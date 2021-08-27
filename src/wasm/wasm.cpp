@@ -1266,7 +1266,6 @@ Elem* addModuleElement(Vector& v,
             << " already exists";
   }
   auto* ret = m[curr->name] = curr.get();
-std::cout << "add " << curr->name << '\n';
   v.push_back(std::move(curr));
   return ret;
 }
