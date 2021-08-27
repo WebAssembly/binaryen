@@ -423,9 +423,7 @@ struct FunctionSplitter {
 
   // Check if an uninlineable function could be split in order to at least
   // inline part of it.
-  bool worthSplitting(Function* func) {
-    return maybeSplit(func);
-  }
+  bool worthSplitting(Function* func) { return maybeSplit(func); }
 
   // Returns the function we can inline, after we split the function into
   // pieces.
@@ -463,7 +461,7 @@ private:
   // Check if we can split a function. Returns whether we can. If the out param
   // is provided, also actually does the split, and returns the inlineable split
   // function in that out param.
-  bool maybeSplit(Function* func, Function** inlineable=nullptr) {
+  bool maybeSplit(Function* func, Function** inlineable = nullptr) {
     // Check if we've processed this input before.
     auto iter = splits.find(func);
     if (iter != splits.end()) {
@@ -518,8 +516,10 @@ private:
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
-      inlineableIf->condition = builder.makeUnary(EqZInt32, inlineableIf->condition);
-      inlineableIf->ifTrue = builder.makeCall(split.outlined->name, args, Type::none);
+      inlineableIf->condition =
+        builder.makeUnary(EqZInt32, inlineableIf->condition);
+      inlineableIf->ifTrue =
+        builder.makeCall(split.outlined->name, args, Type::none);
       func->body = inlineableIf;
 
       // The outlined heavy work no longer needs the initial if.
@@ -553,8 +553,8 @@ private:
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
-      inlineableIf->ifTrue =
-        builder.makeReturn(builder.makeCall(split.outlined->name, args, func->getResults()));
+      inlineableIf->ifTrue = builder.makeReturn(
+        builder.makeCall(split.outlined->name, args, func->getResults()));
 
       // The outlined function just contains the heavy work.
       // TODO: see comment in the pattern above
@@ -570,14 +570,16 @@ private:
     split.splittable = true;
 
     // TODO: we could avoid some of the copying here
-    split.inlineable = ModuleUtils::copyFunction(func, *module,
+    split.inlineable = ModuleUtils::copyFunction(
+      func,
+      *module,
       Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-A-inlineable"))
-    );
-    split.outlined = ModuleUtils::copyFunction(func, *module,
+        *module, func->name.str + std::string("$byn-outline-A-inlineable")));
+    split.outlined = ModuleUtils::copyFunction(
+      func,
+      *module,
       Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-A-outlined"))
-    );
+        *module, func->name.str + std::string("$byn-outline-A-outlined")));
   }
 
   static bool isBlockStartingWithIf(Expression* curr) {
@@ -635,7 +637,8 @@ struct Inlining : public Pass {
     // When optimizing heavily for size, we may potentially split functions in
     // order to inline parts of them.
     if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
-      functionSplitter = std::make_unique<FunctionSplitter>(module, runner->options);
+      functionSplitter =
+        std::make_unique<FunctionSplitter>(module, runner->options);
     }
 
     // No point to do more iterations than the number of functions, as it means
@@ -782,7 +785,8 @@ struct Inlining : public Pass {
 
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
-    if (functionSplitter && functionSplitter->worthSplitting(module->getFunction(name))) {
+    if (functionSplitter &&
+        functionSplitter->worthSplitting(module->getFunction(name))) {
       return true;
     }
 
@@ -806,7 +810,8 @@ struct Inlining : public Pass {
     // function, must always be accurate.
     auto& originalInfo = infos[func->name];
     auto& inlineableInfo = infos[ret->name];
-    auto& outlinedInfo = infos[functionSplitter->getOutlinedSplitFunction(func)->name];
+    auto& outlinedInfo =
+      infos[functionSplitter->getOutlinedSplitFunction(func)->name];
 
     // There is a call from the function we are inlining into to the new
     // inlineable one, which replaces a call to the original function that we
