@@ -97,7 +97,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
             f.write(' (import "env" "foo" (func $import))\n')
             f.write(' (func $many-locals\n')
             for i in range(65 * 1024):
-                f.write('  (local $x%d i32)\n' % i)
+                f.write(f'  (local $x{i} i32)\n')
             f.write('  (call $import)\n')
             f.write(' )\n')
             f.write(')\n')
