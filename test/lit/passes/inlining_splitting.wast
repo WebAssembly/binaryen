@@ -221,18 +221,6 @@
     (call $many-params (i64.const 0) (i32.const 1) (f64.const 3.14159))
   )
 
-  ;; CHECK:      (func $condition-eqz (param $x i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (loop $l
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (br $l)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $condition-eqz (param $x i32)
     (if
       ;; More work in the condition, but work that we still consider worth
@@ -246,6 +234,49 @@
       (call $import)
       (br $l)
     )
+  )
+
+  ;; CHECK:      (func $call-condition-eqz
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$condition-eqz$byn-outline-A-inlineable
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $condition-eqz$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$condition-eqz$byn-outline-A-inlineable0
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $condition-eqz$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-condition-eqz
+    (call $condition-eqz (i32.const 0))
+    (call $condition-eqz (i32.const 1))
   )
 
   ;; CHECK:      (func $condition-global
@@ -603,6 +634,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $many-params$byn-outline-A-outlined (param $x i64) (param $y i32) (param $z f64)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $condition-eqz$byn-outline-A-outlined (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
