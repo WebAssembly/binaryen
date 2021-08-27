@@ -649,13 +649,6 @@ struct Inlining : public Pass {
     runner = runner_;
     module = module_;
 
-    // When optimizing heavily for size, we may potentially split functions in
-    // order to inline parts of them.
-    if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
-      functionSplitter =
-        std::make_unique<FunctionSplitter>(module, runner->options);
-    }
-
     // No point to do more iterations than the number of functions, as it means
     // we are infinitely recursing (which should be very rare in practice, but
     // it is possible that a recursive call can look like it is worth inlining).
@@ -682,7 +675,7 @@ struct Inlining : public Pass {
                 << " (numFunctions: " << module->functions.size() << ")\n";
 #endif
 
-      calculateInfos();
+      prepare();
 
       iterationNumber++;
       std::unordered_set<Function*> inlinedInto;
@@ -703,7 +696,7 @@ struct Inlining : public Pass {
     }
   }
 
-  void calculateInfos() {
+  void prepare() {
     infos.clear();
     // fill in info, as we operate on it in parallel (each function to its own
     // entry)
@@ -722,6 +715,13 @@ struct Inlining : public Pass {
     }
     if (module->start.is()) {
       infos[module->start].usedGlobally = true;
+    }
+
+    // When optimizing heavily for size, we may potentially split functions in
+    // order to inline parts of them.
+    if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
+      functionSplitter =
+        std::make_unique<FunctionSplitter>(module, runner->options);
     }
   }
 
