@@ -751,7 +751,10 @@ std::cout << "loop2\n";
     // perform inlinings TODO: parallelize
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
     // which functions were inlined into
-    for (auto& func : module->functions) {
+    for (auto& kv : state.actionsForFunction) {
+      Name name = kv.first;
+      auto& actions = kv.second;
+      auto* func = module->getFunction(name);
       // if we've inlined a function, don't inline into it in this iteration,
       // avoid risk of races
       // note that we do not risk stalling progress, as each iteration() will
@@ -759,7 +762,7 @@ std::cout << "loop2\n";
       if (inlinedUses.count(func->name)) {
         continue;
       }
-      for (auto& action : state.actionsForFunction[func->name]) {
+      for (auto& action : actions) {
         auto* inlinedFunction = action.contents;
         // if we've inlined into a function, don't inline it in this iteration,
         // avoid risk of races
@@ -774,13 +777,16 @@ std::cout << "loop2\n";
         }
 
         // Success - we can inline.
+std::cout << "inline1! " << func << " : " << func->name << " <= " << action.contents->name << '\n';
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
-        action.contents = getInlinedFunction(action.contents);
-        doInlining(module, func.get(), action);
+        action.contents = getActuallyInlinedFunction(action.contents);
+std::cout << "inline2! " << func << " : " << func->name << '\n';
+std::cout <<"     <= " << action.contents->name << '\n';
+        doInlining(module, func, action);
         inlinedUses[inlinedName]++;
-        inlinedInto.insert(func.get());
+        inlinedInto.insert(func);
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
       }
     }
@@ -816,18 +822,26 @@ std::cout << "loop2\n";
     return false;
   }
 
-  // Gets the function to be inlined. This is called right before actually
-  // performing the inlining, that is, we are guaranteed to inline after this.
-  Function* getInlinedFunction(Function* func) {
+  // Gets the actual function to be inlined. Normally this is the function
+  // itself, but if it is a function we must first split then it will be the
+  // inlineable part of the split.
+  //
+  // This is called right before actually performing the inlining, that is, we
+  // are guaranteed to inline after this.
+  Function* getActuallyInlinedFunction(Function* func) {
+std::cout << "getIF1 " << module->getFunction("call-to-maybe") << " : " << module->getFunction("call-to-maybe")->name << '\n';
+
     // If we want to inline this function itself, do so.
     if (infos[func->name].worthInlining(runner->options)) {
       return func;
     }
+std::cout << "getIF2 " << module->getFunction("call-to-maybe")->name << '\n';
 
     // Otherwise, this is a case where we want to inline part of it, after
     // splitting.
     assert(functionSplitter);
     auto* ret = functionSplitter->getInlineableSplitFunction(func);
+std::cout << "getIF3 " << module->getFunction("call-to-maybe")->name << '\n';
 
     // As we are going to inline this function, and not the original one that
     // we are splitting, we need to update the FunctionInfo data accordingly -
