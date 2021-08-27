@@ -27,6 +27,10 @@
   (func $maybe-work-hard (param $x i32)
     ;; A function that does a quick check before any heavy work. We can outline
     ;; the heavy work, so that the condition can be inlined.
+    ;;
+    ;; This function (and others lower down that we also optimize) will vanish
+    ;; in the output. Part of it will be inlined into its caller, below, and
+    ;; the rest will be outlined into a new function with suffix "outlined".
     (if
       (local.get $x)
       (return)
@@ -108,7 +112,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller
+  (func $call-maybe-work-hard
     ;; Call the above function to verify that we can in fact inline it after
     ;; splitting. We should see each of these three calls replaced by inlined
     ;; code performing the if from $maybe-work-hard, and depending on that

@@ -471,7 +471,9 @@ std::cout << "  maybeSplit\n";
         return false;
       }
       if (iter->second.inlineable) {
-        *inlineableOut = iter->second.inlineable;
+        if (inlineableOut) {
+          *inlineableOut = iter->second.inlineable;
+        }
         return true;
       }
       // Otherwise, we are splittable but have not performed the split yet;
