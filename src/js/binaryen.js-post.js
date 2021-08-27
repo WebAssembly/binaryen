@@ -2348,7 +2348,7 @@ function wrapModule(module, self = {}) {
   self['getGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetGlobal'](module, strToStack(name)));
   };
-  self['addTable'] = function(table, initial, maximum, type = self['funcref']) {
+  self['addTable'] = function(table, initial, maximum, type = Module['_BinaryenTypeFuncref']()) {
     return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum, type));
   }
   self['getTable'] = function(name) {
