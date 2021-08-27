@@ -737,19 +737,21 @@ struct Inlining : public Pass {
     if (state.worthInlining.size() == 0) {
       return;
     }
-    // fill in actionsForFunction, as we operate on it in parallel (each
-    // function to its own entry)
+    // Fill in actionsForFunction, as we operate on it in parallel (each
+    // function to its own entry). Also generate a vector of the function names
+    // so that in the later loop we can iterate on it deterministically and
+    // without iterator invalidation.
+    std::vector<Name> funcNames;
     for (auto& func : module->functions) {
       state.actionsForFunction[func->name];
+      funcNames.push_back(func->name);
     }
     // find and plan inlinings
     Planner(&state).run(runner, module);
     // perform inlinings TODO: parallelize
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
     // which functions were inlined into
-    for (auto& kv : state.actionsForFunction) {
-      Name name = kv.first;
-      auto& actions = kv.second;
+    for (auto name : funcNames) {
       auto* func = module->getFunction(name);
       // if we've inlined a function, don't inline into it in this iteration,
       // avoid risk of races
@@ -758,7 +760,7 @@ struct Inlining : public Pass {
       if (inlinedUses.count(func->name)) {
         continue;
       }
-      for (auto& action : actions) {
+      for (auto& action : state.actionsForFunction[name]) {
         auto* inlinedFunction = action.contents;
         // if we've inlined into a function, don't inline it in this iteration,
         // avoid risk of races
