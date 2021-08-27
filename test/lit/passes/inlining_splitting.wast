@@ -547,6 +547,19 @@
     )
   )
 
+  ;; CHECK:      (func $call-if-not-first
+  ;; CHECK-NEXT:  (call $if-not-first
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $if-not-first
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-if-not-first
+    (call $if-not-first (i32.const 0))
+    (call $if-not-first (i32.const 1))
+  )
+
   ;; CHECK:      (func $if-else (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
