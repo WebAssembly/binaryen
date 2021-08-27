@@ -429,8 +429,14 @@ struct FunctionSplitter {
     : module(module), options(options) {}
 
   // Check if an uninlineable function could be split in order to at least
-  // inline part of it.
-  bool worthSplitting(Function* func) { return maybeSplit(func); }
+  // inline part of it, in a worthwhile manner.
+  bool canSplit(Function* func, const FunctionInfo& info) {
+    if (!canHandleParams(func)) {
+      return false;
+    }
+
+    return maybeSplit(func);
+  }
 
   // Returns the function we can inline, after we split the function into
   // pieces.
@@ -500,10 +506,6 @@ private:
     // need to return false from this function. On success, we update this info
     // in startSplit().
     auto& split = splits[func];
-
-    if (!canHandleParams(func)) {
-      return false;
-    }
 
     auto* body = func->body;
 
@@ -840,7 +842,7 @@ struct Inlining : public Pass {
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
     if (functionSplitter &&
-        functionSplitter->worthSplitting(module->getFunction(name))) {
+        functionSplitter->canSplit(module->getFunction(name), infos[name])) {
       return true;
     }
 

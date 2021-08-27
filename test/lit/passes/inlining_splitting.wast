@@ -449,9 +449,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $start-used-globally
-    ;; This looks optimizable, but it is the start function, which means it is
-    ;; used in more than the direct calls we can optimize, and so we do not
-    ;; optimize it (for now).
+    ;; This looks optimizable, and it is even though it has a global use (by
+    ;; being the start function). We do not interfere with global uses; the only
+    ;; thing we alter are the places where we do partially inline this method.
     (if
       (global.get $glob)
       (return)
