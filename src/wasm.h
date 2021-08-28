@@ -1825,6 +1825,7 @@ class DylinkSection {
 public:
   Index memorySize, memoryAlignment, tableSize, tableAlignment;
   std::vector<Name> neededDynlibs;
+  std::vector<char> tail;
 };
 
 class Module {
