@@ -557,10 +557,8 @@ private:
       auto* inlineableIf = getIf(split.inlineable->body);
       inlineableIf->condition =
         builder.makeUnary(EqZInt32, inlineableIf->condition);
-      inlineableIf->ifTrue =
-        builder.makeCall(split.outlined->name,
-                         getForwardedArgs(func, builder),
-                         Type::none);
+      inlineableIf->ifTrue = builder.makeCall(
+        split.outlined->name, getForwardedArgs(func, builder), Type::none);
       split.inlineable->body = inlineableIf;
 
       // The outlined function no longer needs the initial if.
@@ -596,10 +594,10 @@ private:
       // The inlineable function should only have the if, which will call the
       // outlined heavy work, plus the content after the if.
       auto* inlineableIf = getIf(split.inlineable->body);
-      inlineableIf->ifTrue = builder.makeReturn(
-        builder.makeCall(split.outlined->name,
-                         getForwardedArgs(func, builder),
-                         func->getResults()));
+      inlineableIf->ifTrue =
+        builder.makeReturn(builder.makeCall(split.outlined->name,
+                                            getForwardedArgs(func, builder),
+                                            func->getResults()));
 
       // The outlined function just contains the heavy work.
       // TODO: see comment in the pattern above
@@ -621,13 +619,13 @@ private:
     split.inlineable = ModuleUtils::copyFunction(
       func,
       *module,
-      Names::getValidFunctionName(
-        *module, prefix + func->name.str + "$inlineable"));
+      Names::getValidFunctionName(*module,
+                                  prefix + func->name.str + "$inlineable"));
     split.outlined = ModuleUtils::copyFunction(
       func,
       *module,
-      Names::getValidFunctionName(
-        *module, prefix + func->name.str + "$outlined"));
+      Names::getValidFunctionName(*module,
+                                  prefix + func->name.str + "$outlined"));
   }
 
   static bool isBlockStartingWithIf(Expression* curr) {
