@@ -250,6 +250,8 @@ inline Index getZeroExtBits(Expression* curr) {
 // child of this expression. See getFallthrough for a method that looks all the
 // way to the final value falling through, potentially through multiple
 // intermediate expressions.
+//
+// TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
 inline Expression* getImmediateFallthrough(Expression* curr,
                                            const PassOptions& passOptions,
                                            FeatureSet features) {
