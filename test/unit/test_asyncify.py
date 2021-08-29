@@ -87,3 +87,18 @@ class AsyncifyTest(utils.BinaryenTestCase):
         self.assertEqual(normal, response)
         without = test(['--pass-arg=asyncify-imports@without.anything'])
         self.assertNotEqual(normal, without)
+
+    def test_asyncify_too_many_locals(self):
+        # With 64K+ locals we cannot run the liveness analysis optimization, but
+        # should at least not fatally error.
+        temp = tempfile.NamedTemporaryFile().name
+        with open(temp, 'w') as f:
+            f.write('(module\n')
+            f.write(' (import "env" "foo" (func $import))\n')
+            f.write(' (func $many-locals\n')
+            for i in range(65 * 1024):
+                f.write(f'  (local $x{i} i32)\n')
+            f.write('  (call $import)\n')
+            f.write(' )\n')
+            f.write(')\n')
+        shared.run_process(shared.WASM_OPT + [temp, '--asyncify'])
