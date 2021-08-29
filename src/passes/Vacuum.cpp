@@ -102,7 +102,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         return curr;
       }
       // Check if this expression itself has side effects, ignoring children.
-      EffectAnalyzer self(getPassOptions(), features);
+      EffectAnalyzer self(getPassOptions(), *getModule());
       self.visit(curr);
       if (self.hasSideEffects()) {
         return curr;
@@ -111,7 +111,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // get rid of it. However, the children may have side effects.
       SmallVector<Expression*, 1> childrenWithEffects;
       for (auto* child : ChildIterator(curr)) {
-        if (EffectAnalyzer(getPassOptions(), features, child)
+        if (EffectAnalyzer(getPassOptions(), *getModule(), child)
               .hasSideEffects()) {
           childrenWithEffects.push_back(child);
         }
@@ -292,7 +292,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // Note that we check the type here to avoid removing unreachable code - we
     // leave that for DCE.
     if (curr->type == Type::none &&
-        !EffectAnalyzer(getPassOptions(), getModule()->features, curr)
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr)
            .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr);
       return;
@@ -361,7 +361,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   void visitTry(Try* curr) {
     // If try's body does not throw, the whole try-catch can be replaced with
     // the try's body.
-    if (!EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
+    if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body)
            .throws) {
       replaceCurrent(curr->body);
       for (auto* catchBody : curr->catchBodies) {
@@ -379,7 +379,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       ExpressionManipulator::nop(curr->body);
     }
     if (curr->getResults() == Type::none &&
-        !EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr->body)
            .hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }

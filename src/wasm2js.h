@@ -1299,11 +1299,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // reorder it to the start.
       bool mustReorder = false;
       EffectAnalyzer targetEffects(
-        parent->options, module->features, curr->target);
+        parent->options, *module, curr->target);
       if (targetEffects.hasAnything()) {
         for (auto* operand : curr->operands) {
           if (targetEffects.invalidates(
-                EffectAnalyzer(parent->options, module->features, operand))) {
+                EffectAnalyzer(parent->options, *module, operand))) {
             mustReorder = true;
             break;
           }
@@ -1930,11 +1930,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // side effects, as a JS conditional does not visit both sides.
       bool useLocals = false;
       EffectAnalyzer conditionEffects(
-        parent->options, module->features, curr->condition);
+        parent->options, *module, curr->condition);
       EffectAnalyzer ifTrueEffects(
-        parent->options, module->features, curr->ifTrue);
+        parent->options, *module, curr->ifTrue);
       EffectAnalyzer ifFalseEffects(
-        parent->options, module->features, curr->ifFalse);
+        parent->options, *module, curr->ifFalse);
       if (conditionEffects.invalidates(ifTrueEffects) ||
           conditionEffects.invalidates(ifFalseEffects) ||
           ifTrueEffects.hasSideEffects() || ifFalseEffects.hasSideEffects()) {

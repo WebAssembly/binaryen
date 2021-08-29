@@ -38,7 +38,7 @@ simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
     // just one element. try to replace the block
     auto* singleton = list[0];
     auto sideEffects = EffectAnalyzer(parent->getPassOptions(),
-                                      parent->getModule()->features,
+                                      *parent->getModule(),
                                       singleton)
                          .hasSideEffects();
     if (!sideEffects && !singleton->type.isConcrete()) {
