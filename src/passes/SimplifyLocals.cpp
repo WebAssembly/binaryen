@@ -81,8 +81,8 @@ struct SimplifyLocals
 
     SinkableInfo(Expression** item,
                  PassOptions& passOptions,
-                 FeatureSet features)
-      : item(item), effects(passOptions, features, *item) {}
+                 Module& module)
+      : item(item), effects(passOptions, module, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -428,7 +428,7 @@ struct SimplifyLocals
     // 'catch', because 'pop' should follow right after 'catch'.
     FeatureSet features = this->getModule()->features;
     if (features.hasExceptionHandling() &&
-        EffectAnalyzer(this->getPassOptions(), *getModule(), set->value)
+        EffectAnalyzer(this->getPassOptions(), *this->getModule(), set->value)
           .danglingPop) {
       return false;
     }
@@ -530,7 +530,6 @@ struct SimplifyLocals
     //   )
     //  )
     // so we must check for that.
-    FeatureSet features = this->getModule()->features;
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
       auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;

@@ -69,7 +69,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   // i32.eqz returns the same type as it receives. But for an expression that
   // returns a different type, if the type matters then we cannot replace it.
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
-    FeatureSet features = getModule()->features;
     auto type = curr->type;
     // If the type is none, then we can never replace it with another type.
     if (type == Type::none) {

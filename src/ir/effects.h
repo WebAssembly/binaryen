@@ -693,6 +693,15 @@ public:
     return !aEffects.invalidates(bEffects);
   }
 
+  static bool canReorder(const PassOptions& passOptions,
+                         Module& module,
+                         Expression* a,
+                         Expression* b) {
+    EffectAnalyzer aEffects(passOptions, module, a);
+    EffectAnalyzer bEffects(passOptions, module, b);
+    return !aEffects.invalidates(bEffects);
+  }
+
   // C-API
 
   enum SideEffects : uint32_t {
@@ -780,9 +789,9 @@ private:
 class ShallowEffectAnalyzer : public EffectAnalyzer {
 public:
   ShallowEffectAnalyzer(const PassOptions& passOptions,
-                        FeatureSet features,
+                        Module& module,
                         Expression* ast = nullptr)
-    : EffectAnalyzer(passOptions, features) {
+    : EffectAnalyzer(passOptions, module) {
     if (ast) {
       visit(ast);
     }

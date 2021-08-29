@@ -275,7 +275,7 @@ struct OptimizeInstructions
   }
 
   EffectAnalyzer effects(Expression* expr) {
-    return EffectAnalyzer(getPassOptions(), getModule()->features, expr);
+    return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
 
   decltype(auto) pure(Expression** binder) {
@@ -285,7 +285,7 @@ struct OptimizeInstructions
 
   bool canReorder(Expression* a, Expression* b) {
     return EffectAnalyzer::canReorder(
-      getPassOptions(), getModule()->features, a, b);
+      getPassOptions(), *getModule(), a, b);
   }
 
   void visitBinary(Binary* curr) {
@@ -1379,7 +1379,7 @@ struct OptimizeInstructions
     if (auto* child = ref->dynCast<RefCast>()) {
       // Check if the casts are identical.
       if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
-          !EffectAnalyzer(passOptions, features, curr->rtt).hasSideEffects()) {
+          !EffectAnalyzer(passOptions, *getModule(), curr->rtt).hasSideEffects()) {
         replaceCurrent(curr->ref);
         return;
       }
@@ -1545,9 +1545,9 @@ private:
     // checking if we can remove the two inputs anyhow.)
     auto passOptions = getPassOptions();
     auto features = getModule()->features;
-    if (EffectAnalyzer(passOptions, features, left)
+    if (EffectAnalyzer(passOptions, *getModule(), left)
           .hasUnremovableSideEffects() ||
-        EffectAnalyzer(passOptions, features, right)
+        EffectAnalyzer(passOptions, *getModule(), right)
           .hasUnremovableSideEffects()) {
       return false;
     }
@@ -1916,7 +1916,6 @@ private:
         if (!curr->type.isInteger()) {
           return;
         }
-        FeatureSet features = getModule()->features;
         auto type = curr->type;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
@@ -1938,7 +1937,7 @@ private:
           // shift has side effects
           if (((left && left->value.isZero()) ||
                (right && Bits::getEffectiveShifts(right) == 0)) &&
-              !EffectAnalyzer(passOptions, features, curr->right)
+              !EffectAnalyzer(passOptions, *getModule(), curr->right)
                  .hasSideEffects()) {
             replaceCurrent(curr->left);
             return;
@@ -1947,13 +1946,13 @@ private:
           // multiplying by zero is a zero, unless the other side has side
           // effects
           if (left && left->value.isZero() &&
-              !EffectAnalyzer(passOptions, features, curr->right)
+              !EffectAnalyzer(passOptions, *getModule(), curr->right)
                  .hasSideEffects()) {
             replaceCurrent(left);
             return;
           }
           if (right && right->value.isZero() &&
-              !EffectAnalyzer(passOptions, features, curr->left)
+              !EffectAnalyzer(passOptions, *getModule(), curr->left)
                  .hasSideEffects()) {
             replaceCurrent(right);
             return;
@@ -2688,7 +2687,7 @@ private:
       if (auto* inner = outer->right->dynCast<Binary>()) {
         if (outer->op == inner->op) {
           if (!EffectAnalyzer(
-                 getPassOptions(), getModule()->features, outer->left)
+                 getPassOptions(), *getModule(), outer->left)
                  .hasSideEffects()) {
             if (ExpressionAnalyzer::equal(inner->left, outer->left)) {
               // x - (x - y)  ==>   y
@@ -2731,7 +2730,7 @@ private:
       if (auto* inner = outer->left->dynCast<Binary>()) {
         if (outer->op == inner->op) {
           if (!EffectAnalyzer(
-                 getPassOptions(), getModule()->features, outer->right)
+                 getPassOptions(), *getModule(), outer->right)
                  .hasSideEffects()) {
             if (ExpressionAnalyzer::equal(inner->right, outer->right)) {
               // (x ^ y) ^ y  ==>   x
@@ -3264,7 +3263,7 @@ private:
             // TODO: handle certain side effects when possible in select
             bool validEffects = std::is_same<T, If>::value ||
                                 !ShallowEffectAnalyzer(getPassOptions(),
-                                                       getModule()->features,
+                                                       *getModule(),
                                                        curr->ifTrue)
                                    .hasSideEffects();
 
