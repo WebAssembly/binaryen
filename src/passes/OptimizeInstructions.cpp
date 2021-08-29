@@ -284,8 +284,7 @@ struct OptimizeInstructions
   }
 
   bool canReorder(Expression* a, Expression* b) {
-    return EffectAnalyzer::canReorder(
-      getPassOptions(), *getModule(), a, b);
+    return EffectAnalyzer::canReorder(getPassOptions(), *getModule(), a, b);
   }
 
   void visitBinary(Binary* curr) {
@@ -1379,7 +1378,8 @@ struct OptimizeInstructions
     if (auto* child = ref->dynCast<RefCast>()) {
       // Check if the casts are identical.
       if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
-          !EffectAnalyzer(passOptions, *getModule(), curr->rtt).hasSideEffects()) {
+          !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
+             .hasSideEffects()) {
         replaceCurrent(curr->ref);
         return;
       }
@@ -2686,8 +2686,7 @@ private:
     if (type.isInteger()) {
       if (auto* inner = outer->right->dynCast<Binary>()) {
         if (outer->op == inner->op) {
-          if (!EffectAnalyzer(
-                 getPassOptions(), *getModule(), outer->left)
+          if (!EffectAnalyzer(getPassOptions(), *getModule(), outer->left)
                  .hasSideEffects()) {
             if (ExpressionAnalyzer::equal(inner->left, outer->left)) {
               // x - (x - y)  ==>   y
@@ -2729,8 +2728,7 @@ private:
       }
       if (auto* inner = outer->left->dynCast<Binary>()) {
         if (outer->op == inner->op) {
-          if (!EffectAnalyzer(
-                 getPassOptions(), *getModule(), outer->right)
+          if (!EffectAnalyzer(getPassOptions(), *getModule(), outer->right)
                  .hasSideEffects()) {
             if (ExpressionAnalyzer::equal(inner->right, outer->right)) {
               // (x ^ y) ^ y  ==>   x
@@ -3262,9 +3260,8 @@ private:
             // the side effects execute once, so there is no problem.
             // TODO: handle certain side effects when possible in select
             bool validEffects = std::is_same<T, If>::value ||
-                                !ShallowEffectAnalyzer(getPassOptions(),
-                                                       *getModule(),
-                                                       curr->ifTrue)
+                                !ShallowEffectAnalyzer(
+                                   getPassOptions(), *getModule(), curr->ifTrue)
                                    .hasSideEffects();
 
             // In addition, check for specific limitations of select.

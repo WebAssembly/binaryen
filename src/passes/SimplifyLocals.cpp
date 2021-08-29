@@ -79,9 +79,7 @@ struct SimplifyLocals
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item,
-                 PassOptions& passOptions,
-                 Module& module)
+    SinkableInfo(Expression** item, PassOptions& passOptions, Module& module)
       : item(item), effects(passOptions, module, *item) {}
   };
 
