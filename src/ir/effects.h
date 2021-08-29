@@ -31,21 +31,28 @@ public:
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
-      debugInfo(passOptions.debugInfo), features(features) {
+      debugInfo(passOptions.debugInfo), module(nullptr), features(features) {
     if (ast) {
       walk(ast);
     }
   }
 
   EffectAnalyzer(const PassOptions& passOptions,
-                 Module& wasm,
+                 Module& module,
                  Expression* ast = nullptr)
-    : wasm(&wasm), EffectAnalyzer(passOptions, wasm.features, ast) {}
+    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
+      debugInfo(passOptions.debugInfo), module(&module),
+      features(module.features) {
+    if (ast) {
+      walk(ast);
+    }
+  }
 
-  Module* wasm = nullptr;
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
   bool debugInfo;
+  Module* module;
   FeatureSet features;
 
   // Walk an expression and all its children.
