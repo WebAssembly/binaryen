@@ -824,7 +824,16 @@ struct Inlining : public Pass {
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
+
+        // Update the action for the actual inlining we are about to perform
+        // (when splitting, we will actually inline one of the split pieces and
+        // not the original function itself; note how even if we do that then
+        // we are still removing a call to the original function here, and so
+        // we do not need to change anything else lower down - we still want to
+        // note that we got rid of one use of the original function).
         action.contents = getActuallyInlinedFunction(action.contents);
+
+        // Perform the inlining and update counts.
         doInlining(module, func, action);
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func);
@@ -870,8 +879,9 @@ struct Inlining : public Pass {
   }
 
   // Gets the actual function to be inlined. Normally this is the function
-  // itself, but if it is a function we must first split then it will be the
-  // inlineable part of the split.
+  // itself, but if it is a function that we must first split (i.e., we only
+  // want to partially inline it) then it will be the inlineable part of the
+  // split.
   //
   // This is called right before actually performing the inlining, that is, we
   // are guaranteed to inline after this.
