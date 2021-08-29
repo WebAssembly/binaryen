@@ -555,14 +555,12 @@ private:
       // The inlineable function should only have the if, which will call the
       // outlined function with a flipped condition.
       auto* inlineableIf = getIf(split.inlineable->body);
-      std::vector<Expression*> args;
-      for (Index i = 0; i < func->getNumParams(); i++) {
-        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
-      }
       inlineableIf->condition =
         builder.makeUnary(EqZInt32, inlineableIf->condition);
       inlineableIf->ifTrue =
-        builder.makeCall(split.outlined->name, args, Type::none);
+        builder.makeCall(split.outlined->name,
+                         getForwardedArgs(func, builder),
+                         Type::none);
       split.inlineable->body = inlineableIf;
 
       // The outlined function no longer needs the initial if.
@@ -598,12 +596,10 @@ private:
       // The inlineable function should only have the if, which will call the
       // outlined heavy work, plus the content after the if.
       auto* inlineableIf = getIf(split.inlineable->body);
-      std::vector<Expression*> args; // TODO helper
-      for (Index i = 0; i < func->getNumParams(); i++) {
-        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
-      }
       inlineableIf->ifTrue = builder.makeReturn(
-        builder.makeCall(split.outlined->name, args, func->getResults()));
+        builder.makeCall(split.outlined->name,
+                         getForwardedArgs(func, builder),
+                         func->getResults()));
 
       // The outlined function just contains the heavy work.
       // TODO: see comment in the pattern above
@@ -661,6 +657,17 @@ private:
       return isSimple(is->value);
     }
     return false;
+  }
+
+  // Returns a list of local.gets, one for each of the parameters to the
+  // function. This forwards the arguments passed to the inlineable function to
+  // the outline one.
+  std::vector<Expression*> getForwardedArgs(Function* func, Builder& builder) {
+    std::vector<Expression*> args;
+    for (Index i = 0; i < func->getNumParams(); i++) {
+      args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
+    }
+    return args;
   }
 };
 
