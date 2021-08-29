@@ -357,10 +357,10 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
 }
 
 //
-// Function splitting.
+// Function splitting / partial inlining / inlining of conditions.
 //
 // A function may be too costly to inline, but it may be profitable to
-// *partially* inline it. The specific case optimized here are functions with a
+// *partially* inline it. The specific cases optimized here are functions with a
 // condition,
 //
 //  function foo(x) {
@@ -368,7 +368,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
 //    ..lots and lots of other code..
 //  }
 //
-// If the other code after the if is large enough or costly enough then we will
+// If the other code after the if is large enough or costly enough, then we will
 // not inline the entire function. But it is useful to inline the condition.
 // Consider this caller:
 //
@@ -384,52 +384,65 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
 //    if (x) foo(x);
 //  }
 //
-// Note that we just inlined the condition here, and did not modify foo()
-// itself (yet, see later). Just by copying the condition out of foo() we gain
-// two benefits:
+// By inlining the condition out of foo() we gain two benefits:
 //
 //  * In the first call here the condition is zero, which means we can
 //    statically optimize out the call entirely.
-//  * Even if we can't do that, as in the second call, if at runtime we see the
-//    condition is false then we avoid the call. Calling just to check a cheap
-//    condition and immediately return is very costly, which this can avoid.
+//  * Even if we can't do that (as in the second call) if at runtime we see the
+//    condition is false then we avoid the call. That means we perform what is
+//    hopefully a cheap branch instead of a call and then a branch.
 //
-// The cost to doing this is an increase in code size. Another cost is that we
-// check the condition twice. We can reduce the second cost by seeing if the
-// called function has no unseen callers (no indirect calls, not exported), and
-// if so, we can remove the condition in the function.
+// The cost to doing this is an increase in code size, and so this is only done
+// when optimizing heavily for speed.
 //
-// Instead of inlining the condition, we take the simpler approach of outlining
-// the rest of the code. By splitting the function into an easily-inlineable
-// part, and a separate "heavy" part, we can achieve our goal by letting
-// normal inlining run on the easily-inlineable piece. That is, given foo()
-// above, we transform it to this:
+// To implement partial inlining we split the function to be inlined. Starting
+// with
 //
 //  function foo(x) {
 //    if (x) return;
-//    foo$heavy(x);
-//  }
-//
-// And we create a new function
-//
-//  function foo$heavy(x) {
 //    ..lots and lots of other code..
 //  }
 //
-// We then depend on the modified foo() being inlined, at which point we return
-// to the result mentioned earlier.
+// We create the "inlineable" part of it, and the code that is "outlined":
+//
+//  function foo$inlineable(x) {
+//    if (x) return;
+//    foo$outlined(x);
+//  }
+//  function foo$outlined(x) {
+//    ..lots and lots of other code..
+//  }
+//
+// (Note how if the second function were inlined into the first, we would end
+// up where we started, with the original function.) After splitting the
+// function in this way, we simply inline the inlineable part using the normal
+// mechanism for that. That ends up replacing  foo(x);  with
+//
+//  if (x) foo$outlined(x);
+//
+// which is what we wanted.
+//
+// To reduce the complexity of this feature, it is implemented almost entirely
+// in its own class, FunctionSplitter. The main inlining logic just calls out to
+// the splitter to check if a function is worth splitting, and to get the split
+// part if so.
+//
 
 struct FunctionSplitter {
   Module* module;
   PassOptions& options;
 
-  // Receive the module and the info about function inlineability. We will
-  // update that info if/when we split.
   FunctionSplitter(Module* module, PassOptions& options)
     : module(module), options(options) {}
 
-  // Check if an uninlineable function could be split in order to at least
-  // inline part of it, in a worthwhile manner.
+  // Check if an function could be split in order to at least inline part of it,
+  // in a worthwhile manner.
+  //
+  // Even if this returns true, we may not end up inlining the function, as the
+  // main inlining logic has a few other considerations to take into account
+  // (like limitations on which functions can be inlined into in each iteration,
+  // the number of iterations, etc.). Therefore this function will only find out
+  // if we *can* split, but not actually do any splitting.
   bool canSplit(Function* func, const FunctionInfo& info) {
     if (!canHandleParams(func)) {
       return false;
@@ -438,8 +451,11 @@ struct FunctionSplitter {
     return maybeSplit(func);
   }
 
-  // Returns the function we can inline, after we split the function into
-  // pieces.
+  // Returns the function we should inline, after we split the function into two
+  // pieces as described above (foo$inlineable, there).
+  //
+  // This is called when we are definitely inlining the function, and so it will
+  // perform the splitting (if that has not already been done before).
   Function* getInlineableSplitFunction(Function* func) {
     Function* inlineable = nullptr;
     auto success = maybeSplit(func, &inlineable);
@@ -447,14 +463,10 @@ struct FunctionSplitter {
     return inlineable;
   }
 
-  Function* getOutlinedSplitFunction(Function* func) {
-    assert(splits.count(func));
-    return splits[func].outlined;
-  }
-
   void finish() {
-    // When all work is complete, we no longer need the inlineable functions:
-    // they will have been inlined whereever we wanted to use them.
+    // When all work is complete, we no longer need the inlineable functions on
+    // the module, as they have been inlined into all the places we wanted them
+    // for.
     for (auto& kv : splits) {
       auto* inlineable = kv.second.inlineable;
       if (inlineable) {
@@ -464,22 +476,20 @@ struct FunctionSplitter {
   }
 
 private:
-  // The two pieces we get after splitting a function into two.
+  // Information about splitting a function.
   struct Split {
-    // Whether we can split the original function. If not, the other two fields
-    // here are null.
+    // Whether we can split the function.
     bool splittable = false;
 
-    // The inlineable function, that is, a lightweight condition we want to
-    // inline.
+    // The inlineable function out of the two that we generate by splitting.
+    // That is, foo$inlineable from above.
     Function* inlineable = nullptr;
 
-    // The outlined function, that is, heavy code we do not want to inline.
+    // The outlined function, that is, foo$outlined from above.
     Function* outlined = nullptr;
   };
 
-  // All the split checks and actual splits we have already performed. This maps
-  // the original function to the two split pieces of it.
+  // All the splitting we have already performed.
   std::unordered_map<Function*, Split> splits;
 
   // Check if we can split a function. Returns whether we can. If the out param
@@ -490,6 +500,7 @@ private:
     auto iter = splits.find(func);
     if (iter != splits.end()) {
       if (!iter->second.splittable) {
+        // We've seen before that this cannot be split.
         return false;
       }
       if (iter->second.inlineable) {
@@ -503,16 +514,16 @@ private:
     }
 
     // The default value of split.splittable is false, so if we fail we just
-    // need to return false from this function. On success, we update this info
-    // in startSplit().
+    // need to return false from this function. If, on the other hand, we can
+    // split, then we will update this split info accordingly.
     auto& split = splits[func];
 
     auto* body = func->body;
 
     // All the patterns we look for atm start with an if at the very top of the
     // function. If that if conditionalizes almost all the work in the function,
-    // then it seems promising to inling that if's condition (by outlining the
-    // heavy work, as mentioned earlier).
+    // then it seems promising to inline that if's condition (by outlining the
+    // rest, as mentioned earlier).
     if (!isBlockStartingWithIf(body)) {
       return false;
     }
@@ -541,8 +552,8 @@ private:
 
       startSplit(split, func);
 
-      // The inlineable function now only has the if, which will call the
-      // outlined heavy work with a flipped condition.
+      // The inlineable function should only have the if, which will call the
+      // outlined function with a flipped condition.
       auto* inlineableIf = getIf(split.inlineable->body);
       std::vector<Expression*> args;
       for (Index i = 0; i < func->getNumParams(); i++) {
@@ -554,7 +565,7 @@ private:
         builder.makeCall(split.outlined->name, args, Type::none);
       split.inlineable->body = inlineableIf;
 
-      // The outlined heavy work no longer needs the initial if.
+      // The outlined function no longer needs the initial if.
       // TODO: If we handle the case with indirect calls and other global uses
       //       then we could not do this, as those calls would skip the first
       //       function with the condition that calls the heavy work.
@@ -584,7 +595,7 @@ private:
 
       startSplit(split, func);
 
-      // The inlineable function now only has the if, which will call the
+      // The inlineable function should only have the if, which will call the
       // outlined heavy work, plus the content after the if.
       auto* inlineableIf = getIf(split.inlineable->body);
       std::vector<Expression*> args; // TODO helper
