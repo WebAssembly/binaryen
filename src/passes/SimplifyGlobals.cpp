@@ -108,8 +108,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     }
 
     // See if reading a specific global is the only effect the condition has.
-    EffectAnalyzer condition(
-      getPassOptions(), *getModule(), curr->condition);
+    EffectAnalyzer condition(getPassOptions(), *getModule(), curr->condition);
 
     if (condition.globalsRead.size() != 1) {
       return;
@@ -123,8 +122,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     // See if writing the same global is the only effect the body has. (Note
     // that we don't need to care about the case where the body has no effects
     // at all - other pass would handle that trivial situation.)
-    EffectAnalyzer ifTrue(
-      getPassOptions(), *getModule(), curr->ifTrue);
+    EffectAnalyzer ifTrue(getPassOptions(), *getModule(), curr->ifTrue);
     if (ifTrue.globalsWritten.size() != 1) {
       return;
     }

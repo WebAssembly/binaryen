@@ -410,7 +410,8 @@ struct SimplifyLocals
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
       self->sinkables.emplace(std::make_pair(
-        index, SinkableInfo(currp, self->getPassOptions(), *self->getModule())));
+        index,
+        SinkableInfo(currp, self->getPassOptions(), *self->getModule())));
     }
 
     if (!allowNesting) {
@@ -548,7 +549,8 @@ struct SimplifyLocals
             *breakLocalSetPointer = &nop;
             EffectAnalyzer condition(
               this->getPassOptions(), *this->getModule(), br->condition);
-            EffectAnalyzer value(this->getPassOptions(), *this->getModule(), set);
+            EffectAnalyzer value(
+              this->getPassOptions(), *this->getModule(), set);
             *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop

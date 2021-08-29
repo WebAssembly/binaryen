@@ -591,9 +591,8 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(getPassOptions(),
-                                                   *getModule(),
-                                                   newItem)
+                                if (EffectAnalyzer(
+                                      getPassOptions(), *getModule(), newItem)
                                       .hasExternalBreakTargets()) {
                                   return true;
                                 }

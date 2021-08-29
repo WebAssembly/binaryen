@@ -512,15 +512,18 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), *getModule(), first).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), *getModule(), first)
+          .hasSideEffects()) {
       return;
     }
     outer = optimize(curr, first, outer);
-    if (EffectAnalyzer(getPassOptions(), *getModule(), second).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), *getModule(), second)
+          .hasSideEffects()) {
       return;
     }
     outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), *getModule(), third).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), *getModule(), third)
+          .hasSideEffects()) {
       return;
     }
     optimize(curr, third, outer);
@@ -546,8 +549,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   template<typename T> void handleCall(T* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(
-            getPassOptions(), *getModule(), curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
             .hasSideEffects()) {
         return;
       }
@@ -580,8 +582,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitThrow(Throw* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(
-            getPassOptions(), *getModule(), curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
             .hasSideEffects()) {
         return;
       }

@@ -1298,8 +1298,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // If the target has effects that interact with the operands, we must
       // reorder it to the start.
       bool mustReorder = false;
-      EffectAnalyzer targetEffects(
-        parent->options, *module, curr->target);
+      EffectAnalyzer targetEffects(parent->options, *module, curr->target);
       if (targetEffects.hasAnything()) {
         for (auto* operand : curr->operands) {
           if (targetEffects.invalidates(
@@ -1931,10 +1930,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       bool useLocals = false;
       EffectAnalyzer conditionEffects(
         parent->options, *module, curr->condition);
-      EffectAnalyzer ifTrueEffects(
-        parent->options, *module, curr->ifTrue);
-      EffectAnalyzer ifFalseEffects(
-        parent->options, *module, curr->ifFalse);
+      EffectAnalyzer ifTrueEffects(parent->options, *module, curr->ifTrue);
+      EffectAnalyzer ifFalseEffects(parent->options, *module, curr->ifFalse);
       if (conditionEffects.invalidates(ifTrueEffects) ||
           conditionEffects.invalidates(ifFalseEffects) ||
           ifTrueEffects.hasSideEffects() || ifFalseEffects.hasSideEffects()) {

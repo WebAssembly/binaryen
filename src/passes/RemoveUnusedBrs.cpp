@@ -860,8 +860,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition &&
-              canTurnIfIntoBrIf(
-                iff->condition, ifTrueBreak->value, passOptions, *getModule())) {
+              canTurnIfIntoBrIf(iff->condition,
+                                ifTrueBreak->value,
+                                passOptions,
+                                *getModule())) {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
@@ -873,8 +875,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // otherwise, perhaps we can flip the if
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
           if (ifFalseBreak && !ifFalseBreak->condition &&
-              canTurnIfIntoBrIf(
-                iff->condition, ifFalseBreak->value, passOptions, *getModule())) {
+              canTurnIfIntoBrIf(iff->condition,
+                                ifFalseBreak->value,
+                                passOptions,
+                                *getModule())) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
@@ -931,10 +935,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // This switch has just one target no matter what; replace with a br
           // if we can (to do so, we must put the condition before a possible
           // value).
-          if (!curr->value || EffectAnalyzer::canReorder(passOptions,
-                                                         *getModule(),
-                                                         curr->condition,
-                                                         curr->value)) {
+          if (!curr->value ||
+              EffectAnalyzer::canReorder(
+                passOptions, *getModule(), curr->condition, curr->value)) {
             Builder builder(*getModule());
             replaceCurrent(builder.makeSequence(
               builder.makeDrop(curr->condition), // might have side effects

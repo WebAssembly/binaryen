@@ -39,7 +39,8 @@ public:
 
   EffectAnalyzer(const PassOptions& passOptions,
                  Module& wasm,
-                 Expression* ast = nullptr) : wasm(&wasm), EffectAnalyzer(passOptions, wasm.features, ast) {}
+                 Expression* ast = nullptr)
+    : wasm(&wasm), EffectAnalyzer(passOptions, wasm.features, ast) {}
 
   Module* wasm = nullptr;
   bool ignoreImplicitTraps;
