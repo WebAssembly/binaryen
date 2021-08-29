@@ -550,7 +550,7 @@ private:
         return true;
       }
 
-      startSplit(split, func);
+      startSplit(split, func, "A");
 
       // The inlineable function should only have the if, which will call the
       // outlined function with a flipped condition.
@@ -591,7 +591,7 @@ private:
         return true;
       }
 
-      startSplit(split, func);
+      startSplit(split, func, "B");
 
       // The inlineable function should only have the if, which will call the
       // outlined heavy work, plus the content after the if.
@@ -612,20 +612,22 @@ private:
     return false;
   }
 
-  void startSplit(Split& split, Function* func) {
+  void startSplit(Split& split, Function* func, std::string prefix) {
     split.splittable = true;
+
+    prefix = "byn-split-" + prefix + '$';
 
     // TODO: we could avoid some of the copying here
     split.inlineable = ModuleUtils::copyFunction(
       func,
       *module,
       Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-A-inlineable")));
+        *module, prefix + func->name.str + "$inlineable"));
     split.outlined = ModuleUtils::copyFunction(
       func,
       *module,
       Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-A-outlined")));
+        *module, prefix + func->name.str + "$outlined"));
   }
 
   static bool isBlockStartingWithIf(Expression* curr) {
@@ -661,7 +663,7 @@ private:
 
   // Returns a list of local.gets, one for each of the parameters to the
   // function. This forwards the arguments passed to the inlineable function to
-  // the outline one.
+  // the outlined one.
   std::vector<Expression*> getForwardedArgs(Function* func, Builder& builder) {
     std::vector<Expression*> args;
     for (Index i = 0; i < func->getNumParams(); i++) {
