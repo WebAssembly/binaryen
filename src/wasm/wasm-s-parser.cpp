@@ -3388,8 +3388,8 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
       auto func = getFunctionName(*s[i]);
       segment->data.push_back(
         Builder(wasm).makeRefFunc(func, functionTypes[func]));
+      continue;
     }
-
     if (!isPostMVP) {
       throw ParseException("expected an MVP-style $funcname in elem.");
     }
