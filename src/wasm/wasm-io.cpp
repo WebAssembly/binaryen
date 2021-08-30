@@ -89,7 +89,7 @@ void ModuleReader::read(std::string filename,
                         Module& wasm,
                         std::string sourceMapFilename) {
   // empty filename means read from stdin
-  if (!filename.size()) {
+  if (!filename.size() || filename == "-") {
     readStdin(wasm, sourceMapFilename);
     return;
   }
