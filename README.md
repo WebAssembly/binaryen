@@ -70,7 +70,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      multivalue instructions and blocks, it is represented with tuple types that
      do not exist in the WebAssembly language. In addition to multivalue
      instructions, locals and globals can also have tuple types in Binaryen IR
-     but not in WebAssembly.
+     but not in WebAssembly. Experiments show that better support for
+     multivalue could enable useful but small code size savings of 1-3%, so it
+     has not been worth changing the core IR structure to support it better.
+   * Block input values (currently only supported in `catch` blocks in the
+     exception handling feature) are represented as `pop` subexpressions.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
