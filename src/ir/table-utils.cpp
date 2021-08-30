@@ -76,8 +76,7 @@ bool isPostMVP(ElementSegment* curr, Module* module) {
   // If the table has a specialized (non-MVP) type, then the segment must
   // declare a type that is a subtype of that, and so it is not MVP.
   bool hasTableOfSpecializedType =
-    curr->table.is() &&
-    module->getTable(curr->table)->type != Type::funcref;
+    curr->table.is() && module->getTable(curr->table)->type != Type::funcref;
 
   return !allElementsRefFunc || hasTableOfSpecializedType;
 }
