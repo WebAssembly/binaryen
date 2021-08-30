@@ -2735,20 +2735,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void visitElementSegment(ElementSegment* curr) {
-    bool allElementsRefFunc =
-      std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
-        return entry->is<RefFunc>();
-      });
+    bool isMVP = TableUtils::isMVP(curr, currModule);
     auto printElemType = [&]() {
-      // If all elements are ref.func, then we may be a simple MVP table. We
-      // populate such tables with ref.func internally, but we print them as
-      // having type "func" and not a specialized type. However, if we have a
-      // table with a specialized type then we must emit that type (as our type
-      // must be a subtype of that type).
-      bool hasTableOfSpecializedType =
-        curr->table.is() &&
-        currModule->getTable(curr->table)->type != Type::funcref;
-      if (allElementsRefFunc && !hasTableOfSpecializedType) {
+      if (isMVP) {
         o << "func";
       } else {
         printType(o, curr->type, currModule);
@@ -2766,7 +2755,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
 
     if (curr->table.is()) {
-      if (!allElementsRefFunc || currModule->tables.size() > 1) {
+      if (!isMVP || currModule->tables.size() > 1) {
         // tableuse
         o << " (table ";
         printName(curr->table, o);
@@ -2776,7 +2765,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ' ';
       visit(curr->offset);
 
-      if (!allElementsRefFunc || currModule->tables.size() > 1) {
+      if (!isMVP || currModule->tables.size() > 1) {
         o << ' ';
         printElemType();
       }
@@ -2785,7 +2774,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printElemType();
     }
 
-    if (allElementsRefFunc) {
+    if (isMVP) {
       for (auto* entry : curr->data) {
         auto* refFunc = entry->cast<RefFunc>();
         o << ' ';

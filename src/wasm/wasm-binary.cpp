@@ -586,11 +586,8 @@ void WasmBinaryWriter::writeElementSegments() {
     Index tableIdx = 0;
 
     bool isPassive = segment->table.isNull();
-    // if all items are ref.func, we can use the shorter form.
-    bool usesExpressions =
-      std::any_of(segment->data.begin(),
-                  segment->data.end(),
-                  [](Expression* curr) { return !curr->is<RefFunc>(); });
+    // If the segment is MVP, we can use the shorter form.
+    bool isPostMVP = TableUtils::isPostMVP(segment.get(), wasm);
 
     bool hasTableIndex = false;
     if (!isPassive) {
@@ -599,8 +596,8 @@ void WasmBinaryWriter::writeElementSegments() {
     }
 
     uint32_t flags = 0;
-    if (usesExpressions) {
-      flags |= BinaryConsts::UsesExpressions;
+    if (isPostMVP) {
+      flags |= BinaryConsts::PostMVP;
     }
     if (isPassive) {
       flags |= BinaryConsts::IsPassive;
@@ -618,21 +615,16 @@ void WasmBinaryWriter::writeElementSegments() {
     }
 
     if (isPassive || hasTableIndex) {
-      // If this element segment has a table, and the table has a specialized
-      // type, emit our type in full here (as our type must be a subtype of that
-      // type). Otherwise, assume we are an MVP table and emit funcref.
-      bool hasTableOfSpecializedType =
-        hasTableIndex && wasm->getTable(segment->table)->type != Type::funcref;
-      if (usesExpressions || hasTableOfSpecializedType) {
+      if (isPostMVP) {
         // elemType
         writeType(segment->type);
       } else {
-        // elemKind funcref
-        writeType(Type::funcref);
+        // MVP elemKind of funcref
+        o << U32LEB(0);
       }
     }
     o << U32LEB(segment->data.size());
-    if (usesExpressions) {
+    if (isPostMVP) {
       for (auto* item : segment->data) {
         writeExpression(item);
         o << int8_t(BinaryConsts::End);
@@ -2851,7 +2843,7 @@ void WasmBinaryBuilder::readElementSegments() {
     bool hasTableIdx = !isPassive && ((flags & BinaryConsts::HasIndex) != 0);
     bool isDeclarative =
       isPassive && ((flags & BinaryConsts::IsDeclarative) != 0);
-    bool usesExpressions = (flags & BinaryConsts::UsesExpressions) != 0;
+    bool PostMVP = (flags & BinaryConsts::PostMVP) != 0;
 
     if (isDeclarative) {
       // Declared segments are needed in wasm text and binary, but not in
@@ -2890,15 +2882,21 @@ void WasmBinaryBuilder::readElementSegments() {
     }
 
     if (isPassive || hasTableIdx) {
-      segment->type = getType();
-      if (!segment->type.isFunction()) {
-        throwError("Invalid type for an element segment");
-      }
+      if (isPostMVP) {
+        segment->type = getType();
+        if (!segment->type.isFunction()) {
+          throwError("Invalid type for a post-MVP element segment");
+        }
+      } else {
+        auto elemKind = getU32LEB();
+        if (elemKind != 0x0) {
+          throwError("Only funcref elem kinds are valid in the MVP.");
+        }
     }
 
     auto& segmentData = segment->data;
     auto size = getU32LEB();
-    if (usesExpressions) {
+    if (PostMVP) {
       for (Index j = 0; j < size; j++) {
         segmentData.push_back(readExpression());
       }

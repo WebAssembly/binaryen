@@ -64,6 +64,24 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   return ret;
 }
 
+bool isPostMVP(ElementSegment* curr, Module* module) {
+  // Binaryen IR always has ref.funcs for functions in tables for uniformity,
+  // so that by itself does not rule out a table being MVP. But anything that is
+  // not a ref.func implies non-MVP.
+  bool allElementsRefFunc =
+    std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
+      return entry->is<RefFunc>();
+    });
+
+  // If the table has a specialized (non-MVP) type, then the segment must
+  // declare a type that is a subtype of that, and so it is not MVP.
+  bool hasTableOfSpecializedType =
+    curr->table.is() &&
+    module->getTable(curr->table)->type != Type::funcref;
+
+  return !allElementsRefFunc || hasTableOfSpecializedType;
+}
+
 } // namespace TableUtils
 
 } // namespace wasm

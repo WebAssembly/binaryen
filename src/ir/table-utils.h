@@ -110,6 +110,11 @@ inline Index getOrAppend(Table& table, Name name, Module& wasm) {
 // "elem declare" mention in the text and binary formats.
 std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
 
+// Returns whether a segment is post-MVP. MVP segments have only MVP types, and
+// are written in the binary format as function indexes; post-MVP can contain
+// any type, and any expression.
+bool isPostMVP(ElementSegment* curr, Module* module);
+
 } // namespace TableUtils
 
 } // namespace wasm

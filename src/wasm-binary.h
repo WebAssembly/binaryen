@@ -346,9 +346,10 @@ enum SegmentFlag {
   // Bit 1 if active: 0 = index 0, 1 = index given
   HasIndex = 1 << 1,
   // Table element segments only:
-  // Bit 2: 0 = elemType is funcref and vector of func indexes given
+  // Bit 2: 0 = elemType is funcref and vector of func indexes given (that is,
+  //            this is MVP)
   //        1 = elemType is given and vector of ref expressions is given
-  UsesExpressions = 1 << 2
+  PostMVP = 1 << 2
 };
 
 enum EncodedType {
