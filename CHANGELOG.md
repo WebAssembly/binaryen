@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add `BinaryenUpdateMaps` to the C API.
+
 - Adds a TrapsNeverHappen mode (#4059). This has many of the benefits of
   IgnoreImplicitTraps, but can be used safely in more cases. IgnoreImplicitTraps
   is now deprecated.
