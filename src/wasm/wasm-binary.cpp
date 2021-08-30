@@ -2843,7 +2843,7 @@ void WasmBinaryBuilder::readElementSegments() {
     bool hasTableIdx = !isPassive && ((flags & BinaryConsts::HasIndex) != 0);
     bool isDeclarative =
       isPassive && ((flags & BinaryConsts::IsDeclarative) != 0);
-    bool PostMVP = (flags & BinaryConsts::PostMVP) != 0;
+    bool isPostMVP = (flags & BinaryConsts::PostMVP) != 0;
 
     if (isDeclarative) {
       // Declared segments are needed in wasm text and binary, but not in
@@ -2892,11 +2892,12 @@ void WasmBinaryBuilder::readElementSegments() {
         if (elemKind != 0x0) {
           throwError("Only funcref elem kinds are valid in the MVP.");
         }
+      }
     }
 
     auto& segmentData = segment->data;
     auto size = getU32LEB();
-    if (PostMVP) {
+    if (isPostMVP) {
       for (Index j = 0; j < size; j++) {
         segmentData.push_back(readExpression());
       }

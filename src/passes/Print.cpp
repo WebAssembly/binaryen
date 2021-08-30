@@ -2735,9 +2735,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void visitElementSegment(ElementSegment* curr) {
-    bool isMVP = TableUtils::isMVP(curr, currModule);
+    bool isPostMVP = TableUtils::isPostMVP(curr, currModule);
     auto printElemType = [&]() {
-      if (isMVP) {
+      if (!isPostMVP) {
         o << "func";
       } else {
         printType(o, curr->type, currModule);
@@ -2755,7 +2755,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
 
     if (curr->table.is()) {
-      if (!isMVP || currModule->tables.size() > 1) {
+      if (isPostMVP || currModule->tables.size() > 1) {
         // tableuse
         o << " (table ";
         printName(curr->table, o);
@@ -2765,7 +2765,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ' ';
       visit(curr->offset);
 
-      if (!isMVP || currModule->tables.size() > 1) {
+      if (isPostMVP || currModule->tables.size() > 1) {
         o << ' ';
         printElemType();
       }
@@ -2774,7 +2774,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printElemType();
     }
 
-    if (isMVP) {
+    if (!isPostMVP) {
       for (auto* entry : curr->data) {
         auto* refFunc = entry->cast<RefFunc>();
         o << ' ';

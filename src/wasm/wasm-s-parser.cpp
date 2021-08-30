@@ -21,6 +21,7 @@
 #include <limits>
 
 #include "ir/branch-utils.h"
+#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/string.h"
 #include "wasm-binary.h"
@@ -3299,7 +3300,7 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   Name name = Name::fromInt(elemCounter++);
   bool hasExplicitName = false;
   bool isPassive = true;
-  bool usesExpressions = false;
+  bool isPostMVP = false;
 
   if (table) {
     Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
@@ -3344,13 +3345,13 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
 
   if (i < s.size()) {
     if (s[i]->isStr() && s[i]->dollared()) {
-      usesExpressions = false;
+      isPostMVP = false;
     } else if (s[i]->isStr() && s[i]->str() == FUNC) {
-      usesExpressions = false;
+      isPostMVP = false;
       i += 1;
     } else {
       segment->type = elementToType(*s[i]);
-      usesExpressions = true;
+      isPostMVP = true;
       i += 1;
 
       if (!segment->type.isFunction()) {
@@ -3368,16 +3369,20 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     segment->table = table->name;
   }
 
-  parseElemFinish(s, segment, i, usesExpressions);
+  // We may be post-MVP also due to type reasons or otherwise, as detected by
+  // the utility function for Binaryen IR.
+  isPostMVP = isPostMVP || TableUtils::isPostMVP(segment.get(), &wasm);
+
+  parseElemFinish(s, segment, i, isPostMVP);
 }
 
 ElementSegment* SExpressionWasmBuilder::parseElemFinish(
   Element& s,
   std::unique_ptr<ElementSegment>& segment,
   Index i,
-  bool usesExpressions) {
+  bool isPostMVP) {
 
-  if (usesExpressions) {
+  if (isPostMVP) {
     for (; i < s.size(); i++) {
       if (!s[i]->isList()) {
         throw ParseException("expected a ref.* expression.");
