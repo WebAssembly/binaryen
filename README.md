@@ -141,6 +141,41 @@ Notes when working with Binaryen IR:
    incorrectly.
  * For similar reasons, nodes should not appear in more than one functions.
 
+### Intrinsics
+
+Binaryen intrinsic functions look like calls to imports, e.g.,
+
+```wat
+(import "binaryen-intrinsics" "foo" (func $foo))
+```
+
+. Implementing them
+that way allows them to be read and written by other tools, and avoid
+confusing errors on a binary format error that could happen if we had a
+custom binary format representation for them.
+
+An intrinsic method may be optimized away by the optimizer. If it is not, it
+must be **lowered** before shipping the wasm, as otherwise it will look like a
+call to an import that does not exist. That final lowering is not done
+automatically - a user of intrinsics must run the pass for that explicitly. Note
+that, in general, some additional optimizations may be possible after the final
+lowering, and so a useful pattern is to  optimize once normally with intrinsics,
+then lower them away, then optimize (minimally) after that, e.g.:
+
+```
+wasm-opt input.wasm -o output.wasm  -Os --lower-intrinsics -O1
+```
+
+Each intrinsic defines its semantics, which includes what the optimizer is
+allowed to do with it and what the final lowering will turn it to. See
+[intrinsics.h](https://github.com/WebAssembly/binaryen/blob/main/src/ir/intrinsics.h)
+for the detailed definitions. A quick summary appears here:
+
+* `consumer.used`
+  * Returns 1 if the intrinsic's consumer's result is used, or may be used, and
+    0 if it is
+    definitely not used.
+
 ## Tools
 
 This repository contains code that builds the following tools in `bin/`:

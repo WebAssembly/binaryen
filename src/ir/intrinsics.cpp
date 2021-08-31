@@ -20,18 +20,18 @@
 namespace wasm {
 
 static Name BinaryenIntrinsics("binaryen-intrinsics"),
-            Used("used");
+            ConsumerUsed("consumer.used");
 
 bool Intrinsics::isUsed(Call* call) {
   auto* func = module.getFunctionOrNull(call->target);
-  return func->module == BinaryenIntrinsics && func->base = Used;
+  return func->module == BinaryenIntrinsics && func->base = ConsumerUsed;
 }
 
 Expression* Intrinsics::lower(Call* call) {
   Builder builder(module);
 
-  if (isUsed(call)) {
-    // The final lowering must assume the value might be used.
+  if (isConsumerUsed(call)) {
+    // The final lowering must assume the consumer's value might be used.
     return builder.makeConst(int32_t(1));
   }
 

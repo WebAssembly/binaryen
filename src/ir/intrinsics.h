@@ -21,30 +21,10 @@
 #include "wasm-traversal.h"
 
 //
-// Binaryen intrinsic functions look like calls to imports. Implementing them
-// that way allows them to be read and written by other tools, and avoid
-// confusing errors on a binary format error that could happen if we had a
-// custom binary format representation for them.
+// See the README.md for background on intrinsic functions.
 //
 // Intrinsics can be recognized by Intrinsics::isFoo() methods, that check if a
 // call is a particular intrinsic.
-//
-// An intrinsic method may be optimized away by the optimizer. If it is not, it
-// must be lowered before shipping the wasm, as otherwise it will look like a
-// call to an import that does not exist.
-//
-// Each intrinsic defines its semantics, which includes what the optimizer is
-// allowed to do with it, and what the final lowering will turn it to.
-//
-// The final lowering is not done automatically - a user of intrinsics must run
-// the pass for that explicitly. Note that, in general, some additional
-// optimizations may be possible after the final lowering, and so a useful
-// pattern might be this:
-//
-//   wasm-opt input.wasm -O --lower-intrinsics -O
-//
-// That is, to optimize once with intrinsics, then lower them away, then
-// optimize once more.
 //
 
 namespace wasm {
@@ -55,44 +35,56 @@ class Intrinsics {
 public:
   Intrinsics(Module& module) : module(module) {}
 
-  // Check if a call is the used() intrinsic. used() can be seen as returning 1
-  // if the result might be used, and 0 otherwise.
+  // Check if a call is the consumer.used intrinsic.
   //
-  // Semantics:
+  //   (import "binaryen-intrinsics" "consumer.used" (func (result i32)))
   //
-  //  * A used() instance refers to a property of the control flow structure it
-  //    is a child of. Call that the parent.
-  //  * If the parent returns a concrete result, and that optimizer sees that
-  //    result is not actually used - for example, by being dropped - then it
-  //    can turn this used() instance into a constant of 0.
-  //  * Final lowering turns this into a 1 (as we must assume the value might be
-  //    used).
+  // Loosely, consumer.used can be seen as returning 1 if the result of its
+  // consumer might be used, and 0 otherwise.
   //
-  // used() is useful to be able to get rid of an unused result that has side
-  // effects. For example (in simplified wat), assume we have an if whose
-  // condition is used() and has one arm doing a call foo(), and the other is a
-  // constant 0:
+  // Precise semantics:
   //
-  //   (if used() foo() 0)
+  //  * consumer.used returns an i32. If that value is consumed, then used()'s
+  //    value depends on that consumer.
+  //  * If the consumer itself returns a value, and if the optimizer sees that
+  //    the consumer's value is not actually used - for example, by being
+  //    dropped - then this consumer.used instance can be replaced with a
+  //    constant of 0.
+  //  * Final lowering always turns this into a 1 (as we must assume the value
+  //    might be used).
   //
-  // If that is dropped, then this happens:
+  // consumer.used is useful to be able to get rid of an unused result that has
+  // side effects. For example (in simplified wat), assume we have an if whose
+  // condition is consumer.used and has one arm doing a call foo(), and the
+  // other is a constant 0
   //
-  //  (drop (if used() foo() 0))
-  //  (drop (if 0      foo() 0))  // The optimizer replaces used() with 0.
-  //  (drop 0)                    // The optimizer removes the if and the foo().
-  //  (nop)                       // The optimizer removes the drop of 0.
+  //   (if (call $consumer.used) (call $foo) (i32.const 0))
+  //
+  // Or, in simplified notation:
+  //
+  //   (if consumer.used() foo() 0)
+  //
+  // The "consumer" here is the if, which consumes the value of the intrinsic.
+  // This is what happens if the if is dropped:
+  //
+  //  (drop (if consumer.used() foo() 0))
+  //  (drop (if 0               foo() 0))  // The optimizer replaces
+  //                                          consumer.used() with 0.
+  //  (drop 0)  // The optimizer removes the if and the foo().
+  //  (nop)     // The optimizer removes the drop of 0.
   //
   // Or, if the value is actually used:
   //
-  //  (local.set (if used() foo() 0))
-  //  (local.set (if 1      foo() 0))  // Final lowering replaces used() with 1.
-  //  (local.set foo())                // If is optimized out, leaving foo().
+  //  (local.set (if consumer.used() foo() 0))
+  //  (local.set (if 1               foo() 0))  // Final lowering replaces
+  //                                            // consumer.used() with 1.
+  //  (local.set foo())  // The if is optimized out, leaving foo().
   //
-  // Without used() the optimizer cannot remove a dropped call to foo() if foo()
-  // has side effects. This, this intrinsic lets code generators control what
+  // Without consumer.used() the optimizer cannot remove a dropped call because
+  // it has side effects. Thus, this intrinsic lets code generators control what
   // happens if a result is seen as not used, which can include ignoring side
   // effects.
-  bool isUsed(Call* call);
+  bool isConsumerUsed(Call* call);
 
   // Perform the final lowering of a possible intrinsic. If this call is not an
   // intrinsic, ignore it by returning the input.
