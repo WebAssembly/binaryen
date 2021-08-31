@@ -31,7 +31,19 @@ public:
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
-      debugInfo(passOptions.debugInfo), features(features) {
+      debugInfo(passOptions.debugInfo), module(nullptr), features(features) {
+    if (ast) {
+      walk(ast);
+    }
+  }
+
+  EffectAnalyzer(const PassOptions& passOptions,
+                 Module& module,
+                 Expression* ast = nullptr)
+    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
+      debugInfo(passOptions.debugInfo), module(&module),
+      features(module.features) {
     if (ast) {
       walk(ast);
     }
@@ -40,6 +52,7 @@ public:
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
   bool debugInfo;
+  Module* module;
   FeatureSet features;
 
   // Walk an expression and all its children.
@@ -680,6 +693,15 @@ public:
     return !aEffects.invalidates(bEffects);
   }
 
+  static bool canReorder(const PassOptions& passOptions,
+                         Module& module,
+                         Expression* a,
+                         Expression* b) {
+    EffectAnalyzer aEffects(passOptions, module, a);
+    EffectAnalyzer bEffects(passOptions, module, b);
+    return !aEffects.invalidates(bEffects);
+  }
+
   // C-API
 
   enum SideEffects : uint32_t {
@@ -767,9 +789,9 @@ private:
 class ShallowEffectAnalyzer : public EffectAnalyzer {
 public:
   ShallowEffectAnalyzer(const PassOptions& passOptions,
-                        FeatureSet features,
+                        Module& module,
                         Expression* ast = nullptr)
-    : EffectAnalyzer(passOptions, features) {
+    : EffectAnalyzer(passOptions, module) {
     if (ast) {
       visit(ast);
     }

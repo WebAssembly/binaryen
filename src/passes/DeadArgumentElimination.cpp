@@ -395,7 +395,7 @@ struct DAE : public Pass {
           bool callParamsAreValid =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
-              return EffectAnalyzer(runner->options, module->features, operand)
+              return EffectAnalyzer(runner->options, *module, operand)
                 .hasSideEffects();
             });
           // The type must be valid for us to handle as a local (since we

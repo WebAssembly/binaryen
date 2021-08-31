@@ -37,10 +37,9 @@ simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
       !BranchUtils::BranchSeeker::has(list[0], block->name)) {
     // just one element. try to replace the block
     auto* singleton = list[0];
-    auto sideEffects = EffectAnalyzer(parent->getPassOptions(),
-                                      parent->getModule()->features,
-                                      singleton)
-                         .hasSideEffects();
+    auto sideEffects =
+      EffectAnalyzer(parent->getPassOptions(), *parent->getModule(), singleton)
+        .hasSideEffects();
     if (!sideEffects && !singleton->type.isConcrete()) {
       // no side effects, and singleton is not returning a value, so we can
       // throw away the block and its contents, basically

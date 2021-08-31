@@ -113,7 +113,7 @@ struct ProblemFinder
           brIfs++;
         }
         // if the value has side effects, we can't remove it
-        if (EffectAnalyzer(passOptions, getModule()->features, br->value)
+        if (EffectAnalyzer(passOptions, *getModule(), br->value)
               .hasSideEffects()) {
           foundProblem = true;
         }
@@ -434,18 +434,17 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     if (!child) {
       return outer;
     }
-    FeatureSet features = getModule()->features;
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
       // there are dependencies, things we must be reordered through. make sure
       // no problems there
-      EffectAnalyzer childEffects(getPassOptions(), features, child);
+      EffectAnalyzer childEffects(getPassOptions(), *getModule(), child);
       if (dependency1 && *dependency1 &&
-          EffectAnalyzer(getPassOptions(), features, *dependency1)
+          EffectAnalyzer(getPassOptions(), *getModule(), *dependency1)
             .invalidates(childEffects)) {
         return outer;
       }
       if (dependency2 && *dependency2 &&
-          EffectAnalyzer(getPassOptions(), features, *dependency2)
+          EffectAnalyzer(getPassOptions(), *getModule(), *dependency2)
             .invalidates(childEffects)) {
         return outer;
       }
@@ -512,17 +511,19 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
                        Expression*& third) {
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
-    FeatureSet features = getModule()->features;
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), features, first).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), *getModule(), first)
+          .hasSideEffects()) {
       return;
     }
     outer = optimize(curr, first, outer);
-    if (EffectAnalyzer(getPassOptions(), features, second).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), *getModule(), second)
+          .hasSideEffects()) {
       return;
     }
     outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), features, third).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), *getModule(), third)
+          .hasSideEffects()) {
       return;
     }
     optimize(curr, third, outer);
@@ -548,8 +549,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   template<typename T> void handleCall(T* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(
-            getPassOptions(), getModule()->features, curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
             .hasSideEffects()) {
         return;
       }
@@ -560,16 +560,15 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitCall(Call* curr) { handleCall(curr); }
 
   template<typename T> void handleNonDirectCall(T* curr) {
-    FeatureSet features = getModule()->features;
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), features, curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
             .hasSideEffects()) {
         return;
       }
       outer = optimize(curr, curr->operands[i], outer);
     }
-    if (EffectAnalyzer(getPassOptions(), features, curr->target)
+    if (EffectAnalyzer(getPassOptions(), *getModule(), curr->target)
           .hasSideEffects()) {
       return;
     }
@@ -583,8 +582,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   void visitThrow(Throw* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(
-            getPassOptions(), getModule()->features, curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
             .hasSideEffects()) {
         return;
       }
