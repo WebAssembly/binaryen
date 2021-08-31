@@ -35,6 +35,7 @@ class Intrinsics {
 public:
   Intrinsics(Module& module) : module(module) {}
 
+  //
   // Check if a call is the consumer.used intrinsic.
   //
   //   (import "binaryen-intrinsics" "consumer.used" (func (result i32)))
@@ -56,7 +57,7 @@ public:
   // consumer.used is useful to be able to get rid of an unused result that has
   // side effects. For example (in simplified wat), assume we have an if whose
   // condition is consumer.used and has one arm doing a call foo(), and the
-  // other is a constant 0
+  // other is a constant 0:
   //
   //   (if (call $consumer.used) (call $foo) (i32.const 0))
   //
@@ -84,6 +85,19 @@ public:
   // it has side effects. Thus, this intrinsic lets code generators control what
   // happens if a result is seen as not used, which can include ignoring side
   // effects.
+  //
+  // More examples, with the value of consumer.used for them:
+  //
+  //   (local.set $x (select (a) (b) (call $consumer.used)))   =>   1
+  //   (drop         (select (a) (b) (call $consumer.used)))   =>   0
+  //   (local.set $x (i32.eqz (call $consumer.used)))          =>   1
+  //
+  // "Consumer" here means actual consumption of the result. For example, adding
+  // a block in between the intrinsic and the consumer does not change things,
+  // as the block just lets the value fall through:
+  //
+  //   (if (block (result i32) (call $consumer.used)) (a) (b)))
+  //
   bool isConsumerUsed(Call* call);
 
   // Perform the final lowering of a possible intrinsic. If this call is not an
