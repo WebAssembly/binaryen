@@ -24,9 +24,12 @@ static Name BinaryenIntrinsics("binaryen-intrinsics"),
 
 bool Intrinsics::isConsumerUsed(Expression* curr) {
   if (auto* call = curr->dynCast<Call>()) {
-    auto* func = module.getFunctionOrNull(call->target);
-    return func->module == BinaryenIntrinsics && func->base == ConsumerUsed &&
-           func->getParams() == Type::none && func->getResults() == Type::i32;
+    // The target function may not exist if the module is still being
+    // constructed.
+    if (auto* func = module.getFunctionOrNull(call->target)) {
+      return func->module == BinaryenIntrinsics && func->base == ConsumerUsed &&
+             func->getParams() == Type::none && func->getResults() == Type::i32;
+    }
   }
   return false;
 }
