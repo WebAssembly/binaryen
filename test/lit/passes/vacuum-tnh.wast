@@ -80,7 +80,7 @@
     ;; The struct.get's side effect can be ignored due to tnh, and the value is
     ;; dropped anyhow, so we can remove it. We cannot remove the local.tee
     ;; inside it, however, so we must only vacuum out the struct.get and
-    ;; nothing more.
+    ;; nothing more. (In addition, a drop of a tee will become a set.)
     (drop
       (struct.get $struct 0
         (local.tee $y
