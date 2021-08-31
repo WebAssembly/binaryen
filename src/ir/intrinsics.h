@@ -92,12 +92,6 @@ public:
   //   (drop         (select (a) (b) (call $consumer.used)))   =>   0
   //   (local.set $x (i32.eqz (call $consumer.used)))          =>   1
   //
-  // "Consumer" here means actual consumption of the result. For example, adding
-  // a block in between the intrinsic and the consumer does not change things,
-  // as the block just lets the value fall through:
-  //
-  //   (if (block (result i32) (call $consumer.used)) (a) (b)))
-  //
   bool isConsumerUsed(Call* call);
 
   // Perform the final lowering of a possible intrinsic. If this call is not an
