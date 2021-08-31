@@ -267,7 +267,7 @@ private:
                       Index index,
                       FunctionStructValuesMap& valuesMap) {
     expr =
-      Properties::getFallthrough(expr, getPassOptions(), getModule()->features);
+      Properties::getFallthrough(expr, getPassOptions(), *getModule());
 
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.

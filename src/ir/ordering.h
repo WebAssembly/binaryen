@@ -43,7 +43,7 @@ Expression* getResultOfFirst(Expression* first,
 
   Builder builder(*wasm);
 
-  if (EffectAnalyzer::canReorder(passOptions, wasm->features, first, second)) {
+  if (EffectAnalyzer::canReorder(passOptions, *wasm, first, second)) {
     return builder.makeSequence(second, first);
   }
 

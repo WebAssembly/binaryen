@@ -659,7 +659,7 @@ struct Heap2LocalOptimizer {
     // Finally, check for mixing. If the child is the immediate fallthrough
     // of the parent then no other values can be mixed in.
     if (Properties::getImmediateFallthrough(
-          parent, passOptions, module->features) == child) {
+          parent, passOptions, *module) == child) {
       return ParentChildInteraction::Flows;
     }
 

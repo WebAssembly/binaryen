@@ -4331,8 +4331,8 @@ BinaryenSideEffects BinaryenSideEffectAny(void) {
 
 BinaryenSideEffects
 BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
-                                 BinaryenFeatures features) {
-  return EffectAnalyzer(globalPassOptions, features, (Expression*)expr)
+                                 BinaryenModuleRef module) {
+  return EffectAnalyzer(globalPassOptions, *(Module*)module, (Expression*)expr)
     .getSideEffects();
 }
 
