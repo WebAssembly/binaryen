@@ -102,9 +102,9 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
   void visitUnary(Unary* curr) {
     if (isReinterpret(curr)) {
-      if (auto* get =
-            Properties::getFallthrough(curr->value, getPassOptions(), *getModule())
-              ->dynCast<LocalGet>()) {
+      if (auto* get = Properties::getFallthrough(
+                        curr->value, getPassOptions(), *getModule())
+                        ->dynCast<LocalGet>()) {
         if (auto* load =
               getSingleLoad(localGraph, get, getPassOptions(), *getModule())) {
           auto& info = infos[load];
@@ -155,8 +155,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
               replaceCurrent(makeReinterpretedLoad(load, load->ptr));
             }
           } else if (auto* get = value->dynCast<LocalGet>()) {
-            if (auto* load = getSingleLoad(
-                  localGraph, get, passOptions, *module)) {
+            if (auto* load =
+                  getSingleLoad(localGraph, get, passOptions, *module)) {
               auto iter = infos.find(load);
               if (iter != infos.end()) {
                 auto& info = iter->second;

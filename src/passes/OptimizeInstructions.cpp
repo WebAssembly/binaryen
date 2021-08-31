@@ -101,8 +101,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
       return;
     }
     // an integer var, worth processing
-    auto* value = Properties::getFallthrough(
-      curr->value, passOptions, *getModule());
+    auto* value =
+      Properties::getFallthrough(curr->value, passOptions, *getModule());
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
@@ -469,9 +469,9 @@ struct OptimizeInstructions
       Index extraLeftShifts;
       auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
       if (extraLeftShifts == 0) {
-        if (auto* load = Properties::getFallthrough(
-                           ext, getPassOptions(), *getModule())
-                           ->dynCast<Load>()) {
+        if (auto* load =
+              Properties::getFallthrough(ext, getPassOptions(), *getModule())
+                ->dynCast<Load>()) {
           // pattern match a load of 8 bits and a sign extend using a shl of
           // 24 then shr_s of 24 as well, etc.
           if (LoadUtils::canBeSigned(load) &&
@@ -1152,9 +1152,9 @@ struct OptimizeInstructions
     // the fallthrough value there. It takes more work to optimize this case,
     // but it is pretty important to allow a call_ref to become a fast direct
     // call, so make the effort.
-    if (auto* ref =
-          Properties::getFallthrough(curr->target, getPassOptions(), *getModule())
-            ->dynCast<RefFunc>()) {
+    if (auto* ref = Properties::getFallthrough(
+                      curr->target, getPassOptions(), *getModule())
+                      ->dynCast<RefFunc>()) {
       // Check if the fallthrough make sense. We may have cast it to a different
       // type, which would be a problem - we'd be replacing a call_ref to one
       // type with a direct call to a function of another type. That would trap
@@ -1290,8 +1290,8 @@ struct OptimizeInstructions
     Builder builder(*getModule());
     auto passOptions = getPassOptions();
 
-    auto fallthrough = Properties::getFallthrough(
-      curr->ref, getPassOptions(), *getModule());
+    auto fallthrough =
+      Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
     // If the value is a null, it will just flow through, and we do not need the
     // cast. However, if that would change the type, then things are less
@@ -1557,7 +1557,8 @@ private:
     }
     // To be equal, they must also be known to return the same result
     // deterministically.
-    if (Properties::isIntrinsicallyNondeterministic(left, getModule()->features)) {
+    if (Properties::isIntrinsicallyNondeterministic(left,
+                                                    getModule()->features)) {
       return false;
     }
     return true;

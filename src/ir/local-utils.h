@@ -47,9 +47,7 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
   LocalGetCounter* localGetCounter = nullptr;
   Module& module;
 
-  UnneededSetRemover(Function* func,
-                     PassOptions& passOptions,
-                     Module& module)
+  UnneededSetRemover(Function* func, PassOptions& passOptions, Module& module)
     : passOptions(passOptions), module(module) {
     LocalGetCounter counter(func);
     UnneededSetRemover inner(counter, func, passOptions, module);

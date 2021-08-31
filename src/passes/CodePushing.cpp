@@ -268,8 +268,7 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     // don't hit a non-control-flow ordering invalidation issue, since if this
     // isn't a loop, it's fine (we're not used outside), and if it is, we hit
     // the assign before any use (as we can't push it past a use).
-    Pusher pusher(
-      curr, analyzer, numGetsSoFar, getPassOptions(), *getModule());
+    Pusher pusher(curr, analyzer, numGetsSoFar, getPassOptions(), *getModule());
   }
 };
 
