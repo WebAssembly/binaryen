@@ -8,9 +8,7 @@
   (type $struct (struct (field (mut i32))))
 
   ;; CHECK:      (func $drop (param $x i32) (param $y anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $drop (param $x i32) (param $y anyref)
     ;; A load might trap, normally, but if traps never happen then we can
@@ -39,15 +37,8 @@
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result i32)
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.load
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
@@ -58,7 +49,7 @@
     )
 
     ;; Add to the load an additional specific side effect, of writing to a
-    ;; local.
+    ;; local. We can remove the load, but not the write to a local.
     (drop
       (block (result i32)
         (local.set $x (i32.const 2))
@@ -77,19 +68,11 @@
 
   ;; CHECK:      (func $partial (param $x (ref $struct))
   ;; CHECK-NEXT:  (local $y (ref null $struct))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.tee $y
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.tee $y
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $partial (param $x (ref $struct))
