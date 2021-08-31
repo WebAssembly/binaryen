@@ -398,8 +398,7 @@ private:
         parent.branchesOut = true;
       }
 
-      Intrinsics intrinsics(*module);
-      if (intrinsics.isUsed(curr)) {
+      if (Intrinsics(*module).isUsed(curr)) {
         // used() has no side effects.
         return;
       }

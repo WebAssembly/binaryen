@@ -57,33 +57,39 @@ public:
 
   // Check if a call is the used() intrinsic. used() can be seen as returning 1
   // if the result might be used, and 0 otherwise.
-  //condition!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  //
   // Semantics:
   //
-  //  * If the optimizer sees the result is not actually used - for example, by
-  //    being dropped - then it can turn this intrinsic into a constant of 0.
+  //  * A used() instance refers to a property of the control flow structure it
+  //    is a child of. Call that the parent.
+  //  * If the parent returns a concrete result, and that optimizer sees that
+  //    result is not actually used - for example, by being dropped - then it
+  //    can turn this used() instance into a constant of 0.
   //  * Final lowering turns this into a 1 (as we must assume the value might be
   //    used).
   //
   // used() is useful to be able to get rid of an unused result that has side
-  // effects. For example:
+  // effects. For example (in simplified wat), assume we have an if whose
+  // condition is used() and has one arm doing a call foo(), and the other is a
+  // constant 0:
   //
-  //   used() ? foo() : 0
+  //   (if used() foo() 0)
   //
-  // (? : indicates an "if" here). If that is dropped, then this happens:
+  // If that is dropped, then this happens:
   //
-  //  used() ? foo() : 0; // ";" indicates a drop.
-  //  0      ? foo() : 0; // The optimizer replaces it with 0.
-  //  0                   // The if is optimized out, and foo() is removed.
+  //  (drop (if used() foo() 0))
+  //  (drop (if 0      foo() 0))  // The optimizer replaces used() with 0.
+  //  (drop 0)                    // The optimizer removes the if and the foo().
+  //  (nop)                       // The optimizer removes the drop of 0.
   //
   // Or, if the value is actually used:
   //
-  //  x = used() ? foo() : 0;
-  //  x = 1      ? foo() : 0; // Final lowering replaces it with 1.
-  //  x = foo();              // The if is optimized out, leaving foo().
+  //  (local.set (if used() foo() 0))
+  //  (local.set (if 1      foo() 0))  // Final lowering replaces used() with 1.
+  //  (local.set foo())                // If is optimized out, leaving foo().
   //
-  // Without used() the optimizer cannot remove a dropped call to foo() if
-  // foo() has side effects. This intrinsic lets code generators control what
+  // Without used() the optimizer cannot remove a dropped call to foo() if foo()
+  // has side effects. This, this intrinsic lets code generators control what
   // happens if a result is seen as not used, which can include ignoring side
   // effects.
   bool isUsed(Call* call);
