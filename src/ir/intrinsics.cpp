@@ -22,9 +22,9 @@ namespace wasm {
 static Name BinaryenIntrinsics("binaryen-intrinsics"),
             ConsumerUsed("consumer.used");
 
-bool Intrinsics::isUsed(Call* call) {
+bool Intrinsics::isConsumerUsed(Call* call) {
   auto* func = module.getFunctionOrNull(call->target);
-  return func->module == BinaryenIntrinsics && func->base = ConsumerUsed;
+  return func->module == BinaryenIntrinsics && func->base == ConsumerUsed;
 }
 
 Expression* Intrinsics::lower(Call* call) {
@@ -38,7 +38,5 @@ Expression* Intrinsics::lower(Call* call) {
   // Not an intrinsic.
   return call;
 }
-
-} // namespace Intrinsics
 
 } // namespace wasm

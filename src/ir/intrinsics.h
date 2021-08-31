@@ -105,8 +105,6 @@ public:
   Expression* lower(Call* call);
 };
 
-} // namespace Intrinsics
-
 } // namespace wasm
 
 #endif // wasm_ir_intrinsics_h

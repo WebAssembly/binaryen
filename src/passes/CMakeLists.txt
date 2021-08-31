@@ -35,6 +35,7 @@ set(passes_SOURCES
   Inlining.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
+  Intrinsics.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LocalCSE.cpp

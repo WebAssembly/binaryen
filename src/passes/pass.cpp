@@ -164,6 +164,9 @@ void PassRegistry::registerPasses() {
   registerPass("inlining-optimizing",
                "inline functions and optimizes where we inlined",
                createInliningOptimizingPass);
+  registerPass("intrinsic-lowering",
+               "lower away binaryen intrinsics",
+               createIntrinsicLoweringPass);
   registerPass("legalize-js-interface",
                "legalizes i64 types on the import/export boundary",
                createLegalizeJSInterfacePass);

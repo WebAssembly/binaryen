@@ -398,7 +398,7 @@ private:
         parent.branchesOut = true;
       }
 
-      if (Intrinsics(*module).isConsumerUsed(curr)) {
+      if (Intrinsics(*parent.module).isConsumerUsed(curr)) {
         // used() has no side effects.
         return;
       }
