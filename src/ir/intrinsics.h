@@ -36,7 +36,7 @@ public:
   Intrinsics(Module& module) : module(module) {}
 
   //
-  // Check if a call is the consumer.used intrinsic.
+  // Check if an instruction is the consumer.used intrinsic.
   //
   //   (import "binaryen-intrinsics" "consumer.used" (func (result i32)))
   //
@@ -92,11 +92,11 @@ public:
   //   (drop         (select (a) (b) (call $consumer.used)))   =>   0
   //   (local.set $x (i32.eqz (call $consumer.used)))          =>   1
   //
-  bool isConsumerUsed(Call* call);
+  bool isConsumerUsed(Expression* curr);
 
   // Perform the final lowering of a possible intrinsic. If this call is not an
   // intrinsic, ignore it by returning the input.
-  Expression* lower(Call* call);
+  Expression* lower(Expression* curr);
 };
 
 } // namespace wasm

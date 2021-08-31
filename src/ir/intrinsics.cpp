@@ -22,21 +22,25 @@ namespace wasm {
 static Name BinaryenIntrinsics("binaryen-intrinsics"),
             ConsumerUsed("consumer.used");
 
-bool Intrinsics::isConsumerUsed(Call* call) {
-  auto* func = module.getFunctionOrNull(call->target);
-  return func->module == BinaryenIntrinsics && func->base == ConsumerUsed;
+bool Intrinsics::isConsumerUsed(Expression* curr) {
+  if (auto* call = curr->dynCast<Call>()) {
+    auto* func = module.getFunctionOrNull(call->target);
+    return func->module == BinaryenIntrinsics && func->base == ConsumerUsed &&
+           func->getParams() == Type::none && func->getResults() == Type::i32;
+  }
+  return false;
 }
 
-Expression* Intrinsics::lower(Call* call) {
+Expression* Intrinsics::lower(Expression* curr) {
   Builder builder(module);
 
-  if (isConsumerUsed(call)) {
+  if (isConsumerUsed(curr)) {
     // The final lowering must assume the consumer's value might be used.
     return builder.makeConst(int32_t(1));
   }
 
   // Not an intrinsic.
-  return call;
+  return curr;
 }
 
 } // namespace wasm
