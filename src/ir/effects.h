@@ -17,6 +17,7 @@
 #ifndef wasm_ir_effects_h
 #define wasm_ir_effects_h
 
+#include "ir/intrinsics.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 
@@ -393,13 +394,20 @@ private:
     }
 
     void visitCall(Call* curr) {
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
+      Intrinsics intrinsics(*module);
+      if (intrinsics.isUsed(curr)) {
+        // used() has no side effects.
+        return;
+      }
+
       parent.calls = true;
       // When EH is enabled, any call can throw.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws = true;
-      }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
       }
       if (parent.debugInfo) {
         // debugInfo call imports must be preserved very strongly, do not
