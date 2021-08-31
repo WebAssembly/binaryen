@@ -598,13 +598,13 @@ void test_cost() {
 
 void test_effects() {
   PassOptions options;
-  FeatureSet features;
+  Module module;
   // Unreachables trap.
   Unreachable unreachable;
-  assert_equal(EffectAnalyzer(options, features, &unreachable).trap, true);
+  assert_equal(EffectAnalyzer(options, module, &unreachable).trap, true);
   // Nops... do not.
   Nop nop;
-  assert_equal(EffectAnalyzer(options, features, &nop).trap, false);
+  assert_equal(EffectAnalyzer(options, module, &nop).trap, false);
 }
 
 void test_literals() {

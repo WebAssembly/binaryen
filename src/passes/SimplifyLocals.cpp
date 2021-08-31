@@ -1031,7 +1031,7 @@ struct SimplifyLocals
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
     UnneededSetRemover setRemover(
-      getCounter, func, this->getPassOptions(), this->getModule()->features);
+      getCounter, func, this->getPassOptions(), *this->getModule());
     setRemover.setModule(this->getModule());
 
     return eqOpter.anotherCycle || setRemover.removed;

@@ -2628,7 +2628,7 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectDanglingPop(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
 
 BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(
-  BinaryenExpressionRef expr, BinaryenFeatures features);
+  BinaryenExpressionRef expr, BinaryenModuleRef module);
 
 //
 // ========== CFG / Relooper ==========

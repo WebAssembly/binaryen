@@ -27,17 +27,6 @@ namespace wasm {
 class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions,
-                 FeatureSet features,
-                 Expression* ast = nullptr)
-    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
-      debugInfo(passOptions.debugInfo), module(nullptr), features(features) {
-    if (ast) {
-      walk(ast);
-    }
-  }
-
-  EffectAnalyzer(const PassOptions& passOptions,
                  Module& module,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
@@ -683,15 +672,6 @@ private:
 
 public:
   // Helpers
-
-  static bool canReorder(const PassOptions& passOptions,
-                         FeatureSet features,
-                         Expression* a,
-                         Expression* b) {
-    EffectAnalyzer aEffects(passOptions, features, a);
-    EffectAnalyzer bEffects(passOptions, features, b);
-    return !aEffects.invalidates(bEffects);
-  }
 
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
