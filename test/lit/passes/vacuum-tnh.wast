@@ -100,17 +100,12 @@
     )
   )
 
-  ;; CHECK:      (func $toplevel (param $x (ref $struct))
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $toplevel
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $toplevel (param $x (ref $struct))
-    ;; A removable side effect at the top level of a function.
-    (struct.set $struct 0
-      (local.get $x)
-      (i32.const 1)
-    )
+  (func $toplevel
+    ;; A removable side effect at the top level of a function. We can turn this
+    ;; into a nop.
+    (unreachable)
   )
 )
