@@ -2861,12 +2861,12 @@ void WasmBinaryBuilder::readElementSegments() {
       if (usesExpressions) {
         segment->type = getType();
         if (!segment->type.isFunction()) {
-          throwError("Invalid type for a post-MVP element segment");
+          throwError("Invalid type for a usesExpressions element segment");
         }
       } else {
         auto elemKind = getU32LEB();
         if (elemKind != 0x0) {
-          throwError("Only funcref elem kinds are valid in the MVP.");
+          throwError("Invalid kind (!= funcref(0)) since !usesExpressions.");
         }
       }
     }
