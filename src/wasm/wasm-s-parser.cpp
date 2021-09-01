@@ -3371,7 +3371,8 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
 
   // We may be post-MVP also due to type reasons or otherwise, as detected by
   // the utility function for Binaryen IR.
-  usesExpressions = usesExpressions || TableUtils::usesExpressions(segment.get(), &wasm);
+  usesExpressions =
+    usesExpressions || TableUtils::usesExpressions(segment.get(), &wasm);
 
   parseElemFinish(s, segment, i, usesExpressions);
 }
