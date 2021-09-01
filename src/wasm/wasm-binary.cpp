@@ -595,7 +595,7 @@ void WasmBinaryWriter::writeElementSegments() {
 
     uint32_t flags = 0;
     if (usesExpressions) {
-      flags |= BinaryConsts::usesExpressions;
+      flags |= BinaryConsts::UsesExpressions;
     }
     if (isPassive) {
       flags |= BinaryConsts::IsPassive;
@@ -2819,7 +2819,7 @@ void WasmBinaryBuilder::readElementSegments() {
     bool hasTableIdx = !isPassive && ((flags & BinaryConsts::HasIndex) != 0);
     bool isDeclarative =
       isPassive && ((flags & BinaryConsts::IsDeclarative) != 0);
-    bool usesExpressions = (flags & BinaryConsts::usesExpressions) != 0;
+    bool usesExpressions = (flags & BinaryConsts::UsesExpressions) != 0;
 
     if (isDeclarative) {
       // Declared segments are needed in wasm text and binary, but not in

@@ -348,7 +348,7 @@ enum SegmentFlag {
   // Table element segments only:
   // Bit 2: 0 = elemType is funcref and a vector of func indexes given
   //        1 = elemType is given and a vector of ref expressions is given
-  usesExpressions = 1 << 2
+  UsesExpressions = 1 << 2
 };
 
 enum EncodedType {
