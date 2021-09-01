@@ -18,12 +18,11 @@
 #define wasm_asm_v_wasm_h
 
 #include "emscripten-optimizer/optimizer.h"
-#include "mixed_arena.h"
 #include "wasm.h"
 
 namespace wasm {
 
-AsmType wasmToAsmType(Type type);
+JsType wasmToJsType(Type type);
 
 char getSig(Type type);
 std::string getSig(Type results, Type params);
