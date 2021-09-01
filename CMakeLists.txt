@@ -264,16 +264,21 @@ endif()
 if(EMSCRIPTEN)
   # link with -O3 for metadce and other powerful optimizations. note that we
   # must use add_link_options so that this appears after CMake's default -O2
-  add_link_options("-O1")
+  #add_link_options("-O3")
   #add_link_flag("-s SINGLE_FILE")
   add_link_flag("-s ALLOW_MEMORY_GROWTH=1")
+  # Comment out these to disable emscripten EH
   #add_compile_flag("-s DISABLE_EXCEPTION_CATCHING=0")
   #add_link_flag("-s DISABLE_EXCEPTION_CATCHING=0")
-  add_compile_flag("-fwasm-exceptions")
+  # Add this to enable wasm EH
+  #add_compile_flag("-fwasm-exceptions")
   # make the tools immediately usable on Node.js
   add_link_flag("-s NODERAWFS")
   # in opt builds, LTO helps so much (>20%) it's worth slow compile times
+  # Comment out this to disable LTO
   #add_nondebug_compile_flag("-flto")
+  # Add this to strip debug info after link
+  add_link_options("-g0")
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
@@ -363,10 +368,12 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
-  #target_link_libraries(binaryen_wasm optimized "--closure 1")
-  #target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
+  target_link_libraries(binaryen_wasm optimized "--closure 1")
+  target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
+  # Comment out this to disable LTO
   #target_link_libraries(binaryen_wasm optimized "-flto")
-  target_link_libraries(binaryen_wasm debug "--profiling")
+  # Comment out this to avoid name section for debug builds
+  #target_link_libraries(binaryen_wasm debug "--profiling")
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
