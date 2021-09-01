@@ -659,8 +659,11 @@ private:
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
+      parent.readsArray = true;
+      parent.writesArray = true;
       // traps when a ref is null, or when out of bounds.
       parent.implicitTrap = true;
+
     }
     void visitRefAs(RefAs* curr) {
       // traps when the arg is not valid

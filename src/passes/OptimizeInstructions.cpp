@@ -1116,6 +1116,20 @@ struct OptimizeInstructions
     }
   }
 
+#if 0
+  void visitCall(Call* curr) {
+    PassOptions options = getPassOptions();
+    if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
+      // 
+      skipNonNullCast
+      skipCastIfValidateWithoutThem. also in LocalSet.
+      // TODO: refactor validator to get the expected type for each child. Then
+      //       use that to remove unneeded casts etc. while things still
+      //       validate, and no unremoabelabe side effects.
+    }
+  }
+#endif
+
   void visitMemoryCopy(MemoryCopy* curr) {
     if (curr->type == Type::unreachable) {
       return;
