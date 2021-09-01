@@ -84,8 +84,6 @@ void WasmBinaryWriter::write() {
 
   writeLateUserSections();
   writeFeaturesSection();
-
-  finishUp();
 }
 
 void WasmBinaryWriter::writeHeader() {
@@ -1084,6 +1082,9 @@ void WasmBinaryWriter::writeDylinkSection() {
   for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
     writeInlineString(neededDynlib.c_str());
   }
+
+  writeData(wasm->dylinkSection->tail.data(), wasm->dylinkSection->tail.size());
+
   finishSection(start);
 }
 
@@ -1128,12 +1129,16 @@ void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
   }
 }
 
+void WasmBinaryWriter::writeData(const char* data, size_t size) {
+  for (size_t i = 0; i < size; i++) {
+    o << int8_t(data[i]);
+  }
+}
+
 void WasmBinaryWriter::writeInlineString(const char* name) {
   int32_t size = strlen(name);
   o << U32LEB(size);
-  for (int32_t i = 0; i < size; i++) {
-    o << int8_t(name[i]);
-  }
+  writeData(name, size);
 }
 
 static bool isHexDigit(char ch) {
@@ -1170,36 +1175,7 @@ void WasmBinaryWriter::writeEscapedName(const char* name) {
 
 void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
   o << U32LEB(size);
-  for (size_t i = 0; i < size; i++) {
-    o << int8_t(data[i]);
-  }
-}
-
-void WasmBinaryWriter::emitBuffer(const char* data, size_t size) {
-  assert(size > 0);
-  buffersToWrite.emplace_back(data, size, o.size());
-  // placeholder, we'll fill in the pointer to the buffer later when we have it
-  o << uint32_t(0);
-}
-
-void WasmBinaryWriter::emitString(const char* str) {
-  BYN_TRACE("emitString " << str << std::endl);
-  emitBuffer(str, strlen(str) + 1);
-}
-
-void WasmBinaryWriter::finishUp() {
-  BYN_TRACE("finishUp\n");
-  // finish buffers
-  for (const auto& buffer : buffersToWrite) {
-    BYN_TRACE("writing buffer"
-              << (int)buffer.data[0] << "," << (int)buffer.data[1] << " at "
-              << o.size() << " and pointer is at " << buffer.pointerLocation
-              << "\n");
-    o.writeAt(buffer.pointerLocation, (uint32_t)o.size());
-    for (size_t i = 0; i < buffer.size; i++) {
-      o << (uint8_t)buffer.data[i];
-    }
-  }
+  writeData(data, size);
 }
 
 void WasmBinaryWriter::writeType(Type type) {
@@ -3285,6 +3261,10 @@ void WasmBinaryBuilder::readDylink(size_t payloadLen) {
   for (size_t i = 0; i < numNeededDynlibs; ++i) {
     wasm.dylinkSection->neededDynlibs.push_back(getInlineString());
   }
+
+  size_t remaining = (sectionPos + payloadLen) - pos;
+  auto tail = getByteView(remaining);
+  wasm.dylinkSection->tail = {tail.first, tail.second};
 
   if (pos != sectionPos + payloadLen) {
     throwError("bad features section size");

@@ -380,7 +380,7 @@ struct Checker
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
-      EffectAnalyzer effects(options, getModule()->features);
+      EffectAnalyzer effects(options, *getModule());
       // We only need to visit this node itself, as we have already visited its
       // children by the time we get here.
       effects.visit(curr);
@@ -421,7 +421,7 @@ struct Checker
     if (info.requests > 0) {
       // This is an original. Compute its side effects, as we cannot optimize
       // away repeated apperances if it has any.
-      EffectAnalyzer effects(options, getModule()->features, curr);
+      EffectAnalyzer effects(options, *getModule(), curr);
 
       // We can ignore traps here, as we replace a repeating expression with a
       // single appearance of it, a store to a local, and gets in the other

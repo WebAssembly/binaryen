@@ -250,9 +250,11 @@ inline Index getZeroExtBits(Expression* curr) {
 // child of this expression. See getFallthrough for a method that looks all the
 // way to the final value falling through, potentially through multiple
 // intermediate expressions.
+//
+// TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
 inline Expression* getImmediateFallthrough(Expression* curr,
                                            const PassOptions& passOptions,
-                                           FeatureSet features) {
+                                           Module& module) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -283,7 +285,7 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
+    if (!EffectAnalyzer(passOptions, module, tryy->body).throws) {
       return tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
@@ -300,9 +302,9 @@ inline Expression* getImmediateFallthrough(Expression* curr,
 // find the final value that falls through.
 inline Expression* getFallthrough(Expression* curr,
                                   const PassOptions& passOptions,
-                                  FeatureSet features) {
+                                  Module& module) {
   while (1) {
-    auto* next = getImmediateFallthrough(curr, passOptions, features);
+    auto* next = getImmediateFallthrough(curr, passOptions, module);
     if (next == curr) {
       return curr;
     }

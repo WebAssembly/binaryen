@@ -2888,6 +2888,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     for (auto& neededDynlib : dylinkSection->neededDynlibs) {
       doIndent(o, indent) << ";;   needed dynlib: " << neededDynlib << '\n';
     }
+    if (dylinkSection->tail.size()) {
+      doIndent(o, indent) << ";;   extra dylink data, size "
+                          << dylinkSection->tail.size() << "\n";
+    }
   }
   void visitModule(Module* curr) {
     currModule = curr;
