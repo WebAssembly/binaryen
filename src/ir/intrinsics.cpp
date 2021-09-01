@@ -23,27 +23,20 @@ static Name BinaryenIntrinsics("binaryen-intrinsics"),
             ConsumerUsed("consumer.used");
 
 bool Intrinsics::isConsumerUsed(Expression* curr) {
+std::cout << *curr << '\n';
   if (auto* call = curr->dynCast<Call>()) {
+std::cout << "  a1\n";//
     // The target function may not exist if the module is still being
     // constructed.
     if (auto* func = module.getFunctionOrNull(call->target)) {
+std::cout << "  a2\n" << (func->module == BinaryenIntrinsics) << " : " << (func->base == ConsumerUsed)  << " : " <<
+             (func->getParams() == Type::none)  << " : " << (func->getResults() == Type::i32) << '\n';
       return func->module == BinaryenIntrinsics && func->base == ConsumerUsed &&
              func->getParams() == Type::none && func->getResults() == Type::i32;
     }
   }
+std::cout << "  a3\n";//
   return false;
-}
-
-Expression* Intrinsics::lower(Expression* curr) {
-  Builder builder(module);
-
-  if (isConsumerUsed(curr)) {
-    // The final lowering must assume the consumer's value might be used.
-    return builder.makeConst(int32_t(1));
-  }
-
-  // Not an intrinsic.
-  return curr;
 }
 
 } // namespace wasm

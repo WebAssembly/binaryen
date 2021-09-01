@@ -93,10 +93,6 @@ public:
   //   (local.set $x (i32.eqz (call $consumer.used)))          =>   1
   //
   bool isConsumerUsed(Expression* curr);
-
-  // Perform the final lowering of a possible intrinsic. If this call is not an
-  // intrinsic, ignore it by returning the input.
-  Expression* lower(Expression* curr);
 };
 
 } // namespace wasm
