@@ -23,19 +23,14 @@ static Name BinaryenIntrinsics("binaryen-intrinsics"),
             ConsumerUsed("consumer.used");
 
 bool Intrinsics::isConsumerUsed(Expression* curr) {
-std::cout << *curr << '\n';
   if (auto* call = curr->dynCast<Call>()) {
-std::cout << "  a1\n";//
     // The target function may not exist if the module is still being
     // constructed.
     if (auto* func = module.getFunctionOrNull(call->target)) {
-std::cout << "  a2\n" << (func->module == BinaryenIntrinsics) << " : " << (func->base == ConsumerUsed)  << " : " <<
-             (func->getParams() == Type::none)  << " : " << (func->getResults() == Type::i32) << '\n';
       return func->module == BinaryenIntrinsics && func->base == ConsumerUsed &&
              func->getParams() == Type::none && func->getResults() == Type::i32;
     }
   }
-std::cout << "  a3\n";//
   return false;
 }
 

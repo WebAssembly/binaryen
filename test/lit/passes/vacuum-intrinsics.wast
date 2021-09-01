@@ -2,10 +2,23 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (import "binaryen-intrinsics" "consumer.used" (func $consumer.used (result i32)))
   (import "binaryen-intrinsics" "consumer.used" (func $consumer.used (result i32)))
 
+  ;; CHECK:      (func $used
+  ;; CHECK-NEXT:  (local $f64 f64)
+  ;; CHECK-NEXT:  (local.set $f64
+  ;; CHECK-NEXT:   (if (result f64)
+  ;; CHECK-NEXT:    (call $consumer.used)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (f64.const 2.71828)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $used
     (local $f64 f64)
+    ;; The result of the intrinsic's consumer (the if) is used (by the
+    ;; local.set, so we cannot do anything here).
     (local.set $f64
       (if (result f64)
         (call $consumer.used)
@@ -15,7 +28,12 @@
     )
   )
 
+  ;; CHECK:      (func $unused
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $unused
+    ;; The result is dropped, so we can assign 0 to the intrinsic. That means
+    ;; the if's condition is 0, and we can vacuum away the entire dropped if.
     (drop
       (if (result f64)
         (call $consumer.used)
@@ -25,22 +43,96 @@
     )
   )
 
-  (func $used-func-result (result f64)
+  ;; CHECK:      (func $unused-side-effect
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $unused-side-effect
+    ;; As above, but now there is a side effect in the if. But after we turn
+    ;; the intrinsic into 0, vacuum sees that the if never takes that path, and
+    ;; we can remove the entire dropped if.
+    (drop
+      (if (result f64)
+        (call $consumer.used)
+        (block (result f64)
+          (call $unused-side-effect)
+          (f64.const 3.14159)
+        )
+        (f64.const 2.71828)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $unused-side-effect-2
+  ;; CHECK-NEXT:  (call $unused-side-effect)
+  ;; CHECK-NEXT: )
+  (func $unused-side-effect-2
+    ;; As above, but with flipped if arms, so the side effect is in the other
+    ;; arm - the one that is in fact kept around. We can remove everything but
+    ;; that side effect.
+    (drop
+      (if (result f64)
+        (call $consumer.used)
+        (f64.const 2.71828)
+        (block (result f64)
+          (call $unused-side-effect)
+          (f64.const 3.14159)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $used-side-effect (result f64)
+  ;; CHECK-NEXT:  (if (result f64)
+  ;; CHECK-NEXT:   (call $consumer.used)
+  ;; CHECK-NEXT:   (block $block (result f64)
+  ;; CHECK-NEXT:    (call $unused-side-effect)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f64.const 2.71828)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $used-side-effect (result f64)
+    ;; The if's result is used here (as the function result), and so we cannot
+    ;; optimize anything.
     (if (result f64)
       (call $consumer.used)
-      (f64.const 3.14159)
+      (block (result f64)
+        (call $unused-side-effect)
+        (f64.const 3.14159)
+      )
       (f64.const 2.71828)
     )
   )
 
+  ;; CHECK:      (func $unused-fallthrough
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $unused-fallthrough
     (drop
+      ;; An extra block in the way does not confuse us: the if's result is not
+      ;; used, so we can optimize this away.
       (block (result f64)
         (if (result f64)
           (call $consumer.used)
           (f64.const 3.14159)
           (f64.const 2.71828)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $unused-eqz
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $unused-eqz
+    (drop
+      (if (result f64)
+        ;; An eqz appears on the intrinsic.
+        (i32.eqz
+          (call $consumer.used)
+        )
+        (f64.const 3.14159)
+        (f64.const 2.71828)
       )
     )
   )
