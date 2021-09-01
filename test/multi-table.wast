@@ -10,7 +10,7 @@
   (table $textern 0 externref)
 
   ;; A table with a typed function references specialized type.
-  (table $tspecial 0 (ref null $none_=>_none))
+  (table $tspecial 5 5 (ref null $none_=>_none))
 
   ;; add to $t1
   (elem (i32.const 0) $f)
@@ -28,8 +28,9 @@
   (elem $empty func)
   (elem $declarative declare func $h)
 
-  (elem $e2a (table $tspecial) (i32.const 0) (ref.null $none_=>_none) $f $h)
-
+  ;; This elem will be emitted as usesExpressions because of the type of the
+  ;; table.
+  (elem $especial (table $tspecial) (i32.const 0) (ref null $none_=>_none) $f $h)
 
   (func $f (drop (ref.func $h)))
   (func $g)
