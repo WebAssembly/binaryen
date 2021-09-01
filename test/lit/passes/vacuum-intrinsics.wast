@@ -122,17 +122,33 @@
   )
 
   ;; CHECK:      (func $unused-eqz
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result f64)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (call $consumer.used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 2.71828)
+  ;; CHECK-NEXT:    (block $block (result f64)
+  ;; CHECK-NEXT:     (call $unused-side-effect)
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unused-eqz
     (drop
       (if (result f64)
-        ;; An eqz appears on the intrinsic.
+        ;; An eqz appears on the intrinsic, and the arms are flipped. We should
+        ;; still be able to optimize this case.
+        ;; XXX
         (i32.eqz
           (call $consumer.used)
         )
-        (f64.const 3.14159)
         (f64.const 2.71828)
+        (block (result f64)
+          (call $unused-side-effect)
+          (f64.const 3.14159)
+        )
       )
     )
   )
