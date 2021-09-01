@@ -585,7 +585,7 @@ void WasmBinaryWriter::writeElementSegments() {
 
     bool isPassive = segment->table.isNull();
     // If the segment is MVP, we can use the shorter form.
-    bool isPostMVP = TableUtils::isPostMVP(segment.get(), wasm);
+    bool usesExpressions = TableUtils::usesExpressions(segment.get(), wasm);
 
     bool hasTableIndex = false;
     if (!isPassive) {
@@ -594,7 +594,7 @@ void WasmBinaryWriter::writeElementSegments() {
     }
 
     uint32_t flags = 0;
-    if (isPostMVP) {
+    if (usesExpressions) {
       flags |= BinaryConsts::PostMVP;
     }
     if (isPassive) {
@@ -613,7 +613,7 @@ void WasmBinaryWriter::writeElementSegments() {
     }
 
     if (isPassive || hasTableIndex) {
-      if (isPostMVP) {
+      if (usesExpressions) {
         // elemType
         writeType(segment->type);
       } else {
@@ -622,7 +622,7 @@ void WasmBinaryWriter::writeElementSegments() {
       }
     }
     o << U32LEB(segment->data.size());
-    if (isPostMVP) {
+    if (usesExpressions) {
       for (auto* item : segment->data) {
         writeExpression(item);
         o << int8_t(BinaryConsts::End);
@@ -2819,7 +2819,7 @@ void WasmBinaryBuilder::readElementSegments() {
     bool hasTableIdx = !isPassive && ((flags & BinaryConsts::HasIndex) != 0);
     bool isDeclarative =
       isPassive && ((flags & BinaryConsts::IsDeclarative) != 0);
-    bool isPostMVP = (flags & BinaryConsts::PostMVP) != 0;
+    bool usesExpressions = (flags & BinaryConsts::PostMVP) != 0;
 
     if (isDeclarative) {
       // Declared segments are needed in wasm text and binary, but not in
@@ -2858,7 +2858,7 @@ void WasmBinaryBuilder::readElementSegments() {
     }
 
     if (isPassive || hasTableIdx) {
-      if (isPostMVP) {
+      if (usesExpressions) {
         segment->type = getType();
         if (!segment->type.isFunction()) {
           throwError("Invalid type for a post-MVP element segment");
@@ -2873,7 +2873,7 @@ void WasmBinaryBuilder::readElementSegments() {
 
     auto& segmentData = segment->data;
     auto size = getU32LEB();
-    if (isPostMVP) {
+    if (usesExpressions) {
       for (Index j = 0; j < size; j++) {
         segmentData.push_back(readExpression());
       }

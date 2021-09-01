@@ -64,7 +64,7 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   return ret;
 }
 
-bool isPostMVP(ElementSegment* curr, Module* module) {
+bool usesExpressions(ElementSegment* curr, Module* module) {
   // Binaryen IR always has ref.funcs for functions in tables for uniformity,
   // so that by itself does not rule out a table being MVP. But anything that is
   // not a ref.func implies non-MVP.

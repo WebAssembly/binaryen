@@ -349,7 +349,7 @@ enum SegmentFlag {
   // Bit 2: 0 = elemType is funcref and vector of func indexes given (that is,
   //            this is MVP)
   //        1 = elemType is given and vector of ref expressions is given
-  PostMVP = 1 << 2
+  usesExpressions = 1 << 2
 };
 
 enum EncodedType {

@@ -3300,7 +3300,7 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   Name name = Name::fromInt(elemCounter++);
   bool hasExplicitName = false;
   bool isPassive = true;
-  bool isPostMVP = false;
+  bool usesExpressions = false;
 
   if (table) {
     Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
@@ -3345,13 +3345,13 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
 
   if (i < s.size()) {
     if (s[i]->isStr() && s[i]->dollared()) {
-      isPostMVP = false;
+      usesExpressions = false;
     } else if (s[i]->isStr() && s[i]->str() == FUNC) {
-      isPostMVP = false;
+      usesExpressions = false;
       i += 1;
     } else {
       segment->type = elementToType(*s[i]);
-      isPostMVP = true;
+      usesExpressions = true;
       i += 1;
 
       if (!segment->type.isFunction()) {
@@ -3371,16 +3371,16 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
 
   // We may be post-MVP also due to type reasons or otherwise, as detected by
   // the utility function for Binaryen IR.
-  isPostMVP = isPostMVP || TableUtils::isPostMVP(segment.get(), &wasm);
+  usesExpressions = usesExpressions || TableUtils::usesExpressions(segment.get(), &wasm);
 
-  parseElemFinish(s, segment, i, isPostMVP);
+  parseElemFinish(s, segment, i, usesExpressions);
 }
 
 ElementSegment* SExpressionWasmBuilder::parseElemFinish(
   Element& s,
   std::unique_ptr<ElementSegment>& segment,
   Index i,
-  bool isPostMVP) {
+  bool usesExpressions) {
 
   for (; i < s.size(); i++) {
     if (!s[i]->isList()) {
@@ -3390,7 +3390,7 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
         Builder(wasm).makeRefFunc(func, functionTypes[func]));
       continue;
     }
-    if (!isPostMVP) {
+    if (!usesExpressions) {
       throw ParseException("expected an MVP-style $funcname in elem.");
     }
     auto& inner = *s[i];
