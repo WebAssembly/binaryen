@@ -28,7 +28,7 @@
   (elem $empty func)
   (elem $declarative declare func $h)
 
-  (elem $e2a (table $t2) (i32.const 0) (ref.null $none_=>_none) $f $h)
+  (elem $e2a (table $tspecial) (i32.const 0) (ref.null $none_=>_none) $f $h)
 
 
   (func $f (drop (ref.func $h)))
