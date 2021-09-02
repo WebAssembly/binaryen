@@ -145,6 +145,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   //
   // TODO: If the "once" function is inlined, this pattern can show up in random
   //       places, and we can look for it there as well.
+  // TODO: Handle related patterns like if (!once) { .. }, but other opts will
+  //       tend to normalize to this form anyhow.
   Name getOnceGlobal(Expression* body) {
     // Look the pattern mentioned above:
     //
