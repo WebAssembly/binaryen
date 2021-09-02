@@ -200,16 +200,16 @@ struct BlockInfo {
 
 // Performs optimization in all functions. This reads onceGlobalsSetInFuncs in
 // order to know what "once" globals are written by each function (so that when
-// we see a call, we can infer things), and when it is finishes with a function
-// it has learned which "once" globals it must set, and it then writes out
+// we see a call, we can infer things), and when it finishes with a function it
+// has learned which "once" globals it must set, and it then writes out
 // newOnceGlobalsSetInFuncs with that result. Later iterations will then use
-// those values in place of onceGlobalsSetInFuncs, which propagates things to
-// callers. This in effect mixes local optimization with the global
-// propagation - as we need to run the full local optimization in order to infer
-// the new values for onceGlobalsSetInFuncs, that is unavoidable (in principle,
-// we could also do a full propagation to a fixed point in between running
-// local optimization, but that would require more code - it might be more
-// efficient, though).
+// those values in place of onceGlobalsSetInFuncs, which propagate things to
+// callers. This in effect mixes local optimization with the global propagation
+// - as we need to run the full local optimization in order to infer the new
+// values for onceGlobalsSetInFuncs, that is unavoidable (in principle, we could
+// also do a full propagation to a fixed point in between running local
+// optimization, but that would require more code - it might be more efficient,
+// though).
 struct Optimizer
   : public WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>> {
   bool isFunctionParallel() override { return true; }
