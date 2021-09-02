@@ -354,6 +354,14 @@ struct OnceReduction : public Pass {
       // Fill in the map so that it can be operated on in parallel.
       optInfo.onceFuncs[func->name] = Name();
     }
+    for (auto& ex : module->exports) {
+      if (ex->kind == ExternalKind::Global) {
+        // An exported global cannot be "once" since the outside may read and
+        // write to it in ways we are unaware.
+        // TODO: This could perhaps only be on mutable ones.
+        optInfo.onceGlobals[ex->value] = false;
+      }
+    }
 
     // Scan the module to find out which globals and functions are "once".
     Scanner(optInfo).run(runner, module);
