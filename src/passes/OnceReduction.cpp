@@ -254,7 +254,7 @@ struct Optimizer
     auto numBlocks = basicBlocks.size();
     onceGlobalsWrittenVec.resize(numBlocks);
 
-    for (Index i = 0; i < basicBlocks.size(); i++) {
+    for (Index i = 0; i < numBlocks; i++) {
       auto* block = basicBlocks[i].get();
 
       // Note that we take a reference here, which is how the data we accumulate
@@ -266,7 +266,8 @@ struct Optimizer
       auto parent = domTree.iDoms[i];
       if (parent == domTree.nonsense) {
         // This is either the entry node (which we need to process), or an
-        // unreachable block (which we do not - leave that to DCE).
+        // unreachable block (which we do not need to process - we leave that to
+        // DCE).
         if (i > 0) {
           continue;
         }
