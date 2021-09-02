@@ -37,6 +37,9 @@
 //
 // The latter call can be removed since it has definitely run by then.
 //
+// TODO: "Once" globals are effectively boolean in that all non-zero values are
+//       indistinguishable, and so we could rewrite them all to be 1.
+//
 
 #include <atomic>
 
