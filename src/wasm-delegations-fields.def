@@ -570,14 +570,14 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefTestId: {
     DELEGATE_START(RefTest);
-    DELEGATE_FIELD_CHILD(RefTest, rtt);
+    DELEGATE_FIELD_OPTIONAL_CHILD(RefTest, rtt);
     DELEGATE_FIELD_CHILD(RefTest, ref);
     DELEGATE_END(RefTest);
     break;
   }
   case Expression::Id::RefCastId: {
     DELEGATE_START(RefCast);
-    DELEGATE_FIELD_CHILD(RefCast, rtt);
+    DELEGATE_FIELD_OPTIONAL_CHILD(RefCast, rtt);
     DELEGATE_FIELD_CHILD(RefCast, ref);
     DELEGATE_END(RefCast);
     break;

@@ -1313,6 +1313,13 @@ struct OptimizeInstructions
       //       into.
     }
 
+    if (!curr->rtt) {
+      // This is a static cast. If the type matches, it will definitely
+      // succeed.
+      if (HeapType::isSubType(curr->ref->type.getHeapType(),
+                              curr->type.getHeapType())) {
+    }
+
     // For the cast to be able to succeed, the value being cast must be a
     // subtype of the desired type, as RTT subtyping is a subset of static
     // subtyping. For example, trying to cast an array to a struct would be

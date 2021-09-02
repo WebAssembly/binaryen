@@ -1881,8 +1881,12 @@ struct PrintExpressionContents
       printMedium(o, "call_ref");
     }
   }
-  void visitRefTest(RefTest* curr) { printMedium(o, "ref.test"); }
-  void visitRefCast(RefCast* curr) { printMedium(o, "ref.cast"); }
+  void visitRefTest(RefTest* curr) {
+    printMedium(o, curr->rtt ? "ref.test" : "ref.test_static");
+  }
+  void visitRefCast(RefCast* curr) {
+    printMedium(o, curr->rtt ? "ref.cast" : "ref.cast_static");
+  }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:

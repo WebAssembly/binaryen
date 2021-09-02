@@ -1355,7 +1355,10 @@ public:
   RefTest(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // If provided, this is a dynamic test with an rtt. If nullptr, this is a
+  // static cast, and the type of this expression is what we cast to.
+  Expression* rtt = nullptr;
 
   void finalize();
 };
@@ -1365,7 +1368,9 @@ public:
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // See above with RefTest.
+  Expression* rtt = nullptr;
 
   void finalize();
 };
