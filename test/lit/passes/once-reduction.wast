@@ -188,7 +188,8 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $caller-empty
-    ;; A tiny function with nothing at all.
+    ;; A tiny function with nothing at all, just to verify we do not crash on
+    ;; such things.
   )
 )
 
