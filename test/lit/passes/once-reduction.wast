@@ -585,7 +585,10 @@
   )
 )
 
-;; Corner case: Non-constant initial value.
+;; Corner case: Non-constant initial value. This is fine, as the initial value
+;; does not matter (if it is zero, then this is a "classic" "once" global; if
+;; not then it will never be written to, and the "once" function will never run
+;; at all, which is fine too)
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -614,7 +617,7 @@
 
   ;; CHECK:      (func $caller
   ;; CHECK-NEXT:  (call $once)
-  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $caller
     (call $once)
