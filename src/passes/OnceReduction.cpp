@@ -354,8 +354,8 @@ struct OnceReduction : public Pass {
       //       immutable globals will not be considered "once" anyhow as they do
       //       not fit the pattern of being written after the first call.
       // TODO: non-integer types?
-      optInfo.onceGlobals[global->name] = global->type.isInteger() &&
-                                          !global->imported();
+      optInfo.onceGlobals[global->name] =
+        global->type.isInteger() && !global->imported();
     }
     for (auto& func : module->functions) {
       // Fill in the map so that it can be operated on in parallel.
