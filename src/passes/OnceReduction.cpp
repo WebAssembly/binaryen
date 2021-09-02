@@ -236,6 +236,9 @@ struct Optimizer
 
     // Walk the function to builds the CFG.
     Parent::doWalkFunction(func);
+    if (basicBlocks.empty()) {
+      return;
+    }
 
     // Build a dominator tree, which then tells us what to remove: if a call
     // appears in block A, then we do not need to make any calls in any blocks
@@ -244,14 +247,11 @@ struct Optimizer
 
     // Perform the work by going through the blocks in reverse postorder and
     // filling out which "once" globals have been written to.
-    auto numBlocks = basicBlocks.size();
-    if (numBlocks == 0) {
-      return;
-    }
 
     // Each index in this vector is the set of "once" globals written to in the
     // basic block with the same index.
     std::vector<std::unordered_set<Name>> onceGlobalsWrittenVec;
+    auto numBlocks = basicBlocks.size();
     onceGlobalsWrittenVec.resize(numBlocks);
 
     for (Index i = 0; i < basicBlocks.size(); i++) {
