@@ -177,8 +177,11 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     }
     auto* set = list[1]->dynCast<GlobalSet>();
 
-    // Note that we have already checked the set's value earlier, but we do need
-    // it to not be unreachable (so it is actually set).
+    // Note that we have already checked the set's value earlier - that if it is
+    // reached then it writes a non-zero constant. Those are properties that we
+    // need from all sets. For this specific set, we also need it to actually
+    // perform the write, that is, to not be unreachable (otherwise, the global
+    // is not written here, and the function can execute more than once).
     if (!set || set->name != get->name || set->type == Type::unreachable) {
       return Name();
     }
