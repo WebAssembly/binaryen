@@ -346,16 +346,14 @@ struct OnceReduction : public Pass {
 
     // Fill out the initial data.
     for (auto& global : module->globals) {
-      // For a global to possibly be "once", it must be initialized to a
-      // constant. As we scan code we will turn this into false if we see
+      // For a global to possibly be "once", it must be an integer, and to not
+      // be imported (as a mutable import may be read and written to from the
+      // outside). As we scan code we will turn this into false if we see
       // anything that proves the global is not "once".
-      //   * Note that we don't check that the constant is zero - that is fine
-      //     for us to optimize, though it does indicate that the once function
-      //     will never ever run, which we could optimize further. TODO
-      //   * TODO: non-integer types?
+      // TODO: This limitation could perhaps only be on mutable ones.
+      // TODO: non-integer types?
       optInfo.onceGlobals[global->name] = global->type.isInteger() &&
-                                          !global->imported() &&
-                                          global->init->is<Const>();
+                                          !global->imported();
     }
     for (auto& func : module->functions) {
       // Fill in the map so that it can be operated on in parallel.
