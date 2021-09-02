@@ -350,7 +350,9 @@ struct OnceReduction : public Pass {
       // be imported (as a mutable import may be read and written to from the
       // outside). As we scan code we will turn this into false if we see
       // anything that proves the global is not "once".
-      // TODO: This limitation could perhaps only be on mutable ones.
+      // TODO: This limitation could perhaps only be on mutable ones, but
+      //       immutable globals will not be considered "once" anyhow as they do
+      //       not fit the pattern of being written after the first call.
       // TODO: non-integer types?
       optInfo.onceGlobals[global->name] = global->type.isInteger() &&
                                           !global->imported();
@@ -363,7 +365,7 @@ struct OnceReduction : public Pass {
       if (ex->kind == ExternalKind::Global) {
         // An exported global cannot be "once" since the outside may read and
         // write to it in ways we are unaware.
-        // TODO: This could perhaps only be on mutable ones.
+        // TODO: See comment above on mutability.
         optInfo.onceGlobals[ex->value] = false;
       }
     }
