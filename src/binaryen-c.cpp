@@ -3775,6 +3775,10 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.run();
 }
 
+void BinaryenModuleUpdateMaps(BinaryenModuleRef module) {
+  ((Module*)module)->updateMaps();
+}
+
 int BinaryenGetOptimizeLevel(void) { return globalPassOptions.optimizeLevel; }
 
 void BinaryenSetOptimizeLevel(int level) {

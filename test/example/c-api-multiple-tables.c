@@ -64,6 +64,7 @@ int main() {
 
     assert(strcmp(BinaryenTableGetName(t2), "t2") == 0);
     BinaryenTableSetName(t2, "table2");
+    BinaryenModuleUpdateMaps(module);
     assert(strcmp(BinaryenTableGetName(t2), "table2") == 0);
     BinaryenElementSegmentSetTable(elem1, "table2");
     assert(strcmp(BinaryenElementSegmentGetTable(elem1), "table2") == 0);
