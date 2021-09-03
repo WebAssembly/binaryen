@@ -22,12 +22,7 @@
   )
 
   ;; CHECK:      (func $unused
-  ;; CHECK-NEXT:  (local $i32 i32)
-  ;; CHECK-NEXT:  (local.set $i32
-  ;; CHECK-NEXT:   (call $call.if.used
-  ;; CHECK-NEXT:    (ref.func $i)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused
     ;; The result is unused, so we can remove the call.
