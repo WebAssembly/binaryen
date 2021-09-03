@@ -20,7 +20,7 @@
 namespace wasm {
 
 static Name BinaryenIntrinsics("binaryen-intrinsics"),
-            CallIfUsed("call.if.used");
+  CallIfUsed("call.if.used");
 
 Call* Intrinsics::isCallIfUsed(Expression* curr) {
   if (auto* call = curr->dynCast<Call>()) {
