@@ -70,7 +70,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      multivalue instructions and blocks, it is represented with tuple types that
      do not exist in the WebAssembly language. In addition to multivalue
      instructions, locals and globals can also have tuple types in Binaryen IR
-     but not in WebAssembly.
+     but not in WebAssembly. Experiments show that better support for
+     multivalue could enable useful but small code size savings of 1-3%, so it
+     has not been worth changing the core IR structure to support it better.
+   * Block input values (currently only supported in `catch` blocks in the
+     exception handling feature) are represented as `pop` subexpressions.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
@@ -107,19 +111,6 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      emitted when generating wasm. Instead its list of operands will be directly
      used in the containing node. Such a block is sometimes called an "implicit
      block".
- * Multivalue
-   * Binaryen will not represent multivalue instructions and values directly.
-     Binaryen's main focus is on optimization of wasm, and therefore the question
-     of whether we should have multivalue in the main IR is whether it justifes
-     the extra complexity there. Experiments show that the shrinking of code
-     size thanks to multivalue is useful but small, just 1-3% or so. Given that,
-     we prefer to keep the main IR simple, and focus on multivalue optimizations
-     in Stack IR, which is more suitable for such things.
-   * Binaryen does still need to implement the "ABI" level of multivalue, that
-     is, we need multivalue calls because those may cross module boundaries,
-     and so they are observable externally. To support that, Binaryen may use
-     `push` and `pop` as mentioned earlier; another option is to add LLVM-like
-     `extractvalue/composevalue` instructions.
  * Reference Types
   * The wasm text and binary formats require that a function whose address is
     taken by `ref.func` must be either in the table, or declared via an

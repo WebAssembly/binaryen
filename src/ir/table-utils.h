@@ -110,6 +110,11 @@ inline Index getOrAppend(Table& table, Name name, Module& wasm) {
 // "elem declare" mention in the text and binary formats.
 std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
 
+// Returns whether a segment uses arbitrary wasm expressions, as opposed to the
+// original tables from the MVP that use function indices. (Some post-MVP tables
+// do so, and some do not, depending on their type and use.)
+bool usesExpressions(ElementSegment* curr, Module* module);
+
 } // namespace TableUtils
 
 } // namespace wasm

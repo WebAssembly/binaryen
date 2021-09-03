@@ -27,7 +27,5 @@ builtin_parameters = {
     }
 }
 
-print(builtin_parameters)
-
 if __name__ == '__main__':
     main(builtin_parameters)

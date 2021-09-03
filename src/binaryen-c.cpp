@@ -3775,6 +3775,10 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.run();
 }
 
+void BinaryenModuleUpdateMaps(BinaryenModuleRef module) {
+  ((Module*)module)->updateMaps();
+}
+
 int BinaryenGetOptimizeLevel(void) { return globalPassOptions.optimizeLevel; }
 
 void BinaryenSetOptimizeLevel(int level) {
@@ -4329,10 +4333,9 @@ BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
 }
 
-BinaryenSideEffects
-BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
-                                 BinaryenFeatures features) {
-  return EffectAnalyzer(globalPassOptions, features, (Expression*)expr)
+BinaryenSideEffects BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
+                                                     BinaryenModuleRef module) {
+  return EffectAnalyzer(globalPassOptions, *(Module*)module, (Expression*)expr)
     .getSideEffects();
 }
 
