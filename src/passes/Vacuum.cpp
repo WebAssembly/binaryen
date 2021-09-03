@@ -20,6 +20,7 @@
 
 #include <ir/block-utils.h>
 #include <ir/effects.h>
+#include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/type-updating.h>
@@ -199,14 +200,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitIf(If* curr) {
-    if (Intrinsics(*getModule()).isConsumerUsed(curr->condition) &&
-        !ExpressionAnalyzer::isResultUsed(expressionStack, getFunction())) {
-      // This if is the consumer of a consumer.used() intrinsic (as its
-      // condition), and the if's result is not used, so we can fix a value of 0
-      // for that intrinsic.
-      curr->condition = Builder(*getModule()).makeConst(int32_t(0));
-    }
-
     // if the condition is a constant, just apply it
     // we can just return the ifTrue or ifFalse.
     if (auto* value = curr->condition->dynCast<Const>()) {
@@ -285,6 +278,19 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       assert(set->isTee());
       set->makeSet();
       replaceCurrent(set);
+      return;
+    }
+
+    if (auto* call = Intrinsics(*getModule()).isCallIfUsed(curr->value)) {
+      // TODO use above in more places?
+      // This is in fact not used, so we do not need to make the call. Turn it
+      // into a sequence of drops.
+      Builder builder(*getModule());
+      auto& operands = call->operands;
+      for (auto*& operand : operands) {
+        operand = builder.makeDrop(operand);
+      }
+      replaceCurrent(builder.makeBlock(operands));
       return;
     }
 

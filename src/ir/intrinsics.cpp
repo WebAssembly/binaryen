@@ -20,18 +20,19 @@
 namespace wasm {
 
 static Name BinaryenIntrinsics("binaryen-intrinsics"),
-            ConsumerUsed("consumer.used");
+            CallIfUsed("call.if.used");
 
-bool Intrinsics::isConsumerUsed(Expression* curr) {
+Call* Intrinsics::isCallIfUsed(Expression* curr) {
   if (auto* call = curr->dynCast<Call>()) {
     // The target function may not exist if the module is still being
     // constructed.
     if (auto* func = module.getFunctionOrNull(call->target)) {
-      return func->module == BinaryenIntrinsics && func->base == ConsumerUsed &&
-             func->getParams() == Type::none && func->getResults() == Type::i32;
+      if (func->module == BinaryenIntrinsics && func->base == CallIfUsed) {
+        return call;
+      }
     }
   }
-  return false;
+  return nullptr;
 }
 
 } // namespace wasm

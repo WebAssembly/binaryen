@@ -2,50 +2,37 @@
 ;; RUN: wasm-opt %s --intrinsic-lowering -all -S -o - | filecheck %s
 
 (module
-  ;; The actual intrinsic, properly defined.
-  ;; CHECK:      (import "binaryen-intrinsics" "consumer.used" (func $used (result i32)))
-  (import "binaryen-intrinsics" "consumer.used" (func $used (result i32)))
+  ;; call.if.used with no params or result
+  ;; CHECK:      (import "binaryen-intrinsics" "call.if.used" (func $ciu-v (param funcref)))
+  (import "binaryen-intrinsics" "call.if.used" (func $ciu-v (param funcref)))
 
-  ;; Wrong result.
-  ;; CHECK:      (import "binaryen-intrinsics" "consumer.used" (func $not-used-1 (result f64)))
-  (import "binaryen-intrinsics" "consumer.used" (func $not-used-1 (result f64)))
-
-  ;; Wrong params.
-  ;; CHECK:      (import "binaryen-intrinsics" "consumer.used" (func $not-used-2 (param i32) (result i32)))
-  (import "binaryen-intrinsics" "consumer.used" (func $not-used-2 (param i32) (result i32)))
-
-  ;; Wrong module name.
-  ;; CHECK:      (import "binaryen-intrinsics_" "consumer.used" (func $not-used-3 (result i32)))
-  (import "binaryen-intrinsics_" "consumer.used" (func $not-used-3 (result i32)))
-
-  ;; Wrong base name.
-  ;; CHECK:      (import "binaryen-intrinsics" "consumer.used_" (func $not-used-4 (result i32)))
-  (import "binaryen-intrinsics" "consumer.used_" (func $not-used-4 (result i32)))
+  ;; call.if.used with some params and a result
+  ;; CHECK:      (import "binaryen-intrinsics" "call.if.used" (func $ciu-dif (param f64 i32 funcref) (result f32)))
+  (import "binaryen-intrinsics" "call.if.used" (func $ciu-dif (param f64) (param i32) (param funcref) (result f32)))
 
   ;; CHECK:      (func $test
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $not-used-1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $not-used-2
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (ref.func $dif)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $not-used-3)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $not-used-4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    (drop (call $used))
-    (drop (call $not-used-1))
-    (drop (call $not-used-2 (i32.const 1)))
-    (drop (call $not-used-3))
-    (drop (call $not-used-4))
+    ;; These will be lowered into call_refs.
+    (call $ciu-v (ref.func $test))
+    (drop (call $ciu-dif (f64.const 3.14159) (i32.const 42) (ref.func $dif)))
+  )
+
+  ;; CHECK:      (func $dif (param $0 f64) (param $1 i32) (result f32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $dif (param f64) (param i32) (result f32)
+    ;; Helper function for the above.
+    (unreachable)
   )
 )

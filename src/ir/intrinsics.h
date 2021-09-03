@@ -24,7 +24,8 @@
 // See the README.md for background on intrinsic functions.
 //
 // Intrinsics can be recognized by Intrinsics::isFoo() methods, that check if a
-// call is a particular intrinsic.
+// call is a particular intrinsic. Each such call returns nullptr if the input
+// is not that intrinsic, and otherwise the intrinsic itself cast to a Call*.
 //
 
 namespace wasm {
@@ -36,63 +37,56 @@ public:
   Intrinsics(Module& module) : module(module) {}
 
   //
-  // Check if an instruction is the consumer.used intrinsic.
+  // Check if an instruction is the call.if.used intrinsic.
   //
-  //   (import "binaryen-intrinsics" "consumer.used" (func (result i32)))
+  //   (import "binaryen-intrinsics" "call.if.used"
+  //     (func (..params..) (param $target funcref) (..results..)))
   //
-  // Loosely, consumer.used can be seen as returning 1 if the result of its
-  // consumer might be used, and 0 otherwise.
+  // call.if.used can take any parameters, and in addition a funcref, and return
+  // any (non-none) result.
   //
   // Precise semantics:
   //
-  //  * consumer.used returns an i32. If that value is consumed, then used()'s
-  //    value depends on that consumer.
-  //  * If the consumer itself returns a value, and if the optimizer sees that
-  //    the consumer's value is not actually used - for example, by being
-  //    dropped - then this consumer.used instance can be replaced with a
-  //    constant of 0.
-  //  * Final lowering always turns this into a 1 (as we must assume the value
-  //    might be used).
+  //  * If the optimizer sees that a call.if.used's result is not used - that
+  //    is, the result is dropped (potentially after passing through as a
+  //    block/if result, etc.) - then the optimizer can remove the call, by
+  //    turning this the call.if.used into a sequence of drops of all the
+  //    parameters.
+  //  * Final lowering always turns a call.if.used into a call_ref.
   //
-  // consumer.used is useful to be able to get rid of an unused result that has
-  // side effects. For example (in simplified wat), assume we have an if whose
-  // condition is consumer.used and has one arm doing a call foo(), and the
-  // other is a constant 0:
+  // call.if.used is useful to be able to get rid of an unused result that has
+  // side effects. For example,
   //
-  //   (if (call $consumer.used) (call $foo) (i32.const 0))
+  //  (drop (call $get-something))
   //
-  // Or, in simplified notation:
+  // cannot be removed, as a call has side effects. But if a code generator
+  // knows that it is fine to not make the call given that the result is
+  // dropped (perhaps the side effects are to initialize a global cache, for
+  // example) then it can replace
   //
-  //   (if consumer.used() foo() 0)
+  //   (call $get-something)
   //
-  // The "consumer" here is the if, which consumes the value of the intrinsic.
-  // This is what happens if the if is dropped:
+  // with
   //
-  //  (drop (if consumer.used() foo() 0))
-  //  (drop (if 0               foo() 0))  // The optimizer replaces
-  //                                          consumer.used() with 0.
-  //  (drop 0)  // The optimizer removes the if and the foo().
-  //  (nop)     // The optimizer removes the drop of 0.
+  //   (call $call.if.used (ref.func $get-something))
   //
-  // Or, if the value is actually used:
+  // which will have this behavior in the optimizer if it is dropped:
   //
-  //  (local.set (if consumer.used() foo() 0))
-  //  (local.set (if 1               foo() 0))  // Final lowering replaces
-  //                                            // consumer.used() with 1.
-  //  (local.set foo())  // The if is optimized out, leaving foo().
+  //  (drop (call $call.if.used (ref.func $get-something)))
+  //     =>
+  //  (drop (ref.func $get-something))
   //
-  // Without consumer.used() the optimizer cannot remove a dropped call because
-  // it has side effects. Thus, this intrinsic lets code generators control what
-  // happens if a result is seen as not used, which can include ignoring side
-  // effects.
+  // Later passes can then remove the dropped ref.func. Or, if the result is
+  // actually used,
   //
-  // More examples, with the value of consumer.used for them:
+  //  (local.set $x (call $call.if.used (ref.func $get-something)))
+  //     =>
+  //  (local.set $x (call_ref (ref.func $get-something)))
   //
-  //   (local.set $x (select (a) (b) (call $consumer.used)))   =>   1
-  //   (drop         (select (a) (b) (call $consumer.used)))   =>   0
-  //   (local.set $x (i32.eqz (call $consumer.used)))          =>   1
+  // Later passes will then turn that into a direct call and further optimize
+  // things.
   //
-  bool isConsumerUsed(Expression* curr);
+  Call* isCallIfUsed(Expression* curr);
 };
 
 } // namespace wasm
