@@ -855,7 +855,9 @@
       (ref.is_null
         (local.get $x)
       )
-      ;; The if body is not unreachable, which prevents the optimization.
+      ;; It is ok if the body is not unreachable (so long as it contains no
+      ;; returns). We will optimize this, and just do a call to the outlined
+      ;; code, without a return of a value here.
       (call $import)
     )
     (local.get $x)
@@ -916,6 +918,55 @@
   (func $call-reachable-if-body
     (drop (call $reachable-if-body (ref.null any)))
     (drop (call $reachable-if-body (ref.null any)))
+  )
+
+  ;; CHECK:      (func $reachable-if-body-return (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $reachable-if-body-return (param $x anyref) (result anyref)
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (if
+        (i32.const 1)
+        ;; The return here prevents the optimization.
+        (return
+          (local.get $x)
+        )
+        (call $import)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $call-reachable-if-body-return
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $reachable-if-body-return
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $reachable-if-body-return
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-reachable-if-body-return
+    (drop (call $reachable-if-body-return (ref.null any)))
+    (drop (call $reachable-if-body-return (ref.null any)))
   )
 )
 
