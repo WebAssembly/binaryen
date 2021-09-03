@@ -651,11 +651,14 @@ private:
         outlined->body = inlineableIf->ifTrue;
         auto* call = builder.makeCall(outlined->name,
                                       getForwardedArgs(func, builder),
-                                      func->getResults())
+                                      func->getResults());
 
         // If the outlined code is unreachable, we can just return here.
-        inlineableIf->ifTrue =
-          outlined->body->type == Type::unreachable ? builder.makeReturn(call) : builder.makeDrop(call);
+        if (outlined->body->type== Type::unreachable) {
+          inlineableIf->ifTrue = builder.makeReturn(call);
+        } else {
+          inlineableIf->ifTrue = builder.makeDrop(call);
+        }
       }
 
       // We can just leave the final value at the end, if it exists.
