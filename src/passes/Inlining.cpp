@@ -679,8 +679,7 @@ private:
     return ModuleUtils::copyFunction(
       func,
       *module,
-      Names::getValidFunctionName(*module,
-                                  prefix + '$' + func->name.str));
+      Names::getValidFunctionName(*module, prefix + '$' + func->name.str));
   }
 
   static bool isBlockStartingWithIf(Expression* curr) {
@@ -688,7 +687,7 @@ private:
     return block && !block->list.empty() && block->list[0]->is<If>();
   }
 
-  static If* getIf(Expression* curr, Index i=0) {
+  static If* getIf(Expression* curr, Index i = 0) {
     return curr->cast<Block>()->list[i]->cast<If>();
   }
 
