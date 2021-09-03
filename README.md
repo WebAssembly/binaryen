@@ -160,10 +160,10 @@ call to an import that does not exist. That final lowering is not done
 automatically - a user of intrinsics must run the pass for that explicitly. Note
 that, in general, some additional optimizations may be possible after the final
 lowering, and so a useful pattern is to  optimize once normally with intrinsics,
-then lower them away, then optimize (minimally) after that, e.g.:
+then lower them away, then optimize after that, e.g.:
 
 ```
-wasm-opt input.wasm -o output.wasm  -Os --lower-intrinsics -O1
+wasm-opt input.wasm -o output.wasm  -Os --intrinsic-lowering -O3
 ```
 
 Each intrinsic defines its semantics, which includes what the optimizer is
@@ -171,10 +171,10 @@ allowed to do with it and what the final lowering will turn it to. See
 [intrinsics.h](https://github.com/WebAssembly/binaryen/blob/main/src/ir/intrinsics.h)
 for the detailed definitions. A quick summary appears here:
 
-* `consumer.used`
-  * Returns 1 if the intrinsic's consumer's result is used, or may be used, and
-    0 if it is
-    definitely not used.
+* `call.if.used`: Similar to a `call_ref` (in that it receives parameters, and a
+   reference to a function to call), except that if the result is not used
+  (because it is dropped) then the optimizer can remove the call itself (and
+  just drop the parameters).
 
 ## Tools
 
