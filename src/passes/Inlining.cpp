@@ -601,15 +601,15 @@ private:
     // Or, if it has type none, then for now we require that it has no returns
     // so that we do not need to handle passing the information of whether we
     // should return or not (without a return, we know we don't need to). TODO
+    // (Note that it can't be anything other than none or unreachable, so we do
+    // not have an if-else here - the if arms return no results.)
 
     // TODO: investigate more values here.
     const Index MaxIfs = 2;
     if (list.size() >= 1 && list.size() <= MaxIfs + 1) {
       auto numIfs = list.size();
-      bool hasFinalValue = false;
       if (isSimple(list.back())) {
         numIfs--;
-        hasFinalValue = true;
       }
 
       for (Index i = 0; i < numIfs; i++) {
@@ -649,15 +649,16 @@ private:
         auto* inlineableIf = getIf(split.inlineable->body, i);
         auto* outlined = copyFunction(func, "outlined-B");
         outlined->body = inlineableIf->ifTrue;
-        auto* call = builder.makeCall(outlined->name,
-                                      getForwardedArgs(func, builder),
-                                      func->getResults());
 
-        // If the outlined code is unreachable, we can just return here.
-        if (outlined->body->type== Type::unreachable) {
-          inlineableIf->ifTrue = builder.makeReturn(call);
-        } else {
-          inlineableIf->ifTrue = builder.makeDrop(call);
+        // The outlined function either returns the same results as the original
+        // one, or nothing, depending on if a value is returned here.
+        auto valueReturned = outlined->body->type != Type::none;
+        outlined->setResults(valueReturned ? func->getResults() : Type::none);
+        inlineableIf->ifTrue = builder.makeCall(outlined->name,
+                                                getForwardedArgs(func, builder),
+                                                outlined->getResults());
+        if (valueReturned) {
+          inlineableIf->ifTrue = builder.makeReturn(inlineableIf->ifTrue);
         }
       }
 
