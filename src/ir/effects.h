@@ -170,7 +170,7 @@ public:
   // and gets the result that there are no unremovable side effects, then it
   // must either
   //
-  //  1. Remove any side effects present, if any, so they no longer exists.
+  //  1. Remove any side effects present, if any, so they no longer exist.
   //  2. Keep the code exactly where it is.
   //
   // If instead of 1&2 a pass kept the side effect and also reordered the code
@@ -666,6 +666,8 @@ private:
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
+      parent.readsArray = true;
+      parent.writesArray = true;
       // traps when a ref is null, or when out of bounds.
       parent.implicitTrap = true;
     }

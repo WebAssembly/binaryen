@@ -103,7 +103,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // Check if this expression itself has side effects, ignoring children.
       EffectAnalyzer self(getPassOptions(), *getModule());
       self.visit(curr);
-      if (self.hasSideEffects()) {
+      if (self.hasUnremovableSideEffects()) {
         return curr;
       }
       // The result isn't used, and this has no side effects itself, so we can
@@ -111,7 +111,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       SmallVector<Expression*, 1> childrenWithEffects;
       for (auto* child : ChildIterator(curr)) {
         if (EffectAnalyzer(getPassOptions(), *getModule(), child)
-              .hasSideEffects()) {
+              .hasUnremovableSideEffects()) {
           childrenWithEffects.push_back(child);
         }
       }
@@ -386,7 +386,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
     if (curr->getResults() == Type::none &&
         !EffectAnalyzer(getPassOptions(), *getModule(), curr->body)
-           .hasSideEffects()) {
+           .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }
   }

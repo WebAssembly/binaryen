@@ -64,6 +64,25 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   return ret;
 }
 
+bool usesExpressions(ElementSegment* curr, Module* module) {
+  // Binaryen IR always has ref.funcs for functions in tables for uniformity,
+  // so that by itself does not indicate if expressions should be used when
+  // emitting the table or not. But definitely anything that is not a ref.func
+  // implies we are post-MVP and must use expressions.
+  bool allElementsRefFunc =
+    std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
+      return entry->is<RefFunc>();
+    });
+
+  // If the table has a specialized (non-MVP) type, then the segment must
+  // declare a type that is a subtype of that, so it must use the post-MVP form
+  // of using expressions.
+  bool hasTableOfSpecializedType =
+    curr->table.is() && module->getTable(curr->table)->type != Type::funcref;
+
+  return !allElementsRefFunc || hasTableOfSpecializedType;
+}
+
 } // namespace TableUtils
 
 } // namespace wasm
