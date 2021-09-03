@@ -22,9 +22,8 @@
 
 namespace wasm {
 
-Instrumenter::Instrumenter(const std::string& profileExport,
-                           uint64_t moduleHash)
-  : profileExport(profileExport), moduleHash(moduleHash) {}
+Instrumenter::Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash)
+  : options(options), moduleHash(moduleHash) {}
 
 void Instrumenter::run(PassRunner* runner, Module* wasm) {
   this->runner = runner;
@@ -35,6 +34,10 @@ void Instrumenter::run(PassRunner* runner, Module* wasm) {
 }
 
 void Instrumenter::addGlobals() {
+  if (options.storageKind != WasmSplitOptions::StorageKind::InGlobals) {
+    // Don't need globals
+    return;
+  }
   // Create fresh global names (over-reserves, but that's ok)
   counterGlobal = Names::getValidGlobalName(*wasm, "monotonic_counter");
   functionGlobals.reserve(wasm->functions.size());
@@ -60,42 +63,65 @@ void Instrumenter::addGlobals() {
 }
 
 void Instrumenter::instrumentFuncs() {
-  // Inject the following code at the beginning of each function to advance the
-  // monotonic counter and set the function's timestamp if it hasn't already
-  // been set.
-  //
-  //   (if (i32.eqz (global.get $timestamp))
-  //     (block
-  //       (global.set $monotonic_counter
-  //         (i32.add
-  //           (global.get $monotonic_counter)
-  //           (i32.const 1)
-  //         )
-  //       )
-  //       (global.set $timestamp
-  //         (global.get $monotonic_counter)
-  //       )
-  //     )
-  //   )
+  // Inject code at the beginning of each function to advance the monotonic
+  // counter and set the function's timestamp if it hasn't already been set.
   Builder builder(*wasm);
-  auto globalIt = functionGlobals.begin();
-  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    func->body = builder.makeSequence(
-      builder.makeIf(
-        builder.makeUnary(EqZInt32,
-                          builder.makeGlobalGet(*globalIt, Type::i32)),
-        builder.makeSequence(
-          builder.makeGlobalSet(
-            counterGlobal,
-            builder.makeBinary(AddInt32,
-                               builder.makeGlobalGet(counterGlobal, Type::i32),
-                               builder.makeConst(Literal::makeOne(Type::i32)))),
-          builder.makeGlobalSet(
-            *globalIt, builder.makeGlobalGet(counterGlobal, Type::i32)))),
-      func->body,
-      func->body->type);
-    ++globalIt;
-  });
+  switch (options.storageKind) {
+    case WasmSplitOptions::StorageKind::InGlobals: {
+      // (if (i32.eqz (global.get $timestamp))
+      //   (block
+      //     (global.set $monotonic_counter
+      //       (i32.add
+      //         (global.get $monotonic_counter)
+      //         (i32.const 1)
+      //       )
+      //     )
+      //     (global.set $timestamp
+      //       (global.get $monotonic_counter)
+      //     )
+      //   )
+      // )
+      auto globalIt = functionGlobals.begin();
+      ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+        func->body = builder.makeSequence(
+          builder.makeIf(
+            builder.makeUnary(EqZInt32,
+                              builder.makeGlobalGet(*globalIt, Type::i32)),
+            builder.makeSequence(
+              builder.makeGlobalSet(
+                counterGlobal,
+                builder.makeBinary(
+                  AddInt32,
+                  builder.makeGlobalGet(counterGlobal, Type::i32),
+                  builder.makeConst(Literal::makeOne(Type::i32)))),
+              builder.makeGlobalSet(
+                *globalIt, builder.makeGlobalGet(counterGlobal, Type::i32)))),
+          func->body,
+          func->body->type);
+        ++globalIt;
+      });
+      break;
+    }
+    case WasmSplitOptions::StorageKind::InMemory: {
+      if (!wasm->features.hasAtomics()) {
+        Fatal() << "error: --in-memory requires atomics to be enabled";
+      }
+      // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
+      Index funcIdx = 0;
+      ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+        func->body = builder.makeSequence(
+          builder.makeAtomicStore(1,
+                                  funcIdx,
+                                  builder.makeConstPtr(0),
+                                  builder.makeConst(uint32_t(1)),
+                                  Type::i32),
+          func->body,
+          func->body->type);
+        ++funcIdx;
+      });
+      break;
+    }
+  }
 }
 
 // wasm-split profile format:
@@ -118,17 +144,20 @@ void Instrumenter::addProfileExport() {
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
   // writes the profile if the given space is sufficient to hold it.
-  auto name = Names::getValidFunctionName(*wasm, profileExport);
+  auto name = Names::getValidFunctionName(*wasm, options.profileExport);
   auto writeProfile = Builder::makeFunction(
     name, Signature({Type::i32, Type::i32}, Type::i32), {});
   writeProfile->hasExplicitName = true;
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");
 
+  size_t numFuncs = 0;
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
+
   // Calculate the size of the profile:
   //   8 bytes module hash +
   //   4 bytes for the timestamp for each function
-  const size_t profileSize = 8 + 4 * functionGlobals.size();
+  const size_t profileSize = 8 + 4 * numFuncs;
 
   // Create the function body
   Builder builder(*wasm);
@@ -142,18 +171,76 @@ void Instrumenter::addProfileExport() {
   // Write the hash followed by all the time stamps
   Expression* writeData =
     builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64);
-
   uint32_t offset = 8;
-  for (const auto& global : functionGlobals) {
-    writeData = builder.blockify(
-      writeData,
-      builder.makeStore(4,
-                        offset,
-                        1,
-                        getAddr(),
-                        builder.makeGlobalGet(global, Type::i32),
-                        Type::i32));
-    offset += 4;
+
+  switch (options.storageKind) {
+    case WasmSplitOptions::StorageKind::InGlobals: {
+      for (const auto& global : functionGlobals) {
+        writeData = builder.blockify(
+          writeData,
+          builder.makeStore(4,
+                            offset,
+                            1,
+                            getAddr(),
+                            builder.makeGlobalGet(global, Type::i32),
+                            Type::i32));
+        offset += 4;
+      }
+      break;
+    }
+    case WasmSplitOptions::StorageKind::InMemory: {
+      Index funcIdxVar =
+        Builder::addVar(writeProfile.get(), "funcIdx", Type::i32);
+      auto getFuncIdx = [&]() {
+        return builder.makeLocalGet(funcIdxVar, Type::i32);
+      };
+      // (block $outer
+      //   (loop $l
+      //     (br_if $outer (i32.eq (local.get $fucIdx) (i32.const numFuncs))
+      //     (i32.store offset=8
+      //       (i32.add
+      //         (local.get $addr)
+      //         (i32.mul (local.get $funcIdx) (i32.const 4))
+      //       )
+      //       (i32.atomic.load8_u (local.get $funcIdx))
+      //     )
+      //     (local.set $funcIdx
+      //      (i32.add (local.get $fundIdx) (i32.const 1)
+      //     )
+      //     (br $l)
+      //   )
+      // )
+      writeData = builder.blockify(
+        writeData,
+        builder.makeBlock(
+          "outer",
+          builder.makeLoop(
+            "l",
+            builder.blockify(
+              builder.makeBreak(
+                "outer",
+                nullptr,
+                builder.makeBinary(EqInt32,
+                                   getFuncIdx(),
+                                   builder.makeConst(uint32_t(numFuncs)))),
+              builder.makeStore(
+                4,
+                offset,
+                4,
+                builder.makeBinary(
+                  AddInt32,
+                  getAddr(),
+                  builder.makeBinary(
+                    MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
+                builder.makeAtomicLoad(1, 0, getFuncIdx(), Type::i32),
+                Type::i32),
+              builder.makeLocalSet(
+                funcIdxVar,
+                builder.makeBinary(
+                  AddInt32, getFuncIdx(), builder.makeConst(uint32_t(1)))),
+              builder.makeBreak("l")))));
+      break;
+    }
   }
 
   writeProfile->body = builder.makeSequence(
@@ -164,7 +251,7 @@ void Instrumenter::addProfileExport() {
   // Create an export for the function
   wasm->addFunction(std::move(writeProfile));
   wasm->addExport(
-    Builder::makeExport(profileExport, name, ExternalKind::Function));
+    Builder::makeExport(options.profileExport, name, ExternalKind::Function));
 
   // Also make sure there is a memory with enough pages to write into
   size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
