@@ -550,7 +550,9 @@ private:
         return true;
       }
 
-      startSplit(split, func, "A");
+      split.splittable = true;
+      split.inlineable = copyFunction(func, "inlineable-A");
+      auto* outlined = copyFunction(func, "outlined-A");
 
       // The inlineable function should only have the if, which will call the
       // outlined function with a flipped condition.
@@ -558,14 +560,14 @@ private:
       inlineableIf->condition =
         builder.makeUnary(EqZInt32, inlineableIf->condition);
       inlineableIf->ifTrue = builder.makeCall(
-        split.outlined->name, getForwardedArgs(func, builder), Type::none);
+        outlined->name, getForwardedArgs(func, builder), Type::none);
       split.inlineable->body = inlineableIf;
 
       // The outlined function no longer needs the initial if.
       // TODO: If we handle the case with indirect calls and other global uses
       //       then we could not do this, as those calls would skip the first
       //       function with the condition that calls the heavy work.
-      auto& outlinedList = split.outlined->body->cast<Block>()->list;
+      auto& outlinedList = outlined->body->cast<Block>()->list;
       outlinedList.erase(outlinedList.begin());
 
       *inlineableOut = split.inlineable;
@@ -576,32 +578,87 @@ private:
 
     // Pattern B: Represents a function whose entire body looks like
     //
-    //  if (A) {
+    //  if (A_1) {
     //    ..heavy work..
     //  }
-    //  B; // a value flowing out, if there is a return value
+    //  ..
+    //  if (A_k) {
+    //    ..heavy work..
+    //  }
+    //  B; // an optional final value (which can be a return value)
     //
-    // where A and B are very simple. The body of the if must be unreachable.
-    if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
-        list.size() == 2 && isSimple(list[1])) {
+    // where there is a small number of such ifs with arguments A1..A_k, and
+    // A_1..A_k and B (if the final value B exists) are very simple.
+    //
+    // Also, each if body must either be unreachable, or it must have type none
+    // and have no returns. If it is unreachable, for example because it is a
+    // return, then we will just return that value,
+    //
+    //  if (A_i) {
+    //    return outlined(..);
+    //  }
+    //
+    // Or, if it has type none, then for now we require that it has no returns
+    // so that we do not need to handle passing the information of whether we
+    // should return or not (without a return, we know we don't need to). TODO
+
+    // TODO: investigate more values here.
+    const Index MaxIfs = 2;
+    if (list.size() >= 1 && list.size() <= MaxIfs + 1) {
+      auto numIfs = list.size();
+      bool hasFinalValue = false;
+      if (isSimple(list.back())) {
+        numIfs--;
+        hasFinalValue = true;
+      }
+
+      for (Index i = 0; i < numIfs; i++) {
+        if (auto* iff = list[i]->dynCast<If>()) {
+          // The if must have a simple condition and no else arm.
+          if (!isSimple(iff->condition) || iff->ifFalse) {
+            return false;
+          }
+          if (iff->ifTrue->type == Type::none) {
+            // This must have no returns.
+            if (!FindAll<Return>(iff->ifTrue).list.empty()) {
+              return false;
+            }
+          } else if (iff->ifTrue->type != Type::unreachable) {
+            // This is neither unreachable nor none, so we cannot handle it.
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+
+      // Success, this matches the pattern. Exit if we were just checking.
       if (!inlineableOut) {
         split.splittable = true;
         return true;
       }
 
-      startSplit(split, func, "B");
+      split.splittable = true;
+      split.inlineable = copyFunction(func, "inlineable-B");
 
-      // The inlineable function should only have the if, which will call the
-      // outlined heavy work, plus the content after the if.
-      auto* inlineableIf = getIf(split.inlineable->body);
-      inlineableIf->ifTrue =
-        builder.makeReturn(builder.makeCall(split.outlined->name,
-                                            getForwardedArgs(func, builder),
-                                            func->getResults()));
+      // The inlineable function should only have the ifs, which will call the
+      // outlined heavy work.
+      for (Index i = 0; i < numIfs; i++) {
+        // For each if, create an outlined function with the body of that if,
+        // and call that from the if.
+        auto* inlineableIf = getIf(split.inlineable->body, i);
+        auto* outlined = copyFunction(func, "outlined-B");
+        outlined->body = inlineableIf->ifTrue;
+        auto* call = builder.makeCall(outlined->name,
+                                      getForwardedArgs(func, builder),
+                                      func->getResults())
 
-      // The outlined function just contains the heavy work.
-      // TODO: see comment in the pattern above
-      split.outlined->body = getIf(split.outlined->body)->ifTrue;
+        // If the outlined code is unreachable, we can just return here.
+        inlineableIf->ifTrue =
+          outlined->body->type == Type::unreachable ? builder.makeReturn(call) : builder.makeDrop(call);
+      }
+
+      // We can just leave the final value at the end, if it exists.
 
       *inlineableOut = split.inlineable;
       return true;
@@ -610,22 +667,16 @@ private:
     return false;
   }
 
-  void startSplit(Split& split, Function* func, std::string prefix) {
-    split.splittable = true;
-
-    prefix = "byn-split-" + prefix + '$';
-
-    // TODO: we could avoid some of the copying here
-    split.inlineable = ModuleUtils::copyFunction(
+  Function* copyFunction(Function* func, std::string prefix) {
+    // TODO: We copy quite a lot more than we need here, and throw stuff out.
+    //       It is simple to just copy the entire thing to get the params and
+    //       results and all that, but we could be more efficient.
+    prefix = "byn-split-" + prefix;
+    return ModuleUtils::copyFunction(
       func,
       *module,
       Names::getValidFunctionName(*module,
-                                  prefix + func->name.str + "$inlineable"));
-    split.outlined = ModuleUtils::copyFunction(
-      func,
-      *module,
-      Names::getValidFunctionName(*module,
-                                  prefix + func->name.str + "$outlined"));
+                                  prefix + '$' + func->name.str));
   }
 
   static bool isBlockStartingWithIf(Expression* curr) {
@@ -633,9 +684,8 @@ private:
     return block && !block->list.empty() && block->list[0]->is<If>();
   }
 
-  static If* getIf(Expression* curr) {
-    assert(isBlockStartingWithIf(curr));
-    return curr->cast<Block>()->list[0]->cast<If>();
+  static If* getIf(Expression* curr, Index i=0) {
+    return curr->cast<Block>()->list[i]->cast<If>();
   }
 
   // Checks if an expression is very simple - something simple enough that we
