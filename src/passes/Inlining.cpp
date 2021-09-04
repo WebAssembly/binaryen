@@ -604,8 +604,9 @@ private:
     // (Note that it can't be anything other than none or unreachable, so we do
     // not have an if-else here - the if arms return no results.)
 
-    // TODO: investigate more values here.
-    const Index MaxIfs = 2;
+    // TODO: Investigate more values here. 3 appears useful on real-world code.
+    const Index MaxIfs = 3;
+
     if (list.size() >= 1 && list.size() <= MaxIfs + 1) {
       auto numIfs = list.size();
       if (isSimple(list.back())) {
