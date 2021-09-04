@@ -6659,12 +6659,12 @@
       (local.get $y)
       (i64.const -3)
     ))
-    ;; x % 0x80000000  ->  x & 0x7FFFFFFF
+    ;; x % 0x80000000 (skip)
     (drop (i32.rem_s
       (local.get $x)
       (i32.const 0x80000000)
     ))
-    ;; x % 0x8000000000000000  ->  x & 0x7FFFFFFFFFFFFFFF
+    ;; x % 0x8000000000000000 (skip)
     (drop (i64.rem_s
       (local.get $y)
       (i64.const 0x8000000000000000)
