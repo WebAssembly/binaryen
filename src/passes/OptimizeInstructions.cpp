@@ -440,18 +440,16 @@ struct OptimizeInstructions
         // -x * y   ==>   -(x * y)
         // x * -y   ==>   -(x * y)
         Expression *x, *y;
-        if (matches(curr,
-                    binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
-            matches(curr,
-                    binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) {
-
-          if (!x->is<Const>() && !y->is<Const>()) {
-            Builder builder(*getModule());
-            return replaceCurrent(builder.makeBinary(
-              Abstract::getBinary(curr->type, Sub),
-              builder.makeConst(Literal::makeZero(curr->type)),
-              builder.makeBinary(curr->op, x, y)));
-          }
+        if ((matches(curr,
+                     binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
+             matches(curr,
+                     binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) &&
+            !x->is<Const>() && !y->is<Const>()) {
+          Builder builder(*getModule());
+          return replaceCurrent(
+            builder.makeBinary(Abstract::getBinary(curr->type, Sub),
+                               builder.makeConst(Literal::makeZero(curr->type)),
+                               builder.makeBinary(curr->op, x, y)));
         }
       }
       {
