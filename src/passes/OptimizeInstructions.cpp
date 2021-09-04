@@ -2226,8 +2226,14 @@ private:
       right->value = Literal::makeZero(type);
       return right;
     }
-    // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
+    // (signed)x % -C   ==>  (signed)x % C,  if C != C_min
+    if (matches(curr, binary(RemS, pure(&left), ival())) &&
+        (!right->value.isSignedMin() && right->value.isNegative())) {
+      right->value = right->value.neg();
+      return curr;
+    }
     {
+      // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
       Const* c;
       Binary* inner;
       if (matches(curr,

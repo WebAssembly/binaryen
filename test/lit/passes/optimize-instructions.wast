@@ -6589,10 +6589,31 @@
   )
   ;; CHECK:      (func $srem-by-const (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.rem_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.rem_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.rem_s
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 3)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.rem_s
@@ -6608,21 +6629,42 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $srem-by-const (param $x i32) (param $y i64)
-    ;; (signed)x % 1
+    ;; x % 0  ->  x % 0
+    (drop (i32.rem_s
+      (local.get $x)
+      (i32.const 0)
+    ))
+    ;; x % 1  ->  0
     (drop (i32.rem_s
       (local.get $x)
       (i32.const 1)
     ))
+    ;; x % 1  ->  0
     (drop (i64.rem_s
       (local.get $y)
       (i64.const 1)
     ))
-    ;; (signed)x % 0x80000000 -> x & 0x7FFFFFFF
+    ;; x % -1  ->  0
+    (drop (i32.rem_s
+      (local.get $x)
+      (i32.const -1)
+    ))
+    ;; x % -2  ->  x % 2
+    (drop (i32.rem_s
+      (local.get $x)
+      (i32.const -2)
+    ))
+    ;; x % -3  ->  x % 3
+    (drop (i64.rem_s
+      (local.get $y)
+      (i64.const -3)
+    ))
+    ;; x % 0x80000000  ->  x & 0x7FFFFFFF
     (drop (i32.rem_s
       (local.get $x)
       (i32.const 0x80000000)
     ))
-    ;; (signed)x % 0x8000000000000000 -> x & 0x7FFFFFFFFFFFFFFF
+    ;; x % 0x8000000000000000  ->  x & 0x7FFFFFFFFFFFFFFF
     (drop (i64.rem_s
       (local.get $y)
       (i64.const 0x8000000000000000)
