@@ -33,6 +33,12 @@ struct WasmSplitOptions : ToolOptions {
   constexpr static size_t NumModes =
     static_cast<unsigned>(Mode::MergeProfiles) + 1;
 
+  enum class StorageKind : unsigned {
+    InGlobals, // Store profile data in WebAssembly Globals
+    InMemory,  // Store profile data in memory, accessible from all threads
+  };
+  StorageKind storageKind = StorageKind::InGlobals;
+
   bool verbose = false;
   bool emitBinary = true;
   bool symbolMap = false;

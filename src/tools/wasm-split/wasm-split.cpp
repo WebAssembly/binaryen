@@ -109,7 +109,7 @@ void instrumentModule(const WasmSplitOptions& options) {
 
   uint64_t moduleHash = hashFile(options.inputFiles[0]);
   PassRunner runner(&wasm, options.passOptions);
-  Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
+  Instrumenter(options, moduleHash).run(&runner, &wasm);
 
   adjustTableSize(wasm, options.initialTableSize);
 
