@@ -458,6 +458,16 @@ struct OptimizeInstructions
           return replaceCurrent(c);
         }
       }
+      {
+        // (signed)x % -C   ==>  (signed)x % C,  if C != C_min
+        Const* c;
+        Expression* x;
+        if (matches(curr, binary(RemS, any(&x), ival(&c))) &&
+            (!c->value.isSignedMin() && c->value.isNegative())) {
+          c->value = c->value.neg();
+          return replaceCurrent(curr);
+        }
+      }
     }
     if (auto* ext = Properties::getAlmostSignExt(curr)) {
       Index extraLeftShifts;
@@ -2226,12 +2236,6 @@ private:
       right->value = Literal::makeZero(type);
       return right;
     }
-    // (signed)x % -C   ==>  (signed)x % C,  if C != C_min
-    if (matches(curr, binary(RemS, pure(&left), ival())) &&
-        (!right->value.isSignedMin() && right->value.isNegative())) {
-      right->value = right->value.neg();
-      return curr;
-    }
     {
       // (signed)x % C_pot != 0   ==>  (x & (abs(C_pot) - 1)) != 0
       Const* c;
@@ -2298,11 +2302,6 @@ private:
     }
     // x | -1   ==>   -1
     if (matches(curr, binary(Or, pure(&left), ival(-1)))) {
-      return right;
-    }
-    // (signed)x % -1   ==>   0
-    if (matches(curr, binary(RemS, pure(&left), ival(-1)))) {
-      right->value = Literal::makeZero(type);
       return right;
     }
     // i32(x) / i32.min_s   ==>   x == i32.min_s
