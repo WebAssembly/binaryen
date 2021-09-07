@@ -78,6 +78,7 @@ Pass* createMetricsPass();
 Pass* createNameListPass();
 Pass* createNameTypesPass();
 Pass* createNoExitRuntimePass();
+Pass* createOnceReductionPass();
 Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeAddedConstantsPropagatePass();
 Pass* createOptimizeInstructionsPass();

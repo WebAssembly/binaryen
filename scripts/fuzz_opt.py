@@ -165,8 +165,13 @@ def randomize_fuzz_settings():
 
 
 IMPORTANT_INITIAL_CONTENTS = [
+    # Perenially-important passes
     os.path.join('lit', 'passes', 'optimize-instructions.wast'),
     os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+
+    # Recently-added or modified passes. These can be added to and pruned
+    # frequently.
+    os.path.join('lit', 'passes', 'once-reduction.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
@@ -1058,6 +1063,7 @@ opt_choices = [
     ["--memory-packing"],
     ["--merge-blocks"],
     ['--merge-locals'],
+    ['--once-reduction'],
     ["--optimize-instructions"],
     ["--optimize-stack-ir"],
     ["--generate-stack-ir", "--optimize-stack-ir"],
