@@ -360,7 +360,11 @@ struct Inlining : public Pass {
     // call. This is typically recursion, which to some extent can help, but
     // then like loop unrolling it loses its benefit quickly, so set a limit
     // here.
-    std::unordered_map<Function*, Index> iterationsInlinedInto;
+    //
+    // (Track names here, and not Function pointers, as we can remove functions
+    // while inlining, and it may be confusing during debugging to have a
+    // pointer to something that was removed.)
+    std::unordered_map<Name, Index> iterationsInlinedInto;
 
     const size_t MaxIterationsForFunc = 5;
 
@@ -384,7 +388,7 @@ struct Inlining : public Pass {
 #endif
 
       for (auto* func : inlinedInto) {
-        if (++iterationsInlinedInto[func] >= MaxIterationsForFunc) {
+        if (++iterationsInlinedInto[func->name] >= MaxIterationsForFunc) {
           return;
         }
       }
