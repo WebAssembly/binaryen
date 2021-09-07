@@ -38,7 +38,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused-fj
-    ;; As above, but with an extra float param and a different result type, and
+    ;; As above, but with an extra float param and a different result type.
     (drop
       (call $call.if.used-fj (f32.const 2.71828) (ref.func $fj))
     )
@@ -57,8 +57,8 @@
   ;; CHECK-NEXT: )
   (func $unused-fj-side-effects
     (local $f32 f32)
-    ;; As above, but side effects in the param. We must keep that around, and
-    ;; drop it.
+    ;; As above, but side effects in the param. We must keep the params around
+    ;; and drop them.
     (drop
       (call $call.if.used-fj
         (local.tee $f32
