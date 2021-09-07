@@ -266,7 +266,20 @@ void Instrumenter::addProfileExport() {
     }
   }
 
-  // TODO: export the memory if it is not already exported.
+  // Export the memory if it is not already exported.
+  bool memoryExported = false;
+  for (auto& ex : wasm->exports) {
+    if (ex->kind == ExternalKind::Memory) {
+      memoryExported = true;
+      break;
+    }
+  }
+  if (!memoryExported) {
+    wasm->addExport(
+      Builder::makeExport("profile-memory",
+                          Names::getValidExportName(*wasm, wasm->memory.name),
+                          ExternalKind::Memory));
+  }
 }
 
 } // namespace wasm
