@@ -761,7 +761,7 @@ struct Inlining : public Pass {
     // call. This is typically recursion, which to some extent can help, but
     // then like loop unrolling it loses its benefit quickly, so set a limit
     // here.
-    std::unordered_map<Function*, Index> iterationsInlinedInto;
+    std::unordered_map<Name, Index> iterationsInlinedInto;
 
     const size_t MaxIterationsForFunc = 5;
 
@@ -787,9 +787,28 @@ struct Inlining : public Pass {
 #endif
 
       for (auto* func : inlinedInto) {
-        if (++iterationsInlinedInto[func] >= MaxIterationsForFunc) {
+        if (++iterationsInlinedInto[func->name] >= MaxIterationsForFunc) {
+#ifdef INLINING_DEBUG
+          std::cout << "  halting due to iterationsInlinedInto.\n";
+#endif
           return;
         }
+      }
+
+      // Clean up iterationsInlinedInto: we may have entered info for a function
+      // in a previous iteration, and now it has been removed. If so, remove the
+      // info for it as well. This protects against a theoretical bug where we
+      // create a new function with the same name as before, and end up reading
+      // a value here that was for the previous function.
+      std::vector<Name> toRemove;
+      for (auto& kv : iterationsInlinedInto) {
+        auto name = kv.first;
+        if (!module->getFunctionOrNull(name)) {
+          toRemove.push_back(name);
+        }
+      }
+      for (auto name : toRemove) {
+        iterationsInlinedInto.erase(name);
       }
     }
   }
