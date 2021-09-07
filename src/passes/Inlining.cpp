@@ -799,7 +799,9 @@ struct Inlining : public Pass {
       // in a previous iteration, and now it has been removed. If so, remove the
       // info for it as well. This protects against a theoretical bug where we
       // create a new function with the same name as before, and end up reading
-      // a value here that was for the previous function.
+      // a value here that was for the previous function (which could cause
+      // nondeterminism, if it happens some of the time, and we then exit
+      // earlier because of it).
       std::vector<Name> toRemove;
       for (auto& kv : iterationsInlinedInto) {
         auto name = kv.first;
