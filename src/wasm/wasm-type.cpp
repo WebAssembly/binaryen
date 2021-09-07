@@ -922,6 +922,19 @@ unsigned Type::getByteSize() const {
   return getSingleByteSize(*this);
 }
 
+unsigned Type::hasByteSize() const {
+  auto hasSingleByteSize = [](Type t) { return t.isNumber(); };
+  if (isTuple()) {
+    for (const auto& t : *this) {
+      if (!hasSingleByteSize(t)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return hasSingleByteSize(*this);
+}
+
 Type Type::reinterpret() const {
   assert(!isTuple() && "Unexpected tuple type");
   switch ((*begin()).getBasic()) {
