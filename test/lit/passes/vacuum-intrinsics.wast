@@ -72,6 +72,22 @@
     )
   )
 
+  ;; CHECK:      (func $unused-unreachable
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $call.if.used-fj
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.func $fj)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unused-unreachable
+    ;; An unused result, but the call is unreachable and so we ignore it (and
+    ;; leave it for DCE).
+    (drop
+      (call $call.if.used-fj (unreachable) (ref.func $fj))
+    )
+  )
+
   ;; CHECK:      (func $used-fallthrough
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
