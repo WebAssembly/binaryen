@@ -189,7 +189,7 @@ void Instrumenter::addProfileExport() {
   }
   if (!memoryExported) {
     wasm->addExport(Builder::makeExport(
-      "profile-memory", wasm->memory.name, ExternalKind::Memory));
+      "profile-memory", Names::getValidExportName(*wasm, wasm->memory.name), ExternalKind::Memory));
   }
 }
 
