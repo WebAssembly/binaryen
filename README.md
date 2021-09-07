@@ -149,10 +149,9 @@ Binaryen intrinsic functions look like calls to imports, e.g.,
 (import "binaryen-intrinsics" "foo" (func $foo))
 ```
 
-. Implementing them
-that way allows them to be read and written by other tools, and avoid
-confusing errors on a binary format error that could happen if we had a
-custom binary format representation for them.
+Implementing them that way allows them to be read and written by other tools,
+and it avoids confusing errors on a binary format error that could happen in
+those tools if we had a custom binary format extension.
 
 An intrinsic method may be optimized away by the optimizer. If it is not, it
 must be **lowered** before shipping the wasm, as otherwise it will look like a
