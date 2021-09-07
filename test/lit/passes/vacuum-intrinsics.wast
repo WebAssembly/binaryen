@@ -8,6 +8,9 @@
   ;; CHECK:      (import "binaryen-intrinsics" "call.if.used" (func $call.if.used-fj (param f32 funcref) (result i64)))
   (import "binaryen-intrinsics" "call.if.used" (func $call.if.used-fj (param f32) (param funcref) (result i64)))
 
+  ;; CHECK:      (import "binaryen-intrinsics" "call.if.used" (func $call.if.used-ref (param funcref) (result (ref any))))
+  (import "binaryen-intrinsics" "call.if.used" (func $call.if.used-ref (param funcref) (result (ref any))))
+
   ;; CHECK:      (func $used
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
@@ -119,7 +122,6 @@
   )
 
   ;; CHECK:      (func $unused-fallthrough
-  ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (block $condition (result i32)
@@ -150,7 +152,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unused-fallthrough
-    (local $i32 i32)
     (drop
       (if (result i32)
         (block $condition (result i32)
@@ -171,6 +172,31 @@
     )
   )
 
+  ;; CHECK:      (func $unused-fallthrough-bad-type
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref any))
+  ;; CHECK-NEXT:    (call $i)
+  ;; CHECK-NEXT:    (call $call.if.used-ref
+  ;; CHECK-NEXT:     (ref.func $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $call.if.used-ref
+  ;; CHECK-NEXT:     (ref.func $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unused-fallthrough-bad-type
+    (drop
+      (if (result (ref any))
+        (call $i)
+        ;; As above, but the type of these unused values prevents us from
+        ;; optimizing as we cannot create a "zero" for them.
+        (call $call.if.used-ref (ref.func $ref))
+        (call $call.if.used-ref (ref.func $ref))
+      )
+    )
+  )
+
   ;; CHECK:      (func $i (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
@@ -186,6 +212,15 @@
     ;; Helper function for the above.
     (unreachable)
   )
+
+  ;; CHECK:      (func $ref (result (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $ref (result (ref any))
+    ;; Helper function for the above.
+    (unreachable)
+  )
+
 
   ;; CHECK:      (func $nop
   ;; CHECK-NEXT:  (nop)
