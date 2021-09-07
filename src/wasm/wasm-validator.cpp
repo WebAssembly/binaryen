@@ -2684,7 +2684,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
     if (Intrinsics(module).isCallIfUsed(curr)) {
       info.shouldBeTrue(curr->getResults() != Type::none,
                         curr->name,
-                       "call.if.used must return a result");
+                        "call.if.used must return a result");
       auto lastParam = curr->getParams();
       if (lastParam.isTuple()) {
         lastParam = lastParam.getTuple().types.back();
