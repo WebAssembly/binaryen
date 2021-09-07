@@ -1397,7 +1397,7 @@ private:
   }
 
   unsigned getByteSize(Type type) {
-    if (!type.isNumber()) {
+    if (!type.hasByteSize()) {
       Fatal() << "Asyncify does not yet support non-number types, like "
                  "references (see "
                  "https://github.com/WebAssembly/binaryen/issues/3739)";

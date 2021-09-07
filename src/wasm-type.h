@@ -195,6 +195,12 @@ public:
   // Returns the type size in bytes. Only single types are supported.
   unsigned getByteSize() const;
 
+  // Returns whether the type has a size in bytes. This is the same as whether
+  // it can be stored in linear memory. Things like references do not have this
+  // property, while numbers do. Tuples may or may not depending on their
+  // contents.
+  unsigned hasByteSize() const;
+
   // Reinterpret an integer type to a float type with the same size and vice
   // versa. Only single integer and float types are supported.
   Type reinterpret() const;
