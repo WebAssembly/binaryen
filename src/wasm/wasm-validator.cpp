@@ -2681,14 +2681,14 @@ static void validateImports(Module& module, ValidationInfo& info) {
       }
     }
 
-    if (Intrinsics(*getModule()).isCallIfUsed(curr)) {
-      shouldBeTrue(func->getResults().isConcrete(),
-                   curr,
+    if (Intrinsics(module).isCallIfUsed(curr)) {
+      info.shouldBeTrue(curr->getResults().isConcrete(),
+                   curr->name,
                    "call.if.used must return a result");
-      auto params = func->getParams();
-      if (!params.isTuple() || !params.getTuple().types.back().isFunction()) {
-        Fatal() << "call.if.used's final parameter must be a function";
-      }
+      auto params = curr->getParams();
+      info.shouldBeTrue(params.isTuple() && params.getTuple().types.back().isFunction(),
+                   curr->name,
+                   "call.if.used must return a result");
     }
   });
   ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
