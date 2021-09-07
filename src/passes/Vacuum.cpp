@@ -281,19 +281,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return;
     }
 
-    if (auto* call = Intrinsics(*getModule()).isCallIfUsed(curr->value)) {
-      // TODO use above in more places?
-      // This is in fact not used, so we do not need to make the call. Turn it
-      // into a sequence of drops.
-      Builder builder(*getModule());
-      auto& operands = call->operands;
-      for (auto*& operand : operands) {
-        operand = builder.makeDrop(operand);
-      }
-      replaceCurrent(builder.makeBlock(operands));
-      return;
-    }
-
     // If the value has no side effects, or it has side effects we can remove,
     // do so. This basically means that if noTrapsHappen is set then we can
     // use that assumption (that no trap actually happens at runtime) and remove
@@ -367,6 +354,40 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         iff->ifTrue = curr;
         iff->type = Type::none;
         replaceCurrent(iff);
+      }
+    }
+  }
+
+  void visitCall(Call* curr) {
+    auto type = curr->type;
+    if (type == Type::unreachable) {
+      // Leave unreachability to DCE.
+      return;
+    }
+
+    if (auto* call = Intrinsics(*getModule()).isCallIfUsed(curr)) {
+      if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction())) {
+        // This is in fact not used, so we do not need to make the call. Turn it
+        // into a sequence of drops.
+        Builder builder(*getModule());
+        auto& operands = call->operands;
+        if (type.isConcrete()) {
+          // We return a value, and so we need to return the same type, and
+          // cannot just replace outselves with drops.
+          if (LiteralUtils::canMakeZero(type)) {
+            operands.push_back(LiteralUtils::makeZero(type, *getModule()));
+          } else {
+            // We can't find a replacement value here. Do nothing and hope that
+            // later optimization passes help.
+            return;
+          }
+        }
+        for (auto*& operand : operands) {
+          if (!(type.isConcrete() && operand == operands.back())) {
+            operand = builder.makeDrop(operand);
+          }
+        }
+        replaceCurrent(builder.makeBlock(operands));
       }
     }
   }

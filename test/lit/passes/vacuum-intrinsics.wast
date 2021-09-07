@@ -130,14 +130,20 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block $ifTrue (result i32)
   ;; CHECK-NEXT:     (call $nop)
-  ;; CHECK-NEXT:     (call $call.if.used
-  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.func $i)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block $ifFalse (result i32)
   ;; CHECK-NEXT:     (call $nop)
-  ;; CHECK-NEXT:     (call $call.if.used
-  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.func $i)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
