@@ -2682,13 +2682,16 @@ static void validateImports(Module& module, ValidationInfo& info) {
     }
 
     if (Intrinsics(module).isCallIfUsed(curr)) {
-      info.shouldBeTrue(curr->getResults().isConcrete(),
-                   curr->name,
-                   "call.if.used must return a result");
-      auto params = curr->getParams();
-      info.shouldBeTrue(params.isTuple() && params.getTuple().types.back().isFunction(),
-                   curr->name,
-                   "call.if.used must return a result");
+      info.shouldBeTrue(curr->getResults() != Type::none,
+                        curr->name,
+                       "call.if.used must return a result");
+      auto lastParam = curr->getParams();
+      if (lastParam.isTuple()) {
+        lastParam = lastParam.getTuple().types.back();
+      }
+      info.shouldBeTrue(lastParam.isFunction(),
+                        curr->name,
+                        "call.if.used's last param must be a function");
     }
   });
   ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
