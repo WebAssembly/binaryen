@@ -787,16 +787,6 @@ void FunctionValidator::visitCall(Call* curr) {
     return;
   }
   validateCallParamsAndResult(curr, target->getSig());
-
-  if (Intrinsics(*getModule()).isCallIfUsed(curr)) {
-    shouldBeTrue(target->getResults.isConcrete(),
-                 curr,
-                 "call.if.used must return a result");
-  }
-  auto params = target->getParams();
-  if (!params.isTuple() || !params.getTuple().types.back().isFunction()) {
-    Fatal() << "call.if.used's final parameter must be a function";
-  }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -2688,6 +2678,16 @@ static void validateImports(Module& module, ValidationInfo& info) {
                              Type(Type::i64),
                              curr->name,
                              "Imported function must not have i64 results");
+      }
+    }
+
+    if (Intrinsics(*getModule()).isCallIfUsed(curr)) {
+      shouldBeTrue(func->getResults().isConcrete(),
+                   curr,
+                   "call.if.used must return a result");
+      auto params = func->getParams();
+      if (!params.isTuple() || !params.getTuple().types.back().isFunction()) {
+        Fatal() << "call.if.used's final parameter must be a function";
       }
     }
   });

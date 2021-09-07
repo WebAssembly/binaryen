@@ -24,8 +24,9 @@
 // See the README.md for background on intrinsic functions.
 //
 // Intrinsics can be recognized by Intrinsics::isFoo() methods, that check if a
-// call is a particular intrinsic. Each such call returns nullptr if the input
-// is not that intrinsic, and otherwise the intrinsic itself cast to a Call*.
+// function is a particular intrinsic, or if a call to an function is so. The
+// latter return nullptr if the input is not that intrinsic, and otherwise the
+// intrinsic itself cast to a Call*.
 //
 
 namespace wasm {
@@ -85,6 +86,7 @@ public:
   // Later passes will then turn that into a direct call and further optimize
   // things.
   //
+  bool isCallIfUsed(Function* func);
   Call* isCallIfUsed(Expression* curr);
 };
 
