@@ -18,6 +18,8 @@
 #define wasm_tools_wasm_split_instrumenter_h
 
 #include "pass.h"
+#include "split-options.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -28,15 +30,17 @@ struct Instrumenter : public Pass {
   PassRunner* runner = nullptr;
   Module* wasm = nullptr;
 
-  const std::string& profileExport;
+  const WasmSplitOptions& options;
   uint64_t moduleHash;
 
   Name counterGlobal;
   std::vector<Name> functionGlobals;
 
-  Instrumenter(const std::string& profileExport, uint64_t moduleHash);
+  Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash);
 
   void run(PassRunner* runner, Module* wasm) override;
+
+private:
   void addGlobals();
   void instrumentFuncs();
   void addProfileExport();

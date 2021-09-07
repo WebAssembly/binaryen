@@ -197,6 +197,19 @@ WasmSplitOptions::WasmSplitOptions()
            profileExport = argument;
          })
     .add(
+      "--in-memory",
+      "",
+      "Store profile information in memory (starting at address 0 and taking "
+      "one byte per function) rather than globals (the default) so that "
+      "it can be shared between multiple threads. Users are responsible for "
+      "ensuring that the module does not use the initial memory region for "
+      "anything else.",
+      {Mode::Instrument},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) {
+        storageKind = StorageKind::InMemory;
+      })
+    .add(
       "--emit-module-names",
       "",
       "Emit module names, even if not emitting the rest of the names section. "
