@@ -155,14 +155,15 @@ those tools if we had a custom binary format extension.
 
 An intrinsic method may be optimized away by the optimizer. If it is not, it
 must be **lowered** before shipping the wasm, as otherwise it will look like a
-call to an import that does not exist. That final lowering is not done
+call to an import that does not exist (and VMs will show an error on not having
+a proper value for that import). That final lowering is *not* done
 automatically - a user of intrinsics must run the pass for that explicitly. Note
 that, in general, some additional optimizations may be possible after the final
 lowering, and so a useful pattern is to  optimize once normally with intrinsics,
 then lower them away, then optimize after that, e.g.:
 
 ```
-wasm-opt input.wasm -o output.wasm  -Os --intrinsic-lowering -O3
+wasm-opt input.wasm -o output.wasm  -O --intrinsic-lowering -O
 ```
 
 Each intrinsic defines its semantics, which includes what the optimizer is
@@ -171,9 +172,13 @@ allowed to do with it and what the final lowering will turn it to. See
 for the detailed definitions. A quick summary appears here:
 
 * `call.if.used`: Similar to a `call_ref` (in that it receives parameters, and a
-   reference to a function to call), except that if the result is not used
-  (because it is dropped) then the optimizer can remove the call itself (and
-  just drop the parameters).
+  reference to a function to call), except that if the result is not used
+  (because it is dropped) then the optimizer can remove the call itself. This
+  can be used to implement a call that has side effects but the the code
+  generator knows they are not actually needed if the value is not used (for
+  example, if the side effect is to initialize a singleton global value that is
+  then returned from the function: if it isn't used, perhaps the source language
+  allows it to be initialized later).
 
 ## Tools
 

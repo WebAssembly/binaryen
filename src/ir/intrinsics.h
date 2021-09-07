@@ -50,8 +50,7 @@ public:
   //  * If the optimizer sees that a call.if.used's result is not used - that
   //    is, the result is dropped (potentially after passing through as a
   //    block/if result, etc.) - then the optimizer can remove the call, by
-  //    turning this the call.if.used into a sequence of drops of all the
-  //    parameters.
+  //    turning the call.if.used into a sequence of drops of all the parameters.
   //  * Final lowering always turns a call.if.used into a call_ref.
   //
   // call.if.used is useful to be able to get rid of an unused result that has
@@ -62,11 +61,11 @@ public:
   // cannot be removed, as a call has side effects. But if a code generator
   // knows that it is fine to not make the call given that the result is
   // dropped (perhaps the side effects are to initialize a global cache, for
-  // example) then it can replace
+  // example) then instead of emitting
   //
   //   (call $get-something)
   //
-  // with
+  // it can emit
   //
   //   (call $call.if.used (ref.func $get-something))
   //
