@@ -383,6 +383,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           }
         }
         for (auto*& operand : operands) {
+          // Drop all the operands except for the last one, if we need the last
+          // one to flow out a value.
           if (!(type.isConcrete() && operand == operands.back())) {
             operand = builder.makeDrop(operand);
           }
