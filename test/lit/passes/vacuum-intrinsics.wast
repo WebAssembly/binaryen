@@ -69,6 +69,102 @@
     )
   )
 
+  ;; CHECK:      (func $used-fallthrough
+  ;; CHECK-NEXT:  (local $i32 i32)
+  ;; CHECK-NEXT:  (local.set $i32
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (block $condition (result i32)
+  ;; CHECK-NEXT:     (call $nop)
+  ;; CHECK-NEXT:     (call $call.if.used
+  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $ifTrue (result i32)
+  ;; CHECK-NEXT:     (call $nop)
+  ;; CHECK-NEXT:     (call $call.if.used
+  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $ifFalse (result i32)
+  ;; CHECK-NEXT:     (call $nop)
+  ;; CHECK-NEXT:     (call $call.if.used
+  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $used-fallthrough
+    (local $i32 i32)
+    (local.set $i32
+      (if (result i32)
+        ;; The block falls through a value that is used as the if condition.
+        (block $condition (result i32)
+          ;; Add a call to $nop so that the blocks are not optimized away.
+          (call $nop)
+          (call $call.if.used (ref.func $i))
+        )
+        ;; The arms fall through their blocks and also through the if, and end
+        ;; up used by the set.
+        (block $ifTrue (result i32)
+          (call $nop)
+          (call $call.if.used (ref.func $i))
+        )
+        (block $ifFalse (result i32)
+          (call $nop)
+          (call $call.if.used (ref.func $i))
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $unused-fallthrough
+  ;; CHECK-NEXT:  (local $i32 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (block $condition (result i32)
+  ;; CHECK-NEXT:     (call $nop)
+  ;; CHECK-NEXT:     (call $call.if.used
+  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $ifTrue (result i32)
+  ;; CHECK-NEXT:     (call $nop)
+  ;; CHECK-NEXT:     (call $call.if.used
+  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $ifFalse (result i32)
+  ;; CHECK-NEXT:     (call $nop)
+  ;; CHECK-NEXT:     (call $call.if.used
+  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unused-fallthrough
+    (local $i32 i32)
+    (drop
+      (if (result i32)
+        (block $condition (result i32)
+          (call $nop)
+          (call $call.if.used (ref.func $i))
+        )
+        ;; As above, but now there is a drop outside the if, so the arms are
+        ;; unused and we can optimize them.
+        (block $ifTrue (result i32)
+          (call $nop)
+          (call $call.if.used (ref.func $i))
+        )
+        (block $ifFalse (result i32)
+          (call $nop)
+          (call $call.if.used (ref.func $i))
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $i (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
@@ -83,5 +179,13 @@
   (func $fj (param f32) (result i64)
     ;; Helper function for the above.
     (unreachable)
+  )
+
+  ;; CHECK:      (func $nop
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $nop
+    ;; Helper function for the above.
+    (nop)
   )
 )
