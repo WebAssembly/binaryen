@@ -33,9 +33,8 @@ struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
       auto& operands = curr->operands;
       auto* target = operands.back();
       operands.pop_back();
-      replaceCurrent(Builder(*getModule()).makeCallRef(target,
-                                                       operands,
-                                                       curr->type));
+      replaceCurrent(
+        Builder(*getModule()).makeCallRef(target, operands, curr->type));
     }
   }
 };
