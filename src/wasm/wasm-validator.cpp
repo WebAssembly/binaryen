@@ -21,6 +21,7 @@
 
 #include "ir/features.h"
 #include "ir/global-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
@@ -786,6 +787,16 @@ void FunctionValidator::visitCall(Call* curr) {
     return;
   }
   validateCallParamsAndResult(curr, target->getSig());
+
+  if (Intrinsics(*getModule()).isCallIfUsed(curr)) {
+    shouldBeTrue(target->getResults.isConcrete(),
+                 curr,
+                 "call.if.used must return a result");
+  }
+  auto params = target->getParams();
+  if (!params.isTuple() || !params.getTuple().types.back().isFunction()) {
+    Fatal() << "call.if.used's final parameter must be a function";
+  }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
