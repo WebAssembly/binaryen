@@ -923,9 +923,7 @@ unsigned Type::getByteSize() const {
 }
 
 unsigned Type::hasByteSize() const {
-  auto hasSingleByteSize = [](Type t) {
-    return t.isNumber();
-  };
+  auto hasSingleByteSize = [](Type t) { return t.isNumber(); };
   if (isTuple()) {
     for (const auto& t : *this) {
       if (!hasSingleByteSize(t)) {
