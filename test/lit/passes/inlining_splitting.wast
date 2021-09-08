@@ -115,12 +115,11 @@
     ;; As above, but all we have is an if.
     (if
       (local.get $x)
-      (block
-        (loop $l
-          (call $import)
-          (br $l)
+      (loop $l
+        (call $import)
+        (br_if $l
+          (local.get $x)
         )
-        (return)
       )
     )
   )
@@ -1181,12 +1180,11 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$just-if (param $x i32)
-;; CHECK-NEXT:  (block $block
-;; CHECK-NEXT:   (loop $l
-;; CHECK-NEXT:    (call $import)
-;; CHECK-NEXT:    (br $l)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br_if $l
+;; CHECK-NEXT:    (local.get $x)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
