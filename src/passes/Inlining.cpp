@@ -496,6 +496,7 @@ private:
   // is provided, also actually does the split, and returns the inlineable split
   // function in that out param.
   bool maybeSplit(Function* func, Function** inlineableOut = nullptr) {
+std::cout << "a1\n";
     // Check if we've processed this input before.
     auto iter = splits.find(func);
     if (iter != splits.end()) {
@@ -525,15 +526,18 @@ private:
     // then it seems promising to inline that if's condition (by outlining the
     // rest, as mentioned earlier).
     auto* iff = getIf(body);
+std::cout << "a2\n";
     if (!iff) {
       return false;
     }
+std::cout << "a3\n";
 
     // If the condition is not very simple, the benefits of this optimization
     // are not obvious.
     if (!isSimple(iff->condition)) {
       return false;
     }
+std::cout << "a4\n";
 
     Builder builder(*module);
 
@@ -577,6 +581,7 @@ private:
       *inlineableOut = split.inlineable;
       return true;
     }
+std::cout << "a6\n";
 
     // Pattern B: Represents a function whose entire body looks like
     //
@@ -619,13 +624,16 @@ private:
 
     // The final item must be simple (or not exist, which is simple enough).
     bool finalItemIsSimple = finalItem ? isSimple(finalItem) : true;
+std::cout << "a8\n";
 
     // To fit the pattern, the number of ifs must be valid, and there must be no
     // other items after the optional final one.
     if (numIfs > 0 && numIfs <= MaxIfs + 1 && finalItemIsSimple &&
         !getItem(body, numIfs + (finalItem ? 1 : 0))) {
+std::cout << "a9\n";
       // This has the general shape we seek. Check each if.
       for (Index i = 0; i < numIfs; i++) {
+std::cout << "aa\n";
         auto* iff = getIf(body, i);
         // The if must have a simple condition and no else arm.
         if (!isSimple(iff->condition) || iff->ifFalse) {
@@ -641,6 +649,7 @@ private:
           return false;
         }
       }
+std::cout << "ab\n";
 
       // Success, this matches the pattern. Exit if we were just checking.
       if (!inlineableOut) {
@@ -706,6 +715,9 @@ private:
       if (i < list.size()) {
         return list[i];
       }
+    }
+    if (i == 0) {
+      return curr;
     }
     return nullptr;
   }

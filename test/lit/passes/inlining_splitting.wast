@@ -111,6 +111,57 @@
     (call $maybe-work-hard (i32.const 3))
   )
 
+  (func $just-if (param $x i32)
+    ;; As above, but all we have is an if.
+    (if
+      (local.get $x)
+      (block
+        (loop $l
+          (call $import)
+          (br $l)
+        )
+        (return)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $call-just-if
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$just-if
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (call $byn-split-outlined-B$just-if
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$just-if0
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (call $byn-split-outlined-B$just-if
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-just-if
+    (call $just-if (i32.const 1))
+    (call $just-if (i32.const 2))
+  )
+
+  ;; TODO: testcase with a br to the block's top block which is named
+
   ;; CHECK:      (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -969,17 +1020,6 @@
     (drop (call $reachable-if-body-return (ref.null any)))
   )
 
-  ;; CHECK:      (func $unreachable-if-body-no-result (param $x anyref)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block
-  ;; CHECK-NEXT:    (call $import)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $unreachable-if-body-no-result (param $x anyref)
     (if
       (ref.is_null
@@ -995,11 +1035,37 @@
   )
 
   ;; CHECK:      (func $call-unreachable-if-body-no-result
-  ;; CHECK-NEXT:  (call $unreachable-if-body-no-result
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (ref.is_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $byn-split-outlined-B$unreachable-if-body-no-result
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $unreachable-if-body-no-result
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result0
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (ref.is_null
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $byn-split-outlined-B$unreachable-if-body-no-result
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-unreachable-if-body-no-result
@@ -1114,6 +1180,16 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $byn-split-outlined-B$just-if (param $x i32)
+;; CHECK-NEXT:  (block $block
+;; CHECK-NEXT:   (loop $l
+;; CHECK-NEXT:    (call $import)
+;; CHECK-NEXT:    (br $l)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (return)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $byn-split-outlined-A$many-params (param $x i64) (param $y i32) (param $z f64)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
@@ -1150,6 +1226,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$error-if-null (param $x anyref) (result anyref)
+;; CHECK-NEXT:  (block $block
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-B$unreachable-if-body-no-result (param $x anyref)
 ;; CHECK-NEXT:  (block $block
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (unreachable)
