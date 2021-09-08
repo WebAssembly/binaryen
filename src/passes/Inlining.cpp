@@ -30,6 +30,7 @@
 
 #include <atomic>
 
+#include "ir/branch-utils.h"
 #include "ir/debug.h"
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
@@ -520,10 +521,16 @@ private:
 
     auto* body = func->body;
 
+    // If the body is a block, and we have breaks to that block, then we cannot
+    // outline any code - we can't outline a break without the break's target.
+    if (auto* block = body->dynCast<Block>()) {
+      if (BranchUtils::BranchSeeker::has(block, block->name)) {
+        return false;
+      }
+    }
+
     // All the patterns we look for atm start with an if at the very top of the
-    // function. If that if conditionalizes almost all the work in the function,
-    // then it seems promising to inline that if's condition (by outlining the
-    // rest, as mentioned earlier).
+    // function.
     auto* iff = getIf(body);
     if (!iff) {
       return false;

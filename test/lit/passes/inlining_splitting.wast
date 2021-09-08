@@ -159,7 +159,49 @@
     (call $just-if (i32.const 2))
   )
 
-  ;; TODO: testcase with a br to the block's top block which is named
+  ;; CHECK:      (func $br-to-toplevel (param $x i32)
+  ;; CHECK-NEXT:  (block $toplevel
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block $block
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (br $toplevel)
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-to-toplevel (param $x i32)
+    (block $toplevel
+      (if
+        (local.get $x)
+        (block
+          (if
+            (local.get $x)
+            ;; A br to the toplevel block prevents us from outlining this code,
+            ;; as we can't outline a br without its target.
+            (br $toplevel)
+            (call $import)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $call-br-to-toplevel
+  ;; CHECK-NEXT:  (call $br-to-toplevel
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $br-to-toplevel
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-br-to-toplevel
+    (call $br-to-toplevel (i32.const 1))
+    (call $br-to-toplevel (i32.const 2))
+  )
 
   ;; CHECK:      (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
   ;; CHECK-NEXT:  (if
