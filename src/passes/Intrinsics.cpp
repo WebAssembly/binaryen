@@ -27,14 +27,20 @@ struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
   Pass* create() override { return new IntrinsicLowering; }
 
   void visitCall(Call* curr) {
-    if (Intrinsics(*getModule()).isCallIfUsed(curr)) {
-      // Turn into a call_ref, by using the final operand as the call_ref
-      // target.
+    if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+      // Turn into a call, by using the final operand as the function to call.
       auto& operands = curr->operands;
       auto* target = operands.back();
       operands.pop_back();
-      replaceCurrent(
-        Builder(*getModule()).makeCallRef(target, operands, curr->type));
+      // We could rely on later optimizations here, but at least ensure we emit
+      // a direct call when we can, to avoid a performance cliff if the user
+      // forgets to optimize.
+      Builder builder(*getModule());
+      if (auto* refFunc = target->dynCast<RefFunc>()) {
+        replaceCurrent(builder.makeCall(refFunc->name, operands, curr->type));
+      } else {
+        replaceCurrent(builder.makeCallRef(target, operands, curr->type));
+      }
     }
   }
 };

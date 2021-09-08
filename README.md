@@ -175,14 +175,11 @@ allowed to do with it and what the final lowering will turn it to. See
 [intrinsics.h](https://github.com/WebAssembly/binaryen/blob/main/src/ir/intrinsics.h)
 for the detailed definitions. A quick summary appears here:
 
-* `call.if.used`: Similar to a `call_ref` (in that it receives parameters, and a
-  reference to a function to call), except that if the result is not used
-  (because it is dropped) then the optimizer can remove the call itself. This
-  can be used to implement a call that has side effects but the the code
-  generator knows they are not actually needed if the value is not used (for
-  example, if the side effect is to initialize a singleton global value that is
-  then returned from the function: if it isn't used, perhaps the source language
-  allows it to be initialized later).
+* `call.without.effects`: Similar to a `call_ref` in that it receives
+  parameters, and a reference to a function to call, and calls that function
+  with those parameters, except that the optimizer can assume the call has no
+  side effects, and may be able to optimize it out (if it does not have a
+  result that is used, generally).
 
 ## Tools
 

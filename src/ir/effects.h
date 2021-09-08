@@ -17,6 +17,7 @@
 #ifndef wasm_ir_effects_h
 #define wasm_ir_effects_h
 
+#include "ir/intrinsics.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 
@@ -393,6 +394,11 @@ private:
     }
 
     void visitCall(Call* curr) {
+      // call.without.effects has no effects.
+      if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
+        return;
+      }
+
       parent.calls = true;
       // When EH is enabled, any call can throw.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {

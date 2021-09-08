@@ -20,18 +20,18 @@
 namespace wasm {
 
 static Name BinaryenIntrinsics("binaryen-intrinsics"),
-  CallIfUsed("call.if.used");
+  CallWithoutEffects("call.without.effects");
 
-bool Intrinsics::isCallIfUsed(Function* func) {
-  return func->module == BinaryenIntrinsics && func->base == CallIfUsed;
+bool Intrinsics::isCallWithoutEffects(Function* func) {
+  return func->module == BinaryenIntrinsics && func->base == CallWithoutEffects;
 }
 
-Call* Intrinsics::isCallIfUsed(Expression* curr) {
+Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
   if (auto* call = curr->dynCast<Call>()) {
     // The target function may not exist if the module is still being
     // constructed.
     if (auto* func = module.getFunctionOrNull(call->target)) {
-      if (isCallIfUsed(func)) {
+      if (isCallWithoutEffects(func)) {
         return call;
       }
     }

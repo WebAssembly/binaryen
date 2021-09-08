@@ -38,24 +38,22 @@ public:
   Intrinsics(Module& module) : module(module) {}
 
   //
-  // Check if an instruction is the call.if.used intrinsic.
+  // Check if an instruction is the call.without.effects intrinsic.
   //
-  //   (import "binaryen-intrinsics" "call.if.used"
+  //   (import "binaryen-intrinsics" "call.without.effects"
   //     (func (..params..) (param $target funcref) (..results..)))
   //
   // call.if.used can take any parameters, and in addition a funcref, and return
-  // any (non-none) result.
+  // any result.
   //
   // Precise semantics:
   //
-  //  * If the optimizer sees that a call.if.used's result is not used - that
-  //    is, the result is dropped (potentially after passing through as a
-  //    block/if result, etc.) - then the optimizer can remove the call, by
-  //    turning the call.if.used into a sequence of drops of all the parameters.
-  //  * Final lowering always turns a call.if.used into a call_ref.
+  //  * The optimizer will assume this instruction has no side effects.
+  //  * Final lowering turns a call.if.used into a call of the given function
+  //    with the given parameters.
   //
-  // call.if.used is useful to be able to get rid of an unused result that has
-  // side effects. For example,
+  // call.without.effects is useful to be able to get rid of an unused result
+  // that has side effects. For example,
   //
   //  (drop (call $get-something))
   //
@@ -68,26 +66,26 @@ public:
   //
   // it can emit
   //
-  //   (call $call.if.used (ref.func $get-something))
+  //   (call $call.without.effects (ref.func $get-something))
   //
   // which will have this behavior in the optimizer if it is dropped:
   //
-  //  (drop (call $call.if.used (ref.func $get-something)))
+  //  (drop (call $call.without.effects (ref.func $get-something)))
   //     =>
   //  (drop (ref.func $get-something))
   //
-  // Later passes can then remove the dropped ref.func. Or, if the result is
+  // Later optimizations can remove the dropped ref.func. Or, if the result is
   // actually used,
   //
-  //  (local.set $x (call $call.if.used (ref.func $get-something)))
+  //  (local.set $x (call $call.without.effects (ref.func $get-something)))
   //     =>
-  //  (local.set $x (call_ref (ref.func $get-something)))
+  //  (local.set $x (call $get-something))
   //
   // Later passes will then turn that into a direct call and further optimize
   // things.
   //
-  bool isCallIfUsed(Function* func);
-  Call* isCallIfUsed(Expression* curr);
+  bool isCallWithoutEffects(Function* func);
+  Call* isCallWithoutEffects(Expression* curr);
 };
 
 } // namespace wasm
