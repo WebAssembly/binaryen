@@ -37,7 +37,7 @@ struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
       // forgets to optimize.
       Builder builder(*getModule());
       if (auto* refFunc = target->dynCast<RefFunc>()) {
-        replaceCurrent(builder.makeCall(refFunc->name, operands, curr->type));
+        replaceCurrent(builder.makeCall(refFunc->func, operands, curr->type));
       } else {
         replaceCurrent(builder.makeCallRef(target, operands, curr->type));
       }
