@@ -495,6 +495,17 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, UnifiedExpression
   // Default optimizations for simple cases. Complex things are overridden
   // below.
   void visitExpression(Expression* curr) {
+#if 0
+std::cout << *curr << " : " << BranchUtils::getUniqueTargets(curr).size() << '\n';
+static int limit = atoi(getenv("LIMIT"));
+if (limit-- < 0) return;
+#endif
+    // Control flow need special handling. Those we can optimize are handled
+    // below.
+    if (Properties::isControlFlowStructure(curr)) {
+      return;
+    }
+
     ChildIterator iterator(curr);
     auto& children = iterator.children;
     if (children.size() == 1) {
