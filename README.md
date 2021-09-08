@@ -157,7 +157,11 @@ An intrinsic method may be optimized away by the optimizer. If it is not, it
 must be **lowered** before shipping the wasm, as otherwise it will look like a
 call to an import that does not exist (and VMs will show an error on not having
 a proper value for that import). That final lowering is *not* done
-automatically - a user of intrinsics must run the pass for that explicitly. Note
+automatically. A user of intrinsics must run the pass for that explicitly,
+because the tools do not know when the user intends to finish optimizing, as the
+user may have a pipeline of multiple optimization steps, or may be doing local
+experimentation, or fuzzing/reducing, etc. Only the user knows when the final
+optimization happens before the wasm is "final" and ready to be shipped. Note
 that, in general, some additional optimizations may be possible after the final
 lowering, and so a useful pattern is to  optimize once normally with intrinsics,
 then lower them away, then optimize after that, e.g.:
