@@ -39,6 +39,10 @@ struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
       if (auto* refFunc = target->dynCast<RefFunc>()) {
         replaceCurrent(builder.makeCall(refFunc->func, operands, curr->type));
       } else {
+        if (curr->type.isBasic()) {
+          Fatal() << "Cannot emit call_ref for call.without.effects without "
+                     "a specialized function type";
+        }
         replaceCurrent(builder.makeCallRef(target, operands, curr->type));
       }
     }
