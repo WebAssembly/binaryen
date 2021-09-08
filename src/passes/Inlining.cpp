@@ -464,16 +464,23 @@ struct FunctionSplitter {
     return inlineable;
   }
 
-  void finish() {
-    // When all work is complete, we no longer need the inlineable functions on
-    // the module, as they have been inlined into all the places we wanted them
-    // for.
+  // Clean up. When we are done we no longer need the inlineable functions on
+  // the module, as they have been inlined into all the places we wanted them
+  // for.
+  //
+  // Returns a list of the names of the functions we split.
+  std::vector<Name> finish() {
+    std::vector<Name> ret;
     for (auto& kv : splits) {
-      auto* inlineable = kv.second.inlineable;
+      auto* func = kv.first;
+      auto& split = kv.second;
+      auto* inlineable = split.inlineable;
       if (inlineable) {
         module->removeFunction(inlineable->name);
+        ret.push_back(func->name);
       }
     }
+    return ret;
   }
 
 private:
@@ -803,10 +810,17 @@ struct Inlining : public Pass {
     // then like loop unrolling it loses its benefit quickly, so set a limit
     // here.
     //
+    // In addition to inlining into a function, we track how many times we do
+    // other potentially repetitive operations like splitting a function before
+    // inlining, as any such repetitive operation should be limited in how many
+    // times we perform it. (An exception is how many times we inlined a
+    // function, which we do not want to limit - it can be profitable to inline
+    // a call into a great many callsites, over many iterations.)
+    //
     // (Track names here, and not Function pointers, as we can remove functions
     // while inlining, and it may be confusing during debugging to have a
     // pointer to something that was removed.)
-    std::unordered_map<Name, Index> iterationsInlinedInto;
+    std::unordered_map<Name, Index> iterationCounts;
 
     const size_t MaxIterationsForFunc = 5;
 
@@ -821,7 +835,6 @@ struct Inlining : public Pass {
 
       prepare();
       iteration(inlinedInto);
-      finish();
 
       if (inlinedInto.empty()) {
         return;
@@ -832,11 +845,17 @@ struct Inlining : public Pass {
 #endif
 
       for (auto* func : inlinedInto) {
-        if (++iterationsInlinedInto[func->name] >= MaxIterationsForFunc) {
-#ifdef INLINING_DEBUG
-          std::cout << "  halting due to iterationsInlinedInto.\n";
-#endif
+        if (++iterationCounts[func->name] >= MaxIterationsForFunc) {
           return;
+        }
+      }
+
+      if (functionSplitter) {
+        auto splitNames = functionSplitter->finish();
+        for (auto name : splitNames) {
+          if (++iterationCounts[name] >= MaxIterationsForFunc) {
+            return;
+          }
         }
       }
     }
@@ -954,12 +973,6 @@ struct Inlining : public Pass {
       return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
              !info.usedGlobally;
     });
-  }
-
-  void finish() {
-    if (functionSplitter) {
-      functionSplitter->finish();
-    }
   }
 
   bool worthInlining(Name name) {
