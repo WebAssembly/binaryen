@@ -37,12 +37,13 @@ struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
       // forgets to optimize.
       Builder builder(*getModule());
       if (auto* refFunc = target->dynCast<RefFunc>()) {
-        auto* func = getModule()->getFunction(refFunc->func);
+        auto name = refFunc->func;
+        auto* func = getModule()->getFunction(name);
         if (!HeapType::isSubType(func->type, refFunc->type.getHeapType())) {
           Fatal() << "call.without.effects is not of a subtype of the called "
-                     "function (" << refFunc->func << ")\n";
+                     "function (" << name << ")\n";
         }
-        replaceCurrent(builder.makeCall(refFunc->func, operands, curr->type));
+        replaceCurrent(builder.makeCall(name, operands, curr->type));
       } else {
         if (target->type.isBasic()) {
           Fatal() << "Cannot emit call_ref for call.without.effects without "
