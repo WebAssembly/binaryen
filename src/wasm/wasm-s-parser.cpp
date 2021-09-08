@@ -2643,6 +2643,16 @@ Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
   return atoi(field.c_str());
 }
 
+static void verifyPackedRead(const Field& field, SExpressionWasmBuilder::Packed packed, Element& s, std::string what) {
+  if (field.isPacked() && packed == SExpressionWasmBuilder::Packed::Non) {
+    throw ParseException("packed " + what + " must be read as packed", s.line, s.col);
+  }
+  if (!field.isPacked() && packed != SExpressionWasmBuilder::Packed::Non) {
+    throw ParseException(
+      "non-packed " + what + " must not be read as packed", s.line, s.col);
+  }
+}
+
 Expression* SExpressionWasmBuilder::makeStructGet(Element& s, Packed packed) {
   auto heapType = parseHeapType(*s[1]);
   if (!heapType.isStruct()) {
@@ -2650,13 +2660,7 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, Packed packed) {
   }
   auto index = getStructIndex(*s[1], *s[2]);
   auto& field = heapType.getStruct().fields[index];
-  if (field.isPacked() && packed == Packed::Non) {
-    throw ParseException("packed field must be read as packed", s.line, s.col);
-  }
-  if (!field.isPacked() && packed != Packed::Non) {
-    throw ParseException(
-      "non-packed field must not be read as packed", s.line, s.col);
-  }
+  verifyPackedRead(field, packed, s, "struct field");
   auto type = field.type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
@@ -2692,14 +2696,7 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, Packed packed) {
   auto heapType = parseHeapType(*s[1]);
   auto element = heapType.getArray().element;
-  if (element.isPacked() && packed == Packed::Non) {
-    throw ParseException(
-      "packed element must be read as packed", s.line, s.col);
-  }
-  if (!element.isPacked() && packed != Packed::Non) {
-    throw ParseException(
-      "non-packed element must not be read as packed", s.line, s.col);
-  }
+  verifyPackedRead(element, packed, s, "array element");
   auto ref = parseExpression(*s[2]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto index = parseExpression(*s[3]);
