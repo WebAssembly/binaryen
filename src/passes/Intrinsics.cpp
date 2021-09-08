@@ -41,7 +41,8 @@ struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
         auto* func = getModule()->getFunction(name);
         if (!HeapType::isSubType(func->type, refFunc->type.getHeapType())) {
           Fatal() << "call.without.effects is not of a subtype of the called "
-                     "function (" << name << ")\n";
+                     "function ("
+                  << name << ")\n";
         }
         replaceCurrent(builder.makeCall(name, operands, curr->type));
       } else {
