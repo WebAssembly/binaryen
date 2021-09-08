@@ -589,6 +589,11 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       outer = optimize(curr, curr->operands[i], outer);
     }
   }
+
+  void visitStructGet(StructGet* curr) { optimize(curr, curr->ref); }
+  void visitStructSet(StructSet* curr) {
+    optimize(curr, curr->value, optimize(curr, curr->ref), &curr->ref);
+  }
 };
 
 Pass* createMergeBlocksPass() { return new MergeBlocks(); }

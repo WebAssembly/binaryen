@@ -4,6 +4,9 @@
 
 (module
  (type $anyref_=>_none (func (param anyref)))
+
+ (type $struct (struct (field (mut i32))))
+
  ;; CHECK:      (func $br_on_to_drop
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
@@ -29,6 +32,39 @@
     )
     (ref.null i31) ;; this must not end up dropped
    )
+  )
+ )
+
+ (func $struct.set
+  (block
+   (nop)
+   (struct.set $struct 0
+    (block (result (ref $struct))
+     (drop (i32.const 1234))
+     (ref.as_non_null
+      (ref.null $struct)
+     )
+    )
+    (i32.const 5)
+   )
+   (nop)
+  )
+ )
+
+ (func $struct.get
+  (block
+   (nop)
+   (drop
+    (struct.get $struct 0
+     (block (result (ref $struct))
+      (drop (i32.const 1234))
+      (ref.as_non_null
+       (ref.null $struct)
+      )
+     )
+    )
+   )
+   (nop)
   )
  )
 )
