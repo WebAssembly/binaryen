@@ -424,6 +424,7 @@ struct OptimizeInstructions
       }
       {
         // -x * -y   ==>   x * y
+        //   where  x, y  are integers
         Binary* bin;
         Expression *x, *y;
         if (matches(curr,
@@ -439,6 +440,7 @@ struct OptimizeInstructions
       {
         // -x * y   ==>   -(x * y)
         // x * -y   ==>   -(x * y)
+        //   where  x, y  are integers
         Expression *x, *y;
         if ((matches(curr,
                      binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
@@ -2257,6 +2259,7 @@ private:
     }
     // -x * C   ==>    x * -C,   if  shrinkLevel != 0  or  C != C_pot
     // -x * C   ==>   -(x * C),  otherwise
+    //    where  x, C  are integers
     Binary* inner;
     if (matches(
           curr,
