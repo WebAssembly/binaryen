@@ -279,12 +279,17 @@ private:
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeRttFreshSub(Element& s);
+
+  // A field may be packed, in which case it is signed or unsigned, or it may
+  // not be packed.
+  enum class Packed { Signed, Unsigned, Non };
+
   Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
-  Expression* makeStructGet(Element& s, bool signed_ = false);
+  Expression* makeStructGet(Element& s, Packed packed = Packed::Non);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayGet(Element& s, bool signed_ = false);
+  Expression* makeArrayGet(Element& s, Packed packed = Packed::Non);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
