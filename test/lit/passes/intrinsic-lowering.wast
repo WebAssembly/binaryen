@@ -2,6 +2,9 @@
 ;; RUN: wasm-opt %s --intrinsic-lowering -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $none (func))
+  (type $none (func))
+
   ;; call.without.effects with no params.
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-v (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe-v (param funcref) (result i32)))
@@ -9,6 +12,10 @@
   ;; call.without.effects with some params.
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-dif (param f64 i32 funcref) (result f32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe-dif (param f64) (param i32) (param funcref) (result f32)))
+
+  ;; call.without.effects with no result.
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-n (param funcref)))
+  (import "binaryen-intrinsics" "call.without.effects" (func $cwe-n (param funcref)))
 
   ;; CHECK:      (func $test (result i32)
   ;; CHECK-NEXT:  (drop
@@ -20,12 +27,19 @@
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $none)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $test (result i32)
-    ;; These will be lowered into call_refs.
+    ;; These will be lowered into calls.
     (drop (call $cwe-v (ref.func $test)))
     (drop (call $cwe-dif (f64.const 3.14159) (i32.const 42) (ref.func $dif)))
+    ;; The last must be a call_ref, as we don't see a constant ref.func
+    (call $cwe-n
+      (ref.null $none)
+    )
     (i32.const 1)
   )
 
