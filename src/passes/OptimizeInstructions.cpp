@@ -1126,6 +1126,16 @@ struct OptimizeInstructions
     }
   }
 
+  void visitMemoryFill(MemoryFill* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    assert(getModule()->features.hasBulkMemory());
+    if (auto* ret = optimizeMemoryFill(curr)) {
+      return replaceCurrent(ret);
+    }
+  }
+
   void visitCallRef(CallRef* curr) {
     if (curr->target->type == Type::unreachable) {
       // The call_ref is not reached; leave this for DCE.
@@ -2795,7 +2805,7 @@ private:
 
     // memory.copy(dst, src, C)  ==>  store(dst, load(src))
     if (auto* csize = memCopy->size->dynCast<Const>()) {
-      auto bytes = csize->value.geti32();
+      auto bytes = csize->value.getInteger();
       Builder builder(*getModule());
 
       switch (bytes) {
@@ -2846,6 +2856,103 @@ private:
         }
         default: {
         }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* optimizeMemoryFill(MemoryFill* memFill) {
+    if (auto* csize = memFill->size->dynCast<Const>()) {
+      PassOptions options = getPassOptions();
+
+      auto bytes = csize->value.getInteger();
+      Builder builder(*getModule());
+
+      if (bytes == 0LL &&
+          (options.ignoreImplicitTraps || options.trapsNeverHappen)) {
+        // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
+        return builder.makeBlock(
+          {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
+      }
+      if (auto* cvalue = memFill->value->dynCast<Const>()) {
+        uint32_t byteValue = cvalue->value.geti32() & 0xFF;
+        // memory.fill(d, C1, C2)  ==>
+        //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
+        switch (bytes) {
+          case 1: {
+            return builder.makeStore(1, // bytes
+                                     0, // offset
+                                     1, // align
+                                     memFill->dest,
+                                     builder.makeConst<uint32_t>(byteValue),
+                                     Type::i32);
+          }
+          case 2: {
+            return builder.makeStore(
+              2, // bytes
+              0, // offset
+              1, // align
+              memFill->dest,
+              builder.makeConst<uint32_t>(byteValue * 0x0101U),
+              Type::i32);
+          }
+          case 4: {
+            // transform only when "value" or shrinkLevel equal to zero due to
+            // it could increase size by several bytes
+            if (byteValue == 0 || options.shrinkLevel == 0) {
+              return builder.makeStore(
+                4, // bytes
+                0, // offset
+                1, // align
+                memFill->dest,
+                builder.makeConst<uint32_t>(byteValue * 0x01010101U),
+                Type::i32);
+            }
+            break;
+          }
+          case 8: {
+            // transform only when "value" or shrinkLevel equal to zero due to
+            // it could increase size by several bytes
+            if (byteValue == 0 || options.shrinkLevel == 0) {
+              return builder.makeStore(
+                8, // bytes
+                0, // offset
+                1, // align
+                memFill->dest,
+                builder.makeConst<uint64_t>((uint64_t)byteValue *
+                                            0x0101010101010101ULL),
+                Type::i64);
+            }
+            break;
+          }
+          case 16: {
+            if (options.shrinkLevel == 0) {
+              if (getModule()->features.hasSIMD()) {
+                return builder.makeStore(
+                  16, // bytes
+                  0,  // offset
+                  1,  // align
+                  memFill->dest,
+                  builder.makeUnary(
+                    SplatVecI8x16,
+                    builder.makeConst<uint8_t>((uint8_t)byteValue)),
+                  Type::v128);
+              }
+            }
+            break;
+          }
+          default: {
+          }
+        }
+      }
+      // memory.fill(d, v, 1)  ==>  store8(d, v)
+      if (bytes == 1LL) {
+        return builder.makeStore(1, // bytes
+                                 0, // offset
+                                 1, // align
+                                 memFill->dest,
+                                 memFill->value,
+                                 Type::i32);
       }
     }
     return nullptr;
