@@ -37,6 +37,10 @@ struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
       // forgets to optimize.
       Builder builder(*getModule());
       if (auto* refFunc = target->dynCast<RefFunc>()) {
+        if (!Type::isSubType(curr->type, refFunc->type)) {
+          Fatal() << "call.without.effects is not of a subtype of the called "
+                     "function (" << refFunc->func << ")\n";
+        }
         replaceCurrent(builder.makeCall(refFunc->func, operands, curr->type));
       } else {
         if (curr->type.isBasic()) {
