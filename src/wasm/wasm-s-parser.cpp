@@ -2643,9 +2643,13 @@ Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
   return atoi(field.c_str());
 }
 
-static void verifyPackedRead(const Field& field, SExpressionWasmBuilder::Packed packed, Element& s, std::string what) {
+static void verifyPackedRead(const Field& field,
+                             SExpressionWasmBuilder::Packed packed,
+                             Element& s,
+                             std::string what) {
   if (field.isPacked() && packed == SExpressionWasmBuilder::Packed::Non) {
-    throw ParseException("packed " + what + " must be read as packed", s.line, s.col);
+    throw ParseException(
+      "packed " + what + " must be read as packed", s.line, s.col);
   }
   if (!field.isPacked() && packed != SExpressionWasmBuilder::Packed::Non) {
     throw ParseException(
