@@ -2654,12 +2654,14 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, Packed packed) {
     throw ParseException("packed field must be read as packed", s.line, s.col);
   }
   if (!field.isPacked() && packed != Packed::Non) {
-    throw ParseException("non-packed field must not be read as packed", s.line, s.col);
+    throw ParseException(
+      "non-packed field must not be read as packed", s.line, s.col);
   }
   auto type = field.type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
-  return Builder(wasm).makeStructGet(index, ref, type, packed == Packed::Signed);
+  return Builder(wasm).makeStructGet(
+    index, ref, type, packed == Packed::Signed);
 }
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
@@ -2691,10 +2693,12 @@ Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, Packed packed) {
   auto heapType = parseHeapType(*s[1]);
   auto element = heapType.getArray().element;
   if (element.isPacked() && packed == Packed::Non) {
-    throw ParseException("packed element must be read as packed", s.line, s.col);
+    throw ParseException(
+      "packed element must be read as packed", s.line, s.col);
   }
   if (!element.isPacked() && packed != Packed::Non) {
-    throw ParseException("non-packed element must not be read as packed", s.line, s.col);
+    throw ParseException(
+      "non-packed element must not be read as packed", s.line, s.col);
   }
   auto ref = parseExpression(*s[2]);
   validateHeapTypeUsingChild(ref, heapType, s);
