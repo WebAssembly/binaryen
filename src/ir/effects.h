@@ -32,7 +32,7 @@ public:
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
-      debugInfo(passOptions.debugInfo), module(&module),
+      debugInfo(passOptions.debugInfo), module(module),
       features(module.features) {
     if (ast) {
       walk(ast);
@@ -42,7 +42,7 @@ public:
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
   bool debugInfo;
-  Module* module;
+  Module& module;
   FeatureSet features;
 
   // Walk an expression and all its children.
