@@ -74,6 +74,7 @@
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/iteration.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -397,7 +398,7 @@ void BreakValueDropper::visitBlock(Block* curr) {
   optimizeBlock(curr, getModule(), passOptions, branchInfo);
 }
 
-struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
+struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new MergeBlocks; }
@@ -489,6 +490,20 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       }
     }
     return outer;
+  }
+
+  // Default optimizations for simple cases. Complex things are overridden
+  // below.
+  void visitExpression(Expression* curr) {
+    ChildIterator iterator(curr);
+    auto& children = iterator.children;
+    if (children.size() == 1) {
+      optimize(curr, *children[0]);
+    } else if (children.size() == 2) {
+      optimize(curr, *children[1], optimize(curr, *children[0]), children[0]);
+    } else if (children.size() == 3) {
+      optimizeTernary(curr, *children[0], *children[1], *children[2]);
+    }
   }
 
   void visitUnary(Unary* curr) { optimize(curr, curr->value); }
@@ -588,11 +603,6 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       }
       outer = optimize(curr, curr->operands[i], outer);
     }
-  }
-
-  void visitStructGet(StructGet* curr) { optimize(curr, curr->ref); }
-  void visitStructSet(StructSet* curr) {
-    optimize(curr, curr->value, optimize(curr, curr->ref), &curr->ref);
   }
 };
 
