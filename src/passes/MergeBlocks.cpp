@@ -517,11 +517,6 @@ if (limit-- < 0) return;
     }
   }
 
-  void visitUnary(Unary* curr) { optimize(curr, curr->value); }
-  void visitLocalSet(LocalSet* curr) { optimize(curr, curr->value); }
-  void visitLoad(Load* curr) { optimize(curr, curr->ptr); }
-  void visitReturn(Return* curr) { optimize(curr, curr->value); }
-
   void visitBinary(Binary* curr) {
     optimize(curr, curr->right, optimize(curr, curr->left), &curr->left);
   }
@@ -531,6 +526,7 @@ if (limit-- < 0) return;
   void visitAtomicRMW(AtomicRMW* curr) {
     optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
   }
+
   void optimizeTernary(Expression* curr,
                        Expression*& first,
                        Expression*& second,
