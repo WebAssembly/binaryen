@@ -747,7 +747,7 @@
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.get_u $array
+  ;; CHECK-NEXT:   (array.get_s $array
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
@@ -779,7 +779,7 @@
   ;; NOMNL-NEXT:   (i32.const 3)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (array.get_u $array
+  ;; NOMNL-NEXT:   (array.get_s $array
   ;; NOMNL-NEXT:    (local.get $y)
   ;; NOMNL-NEXT:    (i32.const 4)
   ;; NOMNL-NEXT:   )
@@ -821,7 +821,7 @@
       (i32.const 3)
     )
     (drop
-      (array.get $array
+      (array.get_s $array
         (ref.as_non_null
           (local.get $y)
         )
