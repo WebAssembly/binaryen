@@ -2255,13 +2255,13 @@ private:
         matches(curr, binary(And, pure(&left), ival(0)))) {
       return right;
     }
-    // -x * C   ==>    x * -C,   if  shrinkLevel == 0  or  C != C_pot
+    // -x * C   ==>    x * -C,   if  shrinkLevel == 0  and  C != C_pot
     // -x * C   ==>   -(x * C),  otherwise
     Binary* inner;
     if (matches(
           curr,
           binary(Mul, binary(&inner, Sub, ival(0), any(&left)), ival()))) {
-      if (getPassOptions().shrinkLevel != 0 ||
+      if (getPassOptions().shrinkLevel == 0 &&
           !Bits::isPowerOf2(right->value.getInteger())) {
         right->value = right->value.neg();
         curr->left = left;
