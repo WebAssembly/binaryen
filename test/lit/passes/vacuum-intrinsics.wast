@@ -198,8 +198,6 @@
     )
   )
 
-  ;; TODO: reordering test.
-
   ;; CHECK:      (func $i (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
