@@ -1,5 +1,9 @@
+# Also takes an optional extra argument, which is a list of libs to link before `binaryen`
 function(binaryen_add_executable name sources)
   add_executable(${name} ${sources})
+  if (DEFINED ARGV2)
+    target_link_libraries(${name} ${ARGV2})
+  endif()
   target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
   target_link_libraries(${name} binaryen)
   set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
