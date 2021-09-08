@@ -524,10 +524,10 @@ private:
     // function. If that if conditionalizes almost all the work in the function,
     // then it seems promising to inline that if's condition (by outlining the
     // rest, as mentioned earlier).
-    if (!startsWithIf(body)) {
+    auto* iff = getIf(body);
+    if (!iff) {
       return false;
     }
-    auto* iff = getIf(body);
 
     // If the condition is not very simple, the benefits of this optimization
     // are not obvious.
@@ -543,7 +543,7 @@ private:
     //
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
-        iff->ifTrue->is<Return>()) {
+        iff->ifTrue->is<Return>() && body->is<Block>()) {
       // If we were just checking, stop and report success.
       if (!inlineableOut) {
         split.splittable = true;
@@ -567,14 +567,16 @@ private:
       // TODO: If we handle the case with indirect calls and other global uses
       //       then we could not do this, as those calls would skip the first
       //       function with the condition that calls the heavy work.
+      //
+      // Note that the body must be a block, because if it were not then the
+      // function would be easily inlineable (just an if with a simple condition
+      // and a return), and we would not even attempt to do splitting.
       auto& outlinedList = outlined->body->cast<Block>()->list;
       outlinedList.erase(outlinedList.begin());
 
       *inlineableOut = split.inlineable;
       return true;
     }
-
-    auto& list = body->cast<Block>()->list; // TODO: andle if too
 
     // Pattern B: Represents a function whose entire body looks like
     //
@@ -604,31 +606,38 @@ private:
     // (Note that it can't be anything other than none or unreachable, so we do
     // not have an if-else here - the if arms return no results.)
 
+    // Find the number of ifs.
     // TODO: Investigate more values here. 3 appears useful on real-world code.
     const Index MaxIfs = 3;
+    Index numIfs = 0;
+    while (getIf(body, numIfs) && numIfs <= MaxIfs + 1) {
+      numIfs++;
+    }
 
-    if (list.size() >= 1 && list.size() <= MaxIfs + 1) {
-      auto numIfs = list.size();
-      if (isSimple(list.back())) {
-        numIfs--;
-      }
+    // Look for a final item after the ifs.
+    auto* finalItem = getItem(body, numIfs);
 
+    // The final item must be simple (or not exist, which is simple enough).
+    bool finalItemIsSimple = finalItem ? isSimple(finalItem) : true;
+
+    // To fit the pattern, the number of ifs must be valid, and there must be no
+    // other items after the optional final one.
+    if (numIfs > 0 && numIfs <= MaxIfs + 1 && finalItemIsSimple &&
+        !getItem(body, numIfs + (finalItem ? 1 : 0))) {
+      // This has the general shape we seek. Check each if.
       for (Index i = 0; i < numIfs; i++) {
-        if (auto* iff = list[i]->dynCast<If>()) {
-          // The if must have a simple condition and no else arm.
-          if (!isSimple(iff->condition) || iff->ifFalse) {
+        auto* iff = getIf(body, i);
+        // The if must have a simple condition and no else arm.
+        if (!isSimple(iff->condition) || iff->ifFalse) {
+          return false;
+        }
+        if (iff->ifTrue->type == Type::none) {
+          // This must have no returns.
+          if (!FindAll<Return>(iff->ifTrue).list.empty()) {
             return false;
           }
-          if (iff->ifTrue->type == Type::none) {
-            // This must have no returns.
-            if (!FindAll<Return>(iff->ifTrue).list.empty()) {
-              return false;
-            }
-          } else if (iff->ifTrue->type != Type::unreachable) {
-            // This is neither unreachable nor none, so we cannot handle it.
-            return false;
-          }
-        } else {
+        } else if (iff->ifTrue->type != Type::unreachable) {
+          // This is neither unreachable nor none, so we cannot handle it.
           return false;
         }
       }
@@ -684,20 +693,34 @@ private:
       Names::getValidFunctionName(*module, prefix + '$' + func->name.str));
   }
 
-  static bool startsWithIf(Expression* curr) {
-    if (curr->is<If>()) {
-      return true;
+  // Get the i-th item in a sequence of initial items in an expression. That is,
+  // if the item is a block, it may have several such items, and otherwise there
+  // is a single item, that item itself. This basically provides a simpler
+  // interface than checking if something is a block or not when there is just
+  // one item.
+  //
+  // Returns nullptr if there is no such item.
+  static Expression* getItem(Expression* curr, Index i = 0) {
+    if (auto* block = curr->dynCast<Block>()) {
+      auto& list = block->list;
+      if (i < list.size()) {
+        return list[i];
+      }
     }
-    auto* block = curr->dynCast<Block>();
-    return block && !block->list.empty() && block->list[0]->is<If>();
+    return nullptr;
   }
 
+  // Get the i-th if in a sequence of initial ifs in an expression. If no such
+  // if exists, returns nullptr;
   static If* getIf(Expression* curr, Index i = 0) {
-    if (curr->is<If>()) {
-      assert(i = 0);
-      return curr->cast<If>();
+    auto* item = getItem(curr, i);
+    if (!item) {
+      return nullptr;
     }
-    return curr->cast<Block>()->list[i]->cast<If>();
+    if (auto* iff = item->dynCast<If>()) {
+      return iff;
+    }
+    return nullptr;
   }
 
   // Checks if an expression is very simple - something simple enough that we
