@@ -524,7 +524,7 @@ private:
     // function. If that if conditionalizes almost all the work in the function,
     // then it seems promising to inline that if's condition (by outlining the
     // rest, as mentioned earlier).
-    if (!isBlockStartingWithIf(body)) {
+    if (!startsWithIf(body)) {
       return false;
     }
     auto* iff = getIf(body);
@@ -574,7 +574,7 @@ private:
       return true;
     }
 
-    auto& list = body->cast<Block>()->list;
+    auto& list = body->cast<Block>()->list; // TODO: andle if too
 
     // Pattern B: Represents a function whose entire body looks like
     //
@@ -684,12 +684,19 @@ private:
       Names::getValidFunctionName(*module, prefix + '$' + func->name.str));
   }
 
-  static bool isBlockStartingWithIf(Expression* curr) {
+  static bool startsWithIf(Expression* curr) {
+    if (curr->is<If>()) {
+      return true;
+    }
     auto* block = curr->dynCast<Block>();
     return block && !block->list.empty() && block->list[0]->is<If>();
   }
 
   static If* getIf(Expression* curr, Index i = 0) {
+    if (curr->is<If>()) {
+      assert(i = 0);
+      return curr->cast<If>();
+    }
     return curr->cast<Block>()->list[i]->cast<If>();
   }
 

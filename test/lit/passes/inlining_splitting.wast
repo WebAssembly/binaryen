@@ -9,10 +9,10 @@
 
   ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
 
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
-
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
 
@@ -967,6 +967,44 @@
   (func $call-reachable-if-body-return
     (drop (call $reachable-if-body-return (ref.null any)))
     (drop (call $reachable-if-body-return (ref.null any)))
+  )
+
+  ;; CHECK:      (func $unreachable-if-body-no-result (param $x anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-if-body-no-result (param $x anyref)
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      ;; The if body is unreachable, but the function has no returned value.
+      ;; When we outline this code, we should not try to return a value.
+      (block
+        (call $import)
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $call-unreachable-if-body-no-result
+  ;; CHECK-NEXT:  (call $unreachable-if-body-no-result
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $unreachable-if-body-no-result
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-unreachable-if-body-no-result
+    (call $unreachable-if-body-no-result (ref.null any))
+    (call $unreachable-if-body-no-result (ref.null any))
   )
 
   (func $multi-if (param $x anyref) (result anyref)
