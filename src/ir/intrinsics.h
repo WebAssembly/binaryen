@@ -25,7 +25,7 @@
 //
 // Intrinsics can be recognized by Intrinsics::isFoo() methods, that check if a
 // function is a particular intrinsic, or if a call to a function is so. The
-// latter return nullptr if the input is not that intrinsic, and otherwise the
+// latter returns nullptr if the input is not that intrinsic, and otherwise the
 // intrinsic itself cast to a Call*.
 //
 
