@@ -2,33 +2,30 @@
 ;; RUN: wasm-opt %s --intrinsic-lowering -all -S -o - | filecheck %s
 
 (module
-  ;; call.if.used with no params.
-  ;; CHECK:      (import "binaryen-intrinsics" "call.if.used" (func $ciu-v (param funcref) (result i32)))
-  (import "binaryen-intrinsics" "call.if.used" (func $ciu-v (param funcref) (result i32)))
+  ;; call.without.effects with no params.
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-v (param funcref) (result i32)))
+  (import "binaryen-intrinsics" "call.without.effects" (func $cwe-v (param funcref) (result i32)))
 
-  ;; call.if.used with some params.
-  ;; CHECK:      (import "binaryen-intrinsics" "call.if.used" (func $ciu-dif (param f64 i32 funcref) (result f32)))
-  (import "binaryen-intrinsics" "call.if.used" (func $ciu-dif (param f64) (param i32) (param funcref) (result f32)))
+  ;; call.without.effects with some params.
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-dif (param f64 i32 funcref) (result f32)))
+  (import "binaryen-intrinsics" "call.without.effects" (func $cwe-dif (param f64) (param i32) (param funcref) (result f32)))
 
   ;; CHECK:      (func $test (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_ref
-  ;; CHECK-NEXT:    (ref.func $test)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:   (call $dif
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:    (ref.func $dif)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $test (result i32)
     ;; These will be lowered into call_refs.
-    (drop (call $ciu-v (ref.func $test)))
-    (drop (call $ciu-dif (f64.const 3.14159) (i32.const 42) (ref.func $dif)))
+    (drop (call $cwe-v (ref.func $test)))
+    (drop (call $cwe-dif (f64.const 3.14159) (i32.const 42) (ref.func $dif)))
     (i32.const 1)
   )
 
