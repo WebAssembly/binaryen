@@ -1,4 +1,4 @@
-;; Test `call` operator
+;; Test `call.if.used` intrinsic
 
 (assert_invalid
   (module
