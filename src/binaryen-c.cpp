@@ -3512,8 +3512,9 @@ BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
 BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenIndex initial,
-                                  BinaryenIndex maximum) {
-  auto table = Builder::makeTable(name, Type::funcref, initial, maximum);
+                                  BinaryenIndex maximum,
+                                  BinaryenType tableType) {
+  auto table = Builder::makeTable(name, Type(tableType), initial, maximum);
   table->hasExplicitName = true;
   return ((Module*)module)->addTable(std::move(table));
 }
@@ -3772,6 +3773,10 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
+}
+
+void BinaryenModuleUpdateMaps(BinaryenModuleRef module) {
+  ((Module*)module)->updateMaps();
 }
 
 int BinaryenGetOptimizeLevel(void) { return globalPassOptions.optimizeLevel; }
@@ -4328,10 +4333,9 @@ BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
 }
 
-BinaryenSideEffects
-BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
-                                 BinaryenFeatures features) {
-  return EffectAnalyzer(globalPassOptions, features, (Expression*)expr)
+BinaryenSideEffects BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
+                                                     BinaryenModuleRef module) {
+  return EffectAnalyzer(globalPassOptions, *(Module*)module, (Expression*)expr)
     .getSideEffects();
 }
 

@@ -20,6 +20,6 @@ for (let i = 4; i < process.argv.length; i++) {
 }
 
 // Create and read the profile
-let profileSize = instance.exports['__write_profile'](0, 2**32 - 1);
-let profileData = Buffer.from(instance.exports.memory.buffer, 0, profileSize);
+let profileSize = instance.exports['__write_profile'](1024, 2**32 - 1024);
+let profileData = Buffer.from(instance.exports.memory.buffer, 1024, profileSize);
 fs.writeFileSync(outFile, profileData);

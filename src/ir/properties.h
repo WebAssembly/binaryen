@@ -250,9 +250,11 @@ inline Index getZeroExtBits(Expression* curr) {
 // child of this expression. See getFallthrough for a method that looks all the
 // way to the final value falling through, potentially through multiple
 // intermediate expressions.
+//
+// TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
 inline Expression* getImmediateFallthrough(Expression* curr,
                                            const PassOptions& passOptions,
-                                           FeatureSet features) {
+                                           Module& module) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -283,7 +285,7 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
+    if (!EffectAnalyzer(passOptions, module, tryy->body).throws) {
       return tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
@@ -300,14 +302,49 @@ inline Expression* getImmediateFallthrough(Expression* curr,
 // find the final value that falls through.
 inline Expression* getFallthrough(Expression* curr,
                                   const PassOptions& passOptions,
-                                  FeatureSet features) {
+                                  Module& module) {
   while (1) {
-    auto* next = getImmediateFallthrough(curr, passOptions, features);
+    auto* next = getImmediateFallthrough(curr, passOptions, module);
     if (next == curr) {
       return curr;
     }
     curr = next;
   }
+}
+
+inline Index getNumChildren(Expression* curr) {
+  Index ret = 0;
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
+#define DELEGATE_FIELD_CHILD(id, name) ret++;
+
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
+  if (cast->name) {                                                            \
+    ret++;                                                                     \
+  }
+
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_NAME_VECTOR(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+
+#include "wasm-delegations-fields.def"
+
+  return ret;
 }
 
 // Returns whether the resulting value here must fall through without being

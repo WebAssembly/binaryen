@@ -2348,8 +2348,8 @@ function wrapModule(module, self = {}) {
   self['getGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetGlobal'](module, strToStack(name)));
   };
-  self['addTable'] = function(table, initial, maximum) {
-    return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum));
+  self['addTable'] = function(table, initial, maximum, type = Module['_BinaryenTypeFuncref']()) {
+    return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum, type));
   }
   self['getTable'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetTable'](module, strToStack(name)));
@@ -3128,8 +3128,8 @@ Module['getExpressionInfo'] = function(expr) {
 };
 
 // Gets the side effects of the specified expression
-Module['getSideEffects'] = function(expr, features) {
-  return Module['_BinaryenExpressionGetSideEffects'](expr, features);
+Module['getSideEffects'] = function(expr, module) {
+  return Module['_BinaryenExpressionGetSideEffects'](expr, module);
 };
 
 Module['createType'] = function(types) {

@@ -21,6 +21,7 @@
 #include <limits>
 
 #include "ir/branch-utils.h"
+#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/string.h"
 #include "wasm-binary.h"
@@ -3368,6 +3369,11 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     segment->table = table->name;
   }
 
+  // We may be post-MVP also due to type reasons or otherwise, as detected by
+  // the utility function for Binaryen IR.
+  usesExpressions =
+    usesExpressions || TableUtils::usesExpressions(segment.get(), &wasm);
+
   parseElemFinish(s, segment, i, usesExpressions);
 }
 
@@ -3377,30 +3383,29 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
   Index i,
   bool usesExpressions) {
 
-  if (usesExpressions) {
-    for (; i < s.size(); i++) {
-      if (!s[i]->isList()) {
-        throw ParseException("expected a ref.* expression.");
-      }
-      auto& inner = *s[i];
-      if (elementStartsWith(inner, ITEM)) {
-        if (inner[1]->isList()) {
-          // (item (ref.func $f))
-          segment->data.push_back(parseExpression(inner[1]));
-        } else {
-          // (item ref.func $f)
-          inner.list().removeAt(0);
-          segment->data.push_back(parseExpression(inner));
-        }
-      } else {
-        segment->data.push_back(parseExpression(inner));
-      }
-    }
-  } else {
-    for (; i < s.size(); i++) {
+  for (; i < s.size(); i++) {
+    if (!s[i]->isList()) {
+      // An MVP-style declaration: just a function name.
       auto func = getFunctionName(*s[i]);
       segment->data.push_back(
         Builder(wasm).makeRefFunc(func, functionTypes[func]));
+      continue;
+    }
+    if (!usesExpressions) {
+      throw ParseException("expected an MVP-style $funcname in elem.");
+    }
+    auto& inner = *s[i];
+    if (elementStartsWith(inner, ITEM)) {
+      if (inner[1]->isList()) {
+        // (item (ref.func $f))
+        segment->data.push_back(parseExpression(inner[1]));
+      } else {
+        // (item ref.func $f)
+        inner.list().removeAt(0);
+        segment->data.push_back(parseExpression(inner));
+      }
+    } else {
+      segment->data.push_back(parseExpression(inner));
     }
   }
   return wasm.addElementSegment(std::move(segment));

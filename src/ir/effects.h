@@ -27,11 +27,12 @@ namespace wasm {
 class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions,
-                 FeatureSet features,
+                 Module& module,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
-      debugInfo(passOptions.debugInfo), features(features) {
+      debugInfo(passOptions.debugInfo), module(&module),
+      features(module.features) {
     if (ast) {
       walk(ast);
     }
@@ -40,6 +41,7 @@ public:
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
   bool debugInfo;
+  Module* module;
   FeatureSet features;
 
   // Walk an expression and all its children.
@@ -72,10 +74,12 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
-  // TODO: Type-based alias analysis. For example, writes to Arrays never
-  // interfere with reads from Structs.
-  bool readsHeap = false;
-  bool writesHeap = false;
+  // TODO: More specific type-based alias analysis, and not just at the
+  //       struct/array level.
+  bool readsStruct = false;
+  bool writesStruct = false;
+  bool readsArray = false;
+  bool writesArray = false;
   // A trap, either from an unreachable instruction, or from an implicit trap
   // that we do not ignore (see below).
   //
@@ -124,7 +128,8 @@ public:
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool accessesHeap() const { return calls || readsHeap || writesHeap; }
+  bool accessesStruct() const { return calls || readsStruct || writesStruct; }
+  bool accessesArray() const { return calls || readsArray || writesArray; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
   // or a throw (if the throw is not known to be caught inside this expression;
@@ -138,11 +143,12 @@ public:
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() || writesMemory || writesHeap || isAtomic ||
-           calls;
+    return globalsWritten.size() || writesMemory || writesStruct ||
+           writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsHeap || isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsStruct || readsArray ||
+           isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
@@ -163,7 +169,7 @@ public:
   // and gets the result that there are no unremovable side effects, then it
   // must either
   //
-  //  1. Remove any side effects present, if any, so they no longer exists.
+  //  1. Remove any side effects present, if any, so they no longer exist.
   //  2. Keep the code exactly where it is.
   //
   // If instead of 1&2 a pass kept the side effect and also reordered the code
@@ -191,8 +197,10 @@ public:
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
-        ((writesHeap || calls) && other.accessesHeap()) ||
-        ((other.writesHeap || other.calls) && accessesHeap()) ||
+        ((writesStruct || calls) && other.accessesStruct()) ||
+        ((other.writesStruct || other.calls) && accessesStruct()) ||
+        ((writesArray || calls) && other.accessesArray()) ||
+        ((other.writesArray || other.calls) && accessesArray()) ||
         (danglingPop || other.danglingPop)) {
       return true;
     }
@@ -252,8 +260,10 @@ public:
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
-    readsHeap = readsHeap || other.readsHeap;
-    writesHeap = writesHeap || other.writesHeap;
+    readsStruct = readsStruct || other.readsStruct;
+    writesStruct = writesStruct || other.writesStruct;
+    readsArray = readsArray || other.readsArray;
+    writesArray = writesArray || other.writesArray;
     trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
     trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
@@ -618,14 +628,14 @@ private:
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
-      parent.readsHeap = true;
+      parent.readsStruct = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
     }
     void visitStructSet(StructSet* curr) {
-      parent.writesHeap = true;
+      parent.writesStruct = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
@@ -633,12 +643,12 @@ private:
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayGet(ArrayGet* curr) {
-      parent.readsHeap = true;
+      parent.readsArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
     void visitArraySet(ArraySet* curr) {
-      parent.writesHeap = true;
+      parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
@@ -649,6 +659,8 @@ private:
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
+      parent.readsArray = true;
+      parent.writesArray = true;
       // traps when a ref is null, or when out of bounds.
       parent.implicitTrap = true;
     }
@@ -664,11 +676,11 @@ public:
   // Helpers
 
   static bool canReorder(const PassOptions& passOptions,
-                         FeatureSet features,
+                         Module& module,
                          Expression* a,
                          Expression* b) {
-    EffectAnalyzer aEffects(passOptions, features, a);
-    EffectAnalyzer bEffects(passOptions, features, b);
+    EffectAnalyzer aEffects(passOptions, module, a);
+    EffectAnalyzer bEffects(passOptions, module, b);
     return !aEffects.invalidates(bEffects);
   }
 
@@ -759,9 +771,9 @@ private:
 class ShallowEffectAnalyzer : public EffectAnalyzer {
 public:
   ShallowEffectAnalyzer(const PassOptions& passOptions,
-                        FeatureSet features,
+                        Module& module,
                         Expression* ast = nullptr)
-    : EffectAnalyzer(passOptions, features) {
+    : EffectAnalyzer(passOptions, module) {
     if (ast) {
       visit(ast);
     }

@@ -598,13 +598,27 @@ void test_cost() {
 
 void test_effects() {
   PassOptions options;
-  FeatureSet features;
+  Module module;
+
   // Unreachables trap.
   Unreachable unreachable;
-  assert_equal(EffectAnalyzer(options, features, &unreachable).trap, true);
+  assert_equal(EffectAnalyzer(options, module, &unreachable).trap, true);
+
   // Nops... do not.
   Nop nop;
-  assert_equal(EffectAnalyzer(options, features, &nop).trap, false);
+  assert_equal(EffectAnalyzer(options, module, &nop).trap, false);
+
+  // ArrayCopy can trap, reads arrays, and writes arrays (but not structs).
+  {
+    ArrayCopy arrayCopy(module.allocator);
+    EffectAnalyzer effects(options, module);
+    effects.visit(&arrayCopy);
+    assert_equal(effects.trap, true);
+    assert_equal(effects.readsArray, true);
+    assert_equal(effects.writesArray, true);
+    assert_equal(effects.readsStruct, false);
+    assert_equal(effects.writesStruct, false);
+  }
 }
 
 void test_literals() {

@@ -199,7 +199,6 @@ BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
 WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
-ASM2WASM = [os.path.join(options.binaryen_bin, 'asm2wasm')]
 WASM2JS = [os.path.join(options.binaryen_bin, 'wasm2js')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
@@ -224,7 +223,6 @@ if options.valgrind:
     WASM_OPT = wrap_with_valgrind(WASM_OPT)
     WASM_AS = wrap_with_valgrind(WASM_AS)
     WASM_DIS = wrap_with_valgrind(WASM_DIS)
-    ASM2WASM = wrap_with_valgrind(ASM2WASM)
     WASM_SHELL = wrap_with_valgrind(WASM_SHELL)
 
 

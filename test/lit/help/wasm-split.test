@@ -36,13 +36,20 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
 ;; CHECK-NEXT:                                        to keep in the primary module, regardless
-;; CHECK-NEXT:                                        of any profile.
+;; CHECK-NEXT:                                        of any profile. You can also pass a file
+;; CHECK-NEXT:                                        with a list of functions separated by new
+;; CHECK-NEXT:                                        lines. To do this, prepend @ before
+;; CHECK-NEXT:                                        filename (--keep-funcs @myfile)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --split-funcs                        [split] Comma-separated list of functions
 ;; CHECK-NEXT:                                        to split into the secondary module,
 ;; CHECK-NEXT:                                        regardless of any profile. If there is no
 ;; CHECK-NEXT:                                        profile, then this defaults to all
-;; CHECK-NEXT:                                        functions defined in the module.
+;; CHECK-NEXT:                                        functions defined in the module. You can
+;; CHECK-NEXT:                                        also pass a file with a list of functions
+;; CHECK-NEXT:                                        separated by new lines. To do this,
+;; CHECK-NEXT:                                        prepend @ before filename (--split-funcs
+;; CHECK-NEXT:                                        @myfile)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
 ;; CHECK-NEXT:                                        module.
@@ -72,6 +79,15 @@
 ;; CHECK-NEXT:                                        function the embedder calls to write the
 ;; CHECK-NEXT:                                        profile into memory. Defaults to
 ;; CHECK-NEXT:                                        `__write_profile`.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --in-memory                          [instrument] Store profile information in
+;; CHECK-NEXT:                                        memory (starting at address 0 and taking
+;; CHECK-NEXT:                                        one byte per function) rather than
+;; CHECK-NEXT:                                        globals (the default) so that it can be
+;; CHECK-NEXT:                                        shared between multiple threads. Users
+;; CHECK-NEXT:                                        are responsible for ensuring that the
+;; CHECK-NEXT:                                        module does not use the initial memory
+;; CHECK-NEXT:                                        region for anything else.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-module-names                  [split, instrument] Emit module names,
 ;; CHECK-NEXT:                                        even if not emitting the rest of the

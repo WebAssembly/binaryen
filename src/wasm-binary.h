@@ -346,8 +346,8 @@ enum SegmentFlag {
   // Bit 1 if active: 0 = index 0, 1 = index given
   HasIndex = 1 << 1,
   // Table element segments only:
-  // Bit 2: 0 = elemType is funcref and vector of func indexes given
-  //        1 = elemType is given and vector of ref expressions is given
+  // Bit 2: 0 = elemType is funcref and a vector of func indexes given
+  //        1 = elemType is given and a vector of ref expressions is given
   UsesExpressions = 1 << 2
 };
 
@@ -1242,6 +1242,7 @@ public:
   void writeInlineString(const char* name);
   void writeEscapedName(const char* name);
   void writeInlineBuffer(const char* data, size_t size);
+  void writeData(const char* data, size_t size);
 
   struct Buffer {
     const char* data;
@@ -1250,12 +1251,6 @@ public:
     Buffer(const char* data, size_t size, size_t pointerLocation)
       : data(data), size(size), pointerLocation(pointerLocation) {}
   };
-
-  std::vector<Buffer> buffersToWrite;
-
-  void emitBuffer(const char* data, size_t size);
-  void emitString(const char* str);
-  void finishUp();
 
   Module* getModule() { return wasm; }
 

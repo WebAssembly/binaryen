@@ -303,7 +303,7 @@ private:
         return false;
       }
       if (getModule()->features.hasExceptionHandling()) {
-        EffectAnalyzer effects(getPassOptions(), getModule()->features, item);
+        EffectAnalyzer effects(getPassOptions(), *getModule(), item);
         // Pop instructions are pseudoinstructions used only after 'catch' to
         // simulate its behavior. We cannot move expressions containing pops if
         // they are not enclosed in a 'catch' body, because a pop instruction
@@ -591,9 +591,8 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(getPassOptions(),
-                                                   getModule()->features,
-                                                   newItem)
+                                if (EffectAnalyzer(
+                                      getPassOptions(), *getModule(), newItem)
                                       .hasExternalBreakTargets()) {
                                   return true;
                                 }

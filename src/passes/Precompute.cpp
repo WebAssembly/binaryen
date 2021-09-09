@@ -316,7 +316,7 @@ private:
         // propagate that 42 along to the users, regardless of whatever the call
         // did globally.)
         auto values = precomputeValue(Properties::getFallthrough(
-          set->value, getPassOptions(), getModule()->features));
+          set->value, getPassOptions(), *getModule()));
         // Fix up the value. The computation we just did was to look at the
         // fallthrough, then precompute that; that looks through expressions
         // that pass through the value. Normally that does not matter here,

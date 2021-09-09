@@ -560,10 +560,9 @@ enum BrOnOp {
 // Expressions
 //
 // Note that little is provided in terms of constructors for these. The
-// rationale is that writing  new Something(a, b, c, d, e)  is not the clearest,
-// and it would be better to write   new Something(name=a, leftOperand=b...
-// etc., but C++ lacks named operands, so in asm2wasm etc. you will see things
-// like
+// rationale is that writing `new Something(a, b, c, d, e)` is not the clearest,
+// and it would be better to write new `Something(name=a, leftOperand=b...`
+// etc., but C++ lacks named operands so you will see things like
 //   auto x = new Something();
 //   x->name = a;
 //   x->leftOperand = b;
@@ -1825,6 +1824,7 @@ class DylinkSection {
 public:
   Index memorySize, memoryAlignment, tableSize, tableAlignment;
   std::vector<Name> neededDynlibs;
+  std::vector<char> tail;
 };
 
 class Module {

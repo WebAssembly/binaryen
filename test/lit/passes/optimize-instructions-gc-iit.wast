@@ -57,9 +57,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (local.get $child)
-  ;; CHECK-NEXT:    (local.get $other-rtt)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $child)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $other-rtt)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -87,9 +92,14 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
-  ;; NOMNL-NEXT:    (local.get $child)
-  ;; NOMNL-NEXT:    (local.get $other-rtt)
+  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $child)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $other-rtt)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -117,9 +127,14 @@
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast
-  ;; NOMNL-TNH-NEXT:    (local.get $child)
-  ;; NOMNL-TNH-NEXT:    (local.get $other-rtt)
+  ;; NOMNL-TNH-NEXT:   (block
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (local.get $child)
+  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (local.get $other-rtt)
+  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (unreachable)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT: )
@@ -132,28 +147,31 @@
     (param $child-rtt (rtt $child))
     (param $other-rtt (rtt $other))
 
-    ;; a cast of parent to an rtt of parent: static subtyping matches.
+    ;; a cast of parent to an rtt of parent: assuming no traps as we do, we can
+    ;; optimize this as the new type will be valid.
     (drop
       (ref.cast
         (local.get $parent)
         (local.get $parent-rtt)
       )
     )
-    ;; a cast of child to a supertype: static subtyping matches.
+    ;; a cast of child to a supertype: again, we replace with a valid type.
     (drop
       (ref.cast
         (local.get $child)
         (local.get $parent-rtt)
       )
     )
-    ;; a cast of parent to a subtype: static subtyping does not match.
+    ;; a cast of parent to a subtype: we cannot replace the original heap type
+    ;; $child with one that is not equal or more specific, like $parent, so we
+    ;; cannot optimize here.
     (drop
       (ref.cast
         (local.get $parent)
         (local.get $child-rtt)
       )
     )
-    ;; a cast of child to an unrelated type: static subtyping does not match.
+    ;; a cast of child to an unrelated type: it will trap anyhow
     (drop
       (ref.cast
         (local.get $child)
@@ -163,15 +181,23 @@
   )
 
   ;; CHECK:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
+  ;; CHECK-NEXT:  (local $2 (ref null $parent))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (block $block (result (ref $parent))
-  ;; CHECK-NEXT:     (call $foo)
-  ;; CHECK-NEXT:     (local.get $parent)
+  ;; CHECK-NEXT:   (block (result (ref $parent))
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (block $block (result (ref $parent))
+  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:      (local.get $parent)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $block0 (result (rtt $parent))
-  ;; CHECK-NEXT:     (call $foo)
-  ;; CHECK-NEXT:     (local.get $parent-rtt)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block0 (result (rtt $parent))
+  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:      (local.get $parent-rtt)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -189,15 +215,23 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
+  ;; NOMNL-NEXT:  (local $2 (ref null $parent))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
-  ;; NOMNL-NEXT:    (block $block (result (ref $parent))
-  ;; NOMNL-NEXT:     (call $foo)
-  ;; NOMNL-NEXT:     (local.get $parent)
+  ;; NOMNL-NEXT:   (block (result (ref $parent))
+  ;; NOMNL-NEXT:    (local.set $2
+  ;; NOMNL-NEXT:     (block $block (result (ref $parent))
+  ;; NOMNL-NEXT:      (call $foo)
+  ;; NOMNL-NEXT:      (local.get $parent)
+  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (block $block0 (result (rtt $parent))
-  ;; NOMNL-NEXT:     (call $foo)
-  ;; NOMNL-NEXT:     (local.get $parent-rtt)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block $block0 (result (rtt $parent))
+  ;; NOMNL-NEXT:      (call $foo)
+  ;; NOMNL-NEXT:      (local.get $parent-rtt)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (local.get $2)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -215,15 +249,23 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   ;; NOMNL-TNH:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
+  ;; NOMNL-TNH-NEXT:  (local $2 (ref null $parent))
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast
-  ;; NOMNL-TNH-NEXT:    (block $block (result (ref $parent))
-  ;; NOMNL-TNH-NEXT:     (call $foo)
-  ;; NOMNL-TNH-NEXT:     (local.get $parent)
+  ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
+  ;; NOMNL-TNH-NEXT:    (local.set $2
+  ;; NOMNL-TNH-NEXT:     (block $block (result (ref $parent))
+  ;; NOMNL-TNH-NEXT:      (call $foo)
+  ;; NOMNL-TNH-NEXT:      (local.get $parent)
+  ;; NOMNL-TNH-NEXT:     )
   ;; NOMNL-TNH-NEXT:    )
-  ;; NOMNL-TNH-NEXT:    (block $block0 (result (rtt $parent))
-  ;; NOMNL-TNH-NEXT:     (call $foo)
-  ;; NOMNL-TNH-NEXT:     (local.get $parent-rtt)
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (block $block0 (result (rtt $parent))
+  ;; NOMNL-TNH-NEXT:      (call $foo)
+  ;; NOMNL-TNH-NEXT:      (local.get $parent-rtt)
+  ;; NOMNL-TNH-NEXT:     )
+  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (ref.as_non_null
+  ;; NOMNL-TNH-NEXT:     (local.get $2)
   ;; NOMNL-TNH-NEXT:    )
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
@@ -244,7 +286,7 @@
     (param $parent (ref $parent))
     (param $parent-rtt (rtt $parent))
 
-    ;; ignore due to the inability to reorder
+    ;; optimizing this cast away requires reordering.
     (drop
       (ref.cast
         (block (result (ref $parent))

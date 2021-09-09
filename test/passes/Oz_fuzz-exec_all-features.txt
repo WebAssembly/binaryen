@@ -62,17 +62,15 @@
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 (module
- (type $struct (struct (field (mut i32))))
  (type $extendedstruct (struct (field (mut i32)) (field f64)))
+ (type $struct (struct (field (mut i32))))
  (type $void_func (func))
  (type $bytes (array (mut i8)))
- (type $int_func (func (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
- (type $eqref_=>_none (func (param eqref)))
+ (type $int_func (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (global $rtt (mut (rtt $extendedstruct)) (rtt.canon $extendedstruct))
- (elem declare func $a-void-func $call-target)
  (export "structs" (func $0))
  (export "arrays" (func $1))
  (export "rtts" (func $2))
@@ -161,14 +159,7 @@
    (i32.const 0)
   )
   (call $log
-   (ref.test
-    (array.new_with_rtt $bytes
-     (i32.const 20)
-     (i32.const 10)
-     (rtt.canon $bytes)
-    )
-    (rtt.canon $struct)
-   )
+   (i32.const 0)
   )
   (call $log
    (ref.test
@@ -336,11 +327,6 @@
    )
   )
  )
- (func $a-void-func (; has Stack IR ;)
-  (call $log
-   (i32.const 1337)
-  )
- )
  (func $15 (; has Stack IR ;)
   (call $log
    (i32.const 0)
@@ -357,17 +343,7 @@
   (call $log
    (i32.const 3)
   )
-  (drop
-   (call_ref
-    (ref.cast
-     (ref.func $a-void-func)
-     (rtt.canon $int_func)
-    )
-   )
-  )
-  (call $log
-   (i32.const 4)
-  )
+  (unreachable)
  )
  (func $17 (; has Stack IR ;) (result i32)
   (array.get_u $bytes
@@ -379,15 +355,9 @@
    (i32.const 10)
   )
  )
- (func $call-target (; has Stack IR ;) (param $0 eqref)
-  (nop)
- )
  (func $19 (; has Stack IR ;)
   (drop
-   (ref.cast
-    (ref.func $call-target)
-    (rtt.canon $struct)
-   )
+   (unreachable)
   )
  )
  (func $20 (; has Stack IR ;)
@@ -533,12 +503,12 @@
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 1337]
 [LoggingExternalInterface logging 3]
-[trap cast error]
+[trap unreachable]
 [fuzz-exec] calling array-alloc-failure
 [fuzz-exec] calling init-array-packed
 [fuzz-exec] note result: init-array-packed => 213
 [fuzz-exec] calling cast-func-to-struct
-[trap cast error]
+[trap unreachable]
 [fuzz-exec] calling array-copy
 [LoggingExternalInterface logging 10]
 [LoggingExternalInterface logging 10]

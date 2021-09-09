@@ -1269,6 +1269,15 @@ private:
     };
 
     RelevantLiveLocalsWalker walker;
+    walker.setFunction(func);
+    if (!walker.canRun(func)) {
+      // We can proceed without this optimization, which will cause more
+      // spilling - assume all locals are relevant.
+      for (Index i = 0; i < func->getNumLocals(); i++) {
+        relevantLiveLocals.insert(i);
+      }
+      return;
+    }
     walker.walkFunctionInModule(func, getModule());
     // The relevant live locals are ones that are alive at an unwind/rewind
     // location. TODO look more precisely inside basic blocks, as one might stop
@@ -1293,7 +1302,7 @@ private:
       if (!relevantLiveLocals.count(i)) {
         continue;
       }
-      total += func->getLocalType(i).getByteSize();
+      total += getByteSize(func->getLocalType(i));
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
@@ -1308,7 +1317,7 @@ private:
       auto localType = func->getLocalType(i);
       SmallVector<Expression*, 1> loads;
       for (const auto& type : localType) {
-        auto size = type.getByteSize();
+        auto size = getByteSize(type);
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
         loads.push_back(
@@ -1352,7 +1361,7 @@ private:
       auto localType = func->getLocalType(i);
       size_t j = 0;
       for (const auto& type : localType) {
-        auto size = type.getByteSize();
+        auto size = getByteSize(type);
         Expression* localGet = builder->makeLocalGet(i, localType);
         if (localType.size() > 1) {
           localGet = builder->makeTupleExtract(localGet, j);
@@ -1385,6 +1394,15 @@ private:
                          builder->makeLocalGet(tempIndex, Type::i32),
                          Type::i32),
       builder->makeIncStackPos(4));
+  }
+
+  unsigned getByteSize(Type type) {
+    if (!type.hasByteSize()) {
+      Fatal() << "Asyncify does not yet support non-number types, like "
+                 "references (see "
+                 "https://github.com/WebAssembly/binaryen/issues/3739)";
+    }
+    return type.getByteSize();
   }
 };
 

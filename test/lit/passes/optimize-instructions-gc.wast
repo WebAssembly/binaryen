@@ -14,22 +14,23 @@
     (field $i64 (mut i64))
   ))
 
-  ;; CHECK:      (type $empty (struct ))
-  ;; NOMNL:      (type $empty (struct ))
-  (type $empty (struct))
+  ;; CHECK:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $array (array (mut i8)))
+  (type $array (array (mut i8)))
 
   ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
   ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
   (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
+  ;; CHECK:      (type $empty (struct ))
+  ;; NOMNL:      (type $empty (struct ))
+  (type $empty (struct))
+
   ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
   ;; NOMNL:      (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
   (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
 
-  ;; CHECK:      (type $array (array (mut i8)))
-  ;; NOMNL:      (type $array (array (mut i8)))
-  (type $array (array (mut i8)))
-
+  ;; CHECK:      (type $A (struct (field i32)))
   ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
@@ -1662,6 +1663,223 @@
       )
       (struct.get $C 1
         (ref.null $C)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-cast-of-non-null (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (rtt.canon $array)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $incompatible-cast-of-non-null (param $struct (ref $struct))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $struct)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (rtt.canon $array)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $incompatible-cast-of-non-null (param $struct (ref $struct))
+    (drop
+      (ref.cast
+        (local.get $struct)
+        (rtt.canon $array)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-cast-of-null
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (rtt.canon $array)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $array)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref null $array))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (rtt.canon $array)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null $array)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $incompatible-cast-of-null
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $array))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.null $struct)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (rtt.canon $array)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null $array)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.as_non_null
+  ;; NOMNL-NEXT:    (block (result (ref null $array))
+  ;; NOMNL-NEXT:     (drop
+  ;; NOMNL-NEXT:      (ref.as_non_null
+  ;; NOMNL-NEXT:       (ref.null $struct)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (drop
+  ;; NOMNL-NEXT:      (rtt.canon $array)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.null $array)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $incompatible-cast-of-null
+    (drop
+      (ref.cast
+        (ref.null $struct)
+        (rtt.canon $array)
+      )
+    )
+    (drop
+      (ref.cast
+        ;; The fallthrough is null, but the node's child's type is non-nullable,
+        ;; so we must add a ref.as_non_null on the outside to keep the type
+        ;; identical.
+        (ref.as_non_null
+          (ref.null $struct)
+        )
+        (rtt.canon $array)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-cast-of-unknown (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (rtt.canon $array)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $incompatible-cast-of-unknown (param $struct (ref null $struct))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:    (local.get $struct)
+  ;; NOMNL-NEXT:    (rtt.canon $array)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $incompatible-cast-of-unknown (param $struct (ref null $struct))
+    (drop
+      (ref.cast
+        (local.get $struct)
+        (rtt.canon $array)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-test (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (rtt.canon $array)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $incompatible-test (param $struct (ref null $struct))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $struct)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (rtt.canon $array)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $incompatible-test (param $struct (ref null $struct))
+    (drop
+      ;; This test will definitely fail, so we can turn it into 0.
+      (ref.test
+        (local.get $struct)
+        (rtt.canon $array)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:    (rtt.canon $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:    (rtt.canon $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:    (local.get $A)
+  ;; NOMNL-NEXT:    (rtt.canon $B)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:    (local.get $B)
+  ;; NOMNL-NEXT:    (rtt.canon $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
+    (drop
+      ;; B is a subtype of A, so this can work.
+      (ref.test
+        (local.get $A)
+        (rtt.canon $B)
+      )
+    )
+    (drop
+      ;; The other direction works too.
+      (ref.test
+        (local.get $B)
+        (rtt.canon $A)
       )
     )
   )

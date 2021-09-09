@@ -165,8 +165,13 @@ def randomize_fuzz_settings():
 
 
 IMPORTANT_INITIAL_CONTENTS = [
+    # Perenially-important passes
     os.path.join('lit', 'passes', 'optimize-instructions.wast'),
     os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+
+    # Recently-added or modified passes. These can be added to and pruned
+    # frequently.
+    os.path.join('lit', 'passes', 'once-reduction.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
@@ -296,13 +301,16 @@ FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
 
 # compare two strings, strictly
-def compare(x, y, context):
+def compare(x, y, context, verbose=True):
     if x != y and x != IGNORE and y != IGNORE:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
-        raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
-            x, y,
-            message
-        ))
+        if verbose:
+            raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
+                x, y,
+                message
+            ))
+        else:
+            raise Exception(context + "\nDiff:\n\n%s" % (message))
 
 
 # converts a possibly-signed integer to an unsigned integer
@@ -713,7 +721,14 @@ class CheckDeterminism(TestCaseHandler):
         # check for determinism
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
         run([in_bin('wasm-opt'), before_wasm, '-o', 'b2.wasm'] + opts)
-        assert open('b1.wasm', 'rb').read() == open('b2.wasm', 'rb').read(), 'output must be deterministic'
+        b1 = open('b1.wasm', 'rb').read()
+        b2 = open('b2.wasm', 'rb').read()
+        if (b1 != b2):
+            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat'])
+            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'])
+            t1 = open('b1.wat', 'r').read()
+            t2 = open('b2.wat', 'r').read()
+            compare(t1, t2, 'Output must be deterministic.', verbose=False)
 
 
 class Wasm2JS(TestCaseHandler):
@@ -1048,6 +1063,7 @@ opt_choices = [
     ["--memory-packing"],
     ["--merge-blocks"],
     ['--merge-locals'],
+    ['--once-reduction'],
     ["--optimize-instructions"],
     ["--optimize-stack-ir"],
     ["--generate-stack-ir", "--optimize-stack-ir"],

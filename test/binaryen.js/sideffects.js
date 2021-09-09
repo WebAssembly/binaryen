@@ -101,7 +101,7 @@ module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
     module.call("test", [], binaryen.i32),
-    module.getFeatures()
+    module
   )
   ==
   binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
@@ -110,7 +110,7 @@ assert(
 assert(
   binaryen.getSideEffects(
     module.drop(module.i32.pop()),
-    module.getFeatures()
+    module
   )
   ==
   binaryen.SideEffects.DanglingPop

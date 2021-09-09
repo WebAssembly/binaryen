@@ -219,9 +219,9 @@ struct Scanner
   // original expression that we request from.
   HashedExprs activeExprs;
 
-  // Hash values of all active expressions. We store these so that we do not end
-  // up recomputing hashes of children in an N^2 manner.
-  std::unordered_map<Expression*, size_t> activeHashes;
+  // Stack of hash values of all active expressions. We store these so that we
+  // do not end up recomputing hashes of children in an N^2 manner.
+  SmallVector<size_t, 10> activeHashes;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
@@ -240,17 +240,18 @@ struct Scanner
     //
     // Note that we must compute the hash first, as we need it even for things
     // that are not isRelevant() (if they are the children of a relevant thing).
+    auto numChildren = Properties::getNumChildren(curr);
     auto hash = ExpressionAnalyzer::shallowHash(curr);
-    for (auto* child : ChildIterator(curr)) {
-      auto iter = activeHashes.find(child);
-      if (iter == activeHashes.end()) {
+    for (Index i = 0; i < numChildren; i++) {
+      if (activeHashes.empty()) {
         // The child was in another block, so this expression cannot be
         // optimized.
         return;
       }
-      hash_combine(hash, iter->second);
+      hash_combine(hash, activeHashes.back());
+      activeHashes.pop_back();
     }
-    activeHashes[curr] = hash;
+    activeHashes.push_back(hash);
 
     // Check if this is something relevant for optimization.
     if (!isRelevant(curr)) {
@@ -379,7 +380,7 @@ struct Checker
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
-      EffectAnalyzer effects(options, getModule()->features);
+      EffectAnalyzer effects(options, *getModule());
       // We only need to visit this node itself, as we have already visited its
       // children by the time we get here.
       effects.visit(curr);
@@ -420,7 +421,7 @@ struct Checker
     if (info.requests > 0) {
       // This is an original. Compute its side effects, as we cannot optimize
       // away repeated apperances if it has any.
-      EffectAnalyzer effects(options, getModule()->features, curr);
+      EffectAnalyzer effects(options, *getModule(), curr);
 
       // We can ignore traps here, as we replace a repeating expression with a
       // single appearance of it, a store to a local, and gets in the other

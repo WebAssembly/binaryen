@@ -33,6 +33,7 @@
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
 #include <ir/match.h>
+#include <ir/ordering.h>
 #include <ir/properties.h>
 #include <ir/type-updating.h>
 #include <ir/utils.h>
@@ -44,12 +45,6 @@
 // conditionalized on the availability of atomics.
 
 namespace wasm {
-
-Name I32_EXPR = "i32.expr";
-Name I64_EXPR = "i64.expr";
-Name F32_EXPR = "f32.expr";
-Name F64_EXPR = "f64.expr";
-Name ANY_EXPR = "any.expr";
 
 // Useful information about locals
 struct LocalInfo {
@@ -100,8 +95,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
       return;
     }
     // an integer var, worth processing
-    auto* value = Properties::getFallthrough(
-      curr->value, passOptions, getModule()->features);
+    auto* value =
+      Properties::getFallthrough(curr->value, passOptions, *getModule());
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
@@ -212,20 +207,35 @@ struct OptimizeInstructions
 
   bool fastMath;
 
+  bool refinalize = false;
+
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
-    // first, scan locals
+
+    // First, scan locals.
     {
       LocalScanner scanner(localInfo, getPassOptions());
       scanner.setModule(getModule());
       scanner.walkFunction(func);
     }
-    // main walk
+
+    // Main walk.
     super::doWalkFunction(func);
+
+    // If we need to update parent types, do so.
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
+
+    // Final optimizations.
     {
       FinalOptimizer optimizer(getPassOptions());
       optimizer.walkFunction(func);
     }
+
+    // Some patterns create locals (like when we use getResultOfFirst), which we
+    // may need to fix up.
+    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
 
   // Set to true when one of the visitors makes a change (either replacing the
@@ -259,7 +269,7 @@ struct OptimizeInstructions
   }
 
   EffectAnalyzer effects(Expression* expr) {
-    return EffectAnalyzer(getPassOptions(), getModule()->features, expr);
+    return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
 
   decltype(auto) pure(Expression** binder) {
@@ -268,8 +278,7 @@ struct OptimizeInstructions
   }
 
   bool canReorder(Expression* a, Expression* b) {
-    return EffectAnalyzer::canReorder(
-      getPassOptions(), getModule()->features, a, b);
+    return EffectAnalyzer::canReorder(getPassOptions(), *getModule(), a, b);
   }
 
   void visitBinary(Binary* curr) {
@@ -454,9 +463,9 @@ struct OptimizeInstructions
       Index extraLeftShifts;
       auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
       if (extraLeftShifts == 0) {
-        if (auto* load = Properties::getFallthrough(
-                           ext, getPassOptions(), getModule()->features)
-                           ->dynCast<Load>()) {
+        if (auto* load =
+              Properties::getFallthrough(ext, getPassOptions(), *getModule())
+                ->dynCast<Load>()) {
           // pattern match a load of 8 bits and a sign extend using a shl of
           // 24 then shr_s of 24 as well, etc.
           if (LoadUtils::canBeSigned(load) &&
@@ -1137,9 +1146,9 @@ struct OptimizeInstructions
     // the fallthrough value there. It takes more work to optimize this case,
     // but it is pretty important to allow a call_ref to become a fast direct
     // call, so make the effort.
-    if (auto* ref =
-          Properties::getFallthrough(curr->target, getPassOptions(), features)
-            ->dynCast<RefFunc>()) {
+    if (auto* ref = Properties::getFallthrough(
+                      curr->target, getPassOptions(), *getModule())
+                      ->dynCast<RefFunc>()) {
       // Check if the fallthrough make sense. We may have cast it to a different
       // type, which would be a problem - we'd be replacing a call_ref to one
       // type with a direct call to a function of another type. That would trap
@@ -1263,46 +1272,85 @@ struct OptimizeInstructions
     skipNonNullCast(curr->srcRef);
   }
 
+  bool canBeCastTo(HeapType a, HeapType b) {
+    return HeapType::isSubType(a, b) || HeapType::isSubType(b, a);
+  }
+
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
 
+    Builder builder(*getModule());
     auto passOptions = getPassOptions();
 
+    auto fallthrough =
+      Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
+
+    // If the value is a null, it will just flow through, and we do not need the
+    // cast. However, if that would change the type, then things are less
+    // simple: if the original type was non-nullable, replacing it with a null
+    // would change the type, which can happen in e.g.
+    //   (ref.cast (ref.as_non_null (.. (ref.null)
+    if (fallthrough->is<RefNull>()) {
+      // Replace the expression with drops of the inputs, and a null. Note that
+      // we provide a null of the type the outside expects - that of the rtt,
+      // which is what was cast to.
+      Expression* rep =
+        builder.makeBlock({builder.makeDrop(curr->ref),
+                           builder.makeDrop(curr->rtt),
+                           builder.makeRefNull(curr->rtt->type.getHeapType())});
+      if (curr->ref->type.isNonNullable()) {
+        // Avoid a type change by forcing to be non-nullable. In practice, this
+        // would have trapped before we get here, so this is just for
+        // validation.
+        rep = builder.makeRefAs(RefAsNonNull, rep);
+      }
+      replaceCurrent(rep);
+      return;
+      // TODO: The optimal ordering of this and the other ref.as_non_null stuff
+      //       later down in this functions is unclear and may be worth looking
+      //       into.
+    }
+
+    // For the cast to be able to succeed, the value being cast must be a
+    // subtype of the desired type, as RTT subtyping is a subset of static
+    // subtyping. For example, trying to cast an array to a struct would be
+    // incompatible.
+    if (!canBeCastTo(curr->ref->type.getHeapType(),
+                     curr->rtt->type.getHeapType())) {
+      // This cast cannot succeed. If the input is not a null, it will
+      // definitely trap.
+      if (fallthrough->type.isNonNullable()) {
+        // Our type will now be unreachable; update the parents.
+        refinalize = true;
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->rtt),
+                                          builder.makeUnreachable()}));
+        return;
+      }
+      // Otherwise, we are not sure what it is, and need to wait for runtime to
+      // see if it is a null or not. (We've already handled the case where we
+      // can see the value is definitely a null at compile time, earlier.)
+    }
+
     if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
-      // A ref.cast traps when the RTTs do not line up, which can be of one of
-      // two sorts of issues:
-      //  1. The value being cast is not even a subtype of the cast type. In
-      //     that case the RTTs trivially cannot indicate subtyping, because
-      //     RTT subtyping is a subset of static subtyping. For example, maybe
-      //     we are trying to cast a {i32} struct to an [f64] array.
-      //  2. The value is a subtype of the cast type, but the RTTs still do not
-      //     fit. That indicates a difference between RTT subtyping and static
-      //     subtyping. That is, the type may be right but the chain of rtt.subs
-      //     is not.
-      // If we ignore a possible trap then we would like to assume that neither
-      // of those two situations can happen. However, we still cannot do
-      // anything if point 1 is a problem, that is, if the value is not a
-      // subtype of the cast type, as we can't remove the cast in that case -
-      // the wasm would not validate. But if the type *is* a subtype, then we
-      // can ignore a possible trap on 2 and remove it.
-      //
-      // We also do not do this if the arguments cannot be reordered. If we
-      // can't do that then we need to add a drop, at minimum (which may still
-      // be worthwhile, but depends on other optimizations kicking in, so it's
-      // not clearly worthwhile).
+      // Aside from the issue of type incompatibility as mentioned above, the
+      // cast can trap if the types *are* compatible but it happens to be the
+      // case at runtime that the value is not of the desired subtype. If we
+      // do not consider such traps possible, we can ignore that. Note, though,
+      // that we cannot do this if we cannot replace the current type with the
+      // reference's type.
       if (HeapType::isSubType(curr->ref->type.getHeapType(),
-                              curr->rtt->type.getHeapType()) &&
-          canReorder(curr->ref, curr->rtt)) {
-        Builder builder(*getModule());
-        replaceCurrent(
-          builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+                              curr->rtt->type.getHeapType())) {
+        replaceCurrent(getResultOfFirst(curr->ref,
+                                        builder.makeDrop(curr->rtt),
+                                        getFunction(),
+                                        getModule(),
+                                        passOptions));
         return;
       }
     }
-
-    auto features = getModule()->features;
 
     // Repeated identical ref.cast operations are unnecessary, if using the
     // exact same rtt - the result will be the same. Find the immediate child
@@ -1314,7 +1362,7 @@ struct OptimizeInstructions
       // RefCast falls through the value, so instead of calling getFallthrough()
       // to look through all fallthroughs, we must iterate manually. Keep going
       // until we reach either the end of things falling-through, or a cast.
-      ref = Properties::getImmediateFallthrough(ref, passOptions, features);
+      ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
       if (ref == last) {
         break;
       }
@@ -1322,7 +1370,8 @@ struct OptimizeInstructions
     if (auto* child = ref->dynCast<RefCast>()) {
       // Check if the casts are identical.
       if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
-          !EffectAnalyzer(passOptions, features, curr->rtt).hasSideEffects()) {
+          !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
+             .hasSideEffects()) {
         replaceCurrent(curr->ref);
         return;
       }
@@ -1355,6 +1404,18 @@ struct OptimizeInstructions
         replaceCurrent(as);
         return;
       }
+    }
+  }
+
+  void visitRefTest(RefTest* curr) {
+    // See above in RefCast.
+    if (!canBeCastTo(curr->ref->type.getHeapType(),
+                     curr->rtt->type.getHeapType())) {
+      // This test cannot succeed, and will definitely return 0.
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->rtt),
+                                        builder.makeConst(int32_t(0))}));
     }
   }
 
@@ -1475,23 +1536,22 @@ private:
     // also ok to have side effects here, if we can remove them, as we are also
     // checking if we can remove the two inputs anyhow.)
     auto passOptions = getPassOptions();
-    auto features = getModule()->features;
-    if (EffectAnalyzer(passOptions, features, left)
+    if (EffectAnalyzer(passOptions, *getModule(), left)
           .hasUnremovableSideEffects() ||
-        EffectAnalyzer(passOptions, features, right)
+        EffectAnalyzer(passOptions, *getModule(), right)
           .hasUnremovableSideEffects()) {
       return false;
     }
 
     // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, features);
-    right = Properties::getFallthrough(right, passOptions, features);
+    left = Properties::getFallthrough(left, passOptions, *getModule());
+    right = Properties::getFallthrough(right, passOptions, *getModule());
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
     // To be equal, they must also be known to return the same result
     // deterministically.
-    if (Properties::isGenerative(left, features)) {
+    if (Properties::isGenerative(left, getModule()->features)) {
       return false;
     }
     return true;
@@ -1847,7 +1907,6 @@ private:
         if (!curr->type.isInteger()) {
           return;
         }
-        FeatureSet features = getModule()->features;
         auto type = curr->type;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
@@ -1869,7 +1928,7 @@ private:
           // shift has side effects
           if (((left && left->value.isZero()) ||
                (right && Bits::getEffectiveShifts(right) == 0)) &&
-              !EffectAnalyzer(passOptions, features, curr->right)
+              !EffectAnalyzer(passOptions, *getModule(), curr->right)
                  .hasSideEffects()) {
             replaceCurrent(curr->left);
             return;
@@ -1878,13 +1937,13 @@ private:
           // multiplying by zero is a zero, unless the other side has side
           // effects
           if (left && left->value.isZero() &&
-              !EffectAnalyzer(passOptions, features, curr->right)
+              !EffectAnalyzer(passOptions, *getModule(), curr->right)
                  .hasSideEffects()) {
             replaceCurrent(left);
             return;
           }
           if (right && right->value.isZero() &&
-              !EffectAnalyzer(passOptions, features, curr->left)
+              !EffectAnalyzer(passOptions, *getModule(), curr->left)
                  .hasSideEffects()) {
             replaceCurrent(right);
             return;
@@ -2618,8 +2677,7 @@ private:
     if (type.isInteger()) {
       if (auto* inner = outer->right->dynCast<Binary>()) {
         if (outer->op == inner->op) {
-          if (!EffectAnalyzer(
-                 getPassOptions(), getModule()->features, outer->left)
+          if (!EffectAnalyzer(getPassOptions(), *getModule(), outer->left)
                  .hasSideEffects()) {
             if (ExpressionAnalyzer::equal(inner->left, outer->left)) {
               // x - (x - y)  ==>   y
@@ -2661,8 +2719,7 @@ private:
       }
       if (auto* inner = outer->left->dynCast<Binary>()) {
         if (outer->op == inner->op) {
-          if (!EffectAnalyzer(
-                 getPassOptions(), getModule()->features, outer->right)
+          if (!EffectAnalyzer(getPassOptions(), *getModule(), outer->right)
                  .hasSideEffects()) {
             if (ExpressionAnalyzer::equal(inner->right, outer->right)) {
               // (x ^ y) ^ y  ==>   x
@@ -3194,9 +3251,8 @@ private:
             // the side effects execute once, so there is no problem.
             // TODO: handle certain side effects when possible in select
             bool validEffects = std::is_same<T, If>::value ||
-                                !ShallowEffectAnalyzer(getPassOptions(),
-                                                       getModule()->features,
-                                                       curr->ifTrue)
+                                !ShallowEffectAnalyzer(
+                                   getPassOptions(), *getModule(), curr->ifTrue)
                                    .hasSideEffects();
 
             // In addition, check for specific limitations of select.
