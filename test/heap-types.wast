@@ -388,4 +388,12 @@
       (rtt.canon $vector)
     )
   )
+  (func $array-init-packed (result (ref $bytes))
+    (array.init $bytes
+      (i32.const 4)
+      (i32.const 2)
+      (i32.const 1)
+      (rtt.canon $bytes)
+    )
+  )
 )
