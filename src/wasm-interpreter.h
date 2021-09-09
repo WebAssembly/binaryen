@@ -1715,11 +1715,11 @@ public:
     }
     Literals data(num);
     for (Index i = 0; i < num; i++) {
-      auto* value = this->visit(curr->values[i]);
+      auto value = this->visit(curr->values[i]);
       if (value.breaking()) {
         return value;
       }
-      data[i] = value;
+      data[i] = value.getSingleValue();
     }
     return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
                         curr->type));
