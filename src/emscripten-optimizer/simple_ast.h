@@ -947,8 +947,9 @@ struct JSPrinter {
     bool integer = wasm::isInteger(d);
 #define BUFFERSIZE 1000
     // f is normal, e is scientific for float, x for integer
-    char full_storage_f[BUFFERSIZE];
-    char full_storage_e[BUFFERSIZE];
+    // These need to be thread-local because they are returned.
+    thread_local char full_storage_f[BUFFERSIZE];
+    thread_local char full_storage_e[BUFFERSIZE];
     // full has one more char, for a possible '-'
     char* storage_f = full_storage_f + 1;
     char* storage_e = full_storage_e + 1;
