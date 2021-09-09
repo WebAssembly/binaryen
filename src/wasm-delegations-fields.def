@@ -638,7 +638,6 @@ switch (DELEGATE_ID) {
     DELEGATE_START(ArrayInit);
     DELEGATE_FIELD_CHILD(ArrayInit, rtt);
     DELEGATE_FIELD_CHILD_VECTOR(ArrayInit, values);
-    DELEGATE_FIELD_INT(ArrayInit, size);
     DELEGATE_END(ArrayInit);
     break;
   }

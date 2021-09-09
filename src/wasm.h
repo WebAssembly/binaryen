@@ -1471,7 +1471,7 @@ public:
 
 class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
 public:
-  ArrayInit(MixedArena& allocator) {}
+  ArrayInit(MixedArena& allocator) : values(allocator) {}
 
   ExpressionList values;
   Expression* rtt;
