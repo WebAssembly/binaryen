@@ -947,8 +947,8 @@ struct JSPrinter {
     bool integer = wasm::isInteger(d);
 #define BUFFERSIZE 1000
     // f is normal, e is scientific for float, x for integer
-    char full_storage_f[BUFFERSIZE] = {};
-    char full_storage_e[BUFFERSIZE] = {};
+    char full_storage_f[BUFFERSIZE];
+    char full_storage_e[BUFFERSIZE];
     // full has one more char, for a possible '-'
     char* storage_f = full_storage_f + 1;
     char* storage_e = full_storage_e + 1;
@@ -958,7 +958,7 @@ struct JSPrinter {
       char* buffer = e ? storage_e : storage_f;
       double temp;
       if (!integer) {
-        char format[6] = {};
+        char format[6];
         for (int i = 0; i <= 18; i++) {
           format[0] = '%';
           format[1] = '.';
