@@ -6520,7 +6520,7 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType);
   std::vector<Expression*> values(size);
-  for (size_t i = 0; i < num; i++) {
+  for (size_t i = 0; i < size; i++) {
     values[num - i - 1] = popNonVoidExpression();
   }
   out = Builder(wasm).makeArrayInit(rtt, values);
