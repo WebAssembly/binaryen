@@ -1708,12 +1708,8 @@ public:
     if (rtt.breaking()) {
       return rtt;
     }
-    auto size = this->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
-    Index num = curr->size;
+    Index num = curr->values.size();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
     }
