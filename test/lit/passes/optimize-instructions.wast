@@ -6021,13 +6021,13 @@
       (i32.const -5)
     )
   )
-  ;; CHECK:      (func $propagate-sign-for-i32-skip-1 (param $0 i32) (result i32)
+  ;; CHECK:      (func $propagate-sign-for-i32-both-sign-consts (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.mul
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $propagate-sign-for-i32-skip-1 (param $0 i32) (result i32)
+  (func $propagate-sign-for-i32-both-sign-consts (param $0 i32) (result i32)
     (i32.mul
       (i32.const -5)
       (i32.sub
