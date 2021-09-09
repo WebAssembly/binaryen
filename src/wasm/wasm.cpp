@@ -1043,7 +1043,7 @@ void ArrayInit::finalize() {
   for (auto* value : values) {
     if (value->type == Type::unreachable) {
       type = Type::unreachable;
-      return true;
+      return;
     }
   }
   type = Type(rtt->type.getHeapType(), NonNullable);
