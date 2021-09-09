@@ -198,10 +198,6 @@ public:
 
   Module& getModule() { return wasm; }
 
-  // A field may be packed, in which case it is signed or unsigned, or it may
-  // not be packed.
-  enum class Packed { Signed, Unsigned, Non };
-
 private:
   Expression* makeExpression(Element& s);
   Expression* makeUnreachable();
@@ -285,10 +281,10 @@ private:
   Expression* makeRttFreshSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
-  Expression* makeStructGet(Element& s, Packed packed = Packed::Non);
+  Expression* makeStructGet(Element& s, Signedness signedness = Nonsigned);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayGet(Element& s, Packed packed = Packed::Non);
+  Expression* makeArrayGet(Element& s, Signedness signedness = Nonsigned);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
