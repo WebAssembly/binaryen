@@ -5,11 +5,11 @@
 
 (module
   (memory 100 100)
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
   ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
 
   ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
-
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; CHECK:      (memory $0 100 100)
 
@@ -18,6 +18,8 @@
   ;; CHECK:      (export "localcse-2" (func $8))
 
   ;; CHECK:      (export "propagate-sign-for-mul-i32-lhs-const-pot" (func $9))
+
+  ;; CHECK:      (export "propagate-sign-for-mul-i32-smin" (func $10))
 
   ;; CHECK:      (func $basics (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
@@ -130,6 +132,22 @@
         (i32.const 0)
         (local.get $0)
       )
+    )
+  )
+
+  ;; CHECK:      (func $10 (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.shl
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 31)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $10 (export "propagate-sign-for-mul-i32-smin") (param $0 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.const 0x80000000)
     )
   )
 )

@@ -6036,6 +6036,21 @@
       )
     )
   )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-smin (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.shl
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 31)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-smin (param $0 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.const 0x80000000)
+    )
+  )
   ;; CHECK:      (func $propagate-sign-for-mul-i32-skip-2 (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.mul
   ;; CHECK-NEXT:   (i32.sub
