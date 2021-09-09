@@ -840,8 +840,8 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayInit*
-  makeArrayInit(Expression* rtt, const std::vector<Expression*>& values) {
+  ArrayInit* makeArrayInit(Expression* rtt,
+                           const std::vector<Expression*>& values) {
     auto* ret = wasm.allocator.alloc<ArrayInit>();
     ret->rtt = rtt;
     ret->values.set(values);

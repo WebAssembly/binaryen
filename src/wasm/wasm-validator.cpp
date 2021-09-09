@@ -2418,8 +2418,9 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
 }
 
 void FunctionValidator::visitArrayInit(ArrayInit* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "array.init requires gc to be enabled");
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.init requires gc to be enabled");
   if (curr->type == Type::unreachable) {
     return;
   }
