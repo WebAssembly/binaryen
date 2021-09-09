@@ -1056,7 +1056,7 @@ enum ASTNodes {
   ArraySet = 0x16,
   ArrayLen = 0x17,
   ArrayCopy = 0x18,
-  ArrayInitWithRtt = 0x19,
+  ArrayInit = 0x19,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,

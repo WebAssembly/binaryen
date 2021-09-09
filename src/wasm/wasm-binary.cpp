@@ -6512,7 +6512,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::ArrayInitWithRtt) {
+  if (code != BinaryConsts::ArrayInit) {
     return false;
   }
   auto heapType = getIndexedHeapType();
