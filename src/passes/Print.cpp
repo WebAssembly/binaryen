@@ -2006,6 +2006,11 @@ struct PrintExpressionContents
     o << "with_rtt ";
     TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
+  void visitArrayInit(ArrayInit* curr) {
+    printMedium(o, "array.init ");
+    o << "_with_rtt ";
+    TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
+  }
   void visitArrayGet(ArrayGet* curr) {
     if (printUnreachableReplacement(curr->ref)) {
       return;

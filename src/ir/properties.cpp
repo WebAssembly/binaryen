@@ -32,6 +32,7 @@ bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features) {
     bool deterministic = true;
     void visitStructNew(StructNew* curr) { deterministic = false; }
     void visitArrayNew(ArrayNew* curr) { deterministic = false; }
+    void visitArrayInit(ArrayInit* curr) { deterministic = false; }
   } scanner;
   scanner.walk(curr);
   return !scanner.deterministic;

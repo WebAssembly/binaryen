@@ -3574,6 +3574,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitArrayNew(curr, opcode)) {
         break;
       }
+      if (maybeVisitArrayInit(curr, opcode)) {
+        break;
+      }
       if (maybeVisitArrayGet(curr, opcode)) {
         break;
       }
@@ -6491,9 +6494,8 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::ArrayNewWithRtt &&
-      code != BinaryConsts::ArrayNewDefaultWithRtt) {
+bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ArrayInitWithRtt) {
     return false;
   }
   auto heapType = getIndexedHeapType();
@@ -6501,6 +6503,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
   validateHeapTypeUsingChild(rtt, heapType);
   auto* size = popNonVoidExpression();
   Expression* init = nullptr;
+waka
   if (code == BinaryConsts::ArrayNewWithRtt) {
     init = popNonVoidExpression();
   }
