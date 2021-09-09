@@ -398,7 +398,9 @@ void BreakValueDropper::visitBlock(Block* curr) {
   optimizeBlock(curr, getModule(), passOptions, branchInfo);
 }
 
-struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
+struct MergeBlocks
+  : public WalkerPass<
+      PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new MergeBlocks; }
