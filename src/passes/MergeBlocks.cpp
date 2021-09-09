@@ -511,20 +511,10 @@ if (limit-- < 0) return;
     if (children.size() == 1) {
       optimize(curr, *children[0]);
     } else if (children.size() == 2) {
-      optimize(curr, *children[1], optimize(curr, *children[0]), children[0]);
+      optimize(curr, *children[0], optimize(curr, *children[1]), children[1]);
     } else if (children.size() == 3) {
-      optimizeTernary(curr, *children[0], *children[1], *children[2]);
+      optimizeTernary(curr, *children[2], *children[1], *children[0]);
     }
-  }
-
-  void visitBinary(Binary* curr) {
-    optimize(curr, curr->right, optimize(curr, curr->left), &curr->left);
-  }
-  void visitStore(Store* curr) {
-    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
   }
 
   void optimizeTernary(Expression* curr,
@@ -549,23 +539,6 @@ if (limit-- < 0) return;
       return;
     }
     optimize(curr, third, outer);
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    optimizeTernary(curr, curr->ptr, curr->expected, curr->replacement);
-  }
-
-  void visitSelect(Select* curr) {
-    optimizeTernary(curr, curr->ifTrue, curr->ifFalse, curr->condition);
-  }
-
-  void visitDrop(Drop* curr) { optimize(curr, curr->value); }
-
-  void visitBreak(Break* curr) {
-    optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
-  }
-
-  void visitSwitch(Switch* curr) {
-    optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
   }
 
   template<typename T> void handleCall(T* curr) {
