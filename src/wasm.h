@@ -1473,7 +1473,6 @@ class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
 public:
   ArrayInit(MixedArena& allocator) {}
 
-  Index size;
   ExpressionList values;
   Expression* rtt;
 
