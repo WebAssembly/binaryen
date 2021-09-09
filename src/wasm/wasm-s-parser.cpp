@@ -2647,11 +2647,11 @@ static void verifyPackedRead(const Field& field,
                              Signedness signedness,
                              Element& s,
                              std::string what) {
-  if (field.isPacked() && signedness == Nonsigned) {
+  if (field.isPacked() && signedness == NoSign) {
     throw ParseException(
       "packed " + what + " must be read as packed", s.line, s.col);
   }
-  if (!field.isPacked() && signedness != Nonsigned) {
+  if (!field.isPacked() && signedness != NoSign) {
     throw ParseException(
       "non-packed " + what + " must not be read as packed", s.line, s.col);
   }

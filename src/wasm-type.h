@@ -64,7 +64,7 @@ enum Signedness {
   // The value has signedness, and is unsigned, like e.g. uint32_t.
   Unsigned,
   // The value has no concept of signedness, like e.g. float or raw bits.
-  Nonsigned
+  NoSign
 };
 
 // The type used for interning IDs in the public interfaces of Type and
