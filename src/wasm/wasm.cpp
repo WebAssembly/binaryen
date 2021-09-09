@@ -1037,7 +1037,6 @@ void ArrayNew::finalize() {
 
 void ArrayInit::finalize() {
   if (rtt->type == Type::unreachable) {
-      (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
   }
