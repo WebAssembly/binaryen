@@ -34,7 +34,7 @@ switch (op[0]) {
             }
           }
           case 'i':
-            if (strcmp(op, "array.init_with_rtt") == 0) { return makeArrayInit(s); }
+            if (strcmp(op, "array.init") == 0) { return makeArrayInit(s); }
             goto parse_error;
           case 'l':
             if (strcmp(op, "array.len") == 0) { return makeArrayLen(s); }

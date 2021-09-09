@@ -478,7 +478,7 @@
  (func "array.init"
   (local $x (ref null $bytes))
   (local.set $x
-   (array.init_with_rtt $bytes
+   (array.init $bytes
     (i32.const 42) ;; first value
     (i32.const 50) ;; second value
     (rtt.canon $bytes)

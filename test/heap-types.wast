@@ -380,7 +380,7 @@
     )
   )
   (func $array-init (result (ref $vector))
-    (array.init_with_rtt $vector
+    (array.init $vector
       (f64.const 1)
       (f64.const 2)
       (f64.const 4)

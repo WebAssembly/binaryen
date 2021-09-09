@@ -2007,8 +2007,7 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
   void visitArrayInit(ArrayInit* curr) {
-    printMedium(o, "array.init");
-    o << "_with_rtt ";
+    printMedium(o, "array.init ");
     TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
   void visitArrayGet(ArrayGet* curr) {

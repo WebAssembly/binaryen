@@ -559,7 +559,7 @@ instructions = [
     ("struct.set",           "makeStructSet(s)"),
     ("array.new_with_rtt",   "makeArrayNew(s, false)"),
     ("array.new_default_with_rtt", "makeArrayNew(s, true)"),
-    ("array.init_with_rtt",  "makeArrayInit(s)"),
+    ("array.init",           "makeArrayInit(s)"),
     ("array.get",            "makeArrayGet(s)"),
     ("array.get_s",          "makeArrayGet(s, true)"),
     ("array.get_u",          "makeArrayGet(s, false)"),
