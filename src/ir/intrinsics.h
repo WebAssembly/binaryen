@@ -43,7 +43,7 @@ public:
   //   (import "binaryen-intrinsics" "call.without.effects"
   //     (func (..params..) (param $target funcref) (..results..)))
   //
-  // call.if.used can take any parameters, and in addition a funcref, and return
+  // call.without.effects can take any parameters, and in addition a funcref, and return
   // any result.
   //
   // Precise semantics:
