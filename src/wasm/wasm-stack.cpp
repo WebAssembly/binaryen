@@ -2043,7 +2043,7 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
 void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayInitWithRtt);
   parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
-  o << U32LEB(curr->size);
+  o << U32LEB(curr->values.size());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {

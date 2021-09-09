@@ -2433,7 +2433,6 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
     return;
   }
   const auto& element = heapType.getArray().element;
-  shouldBeEqual(curr->size, curr->values.size() curr, "array.init should have the proper number of values");
   for (auto* value : curr->values) {
     shouldBeSubType(value->type,
                     element.type,
