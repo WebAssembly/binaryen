@@ -1583,8 +1583,7 @@ private:
     }
     // To be equal, they must also be known to return the same result
     // deterministically.
-    if (Properties::isIntrinsicallyNondeterministic(left,
-                                                    getModule()->features)) {
+    if (Properties::isGenerative(left, getModule()->features)) {
       return false;
     }
     return true;
