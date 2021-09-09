@@ -466,7 +466,7 @@
   (call $log
    (array.len $bytes
     (local.tee $0
-     (array.init_with_rtt $bytes
+     (array.init $bytes
       (i32.const 42)
       (i32.const 50)
       (rtt.canon $bytes)

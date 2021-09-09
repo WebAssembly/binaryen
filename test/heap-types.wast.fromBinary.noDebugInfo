@@ -425,7 +425,7 @@
   )
  )
  (func $20 (result (ref $[mut:f64]))
-  (array.init_with_rtt $[mut:f64]
+  (array.init $[mut:f64]
    (f64.const 1)
    (f64.const 2)
    (f64.const 4)
