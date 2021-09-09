@@ -642,6 +642,7 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
+    void visitArrayInit(ArrayInit* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       parent.readsArray = true;
       // traps when the arg is null or the index out of bounds

@@ -634,6 +634,14 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayNew);
     break;
   }
+  case Expression::Id::ArrayInitId: {
+    DELEGATE_START(ArrayInit);
+    DELEGATE_FIELD_CHILD(ArrayInit, rtt);
+    DELEGATE_FIELD_CHILD_VECTOR(ArrayInit, values);
+    DELEGATE_FIELD_INT(ArrayInit, size);
+    DELEGATE_END(ArrayInit);
+    break;
+  }
   case Expression::Id::ArrayGetId: {
     DELEGATE_START(ArrayGet);
     DELEGATE_FIELD_CHILD(ArrayGet, index);

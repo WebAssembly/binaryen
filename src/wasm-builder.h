@@ -840,6 +840,15 @@ public:
     ret->finalize();
     return ret;
   }
+  ArrayInit*
+  makeArrayInit(Expression* rtt, Index size, const std::vector<Expression*>& values) {
+    auto* ret = wasm.allocator.alloc<ArrayInit>();
+    ret->rtt = rtt;
+    ret->size = size;
+    ret->values.set(values);
+    ret->finalize();
+    return ret;
+  }
   ArrayGet*
   makeArrayGet(Expression* ref, Expression* index, bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<ArrayGet>();

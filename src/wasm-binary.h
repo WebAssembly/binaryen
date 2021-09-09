@@ -1056,6 +1056,7 @@ enum ASTNodes {
   ArraySet = 0x16,
   ArrayLen = 0x17,
   ArrayCopy = 0x18,
+  ArrayInit = 0x19,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
@@ -1626,6 +1627,7 @@ public:
   bool maybeVisitStructGet(Expression*& out, uint32_t code);
   bool maybeVisitStructSet(Expression*& out, uint32_t code);
   bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayInit(Expression*& out, uint32_t code);
   bool maybeVisitArrayGet(Expression*& out, uint32_t code);
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
