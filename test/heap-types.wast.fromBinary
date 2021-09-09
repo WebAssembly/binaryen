@@ -1,8 +1,8 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
+ (type $vector (array (mut f64)))
  (type $none_=>_none (func))
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
- (type $vector (array (mut f64)))
  (type $grandchild (struct (field i32) (field i64)))
  (type $matrix (array (mut (ref null $vector))))
  (type $struct.C (struct (field $named-mut (mut f32))))
@@ -18,6 +18,7 @@
  (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
  (type $rtt_$parent_=>_none (func (param (rtt $parent))))
  (type $ref|$vector|_ref?|$vector|_=>_none (func (param (ref $vector) (ref null $vector))))
+ (type $none_=>_ref|$vector| (func (result (ref $vector))))
  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
  (global $rttchild (rtt 1 $child) (rtt.sub $child
   (global.get $rttparent)
@@ -421,6 +422,15 @@
    (local.get $y)
    (i32.const 42)
    (i32.const 1337)
+  )
+ )
+ (func $array-init (result (ref $vector))
+  (array.init _with_rtt $vector
+   (f64.const 1)
+   (f64.const 2)
+   (f64.const 4)
+   (f64.const 8)
+   (rtt.canon $vector)
   )
  )
 )

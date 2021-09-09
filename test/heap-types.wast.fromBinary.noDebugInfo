@@ -1,8 +1,8 @@
 (module
  (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
+ (type $[mut:f64] (array (mut f64)))
  (type $none_=>_none (func))
  (type ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref ${i32_f32_f64})) (field (mut (ref ${i32_f32_f64})))))
- (type $[mut:f64] (array (mut f64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type $[mut:ref?|[mut:f64]|] (array (mut (ref null $[mut:f64]))))
  (type ${mut:f32} (struct (field (mut f32))))
@@ -18,6 +18,7 @@
  (type $rtt_1_{}_=>_none (func (param (rtt 1 ${}))))
  (type $rtt_{}_=>_none (func (param (rtt ${}))))
  (type $ref|[mut:f64]|_ref?|[mut:f64]|_=>_none (func (param (ref $[mut:f64]) (ref null $[mut:f64]))))
+ (type $none_=>_ref|[mut:f64]| (func (result (ref $[mut:f64]))))
  (global $global$0 (rtt 0 ${}) (rtt.canon ${}))
  (global $global$1 (rtt 1 ${i32}) (rtt.sub ${i32}
   (global.get $global$0)
@@ -421,6 +422,15 @@
    (local.get $1)
    (i32.const 42)
    (i32.const 1337)
+  )
+ )
+ (func $20 (result (ref $[mut:f64]))
+  (array.init _with_rtt $[mut:f64]
+   (f64.const 1)
+   (f64.const 2)
+   (f64.const 4)
+   (f64.const 8)
+   (rtt.canon $[mut:f64])
   )
  )
 )
