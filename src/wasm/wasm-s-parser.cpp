@@ -2657,7 +2657,8 @@ static void verifyPackedRead(const Field& field,
   }
 }
 
-Expression* SExpressionWasmBuilder::makeStructGet(Element& s, Signedness signedness) {
+Expression* SExpressionWasmBuilder::makeStructGet(Element& s,
+                                                  Signedness signedness) {
   auto heapType = parseHeapType(*s[1]);
   if (!heapType.isStruct()) {
     throw ParseException("bad struct heap type", s.line, s.col);
@@ -2668,8 +2669,7 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, Signedness signedn
   auto type = field.type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
-  return Builder(wasm).makeStructGet(
-    index, ref, type, signedness == Signed);
+  return Builder(wasm).makeStructGet(index, ref, type, signedness == Signed);
 }
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
@@ -2697,7 +2697,8 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
   return Builder(wasm).makeArrayNew(rtt, size, init);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, Signedness signedness) {
+Expression* SExpressionWasmBuilder::makeArrayGet(Element& s,
+                                                 Signedness signedness) {
   auto heapType = parseHeapType(*s[1]);
   auto element = heapType.getArray().element;
   verifyPackedRead(element, signedness, s, "array element");
