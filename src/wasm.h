@@ -641,6 +641,7 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
+    ArrayInitId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
@@ -1464,6 +1465,16 @@ public:
   Expression* rtt;
 
   bool isWithDefault() { return !init; }
+
+  void finalize();
+};
+
+class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+public:
+  ArrayInit(MixedArena& allocator) : values(allocator) {}
+
+  ExpressionList values;
+  Expression* rtt;
 
   void finalize();
 };

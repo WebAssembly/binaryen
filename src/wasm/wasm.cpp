@@ -1035,6 +1035,20 @@ void ArrayNew::finalize() {
   type = Type(rtt->type.getHeapType(), NonNullable);
 }
 
+void ArrayInit::finalize() {
+  if (rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  for (auto* value : values) {
+    if (value->type == Type::unreachable) {
+      type = Type::unreachable;
+      return;
+    }
+  }
+  type = Type(rtt->type.getHeapType(), NonNullable);
+}
+
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;

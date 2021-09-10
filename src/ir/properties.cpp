@@ -32,6 +32,7 @@ bool isGenerative(Expression* curr, FeatureSet features) {
     bool generative = false;
     void visitStructNew(StructNew* curr) { generative = true; }
     void visitArrayNew(ArrayNew* curr) { generative = true; }
+    void visitArrayInit(ArrayInit* curr) { generative = true; }
   } scanner;
   scanner.walk(curr);
   return scanner.generative;

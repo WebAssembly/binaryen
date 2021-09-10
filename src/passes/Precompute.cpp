@@ -94,6 +94,7 @@ public:
   Flow visitStructNew(StructNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayNew(ArrayNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayInit(ArrayInit* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }

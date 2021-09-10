@@ -2040,6 +2040,12 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
 }
 
+void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayInit);
+  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
+  o << U32LEB(curr->values.size());
+}
+
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
   auto heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getArray().element;

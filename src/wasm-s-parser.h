@@ -284,6 +284,7 @@ private:
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
+  Expression* makeArrayInit(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
