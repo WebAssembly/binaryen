@@ -1316,7 +1316,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // dce will clean it up
             return nullptr;
           }
-          auto* binary = br->condition->dynCast<Binary>();
+          auto* condition = br->condition;
+          // Also support eqz, which is the same as == 0.
+          if (auto* unary = condition->dynCast<Unary>()) {
+            if (unary->op == EqZInt32) {
+              return br;
+            }
+            return nullptr;
+          }
+          auto* binary = condition->dynCast<Binary>();
           if (!binary) {
             return nullptr;
           }
@@ -1342,16 +1350,29 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br) {
             return nullptr;
           }
-          return br->condition->cast<Binary>()->left;
+          auto* condition = br->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->left;
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return unary->value;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
 
         // returns the constant value, as a uint32_t
         auto getProperBrIfConstant =
           [&getProperBrIf](Expression* curr) -> uint32_t {
-          return getProperBrIf(curr)
-            ->condition->cast<Binary>()
-            ->right->cast<Const>()
-            ->value.geti32();
+          auto* condition = getProperBrIf(curr)->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->right->cast<Const>()->value.geti32();
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return 0;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
         Index start = 0;
         while (start < list.size() - 1) {

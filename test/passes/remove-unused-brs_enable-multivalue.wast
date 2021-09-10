@@ -1359,7 +1359,12 @@
         (block $z
           (br_if $x
             (i32.eq
-              (local.tee $a (i32.const 99))
+              (local.tee $a
+                (i32.add
+                  (i32.const 10)
+                  (i32.const 1)
+                )
+              )
               (i32.const 10)
             )
           )
@@ -1388,6 +1393,45 @@
           ;; optimize here.
           (br_if $y (i32.eq (local.get $b) (i32.const 11)))
           (br_if $z (i32.eq (local.get $b) (i32.const 12)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-eqz (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x (i32.eqz (local.get $a)))
+          (br_if $y (i32.eq (local.get $a) (i32.const 1)))
+          (br_if $z (i32.eq (local.get $a) (i32.const 2)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-tee-eqz (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x
+            (i32.eqz
+              (local.tee $a
+                (i32.add
+                  (i32.const 0)
+                  (i32.const 1)
+                )
+              )
+            )
+          )
+          (br_if $y (i32.eq (local.get $a) (i32.const 1)))
+          (br_if $z (i32.eq (local.get $a) (i32.const 2)))
           (unreachable)
         )
         (unreachable)

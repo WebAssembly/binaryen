@@ -1679,7 +1679,10 @@
       (br_table $x $y $z $tablify|0
        (i32.sub
         (local.tee $a
-         (i32.const 99)
+         (i32.add
+          (i32.const 10)
+          (i32.const 1)
+         )
         )
         (i32.const 10)
        )
@@ -1716,6 +1719,49 @@
       (i32.eq
        (local.get $b)
        (i32.const 12)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-eqz (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (local.get $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-tee-eqz (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (local.tee $a
+        (i32.add
+         (i32.const 0)
+         (i32.const 1)
+        )
+       )
       )
      )
      (unreachable)
