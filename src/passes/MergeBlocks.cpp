@@ -74,6 +74,7 @@
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/iteration.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -397,7 +398,9 @@ void BreakValueDropper::visitBlock(Block* curr) {
   optimizeBlock(curr, getModule(), passOptions, branchInfo);
 }
 
-struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
+struct MergeBlocks
+  : public WalkerPass<
+      PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new MergeBlocks; }
@@ -491,20 +494,26 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     return outer;
   }
 
-  void visitUnary(Unary* curr) { optimize(curr, curr->value); }
-  void visitLocalSet(LocalSet* curr) { optimize(curr, curr->value); }
-  void visitLoad(Load* curr) { optimize(curr, curr->ptr); }
-  void visitReturn(Return* curr) { optimize(curr, curr->value); }
+  // Default optimizations for simple cases. Complex things are overridden
+  // below.
+  void visitExpression(Expression* curr) {
+    // Control flow need special handling. Those we can optimize are handled
+    // below.
+    if (Properties::isControlFlowStructure(curr)) {
+      return;
+    }
 
-  void visitBinary(Binary* curr) {
-    optimize(curr, curr->right, optimize(curr, curr->left), &curr->left);
+    ChildIterator iterator(curr);
+    auto& children = iterator.children;
+    if (children.size() == 1) {
+      optimize(curr, *children[0]);
+    } else if (children.size() == 2) {
+      optimize(curr, *children[0], optimize(curr, *children[1]), children[1]);
+    } else if (children.size() == 3) {
+      optimizeTernary(curr, *children[2], *children[1], *children[0]);
+    }
   }
-  void visitStore(Store* curr) {
-    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
-  }
+
   void optimizeTernary(Expression* curr,
                        Expression*& first,
                        Expression*& second,
@@ -527,23 +536,6 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       return;
     }
     optimize(curr, third, outer);
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    optimizeTernary(curr, curr->ptr, curr->expected, curr->replacement);
-  }
-
-  void visitSelect(Select* curr) {
-    optimizeTernary(curr, curr->ifTrue, curr->ifFalse, curr->condition);
-  }
-
-  void visitDrop(Drop* curr) { optimize(curr, curr->value); }
-
-  void visitBreak(Break* curr) {
-    optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
-  }
-
-  void visitSwitch(Switch* curr) {
-    optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
   }
 
   template<typename T> void handleCall(T* curr) {
