@@ -309,8 +309,8 @@ private:
         // creates a new, unique struct, even if the data is equal), and so
         // PrecomputingExpressionRunner will return a nonconstant flow for all
         // GC heap operations. (We could also have used
-        // Properties::isIntrinsicallyNondeterministic here, but that would be
-        // less efficient to re-scan the entire expression.)
+        // Properties::isGenerative here, but that would be less efficient to
+        // re-scan the entire expression.)
         //
         // (Other side effects are fine; if an expression does a call and we
         // somehow know the entire expression precomputes to a 42, then we can
