@@ -462,17 +462,22 @@ struct MergeBlocks
           return outer;
         }
         auto* back = block->list.back();
-        if (back->type == Type::unreachable ||
-            block->type == Type::unreachable) {
-          // If either the block is unreachable or the final element is then let
-          // DCE improve things rather than try anything complex here.
+        if (back->type == Type::unreachable) {
+          // curr is not reachable, dce could remove it; don't try anything
+          // fancy here
           return outer;
         }
-        // If both types are reachable, then since the block has no breaks to it
-        // (as we've confirmed above), the block's type is exactly that of its
-        // last element.
-        assert(block->type == back->type);
-
+        // We are going to replace the block with the final element, so they
+        // should be identically typed. Note that we could check for subtyping
+        // here, but it would not help in the general case: we know that this
+        // block has no breaks (as confirmed above), and so the local-subtyping
+        // pass will turn its type into that of its final element, if the final
+        // element has a more specialized type. (If we did want to handle that,
+        // we'd need to them run a ReFinalize after everything, which would add
+        // more complexity here.)
+        if (block->type != back->type) {
+          return outer;
+        }
         child = back;
         if (outer == nullptr) {
           // reuse the block, move it out
