@@ -1360,6 +1360,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             start++;
             continue;
           }
+          // If the first condition value is a tee, that is ok, so long as the
+          // others afterwards are gets of the value that is tee'd.
+          LocalGet get;
+          if (auto* tee = conditionValue->dynCast<LocalSet>()) {
+            get.index = tee->index;
+            conditionValue = &get;
+          }
           // if the condition has side effects, we can't replace many
           // appearances of it with a single one
           if (EffectAnalyzer(passOptions, *getModule(), conditionValue)
@@ -1427,13 +1434,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               }
               Builder builder(*getModule());
               // the table and condition are offset by the min
+              auto* newCondition = getProperBrIfConditionValue(list[start]);
+
               if (min != 0) {
-                conditionValue = builder.makeBinary(
-                  SubInt32, conditionValue, builder.makeConst(int32_t(min)));
+                newCondition = builder.makeBinary(
+                  SubInt32, newCondition, builder.makeConst(int32_t(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,
-                builder.makeSwitch(table, defaultName, conditionValue));
+                builder.makeSwitch(table, defaultName, newCondition));
               for (Index i = start; i < end - 1; i++) {
                 ExpressionManipulator::nop(list[i]);
               }
