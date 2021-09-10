@@ -473,7 +473,7 @@ struct MergeBlocks
         // block has no breaks (as confirmed above), and so the local-subtyping
         // pass will turn its type into that of its final element, if the final
         // element has a more specialized type. (If we did want to handle that,
-        // we'd need to them run a ReFinalize after everything, which would add
+        // we'd need to then run a ReFinalize after everything, which would add
         // more complexity here.)
         if (block->type != back->type) {
           return outer;
