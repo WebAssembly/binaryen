@@ -43,16 +43,16 @@ public:
   //   (import "binaryen-intrinsics" "call.without.effects"
   //     (func (..params..) (param $target funcref) (..results..)))
   //
-  // call.without.effects can take any parameters, and in addition a funcref, and return
-  // any result.
+  // call.without.effects can take any parameters, and in addition a funcref,
+  // and return any result.
   //
   // Precise semantics:
   //
   //  * The optimizer will assume this instruction has no side effects.
-  //  * Final lowering turns a call.without.effects into a call of the given function
-  //    with the given parameters. (This will either be a direct call, or a
-  //    call_ref; note that either way, the function reference that appears here
-  //    must have the proper type - if not, you will get an error.)
+  //  * Final lowering turns a call.without.effects into a call of the given
+  //    function with the given parameters. (This will either be a direct call,
+  //    or a call_ref; note that either way, the function reference that appears
+  //    here must have the proper type - if not, you will get an error.)
   //
   // call.without.effects is useful to be able to get rid of an unused result
   // that has side effects. For example,
