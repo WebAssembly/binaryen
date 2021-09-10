@@ -1365,6 +1365,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           LocalGet get;
           if (auto* tee = conditionValue->dynCast<LocalSet>()) {
             get.index = tee->index;
+            get.type = getFunction()->getLocalType(get.index);
             conditionValue = &get;
           }
           // if the condition has side effects, we can't replace many
