@@ -131,3 +131,25 @@
   )
   "invalid number of arguments to struct.new"
 )
+
+;; Packed parsing
+
+(assert_invalid
+  (module
+    (type $struct (struct (mut i8)))
+    (func $foo (param $ref (ref $struct))
+      (drop (struct.get $struct 0 (local.get $struct)))
+    )
+  )
+  "packed field must be read as packed"
+)
+
+(assert_invalid
+  (module
+    (type $struct (struct (mut i32)))
+    (func $foo (param $ref (ref $struct))
+      (drop (struct.get_s $struct 0 (local.get $struct)))
+    )
+  )
+  "non-packed field must not be read as packed"
+)

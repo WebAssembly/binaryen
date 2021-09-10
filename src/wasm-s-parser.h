@@ -281,10 +281,10 @@ private:
   Expression* makeRttFreshSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
-  Expression* makeStructGet(Element& s, bool signed_ = false);
+  Expression* makeStructGet(Element& s, Signedness signedness = NoSign);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayGet(Element& s, bool signed_ = false);
+  Expression* makeArrayGet(Element& s, Signedness signedness = NoSign);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);

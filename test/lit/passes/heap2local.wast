@@ -197,7 +197,7 @@
   (func $packed
     ;; We do not optimize packed structs yet.
     (drop
-      (struct.get $struct.packed 0
+      (struct.get_u $struct.packed 0
         (struct.new_default_with_rtt $struct.packed
           (rtt.canon $struct.packed)
         )

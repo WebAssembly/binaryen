@@ -58,6 +58,15 @@ struct Rtt;
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
 
+enum Signedness {
+  // The value has signedness, and is signed, like e.g. int32_t.
+  Signed,
+  // The value has signedness, and is unsigned, like e.g. uint32_t.
+  Unsigned,
+  // The value has no concept of signedness, like e.g. float or raw bits.
+  NoSign
+};
+
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
 using TypeID = uint64_t;

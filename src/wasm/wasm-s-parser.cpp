@@ -2643,16 +2643,33 @@ Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
   return atoi(field.c_str());
 }
 
-Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
+static void verifyPackedRead(const Field& field,
+                             Signedness signedness,
+                             Element& s,
+                             std::string what) {
+  if (field.isPacked() && signedness == NoSign) {
+    throw ParseException(
+      "packed " + what + " must be read as packed", s.line, s.col);
+  }
+  if (!field.isPacked() && signedness != NoSign) {
+    throw ParseException(
+      "non-packed " + what + " must not be read as packed", s.line, s.col);
+  }
+}
+
+Expression* SExpressionWasmBuilder::makeStructGet(Element& s,
+                                                  Signedness signedness) {
   auto heapType = parseHeapType(*s[1]);
   if (!heapType.isStruct()) {
     throw ParseException("bad struct heap type", s.line, s.col);
   }
   auto index = getStructIndex(*s[1], *s[2]);
-  auto type = heapType.getStruct().fields[index].type;
+  auto& field = heapType.getStruct().fields[index];
+  verifyPackedRead(field, signedness, s, "struct field");
+  auto type = field.type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
-  return Builder(wasm).makeStructGet(index, ref, type, signed_);
+  return Builder(wasm).makeStructGet(index, ref, type, signedness == Signed);
 }
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
@@ -2680,12 +2697,15 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
   return Builder(wasm).makeArrayNew(rtt, size, init);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
+Expression* SExpressionWasmBuilder::makeArrayGet(Element& s,
+                                                 Signedness signedness) {
   auto heapType = parseHeapType(*s[1]);
+  auto element = heapType.getArray().element;
+  verifyPackedRead(element, signedness, s, "array element");
   auto ref = parseExpression(*s[2]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto index = parseExpression(*s[3]);
-  return Builder(wasm).makeArrayGet(ref, index, signed_);
+  return Builder(wasm).makeArrayGet(ref, index, signedness == Signed);
 }
 
 Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {

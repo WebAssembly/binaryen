@@ -22,10 +22,10 @@ switch (op[0]) {
               case '_': {
                 switch (op[10]) {
                   case 's':
-                    if (strcmp(op, "array.get_s") == 0) { return makeArrayGet(s, true); }
+                    if (strcmp(op, "array.get_s") == 0) { return makeArrayGet(s, Signed); }
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "array.get_u") == 0) { return makeArrayGet(s, false); }
+                    if (strcmp(op, "array.get_u") == 0) { return makeArrayGet(s, Unsigned); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -2933,10 +2933,10 @@ switch (op[0]) {
               case '_': {
                 switch (op[11]) {
                   case 's':
-                    if (strcmp(op, "struct.get_s") == 0) { return makeStructGet(s, true); }
+                    if (strcmp(op, "struct.get_s") == 0) { return makeStructGet(s, Signed); }
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "struct.get_u") == 0) { return makeStructGet(s, false); }
+                    if (strcmp(op, "struct.get_u") == 0) { return makeStructGet(s, Unsigned); }
                     goto parse_error;
                   default: goto parse_error;
                 }

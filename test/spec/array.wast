@@ -144,3 +144,25 @@
   )
   "type mismatch"
 )
+
+;; Packed parsing
+
+(assert_invalid
+  (module
+    (type $array (array (mut i8)))
+    (func $foo (param $ref (ref $array))
+      (drop (array.get $array (local.get $array) (i32.const 1)))
+    )
+  )
+  "packed field must be read as packed"
+)
+
+(assert_invalid
+  (module
+    (type $array (array (mut i32)))
+    (func $foo (param $ref (ref $array))
+      (drop (array.get_u $array (local.get $array) (i32.const 1)))
+    )
+  )
+  "non-packed field must not be read as packed"
+)
