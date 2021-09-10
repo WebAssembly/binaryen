@@ -464,8 +464,8 @@ struct MergeBlocks
         auto* back = block->list.back();
         if (back->type == Type::unreachable ||
             block->type == Type::unreachable) {
-          // Curr is not reachable, or the block is not. Don't try anything
-          // fancy here and let DCE improve it.
+          // If either the block is unreachable or the final element is then let
+          // DCE improve things rather than try anything complex here.
           return outer;
         }
         // If both types are reachable, then since the block has no breaks to it
