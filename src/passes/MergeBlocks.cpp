@@ -462,16 +462,17 @@ struct MergeBlocks
           return outer;
         }
         auto* back = block->list.back();
-        if (back->type == Type::unreachable) {
-          // curr is not reachable, dce could remove it; don't try anything
-          // fancy here
+        if (back->type == Type::unreachable ||
+            block->type == Type::unreachable) {
+          // Curr is not reachable, or the block is not. Don't try anything
+          // fancy here and let DCE improve it.
           return outer;
         }
-        // we are going to replace the block with the final element, so they
-        // should be identically typed
-        if (block->type != back->type) {
-          return outer;
-        }
+        // If both types are reachable, then since the block has no breaks to it
+        // (as we've confirmed above), the block's type is exactly that of its
+        // last element.
+        assert(block->type == back->type);
+
         child = back;
         if (outer == nullptr) {
           // reuse the block, move it out
