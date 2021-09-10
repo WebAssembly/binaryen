@@ -467,8 +467,14 @@ struct MergeBlocks
           // fancy here
           return outer;
         }
-        // we are going to replace the block with the final element, so they
-        // should be identically typed
+        // We are going to replace the block with the final element, so they
+        // should be identically typed. Note that we could check for subtyping
+        // here, but it would not help in the general case: we know that this
+        // block has no breaks (as confirmed above), and so the local-subtyping
+        // pass will turn its type into that of its final element, if the final
+        // element has a more specialized type. (If we did want to handle that,
+        // we'd need to then run a ReFinalize after everything, which would add
+        // more complexity here.)
         if (block->type != back->type) {
           return outer;
         }
