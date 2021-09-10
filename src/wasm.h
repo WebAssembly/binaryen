@@ -1833,6 +1833,7 @@ public:
 // The optional "dylink" section is used in dynamic linking.
 class DylinkSection {
 public:
+  bool isLegacy = false;
   Index memorySize, memoryAlignment, tableSize, tableAlignment;
   std::vector<Name> neededDynlibs;
   std::vector<char> tail;
