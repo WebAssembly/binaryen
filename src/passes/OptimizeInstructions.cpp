@@ -1819,6 +1819,24 @@ private:
         }
       }
     }
+    if (curr->type == Type::i32 && Bits::getMaxBits(curr->condition) <= 1 &&
+        Bits::getMaxBits(curr->ifTrue) <= 1 &&
+        Bits::getMaxBits(curr->ifFalse) <= 1) {
+      // The condition and both arms are i32 booleans, which allows us to do
+      // boolean optimizations.
+      Expression* x;
+      Expression* y;
+
+      // x ? y : 0   ==>   x & y
+      if (matches(curr, select(any(&y), ival(0), any(&x)))) {
+        return builder.makeBinary(AndInt32, y, x);
+      }
+
+      // x ? 1 : y   ==>   x | y
+      if (matches(curr, select(ival(1), any(&y), any(&x)))) {
+        return builder.makeBinary(OrInt32, y, x);
+      }
+    }
     {
       // Sides are identical, fold
       Expression *ifTrue, *ifFalse, *c;
