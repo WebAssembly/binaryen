@@ -703,6 +703,56 @@
       )
     )
   )
+  ;; CHECK:      (func $select-and (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.and
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.const 0)
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.const 1)
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
   ;; CHECK:      (func $load8_s-and-255 (result i32)
   ;; CHECK-NEXT:  (i32.load8_u
   ;; CHECK-NEXT:   (i32.const 0)
