@@ -31,6 +31,7 @@ namespace UserSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
+const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
 const char* TargetFeatures = "target_features";

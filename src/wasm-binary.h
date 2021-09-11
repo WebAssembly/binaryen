@@ -403,6 +403,7 @@ namespace UserSections {
 extern const char* Name;
 extern const char* SourceMapUrl;
 extern const char* Dylink;
+extern const char* Dylink0;
 extern const char* Linking;
 extern const char* Producers;
 extern const char* TargetFeatures;
@@ -435,7 +436,10 @@ enum Subsection {
   NameElem = 8,
   NameData = 9,
   // see: https://github.com/WebAssembly/gc/issues/193
-  NameField = 10
+  NameField = 10,
+
+  DylinkMemInfo = 1,
+  DylinkNeeded = 2,
 };
 
 } // namespace UserSections
@@ -1230,6 +1234,7 @@ public:
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();
   void writeDylinkSection();
+  void writeLegacyDylinkSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
@@ -1557,6 +1562,7 @@ public:
   void readNames(size_t);
   void readFeatures(size_t);
   void readDylink(size_t);
+  void readDylink0(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }

@@ -1067,7 +1067,7 @@ void WasmBinaryWriter::writeFeaturesSection() {
   finishSection(start);
 }
 
-void WasmBinaryWriter::writeDylinkSection() {
+void WasmBinaryWriter::writeLegacyDylinkSection() {
   if (!wasm->dylinkSection) {
     return;
   }
@@ -1082,9 +1082,41 @@ void WasmBinaryWriter::writeDylinkSection() {
   for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
     writeInlineString(neededDynlib.c_str());
   }
+  finishSection(start);
+}
+
+void WasmBinaryWriter::writeDylinkSection() {
+  if (!wasm->dylinkSection) {
+    return;
+  }
+
+  if (wasm->dylinkSection->isLegacy) {
+    writeLegacyDylinkSection();
+    return;
+  }
+
+  auto start = startSection(BinaryConsts::User);
+  writeInlineString(BinaryConsts::UserSections::Dylink0);
+
+  auto substart =
+    startSubsection(BinaryConsts::UserSections::Subsection::DylinkMemInfo);
+  o << U32LEB(wasm->dylinkSection->memorySize);
+  o << U32LEB(wasm->dylinkSection->memoryAlignment);
+  o << U32LEB(wasm->dylinkSection->tableSize);
+  o << U32LEB(wasm->dylinkSection->tableAlignment);
+  finishSubsection(substart);
+
+  if (wasm->dylinkSection->neededDynlibs.size()) {
+    substart =
+      startSubsection(BinaryConsts::UserSections::Subsection::DylinkNeeded);
+    o << U32LEB(wasm->dylinkSection->neededDynlibs.size());
+    for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
+      writeInlineString(neededDynlib.c_str());
+    }
+    finishSubsection(substart);
+  }
 
   writeData(wasm->dylinkSection->tail.data(), wasm->dylinkSection->tail.size());
-
   finishSection(start);
 }
 
@@ -1435,6 +1467,7 @@ void WasmBinaryBuilder::read() {
 }
 
 void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
+  BYN_TRACE("== readUserSection\n");
   auto oldPos = pos;
   Name sectionName = getInlineString();
   size_t read = pos - oldPos;
@@ -1452,6 +1485,8 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     readFeatures(payloadLen);
   } else if (sectionName.equals(BinaryConsts::UserSections::Dylink)) {
     readDylink(payloadLen);
+  } else if (sectionName.equals(BinaryConsts::UserSections::Dylink0)) {
+    readDylink0(payloadLen);
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::UserSections::Linking)) {
@@ -3252,6 +3287,7 @@ void WasmBinaryBuilder::readDylink(size_t payloadLen) {
 
   auto sectionPos = pos;
 
+  wasm.dylinkSection->isLegacy = true;
   wasm.dylinkSection->memorySize = getU32LEB();
   wasm.dylinkSection->memoryAlignment = getU32LEB();
   wasm.dylinkSection->tableSize = getU32LEB();
@@ -3262,12 +3298,50 @@ void WasmBinaryBuilder::readDylink(size_t payloadLen) {
     wasm.dylinkSection->neededDynlibs.push_back(getInlineString());
   }
 
-  size_t remaining = (sectionPos + payloadLen) - pos;
-  auto tail = getByteView(remaining);
-  wasm.dylinkSection->tail = {tail.first, tail.second};
-
   if (pos != sectionPos + payloadLen) {
-    throwError("bad features section size");
+    throwError("bad dylink section size");
+  }
+}
+
+void WasmBinaryBuilder::readDylink0(size_t payloadLen) {
+  BYN_TRACE("== readDylink0\n");
+  auto sectionPos = pos;
+  uint32_t lastType = 0;
+
+  wasm.dylinkSection = make_unique<DylinkSection>();
+  while (pos < sectionPos + payloadLen) {
+    auto oldPos = pos;
+    auto dylinkType = getU32LEB();
+    if (lastType && dylinkType <= lastType) {
+      std::cerr << "warning: out-of-order dylink.0 subsection: " << dylinkType
+                << std::endl;
+    }
+    lastType = dylinkType;
+    auto subsectionSize = getU32LEB();
+    auto subsectionPos = pos;
+    if (dylinkType == BinaryConsts::UserSections::Subsection::DylinkMemInfo) {
+      wasm.dylinkSection->memorySize = getU32LEB();
+      wasm.dylinkSection->memoryAlignment = getU32LEB();
+      wasm.dylinkSection->tableSize = getU32LEB();
+      wasm.dylinkSection->tableAlignment = getU32LEB();
+    } else if (dylinkType ==
+               BinaryConsts::UserSections::Subsection::DylinkNeeded) {
+      size_t numNeededDynlibs = getU32LEB();
+      for (size_t i = 0; i < numNeededDynlibs; ++i) {
+        wasm.dylinkSection->neededDynlibs.push_back(getInlineString());
+      }
+    } else {
+      // Unknown subsection.  Stop parsing now and store the rest of
+      // the section verbatim.
+      pos = oldPos;
+      size_t remaining = (sectionPos + payloadLen) - pos;
+      auto tail = getByteView(remaining);
+      wasm.dylinkSection->tail = {tail.first, tail.second};
+      break;
+    }
+    if (pos != subsectionPos + subsectionSize) {
+      throwError("bad dylink.0 subsection position change");
+    }
   }
 }
 
