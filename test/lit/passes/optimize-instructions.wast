@@ -728,6 +728,45 @@
       )
     )
   )
+  ;; CHECK:      (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (call $select-or-side-effects
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (call $select-or-side-effects
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
+    ;; When there are side effects, the order of the operations must remain
+    ;; correct.
+    (select
+      (i32.const 1)
+      (i32.eq
+        (call $select-or-side-effects
+          (local.get $x)
+          (local.get $y)
+        )
+        (i32.const 1337)
+      )
+      (i32.and
+        (call $select-or-side-effects
+          (local.get $y)
+          (local.get $x)
+        )
+        (i32.const 1)
+      )
+    )
+  )
   ;; CHECK:      (func $select-or-no-bits (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
