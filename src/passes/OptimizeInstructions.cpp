@@ -859,6 +859,17 @@ struct OptimizeInstructions
         }
       }
       {
+        // i32.wrap_i64(i64(x) & 0x00000000FFFFFFFF)  =>  i32.wrap_i64(x)
+        Expression* x;
+        if (matches(
+              curr,
+              unary(WrapInt64,
+                    binary(And, any(&x), i64(int64_t(0x00000000FFFFFFFF)))))) {
+          curr->cast<Unary>()->value = x;
+          return replaceCurrent(curr);
+        }
+      }
+      {
         // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
         Unary* inner;
