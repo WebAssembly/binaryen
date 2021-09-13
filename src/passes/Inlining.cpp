@@ -487,7 +487,9 @@ struct FunctionSplitter {
 private:
   // Information about splitting a function.
   struct Split {
-    // Whether we can split the function.
+    // Whether we can split the function. If this is false, the other two will
+    // remain nullptr forever; if this is true then we will populate them the
+    // first time we need them.
     bool splittable = false;
 
     // The inlineable function out of the two that we generate by splitting.
