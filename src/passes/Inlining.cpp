@@ -563,13 +563,12 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>() && body->is<Block>()) {
+      split.splittable = true;
       // If we were just checking, stop and report success.
       if (!inlineableOut) {
-        split.splittable = true;
         return true;
       }
 
-      split.splittable = true;
       split.inlineable = copyFunction(func, "inlineable-A");
       auto* outlined = copyFunction(func, "outlined-A");
 
