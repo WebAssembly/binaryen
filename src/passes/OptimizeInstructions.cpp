@@ -859,14 +859,18 @@ struct OptimizeInstructions
         }
       }
       {
-        // i32.wrap_i64(i64(x) & 0x00000000FFFFFFFF)  =>  i32.wrap_i64(x)
+        // i32.wrap_i64(i64(x) & C)  =>  i32.wrap_i64(x)
+        //    if C & 0x00000000FFFFFFFF == 0x00000000FFFFFFFF
+        Const* c;
         Expression* x;
         if (matches(
               curr,
               unary(WrapInt64,
-                    binary(And, any(&x), i64(int64_t(0x00000000FFFFFFFF)))))) {
-          curr->cast<Unary>()->value = x;
-          return replaceCurrent(curr);
+                    binary(And, any(&x), i64(&c))))) {
+          if ((c->value.geti64() & 0xFFFFFFFFLL) == 0xFFFFFFFFLL) {
+            curr->cast<Unary>()->value = x;
+            return replaceCurrent(curr);
+          }
         }
       }
       {
