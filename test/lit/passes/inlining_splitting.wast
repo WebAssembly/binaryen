@@ -1038,8 +1038,9 @@
     ;; we end up with a function that all it does is make that call - which is
     ;; worth inlining in the normal way (to avoid two calls). As a result of all
     ;; that, we end up inlining *all* of $reachable-if-body, just by a
-    ;; roundabout way (split, outline, then inline). While this seems odd, the
-    ;; result is a good one, and each step along the way makes sense.
+    ;; roundabout way (split, outline, then inline). While this seems odd, each
+    ;; step along the way makes sense, and the result is a good one (might be a
+    ;; little hard to see before opts remove the extra block cruft etc.).
     (drop (call $reachable-if-body (ref.null any)))
     (drop (call $reachable-if-body (ref.null any)))
   )
