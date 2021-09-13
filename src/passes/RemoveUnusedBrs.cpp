@@ -1316,7 +1316,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // dce will clean it up
             return nullptr;
           }
-          auto* binary = br->condition->dynCast<Binary>();
+          auto* condition = br->condition;
+          // Also support eqz, which is the same as == 0.
+          if (auto* unary = condition->dynCast<Unary>()) {
+            if (unary->op == EqZInt32) {
+              return br;
+            }
+            return nullptr;
+          }
+          auto* binary = condition->dynCast<Binary>();
           if (!binary) {
             return nullptr;
           }
@@ -1342,16 +1350,29 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br) {
             return nullptr;
           }
-          return br->condition->cast<Binary>()->left;
+          auto* condition = br->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->left;
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return unary->value;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
 
         // returns the constant value, as a uint32_t
         auto getProperBrIfConstant =
           [&getProperBrIf](Expression* curr) -> uint32_t {
-          return getProperBrIf(curr)
-            ->condition->cast<Binary>()
-            ->right->cast<Const>()
-            ->value.geti32();
+          auto* condition = getProperBrIf(curr)->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->right->cast<Const>()->value.geti32();
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return 0;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
         Index start = 0;
         while (start < list.size() - 1) {
@@ -1359,6 +1380,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!conditionValue) {
             start++;
             continue;
+          }
+          // If the first condition value is a tee, that is ok, so long as the
+          // others afterwards are gets of the value that is tee'd.
+          LocalGet get;
+          if (auto* tee = conditionValue->dynCast<LocalSet>()) {
+            get.index = tee->index;
+            get.type = getFunction()->getLocalType(get.index);
+            conditionValue = &get;
           }
           // if the condition has side effects, we can't replace many
           // appearances of it with a single one
@@ -1427,13 +1456,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               }
               Builder builder(*getModule());
               // the table and condition are offset by the min
+              auto* newCondition = getProperBrIfConditionValue(list[start]);
+
               if (min != 0) {
-                conditionValue = builder.makeBinary(
-                  SubInt32, conditionValue, builder.makeConst(int32_t(min)));
+                newCondition = builder.makeBinary(
+                  SubInt32, newCondition, builder.makeConst(int32_t(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,
-                builder.makeSwitch(table, defaultName, conditionValue));
+                builder.makeSwitch(table, defaultName, newCondition));
               for (Index i = start; i < end - 1; i++) {
                 ExpressionManipulator::nop(list[i]);
               }
