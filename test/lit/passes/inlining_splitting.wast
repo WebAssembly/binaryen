@@ -1212,6 +1212,91 @@
     (drop (call $multi-if (ref.null any)))
     (drop (call $multi-if (ref.null func)))
   )
+
+  ;; CHECK:      (func $too-many-ifs (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $too-many-ifs (param $x anyref) (result anyref)
+    ;; 5 ifs, which is too many.
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (call $import)
+    )
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (call $import)
+    )
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (call $import)
+    )
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (call $import)
+    )
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (call $import)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $call-too-many-ifs
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $too-many-ifs
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $too-many-ifs
+  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-too-many-ifs
+    (drop (call $too-many-ifs (ref.null any)))
+    (drop (call $too-many-ifs (ref.null func)))
+  )
 )
 
 ;; CHECK:      (func $byn-split-outlined-A$maybe-work-hard (param $x i32)

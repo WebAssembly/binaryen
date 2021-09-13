@@ -629,10 +629,10 @@ private:
     // without an else.
 
     // Find the number of ifs.
-    // TODO: Investigate more values here. 3 appears useful on real-world code.
-    const Index MaxIfs = 3;
+    // TODO: Investigate more values here. 4 appears useful on real-world code.
+    const Index MaxIfs = 4;
     Index numIfs = 0;
-    while (getIf(body, numIfs) && numIfs <= MaxIfs + 1) {
+    while (getIf(body, numIfs) && numIfs <= MaxIfs) {
       numIfs++;
     }
 
@@ -644,7 +644,7 @@ private:
 
     // To fit the pattern, the number of ifs must be valid, and there must be no
     // other items after the optional final one.
-    if (numIfs > 0 && numIfs <= MaxIfs + 1 && finalItemIsSimple &&
+    if (numIfs > 0 && numIfs <= MaxIfs && finalItemIsSimple &&
         !getItem(body, numIfs + (finalItem ? 1 : 0))) {
       // This has the general shape we seek. Check each if.
       for (Index i = 0; i < numIfs; i++) {
