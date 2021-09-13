@@ -863,10 +863,7 @@ struct OptimizeInstructions
         //    if C & 0x00000000FFFFFFFF == 0x00000000FFFFFFFF
         Const* c;
         Expression* x;
-        if (matches(
-              curr,
-              unary(WrapInt64,
-                    binary(And, any(&x), i64(&c))))) {
+        if (matches(curr, unary(WrapInt64, binary(And, any(&x), i64(&c))))) {
           if ((c->value.geti64() & 0xFFFFFFFFLL) == 0xFFFFFFFFLL) {
             curr->cast<Unary>()->value = x;
             return replaceCurrent(curr);
