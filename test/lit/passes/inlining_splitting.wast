@@ -558,9 +558,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $start-used-globally
-    ;; This looks optimizable, and it is even though it has a global use (by
-    ;; being the start function). We do not interfere with global uses; the only
-    ;; thing we alter are the places where we do partially inline this method.
+    ;; This is optimizable even though it is the start function, that is is,
+    ;; having global uses of a function are not a problem for partial inlining
+    ;; (since we do not modify this function - we create new split pieces of
+    ;; it).
     (if
       (global.get $glob)
       (return)
