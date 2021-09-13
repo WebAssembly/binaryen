@@ -805,7 +805,8 @@
   ;; Pattern B: functions containing
   ;;
   ;;   if (simple1) heavy-work-that-is-unreachable;
-  ;;   simple2
+  ;;   if (simple..) heavy-work-that-is-unreachable;
+  ;;   simplek
 
   (func $error-if-null (param $x anyref) (result anyref)
     ;; A "as non null" function: If the input is null, issue an error somehow
