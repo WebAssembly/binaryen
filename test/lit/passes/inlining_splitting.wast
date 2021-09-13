@@ -1159,11 +1159,7 @@
       )
       (call $import)
     )
-    ;; A second if. We can outline both if bodies. Note that the first will
-    ;; actually get inlined later (since it will have a single use), while the
-    ;; second will not, showing that we can effectively outline individual
-    ;; pieces (which is the same as outlining them all, then seeing what we can
-    ;; inline back).
+    ;; A second if. We can outline both if bodies.
     (if
       (ref.is_func
         (local.get $x)
