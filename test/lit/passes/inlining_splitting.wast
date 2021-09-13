@@ -798,6 +798,8 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $colliding-name$byn-outline-A-outlined
+    ;; This function's name might collide with the split function we create for
+    ;; the above function; the split function's name must be fixed up.
   )
 
   ;; Pattern B: functions containing
