@@ -1819,9 +1819,10 @@ private:
         }
       }
     }
-    if (curr->type == Type::i32 && Bits::getMaxBits(curr->condition) <= 1 &&
-        Bits::getMaxBits(curr->ifTrue) <= 1 &&
-        Bits::getMaxBits(curr->ifFalse) <= 1) {
+    if (curr->type == Type::i32 &&
+        Bits::getMaxBits(curr->condition, this) <= 1 &&
+        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
+        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
       // The condition and both arms are i32 booleans, which allows us to do
       // boolean optimizations.
       Expression* x;
