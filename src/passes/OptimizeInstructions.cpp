@@ -2314,7 +2314,7 @@ private:
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
     }
-    // bool(x)  ^ 1  ==>  !bool(x)
+    // bool(x) ^ 1  ==>  !bool(x)
     if (matches(curr, binary(Xor, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
       auto* result = builder.makeUnary(Abstract::getUnary(type, EqZ), left);
@@ -2364,6 +2364,12 @@ private:
       curr->op = EqInt64;
       curr->type = Type::i32;
       return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
+    }
+    // i64(x) & 0x00000000FFFFFFFF   ==>   i64(i32(x))
+    if (matches(curr, binary(And, any(&left), i64(0x00000000FFFFFFFFLL)))) {
+      Builder builder(*getModule());
+      return builder.makeUnary(ExtendUInt32,
+                               builder.makeUnary(WrapInt64, left));
     }
     // (unsigned)x < 0   ==>   i32(0)
     if (matches(curr, binary(LtU, pure(&left), ival(0)))) {

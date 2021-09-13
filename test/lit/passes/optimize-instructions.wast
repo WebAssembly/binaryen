@@ -9609,6 +9609,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -9805,6 +9812,12 @@
     (drop (i64.div_u
       (local.get $y)
       (i64.const -9223372036854775808)
+    ))
+
+    ;; i64(x) & 0x00000000FFFFFFFF  =>  extend(wrap(x))
+    (drop (i64.and
+      (local.get $y)
+      (i64.const 0x00000000FFFFFFFF)
     ))
 
     ;; (unsigned)x >= 0  =>  i32(1)
@@ -11497,9 +11510,10 @@
 
   ;; CHECK:      (func $sign-and-zero-extention-elimination-2 (param $x i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.and
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i64.const 4294967295)
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -11525,10 +11539,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.extend_i32_s
   ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.and
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i64.const 4294967295)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
