@@ -2366,7 +2366,8 @@ private:
       return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
     }
     // i64(x) & 0x00000000FFFFFFFF   ==>   i64(i32(x))
-    if (matches(curr, binary(And, any(&left), i64(0x00000000FFFFFFFFLL)))) {
+    if (matches(curr,
+                binary(And, any(&left), i64(int64_t(0x00000000FFFFFFFF))))) {
       Builder builder(*getModule());
       return builder.makeUnary(ExtendUInt32,
                                builder.makeUnary(WrapInt64, left));
