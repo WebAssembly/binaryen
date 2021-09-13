@@ -120,7 +120,7 @@ struct FunctionInfo {
   }
 };
 
-bool canHandleParams(Function* func) {
+static bool canHandleParams(Function* func) {
   // We cannot inline a function if we cannot handle placing it in a local, as
   // all params become locals.
   for (auto param : func->getParams()) {
@@ -453,7 +453,8 @@ struct FunctionSplitter {
   }
 
   // Returns the function we should inline, after we split the function into two
-  // pieces as described above (foo$inlineable, there).
+  // pieces as described above (that is, in the example above, this would return
+  // foo$inlineable).
   //
   // This is called when we are definitely inlining the function, and so it will
   // perform the splitting (if that has not already been done before).
