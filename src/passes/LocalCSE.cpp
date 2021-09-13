@@ -436,8 +436,7 @@ struct Checker
       // nondeterministic: even if it has no side effects, if it may return a
       // different result each time, then we cannot optimize away repeats.
       if (effects.hasSideEffects() ||
-          Properties::isIntrinsicallyNondeterministic(curr,
-                                                      getModule()->features)) {
+          Properties::isGenerative(curr, getModule()->features)) {
         requestInfos.erase(curr);
       } else {
         activeOriginals.emplace(

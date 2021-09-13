@@ -1702,6 +1702,27 @@ public:
     return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
                         curr->type));
   }
+  Flow visitArrayInit(ArrayInit* curr) {
+    NOTE_ENTER("ArrayInit");
+    auto rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      return rtt;
+    }
+    Index num = curr->values.size();
+    if (num >= ArrayLimit) {
+      hostLimit("allocation failure");
+    }
+    Literals data(num);
+    for (Index i = 0; i < num; i++) {
+      auto value = this->visit(curr->values[i]);
+      if (value.breaking()) {
+        return value;
+      }
+      data[i] = value.getSingleValue();
+    }
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+                        curr->type));
+  }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
     Flow ref = this->visit(curr->ref);

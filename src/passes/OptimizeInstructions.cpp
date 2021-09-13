@@ -416,6 +416,38 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x * -y   ==>   x * y
+        //   where  x, y  are integers
+        Binary* bin;
+        Expression *x, *y;
+        if (matches(curr,
+                    binary(&bin,
+                           Mul,
+                           binary(Sub, ival(0), any(&x)),
+                           binary(Sub, ival(0), any(&y))))) {
+          bin->left = x;
+          bin->right = y;
+          return replaceCurrent(curr);
+        }
+      }
+      {
+        // -x * y   ==>   -(x * y)
+        // x * -y   ==>   -(x * y)
+        //   where  x, y  are integers
+        Expression *x, *y;
+        if ((matches(curr,
+                     binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
+             matches(curr,
+                     binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) &&
+            !x->is<Const>() && !y->is<Const>()) {
+          Builder builder(*getModule());
+          return replaceCurrent(
+            builder.makeBinary(Abstract::getBinary(curr->type, Sub),
+                               builder.makeConst(Literal::makeZero(curr->type)),
+                               builder.makeBinary(curr->op, x, y)));
+        }
+      }
+      {
         if (getModule()->features.hasSignExt()) {
           Const *c1, *c2;
           Expression* x;
@@ -1551,8 +1583,7 @@ private:
     }
     // To be equal, they must also be known to return the same result
     // deterministically.
-    if (Properties::isIntrinsicallyNondeterministic(left,
-                                                    getModule()->features)) {
+    if (Properties::isGenerative(left, getModule()->features)) {
       return false;
     }
     return true;
@@ -1786,6 +1817,25 @@ private:
           return builder.makeBinary(
             Abstract::getBinary(type, Or), bin, curr->ifTrue);
         }
+      }
+    }
+    if (curr->type == Type::i32 &&
+        Bits::getMaxBits(curr->condition, this) <= 1 &&
+        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
+        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
+      // The condition and both arms are i32 booleans, which allows us to do
+      // boolean optimizations.
+      Expression* x;
+      Expression* y;
+
+      // x ? y : 0   ==>   x & y
+      if (matches(curr, select(any(&y), ival(0), any(&x)))) {
+        return builder.makeBinary(AndInt32, y, x);
+      }
+
+      // x ? 1 : y   ==>   x | y
+      if (matches(curr, select(ival(1), any(&y), any(&x)))) {
+        return builder.makeBinary(OrInt32, y, x);
       }
     }
     {
@@ -2215,6 +2265,24 @@ private:
     if (matches(curr, binary(Mul, pure(&left), ival(0))) ||
         matches(curr, binary(And, pure(&left), ival(0)))) {
       return right;
+    }
+    // -x * C   ==>    x * -C,   if  shrinkLevel != 0  or  C != C_pot
+    // -x * C   ==>   -(x * C),  otherwise
+    //    where  x, C  are integers
+    Binary* inner;
+    if (matches(
+          curr,
+          binary(Mul, binary(&inner, Sub, ival(0), any(&left)), ival()))) {
+      if (getPassOptions().shrinkLevel != 0 ||
+          !Bits::isPowerOf2(right->value.getInteger())) {
+        right->value = right->value.neg();
+        curr->left = left;
+        return curr;
+      } else {
+        curr->left = left;
+        Const* zero = inner->left->cast<Const>();
+        return builder.makeBinary(inner->op, zero, curr);
+      }
     }
     // x == 0   ==>   eqz x
     if (matches(curr, binary(Eq, any(&left), ival(0)))) {
