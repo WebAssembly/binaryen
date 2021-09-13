@@ -609,17 +609,24 @@ private:
     //
     // Also, each if body must either be unreachable, or it must have type none
     // and have no returns. If it is unreachable, for example because it is a
-    // return, then we will just return that value,
+    // return, then we will just return a value from the outlined function:
     //
     //  if (A_i) {
     //    return outlined(..);
     //  }
     //
-    // Or, if it has type none, then for now we require that it has no returns
-    // so that we do not need to handle passing the information of whether we
-    // should return or not (without a return, we know we don't need to). TODO
-    // (Note that it can't be anything other than none or unreachable, so we do
-    // not have an if-else here - the if arms return no results.)
+    // Or, if an if body has type none, then for now we assume that we do not
+    // need to return a value from there, which makes things simpler, and in
+    // that case we just do this, which continues onward in the function:
+    //
+    //  if (A_i) {
+    //    outlined(..);
+    //  }
+    //
+    // TODO: handle a possible returned value in this case as well.
+    //
+    // Note that the if body type must be unreachable or none, as this is an if
+    // without an else.
 
     // Find the number of ifs.
     // TODO: Investigate more values here. 3 appears useful on real-world code.
