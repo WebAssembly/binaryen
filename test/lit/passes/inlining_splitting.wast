@@ -371,19 +371,9 @@
     (call $condition-eqz (i32.const 1))
   )
 
-  ;; CHECK:      (func $condition-global
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $glob)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (loop $l
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (br $l)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $condition-global
     (if
-      ;; A global read.
+      ;; A global read, also worth splitting.
       (global.get $glob)
       (return)
     )
@@ -391,6 +381,33 @@
       (call $import)
       (br $l)
     )
+  )
+
+  ;; CHECK:      (func $call-condition-global
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$condition-global
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (global.get $glob)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$condition-global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$condition-global0
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (global.get $glob)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$condition-global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-condition-global
+    (call $condition-global)
+    (call $condition-global)
   )
 
   (func $condition-ref.is (param $x anyref)
@@ -1323,6 +1340,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-A$condition-eqz (param $x i32)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-A$condition-global
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
