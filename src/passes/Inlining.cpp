@@ -738,7 +738,7 @@ private:
   }
 
   // Get the i-th if in a sequence of initial ifs in an expression. If no such
-  // if exists, returns nullptr;
+  // if exists, returns nullptr.
   static If* getIf(Expression* curr, Index i = 0) {
     auto* item = getItem(curr, i);
     if (!item) {
