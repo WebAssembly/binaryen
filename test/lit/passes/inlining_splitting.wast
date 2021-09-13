@@ -1041,6 +1041,11 @@
     ;; roundabout way (split, outline, then inline). While this seems odd, each
     ;; step along the way makes sense, and the result is a good one (might be a
     ;; little hard to see before opts remove the extra block cruft etc.).
+    ;;
+    ;; We could avoid this if we detected that the if body is just a call, and
+    ;; not done any outlining - just done that call. That would be more
+    ;; efficient, but it would make the code more complicated, and the result is
+    ;; the same.
     (drop (call $reachable-if-body (ref.null any)))
     (drop (call $reachable-if-body (ref.null any)))
   )
