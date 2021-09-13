@@ -582,9 +582,6 @@ private:
       split.inlineable->body = inlineableIf;
 
       // The outlined function no longer needs the initial if.
-      // TODO: If we handle the case with indirect calls and other global uses
-      //       then we could not do this, as those calls would skip the first
-      //       function with the condition that calls the heavy work.
       //
       // Note that the body must be a block, because if it were not then the
       // function would be easily inlineable (just an if with a simple condition
