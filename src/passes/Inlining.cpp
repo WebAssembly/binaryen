@@ -635,73 +635,75 @@ private:
     while (getIf(body, numIfs) && numIfs <= MaxIfs) {
       numIfs++;
     }
+    if (numIfs == 0 || numIfs > MaxIfs) {
+      return false;
+    }
 
     // Look for a final item after the ifs.
     auto* finalItem = getItem(body, numIfs);
 
     // The final item must be simple (or not exist, which is simple enough).
-    bool finalItemIsSimple = finalItem ? isSimple(finalItem) : true;
+    if (finalItem && !isSimple(finalItem)) {
+      return false;
+    }
 
-    // To fit the pattern, the number of ifs must be valid, and there must be no
-    // other items after the optional final one.
-    if (numIfs > 0 && numIfs <= MaxIfs && finalItemIsSimple &&
-        !getItem(body, numIfs + (finalItem ? 1 : 0))) {
-      // This has the general shape we seek. Check each if.
-      for (Index i = 0; i < numIfs; i++) {
-        auto* iff = getIf(body, i);
-        // The if must have a simple condition and no else arm.
-        if (!isSimple(iff->condition) || iff->ifFalse) {
+    // There must be no other items after the optional final one.
+    if (getItem(body, numIfs + (finalItem ? 1 : 0))) {
+      return false;
+    }
+    // This has the general shape we seek. Check each if.
+    for (Index i = 0; i < numIfs; i++) {
+      auto* iff = getIf(body, i);
+      // The if must have a simple condition and no else arm.
+      if (!isSimple(iff->condition) || iff->ifFalse) {
+        return false;
+      }
+      if (iff->ifTrue->type == Type::none) {
+        // This must have no returns.
+        if (!FindAll<Return>(iff->ifTrue).list.empty()) {
           return false;
         }
-        if (iff->ifTrue->type == Type::none) {
-          // This must have no returns.
-          if (!FindAll<Return>(iff->ifTrue).list.empty()) {
-            return false;
-          }
-        } else if (iff->ifTrue->type != Type::unreachable) {
-          // This is neither unreachable nor none, so we cannot handle it.
-          return false;
-        }
+      } else {
+        // This is an if without an else, and so the type is either none of
+        // unreachable;
+        assert(iff->ifTrue->type == Type::unreachable);
       }
+    }
 
-      // Success, this matches the pattern. Exit if we were just checking.
-      if (!inlineableOut) {
-        split.splittable = true;
-        return true;
-      }
-
-      split.splittable = true;
-      split.inlineable = copyFunction(func, "inlineable-B");
-
-      // The inlineable function should only have the ifs, which will call the
-      // outlined heavy work.
-      for (Index i = 0; i < numIfs; i++) {
-        // For each if, create an outlined function with the body of that if,
-        // and call that from the if.
-        auto* inlineableIf = getIf(split.inlineable->body, i);
-        auto* outlined = copyFunction(func, "outlined-B");
-        outlined->body = inlineableIf->ifTrue;
-
-        // The outlined function either returns the same results as the original
-        // one, or nothing, depending on if a value is returned here.
-        auto valueReturned = func->getResults() != Type::none &&
-                             outlined->body->type != Type::none;
-        outlined->setResults(valueReturned ? func->getResults() : Type::none);
-        inlineableIf->ifTrue = builder.makeCall(outlined->name,
-                                                getForwardedArgs(func, builder),
-                                                outlined->getResults());
-        if (valueReturned) {
-          inlineableIf->ifTrue = builder.makeReturn(inlineableIf->ifTrue);
-        }
-      }
-
-      // We can just leave the final value at the end, if it exists.
-
-      *inlineableOut = split.inlineable;
+    // Success, this matches the pattern. Exit if we were just checking.
+    split.splittable = true;
+    if (!inlineableOut) {
       return true;
     }
 
-    return false;
+    split.inlineable = copyFunction(func, "inlineable-B");
+
+    // The inlineable function should only have the ifs, which will call the
+    // outlined heavy work.
+    for (Index i = 0; i < numIfs; i++) {
+      // For each if, create an outlined function with the body of that if,
+      // and call that from the if.
+      auto* inlineableIf = getIf(split.inlineable->body, i);
+      auto* outlined = copyFunction(func, "outlined-B");
+      outlined->body = inlineableIf->ifTrue;
+
+      // The outlined function either returns the same results as the original
+      // one, or nothing, depending on if a value is returned here.
+      auto valueReturned = func->getResults() != Type::none &&
+                           outlined->body->type != Type::none;
+      outlined->setResults(valueReturned ? func->getResults() : Type::none);
+      inlineableIf->ifTrue = builder.makeCall(outlined->name,
+                                              getForwardedArgs(func, builder),
+                                              outlined->getResults());
+      if (valueReturned) {
+        inlineableIf->ifTrue = builder.makeReturn(inlineableIf->ifTrue);
+      }
+    }
+
+    // We can just leave the final value at the end, if it exists.
+
+    *inlineableOut = split.inlineable;
+    return true;
   }
 
   Function* copyFunction(Function* func, std::string prefix) {
