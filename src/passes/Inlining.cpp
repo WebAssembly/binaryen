@@ -514,6 +514,8 @@ private:
         // We've seen before that this cannot be split.
         return false;
       }
+      // We can split this function. If we've already done so, return that
+      // cached result.
       if (iter->second.inlineable) {
         if (inlineableOut) {
           *inlineableOut = iter->second.inlineable;
