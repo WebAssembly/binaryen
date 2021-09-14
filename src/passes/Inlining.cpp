@@ -473,12 +473,12 @@ struct FunctionSplitter {
   std::vector<Name> finish() {
     std::vector<Name> ret;
     for (auto& kv : splits) {
-      auto* func = kv.first;
+      Name func = kv.first;
       auto& split = kv.second;
       auto* inlineable = split.inlineable;
       if (inlineable) {
         module->removeFunction(inlineable->name);
-        ret.push_back(func->name);
+        ret.push_back(func);
       }
     }
     return ret;
@@ -501,14 +501,18 @@ private:
   };
 
   // All the splitting we have already performed.
-  std::unordered_map<Function*, Split> splits;
+  //
+  // Note that this maps from function names, and not Function*, as the main
+  // inlining code can remove functions as it goes, but we can rely on names
+  // staying constant.
+  std::unordered_map<Name, Split> splits;
 
   // Check if we can split a function. Returns whether we can. If the out param
   // is provided, also actually does the split, and returns the inlineable split
   // function in that out param.
   bool maybeSplit(Function* func, Function** inlineableOut = nullptr) {
     // Check if we've processed this input before.
-    auto iter = splits.find(func);
+    auto iter = splits.find(func->name);
     if (iter != splits.end()) {
       if (!iter->second.splittable) {
         // We've seen before that this cannot be split.
@@ -529,7 +533,7 @@ private:
     // The default value of split.splittable is false, so if we fail we just
     // need to return false from this function. If, on the other hand, we can
     // split, then we will update this split info accordingly.
-    auto& split = splits[func];
+    auto& split = splits[func->name];
 
     auto* body = func->body;
 
