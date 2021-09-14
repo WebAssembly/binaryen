@@ -1835,8 +1835,6 @@ private:
         Bits::getMaxBits(curr->ifFalse, this) <= 1) {
       // The condition and both arms are i32 booleans, which allows us to do
       // boolean optimizations.
-      Expression* x;
-      Expression* y;
 
       // x ? y : 0   ==>   x & y
       if (matches(curr->ifFalse, ival(0))) {
