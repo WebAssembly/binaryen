@@ -505,7 +505,7 @@
     (rtt.canon $bytes)
    )
   )
-  ;; The first value should be be -11512 & 255 => 8
+  ;; The value should be be -11512 & 255 => 8
   (call $log
    (array.get_u $bytes (local.get $x) (i32.const 0))
   )
