@@ -922,13 +922,67 @@
       )
     )
   )
-  ;; CHECK:      (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $select-and-negation (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-negation (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; With a 1 here, we must negate the condition.
+      (i32.const 1)
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and-negation-impossible (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-negation-impossible (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; With a 1 here, we must negate the condition, but the condition here
+      ;; cannot be negated in a simple way, so skip.
+      (i32.const 1)
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 31)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const 42)
@@ -941,8 +995,8 @@
         (local.get $y)
         (i32.const 1337)
       )
-      ;; The wrong constant (should be 0).
-      (i32.const 1)
+      ;; The wrong constant (should be 0 or 1).
+      (i32.const 2)
       (i32.eq
         (local.get $x)
         (i32.const 42)
