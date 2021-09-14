@@ -772,22 +772,10 @@
  ;; CHECK-NEXT:    (local.get $val)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.load
- ;; CHECK-NEXT:     (i32.const -1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (memory.fill
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.load
- ;; CHECK-NEXT:    (i32.const -1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $sz)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $optimize-bulk-memory-fill (param $dst i32) (param $val i32) (param $sz i32)
@@ -803,16 +791,10 @@
     (i32.const 0)
   )
 
-  (memory.fill ;; drops
-    (i32.load (i32.const -1))
-    (i32.const 0)
-    (i32.const 0)
-  )
-
   (memory.fill ;; skip
     (i32.const 0)
     (i32.const 0)
-    (i32.load (i32.const -1))
+    (local.get $sz)
   )
  )
 )
