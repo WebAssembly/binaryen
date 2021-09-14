@@ -497,6 +497,19 @@
    (array.get_u $bytes (local.get $x) (i32.const 1))
   )
  )
+ (func "array.init-packed"
+  (local $x (ref null $bytes))
+  (local.set $x
+   (array.init $bytes
+    (i32.const -11512)
+    (rtt.canon $bytes)
+   )
+  )
+  ;; The value should be be -11512 & 255 => 8
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 0))
+  )
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))
