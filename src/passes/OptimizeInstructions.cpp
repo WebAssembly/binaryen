@@ -1861,13 +1861,13 @@ private:
         if (binary->isRelational()) {
           // x ? 0 : y   ==>   !x & y
           if (matches(curr->ifTrue, ival(0))) {
-            binary->op = reverseRelationalOp(binary->op);
+            binary->op = invertBinaryOp(binary->op);
             return builder.makeBinary(AndInt32, curr->ifFalse, binary);
           }
 
           // x ? y : 1  ==>   !x | y
           if (matches(curr->ifFalse, ival(1))) {
-            binary->op = reverseRelationalOp(binary->op);
+            binary->op = invertBinaryOp(binary->op);
             return builder.makeBinary(OrInt32, curr->ifTrue, binary);
           }
         }
@@ -3111,6 +3111,8 @@ private:
     }
   }
 
+  // Invert (negate) the opcode, so that it has the exact negative meaning as it
+  // had before.
   BinaryOp invertBinaryOp(BinaryOp op) {
     // use de-morgan's laws
     switch (op) {
@@ -3171,6 +3173,9 @@ private:
     }
   }
 
+  // Change the opcode so it is correct after reversing the operands. That is,
+  // we had  X OP  Y  and we need OP' so that this is equivalent to that:
+  //         Y OP' X
   BinaryOp reverseRelationalOp(BinaryOp op) {
     switch (op) {
       case EqInt32:
