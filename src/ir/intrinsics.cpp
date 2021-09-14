@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-#include "ir/properties.h"
-#include "wasm-traversal.h"
+#include "ir/intrinsics.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
-namespace Properties {
+static Name BinaryenIntrinsics("binaryen-intrinsics"),
+  CallWithoutEffects("call.without.effects");
 
-bool isGenerative(Expression* curr, FeatureSet features) {
-  // Practically no wasm instructions are generative. Exceptions occur only in
-  // GC atm.
-  if (!features.hasGC()) {
-    return false;
-  }
-
-  struct Scanner : public PostWalker<Scanner> {
-    bool generative = false;
-    void visitStructNew(StructNew* curr) { generative = true; }
-    void visitArrayNew(ArrayNew* curr) { generative = true; }
-    void visitArrayInit(ArrayInit* curr) { generative = true; }
-  } scanner;
-  scanner.walk(curr);
-  return scanner.generative;
+bool Intrinsics::isCallWithoutEffects(Function* func) {
+  return func->module == BinaryenIntrinsics && func->base == CallWithoutEffects;
 }
 
-} // namespace Properties
+Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
+  if (auto* call = curr->dynCast<Call>()) {
+    // The target function may not exist if the module is still being
+    // constructed.
+    if (auto* func = module.getFunctionOrNull(call->target)) {
+      if (isCallWithoutEffects(func)) {
+        return call;
+      }
+    }
+  }
+  return nullptr;
+}
 
 } // namespace wasm

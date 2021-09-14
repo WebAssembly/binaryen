@@ -17,6 +17,7 @@
 #ifndef wasm_ir_effects_h
 #define wasm_ir_effects_h
 
+#include "ir/intrinsics.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 
@@ -31,7 +32,7 @@ public:
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
-      debugInfo(passOptions.debugInfo), module(&module),
+      debugInfo(passOptions.debugInfo), module(module),
       features(module.features) {
     if (ast) {
       walk(ast);
@@ -41,7 +42,7 @@ public:
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
   bool debugInfo;
-  Module* module;
+  Module& module;
   FeatureSet features;
 
   // Walk an expression and all its children.
@@ -393,6 +394,11 @@ private:
     }
 
     void visitCall(Call* curr) {
+      // call.without.effects has no effects.
+      if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
+        return;
+      }
+
       parent.calls = true;
       // When EH is enabled, any call can throw.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
@@ -642,6 +648,7 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
+    void visitArrayInit(ArrayInit* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       parent.readsArray = true;
       // traps when the arg is null or the index out of bounds

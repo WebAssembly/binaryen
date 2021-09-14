@@ -413,6 +413,8 @@ Index getMaxBits(Expression* curr,
     // a tee passes through the value
     return getMaxBits(set->value, localInfoProvider);
   } else if (auto* get = curr->dynCast<LocalGet>()) {
+    // TODO: Should this be optional?
+    assert(localInfoProvider);
     return localInfoProvider->getMaxBitsForLocal(get);
   } else if (auto* load = curr->dynCast<Load>()) {
     // if signed, then the sign-extension might fill all the bits

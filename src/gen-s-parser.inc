@@ -33,6 +33,9 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
+          case 'i':
+            if (strcmp(op, "array.init") == 0) { return makeArrayInit(s); }
+            goto parse_error;
           case 'l':
             if (strcmp(op, "array.len") == 0) { return makeArrayLen(s); }
             goto parse_error;
