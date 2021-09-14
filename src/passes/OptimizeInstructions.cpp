@@ -1853,6 +1853,10 @@ private:
       // eqz (one byte). However, the eqz adds work, so it is not obvious that
       // this is beneficial to do - only do it when we know we can fold away the
       // eqz.
+      // TODO: Perhaps also do this even if we can't remove the eqz, if we are
+      //       optimizing for size? We should measure the performance aspect
+      //       first though, to see if we need that.
+      //
       // (Note that aside from a relational binary which we can flip, we could
       // also check for an eqz unary, but a select with an eqz condition would
       // have already been removed in the cases relevant to us, since the true
