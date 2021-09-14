@@ -870,9 +870,35 @@
       )
     )
   )
+  ;; CHECK:      (func $select-or-negation (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.and
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-negation (param $x i32) (param $y i32) (result i32)
+    (select
+      ;; With a zero here we must negate the condition.
+      (i32.const 0)
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.lt_u
+        (local.get $x)
+        (i32.const 20)
+      )
+    )
+  )
   ;; CHECK:      (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i32.const 1337)
@@ -885,8 +911,8 @@
   ;; CHECK-NEXT: )
   (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
     (select
-      ;; The wrong const (should be 1).
-      (i32.const 0)
+      ;; The wrong const (should be 0 or 1).
+      (i32.const 2)
       (i32.eq
         (local.get $y)
         (i32.const 1337)
