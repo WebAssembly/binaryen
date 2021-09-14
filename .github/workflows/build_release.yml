@@ -67,24 +67,20 @@ jobs:
         echo "::set-output name=shasum::$SHASUM"
 
     - name: upload tarball
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: svenstaro/upload-release-action@v2
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.tarball }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        file: ./${{ steps.archive.outputs.tarball }}
         asset_name: ${{ steps.archive.outputs.tarball }}
-        asset_content_type: application/gzip
 
     - name: upload shasum
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: svenstaro/upload-release-action@v2
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.shasum }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        file: ./${{ steps.archive.outputs.shasum }}
         asset_name: ${{ steps.archive.outputs.shasum }}
-        asset_content_type: text/plain
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
@@ -118,9 +114,6 @@ jobs:
       run: |
         ./alpine.sh ninja install
 
-    - name: test
-      run: ./alpine.sh python3 ./check.py
-
     - name: archive
       id: archive
       run: |
@@ -136,21 +129,17 @@ jobs:
         echo "::set-output name=shasum::$SHASUM"
 
     - name: upload tarball
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: svenstaro/upload-release-action@v2
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.tarball }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        file: ./${{ steps.archive.outputs.tarball }}
         asset_name: ${{ steps.archive.outputs.tarball }}
-        asset_content_type: application/gzip
 
     - name: upload shasum
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: svenstaro/upload-release-action@v2
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.shasum }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        file: ./${{ steps.archive.outputs.shasum }}
         asset_name: ${{ steps.archive.outputs.shasum }}
-        asset_content_type: text/plain
