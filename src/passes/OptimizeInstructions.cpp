@@ -1839,13 +1839,40 @@ private:
       Expression* y;
 
       // x ? y : 0   ==>   x & y
-      if (matches(curr, select(any(&y), ival(0), any(&x)))) {
-        return builder.makeBinary(AndInt32, y, x);
+      if (matches(curr->ifFalse, ival(0))) {
+        return builder.makeBinary(AndInt32, curr->ifTrue, curr->condition);
       }
 
       // x ? 1 : y   ==>   x | y
-      if (matches(curr, select(ival(1), any(&y), any(&x)))) {
-        return builder.makeBinary(OrInt32, y, x);
+      if (matches(curr->ifTrue, ival(1))) {
+        return builder.makeBinary(OrInt32, curr->ifFalse, curr->condition);
+      }
+
+      // Some operations require us to add an eqz, like
+      // x ? 0 : y   ==>   !x & y
+      // We replace the select with an and, which does not change code size, and
+      // then reduce code size by removing the number (2 bytes) and adding an
+      // eqz (one byte). However, the eqz adds work, so it is not obvious that
+      // this is beneficial to do - only do it when we know we can fold away the
+      // eqz.
+      // (Note that aside from a relational binary which we can flip, we could
+      // also check for an eqz unary, but a select with an eqz condition would
+      // have already been removed in the cases relevant to us, since the true
+      // and false arms can be flipped given that one of them is a constant.)
+      if (auto* binary = curr->condition->dynCast<Binary>()) {
+        if (binary->isRelational()) {
+          // x ? 0 : y   ==>   !x & y
+          if (matches(curr->ifTrue, ival(0))) {
+            binary->op = reverseRelationalOp(binary->op);
+            return builder.makeBinary(AndInt32, curr->ifFalse, binary);
+          }
+
+          // x ? y : 1  ==>   !x | y
+          if (matches(curr->ifFalse, ival(1))) {
+            binary->op = reverseRelationalOp(binary->op);
+            return builder.makeBinary(OrInt32, curr->ifTrue, binary);
+          }
+        }
       }
     }
     {
