@@ -3010,8 +3010,7 @@ private:
                                        builder.makeConst<uint8_t[16]>(values),
                                        Type::v128);
             } else {
-              // i64.store(d, C', 0)
-              // i64.store(d, C', 8)
+              // { i64.store(d, C', 0), i64.store(d, C', 8) }
               return builder.makeBlock({
                 builder.makeStore(
                   8,
