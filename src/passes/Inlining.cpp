@@ -689,8 +689,8 @@ private:
 
       // The outlined function either returns the same results as the original
       // one, or nothing, depending on if a value is returned here.
-      auto valueReturned = func->getResults() != Type::none &&
-                           outlined->body->type != Type::none;
+      auto valueReturned =
+        func->getResults() != Type::none && outlined->body->type != Type::none;
       outlined->setResults(valueReturned ? func->getResults() : Type::none);
       inlineableIf->ifTrue = builder.makeCall(outlined->name,
                                               getForwardedArgs(func, builder),
