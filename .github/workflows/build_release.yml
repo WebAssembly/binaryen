@@ -67,20 +67,10 @@ jobs:
         echo "::set-output name=shasum::$SHASUM"
 
     - name: upload tarball
-      uses: svenstaro/upload-release-action@v2
+      uses: AButler/upload-release-assets@v2.0
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref }}
-        file: ./${{ steps.archive.outputs.tarball }}
-        asset_name: ${{ steps.archive.outputs.tarball }}
-
-    - name: upload shasum
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref }}
-        file: ./${{ steps.archive.outputs.shasum }}
-        asset_name: ${{ steps.archive.outputs.shasum }}
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        files: '${{ steps.archive.outputs.tarball }};${{ steps.archive.outputs.shasum }}'
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
@@ -128,18 +118,8 @@ jobs:
         echo "::set-output name=tarball::$TARBALL"
         echo "::set-output name=shasum::$SHASUM"
 
-    - name: upload tarball
-      uses: svenstaro/upload-release-action@v2
+    - name: upload
+      uses: AButler/upload-release-assets@v2.0
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref }}
-        file: ./${{ steps.archive.outputs.tarball }}
-        asset_name: ${{ steps.archive.outputs.tarball }}
-
-    - name: upload shasum
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.ref }}
-        file: ./${{ steps.archive.outputs.shasum }}
-        asset_name: ${{ steps.archive.outputs.shasum }}
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        files: '${{ steps.archive.outputs.tarball }};${{ steps.archive.outputs.shasum }}'
