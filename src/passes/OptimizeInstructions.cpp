@@ -2930,99 +2930,118 @@ private:
   }
 
   Expression* optimizeMemoryFill(MemoryFill* memFill) {
-    if (auto* csize = memFill->size->dynCast<Const>()) {
-      PassOptions options = getPassOptions();
+    if (!memFill->size->is<Const>()) {
+      return nullptr;
+    }
 
-      auto bytes = csize->value.getInteger();
-      Builder builder(*getModule());
+    PassOptions options = getPassOptions();
+    Builder builder(*getModule());
 
-      if (bytes == 0LL &&
-          (options.ignoreImplicitTraps || options.trapsNeverHappen)) {
-        // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
-        return builder.makeBlock(
-          {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
-      }
-      if (auto* cvalue = memFill->value->dynCast<Const>()) {
-        uint32_t byteValue = cvalue->value.geti32() & 0xFF;
-        // memory.fill(d, C1, C2)  ==>
-        //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
-        switch (bytes) {
-          case 1: {
-            return builder.makeStore(1, // bytes
-                                     0, // offset
-                                     1, // align
-                                     memFill->dest,
-                                     builder.makeConst<uint32_t>(byteValue),
-                                     Type::i32);
-          }
-          case 2: {
+    auto* csize = memFill->size->cast<Const>();
+    auto bytes = csize->value.getInteger();
+
+    if (bytes == 0LL &&
+        (options.ignoreImplicitTraps || options.trapsNeverHappen)) {
+      // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
+      return builder.makeBlock(
+        {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
+    }
+
+    const uint32_t offset = 0, align = 1;
+
+    if (auto* cvalue = memFill->value->dynCast<Const>()) {
+      uint32_t value = cvalue->value.geti32() & 0xFF;
+      // memory.fill(d, C1, C2)  ==>
+      //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
+      switch (bytes) {
+        case 1: {
+          return builder.makeStore(1, // bytes
+                                   offset,
+                                   align,
+                                   memFill->dest,
+                                   builder.makeConst<uint32_t>(value),
+                                   Type::i32);
+        }
+        case 2: {
+          return builder.makeStore(2,
+                                   offset,
+                                   align,
+                                   memFill->dest,
+                                   builder.makeConst<uint32_t>(value * 0x0101U),
+                                   Type::i32);
+        }
+        case 4: {
+          // transform only when "value" or shrinkLevel equal to zero due to
+          // it could increase size by several bytes
+          if (value == 0 || options.shrinkLevel == 0) {
             return builder.makeStore(
-              2, // bytes
-              0, // offset
-              1, // align
+              4,
+              offset,
+              align,
               memFill->dest,
-              builder.makeConst<uint32_t>(byteValue * 0x0101U),
+              builder.makeConst<uint32_t>(value * 0x01010101U),
               Type::i32);
           }
-          case 4: {
-            // transform only when "value" or shrinkLevel equal to zero due to
-            // it could increase size by several bytes
-            if (byteValue == 0 || options.shrinkLevel == 0) {
-              return builder.makeStore(
-                4, // bytes
-                0, // offset
-                1, // align
-                memFill->dest,
-                builder.makeConst<uint32_t>(byteValue * 0x01010101U),
-                Type::i32);
-            }
-            break;
+          break;
+        }
+        case 8: {
+          // transform only when "value" or shrinkLevel equal to zero due to
+          // it could increase size by several bytes
+          if (value == 0 || options.shrinkLevel == 0) {
+            return builder.makeStore(
+              8,
+              offset,
+              align,
+              memFill->dest,
+              builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
+              Type::i64);
           }
-          case 8: {
-            // transform only when "value" or shrinkLevel equal to zero due to
-            // it could increase size by several bytes
-            if (byteValue == 0 || options.shrinkLevel == 0) {
-              return builder.makeStore(
-                8, // bytes
-                0, // offset
-                1, // align
-                memFill->dest,
-                builder.makeConst<uint64_t>((uint64_t)byteValue *
-                                            0x0101010101010101ULL),
-                Type::i64);
-            }
-            break;
-          }
-          case 16: {
-            if (options.shrinkLevel == 0) {
-              if (getModule()->features.hasSIMD()) {
-                return builder.makeStore(
-                  16, // bytes
-                  0,  // offset
-                  1,  // align
+          break;
+        }
+        case 16: {
+          if (options.shrinkLevel == 0) {
+            if (getModule()->features.hasSIMD()) {
+              uint8_t values[16];
+              std::fill_n(values, 16, (uint8_t)value);
+              return builder.makeStore(16,
+                                       offset,
+                                       align,
+                                       memFill->dest,
+                                       builder.makeConst<uint8_t[16]>(values),
+                                       Type::v128);
+            } else {
+              // i64.store(d, C', 0)
+              // i64.store(d, C', 8)
+              return builder.makeBlock({
+                builder.makeStore(
+                  8,
+                  offset,
+                  align,
                   memFill->dest,
-                  builder.makeUnary(
-                    SplatVecI8x16,
-                    builder.makeConst<uint8_t>((uint8_t)byteValue)),
-                  Type::v128);
-              }
+                  builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
+                  Type::i64),
+                builder.makeStore(
+                  8,
+                  offset + 8,
+                  align,
+                  memFill->dest,
+                  builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
+                  Type::i64),
+              });
             }
-            break;
           }
-          default: {
-          }
+          break;
+        }
+        default: {
         }
       }
-      // memory.fill(d, v, 1)  ==>  store8(d, v)
-      if (bytes == 1LL) {
-        return builder.makeStore(1, // bytes
-                                 0, // offset
-                                 1, // align
-                                 memFill->dest,
-                                 memFill->value,
-                                 Type::i32);
-      }
     }
+    // memory.fill(d, v, 1)  ==>  store8(d, v)
+    if (bytes == 1LL) {
+      return builder.makeStore(
+        1, offset, align, memFill->dest, memFill->value, Type::i32);
+    }
+
     return nullptr;
   }
 

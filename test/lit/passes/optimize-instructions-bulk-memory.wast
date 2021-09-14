@@ -203,9 +203,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (v128.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (i8x16.splat
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
@@ -217,15 +215,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (v128.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (i8x16.splat
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (v128.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (i8x16.splat
-  ;; CHECK-NEXT:    (i32.const 255)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (v128.const i32x4 0xffffffff 0xffffffff 0xffffffff 0xffffffff)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
