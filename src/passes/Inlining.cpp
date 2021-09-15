@@ -121,8 +121,8 @@ struct FunctionInfo {
 };
 
 static bool canHandleParams(Function* func) {
-  // We cannot inline a function if we cannot handle placing its params in a locals, as
-  // all params become locals.
+  // We cannot inline a function if we cannot handle placing its params in a
+  // locals, as all params become locals.
   for (auto param : func->getParams()) {
     if (!TypeUpdating::canHandleAsLocal(param)) {
       return false;
@@ -545,8 +545,8 @@ private:
       }
     }
 
-    // All the patterns we look for right now start with an if at the very top of the
-    // function.
+    // All the patterns we look for right now start with an if at the very top
+    // of the function.
     auto* iff = getIf(body);
     if (!iff) {
       return false;
