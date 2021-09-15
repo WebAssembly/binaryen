@@ -1054,21 +1054,32 @@ struct OptimizeInstructions
   }
 
   void visitLocalSet(LocalSet* curr) {
-    //   (local.tee (ref.as_non_null ..))
-    // can be reordered to
-    //   (ref.as_non_null (local.tee ..))
-    // if the local is nullable (which it must be until some form of let is
-    // added). The reordering allows the ref.as to be potentially optimized
-    // further based on where the value flows to.
-    if (curr->isTee()) {
-      if (auto* as = curr->value->dynCast<RefAs>()) {
-        if (as->op == RefAsNonNull &&
-            getFunction()->getLocalType(curr->index).isNullable()) {
+    if (auto* as = curr->value->dynCast<RefAs>()) {
+      if (as->op == RefAsNonNull &&
+          getFunction()->getLocalType(curr->index).isNullable()) {
+        //   (local.tee (ref.as_non_null ..))
+        // can be reordered to
+        //   (ref.as_non_null (local.tee ..))
+        // if the local is nullable anyhow. The reordering allows the ref.as to
+        // be potentially optimized further based on where the value flows to.
+        if (curr->isTee()) {
           curr->value = as->value;
           curr->finalize();
           as->value = curr;
           as->finalize();
           replaceCurrent(as);
+          return;
+        }
+
+        // Otherwise, if this is not a tee, then no value falls through. The
+        // ref.as_non_null acts as a null check here, basically. If we are
+        // ignoring such traps, we can remove it. Note that we only do so when
+        // we do not allow non-nullable locals, as removing the cast of the type
+        // to be non-nullable would prevent specializing the local's type later.
+        auto passOptions = getPassOptions();
+        if ((passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) &&
+            !getModule()->features.hasGCNNLocals()) {
+          curr->value = as->value;
         }
       }
     }

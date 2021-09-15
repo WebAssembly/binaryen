@@ -342,4 +342,13 @@
       )
     )
   )
+
+  (func $set-of-as-non-null (param $x anyref)
+    ;; As we ignore such traps, we can remove the ref.as here.
+    (local.set $x
+      (ref.as_non_null
+        (local.get $x)
+      )
+    )
+  )
 )
