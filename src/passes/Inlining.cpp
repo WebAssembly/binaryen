@@ -444,7 +444,7 @@ struct FunctionSplitter {
   // (like limitations on which functions can be inlined into in each iteration,
   // the number of iterations, etc.). Therefore this function will only find out
   // if we *can* split, but not actually do any splitting.
-  bool canSplit(Function* func, const FunctionInfo& info) {
+  bool canSplit(Function* func) {
     if (!canHandleParams(func)) {
       return false;
     }
@@ -998,7 +998,7 @@ struct Inlining : public Pass {
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
     if (functionSplitter &&
-        functionSplitter->canSplit(module->getFunction(name), infos[name])) {
+        functionSplitter->canSplit(module->getFunction(name))) {
       return true;
     }
 
