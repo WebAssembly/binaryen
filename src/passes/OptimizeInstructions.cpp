@@ -185,8 +185,7 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
       if (matches(curr,
                   binary(And, any(&x), i64(int64_t(0x00000000FFFFFFFF))))) {
         Builder builder(*getModule());
-        return builder.makeUnary(ExtendUInt32,
-                                 builder.makeUnary(WrapInt64, x));
+        return builder.makeUnary(ExtendUInt32, builder.makeUnary(WrapInt64, x));
       }
     }
     return nullptr;
