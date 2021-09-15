@@ -1450,6 +1450,10 @@ struct OptimizeInstructions
   }
 
   void visitRefTest(RefTest* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     // See above in RefCast.
     if (!canBeCastTo(curr->ref->type.getHeapType(),
                      curr->rtt->type.getHeapType())) {
