@@ -878,10 +878,10 @@ struct OptimizeInstructions
             curr->cast<Unary>()->value = x;
             return replaceCurrent(curr);
           }
+          // TODO:
+          // otherwise move C outside of wrap_i64 as:
+          // i32.wrap_i64(i64(x) & i64(C))  =>  i32.wrap_i64(x) & i32(C)
         }
-        // TODO:
-        // otherwise move C outside of wrap_i64 as:
-        // i32.wrap_i64(i64(x) & i64(C))  =>  i32.wrap_i64(x) & i32(C)
       }
       {
         // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
