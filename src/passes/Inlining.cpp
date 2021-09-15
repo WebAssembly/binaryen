@@ -380,7 +380,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
 //
 // If we inline the condition, we end up with this:
 //
-//  function caller(x {
+//  function caller(x) {
 //    if (0) foo(0);
 //    if (x) foo(x);
 //  }
