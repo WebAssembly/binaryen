@@ -382,7 +382,18 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
+  // Return whether there is a nontrivial (i.e. non-basic) nominal supertype and
+  // store it in `out` if there is. Nominal types (in the sense of isNominal,
+  // i.e. Milestone 4 nominal types) may always have supertypes and other types
+  // may have supertypes in `TypeSystem::Nominal` mode but not in
+  // `TypeSystem::Equirecursive` mode.
   bool getSuperType(HeapType& out) const;
+
+  // Whether this is a nominal type in the sense of being a GC Milestone 4
+  // nominal type. Although all non-basic HeapTypes are nominal in
+  // `TypeSystem::Nominal` mode, this will still return false unless the type is
+  // specifically constructed as a Milestone 4 nominal type.
+  bool isNominal() const;
 
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
@@ -576,6 +587,12 @@ struct TypeBuilder {
   // equirecursive mode.
   void setSubType(size_t i, size_t j);
 
+  // Make this type nominal in the sense of the Milestone 4 GC spec, independent
+  // of the current TypeSystem configuration. `supertype` is the index of the
+  // nontrivial supertype, or `NoSupertype` if there is no nontrivial supertype.
+  enum : size_t { NoSupertype = -1ull };
+  void setNominal(size_t i, size_t supertype);
+
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal
   // mode, all of the constructed HeapTypes will be fresh and distinct. In
@@ -614,6 +631,11 @@ struct TypeBuilder {
       builder.setSubType(index, other.index);
       return *this;
     }
+    Entry& setNominal(size_t supertype) {
+      builder.setNominal(index, supertype);
+      return *this;
+    }
+    Entry& setNominal(Entry supertype) { return setNominal(supertype.index); }
   };
 
   Entry operator[](size_t i) { return Entry{*this, i}; }
