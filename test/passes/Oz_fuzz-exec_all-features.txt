@@ -65,6 +65,8 @@
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 50]
+[fuzz-exec] calling array.init-packed
+[LoggingExternalInterface logging 8]
 (module
  (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $struct (struct (field (mut i32))))
@@ -95,6 +97,7 @@
  (export "array-copy" (func $20))
  (export "rtt_Fresh" (func $21))
  (export "array.init" (func $22))
+ (export "array.init-packed" (func $23))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -487,6 +490,17 @@
    )
   )
  )
+ (func $23 (; has Stack IR ;)
+  (call $log
+   (array.get_u $bytes
+    (array.init $bytes
+     (i32.const -11512)
+     (rtt.canon $bytes)
+    )
+    (i32.const 0)
+   )
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -554,6 +568,8 @@
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 50]
+[fuzz-exec] calling array.init-packed
+[LoggingExternalInterface logging 8]
 ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]

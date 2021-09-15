@@ -172,6 +172,7 @@ IMPORTANT_INITIAL_CONTENTS = [
     # Recently-added or modified passes. These can be added to and pruned
     # frequently.
     os.path.join('lit', 'passes', 'once-reduction.wast'),
+    os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
