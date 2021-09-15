@@ -1075,7 +1075,8 @@ struct OptimizeInstructions
         // ref.as_non_null acts as a null check here, basically. If we are
         // ignoring such traps, we can remove it. Note that we only do so when
         // we do not allow non-nullable locals, as removing the cast of the type
-        // to be non-nullable would prevent specializing the local's type later.
+        // to be non-nullable would prevent specializing the local's type later
+        // in LocalSubtyping.
         auto passOptions = getPassOptions();
         if ((passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) &&
             !getModule()->features.hasGCNNLocals()) {
