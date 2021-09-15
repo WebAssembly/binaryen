@@ -3,6 +3,14 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (func $set-of-as-non-null
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $set-of-as-non-null
     (local $x anyref)
     ;; As we ignore such traps, we can in principle remove the ref.as here.
