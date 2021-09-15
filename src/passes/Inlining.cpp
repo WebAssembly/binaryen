@@ -566,7 +566,12 @@ private:
     //
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
-        iff->ifTrue->is<Return>() && body->is<Block>()) {
+        iff->ifTrue->is<Return>()) {
+      // The body must be a block, because if it were not then the function
+      // would be easily inlineable (just an if with a simple condition and a
+      // return), and we would not even attempt to do splitting.
+      assert(body->is<Block>());
+
       split.splittable = true;
       // If we were just checking, stop and report success.
       if (!inlineableOut) {
@@ -586,10 +591,6 @@ private:
       split.inlineable->body = inlineableIf;
 
       // The outlined function no longer needs the initial if.
-      //
-      // Note that the body must be a block, because if it were not then the
-      // function would be easily inlineable (just an if with a simple condition
-      // and a return), and we would not even attempt to do splitting.
       auto& outlinedList = outlined->body->cast<Block>()->list;
       outlinedList.erase(outlinedList.begin());
 
