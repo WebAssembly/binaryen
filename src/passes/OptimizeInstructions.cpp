@@ -3015,6 +3015,8 @@ private:
                                        Type::v128);
             } else {
               // { i64.store(d, C', 0), i64.store(d, C', 8) }
+              auto* copiedDest = ExpressionManipulator::copy(memFill->dest,
+                                                             *getModule());
               return builder.makeBlock({
                 builder.makeStore(
                   8,
@@ -3027,7 +3029,7 @@ private:
                   8,
                   offset + 8,
                   align,
-                  memFill->dest,
+                  copiedDest,
                   builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
                   Type::i64),
               });
