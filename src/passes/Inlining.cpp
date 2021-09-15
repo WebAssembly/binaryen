@@ -578,6 +578,8 @@ private:
         return true;
       }
 
+      // Note that "A" in the name here identifies this as being a split from
+      // pattern A. The second pattern B will have B in the name.
       split.inlineable = copyFunction(func, "inlineable-A");
       auto* outlined = copyFunction(func, "outlined-A");
 
