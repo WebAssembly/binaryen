@@ -121,7 +121,7 @@ struct FunctionInfo {
 };
 
 static bool canHandleParams(Function* func) {
-  // We cannot inline a function if we cannot handle placing it in a local, as
+  // We cannot inline a function if we cannot handle placing its params in a locals, as
   // all params become locals.
   for (auto param : func->getParams()) {
     if (!TypeUpdating::canHandleAsLocal(param)) {
@@ -545,7 +545,7 @@ private:
       }
     }
 
-    // All the patterns we look for atm start with an if at the very top of the
+    // All the patterns we look for right now start with an if at the very top of the
     // function.
     auto* iff = getIf(body);
     if (!iff) {
@@ -613,7 +613,7 @@ private:
     //
     // Also, each if body must either be unreachable, or it must have type none
     // and have no returns. If it is unreachable, for example because it is a
-    // return, then we will just return a value from the outlined function:
+    // return, then we will just return a value in the inlineable function:
     //
     //  if (A_i) {
     //    return outlined(..);
@@ -652,7 +652,7 @@ private:
     }
 
     // There must be no other items after the optional final one.
-    if (getItem(body, numIfs + (finalItem ? 1 : 0))) {
+    if (finalItem && getItem(body, numIfs + 1)) {
       return false;
     }
     // This has the general shape we seek. Check each if.
