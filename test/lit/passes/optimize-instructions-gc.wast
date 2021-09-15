@@ -22,6 +22,10 @@
   ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
   (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
+  ;; CHECK:      (type $A (struct (field i32)))
+  ;; NOMNL:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
   ;; CHECK:      (type $empty (struct ))
   ;; NOMNL:      (type $empty (struct ))
   (type $empty (struct))
@@ -29,10 +33,6 @@
   ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
   ;; NOMNL:      (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
   (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
-
-  ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $A (struct (field i32)))
-  (type $A (struct (field i32)))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   ;; NOMNL:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -1879,6 +1879,32 @@
       ;; The other direction works too.
       (ref.test
         (local.get $B)
+        (rtt.canon $A)
+      )
+    )
+  )
+  ;; CHECK:      (func $ref.test-unreachable (param $A (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (rtt.canon $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref.test-unreachable (param $A (ref null $A))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:    (rtt.canon $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref.test-unreachable (param $A (ref null $A))
+    (drop
+      ;; We should ignore unreachable ref.tests and not try to compare their
+      ;; HeapTypes.
+      (ref.test
+        (unreachable)
         (rtt.canon $A)
       )
     )
