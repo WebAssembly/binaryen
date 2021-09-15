@@ -9862,6 +9862,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -10064,6 +10070,15 @@
     (drop (i64.and
       (local.get $y)
       (i64.const 0x00000000FFFFFFFF)
+    ))
+    ;; should skip "extend + wrap" when:
+    ;; (i64(x) & 0x00000000FFFFFFFF) & 3  =>  x & 3
+    (drop (i64.and
+      (i64.and
+        (local.get $y)
+        (i64.const 0x00000000FFFFFFFF)
+      )
+      (i64.const 3)
     ))
 
     ;; (unsigned)x >= 0  =>  i32(1)

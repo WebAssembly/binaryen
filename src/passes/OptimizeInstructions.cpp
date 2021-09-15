@@ -147,7 +147,7 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
     }
   }
 
-  Binary* optimize(Binary* curr) {
+  Expression* optimize(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
     {
@@ -177,6 +177,16 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
           }
         }
         return curr;
+      }
+    }
+    {
+      // i64(x) & 0x00000000FFFFFFFF   ==>   i64(i32(x))
+      Expression* x;
+      if (matches(curr,
+                  binary(And, any(&x), i64(int64_t(0x00000000FFFFFFFF))))) {
+        Builder builder(*getModule());
+        return builder.makeUnary(ExtendUInt32,
+                                 builder.makeUnary(WrapInt64, x));
       }
     }
     return nullptr;
@@ -230,6 +240,7 @@ struct OptimizeInstructions
     // Final optimizations.
     {
       FinalOptimizer optimizer(getPassOptions());
+      optimizer.setModule(getModule());
       optimizer.walkFunction(func);
     }
 
@@ -2405,13 +2416,6 @@ private:
       curr->op = EqInt64;
       curr->type = Type::i32;
       return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
-    }
-    // i64(x) & 0x00000000FFFFFFFF   ==>   i64(i32(x))
-    if (matches(curr,
-                binary(And, any(&left), i64(int64_t(0x00000000FFFFFFFF))))) {
-      Builder builder(*getModule());
-      return builder.makeUnary(ExtendUInt32,
-                               builder.makeUnary(WrapInt64, left));
     }
     // (unsigned)x < 0   ==>   i32(0)
     if (matches(curr, binary(LtU, pure(&left), ival(0)))) {
