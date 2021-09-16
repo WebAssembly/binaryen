@@ -173,6 +173,9 @@ IMPORTANT_INITIAL_CONTENTS = [
     # frequently.
     os.path.join('lit', 'passes', 'once-reduction.wast'),
     os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
+    os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
+    os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
+    os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
     os.path.join('lit', 'passes', 'inlining_splitting.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]

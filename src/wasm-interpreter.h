@@ -1712,13 +1712,14 @@ public:
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
     }
+    auto field = curr->type.getHeapType().getArray().element;
     Literals data(num);
     for (Index i = 0; i < num; i++) {
       auto value = this->visit(curr->values[i]);
       if (value.breaking()) {
         return value;
       }
-      data[i] = value.getSingleValue();
+      data[i] = truncateForPacking(value.getSingleValue(), field);
     }
     return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
                         curr->type));
