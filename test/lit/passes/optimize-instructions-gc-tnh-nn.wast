@@ -10,6 +10,13 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set-of-as-non-null
     (local $x anyref)
@@ -19,6 +26,14 @@
     (local.set $x
       (ref.as_non_null
         (local.get $x)
+      )
+    )
+    ;; The same for a tee.
+    (drop
+      (local.tee $x
+        (ref.as_non_null
+          (local.get $x)
+        )
       )
     )
   )
