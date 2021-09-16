@@ -1247,7 +1247,6 @@
         (ref.as_non_null
           (local.get $x)
         )
-        (rtt.canon $struct)
       )
     )
   )

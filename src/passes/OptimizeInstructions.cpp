@@ -1054,21 +1054,36 @@ struct OptimizeInstructions
   }
 
   void visitLocalSet(LocalSet* curr) {
-    //   (local.tee (ref.as_non_null ..))
-    // can be reordered to
-    //   (ref.as_non_null (local.tee ..))
-    // if the local is nullable (which it must be until some form of let is
-    // added). The reordering allows the ref.as to be potentially optimized
-    // further based on where the value flows to.
-    if (curr->isTee()) {
-      if (auto* as = curr->value->dynCast<RefAs>()) {
-        if (as->op == RefAsNonNull &&
-            getFunction()->getLocalType(curr->index).isNullable()) {
+    // Interactions between local.set/tee and ref.as_non_null can be optimized
+    // in some cases, by removing or moving the ref.as_non_null operation. In
+    // all cases, we only do this when we do *not* allow non-nullable locals. If
+    // we do allow such locals, then (1) this local might be non-nullable, so we
+    // can't remove or move a ref.as_non_null flowing into a local.set/tee, and
+    // (2) even if the local were nullable, if we change things we might prevent
+    // the LocalSubtyping pass from turning it into a non-nullable local later.
+    if (auto* as = curr->value->dynCast<RefAs>()) {
+      if (as->op == RefAsNonNull && !getModule()->features.hasGCNNLocals()) {
+        //   (local.tee (ref.as_non_null ..))
+        // =>
+        //   (ref.as_non_null (local.tee ..))
+        //
+        // The reordering allows the ref.as to be potentially optimized further
+        // based on where the value flows to.
+        if (curr->isTee()) {
           curr->value = as->value;
           curr->finalize();
           as->value = curr;
           as->finalize();
           replaceCurrent(as);
+          return;
+        }
+
+        // Otherwise, if this is not a tee, then no value falls through. The
+        // ref.as_non_null acts as a null check here, basically. If we are
+        // ignoring such traps, we can remove it.
+        auto passOptions = getPassOptions();
+        if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+          curr->value = as->value;
         }
       }
     }

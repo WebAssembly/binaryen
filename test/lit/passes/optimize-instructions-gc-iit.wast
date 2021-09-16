@@ -342,4 +342,28 @@
       )
     )
   )
+
+  ;; CHECK:      (func $set-of-as-non-null (param $x anyref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $set-of-as-non-null (param $x anyref)
+  ;; NOMNL-NEXT:  (local.set $x
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  ;; NOMNL-TNH:      (func $set-of-as-non-null (param $x anyref)
+  ;; NOMNL-TNH-NEXT:  (local.set $x
+  ;; NOMNL-TNH-NEXT:   (local.get $x)
+  ;; NOMNL-TNH-NEXT:  )
+  ;; NOMNL-TNH-NEXT: )
+  (func $set-of-as-non-null (param $x anyref)
+    ;; As we ignore such traps, we can remove the ref.as here.
+    (local.set $x
+      (ref.as_non_null
+        (local.get $x)
+      )
+    )
+  )
 )
