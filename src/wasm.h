@@ -641,6 +641,7 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
+    ArrayInitId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
@@ -1473,6 +1474,16 @@ public:
   void finalize();
 };
 
+class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+public:
+  ArrayInit(MixedArena& allocator) : values(allocator) {}
+
+  ExpressionList values;
+  Expression* rtt;
+
+  void finalize();
+};
+
 class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
 public:
   ArrayGet(MixedArena& allocator) {}
@@ -1827,6 +1838,7 @@ public:
 // The optional "dylink" section is used in dynamic linking.
 class DylinkSection {
 public:
+  bool isLegacy = false;
   Index memorySize, memoryAlignment, tableSize, tableAlignment;
   std::vector<Name> neededDynlibs;
   std::vector<char> tail;

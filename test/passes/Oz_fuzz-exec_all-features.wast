@@ -475,6 +475,41 @@
    )
   )
  )
+ (func "array.init"
+  (local $x (ref null $bytes))
+  (local.set $x
+   (array.init $bytes
+    (i32.const 42) ;; first value
+    (i32.const 50) ;; second value
+    (rtt.canon $bytes)
+   )
+  )
+  ;; The length should be 2
+  (call $log
+   (array.len $bytes (local.get $x))
+  )
+  ;; The first value should be 42
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 0))
+  )
+  ;; The second value should be 50
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 1))
+  )
+ )
+ (func "array.init-packed"
+  (local $x (ref null $bytes))
+  (local.set $x
+   (array.init $bytes
+    (i32.const -11512)
+    (rtt.canon $bytes)
+   )
+  )
+  ;; The value should be be -11512 & 255 => 8
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 0))
+  )
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))

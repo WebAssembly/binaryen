@@ -416,6 +416,38 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x * -y   ==>   x * y
+        //   where  x, y  are integers
+        Binary* bin;
+        Expression *x, *y;
+        if (matches(curr,
+                    binary(&bin,
+                           Mul,
+                           binary(Sub, ival(0), any(&x)),
+                           binary(Sub, ival(0), any(&y))))) {
+          bin->left = x;
+          bin->right = y;
+          return replaceCurrent(curr);
+        }
+      }
+      {
+        // -x * y   ==>   -(x * y)
+        // x * -y   ==>   -(x * y)
+        //   where  x, y  are integers
+        Expression *x, *y;
+        if ((matches(curr,
+                     binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
+             matches(curr,
+                     binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) &&
+            !x->is<Const>() && !y->is<Const>()) {
+          Builder builder(*getModule());
+          return replaceCurrent(
+            builder.makeBinary(Abstract::getBinary(curr->type, Sub),
+                               builder.makeConst(Literal::makeZero(curr->type)),
+                               builder.makeBinary(curr->op, x, y)));
+        }
+      }
+      {
         if (getModule()->features.hasSignExt()) {
           Const *c1, *c2;
           Expression* x;
@@ -1022,21 +1054,36 @@ struct OptimizeInstructions
   }
 
   void visitLocalSet(LocalSet* curr) {
-    //   (local.tee (ref.as_non_null ..))
-    // can be reordered to
-    //   (ref.as_non_null (local.tee ..))
-    // if the local is nullable (which it must be until some form of let is
-    // added). The reordering allows the ref.as to be potentially optimized
-    // further based on where the value flows to.
-    if (curr->isTee()) {
-      if (auto* as = curr->value->dynCast<RefAs>()) {
-        if (as->op == RefAsNonNull &&
-            getFunction()->getLocalType(curr->index).isNullable()) {
+    // Interactions between local.set/tee and ref.as_non_null can be optimized
+    // in some cases, by removing or moving the ref.as_non_null operation. In
+    // all cases, we only do this when we do *not* allow non-nullable locals. If
+    // we do allow such locals, then (1) this local might be non-nullable, so we
+    // can't remove or move a ref.as_non_null flowing into a local.set/tee, and
+    // (2) even if the local were nullable, if we change things we might prevent
+    // the LocalSubtyping pass from turning it into a non-nullable local later.
+    if (auto* as = curr->value->dynCast<RefAs>()) {
+      if (as->op == RefAsNonNull && !getModule()->features.hasGCNNLocals()) {
+        //   (local.tee (ref.as_non_null ..))
+        // =>
+        //   (ref.as_non_null (local.tee ..))
+        //
+        // The reordering allows the ref.as to be potentially optimized further
+        // based on where the value flows to.
+        if (curr->isTee()) {
           curr->value = as->value;
           curr->finalize();
           as->value = curr;
           as->finalize();
           replaceCurrent(as);
+          return;
+        }
+
+        // Otherwise, if this is not a tee, then no value falls through. The
+        // ref.as_non_null acts as a null check here, basically. If we are
+        // ignoring such traps, we can remove it.
+        auto passOptions = getPassOptions();
+        if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+          curr->value = as->value;
         }
       }
     }
@@ -1122,6 +1169,16 @@ struct OptimizeInstructions
     }
     assert(getModule()->features.hasBulkMemory());
     if (auto* ret = optimizeMemoryCopy(curr)) {
+      return replaceCurrent(ret);
+    }
+  }
+
+  void visitMemoryFill(MemoryFill* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    assert(getModule()->features.hasBulkMemory());
+    if (auto* ret = optimizeMemoryFill(curr)) {
       return replaceCurrent(ret);
     }
   }
@@ -1415,6 +1472,10 @@ struct OptimizeInstructions
   }
 
   void visitRefTest(RefTest* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     // See above in RefCast.
     if (!canBeCastTo(curr->ref->type.getHeapType(),
                      curr->rtt->type.getHeapType())) {
@@ -1558,8 +1619,7 @@ private:
     }
     // To be equal, they must also be known to return the same result
     // deterministically.
-    if (Properties::isIntrinsicallyNondeterministic(left,
-                                                    getModule()->features)) {
+    if (Properties::isGenerative(left, getModule()->features)) {
       return false;
     }
     return true;
@@ -1793,6 +1853,25 @@ private:
           return builder.makeBinary(
             Abstract::getBinary(type, Or), bin, curr->ifTrue);
         }
+      }
+    }
+    if (curr->type == Type::i32 &&
+        Bits::getMaxBits(curr->condition, this) <= 1 &&
+        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
+        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
+      // The condition and both arms are i32 booleans, which allows us to do
+      // boolean optimizations.
+      Expression* x;
+      Expression* y;
+
+      // x ? y : 0   ==>   x & y
+      if (matches(curr, select(any(&y), ival(0), any(&x)))) {
+        return builder.makeBinary(AndInt32, y, x);
+      }
+
+      // x ? 1 : y   ==>   x | y
+      if (matches(curr, select(ival(1), any(&y), any(&x)))) {
+        return builder.makeBinary(OrInt32, y, x);
       }
     }
     {
@@ -2222,6 +2301,24 @@ private:
     if (matches(curr, binary(Mul, pure(&left), ival(0))) ||
         matches(curr, binary(And, pure(&left), ival(0)))) {
       return right;
+    }
+    // -x * C   ==>    x * -C,   if  shrinkLevel != 0  or  C != C_pot
+    // -x * C   ==>   -(x * C),  otherwise
+    //    where  x, C  are integers
+    Binary* inner;
+    if (matches(
+          curr,
+          binary(Mul, binary(&inner, Sub, ival(0), any(&left)), ival()))) {
+      if (getPassOptions().shrinkLevel != 0 ||
+          !Bits::isPowerOf2(right->value.getInteger())) {
+        right->value = right->value.neg();
+        curr->left = left;
+        return curr;
+      } else {
+        curr->left = left;
+        Const* zero = inner->left->cast<Const>();
+        return builder.makeBinary(inner->op, zero, curr);
+      }
     }
     // x == 0   ==>   eqz x
     if (matches(curr, binary(Eq, any(&left), ival(0)))) {
@@ -2802,7 +2899,7 @@ private:
 
     // memory.copy(dst, src, C)  ==>  store(dst, load(src))
     if (auto* csize = memCopy->size->dynCast<Const>()) {
-      auto bytes = csize->value.geti32();
+      auto bytes = csize->value.getInteger();
       Builder builder(*getModule());
 
       switch (bytes) {
@@ -2855,6 +2952,127 @@ private:
         }
       }
     }
+    return nullptr;
+  }
+
+  Expression* optimizeMemoryFill(MemoryFill* memFill) {
+    if (memFill->type == Type::unreachable) {
+      return nullptr;
+    }
+
+    if (!memFill->size->is<Const>()) {
+      return nullptr;
+    }
+
+    PassOptions options = getPassOptions();
+    Builder builder(*getModule());
+
+    auto* csize = memFill->size->cast<Const>();
+    auto bytes = csize->value.getInteger();
+
+    if (bytes == 0LL &&
+        (options.ignoreImplicitTraps || options.trapsNeverHappen)) {
+      // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
+      return builder.makeBlock(
+        {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
+    }
+
+    const uint32_t offset = 0, align = 1;
+
+    if (auto* cvalue = memFill->value->dynCast<Const>()) {
+      uint32_t value = cvalue->value.geti32() & 0xFF;
+      // memory.fill(d, C1, C2)  ==>
+      //   store(d, (C1 & 0xFF) * (-1U / max(bytes)))
+      switch (bytes) {
+        case 1: {
+          return builder.makeStore(1, // bytes
+                                   offset,
+                                   align,
+                                   memFill->dest,
+                                   builder.makeConst<uint32_t>(value),
+                                   Type::i32);
+        }
+        case 2: {
+          return builder.makeStore(2,
+                                   offset,
+                                   align,
+                                   memFill->dest,
+                                   builder.makeConst<uint32_t>(value * 0x0101U),
+                                   Type::i32);
+        }
+        case 4: {
+          // transform only when "value" or shrinkLevel equal to zero due to
+          // it could increase size by several bytes
+          if (value == 0 || options.shrinkLevel == 0) {
+            return builder.makeStore(
+              4,
+              offset,
+              align,
+              memFill->dest,
+              builder.makeConst<uint32_t>(value * 0x01010101U),
+              Type::i32);
+          }
+          break;
+        }
+        case 8: {
+          // transform only when "value" or shrinkLevel equal to zero due to
+          // it could increase size by several bytes
+          if (value == 0 || options.shrinkLevel == 0) {
+            return builder.makeStore(
+              8,
+              offset,
+              align,
+              memFill->dest,
+              builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
+              Type::i64);
+          }
+          break;
+        }
+        case 16: {
+          if (options.shrinkLevel == 0) {
+            if (getModule()->features.hasSIMD()) {
+              uint8_t values[16];
+              std::fill_n(values, 16, (uint8_t)value);
+              return builder.makeStore(16,
+                                       offset,
+                                       align,
+                                       memFill->dest,
+                                       builder.makeConst<uint8_t[16]>(values),
+                                       Type::v128);
+            } else {
+              // { i64.store(d, C', 0), i64.store(d, C', 8) }
+              auto destType = memFill->dest->type;
+              Index tempLocal = builder.addVar(getFunction(), destType);
+              return builder.makeBlock({
+                builder.makeStore(
+                  8,
+                  offset,
+                  align,
+                  builder.makeLocalTee(tempLocal, memFill->dest, destType),
+                  builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
+                  Type::i64),
+                builder.makeStore(
+                  8,
+                  offset + 8,
+                  align,
+                  builder.makeLocalGet(tempLocal, destType),
+                  builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
+                  Type::i64),
+              });
+            }
+          }
+          break;
+        }
+        default: {
+        }
+      }
+    }
+    // memory.fill(d, v, 1)  ==>  store8(d, v)
+    if (bytes == 1LL) {
+      return builder.makeStore(
+        1, offset, align, memFill->dest, memFill->value, Type::i32);
+    }
+
     return nullptr;
   }
 

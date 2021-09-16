@@ -104,9 +104,10 @@ StructNewId: 58
 StructGetId: 59
 StructSetId: 60
 ArrayNewId: 61
-ArrayGetId: 62
-ArraySetId: 63
-ArrayLenId: 64
+ArrayInitId: 62
+ArrayGetId: 63
+ArraySetId: 64
+ArrayLenId: 65
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)

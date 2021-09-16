@@ -2680,6 +2680,18 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
   return Builder(wasm).makeArrayNew(rtt, size, init);
 }
 
+Expression* SExpressionWasmBuilder::makeArrayInit(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  size_t i = 2;
+  std::vector<Expression*> values;
+  while (i < s.size() - 1) {
+    values.push_back(parseExpression(*s[i++]));
+  }
+  auto* rtt = parseExpression(*s[i++]);
+  validateHeapTypeUsingChild(rtt, heapType, s);
+  return Builder(wasm).makeArrayInit(rtt, values);
+}
+
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
   auto heapType = parseHeapType(*s[1]);
   auto ref = parseExpression(*s[2]);

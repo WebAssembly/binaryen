@@ -703,6 +703,252 @@
       )
     )
   )
+  ;; CHECK:      (func $select-or (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.const 1)
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (call $select-or-side-effects
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (call $select-or-side-effects
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
+    ;; When there are side effects, the order of the operations must remain
+    ;; correct.
+    (select
+      (i32.const 1)
+      (i32.eq
+        (call $select-or-side-effects
+          (local.get $x)
+          (local.get $y)
+        )
+        (i32.const 1337)
+      )
+      (i32.and
+        (call $select-or-side-effects
+          (local.get $y)
+          (local.get $x)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-no-bits (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-no-bits (param $x i32) (param $y i32)
+    ;; The following cannot be optimized into an "or" operation due to maxBits
+    ;; not being known to be 1.
+    (drop
+      (select
+        ;; Too many bits in ifTrue
+        (i32.const 2)
+        (i32.eq
+          (local.get $y)
+          (i32.const 1337)
+        )
+        (i32.eq
+          (local.get $x)
+          (i32.const 42)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        ;; Too many bits in ifFalse
+        (local.get $y)
+        (i32.eq
+          (local.get $x)
+          (i32.const 42)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.eq
+          (local.get $y)
+          (i32.const 1337)
+        )
+        ;; Too many bits in condition
+        (local.get $x)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-no-type (param $x i32) (param $y i64) (result i64)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-no-type (param $x i32) (param $y i64) (result i64)
+    ;; An i64 result cannot be optimized into an "or" of the ifTrue and the
+    ;; condition due to their types being different.
+    (select
+      (i64.const 1)
+      (i64.and
+        (local.get $y)
+        (i64.const 1)
+      )
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
+    (select
+      ;; The wrong const (should be 1).
+      (i32.const 0)
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.and
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.const 0)
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; The wrong constant (should be 0).
+      (i32.const 1)
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
   ;; CHECK:      (func $load8_s-and-255 (result i32)
   ;; CHECK-NEXT:  (i32.load8_u
   ;; CHECK-NEXT:   (i32.const 0)
@@ -5839,6 +6085,234 @@
        (local.get $1)
       )
      )
+    )
+  )
+  ;; CHECK:      (func $remove-signs-for-mul-i32 (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $remove-signs-for-mul-i32 (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $remove-signs-for-mul-i64 (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $remove-signs-for-mul-i64 (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (i64.sub
+        (i64.const 0)
+        (local.get $0)
+      )
+      (i64.sub
+        (i64.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-lhs (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-lhs (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (local.get $1)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-rhs (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-rhs (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (local.get $0)
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i64-lhs (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.sub
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i64-lhs (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (i64.sub
+        (i64.const 0)
+        (local.get $0)
+      )
+      (local.get $1)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i64-rhs (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.sub
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i64-rhs (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (local.get $0)
+      (i64.sub
+        (i64.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-rhs-side (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (call $subzero4
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-rhs-side (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (call $subzero4
+        (local.get $0)
+        (local.get $1)
+      )
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-lhs-const (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const -3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-lhs-const (param $0 i32) (result i32)
+    (i32.mul
+      (i32.const 3)
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-lhs-const-pot (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-lhs-const-pot (param $0 i32) (result i32)
+    (i32.mul
+      (i32.const 2)
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-rhs-const (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-rhs-const (param $0 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.const -5)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-both-sign-consts (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-both-sign-consts (param $0 i32) (result i32)
+    (i32.mul
+      (i32.const -5)
+      (i32.sub
+        (i32.const 0)
+        (i32.const 2)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-smin (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.shl
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 31)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-smin (param $0 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.const 0x80000000)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-skip-2 (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-skip-2 (param $0 i32) (result i32)
+    (i32.mul
+      (local.get $0)
+      (i32.sub
+        (i32.const 0)
+        (i32.const 3)
+      )
     )
   )
   ;; CHECK:      (func $mul-32-power-2 (param $x i32) (result i32)

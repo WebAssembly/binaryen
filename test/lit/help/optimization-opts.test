@@ -284,6 +284,8 @@
 ;; CHECK-NEXT:                                                 to intercept all loads and
 ;; CHECK-NEXT:                                                 stores
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
 ;; CHECK-NEXT:
@@ -347,6 +349,9 @@
 ;; CHECK-NEXT:   --no-exit-runtime                             removes calls to atexit(), which
 ;; CHECK-NEXT:                                                 is valid if the C runtime will
 ;; CHECK-NEXT:                                                 never be exited
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --once-reduction                              reduces calls to code that only
+;; CHECK-NEXT:                                                 runs once
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-added-constants                    optimizes added constants into
 ;; CHECK-NEXT:                                                 load/store offsets

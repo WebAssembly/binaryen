@@ -31,6 +31,7 @@ namespace UserSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
+const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
 const char* TargetFeatures = "target_features";
@@ -1031,6 +1032,20 @@ void ArrayNew::finalize() {
       (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
+  }
+  type = Type(rtt->type.getHeapType(), NonNullable);
+}
+
+void ArrayInit::finalize() {
+  if (rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  for (auto* value : values) {
+    if (value->type == Type::unreachable) {
+      type = Type::unreachable;
+      return;
+    }
   }
   type = Type(rtt->type.getHeapType(), NonNullable);
 }

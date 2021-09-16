@@ -141,6 +141,46 @@ Notes when working with Binaryen IR:
    incorrectly.
  * For similar reasons, nodes should not appear in more than one functions.
 
+### Intrinsics
+
+Binaryen intrinsic functions look like calls to imports, e.g.,
+
+```wat
+(import "binaryen-intrinsics" "foo" (func $foo))
+```
+
+Implementing them that way allows them to be read and written by other tools,
+and it avoids confusing errors on a binary format error that could happen in
+those tools if we had a custom binary format extension.
+
+An intrinsic method may be optimized away by the optimizer. If it is not, it
+must be **lowered** before shipping the wasm, as otherwise it will look like a
+call to an import that does not exist (and VMs will show an error on not having
+a proper value for that import). That final lowering is *not* done
+automatically. A user of intrinsics must run the pass for that explicitly,
+because the tools do not know when the user intends to finish optimizing, as the
+user may have a pipeline of multiple optimization steps, or may be doing local
+experimentation, or fuzzing/reducing, etc. Only the user knows when the final
+optimization happens before the wasm is "final" and ready to be shipped. Note
+that, in general, some additional optimizations may be possible after the final
+lowering, and so a useful pattern is to  optimize once normally with intrinsics,
+then lower them away, then optimize after that, e.g.:
+
+```
+wasm-opt input.wasm -o output.wasm  -O --intrinsic-lowering -O
+```
+
+Each intrinsic defines its semantics, which includes what the optimizer is
+allowed to do with it and what the final lowering will turn it to. See
+[intrinsics.h](https://github.com/WebAssembly/binaryen/blob/main/src/ir/intrinsics.h)
+for the detailed definitions. A quick summary appears here:
+
+* `call.without.effects`: Similar to a `call_ref` in that it receives
+  parameters, and a reference to a function to call, and calls that function
+  with those parameters, except that the optimizer can assume the call has no
+  side effects, and may be able to optimize it out (if it does not have a
+  result that is used, generally).
+
 ## Tools
 
 This repository contains code that builds the following tools in `bin/`:
