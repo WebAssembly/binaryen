@@ -2934,6 +2934,10 @@ private:
   }
 
   Expression* optimizeMemoryFill(MemoryFill* memFill) {
+    if (memFill->type == Type::unreachable) {
+      return nullptr;
+    }
+
     if (!memFill->size->is<Const>()) {
       return nullptr;
     }
@@ -3015,21 +3019,21 @@ private:
                                        Type::v128);
             } else {
               // { i64.store(d, C', 0), i64.store(d, C', 8) }
-              auto* copiedDest =
-                ExpressionManipulator::copy(memFill->dest, *getModule());
+              auto destType = memFill->dest->type;
+              Index tempLocal = builder.addVar(getFunction(), destType);
               return builder.makeBlock({
                 builder.makeStore(
                   8,
                   offset,
                   align,
-                  memFill->dest,
+                  builder.makeLocalTee(tempLocal, memFill->dest, destType),
                   builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
                   Type::i64),
                 builder.makeStore(
                   8,
                   offset + 8,
                   align,
-                  copiedDest,
+                  builder.makeLocalGet(tempLocal, destType),
                   builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
                   Type::i64),
               });
