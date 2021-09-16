@@ -1,3 +1,4 @@
+import os
 import lit.formats
 
 config.name = "Binaryen lit tests"
@@ -7,6 +8,8 @@ config.suffixes = ['.wat', '.wast', '.test']
 
 config.test_source_root = os.path.dirname(__file__)
 config.test_exec_root = os.path.join(config.binaryen_build_root, 'test')
+
+config.environment = dict(os.environ)
 
 # Replace all Binaryen tools with their absolute paths
 bin_dir = os.path.join(config.binaryen_build_root, 'bin')
