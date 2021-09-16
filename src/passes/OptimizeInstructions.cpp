@@ -1062,8 +1062,7 @@ struct OptimizeInstructions
     // (2) even if the local were nullable, if we change things we might prevent
     // the LocalSubtyping pass from turning it into a non-nullable local later.
     if (auto* as = curr->value->dynCast<RefAs>()) {
-      if (as->op == RefAsNonNull &&
-          !getModule()->features.hasGCNNLocals()) {
+      if (as->op == RefAsNonNull && !getModule()->features.hasGCNNLocals()) {
         //   (local.tee (ref.as_non_null ..))
         // =>
         //   (ref.as_non_null (local.tee ..))
