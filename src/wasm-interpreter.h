@@ -1469,8 +1469,8 @@ public:
           cast.outcome = cast.Failure;
           return cast;
         }
-        cast.castRef =
-          Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
+        cast.castRef = Literal(
+          func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
       } else {
         if (!HeapType::isSubType(func->type, curr->intendedType)) {
           cast.outcome = cast.Failure;
@@ -1497,8 +1497,7 @@ public:
           cast.outcome = cast.Failure;
           return cast;
         }
-        cast.castRef =
-          Literal(gcData, Type(seenType, NonNullable));
+        cast.castRef = Literal(gcData, Type(seenType, NonNullable));
       }
     }
     cast.outcome = cast.Success;

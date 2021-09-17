@@ -567,10 +567,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitI31New(I31New* curr) { return 3 + visit(curr->value); }
   CostType visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
   CostType visitRefTest(RefTest* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + maybeVisit(curr->rtt);
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           maybeVisit(curr->rtt);
   }
   CostType visitRefCast(RefCast* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + maybeVisit(curr->rtt);
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           maybeVisit(curr->rtt);
   }
   CostType visitBrOn(BrOn* curr) {
     // BrOnCast has more work to do with the rtt, so add a little there.

@@ -2224,9 +2224,15 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
       shouldBeTrue(
         curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
     }
-    shouldBeEqual(curr->intendedType, HeapType(), curr, "dynamic ref.test must not use intendedType field");
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "dynamic ref.test must not use intendedType field");
   } else {
-    shouldBeUnequal(curr->intendedType, HeapType(), curr, "static ref.test must set intendedType field");
+    shouldBeUnequal(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "static ref.test must set intendedType field");
   }
 }
 
@@ -2242,9 +2248,15 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
       shouldBeTrue(
         curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
     }
-    shouldBeEqual(curr->intendedType, HeapType(), curr, "dynamic ref.cast must not use intendedType field");
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "dynamic ref.cast must not use intendedType field");
   } else {
-    shouldBeUnequal(curr->intendedType, HeapType(), curr, "static ref.cast must set intendedType field");
+    shouldBeUnequal(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "static ref.cast must set intendedType field");
   }
 }
 
@@ -2264,9 +2276,15 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       // casts to.
       shouldBeTrue(
         curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
-      shouldBeEqual(curr->intendedType, HeapType(), curr, "dynamic br_on_cast* must not use intendedType field");
+      shouldBeEqual(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "dynamic br_on_cast* must not use intendedType field");
     } else {
-      shouldBeUnequal(curr->intendedType, HeapType(), curr, "static br_on_cast* must set intendedType field");
+      shouldBeUnequal(curr->intendedType,
+                      HeapType(),
+                      curr,
+                      "static br_on_cast* must set intendedType field");
     }
   } else {
     shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");

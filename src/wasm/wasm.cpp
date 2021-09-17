@@ -895,7 +895,8 @@ void CallRef::finalize(Type type_) {
 }
 
 void RefTest::finalize() {
-  if (ref->type == Type::unreachable || (rtt && rtt->type == Type::unreachable)) {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -907,7 +908,8 @@ HeapType RefTest::getIntendedType() {
 }
 
 void RefCast::finalize() {
-  if (ref->type == Type::unreachable || (rtt && rtt->type == Type::unreachable)) {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     // The output of ref.cast may be null if the input is null (in that case the

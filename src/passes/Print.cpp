@@ -286,7 +286,8 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   return o;
 }
 
-static std::ostream& printHeapType(std::ostream& o, HeapType type, Module* wasm) {
+static std::ostream&
+printHeapType(std::ostream& o, HeapType type, Module* wasm) {
   TypeNamePrinter(o, wasm).print(type);
   return o;
 }

@@ -1355,12 +1355,13 @@ struct OptimizeInstructions
       // which is what was cast to.
       Expression* rep;
       if (curr->rtt) {
-        rep = builder.makeBlock({builder.makeDrop(curr->ref),
-                           builder.makeDrop(curr->rtt),
-                           builder.makeRefNull(curr->rtt->type.getHeapType())});
+        rep = builder.makeBlock(
+          {builder.makeDrop(curr->ref),
+           builder.makeDrop(curr->rtt),
+           builder.makeRefNull(curr->rtt->type.getHeapType())});
       } else {
         rep = builder.makeBlock({builder.makeDrop(curr->ref),
-                           builder.makeRefNull(curr->intendedType)});
+                                 builder.makeRefNull(curr->intendedType)});
       }
       if (curr->ref->type.isNonNullable()) {
         // Avoid a type change by forcing to be non-nullable. In practice, this
@@ -1394,18 +1395,18 @@ struct OptimizeInstructions
                                             builder.makeUnreachable()}));
           return;
         }
-        // Otherwise, we are not sure what it is, and need to wait for runtime to
-        // see if it is a null or not. (We've already handled the case where we
-        // can see the value is definitely a null at compile time, earlier.)
+        // Otherwise, we are not sure what it is, and need to wait for runtime
+        // to see if it is a null or not. (We've already handled the case where
+        // we can see the value is definitely a null at compile time, earlier.)
       }
 
       if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
         // Aside from the issue of type incompatibility as mentioned above, the
         // cast can trap if the types *are* compatible but it happens to be the
         // case at runtime that the value is not of the desired subtype. If we
-        // do not consider such traps possible, we can ignore that. Note, though,
-        // that we cannot do this if we cannot replace the current type with the
-        // reference's type.
+        // do not consider such traps possible, we can ignore that. Note,
+        // though, that we cannot do this if we cannot replace the current type
+        // with the reference's type.
         if (HeapType::isSubType(curr->ref->type.getHeapType(),
                                 curr->rtt->type.getHeapType())) {
           replaceCurrent(getResultOfFirst(curr->ref,
@@ -1424,10 +1425,12 @@ struct OptimizeInstructions
       auto* ref = curr->ref;
       while (!ref->is<RefCast>()) {
         auto* last = ref;
-        // RefCast falls through the value, so instead of calling getFallthrough()
-        // to look through all fallthroughs, we must iterate manually. Keep going
-        // until we reach either the end of things falling-through, or a cast.
-        ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
+        // RefCast falls through the value, so instead of calling
+        // getFallthrough() to look through all fallthroughs, we must iterate
+        // manually. Keep going until we reach either the end of things
+        // falling-through, or a cast.
+        ref =
+          Properties::getImmediateFallthrough(ref, passOptions, *getModule());
         if (ref == last) {
           break;
         }
