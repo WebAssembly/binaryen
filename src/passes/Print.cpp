@@ -1882,10 +1882,20 @@ struct PrintExpressionContents
     }
   }
   void visitRefTest(RefTest* curr) {
-    printMedium(o, curr->rtt ? "ref.test" : "ref.test_static");
+    if (curr->rtt) {
+      printMedium(o, "ref.test");
+    } else {
+      printMedium(o, "ref.test_static ");
+      printType(o, type, wasm);
+    }
   }
   void visitRefCast(RefCast* curr) {
-    printMedium(o, curr->rtt ? "ref.cast" : "ref.cast_static");
+    if (curr->rtt) {
+      printMedium(o, "ref.cast");
+    } else {
+      printMedium(o, "ref.cast_static ");
+      printType(o, type, wasm);
+    }
   }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {

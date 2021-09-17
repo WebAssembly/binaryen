@@ -1943,10 +1943,16 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
+  if (!curr->rtt) {
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
+  if (!curr->rtt) {
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {

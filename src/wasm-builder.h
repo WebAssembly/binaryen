@@ -765,10 +765,24 @@ public:
     ret->finalize();
     return ret;
   }
+  RefTest* makeRefTest(Expression* ref, HeapType intendedType) {
+    auto* ret = wasm.allocator.alloc<RefTest>();
+    ret->ref = ref;
+    ret->intendedType = intendedType;
+    ret->finalize();
+    return ret;
+  }
   RefCast* makeRefCast(Expression* ref, Expression* rtt) {
     auto* ret = wasm.allocator.alloc<RefCast>();
     ret->ref = ref;
     ret->rtt = rtt;
+    ret->finalize();
+    return ret;
+  }
+  RefCast* makeRefCast(Expression* ref, HeapType intendedType) {
+    auto* ret = wasm.allocator.alloc<RefCast>();
+    ret->ref = ref;
+    ret->intendedType = intendedType;
     ret->finalize();
     return ret;
   }

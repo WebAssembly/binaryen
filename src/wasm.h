@@ -1361,6 +1361,10 @@ public:
   // static cast, and the type of this expression is what we cast to.
   Expression* rtt = nullptr;
 
+  // If this is not a dynamic test, then a static type is provided here that
+  // indicates to what type we intend to cast.
+  HeapType intendedType;
+
   void finalize();
 };
 
@@ -1372,6 +1376,7 @@ public:
 
   // See above with RefTest.
   Expression* rtt = nullptr;
+  HeapType intendedType;
 
   void finalize();
 };

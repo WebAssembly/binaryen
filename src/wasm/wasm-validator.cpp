@@ -2219,9 +2219,14 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
   }
-  if (curr->rtt->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+  if (curr->rtt) {
+    if (curr->rtt->type != Type::unreachable) {
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+    }
+    shouldBeEqual(curr->intendedType, HeapType(), curr, "dynamic ref.test must not use intendedType field");
+  } else {
+    shouldBeTrue(curr->intendedType.isRef(), curr, "static ref.test heap type must be a reference");
   }
 }
 
@@ -2232,9 +2237,14 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.cast ref must have ref type");
   }
-  if (curr->rtt->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
+  if (curr->rtt) {
+    if (curr->rtt->type != Type::unreachable) {
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
+    }
+    shouldBeEqual(curr->intendedType, HeapType(), curr, "dynamic ref.cast must not use intendedType field");
+  } else {
+    shouldBeTrue(curr->intendedType.isRef(), curr, "static ref.cast heap type must be a reference");
   }
 }
 
