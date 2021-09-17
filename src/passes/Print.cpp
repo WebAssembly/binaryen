@@ -1886,7 +1886,7 @@ struct PrintExpressionContents
       printMedium(o, "ref.test");
     } else {
       printMedium(o, "ref.test_static ");
-      printType(o, type, wasm);
+      printType(o, curr->intendedType, wasm);
     }
   }
   void visitRefCast(RefCast* curr) {
@@ -1894,7 +1894,7 @@ struct PrintExpressionContents
       printMedium(o, "ref.cast");
     } else {
       printMedium(o, "ref.cast_static ");
-      printType(o, type, wasm);
+      printType(o, curr->intendedType, wasm);
     }
   }
   void visitBrOn(BrOn* curr) {
@@ -1906,10 +1906,20 @@ struct PrintExpressionContents
         printMedium(o, "br_on_non_null ");
         break;
       case BrOnCast:
-        printMedium(o, "br_on_cast ");
+        if (curr->rtt) {
+          printMedium(o, "br_on_cast ");
+        } else {
+          printMedium(o, "br_on_cast_static ");
+          printType(o, curr->intendedType, wasm);
+        }
         break;
       case BrOnCastFail:
-        printMedium(o, "br_on_cast_fail ");
+        if (curr->rtt) {
+          printMedium(o, "br_on_cast_fail ");
+        } else {
+          printMedium(o, "br_on_cast_static_fail ");
+          printType(o, curr->intendedType, wasm);
+        }
         break;
       case BrOnFunc:
         printMedium(o, "br_on_func ");

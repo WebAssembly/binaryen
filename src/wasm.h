@@ -1390,7 +1390,9 @@ public:
   Expression* ref;
 
   // BrOnCast* has an rtt that is used in the cast.
-  Expression* rtt;
+  // See above with RefTest regarding intendedType.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do
   //       not support. See also the discussion on

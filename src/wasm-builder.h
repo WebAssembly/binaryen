@@ -796,6 +796,15 @@ public:
     ret->finalize();
     return ret;
   }
+  makeBrOn(BrOnOp op, Name name, Expression* ref, HeapType intendedType) {
+    auto* ret = wasm.allocator.alloc<BrOn>();
+    ret->op = op;
+    ret->name = name;
+    ret->ref = ref;
+    ret->intendedType = intendedType;
+    ret->finalize();
+    return ret;
+  }
   RttCanon* makeRttCanon(HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RttCanon>();
     ret->type = Type(Rtt(0, heapType));

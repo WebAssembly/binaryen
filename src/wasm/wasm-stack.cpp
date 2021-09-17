@@ -1965,9 +1965,15 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       break;
     case BrOnCast:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+      if (!curr->rtt) {
+        parent.writeIndexedHeapType(curr->intendedType);
+      }
       break;
     case BrOnCastFail:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastFail);
+      if (!curr->rtt) {
+        parent.writeIndexedHeapType(curr->intendedType);
+      }
       break;
     case BrOnFunc:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);

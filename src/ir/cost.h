@@ -575,7 +575,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitBrOn(BrOn* curr) {
     // BrOnCast has more work to do with the rtt, so add a little there.
     CostType base = curr->op == BrOnCast ? 3 : 2;
-    return base + nullCheckCost(curr->ref) + visit(curr->ref) +
+    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref) +
            maybeVisit(curr->rtt);
   }
   CostType visitRttCanon(RttCanon* curr) {
