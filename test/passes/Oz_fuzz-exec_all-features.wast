@@ -325,7 +325,7 @@
    )
   )
  )
- (func $ref-as-data-of-func
+ (func "ref-as-data-of-func"
   (drop
    ;; This should trap.
    (ref.as_data
@@ -333,7 +333,7 @@
    )
   )
  )
- (func $ref-as-data-of-data
+ (func "ref-as-data-of-data"
   (drop
    ;; This should trap.
    (ref.as_data
@@ -343,7 +343,7 @@
    )
   )
  )
- (func $ref-as-func-of-data
+ (func "ref-as-func-of-data"
   (drop
    ;; This should trap.
    (ref.as_func
@@ -353,7 +353,7 @@
    )
   )
  )
- (func $ref-as-func-of-func
+ (func "ref-as-func-of-func"
   (drop
    ;; This should trap.
    (ref.as_func

@@ -38,6 +38,12 @@
 [fuzz-exec] calling br-on_non_null-2
 [LoggingExternalInterface logging 1]
 [trap unreachable]
+[fuzz-exec] calling ref-as-data-of-func
+[trap not a data]
+[fuzz-exec] calling ref-as-data-of-data
+[fuzz-exec] calling ref-as-func-of-data
+[trap not a func]
+[fuzz-exec] calling ref-as-func-of-func
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
@@ -90,14 +96,18 @@
  (export "br_on_non_data-other" (func $9))
  (export "br-on_non_null" (func $9))
  (export "br-on_non_null-2" (func $13))
- (export "rtt-and-cast-on-func" (func $15))
+ (export "ref-as-data-of-func" (func $14))
+ (export "ref-as-data-of-data" (func $9))
+ (export "ref-as-func-of-data" (func $14))
+ (export "ref-as-func-of-func" (func $9))
+ (export "rtt-and-cast-on-func" (func $19))
  (export "array-alloc-failure" (func $9))
- (export "init-array-packed" (func $17))
- (export "cast-func-to-struct" (func $19))
- (export "array-copy" (func $20))
- (export "rtt_Fresh" (func $21))
- (export "array.init" (func $22))
- (export "array.init-packed" (func $23))
+ (export "init-array-packed" (func $21))
+ (export "cast-func-to-struct" (func $14))
+ (export "array-copy" (func $24))
+ (export "rtt_Fresh" (func $25))
+ (export "array.init" (func $26))
+ (export "array.init-packed" (func $27))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -335,7 +345,12 @@
    )
   )
  )
- (func $15 (; has Stack IR ;)
+ (func $14 (; has Stack IR ;)
+  (drop
+   (unreachable)
+  )
+ )
+ (func $19 (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
@@ -353,7 +368,7 @@
   )
   (unreachable)
  )
- (func $17 (; has Stack IR ;) (result i32)
+ (func $21 (; has Stack IR ;) (result i32)
   (array.get_u $bytes
    (array.new_with_rtt $bytes
     (i32.const -43)
@@ -363,12 +378,7 @@
    (i32.const 10)
   )
  )
- (func $19 (; has Stack IR ;)
-  (drop
-   (unreachable)
-  )
- )
- (func $20 (; has Stack IR ;)
+ (func $24 (; has Stack IR ;)
   (local $0 (ref null $bytes))
   (local $1 (ref null $bytes))
   (array.set $bytes
@@ -425,7 +435,7 @@
    )
   )
  )
- (func $21 (; has Stack IR ;)
+ (func $25 (; has Stack IR ;)
   (call $log
    (ref.test
     (struct.new_default_with_rtt $extendedstruct
@@ -464,7 +474,7 @@
    )
   )
  )
- (func $22 (; has Stack IR ;)
+ (func $26 (; has Stack IR ;)
   (local $0 (ref null $bytes))
   (call $log
    (array.len $bytes
@@ -490,7 +500,7 @@
    )
   )
  )
- (func $23 (; has Stack IR ;)
+ (func $27 (; has Stack IR ;)
   (call $log
    (array.get_u $bytes
     (array.init $bytes
@@ -542,6 +552,12 @@
 [fuzz-exec] calling br-on_non_null-2
 [LoggingExternalInterface logging 1]
 [trap unreachable]
+[fuzz-exec] calling ref-as-data-of-func
+[trap unreachable]
+[fuzz-exec] calling ref-as-data-of-data
+[fuzz-exec] calling ref-as-func-of-data
+[trap unreachable]
+[fuzz-exec] calling ref-as-func-of-func
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
