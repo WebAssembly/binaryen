@@ -1376,7 +1376,8 @@ struct OptimizeInstructions
         // types for other passes.
         replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                           builder.makeDrop(curr->rtt),
-                                          builder.makeUnreachable()}, curr->type));
+                                          builder.makeUnreachable()},
+                                         curr->type));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime to
@@ -1559,8 +1560,9 @@ struct OptimizeInstructions
       Builder builder(*getModule());
       // Make sure to emit a block with the same type as us; leave updating
       // types for other passes.
-      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->value),
-                                        builder.makeUnreachable()}, curr->type));
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->value), builder.makeUnreachable()},
+        curr->type));
       return;
     }
 
