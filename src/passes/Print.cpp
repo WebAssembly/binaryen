@@ -1915,7 +1915,10 @@ struct PrintExpressionContents
           printMedium(o, "br_on_cast ");
         } else {
           printMedium(o, "br_on_cast_static ");
+          printName(curr->name, o);
+          o << ' ';
           printHeapType(o, curr->intendedType, wasm);
+          return;
         }
         break;
       case BrOnCastFail:
@@ -1923,7 +1926,10 @@ struct PrintExpressionContents
           printMedium(o, "br_on_cast_fail ");
         } else {
           printMedium(o, "br_on_cast_static_fail ");
+          printName(curr->name, o);
+          o << ' ';
           printHeapType(o, curr->intendedType, wasm);
+          return;
         }
         break;
       case BrOnFunc:

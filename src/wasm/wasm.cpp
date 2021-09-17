@@ -895,21 +895,29 @@ void CallRef::finalize(Type type_) {
 }
 
 void RefTest::finalize() {
-  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+  if (ref->type == Type::unreachable || (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
   }
 }
 
+HeapType RefTest::getIntendedType() {
+  return rtt ? rtt->type.getHeapType() : intendedType;
+}
+
 void RefCast::finalize() {
-  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+  if (ref->type == Type::unreachable || (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     // The output of ref.cast may be null if the input is null (in that case the
     // null is passed through).
-    type = Type(rtt->type.getHeapType(), ref->type.getNullability());
+    type = Type(getIntendedType(), ref->type.getNullability());
   }
+}
+
+HeapType RefCast::getIntendedType() {
+  return rtt ? rtt->type.getHeapType() : intendedType;
 }
 
 void BrOn::finalize() {
@@ -938,7 +946,7 @@ void BrOn::finalize() {
     case BrOnCastFail:
       // If we do not branch, the cast worked, and we have something of the cast
       // type.
-      type = Type(rtt->type.getHeapType(), NonNullable);
+      type = Type(getIntendedType(), NonNullable);
       break;
     case BrOnNonFunc:
       type = Type(HeapType::func, NonNullable);
@@ -952,6 +960,11 @@ void BrOn::finalize() {
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
+}
+
+HeapType BrOn::getIntendedType() {
+  assert(op == BrOnCast || op == BrOnCastFail);
+  return rtt ? rtt->type.getHeapType() : intendedType;
 }
 
 Type BrOn::getSentType() {
@@ -971,7 +984,7 @@ Type BrOn::getSentType() {
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
-      return Type(rtt->type.getHeapType(), NonNullable);
+      return Type(getIntendedType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
     case BrOnData:

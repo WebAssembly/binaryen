@@ -408,10 +408,10 @@
     (drop
       (block $out (result (ref $struct.B))
         (local.set $temp.A
-          (br_on_cast $out $struct.B (ref.null $struct.A))
+          (br_on_cast_static $out $struct.B (ref.null $struct.A))
         )
         (local.set $temp.A
-          (br_on_cast_fail $out $struct.B (ref.null $struct.A))
+          (br_on_cast_static_fail $out $struct.B (ref.null $struct.A))
         )
         (unreachable)
       )
