@@ -796,6 +796,7 @@ public:
     ret->finalize();
     return ret;
   }
+  BrOn*
   makeBrOn(BrOnOp op, Name name, Expression* ref, HeapType intendedType) {
     auto* ret = wasm.allocator.alloc<BrOn>();
     ret->op = op;
