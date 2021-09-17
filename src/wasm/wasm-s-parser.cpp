@@ -2569,12 +2569,22 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
+  if (s[1]->isStr()) {
+    auto heapType = parseHeapType(*s[1]);
+    auto* ref = parseExpression(*s[2]);
+    return Builder(wasm).makeRefTest(ref, heapType);
+  }
   auto* ref = parseExpression(*s[1]);
   auto* rtt = parseExpression(*s[2]);
   return Builder(wasm).makeRefTest(ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
+  if (s[1]->isStr()) {
+    auto heapType = parseHeapType(*s[1]);
+    auto* ref = parseExpression(*s[2]);
+    return Builder(wasm).makeRefCast(ref, heapType);
+  }
   auto* ref = parseExpression(*s[1]);
   auto* rtt = parseExpression(*s[2]);
   return Builder(wasm).makeRefCast(ref, rtt);
@@ -2582,6 +2592,11 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   auto name = getLabel(*s[1]);
+  if (s[2]->isStr()) {
+    auto heapType = parseHeapType(*s[2]);
+    auto* ref = parseExpression(*s[3]);
+    return Builder(wasm).makeBrOn(op, name, ref, heapType);
+  }
   auto* ref = parseExpression(*s[2]);
   Expression* rtt = nullptr;
   if (op == BrOnCast || op == BrOnCastFail) {
