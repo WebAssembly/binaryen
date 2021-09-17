@@ -207,8 +207,6 @@ struct OptimizeInstructions
 
   bool fastMath;
 
-  bool refinalize = false;
-
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
 
@@ -221,11 +219,6 @@ struct OptimizeInstructions
 
     // Main walk.
     super::doWalkFunction(func);
-
-    // If we need to update parent types, do so.
-    if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
 
     // Final optimizations.
     {
@@ -1379,11 +1372,11 @@ struct OptimizeInstructions
       // This cast cannot succeed. If the input is not a null, it will
       // definitely trap.
       if (fallthrough->type.isNonNullable()) {
-        // Our type will now be unreachable; update the parents.
-        refinalize = true;
+        // Make sure to emit a block with the same type as us; leave updating
+        // types for other passes.
         replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                           builder.makeDrop(curr->rtt),
-                                          builder.makeUnreachable()}));
+                                          builder.makeUnreachable()}, curr->type));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime to
@@ -1564,8 +1557,10 @@ struct OptimizeInstructions
       // drop, which is no worse, and the value and the drop can be optimized
       // out later if the value has no side effects.
       Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
-                                          builder.makeUnreachable()));
+      // Make sure to emit a block with the same type as us; leave updating
+      // types for other passes.
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->value),
+                                        builder.makeUnreachable()}, curr->type));
       return;
     }
 
