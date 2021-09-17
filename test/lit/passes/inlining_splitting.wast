@@ -767,7 +767,7 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_0
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -782,7 +782,7 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_0
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -794,7 +794,7 @@
     (call $colliding-name (i32.const 1))
   )
 
-  ;; CHECK:      (func $colliding-name$byn-outline-A-outlined
+  ;; CHECK:      (func $byn-split-outlined-A$colliding-name
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $byn-split-outlined-A$colliding-name
@@ -1384,7 +1384,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$colliding-name (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$colliding-name_0 (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
