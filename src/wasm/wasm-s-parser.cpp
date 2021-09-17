@@ -2569,25 +2569,27 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
-  if (s[1]->isStr()) {
-    auto heapType = parseHeapType(*s[1]);
-    auto* ref = parseExpression(*s[2]);
-    return Builder(wasm).makeRefTest(ref, heapType);
-  }
   auto* ref = parseExpression(*s[1]);
   auto* rtt = parseExpression(*s[2]);
   return Builder(wasm).makeRefTest(ref, rtt);
 }
 
+Expression* SExpressionWasmBuilder::makeRefTestStatic(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  auto* ref = parseExpression(*s[2]);
+  return Builder(wasm).makeRefTest(ref, heapType);
+}
+
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
-  if (s[1]->isStr()) {
-    auto heapType = parseHeapType(*s[1]);
-    auto* ref = parseExpression(*s[2]);
-    return Builder(wasm).makeRefCast(ref, heapType);
-  }
   auto* ref = parseExpression(*s[1]);
   auto* rtt = parseExpression(*s[2]);
   return Builder(wasm).makeRefCast(ref, rtt);
+}
+
+Expression* SExpressionWasmBuilder::makeRefCastStatic(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  auto* ref = parseExpression(*s[2]);
+  return Builder(wasm).makeRefCast(ref, heapType);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
@@ -2604,6 +2606,13 @@ Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   }
   return ValidatingBuilder(wasm, s.line, s.col)
     .validateAndMakeBrOn(op, name, ref, rtt);
+}
+
+Expression* SExpressionWasmBuilder::makeBrOnStatic(Element& s, BrOnOp op) {
+  auto name = getLabel(*s[1]);
+  auto heapType = parseHeapType(*s[2]);
+  auto* ref = parseExpression(*s[3]);
+  return Builder(wasm).makeBrOn(op, name, ref, heapType);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
