@@ -797,7 +797,7 @@
   ;; CHECK:      (func $colliding-name$byn-outline-A-outlined
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $colliding-name$byn-outline-A-outlined
+  (func $byn-split-outlined-A$colliding-name
     ;; This function's name might collide with the split function we create for
     ;; the above function; the split function's name must be fixed up.
   )
