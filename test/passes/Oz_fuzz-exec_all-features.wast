@@ -510,6 +510,79 @@
    (array.get_u $bytes (local.get $x) (i32.const 0))
   )
  )
+ (func "static-casts"
+  ;; Casting null returns null.
+  (call $log (ref.is_null
+   (ref.cast $struct (ref.null $struct))
+  ))
+  ;; Testing null returns 0.
+  (call $log
+   (ref.test $struct (ref.null $struct))
+  )
+  ;; Testing something completely wrong (struct vs array) returns 0.
+  (call $log
+   (ref.test $struct
+    (array.new_with_rtt $bytes
+     (i32.const 20)
+     (i32.const 10)
+     (rtt.canon $bytes)
+    )
+   )
+  )
+  ;; Testing a thing with the same type returns 1.
+  (call $log
+   (ref.test $struct
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  ;; A bad downcast returns 0: we create a struct, which is not a extendedstruct.
+  (call $log
+   (ref.test $extendedstruct
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  ;; Casting to a supertype works.
+  (call $log
+   (ref.test $struct
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.canon $extendedstruct)
+    )
+   )
+  )
+ )
+ (func "static-br_on_cast"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+  )
+  (drop
+   (block $block (result ($ref $struct))
+    (drop
+     (block $extendedblock (result (ref $extendedstruct))
+      (drop
+       ;; second, try to cast our simple $struct to what it is, which will work
+       (br_on_cast $block $struct
+        ;; first, try to cast our simple $struct to an extended, which will fail
+        (br_on_cast $extendedblock $extendedstruct
+         (local.get $any)
+        )
+       )
+      )
+      (call $log (i32.const -1)) ;; we should never get here
+      (return)
+     )
+    )
+    (call $log (i32.const -2)) ;; we should never get here either
+    (return)
+   )
+  )
+  (call $log (i32.const 3)) ;; we should get here
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))
