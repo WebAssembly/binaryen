@@ -1357,12 +1357,10 @@ public:
 
   Expression* ref;
 
-  // If provided, this is a dynamic test with an rtt. If nullptr, this is a
-  // static cast, and the type of this expression is what we cast to.
+  // If rtt is provided then this is a dynamic test with an rtt. If nullptr then
+  // this is a static cast and intendedType is set, and it contains the type we
+  // intend to cast to.
   Expression* rtt = nullptr;
-
-  // If this is not a dynamic test, then a static type is provided here that
-  // indicates to what type we intend to cast.
   HeapType intendedType;
 
   void finalize();
@@ -1395,8 +1393,8 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast* has an rtt that is used in the cast.
-  // See above with RefTest regarding intendedType.
+  // BrOnCast* has, like RefCast and RefTest, either an rtt or a static intended
+  // type.
   Expression* rtt = nullptr;
   HeapType intendedType;
 

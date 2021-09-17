@@ -2594,11 +2594,6 @@ Expression* SExpressionWasmBuilder::makeRefCastStatic(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   auto name = getLabel(*s[1]);
-  if (s[2]->isStr()) {
-    auto heapType = parseHeapType(*s[2]);
-    auto* ref = parseExpression(*s[3]);
-    return Builder(wasm).makeBrOn(op, name, ref, heapType);
-  }
   auto* ref = parseExpression(*s[2]);
   Expression* rtt = nullptr;
   if (op == BrOnCast || op == BrOnCastFail) {
