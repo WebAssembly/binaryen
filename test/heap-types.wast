@@ -396,4 +396,25 @@
       (rtt.canon $bytes)
     )
   )
+  (func $static-operations
+    (local $temp.A (ref null $struct.A))
+    (local $temp.B (ref null $struct.B))
+    (drop
+      (ref.test $struct.B (ref.null $struct.A))
+    )
+    (drop
+      (ref.cast $struct.B (ref.null $struct.A))
+    )
+    (drop
+      (block $out (result (ref $struct.B))
+        (local.set $temp.A
+          (br_on_cast $out $struct.B (ref.null $struct.A))
+        )
+        (local.set $temp.A
+          (br_on_cast_fail $out $struct.B (ref.null $struct.A))
+        )
+        (unreachable)
+      )
+    )
+  )
 )
