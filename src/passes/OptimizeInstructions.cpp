@@ -1355,11 +1355,11 @@ struct OptimizeInstructions
       // which is what was cast to.
       Expression* rep;
       if (curr->rtt) {
-        builder.makeBlock({builder.makeDrop(curr->ref),
+        rep = builder.makeBlock({builder.makeDrop(curr->ref),
                            builder.makeDrop(curr->rtt),
                            builder.makeRefNull(curr->rtt->type.getHeapType())});
       } else {
-        builder.makeBlock({builder.makeDrop(curr->ref),
+        rep = builder.makeBlock({builder.makeDrop(curr->ref),
                            builder.makeRefNull(curr->intendedType)});
       }
       if (curr->ref->type.isNonNullable()) {

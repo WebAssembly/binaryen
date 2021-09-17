@@ -286,6 +286,11 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   return o;
 }
 
+static std::ostream& printHeapType(std::ostream& o, HeapType type, Module* wasm) {
+  TypeNamePrinter(o, wasm).print(type);
+  return o;
+}
+
 static std::ostream& printPrefixedTypes(std::ostream& o,
                                         const char* prefix,
                                         Type type,
@@ -1811,7 +1816,7 @@ struct PrintExpressionContents
   void visitMemoryGrow(MemoryGrow* curr) { printMedium(o, "memory.grow"); }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    printHeapType(o, curr->type.getHeapType(), wasm);
   }
   void visitRefIs(RefIs* curr) {
     switch (curr->op) {
@@ -1886,7 +1891,7 @@ struct PrintExpressionContents
       printMedium(o, "ref.test");
     } else {
       printMedium(o, "ref.test_static ");
-      printType(o, curr->intendedType, wasm);
+      printHeapType(o, curr->intendedType, wasm);
     }
   }
   void visitRefCast(RefCast* curr) {
@@ -1894,7 +1899,7 @@ struct PrintExpressionContents
       printMedium(o, "ref.cast");
     } else {
       printMedium(o, "ref.cast_static ");
-      printType(o, curr->intendedType, wasm);
+      printHeapType(o, curr->intendedType, wasm);
     }
   }
   void visitBrOn(BrOn* curr) {
@@ -1910,7 +1915,7 @@ struct PrintExpressionContents
           printMedium(o, "br_on_cast ");
         } else {
           printMedium(o, "br_on_cast_static ");
-          printType(o, curr->intendedType, wasm);
+          printHeapType(o, curr->intendedType, wasm);
         }
         break;
       case BrOnCastFail:
@@ -1918,7 +1923,7 @@ struct PrintExpressionContents
           printMedium(o, "br_on_cast_fail ");
         } else {
           printMedium(o, "br_on_cast_static_fail ");
-          printType(o, curr->intendedType, wasm);
+          printHeapType(o, curr->intendedType, wasm);
         }
         break;
       case BrOnFunc:
