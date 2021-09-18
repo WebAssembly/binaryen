@@ -1639,7 +1639,7 @@ private:
         c->value = c->value.neg();
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
       }
-      // (unsigned)x >> 31  ==>  (signed)x < 0
+      // u32(x) >> 31  ==>  i32(x) < 0
       if (binary->op == ShrUInt32 && c->value.geti32() == 31) {
         c->value = Literal::makeZero(Type::i32);
         binary->op = LtSInt32;
