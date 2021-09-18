@@ -39,12 +39,12 @@ namespace Match {
 //    argument can be a specific value to match or it can be a pointer to a
 //    value, Literal, or Const* at which to store the matched entity.
 //
-//  ival, fval
+//  bval, ival, fval
 //
-//    Match any integer constant or any floating point constant. Takes neither,
-//    either, or both of two possible arguments: first, a pointer to a value,
-//    Literal, or Const* at which to store the matched entity and second, a
-//    specific value to match.
+//    Match any boolean, any integer or any floating point constant. Takes
+//    neither, either, or both of two possible arguments: first, a pointer to a
+//    value, Literal, or Const* at which to store the matched entity and second,
+//    a specific value to match.
 //
 //  constant
 //
