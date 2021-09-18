@@ -871,9 +871,8 @@ struct OptimizeInstructions
         // canonicalize
         // i32.wrap_i64(it64(x) >> 63)  =>  i64(x) < 0
         Binary* inner;
-        Expression* x;
         if (matches(curr,
-                    unary(WrapInt64, binary(&inner, ShrU, any(&x), i64(63))))) {
+                    unary(WrapInt64, binary(&inner, ShrU, any(), i64(63))))) {
           inner->op = LtSInt64;
           inner->right->cast<Const>()->value = Literal::makeZero(Type::i64);
           inner->type = Type::i32;
