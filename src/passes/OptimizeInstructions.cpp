@@ -869,7 +869,7 @@ struct OptimizeInstructions
       }
       {
         // canonicalize
-        // i32.wrap_i64(it64(x) >> 63)  =>  i64(x) < 0
+        // i32.wrap_i64(u64(x) >> 63)  =>  i64(x) < 0
         Binary* inner;
         if (matches(curr,
                     unary(WrapInt64, binary(&inner, ShrU, any(), i64(63))))) {
