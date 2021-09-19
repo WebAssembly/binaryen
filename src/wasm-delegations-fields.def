@@ -298,7 +298,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
     DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
     DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset);
-    DELEGATE_END(AtomicCmpxchgId);
+    DELEGATE_END(AtomicCmpxchg);
     break;
   }
   case Expression::Id::AtomicWaitId: {
