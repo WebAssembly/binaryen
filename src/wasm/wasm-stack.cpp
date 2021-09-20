@@ -1942,11 +1942,23 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 }
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->rtt) {
+    o << U32LEB(BinaryConsts::RefTest);
+  } else {
+    o << U32LEB(BinaryConsts::RefTestStatic);
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->rtt) {
+    o << U32LEB(BinaryConsts::RefCast);
+  } else {
+    o << U32LEB(BinaryConsts::RefCastStatic);
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
@@ -1958,10 +1970,20 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       o << int8_t(BinaryConsts::BrOnNonNull);
       break;
     case BrOnCast:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+      o << int8_t(BinaryConsts::GCPrefix);
+      if (curr->rtt) {
+        o << U32LEB(BinaryConsts::BrOnCast);
+      } else {
+        o << U32LEB(BinaryConsts::BrOnCastStatic);
+      }
       break;
     case BrOnCastFail:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastFail);
+      o << int8_t(BinaryConsts::GCPrefix);
+      if (curr->rtt) {
+        o << U32LEB(BinaryConsts::BrOnCastFail);
+      } else {
+        o << U32LEB(BinaryConsts::BrOnCastStaticFail);
+      }
       break;
     case BrOnFunc:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);
@@ -1985,6 +2007,9 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       WASM_UNREACHABLE("invalid br_on_*");
   }
   o << U32LEB(getBreakIndex(curr->name));
+  if ((curr->op == BrOnCast || curr->op == BrOnCastFail) && !curr->rtt) {
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
