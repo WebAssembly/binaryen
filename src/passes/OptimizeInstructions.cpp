@@ -1376,7 +1376,8 @@ struct OptimizeInstructions
         // This cast cannot succeed. If the input is not a null, it will
         // definitely trap.
         if (fallthrough->type.isNonNullable()) {
-          // Our type will now be unreachable; update the parents.
+          // Make sure to emit a block with the same type as us; leave updating
+          // types for other passes.
           refinalize = true;
           replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                             builder.makeDrop(curr->rtt),
