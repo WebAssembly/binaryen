@@ -76,6 +76,8 @@
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling static-br_on_cast
 [LoggingExternalInterface logging 3]
+[fuzz-exec] calling static-br_on_cast_fail
+[LoggingExternalInterface logging -2]
 (module
  (type $struct (struct (field (mut i32))))
  (type $extendedstruct (struct (field (mut i32)) (field f64)))
@@ -109,6 +111,7 @@
  (export "array.init-packed" (func $23))
  (export "static-casts" (func $24))
  (export "static-br_on_cast" (func $25))
+ (export "static-br_on_cast_fail" (func $26))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -580,6 +583,26 @@
    (i32.const 3)
   )
  )
+ (func $26 (; has Stack IR ;)
+  (drop
+   (block $failblock (result (ref $struct))
+    (drop
+     (br_on_cast_static_fail $failblock $extendedstruct
+      (struct.new_default_with_rtt $struct
+       (rtt.canon $struct)
+      )
+     )
+    )
+    (call $log
+     (i32.const -1)
+    )
+    (return)
+   )
+  )
+  (call $log
+   (i32.const -2)
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -658,6 +681,8 @@
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling static-br_on_cast
 [LoggingExternalInterface logging 3]
+[fuzz-exec] calling static-br_on_cast_fail
+[LoggingExternalInterface logging -2]
 ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]
