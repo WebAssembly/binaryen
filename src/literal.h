@@ -62,7 +62,7 @@ class Literal {
     // To support the experimental RttFreshSub instruction, we not only store
     // the type, but also a reference to an allocation.
     // The above describes dynamic data, that is with an actual RTT. The static
-    // case does not declare anything here, and just uses the type field.
+    // case just has a static type in its GCData.
     // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
