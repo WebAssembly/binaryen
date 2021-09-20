@@ -1483,8 +1483,8 @@ public:
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
-      Literal seenRtt = gcData->rtt;
       if (curr->rtt) {
+        Literal seenRtt = gcData->rtt;
         if (!seenRtt.isSubRtt(intendedRtt)) {
           cast.outcome = cast.Failure;
           return cast;
@@ -1492,7 +1492,7 @@ public:
         cast.castRef =
           Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
       } else {
-        auto seenType = seenRtt.type.getHeapType();
+        auto seenType = gcData->type;
         if (!HeapType::isSubType(seenType, curr->intendedType)) {
           cast.outcome = cast.Failure;
           return cast;
@@ -1633,11 +1633,11 @@ public:
   // typing. Dynamic typing will provide an rtt expression and an rtt flow with
   // the value, while static typing only provides a heap type directly.
   template<typename T>
-  std::shared_ptr<GCData> makeGCData(Expression* rttExpr, Flow& rtt, HeapType type, T& data) {
+  std::shared_ptr<GCData> makeGCData(Expression* rttExpr, Flow& rttFlow, HeapType type, T& data) {
     if (rttExpr) {
-      gcData = std::make_shared<GCData>(rtt.getSingleValue(), data);
+      return std::make_shared<GCData>(rttFlow.getSingleValue(), data);
     } else {
-      gcData = std::make_shared<GCData>(type, data);
+      return std::make_shared<GCData>(type, data);
     }
   }
 
@@ -1645,7 +1645,7 @@ public:
     NOTE_ENTER("StructNew");
     Flow rtt;
     if (curr->rtt) {
-      this->visit(curr->rtt);
+      rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
@@ -1708,7 +1708,7 @@ public:
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
     Flow rtt;
-    if (rtt) {
+    if (curr->rtt) {
       rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
@@ -1756,7 +1756,8 @@ public:
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
     }
-    auto field = curr->type.getHeapType().getArray().element;
+    auto heapType = curr->type.getHeapType();
+    auto field = heapType.getArray().element;
     Literals data(num);
     for (Index i = 0; i < num; i++) {
       auto value = this->visit(curr->values[i]);
