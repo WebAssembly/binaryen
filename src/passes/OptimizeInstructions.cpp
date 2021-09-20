@@ -207,8 +207,6 @@ struct OptimizeInstructions
 
   bool fastMath;
 
-  bool refinalize = false;
-
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
 
@@ -221,11 +219,6 @@ struct OptimizeInstructions
 
     // Main walk.
     super::doWalkFunction(func);
-
-    // If we need to update parent types, do so.
-    if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
 
     // Final optimizations.
     {
@@ -1383,11 +1376,12 @@ struct OptimizeInstructions
         // This cast cannot succeed. If the input is not a null, it will
         // definitely trap.
         if (fallthrough->type.isNonNullable()) {
-          // Our type will now be unreachable; update the parents.
-          refinalize = true;
+          // Make sure to emit a block with the same type as us; leave updating
+          // types for other passes.
           replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                             builder.makeDrop(curr->rtt),
-                                            builder.makeUnreachable()}));
+                                            builder.makeUnreachable()},
+                                           curr->type));
           return;
         }
         // Otherwise, we are not sure what it is, and need to wait for runtime
@@ -1575,8 +1569,11 @@ struct OptimizeInstructions
       // drop, which is no worse, and the value and the drop can be optimized
       // out later if the value has no side effects.
       Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
-                                          builder.makeUnreachable()));
+      // Make sure to emit a block with the same type as us; leave updating
+      // types for other passes.
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->value), builder.makeUnreachable()},
+        curr->type));
       return;
     }
 
@@ -3350,14 +3347,9 @@ private:
         curr->ifTrue->type != Type::unreachable &&
         curr->ifFalse->type != Type::unreachable) {
       Unary* un;
-      Expression* x;
       Const* c;
       auto check = [&](Expression* a, Expression* b) {
-        if (matches(a, unary(&un, EqZ, any(&x))) && matches(b, ival(&c))) {
-          auto value = c->value.getInteger();
-          return value == 0 || value == 1;
-        }
-        return false;
+        return matches(b, bval(&c)) && matches(a, unary(&un, EqZ, any()));
       };
       if (check(curr->ifTrue, curr->ifFalse) ||
           check(curr->ifFalse, curr->ifTrue)) {

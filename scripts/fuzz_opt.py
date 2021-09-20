@@ -176,6 +176,8 @@ IMPORTANT_INITIAL_CONTENTS = [
     os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
     os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
     os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
+    os.path.join('lit', 'passes', 'optimize-instructions-gc-iit.wast'),
+    os.path.join('lit', 'passes', 'optimize-instructions-call_ref.wast'),
     os.path.join('lit', 'passes', 'inlining_splitting.wast'),
     os.path.join('heap-types.wast'),
 ]

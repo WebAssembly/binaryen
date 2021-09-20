@@ -5,11 +5,11 @@
 ;; remove-unused-names is to allow fallthrough computations to work on blocks
 
 (module
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
-
  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32 (func (result i32)))
+
+ ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
 
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
@@ -143,7 +143,7 @@
 
  ;; CHECK:      (func $fallthrough-bad-type (result i32)
  ;; CHECK-NEXT:  (call_ref
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.func $return-nothing)
  ;; CHECK-NEXT:    )
