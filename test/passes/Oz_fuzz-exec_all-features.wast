@@ -583,6 +583,27 @@
   )
   (call $log (i32.const 3)) ;; we should get here
  )
+ (func "static-br_on_cast_fail"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+  )
+  (drop
+   (block $failblock (result anyref)
+    (drop
+      ;; try to cast our simple $struct to an extended, which will fail
+     (br_on_cast_static_fail $failblock $extendedstruct
+      (local.get $any)
+     )
+    )
+    (call $log (i32.const -1)) ;; we should never get here
+    (return)
+   )
+  )
+  (call $log (i32.const -2)) ;; we should get here.
+  (return)
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))
