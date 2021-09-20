@@ -2741,7 +2741,7 @@ Expression* SExpressionWasmBuilder::makeArrayInitStatic(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   size_t i = 2;
   std::vector<Expression*> values;
-  while (i < s.size() - 1) {
+  while (i < s.size()) {
     values.push_back(parseExpression(*s[i++]));
   }
   return Builder(wasm).makeArrayInit(heapType, values);

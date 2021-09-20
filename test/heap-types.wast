@@ -424,8 +424,7 @@
   )
   (func $static-constructions
     (drop
-      (struct.new_default $struct.A
-      )
+      (struct.new_default $struct.A)
     )
     (drop
       (struct.new $struct.A

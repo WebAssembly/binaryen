@@ -2038,7 +2038,7 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
       o << U32LEB(BinaryConsts::StructNew);
     }
   }
-  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
@@ -2078,7 +2078,7 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
     o << U32LEB(BinaryConsts::ArrayNew);
   }
   }
-  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
@@ -2088,7 +2088,7 @@ void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
   } else {
     o << U32LEB(BinaryConsts::ArrayInitStatic);
   }
-  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->type.getHeapType());
   o << U32LEB(curr->values.size());
 }
 
