@@ -840,7 +840,7 @@ public:
   StructNew* makeStructNew(HeapType type, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
-    ret->type = type;
+    ret->type = Type(type, NonNullable);
     ret->finalize();
     return ret;
   }
@@ -876,7 +876,7 @@ public:
     auto* ret = wasm.allocator.alloc<ArrayNew>();
     ret->size = size;
     ret->init = init;
-    ret->type = type;
+    ret->type = Type(type, NonNullable);
     ret->finalize();
     return ret;
   }
@@ -892,7 +892,7 @@ public:
                            const std::vector<Expression*>& values) {
     auto* ret = wasm.allocator.alloc<ArrayInit>();
     ret->values.set(values);
-    ret->type = type;
+    ret->type = Type(type, NonNullable);
     ret->finalize();
     return ret;
   }
