@@ -1985,15 +1985,18 @@ struct PrintExpressionContents
   }
 
   void visitStructNew(StructNew* curr) {
-    if (printUnreachableReplacement(curr->rtt)) {
+    if (printUnreachableReplacement(curr)) {
       return;
     }
-    printMedium(o, "struct.new_");
+    printMedium(o, "struct.new");
     if (curr->isWithDefault()) {
-      o << "default_";
+      printMedium(o, "_default");
     }
-    o << "with_rtt ";
-    TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
+    if (curr->rtt) {
+      printMedium(o, "_with_rtt");
+    }
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
 
   void printFieldName(HeapType type, Index index) {
@@ -2035,16 +2038,29 @@ struct PrintExpressionContents
     printFieldName(heapType, curr->index);
   }
   void visitArrayNew(ArrayNew* curr) {
-    printMedium(o, "array.new_");
-    if (curr->isWithDefault()) {
-      o << "default_";
+    if (printUnreachableReplacement(curr)) {
+      return;
     }
-    o << "with_rtt ";
-    TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
+    printMedium(o, "array.new");
+    if (curr->isWithDefault()) {
+      printMedium(o, "_default");
+    }
+    if (curr->rtt) {
+      printMedium(o, "_with_rtt");
+    }
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
   void visitArrayInit(ArrayInit* curr) {
-    printMedium(o, "array.init ");
-    TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
+    if (printUnreachableReplacement(curr)) {
+      return;
+    }
+    printMedium(o, "array.init");
+    if (!curr->rtt) {
+      printMedium(o, "_static");
+    }
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
   void visitArrayGet(ArrayGet* curr) {
     if (printUnreachableReplacement(curr->ref)) {
