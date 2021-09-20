@@ -325,6 +325,40 @@
    )
   )
  )
+ (func "ref-as-data-of-func"
+  (drop
+   ;; This should trap.
+   (ref.as_data
+    (ref.func $0)
+   )
+  )
+ )
+ (func "ref-as-data-of-data"
+  (drop
+   (ref.as_data
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+ )
+ (func "ref-as-func-of-data"
+  (drop
+   ;; This should trap.
+   (ref.as_func
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+ )
+ (func "ref-as-func-of-func"
+  (drop
+   (ref.as_func
+    (ref.func $0)
+   )
+  )
+ )
  (func $a-void-func
   (call $log (i32.const 1337))
  )
