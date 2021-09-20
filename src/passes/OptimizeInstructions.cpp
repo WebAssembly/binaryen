@@ -1378,7 +1378,6 @@ struct OptimizeInstructions
         if (fallthrough->type.isNonNullable()) {
           // Make sure to emit a block with the same type as us; leave updating
           // types for other passes.
-          refinalize = true;
           replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                             builder.makeDrop(curr->rtt),
                                             builder.makeUnreachable()},
