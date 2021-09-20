@@ -1348,15 +1348,15 @@ struct OptimizeInstructions
       auto fallthrough =
         Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
-      // If the value is a null, it will just flow through, and we do not need the
-      // cast. However, if that would change the type, then things are less
+      // If the value is a null, it will just flow through, and we do not need
+      // the cast. However, if that would change the type, then things are less
       // simple: if the original type was non-nullable, replacing it with a null
       // would change the type, which can happen in e.g.
       //   (ref.cast (ref.as_non_null (.. (ref.null)
       if (fallthrough->is<RefNull>()) {
-        // Replace the expression with drops of the inputs, and a null. Note that
-        // we provide a null of the type the outside expects - that of the rtt,
-        // which is what was cast to.
+        // Replace the expression with drops of the inputs, and a null. Note
+        // that we provide a null of the type the outside expects - that of the
+        // rtt, which is what was cast to.
         Expression* rep = builder.makeBlock(
           {builder.makeDrop(curr->ref),
            builder.makeDrop(curr->rtt),
