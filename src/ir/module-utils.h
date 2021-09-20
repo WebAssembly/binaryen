@@ -513,16 +513,16 @@ inline void collectHeapTypes(Module& wasm,
         }
       } else if (auto* cast = curr->dynCast<RefCast>()) {
         if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->type.getHeapType());
+          counts.note(cast->getIntendedType());
         }
       } else if (auto* cast = curr->dynCast<RefTest>()) {
         if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->type.getHeapType());
+          counts.note(cast->getIntendedType());
         }
       } else if (auto* cast = curr->dynCast<BrOn>()) {
         if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
           if (!cast->rtt && cast->type != Type::unreachable) {
-            counts.note(cast->type.getHeapType());
+            counts.note(cast->getIntendedType());
           }
         }
       } else if (auto* get = curr->dynCast<StructGet>()) {
