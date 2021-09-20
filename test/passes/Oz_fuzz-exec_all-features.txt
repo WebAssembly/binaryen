@@ -85,9 +85,9 @@
 [fuzz-exec] calling static-br_on_cast_fail
 [LoggingExternalInterface logging -2]
 (module
+ (type $void_func (func))
  (type $struct (struct (field (mut i32))))
  (type $extendedstruct (struct (field (mut i32)) (field f64)))
- (type $void_func (func))
  (type $bytes (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
@@ -534,32 +534,25 @@
   )
   (call $log
    (ref.test_static $struct
-    (array.new_with_rtt $bytes
+    (array.new $bytes
      (i32.const 20)
      (i32.const 10)
-     (rtt.canon $bytes)
     )
    )
   )
   (call $log
    (ref.test_static $struct
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
+    (struct.new_default $struct)
    )
   )
   (call $log
    (ref.test_static $extendedstruct
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
+    (struct.new_default $struct)
    )
   )
   (call $log
    (ref.test_static $struct
-    (struct.new_default_with_rtt $extendedstruct
-     (rtt.canon $extendedstruct)
-    )
+    (struct.new_default $extendedstruct)
    )
   )
  )
@@ -571,9 +564,7 @@
       (drop
        (br_on_cast_static $block $struct
         (br_on_cast_static $extendedblock $extendedstruct
-         (struct.new_default_with_rtt $struct
-          (rtt.canon $struct)
-         )
+         (struct.new_default $struct)
         )
        )
       )
@@ -598,9 +589,7 @@
    (block $failblock (result (ref $struct))
     (drop
      (br_on_cast_static_fail $failblock $extendedstruct
-      (struct.new_default_with_rtt $struct
-       (rtt.canon $struct)
-      )
+      (struct.new_default $struct)
      )
     )
     (call $log
