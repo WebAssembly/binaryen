@@ -1381,8 +1381,8 @@ struct OptimizeInstructions
           refinalize = true;
           replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                             builder.makeDrop(curr->rtt),
-                                            builder.makeUnreachable(),
-                                            curr->type}));
+                                            builder.makeUnreachable()},
+                                            curr->type));
           return;
         }
         // Otherwise, we are not sure what it is, and need to wait for runtime
