@@ -1438,7 +1438,10 @@ class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
   StructNew(MixedArena& allocator) : operands(allocator) {}
 
-  Expression* rtt;
+  // A dynamic StructNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
+
   // A struct.new_with_default has empty operands. This does leave the case of a
   // struct with no fields ambiguous, but it doesn't make a difference in that
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
@@ -1481,7 +1484,10 @@ public:
   // used.
   Expression* init = nullptr;
   Expression* size;
-  Expression* rtt;
+
+  // A dynamic ArrayNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
 
   bool isWithDefault() { return !init; }
 
@@ -1493,7 +1499,10 @@ public:
   ArrayInit(MixedArena& allocator) : values(allocator) {}
 
   ExpressionList values;
-  Expression* rtt;
+
+  // A dynamic ArrayInit has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
 
   void finalize();
 };
