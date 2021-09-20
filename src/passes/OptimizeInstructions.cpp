@@ -1405,7 +1405,6 @@ struct OptimizeInstructions
                                           passOptions));
           return;
         }
->>>>>>> origin/main
       }
 
       // Repeated identical ref.cast operations are unnecessary, if using the
