@@ -1633,7 +1633,8 @@ public:
   // typing. Dynamic typing will provide an rtt expression and an rtt flow with
   // the value, while static typing only provides a heap type directly.
   template<typename T>
-  std::shared_ptr<GCData> makeGCData(Expression* rttExpr, Flow& rttFlow, HeapType type, T& data) {
+  std::shared_ptr<GCData>
+  makeGCData(Expression* rttExpr, Flow& rttFlow, HeapType type, T& data) {
     if (rttExpr) {
       return std::make_shared<GCData>(rttFlow.getSingleValue(), data);
     } else {
@@ -1664,7 +1665,8 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
+    return Flow(
+      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1740,8 +1742,8 @@ public:
         data[i] = value;
       }
     }
-    return Flow(Literal(makeGCData(curr->rtt, rtt, heapType, data),
-                        curr->type));
+    return Flow(
+      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
@@ -1766,8 +1768,8 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return Flow(Literal(makeGCData(curr->rtt, rtt, heapType, data),
-                        curr->type));
+    return Flow(
+      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");

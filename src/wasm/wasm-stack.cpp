@@ -2072,11 +2072,11 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
       o << U32LEB(BinaryConsts::ArrayNewWithRtt);
     }
   } else {
-  if (curr->isWithDefault()) {
-    o << U32LEB(BinaryConsts::ArrayNewDefault);
-  } else {
-    o << U32LEB(BinaryConsts::ArrayNew);
-  }
+    if (curr->isWithDefault()) {
+      o << U32LEB(BinaryConsts::ArrayNewDefault);
+    } else {
+      o << U32LEB(BinaryConsts::ArrayNew);
+    }
   }
   parent.writeIndexedHeapType(curr->type.getHeapType());
 }

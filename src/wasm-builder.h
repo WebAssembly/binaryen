@@ -836,8 +836,7 @@ public:
     ret->finalize();
     return ret;
   }
-  template<typename T>
-  StructNew* makeStructNew(HeapType type, const T& args) {
+  template<typename T> StructNew* makeStructNew(HeapType type, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
     ret->type = Type(type, NonNullable);

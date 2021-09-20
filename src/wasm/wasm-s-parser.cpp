@@ -2643,12 +2643,12 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   return Builder(wasm).makeStructNew(rtt, operands);
 }
 
-Expression* SExpressionWasmBuilder::makeStructNewStatic(Element& s, bool default_) {
+Expression* SExpressionWasmBuilder::makeStructNewStatic(Element& s,
+                                                        bool default_) {
   auto heapType = parseHeapType(*s[1]);
   auto numOperands = s.size() - 2;
   if (default_ && numOperands > 0) {
-    throw ParseException(
-      "arguments provided for struct.new", s.line, s.col);
+    throw ParseException("arguments provided for struct.new", s.line, s.col);
   }
   std::vector<Expression*> operands;
   operands.resize(numOperands);
@@ -2714,7 +2714,8 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
   return Builder(wasm).makeArrayNew(rtt, size, init);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s, bool default_) {
+Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s,
+                                                       bool default_) {
   auto heapType = parseHeapType(*s[1]);
   Expression* init = nullptr;
   size_t i = 2;

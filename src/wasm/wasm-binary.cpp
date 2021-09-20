@@ -6602,8 +6602,7 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::ArrayNew ||
-      code == BinaryConsts::ArrayNewDefault) {
+  if (code == BinaryConsts::ArrayNew || code == BinaryConsts::ArrayNewDefault) {
     auto heapType = getIndexedHeapType();
     auto* size = popNonVoidExpression();
     Expression* init = nullptr;

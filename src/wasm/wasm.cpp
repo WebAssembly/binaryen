@@ -1047,7 +1047,8 @@ void StructSet::finalize() {
 }
 
 void ArrayNew::finalize() {
-  if ((rtt && rtt->type == Type::unreachable) || size->type == Type::unreachable ||
+  if ((rtt && rtt->type == Type::unreachable) ||
+      size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
