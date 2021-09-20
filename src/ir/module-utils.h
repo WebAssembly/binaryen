@@ -30,9 +30,12 @@ namespace wasm {
 
 namespace ModuleUtils {
 
-inline Function* copyFunction(Function* func, Module& out) {
-  auto* ret = new Function();
-  ret->name = func->name;
+// Copies a function into a module. If newName is provided it is used as the
+// name of the function (otherwise the original name is copied).
+inline Function*
+copyFunction(Function* func, Module& out, Name newName = Name()) {
+  auto ret = std::make_unique<Function>();
+  ret->name = newName.is() ? newName : func->name;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
@@ -43,8 +46,7 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->base = func->base;
   // TODO: copy Stack IR
   assert(!func->stackIR);
-  out.addFunction(ret);
-  return ret;
+  return out.addFunction(std::move(ret));
 }
 
 inline Global* copyGlobal(Global* global, Module& out) {
