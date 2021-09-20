@@ -177,6 +177,7 @@ IMPORTANT_INITIAL_CONTENTS = [
     os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
     os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
     os.path.join('lit', 'passes', 'inlining_splitting.wast'),
+    os.path.join('heap-types.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
