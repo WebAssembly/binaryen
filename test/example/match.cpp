@@ -123,16 +123,28 @@ void test_internal_exact() {
 }
 
 void test_internal_literal() {
-  std::cout << "Testing Internal::{I32,I64,Int,F32,F64,Float}Lit\n";
+  std::cout << "Testing Internal::{Bool,I32,I64,Int,F32,F64,Float}Lit\n";
 
   Literal i32Zero(int32_t(0));
   Literal i32One(int32_t(1));
+  Literal i32Two(int32_t(2));
   Literal f32Zero(float(0));
   Literal f32One(float(1));
   Literal i64Zero(int64_t(0));
   Literal i64One(int64_t(1));
   Literal f64Zero(double(0));
   Literal f64One(double(1));
+
+  auto anyBool = Internal::BoolLit(nullptr, Internal::Any<bool>(nullptr));
+  assert(anyBool.matches(i32Zero));
+  assert(anyBool.matches(i32One));
+  assert(!anyBool.matches(i32Two));
+  assert(!anyBool.matches(f32Zero));
+  assert(!anyBool.matches(f32One));
+  assert(!anyBool.matches(i64Zero));
+  assert(!anyBool.matches(i64One));
+  assert(!anyBool.matches(f64Zero));
+  assert(!anyBool.matches(f64One));
 
   auto anyi32 = Internal::I32Lit(nullptr, Internal::Any<int32_t>(nullptr));
   assert(anyi32.matches(i32Zero));

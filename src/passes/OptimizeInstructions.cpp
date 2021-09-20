@@ -3350,14 +3350,9 @@ private:
         curr->ifTrue->type != Type::unreachable &&
         curr->ifFalse->type != Type::unreachable) {
       Unary* un;
-      Expression* x;
       Const* c;
       auto check = [&](Expression* a, Expression* b) {
-        if (matches(a, unary(&un, EqZ, any(&x))) && matches(b, ival(&c))) {
-          auto value = c->value.getInteger();
-          return value == 0 || value == 1;
-        }
-        return false;
+        return matches(b, bval(&c)) && matches(a, unary(&un, EqZ, any()));
       };
       if (check(curr->ifTrue, curr->ifFalse) ||
           check(curr->ifFalse, curr->ifTrue)) {
