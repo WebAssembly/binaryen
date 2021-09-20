@@ -593,7 +593,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // at least some baseline cost, plus writing the fields. (If we use default
     // values for the fields, then it is possible they are all 0 and if so, we
     // can get that almost for free as well, so don't add anything there.)
-    CostType ret = 4 + visit(curr->rtt) + curr->operands.size();
+    CostType ret = 4 + maybeVisit(curr->rtt) + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
@@ -606,10 +606,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
   }
   CostType visitArrayNew(ArrayNew* curr) {
-    return 4 + visit(curr->rtt) + visit(curr->size) + maybeVisit(curr->init);
+    return 4 + maybeVisit(curr->rtt) + visit(curr->size) + maybeVisit(curr->init);
   }
   CostType visitArrayInit(ArrayInit* curr) {
-    CostType ret = 4 + visit(curr->rtt);
+    CostType ret = 4 + maybeVisit(curr->rtt);
     for (auto* child : curr->values) {
       ret += visit(child);
     }
