@@ -461,6 +461,7 @@ struct FunctionSplitter {
   Function* getInlineableSplitFunction(Function* func) {
     Function* inlineable = nullptr;
     auto success = maybeSplit(func, &inlineable);
+    WASM_UNUSED(success);
     assert(success && inlineable);
     return inlineable;
   }
