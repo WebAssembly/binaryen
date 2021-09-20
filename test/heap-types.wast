@@ -422,4 +422,36 @@
       )
     )
   )
+  (func $static-constructions
+    (drop
+      (struct.new_default $struct.A
+      )
+    )
+    (drop
+      (struct.new $struct.A
+        (i32.const 1)
+        (f32.const 2.345)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (array.new $vector
+        (f64.const 3.14159)
+        (i32.const 3)
+      )
+    )
+    (drop
+      (array.new_default $matrix
+        (i32.const 10)
+      )
+    )
+    (drop
+      (array.init_static $vector
+        (f64.const 1)
+        (f64.const 2)
+        (f64.const 4)
+        (f64.const 8)
+      )
+    )
+  )
 )
