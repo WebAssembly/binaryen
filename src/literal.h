@@ -696,10 +696,16 @@ std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
 // A GC Struct or Array is a set of values with a run-time type saying what it
-// is.
+// is. In the case of static (rtt-free) typing, the rtt is not present and
+// instead we have a static type.
 struct GCData {
+  // Either the RTT or the type must be present, but not both.
   Literal rtt;
+  HeapType type;
+
   Literals values;
+
+  GCData(HeapType type, Literals values) : type(type), values(values) {}
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 

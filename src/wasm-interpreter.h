@@ -1628,13 +1628,30 @@ public:
     }
     return Literal(std::move(newSupers), curr->type);
   }
+
+  // Generates GC data for either dynamic (with an RTT) or static (with a type)
+  // typing. Dynamic typing will provide an rtt expression and an rtt flow with
+  // the value, while static typing only provides a heap type directly.
+  template<typename T>
+  std::shared_ptr<GCData> makeGCData(Expression* rttExpr, Flow& rtt, HeapType type, T& data) {
+    if (rttExpr) {
+      gcData = std::make_shared<GCData>(rtt.getSingleValue(), data);
+    } else {
+      gcData = std::make_shared<GCData>(type, data);
+    }
+  }
+
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Flow rtt;
+    if (curr->rtt) {
+      this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
     }
-    const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
+    auto heapType = curr->type.getHeapType();
+    const auto& fields = heapType.getStruct().fields;
     Literals data(fields.size());
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
@@ -1647,8 +1664,7 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
-                        curr->type));
+    return Flow(Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1691,15 +1707,19 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Flow rtt;
+    if (rtt) {
+      rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
     }
     auto size = this->visit(curr->size);
     if (size.breaking()) {
       return size;
     }
-    const auto& element = curr->rtt->type.getHeapType().getArray().element;
+    auto heapType = curr->type.getHeapType();
+    const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
@@ -1720,14 +1740,17 @@ public:
         data[i] = value;
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+    return Flow(Literal(makeGCData(curr->rtt, rtt, heapType, data),
                         curr->type));
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Flow rtt;
+    if (curr->rtt) {
+      rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
     }
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
@@ -1742,7 +1765,7 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+    return Flow(Literal(makeGCData(curr->rtt, rtt, heapType, data),
                         curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
