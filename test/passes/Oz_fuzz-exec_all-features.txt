@@ -73,9 +73,20 @@
 [LoggingExternalInterface logging 50]
 [fuzz-exec] calling array.init-packed
 [LoggingExternalInterface logging 8]
+[fuzz-exec] calling static-casts
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling static-br_on_cast
+[LoggingExternalInterface logging 3]
+[fuzz-exec] calling static-br_on_cast_fail
+[LoggingExternalInterface logging -2]
 (module
- (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $struct (struct (field (mut i32))))
+ (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $void_func (func))
  (type $bytes (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
@@ -108,6 +119,9 @@
  (export "rtt_Fresh" (func $25))
  (export "array.init" (func $26))
  (export "array.init-packed" (func $27))
+ (export "static-casts" (func $28))
+ (export "static-br_on_cast" (func $29))
+ (export "static-br_on_cast_fail" (func $30))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -511,6 +525,94 @@
    )
   )
  )
+ (func $28 (; has Stack IR ;)
+  (call $log
+   (i32.const 1)
+  )
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (ref.test_static $struct
+    (array.new_with_rtt $bytes
+     (i32.const 20)
+     (i32.const 10)
+     (rtt.canon $bytes)
+    )
+   )
+  )
+  (call $log
+   (ref.test_static $struct
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  (call $log
+   (ref.test_static $extendedstruct
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  (call $log
+   (ref.test_static $struct
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.canon $extendedstruct)
+    )
+   )
+  )
+ )
+ (func $29 (; has Stack IR ;)
+  (drop
+   (block $block (result (ref $struct))
+    (drop
+     (block $extendedblock (result (ref $extendedstruct))
+      (drop
+       (br_on_cast_static $block $struct
+        (br_on_cast_static $extendedblock $extendedstruct
+         (struct.new_default_with_rtt $struct
+          (rtt.canon $struct)
+         )
+        )
+       )
+      )
+      (call $log
+       (i32.const -1)
+      )
+      (return)
+     )
+    )
+    (call $log
+     (i32.const -2)
+    )
+    (return)
+   )
+  )
+  (call $log
+   (i32.const 3)
+  )
+ )
+ (func $30 (; has Stack IR ;)
+  (drop
+   (block $failblock (result (ref $struct))
+    (drop
+     (br_on_cast_static_fail $failblock $extendedstruct
+      (struct.new_default_with_rtt $struct
+       (rtt.canon $struct)
+      )
+     )
+    )
+    (call $log
+     (i32.const -1)
+    )
+    (return)
+   )
+  )
+  (call $log
+   (i32.const -2)
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -586,6 +688,17 @@
 [LoggingExternalInterface logging 50]
 [fuzz-exec] calling array.init-packed
 [LoggingExternalInterface logging 8]
+[fuzz-exec] calling static-casts
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling static-br_on_cast
+[LoggingExternalInterface logging 3]
+[fuzz-exec] calling static-br_on_cast_fail
+[LoggingExternalInterface logging -2]
 ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]

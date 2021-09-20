@@ -2219,9 +2219,20 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
   }
-  if (curr->rtt->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+  if (curr->rtt) {
+    if (curr->rtt->type != Type::unreachable) {
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+    }
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "dynamic ref.test must not use intendedType field");
+  } else {
+    shouldBeUnequal(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "static ref.test must set intendedType field");
   }
 }
 
@@ -2232,9 +2243,20 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.cast ref must have ref type");
   }
-  if (curr->rtt->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
+  if (curr->rtt) {
+    if (curr->rtt->type != Type::unreachable) {
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
+    }
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "dynamic ref.cast must not use intendedType field");
+  } else {
+    shouldBeUnequal(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "static ref.cast must set intendedType field");
   }
 }
 
@@ -2247,14 +2269,29 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
   }
   if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-    // Note that an unreachable rtt is not supported: the text and binary
-    // formats do not provide the type, so if it's unreachable we should not
-    // even create a br_on_cast in such a case, as we'd have no idea what it
-    // casts to.
-    shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
+    if (curr->rtt) {
+      // Note that an unreachable rtt is not supported: the text and binary
+      // formats do not provide the type, so if it's unreachable we should not
+      // even create a br_on_cast in such a case, as we'd have no idea what it
+      // casts to.
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
+      shouldBeEqual(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "dynamic br_on_cast* must not use intendedType field");
+    } else {
+      shouldBeUnequal(curr->intendedType,
+                      HeapType(),
+                      curr,
+                      "static br_on_cast* must set intendedType field");
+    }
   } else {
     shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "non-cast br_on* must not set intendedType field");
   }
   noteBreak(curr->name, curr->getSentType(), curr);
 }

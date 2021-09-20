@@ -84,9 +84,25 @@ switch (op[0]) {
                       case '\0':
                         if (strcmp(op, "br_on_cast") == 0) { return makeBrOn(s, BrOnCast); }
                         goto parse_error;
-                      case '_':
-                        if (strcmp(op, "br_on_cast_fail") == 0) { return makeBrOn(s, BrOnCastFail); }
-                        goto parse_error;
+                      case '_': {
+                        switch (op[11]) {
+                          case 'f':
+                            if (strcmp(op, "br_on_cast_fail") == 0) { return makeBrOn(s, BrOnCastFail); }
+                            goto parse_error;
+                          case 's': {
+                            switch (op[17]) {
+                              case '\0':
+                                if (strcmp(op, "br_on_cast_static") == 0) { return makeBrOnStatic(s, BrOnCast); }
+                                goto parse_error;
+                              case '_':
+                                if (strcmp(op, "br_on_cast_static_fail") == 0) { return makeBrOnStatic(s, BrOnCastFail); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          default: goto parse_error;
+                        }
+                      }
                       default: goto parse_error;
                     }
                   }
@@ -2831,9 +2847,17 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'c':
-                if (strcmp(op, "ref.cast") == 0) { return makeRefCast(s); }
-                goto parse_error;
+              case 'c': {
+                switch (op[8]) {
+                  case '\0':
+                    if (strcmp(op, "ref.cast") == 0) { return makeRefCast(s); }
+                    goto parse_error;
+                  case '_':
+                    if (strcmp(op, "ref.cast_static") == 0) { return makeRefCastStatic(s); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'e':
                 if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
                 goto parse_error;
@@ -2860,9 +2884,17 @@ switch (op[0]) {
               case 'n':
                 if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }
                 goto parse_error;
-              case 't':
-                if (strcmp(op, "ref.test") == 0) { return makeRefTest(s); }
-                goto parse_error;
+              case 't': {
+                switch (op[8]) {
+                  case '\0':
+                    if (strcmp(op, "ref.test") == 0) { return makeRefTest(s); }
+                    goto parse_error;
+                  case '_':
+                    if (strcmp(op, "ref.test_static") == 0) { return makeRefTestStatic(s); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }
