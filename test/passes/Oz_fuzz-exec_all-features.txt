@@ -85,9 +85,9 @@
 [fuzz-exec] calling static-br_on_cast_fail
 [LoggingExternalInterface logging -2]
 (module
- (type $void_func (func))
  (type $struct (struct (field (mut i32))))
  (type $extendedstruct (struct (field (mut i32)) (field f64)))
+ (type $void_func (func))
  (type $bytes (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
