@@ -1341,44 +1341,39 @@ struct OptimizeInstructions
     Builder builder(*getModule());
     auto passOptions = getPassOptions();
 
-    auto fallthrough =
-      Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
-
-    // If the value is a null, it will just flow through, and we do not need the
-    // cast. However, if that would change the type, then things are less
-    // simple: if the original type was non-nullable, replacing it with a null
-    // would change the type, which can happen in e.g.
-    //   (ref.cast (ref.as_non_null (.. (ref.null)
-    if (fallthrough->is<RefNull>()) {
-      // Replace the expression with drops of the inputs, and a null. Note that
-      // we provide a null of the type the outside expects - that of the rtt,
-      // which is what was cast to.
-      Expression* rep;
-      if (curr->rtt) {
-        rep = builder.makeBlock(
-          {builder.makeDrop(curr->ref),
-           builder.makeDrop(curr->rtt),
-           builder.makeRefNull(curr->rtt->type.getHeapType())});
-      } else {
-        rep = builder.makeBlock({builder.makeDrop(curr->ref),
-                                 builder.makeRefNull(curr->intendedType)});
-      }
-      if (curr->ref->type.isNonNullable()) {
-        // Avoid a type change by forcing to be non-nullable. In practice, this
-        // would have trapped before we get here, so this is just for
-        // validation.
-        rep = builder.makeRefAs(RefAsNonNull, rep);
-      }
-      replaceCurrent(rep);
-      return;
-      // TODO: The optimal ordering of this and the other ref.as_non_null stuff
-      //       later down in this functions is unclear and may be worth looking
-      //       into.
-    }
-
     // TODO: If no rtt, this is a static cast, and if the type matches then it
     //       will definitely succeed. The opts below could be expanded for that.
     if (curr->rtt) {
+
+      auto fallthrough =
+        Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
+
+      // If the value is a null, it will just flow through, and we do not need the
+      // cast. However, if that would change the type, then things are less
+      // simple: if the original type was non-nullable, replacing it with a null
+      // would change the type, which can happen in e.g.
+      //   (ref.cast (ref.as_non_null (.. (ref.null)
+      if (fallthrough->is<RefNull>()) {
+        // Replace the expression with drops of the inputs, and a null. Note that
+        // we provide a null of the type the outside expects - that of the rtt,
+        // which is what was cast to.
+        Expression* rep = builder.makeBlock(
+          {builder.makeDrop(curr->ref),
+           builder.makeDrop(curr->rtt),
+           builder.makeRefNull(curr->rtt->type.getHeapType())});
+        if (curr->ref->type.isNonNullable()) {
+          // Avoid a type change by forcing to be non-nullable. In practice,
+          // this would have trapped before we get here, so this is just for
+          // validation.
+          rep = builder.makeRefAs(RefAsNonNull, rep);
+        }
+        replaceCurrent(rep);
+        return;
+        // TODO: The optimal ordering of this and the other ref.as_non_null
+        //       stuff later down in this functions is unclear and may be worth
+        //       looking into.
+      }
+
       // For the cast to be able to succeed, the value being cast must be a
       // subtype of the desired type, as RTT subtyping is a subset of static
       // subtyping. For example, trying to cast an array to a struct would be
