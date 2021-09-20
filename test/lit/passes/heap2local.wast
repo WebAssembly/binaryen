@@ -1937,4 +1937,12 @@
       )
     )
   )
+
+  (func $simple-no-rtt
+    (drop
+      ;; This allocation has no rtt, so we have nothing to drop from it when
+      ;; we optimize.
+      (struct.new_default $struct.A)
+    )
+  )
 )
