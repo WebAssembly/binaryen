@@ -164,11 +164,29 @@ def randomize_fuzz_settings():
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
+# Returns the list of test wast/wat files added or modified within the
+# RECENT_DAYS number of days
+def auto_select_initial_contents():
+    # 1. Print 'git log' with changed file status and without commit message,
+    #    with commits within RECENT_DAYS number of days
+    # 2. Pick up lines in the form of
+    #    A       test/../something.wast
+    #    M       test/../something.wast
+    #    (wat extension is also included)
+    RECENT_DAYS = 30
+    added_modified_re = re.compile(r'^[AM]\stest' + os.sep + '(.*\.(wat|wast))$')
+    log = run(['git', 'log', '--name-status', '--format=', '--date=relative', '--no-renames', '--since="%d days ago"' % RECENT_DAYS], silent=True).splitlines()
+    entry_matches = [added_modified_re.match(e) for e in log]
+    return [match.group(1) for match in entry_matches if match]
+
+
 IMPORTANT_INITIAL_CONTENTS = [
     # Perenially-important passes
     os.path.join('lit', 'passes', 'optimize-instructions.wast'),
     os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+]
 
+MANUAL_INITIAL_CONTENTS = [
     # Recently-added or modified passes. These can be added to and pruned
     # frequently.
     os.path.join('lit', 'passes', 'once-reduction.wast'),
@@ -178,6 +196,12 @@ IMPORTANT_INITIAL_CONTENTS = [
     os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
     os.path.join('lit', 'passes', 'inlining_splitting.wast'),
 ]
+
+if shared.options.auto_initial_contents:
+    IMPORTANT_INITIAL_CONTENTS += auto_select_initial_contents()
+else:
+    IMPORTANT_INITIAL_CONTENTS += MANUAL_INITIAL_CONTENTS
+
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
 

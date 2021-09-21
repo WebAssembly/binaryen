@@ -92,6 +92,11 @@ def parse_args(args):
         '--filter', dest='test_name_filter', default='',
         help=('Specifies a filter. Only tests whose paths contains this '
               'substring will be run'))
+    parser.add_argument(
+        '--auto-initial-contents', dest='auto_initial_contents',
+        action='store_true', default=False,
+        help='Select important initial contents automaticaly in fuzzer. '
+             'Default: disabled.')
 
     return parser.parse_args(args)
 
