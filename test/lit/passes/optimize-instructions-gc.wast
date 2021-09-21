@@ -22,6 +22,10 @@
   ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
   (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
+  ;; CHECK:      (type $A (struct (field i32)))
+  ;; NOMNL:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
   ;; CHECK:      (type $empty (struct ))
   ;; NOMNL:      (type $empty (struct ))
   (type $empty (struct))
@@ -29,10 +33,6 @@
   ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
   ;; NOMNL:      (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
   (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
-
-  ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $A (struct (field i32)))
-  (type $A (struct (field i32)))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   ;; NOMNL:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -569,7 +569,7 @@
   ;; data, etc.), so we know we will trap
   ;; CHECK:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result (ref func))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $data)
   ;; CHECK-NEXT:    )
@@ -577,7 +577,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result dataref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $i31)
   ;; CHECK-NEXT:    )
@@ -585,7 +585,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i31ref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
@@ -593,7 +593,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result (ref func))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $data)
   ;; CHECK-NEXT:    )
@@ -601,7 +601,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result dataref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $i31)
   ;; CHECK-NEXT:    )
@@ -609,7 +609,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i31ref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
@@ -619,7 +619,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result (ref func))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $data)
   ;; NOMNL-NEXT:    )
@@ -627,7 +627,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result dataref)
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $i31)
   ;; NOMNL-NEXT:    )
@@ -635,7 +635,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result i31ref)
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $func)
   ;; NOMNL-NEXT:    )
@@ -643,7 +643,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result (ref func))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $data)
   ;; NOMNL-NEXT:    )
@@ -651,7 +651,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result dataref)
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $i31)
   ;; NOMNL-NEXT:    )
@@ -659,7 +659,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result i31ref)
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $func)
   ;; NOMNL-NEXT:    )
@@ -1247,7 +1247,6 @@
         (ref.as_non_null
           (local.get $x)
         )
-        (rtt.canon $struct)
       )
     )
   )
@@ -1669,7 +1668,7 @@
 
   ;; CHECK:      (func $incompatible-cast-of-non-null (param $struct (ref $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result (ref $array))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $struct)
   ;; CHECK-NEXT:    )
@@ -1682,7 +1681,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $incompatible-cast-of-non-null (param $struct (ref $struct))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result (ref $array))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $struct)
   ;; NOMNL-NEXT:    )
@@ -1882,5 +1881,77 @@
         (rtt.canon $A)
       )
     )
+  )
+  ;; CHECK:      (func $ref.test-unreachable (param $A (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (rtt.canon $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref.test-unreachable (param $A (ref null $A))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:    (rtt.canon $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref.test-unreachable (param $A (ref null $A))
+    (drop
+      ;; We should ignore unreachable ref.tests and not try to compare their
+      ;; HeapTypes.
+      (ref.test
+        (unreachable)
+        (rtt.canon $A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $consecutive-opts-with-unreachable (param $func funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (block (result dataref)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $func)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $consecutive-opts-with-unreachable (param $func funcref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:    (block (result dataref)
+  ;; NOMNL-NEXT:     (drop
+  ;; NOMNL-NEXT:      (local.get $func)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (rtt.canon $struct)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $consecutive-opts-with-unreachable (param $func funcref)
+   (drop
+     (ref.cast
+       ;; Casting a funcref to data will definitely fail, so this will be
+       ;; replaced with an unreachable. But it should be enclosed in a block of
+       ;; the previous type, so that the outside ref.cast is not confused. This
+       ;; is a regression test for a bug where we replace this node with an
+       ;; unreachable one, but we left refinalize til the end of all the other
+       ;; opts - and that meant that we got to our parent, the ref.cast, with
+       ;; one unreachable child but before it itself was refinalized, so its
+       ;; type was *not* unreachable yet, which meant it saw inconsistent IR
+       ;; that then led to an assertion.
+       (ref.as_data
+         (local.get $func)
+       )
+       (rtt.canon $struct)
+     )
+   )
   )
 )

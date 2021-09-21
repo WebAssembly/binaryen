@@ -274,8 +274,11 @@ private:
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s);
+  Expression* makeRefTestStatic(Element& s);
   Expression* makeRefCast(Element& s);
+  Expression* makeRefCastStatic(Element& s);
   Expression* makeBrOn(Element& s, BrOnOp op);
+  Expression* makeBrOnStatic(Element& s, BrOnOp op);
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeRttFreshSub(Element& s);

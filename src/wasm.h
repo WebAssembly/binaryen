@@ -1356,9 +1356,17 @@ public:
   RefTest(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // If rtt is provided then this is a dynamic test with an rtt. If nullptr then
+  // this is a static cast and intendedType is set, and it contains the type we
+  // intend to cast to.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1366,9 +1374,15 @@ public:
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // See above with RefTest.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1379,8 +1393,10 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast* has an rtt that is used in the cast.
-  Expression* rtt;
+  // BrOnCast* has, like RefCast and RefTest, either an rtt or a static intended
+  // type.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do
   //       not support. See also the discussion on
@@ -1389,6 +1405,9 @@ public:
   //       Break or a new class of its own.
 
   void finalize();
+
+  // Returns the type we intend to cast to. Relevant only for the cast variants.
+  HeapType getIntendedType();
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();
