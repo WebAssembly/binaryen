@@ -166,7 +166,7 @@ def randomize_fuzz_settings():
 
 # Returns the list of test wast/wat files added or modified within the
 # RECENT_DAYS number of days
-def auto_select_initial_contents():
+def auto_select_recent_initial_contents():
     # 1. Print 'git log' with changed file status and without commit message,
     #    with commits within RECENT_DAYS number of days
     # 2. Pick up lines in the form of
@@ -186,7 +186,7 @@ IMPORTANT_INITIAL_CONTENTS = [
     os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
 ]
 
-MANUAL_INITIAL_CONTENTS = [
+RECENT_INITIAL_CONTENTS = [
     # Recently-added or modified passes. These can be added to and pruned
     # frequently.
     os.path.join('lit', 'passes', 'once-reduction.wast'),
@@ -198,9 +198,9 @@ MANUAL_INITIAL_CONTENTS = [
 ]
 
 if shared.options.auto_initial_contents:
-    IMPORTANT_INITIAL_CONTENTS += auto_select_initial_contents()
+    IMPORTANT_INITIAL_CONTENTS += auto_select_recent_initial_contents()
 else:
-    IMPORTANT_INITIAL_CONTENTS += MANUAL_INITIAL_CONTENTS
+    IMPORTANT_INITIAL_CONTENTS += RECENT_INITIAL_CONTENTS
 
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
