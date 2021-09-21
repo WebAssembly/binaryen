@@ -1651,6 +1651,17 @@ public:
         return rtt;
       }
     }
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // find why we are unreachable, and stop there.
+      for (auto* operand : curr->operands) {
+        auto value = this->visit(operand);
+        if (value.breaking()) {
+          return value;
+        }
+      }
+      WASM_UNREACHABLE("unreachable but no unreachable child");
+    }
     auto heapType = curr->type.getHeapType();
     const auto& fields = heapType.getStruct().fields;
     Literals data(fields.size());
@@ -1720,6 +1731,13 @@ public:
     if (size.breaking()) {
       return size;
     }
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // visit the unreachable child, and stop there.
+      auto init = this->visit(curr->init);
+      assert(init.breaking());
+      return init;
+    }
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
@@ -1757,6 +1775,17 @@ public:
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
+    }
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // find why we are unreachable, and stop there.
+      for (auto* value : curr->values) {
+        auto result = this->visit(value);
+        if (result.breaking()) {
+          return result;
+        }
+      }
+      WASM_UNREACHABLE("unreachable but no unreachable child");
     }
     auto heapType = curr->type.getHeapType();
     auto field = heapType.getArray().element;

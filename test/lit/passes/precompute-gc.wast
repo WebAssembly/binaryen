@@ -510,4 +510,24 @@
    )
   )
  )
+
+ ;; CHECK:      (func $new_block_unreachable (result anyref)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (rtt.canon $struct)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $new_block_unreachable (result anyref)
+  (struct.new_with_rtt $struct
+   ;; The value is a block with an unreachable. precompute will get rid of the
+   ;; block, after which fuzz-exec should not crash - this is a regression test
+   ;; for us being careful in how we execute an unreachable struct.new
+   (block $label$1 (result i32)
+    (unreachable)
+   )
+   (rtt.canon $struct)
+  )
+ )
 )
