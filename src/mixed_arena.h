@@ -369,10 +369,10 @@ public:
 
   void insertAt(size_t index, T item) {
     assert(index <= size()); // appending is ok
-    resize(size() + 1);
     if (index == size()) {
       push_back(item); // simple append
     } else {
+      resize(size() + 1);
       for (auto i = size() - 1; i > index; --i) {
         data[i] = data[i - 1];
       }
@@ -383,7 +383,9 @@ public:
   T removeAt(size_t index) {
     assert(index < size());
     if (index == size() - 1) {
-      return pop_back(); // simple pop
+      // simple pop
+      usedElements--;
+      return data[usedElements];
     } else {
       auto item = data[index];
       for (auto i = index; i < size() - 1; ++i) {
