@@ -182,8 +182,9 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
     {
       // i64(x) & 0x00000000FFFFFFFF   ==>   i64(i32(x))
       Expression* x;
-      if (matches(curr,
-                  binary(And, any(&x), i64(int64_t(0x00000000FFFFFFFF))))) {
+      if (matches(
+            curr,
+            binary(AndInt64, any(&x), i64(int64_t(0x00000000FFFFFFFF))))) {
         Builder builder(*getModule());
         return builder.makeUnary(ExtendUInt32, builder.makeUnary(WrapInt64, x));
       }
@@ -866,14 +867,14 @@ struct OptimizeInstructions
         //    if C & 0x00000000FFFFFFFF == 0x00000000FFFFFFFF
         Const* c;
         Expression* x;
-        if (matches(curr, unary(WrapInt64, binary(And, any(&x), i64(&c))))) {
+        Unary* una;
+        if (matches(
+              curr,
+              unary(&una, WrapInt64, binary(AndInt64, any(&x), i64(&c))))) {
           if ((c->value.geti64() & 0xFFFFFFFFLL) == 0xFFFFFFFFLL) {
-            curr->cast<Unary>()->value = x;
+            una->value = x;
             return replaceCurrent(curr);
           }
-          // TODO:
-          // otherwise move C outside of wrap_i64 as:
-          // i32.wrap_i64(i64(x) & i64(C))  =>  i32.wrap_i64(x) & i32(C)
         }
       }
       {
