@@ -216,7 +216,8 @@ def get_important_initial_contents():
     for test in recent_contents:
         print('  ' + test)
     print()
-    if input('Do you want to proceed with these initial contents? (y/n) ').lower() != 'y':
+    ret = input('Do you want to proceed with these initial contents? (Y/n) ').lower()
+    if ret != 'y' and ret != '':
         sys.exit(1)
 
     initial_contents = FIXED_IMPORTANT_INITIAL_CONTENTS + recent_contents
