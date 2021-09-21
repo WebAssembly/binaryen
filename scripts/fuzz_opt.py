@@ -164,45 +164,62 @@ def randomize_fuzz_settings():
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
-# Returns the list of test wast/wat files added or modified within the
-# RECENT_DAYS number of days
-def auto_select_recent_initial_contents():
-    # 1. Print 'git log' with changed file status and without commit message,
-    #    with commits within RECENT_DAYS number of days
-    # 2. Pick up lines in the form of
-    #    A       test/../something.wast
-    #    M       test/../something.wast
-    #    (wat extension is also included)
+def get_important_initial_contents():
+    FIXED_IMPORTANT_INITIAL_CONTENTS = [
+        # Perenially-important passes
+        os.path.join('lit', 'passes', 'optimize-instructions.wast'),
+        os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+    ]
+    MANUAL_RECENT_INITIAL_CONTENTS = [
+        # Recently-added or modified passes. These can be added to and pruned
+        # frequently.
+        os.path.join('lit', 'passes', 'once-reduction.wast'),
+        os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
+        os.path.join('lit', 'passes', 'inlining_splitting.wast'),
+    ]
     RECENT_DAYS = 30
-    p = re.compile(r'^[AM]\stest' + os.sep + r'(.*\.(wat|wast))$')
-    log = run(['git', 'log', '--name-status', '--format=', '--date=relative', '--no-renames', '--since="%d days ago"' % RECENT_DAYS], silent=True).splitlines()
-    entry_matches = [p.match(e) for e in log]
-    return [match.group(1) for match in entry_matches if match]
+
+    def auto_select_recent_initial_contents():
+        # Returns the list of test wast/wat files added or modified within the
+        # RECENT_DAYS number of days
+        # 1. Print 'git log' with changed file status and without commit message,
+        #    with commits within RECENT_DAYS number of days
+        # 2. Pick up lines in the form of
+        #    A       test/../something.wast
+        #    M       test/../something.wast
+        #    (wat extension is also included)
+        p = re.compile(r'^[AM]\stest' + os.sep + r'(.*\.(wat|wast))$')
+        log = run(['git', 'log', '--name-status', '--format=', '--date=relative', '--no-renames', f'--since="{RECENT_DAYS} days ago"'], silent=True).splitlines()
+        entry_matches = [p.match(e) for e in log]
+        return [match.group(1) for match in entry_matches if match]
+
+    print('- Perenially-important initial contents:')
+    for test in FIXED_IMPORTANT_INITIAL_CONTENTS:
+        print('  ' + test)
+    print()
+
+    recent_contents = []
+    print('- Recently added or modified initial contents ', end='')
+    if shared.options.auto_initial_contents:
+        print(f'(automatically selected: within last {RECENT_DAYS} days):')
+        recent_contents += auto_select_recent_initial_contents()
+    else:
+        print('(manually selected):')
+        recent_contents = MANUAL_RECENT_INITIAL_CONTENTS
+    for test in recent_contents:
+        print('  ' + test)
+    print()
+    if input('Do you want to proceed with these initial contents? (y/n) ').lower() != 'y':
+        sys.exit(1)
+
+    initial_contents = FIXED_IMPORTANT_INITIAL_CONTENTS + recent_contents
+    return [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
 
 
-IMPORTANT_INITIAL_CONTENTS = [
-    # Perenially-important passes
-    os.path.join('lit', 'passes', 'optimize-instructions.wast'),
-    os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
-]
-
-RECENT_INITIAL_CONTENTS = [
-    # Recently-added or modified passes. These can be added to and pruned
-    # frequently.
-    os.path.join('lit', 'passes', 'once-reduction.wast'),
-    os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
-    os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
-    os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
-    os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
-    os.path.join('lit', 'passes', 'inlining_splitting.wast'),
-]
-
-if shared.options.auto_initial_contents:
-    IMPORTANT_INITIAL_CONTENTS += auto_select_recent_initial_contents()
-else:
-    IMPORTANT_INITIAL_CONTENTS += RECENT_INITIAL_CONTENTS
-
-IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
+IMPORTANT_INITIAL_CONTENTS = get_important_initial_contents()
 
 
 def pick_initial_contents():
