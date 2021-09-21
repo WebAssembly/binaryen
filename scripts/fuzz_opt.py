@@ -196,7 +196,7 @@ def get_important_initial_contents():
         p = re.compile(r'^[AM]\stest' + os.sep + r'(.*\.(wat|wast))$')
         log = run(['git', 'log', '--name-status', '--format=', '--date=relative', '--no-renames', f'--since="{RECENT_DAYS} days ago"'], silent=True).splitlines()
         entry_matches = [p.match(e) for e in log]
-        return [match.group(1) for match in entry_matches if match]
+        return list(set([match.group(1) for match in entry_matches if match]))
 
     print('- Perenially-important initial contents:')
     for test in FIXED_IMPORTANT_INITIAL_CONTENTS:
