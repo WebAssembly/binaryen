@@ -178,6 +178,8 @@ def get_important_initial_contents():
         os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
         os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
         os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-gc-iit.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-call_ref.wast'),
         os.path.join('lit', 'passes', 'inlining_splitting.wast'),
     ]
     RECENT_DAYS = 30

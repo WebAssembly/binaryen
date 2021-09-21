@@ -1424,11 +1424,16 @@ public:
       cast.breaking = ref;
       return cast;
     }
-    Flow rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      cast.outcome = cast.Break;
-      cast.breaking = rtt;
-      return cast;
+    Literal intendedRtt;
+    if (curr->rtt) {
+      // This is a dynamic check with an rtt.
+      Flow rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        cast.outcome = cast.Break;
+        cast.breaking = rtt;
+        return cast;
+      }
+      intendedRtt = rtt.getSingleValue();
     }
     cast.originalRef = ref.getSingleValue();
     if (cast.originalRef.isNull()) {
@@ -1443,8 +1448,6 @@ public:
       cast.outcome = cast.Failure;
       return cast;
     }
-    Literal seenRtt;
-    Literal intendedRtt = rtt.getSingleValue();
     if (cast.originalRef.isFunction()) {
       // Function casts are simple in that they have no RTT hierarchies; instead
       // each reference has the canonical RTT for the signature.
@@ -1460,24 +1463,42 @@ public:
         cast.breaking = NONCONSTANT_FLOW;
         return cast;
       }
-      seenRtt = Literal(Type(Rtt(0, func->type)));
-      if (!seenRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-        return cast;
+      if (curr->rtt) {
+        Literal seenRtt = Literal(Type(Rtt(0, func->type)));
+        if (!seenRtt.isSubRtt(intendedRtt)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef = Literal(
+          func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
+      } else {
+        if (!HeapType::isSubType(func->type, curr->intendedType)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef =
+          Literal(func->name, Type(curr->intendedType, NonNullable));
       }
-      cast.castRef =
-        Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
     } else {
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
-      seenRtt = gcData->rtt;
-      if (!seenRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-        return cast;
+      Literal seenRtt = gcData->rtt;
+      if (curr->rtt) {
+        if (!seenRtt.isSubRtt(intendedRtt)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef =
+          Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
+      } else {
+        auto seenType = seenRtt.type.getHeapType();
+        if (!HeapType::isSubType(seenType, curr->intendedType)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef = Literal(gcData, Type(seenType, NonNullable));
       }
-      cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
     }
     cast.outcome = cast.Success;
     return cast;
@@ -1851,12 +1872,12 @@ public:
         // We've already checked for a null.
         break;
       case RefAsFunc:
-        if (value.type.isFunction()) {
+        if (!value.type.isFunction()) {
           trap("not a func");
         }
         break;
       case RefAsData:
-        if (value.isData()) {
+        if (!value.isData()) {
           trap("not a data");
         }
         break;

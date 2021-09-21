@@ -373,6 +373,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
 #define DELEGATE_FIELD_SIGNATURE(id, name)
 #define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_HEAPTYPE(id, name)
 #define DELEGATE_FIELD_ADDRESS(id, name)
 
 #include "wasm-delegations-fields.def"
