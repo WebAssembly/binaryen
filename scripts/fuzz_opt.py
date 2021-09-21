@@ -174,9 +174,9 @@ def auto_select_initial_contents():
     #    M       test/../something.wast
     #    (wat extension is also included)
     RECENT_DAYS = 30
-    added_modified_re = re.compile(r'^[AM]\stest' + os.sep + '(.*\.(wat|wast))$')
+    p = re.compile(r'^[AM]\stest' + os.sep + r'(.*\.(wat|wast))$')
     log = run(['git', 'log', '--name-status', '--format=', '--date=relative', '--no-renames', '--since="%d days ago"' % RECENT_DAYS], silent=True).splitlines()
-    entry_matches = [added_modified_re.match(e) for e in log]
+    entry_matches = [p.match(e) for e in log]
     return [match.group(1) for match in entry_matches if match]
 
 
