@@ -191,6 +191,7 @@ private:
   bool isType(cashew::IString str) {
     return stringToType(str, true) != Type::none;
   }
+  HeapType getFunctionType(Name name, Element& s);
 
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
