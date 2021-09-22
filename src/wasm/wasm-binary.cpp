@@ -6540,7 +6540,7 @@ bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
     }
     out = Builder(wasm).makeStructNew(heapType, operands);
     return true;
-  } else if (code == BinaryConsts::StructNewWithRtt &&
+  } else if (code == BinaryConsts::StructNewWithRtt ||
              code == BinaryConsts::StructNewDefaultWithRtt) {
     auto heapType = getIndexedHeapType();
     auto* rtt = popNonVoidExpression();
@@ -6610,7 +6610,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
     }
     out = Builder(wasm).makeArrayNew(heapType, size, init);
     return true;
-  } else if (code == BinaryConsts::ArrayNewWithRtt &&
+  } else if (code == BinaryConsts::ArrayNewWithRtt ||
              code == BinaryConsts::ArrayNewDefaultWithRtt) {
     auto heapType = getIndexedHeapType();
     auto* rtt = popNonVoidExpression();
