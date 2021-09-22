@@ -439,7 +439,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-of-if-but-else
+  ;; CHECK:      (func $if-of-if-but-inner-else
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.tee $x
@@ -447,12 +447,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (call $if-of-if-but-else)
+  ;; CHECK-NEXT:    (call $if-of-if-but-inner-else)
   ;; CHECK-NEXT:    (call $if-of-if)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $if-of-if-but-else
+  (func $if-of-if-but-inner-else
     (local $x i32)
     ;; The inner if has an else. For now, leave this unoptimized.
     (if
@@ -461,9 +461,37 @@
       )
       (if
         (local.get $x)
-        (call $if-of-if-but-else)
+        (call $if-of-if-but-inner-else)
         (call $if-of-if)
       )
+    )
+  )
+
+  ;; CHECK:      (func $if-of-if-but-outer-else
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (call $if-of-if-but-outer-else)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $if-of-if)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-of-if-but-outer-else
+    (local $x i32)
+    ;; The outer if has an else. For now, leave this unoptimized.
+    (if
+      (local.tee $x
+        (i32.const 1)
+      )
+      (if
+        (local.get $x)
+        (call $if-of-if-but-outer-else)
+      )
+      (call $if-of-if)
     )
   )
 )
