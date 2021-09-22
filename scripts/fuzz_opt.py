@@ -193,12 +193,12 @@ def get_important_initial_contents():
         # of the current system time is to make the results deterministic given
         # the Binaryen HEAD commit.
         from datetime import datetime, timedelta, timezone
-        head_dt_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
+        head_ts_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
                           silent=True).split()[0]
-        head_dt = datetime.utcfromtimestamp(int(head_dt_str))
+        head_dt = datetime.utcfromtimestamp(int(head_ts_str))
         start_dt = head_dt - timedelta(days=RECENT_DAYS)
-        start_utc_timestamp = start_dt.replace(tzinfo=timezone.utc).timestamp()
-        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_utc_timestamp}'], silent=True).splitlines()
+        start_utc_ts = start_dt.replace(tzinfo=timezone.utc).timestamp()
+        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_utc_ts}'], silent=True).splitlines()
         # Pick up lines in the form of
         # A       test/../something.wast
         # M       test/../something.wast
