@@ -388,15 +388,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // if (condition-A) { if (condition-B) .. }
       //   =>
-      // if (condition-A | condition-B) { .. }
+      // if (condition-A & condition-B) { .. }
       if (auto* child = curr->ifTrue->dynCast<If>()) {
         if (child->ifFalse) {
           return;
         }
         // If running the child's condition unconditionally is too expensive,
         // give up.
-        if (tooCostlyToRunUnconditionally(getPassOptions(),
-                                          child->condition)) {
+        if (tooCostlyToRunUnconditionally(getPassOptions(), child->condition)) {
           return;
         }
         // Of course we can't do this if the inner if's condition has side
@@ -409,7 +408,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // Note that we use the br's condition as the select condition.
         // That keeps the order of the two conditions as it was originally.
         curr->condition =
-          builder.makeBinary(OrInt32, curr->condition, child->condition);
+          builder.makeBinary(AndInt32, curr->condition, child->condition);
         curr->ifTrue = child->ifTrue;
       }
     }
