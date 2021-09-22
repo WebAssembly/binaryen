@@ -196,7 +196,7 @@ def get_important_initial_contents():
         head_dt_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
                           silent=True).split()[0]
         head_dt = datetime.utcfromtimestamp(int(head_dt_str))
-        start_dt = head_dt - timedelta(days=30)
+        start_dt = head_dt - timedelta(days=RECENT_DAYS)
         start_utc_timestamp = start_dt.replace(tzinfo=timezone.utc).timestamp()
         log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_utc_timestamp}'], silent=True).splitlines()
         # Pick up lines in the form of
