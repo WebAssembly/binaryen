@@ -339,7 +339,7 @@
   ;; CHECK:      (func $if-of-if
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:   (i32.and
   ;; CHECK-NEXT:    (local.tee $x
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
