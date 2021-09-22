@@ -2340,7 +2340,10 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   }
   auto heapType = curr->type.getHeapType();
   if (curr->rtt) {
-    shouldBeEqual(curr->rtt->type.getHeapType(), heapType, curr, "struct.new heap type must match rtt");
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "struct.new heap type must match rtt");
   }
   if (!shouldBeTrue(
         heapType.isStruct(), curr, "struct.new heap type must be struct")) {
@@ -2441,7 +2444,10 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   }
   auto heapType = curr->type.getHeapType();
   if (curr->rtt) {
-    shouldBeEqual(curr->rtt->type.getHeapType(), heapType, curr, "array.new heap type must match rtt");
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "array.new heap type must match rtt");
   }
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.new heap type must be array")) {
@@ -2480,7 +2486,10 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   }
   auto heapType = curr->type.getHeapType();
   if (curr->rtt) {
-    shouldBeEqual(curr->rtt->type.getHeapType(), heapType, curr, "array.init heap type must match rtt");
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "array.init heap type must match rtt");
   }
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.init heap type must be array")) {
