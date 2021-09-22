@@ -391,8 +391,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (!child->ifFalse) {
           // If running the child's condition unconditionally is too expensive,
           // give up.
-          if (tooCostlyToRunUnconditionally(
-                getPassOptions(), child->condition)) {
+          if (tooCostlyToRunUnconditionally(getPassOptions(),
+                                            child->condition)) {
             return;
           }
           // Of course we can't do this if the inner if's condition has side
