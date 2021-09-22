@@ -228,7 +228,7 @@ def get_important_initial_contents():
 
     recent_contents = []
     print('- Recently added or modified initial contents ', end='')
-    if is_git_repo() and shared.options.auto_initial_contents:
+    if shared.options.auto_initial_contents:
         print(f'(automatically selected: within last {RECENT_DAYS} days):')
         recent_contents += auto_select_recent_initial_contents()
     else:
