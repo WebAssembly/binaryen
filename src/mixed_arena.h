@@ -369,15 +369,11 @@ public:
 
   void insertAt(size_t index, T item) {
     assert(index <= size()); // appending is ok
-    if (index == size()) {
-      push_back(item); // simple append
-    } else {
-      resize(size() + 1);
-      for (auto i = size() - 1; i > index; --i) {
-        data[i] = data[i - 1];
-      }
-      data[index] = item;
+    resize(size() + 1);
+    for (auto i = size() - 1; i > index; --i) {
+      data[i] = data[i - 1];
     }
+    data[index] = item;
   }
 
   T removeAt(size_t index) {
