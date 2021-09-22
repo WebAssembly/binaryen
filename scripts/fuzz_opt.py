@@ -197,8 +197,8 @@ def get_important_initial_contents():
                           silent=True).split()[0]
         head_dt = datetime.utcfromtimestamp(int(head_ts_str))
         start_dt = head_dt - timedelta(days=RECENT_DAYS)
-        start_utc_ts = start_dt.replace(tzinfo=timezone.utc).timestamp()
-        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_utc_ts}'], silent=True).splitlines()
+        start_ts = start_dt.replace(tzinfo=timezone.utc).timestamp()
+        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_ts}'], silent=True).splitlines()
         # Pick up lines in the form of
         # A       test/../something.wast
         # M       test/../something.wast
