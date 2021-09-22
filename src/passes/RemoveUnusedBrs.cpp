@@ -405,8 +405,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return;
         }
         Builder builder(*getModule());
-        // Note that we use the br's condition as the select condition.
-        // That keeps the order of the two conditions as it was originally.
         curr->condition =
           builder.makeBinary(AndInt32, curr->condition, child->condition);
         curr->ifTrue = child->ifTrue;
