@@ -209,6 +209,18 @@ def get_important_initial_contents():
         auto_set = auto_set.difference(set(FIXED_IMPORTANT_INITIAL_CONTENTS))
         return sorted(list(auto_set))
 
+    def is_git_repo():
+        try:
+            ret = run(['git', 'rev-parse', '--is-inside-work-tree'],
+                      silent=True, stderr=subprocess.DEVNULL)
+            return ret == 'true\n'
+        except subprocess.CalledProcessError:
+            return False
+
+    if not is_git_repo() and shared.options.auto_initial_contents:
+        print('Warning: The current directory is not a git repository, so you cannot use "--auto-initial-contents". Using the manually selected contents.\n')
+        shared.options.auto_initial_contents = False
+
     print('- Perenially-important initial contents:')
     for test in FIXED_IMPORTANT_INITIAL_CONTENTS:
         print('  ' + test)
@@ -216,7 +228,7 @@ def get_important_initial_contents():
 
     recent_contents = []
     print('- Recently added or modified initial contents ', end='')
-    if shared.options.auto_initial_contents:
+    if is_git_repo() and shared.options.auto_initial_contents:
         print(f'(automatically selected: within last {RECENT_DAYS} days):')
         recent_contents += auto_select_recent_initial_contents()
     else:
