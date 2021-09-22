@@ -280,7 +280,6 @@ private:
     // compute all dependencies
     LocalGraph localGraph(func);
     localGraph.computeInfluences();
-    localGraph.computeSSAIndexes();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     std::unordered_set<Expression*> work;
