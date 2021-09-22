@@ -33,6 +33,7 @@
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
 #include <wasm.h>
@@ -282,18 +283,16 @@ private:
     localGraph.computeInfluences();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
-    std::unordered_set<Expression*> work;
+    UniqueDeferredQueue<Expression*> work;
     for (auto& pair : localGraph.locations) {
       auto* curr = pair.first;
-      work.insert(curr);
+      work.push(curr);
     }
     // the constant value, or none if not a constant
     std::unordered_map<LocalSet*, Literals> setValues;
     // propagate constant values
     while (!work.empty()) {
-      auto iter = work.begin();
-      auto* curr = *iter;
-      work.erase(iter);
+      auto* curr = work.pop();
       // see if this set or get is actually a constant value, and if so,
       // mark it as such and add everything it influences to the work list,
       // as they may be constant too.
@@ -338,7 +337,7 @@ private:
         setValues[set] = values;
         if (values.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
-            work.insert(get);
+            work.push(get);
           }
         }
       } else {
@@ -389,7 +388,7 @@ private:
           // we did!
           getValues[get] = values;
           for (auto* set : localGraph.getInfluences[get]) {
-            work.insert(set);
+            work.push(set);
           }
         }
       }
