@@ -6540,24 +6540,23 @@ bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
     }
     out = Builder(wasm).makeStructNew(heapType, operands);
     return true;
-  }
-  if (code != BinaryConsts::StructNewWithRtt &&
-      code != BinaryConsts::StructNewDefaultWithRtt) {
-    return false;
-  }
-  auto heapType = getIndexedHeapType();
-  auto* rtt = popNonVoidExpression();
-  validateHeapTypeUsingChild(rtt, heapType);
-  std::vector<Expression*> operands;
-  if (code == BinaryConsts::StructNewWithRtt) {
-    auto numOperands = heapType.getStruct().fields.size();
-    operands.resize(numOperands);
-    for (Index i = 0; i < numOperands; i++) {
-      operands[numOperands - i - 1] = popNonVoidExpression();
+  } else if (code == BinaryConsts::StructNewWithRtt &&
+      code == BinaryConsts::StructNewDefaultWithRtt) {
+    auto heapType = getIndexedHeapType();
+    auto* rtt = popNonVoidExpression();
+    validateHeapTypeUsingChild(rtt, heapType);
+    std::vector<Expression*> operands;
+    if (code == BinaryConsts::StructNewWithRtt) {
+      auto numOperands = heapType.getStruct().fields.size();
+      operands.resize(numOperands);
+      for (Index i = 0; i < numOperands; i++) {
+        operands[numOperands - i - 1] = popNonVoidExpression();
+      }
     }
+    out = Builder(wasm).makeStructNew(rtt, operands);
+    return true;
   }
-  out = Builder(wasm).makeStructNew(rtt, operands);
-  return true;
+  return false;
 }
 
 bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
@@ -6611,21 +6610,20 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
     }
     out = Builder(wasm).makeArrayNew(heapType, size, init);
     return true;
+  } else if (code == BinaryConsts::ArrayNewWithRtt &&
+      code == BinaryConsts::ArrayNewDefaultWithRtt) {
+    auto heapType = getIndexedHeapType();
+    auto* rtt = popNonVoidExpression();
+    validateHeapTypeUsingChild(rtt, heapType);
+    auto* size = popNonVoidExpression();
+    Expression* init = nullptr;
+    if (code == BinaryConsts::ArrayNewWithRtt) {
+      init = popNonVoidExpression();
+    }
+    out = Builder(wasm).makeArrayNew(rtt, size, init);
+    return true;
   }
-  if (code != BinaryConsts::ArrayNewWithRtt &&
-      code != BinaryConsts::ArrayNewDefaultWithRtt) {
-    return false;
-  }
-  auto heapType = getIndexedHeapType();
-  auto* rtt = popNonVoidExpression();
-  validateHeapTypeUsingChild(rtt, heapType);
-  auto* size = popNonVoidExpression();
-  Expression* init = nullptr;
-  if (code == BinaryConsts::ArrayNewWithRtt) {
-    init = popNonVoidExpression();
-  }
-  out = Builder(wasm).makeArrayNew(rtt, size, init);
-  return true;
+  return false;
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
@@ -6638,20 +6636,19 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
     }
     out = Builder(wasm).makeArrayInit(heapType, values);
     return true;
+  } else if (code == BinaryConsts::ArrayInit) {
+    auto heapType = getIndexedHeapType();
+    auto size = getU32LEB();
+    auto* rtt = popNonVoidExpression();
+    validateHeapTypeUsingChild(rtt, heapType);
+    std::vector<Expression*> values(size);
+    for (size_t i = 0; i < size; i++) {
+      values[size - i - 1] = popNonVoidExpression();
+    }
+    out = Builder(wasm).makeArrayInit(rtt, values);
+    return true;
   }
-  if (code != BinaryConsts::ArrayInit) {
-    return false;
-  }
-  auto heapType = getIndexedHeapType();
-  auto size = getU32LEB();
-  auto* rtt = popNonVoidExpression();
-  validateHeapTypeUsingChild(rtt, heapType);
-  std::vector<Expression*> values(size);
-  for (size_t i = 0; i < size; i++) {
-    values[size - i - 1] = popNonVoidExpression();
-  }
-  out = Builder(wasm).makeArrayInit(rtt, values);
-  return true;
+  return false;
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayGet(Expression*& out, uint32_t code) {
