@@ -378,18 +378,12 @@ public:
 
   T removeAt(size_t index) {
     assert(index < size());
-    if (index == size() - 1) {
-      // simple pop
-      usedElements--;
-      return data[usedElements];
-    } else {
-      auto item = data[index];
-      for (auto i = index; i < size() - 1; ++i) {
-        data[i] = data[i + 1];
-      }
-      resize(size() - 1);
-      return item;
+    auto item = data[index];
+    for (auto i = index; i < size() - 1; ++i) {
+      data[i] = data[i + 1];
     }
+    resize(size() - 1);
+    return item;
   }
 };
 
