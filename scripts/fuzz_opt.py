@@ -184,19 +184,28 @@ def get_important_initial_contents():
     ]
     RECENT_DAYS = 30
 
+    # Returns the list of test wast/wat files added or modified within the
+    # RECENT_DAYS number of days counting from the commit time of HEAD
     def auto_select_recent_initial_contents():
-        # Returns the list of test wast/wat files added or modified within the
-        # RECENT_DAYS number of days
-        # 1. Print 'git log' with changed file status and without commit message,
-        #    with commits within RECENT_DAYS number of days
-        # 2. Pick up lines in the form of
-        #    A       test/../something.wast
-        #    M       test/../something.wast
-        #    (wat extension is also included)
+        # Print 'git log' with changed file status and without commit messages,
+        # with commits within RECENT_DAYS number of days, counting from the
+        # commit time of HEAD. The reason we use the commit time of HEAD instead
+        # of the current system time is to make the results deterministic given
+        # the Binaryen HEAD commit.
+        from datetime import datetime, timedelta, timezone
+        head_dt_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
+                          silent=True).split()[0]
+        head_dt = datetime.utcfromtimestamp(int(head_dt_str))
+        start_dt = head_dt - timedelta(days=30)
+        start_utc_timestamp = start_dt.replace(tzinfo=timezone.utc).timestamp()
+        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_utc_timestamp}'], silent=True).splitlines()
+        # Pick up lines in the form of
+        # A       test/../something.wast
+        # M       test/../something.wast
+        # (wat extension is also included)
         p = re.compile(r'^[AM]\stest' + os.sep + r'(.*\.(wat|wast))$')
-        log = run(['git', 'log', '--name-status', '--format=', '--date=relative', '--no-renames', f'--since="{RECENT_DAYS} days ago"'], silent=True).splitlines()
-        entry_matches = [p.match(e) for e in log]
-        auto_set = set([match.group(1) for match in entry_matches if match])
+        matches = [p.match(e) for e in log]
+        auto_set = set([match.group(1) for match in matches if match])
         auto_set = auto_set.difference(set(FIXED_IMPORTANT_INITIAL_CONTENTS))
         return sorted(list(auto_set))
 
