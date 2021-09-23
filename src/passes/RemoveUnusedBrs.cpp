@@ -409,10 +409,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return;
         }
         Builder builder(*getModule());
-        curr->condition =
-          builder.makeSelect(child->condition,
-                             curr->condition,
-                             builder.makeConst(int32_t(0)));
+        curr->condition = builder.makeSelect(
+          child->condition, curr->condition, builder.makeConst(int32_t(0)));
         curr->ifTrue = child->ifTrue;
       }
     }
