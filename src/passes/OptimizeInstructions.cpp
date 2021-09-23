@@ -1337,6 +1337,8 @@ struct OptimizeInstructions
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
+    auto intendedType = curr->getIntendedType();
+
     // If the value is a null, it will just flow through, and we do not need
     // the cast. However, if that would change the type, then things are less
     // simple: if the original type was non-nullable, replacing it with a null
@@ -1346,17 +1348,13 @@ struct OptimizeInstructions
       // Replace the expression with drops of the inputs, and a null. Note
       // that we provide a null of the previous type, so that we do not alter
       // the type received by our parent.
-      Expression* rep;
+      std::vector<Expression*> items;
+      items.push_back(builder.makeDrop(curr->ref));
       if (curr->rtt) {
-        rep = builder.makeBlock(
-          {builder.makeDrop(curr->ref),
-           builder.makeDrop(curr->rtt),
-           builder.makeRefNull(curr->rtt->type.getHeapType())});
-      } else {
-        rep = builder.makeBlock(
-          {builder.makeDrop(curr->ref),
-           builder.makeRefNull(curr->getIntendedType())});
+        items.push_back(builder.makeDrop(curr->rtt));
       }
+      items.push_back(builder.makeRefNull(intendedType));
+      Expression* rep = builder.makeBlock(items);
       if (curr->ref->type.isNonNullable()) {
         // Avoid a type change by forcing to be non-nullable. In practice,
         // this would have trapped before we get here, so this is just for
@@ -1375,16 +1373,19 @@ struct OptimizeInstructions
     // subtyping. For example, trying to cast an array to a struct would be
     // incompatible.
     if (!canBeCastTo(curr->ref->type.getHeapType(),
-                     curr->rtt->type.getHeapType())) {
+                     intendedType)) {
       // This cast cannot succeed. If the input is not a null, it will
       // definitely trap.
       if (fallthrough->type.isNonNullable()) {
         // Make sure to emit a block with the same type as us; leave updating
         // types for other passes.
-        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->rtt),
-                                          builder.makeUnreachable()},
-                                         curr->type));
+        std::vector<Expression*> items;
+        items.push_back(builder.makeDrop(curr->ref));
+        if (curr->rtt) {
+          items.push_back(builder.makeDrop(curr->rtt));
+        }
+        items.push_back(builder.makeUnreachable());
+        replaceCurrent(builder.makeBlock(items, curr->type));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime
@@ -1400,7 +1401,7 @@ struct OptimizeInstructions
       // though, that we cannot do this if we cannot replace the current type
       // with the reference's type.
       if (HeapType::isSubType(curr->ref->type.getHeapType(),
-                              curr->rtt->type.getHeapType())) {
+                              intendedType)) {
         replaceCurrent(getResultOfFirst(curr->ref,
                                         builder.makeDrop(curr->rtt),
                                         getFunction(),
@@ -1477,7 +1478,7 @@ struct OptimizeInstructions
     if (curr->rtt) {
       // See above in RefCast.
       if (!canBeCastTo(curr->ref->type.getHeapType(),
-                       curr->rtt->type.getHeapType())) {
+                       curr->getIntendedType())) {
         // This test cannot succeed, and will definitely return 0.
         Builder builder(*getModule());
         replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),

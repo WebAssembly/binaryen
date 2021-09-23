@@ -2058,4 +2058,102 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-cast-static-impossible (param $func funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static data
+  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-impossible (param $func funcref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static data
+  ;; NOMNL-NEXT:    (local.get $func)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-impossible (param $func funcref)
+    ;; A funcref cannot be cast to data, so this will trap.
+    (drop
+      (ref.cast_static data
+        (local.get $func)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-non-null (param $a (ref $A)) (param $b (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.tee $a
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-non-null (param $a (ref $A)) (param $b (ref $B))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $A
+  ;; NOMNL-NEXT:    (local.get $a)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $A
+  ;; NOMNL-NEXT:    (local.get $b)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B
+  ;; NOMNL-NEXT:    (local.get $a)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $A
+  ;; NOMNL-NEXT:    (local.tee $a
+  ;; NOMNL-NEXT:     (local.get $a)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-non-null (param $a (ref $A)) (param $b (ref $B))
+    ;; Casting nulls results in a null.
+    (drop
+      (ref.cast_static $A
+        (local.get $a)
+      )
+    )
+    (drop
+      (ref.cast_static $A
+        (local.get $b)
+      )
+    )
+    (drop
+      (ref.cast_static $B
+        (local.get $a)
+      )
+    )
+    ;; A fallthrough works too.
+    (drop
+      (ref.cast_static $A
+        (local.tee $a
+          (local.get $a)
+        )
+      )
+    )
+  )
 )
