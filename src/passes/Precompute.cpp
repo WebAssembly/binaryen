@@ -117,21 +117,27 @@ struct Precompute
   bool worked;
 
   void doWalkFunction(Function* func) {
-    // if propagating, we may need multiple rounds: each propagation can
-    // lead to the main walk removing code, which might open up more
-    // propagation opportunities
-    do {
-      getValues.clear();
-      // with extra effort, we can utilize the get-set graph to precompute
-      // things that use locals that are known to be constant. otherwise,
-      // we just look at what is immediately before us
-      if (propagate) {
-        optimizeLocals(func);
-      }
-      // do the main walk over everything
-      worked = false;
+    // Walk the function and precompute things.
+    super::doWalkFunction(func);
+    if (!propagate) {
+      return;
+    }
+    // When propagating, we can utilize the graph of local operations to
+    // precompute the values from a local.set to a local.get. This populates
+    // getValues which is then used by a subsequent walk that applies those
+    // values.
+    worked = false;
+    optimizeLocals(func);
+    if (worked) {
+      // We found constants to propagate and entered them in getValues. Do
+      // another walk to apply them and perhaps other optimizations that are
+      // unlocked.
       super::doWalkFunction(func);
-    } while (propagate && worked);
+    }
+    // Note that in principle even more cycles could find further work here, in
+    // very rare cases. To avoid constructing a LocalGraph again just for that
+    // unlikely chance, we leave such things for later runs of this pass and for
+    // --converge.
   }
 
   template<typename T> void reuseConstantNode(T* curr, Flow flow) {
@@ -223,7 +229,6 @@ struct Precompute
     // this was precomputed
     if (flow.values.isConcrete()) {
       replaceCurrent(flow.getConstExpression(*getModule()));
-      worked = true;
     } else {
       ExpressionManipulator::nop(curr);
     }
@@ -390,6 +395,7 @@ private:
           for (auto* set : localGraph.getInfluences[get]) {
             work.push(set);
           }
+          worked = true;
         }
       }
     }
