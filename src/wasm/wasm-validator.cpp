@@ -2332,11 +2332,19 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
-    return;
+  if (curr->rtt) {
+    if (!shouldBeTrue(
+          curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
+      return;
+    }
   }
-  auto heapType = curr->rtt->type.getHeapType();
+  auto heapType = curr->type.getHeapType();
+  if (curr->rtt) {
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "struct.new heap type must match rtt");
+  }
   if (!shouldBeTrue(
         heapType.isStruct(), curr, "struct.new heap type must be struct")) {
     return;
@@ -2428,11 +2436,19 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "array.new rtt must be rtt")) {
-    return;
+  if (curr->rtt) {
+    if (!shouldBeTrue(
+          curr->rtt->type.isRtt(), curr, "array.new rtt must be rtt")) {
+      return;
+    }
   }
-  auto heapType = curr->rtt->type.getHeapType();
+  auto heapType = curr->type.getHeapType();
+  if (curr->rtt) {
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "array.new heap type must match rtt");
+  }
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.new heap type must be array")) {
     return;
@@ -2462,11 +2478,19 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "array.init rtt must be rtt")) {
-    return;
+  if (curr->rtt) {
+    if (!shouldBeTrue(
+          curr->rtt->type.isRtt(), curr, "array.init rtt must be rtt")) {
+      return;
+    }
   }
-  auto heapType = curr->rtt->type.getHeapType();
+  auto heapType = curr->type.getHeapType();
+  if (curr->rtt) {
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "array.init heap type must match rtt");
+  }
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.init heap type must be array")) {
     return;

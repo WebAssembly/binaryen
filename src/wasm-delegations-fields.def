@@ -614,7 +614,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::StructNewId: {
     DELEGATE_START(StructNew);
-    DELEGATE_FIELD_CHILD(StructNew, rtt);
+    DELEGATE_FIELD_OPTIONAL_CHILD(StructNew, rtt);
     DELEGATE_FIELD_CHILD_VECTOR(StructNew, operands);
     DELEGATE_END(StructNew);
     break;
@@ -637,7 +637,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayNewId: {
     DELEGATE_START(ArrayNew);
-    DELEGATE_FIELD_CHILD(ArrayNew, rtt);
+    DELEGATE_FIELD_OPTIONAL_CHILD(ArrayNew, rtt);
     DELEGATE_FIELD_CHILD(ArrayNew, size);
     DELEGATE_FIELD_OPTIONAL_CHILD(ArrayNew, init);
     DELEGATE_END(ArrayNew);
@@ -645,7 +645,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayInitId: {
     DELEGATE_START(ArrayInit);
-    DELEGATE_FIELD_CHILD(ArrayInit, rtt);
+    DELEGATE_FIELD_OPTIONAL_CHILD(ArrayInit, rtt);
     DELEGATE_FIELD_CHILD_VECTOR(ArrayInit, values);
     DELEGATE_END(ArrayInit);
     break;
@@ -707,5 +707,6 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
 #undef DELEGATE_FIELD_SIGNATURE
 #undef DELEGATE_FIELD_TYPE
+#undef DELEGATE_FIELD_HEAPTYPE
 #undef DELEGATE_FIELD_ADDRESS
 #undef DELEGATE_GET_FIELD

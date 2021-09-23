@@ -497,6 +497,34 @@ inline void collectHeapTypes(Module& wasm,
         counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
         counts.note(curr->type.getRtt().heapType);
+      } else if (auto* make = curr->dynCast<StructNew>()) {
+        // Some operations emit a HeapType in the binary format, if they are
+        // static and not dynamic (if dynamic, the RTT provides the heap type).
+        if (!make->rtt && make->type != Type::unreachable) {
+          counts.note(make->type.getHeapType());
+        }
+      } else if (auto* make = curr->dynCast<ArrayNew>()) {
+        if (!make->rtt && make->type != Type::unreachable) {
+          counts.note(make->type.getHeapType());
+        }
+      } else if (auto* make = curr->dynCast<ArrayInit>()) {
+        if (!make->rtt && make->type != Type::unreachable) {
+          counts.note(make->type.getHeapType());
+        }
+      } else if (auto* cast = curr->dynCast<RefCast>()) {
+        if (!cast->rtt && cast->type != Type::unreachable) {
+          counts.note(cast->getIntendedType());
+        }
+      } else if (auto* cast = curr->dynCast<RefTest>()) {
+        if (!cast->rtt && cast->type != Type::unreachable) {
+          counts.note(cast->getIntendedType());
+        }
+      } else if (auto* cast = curr->dynCast<BrOn>()) {
+        if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
+          if (!cast->rtt && cast->type != Type::unreachable) {
+            counts.note(cast->getIntendedType());
+          }
+        }
       } else if (auto* get = curr->dynCast<StructGet>()) {
         counts.note(get->ref->type);
       } else if (auto* set = curr->dynCast<StructSet>()) {
