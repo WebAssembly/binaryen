@@ -422,6 +422,7 @@ extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
+extern const char* RelaxedSIMDFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1052,6 +1053,8 @@ enum ASTNodes {
   StructGetS = 0x04,
   StructGetU = 0x05,
   StructSet = 0x06,
+  StructNew = 0x07,
+  StructNewDefault = 0x08,
   ArrayNewWithRtt = 0x11,
   ArrayNewDefaultWithRtt = 0x12,
   ArrayGet = 0x13,
@@ -1061,6 +1064,9 @@ enum ASTNodes {
   ArrayLen = 0x17,
   ArrayCopy = 0x18,
   ArrayInit = 0x19,
+  ArrayInitStatic = 0x1a,
+  ArrayNew = 0x1b,
+  ArrayNewDefault = 0x1c,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,

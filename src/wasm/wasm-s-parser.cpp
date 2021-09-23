@@ -2652,6 +2652,21 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   return Builder(wasm).makeStructNew(rtt, operands);
 }
 
+Expression* SExpressionWasmBuilder::makeStructNewStatic(Element& s,
+                                                        bool default_) {
+  auto heapType = parseHeapType(*s[1]);
+  auto numOperands = s.size() - 2;
+  if (default_ && numOperands > 0) {
+    throw ParseException("arguments provided for struct.new", s.line, s.col);
+  }
+  std::vector<Expression*> operands;
+  operands.resize(numOperands);
+  for (Index i = 0; i < numOperands; i++) {
+    operands[i] = parseExpression(*s[i + 2]);
+  }
+  return Builder(wasm).makeStructNew(heapType, operands);
+}
+
 Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
   if (field.dollared()) {
     auto name = field.str();
@@ -2708,6 +2723,18 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
   return Builder(wasm).makeArrayNew(rtt, size, init);
 }
 
+Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s,
+                                                       bool default_) {
+  auto heapType = parseHeapType(*s[1]);
+  Expression* init = nullptr;
+  size_t i = 2;
+  if (!default_) {
+    init = parseExpression(*s[i++]);
+  }
+  auto* size = parseExpression(*s[i++]);
+  return Builder(wasm).makeArrayNew(heapType, size, init);
+}
+
 Expression* SExpressionWasmBuilder::makeArrayInit(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   size_t i = 2;
@@ -2718,6 +2745,16 @@ Expression* SExpressionWasmBuilder::makeArrayInit(Element& s) {
   auto* rtt = parseExpression(*s[i++]);
   validateHeapTypeUsingChild(rtt, heapType, s);
   return Builder(wasm).makeArrayInit(rtt, values);
+}
+
+Expression* SExpressionWasmBuilder::makeArrayInitStatic(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  size_t i = 2;
+  std::vector<Expression*> values;
+  while (i < s.size()) {
+    values.push_back(parseExpression(*s[i++]));
+  }
+  return Builder(wasm).makeArrayInit(heapType, values);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {

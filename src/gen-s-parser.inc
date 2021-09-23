@@ -33,20 +33,44 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
-          case 'i':
-            if (strcmp(op, "array.init") == 0) { return makeArrayInit(s); }
-            goto parse_error;
+          case 'i': {
+            switch (op[10]) {
+              case '\0':
+                if (strcmp(op, "array.init") == 0) { return makeArrayInit(s); }
+                goto parse_error;
+              case '_':
+                if (strcmp(op, "array.init_static") == 0) { return makeArrayInitStatic(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'l':
             if (strcmp(op, "array.len") == 0) { return makeArrayLen(s); }
             goto parse_error;
           case 'n': {
-            switch (op[10]) {
-              case 'd':
-                if (strcmp(op, "array.new_default_with_rtt") == 0) { return makeArrayNew(s, true); }
+            switch (op[9]) {
+              case '\0':
+                if (strcmp(op, "array.new") == 0) { return makeArrayNewStatic(s, false); }
                 goto parse_error;
-              case 'w':
-                if (strcmp(op, "array.new_with_rtt") == 0) { return makeArrayNew(s, false); }
-                goto parse_error;
+              case '_': {
+                switch (op[10]) {
+                  case 'd': {
+                    switch (op[17]) {
+                      case '\0':
+                        if (strcmp(op, "array.new_default") == 0) { return makeArrayNewStatic(s, true); }
+                        goto parse_error;
+                      case '_':
+                        if (strcmp(op, "array.new_default_with_rtt") == 0) { return makeArrayNew(s, true); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'w':
+                    if (strcmp(op, "array.new_with_rtt") == 0) { return makeArrayNew(s, false); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }
@@ -2980,13 +3004,29 @@ switch (op[0]) {
             }
           }
           case 'n': {
-            switch (op[11]) {
-              case 'd':
-                if (strcmp(op, "struct.new_default_with_rtt") == 0) { return makeStructNew(s, true); }
+            switch (op[10]) {
+              case '\0':
+                if (strcmp(op, "struct.new") == 0) { return makeStructNewStatic(s, false); }
                 goto parse_error;
-              case 'w':
-                if (strcmp(op, "struct.new_with_rtt") == 0) { return makeStructNew(s, false); }
-                goto parse_error;
+              case '_': {
+                switch (op[11]) {
+                  case 'd': {
+                    switch (op[18]) {
+                      case '\0':
+                        if (strcmp(op, "struct.new_default") == 0) { return makeStructNewStatic(s, true); }
+                        goto parse_error;
+                      case '_':
+                        if (strcmp(op, "struct.new_default_with_rtt") == 0) { return makeStructNew(s, true); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'w':
+                    if (strcmp(op, "struct.new_with_rtt") == 0) { return makeStructNew(s, false); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }

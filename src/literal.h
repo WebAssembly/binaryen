@@ -61,6 +61,8 @@ class Literal {
     // as the Literal class itself.
     // To support the experimental RttFreshSub instruction, we not only store
     // the type, but also a reference to an allocation.
+    // The above describes dynamic data, that is with an actual RTT. The static
+    // case just has a static type in its GCData.
     // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
@@ -694,10 +696,16 @@ std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
 // A GC Struct or Array is a set of values with a run-time type saying what it
-// is.
+// is. In the case of static (rtt-free) typing, the rtt is not present and
+// instead we have a static type.
 struct GCData {
+  // Either the RTT or the type must be present, but not both.
   Literal rtt;
+  HeapType type;
+
   Literals values;
+
+  GCData(HeapType type, Literals values) : type(type), values(values) {}
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 

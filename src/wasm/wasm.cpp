@@ -48,6 +48,7 @@ const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
 const char* TypedFunctionReferencesFeature = "typed-function-references";
+const char* RelaxedSIMDFeature = "relaxed-simd";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -1018,14 +1019,18 @@ void RttSub::finalize() {
 }
 
 void StructNew::finalize() {
-  if (rtt->type == Type::unreachable) {
+  if (rtt && rtt->type == Type::unreachable) {
     type = Type::unreachable;
     return;
   }
   if (handleUnreachableOperands(this)) {
     return;
   }
-  type = Type(rtt->type.getHeapType(), NonNullable);
+  // A dynamic StructNew infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
 }
 
 void StructGet::finalize() {
@@ -1045,16 +1050,21 @@ void StructSet::finalize() {
 }
 
 void ArrayNew::finalize() {
-  if (rtt->type == Type::unreachable || size->type == Type::unreachable ||
+  if ((rtt && rtt->type == Type::unreachable) ||
+      size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
   }
-  type = Type(rtt->type.getHeapType(), NonNullable);
+  // A dynamic ArrayNew infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
 }
 
 void ArrayInit::finalize() {
-  if (rtt->type == Type::unreachable) {
+  if (rtt && rtt->type == Type::unreachable) {
     type = Type::unreachable;
     return;
   }
@@ -1064,7 +1074,11 @@ void ArrayInit::finalize() {
       return;
     }
   }
-  type = Type(rtt->type.getHeapType(), NonNullable);
+  // A dynamic ArrayInit infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
 }
 
 void ArrayGet::finalize() {

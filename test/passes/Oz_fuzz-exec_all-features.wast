@@ -556,35 +556,28 @@
   ;; Testing something completely wrong (struct vs array) returns 0.
   (call $log
    (ref.test_static $struct
-    (array.new_with_rtt $bytes
+    (array.new $bytes
      (i32.const 20)
      (i32.const 10)
-     (rtt.canon $bytes)
     )
    )
   )
   ;; Testing a thing with the same type returns 1.
   (call $log
    (ref.test_static $struct
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
+    (struct.new_default $struct)
    )
   )
   ;; A bad downcast returns 0: we create a struct, which is not a extendedstruct.
   (call $log
    (ref.test_static $extendedstruct
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
+    (struct.new_default $struct)
    )
   )
   ;; Casting to a supertype works.
   (call $log
    (ref.test_static $struct
-    (struct.new_default_with_rtt $extendedstruct
-     (rtt.canon $extendedstruct)
-    )
+    (struct.new_default $extendedstruct)
    )
   )
  )
@@ -592,7 +585,7 @@
   (local $any anyref)
   ;; create a simple $struct, store it in an anyref
   (local.set $any
-   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+   (struct.new_default $struct)
   )
   (drop
    (block $block (result ($ref $struct))
@@ -621,7 +614,7 @@
   (local $any anyref)
   ;; create a simple $struct, store it in an anyref
   (local.set $any
-   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+   (struct.new_default $struct)
   )
   (drop
    (block $failblock (result anyref)

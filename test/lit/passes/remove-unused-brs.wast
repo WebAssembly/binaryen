@@ -335,4 +335,164 @@
       )
     )
   )
+
+  ;; CHECK:      (func $if-of-if
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $if-of-if)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-of-if
+    (local $x i32)
+    ;; The outer if has side effects in the condition while the inner one does
+    ;; not, which means we can fold them.
+    (if
+      (local.tee $x
+        (i32.const 1)
+      )
+      (if
+        (local.get $x)
+        (call $if-of-if)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-of-if-but-side-effects
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $if-of-if-but-side-effects)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-of-if-but-side-effects
+    (local $x i32)
+    ;; The inner if has side effects in the condition, which prevents this
+    ;; optimization.
+    (if
+      (local.tee $x
+        (i32.const 1)
+      )
+      (if
+        (local.tee $x
+          (i32.const 2)
+        )
+        (call $if-of-if-but-side-effects)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-of-if-but-too-costly
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (i32.eqz
+  ;; CHECK-NEXT:        (i32.eqz
+  ;; CHECK-NEXT:         (i32.eqz
+  ;; CHECK-NEXT:          (i32.eqz
+  ;; CHECK-NEXT:           (i32.eqz
+  ;; CHECK-NEXT:            (local.get $x)
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $if-of-if-but-too-costly)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-of-if-but-too-costly
+    (local $x i32)
+    ;; The inner if's condition has no effects, but it is very costly, so do not
+    ;; run it unconditionally - leave this unoptimized.
+    (if
+      (local.tee $x
+        (i32.const 1)
+      )
+      (if
+        (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz
+          (local.get $x)
+        ))))))))
+        (call $if-of-if-but-too-costly)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-of-if-but-inner-else
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (call $if-of-if-but-inner-else)
+  ;; CHECK-NEXT:    (call $if-of-if)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-of-if-but-inner-else
+    (local $x i32)
+    ;; The inner if has an else. For now, leave this unoptimized.
+    (if
+      (local.tee $x
+        (i32.const 1)
+      )
+      (if
+        (local.get $x)
+        (call $if-of-if-but-inner-else)
+        (call $if-of-if)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-of-if-but-outer-else
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (call $if-of-if-but-outer-else)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $if-of-if)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-of-if-but-outer-else
+    (local $x i32)
+    ;; The outer if has an else. For now, leave this unoptimized.
+    (if
+      (local.tee $x
+        (i32.const 1)
+      )
+      (if
+        (local.get $x)
+        (call $if-of-if-but-outer-else)
+      )
+      (call $if-of-if)
+    )
+  )
 )
