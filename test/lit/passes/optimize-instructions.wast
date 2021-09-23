@@ -10585,6 +10585,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $select-with-same-arm-and-cond (param $x i32) (param $y i64)
     ;; i32(x) ? i32(x) : 0  ==>  x
@@ -10632,6 +10635,14 @@
       (i64.const 0)
       (i64.eqz
         (local.get $y)
+      )
+    ))
+    (drop (select
+      (local.get $y)
+      (i64.const 0)
+      (i64.eq
+        (local.get $y)
+        (i64.const 0)
       )
     ))
   )
