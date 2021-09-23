@@ -114,8 +114,6 @@ struct Precompute
 
   GetValues getValues;
 
-  bool worked;
-
   void doWalkFunction(Function* func) {
     // Walk the function and precompute things.
     super::doWalkFunction(func);
@@ -126,9 +124,8 @@ struct Precompute
     // precompute the values from a local.set to a local.get. This populates
     // getValues which is then used by a subsequent walk that applies those
     // values.
-    worked = false;
-    optimizeLocals(func);
-    if (worked) {
+    bool propagated = propagateLocals(func);
+    if (propagated) {
       // We found constants to propagate and entered them in getValues. Do
       // another walk to apply them and perhaps other optimizations that are
       // unlocked.
@@ -278,7 +275,8 @@ private:
   }
 
   // Propagates values around. Returns whether we propagated.
-  void optimizeLocals(Function* func) {
+  bool propagateLocals(Function* func) {
+    bool propagated = false;
     // using the graph of get-set interactions, do a constant-propagation type
     // operation: note which sets are assigned locals, then see if that lets us
     // compute other sets as locals (since some of the gets they read may be
@@ -395,10 +393,11 @@ private:
           for (auto* set : localGraph.getInfluences[get]) {
             work.push(set);
           }
-          worked = true;
+          propagated = true;
         }
       }
     }
+    return propagated;
   }
 
   bool canEmitConstantFor(const Literals& values) {
@@ -427,7 +426,7 @@ private:
     }
     // All other reference types cannot be precomputed. Even an immutable GC
     // reference is not currently something this pass can handle, as it will
-    // evaluate and reevaluate code multiple times in e.g. optimizeLocals, see
+    // evaluate and reevaluate code multiple times in e.g. propagateLocals, see
     // the comment above.
     if (type.isRef()) {
       return false;
