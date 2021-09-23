@@ -2088,16 +2088,12 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-non-null (param $a (ref $A)) (param $b (ref $B))
+  ;; CHECK:      (func $ref-cast-static-general (param $a (ref null $A)) (param $b (ref null $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $A
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $A
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $B
@@ -2105,23 +2101,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $A
-  ;; CHECK-NEXT:    (local.tee $a
-  ;; CHECK-NEXT:     (local.get $a)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (local.tee $a
+  ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-non-null (param $a (ref $A)) (param $b (ref $B))
+  ;; NOMNL:      (func $ref-cast-static-general (param $a (ref null $A)) (param $b (ref null $B))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast_static $A
-  ;; NOMNL-NEXT:    (local.get $a)
-  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (local.get $a)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast_static $A
-  ;; NOMNL-NEXT:    (local.get $b)
-  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (local.get $b)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $B
@@ -2129,15 +2119,14 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast_static $A
-  ;; NOMNL-NEXT:    (local.tee $a
-  ;; NOMNL-NEXT:     (local.get $a)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   (local.tee $a
+  ;; NOMNL-NEXT:    (local.get $a)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $ref-cast-static-non-null (param $a (ref $A)) (param $b (ref $B))
-    ;; Casting nulls results in a null.
+  (func $ref-cast-static-general (param $a (ref null $A)) (param $b (ref null $B))
+    ;; In the general case, a static cast of something simply succeeds if the
+    ;; type is a subtype.
     (drop
       (ref.cast_static $A
         (local.get $a)
@@ -2148,6 +2137,7 @@
         (local.get $b)
       )
     )
+    ;; This is the only one that we cannot know for sure will succeed.
     (drop
       (ref.cast_static $B
         (local.get $a)

@@ -1393,20 +1393,26 @@ struct OptimizeInstructions
       // we can see the value is definitely a null at compile time, earlier.)
     }
 
-    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen ||
+        !curr->rtt) {
       // Aside from the issue of type incompatibility as mentioned above, the
       // cast can trap if the types *are* compatible but it happens to be the
       // case at runtime that the value is not of the desired subtype. If we
-      // do not consider such traps possible, we can ignore that. Note,
+      // do not consider such traps possible, we can ignore that. (Note,
       // though, that we cannot do this if we cannot replace the current type
-      // with the reference's type.
+      // with the reference's type.) We can also do this if this is a static
+      // cast: in that case, all we need to know about are the types.
       if (HeapType::isSubType(curr->ref->type.getHeapType(),
                               intendedType)) {
-        replaceCurrent(getResultOfFirst(curr->ref,
-                                        builder.makeDrop(curr->rtt),
-                                        getFunction(),
-                                        getModule(),
-                                        passOptions));
+        if (curr->rtt) {
+          replaceCurrent(getResultOfFirst(curr->ref,
+                                          builder.makeDrop(curr->rtt),
+                                          getFunction(),
+                                          getModule(),
+                                          passOptions));
+        } else {
+          replaceCurrent(curr->ref);
+        }
         return;
       }
     }
