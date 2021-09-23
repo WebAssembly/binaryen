@@ -10587,9 +10587,8 @@
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.ne
+  ;; CHECK-NEXT:    (i64.eqz
   ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -10597,8 +10596,9 @@
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:    (i64.ne
   ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -10626,6 +10626,7 @@
       (local.get $x)
     ))
 
+    ;; i64(x) != 0 ? i64(x) : 0  ==>  x
     (drop (select
       (local.get $y)
       (i64.const 0)
@@ -10634,14 +10635,7 @@
         (i64.const 0)
       )
     ))
-    (drop (select
-      (i64.const 0)
-      (local.get $y)
-      (i64.ne
-        (local.get $y)
-        (i64.const 0)
-      )
-    ))
+    ;; i64(x) == 0 ? 0 : i64(x)  ==>  x
     (drop (select
       (i64.const 0)
       (local.get $y)
@@ -10649,6 +10643,16 @@
         (local.get $y)
       )
     ))
+    ;; i64(x) != 0 ? 0 : i64(x)  ==>  0
+    (drop (select
+      (i64.const 0)
+      (local.get $y)
+      (i64.ne
+        (local.get $y)
+        (i64.const 0)
+      )
+    ))
+    ;; i64(x) == 0 ? i64(x) : 0  ==>  0
     (drop (select
       (local.get $y)
       (i64.const 0)
