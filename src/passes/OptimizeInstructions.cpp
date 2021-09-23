@@ -1805,6 +1805,16 @@ private:
       // order using a temp local, which would be bad
     }
     {
+      // i32(x) ? i32(x) : 0  ==>  x
+      // i32(x) ? 0 : i32(x)  ==>  0
+      Expression *x, *y;
+      if ((matches(curr, select(pure(&x), i32(0), any(&y))) ||
+           matches(curr, select(i32(0), pure(&x), any(&y)))) &&
+          ExpressionAnalyzer::equal(x, y)) {
+        return curr->ifTrue;
+      }
+    }
+    {
       // Flip select to remove eqz if we can reorder
       Select* s;
       Expression *ifTrue, *ifFalse, *c;
