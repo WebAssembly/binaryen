@@ -388,7 +388,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // if (condition-A) { if (condition-B) .. }
       //   =>
-      // if (condition-A & condition-B) { .. }
+      // if (condition-A ? condition-B : 0) { .. }
+      //
+      // This replaces an if, which is 3 bytes, with a select plus a zero, which
+      // is also 3 bytes. The benefit is that the select may be faster, and also
+      // further optimizations may be possible on the select.
       if (auto* child = curr->ifTrue->dynCast<If>()) {
         if (child->ifFalse) {
           return;
@@ -406,7 +410,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         Builder builder(*getModule());
         curr->condition =
-          builder.makeBinary(AndInt32, curr->condition, child->condition);
+          builder.makeSelect(child->condition,
+                             curr->condition,
+                             builder.makeConst(int32_t(0)));
         curr->ifTrue = child->ifTrue;
       }
     }
