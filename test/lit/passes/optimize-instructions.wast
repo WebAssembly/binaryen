@@ -10574,42 +10574,16 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:    (i64.ne
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:     (i64.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.eqz
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.ne
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:     (i64.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:    (i64.eqz
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $select-with-same-arm-and-cond (param $x i32) (param $y i64)
@@ -10626,7 +10600,7 @@
       (local.get $x)
     ))
 
-    ;; i64(x) != 0 ? i64(x) : 0  ==>  x
+    ;; i64(y) != 0 ? i64(y) : 0  ==>  y
     (drop (select
       (local.get $y)
       (i64.const 0)
@@ -10635,7 +10609,7 @@
         (i64.const 0)
       )
     ))
-    ;; i64(x) == 0 ? 0 : i64(x)  ==>  x
+    ;; i64(y) == 0 ? 0 : i64(y)  ==>  y
     (drop (select
       (i64.const 0)
       (local.get $y)
@@ -10643,7 +10617,7 @@
         (local.get $y)
       )
     ))
-    ;; i64(x) != 0 ? 0 : i64(x)  ==>  0
+    ;; i64(y) != 0 ? 0 : i64(y)  ==>  0
     (drop (select
       (i64.const 0)
       (local.get $y)
@@ -10652,7 +10626,7 @@
         (i64.const 0)
       )
     ))
-    ;; i64(x) == 0 ? i64(x) : 0  ==>  0
+    ;; i64(y) == 0 ? i64(y) : 0  ==>  0
     (drop (select
       (local.get $y)
       (i64.const 0)
