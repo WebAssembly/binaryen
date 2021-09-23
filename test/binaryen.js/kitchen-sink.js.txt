@@ -42,7 +42,8 @@ Features.Multivalue: 512
 Features.GC: 1024
 Features.Memory64: 2048
 Features.TypedFunctionReferences: 4096
-Features.All: 16383
+Features.RelaxedSIMD: 16384
+Features.All: 32767
 InvalidId: 0
 BlockId: 1
 IfId: 2

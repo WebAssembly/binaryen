@@ -85,6 +85,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::TypedFunctionReferences,
                   "typed function references")
       .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
+      .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",

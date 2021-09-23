@@ -48,6 +48,7 @@ const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
 const char* TypedFunctionReferencesFeature = "typed-function-references";
+const char* RelaxedSIMDFeature = "relaxed-simd";
 } // namespace UserSections
 } // namespace BinaryConsts
 
