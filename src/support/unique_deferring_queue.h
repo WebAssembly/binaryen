@@ -23,6 +23,7 @@
 #ifndef wasm_support_unique_deferring_queue_h
 #define wasm_support_unique_deferring_queue_h
 
+#include <cassert>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>

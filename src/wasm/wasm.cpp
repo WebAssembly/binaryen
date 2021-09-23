@@ -821,6 +821,7 @@ void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume
   // the current type is already correct. TODO: Calculate a proper LUB.
   std::unordered_set<Type> types{body->type};
+  types.reserve(catchBodies.size());
   for (auto catchBody : catchBodies) {
     types.insert(catchBody->type);
   }
@@ -844,6 +845,7 @@ void Rethrow::finalize() { type = Type::unreachable; }
 
 void TupleMake::finalize() {
   std::vector<Type> types;
+  types.reserve(operands.size());
   for (auto* op : operands) {
     if (op->type == Type::unreachable) {
       type = Type::unreachable;

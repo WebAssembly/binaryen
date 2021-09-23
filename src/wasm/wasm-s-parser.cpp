@@ -1236,6 +1236,15 @@ Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
   return Type::none;
 }
 
+HeapType SExpressionWasmBuilder::getFunctionType(Name name, Element& s) {
+  auto iter = functionTypes.find(name);
+  if (iter == functionTypes.end()) {
+    throw ParseException(
+      "invalid call target: " + std::string(name.str), s.line, s.col);
+  }
+  return iter->second;
+}
+
 Function::DebugLocation
 SExpressionWasmBuilder::getDebugLocation(const SourceLocation& loc) {
   IString file = loc.filename;
@@ -2259,7 +2268,7 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s, bool isReturn) {
   auto target = getFunctionName(*s[1]);
   auto ret = allocator.alloc<Call>();
   ret->target = target;
-  ret->type = functionTypes[ret->target].getSignature().results;
+  ret->type = getFunctionType(ret->target, s).getSignature().results;
   parseCallOperands(s, 2, s.size(), ret);
   ret->isReturn = isReturn;
   ret->finalize();
@@ -2396,7 +2405,7 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   ret->func = func;
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  ret->finalize(Type(functionTypes[func], NonNullable));
+  ret->finalize(Type(getFunctionType(func, s), NonNullable));
   return ret;
 }
 
