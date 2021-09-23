@@ -14,7 +14,11 @@
     (field $i64 (mut i64))
   ))
 
+  ;; CHECK:      (type $A (struct (field i32)))
+
   ;; CHECK:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $A (struct (field i32)))
+
   ;; NOMNL:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
@@ -22,8 +26,6 @@
   ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
   (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
-  ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
   ;; CHECK:      (type $empty (struct ))
@@ -1953,5 +1955,107 @@
        (rtt.canon $struct)
      )
    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-null
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $B))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $a
+  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-null
+  ;; NOMNL-NEXT:  (local $a (ref null $A))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $A))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.null $A)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $A))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.null $B)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $B))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.null $A)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null $B)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $A))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.tee $a
+  ;; NOMNL-NEXT:      (ref.null $A)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-null
+    (local $a (ref null $A))
+    ;; Casting nulls results in a null.
+    (drop
+      (ref.cast_static $A
+        (ref.null $A)
+      )
+    )
+    (drop
+      (ref.cast_static $A
+        (ref.null $B)
+      )
+    )
+    (drop
+      (ref.cast_static $B
+        (ref.null $A)
+      )
+    )
+    ;; A fallthrough works too.
+    (drop
+      (ref.cast_static $A
+        (local.tee $a
+          (ref.null $A)
+        )
+      )
+    )
   )
 )
