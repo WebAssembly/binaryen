@@ -263,6 +263,8 @@ void test_features() {
   printf("BinaryenFeatureMemory64: %d\n", BinaryenFeatureMemory64());
   printf("BinaryenFeatureTypedFunctionReferences: %d\n",
          BinaryenFeatureTypedFunctionReferences());
+  printf("BinaryenFeatureRelaxedSIMD: %d\n",
+         BinaryenFeatureRelaxedSIMD());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
