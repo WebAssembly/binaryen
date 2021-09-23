@@ -2059,22 +2059,28 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-static-impossible (param $func funcref)
+  ;; CHECK:      (func $ref-cast-static-impossible (param $func (ref func))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static data
-  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   (block (result dataref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-impossible (param $func funcref)
+  ;; NOMNL:      (func $ref-cast-static-impossible (param $func (ref func))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast_static data
-  ;; NOMNL-NEXT:    (local.get $func)
+  ;; NOMNL-NEXT:   (block (result dataref)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $func)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $ref-cast-static-impossible (param $func funcref)
-    ;; A funcref cannot be cast to data, so this will trap.
+  (func $ref-cast-static-impossible (param $func (ref func))
+    ;; A func cannot be cast to data, so this will trap.
     (drop
       (ref.cast_static data
         (local.get $func)
