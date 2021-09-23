@@ -422,6 +422,7 @@ extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
+extern const char* RelaxedSIMDFeature;
 
 enum Subsection {
   NameModule = 0,

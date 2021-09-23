@@ -1048,6 +1048,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::Memory64Feature;
       case FeatureSet::TypedFunctionReferences:
         return BinaryConsts::UserSections::TypedFunctionReferencesFeature;
+      case FeatureSet::RelaxedSIMD:
+        return BinaryConsts::UserSections::RelaxedSIMDFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -3263,6 +3265,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
     } else if (name ==
                BinaryConsts::UserSections::TypedFunctionReferencesFeature) {
       feature = FeatureSet::TypedFunctionReferences;
+    } else if (name == BinaryConsts::UserSections::RelaxedSIMDFeature) {
+      feature = FeatureSet::RelaxedSIMD;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
