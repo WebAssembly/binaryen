@@ -1805,6 +1805,8 @@ private:
       // order using a temp local, which would be bad
     }
     {
+      // TODO: Remove this after landing SCCP pass. See: #4161
+
       // i32(x) ? i32(x) : 0  ==>  x
       // i32(x) ? 0 : i32(x)  ==>  0
       Expression *x, *y;
@@ -1815,6 +1817,8 @@ private:
       }
     }
     {
+      // TODO: Remove this after landing SCCP pass. See: #4161
+
       // i64(x) == 0 ? 0 : i64(x)  ==>  x
       // i64(x) == 0 ? i64(x) : 0  ==>  0
       // i64(x) != 0 ? 0 : i64(x)  ==>  0
