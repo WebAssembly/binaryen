@@ -141,10 +141,18 @@ public:
         return false;
       }
       for (size_t i = 0; i < usedFixed; i++) {
-        if (fixed[i] != other.fixed[i]) {
+        bool found = false;
+        for (size_t j = 0; j < usedFixed; j++) {
+          if (fixed[i] == other.fixed[j]) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
           return false;
         }
       }
+      return true;
     }
     return flexible == other.flexible;
   }

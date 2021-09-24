@@ -119,6 +119,15 @@ template<typename T> void testAPI() {
     u.insert(2);
     assert(t != u);
   }
+  {
+    T t, u;
+    // comparisons should ignore the order of insertion
+    t.insert(1);
+    t.insert(2);
+    u.insert(2);
+    u.insert(1);
+    assert(t == u);
+  }
 }
 
 template<typename T> void testInternals() {
