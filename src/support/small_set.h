@@ -281,9 +281,6 @@ public:
 
   using iterator = Iterator;
   using const_iterator = ConstIterator;
-  // using reverse_iterator = typename vector_type::const_reverse_iterator;
-  // using const_reverse_iterator = typename
-  // vector_type::const_reverse_iterator;
 
   // Test-only method to allow unit tests to verify the right internal
   // behavior.
