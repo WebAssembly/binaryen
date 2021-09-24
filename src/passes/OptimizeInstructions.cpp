@@ -1626,11 +1626,11 @@ private:
     return true;
   }
 
-  // Check if two consecutive inputs to an instruction are equal.
-  // It helps to identify reads from the same local variable when
-  // one of them is a "tee" operation.
-  //
-  // local.tee(idx) == local.get(idx)
+  // Check if two consecutive inputs to an instruction are equal and can be
+  // folded into the first of the two. This identifies reads from the same local
+  // variable when one of them is a "tee" operation.
+  // The inputs here must be consecutive, but it is also ok to have code with no
+  // side effects at all in the middle. For example, a Const in between is ok.
   bool areConsecutiveInputsEqualAndFoldable(Expression* left,
                                             Expression* right) {
     if (auto* set = left->dynCast<LocalSet>()) {
@@ -1640,7 +1640,9 @@ private:
         }
       }
     }
-    return false;
+    // stronger property than we need - we can not only fold
+    // them but remove them entirely.
+    return areConsecutiveInputsEqualAndRemovable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
@@ -1829,8 +1831,7 @@ private:
       Expression *x, *y;
       if ((matches(curr, select(any(&x), i32(0), pure(&y))) ||
            matches(curr, select(i32(0), any(&x), pure(&y)))) &&
-          (areConsecutiveInputsEqualAndFoldable(curr->ifTrue, y) ||
-           ExpressionAnalyzer::equal(x, y))) {
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
         return curr->ifTrue;
       }
     }
@@ -1850,7 +1851,7 @@ private:
            matches(
              curr,
              select(any(&x), i64(0), binary(NeInt64, pure(&y), i64(0))))) &&
-          ExpressionAnalyzer::equal(x, y)) {
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
         return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
       }
     }
