@@ -44,6 +44,7 @@ struct LocalGraph {
   // 2: 3.70    45,88  winner
   // 3: 3.65    45,84
   // 4: 3.67    46,11  DOWNAIDE
+  // Unordered is worse.
   typedef SmallSet<LocalSet*, 2> Sets;
 
   // unordered: 3.7 => 3.55   45,55
@@ -74,10 +75,15 @@ struct LocalGraph {
   }
 
   // for each get, the sets whose values are influenced by that get
-  using GetInfluences = std::unordered_set<LocalSet*>;
+  // 0: 8.90    70,65
+  // 1: 8.8?    70,72
+  // 2:         70,31
+  // 4: same
+  using GetInfluences = SmallUnorderedSet<LocalSet*, 4>;
   std::unordered_map<LocalGet*, GetInfluences> getInfluences;
   // for each set, the gets whose values are influenced by that set
-  using SetInfluences = std::unordered_set<LocalGet*>;
+  // 1: 
+  using SetInfluences = SmallUnorderedSet<LocalGet*, 3>;
   std::unordered_map<LocalSet*, SetInfluences> setInfluences;
 
   // Optional: Compute the local indexes that are SSA, in the sense of
