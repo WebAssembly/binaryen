@@ -686,7 +686,7 @@ struct Heap2LocalOptimizer {
     return ParentChildInteraction::Mixes;
   }
 
-  std::unordered_set<LocalGet*>* getGetsReached(LocalSet* set) {
+  LocalGraph::SetInfluences* getGetsReached(LocalSet* set) {
     auto iter = localGraph.setInfluences.find(set);
     if (iter != localGraph.setInfluences.end()) {
       return &iter->second;
