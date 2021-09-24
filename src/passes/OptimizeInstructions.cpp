@@ -1372,8 +1372,7 @@ struct OptimizeInstructions
     // subtype of the desired type, as RTT subtyping is a subset of static
     // subtyping. For example, trying to cast an array to a struct would be
     // incompatible.
-    if (!canBeCastTo(curr->ref->type.getHeapType(),
-                     intendedType)) {
+    if (!canBeCastTo(curr->ref->type.getHeapType(), intendedType)) {
       // This cast cannot succeed. If the input is not a null, it will
       // definitely trap.
       if (fallthrough->type.isNonNullable()) {
@@ -1402,8 +1401,7 @@ struct OptimizeInstructions
       // though, that we cannot do this if we cannot replace the current type
       // with the reference's type.) We can also do this if this is a static
       // cast: in that case, all we need to know about are the types.
-      if (HeapType::isSubType(curr->ref->type.getHeapType(),
-                              intendedType)) {
+      if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
         if (curr->rtt) {
           replaceCurrent(getResultOfFirst(curr->ref,
                                           builder.makeDrop(curr->rtt),
@@ -1427,8 +1425,7 @@ struct OptimizeInstructions
       // getFallthrough() to look through all fallthroughs, we must iterate
       // manually. Keep going until we reach either the end of things
       // falling-through, or a cast.
-      ref =
-        Properties::getImmediateFallthrough(ref, passOptions, *getModule());
+      ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
       if (ref == last) {
         break;
       }
@@ -1460,10 +1457,9 @@ struct OptimizeInstructions
           if (!curr->type.isNullable()) {
             // Make sure to emit a block with the same type as us; leave
             // updating types for other passes.
-            replaceCurrent(builder.makeBlock({
-              builder.makeDrop(child->ref),
-              builder.makeUnreachable()
-            }, curr->type));
+            replaceCurrent(builder.makeBlock(
+              {builder.makeDrop(child->ref), builder.makeUnreachable()},
+              curr->type));
             return;
           }
         }
@@ -1511,8 +1507,7 @@ struct OptimizeInstructions
     auto intendedType = curr->getIntendedType();
 
     // See above in RefCast.
-    if (!canBeCastTo(refType,
-                     intendedType)) {
+    if (!canBeCastTo(refType, intendedType)) {
       // This test cannot succeed, and will definitely return 0.
       std::vector<Expression*> items;
       items.push_back(builder.makeDrop(curr->ref));
@@ -1527,10 +1522,8 @@ struct OptimizeInstructions
     if (!curr->rtt && curr->ref->type.isNonNullable() &&
         HeapType::isSubType(refType, intendedType)) {
       // This static test will definitely succeed.
-      replaceCurrent(builder.makeBlock({
-        builder.makeDrop(curr->ref),
-        builder.makeConst(int32_t(1))
-      }));
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
       return;
     }
   }
