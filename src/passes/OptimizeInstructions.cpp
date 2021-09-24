@@ -1823,7 +1823,8 @@ private:
       Expression *x, *y;
       if ((matches(curr, select(any(&x), i32(0), pure(&y))) ||
            matches(curr, select(i32(0), any(&x), pure(&y)))) &&
-          (equalWithTee(x, y) || ExpressionAnalyzer::equal(x, y))) {
+          ((curr->ifFalse->is<Const>() && equalWithTee(x, y)) ||
+           ExpressionAnalyzer::equal(x, y))) {
         return curr->ifTrue;
       }
     }
