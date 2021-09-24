@@ -2152,4 +2152,118 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-cast-static-squared (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-squared (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $A
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-squared (param $x eqref)
+    ;; Identical ref.casts can be folded together.
+    (drop
+      (ref.cast_static $A
+        (ref.cast_static $A
+          (local.get $x)
+        )
+      )
+    )
+    ;; When subtypes exist, we only need the stricter one.
+    (drop
+      (ref.cast_static $A
+        (ref.cast_static $B
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (ref.cast_static $B
+        (ref.cast_static $A
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-squared-impossible (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (ref.cast_static $array
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (ref.cast_static $struct
+  ;; CHECK-NEXT:     (ref.cast_static $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-squared-impossible (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
+  ;; NOMNL-NEXT:    (ref.cast_static $array
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.as_non_null
+  ;; NOMNL-NEXT:    (ref.cast_static $struct
+  ;; NOMNL-NEXT:     (ref.cast_static $array
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-squared-impossible (param $x eqref)
+    ;; Impossible casts will trap unless the input is null.
+    (drop
+      (ref.cast_static $struct
+        (ref.cast_static $array
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (ref.cast_static $struct
+        (ref.cast_static $array
+          (ref.as_non_null (local.get $x))
+        )
+      )
+    )
+  )
 )

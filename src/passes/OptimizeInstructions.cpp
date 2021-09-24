@@ -1417,9 +1417,8 @@ struct OptimizeInstructions
       }
     }
 
-    // Repeated identical ref.cast operations are unnecessary, if using the
-    // exact same rtt - the result will be the same. Find the immediate child
-    // cast, if there is one, and see if it is identical.
+    // Repeated identical ref.cast operations are unnecessary. First, find the
+    // immediate child cast, if there is one.
     // TODO: Look even further through incompatible casts?
     auto* ref = curr->ref;
     while (!ref->is<RefCast>()) {
@@ -1435,12 +1434,27 @@ struct OptimizeInstructions
       }
     }
     if (auto* child = ref->dynCast<RefCast>()) {
-      // Check if the casts are identical.
-      if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
-          !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
-             .hasSideEffects()) {
-        replaceCurrent(curr->ref);
-        return;
+      if (curr->rtt && child->rtt) {
+        // Check if the casts are identical.
+        if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
+            !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
+               .hasSideEffects()) {
+          replaceCurrent(curr->ref);
+          return;
+        }
+      } else if (!curr->rtt && !child->rtt) {
+        // Repeated static casts can be removed, leaving just the most demanding
+        // of them.
+        auto childIntendedType = child->getIntendedType();
+        if (HeapType::isSubType(intendedType, childIntendedType)) {
+          // Skip the child.
+          curr->ref = child->ref;
+          return;
+        } else if (HeapType::isSubType(childIntendedType, intendedType)) {
+          // Skip the parent.
+          replaceCurrent(child);
+          return;
+        }
       }
     }
 
