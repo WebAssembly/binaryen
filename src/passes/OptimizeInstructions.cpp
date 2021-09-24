@@ -1807,9 +1807,9 @@ private:
     {
       // TODO: Remove this after landing SCCP pass. See: #4161
 
-      auto equalWithTee = [&](Expression* arm, Expression* cond) {
+      auto equalWithTee = [&](Expression* ifTrue, Expression* cond) {
         if (auto* get = cond->dynCast<LocalGet>()) {
-          if (auto* set = arm->dynCast<LocalSet>()) {
+          if (auto* set = ifTrue->dynCast<LocalSet>()) {
             if (set->isTee() && get->index == set->index) {
               return true;
             }
@@ -1823,8 +1823,7 @@ private:
       Expression *x, *y;
       if ((matches(curr, select(any(&x), i32(0), pure(&y))) ||
            matches(curr, select(i32(0), any(&x), pure(&y)))) &&
-          ((curr->ifFalse->is<Const>() && equalWithTee(x, y)) ||
-           ExpressionAnalyzer::equal(x, y))) {
+          (equalWithTee(curr->ifTrue, y) || ExpressionAnalyzer::equal(x, y))) {
         return curr->ifTrue;
       }
     }
