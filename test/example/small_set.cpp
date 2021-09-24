@@ -23,7 +23,7 @@ void assertContents(T& t, const std::vector<int>& expectedContents) {
   }
 }
 
-template<typename T> void test() {
+template<typename T> void testAPI() {
   {
     T t;
 
@@ -121,9 +121,10 @@ template<typename T> void test() {
   }
 }
 
+template<typename T>
 void testInternals() {
   {
-    SmallSet<int, 1> s;
+    T s;
     // Start out using fixed storage.
     assert(s.TEST_ONLY_NEVER_USE_usingFixed());
     // Adding one item still keeps us using fixed storage, as that is the exact
@@ -150,12 +151,18 @@ void testInternals() {
 }
 
 int main() {
-  test<SmallSet<int, 0>>();
-  test<SmallSet<int, 1>>();
-  test<SmallSet<int, 2>>();
-  test<SmallSet<int, 10>>();
+  testAPI<SmallSet<int, 0>>();
+  testAPI<SmallSet<int, 1>>();
+  testAPI<SmallSet<int, 2>>();
+  testAPI<SmallSet<int, 10>>();
 
-  testInternals();
+  testAPI<SmallUnorderedSet<int, 0>>();
+  testAPI<SmallUnorderedSet<int, 1>>();
+  testAPI<SmallUnorderedSet<int, 2>>();
+  testAPI<SmallUnorderedSet<int, 10>>();
+
+  testInternals<SmallSet<int, 1>>();
+  testInternals<SmallUnorderedSet<int, 1>>();
 
   std::cout << "ok.\n";
 }

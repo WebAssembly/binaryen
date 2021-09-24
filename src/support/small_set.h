@@ -17,7 +17,8 @@
 //
 // A set of elements, which is often small. While the number of items is small,
 // the implementation simply stores them in an array that is linearly looked
-// through. Once the size is large enough, we switch to using a std::set.
+// through. Once the size is large enough, we switch to using a std::set or
+// or std::unordered_set.
 //
 
 #ifndef wasm_support_small_set_h
@@ -27,16 +28,17 @@
 #include <cassert>
 #include <iterator>
 #include <set>
+#include <unordered_set>
 
 namespace wasm {
 
-template<typename T, size_t N> class SmallSet {
+template<typename T, size_t N, typename FlexibleSet> class SmallSetBase {
   // fixed-space storage
   size_t usedFixed = 0;
   std::array<T, N> fixed;
 
   // flexible additional storage
-  std::set<T> flexible;
+  FlexibleSet flexible;
 
   bool usingFixed() const {
     // If the flexible storage contains something, then we are using it.
@@ -52,11 +54,11 @@ public:
   using key_type = T;
   using reference = T&;
   using const_reference = const T&;
-  using set_type = typename std::set<T>;
+  using set_type = FlexibleSet;
   using size_type = size_t;
 
-  SmallSet() {}
-  SmallSet(std::initializer_list<T> init) {
+  SmallSetBase() {}
+  SmallSetBase(std::initializer_list<T> init) {
     for (T item : init) {
       insert(item);
     }
@@ -133,7 +135,7 @@ public:
     flexible.clear();
   }
 
-  bool operator==(const SmallSet<T, N>& other) const {
+  bool operator==(const SmallSetBase<T, N, FlexibleSet>& other) const {
     if (usingFixed()) {
       if (usedFixed != other.usedFixed) {
         return false;
@@ -147,7 +149,7 @@ public:
     return flexible == other.flexible;
   }
 
-  bool operator!=(const SmallSet<T, N>& other) const {
+  bool operator!=(const SmallSetBase<T, N, FlexibleSet>& other) const {
     return !(*this == other);
   }
 
@@ -211,11 +213,11 @@ public:
   };
 
   struct Iterator
-    : IteratorBase<SmallSet<T, N>, Iterator, typename std::set<T>::iterator> {
+    : IteratorBase<SmallSetBase<T, N, FlexibleSet>, Iterator, typename FlexibleSet::iterator> {
     typedef std::forward_iterator_tag iterator_category;
 
-    Iterator(SmallSet<T, N>* parent)
-      : IteratorBase<SmallSet<T, N>, Iterator, typename std::set<T>::iterator>(
+    Iterator(SmallSetBase<T, N, FlexibleSet>* parent)
+      : IteratorBase<SmallSetBase<T, N, FlexibleSet>, Iterator, typename FlexibleSet::iterator>(
           parent) {}
 
     value_type operator*() const {
@@ -227,15 +229,15 @@ public:
     }
   };
 
-  struct ConstIterator : IteratorBase<const SmallSet<T, N>,
+  struct ConstIterator : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
                                       ConstIterator,
-                                      typename std::set<T>::const_iterator> {
+                                      typename FlexibleSet::const_iterator> {
     typedef std::forward_iterator_tag iterator_category;
 
-    ConstIterator(const SmallSet<T, N>* parent)
-      : IteratorBase<const SmallSet<T, N>,
+    ConstIterator(const SmallSetBase<T, N, FlexibleSet>* parent)
+      : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
                      ConstIterator,
-                     typename std::set<T>::const_iterator>(parent) {}
+                     typename FlexibleSet::const_iterator>(parent) {}
 
     const value_type operator*() const {
       if (this->usingFixed) {
@@ -278,24 +280,10 @@ public:
   bool TEST_ONLY_NEVER_USE_usingFixed() { return usingFixed(); }
 };
 
+template<typename T, size_t N> class SmallSet : public SmallSetBase<T, N, std::set<T>> {};
+
+template<typename T, size_t N> class SmallUnorderedSet : public SmallSetBase<T, N, std::unordered_set<T>> {};
+
 } // namespace wasm
-
-#if 0
-
-namespace std {
-
-template<typename T, size_t N>
-struct iterator_traits<typename wasm::SmallSet<T, N>::Iterator> {
-  typedef forward_iterator_tag iterator_category;
-};
-
-template<typename T, size_t N>
-struct iterator_traits<typename wasm::SmallSet<T, N>::ConstIterator> {
-  typedef forward_iterator_tag iterator_category;
-};
-
-}
-
-#endif
 
 #endif // wasm_support_small_set_h
