@@ -2061,7 +2061,7 @@
 
   ;; CHECK:      (func $ref-cast-static-impossible (param $func (ref func))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result dataref)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
@@ -2071,7 +2071,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-impossible (param $func (ref func))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result dataref)
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $func)
   ;; NOMNL-NEXT:    )
@@ -2080,9 +2080,9 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-static-impossible (param $func (ref func))
-    ;; A func cannot be cast to data, so this will trap.
+    ;; A func cannot be cast to a struct, so this will trap.
     (drop
-      (ref.cast_static data
+      (ref.cast_static $struct
         (local.get $func)
       )
     )
