@@ -208,6 +208,13 @@ struct OptimizeInstructions
   bool fastMath;
 
   void doWalkFunction(Function* func) {
+    // Early skip single childless expressions in function's body like:
+    // (nop), (i32.const 3), (local.get $0), (global.get $g0)
+    if (func->body->is<Nop>() || func->body->is<Const>() ||
+        func->body->is<LocalGet>() || func->body->is<GlobalGet>()) {
+      return;
+    }
+
     fastMath = getPassOptions().fastMath;
 
     // First, scan locals.
