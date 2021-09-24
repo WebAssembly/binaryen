@@ -1626,6 +1626,23 @@ private:
     return true;
   }
 
+  // Check if two consecutive inputs to an instruction are equal.
+  // It helps to identify reads from the same local variable when
+  // one of them is a "tee" operation.
+  //
+  // local.tee(idx) == local.get(idx)
+  bool areConsecutiveInputsEqualAndFoldable(Expression* left,
+                                            Expression* right) {
+    if (auto* set = left->dynCast<LocalSet>()) {
+      if (auto* get = right->dynCast<LocalGet>()) {
+        if (set->isTee() && get->index == set->index) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
@@ -1807,27 +1824,13 @@ private:
     {
       // TODO: Remove this after landing SCCP pass. See: #4161
 
-      // A helper that helps to identify reads from the same local variable when
-      // one of them is a "tee" operation.
-      //
-      // local.get(idx) ? local.tee(idx) : ..
-      auto equalWithTee = [&](Expression* ifTrue, Expression* cond) {
-        if (auto* get = cond->dynCast<LocalGet>()) {
-          if (auto* set = ifTrue->dynCast<LocalSet>()) {
-            if (set->isTee() && get->index == set->index) {
-              return true;
-            }
-          }
-        }
-        return false;
-      };
-
       // i32(x) ? i32(x) : 0  ==>  x
       // i32(x) ? 0 : i32(x)  ==>  0
       Expression *x, *y;
       if ((matches(curr, select(any(&x), i32(0), pure(&y))) ||
            matches(curr, select(i32(0), any(&x), pure(&y)))) &&
-          (equalWithTee(curr->ifTrue, y) || ExpressionAnalyzer::equal(x, y))) {
+          (areConsecutiveInputsEqualAndFoldable(curr->ifTrue, y) ||
+           ExpressionAnalyzer::equal(x, y))) {
         return curr->ifTrue;
       }
     }
