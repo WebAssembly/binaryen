@@ -121,8 +121,7 @@ template<typename T> void testAPI() {
   }
 }
 
-template<typename T>
-void testInternals() {
+template<typename T> void testInternals() {
   {
     T s;
     // Start out using fixed storage.

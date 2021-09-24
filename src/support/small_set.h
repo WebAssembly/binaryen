@@ -212,13 +212,15 @@ public:
     }
   };
 
-  struct Iterator
-    : IteratorBase<SmallSetBase<T, N, FlexibleSet>, Iterator, typename FlexibleSet::iterator> {
+  struct Iterator : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
+                                 Iterator,
+                                 typename FlexibleSet::iterator> {
     typedef std::forward_iterator_tag iterator_category;
 
     Iterator(SmallSetBase<T, N, FlexibleSet>* parent)
-      : IteratorBase<SmallSetBase<T, N, FlexibleSet>, Iterator, typename FlexibleSet::iterator>(
-          parent) {}
+      : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
+                     Iterator,
+                     typename FlexibleSet::iterator>(parent) {}
 
     value_type operator*() const {
       if (this->usingFixed) {
@@ -280,9 +282,11 @@ public:
   bool TEST_ONLY_NEVER_USE_usingFixed() { return usingFixed(); }
 };
 
-template<typename T, size_t N> class SmallSet : public SmallSetBase<T, N, std::set<T>> {};
+template<typename T, size_t N>
+class SmallSet : public SmallSetBase<T, N, std::set<T>> {};
 
-template<typename T, size_t N> class SmallUnorderedSet : public SmallSetBase<T, N, std::unordered_set<T>> {};
+template<typename T, size_t N>
+class SmallUnorderedSet : public SmallSetBase<T, N, std::unordered_set<T>> {};
 
 } // namespace wasm
 
