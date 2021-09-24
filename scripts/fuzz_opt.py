@@ -44,6 +44,8 @@ INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
 PRINT_WATS = False
 
+given_seed = None
+
 
 # utilities
 
@@ -164,7 +166,7 @@ def randomize_fuzz_settings():
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
-def get_important_initial_contents():
+def init_important_initial_contents():
     FIXED_IMPORTANT_INITIAL_CONTENTS = [
         # Perenially-important passes
         os.path.join('lit', 'passes', 'optimize-instructions.wast'),
@@ -238,15 +240,18 @@ def get_important_initial_contents():
     for test in recent_contents:
         print('  ' + test)
     print()
-    ret = input('Do you want to proceed with these initial contents? (Y/n) ').lower()
-    if ret != 'y' and ret != '':
-        sys.exit(1)
+
+    # We prompt the user only when there is no seed given. This fuzz_opt.py is
+    # often used with seed in a scirpt called from wasm-reduce, in which case we
+    # should not pause for a user input.
+    if given_seed is None:
+        ret = input('Do you want to proceed with these initial contents? (Y/n) ').lower()
+        if ret != 'y' and ret != '':
+            sys.exit(1)
 
     initial_contents = FIXED_IMPORTANT_INITIAL_CONTENTS + recent_contents
-    return [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
-
-
-IMPORTANT_INITIAL_CONTENTS = get_important_initial_contents()
+    global IMPORTANT_INITIAL_CONTENTS
+    IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
 
 
 def pick_initial_contents():
@@ -1246,6 +1251,9 @@ if __name__ == '__main__':
     else:
         given_seed = None
         print('checking infinite random inputs')
+
+    init_important_initial_contents()
+
     seed = time.time() * os.getpid()
     raw_input_data = 'input.dat'
     counter = 0
