@@ -214,11 +214,12 @@
   ;; CHECK-NEXT: )
   (func $13 (export "eliminate-redundant-checks-skip") (param $0 i32) (param $1 i32) (result i32)
     (if
-      (local.get $1)
-      (if
+      (select
+        (local.get $1)
+        (i32.const 0)
         (local.tee $1 (local.get $0))
-        (return (local.get $1))
       )
+      (return (local.get $1))
     )
     (i32.const 0)
   )
