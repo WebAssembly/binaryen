@@ -41,8 +41,7 @@ struct LocalGraph {
   // set of size 2 to avoid allocations there.
   typedef SmallSet<LocalSet*, 2> Sets;
 
-  // unordered?
-  typedef std::map<LocalGet*, Sets> GetSetses;
+  typedef std::unordered_map<LocalGet*, Sets> GetSetses;
 
   typedef std::map<Expression*, Expression**> Locations;
 
@@ -68,7 +67,7 @@ struct LocalGraph {
   }
 
   // for each get, the sets whose values are influenced by that get
-  using GetInfluences = std::unordered_set<LocalGet*>;
+  using GetInfluences = std::unordered_set<LocalSet*>;
   std::unordered_map<LocalGet*, GetInfluences> getInfluences;
   using SetInfluences = std::unordered_set<LocalGet*>;
   std::unordered_map<LocalSet*, SetInfluences> setInfluences;
