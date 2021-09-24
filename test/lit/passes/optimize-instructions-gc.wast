@@ -2296,11 +2296,14 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-test-static-same-type (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+    ;; A nullable value cannot be optimized here even though it is the same
+    ;; type.
     (drop
       (ref.test_static $A
         (local.get $nullable)
       )
     )
+    ;; But if it is non-nullable, it must succeed.
     (drop
       (ref.test_static $A
         (local.get $non-nullable)
@@ -2339,6 +2342,7 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-test-static-subtype (param $nullable (ref null $B)) (param $non-nullable (ref $B))
+    ;; As above, but the input is a subtype, so the same things happen.
     (drop
       (ref.test_static $A
         (local.get $nullable)
@@ -2376,6 +2380,8 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-test-static-supertype (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+    ;; As above, but the input is a supertype. We can't know at compile time
+    ;; what to do here.
     (drop
       (ref.test_static $B
         (local.get $nullable)
@@ -2425,6 +2431,7 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-test-static-impossible (param $nullable (ref null $array)) (param $non-nullable (ref $array))
+    ;; Testing an impossible cast will definitely fail.
     (drop
       (ref.test_static $struct
         (local.get $nullable)
