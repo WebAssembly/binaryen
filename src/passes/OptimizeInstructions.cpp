@@ -1807,12 +1807,23 @@ private:
     {
       // TODO: Remove this after landing SCCP pass. See: #4161
 
+      auto equalWithTee = [&](Expression* arm, Expression* cond) {
+        if (auto* get = cond->dynCast<LocalGet>()) {
+          if (auto* set = arm->dynCast<LocalSet>()) {
+            if (set->isTee() && get->index == set->index) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+
       // i32(x) ? i32(x) : 0  ==>  x
       // i32(x) ? 0 : i32(x)  ==>  0
       Expression *x, *y;
-      if ((matches(curr, select(pure(&x), i32(0), any(&y))) ||
-           matches(curr, select(i32(0), pure(&x), any(&y)))) &&
-          ExpressionAnalyzer::equal(x, y)) {
+      if ((matches(curr, select(any(&x), i32(0), pure(&y))) ||
+           matches(curr, select(i32(0), any(&x), pure(&y)))) &&
+          (equalWithTee(x, y) || ExpressionAnalyzer::equal(x, y))) {
         return curr->ifTrue;
       }
     }
@@ -1824,14 +1835,14 @@ private:
       // i64(x) != 0 ? 0 : i64(x)  ==>  0
       // i64(x) != 0 ? i64(x) : 0  ==>  x
       Expression *x, *y;
-      if ((matches(curr, select(i64(0), pure(&x), unary(EqZInt64, any(&y)))) ||
-           matches(curr, select(pure(&x), i64(0), unary(EqZInt64, any(&y)))) ||
+      if ((matches(curr, select(i64(0), any(&x), unary(EqZInt64, pure(&y)))) ||
+           matches(curr, select(any(&x), i64(0), unary(EqZInt64, pure(&y)))) ||
            matches(
              curr,
-             select(i64(0), pure(&x), binary(NeInt64, any(&y), i64(0)))) ||
+             select(i64(0), any(&x), binary(NeInt64, pure(&y), i64(0)))) ||
            matches(
              curr,
-             select(pure(&x), i64(0), binary(NeInt64, any(&y), i64(0))))) &&
+             select(any(&x), i64(0), binary(NeInt64, pure(&y), i64(0))))) &&
           ExpressionAnalyzer::equal(x, y)) {
         return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
       }
