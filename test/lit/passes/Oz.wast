@@ -5,9 +5,9 @@
 
 (module
   (memory 100 100)
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
-
   ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
 
@@ -24,6 +24,8 @@
   ;; CHECK:      (export "eliminate-redundant-checks-1" (func $11))
 
   ;; CHECK:      (export "eliminate-redundant-checks-2" (func $12))
+
+  ;; CHECK:      (export "eliminate-redundant-checks-skip" (func $13))
 
   ;; CHECK:      (func $basics (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
@@ -191,6 +193,30 @@
       (local.tee $1 (local.get $0))
       (if
         (local.get $1)
+        (return (local.get $1))
+      )
+    )
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $13 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $13 (export "eliminate-redundant-checks-skip") (param $0 i32) (param $1 i32) (result i32)
+    (if
+      (local.get $1)
+      (if
+        (local.tee $1 (local.get $0))
         (return (local.get $1))
       )
     )
