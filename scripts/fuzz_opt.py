@@ -242,7 +242,7 @@ def init_important_initial_contents():
     print()
 
     # We prompt the user only when there is no seed given. This fuzz_opt.py is
-    # often used with seed in a scirpt called from wasm-reduce, in which case we
+    # often used with seed in a script called from wasm-reduce, in which case we
     # should not pause for a user input.
     if given_seed is None:
         ret = input('Do you want to proceed with these initial contents? (Y/n) ').lower()
