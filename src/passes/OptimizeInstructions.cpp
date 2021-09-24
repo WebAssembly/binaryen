@@ -1505,18 +1505,33 @@ struct OptimizeInstructions
       return;
     }
 
-    // TODO: If no rtt, this is a static test, and if the type matches then it
-    //       will definitely succeed. The opt below could be expanded for that.
-    if (curr->rtt) {
-      // See above in RefCast.
-      if (!canBeCastTo(curr->ref->type.getHeapType(),
-                       curr->getIntendedType())) {
-        // This test cannot succeed, and will definitely return 0.
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->rtt),
-                                          builder.makeConst(int32_t(0))}));
+    Builder builder(*getModule());
+
+    auto refType = curr->ref->type.getHeapType();
+    auto intendedType = curr->getIntendedType();
+
+    // See above in RefCast.
+    if (!canBeCastTo(refType,
+                     intendedType)) {
+      // This test cannot succeed, and will definitely return 0.
+      std::vector<Expression*> items;
+      items.push_back(builder.makeDrop(curr->ref));
+      if (curr->rtt) {
+        items.push_back(builder.makeDrop(curr->rtt));
       }
+      items.push_back(builder.makeConst(int32_t(0)));
+      replaceCurrent(builder.makeBlock(items));
+      return;
+    }
+
+    if (!curr->rtt && curr->ref->type.isNonNullable() &&
+        HeapType::isSubType(refType, intendedType)) {
+      // This static test will definitely succeed.
+      replaceCurrent(builder.makeBlock({
+        builder.makeDrop(curr->ref),
+        builder.makeConst(int32_t(1))
+      }));
+      return;
     }
   }
 

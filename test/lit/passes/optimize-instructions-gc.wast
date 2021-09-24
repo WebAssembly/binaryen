@@ -2264,4 +2264,176 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-test-static-same-type (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $A
+  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $non-nullable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-test-static-same-type (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test_static $A
+  ;; NOMNL-NEXT:    (local.get $nullable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $non-nullable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-test-static-same-type (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+    (drop
+      (ref.test_static $A
+        (local.get $nullable)
+      )
+    )
+    (drop
+      (ref.test_static $A
+        (local.get $non-nullable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-test-static-subtype (param $nullable (ref null $B)) (param $non-nullable (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $A
+  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $non-nullable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-test-static-subtype (param $nullable (ref null $B)) (param $non-nullable (ref $B))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test_static $A
+  ;; NOMNL-NEXT:    (local.get $nullable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $non-nullable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-test-static-subtype (param $nullable (ref null $B)) (param $non-nullable (ref $B))
+    (drop
+      (ref.test_static $A
+        (local.get $nullable)
+      )
+    )
+    (drop
+      (ref.test_static $A
+        (local.get $non-nullable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-test-static-supertype (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (local.get $non-nullable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-test-static-supertype (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test_static $B
+  ;; NOMNL-NEXT:    (local.get $nullable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test_static $B
+  ;; NOMNL-NEXT:    (local.get $non-nullable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-test-static-supertype (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+    (drop
+      (ref.test_static $B
+        (local.get $nullable)
+      )
+    )
+    (drop
+      (ref.test_static $B
+        (local.get $non-nullable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-test-static-impossible (param $nullable (ref null $array)) (param $non-nullable (ref $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $nullable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $non-nullable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-test-static-impossible (param $nullable (ref null $array)) (param $non-nullable (ref $array))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $nullable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $non-nullable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-test-static-impossible (param $nullable (ref null $array)) (param $non-nullable (ref $array))
+    (drop
+      (ref.test_static $struct
+        (local.get $nullable)
+      )
+    )
+    (drop
+      (ref.test_static $struct
+        (local.get $non-nullable)
+      )
+    )
+  )
 )
