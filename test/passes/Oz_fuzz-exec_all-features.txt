@@ -533,17 +533,10 @@
    (i32.const 0)
   )
   (call $log
-   (ref.test_static $struct
-    (array.new $bytes
-     (i32.const 20)
-     (i32.const 10)
-    )
-   )
+   (i32.const 0)
   )
   (call $log
-   (ref.test_static $struct
-    (struct.new_default $struct)
-   )
+   (i32.const 1)
   )
   (call $log
    (ref.test_static $extendedstruct
@@ -551,9 +544,7 @@
    )
   )
   (call $log
-   (ref.test_static $struct
-    (struct.new_default $extendedstruct)
-   )
+   (i32.const 1)
   )
  )
  (func $29 (; has Stack IR ;)
