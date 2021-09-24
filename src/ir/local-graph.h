@@ -39,19 +39,12 @@ struct LocalGraph {
   // The local.sets relevant for an index or a get. The most common case is to
   // have a single set; after that, to be a phi of 2 items, so we use a small
   // set of size 2 to avoid allocations there.
-  // 0: 4.38    47,03
-  // 1: 4.11    45,99
-  // 2: 3.70    45,88  winner
-  // 3: 3.65    45,84
-  // 4: 3.67    46,11  DOWNAIDE
-  // Unordered is worse.
   typedef SmallSet<LocalSet*, 2> Sets;
 
-  // unordered: 3.7 => 3.55   45,55
-  typedef std::unordered_map<LocalGet*, Sets> GetSetses;
+  // unordered?
+  typedef std::map<LocalGet*, Sets> GetSetses;
 
-  // maybe also worth unordered, but not clear.
-  typedef std::unordered_map<Expression*, Expression**> Locations;
+  typedef std::map<Expression*, Expression**> Locations;
 
   // externally useful information
   GetSetses getSetses; // the sets affecting each get. a nullptr set means the
@@ -75,15 +68,9 @@ struct LocalGraph {
   }
 
   // for each get, the sets whose values are influenced by that get
-  // 0: 8.90    70,65
-  // 1: 8.8?    70,72
-  // 2:         70,31
-  // 4: same
-  using GetInfluences = SmallUnorderedSet<LocalSet*, 4>;
+  using GetInfluences = std::unordered_set<LocalGet*>;
   std::unordered_map<LocalGet*, GetInfluences> getInfluences;
-  // for each set, the gets whose values are influenced by that set
-  // 1: 
-  using SetInfluences = SmallUnorderedSet<LocalGet*, 3>;
+  using SetInfluences = std::unordered_set<LocalGet*>;
   std::unordered_map<LocalSet*, SetInfluences> setInfluences;
 
   // Optional: Compute the local indexes that are SSA, in the sense of
