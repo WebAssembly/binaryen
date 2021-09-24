@@ -22,13 +22,6 @@
 
 namespace wasm {
 
-/*
-SmallSet
-
-If you reach a get of your index, copy and stop!
-
-*/
-
 //
 // Finds the connections between local.gets and local.sets, creating
 // a graph of those ties. This is useful for "ssa-style" optimization,
@@ -43,12 +36,8 @@ struct LocalGraph {
   // the constructor computes getSetses, the sets affecting each get
   LocalGraph(Function* func);
 
-  // The local.sets relevant for an index or a get. A SmallSet<1> make sense
-  // here because the common case is to have one set for a get (phis are the
-  // less common case). Also, having zero sets is extremely rare, as the
-  // function entry always zero-initializes (only unreachable code can avoid
-  // that).
-  typedef SmallSet<LocalSet*, 2> Sets;
+  // The local.sets relevant for an index or a get.
+  typedef std::set<LocalSet*> Sets;
 
   typedef std::map<LocalGet*, Sets> GetSetses;
 
@@ -76,11 +65,10 @@ struct LocalGraph {
   }
 
   // for each get, the sets whose values are influenced by that get
-  // TODO: Small
-  using GetInfluences = SmallSet<LocalSet*, 2>;
+  using GetInfluences = std::unordered_set<LocalSet*>;
   std::unordered_map<LocalGet*, GetInfluences> getInfluences;
   // for each set, the gets whose values are influenced by that set
-  using SetInfluences = SmallSet<LocalGet*, 2>;
+  using SetInfluences = std::unordered_set<LocalSet*>;
   std::unordered_map<LocalSet*, SetInfluences> setInfluences;
 
   // Optional: Compute the local indexes that are SSA, in the sense of
