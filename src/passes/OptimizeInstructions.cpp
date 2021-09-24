@@ -1454,6 +1454,18 @@ struct OptimizeInstructions
           // Skip the parent.
           replaceCurrent(child);
           return;
+        } else {
+          // The types are not compatible, so if the input is not null, this
+          // will trap.
+          if (!curr->type.isNullable()) {
+            // Make sure to emit a block with the same type as us; leave
+            // updating types for other passes.
+            replaceCurrent(builder.makeBlock({
+              builder.makeDrop(child->ref),
+              builder.makeUnreachable()
+            }, curr->type));
+            return;
+          }
         }
       }
     }

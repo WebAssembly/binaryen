@@ -2222,12 +2222,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast_static $struct
-  ;; CHECK-NEXT:     (ref.cast_static $array
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2240,12 +2239,11 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.as_non_null
-  ;; NOMNL-NEXT:    (ref.cast_static $struct
-  ;; NOMNL-NEXT:     (ref.cast_static $array
-  ;; NOMNL-NEXT:      (local.get $x)
-  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
