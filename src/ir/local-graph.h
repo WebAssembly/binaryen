@@ -36,12 +36,21 @@ struct LocalGraph {
   // the constructor computes getSetses, the sets affecting each get
   LocalGraph(Function* func);
 
-  // The local.sets relevant for an index or a get.
-  typedef std::set<LocalSet*> Sets;
+  // The local.sets relevant for an index or a get. The most common case is to
+  // have a single set; after that, to be a phi of 2 items, so we use a small
+  // set of size 2 to avoid allocations there.
+  // 0: 4.38    47,03
+  // 1: 4.11    45,99
+  // 2: 3.70    45,88  winner
+  // 3: 3.65    45,84
+  // 4: 3.67    46,11  DOWNAIDE
+  typedef SmallSet<LocalSet*, 2> Sets;
 
-  typedef std::map<LocalGet*, Sets> GetSetses;
+  // unordered: 3.7 => 3.55   45,55
+  typedef std::unordered_map<LocalGet*, Sets> GetSetses;
 
-  typedef std::map<Expression*, Expression**> Locations;
+  // maybe also worth unordered, but not clear.
+  typedef std::unordered_map<Expression*, Expression**> Locations;
 
   // externally useful information
   GetSetses getSetses; // the sets affecting each get. a nullptr set means the
