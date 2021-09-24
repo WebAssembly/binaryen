@@ -1807,6 +1807,10 @@ private:
     {
       // TODO: Remove this after landing SCCP pass. See: #4161
 
+      // A helper that helps to identify reads from the same local variable when
+      // one of them is a "tee" operation.
+      //
+      // local.get(idx) ? local.tee(idx) : ..
       auto equalWithTee = [&](Expression* ifTrue, Expression* cond) {
         if (auto* get = cond->dynCast<LocalGet>()) {
           if (auto* set = ifTrue->dynCast<LocalSet>()) {
