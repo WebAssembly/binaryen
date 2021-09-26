@@ -472,16 +472,23 @@ struct FunctionSplitter {
   //
   // Returns a list of the names of the functions we split.
   std::vector<Name> finish() {
+std::cout << "remove1\n";
     std::vector<Name> ret;
+    std::unordered_set<Name> inlineableNames;
     for (auto& kv : splits) {
       Name func = kv.first;
       auto& split = kv.second;
       auto* inlineable = split.inlineable;
       if (inlineable) {
-        module->removeFunction(inlineable->name);
+        inlineableNames.insert(inlineable->name);
         ret.push_back(func);
       }
     }
+std::cout << "remove2\n";
+    module->removeFunctions([&](Function* func) {
+      return inlineableNames.find(func->name) != inlineableNames.end();
+    });
+std::cout << "remove3\n";
     return ret;
   }
 
@@ -977,13 +984,16 @@ struct Inlining : public Pass {
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
       }
     }
-    // anything we inlined into may now have non-unique label names, fix it up
     for (auto func : inlinedInto) {
+      // Anything we inlined into may now have non-unique label names, fix it
+      // up.
       wasm::UniqueNameMapper::uniquify(func->body);
     }
+std::cout << "opting...\n";
     if (optimize && inlinedInto.size() > 0) {
       OptUtils::optimizeAfterInlining(inlinedInto, module, runner);
     }
+std::cout << "zzzzzzzemove1\n";
     // remove functions that we no longer need after inlining
     module->removeFunctions([&](Function* func) {
       auto name = func->name;
@@ -991,6 +1001,7 @@ struct Inlining : public Pass {
       return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
              !info.usedGlobally;
     });
+std::cout << "zzzzzzzemove2\n";
   }
 
   bool worthInlining(Name name) {
