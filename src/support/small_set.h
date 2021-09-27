@@ -209,12 +209,13 @@ public:
 
     bool operator!=(const Iterator& other) const { return !(*this == other); }
 
-    void operator++() {
+    Iterator& operator++() {
       if (usingFixed) {
         fixedIndex++;
       } else {
         flexibleIterator++;
       }
+      return *this;
     }
   };
 
