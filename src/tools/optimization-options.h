@@ -179,7 +179,7 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.inlining.partialInliningIfs =
-               static_cast<Index>(atoi(argument.c_str()));
+               static_cast<Index>(std::stoi(argument));
            })
       .add("--ignore-implicit-traps",
            "-iit",
