@@ -43,7 +43,7 @@ struct LocalGraph {
 
   using GetSetses = std::unordered_map<LocalGet*, Sets>;
 
-  typedef std::map<Expression*, Expression**> Locations;
+  using Locations = std::map<Expression*, Expression**>;
 
   // externally useful information
   GetSetses getSetses; // the sets affecting each get. a nullptr set means the
