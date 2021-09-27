@@ -26,6 +26,10 @@
   ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
   (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
+  ;; CHECK:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)))
+  ;; NOMNL:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)) (extends $B))
+  (type $B-child (struct (field i32) (field i32) (field f32) (field i64)) (extends $B))
+
   (type $A (struct (field i32)))
 
   ;; CHECK:      (type $empty (struct ))
@@ -2208,6 +2212,129 @@
       (ref.cast_static $B
         (ref.cast_static $A
           (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-many (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B-child
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B-child
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B-child
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B-child
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B-child
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B-child
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-many (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B-child
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B-child
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B-child
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B-child
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B-child
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B-child
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-many (param $x eqref)
+    ;; We should optimize a long sequence of static casts when we can. All six
+    ;; orderings of these casts should collapse into the strictest one.
+    (drop
+      (ref.cast_static $A
+        (ref.cast_static $B
+          (ref.cast_static $B-child
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (drop
+      (ref.cast_static $A
+        (ref.cast_static $B-child
+          (ref.cast_static $B
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (drop
+      (ref.cast_static $B
+        (ref.cast_static $A
+          (ref.cast_static $B-child
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (drop
+      (ref.cast_static $B
+        (ref.cast_static $B-child
+          (ref.cast_static $A
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (drop
+      (ref.cast_static $B-child
+        (ref.cast_static $A
+          (ref.cast_static $B
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (drop
+      (ref.cast_static $B-child
+        (ref.cast_static $B
+          (ref.cast_static $A
+            (local.get $x)
+          )
         )
       )
     )
