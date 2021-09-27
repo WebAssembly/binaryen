@@ -473,15 +473,19 @@ struct FunctionSplitter {
   // Returns a list of the names of the functions we split.
   std::vector<Name> finish() {
     std::vector<Name> ret;
+    std::unordered_set<Name> inlineableNames;
     for (auto& kv : splits) {
       Name func = kv.first;
       auto& split = kv.second;
       auto* inlineable = split.inlineable;
       if (inlineable) {
-        module->removeFunction(inlineable->name);
+        inlineableNames.insert(inlineable->name);
         ret.push_back(func);
       }
     }
+    module->removeFunctions([&](Function* func) {
+      return inlineableNames.find(func->name) != inlineableNames.end();
+    });
     return ret;
   }
 
@@ -977,8 +981,9 @@ struct Inlining : public Pass {
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
       }
     }
-    // anything we inlined into may now have non-unique label names, fix it up
     for (auto func : inlinedInto) {
+      // Anything we inlined into may now have non-unique label names, fix it
+      // up.
       wasm::UniqueNameMapper::uniquify(func->body);
     }
     if (optimize && inlinedInto.size() > 0) {
