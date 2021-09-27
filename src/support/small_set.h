@@ -165,7 +165,7 @@ public:
   struct IteratorBase : public std::iterator<std::forward_iterator_tag, T> {
     using value_type = T;
     using difference_type = long;
-    using reference = T&
+    using reference = T&;
 
     Parent* parent;
 
@@ -209,7 +209,7 @@ public:
 
     bool operator!=(const Iterator& other) const { return !(*this == other); }
 
-    Iterator& operator++() {
+    IteratorBase<Parent, Iterator, FlexibleIterator>& operator++() {
       if (usingFixed) {
         fixedIndex++;
       } else {
