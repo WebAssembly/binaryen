@@ -641,13 +641,11 @@ private:
     // without an else.
 
     // Find the number of ifs.
-    // TODO: Investigate more values here. 4 appears useful on real-world code.
-    const Index MaxIfs = 4;
     Index numIfs = 0;
-    while (getIf(body, numIfs) && numIfs <= MaxIfs) {
+    while (getIf(body, numIfs) && numIfs <= options.partialInliningIfs) {
       numIfs++;
     }
-    if (numIfs == 0 || numIfs > MaxIfs) {
+    if (numIfs == 0 || numIfs > options.partialInliningIfs) {
       return false;
     }
 
