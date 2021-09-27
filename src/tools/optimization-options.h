@@ -174,7 +174,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("--partial-inlining-ifs",
            "-pii",
            "Number of ifs allowed in partial inlining (zero means partial "
-           "inlining is disabled (default: " +
+           "inlining is disabled) (default: " +
              std::to_string(InliningOptions().partialInliningIfs) + ')',
            Options::Arguments::Zero,
            [this](Options* o, const std::string&) {
