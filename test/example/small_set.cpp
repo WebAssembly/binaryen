@@ -17,7 +17,7 @@ void assertContents(T& t, const std::vector<int>& expectedContents) {
     assert(std::find(expectedContents.begin(), expectedContents.end(), item) !=
            expectedContents.end());
   }
-  for (const auto item : t) {
+  for (const auto& item : t) {
     assert(std::find(expectedContents.begin(), expectedContents.end(), item) !=
            expectedContents.end());
   }
