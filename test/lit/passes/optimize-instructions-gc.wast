@@ -2340,6 +2340,51 @@
     )
   )
 
+  ;; CHECK:      (func $ref-cast-static-very-many (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B-child
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-very-many (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B-child
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-very-many (param $x eqref)
+    ;; We should optimize an arbitrarily-long long sequence of static casts.
+    (drop
+      (ref.cast_static $A
+        (ref.cast_static $B
+          (ref.cast_static $B-child
+            (ref.cast_static $A
+              (ref.cast_static $A
+                (ref.cast_static $B-child
+                  (ref.cast_static $B-child
+                    (ref.cast_static $B
+                      (ref.cast_static $B
+                        (ref.cast_static $B
+                          (ref.cast_static $B-child
+                            (ref.cast_static $A
+                              (local.get $x)
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $ref-cast-static-squared-impossible (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct
