@@ -248,7 +248,7 @@ public:
                      ConstIterator,
                      typename FlexibleSet::const_iterator>(parent) {}
 
-    const value_type operator*() const {
+    const value_type& operator*() const {
       if (this->usingFixed) {
         return (this->parent->fixed)[this->fixedIndex];
       } else {
