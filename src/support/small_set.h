@@ -222,7 +222,7 @@ public:
   struct Iterator : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
                                  Iterator,
                                  typename FlexibleSet::iterator> {
-    typedef std::forward_iterator_tag iterator_category;
+    using iterator_category = std::forward_iterator_tag;
 
     Iterator(SmallSetBase<T, N, FlexibleSet>* parent)
       : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
