@@ -18,7 +18,7 @@
 // A set of elements, which is often small. While the number of items is small,
 // the implementation simply stores them in an array that is linearly looked
 // through. Once the size is large enough, we switch to using a std::set or
-// or std::unordered_set.
+// std::unordered_set.
 //
 
 #ifndef wasm_support_small_set_h
@@ -78,9 +78,7 @@ public:
         // No fixed storage remains. Switch to flexible.
         assert(usedFixed == N);
         assert(flexible.empty());
-        for (size_t i = 0; i < usedFixed; i++) {
-          flexible.insert(fixed[i]);
-        }
+        flexible.insert(fixed.begin(), fixed.begin() + usedFixed);
         flexible.insert(x);
         assert(!usingFixed());
         usedFixed = 0;
@@ -165,9 +163,9 @@ public:
 
   template<typename Parent, typename Iterator, typename FlexibleIterator>
   struct IteratorBase : public std::iterator<std::forward_iterator_tag, T> {
-    typedef T value_type;
-    typedef long difference_type;
-    typedef T& reference;
+    using value_type = T;
+    using difference_type = long;
+    using reference = T&
 
     Parent* parent;
 
@@ -211,26 +209,27 @@ public:
 
     bool operator!=(const Iterator& other) const { return !(*this == other); }
 
-    void operator++() {
+    Iterator& operator++() {
       if (usingFixed) {
         fixedIndex++;
       } else {
         flexibleIterator++;
       }
+      return *this;
     }
   };
 
   struct Iterator : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
                                  Iterator,
                                  typename FlexibleSet::iterator> {
-    typedef std::forward_iterator_tag iterator_category;
+    using iterator_category = std::forward_iterator_tag;
 
     Iterator(SmallSetBase<T, N, FlexibleSet>* parent)
       : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
                      Iterator,
                      typename FlexibleSet::iterator>(parent) {}
 
-    value_type operator*() const {
+    value_type& operator*() const {
       if (this->usingFixed) {
         return (this->parent->fixed)[this->fixedIndex];
       } else {
@@ -242,14 +241,14 @@ public:
   struct ConstIterator : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
                                       ConstIterator,
                                       typename FlexibleSet::const_iterator> {
-    typedef std::forward_iterator_tag iterator_category;
+    using iterator_category = std::forward_iterator_tag;
 
     ConstIterator(const SmallSetBase<T, N, FlexibleSet>* parent)
       : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
                      ConstIterator,
                      typename FlexibleSet::const_iterator>(parent) {}
 
-    const value_type operator*() const {
+    const value_type& operator*() const {
       if (this->usingFixed) {
         return (this->parent->fixed)[this->fixedIndex];
       } else {

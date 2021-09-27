@@ -39,9 +39,9 @@ struct LocalGraph {
   // The local.sets relevant for an index or a get. The most common case is to
   // have a single set; after that, to be a phi of 2 items, so we use a small
   // set of size 2 to avoid allocations there.
-  typedef SmallSet<LocalSet*, 2> Sets;
+  using Sets = SmallSet<LocalSet*, 2>;
 
-  typedef std::unordered_map<LocalGet*, Sets> GetSetses;
+  using GetSetses = std::unordered_map<LocalGet*, Sets>;
 
   typedef std::map<Expression*, Expression**> Locations;
 
