@@ -1827,31 +1827,34 @@ private:
       // TODO: Remove this after landing SCCP pass. See: #4161
 
       // i32(x) ? i32(x) : 0  ==>  x
-      // i32(x) ? 0 : i32(x)  ==>  0
       Expression *x, *y;
-      if ((matches(curr, select(any(&x), i32(0), any(&y))) ||
-           matches(curr, select(i32(0), pure(&x), any(&y)))) &&
+      if (matches(curr, select(any(&x), i32(0), any(&y))) &&
           areConsecutiveInputsEqualAndFoldable(x, y)) {
         return curr->ifTrue;
       }
-    }
-    {
-      // TODO: Remove this after landing SCCP pass. See: #4161
+      // i32(x) ? 0 : i32(x)  ==>  0
+      if (matches(curr, select(i32(0), any(&x), any(&y))) &&
+          areConsecutiveInputsEqualAndRemovable(x, y)) {
+        return curr->ifTrue;
+      }
 
       // i64(x) == 0 ? 0 : i64(x)  ==>  x
-      // i64(x) == 0 ? i64(x) : 0  ==>  0
-      // i64(x) != 0 ? 0 : i64(x)  ==>  0
       // i64(x) != 0 ? i64(x) : 0  ==>  x
-      Expression *x, *y;
-      if ((matches(curr, select(i64(0), pure(&x), unary(EqZInt64, any(&y)))) ||
-           matches(curr, select(any(&x), i64(0), unary(EqZInt64, any(&y)))) ||
+      if ((matches(curr, select(i64(0), any(&x), unary(EqZInt64, any(&y)))) ||
            matches(
              curr,
-             select(i64(0), pure(&x), binary(NeInt64, any(&y), i64(0)))) ||
+             select(i64(0), any(&x), binary(NeInt64, any(&y), i64(0))))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
+      }
+
+      // i64(x) == 0 ? i64(x) : 0  ==>  0
+      // i64(x) != 0 ? 0 : i64(x)  ==>  0
+      if ((matches(curr, select(any(&x), i64(0), unary(EqZInt64, any(&y)))) ||
            matches(
              curr,
              select(any(&x), i64(0), binary(NeInt64, any(&y), i64(0))))) &&
-          areConsecutiveInputsEqualAndFoldable(x, y)) {
+          areConsecutiveInputsEqualAndRemovable(x, y)) {
         return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
       }
     }
