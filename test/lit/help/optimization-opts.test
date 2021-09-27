@@ -160,6 +160,11 @@
 ;; CHECK-NEXT:   --inline-functions-with-loops,-ifwl           Allow inlining functions with
 ;; CHECK-NEXT:                                                 loops
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --partial-inlining-ifs,-pii                   Number of ifs allowed in partial
+;; CHECK-NEXT:                                                 inlining (zero means partial
+;; CHECK-NEXT:                                                 inlining is disabled) (default:
+;; CHECK-NEXT:                                                 0)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --ignore-implicit-traps,-iit                  Optimize under the helpful
 ;; CHECK-NEXT:                                                 assumption that no surprising
 ;; CHECK-NEXT:                                                 traps occur (from load, div/mod,
