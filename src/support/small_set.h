@@ -78,9 +78,7 @@ public:
         // No fixed storage remains. Switch to flexible.
         assert(usedFixed == N);
         assert(flexible.empty());
-        for (size_t i = 0; i < usedFixed; i++) {
-          flexible.insert(fixed[i]);
-        }
+        flexible.insert(fixed.begin(), fixed.begin() + usedFixed);
         flexible.insert(x);
         assert(!usingFixed());
         usedFixed = 0;
