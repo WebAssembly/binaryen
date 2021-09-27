@@ -229,7 +229,7 @@ public:
                      Iterator,
                      typename FlexibleSet::iterator>(parent) {}
 
-    value_type& operator*() const {
+    value_type operator*() const {
       if (this->usingFixed) {
         return (this->parent->fixed)[this->fixedIndex];
       } else {
