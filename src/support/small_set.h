@@ -241,7 +241,7 @@ public:
   struct ConstIterator : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
                                       ConstIterator,
                                       typename FlexibleSet::const_iterator> {
-    typedef std::forward_iterator_tag iterator_category;
+    using iterator_category = std::forward_iterator_tag;
 
     ConstIterator(const SmallSetBase<T, N, FlexibleSet>* parent)
       : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
