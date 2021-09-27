@@ -18,7 +18,7 @@
 // A set of elements, which is often small. While the number of items is small,
 // the implementation simply stores them in an array that is linearly looked
 // through. Once the size is large enough, we switch to using a std::set or
-// or std::unordered_set.
+// std::unordered_set.
 //
 
 #ifndef wasm_support_small_set_h
