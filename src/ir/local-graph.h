@@ -41,7 +41,7 @@ struct LocalGraph {
   // set of size 2 to avoid allocations there.
   using Sets = SmallSet<LocalSet*, 2>;
 
-  typedef std::unordered_map<LocalGet*, Sets> GetSetses;
+  using GetSetses = std::unordered_map<LocalGet*, Sets>;
 
   typedef std::map<Expression*, Expression**> Locations;
 
