@@ -176,9 +176,10 @@ struct OptimizationOptions : public ToolOptions {
            "Number of ifs allowed in partial inlining (zero means partial "
            "inlining is disabled) (default: " +
              std::to_string(InliningOptions().partialInliningIfs) + ')',
-           Options::Arguments::Zero,
-           [this](Options* o, const std::string&) {
-             passOptions.inlining.allowFunctionsWithLoops = true;
+           Options::Arguments::One,
+           [this](Options* o, const std::string& argument) {
+             passOptions.inlining.partialInliningIfs =
+               static_cast<Index>(atoi(argument.c_str()));
            })
       .add("--ignore-implicit-traps",
            "-iit",
