@@ -137,9 +137,25 @@ template<typename T> void testAPI() {
     // grew it enough to be flexible, then shrank it back (as it only becomes
     // fixed at size 0).
     t.insert(1);
+
     u.insert(1);
     u.insert(2);
     u.erase(2);
+
+    assert(t == u);
+    assert(u == t);
+  }
+  {
+    T t, u;
+    // as above, but for size 2, and don't erase the last item added
+    t.insert(1);
+    t.insert(2);
+
+    u.insert(3);
+    u.insert(2);
+    u.insert(1);
+    u.erase(3);
+
     assert(t == u);
     assert(u == t);
   }
@@ -177,11 +193,13 @@ int main() {
   testAPI<SmallSet<int, 0>>();
   testAPI<SmallSet<int, 1>>();
   testAPI<SmallSet<int, 2>>();
+  testAPI<SmallSet<int, 3>>();
   testAPI<SmallSet<int, 10>>();
 
   testAPI<SmallUnorderedSet<int, 0>>();
   testAPI<SmallUnorderedSet<int, 1>>();
   testAPI<SmallUnorderedSet<int, 2>>();
+  testAPI<SmallUnorderedSet<int, 3>>();
   testAPI<SmallUnorderedSet<int, 10>>();
 
   testInternals<SmallSet<int, 1>>();

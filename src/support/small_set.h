@@ -143,7 +143,7 @@ public:
         return other.count(x);
       });
     } else if (other.usingFixed()) {
-      return std::all_of(other.fixed.begin(), other.fixed.begin() + usedFixed, [this](const T& x) {
+      return std::all_of(other.fixed.begin(), other.fixed.begin() + other.usedFixed, [this](const T& x) {
         return count(x);
       });
     } else {
