@@ -139,13 +139,13 @@ public:
       return false;
     }
     if (usingFixed()) {
-      return std::all_of(fixed.begin(), fixed.begin() + usedFixed, [&other](const T& x) {
-        return other.count(x);
-      });
+      return std::all_of(fixed.begin(),
+                         fixed.begin() + usedFixed,
+                         [&other](const T& x) { return other.count(x); });
     } else if (other.usingFixed()) {
-      return std::all_of(other.fixed.begin(), other.fixed.begin() + other.usedFixed, [this](const T& x) {
-        return count(x);
-      });
+      return std::all_of(other.fixed.begin(),
+                         other.fixed.begin() + other.usedFixed,
+                         [this](const T& x) { return count(x); });
     } else {
       return flexible == other.flexible;
     }
