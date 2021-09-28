@@ -105,7 +105,7 @@ public:
     }
   }
 
-  size_t count(const T& x) {
+  size_t count(const T& x) const {
     if (usingFixed()) {
       // Do a linear search.
       for (size_t i = 0; i < usedFixed; i++) {
@@ -135,25 +135,20 @@ public:
   }
 
   bool operator==(const SmallSetBase<T, N, FlexibleSet>& other) const {
-    if (usingFixed()) {
-      if (usedFixed != other.usedFixed) {
-        return false;
-      }
-      for (size_t i = 0; i < usedFixed; i++) {
-        bool found = false;
-        for (size_t j = 0; j < usedFixed; j++) {
-          if (fixed[i] == other.fixed[j]) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          return false;
-        }
-      }
-      return true;
+    if (size() != other.size()) {
+      return false;
     }
-    return flexible == other.flexible;
+    if (usingFixed()) {
+      return std::all_of(fixed.begin(), fixed.begin() + usedFixed, [&other](const T& x) {
+        return other.count(x);
+      });
+    } else if (other.usingFixed()) {
+      return std::all_of(other.fixed.begin(), other.fixed.begin() + usedFixed, [this](const T& x) {
+        return count(x);
+      });
+    } else {
+      return flexible == other.flexible;
+    }
   }
 
   bool operator!=(const SmallSetBase<T, N, FlexibleSet>& other) const {
