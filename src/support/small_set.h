@@ -162,12 +162,17 @@ public:
 
   // iteration
 
-  template<typename Parent, typename Iterator, typename FlexibleIterator>
+  template<typename Parent, typename FlexibleIterator>
   struct IteratorBase {
     using iterator_category = std::forward_iterator_tag;
     using difference_type = long;
+    using value_type = const T;
+    using pointer = value_type*;
+    using reference = value_type&;
 
     Parent* parent;
+
+    using Iterator = IteratorBase<Parent, FlexibleIterator>;
 
     // Whether we are using fixed storage in the parent. When doing so we have
     // the index in fixedIndex. Otherwise, we are using flexible storage, and we
@@ -215,7 +220,7 @@ public:
 
     bool operator!=(const Iterator& other) const { return !(*this == other); }
 
-    IteratorBase<Parent, Iterator, FlexibleIterator>& operator++() {
+    Iterator& operator++() {
       if (usingFixed) {
         fixedIndex++;
       } else {
@@ -223,40 +228,6 @@ public:
       }
       return *this;
     }
-  };
-
-  struct Iterator : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
-                                 Iterator,
-                                 typename FlexibleSet::iterator> {
-    using value_type = T;
-    using pointer = T*;
-    using reference = T&;
-
-    Iterator(SmallSetBase<T, N, FlexibleSet>* parent)
-      : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
-                     Iterator,
-                     typename FlexibleSet::iterator>(parent) {}
-
-    value_type operator*() const {
-      if (this->usingFixed) {
-        return (this->parent->fixed)[this->fixedIndex];
-      } else {
-        return *this->flexibleIterator;
-      }
-    }
-  };
-
-  struct ConstIterator : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
-                                      ConstIterator,
-                                      typename FlexibleSet::const_iterator> {
-    using value_type = const T;
-    using pointer = value_type*;
-    using reference = value_type&;
-
-    ConstIterator(const SmallSetBase<T, N, FlexibleSet>* parent)
-      : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
-                     ConstIterator,
-                     typename FlexibleSet::const_iterator>(parent) {}
 
     const value_type& operator*() const {
       if (this->usingFixed) {
@@ -266,6 +237,8 @@ public:
       }
     }
   };
+
+  using Iterator = IteratorBase<SmallSetBase<T, N, FlexibleSet>, typename FlexibleSet::const_iterator>;
 
   Iterator begin() {
     auto ret = Iterator(this);
@@ -277,19 +250,19 @@ public:
     ret.setEnd();
     return ret;
   }
-  ConstIterator begin() const {
-    auto ret = ConstIterator(this);
+  Iterator begin() const {
+    auto ret = Iterator(this);
     ret.setBegin();
     return ret;
   }
-  ConstIterator end() const {
-    auto ret = ConstIterator(this);
+  Iterator end() const {
+    auto ret = Iterator(this);
     ret.setEnd();
     return ret;
   }
 
   using iterator = Iterator;
-  using const_iterator = ConstIterator;
+  using const_iterator = Iterator;
 
   // Test-only method to allow unit tests to verify the right internal
   // behavior.
