@@ -1832,10 +1832,10 @@ private:
           areConsecutiveInputsEqualAndFoldable(x, y)) {
         return curr->ifTrue;
       }
-      // i32(x) ? 0 : i32(x)  ==>  0
+      // i32(x) ? 0 : i32(x)  ==>  { x, 0 }
       if (matches(curr, select(i32(0), any(&x), any(&y))) &&
-          areConsecutiveInputsEqualAndRemovable(x, y)) {
-        return curr->ifTrue;
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return builder.makeBlock({builder.makeDrop(x), curr->ifTrue});
       }
 
       // i64(x) == 0 ? 0 : i64(x)  ==>  x
@@ -1848,14 +1848,16 @@ private:
         return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
       }
 
-      // i64(x) == 0 ? i64(x) : 0  ==>  0
-      // i64(x) != 0 ? 0 : i64(x)  ==>  0
+      // i64(x) == 0 ? i64(x) : 0  ==>  { x, 0 }
+      // i64(x) != 0 ? 0 : i64(x)  ==>  { x, 0 }
       if ((matches(curr, select(any(&x), i64(0), unary(EqZInt64, any(&y)))) ||
            matches(
              curr,
              select(any(&x), i64(0), binary(NeInt64, any(&y), i64(0))))) &&
-          areConsecutiveInputsEqualAndRemovable(x, y)) {
-        return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return builder.makeBlock(
+          {builder.makeDrop(x),
+           curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue});
       }
     }
     {
