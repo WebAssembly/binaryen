@@ -29,6 +29,8 @@
 #include <set>
 #include <unordered_set>
 
+#include "utilities.h"
+
 namespace wasm {
 
 template<typename T, size_t N, typename FlexibleSet> class SmallSetBase {
@@ -200,7 +202,13 @@ public:
       if (parent != other.parent) {
         return false;
       }
-      assert(usingFixed == other.usingFixed);
+      // std::set allows changes while iterating. For us here, though, it would
+      // be nontrivial to support that given we have two iterators that we
+      // generalize over (switching "in the middle" would not be easy or fast),
+      // so error on that.
+      if (usingFixed != other.usingFixed) {
+        Fatal() << "SmallSet does not support changes while iterating";
+      }
       if (usingFixed) {
         return fixedIndex == other.fixedIndex;
       } else {
