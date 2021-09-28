@@ -1,7 +1,9 @@
+#include "SDL/SDL_opengl.h"
+#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL.h>
-#include "SDL/SDL_opengl.h"
+
+// clang-format off
 
 const char *WWWGLEnumToString(GLenum e)
 {
@@ -7943,4 +7945,3 @@ int main() {
   i = 3060;
   printf("%d: %s\n", i, WWWGLEnumToString(i));
 }
-
