@@ -15,7 +15,7 @@ void assertContents(T& t, const std::vector<int>& expectedContents) {
   }
   // Also test this using an iterator and a const iterator to also get
   // coverage there.
-  for (auto item : t) {
+  for (auto& item : t) {
     assert(std::find(expectedContents.begin(), expectedContents.end(), item) !=
            expectedContents.end());
   }
