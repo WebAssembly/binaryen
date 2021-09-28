@@ -162,8 +162,7 @@ public:
 
   // iteration
 
-  template<typename Parent, typename FlexibleIterator>
-  struct IteratorBase {
+  template<typename Parent, typename FlexibleIterator> struct IteratorBase {
     using iterator_category = std::forward_iterator_tag;
     using difference_type = long;
     using value_type = const T;
@@ -238,7 +237,8 @@ public:
     }
   };
 
-  using Iterator = IteratorBase<SmallSetBase<T, N, FlexibleSet>, typename FlexibleSet::const_iterator>;
+  using Iterator = IteratorBase<SmallSetBase<T, N, FlexibleSet>,
+                                typename FlexibleSet::const_iterator>;
 
   Iterator begin() {
     auto ret = Iterator(this);
