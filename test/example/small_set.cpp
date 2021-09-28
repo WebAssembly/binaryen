@@ -141,6 +141,7 @@ template<typename T> void testAPI() {
     u.insert(2);
     u.erase(2);
     assert(t == u);
+    assert(u == t);
   }
 }
 
