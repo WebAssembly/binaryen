@@ -1843,7 +1843,7 @@ private:
       if ((matches(curr, select(i64(0), any(&x), unary(EqZInt64, any(&y)))) ||
            matches(
              curr,
-             select(i64(0), any(&x), binary(NeInt64, any(&y), i64(0))))) &&
+             select(any(&x), i64(0), binary(NeInt64, any(&y), i64(0))))) &&
           areConsecutiveInputsEqualAndFoldable(x, y)) {
         return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
       }
@@ -1853,7 +1853,7 @@ private:
       if ((matches(curr, select(any(&x), i64(0), unary(EqZInt64, any(&y)))) ||
            matches(
              curr,
-             select(any(&x), i64(0), binary(NeInt64, any(&y), i64(0))))) &&
+             select(i64(0), any(&x), binary(NeInt64, any(&y), i64(0))))) &&
           areConsecutiveInputsEqualAndFoldable(x, y)) {
         return builder.makeBlock(
           {builder.makeDrop(x),
