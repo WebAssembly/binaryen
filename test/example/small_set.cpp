@@ -141,9 +141,11 @@ template<typename T> void testAPI() {
     u.insert(1);
     u.insert(2);
 
+    // one extra item in u
     assert(t != u);
     assert(u != t);
 
+    // remove the extra item
     u.erase(2);
 
     assert(t == u);
@@ -159,9 +161,11 @@ template<typename T> void testAPI() {
     u.insert(2);
     u.insert(1);
 
+    // one extra item in u
     assert(t != u);
     assert(u != t);
 
+    // remove the extra item
     u.erase(3);
 
     assert(t == u);
