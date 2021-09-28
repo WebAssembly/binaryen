@@ -130,6 +130,18 @@ template<typename T> void testAPI() {
     u.insert(1);
     assert(t == u);
   }
+  {
+    T t, u;
+    // comparisons should ignore the mode: in a SmallSet<1>, a set of size 1
+    // can be either fixed - if we just grew it to size 1 - or flexible - if we
+    // grew it enough to be flexible, then shrank it back (as it only becomes
+    // fixed at size 0).
+    t.insert(1);
+    u.insert(1);
+    u.insert(2);
+    u.erase(2);
+    assert(t == u);
+  }
 }
 
 template<typename T> void testInternals() {
