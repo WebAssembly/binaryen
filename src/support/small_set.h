@@ -26,7 +26,6 @@
 
 #include <array>
 #include <cassert>
-#include <iterator>
 #include <set>
 #include <unordered_set>
 
@@ -162,9 +161,11 @@ public:
   // iteration
 
   template<typename Parent, typename Iterator, typename FlexibleIterator>
-  struct IteratorBase : public std::iterator<std::forward_iterator_tag, T> {
+  struct IteratorBase {
+    using iterator_category = std::forward_iterator_tag;
     using value_type = T;
     using difference_type = long;
+    using pointer = T*;
     using reference = T&;
 
     Parent* parent;
@@ -222,8 +223,6 @@ public:
   struct Iterator : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
                                  Iterator,
                                  typename FlexibleSet::iterator> {
-    using iterator_category = std::forward_iterator_tag;
-
     Iterator(SmallSetBase<T, N, FlexibleSet>* parent)
       : IteratorBase<SmallSetBase<T, N, FlexibleSet>,
                      Iterator,
@@ -241,8 +240,6 @@ public:
   struct ConstIterator : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
                                       ConstIterator,
                                       typename FlexibleSet::const_iterator> {
-    using iterator_category = std::forward_iterator_tag;
-
     ConstIterator(const SmallSetBase<T, N, FlexibleSet>* parent)
       : IteratorBase<const SmallSetBase<T, N, FlexibleSet>,
                      ConstIterator,
