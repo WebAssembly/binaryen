@@ -1842,6 +1842,7 @@ struct PrintExpressionContents
     printName(curr->func, o);
   }
   void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
+  void visitTableGet(TableGet* curr) { printMedium(o, "table.get"); }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {

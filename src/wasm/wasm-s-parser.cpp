@@ -2423,9 +2423,9 @@ Expression* SExpressionWasmBuilder::makeTableGet(Element& s) {
   auto* table = wasm.getTableOrNull(tableName);
   if (!table) {
     throw ParseException(
-      "invalid table name in table.get", s[i]->line, s[i]->col);
+      "invalid table name in table.get", s.line, s.col);
   }
-  return Builder(wasm).makeTableGet(table, index, table->type);
+  return Builder(wasm).makeTableGet(tableName, index, table->type);
 }
 
 // try can be either in the form of try-catch or try-delegate.

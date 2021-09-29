@@ -1358,6 +1358,7 @@ public:
     NOTE_EVAL2(left, right);
     return Literal(int32_t(left == right));
   }
+  Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -2770,12 +2771,12 @@ private:
 
     Flow visitTableGet(TableGet* curr) {
       NOTE_ENTER("TableGet");
-      Flow index = visit(curr->index);
+      Flow index = this->visit(curr->index);
       if (index.breaking()) {
         return index;
       }
       auto info = getTableInterfaceInfo(curr->table);
-      return info.interface->tableGet(info.name, index.getSingleValue());
+      return info.interface->tableGet(info.name, index.getSingleValue().geti32());
     }
 
     Flow visitLocalGet(LocalGet* curr) {
