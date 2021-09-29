@@ -502,6 +502,13 @@ switch (DELEGATE_ID) {
     DELEGATE_END(RefEq);
     break;
   }
+  case Expression::Id::TableGetId: {
+    DELEGATE_START(TableGet);
+    DELEGATE_FIELD_CHILD(TableGet, index);
+    DELEGATE_FIELD_NAME(TableGet, table);
+    DELEGATE_END(TableGet);
+    break;
+  }
   case Expression::Id::TryId: {
     DELEGATE_START(Try);
     DELEGATE_FIELD_SCOPE_NAME_USE(Try, delegateTarget);

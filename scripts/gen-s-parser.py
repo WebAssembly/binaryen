@@ -516,10 +516,12 @@ instructions = [
     ("f64x2.promote_low_f32x4",       "makeUnary(s, UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
 
     # reference types instructions
-    # TODO Add table instructions
     ("ref.null",             "makeRefNull(s)"),
     ("ref.is_null",          "makeRefIs(s, RefIsNull)"),
     ("ref.func",             "makeRefFunc(s)"),
+    ("ref.eq",               "makeRefEq(s)"),
+    # TODO Add table instructions
+    ("table.get",            "makeTableGet(s)"),
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),
@@ -532,7 +534,6 @@ instructions = [
     ("call_ref",             "makeCallRef(s, /*isReturn=*/false)"),
     ("return_call_ref",      "makeCallRef(s, /*isReturn=*/true)"),
     # GC
-    ("ref.eq",               "makeRefEq(s)"),
     ("i31.new",              "makeI31New(s)"),
     ("i31.get_s",            "makeI31Get(s, true)"),
     ("i31.get_u",            "makeI31Get(s, false)"),

@@ -474,6 +474,8 @@ enum ASTNodes {
   GlobalGet = 0x23,
   GlobalSet = 0x24,
 
+  TableGet = 0x25,
+
   I32LoadMem = 0x28,
   I64LoadMem = 0x29,
   F32LoadMem = 0x2a,

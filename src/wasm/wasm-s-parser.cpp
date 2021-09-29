@@ -2417,6 +2417,17 @@ Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeTableGet(Element& s) {
+  auto tableName = s[1]->str();
+  auto* index = parseExpression(s[2]);
+  auto* table = wasm.getTableOrNull(tableName);
+  if (!table) {
+    throw ParseException(
+      "invalid table name in table.get", s[i]->line, s[i]->col);
+  }
+  return Builder(wasm).makeTableGet(table, index, table->type);
+}
+
 // try can be either in the form of try-catch or try-delegate.
 // try-catch is written in the folded wast format as
 // (try

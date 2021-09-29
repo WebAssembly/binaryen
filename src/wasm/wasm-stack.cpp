@@ -1847,6 +1847,11 @@ void BinaryInstWriter::visitRefEq(RefEq* curr) {
   o << int8_t(BinaryConsts::RefEq);
 }
 
+void BinaryInstWriter::visitTableGet(TableGet* curr) {
+  o << int8_t(BinaryConsts::TableGet);
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);
