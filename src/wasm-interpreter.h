@@ -2290,6 +2290,8 @@ public:
                                LiteralList& arguments,
                                Type result,
                                SubType& instance) = 0;
+    virtual Literal tableGet(Name tableName,
+                             Index index) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
@@ -2686,6 +2688,25 @@ private:
       }
       return ret;
     }
+
+    struct TableInterfaceInfo {
+      // The external interface in which the table is defined.
+      ExternalInterface* interface;
+      // The name the table has in that interface.
+      Name name;
+    };
+
+    TableInterfaceInfo getTableInterfaceInfo(Name name) {
+      auto* table = instance.wasm.getTable(name);
+      if (table->imported()) {
+        auto& importedInstance = instance.linkedInstances.at(table->module);
+        auto* tableExport = importedInstance->wasm.getExport(table->base);
+        return TableInterfaceInfo{importedInstance->externalInterface, tableExport->value};
+      } else {
+        return TableInterfaceInfo{instance.externalInterface, name};
+      }
+    }
+
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
       LiteralList arguments;
@@ -2701,21 +2722,13 @@ private:
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
-      Flow ret;
-      auto* table = instance.wasm.getTable(curr->table);
-      if (table->imported()) {
-        auto inst = instance.linkedInstances.at(table->module);
-        Export* tableExport = inst->wasm.getExport(table->base);
-        ret = inst->externalInterface->callTable(tableExport->value,
-                                                 index,
-                                                 curr->sig,
-                                                 arguments,
-                                                 type,
-                                                 *instance.self());
-      } else {
-        ret = instance.externalInterface->callTable(
-          curr->table, index, curr->sig, arguments, type, *instance.self());
-      }
+      auto info = getTableInterfaceInfo(curr->table);
+      Flow ret = info.interface->callTable(info.name,
+                                           index,
+                                           curr->sig,
+                                           arguments,
+                                           type,
+                                           *instance.self());
 
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
@@ -2753,6 +2766,16 @@ private:
         ret.breakTo = RETURN_FLOW;
       }
       return ret;
+    }
+
+    Flow visitTableGet(TableGet* curr) {
+      NOTE_ENTER("TableGet");
+      Flow index = visit(curr->index);
+      if (index.breaking()) {
+        return index;
+      }
+      auto info = getTableInterfaceInfo(curr->table);
+      return info.interface->tableGet(info.name, index.getSingleValue());
     }
 
     Flow visitLocalGet(LocalGet* curr) {
