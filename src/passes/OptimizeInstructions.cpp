@@ -1835,7 +1835,7 @@ private:
       // i32(x) ? 0 : i32(x)  ==>  { x, 0 }
       if (matches(curr, select(i32(0), any(&x), any(&y))) &&
           areConsecutiveInputsEqualAndFoldable(x, y)) {
-        return builder.makeBlock({builder.makeDrop(x), curr->ifTrue});
+        return builder.makeSequence(builder.makeDrop(x), curr->ifTrue);
       }
 
       // i64(x) == 0 ? 0 : i64(x)  ==>  x
