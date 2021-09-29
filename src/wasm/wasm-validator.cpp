@@ -2035,7 +2035,7 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
 void FunctionValidator::visitTableGet(TableGet* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
-               "table.eq requires reference types to be enabled");
+               "table.get requires reference types to be enabled");
   shouldBeEqualOrFirstIsUnreachable(
     curr->index->type, Type(Type::i32), curr, "table.get index must be an i32");
   auto* table = getModule()->getTableOrNull(curr->table);
