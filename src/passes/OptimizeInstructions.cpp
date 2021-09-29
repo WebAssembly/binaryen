@@ -825,6 +825,15 @@ struct OptimizeInstructions
         }
       }
       {
+        // eqz(eqz(x - y))  =>  x != y
+        Binary* inner;
+        if (matches(curr, unary(EqZ, unary(EqZ, binary(&inner, Sub, any(), any()))))) {
+          inner->op = Abstract::getBinary(inner->left->type, Ne);
+          inner->type = Type::i32;
+          return replaceCurrent(inner);
+        }
+      }
+      {
         // eqz(x + C)  =>  x == -C
         Const* c;
         Binary* inner;
@@ -2364,6 +2373,10 @@ private:
          matches(curr, binary(NeInt64, any(&left), i64(0)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(WrapInt64, left);
+    }
+    // i64(x) != 0  ==>  !!x   (reduces 3 bytes into 2)
+    if (matches(curr, binary(NeInt64, any(&left), i64(0)))) {
+      return builder.makeUnary(EqZInt32, builder.makeUnary(EqZInt64, left));
     }
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Ne, any(&left), ival(1))) &&

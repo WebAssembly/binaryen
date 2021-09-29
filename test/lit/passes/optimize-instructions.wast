@@ -515,6 +515,51 @@
       (i64.const 0)
     )
   )
+  ;; CHECK:      (func $neq-zero-i64 (param $x i64) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $neq-zero-i64 (param $x i64) (result i32)
+    (i64.ne
+      (local.get $x)
+      (i64.const 0)
+    )
+  )
+  ;; CHECK:      (func $neq-neq-sub-i32 (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.ne
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $neq-neq-sub-i32 (param $x i32) (param $y i32) (result i32)
+    (i32.eqz
+      (i32.eqz
+        (i32.sub
+          (local.get $x)
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $neq-neq-sub-i64 (param $x i64) (param $y i64) (result i32)
+  ;; CHECK-NEXT:  (i64.ne
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $neq-neq-sub-i64 (param $x i64) (param $y i64) (result i32)
+    (i32.eqz
+      (i64.eqz
+        (i64.sub
+          (local.get $x)
+          (local.get $y)
+        )
+      )
+    )
+  )
   ;; CHECK:      (func $if-eqz-eqz
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 123)
@@ -7212,12 +7257,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.ne
-  ;; CHECK-NEXT:    (i64.and
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:     (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (i64.and
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -9018,9 +9064,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.ne
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -9873,9 +9920,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.ne
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
