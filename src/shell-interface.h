@@ -195,23 +195,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  Literal tableGet(Name tableName,
-                   Index index) override {
-
-    auto it = tables.find(tableName);
-    if (it == tables.end()) {
-      trap("tableGet on non-existing table");
-    }
-
-    auto& table = it->second;
-    if (index >= table.size()) {
-      trap("tableGet overflow");
-    }
-
-std::cout << "in range! " << tableName << " : " << index << " : " << table[index] << " / " << table[index].type << " : " << table[index].size() << "\n";
-    return table[index];
-  }
-
   int8_t load8s(Address addr) override { return memory.get<int8_t>(addr); }
   uint8_t load8u(Address addr) override { return memory.get<uint8_t>(addr); }
   int16_t load16s(Address addr) override { return memory.get<int16_t>(addr); }
@@ -247,6 +230,22 @@ std::cout << "in range! " << tableName << " : " << index << " : " << table[index
     } else {
       table[addr] = entry;
     }
+  }
+
+  Literal tableLoad(Name tableName,
+                    Address addr) override {
+
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+      trap("tableGet on non-existing table");
+    }
+
+    auto& table = it->second;
+    if (addr >= table.size()) {
+      trap("tableGet overflow");
+    }
+
+    return table[addr];
   }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {
