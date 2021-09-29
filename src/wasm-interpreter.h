@@ -2158,6 +2158,10 @@ public:
     NOTE_ENTER("CallRef");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableGet(TableGet* curr) {
+    NOTE_ENTER("TableGet");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
