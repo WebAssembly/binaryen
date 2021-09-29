@@ -232,8 +232,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  Literal tableLoad(Name tableName,
-                    Address addr) override {
+  Literal tableLoad(Name tableName, Address addr) override {
 
     auto it = tables.find(tableName);
     if (it == tables.end()) {

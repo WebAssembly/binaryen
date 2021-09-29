@@ -2422,8 +2422,7 @@ Expression* SExpressionWasmBuilder::makeTableGet(Element& s) {
   auto* index = parseExpression(s[2]);
   auto* table = wasm.getTableOrNull(tableName);
   if (!table) {
-    throw ParseException(
-      "invalid table name in table.get", s.line, s.col);
+    throw ParseException("invalid table name in table.get", s.line, s.col);
   }
   return Builder(wasm).makeTableGet(tableName, index, table->type);
 }

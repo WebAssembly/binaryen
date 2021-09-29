@@ -343,8 +343,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       std::to_string(index));
   }
 
-  Literal tableGet(Name tableName,
-                   Index index) {
+  Literal tableGet(Name tableName, Index index) {
     throw FailToEvalException("table.get: TODO");
   }
 

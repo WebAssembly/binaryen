@@ -1276,7 +1276,6 @@ public:
   void finalize();
 };
 
-
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}

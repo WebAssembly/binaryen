@@ -2033,17 +2033,16 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
 }
 
 void FunctionValidator::visitTableGet(TableGet* curr) {
-  shouldBeTrue(
-    getModule()->features.hasReferenceTypes(), curr, "table.eq requires reference types to be enabled");
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "table.eq requires reference types to be enabled");
   shouldBeEqualOrFirstIsUnreachable(
     curr->index->type, Type(Type::i32), curr, "table.get index must be an i32");
   auto* table = getModule()->getTableOrNull(curr->table);
   if (shouldBeTrue(!!table, curr, "table.get table must exist") &&
       curr->type != Type::unreachable) {
-    shouldBeEqual(curr->type,
-                  table->type,
-                  curr,
-                  "table.get must have same type as table.");
+    shouldBeEqual(
+      curr->type, table->type, curr, "table.get must have same type as table.");
   }
 }
 

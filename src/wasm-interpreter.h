@@ -2442,8 +2442,7 @@ public:
     tableStore(Name tableName, Address addr, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual Literal tableLoad(Name tableName,
-                              Address addr) {
+    virtual Literal tableLoad(Name tableName, Address addr) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2545,7 +2544,8 @@ private:
     if (table->imported()) {
       auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
-      return TableInterfaceInfo{importedInstance->externalInterface, tableExport->value};
+      return TableInterfaceInfo{importedInstance->externalInterface,
+                                tableExport->value};
     } else {
       return TableInterfaceInfo{externalInterface, name};
     }
@@ -2738,12 +2738,8 @@ private:
       Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
       auto info = instance.getTableInterfaceInfo(curr->table);
-      Flow ret = info.interface->callTable(info.name,
-                                           index,
-                                           curr->sig,
-                                           arguments,
-                                           type,
-                                           *instance.self());
+      Flow ret = info.interface->callTable(
+        info.name, index, curr->sig, arguments, type, *instance.self());
 
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
@@ -2790,7 +2786,8 @@ private:
         return index;
       }
       auto info = instance.getTableInterfaceInfo(curr->table);
-      return info.interface->tableLoad(info.name, index.getSingleValue().geti32());
+      return info.interface->tableLoad(info.name,
+                                       index.getSingleValue().geti32());
     }
 
     Flow visitLocalGet(LocalGet* curr) {
