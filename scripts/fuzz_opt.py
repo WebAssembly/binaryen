@@ -1343,6 +1343,9 @@ on valid wasm files.)
                 original_wasm = os.path.abspath('original.wasm')
                 shutil.copyfile('a.wasm', original_wasm)
                 # write out a useful reduce.sh
+                auto_init = ''
+                if shared.options.auto_initial_contents:
+                    auto_init = '--auto-initial-contents'
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
@@ -1354,7 +1357,7 @@ echo "  " $?
 
 # run the command
 echo "The following value should be 1:"
-./scripts/fuzz_opt.py --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "  " $?
 
 #
@@ -1383,6 +1386,7 @@ echo "  " $?
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
                          'bin': shared.options.binaryen_bin,
                          'seed': seed,
+                         'auto_init': auto_init,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
                          'reduce_sh': os.path.abspath('reduce.sh')})
