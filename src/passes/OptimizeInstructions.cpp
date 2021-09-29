@@ -1855,9 +1855,9 @@ private:
              curr,
              select(i64(0), any(&x), binary(NeInt64, any(&y), i64(0))))) &&
           areConsecutiveInputsEqualAndFoldable(x, y)) {
-        return builder.makeBlock(
-          {builder.makeDrop(x),
-           curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue});
+        return builder.makeSequence(
+          builder.makeDrop(x),
+          curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue);
       }
     }
     {
