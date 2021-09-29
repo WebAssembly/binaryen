@@ -92,17 +92,21 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
   }
 
+  // Add a reference to a table and all its segments and elements.
+  void maybeAddTable(Name name) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, name));
+    ModuleUtils::iterTableSegments(
+      *module, name, [&](ElementSegment* segment) {
+        maybeAdd(
+          ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+      });
+  }
+
   void visitCall(Call* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
   }
   void visitCallIndirect(CallIndirect* curr) {
-    assert(!module->tables.empty() && "call-indirect to undefined table.");
-    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
-    ModuleUtils::iterTableSegments(
-      *module, curr->table, [&](ElementSegment* segment) {
-        maybeAdd(
-          ModuleElement(ModuleElementKind::ElementSegment, segment->name));
-      });
+    maybeAddTable(curr->table);
   }
 
   void visitGlobalGet(GlobalGet* curr) {
@@ -127,6 +131,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+  }
+  void visitTableGet(TableGet* curr) {
+    maybeAddTable(curr->table);
   }
   void visitThrow(Throw* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Tag, curr->tag));
