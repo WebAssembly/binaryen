@@ -24,7 +24,8 @@ void worker() {
 
   // Create the add function
   // Note: no additional local variables
-  // Note: no basic blocks here, we are an AST. The function body is just an expression node.
+  // Note: no basic blocks here, we are an AST. The function body is just an
+  // expression node.
   BinaryenFunctionRef adder =
     BinaryenAddFunction(module, "adder", ii, BinaryenTypeInt32(), NULL, 0, ret);
 

@@ -1,5 +1,5 @@
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <emscripten.h>
 
 extern "C" {
@@ -13,7 +13,9 @@ double EMSCRIPTEN_KEEPALIVE dadd(double x, double y) { return x + y; }
 double EMSCRIPTEN_KEEPALIVE dsub(double x, double y) { return x - y; }
 double EMSCRIPTEN_KEEPALIVE dmul(double x, double y) { return x * y; }
 double EMSCRIPTEN_KEEPALIVE ddiv(double x, double y) { return x / y; }
-double EMSCRIPTEN_KEEPALIVE dcopysign(double x, double y) { return std::copysign(x, y); }
+double EMSCRIPTEN_KEEPALIVE dcopysign(double x, double y) {
+  return std::copysign(x, y);
+}
 double EMSCRIPTEN_KEEPALIVE dmin(double x, double y) { return std::min(x, y); }
 double EMSCRIPTEN_KEEPALIVE dmax(double x, double y) { return std::max(x, y); }
 
@@ -68,6 +70,4 @@ int EMSCRIPTEN_KEEPALIVE float_to_uint(float d) {
   unsigned x = d;
   return x;
 }
-
 }
-

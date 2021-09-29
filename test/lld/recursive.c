@@ -3,10 +3,9 @@
 
 int printf(const char* fmt, ...);
 
-__attribute__((noinline))
-int foo(int a, int b) {
-    printf("%d:%d\n", a, b);
-    return a + b;
+__attribute__((noinline)) int foo(int a, int b) {
+  printf("%d:%d\n", a, b);
+  return a + b;
 }
 
 int main() {
