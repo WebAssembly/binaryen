@@ -24,6 +24,7 @@
 #ifndef wasm_support_small_set_h
 #define wasm_support_small_set_h
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <set>
