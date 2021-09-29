@@ -208,6 +208,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       trap("tableGet overflow");
     }
 
+std::cout << "in range! " << tableName << " : " << index << " : " << table[index] << " / " << table[index].type << " : " << table[index].size() << "\n";
     return table[index];
   }
 
