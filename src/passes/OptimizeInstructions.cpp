@@ -835,7 +835,9 @@ struct OptimizeInstructions
         // optimizing that for another run of the pass, in theory, but instead
         // we just handle it here to avoid regressions.
         Binary* inner;
-        if (matches(curr, unary(EqZ, unary(EqZ, binary(&inner, Sub, any(), any()))))) {
+        if (matches(
+              curr,
+              unary(EqZ, unary(EqZ, binary(&inner, Sub, any(), any()))))) {
           inner->op = Abstract::getBinary(inner->left->type, Ne);
           inner->type = Type::i32;
           return replaceCurrent(inner);
