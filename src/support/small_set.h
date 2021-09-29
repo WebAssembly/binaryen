@@ -161,9 +161,9 @@ public:
   template<typename Parent, typename FlexibleIterator> struct IteratorBase {
     using iterator_category = std::forward_iterator_tag;
     using difference_type = long;
-    using value_type = const T;
-    using pointer = value_type*;
-    using reference = value_type&;
+    using value_type = T;
+    using pointer = const value_type*;
+    using reference = const value_type&;
 
     Parent* parent;
 
