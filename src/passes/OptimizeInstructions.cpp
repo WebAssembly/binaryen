@@ -826,6 +826,14 @@ struct OptimizeInstructions
       }
       {
         // eqz(eqz(x - y))  =>  x != y
+        //
+        // Note that this rule is not strictly needed, since inner eqz here fits
+        // the above pattern, and then we get the outer eqz on x == y which can
+        // then turn into x != y. However, the rule "i64(x) != 0  ==>  !!x"
+        // introduces two eqzs, and as we run in postorder (to keep the pass in
+        // linear time) we do not process the inner one again. We could leave
+        // optimizing that for another run of the pass, in theory, but instead
+        // we just handle it here to avoid regressions.
         Binary* inner;
         if (matches(curr, unary(EqZ, unary(EqZ, binary(&inner, Sub, any(), any()))))) {
           inner->op = Abstract::getBinary(inner->left->type, Ne);
