@@ -269,8 +269,9 @@ struct OptimizeInstructions
   // things for a later run of this pass, which this function does. This
   // potentially makes the pass not linear time, so it should be used sparingly.
   void reOptimize(Expression*& curr) {
-    std::cout << "reoptimize! " << *curr << '\n';
-    OptimizeInstructions().runOnExpression(
+    OptimizeInstructions reoptimizer;
+    reoptimizer.localInfo = localInfo;
+    reoptimizer.runOnExpression(
       getPassRunner(), getModule(), getFunction(), curr);
   }
 
