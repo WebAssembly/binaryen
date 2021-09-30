@@ -522,7 +522,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $neq-zero-i32 (param $x i32) (result i32)
-    ;; This would be faster as !!x, but it would be slower.
+    ;; This would be smaller as !!x, but it would be slower.
     (i32.ne
       (local.get $x)
       (i32.const 0)
