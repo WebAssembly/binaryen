@@ -269,8 +269,9 @@ struct OptimizeInstructions
   // things for a later run of this pass, which this function does. This
   // potentially makes the pass not linear time, so it should be used sparingly.
   void reOptimize(Expression*& curr) {
-std::cout << "reoptimize! " << *curr << '\n';
-    OptimizeInstructions().runOnExpression(getPassRunner(), getModule(), getFunction(), curr);
+    std::cout << "reoptimize! " << *curr << '\n';
+    OptimizeInstructions().runOnExpression(
+      getPassRunner(), getModule(), getFunction(), curr);
   }
 
   EffectAnalyzer effects(Expression* expr) {
@@ -2379,7 +2380,8 @@ private:
     }
     // x != 0  ==>  !!x   (reduces 3 bytes into 2)
     if (matches(curr, binary(Ne, any(&left), ival(0)))) {
-      auto* ret = builder.makeUnary(EqZInt32, builder.makeUnary(Abstract::getUnary(type, EqZ), left));
+      auto* ret = builder.makeUnary(
+        EqZInt32, builder.makeUnary(Abstract::getUnary(type, EqZ), left));
       // Re-optimize the inner eqz, since otherwise our postorder walk will not
       // visit it again, and that new eqz may open up new opportunities with
       // its child.
