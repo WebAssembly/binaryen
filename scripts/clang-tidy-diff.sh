@@ -24,7 +24,7 @@ function realpath() {
 
 CLANG_DIR=$(dirname $(dirname $(realpath $CLANG_TIDY)))
 CLANG_TIDY_DIFF=$CLANG_DIR/share/clang/clang-tidy-diff.py
-ARG="-quiet -p1 -regex=src/.*"
+ARG="-quiet -p1 -iregex=src/.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hpp|m|mm|inc)"
 if [ ! -e "$CLANG_TIDY_DIFF" ]; then
   echo "Failed to find clang-tidy-diff.py ($CLANG_TIDY_DIFF)"
   exit 1
