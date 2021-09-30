@@ -907,6 +907,22 @@ struct OptimizeInstructions
           }
         }
       }
+      {
+        // !!x  =>  x != 0
+        // This increases code size by one byte, but it improves speed as it
+        // replaces two CPU instructions with one. Even when moderately
+        // optimizing for size this is reasonable to do, as the code size
+        // increase is tiny compared to the potential benefits, which can
+        // include further optimizations on the resulting pattern.
+        Expression* x;
+        if (getPassOptions().shrinkLevel <= 1 &&
+            matches(curr, unary(EqZ, unary(EqZ, any(&x))))) {
+          auto type = x->type;
+          return replaceCurrent(builder.makeBinary(Abstract::getBinary(type, Ne), x,
+          builder.makeConst(Literal::makeZero(type))
+          ));
+        }
+      }
       if (getModule()->features.hasSignExt()) {
         // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
         Unary* inner;
@@ -2378,16 +2394,6 @@ private:
          matches(curr, binary(NeInt64, any(&left), i64(0)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(WrapInt64, left);
-    }
-    // x != 0  ==>  !!x   (reduces 3 bytes into 2)
-    if (matches(curr, binary(Ne, any(&left), ival(0)))) {
-      auto* ret = builder.makeUnary(
-        EqZInt32, builder.makeUnary(Abstract::getUnary(type, EqZ), left));
-      // Re-optimize the inner eqz, since otherwise our postorder walk will not
-      // visit it again, and that new eqz may open up new opportunities with
-      // its child.
-      reOptimize(ret->value);
-      return ret;
     }
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Ne, any(&left), ival(1))) &&

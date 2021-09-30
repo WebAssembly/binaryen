@@ -49,10 +49,9 @@
   )
   (loop $label$3
    (if
-    (i32.eqz
-     (i64.eqz
-      (local.get $0)
-     )
+    (i64.ne
+     (local.get $0)
+     (i64.const 0)
     )
     (block
      (local.set $1

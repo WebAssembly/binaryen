@@ -531,12 +531,11 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 3)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.eqz
-  ;; CHECK-NEXT:      (i32.eqz
-  ;; CHECK-NEXT:       (local.tee $1
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.tee $1
+  ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

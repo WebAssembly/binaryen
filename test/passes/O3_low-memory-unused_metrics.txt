@@ -9,12 +9,12 @@ total
  [tags]         : 0       
  [total]        : 1964    
  [vars]         : 9       
- Binary         : 235     
+ Binary         : 240     
  Block          : 68      
  Break          : 90      
  Call           : 22      
  CallIndirect   : 1       
- Const          : 170     
+ Const          : 175     
  Drop           : 8       
  If             : 27      
  Load           : 313     
@@ -24,7 +24,7 @@ total
  Return         : 3       
  Select         : 11      
  Store          : 160     
- Unary          : 39      
+ Unary          : 29      
 (module
  (type $0 (func (param i32 i32 i32) (result i32)))
  (type $2 (func (param i32 i32) (result i32)))
@@ -477,43 +477,38 @@ total
                       (i32.or
                        (i32.or
                         (i32.or
-                         (i32.eqz
-                          (i32.eqz
-                           (local.get $9)
-                          )
-                         )
                          (i32.shl
-                          (i32.eqz
-                           (i32.eqz
-                            (local.get $8)
-                           )
+                          (i32.ne
+                           (local.get $8)
+                           (i32.const 0)
                           )
                           (i32.const 1)
                          )
+                         (i32.ne
+                          (local.get $9)
+                          (i32.const 0)
+                         )
                         )
                         (i32.shl
-                         (i32.eqz
-                          (i32.eqz
-                           (local.get $6)
-                          )
+                         (i32.ne
+                          (local.get $6)
+                          (i32.const 0)
                          )
                          (i32.const 2)
                         )
                        )
                        (i32.shl
-                        (i32.eqz
-                         (i32.eqz
-                          (local.get $5)
-                         )
+                        (i32.ne
+                         (local.get $5)
+                         (i32.const 0)
                         )
                         (i32.const 3)
                        )
                       )
                       (i32.shl
-                       (i32.eqz
-                        (i32.eqz
-                         (local.get $4)
-                        )
+                       (i32.ne
+                        (local.get $4)
+                        (i32.const 0)
                        )
                        (i32.const 4)
                       )
