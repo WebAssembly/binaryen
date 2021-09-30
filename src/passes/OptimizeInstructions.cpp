@@ -261,6 +261,18 @@ struct OptimizeInstructions
     inReplaceCurrent = false;
   }
 
+  // The override of replaceCurrent() above us ensures that we revisit a node
+  // after we optimize it, allowing us to apply multiple rules while we still
+  // find things to do. However, we are still doing a post-walk, which means we
+  // do not backtrack. Sometimes a pattern creates several nested children, in
+  // which case it would make sense to re-optimize them instead of leaving
+  // things for a later run of this pass, which this function does. This
+  // potentially makes the pass not linear time, so it should be used sparingly.
+  void reOptimize(Expression*& curr) {
+std::cout << "reoptimize! " << *curr << '\n';
+    OptimizeInstructions().runOnExpression(getPassRunner(), getModule(), getFunction(), curr);
+  }
+
   EffectAnalyzer effects(Expression* expr) {
     return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
@@ -820,25 +832,6 @@ struct OptimizeInstructions
         Binary* inner;
         if (matches(curr, unary(EqZ, binary(&inner, Sub, any(), any())))) {
           inner->op = Abstract::getBinary(inner->left->type, Eq);
-          inner->type = Type::i32;
-          return replaceCurrent(inner);
-        }
-      }
-      {
-        // eqz(eqz(x - y))  =>  x != y
-        //
-        // Note that this rule is not strictly needed, since inner eqz here fits
-        // the above pattern, and then we get the outer eqz on x == y which can
-        // then turn into x != y. However, the rule "i64(x) != 0  ==>  !!x"
-        // introduces two eqzs, and as we run in postorder (to keep the pass in
-        // linear time) we do not process the inner one again. We could leave
-        // optimizing that for another run of the pass, in theory, but instead
-        // we just handle it here to avoid regressions.
-        Binary* inner;
-        if (matches(
-              curr,
-              unary(EqZ, unary(EqZ, binary(&inner, Sub, any(), any()))))) {
-          inner->op = Abstract::getBinary(inner->left->type, Ne);
           inner->type = Type::i32;
           return replaceCurrent(inner);
         }
@@ -2384,9 +2377,14 @@ private:
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(WrapInt64, left);
     }
-    // i64(x) != 0  ==>  !!x   (reduces 3 bytes into 2)
-    if (matches(curr, binary(NeInt64, any(&left), i64(0)))) {
-      return builder.makeUnary(EqZInt32, builder.makeUnary(EqZInt64, left));
+    // x != 0  ==>  !!x   (reduces 3 bytes into 2)
+    if (matches(curr, binary(Ne, any(&left), ival(0)))) {
+      auto* ret = builder.makeUnary(EqZInt32, builder.makeUnary(Abstract::getUnary(type, EqZ), left));
+      // Re-optimize the inner eqz, since otherwise our postorder walk will not
+      // visit it again, and that new eqz may open up new opportunities with
+      // its child.
+      reOptimize(ret->value);
+      return ret;
     }
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Ne, any(&left), ival(1))) &&
