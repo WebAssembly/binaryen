@@ -1334,103 +1334,134 @@ struct OptimizeInstructions
     Builder builder(*getModule());
     auto passOptions = getPassOptions();
 
-    // TODO: If no rtt, this is a static cast, and if the type matches then it
-    //       will definitely succeed. The opts below could be expanded for that.
-    if (curr->rtt) {
+    auto fallthrough =
+      Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
-      auto fallthrough =
-        Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
+    auto intendedType = curr->getIntendedType();
 
-      // If the value is a null, it will just flow through, and we do not need
-      // the cast. However, if that would change the type, then things are less
-      // simple: if the original type was non-nullable, replacing it with a null
-      // would change the type, which can happen in e.g.
-      //   (ref.cast (ref.as_non_null (.. (ref.null)
-      if (fallthrough->is<RefNull>()) {
-        // Replace the expression with drops of the inputs, and a null. Note
-        // that we provide a null of the type the outside expects - that of the
-        // rtt, which is what was cast to.
-        Expression* rep = builder.makeBlock(
-          {builder.makeDrop(curr->ref),
-           builder.makeDrop(curr->rtt),
-           builder.makeRefNull(curr->rtt->type.getHeapType())});
-        if (curr->ref->type.isNonNullable()) {
-          // Avoid a type change by forcing to be non-nullable. In practice,
-          // this would have trapped before we get here, so this is just for
-          // validation.
-          rep = builder.makeRefAs(RefAsNonNull, rep);
+    // If the value is a null, it will just flow through, and we do not need
+    // the cast. However, if that would change the type, then things are less
+    // simple: if the original type was non-nullable, replacing it with a null
+    // would change the type, which can happen in e.g.
+    //   (ref.cast (ref.as_non_null (.. (ref.null)
+    if (fallthrough->is<RefNull>()) {
+      // Replace the expression with drops of the inputs, and a null. Note
+      // that we provide a null of the previous type, so that we do not alter
+      // the type received by our parent.
+      std::vector<Expression*> items;
+      items.push_back(builder.makeDrop(curr->ref));
+      if (curr->rtt) {
+        items.push_back(builder.makeDrop(curr->rtt));
+      }
+      items.push_back(builder.makeRefNull(intendedType));
+      Expression* rep = builder.makeBlock(items);
+      if (curr->ref->type.isNonNullable()) {
+        // Avoid a type change by forcing to be non-nullable. In practice,
+        // this would have trapped before we get here, so this is just for
+        // validation.
+        rep = builder.makeRefAs(RefAsNonNull, rep);
+      }
+      replaceCurrent(rep);
+      return;
+      // TODO: The optimal ordering of this and the other ref.as_non_null
+      //       stuff later down in this functions is unclear and may be worth
+      //       looking into.
+    }
+
+    // For the cast to be able to succeed, the value being cast must be a
+    // subtype of the desired type, as RTT subtyping is a subset of static
+    // subtyping. For example, trying to cast an array to a struct would be
+    // incompatible.
+    if (!canBeCastTo(curr->ref->type.getHeapType(), intendedType)) {
+      // This cast cannot succeed. If the input is not a null, it will
+      // definitely trap.
+      if (fallthrough->type.isNonNullable()) {
+        // Make sure to emit a block with the same type as us; leave updating
+        // types for other passes.
+        std::vector<Expression*> items;
+        items.push_back(builder.makeDrop(curr->ref));
+        if (curr->rtt) {
+          items.push_back(builder.makeDrop(curr->rtt));
         }
-        replaceCurrent(rep);
+        items.push_back(builder.makeUnreachable());
+        replaceCurrent(builder.makeBlock(items, curr->type));
         return;
-        // TODO: The optimal ordering of this and the other ref.as_non_null
-        //       stuff later down in this functions is unclear and may be worth
-        //       looking into.
       }
+      // Otherwise, we are not sure what it is, and need to wait for runtime
+      // to see if it is a null or not. (We've already handled the case where
+      // we can see the value is definitely a null at compile time, earlier.)
+    }
 
-      // For the cast to be able to succeed, the value being cast must be a
-      // subtype of the desired type, as RTT subtyping is a subset of static
-      // subtyping. For example, trying to cast an array to a struct would be
-      // incompatible.
-      if (!canBeCastTo(curr->ref->type.getHeapType(),
-                       curr->rtt->type.getHeapType())) {
-        // This cast cannot succeed. If the input is not a null, it will
-        // definitely trap.
-        if (fallthrough->type.isNonNullable()) {
-          // Make sure to emit a block with the same type as us; leave updating
-          // types for other passes.
-          replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                            builder.makeDrop(curr->rtt),
-                                            builder.makeUnreachable()},
-                                           curr->type));
-          return;
-        }
-        // Otherwise, we are not sure what it is, and need to wait for runtime
-        // to see if it is a null or not. (We've already handled the case where
-        // we can see the value is definitely a null at compile time, earlier.)
-      }
-
-      if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
-        // Aside from the issue of type incompatibility as mentioned above, the
-        // cast can trap if the types *are* compatible but it happens to be the
-        // case at runtime that the value is not of the desired subtype. If we
-        // do not consider such traps possible, we can ignore that. Note,
-        // though, that we cannot do this if we cannot replace the current type
-        // with the reference's type.
-        if (HeapType::isSubType(curr->ref->type.getHeapType(),
-                                curr->rtt->type.getHeapType())) {
+    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen ||
+        !curr->rtt) {
+      // Aside from the issue of type incompatibility as mentioned above, the
+      // cast can trap if the types *are* compatible but it happens to be the
+      // case at runtime that the value is not of the desired subtype. If we
+      // do not consider such traps possible, we can ignore that. (Note,
+      // though, that we cannot do this if we cannot replace the current type
+      // with the reference's type.) We can also do this if this is a static
+      // cast: in that case, all we need to know about are the types.
+      if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
+        if (curr->rtt) {
           replaceCurrent(getResultOfFirst(curr->ref,
                                           builder.makeDrop(curr->rtt),
                                           getFunction(),
                                           getModule(),
                                           passOptions));
-          return;
+        } else {
+          replaceCurrent(curr->ref);
         }
+        return;
       }
+    }
 
-      // Repeated identical ref.cast operations are unnecessary, if using the
-      // exact same rtt - the result will be the same. Find the immediate child
-      // cast, if there is one, and see if it is identical.
-      // TODO: Look even further through incompatible casts?
-      auto* ref = curr->ref;
-      while (!ref->is<RefCast>()) {
-        auto* last = ref;
-        // RefCast falls through the value, so instead of calling
-        // getFallthrough() to look through all fallthroughs, we must iterate
-        // manually. Keep going until we reach either the end of things
-        // falling-through, or a cast.
-        ref =
-          Properties::getImmediateFallthrough(ref, passOptions, *getModule());
-        if (ref == last) {
-          break;
-        }
+    // Repeated identical ref.cast operations are unnecessary. First, find the
+    // immediate child cast, if there is one.
+    // TODO: Look even further through incompatible casts?
+    auto* ref = curr->ref;
+    while (!ref->is<RefCast>()) {
+      auto* last = ref;
+      // RefCast falls through the value, so instead of calling
+      // getFallthrough() to look through all fallthroughs, we must iterate
+      // manually. Keep going until we reach either the end of things
+      // falling-through, or a cast.
+      ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
+      if (ref == last) {
+        break;
       }
-      if (auto* child = ref->dynCast<RefCast>()) {
+    }
+    if (auto* child = ref->dynCast<RefCast>()) {
+      if (curr->rtt && child->rtt) {
         // Check if the casts are identical.
         if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
             !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
                .hasSideEffects()) {
           replaceCurrent(curr->ref);
           return;
+        }
+      } else if (!curr->rtt && !child->rtt) {
+        // Repeated static casts can be removed, leaving just the most demanding
+        // of them.
+        auto childIntendedType = child->getIntendedType();
+        if (HeapType::isSubType(intendedType, childIntendedType)) {
+          // Skip the child.
+          curr->ref = child->ref;
+          return;
+        } else if (HeapType::isSubType(childIntendedType, intendedType)) {
+          // Skip the parent.
+          replaceCurrent(child);
+          return;
+        } else {
+          // The types are not compatible, so if the input is not null, this
+          // will trap.
+          if (!curr->type.isNullable()) {
+            // Make sure to emit a block with the same type as us; leave
+            // updating types for other passes.
+            replaceCurrent(builder.makeBlock(
+              {builder.makeDrop(child->ref), builder.makeUnreachable()},
+              curr->type));
+            return;
+          }
         }
       }
     }
@@ -1470,18 +1501,30 @@ struct OptimizeInstructions
       return;
     }
 
-    // TODO: If no rtt, this is a static test, and if the type matches then it
-    //       will definitely succeed. The opt below could be expanded for that.
-    if (curr->rtt) {
-      // See above in RefCast.
-      if (!canBeCastTo(curr->ref->type.getHeapType(),
-                       curr->rtt->type.getHeapType())) {
-        // This test cannot succeed, and will definitely return 0.
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->rtt),
-                                          builder.makeConst(int32_t(0))}));
+    Builder builder(*getModule());
+
+    auto refType = curr->ref->type.getHeapType();
+    auto intendedType = curr->getIntendedType();
+
+    // See above in RefCast.
+    if (!canBeCastTo(refType, intendedType)) {
+      // This test cannot succeed, and will definitely return 0.
+      std::vector<Expression*> items;
+      items.push_back(builder.makeDrop(curr->ref));
+      if (curr->rtt) {
+        items.push_back(builder.makeDrop(curr->rtt));
       }
+      items.push_back(builder.makeConst(int32_t(0)));
+      replaceCurrent(builder.makeBlock(items));
+      return;
+    }
+
+    if (!curr->rtt && curr->ref->type.isNonNullable() &&
+        HeapType::isSubType(refType, intendedType)) {
+      // This static test will definitely succeed.
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
+      return;
     }
   }
 
