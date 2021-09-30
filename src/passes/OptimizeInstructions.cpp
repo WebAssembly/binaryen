@@ -909,18 +909,26 @@ struct OptimizeInstructions
       }
       {
         // !!x  =>  x != 0
-        // This increases code size by one byte, but it improves speed as it
-        // replaces two CPU instructions with one. Even when moderately
-        // optimizing for size this is reasonable to do, as the code size
-        // increase is tiny compared to the potential benefits, which can
-        // include further optimizations on the resulting pattern.
         Expression* x;
-        if (getPassOptions().shrinkLevel <= 1 &&
-            matches(curr, unary(EqZ, unary(EqZ, any(&x))))) {
-          auto type = x->type;
-          return replaceCurrent(builder.makeBinary(Abstract::getBinary(type, Ne), x,
-          builder.makeConst(Literal::makeZero(type))
-          ));
+        if (matches(curr, unary(EqZ, unary(EqZ, any(&x))))) {
+          // !!bool(x)  ==>   bool(x)
+          // Note that this is only possible if the value is the same type,
+          // which is not the case for (i32.eqz (i64.eqz ..)).
+          if (x->type == curr->type && Bits::getMaxBits(x, this) == 1) {
+            return replaceCurrent(x);
+          }
+
+          // If the input is not boolean already (and it does not change type
+          // from i64 to i32), then we must add a ! = 0 which adds one byte, but
+          // it improves speed as it swaps two CPU instructions with one. Even
+          // when moderately optimizing for size this is reasonable to do, as
+          // the code size increase is tiny compared to the potential benefits.
+          if (getPassOptions().shrinkLevel <= 1) {
+            auto type = x->type;
+            return replaceCurrent(builder.makeBinary(Abstract::getBinary(type, Ne), x,
+            builder.makeConst(Literal::makeZero(type))
+            ));
+          }
         }
       }
       if (getModule()->features.hasSignExt()) {
@@ -2792,13 +2800,6 @@ private:
           case ExtendS16Int32: {
             assert(getModule()->features.hasSignExt());
             return unaryInner;
-          }
-          case EqZInt32: {
-            // eqz(eqz(bool(x)))  ==>   bool(x)
-            if (Bits::getMaxBits(unaryInner->value, this) == 1) {
-              return unaryInner->value;
-            }
-            break;
           }
           default: {
           }
