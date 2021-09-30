@@ -1824,6 +1824,20 @@ private:
       // order using a temp local, which would be bad
     }
     {
+      // Flip select to remove eqz if we can reorder
+      Select* s;
+      Expression *ifTrue, *ifFalse, *c;
+      if (matches(
+            curr,
+            select(
+              &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
+          canReorder(ifTrue, ifFalse)) {
+        s->ifTrue = ifFalse;
+        s->ifFalse = ifTrue;
+        s->condition = c;
+      }
+    }
+    {
       // TODO: Remove this after landing SCCP pass. See: #4161
 
       // i32(x) ? i32(x) : 0  ==>  x
@@ -1858,20 +1872,6 @@ private:
         return builder.makeSequence(
           builder.makeDrop(x),
           curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue);
-      }
-    }
-    {
-      // Flip select to remove eqz if we can reorder
-      Select* s;
-      Expression *ifTrue, *ifFalse, *c;
-      if (matches(
-            curr,
-            select(
-              &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
-          canReorder(ifTrue, ifFalse)) {
-        s->ifTrue = ifFalse;
-        s->ifFalse = ifTrue;
-        s->condition = c;
       }
     }
     {

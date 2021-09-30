@@ -10578,6 +10578,14 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $select-with-same-arm-and-cond-32 (param $x i32)
     ;; i32(x) ? i32(x) : 0  ==>  x
@@ -10586,11 +10594,17 @@
       (i32.const 0)
       (local.get $x)
     ))
-    ;; i32(x) ? 0 : i32(x)  ==>  0
+    ;; i32(x) ? 0 : i32(x)  ==>  {x, 0}
     (drop (select
       (i32.const 0)
       (local.get $x)
       (local.get $x)
+    ))
+    ;; i32(x) == 0 ? i32(x) : 0  ==>  {x, 0}
+    (drop (select
+      (local.get $x)
+      (i32.const 0)
+      (i32.eqz (local.get $x))
     ))
   )
 
@@ -10653,7 +10667,7 @@
         (i64.const 0)
       )
     ))
-    ;; i64(x) == 0 ? i64(x) : 0  ==>  0
+    ;; i64(x) == 0 ? i64(x) : 0  ==>  {x, 0}
     (drop (select
       (local.get $x)
       (i64.const 0)
@@ -10674,9 +10688,11 @@
   ;; CHECK:      (func $select-with-same-arm-and-cond-skips (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -10729,7 +10745,7 @@
     (drop (select
       (local.get $x)
       (i32.const 0)
-      (i32.eqz (local.get $x))
+      (i32.wrap_i64 (local.get $y))
     ))
     (drop (select
       (i32.const 0)
