@@ -911,10 +911,12 @@ struct OptimizeInstructions
         // !!x  =>  x != 0
         Expression* x;
         if (matches(curr, unary(EqZ, unary(EqZ, any(&x))))) {
+          auto xType = x->type;
+
           // !!bool(x)  ==>   bool(x)
           // Note that this is only possible if the value is the same type,
           // which is not the case for (i32.eqz (i64.eqz ..)).
-          if (x->type == curr->type && Bits::getMaxBits(x, this) == 1) {
+          if (xType == curr->type && Bits::getMaxBits(x, this) == 1) {
             return replaceCurrent(x);
           }
 
@@ -924,11 +926,10 @@ struct OptimizeInstructions
           // when moderately optimizing for size this is reasonable to do, as
           // the code size increase is tiny compared to the potential benefits.
           if (getPassOptions().shrinkLevel <= 1) {
-            auto type = x->type;
             return replaceCurrent(
-              builder.makeBinary(Abstract::getBinary(type, Ne),
+              builder.makeBinary(Abstract::getBinary(xType, Ne),
                                  x,
-                                 builder.makeConst(Literal::makeZero(type))));
+                                 builder.makeConst(Literal::makeZero(xType))));
           }
         }
       }
