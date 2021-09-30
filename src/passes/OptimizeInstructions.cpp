@@ -925,9 +925,10 @@ struct OptimizeInstructions
           // the code size increase is tiny compared to the potential benefits.
           if (getPassOptions().shrinkLevel <= 1) {
             auto type = x->type;
-            return replaceCurrent(builder.makeBinary(Abstract::getBinary(type, Ne), x,
-            builder.makeConst(Literal::makeZero(type))
-            ));
+            return replaceCurrent(
+              builder.makeBinary(Abstract::getBinary(type, Ne),
+                                 x,
+                                 builder.makeConst(Literal::makeZero(type))));
           }
         }
       }
