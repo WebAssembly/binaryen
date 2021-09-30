@@ -925,6 +925,8 @@ struct OptimizeInstructions
           // it improves speed as it swaps two CPU instructions with one. Even
           // when moderately optimizing for size this is reasonable to do, as
           // the code size increase is tiny compared to the potential benefits.
+          // TODO: When optimizing heavily for size, do the opposite transform.
+          //       See #4194
           if (getPassOptions().shrinkLevel <= 1) {
             return replaceCurrent(
               builder.makeBinary(Abstract::getBinary(xType, Ne),
