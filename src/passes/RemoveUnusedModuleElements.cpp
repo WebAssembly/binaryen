@@ -195,12 +195,6 @@ struct RemoveUnusedModuleElements : public Pass {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
-    // FIXME!
-    // Track which funcs are called directly. If you are reachable, but *not*
-    // called directly, then you are only called indirectly. And if we track all
-    // indirect calls, and not could possibly call you - then your code is not
-    // reachabe. We can't delete it, since a referejce is taken. But we can
-    // fill the body with just an unreachable.
     ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
