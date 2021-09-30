@@ -522,6 +522,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $neq-zero-i32 (param $x i32) (result i32)
+    ;; This would be faster as !!x, but it would be slower.
     (i32.ne
       (local.get $x)
       (i32.const 0)
@@ -537,6 +538,32 @@
     (i64.ne
       (local.get $x)
       (i64.const 0)
+    )
+  )
+  ;; CHECK:      (func $neq-neq-i32 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.ne
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $neq-neq-i32 (param $x i32) (result i32)
+    (i32.eqz
+      (i32.eqz
+        (local.get $x)
+      )
+    )
+  )
+  ;; CHECK:      (func $neq-neq-i64 (param $x i64) (result i32)
+  ;; CHECK-NEXT:  (i64.ne
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $neq-neq-i64 (param $x i64) (result i32)
+    (i32.eqz
+      (i64.eqz
+        (local.get $x)
+      )
     )
   )
   ;; CHECK:      (func $neq-neq-sub-i32 (param $x i32) (param $y i32) (result i32)
