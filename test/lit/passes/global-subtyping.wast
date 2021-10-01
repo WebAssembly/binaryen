@@ -29,6 +29,13 @@
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref $ref|$struct|_=>_none))
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct))
     (local $temp (ref null $struct))
@@ -408,6 +415,13 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct))

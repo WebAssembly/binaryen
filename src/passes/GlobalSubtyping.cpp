@@ -180,25 +180,12 @@ struct GlobalSubtyping : public Pass {
         if (observedFieldType != oldFieldType &&
             observedFieldType != Type::unreachable) {
           curr->type = observedFieldType;
-          changed = true;
-        }
-      }
-
-      void doWalkFunction(Function* func) {
-        WalkerPass<PostWalker<GetUpdater>>::doWalkFunction(func);
-
-        // If we changed anything, we need to update parent types as types may
-        // have changed.
-        if (changed) {
-          ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
 
     private:
       LUBStructValuesMap& infos;
-
-      bool changed = false;
-    };
+   };
 
     GetUpdater(combinedInfos).run(runner, module);
 
@@ -225,6 +212,10 @@ struct GlobalSubtyping : public Pass {
     };
 
     TypeUpdater(*module, combinedInfos).update();
+
+    // Finally, do a refinalize to propagate the new struct.get types outwards.
+    // This may not be strictly necessary?
+    ReFinalize().run(runner, module);
   }
 };
 
