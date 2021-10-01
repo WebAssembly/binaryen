@@ -156,11 +156,57 @@ struct GlobalSubtyping : public Pass {
 
     // We now know a set of valid types that we can apply, and can do so.
 
-    class Updater : public GlobalTypeUpdater {
+    // Update the types of struct.gets to reflect the more specialized types
+    // we switched to. We do this first so that type rewriting afterwards will
+    // update them properly.
+    struct GetUpdater : public WalkerPass<PostWalker<GetUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      Pass* create() override { return new GetUpdater(infos); }
+
+      GetUpdater(LUBStructValuesMap& infos) : infos(infos) {}
+
+      void visitStructGet(StructGet* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+
+        auto type = curr->ref->type.getHeapType();
+        auto oldFieldType = type.getStruct().fields[i].type;
+        auto observedFieldType = combinedInfos[type][i].type;
+        // If we have more specialized type (and not if it's unreachable,
+        // which means we've seen nothing at all), then we can optimize.
+        if (observedFieldType != oldFieldType &&
+            observedFieldType != Type::unreachable) {
+          curr->type = observedFieldType;
+          changed = true;
+        }
+      }
+
+      void doWalkFunction(Function* func) {
+        WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
+
+        // If we changed anything, we need to update parent types as types may
+        // have changed.
+        if (changed) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
+      }
+
+    private:
+      LUBStructValuesMap& infos;
+
+      bool changed = false;
+    };
+
+    GetUpdater(combinedInfos).run(runner, module);
+
+    // Rewrite all the types to apply our changes to their definitions.
+    class TypeUpdater : public GlobalTypeUpdater {
       LUBStructValuesMap& combinedInfos;
 
     public:
-      Updater(Module& wasm, LUBStructValuesMap& combinedInfos) : GlobalTypeUpdater(wasm), combinedInfos(combinedInfos) {}
+      TypeUpdater(Module& wasm, LUBStructValuesMap& combinedInfos) : GlobalTypeUpdater(wasm), combinedInfos(combinedInfos) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         auto& oldFields = oldStructType.getStruct().fields;
@@ -168,8 +214,6 @@ struct GlobalSubtyping : public Pass {
         for (Index i = 0; i < oldFields.size(); i++) {
           auto oldFieldType = oldFields[i].type;
           auto observedFieldType = observedFields[i].type;
-          // If we have more specialized type (and not if it's unreachable,
-          // which means we've seen nothing at all), then we can optimize.
           if (observedFieldType != oldFieldType &&
               observedFieldType != Type::unreachable) {
             struct_.fields[i].type = getTempType(observedFieldType);
@@ -178,7 +222,7 @@ struct GlobalSubtyping : public Pass {
       }
     };
 
-    Updater(*module, combinedInfos).update();
+    TypeUpdater(*module, combinedInfos).update();
   }
 };
 

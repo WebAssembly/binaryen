@@ -36,9 +36,18 @@
       (local.get $x)
       (ref.func $set)
     )
-    ;; Test that local types remain valid after our work.
+    ;; Test that local types remain valid after our work (otherwise, we'd get a
+    ;; validation error).
     (local.set $temp
       (local.get $x)
+    )
+    ;; Test that struct.get types remain valid after our work.
+    (drop
+      (block (result funcref)
+        (struct.get $struct 0
+          (local.get $x)
+        )
+      )
     )
   )
 
@@ -414,6 +423,11 @@
     (struct.new $struct
       (local.get $x)
       (unreachable)
+    )
+    (drop
+      (struct.get $struct 0
+        (unreachable)
+      )
     )
   )
 )
