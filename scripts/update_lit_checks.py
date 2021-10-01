@@ -146,7 +146,7 @@ def get_command_output(args, test, lines, tmp):
         if len(commands) > 1 and commands[1].startswith('filecheck '):
             filecheck_cmd = commands[1]
             commands = commands[:1]
-        if len(commands) > 1 and commands[1].startswith('FileCheck '):
+        elif len(commands) > 1 and commands[1].startswith('FileCheck '):
             warn('`FileCheck` is not a known command. '
                  'Did you mean to use `filecheck` instead?')
 
