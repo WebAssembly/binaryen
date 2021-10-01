@@ -149,3 +149,72 @@
     )
   )
 )
+
+(module
+  ;; As above, but we also write to the subtype. The write is compatible.
+
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+
+  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  (type $struct     (struct (field (mut funcref))))
+  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $sub-struct 0
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.func $set)
+    )
+    (struct.set $sub-struct 0
+      (local.get $y)
+      (ref.func $set)
+    )
+  )
+)
+
+(module
+  ;; As above, but the write to the subtype is *not* compatible, which prevents
+  ;; optimization.
+
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+
+  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  (type $struct     (struct (field (mut funcref))))
+  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $sub-struct 0
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.func $set)
+    )
+    (struct.set $sub-struct 0
+      (local.get $y)
+      (ref.null func)
+    )
+  )
+)
