@@ -290,3 +290,46 @@
     )
   )
 )
+
+(module
+  ;; As before, but now the fields are immutable. This allows us to turn the
+  ;; subtype's field into a more specific one than the supertype.
+
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+
+  ;; CHECK:      (type $struct (struct (field (ref func))))
+
+  ;; CHECK:      (type $sub-struct (struct (field (ref $ref|$struct|_ref|$sub-struct|_=>_none))) (extends $struct))
+  (type $sub-struct (struct (field funcref)) (extends $struct))
+
+  (type $struct     (struct (field funcref)))
+
+  ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub-struct
+  ;; CHECK-NEXT:    (ref.func $set)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+    (drop
+      (struct.new $struct
+        (ref.as_non_null (ref.null func))
+      )
+    )
+    (drop
+      (struct.new $sub-struct
+        (ref.func $set)
+      )
+    )
+  )
+)

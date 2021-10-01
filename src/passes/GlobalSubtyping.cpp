@@ -90,8 +90,6 @@ struct GlobalSubtyping : public Pass {
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetInfos.combineInto(combinedSetInfos);
 
-
-
     // Reason about what we can optimize. In general, if a field in a struct is
     // has type T, and we see that all values written to it are subtypes of T'
     // where T' is more specific than T, then we would like to specialize the
