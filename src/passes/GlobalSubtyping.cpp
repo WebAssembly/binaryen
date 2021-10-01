@@ -165,12 +165,14 @@ std::cout << "mS " << oldStructType << "\n";
             if (i >= super.getStruct().fields.size()) {
               break;
             }
+#if 0
             auto& superField = super.getStruct().fields[i];
             if (superField.mutable_ == Mutable) {
               // Mutable fields cannot be subtypes, unless they are 100%
               // identical, so we cannot make any changes there.
               abort();
             }
+#endif
             observedType = mergeNonNoneTypes(observedType, parent.combinedInfo[super][i]);
             curr = super;
           }

@@ -225,18 +225,13 @@
   ;; them to have a subtyping relationship is for them to both be immutable).
   ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
 
-  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct     (struct (field (mut funcref))))
-  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
 
-  ;; CHECK:      (elem declare func $set)
-
   ;; CHECK:      (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.func $set)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
     ;; FIXME
