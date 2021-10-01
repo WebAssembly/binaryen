@@ -85,10 +85,6 @@ template<typename T>
 struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override {
-    return new Scanner(functionNewInfos, functionSetInfos);
-  }
-
   Scanner(FunctionStructValuesMap<T>& functionNewInfos,
           FunctionStructValuesMap<T>& functionSetInfos)
     : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
@@ -123,49 +119,14 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
       curr->value, type.getHeapType(), curr->index, functionSetInfos);
   }
 
-private:
   FunctionStructValuesMap<T>& functionNewInfos;
   FunctionStructValuesMap<T>& functionSetInfos;
 
   // Note a value, checking whether it is a constant or not.
-  void noteExpression(Expression* expr,
+  virtual void noteExpression(Expression* expr,
                       HeapType type,
                       Index index,
-                      FunctionStructValuesMap<T>& valuesMap) {
-    expr = Properties::getFallthrough(expr, this->getPassOptions(), *this->getModule());
-
-    // Ignore copies: when we set a value to a field from that same field, no
-    // new values are actually introduced.
-    //
-    // Note that this is only sound by virtue of the overall analysis in this
-    // pass: the object read from may be of a subclass, and so subclass values
-    // may be actually written here. But as our analysis considers subclass
-    // values too (as it must) then that is safe. That is, if a subclass of $A
-    // adds a value X that can be loaded from (struct.get $A $b), then consider
-    // a copy
-    //
-    //   (struct.set $A $b (struct.get $A $b))
-    //
-    // Our analysis will figure out that X can appear in that copy's get, and so
-    // the copy itself does not add any information about values.
-    //
-    // TODO: This may be extensible to a copy from a subtype by the above
-    //       analysis (but this is already entering the realm of diminishing
-    //       returns).
-    if (auto* get = expr->dynCast<StructGet>()) {
-      if (get->index == index && get->ref->type != Type::unreachable &&
-          get->ref->type.getHeapType() == type) {
-        return;
-      }
-    }
-
-    auto& info = valuesMap[this->getFunction()][type][index];
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
-      info.note(Properties::getLiteral(expr));
-    }
-  }
+                      FunctionStructValuesMap<T>& valuesMap) = 0;
 };
 
 } // namespace wasm

@@ -240,6 +240,55 @@ private:
   bool changed = false;
 };
 
+struct PCVScanner : public Scanner<PossibleConstantValues> {
+  Pass* create() override {
+    return new PCVScanner(functionNewInfos, functionSetInfos);
+  }
+
+  PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
+          FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
+    : Scanner<PossibleConstantValues>(functionNewInfos, functionSetInfos) {}
+
+  virtual void noteExpression(Expression* expr,
+                      HeapType type,
+                      Index index,
+                      FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
+    expr = Properties::getFallthrough(expr, this->getPassOptions(), *this->getModule());
+
+    // Ignore copies: when we set a value to a field from that same field, no
+    // new values are actually introduced.
+    //
+    // Note that this is only sound by virtue of the overall analysis in this
+    // pass: the object read from may be of a subclass, and so subclass values
+    // may be actually written here. But as our analysis considers subclass
+    // values too (as it must) then that is safe. That is, if a subclass of $A
+    // adds a value X that can be loaded from (struct.get $A $b), then consider
+    // a copy
+    //
+    //   (struct.set $A $b (struct.get $A $b))
+    //
+    // Our analysis will figure out that X can appear in that copy's get, and so
+    // the copy itself does not add any information about values.
+    //
+    // TODO: This may be extensible to a copy from a subtype by the above
+    //       analysis (but this is already entering the realm of diminishing
+    //       returns).
+    if (auto* get = expr->dynCast<StructGet>()) {
+      if (get->index == index && get->ref->type != Type::unreachable &&
+          get->ref->type.getHeapType() == type) {
+        return;
+      }
+    }
+
+    auto& info = valuesMap[this->getFunction()][type][index];
+    if (!Properties::isConstantExpression(expr)) {
+      info.noteUnknown();
+    } else {
+      info.note(Properties::getLiteral(expr));
+    }
+  }
+};
+
 struct ConstantFieldPropagation : public Pass {
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
@@ -254,7 +303,7 @@ struct ConstantFieldPropagation : public Pass {
       functionNewInfos[func.get()];
       functionSetInfos[func.get()];
     }
-    Scanner<PossibleConstantValues> scanner(functionNewInfos, functionSetInfos);
+    PCVScanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
