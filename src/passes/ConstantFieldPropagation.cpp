@@ -41,35 +41,6 @@ namespace wasm {
 
 namespace {
 
-// A nominal type always knows who its supertype is, if there is one; this class
-// provides the list of immediate subtypes.
-struct SubTypes {
-  SubTypes(Module& wasm) {
-    std::vector<HeapType> types;
-    std::unordered_map<HeapType, Index> typeIndices;
-    ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-    for (auto type : types) {
-      note(type);
-    }
-  }
-
-  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
-    return typeSubTypes[type];
-  }
-
-private:
-  // Add a type to the graph.
-  void note(HeapType type) {
-    HeapType super;
-    if (type.getSuperType(super)) {
-      typeSubTypes[super].insert(type);
-    }
-  }
-
-  // Maps a type to its subtypes.
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
-};
-
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
@@ -337,50 +308,10 @@ struct ConstantFieldPropagation : public Pass {
     // and so given a get of $A and a new of $B, the new is relevant for the get
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
-    //
-    // TODO: A topological sort could avoid repeated work here perhaps.
 
-    SubTypes subTypes(*module);
-
-    auto propagate = [&subTypes](PCVStructValuesMap& combinedInfos,
-                                 bool toSubTypes) {
-      UniqueDeferredQueue<HeapType> work;
-      for (auto& kv : combinedInfos) {
-        auto type = kv.first;
-        work.push(type);
-      }
-      while (!work.empty()) {
-        auto type = work.pop();
-        auto& infos = combinedInfos[type];
-
-        // Propagate shared fields to the supertype.
-        HeapType superType;
-        if (type.getSuperType(superType)) {
-          auto& superInfos = combinedInfos[superType];
-          auto& superFields = superType.getStruct().fields;
-          for (Index i = 0; i < superFields.size(); i++) {
-            if (superInfos[i].combine(infos[i])) {
-              work.push(superType);
-            }
-          }
-        }
-
-        if (toSubTypes) {
-          // Propagate shared fields to the subtypes.
-          auto numFields = type.getStruct().fields.size();
-          for (auto subType : subTypes.getSubTypes(type)) {
-            auto& subInfos = combinedInfos[subType];
-            for (Index i = 0; i < numFields; i++) {
-              if (subInfos[i].combine(infos[i])) {
-                work.push(subType);
-              }
-            }
-          }
-        }
-      }
-    };
-    propagate(combinedNewInfos, false);
-    propagate(combinedSetInfos, true);
+    StructValuePropagator<PossibleConstantValues> propagator(*module);
+    propagator.propagateToSuperTypes(combinedNewInfos);
+    propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
     // Combine both sources of information to the final information that gets
     // care about.

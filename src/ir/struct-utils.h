@@ -17,6 +17,7 @@
 #ifndef wasm_ir_struct_utils_h
 #define wasm_ir_struct_utils_h
 
+#include "ir/subtypes.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -153,6 +154,61 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
                       HeapType type,
                       Index index,
                       FunctionStructValuesMap<T>& valuesMap) = 0;
+};
+
+template<typename T>
+class StructValuePropagator {
+public:
+  StructValuePropagator(Module& wasm) : subTypes(wasm) {}
+
+  void propagateToSuperTypes(StructValuesMap<T>& infos) {
+    propagate(infos, false);
+  }
+
+  void propagateToSuperAndSubTypes(StructValuesMap<T>& infos) {
+    propagate(infos, true);
+  }
+
+private:
+  void propagate(StructValuesMap<T>& combinedInfos,
+                 bool toSubTypes) {
+    UniqueDeferredQueue<HeapType> work;
+    for (auto& kv : combinedInfos) {
+      auto type = kv.first;
+      work.push(type);
+    }
+    while (!work.empty()) {
+      auto type = work.pop();
+      auto& infos = combinedInfos[type];
+
+      // Propagate shared fields to the supertype.
+      HeapType superType;
+      if (type.getSuperType(superType)) {
+        auto& superInfos = combinedInfos[superType];
+        auto& superFields = superType.getStruct().fields;
+        for (Index i = 0; i < superFields.size(); i++) {
+          if (superInfos[i].combine(infos[i])) {
+            work.push(superType);
+          }
+        }
+      }
+
+      if (toSubTypes) {
+        // Propagate shared fields to the subtypes.
+        auto numFields = type.getStruct().fields.size();
+        for (auto subType : subTypes.getSubTypes(type)) {
+          auto& subInfos = combinedInfos[subType];
+          for (Index i = 0; i < numFields; i++) {
+            if (subInfos[i].combine(infos[i])) {
+              work.push(subType);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  SubTypes subTypes;
 };
 
 } // namespace wasm
