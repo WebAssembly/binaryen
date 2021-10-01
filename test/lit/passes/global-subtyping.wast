@@ -7,8 +7,19 @@
   ;; This struct's field begins as a funcref, and can be specialized to a
   ;; particular typed function reference type because we only assign it a
   ;; ref.func of a particular function.
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_=>_none)))))
   (type $struct (struct (field (mut funcref))))
 
+  ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct))
     (struct.set $struct 0
       (local.get $x)
