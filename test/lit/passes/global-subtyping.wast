@@ -10,9 +10,15 @@
   ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_=>_none)))))
   (type $struct (struct (field (mut funcref))))
 
+  ;; Test that we update tag types properly.
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
+  ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
+
   ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (tag $tag (param (ref $struct)))
+  (tag $tag (param (ref $struct)))
 
   ;; CHECK:      (func $set (param $x (ref $struct))
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
@@ -34,6 +40,33 @@
     (local.set $temp
       (local.get $x)
     )
+  )
+
+  ;; CHECK:      (func $foo (result (ref null $struct))
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (pop (ref $struct))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT: )
+  (func $foo (result (ref null $struct))
+    (try
+      (do
+        (nop)
+      )
+      (catch $tag
+        (return
+          (pop (ref $struct))
+        )
+      )
+    )
+    (ref.null $struct)
   )
 )
 

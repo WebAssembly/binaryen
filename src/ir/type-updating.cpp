@@ -181,6 +181,9 @@ cast->name = update(cast->name);
       var = updater.update(var);
     }
   }
+  for (auto& tag : wasm.tags) {
+    tag->sig = updater.update(tag->sig);
+  }
 
   for (auto& kv : oldToNewTypes) {
     auto old = kv.first;
