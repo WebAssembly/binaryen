@@ -253,7 +253,7 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
                       HeapType type,
                       Index index,
                       FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
-    expr = Properties::getFallthrough(expr, this->getPassOptions(), *this->getModule());
+    expr = Properties::getFallthrough(expr, getPassOptions(), *getModule());
 
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
@@ -280,7 +280,7 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
       }
     }
 
-    auto& info = valuesMap[this->getFunction()][type][index];
+    auto& info = valuesMap[getFunction()][type][index];
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
     } else {
