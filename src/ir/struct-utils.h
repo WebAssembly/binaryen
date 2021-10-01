@@ -131,7 +131,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
         value = curr->operands[i];
       } else {
         // We need to create an expression here. As that is wasteful, use a
-        // cache at least.
+        // cache at least. TODO allocate in a temp module?
         auto type = fields[i].type;
         if (zeroCache.count(type) == 0) {
           zeroCache[type] = Builder(*this->getModule()).makeConstantExpression(Literal::makeZero(type));

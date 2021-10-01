@@ -223,22 +223,70 @@
   ;; Only write to the subtype. As the fields are mutable, we cannot specialize
   ;; one without the other (if they are not 100% identical, the only way for
   ;; them to have a subtyping relationship is for them to both be immutable).
+  ;; In this module, we never write to the supertype, so we can update it, and
+  ;; so we end up updating both to a more specific type.
+
   ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
 
-  ;; CHECK:      (type $struct (struct (field (mut funcref))))
-  (type $struct     (struct (field (mut funcref))))
-  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
 
+  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  (type $struct     (struct (field (mut funcref))))
+
+  ;; CHECK:      (elem declare func $set)
+
   ;; CHECK:      (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.set $sub-struct 0
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
-    ;; FIXME
-    ;; (struct.set $sub-struct 0
-    ;;   (local.get $y)
-    ;;   (ref.func $set)
-    ;; )
+    (struct.set $sub-struct 0
+      (local.get $y)
+      (ref.func $set)
+    )
   )
 )
 
+(module
+  ;; Write to both the subtype and the supertype. As they are mutable, we are
+  ;; forced to keep them identical, and the write to the parent limits us. We
+  ;; will update them both to non-nullable funcrefs (an improvement over the
+  ;; nullable ones, but not as specific as the subtype would like).
+
+  ;; CHECK:      (type $struct (struct (field (mut (ref func)))))
+
+  ;; CHECK:      (type $sub-struct (struct (field (mut (ref func)))) (extends $struct))
+  (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  (type $struct     (struct (field (mut funcref))))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+
+  ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $sub-struct 0
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.as_non_null (ref.null func))
+    )
+    (struct.set $sub-struct 0
+      (local.get $y)
+      (ref.func $set)
+    )
+  )
+)
