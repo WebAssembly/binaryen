@@ -382,7 +382,7 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
-  bool getSuperType(HeapType& out) const;
+  std::optional<HeapType> getSuperType() const;
 
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {

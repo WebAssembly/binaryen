@@ -224,10 +224,9 @@ void WasmBinaryWriter::writeTypes() {
   for (Index i = 0; i < types.size(); ++i) {
     auto type = types[i];
     BYN_TRACE("write " << type << std::endl);
-    HeapType super;
-    bool hasSuper = type.getSuperType(super);
+    auto super = type.getSuperType();
     if (type.isSignature()) {
-      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::FuncExtending
+      o << S32LEB(super ? BinaryConsts::EncodedType::FuncExtending
                            : BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
       for (auto& sigType : {sig.params, sig.results}) {
@@ -237,7 +236,7 @@ void WasmBinaryWriter::writeTypes() {
         }
       }
     } else if (type.isStruct()) {
-      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::StructExtending
+      o << S32LEB(super ? BinaryConsts::EncodedType::StructExtending
                            : BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
       o << U32LEB(fields.size());
@@ -245,14 +244,14 @@ void WasmBinaryWriter::writeTypes() {
         writeField(field);
       }
     } else if (type.isArray()) {
-      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::ArrayExtending
+      o << S32LEB(super ? BinaryConsts::EncodedType::ArrayExtending
                            : BinaryConsts::EncodedType::Array);
       writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");
     }
-    if (hasSuper) {
-      o << U32LEB(getTypeIndex(super));
+    if (super) {
+      o << U32LEB(getTypeIndex(*super));
     }
   }
   finishSection(start);

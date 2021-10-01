@@ -1200,16 +1200,15 @@ Array HeapType::getArray() const {
   return getHeapTypeInfo(*this)->array;
 }
 
-bool HeapType::getSuperType(HeapType& out) const {
+std::optional<HeapType> HeapType::getSuperType() const {
   if (isBasic()) {
-    return false;
+    return {};
   }
   HeapTypeInfo* super = getHeapTypeInfo(*this)->supertype;
   if (super != nullptr) {
-    out = HeapType(uintptr_t(super));
-    return true;
+    return HeapType(uintptr_t(super));
   }
-  return false;
+  return {};
 }
 
 bool HeapType::isSubType(HeapType left, HeapType right) {

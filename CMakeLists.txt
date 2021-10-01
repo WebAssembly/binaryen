@@ -6,7 +6,7 @@ include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with scripts/test/shared.py cxx_standard
-set(CXX_STANDARD 14)
+set(CXX_STANDARD 17)
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type selected, default to Release")
@@ -208,7 +208,7 @@ if(MSVC)
   endif()
 else()
 
-  option(ENABLE_WERROR "Enable -Werror" ON)
+  option(ENABLE_WERROR "Enable -Werror" OFF)
 
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   set(CMAKE_THREAD_PREFER_PTHREAD ON)

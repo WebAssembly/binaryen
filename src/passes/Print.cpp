@@ -2581,10 +2581,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     } else {
       o << type;
     }
-    HeapType super;
-    if (type.getSuperType(super)) {
+    auto super = type.getSuperType();
+    if (super) {
       o << " (extends ";
-      TypeNamePrinter(o, module).print(super);
+      TypeNamePrinter(o, module).print(*super);
       o << ')';
     }
   }
