@@ -302,22 +302,9 @@ struct ConstantFieldPropagation : public Pass {
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    auto combine = [](const PCVFunctionStructValuesMap& functionInfos,
-                      PCVStructValuesMap& combinedInfos) {
-      for (auto& kv : functionInfos) {
-        const PCVStructValuesMap& infos = kv.second;
-        for (auto& kv : infos) {
-          auto type = kv.first;
-          auto& info = kv.second;
-          for (Index i = 0; i < info.size(); i++) {
-            combinedInfos[type][i].combine(info[i]);
-          }
-        }
-      }
-    };
     PCVStructValuesMap combinedNewInfos, combinedSetInfos;
-    combine(functionNewInfos, combinedNewInfos);
-    combine(functionSetInfos, combinedSetInfos);
+    functionNewInfos.combineInto(combinedNewInfos);
+    functionSetInfos.combineInto(combinedSetInfos);
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
