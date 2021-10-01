@@ -172,8 +172,9 @@ struct GlobalSubtyping : public Pass {
         }
 
         auto type = curr->ref->type.getHeapType();
-        auto oldFieldType = type.getStruct().fields[i].type;
-        auto observedFieldType = combinedInfos[type][i].type;
+        auto index = curr->index;
+        auto oldFieldType = type.getStruct().fields[index].type;
+        auto observedFieldType = infos[type][index].type;
         // If we have more specialized type (and not if it's unreachable,
         // which means we've seen nothing at all), then we can optimize.
         if (observedFieldType != oldFieldType &&
@@ -184,7 +185,7 @@ struct GlobalSubtyping : public Pass {
       }
 
       void doWalkFunction(Function* func) {
-        WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
+        WalkerPass<PostWalker<GetUpdater>>::doWalkFunction(func);
 
         // If we changed anything, we need to update parent types as types may
         // have changed.
@@ -201,7 +202,8 @@ struct GlobalSubtyping : public Pass {
 
     GetUpdater(combinedInfos).run(runner, module);
 
-    // Rewrite all the types to apply our changes to their definitions.
+    // The types are now generally correct, except for their internals, which we
+    // rewrite now.
     class TypeUpdater : public GlobalTypeUpdater {
       LUBStructValuesMap& combinedInfos;
 
