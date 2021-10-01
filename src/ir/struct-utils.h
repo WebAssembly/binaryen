@@ -81,6 +81,20 @@ struct FunctionStructValuesMap : public std::unordered_map<Function*, StructValu
       (*this)[func.get()];
     }
   }
+
+  // Combine information across functions.
+  void combineInto(StructValuesMap<T>& combinedInfos) const {
+    for (auto& kv : *this) {
+      const StructValuesMap<T>& infos = kv.second;
+      for (auto& kv : infos) {
+        auto type = kv.first;
+        auto& info = kv.second;
+        for (Index i = 0; i < info.size(); i++) {
+          combinedInfos[type][i].combine(info[i]);
+        }
+      }
+    }
+  }
 };
 
 // Scan each function to note all its writes to struct fields.
