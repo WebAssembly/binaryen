@@ -29,6 +29,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -39,35 +40,6 @@
 namespace wasm {
 
 namespace {
-
-// A nominal type always knows who its supertype is, if there is one; this class
-// provides the list of immediate subtypes.
-struct SubTypes {
-  SubTypes(Module& wasm) {
-    std::vector<HeapType> types;
-    std::unordered_map<HeapType, Index> typeIndices;
-    ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-    for (auto type : types) {
-      note(type);
-    }
-  }
-
-  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
-    return typeSubTypes[type];
-  }
-
-private:
-  // Add a type to the graph.
-  void note(HeapType type) {
-    HeapType super;
-    if (type.getSuperType(super)) {
-      typeSubTypes[super].insert(type);
-    }
-  }
-
-  // Maps a type to its subtypes.
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
-};
 
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is

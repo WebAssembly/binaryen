@@ -87,6 +87,7 @@ set(passes_SOURCES
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
+  GlobalSubtyping.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   ${passes_HEADERS}
 )

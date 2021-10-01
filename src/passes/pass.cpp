@@ -398,6 +398,9 @@ void PassRegistry::registerPasses() {
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
+  registerPass("vtable-to-indexes",
+               "converts vtable structs to use indexes",
+               createGlobalSubtypingPass);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
