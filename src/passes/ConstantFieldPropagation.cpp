@@ -132,7 +132,8 @@ private:
 };
 
 using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
-using PCVFunctionStructValuesMap = FunctionStructValuesMap<PossibleConstantValues>;
+using PCVFunctionStructValuesMap =
+  FunctionStructValuesMap<PossibleConstantValues>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -217,13 +218,14 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
   }
 
   PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
-          FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
+             FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
     : Scanner<PossibleConstantValues>(functionNewInfos, functionSetInfos) {}
 
-  virtual void noteExpression(Expression* expr,
-                      HeapType type,
-                      Index index,
-                      FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
+  virtual void noteExpression(
+    Expression* expr,
+    HeapType type,
+    Index index,
+    FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
     expr = Properties::getFallthrough(expr, getPassOptions(), *getModule());
 
     // Ignore copies: when we set a value to a field from that same field, no
@@ -267,7 +269,8 @@ struct ConstantFieldPropagation : public Pass {
     }
 
     // Find and analyze all writes inside each function.
-    PCVFunctionStructValuesMap functionNewInfos(*module), functionSetInfos(*module);
+    PCVFunctionStructValuesMap functionNewInfos(*module),
+      functionSetInfos(*module);
     PCVScanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);

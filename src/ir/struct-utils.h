@@ -27,8 +27,7 @@ namespace wasm {
 // that the vectors are pre-initialized to the right length before accessing any
 // data, which this class enforces using assertions, and which is implemented in
 // StructValuesMap.
-template<typename T>
-struct StructValues : public std::vector<T> {
+template<typename T> struct StructValues : public std::vector<T> {
   T& operator[](size_t index) {
     assert(index < this->size());
     return std::vector<T>::operator[](index);
@@ -84,7 +83,8 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
 // Map of functions to their field value infos. We compute those in parallel,
 // then later we will merge them all.
 template<typename T>
-struct FunctionStructValuesMap : public std::unordered_map<Function*, StructValuesMap<T>> {
+struct FunctionStructValuesMap
+  : public std::unordered_map<Function*, StructValuesMap<T>> {
   FunctionStructValuesMap(Module& wasm) {
     // Initialize the data for each function in preparation for parallel
     // computation.
@@ -151,13 +151,12 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
 
   // Note a value, checking whether it is a constant or not.
   virtual void noteExpression(Expression* expr,
-                      HeapType type,
-                      Index index,
-                      FunctionStructValuesMap<T>& valuesMap) = 0;
+                              HeapType type,
+                              Index index,
+                              FunctionStructValuesMap<T>& valuesMap) = 0;
 };
 
-template<typename T>
-class StructValuePropagator {
+template<typename T> class StructValuePropagator {
 public:
   StructValuePropagator(Module& wasm) : subTypes(wasm) {}
 
@@ -170,8 +169,7 @@ public:
   }
 
 private:
-  void propagate(StructValuesMap<T>& combinedInfos,
-                 bool toSubTypes) {
+  void propagate(StructValuesMap<T>& combinedInfos, bool toSubTypes) {
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
       auto type = kv.first;
