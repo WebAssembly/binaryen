@@ -128,6 +128,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
+        // TODO make an expression and call noteExpression.
         values[i].note(Literal::makeZero(fields[i].type));
       } else {
         noteExpression(curr->operands[i], heapType, i, functionNewInfos);
@@ -159,6 +160,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
 template<typename T> class StructValuePropagator {
 public:
   StructValuePropagator(Module& wasm) : subTypes(wasm) {}
+
+  SubTypes subTypes;
 
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
     propagate(infos, false);
@@ -205,8 +208,6 @@ private:
       }
     }
   };
-
-  SubTypes subTypes;
 };
 
 } // namespace wasm

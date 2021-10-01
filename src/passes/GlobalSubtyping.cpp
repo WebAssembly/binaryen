@@ -21,12 +21,12 @@
 
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
-#include <ir/utils.h>
-#include <pass.h>
-#include <support/small_set.h>
-#include <wasm.h>
-#include <wasm-type.h>
-#include <wasm-builder.h>
+#include "ir/utils.h"
+#include "pass.h"
+#include "support/small_set.h"
+#include "wasm.h"
+#include "wasm-type.h"
+#include "wasm-builder.h"
 
 using namespace std;
 
@@ -34,28 +34,40 @@ namespace wasm {
 
 namespace {
 
-// Find the LUB of two types, but also when considering none to be "no
-// information".
-Type mergeNonNoneTypes(Type a, Type b) {
-  if (a == Type::none) {
-    return b;
-  }
-  if (b == Type::none) {
-    return a;
-  }
-  return Type::getLeastUpperBound(a, b);
-}
+// The least upper bound of the types seen so far.
+struct LUB {
+  Type type = Type::unreachable;
 
-// A vector of the types of fields in a struct.
-struct FieldTypes : public SmallVector<Type, 5> {
-  void update(HeapType structType, Index i, Type writtenType) {
-    resize(structType.getStruct().fields.size());
-    (*this)[i] = mergeNonNoneTypes((*this)[i], writtenType);
+  void note(Type otherType) {
+    type = Type::getLeastUpperBound(type, otherType);
+  }
+
+  bool combine(const LUB& other) {
+    note(other.type);
   }
 };
 
-// A map of all structs to their field types.
-using AllFieldTypes = std::unordered_map<HeapType, FieldTypes>;
+using LUBStructValuesMap = StructValuesMap<LUB>;
+using LUBFunctionStructValuesMap =
+  FunctionStructValuesMap<LUB>;
+
+struct LUBScanner : public Scanner<LUB> {
+  Pass* create() override {
+    return new LUBScanner(functionNewInfos, functionSetInfos);
+  }
+
+  LUBScanner(FunctionStructValuesMap<LUB>& functionNewInfos,
+             FunctionStructValuesMap<LUB>& functionSetInfos)
+    : Scanner<LUB>(functionNewInfos, functionSetInfos) {}
+
+  virtual void noteExpression(
+    Expression* expr,
+    HeapType type,
+    Index index,
+    FunctionStructValuesMap<LUB>& valuesMap) override {
+    valuesMap[getFunction()][type][index].note(expr->type);
+  }
+};
 
 struct GlobalSubtyping : public Pass {
   // A map of functions to the information we collect in them in parallel.
@@ -64,165 +76,107 @@ struct GlobalSubtyping : public Pass {
   // The information after we combine it across all functions.
   AllFieldTypes combinedInfo;
 
-  Module* module;
-
-  void run(PassRunner* runner, Module* module_) override {
+  void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "ConstantFieldPropagation requires nominal typing";
     }
 
-    module = module_;
+    // Find and analyze all writes inside each function.
+    LUBFunctionStructValuesMap functionNewInfos(*module),
+      functionSetInfos(*module);
+    LUBScanner scanner(functionNewInfos, functionSetInfos);
+    scanner.run(runner, module);
+    scanner.walkModuleCode(module);
 
-    collectFunctionData(module);
-    combineFunctionData();
-    optimize(module);
-  }
+    // Combine the data from the functions.
+    LUBStructValuesMap combinedNewInfos, combinedSetInfos;
+    functionNewInfos.combineInto(combinedNewInfos);
+    functionSetInfos.combineInto(combinedSetInfos);
 
-  void collectFunctionData(Module* module) {
-    // Prepare the data structure for parallel operation.
-    for (auto& func : module->functions) {
-      functionInfo[func.get()];
-    }
 
-    struct CodeScanner
-      : public WalkerPass<PostWalker<CodeScanner>> {
-      bool isFunctionParallel() override { return true; }
 
-      GlobalSubtyping& parent;
+    // Reason about what we can optimize. In general, if a field in a struct is
+    // has type T, and we see that all values written to it are subtypes of T'
+    // where T' is more specific than T, then we would like to specialize the
+    // field's type. But, we cannot do so if it breaks subtyping. In particular,
+    // we must maintain that all current subtypes of the struct remain subtypes,
+    // which means:
+    //
+    //  * We cannot specialize a field beyond the type it has in subtypes of the
+    //    struct.
+    //  * If the field is mutable, wasm requires that all subtypes of the struct
+    //    are completely identical. (That is, only immutable fields can be
+    //    different in a subtype of the struct.)
+    //
+    // To identify the proper opportunities, propagate types to supertypes. That
+    // is, if we have
+    //
+    //  struct A     { type U }
+    //  struct B : A { type V }
+    //  struct C : B { type W }
+    //
+    // By propagating V to U, we ensure that the LUB in A's field takes into
+    // account B's field, as a result of which B's field is equal to A's or more
+    // specific. (And likewise from C to B and A).
+    StructValuePropagator<PossibleConstantValues> propagator(*module);
+    propagator.propagateToSuperTypes(combinedNewInfos);
+    propagator.propagateToSuperTypes(combinedSetInfos);
 
-      CodeScanner(GlobalSubtyping& parent) : parent(parent) {}
-
-      CodeScanner* create() override {
-        return new CodeScanner(parent);
-      }
-
-      void visitStructNew(StructNew* curr) {
-        // TODO: unreachability. Or run DCE first?
-        auto heapType = curr->type.getHeapType();
-        for (Index i = 0; i < curr->operands.size(); i++) {
-          update(heapType, i, curr->operands[i]->type);
-        }
-      }
-
-      void visitStructSet(StructSet* curr) {
-        // TODO: unreachability. Or run DCE first?
-        update(curr->ref->type.getHeapType(), curr->index, curr->value->type);
-      }
-
-      void update(HeapType structType, Index fieldIndex, Type writtenType) {
-        auto& funcInfo = parent.functionInfo[getFunction()];
-        auto& fieldTypes = funcInfo[structType];
-        fieldTypes.update(structType, fieldIndex, writtenType);
-      }
-    };
-
-    CodeScanner updater(*this);
-    PassRunner runner(module);
-    updater.run(&runner, module);
-    updater.walkModuleCode(module);
-  }
-
-  void combineFunctionData() {
-    for (auto& kv : functionInfo) {
-      auto& allFieldTypes = kv.second;
-      for (auto& kv : allFieldTypes) {
-        auto heapType = kv.first;
-        auto& fieldTypes = kv.second;
-
-        auto& combinedFieldTypes = combinedInfo[heapType];
-
-        for (Index i = 0; i < fieldTypes.size(); i++) {
-          combinedFieldTypes.update(heapType, i, fieldTypes[i]);
-        }
-      }
-    }
-  }
-
-  void optimize(Module* module) {
-    class Updater : public GlobalTypeUpdater {
-      GlobalSubtyping& parent;
-      SubTypes subTypes;
-
-    public:
-      Updater(GlobalSubtyping& parent) : GlobalTypeUpdater(*parent.module), parent(parent), subTypes(*parent.module) {}
-
-      virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
-std::cout << "mS " << oldStructType << "\n";
-        auto& oldFields = oldStructType.getStruct().fields;
-        auto& observedFieldTypes = parent.combinedInfo[oldStructType];
-        for (Index i = 0; i < oldFields.size(); i++) {
-          // The relevant observed type is what has been written to us, but also
-          // to all of our supertypes that have this field, as if one of them
-          // specializes the type then we must as well.
-          // TODO: this is quadratic overall
-          auto observedType = observedFieldTypes[i];
-          auto curr = oldStructType;
-          while (1) {
-            HeapType super;
-            if (!curr.getSuperType(super)) {
-              break;
-            }
-            if (i >= super.getStruct().fields.size()) {
-              break;
-            }
-#if 0
-            auto& superField = super.getStruct().fields[i];
-            if (superField.mutable_ == Mutable) {
-              // Mutable fields cannot be subtypes, unless they are 100%
-              // identical, so we cannot make any changes there.
-              abort();
-            }
-#endif
-            observedType = mergeNonNoneTypes(observedType, parent.combinedInfo[super][i]);
-            curr = super;
-          }
-
-          auto oldType = oldFields[i].type;
-          if (observedType == Type::none || observedType == oldType) {
-            continue;
-          }
-          assert(Type::isSubType(observedType, oldFields[i].type));
-
-          // We must also preseve the property that subtypes of us have fields
-          // that are subtypes of this new type.
-          // TODO: this is quadratic overall
-
-#if 0
-auto* frist = parent.module->functions[0].get();
-auto param = frist->getLocalType(0);
-std::cout << "param: " << param << " : " << oldStructType << " : " << (param == oldStructType) << '\n';
-#endif
-          auto work = subTypes.getSubTypes(oldStructType);
-std::cout << "look at subtypes\n";
-          while (!work.empty()) {
-std::cout << "  iter\n";
-            auto iter = work.begin();
-            auto currSubType = *iter;
-            work.erase(iter);
-            auto& currFields = parent.combinedInfo[currSubType];
-            auto currType = currFields[i];
-            if (currType != Type::none) {
-              observedType = Type::getLeastUpperBound(observedType, currType);
-              if (observedType == oldType) {
-                // We failed to specialize.
-                break;
+    // Next, handle mutability. As mentioned before, if a field is mutable then
+    // corresponding fields in substructs must be identical.
+    // TODO: avoid repeated work here
+    for (auto& infos : {combinedNewInfos, combinedSetInfos}) {
+      for (auto& kv : infos) {
+        auto heapType : kv.first;
+        auto structValues : kv.second;
+        auto& fields = heapType.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          auto& field = fields[i];
+          if (field.mutable_ == Mutable) {
+            // We must force all subtypes to match us on this field's type.
+            auto forcedType = structValues[i];
+            auto work = propagator.subTypes.getSubTypes(heapType);
+            while (!work.empty()) {
+              auto iter = work.begin();
+              auto subType = *iter;
+              work.erase(iter);
+              infos[subType][i] = forcedType;
+              for (auto next : subTypes.getSubTypes(subType)) {
+                work.insert(next);
               }
             }
-            for (auto subType : subTypes.getSubTypes(currSubType)) {
-              work.insert(subType);
-            }
           }
-          if (observedType == oldType) {
-            continue;
-          }
+        }
+      }
+    }
 
-          // Success! Apply the new observed type in this field.
-          struct_.fields[i].type = getTempType(observedType);
+    // TODO: do we ever care about the difference between sets and news?
+    auto combinedInfos = std::move(combinedNewInfos);
+    combinedSetInfos.combineInto(combinedInfos);
+
+    // We now know a set of valid types that we can apply, and can do so.
+
+    class Updater : public GlobalTypeUpdater {
+      LUBStructValuesMap& combinedInfos;
+
+    public:
+      Updater(Module& wasm, LUBStructValuesMap& combinedInfos) : GlobalTypeUpdater(wasm), combinedInfos(combinedInfos) {}
+
+      virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
+        auto& oldFields = oldStructType.getStruct().fields;
+        auto& observedFieldTypes = combinedInfos[oldStructType];
+        for (Index i = 0; i < oldFields.size(); i++) {
+          auto oldFieldType = oldFields[i].type;
+          auto observedFieldType = observedFieldTypes[i];
+          if (observedFieldType != oldFieldType) {
+            // Success! Apply the new observed type in this field.
+            struct_.fields[i].type = getTempType(observedFieldType);
+          }
         }
       }
     };
 
-    Updater(*this).update();
+    Updater(*this, combinedInfos).update();
   }
 };
 
