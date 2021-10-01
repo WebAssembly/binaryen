@@ -17,7 +17,6 @@
 #ifndef wasm_ir_subtypes_h
 #define wasm_ir_subtypes_h
 
-#include "ir/module-utils.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -29,7 +28,6 @@ struct SubTypes {
     std::vector<HeapType> types;
     std::unordered_map<HeapType, Index> typeIndices;
     ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-std::cout << "ST analysis\n";
     for (auto type : types) {
       note(type);
     }
@@ -42,10 +40,8 @@ std::cout << "ST analysis\n";
 private:
   // Add a type to the graph.
   void note(HeapType type) {
-std::cout << "  ST analysis on " << type << "\n";
     HeapType super;
     if (type.getSuperType(super)) {
-std::cout << "    supe!\n";//
       typeSubTypes[super].insert(type);
     }
   }

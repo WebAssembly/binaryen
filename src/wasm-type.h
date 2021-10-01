@@ -263,11 +263,14 @@ public:
 
   std::string toString() const;
 
-  struct Iterator : std::iterator<std::random_access_iterator_tag,
-                                  Type,
-                                  long,
-                                  Type*,
-                                  const Type&> {
+  struct Iterator {
+    // Iterator traits
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = Type;
+    using difference_type = long;
+    using pointer = const Type*;
+    using reference = const Type&;
+
     const Type* parent;
     size_t index;
     Iterator(const Type* parent, size_t index) : parent(parent), index(index) {}
