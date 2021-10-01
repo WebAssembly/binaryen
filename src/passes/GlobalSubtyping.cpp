@@ -78,16 +78,6 @@ struct GlobalSubtyping : public Pass {
       Fatal() << "GlobalSubtyping requires nominal typing";
     }
 
-    {
-      // Run DCE before anything else, so that we do not need to worry about
-      // unreachability.
-      PassRunner runner(module);
-      runner.add("dce");
-      runner.setIsNested(true);
-      runner.setValidateGlobally(false);
-      runner.run();
-    }
-
     // Find and analyze all writes inside each function.
     LUBFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);

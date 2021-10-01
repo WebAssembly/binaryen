@@ -384,8 +384,22 @@
   ;; CHECK:      (type $struct (struct (field funcref)))
   (type $struct (struct (field funcref)))
 
+  ;; CHECK:      (elem declare func $set)
+
   ;; CHECK:      (func $set (param $x (ref $struct))
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct))
     (drop
