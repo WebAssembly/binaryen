@@ -308,17 +308,17 @@ struct TypeUpdater
 // Updates global heap types across an entire module.
 class GlobalTypeUpdater {
 public:
-  // Creating an instance of this class will perform the entire process of
+  // Perform the entire process of
   // creating new heap types, potentially modifying them via the hooks below,
   // and them replacing them throughout the module.
-  GlobalTypeUpdater(Module& wasm);
+  void update(Module& wasm);
 
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions
   // are the hooks to apply changes through.
-  virtual void modifyStruct(Struct& struct_) {};
-  virtual void modifyArray(Array& array) {};
-  virtual void modifySignature(Signature& sig) {};
+  virtual void modifyStruct(Struct& struct_) {}
+  virtual void modifyArray(Array& array) {}
+  virtual void modifySignature(Signature& sig) {}
 };
 
 namespace TypeUpdating {

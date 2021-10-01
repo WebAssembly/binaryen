@@ -22,7 +22,7 @@
 
 namespace wasm {
 
-GlobalTypeUpdater::GlobalTypeUpdater(Module& wasm) {
+void GlobalTypeUpdater::update(Module& wasm) {
   // Collect all the types.
   std::vector<HeapType> types;
   std::unordered_map<HeapType, Index> typeIndices;

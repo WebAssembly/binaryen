@@ -64,6 +64,7 @@ struct GlobalSubtyping : public Pass {
   void run(PassRunner* runner, Module* module) override {
     collectFunctionData(module);
     combineFunctionData();
+    optimize(module);
   }
 
   void collectFunctionData(Module* module) {
@@ -123,6 +124,21 @@ struct GlobalSubtyping : public Pass {
         }
       }
     }
+  }
+
+  void optimize(Module* module) {
+    class Updater : public GlobalTypeUpdater {
+      GlobalSubtyping& parent;
+
+    public:
+      Updater(GlobalSubtyping& parent) : parent(parent) {}
+
+      virtual void modifyStruct(Struct& struct_) {
+      
+      }
+    };
+
+    Update(*this).update(*module);
   }
 };
 
