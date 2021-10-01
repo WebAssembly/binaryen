@@ -44,7 +44,7 @@ ITEM_RE = re.compile(r'(^\s*)\((' + '|'.join(items) + r')\s+(\$?[^\s()]*).*$',
 
 
 def warn(msg):
-    print(f'WARNING: {msg}', file=sys.stderr)
+    print(f'warning: {msg}', file=sys.stderr)
 
 
 def itertests(args):
@@ -142,6 +142,9 @@ def get_command_output(args, test, lines, tmp):
     command_output = []
     for line in find_run_lines(test, lines):
         commands = [cmd.strip() for cmd in line.rsplit('|', 1)]
+        if (len(commands) > 2 or
+           (len(commands) == 2 and not commands[1].startswith('filecheck '))):
+            warn('pipes only supported for one command piped to `filecheck`')
         filecheck_cmd = ''
         if len(commands) > 1 and commands[1].startswith('filecheck '):
             filecheck_cmd = commands[1]
