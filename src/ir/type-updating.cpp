@@ -22,51 +22,12 @@
 
 namespace wasm {
 
-void GlobalTypeUpdater::update(Module& wasm) {
-  // Collect all the types.
-  std::vector<HeapType> types;
-  std::unordered_map<HeapType, Index> typeIndices;
+void GlobalTypeUpdater::update(Module& wasm) : wasm(wasm), typeBuilder(wasm, types, typeIndices) {
   ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
+  typeBuilder.grow(types.size());
+}
 
-  // We will need to map types to their indexes.
-  std::unordered_map<HeapType, Index> typeToIndex;
-  for (Index i = 0; i < types.size(); i++) {
-    typeToIndex[types[i]] = i;
-  }
-
-  TypeBuilder typeBuilder(types.size());
-
-  // Map an old type to a new type. This is called on the contents of the
-  // temporary heap types, so it basically just needs to map to other temp
-  // heap types.
-  std::function<Type (Type)> getNewType = [&](Type type) {
-    if (type.isBasic()) {
-      return type;
-    }
-    if (type.isRef()) {
-      return typeBuilder.getTempRefType(
-        typeBuilder.getTempHeapType(typeToIndex[type.getHeapType()]),
-        type.getNullability()
-      );
-    }
-    if (type.isRtt()) {
-      auto rtt = type.getRtt();
-      auto newRtt = rtt;
-      newRtt.heapType = 
-        typeBuilder.getTempHeapType(typeToIndex[type.getHeapType()]);
-      return typeBuilder.getTempRttType(newRtt);
-    }
-    if (type.isTuple()) {
-      auto& tuple = type.getTuple();
-      auto newTuple = tuple;
-      for (auto& t : newTuple.types) {
-        t = getNewType(t);
-      }
-      return typeBuilder.getTempTupleType(newTuple);
-    }
-    WASM_UNREACHABLE("bad type");
-  };
-
+void GlobalTypeUpdater::update() {
   // Create the temporary heap types.
   for (Index i = 0; i < types.size(); i++) {
     auto type = types[i];
@@ -74,30 +35,30 @@ void GlobalTypeUpdater::update(Module& wasm) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;
       for (auto t : sig.params) {
-        newParams.push_back(getNewType(t));
+        newParams.push_back(getTempType(t));
       }
       for (auto t : sig.results) {
-        newResults.push_back(getNewType(t));
+        newResults.push_back(getTempType(t));
       }
       Signature newSig(typeBuilder.getTempTupleType(newParams),
                        typeBuilder.getTempTupleType(newResults));
-      modifySignature(newSig);
+      modifySignature(types[i], newSig);
       typeBuilder.setHeapType(i, newSig);
     } else if (type.isStruct()) {
       auto struct_ = type.getStruct();
       // Start with a copy to get mutability/packing/etc.
       auto newStruct = struct_;
       for (auto& field : newStruct.fields) {
-        field.type = getNewTypeForStruct(field.type);
+        field.type = getTempTypeForStruct(field.type);
       }
-      modifyStruct(newStruct);
+      modifyStruct(types[i], newStruct);
       typeBuilder.setHeapType(i, newStruct);
     } else if (type.isArray()) {
       auto array = type.getArray();
       // Start with a copy to get mutability/packing/etc.
       auto newArray = array;
-      newArray.element.type = getNewType(newArray.element.type);
-      modifyArray(newArray);
+      newArray.element.type = getTempType(newArray.element.type);
+      modifyArray(types[i], newArray);
       typeBuilder.setHeapType(i, newArray);
     } else {
       WASM_UNREACHABLE("bad type");
@@ -217,6 +178,37 @@ cast->name = update(cast->name);
       wasm.typeNames[new_] = wasm.typeNames[old];
     }
   }
+}
+
+Type GlobalTypeUpdater::getTempType(Type type) {
+  if (type.isBasic()) {
+    return type;
+  }
+  if (type.isRef()) {
+    return typeBuilder.getTempRefType(
+      auto heapType = type.getHeapType();
+      assert(typeIndices.count(heapType));
+      typeBuilder.getTempHeapType(typeIndices[heapType]),
+      type.getNullability()
+    );
+  }
+  if (type.isRtt()) {
+    auto rtt = type.getRtt();
+    auto newRtt = rtt;
+    auto heapType = type.getHeapType();
+    assert(typeIndices.count(heapType));
+    newRtt.heapType = typeBuilder.getTempHeapType(typeIndices[heapType]);
+    return typeBuilder.getTempRttType(newRtt);
+  }
+  if (type.isTuple()) {
+    auto& tuple = type.getTuple();
+    auto newTuple = tuple;
+    for (auto& t : newTuple.types) {
+      t = getTempType(t);
+    }
+    return typeBuilder.getTempTupleType(newTuple);
+  }
+  WASM_UNREACHABLE("bad type");
 }
 
 namespace TypeUpdating {

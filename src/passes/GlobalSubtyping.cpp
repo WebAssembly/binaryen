@@ -19,7 +19,7 @@
 // heap types defined in the module.
 //
 
-//#include "ir/subtypes.h" // Needed?
+#include "ir/subtypes.h"
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/small_set.h>
@@ -61,7 +61,13 @@ struct GlobalSubtyping : public Pass {
   // The information after we combine it across all functions.
   AllFieldTypes combinedInfo;
 
-  void run(PassRunner* runner, Module* module) override {
+  Module* module;
+
+  void run(PassRunner* runner, Module* module_) override {
+    assert(nominal);
+
+    module = module_;
+
     collectFunctionData(module);
     combineFunctionData();
     optimize(module);
@@ -129,12 +135,51 @@ struct GlobalSubtyping : public Pass {
   void optimize(Module* module) {
     class Updater : public GlobalTypeUpdater {
       GlobalSubtyping& parent;
+      SubTypes subTypes;
 
     public:
-      Updater(GlobalSubtyping& parent) : parent(parent) {}
+      Updater(GlobalSubtyping& parent) : parent(parent), SubTypes(*parent.module) {}
 
-      virtual void modifyStruct(Struct& struct_) {
-      
+      virtual void modifyStruct(HeapType oldType, Struct& struct_) {
+        auto& oldFields = oldType.getStruct().fields;
+        auto& observedFieldTypes = parent.combinedInfo[oldType];
+        for (Index i = 0; i < oldFields.size(); i++) {
+          // Check if the observed types are a subtype of the existing one on
+          // the field. If so, we may be able to specialize.
+          auto observedType = observedFieldTypes[i];
+          auto oldType = oldFields[i].type;
+          if (observedType == Type::none || observedType == oldType) {
+            continue;
+          }
+
+          assert(Type::isSubType(observedType, oldFields[i].type);
+          // We must also preseve the property that subtypes of us have fields
+          // that are subtypes of this new type.
+          auto work = subTypes.getSubTypes(oldType);
+          while (!work.empty()) {
+            auto iter = work.begin();
+            auto currSubType = *iter;
+            work.erase(iter);
+            auto& currFields = parent.combinedInfo[currSubType];
+            auto currType = currFields[i];
+            if (currType != Type::none) {
+              observedType = Type::getLeastUpperBound(observedType, currType);
+              if (observedType == oldType) {
+                // We failed to specialize.
+                break;
+              }
+            }
+            for (auto subType : subTypes.getSubTypes(currSubType)) {
+              work.insert(subType);
+            }
+          }
+          if (observedType == oldType) {
+            continue;
+          }
+
+          // Success! Apply the new type.
+          struct_.fields[i].type = getTempType(observedType);
+        }
       }
     };
 
