@@ -73,7 +73,15 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
 // Map of functions to their field value infos. We compute those in parallel,
 // then later we will merge them all.
 template<typename T>
-using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap<T>>;
+struct FunctionStructValuesMap : public std::unordered_map<Function*, StructValuesMap<T>> {
+  FunctionStructValuesMap(Module& wasm) {
+    // Initialize the data for each function in preparation for parallel
+    // computation.
+    for (auto& func : wasm.functions) {
+      (*this)[func.get()];
+    }
+  }
+};
 
 // Scan each function to note all its writes to struct fields.
 //

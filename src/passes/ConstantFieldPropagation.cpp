@@ -296,13 +296,7 @@ struct ConstantFieldPropagation : public Pass {
     }
 
     // Find and analyze all writes inside each function.
-    PCVFunctionStructValuesMap functionNewInfos, functionSetInfos;
-    for (auto& func : module->functions) {
-      // Initialize the data for each function, so that we can operate on this
-      // structure in parallel without modifying it.
-      functionNewInfos[func.get()];
-      functionSetInfos[func.get()];
-    }
+    PCVFunctionStructValuesMap functionNewInfos(*module), functionSetInfos(*module);
     PCVScanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
