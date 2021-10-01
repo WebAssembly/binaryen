@@ -188,7 +188,11 @@ Type GlobalTypeUpdater::getTempType(Type type) {
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    assert(typeIndices.count(heapType));
+    if (!typeIndices.count(heapType)) {
+      // This type was not present in the module, but is now being used when
+      // defining new types. That is fine; just use it.
+      return type;
+    }
     return typeBuilder.getTempRefType(
       typeBuilder.getTempHeapType(typeIndices[heapType]),
       type.getNullability()

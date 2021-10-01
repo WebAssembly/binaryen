@@ -59,3 +59,43 @@
     )
   )
 )
+
+(module
+  ;; As above, but we also assign a different function reference. The type of
+  ;; the field can be specialized to the LUB, which is a non-null ref to a func
+  ;; (so we just specialized it to be non-null).
+  ;; CHECK:      (type $struct (struct (field (mut (ref func)))))
+  (type $struct (struct (field (mut funcref))))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem declare func $other $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.func $set)
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.func $other)
+    )
+  )
+
+  ;; CHECK:      (func $other
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $other)
+)
