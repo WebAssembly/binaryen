@@ -34,21 +34,23 @@ namespace wasm {
 
 namespace {
 
+// Find the LUB of two types, but also when considering none to be "no
+// information".
+Type mergeNonNoneTypes(Type a, Type b) {
+  if (a == Type::none) {
+    return b;
+  }
+  if (b == Type::none) {
+    return a;
+  }
+  return Type::getLeastUpperBound(a, b);
+}
+
 // A vector of the types of fields in a struct.
 struct FieldTypes : public SmallVector<Type, 5> {
   void update(HeapType structType, Index i, Type writtenType) {
-    if (writtenType == Type::none) {
-      // No information is present here.
-      return;
-    }
     resize(structType.getStruct().fields.size());
-    if ((*this)[i] == Type::none) {
-      // This is the first time we see this field.
-      (*this)[i] = writtenType;
-    } else {
-      // TODO: unreachability. Or run DCE first?
-      (*this)[i] = Type::getLeastUpperBound((*this)[i], writtenType);
-    }
+    (*this)[i] = mergeNonNoneTypes((*this)[i], writtenType);
   }
 };
 
@@ -148,15 +150,29 @@ struct GlobalSubtyping : public Pass {
         auto& oldFields = oldType.getStruct().fields;
         auto& observedFieldTypes = parent.combinedInfo[oldType];
         for (Index i = 0; i < oldFields.size(); i++) {
-          // Check if the observed types are a subtype of the existing one on
-          // the field. If so, we may be able to specialize.
+          // The relevant observed type is what has been written to us, but also
+          // to all of our supertypes that have this field, as if one of them
+          // specializes the type then we must as well.
           auto observedType = observedFieldTypes[i];
+          auto curr = oldType;
+          while (1) {
+            HeapType super;
+            if (!curr.getSuperType(super)) {
+              break;
+            }
+            if (i >= super.getStruct().fields.size()) {
+              break;
+            }
+            observedType = mergeNonNoneTypes(observedType, parent.combinedInfo[super][i]);
+            curr = super;
+          }
+
           auto oldType = oldFields[i].type;
           if (observedType == Type::none || observedType == oldType) {
             continue;
           }
-
           assert(Type::isSubType(observedType, oldFields[i].type));
+
           // We must also preseve the property that subtypes of us have fields
           // that are subtypes of this new type.
           // TODO: this is quadratic overall
