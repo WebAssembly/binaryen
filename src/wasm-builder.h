@@ -648,6 +648,14 @@ public:
     ret->finalize();
     return ret;
   }
+  TableGet* makeTableGet(Name table, Expression* index, Type type) {
+    auto* ret = wasm.allocator.alloc<TableGet>();
+    ret->table = table;
+    ret->index = index;
+    ret->type = type;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,

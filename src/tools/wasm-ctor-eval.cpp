@@ -343,6 +343,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       std::to_string(index));
   }
 
+  Literal tableGet(Name tableName, Index index) {
+    throw FailToEvalException("table.get: TODO");
+  }
+
   int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
   uint8_t load8u(Address addr) override { return doLoad<uint8_t>(addr); }
   int16_t load16s(Address addr) override { return doLoad<int16_t>(addr); }

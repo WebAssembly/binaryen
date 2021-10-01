@@ -1358,6 +1358,7 @@ public:
     NOTE_EVAL2(left, right);
     return Literal(int32_t(left == right));
   }
+  Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -2157,6 +2158,10 @@ public:
     NOTE_ENTER("CallRef");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableGet(TableGet* curr) {
+    NOTE_ENTER("TableGet");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2441,6 +2446,9 @@ public:
     tableStore(Name tableName, Address addr, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
+    virtual Literal tableLoad(Name tableName, Address addr) {
+      WASM_UNREACHABLE("unimp");
+    }
   };
 
   SubType* self() { return static_cast<SubType*>(this); }
@@ -2528,7 +2536,37 @@ private:
 
   std::unordered_set<size_t> droppedSegments;
 
+  struct TableInterfaceInfo {
+    // The external interface in which the table is defined.
+    ExternalInterface* interface;
+    // The name the table has in that interface.
+    Name name;
+  };
+
+  TableInterfaceInfo getTableInterfaceInfo(Name name) {
+    auto* table = wasm.getTable(name);
+    if (table->imported()) {
+      auto& importedInstance = linkedInstances.at(table->module);
+      auto* tableExport = importedInstance->wasm.getExport(table->base);
+      return TableInterfaceInfo{importedInstance->externalInterface,
+                                tableExport->value};
+    } else {
+      return TableInterfaceInfo{externalInterface, name};
+    }
+  }
+
   void initializeTableContents() {
+    for (auto& table : wasm.tables) {
+      if (table->type.isNullable()) {
+        // Initial with nulls in a nullable table.
+        auto info = getTableInterfaceInfo(table->name);
+        auto null = Literal::makeNull(table->type);
+        for (Address i = 0; i < table->initial; i++) {
+          info.interface->tableStore(info.name, i, null);
+        }
+      }
+    }
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Function dummyFunc;
       dummyFunc.type = Signature(Type::none, Type::none);
@@ -2546,6 +2584,7 @@ private:
         extInterface = inst->externalInterface;
         tableName = inst->wasm.getExport(table->base)->value;
       }
+
       for (Index i = 0; i < segment->data.size(); ++i) {
         Flow ret = runner.visit(segment->data[i]);
         extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
@@ -2686,6 +2725,7 @@ private:
       }
       return ret;
     }
+
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
       LiteralList arguments;
@@ -2701,21 +2741,9 @@ private:
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
-      Flow ret;
-      auto* table = instance.wasm.getTable(curr->table);
-      if (table->imported()) {
-        auto inst = instance.linkedInstances.at(table->module);
-        Export* tableExport = inst->wasm.getExport(table->base);
-        ret = inst->externalInterface->callTable(tableExport->value,
-                                                 index,
-                                                 curr->sig,
-                                                 arguments,
-                                                 type,
-                                                 *instance.self());
-      } else {
-        ret = instance.externalInterface->callTable(
-          curr->table, index, curr->sig, arguments, type, *instance.self());
-      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      Flow ret = info.interface->callTable(
+        info.name, index, curr->sig, arguments, type, *instance.self());
 
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
@@ -2753,6 +2781,17 @@ private:
         ret.breakTo = RETURN_FLOW;
       }
       return ret;
+    }
+
+    Flow visitTableGet(TableGet* curr) {
+      NOTE_ENTER("TableGet");
+      Flow index = this->visit(curr->index);
+      if (index.breaking()) {
+        return index;
+      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      return info.interface->tableLoad(info.name,
+                                       index.getSingleValue().geti32());
     }
 
     Flow visitLocalGet(LocalGet* curr) {

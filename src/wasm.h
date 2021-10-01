@@ -624,6 +624,7 @@ public:
     RefIsId,
     RefFuncId,
     RefEqId,
+    TableGetId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1260,6 +1261,17 @@ public:
 
   Expression* left;
   Expression* right;
+
+  void finalize();
+};
+
+class TableGet : public SpecificExpression<Expression::TableGetId> {
+public:
+  TableGet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
 
   void finalize();
 };
