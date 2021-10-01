@@ -17,6 +17,7 @@
 #ifndef wasm_ir_subtypes_h
 #define wasm_ir_subtypes_h
 
+#include "ir/module-utils.h"
 #include "wasm.h"
 
 namespace wasm {

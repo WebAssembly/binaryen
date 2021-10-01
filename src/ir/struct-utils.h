@@ -124,15 +124,21 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
 
     // Note writes to all the fields of the struct.
     auto heapType = type.getHeapType();
-    auto& values = functionNewInfos[this->getFunction()][heapType];
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
-      if (curr->isWithDefault()) {
-        // TODO make an expression and call noteExpression.
-        values[i].note(Literal::makeZero(fields[i].type));
+      Expression* value;
+      if (!curr->isWithDefault()) {
+        value = curr->operands[i];
       } else {
-        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
+        // We need to create an expression here. As that is wasteful, use a
+        // cache at least.
+        auto type = fields[i].type;
+        if (zeroCache.count(type) == 0) {
+          zeroCache[type] = Builder(*this->getModule()).makeConstantExpression(Literal::makeZero(type));
+        }
+        value = zeroCache[type];
       }
+      noteExpression(value, heapType, i, functionNewInfos);
     }
   }
 
@@ -155,6 +161,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
                               HeapType type,
                               Index index,
                               FunctionStructValuesMap<T>& valuesMap) = 0;
+private:
+  std::unordered_map<Type, Expression*> zeroCache;
 };
 
 template<typename T> class StructValuePropagator {

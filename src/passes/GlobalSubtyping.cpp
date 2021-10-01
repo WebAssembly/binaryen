@@ -19,6 +19,7 @@
 // heap types defined in the module.
 //
 
+#include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -43,7 +44,9 @@ struct LUB {
   }
 
   bool combine(const LUB& other) {
+    auto before = type;
     note(other.type);
+    return type != before;
   }
 };
 
@@ -70,15 +73,9 @@ struct LUBScanner : public Scanner<LUB> {
 };
 
 struct GlobalSubtyping : public Pass {
-  // A map of functions to the information we collect in them in parallel.
-  std::unordered_map<Function*, AllFieldTypes> functionInfo;
-
-  // The information after we combine it across all functions.
-  AllFieldTypes combinedInfo;
-
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "ConstantFieldPropagation requires nominal typing";
+      Fatal() << "GlobalSubtyping requires nominal typing";
     }
 
     // Find and analyze all writes inside each function.
@@ -118,37 +115,42 @@ struct GlobalSubtyping : public Pass {
     // By propagating V to U, we ensure that the LUB in A's field takes into
     // account B's field, as a result of which B's field is equal to A's or more
     // specific. (And likewise from C to B and A).
-    StructValuePropagator<PossibleConstantValues> propagator(*module);
+    StructValuePropagator<LUB> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperTypes(combinedSetInfos);
 
     // Next, handle mutability. As mentioned before, if a field is mutable then
     // corresponding fields in substructs must be identical.
     // TODO: avoid repeated work here
-    for (auto& infos : {combinedNewInfos, combinedSetInfos}) {
+    auto handleMutability = [&](LUBStructValuesMap& infos) {
+      // Avoid iterating on infos while modifying it.
+      std::vector<HeapType> heapTypes;
       for (auto& kv : infos) {
-        auto heapType : kv.first;
-        auto structValues : kv.second;
+        heapTypes.push_back(kv.first);
+      }
+      for (auto heapType : heapTypes) {
         auto& fields = heapType.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {
           auto& field = fields[i];
           if (field.mutable_ == Mutable) {
-            // We must force all subtypes to match us on this field's type.
-            auto forcedType = structValues[i];
+            // We must force all subtypes to match us on this field.
+            auto forced = infos[heapType][i];
             auto work = propagator.subTypes.getSubTypes(heapType);
             while (!work.empty()) {
               auto iter = work.begin();
               auto subType = *iter;
               work.erase(iter);
-              infos[subType][i] = forcedType;
-              for (auto next : subTypes.getSubTypes(subType)) {
+              infos[subType][i] = forced;
+              for (auto next : propagator.subTypes.getSubTypes(subType)) {
                 work.insert(next);
               }
             }
           }
         }
       }
-    }
+    };
+    handleMutability(combinedNewInfos);
+    handleMutability(combinedSetInfos);
 
     // TODO: do we ever care about the difference between sets and news?
     auto combinedInfos = std::move(combinedNewInfos);
@@ -164,10 +166,10 @@ struct GlobalSubtyping : public Pass {
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         auto& oldFields = oldStructType.getStruct().fields;
-        auto& observedFieldTypes = combinedInfos[oldStructType];
+        auto& observedFields = combinedInfos[oldStructType];
         for (Index i = 0; i < oldFields.size(); i++) {
           auto oldFieldType = oldFields[i].type;
-          auto observedFieldType = observedFieldTypes[i];
+          auto observedFieldType = observedFields[i].type;
           if (observedFieldType != oldFieldType) {
             // Success! Apply the new observed type in this field.
             struct_.fields[i].type = getTempType(observedFieldType);
@@ -176,7 +178,7 @@ struct GlobalSubtyping : public Pass {
       }
     };
 
-    Updater(*this, combinedInfos).update();
+    Updater(*module, combinedInfos).update();
   }
 };
 
