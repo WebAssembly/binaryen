@@ -375,3 +375,31 @@
     )
   )
 )
+
+(module
+  ;; Test that we are not confused by unreachability.
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $struct (struct (field funcref)))
+  (type $struct (struct (field funcref)))
+
+  ;; CHECK:      (func $set (param $x (ref $struct))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct))
+    (drop
+      (struct.new $struct
+        (unreachable)
+      )
+    )
+    (struct.new $struct
+      (unreachable)
+      (ref.func $set)
+    )
+    (struct.new $struct
+      (local.get $x)
+      (unreachable)
+    )
+  )
+)

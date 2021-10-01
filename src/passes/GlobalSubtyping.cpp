@@ -78,6 +78,16 @@ struct GlobalSubtyping : public Pass {
       Fatal() << "GlobalSubtyping requires nominal typing";
     }
 
+    {
+      // Run DCE before anything else, so that we do not need to worry about
+      // unreachability.
+      PassRunner runner(module);
+      runner.add("dce");
+      runner.setIsNested(true);
+      runner.setValidateGlobally(false);
+      runner.run();
+    }
+
     // Find and analyze all writes inside each function.
     LUBFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
@@ -168,8 +178,10 @@ struct GlobalSubtyping : public Pass {
         for (Index i = 0; i < oldFields.size(); i++) {
           auto oldFieldType = oldFields[i].type;
           auto observedFieldType = observedFields[i].type;
-          if (observedFieldType != oldFieldType) {
-            // Success! Apply the new observed type in this field.
+          // If we have more specialized type (and not if it's unreachable,
+          // which means we've seen nothing at all), then we can optimize.
+          if (observedFieldType != oldFieldType &&
+              observedFieldType != Type::unreachable) {
             struct_.fields[i].type = getTempType(observedFieldType);
           }
         }
