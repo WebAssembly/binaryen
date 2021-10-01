@@ -27,3 +27,35 @@
     )
   )
 )
+
+(module
+  ;; As above, but we also assign a null funcref lower down, which prevents
+  ;; specialization.
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
+  (type $struct (struct (field (mut funcref))))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.func $set)
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.null func)
+    )
+  )
+)
