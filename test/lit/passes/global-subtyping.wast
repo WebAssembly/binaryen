@@ -99,3 +99,15 @@
   ;; CHECK-NEXT: )
   (func $other)
 )
+
+(module
+  (type $struct     (struct (field (mut funcref))))
+  (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  (func $set (param $x (ref $struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.func $set)
+    )
+  )
+)

@@ -63,6 +63,12 @@ void GlobalTypeUpdater::update() {
     } else {
       WASM_UNREACHABLE("bad type");
     }
+
+    // Apply a super, if there is one
+    HeapType super;
+    if (type.getSuperType(super)) {
+      typeBuilder.setSubType(i, typeIndices[super]);
+    }
   }
   auto newTypes = typeBuilder.build();
 
