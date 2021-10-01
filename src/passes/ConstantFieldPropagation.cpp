@@ -29,6 +29,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -159,148 +160,8 @@ private:
   Literal value;
 };
 
-// A vector of PossibleConstantValues. One such vector will be used per struct
-// type, where each element in the vector represents a field. We always assume
-// that the vectors are pre-initialized to the right length before accessing any
-// data, which this class enforces using assertions, and which is implemented in
-// StructValuesMap.
-struct StructValues : public std::vector<PossibleConstantValues> {
-  PossibleConstantValues& operator[](size_t index) {
-    assert(index < size());
-    return std::vector<PossibleConstantValues>::operator[](index);
-  }
-
-  const PossibleConstantValues& operator[](size_t index) const {
-    assert(index < size());
-    return std::vector<PossibleConstantValues>::operator[](index);
-  }
-};
-
-// Map of types to information about the values their fields can take.
-// Concretely, this maps a type to a StructValues which has one element per
-// field.
-struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
-  // When we access an item, if it does not already exist, create it with a
-  // vector of the right length for that type.
-  StructValues& operator[](HeapType type) {
-    auto inserted = insert({type, {}});
-    auto& values = inserted.first->second;
-    if (inserted.second) {
-      values.resize(type.getStruct().fields.size());
-    }
-    return values;
-  }
-
-  void dump(std::ostream& o) {
-    o << "dump " << this << '\n';
-    for (auto& kv : (*this)) {
-      auto type = kv.first;
-      auto& vec = kv.second;
-      o << "dump " << type << " " << &vec << ' ';
-      for (auto x : vec) {
-        x.dump(o);
-        o << " ";
-      };
-      o << '\n';
-    }
-  }
-};
-
-// Map of functions to their field value infos. We compute those in parallel,
-// then later we will merge them all.
-using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap>;
-
-// Scan each function to note all its writes to struct fields.
-//
-// We track information from struct.new and struct.set separately, because in
-// struct.new we know more about the type - we know the actual exact type being
-// written to, and not just that it is of a subtype of the instruction's type,
-// which helps later.
-struct Scanner : public WalkerPass<PostWalker<Scanner>> {
-  bool isFunctionParallel() override { return true; }
-
-  Pass* create() override {
-    return new Scanner(functionNewInfos, functionSetInfos);
-  }
-
-  Scanner(FunctionStructValuesMap& functionNewInfos,
-          FunctionStructValuesMap& functionSetInfos)
-    : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
-
-  void visitStructNew(StructNew* curr) {
-    auto type = curr->type;
-    if (type == Type::unreachable) {
-      return;
-    }
-
-    // Note writes to all the fields of the struct.
-    auto heapType = type.getHeapType();
-    auto& values = functionNewInfos[getFunction()][heapType];
-    auto& fields = heapType.getStruct().fields;
-    for (Index i = 0; i < fields.size(); i++) {
-      if (curr->isWithDefault()) {
-        values[i].note(Literal::makeZero(fields[i].type));
-      } else {
-        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
-      }
-    }
-  }
-
-  void visitStructSet(StructSet* curr) {
-    auto type = curr->ref->type;
-    if (type == Type::unreachable) {
-      return;
-    }
-
-    // Note a write to this field of the struct.
-    noteExpression(
-      curr->value, type.getHeapType(), curr->index, functionSetInfos);
-  }
-
-private:
-  FunctionStructValuesMap& functionNewInfos;
-  FunctionStructValuesMap& functionSetInfos;
-
-  // Note a value, checking whether it is a constant or not.
-  void noteExpression(Expression* expr,
-                      HeapType type,
-                      Index index,
-                      FunctionStructValuesMap& valuesMap) {
-    expr = Properties::getFallthrough(expr, getPassOptions(), *getModule());
-
-    // Ignore copies: when we set a value to a field from that same field, no
-    // new values are actually introduced.
-    //
-    // Note that this is only sound by virtue of the overall analysis in this
-    // pass: the object read from may be of a subclass, and so subclass values
-    // may be actually written here. But as our analysis considers subclass
-    // values too (as it must) then that is safe. That is, if a subclass of $A
-    // adds a value X that can be loaded from (struct.get $A $b), then consider
-    // a copy
-    //
-    //   (struct.set $A $b (struct.get $A $b))
-    //
-    // Our analysis will figure out that X can appear in that copy's get, and so
-    // the copy itself does not add any information about values.
-    //
-    // TODO: This may be extensible to a copy from a subtype by the above
-    //       analysis (but this is already entering the realm of diminishing
-    //       returns).
-    if (auto* get = expr->dynCast<StructGet>()) {
-      if (get->index == index && get->ref->type != Type::unreachable &&
-          get->ref->type.getHeapType() == type) {
-        return;
-      }
-    }
-
-    auto& info = valuesMap[getFunction()][type][index];
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
-      info.note(Properties::getLiteral(expr));
-    }
-  }
-};
+using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
+using PCVFunctionStructValuesMap = FunctionStructValuesMap<PossibleConstantValues>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -312,7 +173,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   Pass* create() override { return new FunctionOptimizer(infos); }
 
-  FunctionOptimizer(StructValuesMap& infos) : infos(infos) {}
+  FunctionOptimizer(PCVStructValuesMap& infos) : infos(infos) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -374,7 +235,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  StructValuesMap& infos;
+  PCVStructValuesMap& infos;
 
   bool changed = false;
 };
@@ -386,22 +247,22 @@ struct ConstantFieldPropagation : public Pass {
     }
 
     // Find and analyze all writes inside each function.
-    FunctionStructValuesMap functionNewInfos, functionSetInfos;
+    PCVFunctionStructValuesMap functionNewInfos, functionSetInfos;
     for (auto& func : module->functions) {
       // Initialize the data for each function, so that we can operate on this
       // structure in parallel without modifying it.
       functionNewInfos[func.get()];
       functionSetInfos[func.get()];
     }
-    Scanner scanner(functionNewInfos, functionSetInfos);
+    Scanner<PossibleConstantValues> scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    auto combine = [](const FunctionStructValuesMap& functionInfos,
-                      StructValuesMap& combinedInfos) {
+    auto combine = [](const PCVFunctionStructValuesMap& functionInfos,
+                      PCVStructValuesMap& combinedInfos) {
       for (auto& kv : functionInfos) {
-        const StructValuesMap& infos = kv.second;
+        const PCVStructValuesMap& infos = kv.second;
         for (auto& kv : infos) {
           auto type = kv.first;
           auto& info = kv.second;
@@ -411,7 +272,7 @@ struct ConstantFieldPropagation : public Pass {
         }
       }
     };
-    StructValuesMap combinedNewInfos, combinedSetInfos;
+    PCVStructValuesMap combinedNewInfos, combinedSetInfos;
     combine(functionNewInfos, combinedNewInfos);
     combine(functionSetInfos, combinedSetInfos);
 
@@ -451,7 +312,7 @@ struct ConstantFieldPropagation : public Pass {
 
     SubTypes subTypes(*module);
 
-    auto propagate = [&subTypes](StructValuesMap& combinedInfos,
+    auto propagate = [&subTypes](PCVStructValuesMap& combinedInfos,
                                  bool toSubTypes) {
       UniqueDeferredQueue<HeapType> work;
       for (auto& kv : combinedInfos) {
@@ -493,7 +354,7 @@ struct ConstantFieldPropagation : public Pass {
 
     // Combine both sources of information to the final information that gets
     // care about.
-    StructValuesMap combinedInfos = std::move(combinedNewInfos);
+    PCVStructValuesMap combinedInfos = std::move(combinedNewInfos);
     for (auto& kv : combinedSetInfos) {
       auto type = kv.first;
       auto& info = kv.second;
