@@ -385,13 +385,7 @@ struct ConstantFieldPropagation : public Pass {
     // Combine both sources of information to the final information that gets
     // care about.
     PCVStructValuesMap combinedInfos = std::move(combinedNewInfos);
-    for (auto& kv : combinedSetInfos) {
-      auto type = kv.first;
-      auto& info = kv.second;
-      for (Index i = 0; i < info.size(); i++) {
-        combinedInfos[type][i].combine(info[i]);
-      }
-    }
+    combinedSetInfos.combineInto(combinedInfos);
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything

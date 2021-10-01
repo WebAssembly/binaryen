@@ -55,6 +55,16 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
     return values;
   }
 
+  void combineInto(StructValuesMap<T>& combinedInfos) const {
+    for (auto& kv : *this) {
+      auto type = kv.first;
+      auto& info = kv.second;
+      for (Index i = 0; i < info.size(); i++) {
+        combinedInfos[type][i].combine(info[i]);
+      }
+    }
+  }
+
   void dump(std::ostream& o) {
     o << "dump " << this << '\n';
     for (auto& kv : (*this)) {
@@ -86,13 +96,7 @@ struct FunctionStructValuesMap : public std::unordered_map<Function*, StructValu
   void combineInto(StructValuesMap<T>& combinedInfos) const {
     for (auto& kv : *this) {
       const StructValuesMap<T>& infos = kv.second;
-      for (auto& kv : infos) {
-        auto type = kv.first;
-        auto& info = kv.second;
-        for (Index i = 0; i < info.size(); i++) {
-          combinedInfos[type][i].combine(info[i]);
-        }
-      }
+      infos.combineInto(combinedInfos);
     }
   }
 };
