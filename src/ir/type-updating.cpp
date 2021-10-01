@@ -22,7 +22,7 @@
 
 namespace wasm {
 
-void GlobalTypeUpdater::update(Module& wasm) : wasm(wasm), typeBuilder(wasm, types, typeIndices) {
+GlobalTypeUpdater::GlobalTypeUpdater(Module& wasm) : wasm(wasm) {
   ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
   typeBuilder.grow(types.size());
 }
@@ -49,7 +49,7 @@ void GlobalTypeUpdater::update() {
       // Start with a copy to get mutability/packing/etc.
       auto newStruct = struct_;
       for (auto& field : newStruct.fields) {
-        field.type = getTempTypeForStruct(field.type);
+        field.type = getTempType(field.type);
       }
       modifyStruct(types[i], newStruct);
       typeBuilder.setHeapType(i, newStruct);
@@ -68,9 +68,10 @@ void GlobalTypeUpdater::update() {
 
   // Creating the oldToNewTypes of old to new types.
 
-  using OldToNewTypes = std::unordered_map<HeapType, HeapType> oldToNewTypes;
+  using OldToNewTypes = std::unordered_map<HeapType, HeapType>;
 
   OldToNewTypes oldToNewTypes;
+
   for (Index i = 0; i < types.size(); i++) {
     oldToNewTypes[types[i]] = newTypes[i];
   }
@@ -154,7 +155,8 @@ cast->name = update(cast->name);
   };
 
   CodeUpdater updater(oldToNewTypes);
-  updater.run(runner, &wasm);
+  PassRunner runner(&wasm);
+  updater.run(&runner, &wasm);
   updater.walkModuleCode(&wasm);
 
   // Update global locations that refer to types.
@@ -185,9 +187,9 @@ Type GlobalTypeUpdater::getTempType(Type type) {
     return type;
   }
   if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    assert(typeIndices.count(heapType));
     return typeBuilder.getTempRefType(
-      auto heapType = type.getHeapType();
-      assert(typeIndices.count(heapType));
       typeBuilder.getTempHeapType(typeIndices[heapType]),
       type.getNullability()
     );
