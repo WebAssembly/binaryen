@@ -34,7 +34,22 @@ namespace wasm {
 namespace {
 
 // A vector of the types of fields in a struct.
-using FieldTypes = SmallVector<Type, 5>;
+struct FieldTypes : public SmallVector<Type, 5> {
+  void update(HeapType structType, Index fieldIndex, Type writtenType) {
+    if (writtenType == Type::none) {
+      // No information is present here.
+      return;
+    }
+    resize(structType.getStruct().fields.size());
+    if ((*this)[i] == Type::none) {
+      // This is the first time we see this field.
+      (*this)[i] = operand->type;
+    } else {
+      // TODO: unreachability. Or run DCE first?
+      (*this)[i] = Type::getLeastUpperBound((*this)[i], operand->type);
+    }
+  }
+};
 
 // A map of all structs to their field types.
 using AllFieldTypes = std::unordered_map<HeapType, FieldTypes>;
@@ -85,20 +100,29 @@ struct GlobalSubtyping : public Pass {
       void update(HeapType structType, Index fieldIndex, Type writtenType) {
         auto& funcInfo = parent.functionInfo[getFunction()];
         auto& fieldTypes = funcInfo[structType];
-        fieldTypes.resize(structType.getStruct().fields.size());
-        if (fieldTypes[i] == Type::none) {
-          // This is the first time we see this field.
-          fieldTypes[i] = operand->type;
-        } else {
-          // TODO: unreachability. Or run DCE first?
-          fieldTypes[i] = Type::getLeastUpperBound(fieldTypes[i], operand->type);
-        }          
+        fieldTypes.update(structType, fieldIndex, writtenType);
       }
     };
 
     CodeScanner updater(*this);
     updater.run(runner, module);
     updater.walkModuleCode(module);
+  }
+
+  void combineFunctionData() {
+    for (auto& kv : functionInfo) {
+      auto& allFieldTypes = kv.second;
+      for (auto& kv : allFieldTypes) {
+        auto heapType = kv.first;
+        auto& fieldTypes = kv.second;
+
+        auto& combinedFieldTypes = combinedInfo[heapType];
+
+        for (Index i = 0; i < fieldTypes; i++) {
+          combinedFieldTypes.update(heapType, i, fieldTypes[i]);
+        }
+      }
+    }
   }
 };
 
