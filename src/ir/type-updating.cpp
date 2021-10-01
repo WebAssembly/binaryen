@@ -177,6 +177,9 @@ cast->name = update(cast->name);
   }
   for (auto& func : wasm.functions) {
     func->type = updater.update(func->type);
+    for (auto& var : func->vars) {
+      var = updater.update(var);
+    }
   }
 
   for (auto& kv : oldToNewTypes) {
