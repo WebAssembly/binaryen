@@ -590,7 +590,7 @@ struct TypeBuilder {
   // Make this type nominal in the sense of the Milestone 4 GC spec, independent
   // of the current TypeSystem configuration. `supertype` is the index of the
   // nontrivial supertype, or `NoSupertype` if there is no nontrivial supertype.
-  enum : size_t { NoSupertype = -1ull };
+  enum : size_t { NoSupertype = static_cast<size_t>(-1) };
   void setNominal(size_t i, size_t supertype);
 
   // Returns all of the newly constructed heap types. May only be called once
