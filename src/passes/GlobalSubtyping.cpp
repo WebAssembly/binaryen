@@ -146,15 +146,17 @@ struct GlobalSubtyping : public Pass {
     public:
       Updater(GlobalSubtyping& parent) : GlobalTypeUpdater(*parent.module), parent(parent), subTypes(*parent.module) {}
 
-      virtual void modifyStruct(HeapType oldType, Struct& struct_) {
-        auto& oldFields = oldType.getStruct().fields;
-        auto& observedFieldTypes = parent.combinedInfo[oldType];
+      virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
+std::cout << "mS " << oldStructType << "\n";
+        auto& oldFields = oldStructType.getStruct().fields;
+        auto& observedFieldTypes = parent.combinedInfo[oldStructType];
         for (Index i = 0; i < oldFields.size(); i++) {
           // The relevant observed type is what has been written to us, but also
           // to all of our supertypes that have this field, as if one of them
           // specializes the type then we must as well.
+          // TODO: this is quadratic overall
           auto observedType = observedFieldTypes[i];
-          auto curr = oldType;
+          auto curr = oldStructType;
           while (1) {
             HeapType super;
             if (!curr.getSuperType(super)) {
@@ -176,8 +178,16 @@ struct GlobalSubtyping : public Pass {
           // We must also preseve the property that subtypes of us have fields
           // that are subtypes of this new type.
           // TODO: this is quadratic overall
-          auto work = subTypes.getSubTypes(oldType.getHeapType());
+
+#if 0
+auto* frist = parent.module->functions[0].get();
+auto param = frist->getLocalType(0);
+std::cout << "param: " << param << " : " << oldStructType << " : " << (param == oldStructType) << '\n';
+#endif
+          auto work = subTypes.getSubTypes(oldStructType);
+std::cout << "look at subtypes\n";
           while (!work.empty()) {
+std::cout << "  iter\n";
             auto iter = work.begin();
             auto currSubType = *iter;
             work.erase(iter);

@@ -22,12 +22,12 @@
 
 namespace wasm {
 
-GlobalTypeUpdater::GlobalTypeUpdater(Module& wasm) : wasm(wasm) {
-  ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-  typeBuilder.grow(types.size());
-}
+GlobalTypeUpdater::GlobalTypeUpdater(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeUpdater::update() {
+  ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
+  typeBuilder.grow(types.size());
+
   // Create the temporary heap types.
   for (Index i = 0; i < types.size(); i++) {
     auto type = types[i];
