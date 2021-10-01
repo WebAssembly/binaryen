@@ -218,3 +218,32 @@
     )
   )
 )
+
+(module
+  ;; Only write to the subtype. As the fields are mutable, we cannot specialize
+  ;; one without the other (if they are not 100% identical, the only way for
+  ;; them to have a subtyping relationship is for them to both be immutable).
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+
+  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  (type $struct     (struct (field (mut funcref))))
+  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  ;; CHECK:      (elem declare func $set)
+
+  ;; CHECK:      (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
+    ;; FIXME
+    ;; (struct.set $sub-struct 0
+    ;;   (local.get $y)
+    ;;   (ref.func $set)
+    ;; )
+  )
+)
+
