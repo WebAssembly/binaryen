@@ -177,7 +177,7 @@ struct GlobalSubtyping : public Pass {
             continue;
           }
 
-          // Success! Apply the new type.
+          // Success! Apply the new observed type in this field.
           struct_.fields[i].type = getTempType(observedType);
         }
       }
