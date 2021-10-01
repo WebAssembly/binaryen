@@ -20,6 +20,7 @@
 //
 
 #include "ir/subtypes.h"
+#include "ir/type-updating.h"
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/small_set.h>
@@ -35,7 +36,7 @@ namespace {
 
 // A vector of the types of fields in a struct.
 struct FieldTypes : public SmallVector<Type, 5> {
-  void update(HeapType structType, Index fieldIndex, Type writtenType) {
+  void update(HeapType structType, Index i, Type writtenType) {
     if (writtenType == Type::none) {
       // No information is present here.
       return;
@@ -43,10 +44,10 @@ struct FieldTypes : public SmallVector<Type, 5> {
     resize(structType.getStruct().fields.size());
     if ((*this)[i] == Type::none) {
       // This is the first time we see this field.
-      (*this)[i] = operand->type;
+      (*this)[i] = writtenType;
     } else {
       // TODO: unreachability. Or run DCE first?
-      (*this)[i] = Type::getLeastUpperBound((*this)[i], operand->type);
+      (*this)[i] = Type::getLeastUpperBound((*this)[i], writtenType);
     }
   }
 };
@@ -64,7 +65,9 @@ struct GlobalSubtyping : public Pass {
   Module* module;
 
   void run(PassRunner* runner, Module* module_) override {
-    assert(nominal);
+    if (getTypeSystem() != TypeSystem::Nominal) {
+      Fatal() << "ConstantFieldPropagation requires nominal typing";
+    }
 
     module = module_;
 
@@ -93,7 +96,7 @@ struct GlobalSubtyping : public Pass {
 
       void visitStructNew(StructNew* curr) {
         // TODO: unreachability. Or run DCE first?
-        auto heapType = curr->ref->type.getHeapType();
+        auto heapType = curr->type.getHeapType();
         for (Index i = 0; i < curr->operands.size(); i++) {
           update(heapType, i, curr->operands[i]->type);
         }
@@ -112,7 +115,8 @@ struct GlobalSubtyping : public Pass {
     };
 
     CodeScanner updater(*this);
-    updater.run(runner, module);
+    PassRunner runner(module);
+    updater.run(&runner, module);
     updater.walkModuleCode(module);
   }
 
@@ -125,7 +129,7 @@ struct GlobalSubtyping : public Pass {
 
         auto& combinedFieldTypes = combinedInfo[heapType];
 
-        for (Index i = 0; i < fieldTypes; i++) {
+        for (Index i = 0; i < fieldTypes.size(); i++) {
           combinedFieldTypes.update(heapType, i, fieldTypes[i]);
         }
       }
@@ -138,7 +142,7 @@ struct GlobalSubtyping : public Pass {
       SubTypes subTypes;
 
     public:
-      Updater(GlobalSubtyping& parent) : parent(parent), SubTypes(*parent.module) {}
+      Updater(GlobalSubtyping& parent) : GlobalTypeUpdater(*parent.module), parent(parent), subTypes(*parent.module) {}
 
       virtual void modifyStruct(HeapType oldType, Struct& struct_) {
         auto& oldFields = oldType.getStruct().fields;
@@ -152,10 +156,11 @@ struct GlobalSubtyping : public Pass {
             continue;
           }
 
-          assert(Type::isSubType(observedType, oldFields[i].type);
+          assert(Type::isSubType(observedType, oldFields[i].type));
           // We must also preseve the property that subtypes of us have fields
           // that are subtypes of this new type.
-          auto work = subTypes.getSubTypes(oldType);
+          // TODO: this is quadratic overall
+          auto work = subTypes.getSubTypes(oldType.getHeapType());
           while (!work.empty()) {
             auto iter = work.begin();
             auto currSubType = *iter;
@@ -183,7 +188,7 @@ struct GlobalSubtyping : public Pass {
       }
     };
 
-    Update(*this).update(*module);
+    Updater(*this).update();
   }
 };
 
