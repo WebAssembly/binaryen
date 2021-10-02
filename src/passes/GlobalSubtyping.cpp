@@ -105,6 +105,14 @@ struct LUBScanner : public Scanner<LUB> {
     }
     item.note(fieldType);
   }
+
+  virtual void noteCopy(
+    HeapType type,
+    Index index,
+    FunctionStructValuesMap<LUB>& valuesMap) override {
+    // A copy does not introduce anything new in terms of types; ignore.
+    // TODO: When we look at mutability, it will matter there.
+  }
 };
 
 struct GlobalSubtyping : public Pass {

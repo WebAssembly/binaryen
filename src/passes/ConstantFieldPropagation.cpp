@@ -226,7 +226,26 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
     HeapType type,
     Index index,
     FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
-    expr = Properties::getFallthrough(expr, getPassOptions(), *getModule());
+
+    auto& info = valuesMap[getFunction()][type][index];
+    if (!Properties::isConstantExpression(expr)) {
+      info.noteUnknown();
+    } else {
+      info.note(Properties::getLiteral(expr));
+    }
+  }
+
+  virtual void noteDefault(Type fieldType,
+                           HeapType type,
+                           Index index,
+                           FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
+    valuesMap[getFunction()][type][index].note(Literal::makeZero(fieldType));
+  }
+
+  virtual void noteCopy(
+    HeapType type,
+    Index index,
+    FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
 
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
@@ -246,26 +265,6 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
     // TODO: This may be extensible to a copy from a subtype by the above
     //       analysis (but this is already entering the realm of diminishing
     //       returns).
-    if (auto* get = expr->dynCast<StructGet>()) {
-      if (get->index == index && get->ref->type != Type::unreachable &&
-          get->ref->type.getHeapType() == type) {
-        return;
-      }
-    }
-
-    auto& info = valuesMap[getFunction()][type][index];
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
-      info.note(Properties::getLiteral(expr));
-    }
-  }
-
-  virtual void noteDefault(Type fieldType,
-                           HeapType type,
-                           Index index,
-                           FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
-    valuesMap[getFunction()][type][index].note(Literal::makeZero(fieldType));
   }
 };
 

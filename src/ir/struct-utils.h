@@ -129,7 +129,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
       if (curr->isWithDefault()) {
         noteDefault(fields[i].type, heapType, i, functionNewInfos);
       } else {
-        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
+        noteExpressionOrCopy(curr->operands[i], heapType, i, functionNewInfos);
       }
     }
   }
@@ -141,8 +141,29 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     }
 
     // Note a write to this field of the struct.
-    noteExpression(
+    noteExpressionOrCopy(
       curr->value, type.getHeapType(), curr->index, functionSetInfos);
+  }
+
+  void noteExpressionOrCopy(Expression* expr,
+                            HeapType type,
+                            Index index,
+                            FunctionStructValuesMap<T>& valuesMap) {
+    // Look at the value falling through, if it has the exact same type
+    // (otherwise, we'd need to consider both the type actually written and the
+    // type of the fallthrough, somehow).
+    auto* fallthrough = Properties::getFallthrough(expr, this->getPassOptions(), *this->getModule());
+    if (fallthrough->type == expr->type) {
+      expr = fallthrough;
+    }
+    if (auto* get = expr->dynCast<StructGet>()) {
+      if (get->index == index && get->ref->type != Type::unreachable &&
+          get->ref->type.getHeapType() == type) {
+        noteCopy(type, index, valuesMap);
+        return;
+      }
+    }
+    noteExpression(expr, type, index, valuesMap);
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
@@ -159,6 +180,11 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
                            HeapType type,
                            Index index,
                            FunctionStructValuesMap<T>& valuesMap) = 0;
+
+  // Note a default value written during creation.
+  virtual void noteCopy(HeapType type,
+                        Index index,
+                        FunctionStructValuesMap<T>& valuesMap) = 0;
 private:
   std::unordered_map<Type, Expression*> zeroCache;
 };
