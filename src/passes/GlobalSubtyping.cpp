@@ -214,6 +214,10 @@ struct GlobalSubtyping : public Pass {
         }
 
         auto type = curr->type.getHeapType();
+        if (infos.count(type) == 0) {
+          return;
+        }
+
         for (Index i = 0; i < curr->operands.size(); i++) {
           auto observedFieldType = infos[type][i].type;
           if (observedFieldType != Type::unreachable &&
@@ -229,6 +233,10 @@ struct GlobalSubtyping : public Pass {
         }
 
         auto type = curr->ref->type.getHeapType();
+        if (infos.count(type) == 0) {
+          return;
+        }
+
         auto i = curr->index;
         auto observedFieldType = infos[type][i].type;
         if (observedFieldType != Type::unreachable &&
@@ -243,6 +251,10 @@ struct GlobalSubtyping : public Pass {
         }
 
         auto type = curr->ref->type.getHeapType();
+        if (infos.count(type) == 0) {
+          return;
+        }
+
         auto index = curr->index;
         auto oldFieldType = type.getStruct().fields[index].type;
         auto observedFieldType = infos[type][index].type;
