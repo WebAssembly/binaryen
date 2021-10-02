@@ -34,7 +34,7 @@ struct SubTypes {
     }
   }
 
-  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
+  const std::vector<HeapType>& getSubTypes(HeapType type) {
     return typeSubTypes[type];
   }
 
@@ -43,12 +43,12 @@ private:
   void note(HeapType type) {
     HeapType super;
     if (type.getSuperType(super)) {
-      typeSubTypes[super].insert(type);
+      typeSubTypes[super].push_back(type);
     }
   }
 
   // Maps a type to its subtypes.
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
+  std::unordered_map<HeapType, std::vector<HeapType>> typeSubTypes;
 };
 
 } // namespace wasm

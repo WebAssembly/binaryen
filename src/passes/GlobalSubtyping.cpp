@@ -183,7 +183,7 @@ struct GlobalSubtyping : public Pass {
               work.erase(iter);
               infos[subType][i] = forced;
               for (auto next : propagator.subTypes.getSubTypes(subType)) {
-                work.insert(next);
+                work.push_back(next);
               }
             }
           }
