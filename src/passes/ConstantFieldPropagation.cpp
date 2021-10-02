@@ -260,6 +260,13 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
       info.note(Properties::getLiteral(expr));
     }
   }
+
+  virtual void noteDefault(Type fieldType,
+                           HeapType type,
+                           Index index,
+                           FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
+    valuesMap[getFunction()][type][index].note(Literal::makeZero(fieldType));
+  }
 };
 
 struct ConstantFieldPropagation : public Pass {

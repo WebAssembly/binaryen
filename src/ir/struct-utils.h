@@ -126,19 +126,11 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     auto heapType = type.getHeapType();
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
-      Expression* value;
-      if (!curr->isWithDefault()) {
-        value = curr->operands[i];
+      if (curr->isWithDefault()) {
+        noteDefault(fields[i].type, heapType, i, functionNewInfos);
       } else {
-        // We need to create an expression here. As that is wasteful, use a
-        // cache at least. TODO allocate in a temp module?
-        auto type = fields[i].type;
-        if (zeroCache.count(type) == 0) {
-          zeroCache[type] = Builder(*this->getModule()).makeConstantExpression(Literal::makeZero(type));
-        }
-        value = zeroCache[type];
+        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
       }
-      noteExpression(value, heapType, i, functionNewInfos);
     }
   }
 
@@ -161,6 +153,12 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
                               HeapType type,
                               Index index,
                               FunctionStructValuesMap<T>& valuesMap) = 0;
+
+  // Note a default value written during creation.
+  virtual void noteDefault(Type fieldType,
+                           HeapType type,
+                           Index index,
+                           FunctionStructValuesMap<T>& valuesMap) = 0;
 private:
   std::unordered_map<Type, Expression*> zeroCache;
 };

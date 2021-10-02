@@ -70,6 +70,13 @@ struct LUBScanner : public Scanner<LUB> {
     FunctionStructValuesMap<LUB>& valuesMap) override {
     valuesMap[getFunction()][type][index].note(expr->type);
   }
+
+  virtual void noteDefault(Type fieldType,
+                           HeapType type,
+                           Index index,
+                           FunctionStructValuesMap<LUB>& valuesMap) override {
+    valuesMap[getFunction()][type][index].note(fieldType);
+  }
 };
 
 struct GlobalSubtyping : public Pass {
