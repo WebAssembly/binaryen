@@ -195,6 +195,38 @@ struct GlobalSubtyping : public Pass {
     handleMutability(combinedSetInfos);
 #endif
 
+    // Find which fields are immutable in all super- and sub-classes. To see
+    // that, propagate sets in both directions.
+    propagator.propagateToSuperAndSubTypes(combinedSetInfos);
+    // Maps types to a vector of booleans that indicate if we can turn the
+    // field immutable. To avoid eager allocation of memory, the vectors are
+    // only resized when we actually have a true to place in them (which is
+    // rare).
+    using CanBecomeImmutable = std::unordered_map<HeapType, std::vector<bool>>;
+    CanBecomeImmutable canBecomeImmutable;
+    for (auto type : propagator.types) {
+      if (!type.isStruct()) {
+        continue;
+      }
+      auto& fields = type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        if (fields[i].mutable_ == Immutable) {
+          // Already immutable; nothing to do.
+          continue;
+        }
+
+        if (combinedSetInfos[type][i].type != Type::unreachable) {
+          // A set exists.
+          continue;
+        }
+
+        // No set exists. Mark it as something we can make immutable.
+        auto& vec = canBecomeImmutable[type];
+        vec.resize(i + 1);
+        vec[i] = true;
+      }
+    }
+
     // TODO: do we ever care about the difference between sets and news?
     auto combinedInfos = std::move(combinedNewInfos);
     combinedSetInfos.combineInto(combinedInfos);
@@ -208,7 +240,7 @@ struct GlobalSubtyping : public Pass {
 
       Pass* create() override { return new AccessUpdater(infos); }
 
-      AccessUpdater(LUBStructValuesMap& infos) : infos(infos) {}
+      AccessUpdater(LUBStructValuesMap& infos, CanBecomeImmutable& canBecomeImmutable) : infos(infos), canBecomeImmutable(canBecomeImmutable) {}
 
       void visitStructNew(StructNew* curr) {
 return;
@@ -273,19 +305,32 @@ return;
 
     private:
       LUBStructValuesMap& infos;
-   };
+      CanBecomeImmutable& canBecomeImmutable;
+    };
 
-    AccessUpdater(combinedInfos).run(runner, module);
+    AccessUpdater(combinedInfos, canBecomeImmutable).run(runner, module);
 
     // The types are now generally correct, except for their internals, which we
     // rewrite now.
     class TypeUpdater : public GlobalTypeUpdater {
       LUBStructValuesMap& combinedInfos;
+      CanBecomeImmutable& canBecomeImmutable;
 
     public:
-      TypeUpdater(Module& wasm, LUBStructValuesMap& combinedInfos) : GlobalTypeUpdater(wasm), combinedInfos(combinedInfos) {}
+      TypeUpdater(Module& wasm, LUBStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeUpdater(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
+        if (!canBecomeImmutable.count(oldStructType)) {
+          return;
+        }
+
+        auto& newFields = struct_.fields;
+        auto& immutableVec = canBecomeImmutable[oldStructType];
+        for (Index i = 0; i < immutableVec.size(); i++) {
+          if (immutableVec[i]) {
+            newFields.mutable_ = Immutable;
+          }
+        }
 #if 0
         auto& oldFields = oldStructType.getStruct().fields;
         auto& observedFields = combinedInfos[oldStructType];

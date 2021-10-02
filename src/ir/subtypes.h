@@ -26,7 +26,6 @@ namespace wasm {
 // provides the list of immediate subtypes.
 struct SubTypes {
   SubTypes(Module& wasm) {
-    std::vector<HeapType> types;
     std::unordered_map<HeapType, Index> typeIndices;
     ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
     for (auto type : types) {
@@ -37,6 +36,37 @@ struct SubTypes {
   const std::vector<HeapType>& getSubTypes(HeapType type) {
     return typeSubTypes[type];
   }
+
+  // Get all subtypes of a type, and their subtypes and so forth.
+  std::vector<HeapType> getAllSubTypes(HeapType type) {
+    std::vector<HeapType> ret, work;
+    work.push_back(type);
+    while (!work.empty()) {
+      auto curr = work.back();
+      work.pop_back();
+      for (auto sub : getSubTypes(curr)) {
+        ret.push_back(sub);
+        work.push_back(sub);
+      }
+    }
+    return ret;
+  }
+
+  // Get all supertypes of a type. The order in the output vector is with the
+  // immediate supertype first, then its supertype, and so forth.
+  std::vector<HeapType> getAllSuperTypes(HeapType type) {
+    std::vector<HeapType> ret;
+    while (1) {
+      HeapType super;
+      if (!type.getSuperType(super)) {
+        return ret;
+      }
+      ret.push_back(super);
+      type = super;
+    }
+  }
+
+  std::vector<HeapType> types;
 
 private:
   // Add a type to the graph.
