@@ -38,15 +38,29 @@ namespace {
 // The least upper bound of the types seen so far.
 struct LUB {
   Type type = Type::unreachable;
+  bool null = false;
 
   void note(Type otherType) {
     type = Type::getLeastUpperBound(type, otherType);
+    applyNull();
+  }
+
+  void noteNull(Type otherType) {
+    null = true;
+    applyNull();
   }
 
   bool combine(const LUB& other) {
     auto before = type;
     note(other.type);
     return type != before;
+  }
+
+private:
+  void applyNull() {
+    if (null && type.isRef() && !type.isNullable()) {
+      type = Type(type.getHeapType(), Nullable);
+    }
   }
 };
 
@@ -68,20 +82,24 @@ struct LUBScanner : public Scanner<LUB> {
     HeapType type,
     Index index,
     FunctionStructValuesMap<LUB>& valuesMap) override {
+    auto& item = valuesMap[getFunction()][type][index];
     if (expr->is<RefNull>()) {
+      item.noteNull(expr->type);
       return;
     }
-    valuesMap[getFunction()][type][index].note(expr->type);
+    item.note(expr->type);
   }
 
   virtual void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
                            FunctionStructValuesMap<LUB>& valuesMap) override {
+    auto& item = valuesMap[getFunction()][type][index];
     if (fieldType.isRef()) {
+      item.noteNull(fieldType);
       return;
     }
-    valuesMap[getFunction()][type][index].note(fieldType);
+    item.note(fieldType);
   }
 };
 
