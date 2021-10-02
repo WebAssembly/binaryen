@@ -90,6 +90,8 @@
   ;; As above, but we also assign a null funcref lower down, which prevents
   ;; full specialization: we can specialize the function type, but it must
   ;; remain nullable.
+  ;; TODO: testcase which is 100% incompatible, different func types.
+
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (type $struct (struct (field (mut (ref null $ref|$struct|_=>_none)))))
@@ -247,6 +249,7 @@
   ;; As above, but the write to the subtype is *not* compatible, which prevents
   ;; full optimization: we can specialize the type, but it must remain
   ;; nullable.
+  ;; TODO: testcase which is 100% incompatible, different func types.
 
   ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
 
