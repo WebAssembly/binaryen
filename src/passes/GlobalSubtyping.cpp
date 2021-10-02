@@ -68,6 +68,9 @@ struct LUBScanner : public Scanner<LUB> {
     HeapType type,
     Index index,
     FunctionStructValuesMap<LUB>& valuesMap) override {
+    if (expr->is<RefNull>()) {
+      return;
+    }
     valuesMap[getFunction()][type][index].note(expr->type);
   }
 
@@ -75,6 +78,9 @@ struct LUBScanner : public Scanner<LUB> {
                            HeapType type,
                            Index index,
                            FunctionStructValuesMap<LUB>& valuesMap) override {
+    if (fieldType.isRef()) {
+      return;
+    }
     valuesMap[getFunction()][type][index].note(fieldType);
   }
 };
@@ -163,15 +169,43 @@ struct GlobalSubtyping : public Pass {
 
     // We now know a set of valid types that we can apply, and can do so.
 
-    // Update the types of struct.gets to reflect the more specialized types
-    // we switched to. We do this first so that type rewriting afterwards will
+    // Update the types of operations on the field. We do this first so that type rewriting afterwards will
     // update them properly.
-    struct GetUpdater : public WalkerPass<PostWalker<GetUpdater>> {
+    struct AccessUpdater : public WalkerPass<PostWalker<AccessUpdater>> {
       bool isFunctionParallel() override { return true; }
 
-      Pass* create() override { return new GetUpdater(infos); }
+      Pass* create() override { return new AccessUpdater(infos); }
 
-      GetUpdater(LUBStructValuesMap& infos) : infos(infos) {}
+      AccessUpdater(LUBStructValuesMap& infos) : infos(infos) {}
+
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+
+        auto type = curr->type.getHeapType();
+        for (Index i = 0; i < curr->operands.size(); i++) {
+          auto observedFieldType = infos[type][i].type;
+          if (observedFieldType != Type::unreachable &&
+              curr->operands[i]->is<RefNull>()) {
+            curr->operands[i]->type = observedFieldType;
+          }
+        }
+      }
+
+      void visitStructSet(StructSet* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+
+        auto type = curr->ref->type.getHeapType();
+        auto i = curr->index;
+        auto observedFieldType = infos[type][i].type;
+        if (observedFieldType != Type::unreachable &&
+            curr->value->is<RefNull>()) {
+          curr->value->type = observedFieldType;
+        }
+      }
 
       void visitStructGet(StructGet* curr) {
         if (curr->type == Type::unreachable) {
@@ -194,7 +228,7 @@ struct GlobalSubtyping : public Pass {
       LUBStructValuesMap& infos;
    };
 
-    GetUpdater(combinedInfos).run(runner, module);
+    AccessUpdater(combinedInfos).run(runner, module);
 
     // The types are now generally correct, except for their internals, which we
     // rewrite now.
@@ -212,6 +246,8 @@ struct GlobalSubtyping : public Pass {
           auto observedFieldType = observedFields[i].type;
           if (observedFieldType != oldFieldType &&
               observedFieldType != Type::unreachable) {
+static int N = 0;
+std::cout << "N: " << N++ << "\n";
             struct_.fields[i].type = getTempType(observedFieldType);
           }
         }
