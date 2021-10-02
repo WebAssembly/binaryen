@@ -7,7 +7,7 @@
   ;; The struct here has two fields, only the first of which has a struct.set
   ;; to. The second can become immutable.
 
-  ;; CHECK:      (type $struct (struct (field (mut funcref))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref)) (field funcref)))
   (type $struct (struct (field (mut funcref)) (field (mut funcref))))
 
   ;; Test that we update tag types properly.
@@ -15,25 +15,32 @@
 
   ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
 
-  ;; CHECK:      (elem declare func $set)
-
   ;; CHECK:      (tag $tag (param (ref $struct)))
   (tag $tag (param (ref $struct)))
 
-  ;; CHECK:      (func $set (param $x (ref $struct))
+  ;; CHECK:      (func $func (param $x (ref $struct))
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.func $set)
+  ;; CHECK-NEXT:   (ref.null func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result funcref)
-  ;; CHECK-NEXT:    (struct.get $struct 0
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 1
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

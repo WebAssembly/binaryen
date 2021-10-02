@@ -87,7 +87,7 @@ struct LUBScanner : public Scanner<LUB> {
     Index index,
     FunctionStructValuesMap<LUB>& valuesMap) override {
     auto& item = valuesMap[getFunction()][type][index];
-    if (expr->is<RefNull>()) {
+    if (0 && expr->is<RefNull>()) {
       item.noteNull();
       return;
     }
@@ -99,7 +99,7 @@ struct LUBScanner : public Scanner<LUB> {
                            Index index,
                            FunctionStructValuesMap<LUB>& valuesMap) override {
     auto& item = valuesMap[getFunction()][type][index];
-    if (fieldType.isRef()) {
+    if (0 && fieldType.isRef()) {
       item.noteNull();
       return;
     }
@@ -208,6 +208,7 @@ struct GlobalSubtyping : public Pass {
       if (!type.isStruct()) {
         continue;
       }
+
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         if (fields[i].mutable_ == Immutable) {
