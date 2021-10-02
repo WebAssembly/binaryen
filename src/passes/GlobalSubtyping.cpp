@@ -110,6 +110,8 @@ struct LUBScanner : public Scanner<LUB> {
     HeapType type,
     Index index,
     FunctionStructValuesMap<LUB>& valuesMap) override {
+    auto& item = valuesMap[getFunction()][type][index];
+    item.note(type.getStruct().fields[index].type);
     // A copy does not introduce anything new in terms of types; ignore.
     // TODO: When we look at mutability, it will matter there.
   }
