@@ -204,7 +204,7 @@ struct GlobalSubtyping : public Pass {
     // rare).
     using CanBecomeImmutable = std::unordered_map<HeapType, std::vector<bool>>;
     CanBecomeImmutable canBecomeImmutable;
-    for (auto type : propagator.types) {
+    for (auto type : propagator.subTypes.types) {
       if (!type.isStruct()) {
         continue;
       }
@@ -238,7 +238,7 @@ struct GlobalSubtyping : public Pass {
     struct AccessUpdater : public WalkerPass<PostWalker<AccessUpdater>> {
       bool isFunctionParallel() override { return true; }
 
-      Pass* create() override { return new AccessUpdater(infos); }
+      Pass* create() override { return new AccessUpdater(infos, canBecomeImmutable); }
 
       AccessUpdater(LUBStructValuesMap& infos, CanBecomeImmutable& canBecomeImmutable) : infos(infos), canBecomeImmutable(canBecomeImmutable) {}
 
@@ -328,7 +328,7 @@ return;
         auto& immutableVec = canBecomeImmutable[oldStructType];
         for (Index i = 0; i < immutableVec.size(); i++) {
           if (immutableVec[i]) {
-            newFields.mutable_ = Immutable;
+            newFields[i].mutable_ = Immutable;
           }
         }
 #if 0
@@ -348,7 +348,7 @@ std::cout << "N: " << N++ << "\n";
       }
     };
 
-    TypeUpdater(*module, combinedInfos).update();
+    TypeUpdater(*module, combinedInfos, canBecomeImmutable).update();
 
     // Finally, do a refinalize to propagate the new struct.get types outwards.
     // This may not be strictly necessary?
