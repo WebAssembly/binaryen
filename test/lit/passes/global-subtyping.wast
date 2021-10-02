@@ -88,11 +88,12 @@
 
 (module
   ;; As above, but we also assign a null funcref lower down, which prevents
-  ;; specialization.
-  ;; CHECK:      (type $struct (struct (field (mut funcref))))
-  (type $struct (struct (field (mut funcref))))
-
+  ;; full specialization: we can specialize the function type, but it must
+  ;; remain nullable.
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $struct (struct (field (mut (ref null $ref|$struct|_=>_none)))))
+  (type $struct (struct (field (mut funcref))))
 
   ;; CHECK:      (elem declare func $set)
 
@@ -103,7 +104,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null $ref|$struct|_=>_none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct))
@@ -244,14 +245,15 @@
 
 (module
   ;; As above, but the write to the subtype is *not* compatible, which prevents
-  ;; any optimization.
-
-  ;; CHECK:      (type $struct (struct (field (mut funcref))))
-  (type $struct     (struct (field (mut funcref))))
-  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
-  (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+  ;; full optimization: we can specialize the type, but it must remain
+  ;; nullable.
 
   ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+
+  ;; CHECK:      (type $struct (struct (field (mut (ref null $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  (type $struct     (struct (field (mut funcref))))
+  ;; CHECK:      (type $sub-struct (struct (field (mut (ref null $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  (type $sub-struct (struct (field (mut funcref))) (extends $struct))
 
   ;; CHECK:      (elem declare func $set)
 
@@ -262,7 +264,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $sub-struct 0
   ;; CHECK-NEXT:   (local.get $y)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null $ref|$struct|_ref|$sub-struct|_=>_none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))

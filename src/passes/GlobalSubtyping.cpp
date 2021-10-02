@@ -45,15 +45,19 @@ struct LUB {
     applyNull();
   }
 
-  void noteNull(Type otherType) {
+  void noteNull() {
     null = true;
     applyNull();
   }
 
   bool combine(const LUB& other) {
-    auto before = type;
+    auto beforeType = type;
+    auto beforeNull = null;
     note(other.type);
-    return type != before;
+    if (other.null) {
+      noteNull();
+    }
+    return type != beforeType || null != beforeNull;
   }
 
 private:
@@ -84,7 +88,7 @@ struct LUBScanner : public Scanner<LUB> {
     FunctionStructValuesMap<LUB>& valuesMap) override {
     auto& item = valuesMap[getFunction()][type][index];
     if (expr->is<RefNull>()) {
-      item.noteNull(expr->type);
+      item.noteNull();
       return;
     }
     item.note(expr->type);
@@ -96,7 +100,7 @@ struct LUBScanner : public Scanner<LUB> {
                            FunctionStructValuesMap<LUB>& valuesMap) override {
     auto& item = valuesMap[getFunction()][type][index];
     if (fieldType.isRef()) {
-      item.noteNull(fieldType);
+      item.noteNull();
       return;
     }
     item.note(fieldType);
