@@ -7,7 +7,7 @@
   ;; This struct's field begins as a funcref, and can be specialized to a
   ;; particular typed function reference type because we only assign it a
   ;; ref.func of a particular function.
-  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_=>_none)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct (struct (field (mut funcref))))
 
   ;; Test that we update tag types properly.
@@ -30,7 +30,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result (ref $ref|$struct|_=>_none))
+  ;; CHECK-NEXT:   (block $block (result funcref)
   ;; CHECK-NEXT:    (struct.get $struct 0
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -92,10 +92,10 @@
   ;; remain nullable.
   ;; TODO: testcase which is 100% incompatible, different func types.
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
-
-  ;; CHECK:      (type $struct (struct (field (mut (ref null $ref|$struct|_=>_none)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct (struct (field (mut funcref))))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (elem declare func $set)
 
@@ -106,7 +106,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $ref|$struct|_=>_none)
+  ;; CHECK-NEXT:   (ref.null func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct))
@@ -125,7 +125,7 @@
   ;; As above, but we also assign a different function reference. The type of
   ;; the field can be specialized to the LUB, which is a non-null ref to a func
   ;; (so we just specialized it to be non-null).
-  ;; CHECK:      (type $struct (struct (field (mut (ref func)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct (struct (field (mut funcref))))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
@@ -162,11 +162,11 @@
 )
 
 (module
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
-
-  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_=>_none)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct     (struct (field (mut funcref))))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (elem declare func $set)
 
@@ -188,11 +188,11 @@
   ;; We cannot specialize the type of a supertype's field without updating
   ;; that of the subtypes, as their fields must be subtypes. As we just write to
   ;; the supertype, here we will update them both.
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
+  (type $struct     (struct (field (mut funcref))))
   ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
 
-  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
-  (type $struct     (struct (field (mut funcref))))
-  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
 
   ;; CHECK:      (elem declare func $set)
@@ -214,12 +214,12 @@
 (module
   ;; As above, but we also write to the subtype. The write is compatible.
 
-  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
-
-  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct     (struct (field (mut funcref))))
-  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
 
   ;; CHECK:      (elem declare func $set)
 
@@ -251,12 +251,12 @@
   ;; nullable.
   ;; TODO: testcase which is 100% incompatible, different func types.
 
-  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
-
-  ;; CHECK:      (type $struct (struct (field (mut (ref null $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct     (struct (field (mut funcref))))
-  ;; CHECK:      (type $sub-struct (struct (field (mut (ref null $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
 
   ;; CHECK:      (elem declare func $set)
 
@@ -267,7 +267,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $sub-struct 0
   ;; CHECK-NEXT:   (local.get $y)
-  ;; CHECK-NEXT:   (ref.null $ref|$struct|_ref|$sub-struct|_=>_none)
+  ;; CHECK-NEXT:   (ref.null func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set (param $x (ref $struct)) (param $y (ref $sub-struct))
@@ -289,12 +289,12 @@
   ;; In this module, we never write to the supertype, so we can update it, and
   ;; so we end up updating both to a more specific type.
 
-  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
-
-  ;; CHECK:      (type $sub-struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
 
-  ;; CHECK:      (type $struct (struct (field (mut (ref $ref|$struct|_ref|$sub-struct|_=>_none)))))
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
   (type $struct     (struct (field (mut funcref))))
 
   ;; CHECK:      (elem declare func $set)
@@ -319,9 +319,9 @@
   ;; will update them both to non-nullable funcrefs (an improvement over the
   ;; nullable ones, but not as specific as the subtype would like).
 
-  ;; CHECK:      (type $struct (struct (field (mut (ref func)))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref))))
 
-  ;; CHECK:      (type $sub-struct (struct (field (mut (ref func)))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field (mut funcref))) (extends $struct))
   (type $sub-struct (struct (field (mut funcref))) (extends $struct))
 
   (type $struct     (struct (field (mut funcref))))
@@ -358,14 +358,14 @@
   ;; As before, but now the fields are immutable. This allows us to turn the
   ;; subtype's field into a more specific one than the supertype.
 
-  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
+  ;; CHECK:      (type $struct (struct (field funcref)))
 
-  ;; CHECK:      (type $struct (struct (field (ref func))))
-
-  ;; CHECK:      (type $sub-struct (struct (field (ref $ref|$struct|_ref|$sub-struct|_=>_none))) (extends $struct))
+  ;; CHECK:      (type $sub-struct (struct (field funcref)) (extends $struct))
   (type $sub-struct (struct (field funcref)) (extends $struct))
 
   (type $struct     (struct (field funcref)))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$sub-struct|_=>_none (func (param (ref $struct) (ref $sub-struct))))
 
   ;; CHECK:      (elem declare func $set)
 

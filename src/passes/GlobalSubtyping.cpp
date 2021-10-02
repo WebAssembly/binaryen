@@ -157,6 +157,7 @@ struct GlobalSubtyping : public Pass {
     // account B's field, as a result of which B's field is equal to A's or more
     // specific. (And likewise from C to B and A).
     StructValuePropagator<LUB> propagator(*module);
+#if 0
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperTypes(combinedSetInfos);
 
@@ -192,6 +193,7 @@ struct GlobalSubtyping : public Pass {
     };
     handleMutability(combinedNewInfos);
     handleMutability(combinedSetInfos);
+#endif
 
     // TODO: do we ever care about the difference between sets and news?
     auto combinedInfos = std::move(combinedNewInfos);
@@ -209,6 +211,7 @@ struct GlobalSubtyping : public Pass {
       AccessUpdater(LUBStructValuesMap& infos) : infos(infos) {}
 
       void visitStructNew(StructNew* curr) {
+return;
         if (curr->type == Type::unreachable) {
           return;
         }
@@ -228,6 +231,7 @@ struct GlobalSubtyping : public Pass {
       }
 
       void visitStructSet(StructSet* curr) {
+return;
         if (curr->type == Type::unreachable) {
           return;
         }
@@ -246,6 +250,7 @@ struct GlobalSubtyping : public Pass {
       }
 
       void visitStructGet(StructGet* curr) {
+return;
         if (curr->type == Type::unreachable) {
           return;
         }
@@ -281,6 +286,7 @@ struct GlobalSubtyping : public Pass {
       TypeUpdater(Module& wasm, LUBStructValuesMap& combinedInfos) : GlobalTypeUpdater(wasm), combinedInfos(combinedInfos) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
+#if 0
         auto& oldFields = oldStructType.getStruct().fields;
         auto& observedFields = combinedInfos[oldStructType];
         for (Index i = 0; i < oldFields.size(); i++) {
@@ -293,6 +299,7 @@ std::cout << "N: " << N++ << "\n";
             struct_.fields[i].type = getTempType(observedFieldType);
           }
         }
+#endif
       }
     };
 
