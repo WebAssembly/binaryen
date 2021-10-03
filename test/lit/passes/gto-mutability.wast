@@ -51,6 +51,8 @@
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
     (local $temp (ref null $struct))
+    ;; The presence of a struct.new does not prevent this optimization: we just
+    ;; care about writes using struct.set.
     (drop
       (struct.new $struct
         (ref.null func)
@@ -126,18 +128,6 @@
   ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
   ;; CHECK:      (func $func (param $x (ref $A))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (ref.null $B)
@@ -148,18 +138,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $A))
-    (drop
-      (struct.new $A
-        (ref.null $B)
-        (i32.const 10)
-      )
-    )
-    (drop
-      (struct.new $A
-        (ref.null $B)
-        (i32.const 10)
-      )
-    )
     (struct.set $A 0
       (local.get $x)
       (ref.null $B)
@@ -183,18 +161,6 @@
   ;; CHECK:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
   ;; CHECK:      (func $func (param $x (ref $B))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $B 0
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (ref.null $A)
@@ -205,18 +171,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $B))
-    (drop
-      (struct.new $A
-        (ref.null $B)
-        (i32.const 10)
-      )
-    )
-    (drop
-      (struct.new $A
-        (ref.null $B)
-        (i32.const 10)
-      )
-    )
     (struct.set $B 0
       (local.get $x)
       (ref.null $A)
@@ -240,18 +194,6 @@
   ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func (param (ref $A) (ref $B))))
 
   ;; CHECK:      (func $func (param $x (ref $A)) (param $y (ref $B))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (ref.null $B)
@@ -262,18 +204,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $A)) (param $y (ref $B))
-    (drop
-      (struct.new $A
-        (ref.null $B)
-        (i32.const 10)
-      )
-    )
-    (drop
-      (struct.new $A
-        (ref.null $B)
-        (i32.const 10)
-      )
-    )
     (struct.set $A 0
       (local.get $x)
       (ref.null $B)
@@ -281,6 +211,36 @@
     (struct.set $B 1
       (local.get $y)
       (f64.const 3.14159)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct (field (mut funcref)) (field funcref) (field (mut funcref))))
+  (type $struct (struct (field (mut funcref)) (field (mut funcref)) (field (mut funcref))))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK-NEXT:  (local $temp (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+    (local $temp (ref null $struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.null func)
+    )
+    (struct.set $struct 2
+      (local.get $x)
+      (ref.null func)
     )
   )
 )
