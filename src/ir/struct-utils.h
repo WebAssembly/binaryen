@@ -246,7 +246,7 @@ private:
         }
       }
     }
-  };
+  }
 };
 
 } // namespace wasm
