@@ -109,71 +109,11 @@ struct GlobalSubtyping : public Pass {
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetInfos.combineInto(combinedSetInfos);
 
-    // Reason about what we can optimize. In general, if a field in a struct is
-    // has type T, and we see that all values written to it are subtypes of T'
-    // where T' is more specific than T, then we would like to specialize the
-    // field's type. But, we cannot do so if it breaks subtyping. In particular,
-    // we must maintain that all current subtypes of the struct remain subtypes,
-    // which means:
-    //
-    //  * We cannot specialize a field beyond the type it has in subtypes of the
-    //    struct.
-    //  * If the field is mutable, wasm requires that all subtypes of the struct
-    //    are completely identical. (That is, only immutable fields can be
-    //    different in a subtype of the struct.)
-    //
-    // To identify the proper opportunities, propagate types to supertypes. That
-    // is, if we have
-    //
-    //  struct A     { type U }
-    //  struct B : A { type V }
-    //  struct C : B { type W }
-    //
-    // By propagating V to U, we ensure that the FieldInfo in A's field takes into
-    // account B's field, as a result of which B's field is equal to A's or more
-    // specific. (And likewise from C to B and A).
-    StructValuePropagator<FieldInfo> propagator(*module);
-#if 0
-    propagator.propagateToSuperTypes(combinedNewInfos);
-    propagator.propagateToSuperTypes(combinedSetInfos);
-
-    // Next, handle mutability. As mentioned before, if a field is mutable then
-    // corresponding fields in substructs must be identical.
-    // TODO: avoid repeated work here
-    auto handleMutability = [&](FieldInfoStructValuesMap& infos) {
-      // Avoid iterating on infos while modifying it.
-      std::vector<HeapType> heapTypes;
-      for (auto& kv : infos) {
-        heapTypes.push_back(kv.first);
-      }
-      for (auto heapType : heapTypes) {
-        auto& fields = heapType.getStruct().fields;
-        for (Index i = 0; i < fields.size(); i++) {
-          auto& field = fields[i];
-          if (field.mutable_ == Mutable) {
-            // We must force all subtypes to match us on this field.
-            auto forced = infos[heapType][i];
-            auto work = propagator.subTypes.getSubTypes(heapType);
-            while (!work.empty()) {
-              auto iter = work.begin();
-              auto subType = *iter;
-              work.erase(iter);
-              infos[subType][i] = forced;
-              for (auto next : propagator.subTypes.getSubTypes(subType)) {
-                work.push_back(next);
-              }
-            }
-          }
-        }
-      }
-    };
-    handleMutability(combinedNewInfos);
-    handleMutability(combinedSetInfos);
-#endif
-
     // Find which fields are immutable in all super- and sub-classes. To see
     // that, propagate sets in both directions.
+    StructValuePropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
+
     // Maps types to a vector of booleans that indicate if we can turn the
     // field immutable. To avoid eager allocation of memory, the vectors are
     // only resized when we actually have a true to place in them (which is
