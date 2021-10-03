@@ -85,33 +85,30 @@ struct LUBScanner : public Scanner<LUB> {
     Expression* expr,
     HeapType type,
     Index index,
-    FunctionStructValuesMap<LUB>& valuesMap) override {
-    auto& item = valuesMap[getFunction()][type][index];
+    LUB& info) override {
     if (0 && expr->is<RefNull>()) {
-      item.noteNull();
+      info.noteNull();
       return;
     }
-    item.note(expr->type);
+    info.note(expr->type);
   }
 
   virtual void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
-                           FunctionStructValuesMap<LUB>& valuesMap) override {
-    auto& item = valuesMap[getFunction()][type][index];
+                           LUB& info) override {
     if (0 && fieldType.isRef()) {
-      item.noteNull();
+      info.noteNull();
       return;
     }
-    item.note(fieldType);
+    info.note(fieldType);
   }
 
   virtual void noteCopy(
     HeapType type,
     Index index,
-    FunctionStructValuesMap<LUB>& valuesMap) override {
-    auto& item = valuesMap[getFunction()][type][index];
-    item.note(type.getStruct().fields[index].type);
+    LUB& info) override {
+    info.note(type.getStruct().fields[index].type);
     // A copy does not introduce anything new in terms of types; ignore.
     // TODO: When we look at mutability, it will matter there.
   }

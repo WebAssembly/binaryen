@@ -127,9 +127,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
-        noteDefault(fields[i].type, heapType, i, functionNewInfos);
+        noteDefault(fields[i].type, heapType, i, functionNewInfos[this->getFunction()][heapType][i]);
       } else {
-        noteExpressionOrCopy(curr->operands[i], heapType, i, functionNewInfos);
+        noteExpressionOrCopy(curr->operands[i], heapType, i, functionNewInfos[this->getFunction()][heapType][i]);
       }
     }
   }
@@ -142,13 +142,13 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
 
     // Note a write to this field of the struct.
     noteExpressionOrCopy(
-      curr->value, type.getHeapType(), curr->index, functionSetInfos);
+      curr->value, type.getHeapType(), curr->index, functionSetInfos[this->getFunction()][type.getHeapType()][curr->index]);
   }
 
   void noteExpressionOrCopy(Expression* expr,
                             HeapType type,
                             Index index,
-                            FunctionStructValuesMap<T>& valuesMap) {
+                            T& info) {
     // Look at the value falling through, if it has the exact same type
     // (otherwise, we'd need to consider both the type actually written and the
     // type of the fallthrough, somehow).
@@ -159,11 +159,11 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     if (auto* get = expr->dynCast<StructGet>()) {
       if (get->index == index && get->ref->type != Type::unreachable &&
           get->ref->type.getHeapType() == type) {
-        noteCopy(type, index, valuesMap);
+        noteCopy(type, index, info);
         return;
       }
     }
-    noteExpression(expr, type, index, valuesMap);
+    noteExpression(expr, type, index, info);
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
@@ -173,18 +173,18 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
   virtual void noteExpression(Expression* expr,
                               HeapType type,
                               Index index,
-                              FunctionStructValuesMap<T>& valuesMap) = 0;
+                              T& info) = 0;
 
   // Note a default value written during creation.
   virtual void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
-                           FunctionStructValuesMap<T>& valuesMap) = 0;
+                           T& info) = 0;
 
   // Note a default value written during creation.
   virtual void noteCopy(HeapType type,
                         Index index,
-                        FunctionStructValuesMap<T>& valuesMap) = 0;
+                        T& info) = 0;
 private:
   std::unordered_map<Type, Expression*> zeroCache;
 };

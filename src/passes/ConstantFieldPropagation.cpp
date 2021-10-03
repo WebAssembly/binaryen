@@ -225,9 +225,8 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
     Expression* expr,
     HeapType type,
     Index index,
-    FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
+    PossibleConstantValues& info) override {
 
-    auto& info = valuesMap[getFunction()][type][index];
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
     } else {
@@ -238,14 +237,14 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
   virtual void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
-                           FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
-    valuesMap[getFunction()][type][index].note(Literal::makeZero(fieldType));
+                           PossibleConstantValues& info) override {
+    info.note(Literal::makeZero(fieldType));
   }
 
   virtual void noteCopy(
     HeapType type,
     Index index,
-    FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
+    PossibleConstantValues& info) override {
 
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
