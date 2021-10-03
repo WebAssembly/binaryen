@@ -27,6 +27,7 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
+#include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
@@ -302,6 +303,29 @@ private:
   }
 };
 
+struct OptimizationInfo {
+  SubTypes subTypes;
+
+  // Info that includes propagation to sub- and super-types. This is what we use
+  // when we see a (struct.get) and are trying to see what possible data could
+  // be accessed there. It includes all the possible values written by
+  // struct.new or struct.set both up and down the type tree.
+  StructValuesMap generalInfo;
+
+  // Info that is precise to the type, not including any propagation. If we know
+  // the precise type of a (struct.get), and that it cannot even be a subtype,
+  // then we use this. It includes all the possible values written by struct.new
+  // of this type itself and nothing more; it also includes propagated types
+  // from struct.set.
+  //
+  // TODO: Figure out which struct.sets set to the precise type, to avoid that
+  //       propagation. However, it may not be a problem as vtables are usually
+  //       only written to by new anyhow, and not set later.
+  StructValuesMap preciseInfo;
+
+  OptimizationInfo(Module& wasm) : subTypes(wasm) {}
+};
+
 // Optimize struct gets based on what we've learned about writes.
 //
 // TODO Aside from writes, we could use information like whether any struct of
@@ -310,28 +334,18 @@ private:
 struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionOptimizer(infos); }
+  Pass* create() override { return new FunctionOptimizer(optInfo); }
 
-  FunctionOptimizer(StructValuesMap& infos) : infos(infos) {}
+  FunctionOptimizer(OptimizationInfo& optInfo) : optInfo(optInfo) {}
 
   void visitStructGet(StructGet* curr) {
-    auto type = curr->ref->type;
-    if (type == Type::unreachable) {
+    if (curr->ref->type == Type::unreachable) {
       return;
     }
 
     Builder builder(*getModule());
 
-    // Find the info for this field, and see if we can optimize. First, see if
-    // there is any information for this heap type at all. If there isn't, it is
-    // as if nothing was ever noted for that field.
-    PossibleConstantValues info;
-    assert(!info.hasNoted());
-    auto iter = infos.find(type.getHeapType());
-    if (iter != infos.end()) {
-      // There is information on this type, fetch it.
-      info = iter->second[curr->index];
-    }
+    PossibleConstantValues info = getInfo(curr);
 
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
@@ -374,9 +388,213 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  StructValuesMap& infos;
+  OptimizationInfo& optInfo;
 
   bool changed = false;
+
+  // We may need local info. As this is expensive, generate it on demand.
+  std::unique_ptr<LocalGraph> localGraph;
+
+  PossibleConstantValues
+  getInfo(StructValuesMap& infos, HeapType type, Index index) {
+    assert(index < type.getStruct().fields.size());
+    PossibleConstantValues info;
+    assert(!info.hasNoted());
+    auto iter = infos.find(type);
+    if (iter != infos.end()) {
+      // There is information on this type, fetch it.
+      info = iter->second[index];
+    }
+    return info;
+  }
+
+  PossibleConstantValues getInfo(StructGet* get) {
+    auto type = get->ref->type.getHeapType();
+    auto index = get->index;
+
+    // Find the possible values based on the type of the get.
+    auto info = getInfo(optInfo.generalInfo, type, index);
+    if (info.isConstant() || !info.hasNoted()) {
+      // We found enough information here; return it.
+      return info;
+    }
+
+    // If there are no subtypes, then we have already done all we can do, and
+    // can learn nothing further that could help us. Avoid doing hard work that
+    // will only fail.
+    if (optInfo.subTypes.getSubTypes(type).empty()) {
+      return info;
+    }
+
+    // Try to infer more about the type of the reference. We hope to learn
+    // either that
+    //
+    //  1. It is of a specific precise type.
+    //  2. It is of some type or any of its subtypes, but that may still be
+    //     an improvement over the type we knew before (that is, we narrowed it
+    //     down to a more specific set of possible types).
+    //
+    auto inference = inferType(get->ref);
+    if (inference.kind == InferredType::Failure) {
+      // We failed to infer anything.
+      return info;
+    }
+
+    // TODO: use inference.hasField(index) here
+
+    if (inference.kind == InferredType::IncludeSubTypes &&
+        inference.type == type) {
+      // We failed to infer anything new.
+      return info;
+    }
+
+    if (inference.kind == InferredType::Precise) {
+      // We inferred a precise type.
+      return getInfo(optInfo.preciseInfo, inference.type, index);
+    } else {
+      // We do not have a precise type, as subtypes may be included, but we did
+      // at least find a more specific type than we knew earlier.
+      assert(inference.kind == InferredType::IncludeSubTypes);
+      return getInfo(optInfo.generalInfo, inference.type, index);
+    }
+  }
+
+  // An inference about a heap type.
+  struct InferredType {
+    enum Kind {
+      // We failed to infer anything.
+      Failure,
+
+      // We inferred a precise type: the value must be of this type and nothing
+      // else.
+      Precise,
+
+      // We inferred that the value must be of this type, or any subtype.
+      IncludeSubTypes
+    } kind;
+
+    HeapType type;
+
+    // We may also have been able to infer something about some of the fields.
+    // If so, they are added to this map. (Failures to infer are not included
+    // here.)
+    std::unordered_map<Index, std::shared_ptr<InferredType>> fields;
+
+    InferredType() : kind(Failure) {}
+    InferredType(Kind kind, HeapType type) : kind(kind), type(type) {
+      // If a type was provided, this is not a failure to infer.
+      assert(kind != Failure);
+    }
+
+    void setField(Index i, InferredType inference) {
+      if (inference.kind == Failure) {
+        // Failure to infer is indicated by simply not having it in the map.
+        return;
+      }
+      fields[i] = std::make_shared<InferredType>(inference);
+    }
+
+    std::shared_ptr<InferredType> getField(Index i) {
+      assert(kind != Failure);
+      auto iter = fields.find(i);
+      if (iter != fields.end()) {
+        return iter->second;
+      }
+      return std::make_shared<InferredType>();
+    }
+
+    bool hasField(Index i) { return fields.count(i); }
+  };
+
+  // Attempts to infer something useful about the heap type returned by an
+  // expression.
+  InferredType inferType(Expression* curr) {
+    // Look at the fallthrough. Be careful as if the fallthrough changes the
+    // type - which a cast might do - then we can infer nothing valid (and a
+    // trap will occur at runtime).
+    auto originalType = curr->type;
+    curr =
+      Properties::getFallthrough(curr, getPassOptions(), getModule()->features);
+    if (!Type::isSubType(curr->type, originalType)) {
+      return InferredType();
+    }
+
+    if (auto* get = curr->dynCast<StructGet>()) {
+      // This is another struct.get, so we need to infer its reference type too.
+      // Nested gets are a common pattern when we load the vtable and then a
+      // function reference from it:
+      //
+      //   (struct.get $vtable.foo indexInVtable
+      //     (struct.get $foo indexOfVtable ..)
+      //
+      auto inference = inferType(get->ref);
+      if (inference.kind != InferredType::Failure) {
+        // We inferred something useful here. Check if we even managed to infer
+        // the field itself.
+        auto fieldInference = inference.getField(get->index);
+        if (fieldInference->kind != InferredType::Failure) {
+          return *fieldInference;
+        }
+
+        // Nothing about the field, but knowing more about the reference may
+        // still be helpful: we can see what the field's type is for that type.
+        auto& field = inference.type.getStruct().fields[get->index];
+        return InferredType(InferredType::IncludeSubTypes,
+                            field.type.getHeapType());
+      }
+    } else if (auto* get = curr->dynCast<LocalGet>()) {
+      // This is a get of a local. See who writes to it.
+      // TODO: avoid possible iloops in unreachable code.
+      // TODO: only construct the graph for relevant types.
+      if (!localGraph) {
+        localGraph = std::make_unique<LocalGraph>(getFunction());
+      }
+      auto& sets = localGraph->getSetses[get];
+      // TODO: support more than one set
+      if (sets.size() == 1) {
+        auto* set = *sets.begin();
+        if (set) {
+          // We found the single value that writes here.
+          return inferType(set->value);
+        } else {
+          // If set is nullptr, that means this is a use of the default value,
+          // that is, a null. This means we can't infer anything new about the
+          // type. We could in principle infer that the operation will trap,
+          // though (but other optimizations should handle that).
+        }
+      }
+    } else if (auto* set = curr->dynCast<StructNew>()) {
+      // We can infer a precise type here, as struct.new creates exactly that.
+      auto type = set->type.getHeapType();
+      InferredType structInference(InferredType::Precise, type);
+
+      // Immutable fields can be inferred as well, as they cannot change later
+      // on.
+      auto& fields = type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        auto& field = fields[i];
+        if (field.mutable_ == Immutable && field.type.isRef()) {
+          structInference.setField(i, inferType(set->operands[i]));
+        }
+      }
+
+      return structInference;
+    } else if (auto* get = curr->dynCast<GlobalGet>()) {
+      // If a global is immutable, we can use information about its value,
+      // including even a precise type since it likely is a struct.new.
+      auto* global = getModule()->getGlobal(get->name);
+      if (!global->mutable_) {
+        return inferType(global->init);
+      }
+    }
+
+    // We didn't manage to do any better than the declared type.
+    if (curr->type == Type::unreachable) {
+      return InferredType();
+    }
+    return InferredType(InferredType::IncludeSubTypes,
+                        curr->type.getHeapType());
+  }
 };
 
 struct ConstantFieldPropagation : public Pass {
@@ -395,6 +613,10 @@ struct ConstantFieldPropagation : public Pass {
     }
     Scanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
+
+    // Define the "null function" for global code.
+    functionNewInfos[nullptr];
+    functionSetInfos[nullptr];
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
@@ -449,10 +671,11 @@ struct ConstantFieldPropagation : public Pass {
     //
     // TODO: A topological sort could avoid repeated work here perhaps.
 
-    SubTypes subTypes(*module);
+    // Compute the final information that we need.
+    OptimizationInfo optInfo(*module);
 
-    auto propagate = [&subTypes](StructValuesMap& combinedInfos,
-                                 bool toSubTypes) {
+    auto propagate = [&optInfo](StructValuesMap& combinedInfos,
+                                bool toSubTypes) {
       UniqueDeferredQueue<HeapType> work;
       for (auto& kv : combinedInfos) {
         auto type = kv.first;
@@ -477,7 +700,7 @@ struct ConstantFieldPropagation : public Pass {
         if (toSubTypes) {
           // Propagate shared fields to the subtypes.
           auto numFields = type.getStruct().fields.size();
-          for (auto subType : subTypes.getSubTypes(type)) {
+          for (auto subType : optInfo.subTypes.getSubTypes(type)) {
             auto& subInfos = combinedInfos[subType];
             for (Index i = 0; i < numFields; i++) {
               if (subInfos[i].combine(infos[i])) {
@@ -488,23 +711,31 @@ struct ConstantFieldPropagation : public Pass {
         }
       }
     };
-    propagate(combinedNewInfos, false);
-    propagate(combinedSetInfos, true);
 
-    // Combine both sources of information to the final information that gets
-    // care about.
-    StructValuesMap combinedInfos = std::move(combinedNewInfos);
-    for (auto& kv : combinedSetInfos) {
-      auto type = kv.first;
-      auto& info = kv.second;
-      for (Index i = 0; i < info.size(); i++) {
-        combinedInfos[type][i].combine(info[i]);
+    auto mergeIn = [](StructValuesMap& target, const StructValuesMap& source) {
+      for (auto& kv : source) {
+        auto type = kv.first;
+        auto& info = kv.second;
+        for (Index i = 0; i < info.size(); i++) {
+          target[type][i].combine(info[i]);
+        }
       }
-    }
+    };
+
+    // Precise info takes the unpropagated news, and adds propagated sets (see
+    // TODO earlier about the latter).
+    propagate(combinedSetInfos, true);
+    optInfo.preciseInfo = combinedNewInfos;
+    mergeIn(optInfo.preciseInfo, combinedSetInfos);
+
+    // General info takes all the propagated info.
+    propagate(combinedNewInfos, false);
+    optInfo.generalInfo = std::move(combinedNewInfos);
+    mergeIn(optInfo.generalInfo, combinedSetInfos);
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedInfos).run(runner, module);
+    FunctionOptimizer(optInfo).run(runner, module);
 
     // TODO: Actually remove the field from the type, where possible? That might
     //       be best in another pass.
