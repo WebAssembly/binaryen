@@ -36,7 +36,7 @@ namespace wasm {
 namespace {
 
 // The least upper bound of the types seen so far.
-struct LUB {
+struct TypeInfo {
   Type type = Type::unreachable;
   bool null = false;
 
@@ -50,7 +50,7 @@ struct LUB {
     applyNull();
   }
 
-  bool combine(const LUB& other) {
+  bool combine(const TypeInfo& other) {
     auto beforeType = type;
     auto beforeNull = null;
     note(other.type);
@@ -68,24 +68,24 @@ private:
   }
 };
 
-using LUBStructValuesMap = StructValuesMap<LUB>;
-using LUBFunctionStructValuesMap =
-  FunctionStructValuesMap<LUB>;
+using TypeInfoStructValuesMap = StructValuesMap<TypeInfo>;
+using TypeInfoFunctionStructValuesMap =
+  FunctionStructValuesMap<TypeInfo>;
 
-struct LUBScanner : public Scanner<LUB> {
+struct TypeInfoScanner : public Scanner<TypeInfo> {
   Pass* create() override {
-    return new LUBScanner(functionNewInfos, functionSetInfos);
+    return new TypeInfoScanner(functionNewInfos, functionSetInfos);
   }
 
-  LUBScanner(FunctionStructValuesMap<LUB>& functionNewInfos,
-             FunctionStructValuesMap<LUB>& functionSetInfos)
-    : Scanner<LUB>(functionNewInfos, functionSetInfos) {}
+  TypeInfoScanner(FunctionStructValuesMap<TypeInfo>& functionNewInfos,
+             FunctionStructValuesMap<TypeInfo>& functionSetInfos)
+    : Scanner<TypeInfo>(functionNewInfos, functionSetInfos) {}
 
   virtual void noteExpression(
     Expression* expr,
     HeapType type,
     Index index,
-    LUB& info) override {
+    TypeInfo& info) override {
     if (0 && expr->is<RefNull>()) {
       info.noteNull();
       return;
@@ -96,7 +96,7 @@ struct LUBScanner : public Scanner<LUB> {
   virtual void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
-                           LUB& info) override {
+                           TypeInfo& info) override {
     if (0 && fieldType.isRef()) {
       info.noteNull();
       return;
@@ -107,7 +107,7 @@ struct LUBScanner : public Scanner<LUB> {
   virtual void noteCopy(
     HeapType type,
     Index index,
-    LUB& info) override {
+    TypeInfo& info) override {
     info.note(type.getStruct().fields[index].type);
     // A copy does not introduce anything new in terms of types; ignore.
     // TODO: When we look at mutability, it will matter there.
@@ -121,14 +121,14 @@ struct GlobalSubtyping : public Pass {
     }
 
     // Find and analyze all writes inside each function.
-    LUBFunctionStructValuesMap functionNewInfos(*module),
+    TypeInfoFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
-    LUBScanner scanner(functionNewInfos, functionSetInfos);
+    TypeInfoScanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    LUBStructValuesMap combinedNewInfos, combinedSetInfos;
+    TypeInfoStructValuesMap combinedNewInfos, combinedSetInfos;
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetInfos.combineInto(combinedSetInfos);
 
@@ -152,10 +152,10 @@ struct GlobalSubtyping : public Pass {
     //  struct B : A { type V }
     //  struct C : B { type W }
     //
-    // By propagating V to U, we ensure that the LUB in A's field takes into
+    // By propagating V to U, we ensure that the TypeInfo in A's field takes into
     // account B's field, as a result of which B's field is equal to A's or more
     // specific. (And likewise from C to B and A).
-    StructValuePropagator<LUB> propagator(*module);
+    StructValuePropagator<TypeInfo> propagator(*module);
 #if 0
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperTypes(combinedSetInfos);
@@ -163,7 +163,7 @@ struct GlobalSubtyping : public Pass {
     // Next, handle mutability. As mentioned before, if a field is mutable then
     // corresponding fields in substructs must be identical.
     // TODO: avoid repeated work here
-    auto handleMutability = [&](LUBStructValuesMap& infos) {
+    auto handleMutability = [&](TypeInfoStructValuesMap& infos) {
       // Avoid iterating on infos while modifying it.
       std::vector<HeapType> heapTypes;
       for (auto& kv : infos) {
@@ -240,7 +240,7 @@ struct GlobalSubtyping : public Pass {
 
       Pass* create() override { return new AccessUpdater(infos, canBecomeImmutable); }
 
-      AccessUpdater(LUBStructValuesMap& infos, CanBecomeImmutable& canBecomeImmutable) : infos(infos), canBecomeImmutable(canBecomeImmutable) {}
+      AccessUpdater(TypeInfoStructValuesMap& infos, CanBecomeImmutable& canBecomeImmutable) : infos(infos), canBecomeImmutable(canBecomeImmutable) {}
 
       void visitStructNew(StructNew* curr) {
 return;
@@ -304,7 +304,7 @@ return;
       }
 
     private:
-      LUBStructValuesMap& infos;
+      TypeInfoStructValuesMap& infos;
       CanBecomeImmutable& canBecomeImmutable;
     };
 
@@ -313,11 +313,11 @@ return;
     // The types are now generally correct, except for their internals, which we
     // rewrite now.
     class TypeUpdater : public GlobalTypeRewriter {
-      LUBStructValuesMap& combinedInfos;
+      TypeInfoStructValuesMap& combinedInfos;
       CanBecomeImmutable& canBecomeImmutable;
 
     public:
-      TypeUpdater(Module& wasm, LUBStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
+      TypeUpdater(Module& wasm, TypeInfoStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         if (!canBecomeImmutable.count(oldStructType)) {
