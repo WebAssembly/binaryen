@@ -15,8 +15,10 @@
  */
 
 //
-// Specializes types at the global level, altering fields etc. on the set of
-// heap types defined in the module.
+// Optimize types at the global level, altering fields etc. on the set of heap
+// types defined in the module.
+//
+//  * Immutability: If a field has no struct.set, it can become immutable.
 //
 // TODO: Specialize field types.
 // TODO: Remove unused fields.
@@ -89,7 +91,7 @@ struct GlobalTypeOptimization : public Pass {
       Fatal() << "GlobalTypeOptimization requires nominal typing";
     }
 
-    // Find and analyze all writes inside each function.
+    // Find and analyze struct operations inside each function.
     FieldInfoFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetInfos);
@@ -98,11 +100,14 @@ struct GlobalTypeOptimization : public Pass {
 
     // Combine the data from the functions.
     FieldInfoStructValuesMap combinedNewInfos, combinedSetInfos;
-    functionNewInfos.combineInto(combinedNewInfos);
     functionSetInfos.combineInto(combinedSetInfos);
+    // TODO: combine newInfos as well, once we have a need for that (we will
+    //       when we do things like subtyping).
 
     // Find which fields are immutable in all super- and sub-classes. To see
-    // that, propagate sets in both directions.
+    // that, propagate sets in both directions. This is necessary because we
+    // cannot have a supertype's field be immutable while a subtype's is not -
+    // they must match for us to preserve subtyping.
     StructValuePropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
@@ -112,6 +117,7 @@ struct GlobalTypeOptimization : public Pass {
     // rare).
     using CanBecomeImmutable = std::unordered_map<HeapType, std::vector<bool>>;
     CanBecomeImmutable canBecomeImmutable;
+
     for (auto type : propagator.subTypes.types) {
       if (!type.isStruct()) {
         continue;
@@ -136,22 +142,15 @@ struct GlobalTypeOptimization : public Pass {
       }
     }
 
-    // TODO: do we ever care about the difference between sets and news?
-    auto combinedInfos = std::move(combinedNewInfos);
-    combinedSetInfos.combineInto(combinedInfos);
-
     // The types are now generally correct, except for their internals, which we
     // rewrite now.
-    class TypeUpdater : public GlobalTypeRewriter {
-      FieldInfoStructValuesMap& combinedInfos;
+    class TypeRewriter : public GlobalTypeRewriter {
       CanBecomeImmutable& canBecomeImmutable;
 
     public:
-      TypeUpdater(Module& wasm,
-                  FieldInfoStructValuesMap& combinedInfos,
+      TypeRewriter(Module& wasm,
                   CanBecomeImmutable& canBecomeImmutable)
-        : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos),
-          canBecomeImmutable(canBecomeImmutable) {}
+        : GlobalTypeRewriter(wasm), canBecomeImmutable(canBecomeImmutable) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         if (!canBecomeImmutable.count(oldStructType)) {
@@ -168,11 +167,7 @@ struct GlobalTypeOptimization : public Pass {
       }
     };
 
-    TypeUpdater(*module, combinedInfos, canBecomeImmutable).update();
-
-    // Finally, do a refinalize to propagate the new struct.get types outwards.
-    // This may not be strictly necessary?
-    ReFinalize().run(runner, module);
+    TypeRewriter(*module, canBecomeImmutable).update();
   }
 };
 
