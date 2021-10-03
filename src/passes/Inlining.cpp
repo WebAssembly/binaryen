@@ -313,8 +313,8 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   // internal block.
   if (BranchUtils::hasBranchTarget(from->body, block->name)) {
     auto existingNames = BranchUtils::getBranchTargets(from->body);
-    block->name = Names::getValidName(block->name,
-                      [&](Name test) { return !existingNames.count(test); });
+    block->name = Names::getValidName(
+      block->name, [&](Name test) { return !existingNames.count(test); });
   }
   if (call->isReturn) {
     if (retType.isConcrete()) {
