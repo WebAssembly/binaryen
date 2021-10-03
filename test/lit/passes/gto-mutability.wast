@@ -88,6 +88,8 @@
   ;; CHECK-NEXT:  (ref.null $struct)
   ;; CHECK-NEXT: )
   (func $foo (result (ref null $struct))
+    ;; Use a tag so that we test proper updating of its type after making
+    ;; changes.
     (try
       (do
         (nop)
