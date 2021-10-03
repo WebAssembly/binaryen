@@ -4,11 +4,11 @@
 ;; name getting in the way)
 
 (module
-  ;; The struct here has two fields, only the first of which has a struct.set
-  ;; to. The second can become immutable.
+  ;; The struct here has three fields, and the second of them has no struct.set
+  ;; which means we can make it immutable.
 
-  ;; CHECK:      (type $struct (struct (field (mut funcref)) (field funcref)))
-  (type $struct (struct (field (mut funcref)) (field (mut funcref))))
+  ;; CHECK:      (type $struct (struct (field (mut funcref)) (field funcref) (field (mut funcref))))
+  (type $struct (struct (field (mut funcref)) (field (mut funcref)) (field (mut funcref))))
 
   ;; Test that we update tag types properly.
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
@@ -24,9 +24,14 @@
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (ref.null func)
   ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null func)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 2
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (ref.null func)
   ;; CHECK-NEXT:  )
@@ -50,9 +55,14 @@
       (struct.new $struct
         (ref.null func)
         (ref.null func)
+        (ref.null func)
       )
     )
     (struct.set $struct 0
+      (local.get $x)
+      (ref.null func)
+    )
+    (struct.set $struct 2
       (local.get $x)
       (ref.null func)
     )
