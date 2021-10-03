@@ -70,19 +70,19 @@ void GlobalTypeRewriter::update() {
       typeBuilder.setSubType(i, typeIndices[super]);
     }
   }
+
   auto newTypes = typeBuilder.build();
 
-  // Creating the oldToNewTypes of old to new types.
-
+  // Map the old types to the new ones. This uses the fact that type indices
+  // are the same in the old and new types, that is, we have not added or
+  // removed types, just modified them.
   using OldToNewTypes = std::unordered_map<HeapType, HeapType>;
-
   OldToNewTypes oldToNewTypes;
-
   for (Index i = 0; i < types.size(); i++) {
     oldToNewTypes[types[i]] = newTypes[i];
   }
 
-  // Replace all the types in the module.
+  // Replace all the old types in the module with the new ones.
   struct CodeUpdater
     : public WalkerPass<
         PostWalker<CodeUpdater, UnifiedExpressionVisitor<CodeUpdater>>> {
@@ -94,17 +94,17 @@ void GlobalTypeRewriter::update() {
 
     CodeUpdater* create() override { return new CodeUpdater(oldToNewTypes); }
 
-    Type update(Type type) {
+    Type getNew(Type type) {
       if (type.isRef()) {
-        return Type(update(type.getHeapType()), type.getNullability());
+        return Type(getNew(type.getHeapType()), type.getNullability());
       }
       if (type.isRtt()) {
-        return Type(Rtt(type.getRtt().depth, update(type.getHeapType())));
+        return Type(Rtt(type.getRtt().depth, getNew(type.getHeapType())));
       }
       return type;
     }
 
-    HeapType update(HeapType type) {
+    HeapType getNew(HeapType type) {
       if (type.isBasic()) {
         return type;
       }
@@ -115,14 +115,13 @@ void GlobalTypeRewriter::update() {
       return type;
     }
 
-    Signature update(Signature sig) {
-      return Signature(update(sig.params), update(sig.results));
+    Signature getNew(Signature sig) {
+      return Signature(getNew(sig.params), getNew(sig.results));
     }
 
-    // Generic visitor. Specific things were overridden earlier.
     void visitExpression(Expression* curr) {
       // Update the type to the new one.
-      curr->type = update(curr->type);
+      curr->type = getNew(curr->type);
 
       // Update any other type fields as well.
 
@@ -134,11 +133,11 @@ void GlobalTypeRewriter::update() {
 
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
-#define DELEGATE_FIELD_TYPE(id, name) cast->name = update(cast->name);
+#define DELEGATE_FIELD_TYPE(id, name) cast->name = getNew(cast->name);
 
-#define DELEGATE_FIELD_HEAPTYPE(id, name) cast->name = update(cast->name);
+#define DELEGATE_FIELD_HEAPTYPE(id, name) cast->name = getNew(cast->name);
 
-#define DELEGATE_FIELD_SIGNATURE(id, name) cast->name = update(cast->name);
+#define DELEGATE_FIELD_SIGNATURE(id, name) cast->name = getNew(cast->name);
 
 #define DELEGATE_FIELD_CHILD(id, name)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)
@@ -163,24 +162,25 @@ void GlobalTypeRewriter::update() {
 
   // Update global locations that refer to types.
   for (auto& table : wasm.tables) {
-    table->type = updater.update(table->type);
+    table->type = updater.getNew(table->type);
   }
   for (auto& elementSegment : wasm.elementSegments) {
-    elementSegment->type = updater.update(elementSegment->type);
+    elementSegment->type = updater.getNew(elementSegment->type);
   }
   for (auto& global : wasm.globals) {
-    global->type = updater.update(global->type);
+    global->type = updater.getNew(global->type);
   }
   for (auto& func : wasm.functions) {
-    func->type = updater.update(func->type);
+    func->type = updater.getNew(func->type);
     for (auto& var : func->vars) {
-      var = updater.update(var);
+      var = updater.getNew(var);
     }
   }
   for (auto& tag : wasm.tags) {
-    tag->sig = updater.update(tag->sig);
+    tag->sig = updater.getNew(tag->sig);
   }
 
+  // Update type names.
   for (auto& kv : oldToNewTypes) {
     auto old = kv.first;
     auto new_ = kv.second;
