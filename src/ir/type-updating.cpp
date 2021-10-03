@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "type-updating.h"
 #include "find_all.h"
 #include "ir/module-utils.h"
-#include "type-updating.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -84,16 +84,15 @@ void GlobalTypeRewriter::update() {
 
   // Replace all the types in the module.
   struct CodeUpdater
-    : public WalkerPass<PostWalker<CodeUpdater, UnifiedExpressionVisitor<CodeUpdater>>> {
+    : public WalkerPass<
+        PostWalker<CodeUpdater, UnifiedExpressionVisitor<CodeUpdater>>> {
     bool isFunctionParallel() override { return true; }
 
     OldToNewTypes& oldToNewTypes;
 
     CodeUpdater(OldToNewTypes& oldToNewTypes) : oldToNewTypes(oldToNewTypes) {}
 
-    CodeUpdater* create() override {
-      return new CodeUpdater(oldToNewTypes);
-    }
+    CodeUpdater* create() override { return new CodeUpdater(oldToNewTypes); }
 
     Type update(Type type) {
       if (type.isRef()) {
@@ -130,19 +129,16 @@ void GlobalTypeRewriter::update() {
 #define DELEGATE_ID curr->_id
 
 #define DELEGATE_START(id)                                                     \
-auto* cast = curr->cast<id>();                                               \
-WASM_UNUSED(cast);
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
 
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
-#define DELEGATE_FIELD_TYPE(id, name) \
-cast->name = update(cast->name);
+#define DELEGATE_FIELD_TYPE(id, name) cast->name = update(cast->name);
 
-#define DELEGATE_FIELD_HEAPTYPE(id, name) \
-cast->name = update(cast->name);
+#define DELEGATE_FIELD_HEAPTYPE(id, name) cast->name = update(cast->name);
 
-#define DELEGATE_FIELD_SIGNATURE(id, name) \
-cast->name = update(cast->name);
+#define DELEGATE_FIELD_SIGNATURE(id, name) cast->name = update(cast->name);
 
 #define DELEGATE_FIELD_CHILD(id, name)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)
@@ -207,8 +203,7 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     }
     return typeBuilder.getTempRefType(
       typeBuilder.getTempHeapType(typeIndices[heapType]),
-      type.getNullability()
-    );
+      type.getNullability());
   }
   if (type.isRtt()) {
     auto rtt = type.getRtt();

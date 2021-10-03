@@ -28,9 +28,9 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/small_set.h"
-#include "wasm.h"
-#include "wasm-type.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 using namespace std;
 
@@ -42,9 +42,7 @@ namespace {
 struct FieldInfo {
   bool hasWrite = false;
 
-  void noteWrite() {
-    hasWrite = true;
-  }
+  void noteWrite() { hasWrite = true; }
 
   bool combine(const FieldInfo& other) {
     if (!hasWrite && other.hasWrite) {
@@ -56,8 +54,7 @@ struct FieldInfo {
 };
 
 using FieldInfoStructValuesMap = StructValuesMap<FieldInfo>;
-using FieldInfoFunctionStructValuesMap =
-  FunctionStructValuesMap<FieldInfo>;
+using FieldInfoFunctionStructValuesMap = FunctionStructValuesMap<FieldInfo>;
 
 struct FieldInfoScanner : public Scanner<FieldInfo> {
   Pass* create() override {
@@ -65,14 +62,13 @@ struct FieldInfoScanner : public Scanner<FieldInfo> {
   }
 
   FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
-             FunctionStructValuesMap<FieldInfo>& functionSetInfos)
+                   FunctionStructValuesMap<FieldInfo>& functionSetInfos)
     : Scanner<FieldInfo>(functionNewInfos, functionSetInfos) {}
 
-  virtual void noteExpression(
-    Expression* expr,
-    HeapType type,
-    Index index,
-    FieldInfo& info) override {
+  virtual void noteExpression(Expression* expr,
+                              HeapType type,
+                              Index index,
+                              FieldInfo& info) override {
     info.noteWrite();
   }
 
@@ -83,10 +79,7 @@ struct FieldInfoScanner : public Scanner<FieldInfo> {
     info.noteWrite();
   }
 
-  virtual void noteCopy(
-    HeapType type,
-    Index index,
-    FieldInfo& info) override {
+  virtual void noteCopy(HeapType type, Index index, FieldInfo& info) override {
     info.noteWrite();
   }
 };
@@ -155,7 +148,11 @@ struct GlobalSubtyping : public Pass {
       CanBecomeImmutable& canBecomeImmutable;
 
     public:
-      TypeUpdater(Module& wasm, FieldInfoStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
+      TypeUpdater(Module& wasm,
+                  FieldInfoStructValuesMap& combinedInfos,
+                  CanBecomeImmutable& canBecomeImmutable)
+        : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos),
+          canBecomeImmutable(canBecomeImmutable) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         if (!canBecomeImmutable.count(oldStructType)) {
