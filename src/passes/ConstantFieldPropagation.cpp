@@ -219,12 +219,13 @@ struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
 
   PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
              FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
-    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos, functionSetInfos) {}
+    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos,
+                                                  functionSetInfos) {}
 
   void noteExpression(Expression* expr,
-                              HeapType type,
-                              Index index,
-                              PossibleConstantValues& info) {
+                      HeapType type,
+                      Index index,
+                      PossibleConstantValues& info) {
 
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
@@ -234,14 +235,13 @@ struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
   }
 
   void noteDefault(Type fieldType,
-                           HeapType type,
-                           Index index,
-                           PossibleConstantValues& info) {
+                   HeapType type,
+                   Index index,
+                   PossibleConstantValues& info) {
     info.note(Literal::makeZero(fieldType));
   }
 
-  void
-  noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
+  void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
 
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.

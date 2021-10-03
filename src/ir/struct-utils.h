@@ -128,7 +128,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
     auto& infos = functionNewInfos[this->getFunction()][heapType];
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
-        static_cast<SubType*>(this)->noteDefault(fields[i].type, heapType, i, infos[i]);
+        static_cast<SubType*>(this)->noteDefault(
+          fields[i].type, heapType, i, infos[i]);
       } else {
         noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
       }

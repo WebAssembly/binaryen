@@ -63,19 +63,18 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 
   FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
                    FunctionStructValuesMap<FieldInfo>& functionSetInfos)
-    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos, functionSetInfos) {}
+    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos, functionSetInfos) {
+  }
 
   void noteExpression(Expression* expr,
-                              HeapType type,
-                              Index index,
-                              FieldInfo& info) {
+                      HeapType type,
+                      Index index,
+                      FieldInfo& info) {
     info.noteWrite();
   }
 
-  void noteDefault(Type fieldType,
-                           HeapType type,
-                           Index index,
-                           FieldInfo& info) {
+  void
+  noteDefault(Type fieldType, HeapType type, Index index, FieldInfo& info) {
     info.noteWrite();
   }
 
@@ -179,6 +178,8 @@ struct GlobalTypeOptimization : public Pass {
 
 } // anonymous namespace
 
-Pass* createGlobalTypeOptimizationPass() { return new GlobalTypeOptimization(); }
+Pass* createGlobalTypeOptimizationPass() {
+  return new GlobalTypeOptimization();
+}
 
 } // namespace wasm
