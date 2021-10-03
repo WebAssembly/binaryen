@@ -154,8 +154,7 @@ struct GlobalTypeOptimization : public Pass {
       CanBecomeImmutable& canBecomeImmutable;
 
     public:
-      TypeRewriter(Module& wasm,
-                  CanBecomeImmutable& canBecomeImmutable)
+      TypeRewriter(Module& wasm, CanBecomeImmutable& canBecomeImmutable)
         : GlobalTypeRewriter(wasm), canBecomeImmutable(canBecomeImmutable) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
