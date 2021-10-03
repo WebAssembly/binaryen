@@ -56,30 +56,30 @@ struct FieldInfo {
 using FieldInfoStructValuesMap = StructValuesMap<FieldInfo>;
 using FieldInfoFunctionStructValuesMap = FunctionStructValuesMap<FieldInfo>;
 
-struct FieldInfoScanner : public Scanner<FieldInfo> {
+struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
     return new FieldInfoScanner(functionNewInfos, functionSetInfos);
   }
 
   FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
                    FunctionStructValuesMap<FieldInfo>& functionSetInfos)
-    : Scanner<FieldInfo>(functionNewInfos, functionSetInfos) {}
+    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos, functionSetInfos) {}
 
-  virtual void noteExpression(Expression* expr,
+  void noteExpression(Expression* expr,
                               HeapType type,
                               Index index,
-                              FieldInfo& info) override {
+                              FieldInfo& info) {
     info.noteWrite();
   }
 
-  virtual void noteDefault(Type fieldType,
+  void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
-                           FieldInfo& info) override {
+                           FieldInfo& info) {
     info.noteWrite();
   }
 
-  virtual void noteCopy(HeapType type, Index index, FieldInfo& info) override {
+  void noteCopy(HeapType type, Index index, FieldInfo& info) {
     info.noteWrite();
   }
 };

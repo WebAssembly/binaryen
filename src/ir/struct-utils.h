@@ -108,8 +108,8 @@ struct FunctionStructValuesMap
 // struct.new we know more about the type - we know the actual exact type being
 // written to, and not just that it is of a subtype of the instruction's type,
 // which helps later.
-template<typename T>
-struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
+template<typename T, typename SubType>
+struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
   Scanner(FunctionStructValuesMap<T>& functionNewInfos,
@@ -128,7 +128,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     auto& infos = functionNewInfos[this->getFunction()][heapType];
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
-        noteDefault(fields[i].type, heapType, i, infos[i]);
+        static_cast<SubType*>(this)->noteDefault(fields[i].type, heapType, i, infos[i]);
       } else {
         noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
       }
@@ -162,26 +162,26 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     if (auto* get = expr->dynCast<StructGet>()) {
       if (get->index == index && get->ref->type != Type::unreachable &&
           get->ref->type.getHeapType() == type) {
-        noteCopy(type, index, info);
+        static_cast<SubType*>(this)->noteCopy(type, index, info);
         return;
       }
     }
-    noteExpression(expr, type, index, info);
+    static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
   FunctionStructValuesMap<T>& functionSetInfos;
 
+  // Subclasses must define three methods:
+  //
   // Note a value, checking whether it is a constant or not.
-  virtual void
-  noteExpression(Expression* expr, HeapType type, Index index, T& info) = 0;
-
+  // void noteExpression(Expression* expr, HeapType type, Index index, T& info);
+  //
   // Note a default value written during creation.
-  virtual void
-  noteDefault(Type fieldType, HeapType type, Index index, T& info) = 0;
-
+  // void noteDefault(Type fieldType, HeapType type, Index index, T& info);
+  //
   // Note a default value written during creation.
-  virtual void noteCopy(HeapType type, Index index, T& info) = 0;
+  // void noteCopy(HeapType type, Index index, T& info);
 
 private:
   std::unordered_map<Type, Expression*> zeroCache;

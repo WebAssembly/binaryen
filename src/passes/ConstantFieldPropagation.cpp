@@ -212,19 +212,19 @@ private:
   bool changed = false;
 };
 
-struct PCVScanner : public Scanner<PossibleConstantValues> {
+struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
     return new PCVScanner(functionNewInfos, functionSetInfos);
   }
 
   PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
              FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
-    : Scanner<PossibleConstantValues>(functionNewInfos, functionSetInfos) {}
+    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos, functionSetInfos) {}
 
-  virtual void noteExpression(Expression* expr,
+  void noteExpression(Expression* expr,
                               HeapType type,
                               Index index,
-                              PossibleConstantValues& info) override {
+                              PossibleConstantValues& info) {
 
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
@@ -233,15 +233,15 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
     }
   }
 
-  virtual void noteDefault(Type fieldType,
+  void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
-                           PossibleConstantValues& info) override {
+                           PossibleConstantValues& info) {
     info.note(Literal::makeZero(fieldType));
   }
 
-  virtual void
-  noteCopy(HeapType type, Index index, PossibleConstantValues& info) override {
+  void
+  noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
 
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
