@@ -22,8 +22,8 @@
 
 namespace wasm {
 
-// A nominal type always knows who its supertype is, if there is one; this class
-// provides the list of immediate subtypes.
+// Analyze subtyping relationships and provide useful interfaces to discover
+// them.
 struct SubTypes {
   SubTypes(Module& wasm) {
     std::unordered_map<HeapType, Index> typeIndices;
@@ -37,7 +37,7 @@ struct SubTypes {
     return typeSubTypes[type];
   }
 
-  // Get all subtypes of a type, and their subtypes and so forth.
+  // Get all subtypes of a type, and their subtypes and so forth, recursively.
   std::vector<HeapType> getAllSubTypes(HeapType type) {
     std::vector<HeapType> ret, work;
     work.push_back(type);

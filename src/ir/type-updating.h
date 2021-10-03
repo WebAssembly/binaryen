@@ -312,9 +312,9 @@ public:
   GlobalTypeRewriter(Module& wasm);
   virtual ~GlobalTypeRewriter() {}
 
-  // Perform the entire process of
-  // creating new heap types, potentially modifying them via the hooks below,
-  // and them replacing them throughout the module.
+  // Main entry point. This performs the entire process of creating new heap
+  // types and calling the hooks below, then applies the new types throughout
+  // the module.
   void update();
 
   // Subclasses can implement these methods to modify the new set of types that
