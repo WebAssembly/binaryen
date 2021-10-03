@@ -216,31 +216,25 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut funcref)) (field funcref) (field (mut funcref))))
-  (type $struct (struct (field (mut funcref)) (field (mut funcref)) (field (mut funcref))))
+  ;; Field #0 is already immutable.
+  ;; Field #1 is mutable and can become so.
+  ;; Field #2 is mutable and must remain so.
+
+  ;; CHECK:      (type $struct (struct (field i32) (field i32) (field (mut i32))))
+  (type $struct (struct (field i32) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (func $func (param $x (ref $struct))
-  ;; CHECK-NEXT:  (local $temp (ref null $struct))
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null func)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 2
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
-    (local $temp (ref null $struct))
-    (struct.set $struct 0
-      (local.get $x)
-      (ref.null func)
-    )
     (struct.set $struct 2
       (local.get $x)
-      (ref.null func)
+      (i32.const 1)
     )
   )
 )
