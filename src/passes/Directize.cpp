@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include "ir/table-utils.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -50,30 +51,60 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
     auto& flatTable = it->second;
 
-    if (auto* c = curr->target->dynCast<Const>()) {
-      Index index = c->value.geti32();
-      // If the index is invalid, or the type is wrong, we can
-      // emit an unreachable here, since in Binaryen it is ok to
-      // reorder/replace traps when optimizing (but never to
-      // remove them, at least not by default).
-      if (index >= flatTable.names.size()) {
-        replaceWithUnreachable(curr);
-        return;
+    // If the target is constant, we can emit a direct call.
+    if (curr->target->is<Const>()) {
+      replaceCurrent(makeDirectCall(curr->operands, curr->target, flatTable, curr));
+      return;
+    }
+
+    // If the target is a select of two different constants, we can emit two
+    // direct calls.
+    // TODO: handle 3+
+    // TODO: handle the case where just one arm is a constant?
+    if (auto* select = curr->target->dynCast<Select>()) {
+      if (select->ifTrue->is<Const>() && select->ifFalse->is<Const>()) {
+        Builder builder(*getModule());
+        auto* func = getFunction();
+        std::vector<Expression*> blockContents;
+
+        // We must use the operands twice, and also must move the condition to
+        // execute first; use locals for them all. While doing so, if we see
+        // any are unreachable, stop trying to optimize and leave this for DCE.
+        if (select->condition->type == Type::unreachable) {
+          return;
+        }
+        auto conditionLocal = builder.addVar(func, Type::i32);
+        blockContents.push_back(builder.makeLocalSet(conditionLocal, select->condition));
+
+        std::vector<Index> operandLocals;
+        for (auto* operand : curr->operands) {
+          if (operand->type == Type::unreachable ||
+              !TypeUpdating::canHandleAsLocal(operand->type)) {
+            return;
+          }
+          auto currLocal = builder.addVar(func, operand->type);
+          operandLocals.push_back(currLocal);
+          blockContents.push_back(builder.makeLocalSet(currLocal, operand));
+        }
+
+        // Build the calls.
+        auto numOperands = curr->operands.size();
+        std::vector<Expression*> newOperands(numOperands);
+        for (Index i = 0; i < numOperands; i++) {
+          newOperands[i] = builder.makeLocalGet(operandLocals[i], func->getLocalType(i));
+        }
+        auto* ifTrueCall = makeDirectCall(newOperands, select->ifTrue, flatTable, curr);
+        auto* ifFalseCall = makeDirectCall(newOperands, select->ifFalse, flatTable, curr);
+
+        // Create the if to pick the calls, and emit the final block.
+        auto* newCondition = builder.makeLocalGet(conditionLocal, Type::i32);
+        auto* iff = builder.makeIf(newCondition, ifTrueCall, ifFalseCall);
+        blockContents.push_back(iff);
+        replaceCurrent(builder.makeBlock(blockContents));
+
+        // By adding locals we must make type adjustments at the end.
+        changedTypes = true;
       }
-      auto name = flatTable.names[index];
-      if (!name.is()) {
-        replaceWithUnreachable(curr);
-        return;
-      }
-      auto* func = getModule()->getFunction(name);
-      if (curr->sig != func->getSig()) {
-        replaceWithUnreachable(curr);
-        return;
-      }
-      // Everything looks good!
-      replaceCurrent(
-        Builder(*getModule())
-          .makeCall(name, curr->operands, curr->type, curr->isReturn));
     }
   }
 
@@ -81,6 +112,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
     if (changedTypes) {
       ReFinalize().walkFunctionInModule(func, getModule());
+      TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     }
   }
 
@@ -89,14 +121,48 @@ private:
 
   bool changedTypes = false;
 
-  void replaceWithUnreachable(CallIndirect* call) {
-    Builder builder(*getModule());
-    for (auto*& operand : call->operands) {
-      operand = builder.makeDrop(operand);
+  // Create a direct call for a given list of operands, an expression which is
+  // known to contain a constant indicating the table offset, and the relevant
+  // table. If we can see that the call will trap, instead return an
+  // unreachable.
+  template<typename T>
+  Expression* makeDirectCall(const T& operands, Expression* c, const TableUtils::FlatTable& flatTable, CallIndirect* original) {
+    Index index = c->cast<Const>()->value.geti32();
+
+    // If the index is invalid, or the type is wrong, we can
+    // emit an unreachable here, since in Binaryen it is ok to
+    // reorder/replace traps when optimizing (but never to
+    // remove them, at least not by default).
+    if (index >= flatTable.names.size()) {
+      return replaceWithUnreachable(operands);
     }
-    replaceCurrent(builder.makeSequence(builder.makeBlock(call->operands),
-                                        builder.makeUnreachable()));
+    auto name = flatTable.names[index];
+    if (!name.is()) {
+      return replaceWithUnreachable(operands);
+    }
+    auto* func = getModule()->getFunction(name);
+    if (original->sig != func->getSig()) {
+      return replaceWithUnreachable(operands);
+    }
+
+    // Everything looks good!
+    return
+      Builder(*getModule())
+        .makeCall(name, operands, original->type, original->isReturn);
+  }
+
+  template<typename T>
+  Expression* replaceWithUnreachable(const T& operands) {
+    // Emitting an unreachable means we must update parent types.
     changedTypes = true;
+
+    Builder builder(*getModule());
+    std::vector<Expression*> newOperands;
+    for (auto* operand : operands) {
+      newOperands.push_back(builder.makeDrop(operand));
+    }
+    return builder.makeSequence(builder.makeBlock(newOperands),
+                                builder.makeUnreachable());
   }
 };
 
