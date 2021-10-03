@@ -1190,6 +1190,16 @@ struct OptimizeInstructions
       return;
     }
 
+    if (auto* get = curr->target->dynCast<TableGet>()) {
+      // (call_ref ..args.. (table.get $table (index))
+      //   =>
+      // (call_indirect $table ..args.. (index))
+      replaceCurrent(
+        Builder(*getModule())
+          .makeCallIndirect(get->table, get->index, curr->operands, get->type.getHeapType().getSignature(), curr->isReturn));
+      return;
+    }
+
     auto features = getModule()->features;
 
     // It is possible the target is not a function reference, but we can infer
