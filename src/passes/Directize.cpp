@@ -53,7 +53,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
     // If the target is constant, we can emit a direct call.
     if (curr->target->is<Const>()) {
-      replaceCurrent(makeDirectCall(curr->operands, curr->target, flatTable, curr));
+      replaceCurrent(
+        makeDirectCall(curr->operands, curr->target, flatTable, curr));
       return;
     }
 
@@ -85,16 +86,20 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
           return;
         }
         auto conditionLocal = builder.addVar(func, Type::i32);
-        blockContents.push_back(builder.makeLocalSet(conditionLocal, select->condition));
+        blockContents.push_back(
+          builder.makeLocalSet(conditionLocal, select->condition));
 
         // Build the calls.
         auto numOperands = curr->operands.size();
         std::vector<Expression*> newOperands(numOperands);
         for (Index i = 0; i < numOperands; i++) {
-          newOperands[i] = builder.makeLocalGet(operandLocals[i], func->getLocalType(i));
+          newOperands[i] =
+            builder.makeLocalGet(operandLocals[i], func->getLocalType(i));
         }
-        auto* ifTrueCall = makeDirectCall(newOperands, select->ifTrue, flatTable, curr);
-        auto* ifFalseCall = makeDirectCall(newOperands, select->ifFalse, flatTable, curr);
+        auto* ifTrueCall =
+          makeDirectCall(newOperands, select->ifTrue, flatTable, curr);
+        auto* ifFalseCall =
+          makeDirectCall(newOperands, select->ifFalse, flatTable, curr);
 
         // Create the if to pick the calls, and emit the final block.
         auto* newCondition = builder.makeLocalGet(conditionLocal, Type::i32);
@@ -126,7 +131,10 @@ private:
   // table. If we can see that the call will trap, instead return an
   // unreachable.
   template<typename T>
-  Expression* makeDirectCall(const T& operands, Expression* c, const TableUtils::FlatTable& flatTable, CallIndirect* original) {
+  Expression* makeDirectCall(const T& operands,
+                             Expression* c,
+                             const TableUtils::FlatTable& flatTable,
+                             CallIndirect* original) {
     Index index = c->cast<Const>()->value.geti32();
 
     // If the index is invalid, or the type is wrong, we can
@@ -146,13 +154,11 @@ private:
     }
 
     // Everything looks good!
-    return
-      Builder(*getModule())
-        .makeCall(name, operands, original->type, original->isReturn);
+    return Builder(*getModule())
+      .makeCall(name, operands, original->type, original->isReturn);
   }
 
-  template<typename T>
-  Expression* replaceWithUnreachable(const T& operands) {
+  template<typename T> Expression* replaceWithUnreachable(const T& operands) {
     // Emitting an unreachable means we must update parent types.
     changedTypes = true;
 
