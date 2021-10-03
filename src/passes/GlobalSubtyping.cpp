@@ -315,12 +315,12 @@ return;
 
     // The types are now generally correct, except for their internals, which we
     // rewrite now.
-    class TypeUpdater : public GlobalTypeUpdater {
+    class TypeUpdater : public GlobalTypeRewriter {
       LUBStructValuesMap& combinedInfos;
       CanBecomeImmutable& canBecomeImmutable;
 
     public:
-      TypeUpdater(Module& wasm, LUBStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeUpdater(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
+      TypeUpdater(Module& wasm, LUBStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         if (!canBecomeImmutable.count(oldStructType)) {

@@ -22,9 +22,9 @@
 
 namespace wasm {
 
-GlobalTypeUpdater::GlobalTypeUpdater(Module& wasm) : wasm(wasm) {}
+GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeUpdater::update() {
+void GlobalTypeRewriter::update() {
   ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
   typeBuilder.grow(types.size());
 
@@ -194,7 +194,7 @@ cast->name = update(cast->name);
   }
 }
 
-Type GlobalTypeUpdater::getTempType(Type type) {
+Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isBasic()) {
     return type;
   }

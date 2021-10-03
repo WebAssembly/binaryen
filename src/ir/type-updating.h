@@ -305,11 +305,12 @@ struct TypeUpdater
   }
 };
 
-// Updates global heap types across an entire module.
-class GlobalTypeUpdater {
+// Rewrites global heap types across an entire module, allowing changes to be
+// made while doing so.
+class GlobalTypeRewriter {
 public:
-  GlobalTypeUpdater(Module& wasm);
-  virtual ~GlobalTypeUpdater() {}
+  GlobalTypeRewriter(Module& wasm);
+  virtual ~GlobalTypeRewriter() {}
 
   // Perform the entire process of
   // creating new heap types, potentially modifying them via the hooks below,
