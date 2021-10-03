@@ -231,15 +231,15 @@
 (module
   ;; As before, but now one field in each can become immutable.
 
-  ;; CHECK:      (type $B (struct (field (mut (ref null $A))) (field (mut f64))))
+  ;; CHECK:      (type $B (struct (field (ref null $A)) (field (mut f64))))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
-  ;; CHECK:      (type $A (struct (field (ref null $B)) (field i32)))
+  ;; CHECK:      (type $A (struct (field (mut (ref null $B))) (field i32)))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
-  ;; CHECK:      (type $ref|$B|_=>_none (func (param (ref $B))))
+  ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func (param (ref $A) (ref $B))))
 
-  ;; CHECK:      (func $func (param $x (ref $B))
+  ;; CHECK:      (func $func (param $x (ref $A)) (param $y (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (ref.null $B)
@@ -252,12 +252,12 @@
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (ref.null $B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $B 1
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:   (f64.const 3.14159)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
