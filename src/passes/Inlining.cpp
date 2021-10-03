@@ -299,6 +299,23 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   Builder builder(*module);
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
+  // In the unlikely event that the function already has a branch target with
+  // this name, fix that up, as otherwise we can get unexpected capture of our
+  // branches, that is, we could end up with this:
+  //
+  //  (block $X             ;; a new block we add as the target of returns
+  //    (from's contents
+  //      (block $X         ;; a block in from's contents with a colliding name
+  //        (br $X          ;; a new br we just added that replaces a return
+  //
+  // Here the br wants to go to the very outermost block, to represent a
+  // return from the inlined function's code, but it ends up captured by an
+  // internal block.
+  if (BranchUtils::hasBranchTarget(from->body, block->name)) {
+    auto existingNames = BranchUtils::getBranchTargets(from->body);
+    block->name = Names::getValidName(block->name,
+                      [&](Name test) { return !existingNames.count(test); });
+  }
   if (call->isReturn) {
     if (retType.isConcrete()) {
       *action.callSite = builder.makeReturn(block);
