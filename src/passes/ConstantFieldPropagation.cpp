@@ -242,7 +242,6 @@ struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
   }
 
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
-
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
     //
