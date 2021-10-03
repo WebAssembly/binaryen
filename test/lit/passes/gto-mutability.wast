@@ -113,3 +113,62 @@
     (ref.null $struct)
   )
 )
+
+(module
+  ;; Test recursion between structs where we only modify one. Specifically $B
+  ;; has no writes to either of its fields.
+
+  ;; CHECK:      (type $A (struct (field (mut (ref null $B))) (field (mut i32))))
+  (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
+  ;; CHECK:      (type $B (struct (field (ref null $A)) (field f64)))
+  (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
+  ;; CHECK:      (func $func (param $x (ref $A))
+  ;; CHECK-NEXT:  (local $temp (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $A))
+    (local $temp (ref null $A))
+    (drop
+      (struct.new $A
+        (ref.null $B)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $A
+        (ref.null $B)
+        (i32.const 10)
+      )
+    )
+    (struct.set $A 0
+      (local.get $x)
+      (ref.null $B)
+    )
+    (struct.set $A 1
+      (local.get $x)
+      (i32.const 20)
+    )
+  )
+)
