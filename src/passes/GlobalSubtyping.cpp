@@ -18,6 +18,9 @@
 // Specializes types at the global level, altering fields etc. on the set of
 // heap types defined in the module.
 //
+// TODO: Specialize field types.
+// TODO: Remove unused fields.
+//
 
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
@@ -35,82 +38,56 @@ namespace wasm {
 
 namespace {
 
-// The least upper bound of the types seen so far.
-struct TypeInfo {
-  Type type = Type::unreachable;
-  bool null = false;
+// Information about usage of a field.
+struct FieldInfo {
+  bool hasWrite = false;
 
-  void note(Type otherType) {
-    type = Type::getLeastUpperBound(type, otherType);
-    applyNull();
+  void noteWrite() {
+    hasWrite = true;
   }
 
-  void noteNull() {
-    null = true;
-    applyNull();
-  }
-
-  bool combine(const TypeInfo& other) {
-    auto beforeType = type;
-    auto beforeNull = null;
-    note(other.type);
-    if (other.null) {
-      noteNull();
+  bool combine(const FieldInfo& other) {
+    if (!hasWrite && other.hasWrite) {
+      hasWrite = true;
+      return true;
     }
-    return type != beforeType || null != beforeNull;
-  }
-
-private:
-  void applyNull() {
-    if (null && type.isRef() && !type.isNullable()) {
-      type = Type(type.getHeapType(), Nullable);
-    }
+    return false;
   }
 };
 
-using TypeInfoStructValuesMap = StructValuesMap<TypeInfo>;
-using TypeInfoFunctionStructValuesMap =
-  FunctionStructValuesMap<TypeInfo>;
+using FieldInfoStructValuesMap = StructValuesMap<FieldInfo>;
+using FieldInfoFunctionStructValuesMap =
+  FunctionStructValuesMap<FieldInfo>;
 
-struct TypeInfoScanner : public Scanner<TypeInfo> {
+struct FieldInfoScanner : public Scanner<FieldInfo> {
   Pass* create() override {
-    return new TypeInfoScanner(functionNewInfos, functionSetInfos);
+    return new FieldInfoScanner(functionNewInfos, functionSetInfos);
   }
 
-  TypeInfoScanner(FunctionStructValuesMap<TypeInfo>& functionNewInfos,
-             FunctionStructValuesMap<TypeInfo>& functionSetInfos)
-    : Scanner<TypeInfo>(functionNewInfos, functionSetInfos) {}
+  FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
+             FunctionStructValuesMap<FieldInfo>& functionSetInfos)
+    : Scanner<FieldInfo>(functionNewInfos, functionSetInfos) {}
 
   virtual void noteExpression(
     Expression* expr,
     HeapType type,
     Index index,
-    TypeInfo& info) override {
-    if (0 && expr->is<RefNull>()) {
-      info.noteNull();
-      return;
-    }
-    info.note(expr->type);
+    FieldInfo& info) override {
+    info.noteWrite();
   }
 
   virtual void noteDefault(Type fieldType,
                            HeapType type,
                            Index index,
-                           TypeInfo& info) override {
-    if (0 && fieldType.isRef()) {
-      info.noteNull();
-      return;
-    }
-    info.note(fieldType);
+                           FieldInfo& info) override {
+    info.noteWrite();
   }
 
   virtual void noteCopy(
     HeapType type,
     Index index,
-    TypeInfo& info) override {
-    info.note(type.getStruct().fields[index].type);
-    // A copy does not introduce anything new in terms of types; ignore.
-    // TODO: When we look at mutability, it will matter there.
+    FieldInfo& info) override {
+    info.noteWrite();
   }
 };
 
@@ -121,14 +98,14 @@ struct GlobalSubtyping : public Pass {
     }
 
     // Find and analyze all writes inside each function.
-    TypeInfoFunctionStructValuesMap functionNewInfos(*module),
+    FieldInfoFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
-    TypeInfoScanner scanner(functionNewInfos, functionSetInfos);
+    FieldInfoScanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    TypeInfoStructValuesMap combinedNewInfos, combinedSetInfos;
+    FieldInfoStructValuesMap combinedNewInfos, combinedSetInfos;
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetInfos.combineInto(combinedSetInfos);
 
@@ -152,10 +129,10 @@ struct GlobalSubtyping : public Pass {
     //  struct B : A { type V }
     //  struct C : B { type W }
     //
-    // By propagating V to U, we ensure that the TypeInfo in A's field takes into
+    // By propagating V to U, we ensure that the FieldInfo in A's field takes into
     // account B's field, as a result of which B's field is equal to A's or more
     // specific. (And likewise from C to B and A).
-    StructValuePropagator<TypeInfo> propagator(*module);
+    StructValuePropagator<FieldInfo> propagator(*module);
 #if 0
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperTypes(combinedSetInfos);
@@ -163,7 +140,7 @@ struct GlobalSubtyping : public Pass {
     // Next, handle mutability. As mentioned before, if a field is mutable then
     // corresponding fields in substructs must be identical.
     // TODO: avoid repeated work here
-    auto handleMutability = [&](TypeInfoStructValuesMap& infos) {
+    auto handleMutability = [&](FieldInfoStructValuesMap& infos) {
       // Avoid iterating on infos while modifying it.
       std::vector<HeapType> heapTypes;
       for (auto& kv : infos) {
@@ -215,7 +192,7 @@ struct GlobalSubtyping : public Pass {
           continue;
         }
 
-        if (combinedSetInfos[type][i].type != Type::unreachable) {
+        if (combinedSetInfos[type][i].hasWrite) {
           // A set exists.
           continue;
         }
@@ -231,93 +208,14 @@ struct GlobalSubtyping : public Pass {
     auto combinedInfos = std::move(combinedNewInfos);
     combinedSetInfos.combineInto(combinedInfos);
 
-    // We now know a set of valid types that we can apply, and can do so.
-
-    // Update the types of operations on the field. We do this first so that type rewriting afterwards will
-    // update them properly.
-    struct AccessUpdater : public WalkerPass<PostWalker<AccessUpdater>> {
-      bool isFunctionParallel() override { return true; }
-
-      Pass* create() override { return new AccessUpdater(infos, canBecomeImmutable); }
-
-      AccessUpdater(TypeInfoStructValuesMap& infos, CanBecomeImmutable& canBecomeImmutable) : infos(infos), canBecomeImmutable(canBecomeImmutable) {}
-
-      void visitStructNew(StructNew* curr) {
-return;
-        if (curr->type == Type::unreachable) {
-          return;
-        }
-
-        auto type = curr->type.getHeapType();
-        if (infos.count(type) == 0) {
-          return;
-        }
-
-        for (Index i = 0; i < curr->operands.size(); i++) {
-          auto observedFieldType = infos[type][i].type;
-          if (observedFieldType != Type::unreachable &&
-              curr->operands[i]->is<RefNull>()) {
-            curr->operands[i]->type = observedFieldType;
-          }
-        }
-      }
-
-      void visitStructSet(StructSet* curr) {
-return;
-        if (curr->type == Type::unreachable) {
-          return;
-        }
-
-        auto type = curr->ref->type.getHeapType();
-        if (infos.count(type) == 0) {
-          return;
-        }
-
-        auto i = curr->index;
-        auto observedFieldType = infos[type][i].type;
-        if (observedFieldType != Type::unreachable &&
-            curr->value->is<RefNull>()) {
-          curr->value->type = observedFieldType;
-        }
-      }
-
-      void visitStructGet(StructGet* curr) {
-return;
-        if (curr->type == Type::unreachable) {
-          return;
-        }
-
-        auto type = curr->ref->type.getHeapType();
-        if (infos.count(type) == 0) {
-          return;
-        }
-
-        auto index = curr->index;
-        auto oldFieldType = type.getStruct().fields[index].type;
-        auto observedFieldType = infos[type][index].type;
-        // If we have more specialized type (and not if it's unreachable,
-        // which means we've seen nothing at all), then we can optimize.
-        if (observedFieldType != oldFieldType &&
-            observedFieldType != Type::unreachable) {
-          curr->type = observedFieldType;
-        }
-      }
-
-    private:
-      TypeInfoStructValuesMap& infos;
-      CanBecomeImmutable& canBecomeImmutable;
-    };
-
-    AccessUpdater(combinedInfos, canBecomeImmutable).run(runner, module);
-
     // The types are now generally correct, except for their internals, which we
     // rewrite now.
     class TypeUpdater : public GlobalTypeRewriter {
-      TypeInfoStructValuesMap& combinedInfos;
+      FieldInfoStructValuesMap& combinedInfos;
       CanBecomeImmutable& canBecomeImmutable;
 
     public:
-      TypeUpdater(Module& wasm, TypeInfoStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
+      TypeUpdater(Module& wasm, FieldInfoStructValuesMap& combinedInfos, CanBecomeImmutable& canBecomeImmutable) : GlobalTypeRewriter(wasm), combinedInfos(combinedInfos), canBecomeImmutable(canBecomeImmutable) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         if (!canBecomeImmutable.count(oldStructType)) {
@@ -331,20 +229,6 @@ return;
             newFields[i].mutable_ = Immutable;
           }
         }
-#if 0
-        auto& oldFields = oldStructType.getStruct().fields;
-        auto& observedFields = combinedInfos[oldStructType];
-        for (Index i = 0; i < oldFields.size(); i++) {
-          auto oldFieldType = oldFields[i].type;
-          auto observedFieldType = observedFields[i].type;
-          if (observedFieldType != oldFieldType &&
-              observedFieldType != Type::unreachable) {
-static int N = 0;
-std::cout << "N: " << N++ << "\n";
-            struct_.fields[i].type = getTempType(observedFieldType);
-          }
-        }
-#endif
       }
     };
 
