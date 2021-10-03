@@ -130,8 +130,12 @@ public:
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool accessesMutableStruct() const { return calls || readsStruct || writesStruct; }
-  bool accessesStruct() const { return accessesMutableStruct() || readsImmutableStruct; }
+  bool accessesMutableStruct() const {
+    return calls || readsStruct || writesStruct;
+  }
+  bool accessesStruct() const {
+    return accessesMutableStruct() || readsImmutableStruct;
+  }
   bool accessesArray() const { return calls || readsArray || writesArray; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
@@ -150,8 +154,8 @@ public:
            writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsStruct || readsImmutableStruct || readsArray ||
-           isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsStruct ||
+           readsImmutableStruct || readsArray || isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
@@ -647,7 +651,10 @@ private:
       if (curr->ref->type == Type::unreachable) {
         return;
       }
-      if (curr->ref->type.getHeapType().getStruct().fields[curr->index].mutable_ == Mutable) {
+      if (curr->ref->type.getHeapType()
+            .getStruct()
+            .fields[curr->index]
+            .mutable_ == Mutable) {
         parent.readsStruct = true;
       } else {
         parent.readsImmutableStruct = true;
