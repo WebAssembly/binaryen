@@ -125,11 +125,12 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     // Note writes to all the fields of the struct.
     auto heapType = type.getHeapType();
     auto& fields = heapType.getStruct().fields;
+    auto& infos = functionNewInfos[this->getFunction()][heapType];
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
-        noteDefault(fields[i].type, heapType, i, functionNewInfos[this->getFunction()][heapType][i]);
+        noteDefault(fields[i].type, heapType, i, infos[i]);
       } else {
-        noteExpressionOrCopy(curr->operands[i], heapType, i, functionNewInfos[this->getFunction()][heapType][i]);
+        noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
       }
     }
   }
