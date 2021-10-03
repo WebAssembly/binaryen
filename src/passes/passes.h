@@ -131,7 +131,7 @@ Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createUnteePass();
 Pass* createVacuumPass();
-Pass* createGlobalSubtypingPass();
+Pass* createGlobalTypeOptimizationPass();
 
 } // namespace wasm
 

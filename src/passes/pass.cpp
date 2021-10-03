@@ -154,9 +154,9 @@ void PassRegistry::registerPasses() {
     createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
-  registerPass("global-subtyping",
-               "apply more specific subtypes to fields where possible",
-               createGlobalSubtypingPass);
+  registerPass("gto",
+               "rewrite global GC types to be more optimal",
+               createGlobalTypeOptimizationPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(

@@ -84,10 +84,10 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   }
 };
 
-struct GlobalSubtyping : public Pass {
+struct GlobalTypeOptimization : public Pass {
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "GlobalSubtyping requires nominal typing";
+      Fatal() << "GlobalTypeOptimization requires nominal typing";
     }
 
     // Find and analyze all writes inside each function.
@@ -179,6 +179,6 @@ struct GlobalSubtyping : public Pass {
 
 } // anonymous namespace
 
-Pass* createGlobalSubtypingPass() { return new GlobalSubtyping(); }
+Pass* createGlobalTypeOptimizationPass() { return new GlobalTypeOptimization(); }
 
 } // namespace wasm
