@@ -108,6 +108,12 @@ struct GlobalTypeOptimization : public Pass {
     // that, propagate sets in both directions. This is necessary because we
     // cannot have a supertype's field be immutable while a subtype's is not -
     // they must match for us to preserve subtyping.
+    //
+    // Note that we do not need to care about types here: If the fields were
+    // mutable before, then they must have had identical types for them to be
+    // subtypes (as wasm only allows the type to differ if the fields are
+    // immutable). Note that by making more things immutable we therefore make
+    // it possible to apply more specific subtypes in subtype fields.
     StructValuePropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 

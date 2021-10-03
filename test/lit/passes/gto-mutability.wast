@@ -238,3 +238,41 @@
     )
   )
 )
+
+(module
+  ;; Subtyping. Without a write in either supertype or subtype, we can
+  ;; optimize the field to be immutable.
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $super (struct (field i32)))
+  (type $super (struct (field (mut i32))))
+  ;; CHECK:      (type $sub (struct (field i32)) (extends $super))
+  (type $sub (struct (field (mut i32))) (extends $super))
+
+  ;; CHECK:      (func $func
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $super
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; The presence of struct.new do not prevent us optimizing
+    (drop
+      (struct.new $super
+        (i32.const 1)
+      )
+    )
+    (drop
+      (struct.new $sub
+        (i32.const 1)
+      )
+    )
+  )
+)
