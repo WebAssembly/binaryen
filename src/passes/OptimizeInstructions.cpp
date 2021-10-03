@@ -1194,9 +1194,12 @@ struct OptimizeInstructions
       // (call_ref ..args.. (table.get $table (index))
       //   =>
       // (call_indirect $table ..args.. (index))
-      replaceCurrent(
-        Builder(*getModule())
-          .makeCallIndirect(get->table, get->index, curr->operands, get->type.getHeapType().getSignature(), curr->isReturn));
+      replaceCurrent(Builder(*getModule())
+                       .makeCallIndirect(get->table,
+                                         get->index,
+                                         curr->operands,
+                                         get->type.getHeapType().getSignature(),
+                                         curr->isReturn));
       return;
     }
 
