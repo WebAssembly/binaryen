@@ -78,6 +78,7 @@ public:
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
   bool readsStruct = false;
+  bool readsImmutableStruct = false;
   bool writesStruct = false;
   bool readsArray = false;
   bool writesArray = false;
@@ -129,7 +130,8 @@ public:
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool accessesStruct() const { return calls || readsStruct || writesStruct; }
+  bool accessesMutableStruct() const { return calls || readsStruct || writesStruct; }
+  bool accessesStruct() const { return accessesMutableStruct() || readsImmutableStruct; }
   bool accessesArray() const { return calls || readsArray || writesArray; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
@@ -148,7 +150,7 @@ public:
            writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsStruct || readsArray ||
+    return globalsRead.size() || readsMemory || readsStruct || readsImmutableStruct || readsArray ||
            isAtomic || calls;
   }
 
@@ -198,8 +200,10 @@ public:
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
-        ((writesStruct || calls) && other.accessesStruct()) ||
-        ((other.writesStruct || other.calls) && accessesStruct()) ||
+
+        ((writesStruct || calls) && other.accessesMutableStruct()) ||
+        ((other.writesStruct || other.calls) && accessesMutableStruct()) ||
+
         ((writesArray || calls) && other.accessesArray()) ||
         ((other.writesArray || other.calls) && accessesArray()) ||
         (danglingPop || other.danglingPop)) {
@@ -262,6 +266,7 @@ public:
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
     readsStruct = readsStruct || other.readsStruct;
+    readsImmutableStruct = readsImmutableStruct || other.readsImmutableStruct;
     writesStruct = writesStruct || other.writesStruct;
     readsArray = readsArray || other.readsArray;
     writesArray = writesArray || other.writesArray;
@@ -639,7 +644,14 @@ private:
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
-      parent.readsStruct = true;
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+      if (curr->ref->type.getHeapType().getStruct().fields[curr->index].mutable_ == Mutable) {
+        parent.readsStruct = true;
+      } else {
+        parent.readsImmutableStruct = true;
+      }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;

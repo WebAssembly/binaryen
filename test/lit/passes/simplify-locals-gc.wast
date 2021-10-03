@@ -8,6 +8,9 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
+  ;; CHECK:      (type $struct-immutable (struct (field i32)))
+  (type $struct-immutable (struct (field i32)))
+
   ;; Writes to heap objects cannot be reordered with reads.
   ;; CHECK:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
@@ -27,6 +30,31 @@
     (local.set $temp
       (struct.get $struct 0
         (local.get $x)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (i32.const 42)
+    )
+    (local.get $temp)
+  )
+
+  ;; CHECK:      (func $reorder-past-write-if-immutable (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct-immutable 0
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reorder-past-write-if-immutable (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+    (local $temp i32)
+    (local.set $temp
+      (struct.get $struct-immutable 0
+        (local.get $y)
       )
     )
     (struct.set $struct 0
