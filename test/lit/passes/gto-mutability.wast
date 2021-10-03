@@ -126,7 +126,6 @@
   ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
   ;; CHECK:      (func $func (param $x (ref $A))
-  ;; CHECK-NEXT:  (local $temp (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (ref.null $B)
@@ -149,7 +148,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $A))
-    (local $temp (ref null $A))
     (drop
       (struct.new $A
         (ref.null $B)
@@ -169,6 +167,120 @@
     (struct.set $A 1
       (local.get $x)
       (i32.const 20)
+    )
+  )
+)
+
+(module
+  ;; As before, but flipped so that $A's fields can become immutable.
+
+  ;; CHECK:      (type $B (struct (field (mut (ref null $A))) (field (mut f64))))
+  (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
+
+  ;; CHECK:      (type $A (struct (field (ref null $B)) (field i32)))
+  (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
+
+  ;; CHECK:      (type $ref|$B|_=>_none (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (param $x (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $B 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f64.const 3.14159)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $B))
+    (drop
+      (struct.new $A
+        (ref.null $B)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $A
+        (ref.null $B)
+        (i32.const 10)
+      )
+    )
+    (struct.set $B 0
+      (local.get $x)
+      (ref.null $A)
+    )
+    (struct.set $B 1
+      (local.get $x)
+      (f64.const 3.14159)
+    )
+  )
+)
+
+(module
+  ;; As before, but now one field in each can become immutable.
+
+  ;; CHECK:      (type $B (struct (field (mut (ref null $A))) (field (mut f64))))
+  (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
+
+  ;; CHECK:      (type $A (struct (field (ref null $B)) (field i32)))
+  (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
+
+  ;; CHECK:      (type $ref|$B|_=>_none (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (param $x (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $B 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f64.const 3.14159)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $A)) (param $y (ref $B))
+    (drop
+      (struct.new $A
+        (ref.null $B)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $A
+        (ref.null $B)
+        (i32.const 10)
+      )
+    )
+    (struct.set $A 0
+      (local.get $x)
+      (ref.null $B)
+    )
+    (struct.set $B 1
+      (local.get $y)
+      (f64.const 3.14159)
     )
   )
 )
