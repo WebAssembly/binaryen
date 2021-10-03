@@ -276,3 +276,73 @@
     )
   )
 )
+
+(module
+  ;; As above, but add a write in the super, which prevents optimization.
+
+  ;; CHECK:      (type $super (struct (field (mut i32))))
+  (type $super (struct (field (mut i32))))
+  ;; CHECK:      (type $ref|$super|_=>_none (func (param (ref $super))))
+
+  ;; CHECK:      (type $sub (struct (field (mut i32))) (extends $super))
+  (type $sub (struct (field (mut i32))) (extends $super))
+
+  ;; CHECK:      (func $func (param $x (ref $super))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $super
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $super 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $super))
+    ;; The presence of struct.new do not prevent us optimizing
+    (drop
+      (struct.new $super
+        (i32.const 1)
+      )
+    )
+    (drop
+      (struct.new $sub
+        (i32.const 1)
+      )
+    )
+    (struct.set $super 0
+      (local.get $x)
+      (i32.const 2)
+    )
+  )
+)
+
+(module
+  ;; As above, but add a write in the sub, which prevents optimization.
+
+  ;; CHECK:      (type $sub (struct (field (mut i32))) (extends $super))
+
+  ;; CHECK:      (type $ref|$sub|_=>_none (func (param (ref $sub))))
+
+  ;; CHECK:      (type $super (struct (field (mut i32))))
+  (type $super (struct (field (mut i32))))
+  (type $sub (struct (field (mut i32))) (extends $super))
+
+  ;; CHECK:      (func $func (param $x (ref $sub))
+  ;; CHECK-NEXT:  (struct.set $sub 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $sub))
+    (struct.set $sub 0
+      (local.get $x)
+      (i32.const 2)
+    )
+  )
+)
