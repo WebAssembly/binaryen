@@ -70,12 +70,6 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
         // We must use the operands twice, and also must move the condition to
         // execute first; use locals for them all. While doing so, if we see
         // any are unreachable, stop trying to optimize and leave this for DCE.
-        if (select->condition->type == Type::unreachable) {
-          return;
-        }
-        auto conditionLocal = builder.addVar(func, Type::i32);
-        blockContents.push_back(builder.makeLocalSet(conditionLocal, select->condition));
-
         std::vector<Index> operandLocals;
         for (auto* operand : curr->operands) {
           if (operand->type == Type::unreachable ||
@@ -86,6 +80,12 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
           operandLocals.push_back(currLocal);
           blockContents.push_back(builder.makeLocalSet(currLocal, operand));
         }
+
+        if (select->condition->type == Type::unreachable) {
+          return;
+        }
+        auto conditionLocal = builder.addVar(func, Type::i32);
+        blockContents.push_back(builder.makeLocalSet(conditionLocal, select->condition));
 
         // Build the calls.
         auto numOperands = curr->operands.size();
