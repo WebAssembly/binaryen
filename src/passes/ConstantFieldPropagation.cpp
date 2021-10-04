@@ -212,22 +212,36 @@ private:
   bool changed = false;
 };
 
-struct PCVScanner : public Scanner<PossibleConstantValues> {
+struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
     return new PCVScanner(functionNewInfos, functionSetInfos);
   }
 
   PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
              FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
-    : Scanner<PossibleConstantValues>(functionNewInfos, functionSetInfos) {}
+    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos,
+                                                  functionSetInfos) {}
 
-  virtual void noteExpression(
-    Expression* expr,
-    HeapType type,
-    Index index,
-    FunctionStructValuesMap<PossibleConstantValues>& valuesMap) override {
-    expr = Properties::getFallthrough(expr, getPassOptions(), *getModule());
+  void noteExpression(Expression* expr,
+                      HeapType type,
+                      Index index,
+                      PossibleConstantValues& info) {
 
+    if (!Properties::isConstantExpression(expr)) {
+      info.noteUnknown();
+    } else {
+      info.note(Properties::getLiteral(expr));
+    }
+  }
+
+  void noteDefault(Type fieldType,
+                   HeapType type,
+                   Index index,
+                   PossibleConstantValues& info) {
+    info.note(Literal::makeZero(fieldType));
+  }
+
+  void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
     //
@@ -246,19 +260,6 @@ struct PCVScanner : public Scanner<PossibleConstantValues> {
     // TODO: This may be extensible to a copy from a subtype by the above
     //       analysis (but this is already entering the realm of diminishing
     //       returns).
-    if (auto* get = expr->dynCast<StructGet>()) {
-      if (get->index == index && get->ref->type != Type::unreachable &&
-          get->ref->type.getHeapType() == type) {
-        return;
-      }
-    }
-
-    auto& info = valuesMap[getFunction()][type][index];
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
-      info.note(Properties::getLiteral(expr));
-    }
   }
 };
 

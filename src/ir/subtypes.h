@@ -22,11 +22,10 @@
 
 namespace wasm {
 
-// A nominal type always knows who its supertype is, if there is one; this class
-// provides the list of immediate subtypes.
+// Analyze subtyping relationships and provide useful interfaces to discover
+// them.
 struct SubTypes {
   SubTypes(Module& wasm) {
-    std::vector<HeapType> types;
     std::unordered_map<HeapType, Index> typeIndices;
     ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
     for (auto type : types) {
@@ -34,21 +33,52 @@ struct SubTypes {
     }
   }
 
-  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
+  const std::vector<HeapType>& getSubTypes(HeapType type) {
     return typeSubTypes[type];
   }
+
+  // Get all subtypes of a type, and their subtypes and so forth, recursively.
+  std::vector<HeapType> getAllSubTypes(HeapType type) {
+    std::vector<HeapType> ret, work;
+    work.push_back(type);
+    while (!work.empty()) {
+      auto curr = work.back();
+      work.pop_back();
+      for (auto sub : getSubTypes(curr)) {
+        ret.push_back(sub);
+        work.push_back(sub);
+      }
+    }
+    return ret;
+  }
+
+  // Get all supertypes of a type. The order in the output vector is with the
+  // immediate supertype first, then its supertype, and so forth.
+  std::vector<HeapType> getAllSuperTypes(HeapType type) {
+    std::vector<HeapType> ret;
+    while (1) {
+      HeapType super;
+      if (!type.getSuperType(super)) {
+        return ret;
+      }
+      ret.push_back(super);
+      type = super;
+    }
+  }
+
+  std::vector<HeapType> types;
 
 private:
   // Add a type to the graph.
   void note(HeapType type) {
     HeapType super;
     if (type.getSuperType(super)) {
-      typeSubTypes[super].insert(type);
+      typeSubTypes[super].push_back(type);
     }
   }
 
   // Maps a type to its subtypes.
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
+  std::unordered_map<HeapType, std::vector<HeapType>> typeSubTypes;
 };
 
 } // namespace wasm

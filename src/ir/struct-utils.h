@@ -22,7 +22,7 @@
 
 namespace wasm {
 
-// A vector of a template type values. One such vector will be used per struct
+// A vector of a template type's values. One such vector will be used per struct
 // type, where each element in the vector represents a field. We always assume
 // that the vectors are pre-initialized to the right length before accessing any
 // data, which this class enforces using assertions, and which is implemented in
@@ -39,9 +39,7 @@ template<typename T> struct StructValues : public std::vector<T> {
   }
 };
 
-// Map of types to information about the values their fields can take.
-// Concretely, this maps a type to a StructValues which has one element per
-// field.
+// Maps heap types to a StructValues for that heap type.
 template<typename T>
 struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   // When we access an item, if it does not already exist, create it with a
@@ -80,8 +78,8 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   }
 };
 
-// Map of functions to their field value infos. We compute those in parallel,
-// then later we will merge them all.
+// Map of functions to StructValuesMap. This lets us compute in parallel while
+// we walk the module, and afterwards we will merge them all.
 template<typename T>
 struct FunctionStructValuesMap
   : public std::unordered_map<Function*, StructValuesMap<T>> {
@@ -102,14 +100,28 @@ struct FunctionStructValuesMap
   }
 };
 
-// Scan each function to note all its writes to struct fields.
+// A generic scanner that finds struct operations and calls hooks to update
+// information. Subclasses must define these methods:
+//
+// * Note an expression written into a field.
+//
+//   void noteExpression(Expression* expr, HeapType type, Index index, T& info);
+//
+// * Note a default value written during creation.
+//
+//   void noteDefault(Type fieldType, HeapType type, Index index, T& info);
+//
+// * Note a copied value (read from this field and written to the same, possibly
+//   in another object).
+//
+//   void noteCopy(HeapType type, Index index, T& info);
 //
 // We track information from struct.new and struct.set separately, because in
 // struct.new we know more about the type - we know the actual exact type being
 // written to, and not just that it is of a subtype of the instruction's type,
 // which helps later.
-template<typename T>
-struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
+template<typename T, typename SubType>
+struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
   Scanner(FunctionStructValuesMap<T>& functionNewInfos,
@@ -124,13 +136,14 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
 
     // Note writes to all the fields of the struct.
     auto heapType = type.getHeapType();
-    auto& values = functionNewInfos[this->getFunction()][heapType];
     auto& fields = heapType.getStruct().fields;
+    auto& infos = functionNewInfos[this->getFunction()][heapType];
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
-        values[i].note(Literal::makeZero(fields[i].type));
+        static_cast<SubType*>(this)->noteDefault(
+          fields[i].type, heapType, i, infos[i]);
       } else {
-        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
+        noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
       }
     }
   }
@@ -142,23 +155,52 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T>>> {
     }
 
     // Note a write to this field of the struct.
-    noteExpression(
-      curr->value, type.getHeapType(), curr->index, functionSetInfos);
+    noteExpressionOrCopy(
+      curr->value,
+      type.getHeapType(),
+      curr->index,
+      functionSetInfos[this->getFunction()][type.getHeapType()][curr->index]);
+  }
+
+  void
+  noteExpressionOrCopy(Expression* expr, HeapType type, Index index, T& info) {
+    // Look at the value falling through, if it has the exact same type
+    // (otherwise, we'd need to consider both the type actually written and the
+    // type of the fallthrough, somehow).
+    auto* fallthrough = Properties::getFallthrough(
+      expr, this->getPassOptions(), *this->getModule());
+    if (fallthrough->type == expr->type) {
+      expr = fallthrough;
+    }
+    if (auto* get = expr->dynCast<StructGet>()) {
+      if (get->index == index && get->ref->type != Type::unreachable &&
+          get->ref->type.getHeapType() == type) {
+        static_cast<SubType*>(this)->noteCopy(type, index, info);
+        return;
+      }
+    }
+    static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
   FunctionStructValuesMap<T>& functionSetInfos;
 
-  // Note a value, checking whether it is a constant or not.
-  virtual void noteExpression(Expression* expr,
-                              HeapType type,
-                              Index index,
-                              FunctionStructValuesMap<T>& valuesMap) = 0;
+private:
+  std::unordered_map<Type, Expression*> zeroCache;
 };
 
+// Helper class to propagate information about fields to sub- and/or super-
+// classes. While propagating it calls a method
+//
+//  to.combine(from)
+//
+// which combines the information from |from| into |to|, and should return true
+// if we changed something.
 template<typename T> class StructValuePropagator {
 public:
   StructValuePropagator(Module& wasm) : subTypes(wasm) {}
+
+  SubTypes subTypes;
 
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
     propagate(infos, false);
@@ -204,9 +246,7 @@ private:
         }
       }
     }
-  };
-
-  SubTypes subTypes;
+  }
 };
 
 } // namespace wasm
