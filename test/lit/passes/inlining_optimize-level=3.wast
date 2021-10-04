@@ -423,4 +423,31 @@
     (drop (i32.const 1))
   )
 )
-.
+
+(module
+ (func $bar
+  (drop
+   (block $__inlined_func$bar (result i32)
+    (return) ;; After inlining, this return will be replaced with a br to a
+             ;; new block. That block's name must not collide with the name
+             ;; of the outer block here, which has been chosen so as to
+             ;; potentially collide. If it collides, we will fail to validate
+             ;; as the new outer block will have type none.
+   )
+  )
+ )
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (func $foo
+ ;; CHECK-NEXT:  (block $__inlined_func$bar_0
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block $__inlined_func$bar (result i32)
+ ;; CHECK-NEXT:     (br $__inlined_func$bar_0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $foo
+  (call $bar)
+ )
+)
