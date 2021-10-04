@@ -1835,6 +1835,7 @@ private:
         s->ifTrue = ifFalse;
         s->ifFalse = ifTrue;
         s->condition = c;
+        return s;
       }
     }
     {
