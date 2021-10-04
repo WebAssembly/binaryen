@@ -190,15 +190,15 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
 };
 
 // Helper class to propagate information about fields to sub- and/or super-
-// classes. While propagating it calls a method
+// classes in the type hierarchy. While propagating it calls a method
 //
 //  to.combine(from)
 //
 // which combines the information from |from| into |to|, and should return true
 // if we changed something.
-template<typename T> class StructValuePropagator {
+template<typename T> class TypeHierarchyPropagator {
 public:
-  StructValuePropagator(Module& wasm) : subTypes(wasm) {}
+  TypeHierarchyPropagator(Module& wasm) : subTypes(wasm) {}
 
   SubTypes subTypes;
 
