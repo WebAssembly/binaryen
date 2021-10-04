@@ -590,7 +590,14 @@ void WasmBinaryWriter::writeElementSegments() {
     bool hasTableIndex = false;
     if (!isPassive) {
       tableIdx = getTableIndex(segment->table);
-      hasTableIndex = true;
+      // Table index 0 is special for backwards compatibility: only tables with
+      // greater indexes than 0 are considered to be "an index" in the sense of
+      // "element segment has a table index". An exception to that exception,
+      // however, is if the table has a type beyond funcref, as then we must
+      // emit the type for its element segments (which we only do when we
+      // consider them to have an index).
+      hasTableIndex =
+        tableIdx > 0 || wasm->getTable(segment->table)->type != Type::funcref;
     }
 
     uint32_t flags = 0;
