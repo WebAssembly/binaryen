@@ -527,6 +527,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("cfp");
   }
+  // TODO: investigate enabling --gto
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
