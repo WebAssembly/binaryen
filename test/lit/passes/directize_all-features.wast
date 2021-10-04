@@ -496,10 +496,10 @@
 )
 
 (module
- ;; CHECK:      (type $ii (func (param i32 i32)))
- (type $ii (func (param i32 i32)))
  ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
 
+ ;; CHECK:      (type $ii (func (param i32 i32)))
+ (type $ii (func (param i32 i32)))
  ;; CHECK:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo1 $foo2)
@@ -642,6 +642,57 @@
    (select
     (i32.const 99999)
     (i32.const 2)
+    (local.get $z)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local $4 i32)
+ ;; CHECK-NEXT:  (local $5 i32)
+ ;; CHECK-NEXT:  (local.set $3
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $4
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $5
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $5)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $4)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $4)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
+  ;; Both are constants, and both are out of range for the table.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (i32.const 99999)
+    (i32.const -1)
     (local.get $z)
    )
   )
