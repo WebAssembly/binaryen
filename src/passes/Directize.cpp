@@ -92,8 +92,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
         // Build the calls.
         auto numOperands = curr->operands.size();
-        std::vector<Expression*> newOperands(numOperands);
         auto getOperands = [&]() {
+          std::vector<Expression*> newOperands(numOperands);
           for (Index i = 0; i < numOperands; i++) {
             newOperands[i] =
               builder.makeLocalGet(operandLocals[i], curr->operands[i]->type);
