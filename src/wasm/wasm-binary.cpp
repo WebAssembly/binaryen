@@ -590,7 +590,7 @@ void WasmBinaryWriter::writeElementSegments() {
     bool hasTableIndex = false;
     if (!isPassive) {
       tableIdx = getTableIndex(segment->table);
-      hasTableIndex = tableIdx > 0;
+      hasTableIndex = true;
     }
 
     uint32_t flags = 0;
