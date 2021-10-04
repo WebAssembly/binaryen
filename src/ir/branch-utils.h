@@ -238,6 +238,28 @@ inline NameSet getBranchTargets(Expression* ast) {
   return scanner.targets;
 }
 
+// Check if an expression defines a particular name as a branch target anywhere
+// inside it.
+inline bool hasBranchTarget(Expression* ast, Name target) {
+  struct Scanner
+    : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    Name target;
+    bool has = false;
+
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name& name) {
+        if (name == target) {
+          has = true;
+        }
+      });
+    }
+  };
+  Scanner scanner;
+  scanner.target = target;
+  scanner.walk(ast);
+  return scanner.has;
+}
+
 // Get the name of the branch target that is defined in the expression, or an
 // empty name if there is none.
 inline Name getDefinedName(Expression* curr) {
