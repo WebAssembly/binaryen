@@ -267,7 +267,7 @@ public:
     // Iterator traits
     using iterator_category = std::random_access_iterator_tag;
     using value_type = Type;
-    using difference_type = long;
+    using difference_type = std::ptrdiff_t;
     using pointer = const Type*;
     using reference = const Type&;
 
