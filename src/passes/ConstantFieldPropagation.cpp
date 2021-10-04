@@ -313,7 +313,7 @@ struct ConstantFieldPropagation : public Pass {
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
 
-    StructValuePropagator<PossibleConstantValues> propagator(*module);
+    TypeHierarchyPropagator<PossibleConstantValues> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
