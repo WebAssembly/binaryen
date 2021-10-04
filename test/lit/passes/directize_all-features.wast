@@ -6,17 +6,20 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
+
  ;; CHECK:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
- (elem (i32.const 1) $foo)
  ;; CHECK:      (elem (i32.const 1) $foo)
+ (elem (i32.const 1) $foo)
 
  ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $foo (param i32) (param i32)
+  ;; helper function
   (unreachable)
  )
+
  ;; CHECK:      (func $bar (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
@@ -742,6 +745,30 @@
     (i32.const 1)
     (i32.const 2)
     (unreachable)
+   )
+  )
+ )
+)
+
+(module
+ (table $0 15 15 funcref)
+ (type $F (func (param (ref func))))
+ (elem (i32.const 10) $foo-ref $foo-ref)
+
+ (func $foo-ref (param (ref func))
+  ;; helper function
+  (unreachable)
+ )
+
+ (func $select-non-nullable (param $x i32) (param $y i32) (param $z i32)
+  ;; Test we can handle a non-nullable value when optimizing a select, during
+  ;; which we place values in locals.
+  (call_indirect (type $F)
+   (ref.func $select-non-nullable)
+   (select
+    (i32.const 10)
+    (i32.const 11)
+    (local.get $z)
    )
   )
  )
