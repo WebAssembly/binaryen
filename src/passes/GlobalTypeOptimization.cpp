@@ -114,7 +114,7 @@ struct GlobalTypeOptimization : public Pass {
     // subtypes (as wasm only allows the type to differ if the fields are
     // immutable). Note that by making more things immutable we therefore make
     // it possible to apply more specific subtypes in subtype fields.
-    StructValuePropagator<FieldInfo> propagator(*module);
+    TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
     // Maps types to a vector of booleans that indicate if we can turn the
