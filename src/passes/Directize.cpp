@@ -53,9 +53,9 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
     // If the target is constant, we can emit a direct call.
     if (curr->target->is<Const>()) {
-      std::vector<Expression*> operands(curr->operands.begin(), curr->operands.end());
-      replaceCurrent(
-        makeDirectCall(operands, curr->target, flatTable, curr));
+      std::vector<Expression*> operands(curr->operands.begin(),
+                                        curr->operands.end());
+      replaceCurrent(makeDirectCall(operands, curr->target, flatTable, curr));
       return;
     }
 
