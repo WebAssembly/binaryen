@@ -86,9 +86,6 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
         if (select->condition->type == Type::unreachable) {
           return;
         }
-        auto conditionLocal = builder.addVar(func, Type::i32);
-        blockContents.push_back(
-          builder.makeLocalSet(conditionLocal, select->condition));
 
         // Build the calls.
         auto numOperands = curr->operands.size();
@@ -106,8 +103,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
           makeDirectCall(getOperands(), select->ifFalse, flatTable, curr);
 
         // Create the if to pick the calls, and emit the final block.
-        auto* newCondition = builder.makeLocalGet(conditionLocal, Type::i32);
-        auto* iff = builder.makeIf(newCondition, ifTrueCall, ifFalseCall);
+        auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);
         blockContents.push_back(iff);
         replaceCurrent(builder.makeBlock(blockContents));
 

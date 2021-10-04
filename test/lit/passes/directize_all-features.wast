@@ -524,18 +524,14 @@
  ;; CHECK:      (func $select (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
- ;; CHECK-NEXT:  (local $5 i32)
  ;; CHECK-NEXT:  (local.set $3
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $4
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $5
- ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $5)
+ ;; CHECK-NEXT:   (local.get $z)
  ;; CHECK-NEXT:   (call $foo1
  ;; CHECK-NEXT:    (local.get $3)
  ;; CHECK-NEXT:    (local.get $4)
@@ -608,18 +604,14 @@
  ;; CHECK:      (func $select-out-of-range (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
- ;; CHECK-NEXT:  (local $5 i32)
  ;; CHECK-NEXT:  (local.set $3
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $4
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $5
- ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $5)
+ ;; CHECK-NEXT:   (local.get $z)
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
@@ -653,18 +645,14 @@
  ;; CHECK:      (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
- ;; CHECK-NEXT:  (local $5 i32)
  ;; CHECK-NEXT:  (local.set $3
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $4
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $5
- ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $5)
+ ;; CHECK-NEXT:   (local.get $z)
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
@@ -775,15 +763,11 @@
 
  ;; CHECK:      (func $select-non-nullable (param $x i32)
  ;; CHECK-NEXT:  (local $1 (ref null $i32_=>_none))
- ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $2
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (call $foo-ref
  ;; CHECK-NEXT:    (ref.as_non_null
  ;; CHECK-NEXT:     (local.get $1)
