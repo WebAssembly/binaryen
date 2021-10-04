@@ -184,9 +184,6 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
 
   FunctionStructValuesMap<T>& functionNewInfos;
   FunctionStructValuesMap<T>& functionSetInfos;
-
-private:
-  std::unordered_map<Type, Expression*> zeroCache;
 };
 
 // Helper class to propagate information about fields to sub- and/or super-
