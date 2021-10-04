@@ -9,8 +9,9 @@
 
  ;; CHECK:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
- ;; CHECK:      (elem (i32.const 1) $foo)
  (elem (i32.const 1) $foo)
+
+ ;; CHECK:      (elem (i32.const 1) $foo)
 
  ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
@@ -751,16 +752,51 @@
 )
 
 (module
+ ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+ ;; CHECK:      (type $F (func (param (ref func))))
+
+ ;; CHECK:      (table $0 15 15 funcref)
  (table $0 15 15 funcref)
  (type $F (func (param (ref func))))
  (elem (i32.const 10) $foo-ref $foo-ref)
 
+ ;; CHECK:      (elem (i32.const 10) $foo-ref $foo-ref)
+
+ ;; CHECK:      (elem declare func $select-non-nullable)
+
+ ;; CHECK:      (func $foo-ref (param $0 (ref func))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
  (func $foo-ref (param (ref func))
   ;; helper function
   (unreachable)
  )
 
- (func $select-non-nullable (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select-non-nullable (param $x i32)
+ ;; CHECK-NEXT:  (local $1 (ref null $i32_=>_none))
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (ref.func $select-non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $2
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:   (call $foo-ref
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (call $foo-ref
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-non-nullable (param $x i32)
   ;; Test we can handle a non-nullable value when optimizing a select, during
   ;; which we place values in locals.
   (call_indirect (type $F)
@@ -768,7 +804,7 @@
    (select
     (i32.const 10)
     (i32.const 11)
-    (local.get $z)
+    (local.get $x)
    )
   )
  )

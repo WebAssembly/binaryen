@@ -96,7 +96,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
         auto getOperands = [&]() {
           for (Index i = 0; i < numOperands; i++) {
             newOperands[i] =
-              builder.makeLocalGet(operandLocals[i], func->getLocalType(i));
+              builder.makeLocalGet(operandLocals[i], curr->operands[i]->type);
           }
           return newOperands;
         };
