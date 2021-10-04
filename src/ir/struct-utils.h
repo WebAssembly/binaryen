@@ -40,6 +40,9 @@ template<typename T> struct StructValues : public std::vector<T> {
 };
 
 // Maps heap types to a StructValues for that heap type.
+//
+// Also provides a combineInto() helper that combines one map into another. This
+// depends on the underlying T defining a combine() method.
 template<typename T>
 struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   // When we access an item, if it does not already exist, create it with a
