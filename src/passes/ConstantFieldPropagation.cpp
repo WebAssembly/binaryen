@@ -59,8 +59,7 @@ struct SubTypes {
 private:
   // Add a type to the graph.
   void note(HeapType type) {
-    auto super = type.getSuperType();
-    if (super) {
+    if (auto super = type.getSuperType()) {
       typeSubTypes[*super].insert(type);
     }
   }
@@ -463,8 +462,7 @@ struct ConstantFieldPropagation : public Pass {
         auto& infos = combinedInfos[type];
 
         // Propagate shared fields to the supertype.
-        auto superType = type.getSuperType();
-        if (superType) {
+        if (auto superType = type.getSuperType()) {
           auto& superInfos = combinedInfos[*superType];
           auto& superFields = superType->getStruct().fields;
           for (Index i = 0; i < superFields.size(); i++) {

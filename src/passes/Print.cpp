@@ -2581,8 +2581,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     } else {
       o << type;
     }
-    auto super = type.getSuperType();
-    if (super) {
+    if (auto super = type.getSuperType()) {
       o << " (extends ";
       TypeNamePrinter(o, module).print(*super);
       o << ')';

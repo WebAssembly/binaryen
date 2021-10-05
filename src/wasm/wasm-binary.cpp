@@ -227,7 +227,7 @@ void WasmBinaryWriter::writeTypes() {
     auto super = type.getSuperType();
     if (type.isSignature()) {
       o << S32LEB(super ? BinaryConsts::EncodedType::FuncExtending
-                           : BinaryConsts::EncodedType::Func);
+                        : BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
       for (auto& sigType : {sig.params, sig.results}) {
         o << U32LEB(sigType.size());
@@ -237,7 +237,7 @@ void WasmBinaryWriter::writeTypes() {
       }
     } else if (type.isStruct()) {
       o << S32LEB(super ? BinaryConsts::EncodedType::StructExtending
-                           : BinaryConsts::EncodedType::Struct);
+                        : BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
       o << U32LEB(fields.size());
       for (const auto& field : fields) {
@@ -245,7 +245,7 @@ void WasmBinaryWriter::writeTypes() {
       }
     } else if (type.isArray()) {
       o << S32LEB(super ? BinaryConsts::EncodedType::ArrayExtending
-                           : BinaryConsts::EncodedType::Array);
+                        : BinaryConsts::EncodedType::Array);
       writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");

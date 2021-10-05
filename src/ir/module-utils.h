@@ -595,8 +595,8 @@ inline void collectHeapTypes(Module& wasm,
         counts.note(child);
       }
     }
-    auto super = ht.getSuperType();
-    if (super) {
+
+    if (auto super = ht.getSuperType()) {
       if (!counts.count(*super)) {
         newTypes.insert(*super);
         // We should unconditionally count supertypes, but while the type system
