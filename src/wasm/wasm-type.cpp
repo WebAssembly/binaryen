@@ -2339,23 +2339,14 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
 
 void TypeBuilder::setSubType(size_t i, size_t j) {
   assert(i < size() && j < size() && "index out of bounds");
-  if (typeSystem == TypeSystem::Nominal) {
-    HeapTypeInfo* sub = impl->entries[i].info.get();
-    HeapTypeInfo* super = impl->entries[j].info.get();
-    sub->supertype = super;
-  }
+  HeapTypeInfo* sub = impl->entries[i].info.get();
+  HeapTypeInfo* super = impl->entries[j].info.get();
+  sub->supertype = super;
 }
 
-void TypeBuilder::setNominal(size_t i, size_t supertype) {
-  assert(i < size() && (supertype == NoSupertype || supertype < size()) &&
-         "index out of bounds");
-  HeapTypeInfo& sub = *impl->entries[i].info;
-  sub.isNominal = true;
-  if (supertype == NoSupertype) {
-    sub.supertype = nullptr;
-  } else {
-    sub.supertype = impl->entries[supertype].info.get();
-  }
+void TypeBuilder::setNominal(size_t i) {
+  assert(i < size() && "index out of bounds");
+  impl->entries[i].info->isNominal = true;
 }
 
 namespace {
@@ -3006,6 +2997,9 @@ std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
   for (auto& entry : builder.impl->entries) {
     assert(entry.initialized && "Cannot access uninitialized HeapType");
     entry.info->isFinalized = true;
+    if (!entry.info->isNominal) {
+      entry.info->supertype = nullptr;
+    }
     heapTypes.push_back(entry.get());
   }
 

@@ -13,7 +13,7 @@ using namespace wasm;
 
 static void makeNominal(TypeBuilder& builder) {
   for (size_t i = 0; i < builder.size(); ++i) {
-    builder[i].setNominal(TypeBuilder::NoSupertype);
+    builder[i].setNominal();
   }
 }
 
@@ -334,7 +334,7 @@ void test_subtypes() {
       TypeBuilder builder(3);
       makeNominal(builder);
 
-      builder[0].setNominal(builder[1]);
+      builder[0].subTypeOf(builder[1]);
       builder[0] = Struct{};
       builder[1] = Struct{};
       builder[2] = Struct{};
@@ -350,9 +350,9 @@ void test_subtypes() {
       TypeBuilder builder(6);
       makeNominal(builder);
 
-      builder[0].setNominal(builder[1]);
-      builder[2].setNominal(builder[3]);
-      builder[4].setNominal(builder[5]);
+      builder[0].subTypeOf(builder[1]);
+      builder[2].subTypeOf(builder[3]);
+      builder[4].subTypeOf(builder[5]);
       builder[0] =
         Struct({Field(Type::i32, Mutable), Field(Type::anyref, Mutable)});
       builder[1] =
@@ -378,7 +378,7 @@ void test_subtypes() {
       builder[0] = Struct({Field(Type::i32, Immutable)});
       builder[1] =
         Struct({Field(Type::i32, Immutable), Field(Type::i32, Immutable)});
-      builder[1].setNominal(builder[0]);
+      builder[1].subTypeOf(builder[0]);
       built = builder.build();
     }
     assert(LUB(built[1], built[0]) == built[0]);
@@ -393,7 +393,7 @@ void test_subtypes() {
 
       builder[0] = Struct({Field(Type::anyref, Immutable)});
       builder[1] = Struct({Field(Type::funcref, Immutable)});
-      builder[1].setNominal(builder[0]);
+      builder[1].subTypeOf(builder[0]);
       built = builder.build();
     }
     assert(LUB(built[1], built[0]) == built[0]);
@@ -410,8 +410,8 @@ void test_subtypes() {
       Type b = builder.getTempRefType(builder[1], Nullable);
       Type c = builder.getTempRefType(builder[2], Nullable);
       Type d = builder.getTempRefType(builder[3], Nullable);
-      builder[1].setNominal(builder[0]);
-      builder[3].setNominal(builder[2]);
+      builder[1].subTypeOf(builder[0]);
+      builder[3].subTypeOf(builder[2]);
       builder[0] = Struct({Field(c, Immutable)});
       builder[1] = Struct({Field(d, Immutable)});
       builder[2] = Struct({Field(a, Immutable)});
