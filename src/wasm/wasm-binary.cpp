@@ -587,10 +587,15 @@ void WasmBinaryWriter::writeElementSegments() {
     // If the segment is MVP, we can use the shorter form.
     bool usesExpressions = TableUtils::usesExpressions(segment.get(), wasm);
 
+    // The table index can and should be elided for active segments of table 0
+    // when table 0 has type funcref. This was the only type of segment
+    // supported by the MVP, which also did not support table indices in the
+    // segment encoding.
     bool hasTableIndex = false;
     if (!isPassive) {
       tableIdx = getTableIndex(segment->table);
-      hasTableIndex = tableIdx > 0;
+      hasTableIndex =
+        tableIdx > 0 || wasm->getTable(segment->table)->type != Type::funcref;
     }
 
     uint32_t flags = 0;
