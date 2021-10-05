@@ -219,16 +219,15 @@ void WasmBinaryWriter::writeTypes() {
     return;
   }
   BYN_TRACE("== writeTypes\n");
+  bool nominal = getTypeSystem() == TypeSystem::Nominal;
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(types.size());
   for (Index i = 0; i < types.size(); ++i) {
     auto type = types[i];
     BYN_TRACE("write " << type << std::endl);
-    HeapType super;
-    bool hasSuper = type.getSuperType(super);
     if (type.isSignature()) {
-      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::FuncExtending
-                           : BinaryConsts::EncodedType::Func);
+      o << S32LEB(nominal ? BinaryConsts::EncodedType::FuncExtending
+                          : BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
       for (auto& sigType : {sig.params, sig.results}) {
         o << U32LEB(sigType.size());
@@ -237,22 +236,27 @@ void WasmBinaryWriter::writeTypes() {
         }
       }
     } else if (type.isStruct()) {
-      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::StructExtending
-                           : BinaryConsts::EncodedType::Struct);
+      o << S32LEB(nominal ? BinaryConsts::EncodedType::StructExtending
+                          : BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
       o << U32LEB(fields.size());
       for (const auto& field : fields) {
         writeField(field);
       }
     } else if (type.isArray()) {
-      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::ArrayExtending
-                           : BinaryConsts::EncodedType::Array);
+      o << S32LEB(nominal ? BinaryConsts::EncodedType::ArrayExtending
+                          : BinaryConsts::EncodedType::Array);
       writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");
     }
-    if (hasSuper) {
-      o << U32LEB(getTypeIndex(super));
+    if (nominal) {
+      HeapType super;
+      bool hasSuper = type.getSuperType(super);
+      if (!hasSuper) {
+        super = type.isFunction() ? HeapType::func : HeapType::data;
+      }
+      writeHeapType(super);
     }
   }
   finishSection(start);
@@ -1954,11 +1958,30 @@ void WasmBinaryBuilder::readTypes() {
     if (form == BinaryConsts::EncodedType::FuncExtending ||
         form == BinaryConsts::EncodedType::StructExtending ||
         form == BinaryConsts::EncodedType::ArrayExtending) {
-      auto superIndex = getU32LEB();
-      if (superIndex >= numTypes) {
-        throwError("bad supertype index " + std::to_string(superIndex));
+      auto superIndex = getS64LEB(); // TODO: Actually s33
+      if (superIndex >= 0) {
+        if (size_t(superIndex) >= numTypes) {
+          throwError("bad supertype index " + std::to_string(superIndex));
+        }
+        builder[i].subTypeOf(builder[superIndex]);
+      } else {
+        // Validate but otherwise ignore trivial supertypes.
+        HeapType super;
+        if (!getBasicHeapType(superIndex, super)) {
+          throwError("Unrecognized supertype " + std::to_string(superIndex));
+        }
+        if (form == BinaryConsts::EncodedType::FuncExtending) {
+          if (super != HeapType::func) {
+            throwError(
+              "The only allowed trivial supertype for functions is func");
+          }
+        } else {
+          if (super != HeapType::data) {
+            throwError("The only allowed trivial supertype for structs and "
+                       "arrays is data");
+          }
+        }
       }
-      builder[i].subTypeOf(builder[superIndex]);
     }
   }
 
