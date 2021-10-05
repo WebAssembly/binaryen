@@ -23,7 +23,11 @@
 
   ;; CHECK:      (export "eliminate-redundant-checks-1" (func $11))
 
+  ;; CHECK:      (export "eliminate-redundant-checks-1a" (func $11))
+
   ;; CHECK:      (export "eliminate-redundant-checks-2" (func $12))
+
+  ;; CHECK:      (export "eliminate-redundant-checks-2a" (func $12))
 
   ;; CHECK:      (export "eliminate-redundant-checks-skip-1" (func $13))
 
@@ -178,7 +182,17 @@
     )
     (i32.const 0)
   )
-
+  (func $11a (export "eliminate-redundant-checks-1a") (param $0 i32) (result i32)
+    (if
+      (select
+        (local.get $0)
+        (i32.const 0)
+        (local.get $0)
+      )
+      (return (local.get $0))
+    )
+    (i32.const 0)
+  )
   ;; CHECK:      (func $12 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.tee $1
@@ -200,7 +214,17 @@
     )
     (i32.const 0)
   )
-
+  (func $12a (export "eliminate-redundant-checks-2a") (param $0 i32) (param $1 i32) (result i32)
+    (if
+      (select
+        (local.tee $1 (local.get $0))
+        (i32.const 0)
+        (local.get $1)
+      )
+      (return (local.get $1))
+    )
+    (i32.const 0)
+  )
   ;; CHECK:      (func $13 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
