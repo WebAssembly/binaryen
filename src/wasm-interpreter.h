@@ -2805,13 +2805,14 @@ private:
       if (index.breaking()) {
         return index;
       }
-      Flow value = this->visit(curr->value);
-      if (value.breaking()) {
-        return value;
+      Flow flow = this->visit(curr->value);
+      if (flow.breaking()) {
+        return flow;
       }
       auto info = instance.getTableInterfaceInfo(curr->table);
-      return info.interface->tableStore(
-        info.name, index.getSingleValue().geti32(), value.getSingleValue());
+      info.interface->tableStore(
+        info.name, index.getSingleValue().geti32(), flow.getSingleValue());
+      return Flow();
     }
 
     Flow visitLocalGet(LocalGet* curr) {
