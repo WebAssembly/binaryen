@@ -664,11 +664,11 @@ function wrapModule(module, self = {}) {
   }
 
   self['table'] = {
-    'get'(index, type) {
-      return Module['_BinaryenTableGet'](module, index, type);
+    'get'(name, index, type) {
+      return Module['_BinaryenTableGet'](module, strToStack(name), index, type);
     },
-    'set'(index, value) {
-      return Module['_BinaryenTableSet'](module, index, value);
+    'set'(name, index, value) {
+      return Module['_BinaryenTableSet'](module, strToStack(name), index, value);
     }
   }
 

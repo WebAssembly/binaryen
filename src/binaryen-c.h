@@ -2168,10 +2168,12 @@ BINARYEN_API BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
                                                       BinaryenIndex index);
 
 BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                                    const char* name,
                                                     BinaryenExpressionRef index,
                                                     BinaryenType type);
 BINARYEN_API BinaryenExpressionRef
 BinaryenTableSet(BinaryenModuleRef module,
+                 const char* name,
                  BinaryenExpressionRef index,
                  BinaryenExpressionRef value);
 
