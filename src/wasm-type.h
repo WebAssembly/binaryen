@@ -19,6 +19,7 @@
 
 #include "support/name.h"
 #include "wasm-features.h"
+#include <optional>
 #include <ostream>
 #include <vector>
 
