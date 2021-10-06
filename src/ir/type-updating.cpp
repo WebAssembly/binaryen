@@ -65,9 +65,8 @@ void GlobalTypeRewriter::update() {
     }
 
     // Apply a super, if there is one
-    HeapType super;
-    if (type.getSuperType(super)) {
-      typeBuilder.setSubType(i, typeIndices[super]);
+    if (auto super = type.getSuperType()) {
+      typeBuilder.setSubType(i, typeIndices[*super]);
     }
   }
 

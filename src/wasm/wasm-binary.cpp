@@ -255,7 +255,7 @@ void WasmBinaryWriter::writeTypes() {
       if (!super) {
         super = type.isFunction() ? HeapType::func : HeapType::data;
       }
-      writeHeapType(super);
+      writeHeapType(*super);
     }
   }
   finishSection(start);

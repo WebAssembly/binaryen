@@ -57,12 +57,12 @@ struct SubTypes {
   std::vector<HeapType> getAllSuperTypes(HeapType type) {
     std::vector<HeapType> ret;
     while (1) {
-      HeapType super;
-      if (!type.getSuperType(super)) {
+      auto super = type.getSuperType();
+      if (!super) {
         return ret;
       }
-      ret.push_back(super);
-      type = super;
+      ret.push_back(*super);
+      type = *super;
     }
   }
 
@@ -71,9 +71,8 @@ struct SubTypes {
 private:
   // Add a type to the graph.
   void note(HeapType type) {
-    HeapType super;
-    if (type.getSuperType(super)) {
-      typeSubTypes[super].push_back(type);
+    if (auto super = type.getSuperType()) {
+      typeSubTypes[*super].push_back(type);
     }
   }
 
