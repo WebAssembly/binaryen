@@ -29,56 +29,56 @@
 //
 // DELEGATE_END(id) - called at the end of a case.
 //
-// DELEGATE_GET_FIELD(id, name) - called to get a field by its name. This must
+// DELEGATE_GET_FIELD(id, field) - called to get a field by its name. This must
 //    know the object on which to get it, so it is just useful for the case
 //    where you operate on a single such object, but in that case it is nice
 //    because then other things can be defined automatically for you, see later.
 //
-// DELEGATE_FIELD_CHILD(id, name) - called for each child field (note: children
+// DELEGATE_FIELD_CHILD(id, field) - called for each child field (note: children
 //    are visited in reverse order, which is convenient for walking by pushing
 //    them to a stack first).
 //
-// DELEGATE_FIELD_OPTIONAL_CHILD(id, name) - called for a child that may not be
+// DELEGATE_FIELD_OPTIONAL_CHILD(id, field) - called for a child that may not be
 //    present (like a Return's value). If you do not define this then
 //    DELEGATE_FIELD_CHILD is called.
 //
-// DELEGATE_FIELD_CHILD_VECTOR(id, name) - called for a variable-sized vector of
+// DELEGATE_FIELD_CHILD_VECTOR(id, field) - called for a variable-sized vector of
 //    child pointers. If this is not defined, and DELEGATE_GET_FIELD is, then
 //    DELEGATE_FIELD_CHILD is called on them.
 //
-// DELEGATE_FIELD_INT(id, name) - called for an integer field (bool, enum,
+// DELEGATE_FIELD_INT(id, field) - called for an integer field (bool, enum,
 //    Index, int32, or int64).
 //
-// DELEGATE_FIELD_INT_ARRAY(id, name) - called for a std::array of fixed size of
+// DELEGATE_FIELD_INT_ARRAY(id, field) - called for a std::array of fixed size of
 //    integer values (like a SIMD mask). If this is not defined, and
 //    DELEGATE_GET_FIELD is, then DELEGATE_FIELD_INT is called on them.
 //
-// DELEGATE_FIELD_LITERAL(id, name) - called for a Literal.
+// DELEGATE_FIELD_LITERAL(id, field) - called for a Literal.
 //
-// DELEGATE_FIELD_NAME(id, name) - called for a Name.
+// DELEGATE_FIELD_NAME(id, field) - called for a Name.
 //
-// DELEGATE_FIELD_NAME_VECTOR(id, name) - called for a variable-sized vector of
+// DELEGATE_FIELD_NAME_VECTOR(id, field) - called for a variable-sized vector of
 //    names (like try's catch tag names). If this is not defined, and
 //    DELEGATE_GET_FIELD is, then DELEGATE_FIELD_CHILD is called on them.
 //
-// DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) - called for a scope name definition
+// DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) - called for a scope name definition
 //    (like a block's name).
 //
-// DELEGATE_FIELD_SCOPE_NAME_USE(id, name) - called for a scope name use (like
+// DELEGATE_FIELD_SCOPE_NAME_USE(id, field) - called for a scope name use (like
 //    a break's target).
 //
-// DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name) - called for a variable-sized
+// DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field) - called for a variable-sized
 //    vector of scope names (like a switch's targets). If this is not defined,
 //    and DELEGATE_GET_FIELD is, then DELEGATE_FIELD_SCOPE_NAME_USE is called on
 //    them.
 //
-// DELEGATE_FIELD_SIGNATURE(id, name) - called for a Signature.
+// DELEGATE_FIELD_SIGNATURE(id, field) - called for a Signature.
 //
-// DELEGATE_FIELD_TYPE(id, name) - called for a Type.
+// DELEGATE_FIELD_TYPE(id, field) - called for a Type.
 //
-// DELEGATE_FIELD_HEAPTYPE(id, name) - called for a HeapType.
+// DELEGATE_FIELD_HEAPTYPE(id, field) - called for a HeapType.
 //
-// DELEGATE_FIELD_ADDRESS(id, name) - called for an Address.
+// DELEGATE_FIELD_ADDRESS(id, field) - called for an Address.
 
 #ifndef DELEGATE_START
 #define DELEGATE_START(id)
@@ -89,91 +89,91 @@
 #endif
 
 #ifndef DELEGATE_FIELD_CHILD
-#error please define DELEGATE_FIELD_CHILD(id, name)
+#error please define DELEGATE_FIELD_CHILD(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_OPTIONAL_CHILD
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name) DELEGATE_FIELD_CHILD(id, name)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field) DELEGATE_FIELD_CHILD(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_CHILD_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-  for (int i = int((DELEGATE_GET_FIELD(id, name)).size()) - 1; i >= 0; i--) {  \
-    DELEGATE_FIELD_CHILD(id, name[i]);                                         \
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                  \
+  for (int i = int((DELEGATE_GET_FIELD(id, field)).size()) - 1; i >= 0; i--) {  \
+    DELEGATE_FIELD_CHILD(id, field[i]);                                         \
   }
 #else
-#error please define DELEGATE_FIELD_CHILD_VECTOR(id, name)
+#error please define DELEGATE_FIELD_CHILD_VECTOR(id, field)
 #endif
 #endif
 
 #ifndef DELEGATE_FIELD_INT
-#error please define DELEGATE_FIELD_INT(id, name)
+#error please define DELEGATE_FIELD_INT(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_INT_ARRAY
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_INT_ARRAY(id, name)                                     \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
-    DELEGATE_FIELD_INT(id, name[i]);                                           \
+#define DELEGATE_FIELD_INT_ARRAY(id, field)                                     \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {          \
+    DELEGATE_FIELD_INT(id, field[i]);                                           \
   }
 #else
-#error please define DELEGATE_FIELD_INT_ARRAY(id, name)
+#error please define DELEGATE_FIELD_INT_ARRAY(id, field)
 #endif
 #endif
 
 #ifndef DELEGATE_FIELD_LITERAL
-#error please define DELEGATE_FIELD_LITERAL(id, name)
+#error please define DELEGATE_FIELD_LITERAL(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_NAME
-#error please define DELEGATE_FIELD_NAME(id, name)
+#error please define DELEGATE_FIELD_NAME(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_NAME_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_NAME_VECTOR(id, name)                                   \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
-    DELEGATE_FIELD_NAME(id, name[i]);                                          \
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)                                   \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {          \
+    DELEGATE_FIELD_NAME(id, field[i]);                                          \
   }
 #else
-#error please define DELEGATE_FIELD_NAME_VECTOR(id, name)
+#error please define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #endif
 #endif
 
 #ifndef DELEGATE_FIELD_SCOPE_NAME_DEF
-#error please define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#error please define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE
-#error please define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
+#error please define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                         \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
-    DELEGATE_FIELD_SCOPE_NAME_USE(id, name[i]);                                \
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                         \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {          \
+    DELEGATE_FIELD_SCOPE_NAME_USE(id, field[i]);                                \
   }
 #else
-#error please define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#error please define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #endif
 #endif
 
 #ifndef DELEGATE_FIELD_SIGNATURE
-#error please define DELEGATE_FIELD_SIGNATURE(id, name)
+#error please define DELEGATE_FIELD_SIGNATURE(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_TYPE
-#error please define DELEGATE_FIELD_TYPE(id, name)
+#error please define DELEGATE_FIELD_TYPE(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_HEAPTYPE
-#error please define DELEGATE_FIELD_HEAPTYPE(id, name)
+#error please define DELEGATE_FIELD_HEAPTYPE(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_ADDRESS
-#error please define DELEGATE_FIELD_ADDRESS(id, name)
+#error please define DELEGATE_FIELD_ADDRESS(id, field)
 #endif
 
 switch (DELEGATE_ID) {
