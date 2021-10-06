@@ -828,6 +828,8 @@ void TableGet::finalize() {
 void TableSet::finalize() {
   if (index->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
+  } else {
+    type = Type::none;
   }
 }
 

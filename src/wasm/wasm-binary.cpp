@@ -6230,7 +6230,6 @@ void WasmBinaryBuilder::visitTableSet(TableSet* curr) {
   }
   curr->index = popNonVoidExpression();
   curr->value = popNonVoidExpression();
-  curr->type = tables[tableIdx]->type;
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(curr);

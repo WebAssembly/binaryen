@@ -2056,10 +2056,8 @@ void FunctionValidator::visitTableSet(TableSet* curr) {
   auto* table = getModule()->getTableOrNull(curr->table);
   if (shouldBeTrue(!!table, curr, "table.set table must exist") &&
       curr->type != Type::unreachable) {
-    shouldBeEqual(
-      curr->type, table->type, curr, "table.set must have same type as table.");
     shouldBeSubType(curr->value->type,
-                    curr->type,
+                    table->type,
                     curr,
                     "table.set value must have right type");
   }
