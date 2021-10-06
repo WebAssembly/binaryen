@@ -478,7 +478,6 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefNullId: {
     DELEGATE_START(RefNull);
-    DELEGATE_FIELD_TYPE(RefNull, type);
     DELEGATE_END(RefNull);
     break;
   }

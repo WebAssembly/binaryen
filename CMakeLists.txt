@@ -145,6 +145,8 @@ if(BYN_ENABLE_LTO)
   if(NOT APPLE)
     add_link_flag("-fuse-ld=lld")
   endif()
+  set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=2)
+  set(CMAKE_JOB_POOL_LINK link_job_pool)
   add_compile_flag("-flto=thin")
 endif()
 
