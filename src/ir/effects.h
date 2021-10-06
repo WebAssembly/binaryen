@@ -594,6 +594,11 @@ private:
       // Traps when the index is out of bounds for the table.
       parent.implicitTrap = true;
     }
+    void visitTableSet(TableSet* curr) {
+      // TODO: track readsTable/writesTable, like memory?
+      // Traps when the index is out of bounds for the table.
+      parent.implicitTrap = true;
+    }
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) {
       if (parent.tryDepth == 0) {

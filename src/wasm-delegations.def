@@ -59,6 +59,7 @@ DELEGATE(RefIs);
 DELEGATE(RefFunc);
 DELEGATE(RefEq);
 DELEGATE(TableGet);
+DELEGATE(TableSet);
 DELEGATE(Try);
 DELEGATE(Throw);
 DELEGATE(Rethrow);

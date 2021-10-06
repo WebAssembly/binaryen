@@ -475,6 +475,7 @@ enum ASTNodes {
   GlobalSet = 0x24,
 
   TableGet = 0x25,
+  TableSet = 0x26,
 
   I32LoadMem = 0x28,
   I64LoadMem = 0x29,
@@ -1662,6 +1663,7 @@ public:
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);
+  void visitTableSet(TableSet* curr);
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

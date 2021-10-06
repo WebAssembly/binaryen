@@ -226,14 +226,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void tableStore(Name tableName, Address addr, const Literal& entry) override {
     auto& table = tables[tableName];
     if (addr >= table.size()) {
-      trap("out of bounds table access");
+      trap("tableSet out of bounds access");
     } else {
       table[addr] = entry;
     }
   }
 
   Literal tableLoad(Name tableName, Address addr) override {
-
     auto it = tables.find(tableName);
     if (it == tables.end()) {
       trap("tableGet on non-existing table");
@@ -241,7 +240,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
     auto& table = it->second;
     if (addr >= table.size()) {
-      trap("tableGet overflow");
+      trap("tableGet out of bounds access");
     }
 
     return table[addr];

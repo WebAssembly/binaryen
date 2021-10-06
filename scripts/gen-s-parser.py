@@ -522,6 +522,7 @@ instructions = [
     ("ref.eq",               "makeRefEq(s)"),
     # TODO Add table instructions
     ("table.get",            "makeTableGet(s)"),
+    ("table.set",            "makeTableSet(s)"),
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),

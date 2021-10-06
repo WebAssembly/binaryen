@@ -1359,6 +1359,7 @@ public:
     return Literal(int32_t(left == right));
   }
   Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -2162,6 +2163,10 @@ public:
     NOTE_ENTER("TableGet");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableSet(TableSet* curr) {
+    NOTE_ENTER("TableSet");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2792,6 +2797,21 @@ private:
       auto info = instance.getTableInterfaceInfo(curr->table);
       return info.interface->tableLoad(info.name,
                                        index.getSingleValue().geti32());
+    }
+
+    Flow visitTableSet(TableSet* curr) {
+      NOTE_ENTER("TableSet");
+      Flow index = this->visit(curr->index);
+      if (index.breaking()) {
+        return index;
+      }
+      Flow value = this->visit(curr->value);
+      if (value.breaking()) {
+        return value;
+      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      return info.interface->tableStore(
+        info.name, index.getSingleValue().geti32(), value.getSingleValue());
     }
 
     Flow visitLocalGet(LocalGet* curr) {

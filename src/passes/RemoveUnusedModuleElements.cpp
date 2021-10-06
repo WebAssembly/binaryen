@@ -129,6 +129,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
   }
   void visitTableGet(TableGet* curr) { maybeAddTable(curr->table); }
+  void visitTableSet(TableSet* curr) { maybeAddTable(curr->table); }
   void visitThrow(Throw* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Tag, curr->tag));
   }

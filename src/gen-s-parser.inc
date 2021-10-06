@@ -3041,9 +3041,17 @@ switch (op[0]) {
   }
   case 't': {
     switch (op[1]) {
-      case 'a':
-        if (strcmp(op, "table.get") == 0) { return makeTableGet(s); }
-        goto parse_error;
+      case 'a': {
+        switch (op[6]) {
+          case 'g':
+            if (strcmp(op, "table.get") == 0) { return makeTableGet(s); }
+            goto parse_error;
+          case 's':
+            if (strcmp(op, "table.set") == 0) { return makeTableSet(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       case 'h': {
         switch (op[2]) {
           case 'e':
