@@ -1012,19 +1012,19 @@ void test_core() {
   BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
   BinaryenRemoveElementSegment(module, "p2");
 
-  BinaryenTableSet(module,
-                   "0",
-                   BinaryenConst(module, BinaryenLiteralInt32(0)),
-                   (BinaryenExpressionRef)sinker);
+  BinaryenExpressionRef funcrefExpr1 =
+    BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
 
-  BinaryenExpressionRef funcFromTable =
+  BinaryenExpressionPrint(BinaryenTableSet(
+    module, "0", BinaryenConst(module, BinaryenLiteralInt32(0)), funcrefExpr1));
+
+  BinaryenExpressionRef funcrefExpr2 =
     BinaryenTableGet(module,
                      "0",
                      BinaryenConst(module, BinaryenLiteralInt32(0)),
                      BinaryenTypeFuncref());
 
-  assert(strcmp(BinaryenFunctionGetName((BinaryenFunctionRef)funcFromTable),
-                "kitchen()sinker") == 0);
+  BinaryenExpressionPrint(funcrefExpr2);
 
   // Memory. One per module
 

@@ -735,9 +735,6 @@ function test_core() {
   assert(module.getNumTables() === 1);
   assert(module.getNumElementSegments() === 1);
 
-  module.table.set("t0", module.i32(1), sinker);
-  console.log(binaryen.getFunctionInfo(module.table.get("t0", module.i32(1), binaryen.funcref)).name);
-
   // Memory. One per module
 
   module.setMemory(1, 256, "mem", [
