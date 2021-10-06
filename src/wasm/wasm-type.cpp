@@ -18,6 +18,7 @@
 #include <array>
 #include <cassert>
 #include <map>
+#include <optional>
 #include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
