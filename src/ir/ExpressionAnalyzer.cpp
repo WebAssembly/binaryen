@@ -169,23 +169,23 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   WASM_UNUSED(castRight);
 
 // Handle each type of field, comparing it appropriately.
-#define DELEGATE_FIELD_CHILD(id, field)                                         \
-  leftStack.push_back(castLeft->field);                                         \
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  leftStack.push_back(castLeft->field);                                        \
   rightStack.push_back(castRight->field);
 
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                  \
-  if (castLeft->field.size() != castRight->field.size()) {                       \
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
     return false;                                                              \
   }                                                                            \
-  for (auto* child : castLeft->field) {                                         \
+  for (auto* child : castLeft->field) {                                        \
     leftStack.push_back(child);                                                \
   }                                                                            \
-  for (auto* child : castRight->field) {                                        \
+  for (auto* child : castRight->field) {                                       \
     rightStack.push_back(child);                                               \
   }
 
-#define COMPARE_FIELD(field)                                                    \
-  if (castLeft->field != castRight->field) {                                     \
+#define COMPARE_FIELD(field)                                                   \
+  if (castLeft->field != castRight->field) {                                   \
     return false;                                                              \
   }
 
@@ -197,12 +197,12 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 #define DELEGATE_FIELD_HEAPTYPE(id, field) COMPARE_FIELD(field)
 #define DELEGATE_FIELD_ADDRESS(id, field) COMPARE_FIELD(field)
 
-#define COMPARE_LIST(field)                                                     \
-  if (castLeft->field.size() != castRight->field.size()) {                       \
+#define COMPARE_LIST(field)                                                    \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
     return false;                                                              \
   }                                                                            \
-  for (Index i = 0; i < castLeft->field.size(); i++) {                          \
-    if (castLeft->field[i] != castRight->field[i]) {                             \
+  for (Index i = 0; i < castLeft->field.size(); i++) {                         \
+    if (castLeft->field[i] != castRight->field[i]) {                           \
       return false;                                                            \
     }                                                                          \
   }
@@ -210,23 +210,23 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 #define DELEGATE_FIELD_INT_ARRAY(id, field) COMPARE_LIST(field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field) COMPARE_LIST(field)
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                                \
-  if (castLeft->field.is() != castRight->field.is()) {                           \
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
+  if (castLeft->field.is() != castRight->field.is()) {                         \
     return false;                                                              \
   }                                                                            \
   rightNames[castLeft->field] = castRight->field;
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                                \
-  if (!compareNames(castLeft->field, castRight->field)) {                        \
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
+  if (!compareNames(castLeft->field, castRight->field)) {                      \
     return false;                                                              \
   }
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                         \
-  if (castLeft->field.size() != castRight->field.size()) {                       \
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
     return false;                                                              \
   }                                                                            \
-  for (Index i = 0; i < castLeft->field.size(); i++) {                          \
-    if (!compareNames(castLeft->field[i], castRight->field[i])) {                \
+  for (Index i = 0; i < castLeft->field.size(); i++) {                         \
+    if (!compareNames(castLeft->field[i], castRight->field[i])) {              \
       return false;                                                            \
     }                                                                          \
   }
@@ -305,9 +305,9 @@ struct Hasher {
 // Handle each type of field, comparing it appropriately.
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_CHILD(id, field)                                         \
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
   if (visitChildren) {                                                         \
-    stack.push_back(cast->field);                                               \
+    stack.push_back(cast->field);                                              \
   }
 
 #define HASH_FIELD(field) rehash(digest, cast->field);

@@ -357,10 +357,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_CHILD(id, field)                                         \
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
   self->pushTask(SubType::scan, &cast->field);
 
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                                \
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
   self->maybePushTask(SubType::scan, &cast->field);
 
 #define DELEGATE_FIELD_INT(id, field)

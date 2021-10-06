@@ -83,9 +83,9 @@ public:
 
 #define DELEGATE_FIELD_CHILD(id, field) self->addChild(parent, &cast->field);
 
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                                \
-  if (cast->field) {                                                            \
-    self->addChild(parent, &cast->field);                                       \
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  if (cast->field) {                                                           \
+    self->addChild(parent, &cast->field);                                      \
   }
 
 #define DELEGATE_FIELD_INT(id, field)

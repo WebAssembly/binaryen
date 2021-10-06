@@ -325,8 +325,8 @@ inline Index getNumChildren(Expression* curr) {
 
 #define DELEGATE_FIELD_CHILD(id, field) ret++;
 
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                                \
-  if (cast->field) {                                                            \
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  if (cast->field) {                                                           \
     ret++;                                                                     \
   }
 
