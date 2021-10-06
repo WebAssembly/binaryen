@@ -226,7 +226,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void tableStore(Name tableName, Address addr, const Literal& entry) override {
     auto& table = tables[tableName];
     if (addr >= table.size()) {
-      trap("tableSet out of bounds access");
+      trap("out of bounds table access");
     } else {
       table[addr] = entry;
     }
@@ -240,7 +240,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
     auto& table = it->second;
     if (addr >= table.size()) {
-      trap("tableGet out of bounds access");
+      trap("out of bounds table access");
     }
 
     return table[addr];
