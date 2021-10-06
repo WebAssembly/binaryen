@@ -91,6 +91,8 @@ function initializeConstants() {
     'RefIs',
     'RefFunc',
     'RefEq',
+    'TableGet',
+    'TableSet',
     'Try',
     'Throw',
     'Rethrow',
@@ -658,6 +660,15 @@ function wrapModule(module, self = {}) {
     },
     'set'(name, value) {
       return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
+    }
+  }
+
+  self['table'] = {
+    'get'(name, type) {
+      return Module['_BinaryenTableGet'](module, strToStack(name), type);
+    },
+    'set'(name, value) {
+      return Module['_BinaryenTableSet'](module, strToStack(name), value);
     }
   }
 

@@ -2167,6 +2167,14 @@ BINARYEN_API BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module,
 BINARYEN_API BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
                                                       BinaryenIndex index);
 
+BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                                    BinaryenExpressionRef index,
+                                                    BinaryenType type);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSet(BinaryenModuleRef module,
+                 BinaryenExpressionRef index,
+                 BinaryenExpressionRef value);
+
 // Elem segments
 
 BINARYEN_REF(ElementSegment);

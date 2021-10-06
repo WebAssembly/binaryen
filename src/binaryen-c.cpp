@@ -3538,6 +3538,24 @@ BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
   }
   return tables[index].get();
 }
+BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                       BinaryenExpressionRef index,
+                                       BinaryenType type) {
+  auto* ret = ((Module*)module)->allocator.alloc<TableGet>();
+  ret->index = (Expression*)index;
+  ret->type = Type(type);
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
+                                       BinaryenExpressionRef index,
+                                       BinaryenExpressionRef value) {
+  auto* ret = ((Module*)module)->allocator.alloc<TableSet>();
+  ret->index = (Expression*)index;
+  ret->value = (Expression*)value;
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
 BinaryenElementSegmentRef
 BinaryenAddActiveElementSegment(BinaryenModuleRef module,
                                 const char* table,

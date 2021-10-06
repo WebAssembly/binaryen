@@ -88,6 +88,8 @@ RefNullId: 41
 RefIsId: 42
 RefFuncId: 43
 RefEqId: 44
+TableGetId: 45
+TableSetId: 46
 TryId: 47
 ThrowId: 48
 RethrowId: 49
