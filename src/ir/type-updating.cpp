@@ -209,7 +209,10 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     auto rtt = type.getRtt();
     auto newRtt = rtt;
     auto heapType = type.getHeapType();
-    assert(typeIndices.count(heapType));
+    if (!typeIndices.count(heapType)) {
+      // See above with references.
+      return type;
+    }
     newRtt.heapType = typeBuilder.getTempHeapType(typeIndices[heapType]);
     return typeBuilder.getTempRttType(newRtt);
   }
