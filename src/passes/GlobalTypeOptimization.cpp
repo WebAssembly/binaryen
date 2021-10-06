@@ -55,9 +55,6 @@ struct FieldInfo {
   }
 };
 
-using FieldInfoStructValuesMap = StructValuesMap<FieldInfo>;
-using FieldInfoFunctionStructValuesMap = FunctionStructValuesMap<FieldInfo>;
-
 struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
     return new FieldInfoScanner(functionNewInfos, functionSetInfos);
@@ -92,14 +89,14 @@ struct GlobalTypeOptimization : public Pass {
     }
 
     // Find and analyze struct operations inside each function.
-    FieldInfoFunctionStructValuesMap functionNewInfos(*module),
+    FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    FieldInfoStructValuesMap combinedNewInfos, combinedSetInfos;
+    StructValuesMap<FieldInfo> combinedNewInfos, combinedSetInfos;
     functionSetInfos.combineInto(combinedSetInfos);
     // TODO: combine newInfos as well, once we have a need for that (we will
     //       when we do things like subtyping).
