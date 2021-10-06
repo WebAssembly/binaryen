@@ -155,7 +155,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass("gto",
-               "rewrite global GC types to be more optimal",
+               "globally optimize GC types",
                createGlobalTypeOptimizationPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
