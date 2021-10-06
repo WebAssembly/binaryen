@@ -305,6 +305,43 @@ struct TypeUpdater
   }
 };
 
+// Rewrites global heap types across an entire module, allowing changes to be
+// made while doing so.
+class GlobalTypeRewriter {
+public:
+  GlobalTypeRewriter(Module& wasm);
+  virtual ~GlobalTypeRewriter() {}
+
+  // Main entry point. This performs the entire process of creating new heap
+  // types and calling the hooks below, then applies the new types throughout
+  // the module.
+  void update();
+
+  // Subclasses can implement these methods to modify the new set of types that
+  // we map to. By default, we simply copy over the types, and these functions
+  // are the hooks to apply changes through. The methods receive as input the
+  // old type, and a structure that they can modify. That structure is the one
+  // used to define the new type in the TypeBuilder.
+  virtual void modifyStruct(HeapType oldType, Struct& struct_) {}
+  virtual void modifyArray(HeapType oldType, Array& array) {}
+  virtual void modifySignature(HeapType oldType, Signature& sig) {}
+
+  // Map an old type to a temp type. This can be called from the above hooks,
+  // so that they can use a proper temp type of the TypeBuilder while modifying
+  // things.
+  Type getTempType(Type type);
+
+private:
+  Module& wasm;
+  TypeBuilder typeBuilder;
+
+  // The list of old types.
+  std::vector<HeapType> types;
+
+  // Type indices of the old types.
+  std::unordered_map<HeapType, Index> typeIndices;
+};
+
 namespace TypeUpdating {
 
 // Checks whether a type is valid as a local, or whether
