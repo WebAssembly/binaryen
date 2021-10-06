@@ -42,15 +42,15 @@
 //    present (like a Return's value). If you do not define this then
 //    DELEGATE_FIELD_CHILD is called.
 //
-// DELEGATE_FIELD_CHILD_VECTOR(id, field) - called for a variable-sized vector of
-//    child pointers. If this is not defined, and DELEGATE_GET_FIELD is, then
+// DELEGATE_FIELD_CHILD_VECTOR(id, field) - called for a variable-sized vector
+//   of  child pointers. If this is not defined, and DELEGATE_GET_FIELD is, then
 //    DELEGATE_FIELD_CHILD is called on them.
 //
 // DELEGATE_FIELD_INT(id, field) - called for an integer field (bool, enum,
 //    Index, int32, or int64).
 //
-// DELEGATE_FIELD_INT_ARRAY(id, field) - called for a std::array of fixed size of
-//    integer values (like a SIMD mask). If this is not defined, and
+// DELEGATE_FIELD_INT_ARRAY(id, field) - called for a std::array of fixed size
+//    of integer values (like a SIMD mask). If this is not defined, and
 //    DELEGATE_GET_FIELD is, then DELEGATE_FIELD_INT is called on them.
 //
 // DELEGATE_FIELD_LITERAL(id, field) - called for a Literal.
@@ -98,9 +98,9 @@
 
 #ifndef DELEGATE_FIELD_CHILD_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                  \
-  for (int i = int((DELEGATE_GET_FIELD(id, field)).size()) - 1; i >= 0; i--) {  \
-    DELEGATE_FIELD_CHILD(id, field[i]);                                         \
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  for (int i = int((DELEGATE_GET_FIELD(id, field)).size()) - 1; i >= 0; i--) { \
+    DELEGATE_FIELD_CHILD(id, field[i]);                                        \
   }
 #else
 #error please define DELEGATE_FIELD_CHILD_VECTOR(id, field)
@@ -113,9 +113,9 @@
 
 #ifndef DELEGATE_FIELD_INT_ARRAY
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_INT_ARRAY(id, field)                                     \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {          \
-    DELEGATE_FIELD_INT(id, field[i]);                                           \
+#define DELEGATE_FIELD_INT_ARRAY(id, field)                                    \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
+    DELEGATE_FIELD_INT(id, field[i]);                                          \
   }
 #else
 #error please define DELEGATE_FIELD_INT_ARRAY(id, field)
@@ -132,9 +132,9 @@
 
 #ifndef DELEGATE_FIELD_NAME_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)                                   \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {          \
-    DELEGATE_FIELD_NAME(id, field[i]);                                          \
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)                                  \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
+    DELEGATE_FIELD_NAME(id, field[i]);                                         \
   }
 #else
 #error please define DELEGATE_FIELD_NAME_VECTOR(id, field)
@@ -151,9 +151,9 @@
 
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                         \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {          \
-    DELEGATE_FIELD_SCOPE_NAME_USE(id, field[i]);                                \
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
+    DELEGATE_FIELD_SCOPE_NAME_USE(id, field[i]);                               \
   }
 #else
 #error please define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
