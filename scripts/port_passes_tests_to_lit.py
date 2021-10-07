@@ -57,8 +57,11 @@ def port_test(args, test):
 
     for bad in ['noprint', 'metrics', 'fuzz', 'print', 'emit', 'dump']:
         if bad in joined_passes:
-            warn('Skipping due to nonstandard output')
-            return
+            if args.force:
+                warn('Porting despite possible nonstandard output')
+            else:
+                warn('Skipping due to nonstandard output')
+                return
 
     passes = joined_passes.split('_')
     opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p)
