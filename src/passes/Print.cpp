@@ -435,7 +435,20 @@ struct PrintExpressionContents
 
     o << '(';
     printMinor(o, "type ");
-    TypeNamePrinter(o, wasm).print(HeapType(curr->sig));
+
+    auto heapType = HeapType(curr->sig);
+    if (wasm) {
+      auto tableType = wasm->getTable(curr->table)->type;
+      if (tableType.isFunction() && tableType != Type::funcref) {
+        auto tableHeapType = tableType.getHeapType();
+        auto tableSig = tableHeapType.getSignature();
+        if (curr->sig == tableSig) {
+          heapType = tableHeapType;
+        }
+      }
+    }
+    TypeNamePrinter(o, wasm).print(heapType);
+
     o << ')';
   }
   void visitLocalGet(LocalGet* curr) {
