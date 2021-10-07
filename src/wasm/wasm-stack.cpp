@@ -80,11 +80,25 @@ void BinaryInstWriter::visitCall(Call* curr) {
 }
 
 void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
-  Index tableIdx = parent.getTableIndex(curr->table);
+  // FIXME We should probably store a heap type on CallIndirect, see
+  //       https://github.com/WebAssembly/binaryen/issues/4220
+  //       For now, copy the heap type from the table if it matches - then a
+  //       nominal check will succeed too. If it does not match, then just emit
+  //       something for it like we always used to, using HeapType(sig).
+  HeapType heapType = HeapType(curr->sig);
+  auto tableType = parent.getModule()->getTable(curr->table)->type;
+  if (tableType.isFunction() && tableType != Type::funcref) {
+    auto tableHeapType = tableType.getHeapType();
+    auto tableSig = tableHeapType.getSignature();
+    if (curr->sig == tableSig) {
+      heapType = tableHeapType;
+    }
+  }
 
+  Index tableIdx = parent.getTableIndex(curr->table);
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->sig)) << U32LEB(tableIdx);
+  o << op << U32LEB(parent.getTypeIndex(heapType)) << U32LEB(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
