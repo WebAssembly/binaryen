@@ -181,16 +181,14 @@ struct Directize : public Pass {
     using TablesWithSet = std::unordered_set<Name>;
 
     ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
-      *module,
-      [&](Function* func, TablesWithSet& tablesWithSet) {
+      *module, [&](Function* func, TablesWithSet& tablesWithSet) {
         if (func->imported()) {
           return;
         }
         for (auto* set : FindAll<TableSet>(func->body).list) {
           tablesWithSet.insert(set->table);
         }
-      }
-    );
+      });
 
     TablesWithSet tablesWithSet;
     for (auto& kv : analysis.map) {
