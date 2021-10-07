@@ -421,6 +421,11 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
       }
     }
   });
+  if (wasm.features.hasExceptionHandling()) {
+    ModuleUtils::iterImportedTags(wasm, [&](Tag* import) {
+      meta << nextElement() << '"' << import->base.str << '"';
+    });
+  }
   meta << "\n  ],\n";
 
   meta << "  \"globalImports\": [";
