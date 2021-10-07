@@ -79,6 +79,40 @@
       )
     )
   )
+
+  ;; CHECK-BINARY:      (func $set-get
+  ;; CHECK-BINARY-NEXT:  (table.set $table-1
+  ;; CHECK-BINARY-NEXT:   (i32.const 0)
+  ;; CHECK-BINARY-NEXT:   (ref.func $foo)
+  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT:  (drop
+  ;; CHECK-BINARY-NEXT:   (table.get $table-1
+  ;; CHECK-BINARY-NEXT:    (i32.const 0)
+  ;; CHECK-BINARY-NEXT:   )
+  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT: )
+  ;; CHECK-TEXT:      (func $set-get
+  ;; CHECK-TEXT-NEXT:  (table.set $table-1
+  ;; CHECK-TEXT-NEXT:   (i32.const 0)
+  ;; CHECK-TEXT-NEXT:   (ref.func $foo)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:   (table.get $table-1
+  ;; CHECK-TEXT-NEXT:    (i32.const 0)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  (func $set-get
+    (table.set $table-1
+      (i32.const 0)
+      (ref.func $foo)
+    )
+    (drop
+      (table.get $table-1
+        (i32.const 0)
+      )
+    )
+  )
 )
 ;; CHECK-NODEBUG:      (type $none_=>_none (func))
 
@@ -103,6 +137,18 @@
 ;; CHECK-NODEBUG-NEXT:  (drop
 ;; CHECK-NODEBUG-NEXT:   (table.get $1
 ;; CHECK-NODEBUG-NEXT:    (i32.const 100)
+;; CHECK-NODEBUG-NEXT:   )
+;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT: )
+
+;; CHECK-NODEBUG:      (func $2
+;; CHECK-NODEBUG-NEXT:  (table.set $0
+;; CHECK-NODEBUG-NEXT:   (i32.const 0)
+;; CHECK-NODEBUG-NEXT:   (ref.func $0)
+;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT:  (drop
+;; CHECK-NODEBUG-NEXT:   (table.get $0
+;; CHECK-NODEBUG-NEXT:    (i32.const 0)
 ;; CHECK-NODEBUG-NEXT:   )
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )

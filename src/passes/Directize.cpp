@@ -171,6 +171,7 @@ private:
   }
 };
 
+// TODO: handle table.get / table.set here as well
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
     std::unordered_map<Name, TableUtils::FlatTable> validTables;
