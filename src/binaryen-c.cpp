@@ -1291,24 +1291,18 @@ BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
                                        const char* name,
                                        BinaryenExpressionRef index,
                                        BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<TableGet>();
-  ret->table = name;
-  ret->index = (Expression*)index;
-  ret->type = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableGet(name, (Expression*)index, Type(type)));
 }
 
 BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
                                        const char* name,
                                        BinaryenExpressionRef index,
                                        BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<TableSet>();
-  ret->table = name;
-  ret->index = (Expression*)index;
-  ret->value = (Expression*)value;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableSet(name, (Expression*)index, (Expression*)value));
 }
 
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,

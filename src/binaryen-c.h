@@ -602,6 +602,7 @@ BINARYEN_API BinaryenOp BinaryenRefAsData(void);
 BINARYEN_API BinaryenOp BinaryenRefAsI31(void);
 
 BINARYEN_REF(Expression);
+
 // Block: name can be NULL. Specifying BinaryenUndefined() as the 'type'
 //        parameter indicates that the block's type shall be figured out
 //        automatically instead of explicitly providing it. This conforms
