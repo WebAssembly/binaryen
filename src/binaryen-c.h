@@ -602,15 +602,6 @@ BINARYEN_API BinaryenOp BinaryenRefAsData(void);
 BINARYEN_API BinaryenOp BinaryenRefAsI31(void);
 
 BINARYEN_REF(Expression);
-BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
-                                                    const char* name,
-                                                    BinaryenExpressionRef index,
-                                                    BinaryenType type);
-BINARYEN_API BinaryenExpressionRef
-BinaryenTableSet(BinaryenModuleRef module,
-                 const char* name,
-                 BinaryenExpressionRef index,
-                 BinaryenExpressionRef value);
 // Block: name can be NULL. Specifying BinaryenUndefined() as the 'type'
 //        parameter indicates that the block's type shall be figured out
 //        automatically instead of explicitly providing it. This conforms
@@ -859,6 +850,15 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);
+BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                                    const char* name,
+                                                    BinaryenExpressionRef index,
+                                                    BinaryenType type);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSet(BinaryenModuleRef module,
+                 const char* name,
+                 BinaryenExpressionRef index,
+                 BinaryenExpressionRef value);
 // Try: name can be NULL. delegateTarget should be NULL in try-catch.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTry(BinaryenModuleRef module,
