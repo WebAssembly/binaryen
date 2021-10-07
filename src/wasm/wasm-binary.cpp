@@ -2791,6 +2791,8 @@ void WasmBinaryBuilder::processNames() {
         callIndirect->table = getTableName(index);
       } else if (auto* get = ref->dynCast<TableGet>()) {
         get->table = getTableName(index);
+      } else if (auto* set = ref->dynCast<TableSet>()) {
+        set->table = getTableName(index);
       } else {
         WASM_UNREACHABLE("Invalid type in table references");
       }
@@ -3523,6 +3525,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::TableGet:
       visitTableGet((curr = allocator.alloc<TableGet>())->cast<TableGet>());
+      break;
+    case BinaryConsts::TableSet:
+      visitTableSet((curr = allocator.alloc<TableSet>())->cast<TableSet>());
       break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
@@ -6212,6 +6217,19 @@ void WasmBinaryBuilder::visitTableGet(TableGet* curr) {
   }
   curr->index = popNonVoidExpression();
   curr->type = tables[tableIdx]->type;
+  curr->finalize();
+  // Defer setting the table name for later, when we know it.
+  tableRefs[tableIdx].push_back(curr);
+}
+
+void WasmBinaryBuilder::visitTableSet(TableSet* curr) {
+  BYN_TRACE("zz node: TableSet\n");
+  Index tableIdx = getU32LEB();
+  if (tableIdx >= tables.size()) {
+    throwError("bad table index");
+  }
+  curr->value = popNonVoidExpression();
+  curr->index = popNonVoidExpression();
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(curr);

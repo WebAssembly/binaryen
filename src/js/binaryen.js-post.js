@@ -91,6 +91,8 @@ function initializeConstants() {
     'RefIs',
     'RefFunc',
     'RefEq',
+    'TableGet',
+    'TableSet',
     'Try',
     'Throw',
     'Rethrow',
@@ -549,6 +551,8 @@ function initializeConstants() {
     'WritesGlobal',
     'ReadsMemory',
     'WritesMemory',
+    'ReadsTable',
+    'WritesTable',
     'ImplicitTrap',
     'IsAtomic',
     'Throws',
@@ -658,6 +662,15 @@ function wrapModule(module, self = {}) {
     },
     'set'(name, value) {
       return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
+    }
+  }
+
+  self['table'] = {
+    'get'(name, index, type) {
+      return Module['_BinaryenTableGet'](module, strToStack(name), index, type);
+    },
+    'set'(name, index, value) {
+      return Module['_BinaryenTableSet'](module, strToStack(name), index, value);
     }
   }
 
@@ -2797,6 +2810,21 @@ Module['getExpressionInfo'] = function(expr) {
         'name': UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr)),
         'value': Module['_BinaryenGlobalSetGetValue'](expr)
       };
+    case Module['TableGetId']:
+      return {
+        'id': id,
+        'type': type,
+        'table': UTF8ToString(Module['_BinaryenTableGetGetTable'](expr)),
+        'index': Module['_BinaryenTableGetGetIndex'](expr)
+      };
+    case Module['TableSetId']:
+      return {
+        'id': id,
+        'type': type,
+        'table': UTF8ToString(Module['_BinaryenTableSetGetTable'](expr)),
+        'index': Module['_BinaryenTableSetGetIndex'](expr),
+        'value': Module['_BinaryenTableSetGetValue'](expr)
+      };
     case Module['LoadId']:
       return {
         'id': id,
@@ -3764,6 +3792,42 @@ Module['GlobalSet'] = makeExpressionWrapper({
   },
   'setValue'(expr, valueExpr) {
     Module['_BinaryenGlobalSetSetValue'](expr, valueExpr);
+  }
+});
+
+Module['TableGet'] = makeExpressionWrapper({
+  'getTable'(expr) {
+    return UTF8ToString(Module['_BinaryenTableGetGetTable'](expr));
+  },
+  'setTable'(expr, name) {
+    preserveStack(() => { Module['_BinaryenTableGetSetTable'](expr, strToStack(name)) });
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenTableGetGetIndex'](expr);
+  },
+  'setIndex'(expr, indexExpr) {
+    Module['_BinaryenTableGetSetIndex'](expr, indexExpr);
+  }
+});
+
+Module['TableSet'] = makeExpressionWrapper({
+  'getTable'(expr) {
+    return UTF8ToString(Module['_BinaryenTableSetGetTable'](expr));
+  },
+  'setTable'(expr, name) {
+    preserveStack(() => { Module['_BinaryenTableSetSetTable'](expr, strToStack(name)) });
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenTableSetGetIndex'](expr);
+  },
+  'setIndex'(expr, indexExpr) {
+    Module['_BinaryenTableSetSetIndex'](expr, indexExpr);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenTableSetGetValue'](expr);
+  },
+  'setValue'(expr, valueExpr) {
+    Module['_BinaryenTableSetSetValue'](expr, valueExpr);
   }
 });
 

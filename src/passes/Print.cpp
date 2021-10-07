@@ -1846,6 +1846,10 @@ struct PrintExpressionContents
     printMedium(o, "table.get ");
     printName(curr->table, o);
   }
+  void visitTableSet(TableSet* curr) {
+    printMedium(o, "table.set ");
+    printName(curr->table, o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {

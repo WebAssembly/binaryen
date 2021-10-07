@@ -75,6 +75,8 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
+  bool readsTable = false;
+  bool writesTable = false;
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
   bool readsStruct = false;
@@ -129,6 +131,7 @@ public:
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
+  bool accessesTable() const { return calls || readsTable || writesTable; }
   bool accessesStruct() const { return calls || readsStruct || writesStruct; }
   bool accessesArray() const { return calls || readsArray || writesArray; }
   // Check whether this may transfer control flow to somewhere outside of this
@@ -144,12 +147,12 @@ public:
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() || writesMemory || writesStruct ||
-           writesArray || isAtomic || calls;
+    return globalsWritten.size() || writesMemory || writesTable ||
+           writesStruct || writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsStruct || readsArray ||
-           isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsTable || readsStruct ||
+           readsArray || isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
@@ -184,7 +187,7 @@ public:
   }
 
   bool hasAnything() const {
-    return hasSideEffects() || accessesLocal() || readsMemory ||
+    return hasSideEffects() || accessesLocal() || readsMemory || readsTable ||
            accessesGlobal();
   }
 
@@ -198,6 +201,8 @@ public:
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
+        ((writesTable || calls) && other.accessesTable()) ||
+        ((other.writesTable || other.calls) && accessesTable()) ||
         ((writesStruct || calls) && other.accessesStruct()) ||
         ((other.writesStruct || other.calls) && accessesStruct()) ||
         ((writesArray || calls) && other.accessesArray()) ||
@@ -261,6 +266,8 @@ public:
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
+    readsTable = readsTable || other.readsTable;
+    writesTable = writesTable || other.writesTable;
     readsStruct = readsStruct || other.readsStruct;
     writesStruct = writesStruct || other.writesStruct;
     readsArray = readsArray || other.readsArray;
@@ -590,8 +597,11 @@ private:
     void visitRefFunc(RefFunc* curr) {}
     void visitRefEq(RefEq* curr) {}
     void visitTableGet(TableGet* curr) {
-      // TODO: track readsTable/writesTable, like memory?
-      // Traps when the index is out of bounds for the table.
+      parent.readsTable = true;
+      parent.implicitTrap = true;
+    }
+    void visitTableSet(TableSet* curr) {
+      parent.writesTable = true;
       parent.implicitTrap = true;
     }
     void visitTry(Try* curr) {}
@@ -708,12 +718,14 @@ public:
     WritesGlobal = 1 << 5,
     ReadsMemory = 1 << 6,
     WritesMemory = 1 << 7,
-    ImplicitTrap = 1 << 8,
-    IsAtomic = 1 << 9,
-    Throws = 1 << 10,
-    DanglingPop = 1 << 11,
-    TrapsNeverHappen = 1 << 12,
-    Any = (1 << 13) - 1
+    ReadsTable = 1 << 8,
+    WritesTable = 1 << 9,
+    ImplicitTrap = 1 << 10,
+    IsAtomic = 1 << 11,
+    Throws = 1 << 12,
+    DanglingPop = 1 << 13,
+    TrapsNeverHappen = 1 << 14,
+    Any = (1 << 15) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -740,6 +752,12 @@ public:
     }
     if (writesMemory) {
       effects |= SideEffects::WritesMemory;
+    }
+    if (readsTable) {
+      effects |= SideEffects::ReadsTable;
+    }
+    if (writesTable) {
+      effects |= SideEffects::WritesTable;
     }
     if (implicitTrap) {
       effects |= SideEffects::ImplicitTrap;

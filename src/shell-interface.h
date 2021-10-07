@@ -233,7 +233,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   Literal tableLoad(Name tableName, Address addr) override {
-
     auto it = tables.find(tableName);
     if (it == tables.end()) {
       trap("tableGet on non-existing table");
@@ -241,7 +240,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
     auto& table = it->second;
     if (addr >= table.size()) {
-      trap("tableGet overflow");
+      trap("out of bounds table access");
     }
 
     return table[addr];

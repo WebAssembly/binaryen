@@ -825,6 +825,14 @@ void TableGet::finalize() {
   // Otherwise, the type should have been set already.
 }
 
+void TableSet::finalize() {
+  if (index->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
 void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume
   // the current type is already correct. TODO: Calculate a proper LUB.
