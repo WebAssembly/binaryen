@@ -1203,6 +1203,40 @@ BinaryenGlobalSetGetValue(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
                                             BinaryenExpressionRef valueExpr);
 
+// TableGet
+
+// Gets the name of the table being accessed by a `table.get` expression.
+BINARYEN_API const char* BinaryenTableGetGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.get` expression.
+BINARYEN_API void BinaryenTableGetSetTable(BinaryenExpressionRef expr,
+                                           const char* table);
+// Gets the index expression of a `table.get` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGetGetIndex(BinaryenExpressionRef expr);
+// Sets the index expression of a `table.get` expression.
+BINARYEN_API void BinaryenTableGetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef indexExpr);
+
+// TableSet
+
+// Gets the name of the table being accessed by a `table.set` expression.
+BINARYEN_API const char* BinaryenTableSetGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetTable(BinaryenExpressionRef expr,
+                                           const char* table);
+// Gets the index expression of a `table.set` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSetGetIndex(BinaryenExpressionRef expr);
+// Sets the index expression of a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef indexExpr);
+// Gets the value expression of a `table.set` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSetGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef valueExpr);
+
 // MemoryGrow
 
 // Gets the delta of a `memory.grow` expression.
