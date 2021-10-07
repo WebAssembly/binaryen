@@ -35,6 +35,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -76,6 +77,7 @@
   )
  )
 )
+
 ;; at table edges
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -107,6 +109,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -135,6 +138,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -168,6 +172,7 @@
   )
  )
 )
+
 ;; imported table
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -198,6 +203,7 @@
   )
  )
 )
+
 ;; exported table
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -230,6 +236,7 @@
   )
  )
 )
+
 ;; non-constant table offset
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -263,6 +270,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -297,6 +305,7 @@
   )
  )
 )
+
 ;; non-constant call index
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -329,6 +338,7 @@
   )
  )
 )
+
 ;; bad index
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -363,6 +373,7 @@
   )
  )
 )
+
 ;; missing index
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -397,6 +408,7 @@
   )
  )
 )
+
 ;; bad type
 (module
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
@@ -433,6 +445,7 @@
   )
  )
 )
+
 ;; no table
 (module
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
@@ -444,6 +457,7 @@
   (unreachable)
  )
 )
+
 ;; change types
 (module
  (type (func))
@@ -470,6 +484,7 @@
   )
  )
 )
+
 (module ;; indirect tail call
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -790,6 +805,55 @@
     (i32.const 11)
     (local.get $x)
    )
+  )
+ )
+)
+
+;; A table.set prevents optimization.
+(module
+ ;; CHECK:      (type $v (func))
+ (type $v (func))
+
+ ;; CHECK:      (table $has-set 5 5 funcref)
+ (table $has-set 5 5 funcref)
+
+ ;; CHECK:      (table $no-set 5 5 funcref)
+ (table $no-set 5 5 funcref)
+
+ ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
+ (elem (table $has-set) (i32.const 1) $foo)
+
+ ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
+ (elem (table $no-set) (i32.const 1) $foo)
+
+ ;; CHECK:      (func $foo
+ ;; CHECK-NEXT:  (table.set $has-set
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (ref.func $foo)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $foo
+  ;; Technically this set writes the same value as is already there, but the
+  ;; analysis will give up on optimizing when it sees any set to a table.
+  (table.set $has-set
+   (i32.const 1)
+   (ref.func $foo)
+  )
+ )
+
+ ;; CHECK:      (func $bar
+ ;; CHECK-NEXT:  (call_indirect $has-set (type $v)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $foo)
+ ;; CHECK-NEXT: )
+ (func $bar
+  ;; We can't optimize this one, but we can the one after it.
+  (call_indirect $has-set (type $v)
+   (i32.const 1)
+  )
+  (call_indirect $no-set (type $v)
+   (i32.const 1)
   )
  )
 )

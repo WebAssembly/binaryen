@@ -171,27 +171,60 @@ private:
   }
 };
 
-// TODO: handle table.get / table.set here as well
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    // Find which tables are valid to optimize on. They must not be imported nor
+    // exported (so the outside cannot modify them), and must have no sets in
+    // any part of the module.
+
+    // First, find which tables have sets.
+    using TablesWithSet = std::unordered_set<Name>;
+
+    ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
+      *module,
+      [&](Function* func, TablesWithSet& tablesWithSet) {
+        if (func->imported()) {
+          return;
+        }
+        for (auto* set : FindAll<TableSet>(func->body).list) {
+          tablesWithSet.insert(set->table);
+        }
+      }
+    );
+
+    TablesWithSet tablesWithSet;
+    for (auto& kv : analysis.map) {
+      for (auto name : kv.second) {
+        tablesWithSet.insert(name);
+      }
+    }
+
     std::unordered_map<Name, TableUtils::FlatTable> validTables;
 
     for (auto& table : module->tables) {
-      if (!table->imported()) {
-        bool canOptimizeCallIndirect = true;
+      if (table->imported()) {
+        continue;
+      }
 
-        for (auto& ex : module->exports) {
-          if (ex->kind == ExternalKind::Table && ex->value == table->name) {
-            canOptimizeCallIndirect = false;
-          }
-        }
+      if (tablesWithSet.count(table->name)) {
+        continue;
+      }
 
-        if (canOptimizeCallIndirect) {
-          TableUtils::FlatTable flatTable(*module, *table);
-          if (flatTable.valid) {
-            validTables.emplace(table->name, flatTable);
-          }
+      bool canOptimizeCallIndirect = true;
+      for (auto& ex : module->exports) {
+        if (ex->kind == ExternalKind::Table && ex->value == table->name) {
+          canOptimizeCallIndirect = false;
+          break;
         }
+      }
+      if (!canOptimizeCallIndirect) {
+        continue;
+      }
+
+      // All conditions are valid, this is optimizable.
+      TableUtils::FlatTable flatTable(*module, *table);
+      if (flatTable.valid) {
+        validTables.emplace(table->name, flatTable);
       }
     }
 
