@@ -764,6 +764,28 @@ BinaryenOp BinaryenRefAsFunc(void) { return RefAsFunc; }
 BinaryenOp BinaryenRefAsData(void) { return RefAsData; };
 BinaryenOp BinaryenRefAsI31(void) { return RefAsI31; };
 
+BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenType type) {
+  auto* ret = ((Module*)module)->allocator.alloc<TableGet>();
+  ret->table = name;
+  ret->index = (Expression*)index;
+  ret->type = Type(type);
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenExpressionRef value) {
+  auto* ret = ((Module*)module)->allocator.alloc<TableSet>();
+  ret->table = name;
+  ret->index = (Expression*)index;
+  ret->value = (Expression*)value;
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
                                     BinaryenExpressionRef* children,
@@ -3538,28 +3560,6 @@ BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
   }
   return tables[index].get();
 }
-BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
-                                       const char* name,
-                                       BinaryenExpressionRef index,
-                                       BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<TableGet>();
-  ret->table = name;
-  ret->index = (Expression*)index;
-  ret->type = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
-}
-BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
-                                       const char* name,
-                                       BinaryenExpressionRef index,
-                                       BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<TableSet>();
-  ret->table = name;
-  ret->index = (Expression*)index;
-  ret->value = (Expression*)value;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
-}
 BinaryenElementSegmentRef
 BinaryenAddActiveElementSegment(BinaryenModuleRef module,
                                 const char* table,
@@ -4334,6 +4334,14 @@ BinaryenSideEffects BinaryenSideEffectReadsMemory(void) {
 BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::WritesMemory);
+}
+BinaryenSideEffects BinaryenSideEffectReadsTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsTable);
+}
+BinaryenSideEffects BinaryenSideEffectWritesTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesTable);
 }
 BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
   return static_cast<BinaryenSideEffects>(

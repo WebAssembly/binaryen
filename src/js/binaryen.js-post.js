@@ -551,6 +551,8 @@ function initializeConstants() {
     'WritesGlobal',
     'ReadsMemory',
     'WritesMemory',
+    'ReadsTable',
+    'WritesTable',
     'ImplicitTrap',
     'IsAtomic',
     'Throws',

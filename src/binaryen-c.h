@@ -602,7 +602,15 @@ BINARYEN_API BinaryenOp BinaryenRefAsData(void);
 BINARYEN_API BinaryenOp BinaryenRefAsI31(void);
 
 BINARYEN_REF(Expression);
-
+BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                                    const char* name,
+                                                    BinaryenExpressionRef index,
+                                                    BinaryenType type);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSet(BinaryenModuleRef module,
+                 const char* name,
+                 BinaryenExpressionRef index,
+                 BinaryenExpressionRef value);
 // Block: name can be NULL. Specifying BinaryenUndefined() as the 'type'
 //        parameter indicates that the block's type shall be figured out
 //        automatically instead of explicitly providing it. This conforms
@@ -2167,16 +2175,6 @@ BINARYEN_API BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module,
 BINARYEN_API BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
                                                       BinaryenIndex index);
 
-BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
-                                                    const char* name,
-                                                    BinaryenExpressionRef index,
-                                                    BinaryenType type);
-BINARYEN_API BinaryenExpressionRef
-BinaryenTableSet(BinaryenModuleRef module,
-                 const char* name,
-                 BinaryenExpressionRef index,
-                 BinaryenExpressionRef value);
-
 // Elem segments
 
 BINARYEN_REF(ElementSegment);
@@ -2635,6 +2633,8 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsGlobal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesGlobal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsTable(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesTable(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
