@@ -488,11 +488,13 @@ inline void collectHeapTypes(Module& wasm,
     : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
     Counts& counts;
 
-    CodeScanner(Counts& counts) : counts(counts) {}
+    CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
+      setModule(&wasm);
+    }
 
     void visitExpression(Expression* curr) {
       if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->sig);
+        counts.note(call->getHeapType(getModule()));
       } else if (curr->is<RefNull>()) {
         counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
@@ -542,7 +544,7 @@ inline void collectHeapTypes(Module& wasm,
 
   // Collect module-level info.
   Counts counts;
-  CodeScanner(counts).walkModuleCode(&wasm);
+  CodeScanner(wasm, counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.tags) {
     counts.note(curr->sig);
   }
@@ -561,7 +563,7 @@ inline void collectHeapTypes(Module& wasm,
         counts.note(type);
       }
       if (!func->imported()) {
-        CodeScanner(counts).walk(func->body);
+        CodeScanner(wasm, counts).walk(func->body);
       }
     });
 
