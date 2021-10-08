@@ -511,6 +511,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitMemoryFill(MemoryFill* curr) {
     return 6 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
   }
+  CostType visitTableSize(TableSize* curr) { return 1; }
   CostType visitSIMDLoad(SIMDLoad* curr) { return 1 + visit(curr->ptr); }
   CostType visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     return 1 + CostType(curr->isStore()) + visit(curr->ptr) + visit(curr->vec);

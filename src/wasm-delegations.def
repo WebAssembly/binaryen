@@ -44,6 +44,7 @@ DELEGATE(MemoryInit);
 DELEGATE(DataDrop);
 DELEGATE(MemoryCopy);
 DELEGATE(MemoryFill);
+DELEGATE(TableSize);
 DELEGATE(Const);
 DELEGATE(Unary);
 DELEGATE(Binary);

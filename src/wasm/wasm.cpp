@@ -833,6 +833,8 @@ void TableSet::finalize() {
   }
 }
 
+void TableSize::finalize() { type = ptrType; }
+
 void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume
   // the current type is already correct. TODO: Calculate a proper LUB.

@@ -1360,6 +1360,7 @@ public:
   }
   Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSize(TableSize* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -2167,6 +2168,10 @@ public:
     NOTE_ENTER("TableSet");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableSize(TableSize* curr) {
+    NOTE_ENTER("TableSize");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2798,7 +2803,6 @@ private:
       return info.interface->tableLoad(info.name,
                                        index.getSingleValue().geti32());
     }
-
     Flow visitTableSet(TableSet* curr) {
       NOTE_ENTER("TableSet");
       Flow index = this->visit(curr->index);
@@ -2813,6 +2817,13 @@ private:
       info.interface->tableStore(
         info.name, index.getSingleValue().geti32(), flow.getSingleValue());
       return Flow();
+    }
+
+    Flow visitTableSize(TableSize* curr) {
+      NOTE_ENTER("TableSize");
+      auto table = instance.wasm.getTable(curr->table);
+      // TODO: properly handle table size when TableGrow exists
+      return Literal::makeFromInt32(table->initial, Type::i32);
     }
 
     Flow visitLocalGet(LocalGet* curr) {

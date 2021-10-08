@@ -523,12 +523,12 @@ instructions = [
     # table instructions
     ("table.get",            "makeTableGet(s)"),
     ("table.set",            "makeTableSet(s)"),
+    ("table.size",           "makeTableSize(s)"),
     # TODO:
     # table.init
     # table.fill
     # table.copy
     # table.grow
-    # table.size
     #
     # exception handling instructions
     ("try",                  "makeTry(s)"),

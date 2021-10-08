@@ -239,6 +239,7 @@ private:
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
+  Expression* makeTableSize(Element& s);
   Expression* makePush(Element& s);
   Expression* makePop(Element& s);
   Expression* makeIf(Element& s);

@@ -619,6 +619,7 @@ public:
     DataDropId,
     MemoryCopyId,
     MemoryFillId,
+    TableSizeId,
     PopId,
     RefNullId,
     RefIsId,
@@ -1285,6 +1286,18 @@ public:
 
   Expression* index;
   Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
+
+  Type ptrType = Type::i32;
 
   void finalize();
 };

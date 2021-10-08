@@ -664,6 +664,12 @@ public:
     ret->finalize();
     return ret;
   }
+  TableSize* makeTableSize(Name table) {
+    auto* ret = wasm.allocator.alloc<TableSize>();
+    ret->table = table;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,
