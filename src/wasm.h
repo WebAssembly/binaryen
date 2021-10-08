@@ -835,7 +835,7 @@ public:
   //       nominal check will succeed too. If it does not match, then just
   //       emit something for it like we always used to, using
   //       HeapType(sig) (also do that if no module is provided).
-  HeapType getHeapType(Module* module=nullptr);
+  HeapType getHeapType(Module* module = nullptr);
 };
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {

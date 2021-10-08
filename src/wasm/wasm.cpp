@@ -316,7 +316,6 @@ HeapType CallIndirect::getHeapType(Module* module) {
   return heapType;
 }
 
-
 bool LocalSet::isTee() const { return type != Type::none; }
 
 // Changes to local.tee. The type of the local should be given.
