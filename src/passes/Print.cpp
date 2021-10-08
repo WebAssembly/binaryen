@@ -2504,15 +2504,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     visitExpression(curr);
   }
   // Module-level visitors
-  void handleSignature(HeapType curr, Module* module, Name name = Name()) {
+  void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    HeapType super;
-    bool nominal = curr.getSuperType(super);
-    if (nominal) {
-      o << "(func_subtype";
-    } else {
-      o << "(func";
-    }
+    o << "(func";
     if (name.is()) {
       o << " $" << name;
     }
@@ -2538,10 +2532,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')';
     }
-    if (nominal) {
-      o << ' ';
-      TypeNamePrinter(o, module).print(super);
-    }
     o << ")";
   }
   void handleFieldBody(const Field& field) {
@@ -2563,30 +2553,14 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
     }
   }
-  void handleArray(HeapType curr, Module* module) {
-    HeapType super;
-    bool nominal = curr.getSuperType(super);
-    if (nominal) {
-      o << "(array_subtype ";
-    } else {
-      o << "(array ";
-    }
+  void handleArray(HeapType curr) {
+    o << "(array ";
     handleFieldBody(curr.getArray().element);
-    if (nominal) {
-      o << ' ';
-      TypeNamePrinter(o, module).print(super);
-    }
     o << ')';
   }
-  void handleStruct(HeapType curr, Module* module) {
+  void handleStruct(HeapType curr) {
     const auto& fields = curr.getStruct().fields;
-    HeapType super;
-    bool nominal = curr.getSuperType(super);
-    if (nominal) {
-      o << "(struct_subtype ";
-    } else {
-      o << "(struct ";
-    }
+    o << "(struct ";
     auto sep = "";
     for (Index i = 0; i < fields.size(); i++) {
       o << sep << "(field ";
@@ -2599,21 +2573,23 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
       sep = " ";
     }
-    if (nominal) {
-      o << ' ';
-      TypeNamePrinter(o, module).print(super);
-    }
     o << ')';
   }
   void handleHeapType(HeapType type, Module* module) {
     if (type.isSignature()) {
-      handleSignature(type, module);
+      handleSignature(type);
     } else if (type.isArray()) {
-      handleArray(type, module);
+      handleArray(type);
     } else if (type.isStruct()) {
-      handleStruct(type, module);
+      handleStruct(type);
     } else {
       o << type;
+    }
+    HeapType super;
+    if (type.getSuperType(super)) {
+      o << " (extends ";
+      TypeNamePrinter(o, module).print(super);
+      o << ')';
     }
   }
   void visitExport(Export* curr) {
@@ -2695,7 +2671,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     lastPrintedLocation = {0, 0, 0};
     o << '(';
     emitImportHeader(curr);
-    handleSignature(curr->getSig(), nullptr, curr->name);
+    handleSignature(curr->getSig(), curr->name);
     o << ')';
     o << maybeNewLine;
   }

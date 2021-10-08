@@ -10,10 +10,10 @@
   ;; CHECK:      (type $use-all (func (result (ref $sub-void-func) (ref $sub-i32-func))))
   (type $use-all (func (result (ref $sub-void-func) (ref $sub-i32-func))))
 
-  ;; CHECK:      (type $sub-void-func (func_subtype $super-void-func))
+  ;; CHECK:      (type $sub-void-func (func) (extends $super-void-func))
   (type $sub-void-func (func_subtype $super-void-func))
 
-  ;; CHECK:      (type $sub-i32-func (func_subtype (param i32) (result i32) $super-i32-func))
+  ;; CHECK:      (type $sub-i32-func (func (param i32) (result i32)) (extends $super-i32-func))
   (type $sub-i32-func (func_subtype (param i32) (result i32) $super-i32-func))
 
   ;; CHECK:      (type $super-void-func (func))
