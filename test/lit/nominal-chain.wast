@@ -7,18 +7,18 @@
 ;; types.
 
 (module
-  ;; CHECK:      (type $leaf (struct (field i32) (field i64) (field f32) (field f64)) (extends $twig))
+  ;; CHECK:      (type $leaf (struct_subtype (field i32) (field i64) (field f32) (field f64) $twig))
   (type $leaf (struct i32 i64 f32 f64) (extends $twig))
 
   ;; CHECK:      (type $root (struct ))
 
-  ;; CHECK:      (type $twig (struct (field i32) (field i64) (field f32)) (extends $branch))
+  ;; CHECK:      (type $twig (struct_subtype (field i32) (field i64) (field f32) $branch))
   (type $twig (struct i32 i64 f32) (extends $branch))
 
-  ;; CHECK:      (type $branch (struct (field i32) (field i64)) (extends $trunk))
+  ;; CHECK:      (type $branch (struct_subtype (field i32) (field i64) $trunk))
   (type $branch (struct i32 i64) (extends $trunk))
 
-  ;; CHECK:      (type $trunk (struct (field i32)) (extends $root))
+  ;; CHECK:      (type $trunk (struct_subtype (field i32) $root))
   (type $trunk (struct i32) (extends $root))
 
   (type $root (struct))

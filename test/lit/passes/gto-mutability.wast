@@ -247,7 +247,7 @@
 
   ;; CHECK:      (type $super (struct (field i32)))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $sub (struct (field i32)) (extends $super))
+  ;; CHECK:      (type $sub (struct_subtype (field i32) $super))
   (type $sub (struct (field (mut i32))) (extends $super))
 
   ;; CHECK:      (func $func
@@ -284,7 +284,7 @@
   (type $super (struct (field (mut i32))))
   ;; CHECK:      (type $ref|$super|_=>_none (func (param (ref $super))))
 
-  ;; CHECK:      (type $sub (struct (field (mut i32))) (extends $super))
+  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
   (type $sub (struct (field (mut i32))) (extends $super))
 
   ;; CHECK:      (func $func (param $x (ref $super))
@@ -325,7 +325,7 @@
 (module
   ;; As above, but add a write in the sub, which prevents optimization.
 
-  ;; CHECK:      (type $sub (struct (field (mut i32))) (extends $super))
+  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (type $ref|$sub|_=>_none (func (param (ref $sub))))
 

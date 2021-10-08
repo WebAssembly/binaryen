@@ -19,7 +19,7 @@
  (type $B (func (param (ref $A)) (result (ref $B))))
  (type $C (struct (field (mut (ref $B)))))
  ;; CHECK:      (type $D (struct (field (ref $C)) (field (ref $A))))
- ;; NOMNL:      (type $D (struct (field (ref $C)) (field (ref $A))) (extends $A))
+ ;; NOMNL:      (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
  (type $D (struct (field (ref $C)) (field (ref $A))) (extends $A))
  ;; CHECK:      (global $g0 (rtt 0 $A) (rtt.canon $A))
  ;; NOMNL:      (global $g0 (rtt 0 $A) (rtt.canon $A))

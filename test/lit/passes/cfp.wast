@@ -559,7 +559,7 @@
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $substruct (struct (field i32)) (extends $struct))
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) $struct))
   (type $substruct (struct i32) (extends $struct))
 
   ;; CHECK:      (func $create
@@ -606,7 +606,7 @@
   (type $struct (struct (mut i32)))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $substruct (struct (field (mut i32))) (extends $struct))
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
   (type $substruct (struct (mut i32)) (extends $struct))
 
   ;; CHECK:      (func $create
@@ -660,7 +660,7 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (type $struct (struct (field i32)))
@@ -712,7 +712,7 @@
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (func $create
@@ -774,7 +774,7 @@
   (type $struct (struct i32))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (func $create
@@ -830,7 +830,7 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (type $struct (struct (field i32)))
@@ -892,7 +892,7 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $substruct (struct (field (mut i32)) (field f64)) (extends $struct))
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
   (type $substruct (struct (mut i32) f64) (extends $struct))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -954,12 +954,12 @@
 ;; Multi-level subtyping, check that we propagate not just to the immediate
 ;; supertype but all the way as needed.
 (module
-  ;; CHECK:      (type $struct3 (struct (field i32) (field f64) (field anyref)) (extends $struct2))
+  ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field f64) (field anyref) $struct2))
   (type $struct3 (struct i32 f64 anyref) (extends $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct2 (struct (field i32) (field f64)) (extends $struct1))
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $struct1))
   (type $struct2 (struct i32 f64) (extends $struct1))
 
   ;; CHECK:      (type $struct1 (struct (field i32)))
@@ -1089,13 +1089,13 @@
 ;; different values in the sub-most type. Create the top and bottom types, but
 ;; not the middle one.
 (module
-  ;; CHECK:      (type $struct3 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref)) (extends $struct2))
+  ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref) $struct2))
   (type $struct3 (struct i32 i32 f64 f64 anyref anyref) (extends $struct2))
 
   ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
   (type $struct1 (struct i32 i32))
 
-  ;; CHECK:      (type $struct2 (struct (field i32) (field i32) (field f64) (field f64)) (extends $struct1))
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
   (type $struct2 (struct i32 i32 f64 f64) (extends $struct1))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
@@ -1325,11 +1325,11 @@
 (module
   ;; CHECK:      (type $struct1 (struct (field (mut i32))))
   (type $struct1 (struct (mut i32)))
-  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field f64)) (extends $struct1))
+  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
   (type $struct2 (struct (mut i32) f64) (extends $struct1))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field f64) (field anyref)) (extends $struct2))
+  ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct (mut i32) f64 anyref) (extends $struct2))
 
   ;; CHECK:      (func $create
@@ -1423,13 +1423,13 @@
 ;; As above, but add not just a new of the middle class with a different value
 ;; but also a set. That prevents all optimizations.
 (module
-  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field f64)) (extends $struct1))
+  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
   (type $struct2 (struct (mut i32) f64) (extends $struct1))
 
   ;; CHECK:      (type $struct1 (struct (field (mut i32))))
   (type $struct1 (struct (mut i32)))
 
-  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field f64) (field anyref)) (extends $struct2))
+  ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct (mut i32) f64 anyref) (extends $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -1653,7 +1653,7 @@
 ;; sets, and the final subtype C has a create and a get. The set to A should
 ;; apply to it, preventing optimization.
 (module
-  ;; CHECK:      (type $C (struct (field (mut i32))) (extends $B))
+  ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $B))
   (type $C (struct (mut i32)) (extends $B))
 
   ;; CHECK:      (type $A (struct (field (mut i32))))
@@ -1665,7 +1665,7 @@
 
   ;; CHECK:      (type $ref|$C|_=>_none (func (param (ref $C))))
 
-  ;; CHECK:      (type $B (struct (field (mut i32))) (extends $A))
+  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
   (type $B (struct (mut i32)) (extends $A))
 
   ;; CHECK:      (func $create
