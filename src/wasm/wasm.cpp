@@ -304,12 +304,14 @@ HeapType CallIndirect::getHeapType(Module* module) {
   auto heapType = HeapType(sig);
   if (module) {
     // See comment in wasm.h
-    auto tableType = module->getTable(curr->table)->type;
-    if (tableType.isSignature()) {
+    auto tableType = module->getTable(table)->type;
+    if (tableType.isRef()) {
       auto tableHeapType = tableType.getHeapType();
-      auto tableSig = tableHeapType.getSignature();
-      if (curr->sig == tableSig) {
-        heapType = tableHeapType;
+      if (tableHeapType.isSignature()) {
+        auto tableSig = tableHeapType.getSignature();
+        if (sig == tableSig) {
+          heapType = tableHeapType;
+        }
       }
     }
   }
