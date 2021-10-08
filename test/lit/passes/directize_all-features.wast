@@ -820,13 +820,9 @@
  ;; CHECK:      (table $no-set 5 5 funcref)
  (table $no-set 5 5 funcref)
 
- (elem (table $has-set) (i32.const 1) $foo)
+ (elem $0 (table $has-set) (i32.const 1) $foo)
 
- (elem (table $no-set) (i32.const 1) $foo)
-
- ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
-
- ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
+ (elem $1 (table $no-set) (i32.const 1) $foo)
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (table.set $has-set
