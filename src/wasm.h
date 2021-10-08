@@ -828,6 +828,14 @@ public:
   bool isReturn = false;
 
   void finalize();
+
+  // FIXME We should probably store a heap type here, and not a signature, see
+  //       https://github.com/WebAssembly/binaryen/issues/4220
+  //       For now, copy the heap type from the table if it matches - then a
+  //       nominal check will succeed too. If it does not match, then just
+  //       emit something for it like we always used to, using
+  //       HeapType(sig) (also do that if no module is provided).
+  HeapType getHeapType(Module* module=nullptr);
 };
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {
