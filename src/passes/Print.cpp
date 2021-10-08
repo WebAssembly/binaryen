@@ -445,7 +445,7 @@ struct PrintExpressionContents
       //       emit something for it like we always used to, using
       //       HeapType(sig).
       auto tableType = wasm->getTable(curr->table)->type;
-      if (tableType.isFunction() && tableType != Type::funcref) {
+      if (tableType.isSignature()) {
         auto tableHeapType = tableType.getHeapType();
         auto tableSig = tableHeapType.getSignature();
         if (curr->sig == tableSig) {
