@@ -1305,6 +1305,12 @@ BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
       .makeTableSet(name, (Expression*)index, (Expression*)value));
 }
 
+BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
+                                        const char* name) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeTableSize(name));
+}
+
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenExpressionRef body,
@@ -1949,6 +1955,18 @@ void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
   assert(expression->is<TableSet>());
   assert(valueExpr);
   static_cast<TableSet*>(expression)->value = (Expression*)valueExpr;
+}
+// TableSize
+const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  return static_cast<TableSize*>(expression)->table.c_str();
+}
+void BinaryenTableSetSizeTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  assert(table);
+  static_cast<TableSize*>(expression)->table = table;
 }
 // MemoryGrow
 BinaryenExpressionRef BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr) {

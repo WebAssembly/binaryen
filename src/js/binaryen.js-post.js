@@ -93,6 +93,7 @@ function initializeConstants() {
     'RefEq',
     'TableGet',
     'TableSet',
+    'TableSize',
     'Try',
     'Throw',
     'Rethrow',
@@ -671,6 +672,9 @@ function wrapModule(module, self = {}) {
     },
     'set'(name, index, value) {
       return Module['_BinaryenTableSet'](module, strToStack(name), index, value);
+    },
+    'size'(name) {
+      return Module['_BinaryenTableSize'](module, strToStack(name));
     }
   }
 
@@ -2825,6 +2829,12 @@ Module['getExpressionInfo'] = function(expr) {
         'index': Module['_BinaryenTableSetGetIndex'](expr),
         'value': Module['_BinaryenTableSetGetValue'](expr)
       };
+    case Module['TableSizeId']:
+      return {
+        'id': id,
+        'type': type,
+        'table': UTF8ToString(Module['_BinaryenTableSizeGetTable'](expr)),
+      };
     case Module['LoadId']:
       return {
         'id': id,
@@ -3829,6 +3839,15 @@ Module['TableSet'] = makeExpressionWrapper({
   'setValue'(expr, valueExpr) {
     Module['_BinaryenTableSetSetValue'](expr, valueExpr);
   }
+});
+
+Module['TableSize'] = makeExpressionWrapper({
+  'getTable'(expr) {
+    return UTF8ToString(Module['_BinaryenTableSizeGetTable'](expr));
+  },
+  'setTable'(expr, name) {
+    preserveStack(() => { Module['_BinaryenTableSizeSetTable'](expr, strToStack(name)) });
+  },
 });
 
 Module['MemorySize'] = makeExpressionWrapper({});

@@ -860,6 +860,8 @@ BinaryenTableSet(BinaryenModuleRef module,
                  const char* name,
                  BinaryenExpressionRef index,
                  BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
+                                                     const char* name);
 // Try: name can be NULL. delegateTarget should be NULL in try-catch.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTry(BinaryenModuleRef module,
@@ -1238,6 +1240,13 @@ BinaryenTableSetGetValue(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
                                            BinaryenExpressionRef valueExpr);
 
+// TableSize
+
+// Gets the name of the table being accessed by a `table.size` expression.
+BINARYEN_API const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.size` expression.
+BINARYEN_API void BinaryenTableSizeSetTable(BinaryenExpressionRef expr,
+                                            const char* table);
 // MemoryGrow
 
 // Gets the delta of a `memory.grow` expression.
