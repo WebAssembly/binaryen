@@ -19,8 +19,6 @@
  ;; CHECK:      (type $v3 (func))
  (type $v3 (func))
 
- ;; CHECK:      (type $none_=>_none (func))
-
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
  ;; CHECK:      (table $table-1 10 (ref null $v1))
