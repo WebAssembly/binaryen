@@ -826,10 +826,6 @@
  ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
  (elem $1 (table $no-set) (i32.const 1) $foo)
 
- ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
-
- ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
-
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (table.set $has-set
  ;; CHECK-NEXT:   (i32.const 1)
