@@ -239,7 +239,6 @@ private:
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
-  Expression* makeTableSize(Element& s);
   Expression* makePush(Element& s);
   Expression* makePop(Element& s);
   Expression* makeIf(Element& s);
@@ -268,6 +267,7 @@ private:
   Expression* makeRefEq(Element& s);
   Expression* makeTableGet(Element& s);
   Expression* makeTableSet(Element& s);
+  Expression* makeTableSize(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
