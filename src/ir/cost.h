@@ -511,7 +511,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitMemoryFill(MemoryFill* curr) {
     return 6 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
   }
-  CostType visitTableSize(TableSize* curr) { return 1; }
   CostType visitSIMDLoad(SIMDLoad* curr) { return 1 + visit(curr->ptr); }
   CostType visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     return 1 + CostType(curr->isStore()) + visit(curr->ptr) + visit(curr->vec);
@@ -545,6 +544,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitTableSet(TableSet* curr) {
     return 2 + visit(curr->index) + visit(curr->value);
   }
+  CostType visitTableSize(TableSize* curr) { return 1; }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
