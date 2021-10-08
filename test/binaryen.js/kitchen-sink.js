@@ -159,7 +159,6 @@ function test_ids() {
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + binaryen.MemoryFillId);
-  console.log("TableSizeId: " + binaryen.TableSizeId);
   console.log("PopId: " + binaryen.PopId);
   console.log("RefNullId: " + binaryen.RefNullId);
   console.log("RefIsId: " + binaryen.RefIsId);
@@ -167,6 +166,7 @@ function test_ids() {
   console.log("RefEqId: " + binaryen.RefEqId);
   console.log("TableGetId: " + binaryen.TableGetId);
   console.log("TableSetId: " + binaryen.TableSetId);
+  console.log("TableSizeId: " + binaryen.TableSizeId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);

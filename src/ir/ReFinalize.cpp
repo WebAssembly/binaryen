@@ -119,7 +119,6 @@ void ReFinalize::visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
 void ReFinalize::visitDataDrop(DataDrop* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryFill(MemoryFill* curr) { curr->finalize(); }
-void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitConst(Const* curr) { curr->finalize(); }
 void ReFinalize::visitUnary(Unary* curr) { curr->finalize(); }
 void ReFinalize::visitBinary(Binary* curr) { curr->finalize(); }
@@ -138,6 +137,7 @@ void ReFinalize::visitRefFunc(RefFunc* curr) {
 void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
+void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
