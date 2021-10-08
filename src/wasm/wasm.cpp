@@ -302,11 +302,17 @@ void CallIndirect::finalize() {
 
 HeapType CallIndirect::getHeapType(Module* module) {
   auto heapType = HeapType(sig);
+  // See comment in wasm.h
   if (module) {
-    // See comment in wasm.h
-    auto tableType = module->getTable(table)->type;
-    if (tableType.isRef()) {
-      auto tableHeapType = tableType.getHeapType();
+    // The table may not yet exist if the wasm module is still being
+    // constructed. This should perhaps be an error, but as this is a hack for
+    // the time being, handle this the same as the case where module is null.
+    // Note: table_ (with underscore) is needed as |table| is a field on |this|.
+    if (auto* table_ = module->getTableOrNull(table)) {
+      // The wasm spec may allow more things eventually, and if so we'd need to
+      // add more checking here.
+      assert(table_->type.isRef());
+      auto tableHeapType = table_->type.getHeapType();
       if (tableHeapType.isSignature()) {
         auto tableSig = tableHeapType.getSignature();
         if (sig == tableSig) {
