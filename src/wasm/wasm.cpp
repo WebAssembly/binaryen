@@ -833,7 +833,9 @@ void TableSet::finalize() {
   }
 }
 
-void TableSize::finalize() { type = ptrType; }
+void TableSize::finalize() {
+  // Nothing to do - the type must have been set already during construction.
+}
 
 void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume

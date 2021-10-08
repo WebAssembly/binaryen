@@ -1297,8 +1297,6 @@ public:
 
   Name table;
 
-  Type ptrType = Type::i32;
-
   void finalize();
 };
 
