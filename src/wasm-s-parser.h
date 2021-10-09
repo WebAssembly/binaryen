@@ -267,6 +267,7 @@ private:
   Expression* makeRefEq(Element& s);
   Expression* makeTableGet(Element& s);
   Expression* makeTableSet(Element& s);
+  Expression* makeTableSize(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);

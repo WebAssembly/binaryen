@@ -1026,6 +1026,8 @@ void test_core() {
 
   BinaryenExpressionPrint(funcrefExpr2);
 
+  BinaryenExpressionPrint(BinaryenTableSize(module, "0"));
+
   // Memory. One per module
 
   const char* segments[] = {"hello, world", "I am passive"};

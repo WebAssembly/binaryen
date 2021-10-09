@@ -526,6 +526,7 @@ private:
       parent.writesMemory = true;
       parent.implicitTrap = true;
     }
+    void visitTableSize(TableSize* curr) { parent.readsTable = true; }
     void visitConst(Const* curr) {}
     void visitUnary(Unary* curr) {
       switch (curr->op) {

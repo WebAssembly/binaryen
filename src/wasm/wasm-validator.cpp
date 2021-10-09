@@ -366,6 +366,7 @@ public:
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);
   void visitTableSet(TableSet* curr);
+  void visitTableSize(TableSize* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -2061,6 +2062,14 @@ void FunctionValidator::visitTableSet(TableSet* curr) {
                     curr,
                     "table.set value must have right type");
   }
+}
+
+void FunctionValidator::visitTableSize(TableSize* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "table.size requires reference types to be enabled");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "table.size table must exist");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {

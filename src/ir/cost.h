@@ -544,6 +544,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitTableSet(TableSet* curr) {
     return 2 + visit(curr->index) + visit(curr->value);
   }
+  CostType visitTableSize(TableSize* curr) { return 1; }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);

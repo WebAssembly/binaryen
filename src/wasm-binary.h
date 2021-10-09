@@ -1025,6 +1025,7 @@ enum ASTNodes {
 
   // reference types opcodes
 
+  TableSize = 0x10,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1635,6 +1636,7 @@ public:
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
+  bool maybeVisitTableSize(Expression*& out, uint32_t code);
   bool maybeVisitI31New(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
@@ -1664,6 +1666,7 @@ public:
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);
   void visitTableSet(TableSet* curr);
+  void visitTableSize(TableSize* curr);
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

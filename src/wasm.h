@@ -629,6 +629,7 @@ public:
     RefEqId,
     TableGetId,
     TableSetId,
+    TableSizeId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1297,6 +1298,16 @@ public:
 
   Expression* index;
   Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
 
   void finalize();
 };
