@@ -527,10 +527,6 @@ struct MergeBlocks
     // TODO: for now, just stop when we see any side effect. instead, we could
     //       check effects carefully for reordering
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), *getModule(), first)
-          .hasSideEffects()) {
-      return;
-    }
     outer = optimize(curr, first, outer);
     if (EffectAnalyzer(getPassOptions(), *getModule(), second)
           .hasSideEffects()) {
