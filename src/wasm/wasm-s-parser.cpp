@@ -518,13 +518,13 @@ Name SExpressionWasmBuilder::getTagName(Element& s) {
   }
 }
 
-Index SExpressionWasmBuilder::getExternRefIndex(Element& s) {
+Index SExpressionWasmBuilder::getRefExternIndex(Element& s) {
   if (s.dollared()) {
     throw ParseException("bad extern reference index", s.line, s.col);
   }
   // this is a numeric index
   Index ret = atoi(s.c_str());
-  if (ret >= wasm.elementSegments.count()) {
+  if (ret >= wasm.elementSegments.size()) {
     throw ParseException("bad extern reference index", s.line, s.col);
   }
   return ret;
@@ -2446,7 +2446,7 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefExtern(Element& s) {
-  auto index = getExternRefIndex(*s[1]);
+  auto index = getRefExternIndex(*s[1]);
   auto ret = allocator.alloc<RefExtern>();
   ret->index = index;
   ret->finalize();

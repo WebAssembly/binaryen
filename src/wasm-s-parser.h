@@ -169,6 +169,7 @@ private:
   Name getTableName(Element& s);
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
+  Index getRefExternIndex(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
 
   // returns the next index in s
