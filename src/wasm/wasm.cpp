@@ -839,8 +839,6 @@ void RefExtern::finalize() {
   // previously.
 }
 
-void RefExtern::finalize(Type type_) { type = type_; }
-
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;

@@ -1272,12 +1272,12 @@ public:
 
 class RefExtern : public SpecificExpression<Expression::RefExternId> {
 public:
-  RefFunc(MixedArena& allocator) {}
+  RefExtern() { type = Type::externref; }
+  RefExtern(MixedArena& allocator) : RefExtern() {}
 
   Index index;
 
   void finalize();
-  void finalize(Type type_);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {

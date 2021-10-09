@@ -518,6 +518,18 @@ Name SExpressionWasmBuilder::getTagName(Element& s) {
   }
 }
 
+Index SExpressionWasmBuilder::getExternRefIndex(Element& s) {
+  if (s.dollared()) {
+    throw ParseException("bad extern reference index", s.line, s.col);
+  }
+  // this is a numeric index
+  Index ret = atoi(s.c_str());
+  if (ret >= wasm.elementSegments.count()) {
+    throw ParseException("bad extern reference index", s.line, s.col);
+  }
+  return ret;
+}
+
 // Parse various forms of (param ...) or (local ...) element. This ignores all
 // parameter or local names when specified.
 std::vector<Type> SExpressionWasmBuilder::parseParamOrLocal(Element& s) {
@@ -2434,10 +2446,11 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefExtern(Element& s) {
-  // auto index =
-  // auto ret = allocator.alloc<RefExtern>();
-  // ret->index = index;
-  // return ret;
+  auto index = getExternRefIndex(*s[1]);
+  auto ret = allocator.alloc<RefExtern>();
+  ret->index = index;
+  ret->finalize();
+  return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
