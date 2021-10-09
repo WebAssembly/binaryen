@@ -12,8 +12,12 @@
 (module
   ;; CHECK-BINARY:      (type $none_=>_none (func))
 
+  ;; CHECK-BINARY:      (type $none_=>_i32 (func (result i32)))
+
   ;; CHECK-BINARY:      (table $table-1 1 1 funcref)
   ;; CHECK-TEXT:      (type $none_=>_none (func))
+
+  ;; CHECK-TEXT:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK-TEXT:      (table $table-1 1 1 funcref)
   (table $table-1 funcref
@@ -79,8 +83,54 @@
       )
     )
   )
+
+  ;; CHECK-BINARY:      (func $set-get
+  ;; CHECK-BINARY-NEXT:  (table.set $table-1
+  ;; CHECK-BINARY-NEXT:   (i32.const 0)
+  ;; CHECK-BINARY-NEXT:   (ref.func $foo)
+  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT:  (drop
+  ;; CHECK-BINARY-NEXT:   (table.get $table-1
+  ;; CHECK-BINARY-NEXT:    (i32.const 0)
+  ;; CHECK-BINARY-NEXT:   )
+  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT: )
+  ;; CHECK-TEXT:      (func $set-get
+  ;; CHECK-TEXT-NEXT:  (table.set $table-1
+  ;; CHECK-TEXT-NEXT:   (i32.const 0)
+  ;; CHECK-TEXT-NEXT:   (ref.func $foo)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:   (table.get $table-1
+  ;; CHECK-TEXT-NEXT:    (i32.const 0)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  (func $set-get
+    (table.set $table-1
+      (i32.const 0)
+      (ref.func $foo)
+    )
+    (drop
+      (table.get $table-1
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK-BINARY:      (func $get-table-size (result i32)
+  ;; CHECK-BINARY-NEXT:  (table.size $table-1)
+  ;; CHECK-BINARY-NEXT: )
+  ;; CHECK-TEXT:      (func $get-table-size (result i32)
+  ;; CHECK-TEXT-NEXT:  (table.size $table-1)
+  ;; CHECK-TEXT-NEXT: )
+  (func $get-table-size (result i32)
+    (table.size $table-1)
+  )
 )
 ;; CHECK-NODEBUG:      (type $none_=>_none (func))
+
+;; CHECK-NODEBUG:      (type $none_=>_i32 (func (result i32)))
 
 ;; CHECK-NODEBUG:      (table $0 1 1 funcref)
 
@@ -105,4 +155,20 @@
 ;; CHECK-NODEBUG-NEXT:    (i32.const 100)
 ;; CHECK-NODEBUG-NEXT:   )
 ;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT: )
+
+;; CHECK-NODEBUG:      (func $2
+;; CHECK-NODEBUG-NEXT:  (table.set $0
+;; CHECK-NODEBUG-NEXT:   (i32.const 0)
+;; CHECK-NODEBUG-NEXT:   (ref.func $0)
+;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT:  (drop
+;; CHECK-NODEBUG-NEXT:   (table.get $0
+;; CHECK-NODEBUG-NEXT:    (i32.const 0)
+;; CHECK-NODEBUG-NEXT:   )
+;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT: )
+
+;; CHECK-NODEBUG:      (func $3 (result i32)
+;; CHECK-NODEBUG-NEXT:  (table.size $0)
 ;; CHECK-NODEBUG-NEXT: )

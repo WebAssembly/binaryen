@@ -1190,6 +1190,19 @@ struct OptimizeInstructions
       return;
     }
 
+    if (auto* get = curr->target->dynCast<TableGet>()) {
+      // (call_ref ..args.. (table.get $table (index))
+      //   =>
+      // (call_indirect $table ..args.. (index))
+      replaceCurrent(Builder(*getModule())
+                       .makeCallIndirect(get->table,
+                                         get->index,
+                                         curr->operands,
+                                         get->type.getHeapType().getSignature(),
+                                         curr->isReturn));
+      return;
+    }
+
     auto features = getModule()->features;
 
     // It is possible the target is not a function reference, but we can infer
@@ -1669,6 +1682,25 @@ private:
     return true;
   }
 
+  // Check if two consecutive inputs to an instruction are equal and can be
+  // folded into the first of the two. This identifies reads from the same local
+  // variable when one of them is a "tee" operation.
+  // The inputs here must be consecutive, but it is also ok to have code with no
+  // side effects at all in the middle. For example, a Const in between is ok.
+  bool areConsecutiveInputsEqualAndFoldable(Expression* left,
+                                            Expression* right) {
+    if (auto* set = left->dynCast<LocalSet>()) {
+      if (auto* get = right->dynCast<LocalGet>()) {
+        if (set->isTee() && get->index == set->index) {
+          return true;
+        }
+      }
+    }
+    // stronger property than we need - we can not only fold
+    // them but remove them entirely.
+    return areConsecutiveInputsEqualAndRemovable(left, right);
+  }
+
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
@@ -1859,6 +1891,44 @@ private:
         s->ifTrue = ifFalse;
         s->ifFalse = ifTrue;
         s->condition = c;
+        return s;
+      }
+    }
+    {
+      // TODO: Remove this after landing SCCP pass. See: #4161
+
+      // i32(x) ? i32(x) : 0  ==>  x
+      Expression *x, *y;
+      if (matches(curr, select(any(&x), i32(0), any(&y))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return curr->ifTrue;
+      }
+      // i32(x) ? 0 : i32(x)  ==>  { x, 0 }
+      if (matches(curr, select(i32(0), any(&x), any(&y))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return builder.makeSequence(builder.makeDrop(x), curr->ifTrue);
+      }
+
+      // i64(x) == 0 ? 0 : i64(x)  ==>  x
+      // i64(x) != 0 ? i64(x) : 0  ==>  x
+      if ((matches(curr, select(i64(0), any(&x), unary(EqZInt64, any(&y)))) ||
+           matches(
+             curr,
+             select(any(&x), i64(0), binary(NeInt64, any(&y), i64(0))))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
+      }
+
+      // i64(x) == 0 ? i64(x) : 0  ==>  { x, 0 }
+      // i64(x) != 0 ? 0 : i64(x)  ==>  { x, 0 }
+      if ((matches(curr, select(any(&x), i64(0), unary(EqZInt64, any(&y)))) ||
+           matches(
+             curr,
+             select(i64(0), any(&x), binary(NeInt64, any(&y), i64(0))))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return builder.makeSequence(
+          builder.makeDrop(x),
+          curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue);
       }
     }
     {

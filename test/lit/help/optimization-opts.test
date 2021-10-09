@@ -271,6 +271,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate Stack IR
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gto                                         globally optimize GC types
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-NEXT:

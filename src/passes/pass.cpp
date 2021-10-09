@@ -155,6 +155,8 @@ void PassRegistry::registerPasses() {
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
+    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
@@ -524,6 +526,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("cfp");
   }
+  // TODO: investigate enabling --gto
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {

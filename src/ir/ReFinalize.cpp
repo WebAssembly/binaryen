@@ -136,6 +136,8 @@ void ReFinalize::visitRefFunc(RefFunc* curr) {
 }
 void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }
+void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
+void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }

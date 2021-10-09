@@ -1012,6 +1012,22 @@ void test_core() {
   BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
   BinaryenRemoveElementSegment(module, "p2");
 
+  BinaryenExpressionRef funcrefExpr1 =
+    BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
+
+  BinaryenExpressionPrint(BinaryenTableSet(
+    module, "0", BinaryenConst(module, BinaryenLiteralInt32(0)), funcrefExpr1));
+
+  BinaryenExpressionRef funcrefExpr2 =
+    BinaryenTableGet(module,
+                     "0",
+                     BinaryenConst(module, BinaryenLiteralInt32(0)),
+                     BinaryenTypeFuncref());
+
+  BinaryenExpressionPrint(funcrefExpr2);
+
+  BinaryenExpressionPrint(BinaryenTableSize(module, "0"));
+
   // Memory. One per module
 
   const char* segments[] = {"hello, world", "I am passive"};

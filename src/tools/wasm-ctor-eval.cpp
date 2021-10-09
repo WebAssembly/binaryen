@@ -347,6 +347,14 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException("table.get: TODO");
   }
 
+  void tableSet(Name tableName, Index index, const Literal& value) {
+    throw FailToEvalException("table.set: TODO");
+  }
+
+  Literal tableSize(Name tableName) {
+    throw FailToEvalException("table.size: TODO");
+  }
+
   int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
   uint8_t load8u(Address addr) override { return doLoad<uint8_t>(addr); }
   int16_t load16s(Address addr) override { return doLoad<int16_t>(addr); }

@@ -267,7 +267,7 @@ public:
     // Iterator traits
     using iterator_category = std::random_access_iterator_tag;
     using value_type = Type;
-    using difference_type = long;
+    using difference_type = std::ptrdiff_t;
     using pointer = const Type*;
     using reference = const Type&;
 
@@ -382,7 +382,18 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
+  // Return whether there is a nontrivial (i.e. non-basic) nominal supertype and
+  // store it in `out` if there is. Nominal types (in the sense of isNominal,
+  // i.e. Milestone 4 nominal types) may always have supertypes and other types
+  // may have supertypes in `TypeSystem::Nominal` mode but not in
+  // `TypeSystem::Equirecursive` mode.
   bool getSuperType(HeapType& out) const;
+
+  // Whether this is a nominal type in the sense of being a GC Milestone 4
+  // nominal type. Although all non-basic HeapTypes are nominal in
+  // `TypeSystem::Nominal` mode, this will still return false unless the type is
+  // specifically constructed as a Milestone 4 nominal type.
+  bool isNominal() const;
 
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
@@ -571,10 +582,14 @@ struct TypeBuilder {
   Type getTempRefType(HeapType heapType, Nullability nullable);
   Type getTempRttType(Rtt rtt);
 
-  // In nominal mode, declare the HeapType being built at index `i` to be an
-  // immediate subtype of the HeapType being built at index `j`. Does nothing in
-  // equirecursive mode.
+  // In nominal mode, or for nominal types, declare the HeapType being built at
+  // index `i` to be an immediate subtype of the HeapType being built at index
+  // `j`. Does nothing for equirecursive types.
   void setSubType(size_t i, size_t j);
+
+  // Make this type nominal in the sense of the Milestone 4 GC spec, independent
+  // of the current TypeSystem configuration.
+  void setNominal(size_t i);
 
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal
@@ -612,6 +627,10 @@ struct TypeBuilder {
     Entry& subTypeOf(Entry other) {
       assert(&builder == &other.builder);
       builder.setSubType(index, other.index);
+      return *this;
+    }
+    Entry& setNominal() {
+      builder.setNominal(index);
       return *this;
     }
   };

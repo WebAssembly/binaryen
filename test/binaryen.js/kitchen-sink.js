@@ -164,6 +164,9 @@ function test_ids() {
   console.log("RefIsId: " + binaryen.RefIsId);
   console.log("RefFuncId: " + binaryen.RefFuncId);
   console.log("RefEqId: " + binaryen.RefEqId);
+  console.log("TableGetId: " + binaryen.TableGetId);
+  console.log("TableSetId: " + binaryen.TableSetId);
+  console.log("TableSizeId: " + binaryen.TableSizeId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
