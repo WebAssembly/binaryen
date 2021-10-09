@@ -2433,6 +2433,13 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeRefExtern(Element& s) {
+  // auto index =
+  // auto ret = allocator.alloc<RefExtern>();
+  // ret->index = index;
+  // return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
   auto ret = allocator.alloc<RefEq>();
   ret->left = parseExpression(s[1]);
