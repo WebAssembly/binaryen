@@ -519,6 +519,7 @@ instructions = [
     ("ref.null",             "makeRefNull(s)"),
     ("ref.is_null",          "makeRefIs(s, RefIsNull)"),
     ("ref.func",             "makeRefFunc(s)"),
+    ("ref.extern",           "makeRefExtern(s)"),
     ("ref.eq",               "makeRefEq(s)"),
     # table instructions
     ("table.get",            "makeTableGet(s)"),

@@ -2882,9 +2882,17 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'e':
-                if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
-                goto parse_error;
+              case 'e': {
+                switch (op[5]) {
+                  case 'q':
+                    if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
+                    goto parse_error;
+                  case 'x':
+                    if (strcmp(op, "ref.extern") == 0) { return makeRefExtern(s); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'f':
                 if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
                 goto parse_error;

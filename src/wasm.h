@@ -626,6 +626,7 @@ public:
     RefNullId,
     RefIsId,
     RefFuncId,
+    RefExternId,
     RefEqId,
     TableGetId,
     TableSetId,
@@ -1264,6 +1265,16 @@ public:
   RefFunc(MixedArena& allocator) {}
 
   Name func;
+
+  void finalize();
+  void finalize(Type type_);
+};
+
+class RefExtern : public SpecificExpression<Expression::RefExternId> {
+public:
+  RefFunc(MixedArena& allocator) {}
+
+  Index index;
 
   void finalize();
   void finalize(Type type_);

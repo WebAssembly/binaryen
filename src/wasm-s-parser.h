@@ -264,6 +264,7 @@ private:
   Expression* makeRefNull(Element& s);
   Expression* makeRefIs(Element& s, RefIsOp op);
   Expression* makeRefFunc(Element& s);
+  Expression* makeRefExtern(Element& s);
   Expression* makeRefEq(Element& s);
   Expression* makeTableGet(Element& s);
   Expression* makeTableSet(Element& s);

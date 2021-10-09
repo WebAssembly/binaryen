@@ -834,6 +834,13 @@ void RefFunc::finalize() {
 
 void RefFunc::finalize(Type type_) { type = type_; }
 
+void RefExtern::finalize() {
+  // No-op. We assume that the full proper typed extern type has been applied
+  // previously.
+}
+
+void RefExtern::finalize(Type type_) { type = type_; }
+
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
