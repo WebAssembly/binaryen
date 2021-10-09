@@ -596,6 +596,7 @@ private:
     void visitRefNull(RefNull* curr) {}
     void visitRefIs(RefIs* curr) {}
     void visitRefFunc(RefFunc* curr) {}
+    void visitRefExtern(RefExtern* curr) {}
     void visitRefEq(RefEq* curr) {}
     void visitTableGet(TableGet* curr) {
       parent.readsTable = true;

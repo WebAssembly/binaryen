@@ -57,6 +57,7 @@ DELEGATE(Pop);
 DELEGATE(RefNull);
 DELEGATE(RefIs);
 DELEGATE(RefFunc);
+DELEGATE(RefExtern);
 DELEGATE(RefEq);
 DELEGATE(TableGet);
 DELEGATE(TableSet);

@@ -494,6 +494,12 @@ switch (DELEGATE_ID) {
     DELEGATE_END(RefFunc);
     break;
   }
+  case Expression::Id::RefExternId: {
+    DELEGATE_START(RefExtern);
+    DELEGATE_FIELD_INT(RefExtern, index);
+    DELEGATE_END(RefExtern);
+    break;
+  }
   case Expression::Id::RefEqId: {
     DELEGATE_START(RefEq);
     DELEGATE_FIELD_CHILD(RefEq, right);

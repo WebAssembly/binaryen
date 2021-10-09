@@ -1843,6 +1843,10 @@ struct PrintExpressionContents
     printMedium(o, "ref.func ");
     printName(curr->func, o);
   }
+  void visitRefExtern(RefExtern* curr) {
+    printMedium(o, "ref.extern ");
+    o << " " << int(curr->index);
+  }
   void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
   void visitTableGet(TableGet* curr) {
     printMedium(o, "table.get ");

@@ -537,6 +537,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitRefNull(RefNull* curr) { return 1; }
   CostType visitRefIs(RefIs* curr) { return 1 + visit(curr->value); }
   CostType visitRefFunc(RefFunc* curr) { return 1; }
+  CostType visitRefExtern(RefExtern* curr) { return 1; }
   CostType visitRefEq(RefEq* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
   }
