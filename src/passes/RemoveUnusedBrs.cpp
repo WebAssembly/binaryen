@@ -80,7 +80,7 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
 }
 
-const Index TooCostlyToRunUnconditionally = 7;
+const Index TooCostlyToRunUnconditionally = 9;
 
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously

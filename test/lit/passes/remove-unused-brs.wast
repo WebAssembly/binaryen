@@ -29,6 +29,51 @@
     )
   )
 
+  ;; CHECK:      (func $selectify-simple (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.or
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (i32.const 32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 97)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const 48)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $selectify-simple (param $0 i32) (result i32)
+    (if (result i32)
+      (i32.lt_u
+        (i32.sub
+          (local.get $0)
+          (i32.const 48)
+        )
+        (i32.const 10)
+      )
+      (i32.const 1)
+      (i32.lt_u
+        (i32.sub
+          (i32.or
+            (local.get $0)
+            (i32.const 32)
+          )
+          (i32.const 97)
+        )
+        (i32.const 6)
+      )
+    )
+  )
+
   ;; CHECK:      (func $restructure-br_if (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $x)
@@ -410,7 +455,9 @@
   ;; CHECK-NEXT:         (i32.eqz
   ;; CHECK-NEXT:          (i32.eqz
   ;; CHECK-NEXT:           (i32.eqz
-  ;; CHECK-NEXT:            (local.get $x)
+  ;; CHECK-NEXT:            (i32.eqz
+  ;; CHECK-NEXT:             (local.get $x)
+  ;; CHECK-NEXT:            )
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
@@ -432,9 +479,9 @@
         (i32.const 1)
       )
       (if
-        (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz
+        (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz (i32.eqz
           (local.get $x)
-        ))))))))
+        )))))))))
         (call $if-of-if-but-too-costly)
       )
     )
