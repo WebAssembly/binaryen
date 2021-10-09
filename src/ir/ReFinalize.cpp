@@ -134,6 +134,7 @@ void ReFinalize::visitRefFunc(RefFunc* curr) {
   // could handle a change to the function's type, but is also not really what
   // this class has been meant to do.
 }
+void ReFinalize::visitRefExtern(RefExtern* curr) { curr->finalize(); }
 void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
