@@ -6,13 +6,13 @@
 ;; breaks to them, and so they have no nonlinear control flow.
 
 (module
-  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
-
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
+  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
   (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
+  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
   (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee
@@ -240,6 +240,19 @@
     )
   )
 
+  ;; CHECK:      (func $pattern-breaker
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $pattern-breaker
     (local $ref (ref null $struct))
     (local.set $ref
@@ -255,6 +268,20 @@
     )
   )
 
+  ;; CHECK:      (func $ref-local-write
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $ref
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $ref-local-write
     (local $ref (ref null $struct))
     (local.set $ref
@@ -274,6 +301,21 @@
     )
   )
 
+  ;; CHECK:      (func $other-local-write
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $other (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $other
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $other-local-write
     (local $ref (ref null $struct))
     (local $other (ref null $struct))
@@ -294,6 +336,18 @@
     )
   )
 
+  ;; CHECK:      (func $tee-and-subsequent
+  ;; CHECK-NEXT:  (local $ref (ref null $struct3))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct3
+  ;; CHECK-NEXT:    (i32.const 40)
+  ;; CHECK-NEXT:    (i32.const 50)
+  ;; CHECK-NEXT:    (i32.const 60)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $tee-and-subsequent
     (local $ref (ref null $struct3))
     ;; Test the common pattern of several subsequent sets, one of which is
