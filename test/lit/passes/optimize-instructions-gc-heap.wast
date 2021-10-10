@@ -375,7 +375,26 @@
     )
   )
 
-  ;; with default TODO
+  ;; CHECK:      (func $default
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $default
+    (local $ref (ref null $struct))
+    (struct.set $struct 0
+      (local.tee $ref
+        ;; Ignore a new_default for now. If the fields are defaultable then we
+        ;; could add them, in principle, but that might increase code size.
+        (struct.new_default $struct)
+      )
+      (i32.const 20)
+    )
+  )
 
   ;; CHECK:      (func $helper-i32 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)

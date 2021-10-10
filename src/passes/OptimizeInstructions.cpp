@@ -1394,6 +1394,12 @@ struct OptimizeInstructions
   //
   // TODO: the same for arrays
   bool optimizeSubsequentStructSet(StructNew* new_, StructSet* set) {
+    if (new_->isWithDefault()) {
+      // Ignore a new_default for now. If the fields are defaultable then we
+      // could add them, in principle, but that might increase code size.
+      return false;
+    }
+
     auto index = set->index;
     auto& operands = new_->operands;
 
