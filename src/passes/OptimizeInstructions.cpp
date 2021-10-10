@@ -1315,6 +1315,66 @@ struct OptimizeInstructions
       const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
       optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }
+
+    // If our reference is a tee of a struct.new, we may be able to fold the
+    // stored value into the new itself:
+    //
+    //  (struct.set (local.tee $x (struct.new X Y Z)) X')
+    // =>
+    //  (local.set $x (struct.new X' Y Z))
+    if (auto* tee = curr->ref->dynCast<LocalSet>()) {
+      if (auto* new_ = tee->value->dynCast<StructNew>()) {
+        if (optimizeSubsequentStructSet(new_, curr)) {
+          // Success, so we do not need the struct.set any more, and the tee
+          // can just be a set instead of us.
+          tee->makeSet();
+          replaceCurrent(tee);
+        }
+      }
+    }
+  }
+
+  // TODO move
+  // Given a struct.new and a struct.set that occurs right after it, and that
+  // applies to the same data, try to apply the set during the new:
+  //
+  //  (local.set $x (struct.new X Y Z))
+  //  (struct.set (local.get $x) X')
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // Returns true if we succeeded.
+  //
+  // TODO: the same for arrays
+  bool optimizeSubsequentStructSet(StructNew* new_, StructSet* set) {
+    auto index = set->index;
+    auto& operands = new_->operands;
+
+    // We must move the set's value past indexes greater than it (Y and Z in
+    // the example in the comment on this function).
+    EffectAnalyzer setValueEffects(getPassOptions(), *getModule(), set->value);
+
+    for (Index i = index + 1; i < operands.size(); i++) {
+      EffectAnalyzer operandEffects(
+        getPassOptions(), *getModule(), operands[i]);
+      if (operandEffects.invalidates(setValueEffects)) {
+        // TODO: we could use locals to reorder everything
+        return false;
+      }
+    }
+
+    Builder builder(*getModule());
+
+    // See if we need to keep the old value.
+    EffectAnalyzer replacedOperandEffects(
+      getPassOptions(), *getModule(), operands[index]);
+    if (replacedOperandEffects.hasUnremovableSideEffects()) {
+      operands[index] = builder.makeSequence(builder.makeDrop(operands[index]), set->value);
+    } else {
+      operands[index] = set->value;
+    }
+
+    return true;
   }
 
   void visitArrayGet(ArrayGet* curr) { skipNonNullCast(curr->ref); }
