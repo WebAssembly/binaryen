@@ -304,6 +304,40 @@
     )
   )
 
+  ;; CHECK:      (func $ref-local-write-tee
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-local-write-tee
+    (local $ref (ref null $struct))
+    (struct.set $struct 0
+      (local.tee $ref
+        (struct.new $struct
+          (i32.const 10)
+        )
+      )
+      (block (result i32)
+        ;; As above, but now in a tee.
+        (local.set $ref
+          (ref.null $struct)
+        )
+        (i32.const 20)
+      )
+    )
+  )
+
   ;; CHECK:      (func $other-local-write
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $other (ref null $struct))
@@ -367,6 +401,40 @@
       (local.get $ref)
       (block (result i32)
         ;; A read of the ref local prevents us from optimizing.
+        (drop
+          (local.get $ref)
+        )
+        (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-local-read-tee
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-local-read-tee
+    (local $ref (ref null $struct))
+    (struct.set $struct 0
+      (local.tee $ref
+        (struct.new $struct
+          (i32.const 10)
+        )
+      )
+      (block (result i32)
+        ;; As above, but now in a tee.
         (drop
           (local.get $ref)
         )
