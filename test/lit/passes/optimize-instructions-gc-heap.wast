@@ -33,6 +33,55 @@
     )
   )
 
+  ;; CHECK:      (func $side-effects-in-old-value
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $helper-i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $side-effects-in-old-value
+    (local $ref (ref null $struct))
+    (struct.set $struct 0
+      (local.tee $ref
+        (struct.new $struct
+          ;; Side effects here force us to keep the old value around.
+          (call $helper-i32)
+        )
+      )
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $side-effects-in-new-value
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $side-effects-in-new-value
+    (local $ref (ref null $struct))
+    (struct.set $struct 0
+      (local.tee $ref
+        (struct.new $struct
+          (i32.const 10)
+        )
+      )
+      ;; Side effects here are not a problem.
+      (call $helper-i32)
+    )
+  )
+
+;; TODO
+
   ;; CHECK:      (func $optimize-chain
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
@@ -67,93 +116,6 @@
     )
   )
 
-  ;; CHECK:      (func $nonlinear
-  ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $nonlinear
-    (local $ref (ref null $struct))
-    (local.set $ref
-      (struct.new $struct
-        (i32.const 10)
-      )
-    )
-    ;; Control flow blocks us from optimizing, as we just look in linear
-    ;; traces.
-    (if
-      (i32.const 1)
-      (nop)
-    )
-    (struct.set $struct 0
-      (local.get $ref)
-      (i32.const 20)
-    )
-  )
-
-  ;; CHECK:      (func $several-around-nonlinear
-  ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 30)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 40)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $several-around-nonlinear
-    (local $ref (ref null $struct))
-    (local.set $ref
-      (struct.new $struct
-        (i32.const 10)
-      )
-    )
-    (struct.set $struct 0
-      (local.get $ref)
-      (i32.const 20)
-    )
-    ;; We can optimize before and after an if (but not across it as tested
-    ;; earlier).
-    (if
-      (i32.const 1)
-      (nop)
-    )
-    (local.set $ref
-      (struct.new $struct
-        (i32.const 30)
-      )
-    )
-    (struct.set $struct 0
-      (local.get $ref)
-      (i32.const 40)
-    )
-  )
 
   ;; CHECK:      (func $local-written
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
@@ -221,57 +183,6 @@
     )
   )
 
-  ;; CHECK:      (func $side-effects-in-old-value
-  ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (call $helper-i32)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $side-effects-in-old-value
-    (local $ref (ref null $struct))
-    (local.set $ref
-      (struct.new $struct
-        ;; Side effects here force us to keep the old value around.
-        (call $helper-i32)
-      )
-    )
-    (struct.set $struct 0
-      (local.get $ref)
-      (i32.const 20)
-    )
-  )
-
-  ;; CHECK:      (func $side-effects-in-new-value
-  ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (call $helper-i32)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $side-effects-in-new-value
-    (local $ref (ref null $struct))
-    (local.set $ref
-      (struct.new $struct
-        (i32.const 10)
-      )
-    )
-    (struct.set $struct 0
-      (local.get $ref)
-      ;; Side effects in the new value are not an issue.
-      (call $helper-i32)
-    )
-  )
 
   ;; CHECK:      (func $multiple-fields
   ;; CHECK-NEXT:  (local $ref (ref null $struct2))
