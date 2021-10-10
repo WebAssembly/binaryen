@@ -80,6 +80,66 @@
     )
   )
 
+  ;; CHECK:      (func $many-fields
+  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct2
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct2
+  ;; CHECK-NEXT:    (i32.const 40)
+  ;; CHECK-NEXT:    (i32.const 60)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $many-fields
+    (local $ref (ref null $struct2))
+    ;; Set to the first field.
+    (struct.set $struct2 0
+      (local.tee $ref
+        (struct.new $struct2
+          (i32.const 10)
+          (i32.const 20)
+        )
+      )
+      (i32.const 30)
+    )
+    ;; Set to the second.
+    (struct.set $struct2 1
+      (local.tee $ref
+        (struct.new $struct2
+          (i32.const 40)
+          (i32.const 50)
+        )
+      )
+      (i32.const 60)
+    )
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;; TODO
 
   ;; CHECK:      (func $optimize-chain
