@@ -1006,6 +1006,12 @@ struct OptimizeInstructions
     }
   }
 
+  void visitBlock(Block* curr) {
+    if (getModule()->features.hasGC()) {
+      optimizeHeapStores(curr->list);
+    }
+  }
+
   void visitIf(If* curr) {
     curr->condition = optimizeBoolean(curr->condition);
     if (curr->ifFalse) {
@@ -1329,6 +1335,39 @@ struct OptimizeInstructions
           // can just be a set instead of us.
           tee->makeSet();
           replaceCurrent(tee);
+        }
+      }
+    }
+  }
+
+  // Similar to the above with struct.set whose reference is a tee of a new, we
+  // can do the same for subsequent sets in a list:
+  //
+  //  (local.set $x (struct.new X Y Z))
+  //  (struct.set (local.get $x) X')
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  void optimizeHeapStores(ExpressionList& list) {
+    for (Index i = 0; i < list.size(); i++) {
+      if (auto* localSet = list[i]->dynCast<LocalSet>()) {
+        if (auto* new_ = localSet->value->dynCast<StructNew>()) {
+          for (Index j = i + 1; j < list.size(); j++) {
+            if (auto* structSet = list[j]->dynCast<StructSet>()) {
+              if (auto* localGet = structSet->ref->dynCast<LocalGet>()) {
+                if (localGet->index == localSet->index) {
+                  if (optimizeSubsequentStructSet(new_, structSet)) {
+                    // Success. Replace the set with a nop, and continue to
+                    // perhaps optimize more.
+                    ExpressionManipulator::nop(structSet);
+                    continue;
+                  }
+                }
+              }
+            }
+            // Stop when we fail to optimize, as then there would be things in
+            // the middle whose side effects we need to take into account TODO
+            break;
+          }
         }
       }
     }

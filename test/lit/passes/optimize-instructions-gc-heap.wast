@@ -13,6 +13,8 @@
 
   (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
+  (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
   ;; CHECK:      (func $tee
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
@@ -187,43 +189,38 @@
     )
   )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;; TODO
+  ;; CHECK:      (func $optimize-subsequent
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $optimize-subsequent
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    ;; A set that comes right after can be optimized too.
+    (struct.set $struct 0
+      (local.get $ref)
+      (i32.const 20)
+    )
+  )
 
   ;; CHECK:      (func $optimize-chain
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 30)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $optimize-chain
     (local $ref (ref null $struct))
@@ -243,327 +240,85 @@
     )
   )
 
-
-  ;; CHECK:      (func $local-written
-  ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (ref.null $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $local-written
+  (func $pattern-breaker
     (local $ref (ref null $struct))
     (local.set $ref
       (struct.new $struct
         (i32.const 10)
       )
     )
-    ;; Writing to the local containing the reference prevents optimization.
-    (local.set $ref
-      (ref.null $struct)
-    )
+    ;; Anything that we don't recognize breaks the pattern.
+    (nop)
     (struct.set $struct 0
       (local.get $ref)
       (i32.const 20)
     )
   )
 
-  ;; CHECK:      (func $other-local-written
-  ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (local $ref-other (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $ref-other
-  ;; CHECK-NEXT:   (ref.null $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $other-local-written
+  (func $ref-local-write
     (local $ref (ref null $struct))
-    (local $ref-other (ref null $struct))
     (local.set $ref
       (struct.new $struct
         (i32.const 10)
       )
     )
-    ;; Writing to another local does not bother us.
-    (local.set $ref-other
-      (ref.null $struct)
+    (struct.set $struct 0
+      (local.get $ref)
+      (block (result i32)
+        ;; A write to the ref local prevents us from optimizing.
+        (local.set $ref
+          (ref.null $struct)
+        )
+        (i32.const 20)
+      )
+    )
+  )
+
+  (func $other-local-write
+    (local $ref (ref null $struct))
+    (local $other (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 10)
+      )
     )
     (struct.set $struct 0
       (local.get $ref)
-      (i32.const 20)
-    )
-  )
-
-
-  ;; CHECK:      (func $multiple-fields
-  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct2
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 100)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 1
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 200)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $multiple-fields
-    (local $ref (ref null $struct2))
-    (local.set $ref
-      (struct.new $struct2
-        (i32.const 10)
-        (i32.const 20)
-      )
-    )
-    (struct.set $struct2 0
-      (local.get $ref)
-      (i32.const 100)
-    )
-    (struct.set $struct2 1
-      (local.get $ref)
-      (i32.const 200)
-    )
-  )
-
-  ;; CHECK:      (func $side-effects-conflict
-  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct2
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $x
-  ;; CHECK-NEXT:      (i32.const -1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $x
-  ;; CHECK-NEXT:      (i32.const -2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 20)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const -3)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 100)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 1
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const -4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 200)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $side-effects-conflict
-    (local $ref (ref null $struct2))
-    (local $x i32)
-    ;; Side effects in all 4 values here prevent us from optimizing.
-    ;; We can't optimize the first set because it would cross the new's second
-    ;; value, and we can't optimize the second set because the first set is in
-    ;; the middle.
-    (local.set $ref
-      (struct.new $struct2
-        (block (result i32)
-          (local.set $x
-            (i32.const -1)
-          )
-          (i32.const 10)
-        )
-        (block (result i32)
-          (local.set $x
-            (i32.const -2)
-          )
-          (i32.const 20)
-        )
-      )
-    )
-    (struct.set $struct2 0
-      (local.get $ref)
       (block (result i32)
-        (local.set $x
-          (i32.const -3)
-        )
-        (i32.const 100)
-      )
-    )
-    (struct.set $struct2 1
-      (local.get $ref)
-      (block (result i32)
-        (local.set $x
-          (i32.const -4)
-        )
-        (i32.const 200)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $side-effects-conflict-1
-  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct2
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $x
-  ;; CHECK-NEXT:      (i32.const -2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 20)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const -3)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 100)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 1
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const -4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 200)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $side-effects-conflict-1
-    (local $ref (ref null $struct2))
-    (local $x i32)
-    ;; As above, but without the first side effect. This does not allow any more
-    ;; optimization than before.
-    (local.set $ref
-      (struct.new $struct2
-        (i32.const 10)
-        (block (result i32)
-          (local.set $x
-            (i32.const -2)
-          )
-          (i32.const 20)
-        )
-      )
-    )
-    (struct.set $struct2 0
-      (local.get $ref)
-      (block (result i32)
-        (local.set $x
-          (i32.const -3)
-        )
-        (i32.const 100)
-      )
-    )
-    (struct.set $struct2 1
-      (local.get $ref)
-      (block (result i32)
-        (local.set $x
-          (i32.const -4)
-        )
-        (i32.const 200)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $side-effects-conflict-2
-  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct2
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $x
-  ;; CHECK-NEXT:      (i32.const -2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 0
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const -3)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 100)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 1
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const -4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 200)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $side-effects-conflict-2
-    (local $ref (ref null $struct2))
-    (local $x i32)
-    ;; As above, but without the second side effect. This *does* allow us to
-    ;; do optimization.
-    (local.set $ref
-      (struct.new $struct2
-        (block (result i32)
-          (local.set $x
-            (i32.const -2)
-          )
-          (i32.const 10)
+        ;; A write to the another local is fine.
+        (local.set $other
+          (ref.null $struct)
         )
         (i32.const 20)
       )
     )
-    (struct.set $struct2 0
-      (local.get $ref)
-      (block (result i32)
-        (local.set $x
-          (i32.const -3)
+  )
+
+  (func $tee-and-subsequent
+    (local $ref (ref null $struct3))
+    ;; Test the common pattern of several subsequent sets, one of which is
+    ;; using a tee.
+    (struct.set $struct3 0
+      (local.tee $ref
+        (struct.new $struct3
+          (i32.const 10)
+          (i32.const 20)
+          (i32.const 30)
         )
-        (i32.const 100)
       )
+      (i32.const 40)
     )
-    (struct.set $struct2 1
+    (struct.set $struct3 1
       (local.get $ref)
-      (block (result i32)
-        (local.set $x
-          (i32.const -4)
-        )
-        (i32.const 200)
-      )
+      (i32.const 50)
+    )
+    (struct.set $struct3 2
+      (local.get $ref)
+      (i32.const 60)
     )
   )
+
+  ;; with default TODO
 
   ;; CHECK:      (func $helper-i32 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
