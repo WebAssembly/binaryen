@@ -1330,7 +1330,7 @@ struct OptimizeInstructions
     //  (local.set $x (struct.new X' Y Z))
     if (auto* tee = curr->ref->dynCast<LocalSet>()) {
       if (auto* new_ = tee->value->dynCast<StructNew>()) {
-        if (optimizeSubsequentStructSet(new_, curr)) {
+        if (optimizeSubsequentStructSet(new_, curr, tee->index)) {
           // Success, so we do not need the struct.set any more, and the tee
           // can just be a set instead of us.
           tee->makeSet();
@@ -1353,20 +1353,9 @@ struct OptimizeInstructions
         if (auto* new_ = localSet->value->dynCast<StructNew>()) {
           for (Index j = i + 1; j < list.size(); j++) {
             if (auto* structSet = list[j]->dynCast<StructSet>()) {
-              // A read or a write of the ref local may cause problems, so give
-              // up (for example, moving a read of the ref local to before we
-              // write the ref into it would cause a change in behaviour, and
-              // if it appears in the value then we would in fact be moving it).
-              // TODO: perhaps we can optimize some cases at least
-              auto valueEffects = effects(structSet->value);
-              if (valueEffects.localsRead.count(localSet->index) ||
-                  valueEffects.localsWritten.count(localSet->index)) {
-                break;
-              }
-
               if (auto* localGet = structSet->ref->dynCast<LocalGet>()) {
                 if (localGet->index == localSet->index) {
-                  if (optimizeSubsequentStructSet(new_, structSet)) {
+                  if (optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
                     // Success. Replace the set with a nop, and continue to
                     // perhaps optimize more.
                     ExpressionManipulator::nop(structSet);
@@ -1387,7 +1376,17 @@ struct OptimizeInstructions
 
   // TODO move
   // Given a struct.new and a struct.set that occurs right after it, and that
-  // applies to the same data, try to apply the set during the new:
+  // applies to the same data, try to apply the set during the new. This can be
+  // either with a nested tee:
+  //
+  //  (struct.set
+  //    (local.tee $x (struct.new X Y Z))
+  //    X'
+  //  )
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // or without:
   //
   //  (local.set $x (struct.new X Y Z))
   //  (struct.set (local.get $x) X')
@@ -1397,7 +1396,7 @@ struct OptimizeInstructions
   // Returns true if we succeeded.
   //
   // TODO: the same for arrays
-  bool optimizeSubsequentStructSet(StructNew* new_, StructSet* set) {
+  bool optimizeSubsequentStructSet(StructNew* new_, StructSet* set, Index refLocalIndex) {
     if (new_->isWithDefault()) {
       // Ignore a new_default for now. If the fields are defaultable then we
       // could add them, in principle, but that might increase code size.
@@ -1407,10 +1406,22 @@ struct OptimizeInstructions
     auto index = set->index;
     auto& operands = new_->operands;
 
+    // Check for effects that prevent us moving the struct.set's value (X' in
+    // the function comment) into its new position in the struct.new. First, it
+    // must be ok to move it past the local.set (otherwise, it might read from
+    // memory using that local, and depend on the struct.new having already
+    // occurred; or, if it writes to that local, then it would cross another
+    // write).
+    auto setValueEffects = effects(set->value);
+    if (setValueEffects.localsRead.count(refLocalIndex) ||
+        setValueEffects.localsWritten.count(refLocalIndex)) {
+      return false;
+    }
+
     // We must move the set's value past indexes greater than it (Y and Z in
     // the example in the comment on this function).
-    auto setValueEffects = effects(set->value);
-
+    // TODO When called repeatedly in a sequence this can become quadratic -
+    //      perhaps we should memoize.
     for (Index i = index + 1; i < operands.size(); i++) {
       auto operandEffects = effects(operands[i]);
       if (operandEffects.invalidates(setValueEffects)) {
