@@ -339,6 +339,77 @@
     )
   )
 
+  ;; CHECK:      (func $ref-local-read
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-local-read
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $ref)
+      (block (result i32)
+        ;; A read of the ref local prevents us from optimizing.
+        (drop
+          (local.get $ref)
+        )
+        (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-other-read
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $other (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $other)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $ref-other-read
+    (local $ref (ref null $struct))
+    (local $other (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $ref)
+      (block (result i32)
+        ;; A read of another local is fine.
+        (drop
+          (local.get $other)
+        )
+        (i32.const 20)
+      )
+    )
+  )
+
   ;; CHECK:      (func $tee-and-subsequent
   ;; CHECK-NEXT:  (local $ref (ref null $struct3))
   ;; CHECK-NEXT:  (local.set $ref

@@ -1353,10 +1353,14 @@ struct OptimizeInstructions
         if (auto* new_ = localSet->value->dynCast<StructNew>()) {
           for (Index j = i + 1; j < list.size(); j++) {
             if (auto* structSet = list[j]->dynCast<StructSet>()) {
-              if (effects(structSet).localsWritten.count(localSet->index)) {
-                // Nested somewhere here is a write to the local containing our
-                // reference. For now, just stop and don't try to reason about
-                // that. TODO
+              // A read or a write of the ref local may cause problems, so give
+              // up (for example, moving a read of the ref local to before we
+              // write the ref into it would cause a change in behaviour, and
+              // if it appears in the value then we would in fact be moving it).
+              // TODO: perhaps we can optimize some cases at least
+              auto valueEffects = effects(structSet->value);
+              if (valueEffects.localsRead.count(localSet->index) ||
+                  valueEffects.localsWritten.count(localSet->index)) {
                 break;
               }
 
