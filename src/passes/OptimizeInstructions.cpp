@@ -1413,7 +1413,8 @@ struct OptimizeInstructions
 
     // See if we need to keep the old value.
     if (effects(operands[index]).hasUnremovableSideEffects()) {
-      operands[index] = builder.makeSequence(builder.makeDrop(operands[index]), set->value);
+      operands[index] =
+        builder.makeSequence(builder.makeDrop(operands[index]), set->value);
     } else {
       operands[index] = set->value;
     }
