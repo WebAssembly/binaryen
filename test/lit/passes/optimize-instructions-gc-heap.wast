@@ -6,10 +6,11 @@
 ;; breaks to them, and so they have no nonlinear control flow.
 
 (module
+  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
+
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
   (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee
@@ -39,7 +40,9 @@
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (call $helper-i32)
+  ;; CHECK-NEXT:      (call $helper-i32
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 20)
   ;; CHECK-NEXT:    )
@@ -52,7 +55,7 @@
       (local.tee $ref
         (struct.new $struct
           ;; Side effects here force us to keep the old value around.
-          (call $helper-i32)
+          (call $helper-i32 (i32.const 0))
         )
       )
       (i32.const 20)
@@ -63,7 +66,9 @@
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:    (call $helper-i32
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -76,7 +81,7 @@
         )
       )
       ;; Side effects here are not a problem.
-      (call $helper-i32)
+      (call $helper-i32 (i32.const 0))
     )
   )
 
@@ -119,6 +124,68 @@
     )
   )
 
+  ;; CHECK:      (func $side-effect-conflict
+  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
+  ;; CHECK-NEXT:  (struct.set $struct2 0
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new $struct2
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (call $helper-i32
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $helper-i32
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $side-effect-conflict
+    (local $ref (ref null $struct2))
+    (struct.set $struct2 0
+      (local.tee $ref
+        (struct.new $struct2
+          (i32.const 10)
+          ;; Side effects on the second field prevent us from moving the set's
+          ;; value past it to replace the first field above it.
+          (call $helper-i32 (i32.const 0))
+        )
+      )
+      (call $helper-i32 (i32.const 1))
+    )
+  )
+
+  ;; CHECK:      (func $side-effect-ok
+  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct2
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $helper-i32
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $helper-i32
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $side-effect-ok
+    (local $ref (ref null $struct2))
+    (struct.set $struct2 0
+      (local.tee $ref
+        (struct.new $struct2
+          ;; Side effects on the first field do not interfere.
+          (call $helper-i32 (i32.const 0))
+          (i32.const 10)
+        )
+      )
+      (call $helper-i32 (i32.const 1))
+    )
+  )
 
 
 
@@ -498,10 +565,10 @@
     )
   )
 
-  ;; CHECK:      (func $helper-i32 (result i32)
+  ;; CHECK:      (func $helper-i32 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
-  (func $helper-i32 (result i32)
+  (func $helper-i32 (param $x i32) (result i32)
     (i32.const 42)
   )
 )
