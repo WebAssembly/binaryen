@@ -1353,6 +1353,13 @@ struct OptimizeInstructions
         if (auto* new_ = localSet->value->dynCast<StructNew>()) {
           for (Index j = i + 1; j < list.size(); j++) {
             if (auto* structSet = list[j]->dynCast<StructSet>()) {
+              if (effects(structSet).localsWritten.count(localSet->index)) {
+                // Nested somewhere here is a write to the local containing our
+                // reference. For now, just stop and don't try to reason about
+                // that. TODO
+                break;
+              }
+
               if (auto* localGet = structSet->ref->dynCast<LocalGet>()) {
                 if (localGet->index == localSet->index) {
                   if (optimizeSubsequentStructSet(new_, structSet)) {
@@ -1364,6 +1371,7 @@ struct OptimizeInstructions
                 }
               }
             }
+
             // Stop when we fail to optimize, as then there would be things in
             // the middle whose side effects we need to take into account TODO
             break;
@@ -1391,11 +1399,10 @@ struct OptimizeInstructions
 
     // We must move the set's value past indexes greater than it (Y and Z in
     // the example in the comment on this function).
-    EffectAnalyzer setValueEffects(getPassOptions(), *getModule(), set->value);
+    auto setValueEffects = effects(set->value);
 
     for (Index i = index + 1; i < operands.size(); i++) {
-      EffectAnalyzer operandEffects(
-        getPassOptions(), *getModule(), operands[i]);
+      auto operandEffects = effects(operands[i]);
       if (operandEffects.invalidates(setValueEffects)) {
         // TODO: we could use locals to reorder everything
         return false;
@@ -1405,9 +1412,7 @@ struct OptimizeInstructions
     Builder builder(*getModule());
 
     // See if we need to keep the old value.
-    EffectAnalyzer replacedOperandEffects(
-      getPassOptions(), *getModule(), operands[index]);
-    if (replacedOperandEffects.hasUnremovableSideEffects()) {
+    if (effects(operands[index]).hasUnremovableSideEffects()) {
       operands[index] = builder.makeSequence(builder.makeDrop(operands[index]), set->value);
     } else {
       operands[index] = set->value;
