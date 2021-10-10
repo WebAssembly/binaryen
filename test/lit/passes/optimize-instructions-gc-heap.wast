@@ -272,15 +272,18 @@
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $ref
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 20)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-local-write
     (local $ref (ref null $struct))
