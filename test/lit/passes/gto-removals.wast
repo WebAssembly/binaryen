@@ -335,4 +335,55 @@
   (func $func-4)
 )
 
-;; with default
+(module
+  ;; Similar to the above, but with different types in each field, to verify
+  ;; that we emit valid code and are not confused by the names being right
+  ;; by coincidence.
+
+
+  ;; CHECK:      (type $vtable (struct (field $v1 i64) (field $v2 f32)))
+  (type $vtable (struct (field $v0 i32) (field $v1 i64) (field $v2 f32) (field $v3 f64) (field $v4 anyref)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (i64.const 1)
+  ;; CHECK-NEXT:  (f32.const 2.200000047683716)
+  ;; CHECK-NEXT: ))
+  (global $vtable (ref $vtable) (struct.new $vtable
+    (i32.const 0)
+    (i64.const 1)
+    (f32.const 2.2)
+    (f64.const 3.3)
+    (ref.null data)
+  ))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $i64 i64)
+  ;; CHECK-NEXT:  (local $f32 f32)
+  ;; CHECK-NEXT:  (local.set $i64
+  ;; CHECK-NEXT:   (struct.get $vtable $v1
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $f32
+  ;; CHECK-NEXT:   (struct.get $vtable $v2
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $i64 i64)
+    (local $f32 f32)
+    (local.set $i64
+      (struct.get $vtable 1
+        (global.get $vtable)
+      )
+    )
+    (local.set $f32
+      (struct.get $vtable 2
+        (global.get $vtable)
+      )
+    )
+  )
+)
