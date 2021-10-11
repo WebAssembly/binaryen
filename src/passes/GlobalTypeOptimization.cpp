@@ -288,9 +288,12 @@ struct GlobalTypeOptimization : public Pass {
         if (iter == parent.indexesAfterRemovals.end()) {
           return;
         }
+std::cout << "n1\n";
         auto& indexesAfterRemoval = iter->second;
 
         auto& operands = curr->operands;
+        assert(indexesAfterRemoval.size() == operands.size());
+
         Index skip = 0;
         for (Index i = 0; i < operands.size(); i++) {
           auto newIndex = indexesAfterRemoval[i];
@@ -304,6 +307,7 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
         operands.resize(operands.size() - skip);
+std::cout << "n2\n";
       }
 
       void visitStructSet(StructSet* curr) {
@@ -330,10 +334,12 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
+std::cout << "g1\n";
         auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
         // We can't remove a field that is read from.
         assert(newIndex != RemovedField);
         curr->index = newIndex;
+std::cout << "g2\n";
       }
 
       Index getNewIndex(HeapType type, Index index) {
@@ -347,6 +353,7 @@ struct GlobalTypeOptimization : public Pass {
     };
 
     FieldRemover scanner(*this);
+    scanner.setModule(&wasm);
     scanner.run(runner, &wasm);
     scanner.walkModuleCode(&wasm);
   }

@@ -245,8 +245,15 @@
   ;; A vtable-like structure created in a global location. Only some of the
   ;; fields are accessed.
 
-  (type $vtable (struct (field funcref) (field funcref) (field funcref) (field funcref) (field funcref)))
+  ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $vtable (struct (field $v1 funcref) (field $v2 funcref)))
+  (type $vtable (struct (field $v0 funcref) (field $v1 funcref) (field $v2 funcref) (field $v3 funcref) (field $v4 funcref)))
+
+  ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $func-1)
+  ;; CHECK-NEXT:  (ref.func $func-2)
+  ;; CHECK-NEXT: ))
   (global $vtable (ref $vtable) (struct.new $vtable
     (ref.func $func-0)
     (ref.func $func-1)
@@ -255,6 +262,18 @@
     (ref.func $func-4)
   ))
 
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $vtable $v1
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $vtable $v2
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test
     ;; To differ from previous tests, do not read the very first field.
     (drop
@@ -272,9 +291,26 @@
     ;; one before it.
   )
 
+  ;; CHECK:      (func $func-0
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $func-0)
+  ;; CHECK:      (func $func-1
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $func-1)
+  ;; CHECK:      (func $func-2
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $func-2)
+  ;; CHECK:      (func $func-3
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $func-3)
+  ;; CHECK:      (func $func-4
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $func-4)
 )
+
+;; with default
