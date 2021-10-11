@@ -173,7 +173,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
 
     auto heapType = type.getHeapType();
     auto index = curr->index;
-    static_cast<SubType*>(this)->noteRead(heapType, index, functionSetInfos[this->getFunction()][heapType][index]);
+    static_cast<SubType*>(this)->noteRead(
+      heapType, index, functionSetInfos[this->getFunction()][heapType][index]);
   }
 
   void

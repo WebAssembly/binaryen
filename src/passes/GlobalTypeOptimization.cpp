@@ -70,8 +70,8 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 
   FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
                    FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
-    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos, functionSetGetInfos) {
-  }
+    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos,
+                                           functionSetGetInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
@@ -110,7 +110,6 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
-
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalTypeOptimization requires nominal typing";
@@ -128,7 +127,8 @@ struct GlobalTypeOptimization : public Pass {
     // TODO: combine newInfos as well, once we have a need for that (we will
     //       when we do things like subtyping).
 
-    // TODO: we need to propagate in both directions for no-read as well, update commentttt
+    // TODO: we need to propagate in both directions for no-read as well, update
+    // commentttt
 
     // Find which fields are immutable in all super- and sub-classes. To see
     // that, propagate sets in both directions. This is necessary because we
@@ -224,7 +224,8 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         if (parent.indexesAfterRemovals.count(oldStructType)) {
-          auto& indexesAfterRemoval = parent.indexesAfterRemovals[oldStructType];
+          auto& indexesAfterRemoval =
+            parent.indexesAfterRemovals[oldStructType];
           Index skip = 0;
           for (Index i = 0; i < newFields.size(); i++) {
             auto newIndex = indexesAfterRemoval[i];
@@ -263,17 +264,14 @@ struct GlobalTypeOptimization : public Pass {
   // After updating the types to remove certain fields, we must also remove
   // them from struct instructions.
   void removeFieldsInInstructions(PassRunner* runner, Module& wasm) {
-    struct FieldRemover
-      : public WalkerPass<PostWalker<FieldRemover>> {
+    struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
 
       GlobalTypeOptimization& parent;
 
       FieldRemover(GlobalTypeOptimization& parent) : parent(parent) {}
 
-      FieldRemover* create() override {
-        return new FieldRemover(parent);
-      }
+      FieldRemover* create() override { return new FieldRemover(parent); }
 
       void visitStructNew(StructNew* curr) {
         if (curr->type == Type::unreachable) {
@@ -299,8 +297,10 @@ struct GlobalTypeOptimization : public Pass {
           if (newIndex != RemovedField) {
             operands[newIndex] = operands[i];
           } else {
-            if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i]).hasUnremovableSideEffects()) {
-              Fatal() << "TODO: handle side effects in field removal (impossible in global locations?)";
+            if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i])
+                  .hasUnremovableSideEffects()) {
+              Fatal() << "TODO: handle side effects in field removal "
+                         "(impossible in global locations?)";
             }
             skip++;
           }
@@ -318,12 +318,8 @@ struct GlobalTypeOptimization : public Pass {
           curr->index = newIndex;
         } else {
           Builder builder(*getModule());
-          replaceCurrent(
-            builder.makeSequence(
-              builder.makeDrop(curr->ref),
-              builder.makeDrop(curr->value)
-            )
-          );
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeDrop(curr->value)));
         }
       }
 
