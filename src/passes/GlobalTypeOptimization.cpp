@@ -157,8 +157,13 @@ struct GlobalTypeOptimization : public Pass {
       }
     }
 
-    // The types are now generally correct, except for their internals, which we
-    // rewrite now.
+    // Update the types in the entire module.
+    updateTypes(*module);
+
+
+  }
+
+  void updateTypes(Module& wasm) {
     class TypeRewriter : public GlobalTypeRewriter {
       GlobalTypeOptimization& parent;
 
@@ -181,7 +186,7 @@ struct GlobalTypeOptimization : public Pass {
       }
     };
 
-    TypeRewriter(*module, *this).update();
+    TypeRewriter(wasm, *this).update();
   }
 
   void processImmutability(HeapType type, Index i, const Field& field) {
