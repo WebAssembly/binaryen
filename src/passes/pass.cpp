@@ -524,14 +524,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   }
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
-    // Global type optimization can find opportunities to remove code, as when
-    // if removes vtable entries it can remove the function they referred to.
-    addIfNoDWARFIssues("gto");
-    // Removing code can help constant field propagation.
-    addIfNoDWARFIssues("remove-unused-module-elements");
     addIfNoDWARFIssues("cfp");
-    // Constant field propagation may open up further opportunities, but leave
-    // those for later runs of the pipeline.
   }
 }
 
