@@ -189,20 +189,23 @@ struct GlobalTypeOptimization : public Pass {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
+std::cout << "plan to remove\n";
             skip++;
           }
         }
       }
     }
 
-    // Update the types in the entire module.
-    updateTypes(*module);
-
-    // If we found fields that can be removed, remove them from instructions
-    // too.
+    // If we found fields that can be removed, remove them from instructions.
+    // (Note that we must do this first, while we still have the old heap types
+    // that we can identify, and only after this should be update all the types
+    // throughout the module.)
     if (!indexesAfterRemovals.empty()) {
       removeFieldsInInstructions(runner, *module);
     }
+
+    // Update the types in the entire module.
+    updateTypes(*module);
   }
 
   void updateTypes(Module& wasm) {
@@ -233,6 +236,7 @@ struct GlobalTypeOptimization : public Pass {
             if (newIndex != RemovedField) {
               newFields[newIndex] = newFields[i];
             } else {
+std::cout << "remove from type\n";
               skip++;
             }
           }
@@ -281,6 +285,7 @@ struct GlobalTypeOptimization : public Pass {
           if (newIndex != RemovedField) {
             operands[newIndex] = operands[i];
           } else {
+std::cout << "remove from new\n";
             if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i]).hasUnremovableSideEffects()) {
               Fatal() << "TODO: handle side effects in field removal (impossible in global locations?)";
             }
@@ -297,8 +302,10 @@ struct GlobalTypeOptimization : public Pass {
 
         auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
         if (newIndex != RemovedField) {
+std::cout << "keep (maybe update) in set\n";
           curr->index = newIndex;
         } else {
+std::cout << "remove from set\n";
           Builder builder(*getModule());
           replaceCurrent(
             builder.makeSequence(
@@ -323,9 +330,11 @@ struct GlobalTypeOptimization : public Pass {
       Index getNewIndex(HeapType type, Index index) {
         auto iter = parent.indexesAfterRemovals.find(type);
         if (iter == parent.indexesAfterRemovals.end()) {
+std::cout << "no indexes after removals to readdd\n";
           return index;
         }
         auto& indexesAfterRemoval = iter->second;
+std::cout << "yes indexes after removals to read " << index << " : " << indexesAfterRemoval[index] << "\n";
         return indexesAfterRemoval[index];
       }
     };
