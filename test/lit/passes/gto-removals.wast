@@ -69,6 +69,28 @@
 )
 
 (module
+  ;; A new_default does not keep a field from being removed.
+
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct (field (mut funcref))))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+    ;; The fields in this new will be removed.
+    (drop
+      (struct.new_default $struct
+      )
+    )
+  )
+)
+
+(module
   ;; A read *does* keep a field from being removed.
 
   ;; CHECK:      (type $struct (struct (field funcref)))
