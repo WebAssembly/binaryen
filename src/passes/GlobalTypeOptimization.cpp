@@ -177,16 +177,28 @@ struct GlobalTypeOptimization : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
-        if (!parent.canBecomeImmutable.count(oldStructType)) {
-          return;
+        auto& newFields = struct_.fields;
+
+        if (parent.canBecomeImmutable.count(oldStructType)) {
+          auto& immutableVec = parent.canBecomeImmutable[oldStructType];
+          for (Index i = 0; i < immutableVec.size(); i++) {
+            if (immutableVec[i]) {
+              newFields[i].mutable_ = Immutable;
+            }
+          }
         }
 
-        auto& newFields = struct_.fields;
-        auto& immutableVec = parent.canBecomeImmutable[oldStructType];
-        for (Index i = 0; i < immutableVec.size(); i++) {
-          if (immutableVec[i]) {
-            newFields[i].mutable_ = Immutable;
+        if (parent.canBeRemoved.count(oldStructType)) {
+          auto& removeVec = parent.canBeRemoved[oldStructType];
+          Index skip = 0;
+          for (Index i = 0; i < newFields.size(); i++) {
+            if (i >= removeVec.size() || !removeVec[i]) {
+              newFields[i - skip] = newFields[i];
+            } else {
+              skip++;
+            }
           }
+          newFields.resize(newFields.size() - skip);
         }
       }
     };
