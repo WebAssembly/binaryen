@@ -122,7 +122,7 @@ struct GlobalTypeOptimization : public Pass {
     FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
     scanner.setModule(module);
     scanner.run(runner, module);
-    scanner.walkModuleCode(module);
+    scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);

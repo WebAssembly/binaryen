@@ -279,7 +279,7 @@ struct ConstantFieldPropagation : public Pass {
     PCVScanner scanner(functionNewInfos, functionSetInfos);
     scanner.setModule(module);
     scanner.run(runner, module);
-    scanner.walkModuleCode(module);
+    scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
     PCVStructValuesMap combinedNewInfos, combinedSetInfos;
