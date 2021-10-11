@@ -48,17 +48,14 @@
 (module
   ;; A new does not keep a field from being removed.
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
-
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct (field (mut funcref))))
 
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
   ;; CHECK:      (func $func (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
@@ -106,9 +103,12 @@
 
   ;; A similar struct but with all fields marked immutable, and the only
   ;; writes are from during creation (so all fields are at least writeable).
+  ;; CHECK:      (type $imm-struct (struct (field $rw i32) (field $rw-2 i32)))
   (type $imm-struct (struct (field $w i32) (field $rw i32) (field $w-2 i32) (field $rw-2 i32)))
 
   ;; CHECK:      (type $ref|$mut-struct|_=>_none (func (param (ref $mut-struct))))
+
+  ;; CHECK:      (type $ref|$imm-struct|_=>_none (func (param (ref $imm-struct))))
 
   ;; CHECK:      (func $func-mut (param $x (ref $mut-struct))
   ;; CHECK-NEXT:  (drop
@@ -199,6 +199,24 @@
     )
   )
 
+  ;; CHECK:      (func $func-imm (param $x (ref $imm-struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $imm-struct
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $imm-struct $rw
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $imm-struct $rw-2
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func-imm (param $x (ref $imm-struct))
     ;; create an instance
     (drop
@@ -207,8 +225,6 @@
         (i32.const 1)
         (i32.const 2)
         (i32.const 3)
-        (i32.const 4)
-        (i32.const 5)
       )
     )
     ;; $rw and $rw-2 are also read
