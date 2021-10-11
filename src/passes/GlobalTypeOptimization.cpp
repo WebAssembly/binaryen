@@ -90,7 +90,6 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   }
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
-std::cout << "read!\n";
     info.noteRead();
   }
 };
@@ -186,7 +185,6 @@ struct GlobalTypeOptimization : public Pass {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
-std::cout << "plan to remove\n";
             skip++;
           }
         }
@@ -233,7 +231,6 @@ std::cout << "plan to remove\n";
             if (newIndex != RemovedField) {
               newFields[newIndex] = newFields[i];
             } else {
-std::cout << "remove from type\n";
               skip++;
             }
           }
@@ -300,7 +297,6 @@ std::cout << "remove from type\n";
           if (newIndex != RemovedField) {
             operands[newIndex] = operands[i];
           } else {
-std::cout << "remove from new\n";
             if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i]).hasUnremovableSideEffects()) {
               Fatal() << "TODO: handle side effects in field removal (impossible in global locations?)";
             }
@@ -317,10 +313,8 @@ std::cout << "remove from new\n";
 
         auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
         if (newIndex != RemovedField) {
-std::cout << "keep (maybe update) in set\n";
           curr->index = newIndex;
         } else {
-std::cout << "remove from set\n";
           Builder builder(*getModule());
           replaceCurrent(
             builder.makeSequence(
@@ -345,11 +339,9 @@ std::cout << "remove from set\n";
       Index getNewIndex(HeapType type, Index index) {
         auto iter = parent.indexesAfterRemovals.find(type);
         if (iter == parent.indexesAfterRemovals.end()) {
-std::cout << "no indexes after removals to readdd\n";
           return index;
         }
         auto& indexesAfterRemoval = iter->second;
-std::cout << "yes indexes after removals to read " << index << " : " << indexesAfterRemoval[index] << "\n";
         return indexesAfterRemoval[index];
       }
     };
