@@ -89,12 +89,9 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
     info.noteWrite();
   }
 
-  void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      return;
-    }
-
-    functionSetInfos[getFunction()][curr->ref->type.getHeapType()][curr->index].noteRead();
+  void noteRead(HeapType type, Index index, FieldInfo& info) {
+std::cout << "read!\n";
+    info.noteRead();
   }
 };
 

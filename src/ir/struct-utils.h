@@ -128,7 +128,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
   Scanner(FunctionStructValuesMap<T>& functionNewInfos,
-          FunctionStructValuesMap<T>& functionSetInfos)
+          FunctionStructValuesMap<T>& functionSetInfos) // rename to get also
     : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
 
   void visitStructNew(StructNew* curr) {
@@ -163,6 +163,17 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
       type.getHeapType(),
       curr->index,
       functionSetInfos[this->getFunction()][type.getHeapType()][curr->index]);
+  }
+
+  void visitStructGet(StructGet* curr) {
+    auto type = curr->ref->type;
+    if (type == Type::unreachable) {
+      return;
+    }
+
+    auto heapType = type.getHeapType();
+    auto index = curr->index;
+    static_cast<SubType*>(this)->noteRead(heapType, index, functionSetInfos[this->getFunction()][heapType][index]);
   }
 
   void

@@ -261,6 +261,10 @@ struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
     //       analysis (but this is already entering the realm of diminishing
     //       returns).
   }
+
+  void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
+    // Reads do not interest us.
+  }
 };
 
 struct ConstantFieldPropagation : public Pass {

@@ -7,8 +7,14 @@
   ;; A struct with a field that is never read or written, so it can be
   ;; removed.
 
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct (field (mut funcref))))
 
+  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
   )
 )
@@ -16,12 +22,50 @@
 (module
   ;; A write does not keep a field from being removed.
 
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct (field (mut funcref))))
 
+  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
-    (struct.set $struct
+    ;; The fields of this set will be dropped, as we do not need to perform
+    ;; the write.
+    (struct.set $struct 0
       (local.get $x)
       (ref.null func)
+    )
+  )
+)
+
+
+(module
+  ;; A read *does* keep a field from being removed.
+
+  ;; CHECK:      (type $struct (struct (field funcref)))
+  (type $struct (struct (field (mut funcref))))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $x)
+      )
     )
   )
 )
