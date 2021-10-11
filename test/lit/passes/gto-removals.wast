@@ -46,6 +46,32 @@
 )
 
 (module
+  ;; A new does not keep a field from being removed.
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct (field (mut funcref))))
+
+  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+    ;; The fields in this new will be removed.
+    (drop
+      (struct.new $struct
+        (ref.null func)
+      )
+    )
+  )
+)
+
+(module
   ;; A read *does* keep a field from being removed.
 
   ;; CHECK:      (type $struct (struct (field funcref)))
@@ -69,7 +95,6 @@
   )
 )
 
-
 (module
   ;; Different struct types with different situations: some fields are read,
   ;; some written, and some both. (Note that this also tests the interaction
@@ -77,11 +102,11 @@
 
   ;; A struct with all fields marked mutable.
   ;; CHECK:      (type $mut-struct (struct (field $r i32) (field $rw (mut i32)) (field $r-2 i32) (field $rw-2 (mut i32))))
-  (type $mut-struct (struct (field $r (mut i32)) (field $w (mut i32)) (field $rw (mut i32))  (field $r-2 (mut i32)) (field $w-2 (mut i32)) (field $rw-2 (mut i32))))
+  (type $mut-struct (struct (field $r (mut i32)) (field $w (mut i32)) (field $rw (mut i32)) (field $r-2 (mut i32)) (field $w-2 (mut i32)) (field $rw-2 (mut i32))))
 
-  ;; A similar struct but with all fields immutable where possible (and just
-  ;; written during creation).
-  (type $imm-struct (struct (field $r i32) (field $w i32) (field $rw i32)  (field $r-2 i32) (field $w-2 i32) (field $rw-2 i32)))
+  ;; A similar struct but with all fields marked immutable, and the only
+  ;; writes are from during creation (so all fields are at least writeable).
+  (type $imm-struct (struct (field $w i32) (field $rw i32) (field $w-2 i32) (field $rw-2 i32)))
 
   ;; CHECK:      (type $ref|$mut-struct|_=>_none (func (param (ref $mut-struct))))
 
@@ -169,6 +194,31 @@
     )
     (drop
       (struct.get $mut-struct $rw-2
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $func-imm (param $x (ref $imm-struct))
+    ;; create an instance
+    (drop
+      (struct.new $imm-struct
+        (i32.const 0)
+        (i32.const 1)
+        (i32.const 2)
+        (i32.const 3)
+        (i32.const 4)
+        (i32.const 5)
+      )
+    )
+    ;; $rw and $rw-2 are also read
+    (drop
+      (struct.get $imm-struct $rw
+        (local.get $x)
+      )
+    )
+    (drop
+      (struct.get $imm-struct $rw-2
         (local.get $x)
       )
     )
