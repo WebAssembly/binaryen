@@ -43,15 +43,22 @@ namespace {
 // Information about usage of a field.
 struct FieldInfo {
   bool hasWrite = false;
+  bool hasRead = false;
 
   void noteWrite() { hasWrite = true; }
+  void noteRead() { hasRead = true; }
 
   bool combine(const FieldInfo& other) {
+    bool changed = false;
     if (!hasWrite && other.hasWrite) {
       hasWrite = true;
-      return true;
+      changed = true;
     }
-    return false;
+    if (!hasRead && other.hasRead) {
+      hasRead = true;
+      changed = true;
+    }
+    return changed;
   }
 };
 
@@ -61,8 +68,8 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   }
 
   FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
-                   FunctionStructValuesMap<FieldInfo>& functionSetInfos)
-    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos, functionSetInfos) {
+                   FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
+    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos, functionSetGetInfos) {
   }
 
   void noteExpression(Expression* expr,
@@ -80,9 +87,32 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   void noteCopy(HeapType type, Index index, FieldInfo& info) {
     info.noteWrite();
   }
+
+  void visitStructGet(StructGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+
+    functionSetInfos[getFunction()][curr->ref->type.getHeapType()][curr->index].noteRead();
+  }
 };
 
 struct GlobalTypeOptimization : public Pass {
+  StructValuesMap<FieldInfo> combinedSetGetInfos;
+
+  // Maps types to a vector of booleans that indicate a particular property.
+  // To avoid eager allocation of memory, the vectors are
+  // only resized when we actually have a true to place in them (which is
+  // rare).
+  using HeapBoolVec = std::unordered_map<HeapType, std::vector<bool>>;
+
+  // Track which fields can become immutable.
+  HeapBoolVec canBecomeImmutable;
+
+  // Track which fields can be removed. A removable field is one that is
+  // "write-only", that is, we write to it, but never read anything back.
+  HeapBoolVec canBeRemoved;
+
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalTypeOptimization requires nominal typing";
@@ -90,16 +120,17 @@ struct GlobalTypeOptimization : public Pass {
 
     // Find and analyze struct operations inside each function.
     FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
-      functionSetInfos(*module);
-    FieldInfoScanner scanner(functionNewInfos, functionSetInfos);
+      functionSetGetInfos(*module);
+    FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    StructValuesMap<FieldInfo> combinedNewInfos, combinedSetInfos;
-    functionSetInfos.combineInto(combinedSetInfos);
+    functionSetGetInfos.combineInto(combinedSetGetInfos);
     // TODO: combine newInfos as well, once we have a need for that (we will
     //       when we do things like subtyping).
+
+    // TODO: we need to propagate in both directions for no-read as well, update commentttt
 
     // Find which fields are immutable in all super- and sub-classes. To see
     // that, propagate sets in both directions. This is necessary because we
@@ -112,14 +143,7 @@ struct GlobalTypeOptimization : public Pass {
     // immutable). Note that by making more things immutable we therefore make
     // it possible to apply more specific subtypes in subtype fields.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    propagator.propagateToSuperAndSubTypes(combinedSetInfos);
-
-    // Maps types to a vector of booleans that indicate if we can turn the
-    // field immutable. To avoid eager allocation of memory, the vectors are
-    // only resized when we actually have a true to place in them (which is
-    // rare).
-    using CanBecomeImmutable = std::unordered_map<HeapType, std::vector<bool>>;
-    CanBecomeImmutable canBecomeImmutable;
+    propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     for (auto type : propagator.subTypes.types) {
       if (!type.isStruct()) {
@@ -128,39 +152,27 @@ struct GlobalTypeOptimization : public Pass {
 
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
-        if (fields[i].mutable_ == Immutable) {
-          // Already immutable; nothing to do.
-          continue;
-        }
-
-        if (combinedSetInfos[type][i].hasWrite) {
-          // A set exists.
-          continue;
-        }
-
-        // No set exists. Mark it as something we can make immutable.
-        auto& vec = canBecomeImmutable[type];
-        vec.resize(i + 1);
-        vec[i] = true;
+        processImmutability(type, i, fields[i]);
+        processRemovability(type, i, fields[i]);
       }
     }
 
     // The types are now generally correct, except for their internals, which we
     // rewrite now.
     class TypeRewriter : public GlobalTypeRewriter {
-      CanBecomeImmutable& canBecomeImmutable;
+      GlobalTypeOptimization& parent;
 
     public:
-      TypeRewriter(Module& wasm, CanBecomeImmutable& canBecomeImmutable)
-        : GlobalTypeRewriter(wasm), canBecomeImmutable(canBecomeImmutable) {}
+      TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
+        : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
-        if (!canBecomeImmutable.count(oldStructType)) {
+        if (!parent.canBecomeImmutable.count(oldStructType)) {
           return;
         }
 
         auto& newFields = struct_.fields;
-        auto& immutableVec = canBecomeImmutable[oldStructType];
+        auto& immutableVec = parent.canBecomeImmutable[oldStructType];
         for (Index i = 0; i < immutableVec.size(); i++) {
           if (immutableVec[i]) {
             newFields[i].mutable_ = Immutable;
@@ -169,7 +181,37 @@ struct GlobalTypeOptimization : public Pass {
       }
     };
 
-    TypeRewriter(*module, canBecomeImmutable).update();
+    TypeRewriter(*module, *this).update();
+  }
+
+  void processImmutability(HeapType type, Index i, const Field& field) {
+    if (field.mutable_ == Immutable) {
+      // Already immutable; nothing to do.
+      return;
+    }
+
+    if (combinedSetGetInfos[type][i].hasWrite) {
+      // A set exists.
+      return;
+    }
+
+    // No set exists. Mark it as something we can make immutable.
+    auto& vec = canBecomeImmutable[type];
+    vec.resize(i + 1);
+    vec[i] = true;
+  }
+
+  void processRemovability(HeapType type, Index i, const Field& field) {
+    if (combinedSetGetInfos[type][i].hasRead) {
+      // A read exists.
+      return;
+    }
+
+    // No read exists. Mark it as something we can remove.
+    auto& vec = canBeRemoved[type];
+    vec.resize(i + 1);
+    vec[i] = true;
+std::cout << "waka\n";
   }
 };
 
