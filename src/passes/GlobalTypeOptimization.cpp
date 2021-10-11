@@ -164,7 +164,7 @@ struct GlobalTypeOptimization : public Pass {
     // If we found fields that can be removed, remove them from instructions
     // too.
     if (!canBeRemoved.empty()) {
-      removeFieldsInInstructions(*module);
+      removeFieldsInInstructions(runner, *module);
     }
   }
 
@@ -196,7 +196,7 @@ struct GlobalTypeOptimization : public Pass {
 
   // After updating the types to remove certain fields, we must also remove
   // them from struct instructions.
-  void removeFieldsInInstructions(Module& wasm) {
+  void removeFieldsInInstructions(PassRunner* runner, Module& wasm) {
     struct FieldRemover
       : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
@@ -229,7 +229,7 @@ struct GlobalTypeOptimization : public Pass {
         for (Index i = 0; i < numRelevantOperands; i++) {
           if (vec[i]) {
             if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i]).hasUnremovableSideEffects()) {
-              Fatal() << "TODO: handle side effects in field removal (impossible in global locations?)"
+              Fatal() << "TODO: handle side effects in field removal (impossible in global locations?)";
             }
             operands[i] = nullptr;
           }
@@ -269,13 +269,13 @@ struct GlobalTypeOptimization : public Pass {
 
         if (remove(curr->ref->type.getHeapType(), curr->index)) {
           replaceCurrent(
-            builder(*getModule()).makeDrop(curr->value)
+            Builder(*getModule()).makeDrop(curr->ref)
           );
         }
       }
 
       bool remove(HeapType type, Index index) {
-        auto iter = parent.canBeRemoved.find(curr->ref->type.getHeapType());
+        auto iter = parent.canBeRemoved.find(type);
         if (iter == parent.canBeRemoved.end()) {
           return false;
         }
