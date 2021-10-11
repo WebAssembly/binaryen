@@ -238,6 +238,27 @@ std::cout << "remove from type\n";
             }
           }
           newFields.resize(newFields.size() - skip);
+
+          // Update field names as well. The Type Rewriter cannot do this for
+          // us, as it does not know which old fields map to which new ones (it
+          // just keeps the names in sequence).
+          auto iter = wasm.typeNames.find(oldStructType);
+          if (iter != wasm.typeNames.end()) {
+            auto& nameInfo = iter->second;
+            auto& fieldNames = nameInfo.fieldNames;
+
+            // TODO: templated helper for all theses?
+            for (Index i = 0; i < fieldNames.size(); i++) {
+              auto newIndex = indexesAfterRemoval[i];
+              if (newIndex != RemovedField) {
+                if (fieldNames.count(i)) {
+                  fieldNames[newIndex] = fieldNames[i];
+                }
+              } else {
+                fieldNames.erase(i);
+              }
+            }
+          }
         }
       }
     };
