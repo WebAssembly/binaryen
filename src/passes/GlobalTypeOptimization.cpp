@@ -297,6 +297,7 @@ struct GlobalTypeOptimization : public Pass {
         for (Index i = 0; i < operands.size(); i++) {
           auto newIndex = indexesAfterRemoval[i];
           if (newIndex != RemovedField) {
+            assert(newIndex < operands.size());
             operands[newIndex] = operands[i];
           } else {
             if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i])
@@ -342,14 +343,16 @@ struct GlobalTypeOptimization : public Pass {
           return index;
         }
         auto& indexesAfterRemoval = iter->second;
-        return indexesAfterRemoval[index];
+        auto newIndex = indexesAfterRemoval[index];
+        assert(newIndex < indexesAfterRemoval.size() || newIndex == RemovedField);
+        return newIndex;
       }
     };
 
     FieldRemover remover(*this);
     remover.setModule(&wasm);
     remover.run(runner, &wasm);
-    remover.walkModuleCode(&wasm);
+    remover.runOnModuleCode(runner, &wasm);
   }
 };
 
