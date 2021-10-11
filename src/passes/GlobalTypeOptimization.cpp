@@ -24,6 +24,7 @@
 // TODO: Remove unused fields.
 //
 
+#include "ir/effects.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -160,7 +161,11 @@ struct GlobalTypeOptimization : public Pass {
     // Update the types in the entire module.
     updateTypes(*module);
 
-
+    // If we found fields that can be removed, remove them from instructions
+    // too.
+    if (!canBeRemoved.empty()) {
+      removeFieldsInInstructions(*module);
+    }
   }
 
   void updateTypes(Module& wasm) {
@@ -187,6 +192,104 @@ struct GlobalTypeOptimization : public Pass {
     };
 
     TypeRewriter(wasm, *this).update();
+  }
+
+  // After updating the types to remove certain fields, we must also remove
+  // them from struct instructions.
+  void removeFieldsInInstructions(Module& wasm) {
+    struct FieldRemover
+      : public WalkerPass<PostWalker<FieldRemover>> {
+      bool isFunctionParallel() override { return true; }
+
+      GlobalTypeOptimization& parent;
+
+      FieldRemover(GlobalTypeOptimization& parent) : parent(parent) {}
+
+      FieldRemover* create() override {
+        return new FieldRemover(parent);
+      }
+
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+        if (curr->isWithDefault()) {
+          // Nothing to do, a default was written and will no longer be.
+          return;
+        }
+
+        auto iter = parent.canBeRemoved.find(curr->type.getHeapType());
+        if (iter == parent.canBeRemoved.end()) {
+          return;
+        }
+        auto& vec = iter->second;
+
+        auto& operands = curr->operands;
+        auto numRelevantOperands = std::min(operands.size(), vec.size());
+        for (Index i = 0; i < numRelevantOperands; i++) {
+          if (vec[i]) {
+            if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i]).hasUnremovableSideEffects()) {
+              Fatal() << "TODO: handle side effects in field removal (impossible in global locations?)"
+            }
+            operands[i] = nullptr;
+          }
+        }
+
+        Index skip = 0;
+        for (Index i = 0; i < operands.size(); i++) {
+          if (operands[i]) {
+            operands[i - skip] = operands[i];
+          } else {
+            skip++;
+          }
+        }
+        operands.resize(operands.size() - skip);
+      }
+
+      void visitStructSet(StructSet* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        if (remove(curr->ref->type.getHeapType(), curr->index)) {
+          Builder builder(*getModule());
+          replaceCurrent(
+            builder.makeSequence(
+              builder.makeDrop(curr->ref),
+              builder.makeDrop(curr->value)
+            )
+          );
+        }
+      }
+
+      void visitStructGet(StructGet* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        if (remove(curr->ref->type.getHeapType(), curr->index)) {
+          replaceCurrent(
+            builder(*getModule()).makeDrop(curr->value)
+          );
+        }
+      }
+
+      bool remove(HeapType type, Index index) {
+        auto iter = parent.canBeRemoved.find(curr->ref->type.getHeapType());
+        if (iter == parent.canBeRemoved.end()) {
+          return false;
+        }
+        auto& vec = iter->second;
+        if (index >= vec.size()) {
+          return false;
+        }
+        return vec[index];
+      }
+    };
+
+    FieldRemover scanner(*this);
+    scanner.run(runner, &wasm);
+    scanner.walkModuleCode(&wasm);
   }
 
   void processImmutability(HeapType type, Index i, const Field& field) {
