@@ -421,8 +421,7 @@ public:
     WalkerType::walkFunction(func);
   }
 
-  void
-  runOnModuleCode(PassRunner* runner, Module* module) {
+  void runOnModuleCode(PassRunner* runner, Module* module) {
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkModuleCode(module);
