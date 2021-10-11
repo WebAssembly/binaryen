@@ -241,5 +241,40 @@
   )
 )
 
+(module
+  ;; A vtable-like structure created in a global location. Only some of the
+  ;; fields are accessed.
 
-;; TODO in a global, like j2cl vtable
+  (type $vtable (struct (field funcref) (field funcref) (field funcref) (field funcref) (field funcref)))
+
+  (global $vtable (ref $vtable) (struct.new $vtable
+    (ref.func $func-0)
+    (ref.func $func-1)
+    (ref.func $func-2)
+    (ref.func $func-3)
+    (ref.func $func-4)
+  ))
+
+  (func $test
+    ;; To differ from previous tests, do not read the very first field.
+    (drop
+      (struct.get $vtable 1
+        (global.get $vtable)
+      )
+    )
+    ;; To differ from previous tests, do reads in two adjacent fields.
+    (drop
+      (struct.get $vtable 2
+        (global.get $vtable)
+      )
+    )
+    ;; To differ from previous tests, do not read the very last field, and the
+    ;; one before it.
+  )
+
+  (func $func-0)
+  (func $func-1)
+  (func $func-2)
+  (func $func-3)
+  (func $func-4)
+)
