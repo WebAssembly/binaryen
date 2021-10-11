@@ -421,6 +421,16 @@ public:
     WalkerType::walkFunction(func);
   }
 
+  void runOnExpression(PassRunner* runner,
+                       Module* module,
+                       Function* func,
+                       Expression*& curr) {
+    setPassRunner(runner);
+    WalkerType::setModule(module);
+    WalkerType::setFunction(func);
+    WalkerType::walk(curr);
+  }
+
   PassRunner* getPassRunner() { return runner; }
 
   PassOptions& getPassOptions() { return runner->options; }

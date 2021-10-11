@@ -261,6 +261,20 @@ struct OptimizeInstructions
     inReplaceCurrent = false;
   }
 
+  // The override of replaceCurrent() above us ensures that we revisit a node
+  // after we optimize it, allowing us to apply multiple rules while we still
+  // find things to do. However, we are still doing a post-walk, which means we
+  // do not backtrack. Sometimes a pattern creates several nested children, in
+  // which case it would make sense to re-optimize them instead of leaving
+  // things for a later run of this pass, which this function does. This
+  // potentially makes the pass not linear time, so it should be used sparingly.
+  void reOptimize(Expression*& curr) {
+    OptimizeInstructions reoptimizer;
+    reoptimizer.localInfo = localInfo;
+    reoptimizer.runOnExpression(
+      getPassRunner(), getModule(), getFunction(), curr);
+  }
+
   EffectAnalyzer effects(Expression* expr) {
     return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
@@ -890,6 +904,34 @@ struct OptimizeInstructions
                 (unaryOp == ExtendUInt32 && maxBits <= 32)) {
               return replaceCurrent(x);
             }
+          }
+        }
+      }
+      {
+        // !!x  =>  x != 0
+        Expression* x;
+        if (matches(curr, unary(EqZ, unary(EqZ, any(&x))))) {
+          auto xType = x->type;
+
+          // !!bool(x)  ==>   bool(x)
+          // Note that this is only possible if the value is the same type,
+          // which is not the case for (i32.eqz (i64.eqz ..)).
+          if (xType == curr->type && Bits::getMaxBits(x, this) == 1) {
+            return replaceCurrent(x);
+          }
+
+          // If the input is not boolean already (and it does not change type
+          // from i64 to i32), then we must add a ! = 0 which adds one byte, but
+          // it improves speed as it swaps two CPU instructions with one. Even
+          // when moderately optimizing for size this is reasonable to do, as
+          // the code size increase is tiny compared to the potential benefits.
+          // TODO: When optimizing heavily for size, do the opposite transform.
+          //       See #4194
+          if (getPassOptions().shrinkLevel <= 1) {
+            return replaceCurrent(
+              builder.makeBinary(Abstract::getBinary(xType, Ne),
+                                 x,
+                                 builder.makeConst(Literal::makeZero(xType))));
           }
         }
       }
@@ -2875,13 +2917,6 @@ private:
           case ExtendS16Int32: {
             assert(getModule()->features.hasSignExt());
             return unaryInner;
-          }
-          case EqZInt32: {
-            // eqz(eqz(bool(x)))  ==>   bool(x)
-            if (Bits::getMaxBits(unaryInner->value, this) == 1) {
-              return unaryInner->value;
-            }
-            break;
           }
           default: {
           }
