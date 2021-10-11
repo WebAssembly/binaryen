@@ -19,6 +19,7 @@
 // types defined in the module.
 //
 //  * Immutability: If a field has no struct.set, it can become immutable.
+//  * Fields that are never read from can be removed entirely.
 //
 // TODO: Specialize field types.
 // TODO: Remove unused fields.
@@ -119,6 +120,7 @@ struct GlobalTypeOptimization : public Pass {
     FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
+    scanner.setModule(module);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
@@ -344,10 +346,10 @@ struct GlobalTypeOptimization : public Pass {
       }
     };
 
-    FieldRemover scanner(*this);
-    scanner.setModule(&wasm);
-    scanner.run(runner, &wasm);
-    scanner.walkModuleCode(&wasm);
+    FieldRemover remover(*this);
+    remover.setModule(&wasm);
+    remover.run(runner, &wasm);
+    remover.walkModuleCode(&wasm);
   }
 };
 
