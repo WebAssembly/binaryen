@@ -809,6 +809,7 @@ Type::Type(HeapType heapType, Nullability nullable) {
 
 Type::Type(Rtt rtt) {
   assert(!isTemp(rtt.heapType) && "Leaking temporary type!");
+  assert(false);
   new (this) Type(globalTypeStore.insert(rtt));
 }
 
