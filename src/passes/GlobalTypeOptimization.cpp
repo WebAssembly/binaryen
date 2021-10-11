@@ -246,16 +246,13 @@ std::cout << "remove from type\n";
           if (iter != wasm.typeNames.end()) {
             auto& nameInfo = iter->second;
             auto& fieldNames = nameInfo.fieldNames;
+            auto oldFieldNames = fieldNames;
 
             // TODO: templated helper for all theses?
             for (Index i = 0; i < fieldNames.size(); i++) {
               auto newIndex = indexesAfterRemoval[i];
-              if (newIndex != RemovedField) {
-                if (fieldNames.count(i)) {
-                  fieldNames[newIndex] = fieldNames[i];
-                }
-              } else {
-                fieldNames.erase(i);
+              if (newIndex != RemovedField && fieldNames.count(i)) {
+                fieldNames[newIndex] = oldFieldNames[i];
               }
             }
           }

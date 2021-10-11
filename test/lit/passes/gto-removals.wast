@@ -76,7 +76,7 @@
   ;; of removing with the immutability inference that --gto does.)
 
   ;; A struct with all fields marked mutable.
-  ;; CHECK:      (type $mut-struct (struct (field $r i32) (field $w (mut i32)) (field $rw i32) (field $r-2 (mut i32))))
+  ;; CHECK:      (type $mut-struct (struct (field $r i32) (field $rw (mut i32)) (field $r-2 i32) (field $rw-2 (mut i32))))
   (type $mut-struct (struct (field $r (mut i32)) (field $w (mut i32)) (field $rw (mut i32))  (field $r-2 (mut i32)) (field $w-2 (mut i32)) (field $rw-2 (mut i32))))
 
   ;; A similar struct but with all fields immutable where possible (and just
@@ -99,17 +99,17 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $mut-struct $w
+  ;; CHECK-NEXT:  (struct.set $mut-struct $rw
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $mut-struct $w
+  ;; CHECK-NEXT:   (struct.get $mut-struct $rw
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $mut-struct $rw
+  ;; CHECK-NEXT:   (struct.get $mut-struct $r-2
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -121,12 +121,12 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $mut-struct $r-2
+  ;; CHECK-NEXT:  (struct.set $mut-struct $rw-2
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $mut-struct $r-2
+  ;; CHECK-NEXT:   (struct.get $mut-struct $rw-2
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
