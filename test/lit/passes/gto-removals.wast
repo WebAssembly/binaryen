@@ -12,3 +12,17 @@
   (func $func (param $x (ref $struct))
   )
 )
+
+(module
+  ;; A write does not keep a field from being removed.
+
+  (type $struct (struct (field (mut funcref))))
+
+  (func $func (param $x (ref $struct))
+    (struct.set $struct
+      (local.get $x)
+      (ref.null func)
+    )
+  )
+)
+

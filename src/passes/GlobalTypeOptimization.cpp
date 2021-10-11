@@ -101,18 +101,19 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 struct GlobalTypeOptimization : public Pass {
   StructValuesMap<FieldInfo> combinedSetGetInfos;
 
-  // Maps types to a vector of booleans that indicate a particular property.
-  // To avoid eager allocation of memory, the vectors are
+  // Maps types to a vector of booleans that indicate whether a field can
+  // become immutable. To avoid eager allocation of memory, the vectors are
   // only resized when we actually have a true to place in them (which is
   // rare).
-  using HeapBoolVec = std::unordered_map<HeapType, std::vector<bool>>;
+  std::unordered_map<HeapType, std::vector<bool>> canBecomeImmutable;
 
-  // Track which fields can become immutable.
-  HeapBoolVec canBecomeImmutable;
+  // Maps each field to its new index after field removals. That is, this
+  // takes into account that fields before this one may have been removed,
+  // which would then reduce this field's index. If a field itself is removed,
+  // it has the special value |RemovedField|.
+  static const Index RemovedField = Index(-1);
+  std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
-  // Track which fields can be removed. A removable field is one that is
-  // "write-only", that is, we write to it, but never read anything back.
-  HeapBoolVec canBeRemoved;
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
@@ -150,11 +151,46 @@ struct GlobalTypeOptimization : public Pass {
       if (!type.isStruct()) {
         continue;
       }
-
       auto& fields = type.getStruct().fields;
+
+      // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
-        processImmutability(type, i, fields[i]);
-        processRemovability(type, i, fields[i]);
+        if (field.mutable_ == Immutable) {
+          // Already immutable; nothing to do.
+          continue;
+        }
+
+        if (combinedSetGetInfos[type][i].hasWrite) {
+          // A set exists.
+          continue;
+        }
+
+        // No set exists. Mark it as something we can make immutable.
+        auto& vec = canBecomeImmutable[type];
+        vec.resize(i + 1);
+        vec[i] = true;
+      }
+
+      // Process removability. First, see if we can remove anything before we
+      // start to allocate info for that.
+      for (Index i = 0; i < fields.size(); i++) {
+        if (!combinedSetGetInfos[type][i].hasRead) {
+          canRemove = true;
+          break;
+        }
+      }
+      if (canRemove) {
+        auto& indexesAfterRemoval = indexesAfterRemovals[type];
+        indexesAfterRemoval.resize(fields.size());
+        Index skip = 0;
+        for (Index i = 0; i < fields.size(); i++) {
+          if (combinedSetGetInfos[type][i].hasRead) {
+            indexesAfterRemoval[i] = i - skip;
+          } else {
+            indexesAfterRemoval[i] = RemovedField;
+            skip++;
+          }
+        }
       }
     }
 
@@ -163,7 +199,7 @@ struct GlobalTypeOptimization : public Pass {
 
     // If we found fields that can be removed, remove them from instructions
     // too.
-    if (!canBeRemoved.empty()) {
+    if (!indexAfterRemovals.empty()) {
       removeFieldsInInstructions(runner, *module);
     }
   }
@@ -188,12 +224,13 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
-        if (parent.canBeRemoved.count(oldStructType)) {
-          auto& removeVec = parent.canBeRemoved[oldStructType];
+        if (parent.indexesAfterRemovals.count(oldStructType)) {
+          auto& indexesAfterRemoval = parent.indexesAfterRemovals[oldStructType];
           Index skip = 0;
           for (Index i = 0; i < newFields.size(); i++) {
-            if (i >= removeVec.size() || !removeVec[i]) {
-              newFields[i - skip] = newFields[i];
+            auto newIndex = indexesAfterRemoval[i];
+            if (newIndex != RemovedField) {
+              newFields[newIndex] = newFields[i];
             } else {
               skip++;
             }
@@ -230,28 +267,22 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        auto iter = parent.canBeRemoved.find(curr->type.getHeapType());
-        if (iter == parent.canBeRemoved.end()) {
+        auto iter = parent.indexesAfterRemovals.find(curr->type.getHeapType());
+        if (iter == parent.indexesAfterRemovals.end()) {
           return;
         }
-        auto& vec = iter->second;
+        auto& indexesAfterRemoval = iter->second;
 
         auto& operands = curr->operands;
-        auto numRelevantOperands = std::min(operands.size(), vec.size());
-        for (Index i = 0; i < numRelevantOperands; i++) {
-          if (vec[i]) {
+        Index skip = 0;
+        for (Index i = 0; i < operands.size(); i++) {
+          auto newIndex = indexesAfterRemoval[i];
+          if (newIndex != RemovedField) {
+            operands[newIndex] = operands[i];
+          } else {
             if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i]).hasUnremovableSideEffects()) {
               Fatal() << "TODO: handle side effects in field removal (impossible in global locations?)";
             }
-            operands[i] = nullptr;
-          }
-        }
-
-        Index skip = 0;
-        for (Index i = 0; i < operands.size(); i++) {
-          if (operands[i]) {
-            operands[i - skip] = operands[i];
-          } else {
             skip++;
           }
         }
@@ -263,7 +294,10 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        if (remove(curr->ref->type.getHeapType(), curr->index)) {
+        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        if (newIndex != RemovedField) {
+          curr->index = newIndex;
+        } else {
           Builder builder(*getModule());
           replaceCurrent(
             builder.makeSequence(
@@ -279,59 +313,25 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        if (remove(curr->ref->type.getHeapType(), curr->index)) {
-          replaceCurrent(
-            Builder(*getModule()).makeDrop(curr->ref)
-          );
-        }
+        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        // We can't remove a field that is read from.
+        assert(newIndex != RemovedField);
+        curr->index = newIndex;
       }
 
-      bool remove(HeapType type, Index index) {
-        auto iter = parent.canBeRemoved.find(type);
-        if (iter == parent.canBeRemoved.end()) {
-          return false;
+      Index getNewIndex(HeapType type, Index index) {
+        auto iter = parent.indexesAfterRemovals.find(type);
+        if (iter == parent.indexesAfterRemovals.end()) {
+          return index;
         }
-        auto& vec = iter->second;
-        if (index >= vec.size()) {
-          return false;
-        }
-        return vec[index];
+        auto& indexesAfterRemoval = iter->second;
+        return indexesAfterRemoval[index];
       }
     };
 
     FieldRemover scanner(*this);
     scanner.run(runner, &wasm);
     scanner.walkModuleCode(&wasm);
-  }
-
-  void processImmutability(HeapType type, Index i, const Field& field) {
-    if (field.mutable_ == Immutable) {
-      // Already immutable; nothing to do.
-      return;
-    }
-
-    if (combinedSetGetInfos[type][i].hasWrite) {
-      // A set exists.
-      return;
-    }
-
-    // No set exists. Mark it as something we can make immutable.
-    auto& vec = canBecomeImmutable[type];
-    vec.resize(i + 1);
-    vec[i] = true;
-  }
-
-  void processRemovability(HeapType type, Index i, const Field& field) {
-    if (combinedSetGetInfos[type][i].hasRead) {
-      // A read exists.
-      return;
-    }
-
-    // No read exists. Mark it as something we can remove.
-    auto& vec = canBeRemoved[type];
-    vec.resize(i + 1);
-    vec[i] = true;
-std::cout << "waka\n";
   }
 };
 
