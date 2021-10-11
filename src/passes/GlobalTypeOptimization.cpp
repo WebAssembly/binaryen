@@ -155,7 +155,7 @@ struct GlobalTypeOptimization : public Pass {
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
-        if (field.mutable_ == Immutable) {
+        if (fields[i].mutable_ == Immutable) {
           // Already immutable; nothing to do.
           continue;
         }
@@ -173,6 +173,7 @@ struct GlobalTypeOptimization : public Pass {
 
       // Process removability. First, see if we can remove anything before we
       // start to allocate info for that.
+      bool canRemove = false;
       for (Index i = 0; i < fields.size(); i++) {
         if (!combinedSetGetInfos[type][i].hasRead) {
           canRemove = true;
@@ -199,7 +200,7 @@ struct GlobalTypeOptimization : public Pass {
 
     // If we found fields that can be removed, remove them from instructions
     // too.
-    if (!indexAfterRemovals.empty()) {
+    if (!indexesAfterRemovals.empty()) {
       removeFieldsInInstructions(runner, *module);
     }
   }
