@@ -524,10 +524,10 @@ struct MergeBlocks
                        Expression*& first,
                        Expression*& second,
                        Expression*& third) {
-    // TODO: for now, just stop when we see any side effect. instead, we could
-    //       check effects carefully for reordering
     Block* outer = nullptr;
     outer = optimize(curr, first, outer);
+    // TODO: for now, just stop when we see any side effect after the first
+    //       item, but we could handle them carefully like we do for binaries.
     if (EffectAnalyzer(getPassOptions(), *getModule(), second)
           .hasSideEffects()) {
       return;
