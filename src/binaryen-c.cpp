@@ -1962,7 +1962,7 @@ const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr) {
   assert(expression->is<TableSize>());
   return static_cast<TableSize*>(expression)->table.c_str();
 }
-void BinaryenTableSetSizeTable(BinaryenExpressionRef expr, const char* table) {
+void BinaryenTableSizeSetTable(BinaryenExpressionRef expr, const char* table) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TableSize>());
   assert(table);
