@@ -66,7 +66,7 @@ struct FieldInfo {
 
 struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
-    return new FieldInfoScanner(functionNewInfos, functionSetInfos);
+    return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
   }
 
   FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,

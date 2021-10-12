@@ -214,7 +214,7 @@ private:
 
 struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
-    return new PCVScanner(functionNewInfos, functionSetInfos);
+    return new PCVScanner(functionNewInfos, functionSetGetInfos);
   }
 
   PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
