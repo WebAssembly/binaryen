@@ -1254,6 +1254,37 @@
       )
     )
   )
+
+  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.tee $x
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.null any)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+    (drop
+      (local.tee $x
+        ;; this *cannnot* be moved through the tee outward, as the param is in
+        ;; fact non-nullable, and we depend on the ref.as_non_null in order to
+        ;; get a valid type to assign to it
+        (ref.as_non_null
+          (ref.null any)
+        )
+      )
+    )
+  )
   ;; CHECK:      (func $ternary-identical-arms (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
