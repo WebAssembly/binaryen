@@ -556,6 +556,9 @@ enum BrOnOp {
   BrOnNonI31,
 };
 
+// Forward declaration for methods that receive a Module as a parameter.
+class Module;
+
 //
 // Expressions
 //
@@ -626,6 +629,7 @@ public:
     RefEqId,
     TableGetId,
     TableSetId,
+    TableSizeId,
     TryId,
     ThrowId,
     RethrowId,
@@ -828,6 +832,15 @@ public:
   bool isReturn = false;
 
   void finalize();
+
+  // FIXME We should probably store a heap type here, and not a signature, see
+  //       https://github.com/WebAssembly/binaryen/issues/4220
+  //       For now, copy the heap type from the table if it matches - then a
+  //       nominal check will succeed too. If it does not match, then just
+  //       emit something for it like we always used to, using
+  //       HeapType(sig) (also do that if no module is provided).
+  // FIXME When we remove this, also remove the forward decl of Module, above.
+  HeapType getHeapType(Module* module = nullptr);
 };
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {
@@ -1285,6 +1298,16 @@ public:
 
   Expression* index;
   Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
 
   void finalize();
 };

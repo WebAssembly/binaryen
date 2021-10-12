@@ -52,8 +52,9 @@ int unhex(char c) {
 namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
-  EXTENDS("extends"), I8("i8"), I16("i16"), RTT("rtt"), DECLARE("declare"),
-  ITEM("item"), OFFSET("offset");
+  FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
+  ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), I8("i8"), I16("i16"),
+  RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -594,7 +595,7 @@ HeapType SExpressionWasmBuilder::parseTypeRef(Element& s) {
   return heapType;
 }
 
-// Prases typeuse, a reference to a type definition. It is in the form of either
+// Parses typeuse, a reference to a type definition. It is in the form of either
 // (type index) or (type name), possibly augmented by inlined (param) and
 // (result) nodes. (type) node can be omitted as well. Outputs are returned by
 // parameter references.
@@ -786,12 +787,13 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     return results;
   };
 
-  auto parseSignatureDef = [&](Element& elem) {
+  auto parseSignatureDef = [&](Element& elem, bool nominal) {
     // '(' 'func' vec(param) vec(result) ')'
     // param ::= '(' 'param' id? valtype ')'
     // result ::= '(' 'result' valtype ')'
     std::vector<Type> params, results;
-    for (auto it = ++elem.begin(), end = elem.end(); it != end; ++it) {
+    auto end = elem.end() - (nominal ? 1 : 0);
+    for (auto it = ++elem.begin(); it != end; ++it) {
       Element& curr = **it;
       if (elementStartsWith(curr, PARAM)) {
         auto newParams = parseParams(curr);
@@ -838,9 +840,10 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     return Field(parseValType(*elem), mutable_);
   };
 
-  auto parseStructDef = [&](Element& elem, size_t typeIndex) {
+  auto parseStructDef = [&](Element& elem, size_t typeIndex, bool nominal) {
     FieldList fields;
-    for (Index i = 1; i < elem.size(); i++) {
+    Index end = elem.size() - (nominal ? 1 : 0);
+    for (Index i = 1; i < end; i++) {
       Name name;
       fields.emplace_back(parseField(elem[i], name));
       if (name.is()) {
@@ -860,22 +863,43 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   forEachType([&](Element& elem) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
-    if (kind == FUNC) {
-      builder[index] = parseSignatureDef(def);
-    } else if (kind == STRUCT) {
-      builder[index] = parseStructDef(def, index);
-    } else if (kind == ARRAY) {
+    bool nominal =
+      kind == FUNC_SUBTYPE || kind == STRUCT_SUBTYPE || kind == ARRAY_SUBTYPE;
+    if (kind == FUNC || kind == FUNC_SUBTYPE) {
+      builder[index] = parseSignatureDef(def, nominal);
+    } else if (kind == STRUCT || kind == STRUCT_SUBTYPE) {
+      builder[index] = parseStructDef(def, index, nominal);
+    } else if (kind == ARRAY || kind == ARRAY_SUBTYPE) {
       builder[index] = parseArrayDef(def);
     } else {
       throw ParseException("unknown heaptype kind", kind.line, kind.col);
     }
-    if (elementStartsWith(elem[elem.size() - 1], EXTENDS)) {
+    Element* super = nullptr;
+    if (nominal) {
+      // TODO: Let the new nominal types coexist with equirecursive types
+      // builder[index].setNominal();
+      super = def[def.size() - 1];
+      if (super->dollared()) {
+        // OK
+      } else if (kind == FUNC_SUBTYPE && super->str() == FUNC) {
+        // OK; no supertype
+        super = nullptr;
+      } else if ((kind == STRUCT_SUBTYPE || kind == ARRAY_SUBTYPE) &&
+                 super->str() == DATA) {
+        // OK; no supertype
+        super = nullptr;
+      } else {
+        throw ParseException("unknown supertype", super->line, super->col);
+      }
+    } else if (elementStartsWith(elem[elem.size() - 1], EXTENDS)) {
       // '(' 'extends' $supertype ')'
       Element& extends = *elem[elem.size() - 1];
-      auto it = typeIndices.find(extends[1]->c_str());
+      super = extends[1];
+    }
+    if (super) {
+      auto it = typeIndices.find(super->c_str());
       if (it == typeIndices.end()) {
-        throw ParseException(
-          "unknown dollared function type", elem.line, elem.col);
+        throw ParseException("unknown supertype", super->line, super->col);
       }
       builder[index].subTypeOf(builder[it->second]);
     }
@@ -2436,6 +2460,15 @@ Expression* SExpressionWasmBuilder::makeTableSet(Element& s) {
     throw ParseException("invalid table name in table.set", s.line, s.col);
   }
   return Builder(wasm).makeTableSet(tableName, index, value);
+}
+
+Expression* SExpressionWasmBuilder::makeTableSize(Element& s) {
+  auto tableName = s[1]->str();
+  auto* table = wasm.getTableOrNull(tableName);
+  if (!table) {
+    throw ParseException("invalid table name in table.size", s.line, s.col);
+  }
+  return Builder(wasm).makeTableSize(tableName);
 }
 
 // try can be either in the form of try-catch or try-delegate.

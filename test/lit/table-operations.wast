@@ -12,8 +12,12 @@
 (module
   ;; CHECK-BINARY:      (type $none_=>_none (func))
 
+  ;; CHECK-BINARY:      (type $none_=>_i32 (func (result i32)))
+
   ;; CHECK-BINARY:      (table $table-1 1 1 funcref)
   ;; CHECK-TEXT:      (type $none_=>_none (func))
+
+  ;; CHECK-TEXT:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK-TEXT:      (table $table-1 1 1 funcref)
   (table $table-1 funcref
@@ -113,8 +117,20 @@
       )
     )
   )
+
+  ;; CHECK-BINARY:      (func $get-table-size (result i32)
+  ;; CHECK-BINARY-NEXT:  (table.size $table-1)
+  ;; CHECK-BINARY-NEXT: )
+  ;; CHECK-TEXT:      (func $get-table-size (result i32)
+  ;; CHECK-TEXT-NEXT:  (table.size $table-1)
+  ;; CHECK-TEXT-NEXT: )
+  (func $get-table-size (result i32)
+    (table.size $table-1)
+  )
 )
 ;; CHECK-NODEBUG:      (type $none_=>_none (func))
+
+;; CHECK-NODEBUG:      (type $none_=>_i32 (func (result i32)))
 
 ;; CHECK-NODEBUG:      (table $0 1 1 funcref)
 
@@ -151,4 +167,8 @@
 ;; CHECK-NODEBUG-NEXT:    (i32.const 0)
 ;; CHECK-NODEBUG-NEXT:   )
 ;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT: )
+
+;; CHECK-NODEBUG:      (func $3 (result i32)
+;; CHECK-NODEBUG-NEXT:  (table.size $0)
 ;; CHECK-NODEBUG-NEXT: )

@@ -1026,6 +1026,12 @@ void test_core() {
 
   BinaryenExpressionPrint(funcrefExpr2);
 
+  BinaryenExpressionRef tablesize = BinaryenTableSize(module, "0");
+  BinaryenExpressionPrint(tablesize);
+
+  const char* table = BinaryenTableSizeGetTable(tablesize);
+  BinaryenTableSizeSetTable(tablesize, table);
+
   // Memory. One per module
 
   const char* segments[] = {"hello, world", "I am passive"};

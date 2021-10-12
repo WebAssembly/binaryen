@@ -435,7 +435,9 @@ struct PrintExpressionContents
 
     o << '(';
     printMinor(o, "type ");
-    TypeNamePrinter(o, wasm).print(HeapType(curr->sig));
+
+    TypeNamePrinter(o, wasm).print(curr->getHeapType(wasm));
+
     o << ')';
   }
   void visitLocalGet(LocalGet* curr) {
@@ -1848,6 +1850,10 @@ struct PrintExpressionContents
   }
   void visitTableSet(TableSet* curr) {
     printMedium(o, "table.set ");
+    printName(curr->table, o);
+  }
+  void visitTableSize(TableSize* curr) {
+    printMedium(o, "table.size ");
     printName(curr->table, o);
   }
   void visitTry(Try* curr) {
