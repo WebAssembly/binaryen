@@ -119,6 +119,10 @@ struct FunctionStructValuesMap
 //
 //   void noteCopy(HeapType type, Index index, T& info);
 //
+// * Note a read
+//
+//   void noteRead(HeapType type, Index index, T& info);
+//
 // We track information from struct.new and struct.set/struct.get separately,
 // because in struct.new we know more about the type - we know the actual exact
 // type being written to, and not just that it is of a subtype of the
