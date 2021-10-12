@@ -245,11 +245,14 @@ struct GlobalTypeOptimization : public Pass {
           auto iter = wasm.typeNames.find(oldStructType);
           if (iter != wasm.typeNames.end()) {
             auto& nameInfo = iter->second;
+            // Save a reference to the field names so that we can update them,
+            // and make a copy of the old ones to base ourselves off of as we
+            // do so.
             auto& fieldNames = nameInfo.fieldNames;
             auto oldFieldNames = fieldNames;
             fieldNames.clear();
 
-            for (Index i = 0; i < fieldNames.size(); i++) {
+            for (Index i = 0; i < oldFieldNames.size(); i++) {
               auto newIndex = indexesAfterRemoval[i];
               if (newIndex != RemovedField && oldFieldNames.count(i)) {
                 assert(oldFieldNames[i].is());
