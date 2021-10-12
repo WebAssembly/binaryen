@@ -247,11 +247,12 @@ struct GlobalTypeOptimization : public Pass {
             auto& nameInfo = iter->second;
             auto& fieldNames = nameInfo.fieldNames;
             auto oldFieldNames = fieldNames;
+            fieldNames.clear();
 
-            // TODO: templated helper for all theses?
             for (Index i = 0; i < fieldNames.size(); i++) {
               auto newIndex = indexesAfterRemoval[i];
-              if (newIndex != RemovedField && fieldNames.count(i)) {
+              if (newIndex != RemovedField && oldFieldNames.count(i)) {
+                assert(oldFieldNames[i].is());
                 fieldNames[newIndex] = oldFieldNames[i];
               }
             }
