@@ -147,30 +147,23 @@
   ;; Test recursion between structs where we only modify one. Specifically $B
   ;; has no writes to either of its fields.
 
-  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
-
-  ;; CHECK:      (type $B (struct ))
-
-  ;; CHECK:      (type $A (struct ))
+  ;; CHECK:      (type $A (struct (field (mut (ref null $B))) (field (mut i32))))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
+  ;; CHECK:      (type $B (struct (field (ref null $A)) (field f64)))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
+  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (func $func (param $x (ref $A))
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null $B)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.set $A 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $A))
@@ -182,6 +175,35 @@
       (local.get $x)
       (i32.const 20)
     )
+  )
+
+  ;; CHECK:      (func $field-keepalive
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 1
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $field-keepalive
+    (drop (struct.get $A 0 (ref.null $A)))
+    (drop (struct.get $A 1 (ref.null $A)))
+    (drop (struct.get $B 0 (ref.null $B)))
+    (drop (struct.get $B 1 (ref.null $B)))
   )
 )
 
