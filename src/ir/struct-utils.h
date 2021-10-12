@@ -119,17 +119,17 @@ struct FunctionStructValuesMap
 //
 //   void noteCopy(HeapType type, Index index, T& info);
 //
-// We track information from struct.new and struct.set separately, because in
-// struct.new we know more about the type - we know the actual exact type being
-// written to, and not just that it is of a subtype of the instruction's type,
-// which helps later.
+// We track information from struct.new and struct.set/struct.get separately,
+// because in struct.new we know more about the type - we know the actual exact
+// type being written to, and not just that it is of a subtype of the
+// instruction's type, which helps later.
 template<typename T, typename SubType>
 struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
   Scanner(FunctionStructValuesMap<T>& functionNewInfos,
-          FunctionStructValuesMap<T>& functionSetInfos) // rename to get also
-    : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
+          FunctionStructValuesMap<T>& functionSetGetInfos)
+    : functionNewInfos(functionNewInfos), functionSetGetInfos(functionSetGetInfos) {}
 
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
@@ -162,7 +162,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
       curr->value,
       type.getHeapType(),
       curr->index,
-      functionSetInfos[this->getFunction()][type.getHeapType()][curr->index]);
+      functionSetGetInfos[this->getFunction()][type.getHeapType()][curr->index]);
   }
 
   void visitStructGet(StructGet* curr) {
@@ -174,7 +174,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
     auto heapType = type.getHeapType();
     auto index = curr->index;
     static_cast<SubType*>(this)->noteRead(
-      heapType, index, functionSetInfos[this->getFunction()][heapType][index]);
+      heapType, index, functionSetGetInfos[this->getFunction()][heapType][index]);
   }
 
   void
@@ -198,7 +198,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
-  FunctionStructValuesMap<T>& functionSetInfos;
+  FunctionStructValuesMap<T>& functionSetGetInfos;
 };
 
 // Helper class to propagate information about fields to sub- and/or super-
