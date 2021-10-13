@@ -88,7 +88,7 @@ inline void replaceFunctions(PassRunner* runner,
   // replace direct calls in code both functions and module elements
   FunctionRefReplacer replacer(maybeReplace);
   replacer.run(runner, &module);
-  replacer.walkModuleCode(&module);
+  replacer.runOnModuleCode(runner, &module);
 
   // replace in start
   if (module.start.is()) {
