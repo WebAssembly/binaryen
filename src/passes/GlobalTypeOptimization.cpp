@@ -107,7 +107,10 @@ struct GlobalTypeOptimization : public Pass {
   // Maps each field to its new index after field removals. That is, this
   // takes into account that fields before this one may have been removed,
   // which would then reduce this field's index. If a field itself is removed,
-  // it has the special value |RemovedField|.
+  // it has the special value |RemovedField|. This is always of the full size
+  // of the number of fields, unlike canBecomeImmutable which is lazily
+  // allocated, as if we remove one field that affects the indexes of all the
+  // others anyhow.
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
@@ -120,7 +123,6 @@ struct GlobalTypeOptimization : public Pass {
     FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
-    scanner.setModule(module);
     scanner.run(runner, module);
     scanner.runOnModuleCode(runner, module);
 
@@ -355,7 +357,6 @@ struct GlobalTypeOptimization : public Pass {
     };
 
     FieldRemover remover(*this);
-    remover.setModule(&wasm);
     remover.run(runner, &wasm);
     remover.runOnModuleCode(runner, &wasm);
   }
