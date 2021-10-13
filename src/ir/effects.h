@@ -616,7 +616,7 @@ private:
     void visitTableGrow(TableGrow* curr) {
       parent.calls = true;
       // table.grow technically does a read-modify-write operation on the
-      // memory size in the successful case, modifying the set of valid
+      // table size in the successful case, modifying the set of valid
       // addresses, and just a read operation in the failure case
       parent.readsTable = true;
       parent.writesTable = true;
