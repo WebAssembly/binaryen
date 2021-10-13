@@ -364,7 +364,7 @@
     (struct.set $struct 0
       (local.get $ref)
       (block (result i32)
-        ;; A write to the another local is fine.
+        ;; A write to another local is fine.
         (local.set $other
           (ref.null $struct)
         )
