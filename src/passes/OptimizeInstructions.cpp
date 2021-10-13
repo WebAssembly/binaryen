@@ -1060,8 +1060,12 @@ struct OptimizeInstructions
     // can't remove or move a ref.as_non_null flowing into a local.set/tee, and
     // (2) even if the local were nullable, if we change things we might prevent
     // the LocalSubtyping pass from turning it into a non-nullable local later.
+    // Note that we must also check if this local is nullable regardless, as a
+    // parameter might be non-nullable even if nullable locals are disallowed
+    // (as that just affects vars, and not params).
     if (auto* as = curr->value->dynCast<RefAs>()) {
-      if (as->op == RefAsNonNull && !getModule()->features.hasGCNNLocals()) {
+      if (as->op == RefAsNonNull && !getModule()->features.hasGCNNLocals() &&
+          getFunction()->getLocalType(curr->index).isNullable()) {
         //   (local.tee (ref.as_non_null ..))
         // =>
         //   (ref.as_non_null (local.tee ..))
