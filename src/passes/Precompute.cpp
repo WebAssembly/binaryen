@@ -157,8 +157,7 @@ public:
 
   // Generates heap info for a heap-allocating expression. Returns a none
   // literal if we cannot create anything.
-  template<typename T>
-  Flow getHeapCreationFlow(Flow flow, T* curr) {
+  template<typename T> Flow getHeapCreationFlow(Flow flow, T* curr) {
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific struct.new
     // we get the same identity.
