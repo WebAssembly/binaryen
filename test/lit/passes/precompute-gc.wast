@@ -5,9 +5,10 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (type $empty (struct ))
+
  ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
- ;; CHECK:      (type $empty (struct ))
  (type $empty (struct))
 
  ;; two incompatible struct types
@@ -425,6 +426,91 @@
   (local.get $tempresult)
  )
 
+ ;; CHECK:      (func $propagate-different-params (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $input1)
+ ;; CHECK-NEXT:    (local.get $input2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-different-params (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+  (local $tempresult i32)
+  (local.set $tempresult
+   ;; We cannot say anything about parameters - they might alias, or not.
+   (ref.eq
+    (local.get $input1)
+    (local.get $input2)
+   )
+  )
+  (local.get $tempresult)
+ )
+
+ ;; CHECK:      (func $propagate-uncertain-local (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempref
+ ;; CHECK-NEXT:   (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:    (rtt.canon $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $stashedref
+ ;; CHECK-NEXT:   (local.get $tempref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempref
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:    (local.get $stashedref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-uncertain-local (result i32)
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (local.set $tempref
+   (struct.new_with_rtt $empty
+    (rtt.canon $empty)
+   )
+  )
+  (local.set $stashedref
+   (local.get $tempref)
+  )
+  ;; This if makes it impossible to know what value the ref.eq later should
+  ;; return.
+  (if
+   (call $helper
+    (i32.const 0)
+   )
+   (local.set $tempref
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+   )
+  )
+  (local.set $tempresult
+   (ref.eq
+    (local.get $tempref)
+    (local.get $stashedref)
+   )
+  )
+  (local.get $tempresult)
+ )
+
  ;; CHECK:      (func $propagate-uncertain-loop
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
@@ -463,6 +549,11 @@
   (loop $loop
    ;; Each iteration in this loop may allocate a different struct, so we cannot
    ;; precompute the ref.eq here.
+   ;; Note that the if below us is what actually prevents the opt. That is, a
+   ;; loop forces us to have a merge (if we want to actually have more than one
+   ;; potential value in each iteration), and a merge is what makes us unable
+   ;; to infer a single value. So this test is a subtest of the previous one,
+   ;; really.
    (local.set $stashedref
     (local.get $tempref)
    )
