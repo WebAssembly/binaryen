@@ -490,21 +490,40 @@
   )
  )
 
+ ;; CHECK:      (func $propagate-certain-loop
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $tempref
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $stashedref
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $propagate-certain-loop
   (local $tempresult i32)
   (local $tempref (ref null $empty))
   (local $stashedref (ref null $empty))
   (loop $loop
-   ;; As above, but move the set of $stashedref below the if, so that we can
-   ;; actually see it must be identical to $tempref.
-   (if
-    (call $helper
-     (i32.const 0)
-    )
-    (local.set $tempref
-     (struct.new_with_rtt $empty
-      (rtt.canon $empty)
-     )
+   ;; As above, but remove the if and move the set of $stashedref below the
+   ;; struct.new, so that each loop iteration does in fact have the ref locals
+   ;; identical, and we can precompute.
+   (local.set $tempref
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
     )
    )
    (local.set $stashedref
