@@ -1332,6 +1332,7 @@ struct OptimizeInstructions
     //  (struct.set (local.tee $x (struct.new X Y Z)) X')
     // =>
     //  (local.set $x (struct.new X' Y Z))
+    //
     if (auto* tee = curr->ref->dynCast<LocalSet>()) {
       if (auto* new_ = tee->value->dynCast<StructNew>()) {
         if (optimizeSubsequentStructSet(new_, curr, tee->index)) {
@@ -1351,6 +1352,7 @@ struct OptimizeInstructions
   //  (struct.set (local.get $x) X')
   // =>
   //  (local.set $x (struct.new X' Y Z))
+  //
   void optimizeHeapStores(ExpressionList& list) {
     for (Index i = 0; i < list.size(); i++) {
       if (auto* localSet = list[i]->dynCast<LocalSet>()) {
@@ -1358,14 +1360,13 @@ struct OptimizeInstructions
           for (Index j = i + 1; j < list.size(); j++) {
             if (auto* structSet = list[j]->dynCast<StructSet>()) {
               if (auto* localGet = structSet->ref->dynCast<LocalGet>()) {
-                if (localGet->index == localSet->index) {
-                  if (optimizeSubsequentStructSet(
+                if (localGet->index == localSet->index &&
+                    optimizeSubsequentStructSet(
                         new_, structSet, localGet->index)) {
-                    // Success. Replace the set with a nop, and continue to
-                    // perhaps optimize more.
-                    ExpressionManipulator::nop(structSet);
-                    continue;
-                  }
+                  // Success. Replace the set with a nop, and continue to
+                  // perhaps optimize more.
+                  ExpressionManipulator::nop(structSet);
+                  continue;
                 }
               }
             }
