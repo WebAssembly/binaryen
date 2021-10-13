@@ -104,7 +104,7 @@ public:
                           : FlagValues::DEFAULT,
         MAX_DEPTH,
         MAX_LOOP_ITERATIONS),
-      getValues(getValues) {}
+      getValues(getValues), heapValues(heapValues) {}
 
   Flow visitLocalGet(LocalGet* curr) {
     auto iter = getValues.find(curr);
@@ -160,7 +160,7 @@ public:
     if (!heapValues.count(curr)) {
       // This is the first time we see this source location, allocate its
       // data.
-      heapValues[curr] = std::make_shared<GCData>(curr->type.getHeapType());
+      heapValues.emplace(curr, std::make_shared<GCData>(curr->type.getHeapType(), Literals{}));
     }
     return Literal(heapValues[curr], curr->type);
   }
