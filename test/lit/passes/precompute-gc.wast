@@ -520,10 +520,77 @@
   (loop $loop
    ;; As above, but remove the if and move the set of $stashedref below the
    ;; struct.new, so that each loop iteration does in fact have the ref locals
-   ;; identical, and we can precompute.
+   ;; identical, and we can precompute a 1.
    (local.set $tempref
     (struct.new_with_rtt $empty
      (rtt.canon $empty)
+    )
+   )
+   (local.set $stashedref
+    (local.get $tempref)
+   )
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
+   )
+   (br_if $loop
+    (call $helper
+     (local.get $tempresult)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $propagate-possibly-certain-loop
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $tempref
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:      (rtt.canon $empty)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $stashedref
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (ref.eq
+ ;; CHECK-NEXT:     (local.get $tempref)
+ ;; CHECK-NEXT:     (local.get $stashedref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (local.get $tempresult)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-possibly-certain-loop
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (loop $loop
+   ;; As above, but move the set of $stashedref below the if. That means that
+   ;; it must be identical to $tempref in each iteration. However, that is
+   ;; something we cannot infer atm (while SSA could), so we do not infer
+   ;; anything here for now.
+   (if
+    (call $helper
+     (i32.const 0)
+    )
+    (local.set $tempref
+     (struct.new_with_rtt $empty
+      (rtt.canon $empty)
+     )
     )
    )
    (local.set $stashedref
