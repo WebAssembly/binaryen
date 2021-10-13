@@ -518,7 +518,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::TableSizeId: {
     DELEGATE_START(TableSize);
-    DELEGATE_FIELD_NAME(TableSet, table);
+    DELEGATE_FIELD_NAME(TableSize, table);
     DELEGATE_END(TableSize);
     break;
   }
