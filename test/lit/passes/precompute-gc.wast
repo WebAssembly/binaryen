@@ -448,6 +448,29 @@
   (local.get $tempresult)
  )
 
+ ;; CHECK:      (func $propagate-same-param (param $input (ref $empty)) (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $input)
+ ;; CHECK-NEXT:    (local.get $input)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-same-param (param $input (ref $empty)) (result i32)
+  (local $tempresult i32)
+  (local.set $tempresult
+   ;; We could optimize this in principle, but atm do not.
+   ;; Note that optimize-instructions can handle patterns like this.
+   (ref.eq
+    (local.get $input)
+    (local.get $input)
+   )
+  )
+  (local.get $tempresult)
+ )
+
  ;; CHECK:      (func $propagate-uncertain-local (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
