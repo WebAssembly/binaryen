@@ -163,7 +163,7 @@ public:
     // source expression, so that each time we compute a specific struct.new
     // we get the same identity.
     std::shared_ptr<GCData> canonical = heapValues[curr];
-    *canonical.get() = *flow.getSingleValue().getGCData();
+    *canonical = *flow.getSingleValue().getGCData();
     return Literal(canonical, curr->type);
   }
 };
