@@ -256,6 +256,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return true;
   }
 
+  bool growTable(Name name, Address /*oldSize*/, Address newSize) override {
+    // Apply a reasonable limit on table size, 1GB, to avoid DOS on the
+    // interpreter.
+    if (newSize > 1024 * 1024 * 1024) {
+      return false;
+    }
+    tables[name].resize(newSize);
+    return true;
+  }
+
   void trap(const char* why) override {
     std::cout << "[trap " << why << "]\n";
     throw TrapException();

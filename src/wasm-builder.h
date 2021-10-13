@@ -670,6 +670,13 @@ public:
     ret->finalize();
     return ret;
   }
+  TableGrow* makeTableGrow(Name table, Expression* delta) {
+    auto* ret = wasm.allocator.alloc<TableGrow>();
+    ret->table = table;
+    ret->delta = delta;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,

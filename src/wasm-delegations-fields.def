@@ -518,8 +518,15 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::TableSizeId: {
     DELEGATE_START(TableSize);
-    DELEGATE_FIELD_NAME(TableSet, table);
+    DELEGATE_FIELD_NAME(TableSize, table);
     DELEGATE_END(TableSize);
+    break;
+  }
+  case Expression::Id::TableGrowId: {
+    DELEGATE_START(TableGrow);
+    DELEGATE_FIELD_NAME(TableGrow, table);
+    DELEGATE_FIELD_CHILD(TableGrow, delta);
+    DELEGATE_END(TableGrow);
     break;
   }
   case Expression::Id::TryId: {

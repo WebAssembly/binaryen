@@ -2795,6 +2795,8 @@ void WasmBinaryBuilder::processNames() {
         set->table = getTableName(index);
       } else if (auto* size = ref->dynCast<TableSize>()) {
         size->table = getTableName(index);
+      } else if (auto* grow = ref->dynCast<TableGrow>()) {
+        grow->table = getTableName(index);
       } else {
         WASM_UNREACHABLE("Invalid type in table references");
       }
@@ -3616,6 +3618,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitTableSize(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitTableGrow(curr, opcode)) {
         break;
       }
       throwError("invalid code after misc prefix: " + std::to_string(opcode));
@@ -4931,6 +4936,23 @@ bool WasmBinaryBuilder::maybeVisitTableSize(Expression*& out, uint32_t code) {
     throwError("bad table index");
   }
   auto* curr = allocator.alloc<TableSize>();
+  curr->finalize();
+  // Defer setting the table name for later, when we know it.
+  tableRefs[tableIdx].push_back(curr);
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitTableGrow(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableGrow) {
+    return false;
+  }
+  Index tableIdx = getU32LEB();
+  if (tableIdx >= tables.size()) {
+    throwError("bad table index");
+  }
+  auto* curr = allocator.alloc<TableGrow>();
+  curr->delta = popNonVoidExpression();
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(curr);
