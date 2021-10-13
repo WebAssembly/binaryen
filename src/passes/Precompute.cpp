@@ -162,7 +162,8 @@ public:
     if (!heapValues.count(curr)) {
       // This is the first time we see this source location, allocate its
       // data.
-      heapValues.emplace(curr, std::make_shared<GCData>(curr->type.getHeapType(), Literals{}));
+      heapValues.emplace(
+        curr, std::make_shared<GCData>(curr->type.getHeapType(), Literals{}));
     }
     return Literal(heapValues[curr], curr->type);
   }
@@ -310,9 +311,9 @@ private:
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     Flow flow;
     try {
-      flow =
-        PrecomputingExpressionRunner(getModule(), getValues, heapValues, replaceExpression)
-          .visit(curr);
+      flow = PrecomputingExpressionRunner(
+               getModule(), getValues, heapValues, replaceExpression)
+               .visit(curr);
     } catch (PrecomputingExpressionRunner::NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
     }
