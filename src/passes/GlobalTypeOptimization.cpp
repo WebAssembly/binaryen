@@ -304,7 +304,8 @@ struct GlobalTypeOptimization : public Pass {
         auto& operands = curr->operands;
         assert(indexesAfterRemoval.size() == operands.size());
 
-        Index skip = 0;
+        // Remove the unneeded operands.
+        Index removed = 0;
         for (Index i = 0; i < operands.size(); i++) {
           auto newIndex = indexesAfterRemoval[i];
           if (newIndex != RemovedField) {
@@ -316,10 +317,10 @@ struct GlobalTypeOptimization : public Pass {
               Fatal() << "TODO: handle side effects in field removal "
                          "(impossible in global locations?)";
             }
-            skip++;
+            removed++;
           }
         }
-        operands.resize(operands.size() - skip);
+        operands.resize(operands.size() - removed);
       }
 
       void visitStructSet(StructSet* curr) {
@@ -329,8 +330,10 @@ struct GlobalTypeOptimization : public Pass {
 
         auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
         if (newIndex != RemovedField) {
+          // Map to the new index.
           curr->index = newIndex;
         } else {
+          // This field was removed, so just emit drops of our children.
           Builder builder(*getModule());
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                               builder.makeDrop(curr->value)));
@@ -343,7 +346,7 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
-        // We can't remove a field that is read from.
+        // We must not remove a field that is read from.
         assert(newIndex != RemovedField);
         curr->index = newIndex;
       }
