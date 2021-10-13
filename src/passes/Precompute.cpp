@@ -127,8 +127,6 @@ public:
       return flow;
     }
     return getHeapCreationFlow(flow, curr);
-    // TODO: set the values in the GC data, when we can use immutability to
-    //       read them
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
@@ -138,8 +136,6 @@ public:
       return flow;
     }
     return getHeapCreationFlow(flow, curr);
-    // TODO: set the values in the GC data, when we can use immutability to
-    //       read them
   }
   Flow visitArrayInit(ArrayInit* curr) {
     auto flow = Super::visitArrayInit(curr);
@@ -147,16 +143,13 @@ public:
       return flow;
     }
     return getHeapCreationFlow(flow, curr);
-    // TODO: set the values in the GC data, when we can use immutability to
-    //       read them
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  // Generates heap info for a heap-allocating expression. Returns a none
-  // literal if we cannot create anything.
+  // Generates heap info for a heap-allocating expression.
   template<typename T> Flow getHeapCreationFlow(Flow flow, T* curr) {
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific struct.new
