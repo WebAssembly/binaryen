@@ -162,8 +162,13 @@ public:
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific struct.new
     // we get the same identity.
-    std::shared_ptr<GCData> canonical = heapValues[curr];
-    *canonical.get() = *flow.getSingleValue().getGCData();
+    std::shared_ptr<GCData>& canonical = heapValues[curr];
+    std::shared_ptr<GCData> newGCData = flow.getSingleValue().getGCData();
+    if (!canonical) {
+      canonical = std::make_shared<GCData>(*newGCData);
+    } else {
+      *canonical = *newGCData;
+    }
     return Literal(canonical, curr->type);
   }
 };
