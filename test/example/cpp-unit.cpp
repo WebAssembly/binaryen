@@ -611,7 +611,8 @@ void test_effects() {
     assert_equal(effects.trap, true);
     assert_equal(effects.readsArray, true);
     assert_equal(effects.writesArray, true);
-    assert_equal(effects.readsStruct, false);
+    assert_equal(effects.readsMutableStruct, false);
+    assert_equal(effects.readsImmutableStruct, false);
     assert_equal(effects.writesStruct, false);
   }
 }
