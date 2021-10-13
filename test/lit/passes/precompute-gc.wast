@@ -79,7 +79,10 @@
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (struct.set $struct 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (struct.get $struct 0
  ;; CHECK-NEXT:    (local.get $x)
@@ -321,15 +324,15 @@
   (local.set $y
    (local.get $x)
   )
-  ;; assign the result, so that propagate calculates the ref.eq
+  ;; assign the result, so that propagate calculates the ref.eq. both $x and $y
+  ;; must refer to the same data, so we can precompute a 1 here.
   (local.set $tempresult
    (ref.eq
     (local.get $x)
     (local.get $y)
    )
   )
-  ;; this value could be precomputed in principle, however, we currently do not
-  ;; precompute GC references, and so nothing will be done.
+  ;; and that 1 is propagated to here.
   (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-equal (result i32)
@@ -362,8 +365,8 @@
     (local.get $tempref)
    )
   )
-  ;; this value could be precomputed in principle, however, we currently do not
-  ;; precompute GC references, and so nothing will be done.
+  ;; we can compute a 1 here as the ref.eq compares a struct to itself. note
+  ;; that the ref.eq itself cannot be precomputed away (as it has side effects).
   (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-unequal (result i32)
@@ -377,7 +380,10 @@
  (func $propagate-unequal (result i32)
   (local $tempresult i32)
   (local $tempref (ref null $empty))
-  ;; assign the result, so that propagate calculates the ref.eq
+  ;; assign the result, so that propagate calculates the ref.eq.
+  ;; the structs are different, so we will precompute a 0 here, and as creating
+  ;; heap data does not have side effects, we can in fact replace the ref.eq
+  ;; with that value
   (local.set $tempresult
    ;; allocate two different structs
    (ref.eq
@@ -389,8 +395,6 @@
     )
    )
   )
-  ;; this value could be precomputed in principle, however, we currently do not
-  ;; precompute GC references, and so nothing will be done.
   (local.get $tempresult)
  )
 

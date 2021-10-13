@@ -128,6 +128,7 @@ public:
     //       read them
     return value;
   }
+  Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayNew(ArrayNew* curr) {
     auto value = getHeapLiteral(curr);
@@ -147,6 +148,7 @@ public:
     //       read them
     return value;
   }
+  Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
