@@ -131,22 +131,25 @@ struct GlobalTypeOptimization : public Pass {
     // TODO: combine newInfos as well, once we have a need for that (we will
     //       when we do things like subtyping).
 
-    // TODO: we need to propagate in both directions for no-read as well, update
-    // commentttt
-
-    // Find which fields are immutable in all super- and sub-classes. To see
-    // that, propagate sets in both directions. This is necessary because we
-    // cannot have a supertype's field be immutable while a subtype's is not -
-    // they must match for us to preserve subtyping.
+    // Propagate information to super and subtypes on set/get infos:
     //
-    // Note that we do not need to care about types here: If the fields were
-    // mutable before, then they must have had identical types for them to be
-    // subtypes (as wasm only allows the type to differ if the fields are
-    // immutable). Note that by making more things immutable we therefore make
-    // it possible to apply more specific subtypes in subtype fields.
+    //  * For removing unread fields, we can only remove a field if it is never
+    //    read in any sub or supertype, as such a read may alias any of those
+    //    types (where the field is present).
+    //
+    //  * For immutability, this is necessary because we cannot have a
+    //    supertype's field be immutable while a subtype's is not - they must
+    //    match for us to preserve subtyping.
+    //
+    //    Note that we do not need to care about types here: If the fields were
+    //    mutable before, then they must have had identical types for them to be
+    //    subtypes (as wasm only allows the type to differ if the fields are
+    //    immutable). Note that by making more things immutable we therefore
+    //    make it possible to apply more specific subtypes in subtype fields.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
+    // Process the propagated info.
     for (auto type : propagator.subTypes.types) {
       if (!type.isStruct()) {
         continue;
@@ -197,7 +200,7 @@ struct GlobalTypeOptimization : public Pass {
 
     // If we found fields that can be removed, remove them from instructions.
     // (Note that we must do this first, while we still have the old heap types
-    // that we can identify, and only after this should be update all the types
+    // that we can identify, and only after this should we update all the types
     // throughout the module.)
     if (!indexesAfterRemovals.empty()) {
       removeFieldsInInstructions(runner, *module);
@@ -218,6 +221,7 @@ struct GlobalTypeOptimization : public Pass {
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         auto& newFields = struct_.fields;
 
+        // Adjust immutability.
         if (parent.canBecomeImmutable.count(oldStructType)) {
           auto& immutableVec = parent.canBecomeImmutable[oldStructType];
           for (Index i = 0; i < immutableVec.size(); i++) {
@@ -227,19 +231,20 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
+        // Remove fields where we can.
         if (parent.indexesAfterRemovals.count(oldStructType)) {
           auto& indexesAfterRemoval =
             parent.indexesAfterRemovals[oldStructType];
-          Index skip = 0;
+          Index removed = 0;
           for (Index i = 0; i < newFields.size(); i++) {
             auto newIndex = indexesAfterRemoval[i];
             if (newIndex != RemovedField) {
               newFields[newIndex] = newFields[i];
             } else {
-              skip++;
+              removed++;
             }
           }
-          newFields.resize(newFields.size() - skip);
+          newFields.resize(newFields.size() - removed);
 
           // Update field names as well. The Type Rewriter cannot do this for
           // us, as it does not know which old fields map to which new ones (it
