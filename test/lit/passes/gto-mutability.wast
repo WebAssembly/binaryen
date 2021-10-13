@@ -119,26 +119,14 @@
 
   ;; CHECK:      (func $field-keepalive
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 1
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 2
   ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $field-keepalive
-    ;; --gto will remove fields that are not read from, so add reads to them
-    ;; all.
-    (drop (struct.get $struct 0 (ref.null $struct)))
-    (drop (struct.get $struct 1 (ref.null $struct)))
+    ;; --gto will remove fields that are not read from, so add reads to any
+    ;; that don't already have them.
     (drop (struct.get $struct 2 (ref.null $struct)))
   )
 )
@@ -210,31 +198,24 @@
 (module
   ;; As before, but flipped so that $A's fields can become immutable.
 
-  ;; CHECK:      (type $ref|$B|_=>_none (func (param (ref $B))))
-
-  ;; CHECK:      (type $A (struct ))
-
-  ;; CHECK:      (type $B (struct ))
+  ;; CHECK:      (type $B (struct (field (mut (ref null $A))) (field (mut f64))))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
+  ;; CHECK:      (type $A (struct (field (ref null $B)) (field i32)))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
+  ;; CHECK:      (type $ref|$B|_=>_none (func (param (ref $B))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (func $func (param $x (ref $B))
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $A)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.set $B 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f64.const 3.14159)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $B))
@@ -247,35 +228,58 @@
       (f64.const 3.14159)
     )
   )
+
+  ;; CHECK:      (func $field-keepalive
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 1
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $field-keepalive
+    (drop (struct.get $A 0 (ref.null $A)))
+    (drop (struct.get $A 1 (ref.null $A)))
+    (drop (struct.get $B 0 (ref.null $B)))
+    (drop (struct.get $B 1 (ref.null $B)))
+  )
 )
 
 (module
   ;; As before, but now one field in each can become immutable.
 
-  ;; CHECK:      (type $B (struct ))
+  ;; CHECK:      (type $B (struct (field (ref null $A)) (field (mut f64))))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
+
+  ;; CHECK:      (type $A (struct (field (mut (ref null $B))) (field i32)))
+  (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
   ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func (param (ref $A) (ref $B))))
 
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $func (param $x (ref $A)) (param $y (ref $B))
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null $B)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.set $B 1
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (f64.const 3.14159)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $A)) (param $y (ref $B))
@@ -288,6 +292,35 @@
       (f64.const 3.14159)
     )
   )
+
+  ;; CHECK:      (func $field-keepalive
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 1
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $field-keepalive
+    (drop (struct.get $A 0 (ref.null $A)))
+    (drop (struct.get $A 1 (ref.null $A)))
+    (drop (struct.get $B 0 (ref.null $B)))
+    (drop (struct.get $B 1 (ref.null $B)))
+  )
 )
 
 (module
@@ -295,16 +328,16 @@
   ;; Field #1 is mutable and can become so.
   ;; Field #2 is mutable and must remain so.
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
-
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct (field i32) (field i32) (field (mut i32))))
   (type $struct (struct (field i32) (field (mut i32)) (field (mut i32))))
 
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (func $func (param $x (ref $struct))
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (struct.set $struct 2
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -314,25 +347,52 @@
       (i32.const 1)
     )
   )
+
+  ;; CHECK:      (func $field-keepalive
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 1
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 2
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $field-keepalive
+    (drop (struct.get $struct 0 (ref.null $struct)))
+    (drop (struct.get $struct 1 (ref.null $struct)))
+    (drop (struct.get $struct 2 (ref.null $struct)))
+  )
 )
 
 (module
   ;; Subtyping. Without a write in either supertype or subtype, we can
   ;; optimize the field to be immutable.
 
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (type $super (struct ))
+  ;; CHECK:      (type $super (struct (field i32)))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $sub (struct ) (extends $super))
+  ;; CHECK:      (type $sub (struct (field i32)) (extends $super))
   (type $sub (struct (field (mut i32))) (extends $super))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $func
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $super)
+  ;; CHECK-NEXT:   (struct.new $super
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $sub)
+  ;; CHECK-NEXT:   (struct.new $sub
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
@@ -348,32 +408,51 @@
       )
     )
   )
+
+  ;; CHECK:      (func $field-keepalive
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 0
+  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $field-keepalive
+    (drop (struct.get $super 0 (ref.null $super)))
+    (drop (struct.get $sub 0 (ref.null $sub)))
+  )
 )
 
 (module
   ;; As above, but add a write in the super, which prevents optimization.
 
-  ;; CHECK:      (type $super (struct ))
+  ;; CHECK:      (type $super (struct (field (mut i32))))
   (type $super (struct (field (mut i32))))
+  ;; CHECK:      (type $sub (struct (field (mut i32))) (extends $super))
+  (type $sub (struct (field (mut i32))) (extends $super))
+
   ;; CHECK:      (type $ref|$super|_=>_none (func (param (ref $super))))
 
-  ;; CHECK:      (type $sub (struct ) (extends $super))
-  (type $sub (struct (field (mut i32))) (extends $super))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $func (param $x (ref $super))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $super)
+  ;; CHECK-NEXT:   (struct.new $super
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $sub)
+  ;; CHECK-NEXT:   (struct.new $sub
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.set $super 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $super))
@@ -393,24 +472,41 @@
       (i32.const 2)
     )
   )
+
+  ;; CHECK:      (func $field-keepalive
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 0
+  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $field-keepalive
+    (drop (struct.get $super 0 (ref.null $super)))
+    (drop (struct.get $sub 0 (ref.null $sub)))
+  )
 )
 
 (module
   ;; As above, but add a write in the sub, which prevents optimization.
 
-  ;; CHECK:      (type $ref|$sub|_=>_none (func (param (ref $sub))))
+  ;; CHECK:      (type $sub (struct (field (mut i32))) (extends $super))
 
-  ;; CHECK:      (type $sub (struct ) (extends $super))
-
-  ;; CHECK:      (type $super (struct ))
+  ;; CHECK:      (type $super (struct (field (mut i32))))
   (type $super (struct (field (mut i32))))
   (type $sub (struct (field (mut i32))) (extends $super))
 
+  ;; CHECK:      (type $ref|$sub|_=>_none (func (param (ref $sub))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (func $func (param $x (ref $sub))
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (struct.set $sub 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -419,5 +515,22 @@
       (local.get $x)
       (i32.const 2)
     )
+  )
+
+  ;; CHECK:      (func $field-keepalive
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 0
+  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $field-keepalive
+    (drop (struct.get $super 0 (ref.null $super)))
+    (drop (struct.get $sub 0 (ref.null $sub)))
   )
 )
