@@ -7,17 +7,15 @@
 (module
  ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
- ;; CHECK:      (type $B (struct (field (mut f64))))
-
- ;; CHECK:      (type $func-return-i32 (func (result i32)))
-
  ;; CHECK:      (type $empty (struct ))
  (type $empty (struct))
 
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
+ ;; CHECK:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
 
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
@@ -398,7 +396,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-uncertain (param $input (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-uncertain-param (param $input (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local.set $tempresult
@@ -425,6 +423,112 @@
    )
   )
   (local.get $tempresult)
+ )
+
+ ;; CHECK:      (func $propagate-uncertain-loop
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $stashedref
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $tempref
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:      (rtt.canon $empty)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (ref.eq
+ ;; CHECK-NEXT:     (local.get $tempref)
+ ;; CHECK-NEXT:     (local.get $stashedref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (local.get $tempresult)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-uncertain-loop
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (loop $loop
+   ;; Each iteration in this loop may allocate a different struct, so we cannot
+   ;; precompute the ref.eq here.
+   (local.set $stashedref
+    (local.get $tempref)
+   )
+   (if
+    (call $helper
+     (i32.const 0)
+    )
+    (local.set $tempref
+     (struct.new_with_rtt $empty
+      (rtt.canon $empty)
+     )
+    )
+   )
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
+   )
+   (br_if $loop
+    (call $helper
+     (local.get $tempresult)
+    )
+   )
+  )
+ )
+
+ (func $propagate-certain-loop
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (loop $loop
+   ;; As above, but move the set of $stashedref below the if, so that we can
+   ;; actually see it must be identical to $tempref.
+   (if
+    (call $helper
+     (i32.const 0)
+    )
+    (local.set $tempref
+     (struct.new_with_rtt $empty
+      (rtt.canon $empty)
+     )
+    )
+   )
+   (local.set $stashedref
+    (local.get $tempref)
+   )
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
+   )
+   (br_if $loop
+    (call $helper
+     (local.get $tempresult)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $helper (param $0 i32) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $helper (param i32) (result i32)
+  (unreachable)
  )
 
  ;; CHECK:      (func $odd-cast-and-get
