@@ -212,6 +212,35 @@
     )
   )
 
+  ;; CHECK:      (func $optimize-subsequent-bad-local
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $other (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $other)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-subsequent-bad-local
+    (local $ref (ref null $struct))
+    (local $other (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    ;; As above, but the local.get uses a different local, so we have nothing
+    ;; to optimize.
+    (struct.set $struct 0
+      (local.get $other)
+      (i32.const 20)
+    )
+  )
+
   ;; CHECK:      (func $optimize-chain
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
