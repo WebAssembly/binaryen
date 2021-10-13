@@ -64,6 +64,23 @@
     (local.get $temp)
   )
 
+  (func $unreachable-struct.get (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+    (local $temp i32)
+    ;; As above, but the get's ref is unreachable. This tests we do not hit an
+    ;; assertion on it not having a heap type. (And we simply do not handle this
+    ;; case, leaving it for DCE.)
+    (local.set $temp
+      (struct.get $struct-immutable 0
+        (unreachable)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (i32.const 42)
+    )
+    (local.get $temp)
+  )
+
   ;; CHECK:      (func $no-block-values-if-br_on
   ;; CHECK-NEXT:  (local $temp anyref)
   ;; CHECK-NEXT:  (block $block
