@@ -740,4 +740,56 @@
    (rtt.canon $struct)
   )
  )
+
+ ;; CHECK:      (func $br_on_cast-on-creation-rtt (result (ref $empty))
+ ;; CHECK-NEXT:  (block $label (result (ref $empty))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $label
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:      (rtt.canon $empty)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast-on-creation-rtt (result (ref $empty))
+  (block $label (result (ref $empty))
+   (drop
+    ;; The br_on_cast will read the GC data created from struct.new, which must
+    ;; emit it properly, including with an RTT which it will read from (since
+    ;; this instructions uses an RTT).
+    (br_on_cast $label
+     (struct.new_default_with_rtt $empty
+      (rtt.canon $empty)
+     )
+     (rtt.canon $empty)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast-on-creation-nortt (result (ref $empty))
+ ;; CHECK-NEXT:  (block $label (result (ref $empty))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_static $label $empty
+ ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast-on-creation-nortt (result (ref $empty))
+  (block $label (result (ref $empty))
+   (drop
+    ;; As above, but with no RTTs.
+    (br_on_cast_static $label $empty
+     (struct.new_default $empty)
+    )
+   )
+   (unreachable)
+  )
+ )
 )
