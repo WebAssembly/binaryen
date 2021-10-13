@@ -79,7 +79,7 @@ public:
   bool writesTable = false;
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
-  bool readsStruct = false;
+  bool readsMutableStruct = false;
   bool readsImmutableStruct = false;
   bool writesStruct = false;
   bool readsArray = false;
@@ -134,7 +134,7 @@ public:
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
   bool accessesTable() const { return calls || readsTable || writesTable; }
   bool accessesMutableStruct() const {
-    return calls || readsStruct || writesStruct;
+    return calls || readsMutableStruct || writesStruct;
   }
   bool accessesStruct() const {
     return accessesMutableStruct() || readsImmutableStruct;
@@ -157,8 +157,9 @@ public:
            writesStruct || writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsTable || readsStruct ||
-           readsImmutableStruct || readsArray || isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsTable ||
+           readsMutableStruct || readsImmutableStruct || readsArray ||
+           isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
@@ -274,7 +275,7 @@ public:
     writesMemory = writesMemory || other.writesMemory;
     readsTable = readsTable || other.readsTable;
     writesTable = writesTable || other.writesTable;
-    readsStruct = readsStruct || other.readsStruct;
+    readsMutableStruct = readsMutableStruct || other.readsMutableStruct;
     readsImmutableStruct = readsImmutableStruct || other.readsImmutableStruct;
     writesStruct = writesStruct || other.writesStruct;
     readsArray = readsArray || other.readsArray;
@@ -664,7 +665,7 @@ private:
             .getStruct()
             .fields[curr->index]
             .mutable_ == Mutable) {
-        parent.readsStruct = true;
+        parent.readsMutableStruct = true;
       } else {
         parent.readsImmutableStruct = true;
       }
