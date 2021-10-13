@@ -1359,7 +1359,8 @@ struct OptimizeInstructions
             if (auto* structSet = list[j]->dynCast<StructSet>()) {
               if (auto* localGet = structSet->ref->dynCast<LocalGet>()) {
                 if (localGet->index == localSet->index) {
-                  if (optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
+                  if (optimizeSubsequentStructSet(
+                        new_, structSet, localGet->index)) {
                     // Success. Replace the set with a nop, and continue to
                     // perhaps optimize more.
                     ExpressionManipulator::nop(structSet);
@@ -1400,7 +1401,9 @@ struct OptimizeInstructions
   // Returns true if we succeeded.
   //
   // TODO: the same for arrays
-  bool optimizeSubsequentStructSet(StructNew* new_, StructSet* set, Index refLocalIndex) {
+  bool optimizeSubsequentStructSet(StructNew* new_,
+                                   StructSet* set,
+                                   Index refLocalIndex) {
     if (new_->isWithDefault()) {
       // Ignore a new_default for now. If the fields are defaultable then we
       // could add them, in principle, but that might increase code size.
