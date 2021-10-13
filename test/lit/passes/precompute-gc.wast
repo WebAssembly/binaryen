@@ -792,4 +792,78 @@
    (unreachable)
   )
  )
+
+ ;; CHECK:      (func $ref.is_null (param $param i32)
+ ;; CHECK-NEXT:  (local $ref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $ref
+ ;; CHECK-NEXT:   (struct.new_default $empty)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $ref
+ ;; CHECK-NEXT:   (ref.null $empty)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:   (local.set $ref
+ ;; CHECK-NEXT:    (struct.new_default $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (ref.is_null
+ ;; CHECK-NEXT:     (local.get $ref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.is_null (param $param i32)
+  (local $ref (ref null $empty))
+  ;; Test ref.null on references, and also test that we can infer multiple
+  ;; assignments in the same function, without confusion between them.
+  (local.set $ref
+   (struct.new $empty)
+  )
+  (drop
+   (call $helper
+    ;; The reference here is definitely not null.
+    (ref.is_null
+     (local.get $ref)
+    )
+   )
+  )
+  (local.set $ref
+   (ref.null $empty)
+  )
+  (drop
+   (call $helper
+    ;; The reference here is definitely null.
+    (ref.is_null
+     (local.get $ref)
+    )
+   )
+  )
+  (if
+   (local.get $param)
+   (local.set $ref
+    (struct.new $empty)
+   )
+  )
+  (drop
+   (call $helper
+    ;; The reference here might be null.
+    (ref.is_null
+     (local.get $ref)
+    )
+   )
+  )
+ )
 )
