@@ -75,6 +75,8 @@ using HeapValues = std::unordered_map<Expression*, std::shared_ptr<GCData>>;
 class PrecomputingExpressionRunner
   : public ConstantExpressionRunner<PrecomputingExpressionRunner> {
 
+  using Super = ConstantExpressionRunner<PrecomputingExpressionRunner>;
+
   // Concrete values of gets computed during the pass, which the runner does not
   // know about since it only records values of sets it visits.
   GetValues& getValues;
@@ -120,33 +122,33 @@ public:
 
   // TODO: Use immutability for values
   Flow visitStructNew(StructNew* curr) {
-    auto value = getHeapLiteral(curr);
-    if (value.type == Type::none) {
-      return Flow(NONCONSTANT_FLOW);
+    auto flow = Super::visitStructNew(curr);
+    if (flow.breaking()) {
+      return flow;
     }
+    return getHeapCreationFlow(flow, curr);
     // TODO: set the values in the GC data, when we can use immutability to
     //       read them
-    return value;
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayNew(ArrayNew* curr) {
-    auto value = getHeapLiteral(curr);
-    if (value.type == Type::none) {
-      return Flow(NONCONSTANT_FLOW);
+    auto flow = Super::visitArrayNew(curr);
+    if (flow.breaking()) {
+      return flow;
     }
+    return getHeapCreationFlow(flow, curr);
     // TODO: set the values in the GC data, when we can use immutability to
     //       read them
-    return value;
   }
   Flow visitArrayInit(ArrayInit* curr) {
-    auto value = getHeapLiteral(curr);
-    if (value.type == Type::none) {
-      return Flow(NONCONSTANT_FLOW);
+    auto flow = Super::visitArrayInit(curr);
+    if (flow.breaking()) {
+      return flow;
     }
+    return getHeapCreationFlow(flow, curr);
     // TODO: set the values in the GC data, when we can use immutability to
     //       read them
-    return value;
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
@@ -155,17 +157,14 @@ public:
 
   // Generates heap info for a heap-allocating expression. Returns a none
   // literal if we cannot create anything.
-  Literal getHeapLiteral(Expression* curr) {
-    if (curr->type == Type::unreachable) {
-      return Literal(Type::none);
-    }
-    if (!heapValues.count(curr)) {
-      // This is the first time we see this source location, allocate its
-      // data.
-      heapValues.emplace(
-        curr, std::make_shared<GCData>(curr->type.getHeapType(), Literals{}));
-    }
-    return Literal(heapValues[curr], curr->type);
+  template<typename T>
+  Flow getHeapCreationFlow(Flow flow, T* curr) {
+    // We must return a literal that refers to the canonical location for this
+    // source expression, so that each time we compute a specific struct.new
+    // we get the same identity.
+    std::shared_ptr<GCData> canonical = heapValues[curr];
+    *canonical.get() = *flow.getSingleValue().getGCData();
+    return Literal(canonical, curr->type);
   }
 };
 

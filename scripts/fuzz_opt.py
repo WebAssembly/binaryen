@@ -39,7 +39,7 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
-INPUT_SIZE_MEAN = 40 * 1024
+INPUT_SIZE_MEAN = 80 * 1024
 INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
 PRINT_WATS = False
@@ -169,21 +169,9 @@ def randomize_fuzz_settings():
 def init_important_initial_contents():
     FIXED_IMPORTANT_INITIAL_CONTENTS = [
         # Perenially-important passes
-        os.path.join('lit', 'passes', 'optimize-instructions.wast'),
-        os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+        os.path.join('lit', 'passes', 'precompute-gc.wast'),
     ]
     MANUAL_RECENT_INITIAL_CONTENTS = [
-        # Recently-added or modified passes. These can be added to and pruned
-        # frequently.
-        os.path.join('lit', 'passes', 'once-reduction.wast'),
-        os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-gc-iit.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-call_ref.wast'),
-        os.path.join('lit', 'passes', 'inlining_splitting.wast'),
-        os.path.join('heap-types.wast'),
     ]
     RECENT_DAYS = 30
 
