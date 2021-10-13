@@ -82,8 +82,9 @@
   (func $unreachable-struct.get (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
     (local $temp i32)
     ;; As above, but the get's ref is unreachable. This tests we do not hit an
-    ;; assertion on it not having a heap type. (And we simply do not handle this
-    ;; case, leaving it for DCE.)
+    ;; assertion on the get's type not having a heap type (as we depend on
+    ;; finding the heap type there in the reachable case).
+    ;; We simply do not handle this case, leaving it for DCE.
     (local.set $temp
       (struct.get $struct-immutable 0
         (unreachable)
