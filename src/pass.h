@@ -391,7 +391,7 @@ protected:
 //
 template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
-  PassRunner* runner;
+  PassRunner* runner = nullptr;
 
 protected:
   typedef WalkerPass<WalkerType> super;
@@ -419,6 +419,12 @@ public:
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkFunction(func);
+  }
+
+  void runOnModuleCode(PassRunner* runner, Module* module) {
+    setPassRunner(runner);
+    WalkerType::setModule(module);
+    WalkerType::walkModuleCode(module);
   }
 
   PassRunner* getPassRunner() { return runner; }

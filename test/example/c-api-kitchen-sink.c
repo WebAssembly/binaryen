@@ -1026,7 +1026,11 @@ void test_core() {
 
   BinaryenExpressionPrint(funcrefExpr2);
 
-  BinaryenExpressionPrint(BinaryenTableSize(module, "0"));
+  BinaryenExpressionRef tablesize = BinaryenTableSize(module, "0");
+  BinaryenExpressionPrint(tablesize);
+
+  const char* table = BinaryenTableSizeGetTable(tablesize);
+  BinaryenTableSizeSetTable(tablesize, table);
 
   // Memory. One per module
 
