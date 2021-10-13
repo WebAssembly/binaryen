@@ -770,7 +770,7 @@ void WasmBinaryWriter::writeNames() {
     std::vector<HeapType> namedTypes;
     for (auto& kv : typeIndices) {
       auto type = kv.first;
-      if (wasm->typeNames.count(type)) {
+      if (wasm->typeNames.count(type) && wasm->typeNames[type].name.is()) {
         namedTypes.push_back(type);
       }
     }
@@ -906,7 +906,7 @@ void WasmBinaryWriter::writeNames() {
     std::vector<HeapType> relevantTypes;
     for (auto& type : types) {
       if (type.isStruct() && wasm->typeNames.count(type) &&
-          !wasm->typeNames.at(type).fieldNames.empty()) {
+          !wasm->typeNames[type].fieldNames.empty()) {
         relevantTypes.push_back(type);
       }
     }
@@ -1194,6 +1194,7 @@ static int decodeHexNibble(char ch) {
 }
 
 void WasmBinaryWriter::writeEscapedName(const char* name) {
+  assert(name);
   if (!strpbrk(name, "\\")) {
     writeInlineString(name);
     return;

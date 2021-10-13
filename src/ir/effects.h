@@ -79,7 +79,8 @@ public:
   bool writesTable = false;
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
-  bool readsStruct = false;
+  bool readsMutableStruct = false;
+  bool readsImmutableStruct = false;
   bool writesStruct = false;
   bool readsArray = false;
   bool writesArray = false;
@@ -132,7 +133,12 @@ public:
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
   bool accessesTable() const { return calls || readsTable || writesTable; }
-  bool accessesStruct() const { return calls || readsStruct || writesStruct; }
+  bool accessesMutableStruct() const {
+    return calls || readsMutableStruct || writesStruct;
+  }
+  bool accessesStruct() const {
+    return accessesMutableStruct() || readsImmutableStruct;
+  }
   bool accessesArray() const { return calls || readsArray || writesArray; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
@@ -151,8 +157,9 @@ public:
            writesStruct || writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsTable || readsStruct ||
-           readsArray || isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsTable ||
+           readsMutableStruct || readsImmutableStruct || readsArray ||
+           isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
@@ -203,8 +210,8 @@ public:
         ((other.writesMemory || other.calls) && accessesMemory()) ||
         ((writesTable || calls) && other.accessesTable()) ||
         ((other.writesTable || other.calls) && accessesTable()) ||
-        ((writesStruct || calls) && other.accessesStruct()) ||
-        ((other.writesStruct || other.calls) && accessesStruct()) ||
+        ((writesStruct || calls) && other.accessesMutableStruct()) ||
+        ((other.writesStruct || other.calls) && accessesMutableStruct()) ||
         ((writesArray || calls) && other.accessesArray()) ||
         ((other.writesArray || other.calls) && accessesArray()) ||
         (danglingPop || other.danglingPop)) {
@@ -268,7 +275,8 @@ public:
     writesMemory = writesMemory || other.writesMemory;
     readsTable = readsTable || other.readsTable;
     writesTable = writesTable || other.writesTable;
-    readsStruct = readsStruct || other.readsStruct;
+    readsMutableStruct = readsMutableStruct || other.readsMutableStruct;
+    readsImmutableStruct = readsImmutableStruct || other.readsImmutableStruct;
     writesStruct = writesStruct || other.writesStruct;
     readsArray = readsArray || other.readsArray;
     writesArray = writesArray || other.writesArray;
@@ -658,7 +666,17 @@ private:
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
-      parent.readsStruct = true;
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+      if (curr->ref->type.getHeapType()
+            .getStruct()
+            .fields[curr->index]
+            .mutable_ == Mutable) {
+        parent.readsMutableStruct = true;
+      } else {
+        parent.readsImmutableStruct = true;
+      }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
