@@ -133,7 +133,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
 
   Scanner(FunctionStructValuesMap<T>& functionNewInfos,
           FunctionStructValuesMap<T>& functionSetGetInfos)
-    : functionNewInfos(functionNewInfos), functionSetGetInfos(functionSetGetInfos) {}
+    : functionNewInfos(functionNewInfos),
+      functionSetGetInfos(functionSetGetInfos) {}
 
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
@@ -162,11 +163,11 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
     }
 
     // Note a write to this field of the struct.
-    noteExpressionOrCopy(
-      curr->value,
-      type.getHeapType(),
-      curr->index,
-      functionSetGetInfos[this->getFunction()][type.getHeapType()][curr->index]);
+    noteExpressionOrCopy(curr->value,
+                         type.getHeapType(),
+                         curr->index,
+                         functionSetGetInfos[this->getFunction()]
+                                            [type.getHeapType()][curr->index]);
   }
 
   void visitStructGet(StructGet* curr) {
@@ -178,7 +179,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
     auto heapType = type.getHeapType();
     auto index = curr->index;
     static_cast<SubType*>(this)->noteRead(
-      heapType, index, functionSetGetInfos[this->getFunction()][heapType][index]);
+      heapType,
+      index,
+      functionSetGetInfos[this->getFunction()][heapType][index]);
   }
 
   void

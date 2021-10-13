@@ -348,7 +348,8 @@ struct GlobalTypeOptimization : public Pass {
         }
         auto& indexesAfterRemoval = iter->second;
         auto newIndex = indexesAfterRemoval[index];
-        assert(newIndex < indexesAfterRemoval.size() || newIndex == RemovedField);
+        assert(newIndex < indexesAfterRemoval.size() ||
+               newIndex == RemovedField);
         return newIndex;
       }
     };
