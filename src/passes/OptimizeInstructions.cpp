@@ -1362,7 +1362,7 @@ struct OptimizeInstructions
               if (auto* localGet = structSet->ref->dynCast<LocalGet>()) {
                 if (localGet->index == localSet->index &&
                     optimizeSubsequentStructSet(
-                        new_, structSet, localGet->index)) {
+                      new_, structSet, localGet->index)) {
                   // Success. Replace the set with a nop, and continue to
                   // perhaps optimize more.
                   ExpressionManipulator::nop(structSet);
