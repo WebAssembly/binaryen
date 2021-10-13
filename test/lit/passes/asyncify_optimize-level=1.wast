@@ -577,36 +577,36 @@
   ;; CHECK-NEXT:        (i32.const 2)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (select
-  ;; CHECK-NEXT:       (block (result i32)
-  ;; CHECK-NEXT:        (if
-  ;; CHECK-NEXT:         (i32.eq
-  ;; CHECK-NEXT:          (global.get $__asyncify_state)
-  ;; CHECK-NEXT:          (i32.const 2)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (block
-  ;; CHECK-NEXT:          (i32.store
-  ;; CHECK-NEXT:           (global.get $__asyncify_data)
-  ;; CHECK-NEXT:           (i32.sub
-  ;; CHECK-NEXT:            (i32.load
-  ;; CHECK-NEXT:             (global.get $__asyncify_data)
-  ;; CHECK-NEXT:            )
-  ;; CHECK-NEXT:            (i32.const 4)
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:          (local.set $2
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (if
+  ;; CHECK-NEXT:        (i32.eq
+  ;; CHECK-NEXT:         (global.get $__asyncify_state)
+  ;; CHECK-NEXT:         (i32.const 2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (block
+  ;; CHECK-NEXT:         (i32.store
+  ;; CHECK-NEXT:          (global.get $__asyncify_data)
+  ;; CHECK-NEXT:          (i32.sub
   ;; CHECK-NEXT:           (i32.load
-  ;; CHECK-NEXT:            (i32.load
-  ;; CHECK-NEXT:             (global.get $__asyncify_data)
-  ;; CHECK-NEXT:            )
+  ;; CHECK-NEXT:            (global.get $__asyncify_data)
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:           (i32.const 4)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (local.set $2
+  ;; CHECK-NEXT:          (i32.load
+  ;; CHECK-NEXT:           (i32.load
+  ;; CHECK-NEXT:            (global.get $__asyncify_data)
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (global.get $__asyncify_state)
+  ;; CHECK-NEXT:       (select
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:        (global.get $__asyncify_state)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
