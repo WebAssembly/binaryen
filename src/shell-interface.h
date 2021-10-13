@@ -256,13 +256,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return true;
   }
 
-  bool growTable(Name name, Index /*oldSize*/, Index newSize) override {
+  bool growTable(Name name,
+                 const Literal& value,
+                 Index /*oldSize*/,
+                 Index newSize) override {
     // Apply a reasonable limit on table size, 1GB, to avoid DOS on the
     // interpreter.
     if (newSize > 1024 * 1024 * 1024) {
       return false;
     }
-    tables[name].resize(newSize);
+    tables[name].resize(newSize, value);
     return true;
   }
 

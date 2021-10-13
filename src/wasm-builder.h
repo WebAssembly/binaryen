@@ -670,9 +670,10 @@ public:
     ret->finalize();
     return ret;
   }
-  TableGrow* makeTableGrow(Name table, Expression* delta) {
+  TableGrow* makeTableGrow(Name table, Expression* value, Expression* delta) {
     auto* ret = wasm.allocator.alloc<TableGrow>();
     ret->table = table;
+    ret->value = value;
     ret->delta = delta;
     ret->finalize();
     return ret;

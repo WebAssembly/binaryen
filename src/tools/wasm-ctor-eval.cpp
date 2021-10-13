@@ -372,11 +372,14 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     doStore<int64_t>(addr, value);
   }
 
-  bool growMemory(Address /*oldSize*/, Address newSize) override {
+  bool growMemory(Address /*oldSize*/, Address /*newSize*/) override {
     throw FailToEvalException("grow memory");
   }
 
-  bool growTable(Name name, Index oldSize, Index newSize) override {
+  bool growTable(Name /*name*/,
+                 const Literal& /*value*/,
+                 Index /*oldSize*/,
+                 Index /*newSize*/) override {
     throw FailToEvalException("grow table");
   }
 

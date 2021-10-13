@@ -2311,7 +2311,10 @@ public:
                                Type result,
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
-    virtual bool growTable(Name name, Index oldSize, Index newSize) = 0;
+    virtual bool growTable(Name name,
+                           const Literal& value,
+                           Index oldSize,
+                           Index newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
@@ -2826,17 +2829,18 @@ private:
     }
     Flow visitTableSet(TableSet* curr) {
       NOTE_ENTER("TableSet");
-      Flow index = this->visit(curr->index);
-      if (index.breaking()) {
-        return index;
+      Flow indexFlow = this->visit(curr->index);
+      if (indexFlow.breaking()) {
+        return indexFlow;
       }
-      Flow flow = this->visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
+      Flow valueFlow = this->visit(curr->value);
+      if (valueFlow.breaking()) {
+        return valueFlow;
       }
       auto info = instance.getTableInterfaceInfo(curr->table);
-      info.interface->tableStore(
-        info.name, index.getSingleValue().geti32(), flow.getSingleValue());
+      info.interface->tableStore(info.name,
+                                 indexFlow.getSingleValue().geti32(),
+                                 valueFlow.getSingleValue());
       return Flow();
     }
 
@@ -2848,9 +2852,13 @@ private:
 
     Flow visitTableGrow(TableGrow* curr) {
       NOTE_ENTER("TableGrow");
-      Flow flow = this->visit(curr->delta);
-      if (flow.breaking()) {
-        return flow;
+      Flow valueFlow = this->visit(curr->value);
+      if (valueFlow.breaking()) {
+        return valueFlow;
+      }
+      Flow deltaFlow = this->visit(curr->delta);
+      if (deltaFlow.breaking()) {
+        return deltaFlow;
       }
       Name tableName = curr->table;
       auto* inst = getTableInstance(tableName);
@@ -2858,8 +2866,7 @@ private:
       Flow ret = Literal::makeFromInt32((int32_t)tableSize, Type::i32);
 
       auto fail = Literal::makeFromInt32(-1, Type::i32);
-      uint32_t delta = flow.getSingleValue().geti32();
-
+      uint32_t delta = deltaFlow.getSingleValue().geti32();
       if (tableSize >= uint32_t(-1) - delta) {
         return fail;
       }
@@ -2867,7 +2874,8 @@ private:
       if (newSize > inst->wasm.getTable(tableName)->max) {
         return fail;
       }
-      if (!inst->externalInterface->growTable(tableName, tableSize, newSize)) {
+      if (!inst->externalInterface->growTable(
+            tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
         // We failed to grow the table in practice, even though it was valid
         // to try to do so.
         return fail;

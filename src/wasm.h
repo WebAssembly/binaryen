@@ -1319,7 +1319,8 @@ public:
   TableGrow(MixedArena& allocator) : TableGrow() {}
 
   Name table;
-  Expression* delta = nullptr;
+  Expression* value;
+  Expression* delta;
 
   void finalize();
 };

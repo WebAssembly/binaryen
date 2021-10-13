@@ -4954,6 +4954,7 @@ bool WasmBinaryBuilder::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   }
   auto* curr = allocator.alloc<TableGrow>();
   curr->delta = popNonVoidExpression();
+  curr->value = popNonVoidExpression();
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(curr);

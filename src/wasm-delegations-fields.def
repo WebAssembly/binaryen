@@ -524,8 +524,9 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::TableGrowId: {
     DELEGATE_START(TableGrow);
-    DELEGATE_FIELD_NAME(TableGrow, table);
     DELEGATE_FIELD_CHILD(TableGrow, delta);
+    DELEGATE_FIELD_CHILD(TableGrow, value);
+    DELEGATE_FIELD_NAME(TableGrow, table);
     DELEGATE_END(TableGrow);
     break;
   }

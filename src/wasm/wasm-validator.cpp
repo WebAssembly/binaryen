@@ -2080,8 +2080,12 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
   auto* table = getModule()->getTableOrNull(curr->table);
   if (shouldBeTrue(!!table, curr, "table.grow table must exist") &&
       curr->type != Type::unreachable) {
+    shouldBeSubType(curr->value->type,
+                    table->type,
+                    curr,
+                    "table.grow value must have right type");
     shouldBeEqual(curr->delta->type,
-                  indexType(),
+                  Type(Type::i32),
                   curr,
                   "table.grow must match table index type");
   }
