@@ -1380,7 +1380,6 @@ struct OptimizeInstructions
     }
   }
 
-  // TODO move
   // Given a struct.new and a struct.set that occurs right after it, and that
   // applies to the same data, try to apply the set during the new. This can be
   // either with a nested tee:
@@ -1400,8 +1399,6 @@ struct OptimizeInstructions
   //  (local.set $x (struct.new X' Y Z))
   //
   // Returns true if we succeeded.
-  //
-  // TODO: the same for arrays
   bool optimizeSubsequentStructSet(StructNew* new_,
                                    StructSet* set,
                                    Index refLocalIndex) {
@@ -1428,8 +1425,9 @@ struct OptimizeInstructions
 
     // We must move the set's value past indexes greater than it (Y and Z in
     // the example in the comment on this function).
-    // TODO When called repeatedly in a sequence this can become quadratic -
-    //      perhaps we should memoize.
+    // TODO When this function is called repeatedly in a sequence this can
+    //      become quadratic - perhaps we should memoize (though, struct sizes
+    //      tend to not be ridiculously large).
     for (Index i = index + 1; i < operands.size(); i++) {
       auto operandEffects = effects(operands[i]);
       if (operandEffects.invalidates(setValueEffects)) {
