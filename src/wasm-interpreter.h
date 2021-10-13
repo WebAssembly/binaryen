@@ -2461,8 +2461,7 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void
-    tableStore(Name tableName, Index index, const Literal& entry) {
+    virtual void tableStore(Name tableName, Index index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
     virtual Literal tableLoad(Name tableName, Index index) {
@@ -2862,18 +2861,19 @@ private:
       }
       Name tableName = curr->table;
       auto* inst = getTableInstance(tableName);
-      Address tableSize = inst->tableSizes[tableName];
-      Flow ret = Literal::makeFromInt32((int32_t)tableSize, Type::i32);
+      Index tableSize = inst->tableSizes[tableName];
+      Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
 
       auto fail = Literal::makeFromInt32(-1, Type::i32);
-      uint32_t delta = deltaFlow.getSingleValue().geti32();
+      Index delta = deltaFlow.getSingleValue().geti32();
       if (tableSize >= uint32_t(-1) - delta) {
         return fail;
       }
-      auto newSize = tableSize + delta;
-      if (newSize > inst->wasm.getTable(tableName)->max) {
+      if (uint64_t(tableSize) + uint64_t(delta) >
+          uint64_t(inst->wasm.getTable(tableName)->max)) {
         return fail;
       }
+      Index newSize = tableSize + delta;
       if (!inst->externalInterface->growTable(
             tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
         // We failed to grow the table in practice, even though it was valid
@@ -3604,7 +3604,7 @@ public:
 
 protected:
   Address memorySize; // in pages
-  std::unordered_map<Name, Address> tableSizes;
+  std::unordered_map<Name, Index> tableSizes;
 
   static const Index maxDepth = 250;
 
