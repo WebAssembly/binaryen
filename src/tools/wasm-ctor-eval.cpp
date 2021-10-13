@@ -376,7 +376,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException("grow memory");
   }
 
-  bool growTable(Name name, Address oldSize, Address newSize) override {
+  bool growTable(Name name, Index oldSize, Index newSize) override {
     throw FailToEvalException("grow table");
   }
 

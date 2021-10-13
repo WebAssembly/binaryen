@@ -2311,7 +2311,7 @@ public:
                                Type result,
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
-    virtual bool growTable(Name name, Address oldSize, Address newSize) = 0;
+    virtual bool growTable(Name name, Index oldSize, Index newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
@@ -2459,10 +2459,10 @@ public:
     }
 
     virtual void
-    tableStore(Name tableName, Address addr, const Literal& entry) {
+    tableStore(Name tableName, Index index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual Literal tableLoad(Name tableName, Address addr) {
+    virtual Literal tableLoad(Name tableName, Index index) {
       WASM_UNREACHABLE("unimp");
     }
   };

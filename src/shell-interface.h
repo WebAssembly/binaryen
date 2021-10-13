@@ -223,27 +223,27 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
-  void tableStore(Name tableName, Address addr, const Literal& entry) override {
+  void tableStore(Name tableName, Index index, const Literal& entry) override {
     auto& table = tables[tableName];
-    if (addr >= table.size()) {
+    if (index >= table.size()) {
       trap("out of bounds table access");
     } else {
-      table[addr] = entry;
+      table[index] = entry;
     }
   }
 
-  Literal tableLoad(Name tableName, Address addr) override {
+  Literal tableLoad(Name tableName, Index index) override {
     auto it = tables.find(tableName);
     if (it == tables.end()) {
       trap("tableGet on non-existing table");
     }
 
     auto& table = it->second;
-    if (addr >= table.size()) {
+    if (index >= table.size()) {
       trap("out of bounds table access");
     }
 
-    return table[addr];
+    return table[index];
   }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {
@@ -256,7 +256,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return true;
   }
 
-  bool growTable(Name name, Address /*oldSize*/, Address newSize) override {
+  bool growTable(Name name, Index /*oldSize*/, Index newSize) override {
     // Apply a reasonable limit on table size, 1GB, to avoid DOS on the
     // interpreter.
     if (newSize > 1024 * 1024 * 1024) {
