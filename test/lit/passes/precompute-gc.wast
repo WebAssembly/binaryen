@@ -538,24 +538,24 @@
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempref
+ ;; CHECK-NEXT:   (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:    (rtt.canon $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $stashedref
+ ;; CHECK-NEXT:   (local.get $tempref)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (loop $loop
- ;; CHECK-NEXT:   (local.set $stashedref
- ;; CHECK-NEXT:    (local.get $tempref)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (if
- ;; CHECK-NEXT:    (call $helper
- ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $tempref
- ;; CHECK-NEXT:     (struct.new_default_with_rtt $empty
- ;; CHECK-NEXT:      (rtt.canon $empty)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $tempresult
  ;; CHECK-NEXT:    (ref.eq
  ;; CHECK-NEXT:     (local.get $tempref)
  ;; CHECK-NEXT:     (local.get $stashedref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempref
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (br_if $loop
@@ -569,27 +569,74 @@
   (local $tempresult i32)
   (local $tempref (ref null $empty))
   (local $stashedref (ref null $empty))
+  (local.set $tempref
+   (struct.new_with_rtt $empty
+    (rtt.canon $empty)
+   )
+  )
+  (local.set $stashedref
+   (local.get $tempref)
+  )
   (loop $loop
-   ;; Each iteration in this loop may allocate a different struct, so we cannot
+   ;; Each iteration in this loop may see a different struct, so we cannot
    ;; precompute the ref.eq here.
-   ;; Note that the if below us is what actually prevents the opt. That is, a
-   ;; loop forces us to have a merge (if we want to actually have more than one
-   ;; potential value in each iteration), and a merge is what makes us unable
-   ;; to infer a single value. So this test is a subtest of the previous one,
-   ;; really.
-   (local.set $stashedref
-    (local.get $tempref)
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
    )
-   (if
+   (local.set $tempref
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+   )
+   (br_if $loop
     (call $helper
-     (i32.const 0)
-    )
-    (local.set $tempref
-     (struct.new_with_rtt $empty
-      (rtt.canon $empty)
-     )
+     (local.get $tempresult)
     )
    )
+  )
+ )
+
+ ;; CHECK:      (func $propagate-certain-loop
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempref
+ ;; CHECK-NEXT:   (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:    (rtt.canon $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $stashedref
+ ;; CHECK-NEXT:   (local.get $tempref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-certain-loop
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  ;; As above, but remove the new in the loop, so that each loop iteration does
+  ;; in fact have the ref locals identical, and we can precompute a 1.
+  (local.set $tempref
+   (struct.new_with_rtt $empty
+    (rtt.canon $empty)
+   )
+  )
+  (local.set $stashedref
+   (local.get $tempref)
+  )
+  (loop $loop
    (local.set $tempresult
     (ref.eq
      (local.get $tempref)
@@ -604,7 +651,7 @@
   )
  )
 
- ;; CHECK:      (func $propagate-certain-loop
+ ;; CHECK:      (func $propagate-certain-loop-2
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
@@ -627,14 +674,13 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $propagate-certain-loop
+ (func $propagate-certain-loop-2
   (local $tempresult i32)
   (local $tempref (ref null $empty))
   (local $stashedref (ref null $empty))
   (loop $loop
-   ;; As above, but remove the if and move the set of $stashedref below the
-   ;; struct.new, so that each loop iteration does in fact have the ref locals
-   ;; identical, and we can precompute a 1.
+   ;; Another example of a loop where we can optimize. Here the new is inside
+   ;; the loop.
    (local.set $tempref
     (struct.new_with_rtt $empty
      (rtt.canon $empty)
