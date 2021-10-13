@@ -398,6 +398,35 @@
   (local.get $tempresult)
  )
 
+ ;; CHECK:      (func $propagate-uncertain (param $input (ref $empty)) (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $input)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-uncertain-param (param $input (ref $empty)) (result i32)
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local.set $tempresult
+   ;; allocate a struct and compare it to a param, which we know nothing about,
+   ;; so we can infer nothing here at all.
+   (ref.eq
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+    (local.get $input)
+   )
+  )
+  (local.get $tempresult)
+ )
+
  ;; CHECK:      (func $odd-cast-and-get
  ;; CHECK-NEXT:  (local $temp (ref null $B))
  ;; CHECK-NEXT:  (local.set $temp
