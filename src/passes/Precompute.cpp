@@ -162,7 +162,23 @@ public:
     return getHeapCreationFlow(flow, curr);
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayGet(ArrayGet* curr) {
+    if (curr->ref->type != Type::unreachable) {
+      // If this field is immutable then we may be able to precompute this, as
+      // if we also created the data in this function then we know the value in
+      // the field. If it is immutable, call the super method which will do the
+      // rest (and fail if we do not have GC data there to read, which would
+      // indicate we didn't create it in this function).
+      // Is it null in that case ..?
+      auto element =  curr->ref->type.getHeapType().getArray().element;
+      if (element.mutable_ == Immutable) {
+        return Super::visitArrayGet(curr);
+      }
+    }
+
+    // Otherwise, we've failed to precompute.
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
 

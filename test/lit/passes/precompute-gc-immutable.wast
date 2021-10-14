@@ -656,3 +656,75 @@
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
 )
+
+(module
+  ;; Create an immutable vtable in an immutable global, but using an array
+  ;; instead of a struct.
+
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
+
+  ;; CHECK:      (type $vtable (array funcref))
+  (type $vtable (array funcref))
+  (type $object (struct (ref $vtable)))
+
+  ;; CHECK:      (global $vtable (ref $vtable) (array.init_static $vtable
+  ;; CHECK-NEXT:  (ref.func $nested-creations)
+  ;; CHECK-NEXT: ))
+  (global $vtable (ref $vtable)
+    (array.init_static $vtable
+      (ref.func $nested-creations)
+    )
+  )
+
+  ;; CHECK:      (func $nested-creations (param $param i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (ref.func $nested-creations)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (array.get $vtable
+  ;; CHECK-NEXT:    (struct.get $object 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-creations (param $param i32)
+    (local $ref (ref null $object))
+    (local.set $ref
+      (struct.new $object
+        (global.get $vtable)
+      )
+    )
+    (call $helper
+      (array.get $vtable
+        (struct.get $object 0
+          (local.get $ref)
+        )
+        (i32.const 0)
+      )
+    )
+    ;; The second operation here uses a param for the array index, which is not
+    ;; constant.
+    (call $helper
+      (array.get $vtable
+        (struct.get $object 0
+          (local.get $ref)
+        )
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper (param funcref))
+)
+
