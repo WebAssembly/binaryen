@@ -170,7 +170,7 @@ public:
       // rest (and fail if we do not have GC data there to read, which would
       // indicate we didn't create it in this function).
       // Is it null in that case ..?
-      auto element =  curr->ref->type.getHeapType().getArray().element;
+      auto element = curr->ref->type.getHeapType().getArray().element;
       if (element.mutable_ == Immutable) {
         return Super::visitArrayGet(curr);
       }
