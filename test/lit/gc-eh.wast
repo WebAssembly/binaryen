@@ -3,15 +3,17 @@
 ;; Check that pops of GC types work correctly.
 
 ;; RUN: wasm-opt -all %s -S -o - | filecheck %s
-;; RUN: wasm-opt -all --nominal %s -S -o - | filecheck %s
+;; RUN: wasm-opt -all --nominal %s -S -o - | filecheck %s --check-prefix=NOMNL
 
 (module
-  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  ;; NOMNL:      (type $A (struct_subtype (field (mut i32)) data))
   (type $A (struct
     (field (mut i32))
   ))
 
   ;; CHECK:      (tag $tagA (param (ref $A)))
+  ;; NOMNL:      (tag $tagA (param (ref $A)))
   (tag $tagA (param (ref $A)))
 
   ;; CHECK:      (func $foo (result (ref null $A))
@@ -27,6 +29,19 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.null $A)
   ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $foo (result (ref null $A))
+  ;; NOMNL-NEXT:  (try $try
+  ;; NOMNL-NEXT:   (do
+  ;; NOMNL-NEXT:    (nop)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (catch $tagA
+  ;; NOMNL-NEXT:    (return
+  ;; NOMNL-NEXT:     (pop (ref $A))
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (ref.null $A)
+  ;; NOMNL-NEXT: )
   (func $foo (result (ref null $A))
     (try
       (do

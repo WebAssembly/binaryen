@@ -80,7 +80,10 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
 }
 
-const Index TooCostlyToRunUnconditionally = 7;
+// This leads to similar choices as LLVM does.
+// See https://github.com/WebAssembly/binaryen/pull/4228
+// It can be tuned more later.
+const Index TooCostlyToRunUnconditionally = 9;
 
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously
