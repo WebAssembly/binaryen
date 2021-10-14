@@ -1317,9 +1317,7 @@ BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
                                         BinaryenExpressionRef delta) {
   if (value == nullptr) {
     auto tableType = (*(Module*)module).getTableOrNull(name)->type;
-    auto type = tableType == Type::funcref ? BinaryenTypeFuncref()
-                                           : BinaryenTypeExternref();
-    value = BinaryenRefNull(module, type);
+    value = BinaryenRefNull(module, (BinaryenType)tableType.getID());
   }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
