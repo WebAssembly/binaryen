@@ -551,3 +551,53 @@
   (func $helper (param funcref))
 )
 
+(module
+  ;; One field is immutable, the other is not, so we can only propagate the
+  ;; former.
+  ;; CHECK:      (type $struct (struct (field (mut i32)) (field i32)))
+  (type $struct (struct (mut i32) i32))
+
+  ;; CHECK:      (func $propagate
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate
+    (local $ref (ref null $struct))
+    ;; We can propagate from an immutable field of a struct created in this
+    ;; function.
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (call $helper
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+    )
+    (call $helper
+      (struct.get $struct 1
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper (param i32))
+)
