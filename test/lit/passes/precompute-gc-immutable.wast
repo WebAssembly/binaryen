@@ -146,7 +146,8 @@
   ;; CHECK-NEXT: )
   (func $local-unknown (param $x i32)
     (local $ref-imm (ref null $struct-imm))
-    ;; Do not propagate if a local has more than one possible struct.new.
+    ;; Do not propagate if a local has more than one possible struct.new with
+    ;; different values.
     (if
       (local.get $x)
       (local.set $ref-imm
@@ -157,6 +158,53 @@
       (local.set $ref-imm
         (struct.new $struct-imm
           (i32.const 2)
+        )
+      )
+    )
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref-imm)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local-unknown-ref-same-value (param $x i32)
+  ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.set $ref-imm
+  ;; CHECK-NEXT:    (struct.new $struct-imm
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $ref-imm
+  ;; CHECK-NEXT:    (struct.new $struct-imm
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $struct-imm 0
+  ;; CHECK-NEXT:    (local.get $ref-imm)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-unknown-ref-same-value (param $x i32)
+    (local $ref-imm (ref null $struct-imm))
+    ;; As above, but the two different refs have the same value, so we can in
+    ;; theory optimize. However, atm we do nothing here, as the analysis stops
+    ;; when it sees it cannot propagate the local value (the ref, which has two
+    ;; possible values).
+    (if
+      (local.get $x)
+      (local.set $ref-imm
+        (struct.new $struct-imm
+          (i32.const 1)
+        )
+      )
+      (local.set $ref-imm
+        (struct.new $struct-imm
+          (i32.const 1)
         )
       )
     )
