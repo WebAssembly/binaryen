@@ -192,8 +192,6 @@ public:
     }
     return Literal(canonical, curr->type);
   }
-
-  // TODO propagate from globals, which is where vtables are normally defined.
 };
 
 struct Precompute
