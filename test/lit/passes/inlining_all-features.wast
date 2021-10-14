@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --all-features --nominal -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+  ;; CHECK:      (type $none_=>_funcref (func_subtype (result funcref) func))
 
   ;; CHECK:      (elem declare func $foo)
 
@@ -37,7 +37,7 @@
 (module
  ;; a function reference in a global's init should be noticed, and prevent us
  ;; from removing an inlined function
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
  ;; CHECK:      (global $global$0 (mut funcref) (ref.func $0))
  (global $global$0 (mut funcref) (ref.func $0))
@@ -62,7 +62,7 @@
 (module
  ;; a function reference in the start should be noticed, and prevent us
  ;; from removing an inlined function
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $none_=>_none (func_subtype func))
 
  ;; CHECK:      (start $0)
  (start $0)
@@ -86,7 +86,7 @@
 
 ;; inline a return_call_ref
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $none_=>_none (func_subtype func))
  (type $none_=>_none (func))
 
  ;; CHECK:      (export "func_36_invoker" (func $1))
@@ -119,7 +119,7 @@
  (func $0 (param $non-null (ref func)) (result (ref func))
   (local.get $non-null)
  )
- ;; CHECK:      (type $none_=>_ref|func| (func (result (ref func))))
+ ;; CHECK:      (type $none_=>_ref|func| (func_subtype (result (ref func)) func))
 
  ;; CHECK:      (elem declare func $1)
 
@@ -143,11 +143,11 @@
 
 ;; never inline an rtt parameter, as those cannot be handled as locals
 (module
- ;; CHECK:      (type $struct (struct ))
+ ;; CHECK:      (type $struct (struct_subtype  data))
  (type $struct (struct))
- ;; CHECK:      (type $rtt_$struct_=>_none (func (param (rtt $struct))))
+ ;; CHECK:      (type $rtt_$struct_=>_none (func_subtype (param (rtt $struct)) func))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $none_=>_none (func_subtype func))
 
  ;; CHECK:      (func $0 (param $rtt (rtt $struct))
  ;; CHECK-NEXT:  (nop)

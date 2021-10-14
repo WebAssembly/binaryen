@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s -all --dae --nominal -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type ${} (struct ))
+ ;; CHECK:      (type ${} (struct_subtype  data))
  (type ${} (struct))
 
  ;; CHECK:      (func $foo

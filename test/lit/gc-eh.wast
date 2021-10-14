@@ -6,7 +6,7 @@
 ;; RUN: wasm-opt -all --nominal %s -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
   (type $A (struct
     (field (mut i32))
   ))

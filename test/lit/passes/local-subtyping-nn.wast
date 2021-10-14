@@ -5,7 +5,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
 
   ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))

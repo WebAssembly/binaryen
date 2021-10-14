@@ -5,17 +5,17 @@
 ;; RUN: wasm-opt %s -all --remove-unused-names --heap2local --nominal -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct.A (struct (field (mut i32)) (field (mut f64))))
+  ;; CHECK:      (type $struct.A (struct_subtype (field (mut i32)) (field (mut f64)) data))
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
 
-  ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
+  ;; CHECK:      (type $struct.recursive (struct_subtype (field (mut (ref null $struct.recursive))) data))
 
-  ;; CHECK:      (type $struct.nonnullable (struct (field (ref $struct.A))))
+  ;; CHECK:      (type $struct.nonnullable (struct_subtype (field (ref $struct.A)) data))
 
-  ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
+  ;; CHECK:      (type $struct.packed (struct_subtype (field (mut i8)) data))
   (type $struct.packed (struct (field (mut i8))))
 
-  ;; CHECK:      (type $struct.nondefaultable (struct (field (rtt $struct.A))))
+  ;; CHECK:      (type $struct.nondefaultable (struct_subtype (field (rtt $struct.A)) data))
   (type $struct.nondefaultable (struct (field (rtt $struct.A))))
 
   (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))

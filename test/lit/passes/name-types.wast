@@ -7,11 +7,11 @@
  (type $obnoxious-super-long-type-name_____________________________1 (struct))
 
  ;; A reasonable name that will be kept.
- ;; CHECK:      (type $type$0 (func (param (ref $type$1) (ref $reasonable-name))))
+ ;; CHECK:      (type $type$0 (func_subtype (param (ref $type$1) (ref $reasonable-name)) func))
 
- ;; CHECK:      (type $type$1 (struct ))
+ ;; CHECK:      (type $type$1 (struct_subtype  data))
 
- ;; CHECK:      (type $reasonable-name (struct (field i32)))
+ ;; CHECK:      (type $reasonable-name (struct_subtype (field i32) data))
  (type $reasonable-name (struct (field i32)))
 
  ;; CHECK:      (func $foo (param $x (ref $type$1)) (param $y (ref $reasonable-name))

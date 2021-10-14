@@ -5,14 +5,14 @@
 ;; RUN: wasm-opt %s -all --nominal -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $func (func))
+  ;; CHECK:      (type $func (func_subtype func))
 
-  ;; CHECK:      (type $struct (struct (field (ref $array)) (field (ref null $func))))
+  ;; CHECK:      (type $struct (struct_subtype (field (ref $array)) (field (ref null $func)) data))
   (type $struct (struct
     (field (ref $array))
     (field (ref null $func))
   ))
-  ;; CHECK:      (type $array (array (rtt 2 $func)))
+  ;; CHECK:      (type $array (array_subtype (rtt 2 $func) data))
   (type $array (array (field (rtt 2 $func))))
   (type $func (func))
 

@@ -4,27 +4,27 @@
 ;; RUN: foreach %s %t wasm-opt --instrument-memory --nominal -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $i32_i32_=>_i32 (func_subtype (param i32 i32) (result i32) func))
 
-  ;; CHECK:      (type $i32_i64_=>_i64 (func (param i32 i64) (result i64)))
+  ;; CHECK:      (type $i32_i64_=>_i64 (func_subtype (param i32 i64) (result i64) func))
 
-  ;; CHECK:      (type $i32_f32_=>_f32 (func (param i32 f32) (result f32)))
+  ;; CHECK:      (type $i32_f32_=>_f32 (func_subtype (param i32 f32) (result f32) func))
 
-  ;; CHECK:      (type $i32_f64_=>_f64 (func (param i32 f64) (result f64)))
+  ;; CHECK:      (type $i32_f64_=>_f64 (func_subtype (param i32 f64) (result f64) func))
 
-  ;; CHECK:      (type $struct (struct (field (mut i32)) (field f32) (field $named f64)))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) (field f32) (field $named f64) data))
   (type $struct (struct
     (field (mut i32))
     (field f32)
     (field $named f64)
   ))
-  ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func_subtype (param i32 i32 i32 i32) (result i32) func))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
+  ;; CHECK:      (type $ref|$array|_=>_none (func_subtype (param (ref $array)) func))
 
-  ;; CHECK:      (type $array (array (mut f64)))
+  ;; CHECK:      (type $array (array_subtype (mut f64) data))
   (type $array (array (mut f64)))
 
   ;; CHECK:      (import "env" "load_ptr" (func $load_ptr (param i32 i32 i32 i32) (result i32)))

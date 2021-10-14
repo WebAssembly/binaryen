@@ -8,7 +8,7 @@
 (module
 
   ;; CHECK:      (type $void (func))
-  ;; NOMNL:      (type $void (func))
+  ;; NOMNL:      (type $void (func_subtype func))
   (type $void (func))
 
   ;; CHECK:      (table $t 1 1 funcref)
@@ -47,19 +47,19 @@
 ;; Check GC types and subtyping
 (module
   ;; CHECK:      (type $return-B (func (result (ref $B))))
-  ;; NOMNL:      (type $return-B (func (result (ref $B))))
+  ;; NOMNL:      (type $return-B (func_subtype (result (ref $B)) func))
   (type $return-B (func (result (ref $B))))
 
   ;; CHECK:      (type $return-A (func (result (ref null $A))))
-  ;; NOMNL:      (type $return-A (func (result (ref null $A))))
+  ;; NOMNL:      (type $return-A (func_subtype (result (ref null $A)) func))
   (type $return-A (func (result (ref null $A))))
 
   ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $A (struct (field i32)))
+  ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct i32))
 
   ;; CHECK:      (type $B (struct (field i32) (field i32)))
-  ;; NOMNL:      (type $B (struct (field i32) (field i32)) (extends $A))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) $A))
   (type $B (struct_subtype i32 i32 $A))
 
   ;; CHECK:      (table $t 1 1 funcref)

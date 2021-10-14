@@ -4,23 +4,23 @@
 
 (module
  ;; CHECK:      (type $return_{} (func (result (ref ${}))))
- ;; NOMNL:      (type $return_{} (func (result (ref ${}))))
+ ;; NOMNL:      (type $return_{} (func_subtype (result (ref ${})) func))
  (type $return_{} (func (result (ref ${}))))
 
  ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
- ;; NOMNL:      (type ${i32_f32} (struct (field i32) (field f32)) (extends ${i32}))
+ ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
- ;; NOMNL:      (type ${i32_i64} (struct (field i32) (field i64)) (extends ${i32}))
+ ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
  ;; CHECK:      (type ${i32} (struct (field i32)))
- ;; NOMNL:      (type ${i32} (struct (field i32)) (extends ${}))
+ ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; CHECK:      (type ${} (struct ))
- ;; NOMNL:      (type ${} (struct ))
+ ;; NOMNL:      (type ${} (struct_subtype  data))
  (type ${} (struct))
 
  (table 1 1 funcref)

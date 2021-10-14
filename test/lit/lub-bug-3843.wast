@@ -8,19 +8,19 @@
 
 (module
  ;; CHECK:      (type $A (struct (field (ref null $C))))
- ;; NOMNL:      (type $A (struct (field (ref null $C))))
+ ;; NOMNL:      (type $A (struct_subtype (field (ref null $C)) data))
  (type $A (struct (field (ref null $C))))
 
  ;; CHECK:      (type $B (struct (field (ref null $D))))
- ;; NOMNL:      (type $B (struct (field (ref null $D))) (extends $A))
+ ;; NOMNL:      (type $B (struct_subtype (field (ref null $D)) $A))
  (type $B (struct_subtype (field (ref null $D)) $A))
 
  ;; CHECK:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))))
- ;; NOMNL:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))) (extends $C))
+ ;; NOMNL:      (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
  (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
 
  ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
- ;; NOMNL:      (type $C (struct (field (mut (ref $A)))))
+ ;; NOMNL:      (type $C (struct_subtype (field (mut (ref $A))) data))
  (type $C (struct (field (mut (ref $A)))))
 
 

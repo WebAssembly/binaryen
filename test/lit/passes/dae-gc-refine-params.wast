@@ -4,23 +4,23 @@
 
 (module
  ;; CHECK:      (type ${i32} (struct (field i32)))
- ;; NOMNL:      (type ${i32} (struct (field i32)) (extends ${}))
+ ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; CHECK:      (type ${} (struct ))
- ;; NOMNL:      (type ${} (struct ))
+ ;; NOMNL:      (type ${} (struct_subtype  data))
  (type ${} (struct))
 
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
- ;; NOMNL:      (type ${i32_i64} (struct (field i32) (field i64)) (extends ${i32}))
+ ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
  ;; CHECK:      (type ${f64} (struct (field f64)))
- ;; NOMNL:      (type ${f64} (struct (field f64)) (extends ${}))
+ ;; NOMNL:      (type ${f64} (struct_subtype (field f64) ${}))
  (type ${f64} (struct_subtype (field f64) ${}))
 
  ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
- ;; NOMNL:      (type ${i32_f32} (struct (field i32) (field f32)) (extends ${i32}))
+ ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
  ;; CHECK:      (func $call-various-params-no

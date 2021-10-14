@@ -6,7 +6,7 @@
   ;; This will be the "canonical" function type rather than $foo_t
   (type $bad_t (func))
 
-  ;; CHECK:      (type $foo_t (func))
+  ;; CHECK:      (type $foo_t (func_subtype func))
   (type $foo_t (func))
 
   ;; CHECK:      (func $foo

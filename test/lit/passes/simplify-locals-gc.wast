@@ -5,10 +5,10 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $struct-immutable (struct (field i32)))
+  ;; CHECK:      (type $struct-immutable (struct_subtype (field i32) data))
   (type $struct-immutable (struct (field i32)))
 
   ;; Writes to heap objects cannot be reordered with reads.

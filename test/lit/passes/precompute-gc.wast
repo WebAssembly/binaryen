@@ -5,13 +5,13 @@
 ;; RUN:   | filecheck %s
 
 (module
- ;; CHECK:      (type $struct (struct (field (mut i32))))
+ ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
  (type $struct (struct (mut i32)))
- ;; CHECK:      (type $B (struct (field (mut f64))))
+ ;; CHECK:      (type $B (struct_subtype (field (mut f64)) data))
 
- ;; CHECK:      (type $func-return-i32 (func (result i32)))
+ ;; CHECK:      (type $func-return-i32 (func_subtype (result i32) func))
 
- ;; CHECK:      (type $empty (struct ))
+ ;; CHECK:      (type $empty (struct_subtype  data))
  (type $empty (struct))
 
  ;; two incompatible struct types
