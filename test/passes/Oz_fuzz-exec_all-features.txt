@@ -85,10 +85,10 @@
 [fuzz-exec] calling static-br_on_cast_fail
 [LoggingExternalInterface logging -2]
 (module
- (type $struct (struct (field (mut i32))))
- (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $void_func (func))
  (type $bytes (array (mut i8)))
+ (type $struct (struct (field (mut i32))))
+ (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
  (type $int_func (func (result i32)))
@@ -183,7 +183,6 @@
   )
  )
  (func $2 (; has Stack IR ;)
-  (local $0 (ref null $extendedstruct))
   (call $log
    (i32.const 1)
   )
@@ -194,76 +193,22 @@
    (i32.const 0)
   )
   (call $log
-   (ref.test
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
-    (rtt.canon $struct)
-   )
+   (i32.const 1)
   )
   (call $log
-   (ref.test
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
-    (rtt.canon $extendedstruct)
-   )
+   (i32.const 0)
   )
   (call $log
-   (ref.test
-    (local.tee $0
-     (struct.new_default_with_rtt $extendedstruct
-      (rtt.sub $extendedstruct
-       (rtt.canon $struct)
-      )
-     )
-    )
-    (rtt.sub $extendedstruct
-     (rtt.canon $struct)
-    )
-   )
+   (i32.const 1)
   )
   (call $log
-   (ref.test
-    (local.get $0)
-    (rtt.canon $extendedstruct)
-   )
+   (i32.const 0)
   )
   (call $log
-   (ref.test
-    (local.get $0)
-    (rtt.canon $struct)
-   )
+   (i32.const 1)
   )
  )
  (func $3 (; has Stack IR ;)
-  (drop
-   (block $block (result (ref $struct))
-    (drop
-     (block $extendedblock (result (ref $extendedstruct))
-      (drop
-       (br_on_cast $block
-        (br_on_cast $extendedblock
-         (struct.new_default_with_rtt $struct
-          (rtt.canon $struct)
-         )
-         (rtt.canon $extendedstruct)
-        )
-        (rtt.canon $struct)
-       )
-      )
-      (call $log
-       (i32.const -1)
-      )
-      (return)
-     )
-    )
-    (call $log
-     (i32.const -2)
-    )
-    (return)
-   )
-  )
   (call $log
    (i32.const 3)
   )
@@ -295,28 +240,11 @@
   )
  )
  (func $5 (; has Stack IR ;)
-  (local $0 (ref null $extendedstruct))
-  (local.set $0
-   (struct.new_default_with_rtt $extendedstruct
-    (rtt.canon $extendedstruct)
-   )
+  (call $log
+   (i32.const 1)
   )
-  (drop
-   (block $any (result anyref)
-    (call $log
-     (i32.const 1)
-    )
-    (drop
-     (br_on_cast_fail $any
-      (local.get $0)
-      (rtt.canon $extendedstruct)
-     )
-    )
-    (call $log
-     (i32.const 999)
-    )
-    (ref.null any)
-   )
+  (call $log
+   (i32.const 999)
   )
  )
  (func $6 (; has Stack IR ;)
@@ -451,28 +379,10 @@
  )
  (func $25 (; has Stack IR ;)
   (call $log
-   (ref.test
-    (struct.new_default_with_rtt $extendedstruct
-     (rtt.sub $extendedstruct
-      (rtt.canon $struct)
-     )
-    )
-    (rtt.sub $extendedstruct
-     (rtt.canon $struct)
-    )
-   )
+   (i32.const 1)
   )
   (call $log
-   (ref.test
-    (struct.new_default_with_rtt $extendedstruct
-     (rtt.sub $extendedstruct
-      (rtt.canon $struct)
-     )
-    )
-    (rtt.fresh_sub $extendedstruct
-     (rtt.canon $struct)
-    )
-   )
+   (i32.const 0)
   )
   (global.set $rtt
    (rtt.fresh_sub $extendedstruct
@@ -539,56 +449,18 @@
    (i32.const 1)
   )
   (call $log
-   (ref.test_static $extendedstruct
-    (struct.new_default $struct)
-   )
+   (i32.const 0)
   )
   (call $log
    (i32.const 1)
   )
  )
  (func $29 (; has Stack IR ;)
-  (drop
-   (block $block (result (ref $struct))
-    (drop
-     (block $extendedblock (result (ref $extendedstruct))
-      (drop
-       (br_on_cast_static $block $struct
-        (br_on_cast_static $extendedblock $extendedstruct
-         (struct.new_default $struct)
-        )
-       )
-      )
-      (call $log
-       (i32.const -1)
-      )
-      (return)
-     )
-    )
-    (call $log
-     (i32.const -2)
-    )
-    (return)
-   )
-  )
   (call $log
    (i32.const 3)
   )
  )
  (func $30 (; has Stack IR ;)
-  (drop
-   (block $failblock (result (ref $struct))
-    (drop
-     (br_on_cast_static_fail $failblock $extendedstruct
-      (struct.new_default $struct)
-     )
-    )
-    (call $log
-     (i32.const -1)
-    )
-    (return)
-   )
-  )
   (call $log
    (i32.const -2)
   )

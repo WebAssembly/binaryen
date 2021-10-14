@@ -5,19 +5,18 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (type $empty (struct ))
+
  ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
- ;; CHECK:      (type $B (struct (field (mut f64))))
-
- ;; CHECK:      (type $func-return-i32 (func (result i32)))
-
- ;; CHECK:      (type $empty (struct ))
  (type $empty (struct))
 
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
+ ;; CHECK:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
 
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
@@ -307,12 +306,9 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $tempresult
- ;; CHECK-NEXT:   (ref.eq
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: )
  (func $new-ref-comparisons (result i32)
   (local $x (ref null $struct))
@@ -327,15 +323,15 @@
   (local.set $y
    (local.get $x)
   )
-  ;; assign the result, so that propagate calculates the ref.eq
+  ;; assign the result, so that propagate calculates the ref.eq. both $x and $y
+  ;; must refer to the same data, so we can precompute a 1 here.
   (local.set $tempresult
    (ref.eq
     (local.get $x)
     (local.get $y)
    )
   )
-  ;; this value could be precomputed in principle, however, we currently do not
-  ;; precompute GC references, and so nothing will be done.
+  ;; and that 1 is propagated to here.
   (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-equal (result i32)
@@ -351,7 +347,7 @@
  ;; CHECK-NEXT:    (local.get $tempref)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: )
  (func $propagate-equal (result i32)
   (local $tempresult i32)
@@ -368,29 +364,25 @@
     (local.get $tempref)
    )
   )
-  ;; this value could be precomputed in principle, however, we currently do not
-  ;; precompute GC references, and so nothing will be done.
+  ;; we can compute a 1 here as the ref.eq compares a struct to itself. note
+  ;; that the ref.eq itself cannot be precomputed away (as it has side effects).
   (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-unequal (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local.set $tempresult
- ;; CHECK-NEXT:   (ref.eq
- ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
- ;; CHECK-NEXT:     (rtt.canon $empty)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
- ;; CHECK-NEXT:     (rtt.canon $empty)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: )
  (func $propagate-unequal (result i32)
   (local $tempresult i32)
   (local $tempref (ref null $empty))
-  ;; assign the result, so that propagate calculates the ref.eq
+  ;; assign the result, so that propagate calculates the ref.eq.
+  ;; the structs are different, so we will precompute a 0 here, and as creating
+  ;; heap data does not have side effects, we can in fact replace the ref.eq
+  ;; with that value
   (local.set $tempresult
    ;; allocate two different structs
    (ref.eq
@@ -402,9 +394,387 @@
     )
    )
   )
-  ;; this value could be precomputed in principle, however, we currently do not
-  ;; precompute GC references, and so nothing will be done.
   (local.get $tempresult)
+ )
+
+ ;; CHECK:      (func $propagate-uncertain-param (param $input (ref $empty)) (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $input)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-uncertain-param (param $input (ref $empty)) (result i32)
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local.set $tempresult
+   ;; allocate a struct and compare it to a param, which we know nothing about,
+   ;; so we can infer nothing here at all.
+   (ref.eq
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+    (local.get $input)
+   )
+  )
+  (local.get $tempresult)
+ )
+
+ ;; CHECK:      (func $propagate-different-params (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $input1)
+ ;; CHECK-NEXT:    (local.get $input2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-different-params (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+  (local $tempresult i32)
+  (local.set $tempresult
+   ;; We cannot say anything about parameters - they might alias, or not.
+   (ref.eq
+    (local.get $input1)
+    (local.get $input2)
+   )
+  )
+  (local.get $tempresult)
+ )
+
+ ;; CHECK:      (func $propagate-same-param (param $input (ref $empty)) (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $input)
+ ;; CHECK-NEXT:    (local.get $input)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-same-param (param $input (ref $empty)) (result i32)
+  (local $tempresult i32)
+  (local.set $tempresult
+   ;; We could optimize this in principle, but atm do not.
+   ;; Note that optimize-instructions can handle patterns like this.
+   (ref.eq
+    (local.get $input)
+    (local.get $input)
+   )
+  )
+  (local.get $tempresult)
+ )
+
+ ;; CHECK:      (func $propagate-uncertain-local (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempref
+ ;; CHECK-NEXT:   (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:    (rtt.canon $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $stashedref
+ ;; CHECK-NEXT:   (local.get $tempref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempref
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:    (local.get $stashedref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
+ ;; CHECK-NEXT: )
+ (func $propagate-uncertain-local (result i32)
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (local.set $tempref
+   (struct.new_with_rtt $empty
+    (rtt.canon $empty)
+   )
+  )
+  (local.set $stashedref
+   (local.get $tempref)
+  )
+  ;; This if makes it impossible to know what value the ref.eq later should
+  ;; return.
+  (if
+   (call $helper
+    (i32.const 0)
+   )
+   (local.set $tempref
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+   )
+  )
+  (local.set $tempresult
+   (ref.eq
+    (local.get $tempref)
+    (local.get $stashedref)
+   )
+  )
+  (local.get $tempresult)
+ )
+
+ ;; CHECK:      (func $propagate-uncertain-loop
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempref
+ ;; CHECK-NEXT:   (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:    (rtt.canon $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $stashedref
+ ;; CHECK-NEXT:   (local.get $tempref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (ref.eq
+ ;; CHECK-NEXT:     (local.get $tempref)
+ ;; CHECK-NEXT:     (local.get $stashedref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempref
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (local.get $tempresult)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-uncertain-loop
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (local.set $tempref
+   (struct.new_with_rtt $empty
+    (rtt.canon $empty)
+   )
+  )
+  (local.set $stashedref
+   (local.get $tempref)
+  )
+  (loop $loop
+   ;; Each iteration in this loop may see a different struct, so we cannot
+   ;; precompute the ref.eq here.
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
+   )
+   (local.set $tempref
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+   )
+   (br_if $loop
+    (call $helper
+     (local.get $tempresult)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $propagate-certain-loop
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempref
+ ;; CHECK-NEXT:   (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:    (rtt.canon $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $stashedref
+ ;; CHECK-NEXT:   (local.get $tempref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-certain-loop
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  ;; As above, but remove the new in the loop, so that each loop iteration does
+  ;; in fact have the ref locals identical, and we can precompute a 1.
+  (local.set $tempref
+   (struct.new_with_rtt $empty
+    (rtt.canon $empty)
+   )
+  )
+  (local.set $stashedref
+   (local.get $tempref)
+  )
+  (loop $loop
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
+   )
+   (br_if $loop
+    (call $helper
+     (local.get $tempresult)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $propagate-certain-loop-2
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $tempref
+ ;; CHECK-NEXT:    (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $stashedref
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-certain-loop-2
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (loop $loop
+   ;; Another example of a loop where we can optimize. Here the new is inside
+   ;; the loop.
+   (local.set $tempref
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+   )
+   (local.set $stashedref
+    (local.get $tempref)
+   )
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
+   )
+   (br_if $loop
+    (call $helper
+     (local.get $tempresult)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $propagate-possibly-certain-loop
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local $stashedref (ref null $empty))
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $tempref
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:      (rtt.canon $empty)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $stashedref
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $tempresult
+ ;; CHECK-NEXT:    (ref.eq
+ ;; CHECK-NEXT:     (local.get $tempref)
+ ;; CHECK-NEXT:     (local.get $stashedref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (call $helper
+ ;; CHECK-NEXT:     (local.get $tempresult)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $propagate-possibly-certain-loop
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  (local $stashedref (ref null $empty))
+  (loop $loop
+   ;; As above, but move the set of $stashedref below the if. That means that
+   ;; it must be identical to $tempref in each iteration. However, that is
+   ;; something we cannot infer atm (while SSA could), so we do not infer
+   ;; anything here for now.
+   (if
+    (call $helper
+     (i32.const 0)
+    )
+    (local.set $tempref
+     (struct.new_with_rtt $empty
+      (rtt.canon $empty)
+     )
+    )
+   )
+   (local.set $stashedref
+    (local.get $tempref)
+   )
+   (local.set $tempresult
+    (ref.eq
+     (local.get $tempref)
+     (local.get $stashedref)
+    )
+   )
+   (br_if $loop
+    (call $helper
+     (local.get $tempresult)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $helper (param $0 i32) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $helper (param i32) (result i32)
+  (unreachable)
  )
 
  ;; CHECK:      (func $odd-cast-and-get
@@ -528,6 +898,132 @@
     (unreachable)
    )
    (rtt.canon $struct)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast-on-creation-rtt (result (ref $empty))
+ ;; CHECK-NEXT:  (block $label (result (ref $empty))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $label
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:      (rtt.canon $empty)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (rtt.canon $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast-on-creation-rtt (result (ref $empty))
+  (block $label (result (ref $empty))
+   (drop
+    ;; The br_on_cast will read the GC data created from struct.new, which must
+    ;; emit it properly, including with an RTT which it will read from (since
+    ;; this instructions uses an RTT).
+    (br_on_cast $label
+     (struct.new_default_with_rtt $empty
+      (rtt.canon $empty)
+     )
+     (rtt.canon $empty)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast-on-creation-nortt (result (ref $empty))
+ ;; CHECK-NEXT:  (block $label (result (ref $empty))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_static $label $empty
+ ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast-on-creation-nortt (result (ref $empty))
+  (block $label (result (ref $empty))
+   (drop
+    ;; As above, but with no RTTs.
+    (br_on_cast_static $label $empty
+     (struct.new_default $empty)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $ref.is_null (param $param i32)
+ ;; CHECK-NEXT:  (local $ref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $ref
+ ;; CHECK-NEXT:   (struct.new_default $empty)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $ref
+ ;; CHECK-NEXT:   (ref.null $empty)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:   (local.set $ref
+ ;; CHECK-NEXT:    (struct.new_default $empty)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (ref.is_null
+ ;; CHECK-NEXT:     (local.get $ref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.is_null (param $param i32)
+  (local $ref (ref null $empty))
+  ;; Test ref.null on references, and also test that we can infer multiple
+  ;; assignments in the same function, without confusion between them.
+  (local.set $ref
+   (struct.new $empty)
+  )
+  (drop
+   (call $helper
+    ;; The reference here is definitely not null.
+    (ref.is_null
+     (local.get $ref)
+    )
+   )
+  )
+  (local.set $ref
+   (ref.null $empty)
+  )
+  (drop
+   (call $helper
+    ;; The reference here is definitely null.
+    (ref.is_null
+     (local.get $ref)
+    )
+   )
+  )
+  (if
+   (local.get $param)
+   (local.set $ref
+    (struct.new $empty)
+   )
+  )
+  (drop
+   (call $helper
+    ;; The reference here might be null.
+    (ref.is_null
+     (local.get $ref)
+    )
+   )
   )
  )
 )
