@@ -9,11 +9,11 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
-  (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
-
   ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
   (type $struct2 (struct (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
+  (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
@@ -540,6 +540,36 @@
     (struct.set $struct3 2
       (local.get $ref)
       (i32.const 60)
+    )
+  )
+
+  ;; CHECK:      (func $side-effect-subsequent-ok
+  ;; CHECK-NEXT:  (local $ref (ref null $struct2))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct2
+  ;; CHECK-NEXT:    (call $helper-i32
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $helper-i32
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $side-effect-subsequent-ok
+    (local $ref (ref null $struct2))
+    (local.set $ref
+      (struct.new $struct2
+        ;; The first field has side effects, but the second does not.
+        (call $helper-i32 (i32.const 0))
+        (i32.const 10)
+      )
+    )
+    ;; Replace the second field with something with side effects.
+    (struct.set $struct2 1
+      (local.get $ref)
+      (call $helper-i32 (i32.const 1))
     )
   )
 
