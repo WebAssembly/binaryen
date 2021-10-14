@@ -60,7 +60,7 @@
 
   ;; CHECK:      (type $B (struct (field i32) (field i32)))
   ;; NOMNL:      (type $B (struct (field i32) (field i32)) (extends $A))
-  (type $B (struct i32 i32) (extends $A))
+  (type $B (struct_subtype i32 i32 $A))
 
   ;; CHECK:      (table $t 1 1 funcref)
   ;; NOMNL:      (table $t 1 1 funcref)

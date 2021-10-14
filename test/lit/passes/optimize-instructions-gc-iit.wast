@@ -15,7 +15,7 @@
   ;; CHECK:      (type $child (struct (field i32) (field f64)))
   ;; NOMNL:      (type $child (struct (field i32) (field f64)) (extends $parent))
   ;; NOMNL-TNH:      (type $child (struct (field i32) (field f64)) (extends $parent))
-  (type $child  (struct (field i32) (field f64)) (extends $parent))
+  (type $child (struct_subtype (field i32) (field f64) $parent))
   ;; CHECK:      (type $other (struct (field i64) (field f32)))
   ;; NOMNL:      (type $other (struct (field i64) (field f32)))
   ;; NOMNL-TNH:      (type $other (struct (field i64) (field f32)))

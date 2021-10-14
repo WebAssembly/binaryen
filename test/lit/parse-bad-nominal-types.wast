@@ -4,17 +4,17 @@
 
 ;; CHECK: [parse exception: unknown supertype (at 2:35)]
 (module
-  (type $bad-func (func) (extends $bad))
+  (type $bad-func (func_subtype  $bad))
 )
 
 ;; CHECK: [parse exception: unknown supertype (at 2:39)]
 (module
-  (type $bad-struct (struct) (extends $bad))
+  (type $bad-struct (struct_subtype  $bad))
 )
 
 ;; CHECK: [parse exception: unknown supertype (at 2:41)]
 (module
-  (type $bad-array (array i32) (extends $bad))
+  (type $bad-array (array_subtype i32 $bad))
 )
 
 ;; CHECK: [parse exception: unknown supertype (at 2:33)]

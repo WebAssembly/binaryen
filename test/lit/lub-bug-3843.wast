@@ -13,11 +13,11 @@
 
  ;; CHECK:      (type $B (struct (field (ref null $D))))
  ;; NOMNL:      (type $B (struct (field (ref null $D))) (extends $A))
- (type $B (struct (field (ref null $D))) (extends $A))
+ (type $B (struct_subtype (field (ref null $D)) $A))
 
  ;; CHECK:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))))
  ;; NOMNL:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))) (extends $C))
- (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))) (extends $C))
+ (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
 
  ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
  ;; NOMNL:      (type $C (struct (field (mut (ref $A)))))

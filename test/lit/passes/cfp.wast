@@ -560,7 +560,7 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
   ;; CHECK:      (type $substruct (struct (field i32)) (extends $struct))
-  (type $substruct (struct i32) (extends $struct))
+  (type $substruct (struct_subtype i32 $struct))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -607,7 +607,7 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $substruct (struct (field (mut i32))) (extends $struct))
-  (type $substruct (struct (mut i32)) (extends $struct))
+  (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -661,7 +661,7 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
-  (type $substruct (struct i32 f64) (extends $struct))
+  (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
@@ -713,7 +713,7 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
   ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
-  (type $substruct (struct i32 f64) (extends $struct))
+  (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -775,7 +775,7 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
-  (type $substruct (struct i32 f64) (extends $struct))
+  (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -831,7 +831,7 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
-  (type $substruct (struct i32 f64) (extends $struct))
+  (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
@@ -893,7 +893,7 @@
   (type $struct (struct (mut i32)))
 
   ;; CHECK:      (type $substruct (struct (field (mut i32)) (field f64)) (extends $struct))
-  (type $substruct (struct (mut i32) f64) (extends $struct))
+  (type $substruct (struct_subtype (mut i32) f64 $struct))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -955,12 +955,12 @@
 ;; supertype but all the way as needed.
 (module
   ;; CHECK:      (type $struct3 (struct (field i32) (field f64) (field anyref)) (extends $struct2))
-  (type $struct3 (struct i32 f64 anyref) (extends $struct2))
+  (type $struct3 (struct_subtype i32 f64 anyref $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct2 (struct (field i32) (field f64)) (extends $struct1))
-  (type $struct2 (struct i32 f64) (extends $struct1))
+  (type $struct2 (struct_subtype i32 f64 $struct1))
 
   ;; CHECK:      (type $struct1 (struct (field i32)))
   (type $struct1 (struct i32))
@@ -1090,13 +1090,13 @@
 ;; not the middle one.
 (module
   ;; CHECK:      (type $struct3 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref)) (extends $struct2))
-  (type $struct3 (struct i32 i32 f64 f64 anyref anyref) (extends $struct2))
+  (type $struct3 (struct_subtype i32 i32 f64 f64 anyref anyref $struct2))
 
   ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
   (type $struct1 (struct i32 i32))
 
   ;; CHECK:      (type $struct2 (struct (field i32) (field i32) (field f64) (field f64)) (extends $struct1))
-  (type $struct2 (struct i32 i32 f64 f64) (extends $struct1))
+  (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
@@ -1326,11 +1326,11 @@
   ;; CHECK:      (type $struct1 (struct (field (mut i32))))
   (type $struct1 (struct (mut i32)))
   ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field f64)) (extends $struct1))
-  (type $struct2 (struct (mut i32) f64) (extends $struct1))
+  (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field f64) (field anyref)) (extends $struct2))
-  (type $struct3 (struct (mut i32) f64 anyref) (extends $struct2))
+  (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -1424,13 +1424,13 @@
 ;; but also a set. That prevents all optimizations.
 (module
   ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field f64)) (extends $struct1))
-  (type $struct2 (struct (mut i32) f64) (extends $struct1))
+  (type $struct2 (struct_subtype (mut i32) f64 $struct1))
 
   ;; CHECK:      (type $struct1 (struct (field (mut i32))))
   (type $struct1 (struct (mut i32)))
 
   ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field f64) (field anyref)) (extends $struct2))
-  (type $struct3 (struct (mut i32) f64 anyref) (extends $struct2))
+  (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -1654,7 +1654,7 @@
 ;; apply to it, preventing optimization.
 (module
   ;; CHECK:      (type $C (struct (field (mut i32))) (extends $B))
-  (type $C (struct (mut i32)) (extends $B))
+  (type $C (struct_subtype (mut i32) $B))
 
   ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (mut i32)))
@@ -1666,7 +1666,7 @@
   ;; CHECK:      (type $ref|$C|_=>_none (func (param (ref $C))))
 
   ;; CHECK:      (type $B (struct (field (mut i32))) (extends $A))
-  (type $B (struct (mut i32)) (extends $A))
+  (type $B (struct_subtype (mut i32) $A))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop

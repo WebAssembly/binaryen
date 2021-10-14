@@ -24,11 +24,11 @@
 
   ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
   ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
-  (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
+  (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)))
   ;; NOMNL:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)) (extends $B))
-  (type $B-child (struct (field i32) (field i32) (field f32) (field i64)) (extends $B))
+  (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
   ;; CHECK:      (type $empty (struct ))
   ;; NOMNL:      (type $empty (struct ))
@@ -36,7 +36,7 @@
 
   ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
   ;; NOMNL:      (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
-  (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
+  (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   ;; NOMNL:      (import "env" "get-i32" (func $get-i32 (result i32)))
