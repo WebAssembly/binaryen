@@ -263,6 +263,14 @@ struct MetaDCEGraph {
       }
       void visitGlobalGet(GlobalGet* curr) { handleGlobal(curr->name); }
       void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
+      void visitThrow(Throw* curr) {
+        handleTag(curr->tag);
+      }
+      void visitTry(Try* curr) {
+        for (auto tag : curr->catchTags) {
+          handleTag(tag);
+        }
+      }
 
     private:
       MetaDCEGraph* parent;
@@ -278,6 +286,17 @@ struct MetaDCEGraph {
         } else {
           // it's an import.
           dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
+        }
+        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+          .reaches.push_back(dceName);
+      }
+
+      void handleTag(Name name) {
+        Name dceName;
+        if (!getModule()->getTag(name)->imported()) {
+          dceName = parent->tagToDCENode[name];
+        } else {
+          dceName = parent->importIdToDCENode[parent->getTagImportId(name)];
         }
         parent->nodes[parent->functionToDCENode[getFunction()->name]]
           .reaches.push_back(dceName);
