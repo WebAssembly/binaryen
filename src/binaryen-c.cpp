@@ -249,6 +249,9 @@ BinaryenFeatures BinaryenFeatureMemory64(void) {
 BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::TypedFunctionReferences);
 }
+BinaryenFeatures BinaryenFeatureRelaxedSIMD(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::RelaxedSIMD);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
@@ -1284,6 +1287,30 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
     Builder(*(Module*)module).makeRefEq((Expression*)left, (Expression*)right));
 }
 
+BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenType type) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableGet(name, (Expression*)index, Type(type)));
+}
+
+BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableSet(name, (Expression*)index, (Expression*)value));
+}
+
+BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
+                                        const char* name) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeTableSize(name));
+}
+
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenExpressionRef body,
@@ -1868,6 +1895,78 @@ void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
   assert(expression->is<GlobalSet>());
   assert(valueExpr);
   static_cast<GlobalSet*>(expression)->value = (Expression*)valueExpr;
+}
+// TableGet
+const char* BinaryenTableGetGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  return static_cast<TableGet*>(expression)->table.c_str();
+}
+void BinaryenTableGetSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  assert(table);
+  static_cast<TableGet*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableGetGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  return static_cast<TableGet*>(expression)->index;
+}
+void BinaryenTableGetSetIndex(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef indexExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  assert(indexExpr);
+  static_cast<TableGet*>(expression)->index = (Expression*)indexExpr;
+}
+// TableSet
+const char* BinaryenTableSetGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->table.c_str();
+}
+void BinaryenTableSetSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(table);
+  static_cast<TableSet*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableSetGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->index;
+}
+void BinaryenTableSetSetIndex(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef indexExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(indexExpr);
+  static_cast<TableSet*>(expression)->index = (Expression*)indexExpr;
+}
+BinaryenExpressionRef BinaryenTableSetGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->value;
+}
+void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(valueExpr);
+  static_cast<TableSet*>(expression)->value = (Expression*)valueExpr;
+}
+// TableSize
+const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  return static_cast<TableSize*>(expression)->table.c_str();
+}
+void BinaryenTableSizeSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  assert(table);
+  static_cast<TableSize*>(expression)->table = table;
 }
 // MemoryGrow
 BinaryenExpressionRef BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr) {
@@ -4309,6 +4408,14 @@ BinaryenSideEffects BinaryenSideEffectReadsMemory(void) {
 BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::WritesMemory);
+}
+BinaryenSideEffects BinaryenSideEffectReadsTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsTable);
+}
+BinaryenSideEffects BinaryenSideEffectWritesTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesTable);
 }
 BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
   return static_cast<BinaryenSideEffects>(

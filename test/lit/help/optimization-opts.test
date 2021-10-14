@@ -87,6 +87,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-gc-nn-locals                        Disable GC non-null locals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                         Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd                        Disable relaxed SIMD
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct
 ;; CHECK-NEXT:
@@ -155,6 +159,11 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --inline-functions-with-loops,-ifwl           Allow inlining functions with
 ;; CHECK-NEXT:                                                 loops
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --partial-inlining-ifs,-pii                   Number of ifs allowed in partial
+;; CHECK-NEXT:                                                 inlining (zero means partial
+;; CHECK-NEXT:                                                 inlining is disabled) (default:
+;; CHECK-NEXT:                                                 0)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --ignore-implicit-traps,-iit                  Optimize under the helpful
 ;; CHECK-NEXT:                                                 assumption that no surprising
@@ -261,6 +270,8 @@
 ;; CHECK-NEXT:                                                 support).
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate Stack IR
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --gto                                         globally optimize GC types
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals

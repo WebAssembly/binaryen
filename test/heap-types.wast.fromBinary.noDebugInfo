@@ -1,8 +1,8 @@
 (module
  (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
+ (type ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref ${i32_f32_f64})) (field (mut (ref ${i32_f32_f64})))))
  (type $[mut:f64] (array (mut f64)))
  (type $none_=>_none (func))
- (type ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref ${i32_f32_f64})) (field (mut (ref ${i32_f32_f64})))))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type $[mut:ref?|[mut:f64]|] (array (mut (ref null $[mut:f64]))))
  (type ${mut:f32} (struct (field (mut f32))))
@@ -440,6 +440,71 @@
    (i32.const 2)
    (i32.const 1)
    (rtt.canon $[mut:i8])
+  )
+ )
+ (func $22
+  (local $0 (ref null ${i32_f32_f64}))
+  (local $1 (ref null ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
+  (drop
+   (ref.test_static ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
+    (ref.null ${i32_f32_f64})
+   )
+  )
+  (drop
+   (ref.cast_static ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
+    (ref.null ${i32_f32_f64})
+   )
+  )
+  (drop
+   (block $label$1 (result (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
+    (local.set $0
+     (br_on_cast_static $label$1 ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
+      (ref.null ${i32_f32_f64})
+     )
+    )
+    (unreachable)
+   )
+  )
+  (drop
+   (block $label$2 (result (ref null ${i32_f32_f64}))
+    (local.set $1
+     (br_on_cast_static_fail $label$2 ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
+      (ref.null ${i32_f32_f64})
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $23
+  (drop
+   (struct.new_default ${i32_f32_f64})
+  )
+  (drop
+   (struct.new ${i32_f32_f64}
+    (i32.const 1)
+    (f32.const 2.3450000286102295)
+    (f64.const 3.14159)
+   )
+  )
+  (drop
+   (array.new $[mut:f64]
+    (f64.const 3.14159)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (array.new_default $[mut:ref?|[mut:f64]|]
+    (i32.const 10)
+   )
+  )
+  (drop
+   (array.init_static $[mut:f64]
+    (f64.const 1)
+    (f64.const 2)
+    (f64.const 4)
+    (f64.const 8)
+   )
   )
  )
 )

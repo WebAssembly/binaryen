@@ -1,8 +1,8 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
+ (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $vector (array (mut f64)))
  (type $none_=>_none (func))
- (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $grandchild (struct (field i32) (field i64)))
  (type $matrix (array (mut (ref null $vector))))
  (type $struct.C (struct (field $named-mut (mut f32))))
@@ -440,6 +440,71 @@
    (i32.const 2)
    (i32.const 1)
    (rtt.canon $bytes)
+  )
+ )
+ (func $static-operations
+  (local $temp.A (ref null $struct.A))
+  (local $temp.B (ref null $struct.B))
+  (drop
+   (ref.test_static $struct.B
+    (ref.null $struct.A)
+   )
+  )
+  (drop
+   (ref.cast_static $struct.B
+    (ref.null $struct.A)
+   )
+  )
+  (drop
+   (block $label$1 (result (ref $struct.B))
+    (local.set $temp.A
+     (br_on_cast_static $label$1 $struct.B
+      (ref.null $struct.A)
+     )
+    )
+    (unreachable)
+   )
+  )
+  (drop
+   (block $label$2 (result (ref null $struct.A))
+    (local.set $temp.B
+     (br_on_cast_static_fail $label$2 $struct.B
+      (ref.null $struct.A)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $static-constructions
+  (drop
+   (struct.new_default $struct.A)
+  )
+  (drop
+   (struct.new $struct.A
+    (i32.const 1)
+    (f32.const 2.3450000286102295)
+    (f64.const 3.14159)
+   )
+  )
+  (drop
+   (array.new $vector
+    (f64.const 3.14159)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (array.new_default $matrix
+    (i32.const 10)
+   )
+  )
+  (drop
+   (array.init_static $vector
+    (f64.const 1)
+    (f64.const 2)
+    (f64.const 4)
+    (f64.const 8)
+   )
   )
  )
 )

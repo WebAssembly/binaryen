@@ -75,9 +75,12 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
+  bool readsTable = false;
+  bool writesTable = false;
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
-  bool readsStruct = false;
+  bool readsMutableStruct = false;
+  bool readsImmutableStruct = false;
   bool writesStruct = false;
   bool readsArray = false;
   bool writesArray = false;
@@ -129,7 +132,13 @@ public:
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool accessesStruct() const { return calls || readsStruct || writesStruct; }
+  bool accessesTable() const { return calls || readsTable || writesTable; }
+  bool accessesMutableStruct() const {
+    return calls || readsMutableStruct || writesStruct;
+  }
+  bool accessesStruct() const {
+    return accessesMutableStruct() || readsImmutableStruct;
+  }
   bool accessesArray() const { return calls || readsArray || writesArray; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
@@ -144,11 +153,12 @@ public:
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() || writesMemory || writesStruct ||
-           writesArray || isAtomic || calls;
+    return globalsWritten.size() || writesMemory || writesTable ||
+           writesStruct || writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsStruct || readsArray ||
+    return globalsRead.size() || readsMemory || readsTable ||
+           readsMutableStruct || readsImmutableStruct || readsArray ||
            isAtomic || calls;
   }
 
@@ -184,7 +194,7 @@ public:
   }
 
   bool hasAnything() const {
-    return hasSideEffects() || accessesLocal() || readsMemory ||
+    return hasSideEffects() || accessesLocal() || readsMemory || readsTable ||
            accessesGlobal();
   }
 
@@ -198,8 +208,10 @@ public:
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
-        ((writesStruct || calls) && other.accessesStruct()) ||
-        ((other.writesStruct || other.calls) && accessesStruct()) ||
+        ((writesTable || calls) && other.accessesTable()) ||
+        ((other.writesTable || other.calls) && accessesTable()) ||
+        ((writesStruct || calls) && other.accessesMutableStruct()) ||
+        ((other.writesStruct || other.calls) && accessesMutableStruct()) ||
         ((writesArray || calls) && other.accessesArray()) ||
         ((other.writesArray || other.calls) && accessesArray()) ||
         (danglingPop || other.danglingPop)) {
@@ -261,7 +273,10 @@ public:
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
-    readsStruct = readsStruct || other.readsStruct;
+    readsTable = readsTable || other.readsTable;
+    writesTable = writesTable || other.writesTable;
+    readsMutableStruct = readsMutableStruct || other.readsMutableStruct;
+    readsImmutableStruct = readsImmutableStruct || other.readsImmutableStruct;
     writesStruct = writesStruct || other.writesStruct;
     readsArray = readsArray || other.readsArray;
     writesArray = writesArray || other.writesArray;
@@ -519,6 +534,7 @@ private:
       parent.writesMemory = true;
       parent.implicitTrap = true;
     }
+    void visitTableSize(TableSize* curr) { parent.readsTable = true; }
     void visitConst(Const* curr) {}
     void visitUnary(Unary* curr) {
       switch (curr->op) {
@@ -589,6 +605,14 @@ private:
     void visitRefIs(RefIs* curr) {}
     void visitRefFunc(RefFunc* curr) {}
     void visitRefEq(RefEq* curr) {}
+    void visitTableGet(TableGet* curr) {
+      parent.readsTable = true;
+      parent.implicitTrap = true;
+    }
+    void visitTableSet(TableSet* curr) {
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) {
       if (parent.tryDepth == 0) {
@@ -634,7 +658,17 @@ private:
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
-      parent.readsStruct = true;
+      if (curr->ref->type == Type::unreachable) {
+        return;
+      }
+      if (curr->ref->type.getHeapType()
+            .getStruct()
+            .fields[curr->index]
+            .mutable_ == Mutable) {
+        parent.readsMutableStruct = true;
+      } else {
+        parent.readsImmutableStruct = true;
+      }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
@@ -703,12 +737,14 @@ public:
     WritesGlobal = 1 << 5,
     ReadsMemory = 1 << 6,
     WritesMemory = 1 << 7,
-    ImplicitTrap = 1 << 8,
-    IsAtomic = 1 << 9,
-    Throws = 1 << 10,
-    DanglingPop = 1 << 11,
-    TrapsNeverHappen = 1 << 12,
-    Any = (1 << 13) - 1
+    ReadsTable = 1 << 8,
+    WritesTable = 1 << 9,
+    ImplicitTrap = 1 << 10,
+    IsAtomic = 1 << 11,
+    Throws = 1 << 12,
+    DanglingPop = 1 << 13,
+    TrapsNeverHappen = 1 << 14,
+    Any = (1 << 15) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -735,6 +771,12 @@ public:
     }
     if (writesMemory) {
       effects |= SideEffects::WritesMemory;
+    }
+    if (readsTable) {
+      effects |= SideEffects::ReadsTable;
+    }
+    if (writesTable) {
+      effects |= SideEffects::WritesTable;
     }
     if (implicitTrap) {
       effects |= SideEffects::ImplicitTrap;

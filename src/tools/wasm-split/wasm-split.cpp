@@ -173,7 +173,7 @@ void splitModule(const WasmSplitOptions& options) {
   std::set<Name> keepFuncs;
 
   if (options.profileFile.size()) {
-    // Use the profile to initialize `keepFuncs`.
+    // Use the profile to set `keepFuncs`.
     uint64_t hash = hashFile(options.inputFiles[0]);
     ProfileData profile = readProfile(options.profileFile);
     if (profile.hash != hash) {
@@ -193,29 +193,32 @@ void splitModule(const WasmSplitOptions& options) {
     if (i != profile.timestamps.size()) {
       Fatal() << "Unexpected extra profile data";
     }
-  }
-
-  // Add in the functions specified with --keep-funcs
-  for (auto& func : options.keepFuncs) {
-    if (!options.quiet && wasm.getFunctionOrNull(func) == nullptr) {
-      std::cerr << "warning: function " << func << " does not exist\n";
-    }
-    keepFuncs.insert(func);
-  }
-
-  // Remove the functions specified with --remove-funcs
-  for (auto& func : options.splitFuncs) {
-    auto* function = wasm.getFunctionOrNull(func);
-    if (!options.quiet && function == nullptr) {
-      std::cerr << "warning: function " << func << " does not exist\n";
-    }
-    if (function && function->imported()) {
-      if (!options.quiet) {
-        std::cerr << "warning: cannot split out imported function " << func
-                  << "\n";
+  } else if (options.keepFuncs.size()) {
+    // Use the explicitly provided `keepFuncs`.
+    for (auto& func : options.keepFuncs) {
+      if (!options.quiet && wasm.getFunctionOrNull(func) == nullptr) {
+        std::cerr << "warning: function " << func << " does not exist\n";
       }
-    } else {
-      keepFuncs.erase(func);
+      keepFuncs.insert(func);
+    }
+  } else if (options.splitFuncs.size()) {
+    // Use the explicitly provided `splitFuncs`.
+    for (auto& func : wasm.functions) {
+      keepFuncs.insert(func->name);
+    }
+    for (auto& func : options.splitFuncs) {
+      auto* function = wasm.getFunctionOrNull(func);
+      if (!options.quiet && function == nullptr) {
+        std::cerr << "warning: function " << func << " does not exist\n";
+      }
+      if (function && function->imported()) {
+        if (!options.quiet) {
+          std::cerr << "warning: cannot split out imported function " << func
+                    << "\n";
+        }
+      } else {
+        keepFuncs.erase(func);
+      }
     }
   }
 

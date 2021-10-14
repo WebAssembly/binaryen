@@ -41,6 +41,12 @@
 ;; RUN: wasm-dis %t.both.1.wasm | filecheck %s --check-prefix KEEP-BOTH-PRIMARY
 ;; RUN: wasm-dis %t.both.2.wasm | filecheck %s --check-prefix KEEP-BOTH-SECONDARY
 
+;; Also check the inverse workflow using --keep-all and --split-funcs
+;; RUN: wasm-split %s --export-prefix='%' -g -o1 %t.split-bar.1.wasm -o2 %t.split-bar.2.wasm --split-funcs=bar -v 2>&1 \
+;; RUN:     | filecheck %s --check-prefix KEEP-FOO
+;; RUN: wasm-dis %t.split-bar.1.wasm | filecheck %s --check-prefix KEEP-FOO-PRIMARY
+;; RUN: wasm-dis %t.split-bar.2.wasm | filecheck %s --check-prefix KEEP-FOO-SECONDARY
+
 (module
  (table $table 1 1 funcref)
  (elem (i32.const 0) $foo)

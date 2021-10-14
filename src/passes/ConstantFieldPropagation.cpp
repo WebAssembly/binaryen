@@ -29,6 +29,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/properties.h"
+#include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -39,35 +40,6 @@
 namespace wasm {
 
 namespace {
-
-// A nominal type always knows who its supertype is, if there is one; this class
-// provides the list of immediate subtypes.
-struct SubTypes {
-  SubTypes(Module& wasm) {
-    std::vector<HeapType> types;
-    std::unordered_map<HeapType, Index> typeIndices;
-    ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-    for (auto type : types) {
-      note(type);
-    }
-  }
-
-  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
-    return typeSubTypes[type];
-  }
-
-private:
-  // Add a type to the graph.
-  void note(HeapType type) {
-    HeapType super;
-    if (type.getSuperType(super)) {
-      typeSubTypes[super].insert(type);
-    }
-  }
-
-  // Maps a type to its subtypes.
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
-};
 
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
@@ -159,148 +131,9 @@ private:
   Literal value;
 };
 
-// A vector of PossibleConstantValues. One such vector will be used per struct
-// type, where each element in the vector represents a field. We always assume
-// that the vectors are pre-initialized to the right length before accessing any
-// data, which this class enforces using assertions, and which is implemented in
-// StructValuesMap.
-struct StructValues : public std::vector<PossibleConstantValues> {
-  PossibleConstantValues& operator[](size_t index) {
-    assert(index < size());
-    return std::vector<PossibleConstantValues>::operator[](index);
-  }
-
-  const PossibleConstantValues& operator[](size_t index) const {
-    assert(index < size());
-    return std::vector<PossibleConstantValues>::operator[](index);
-  }
-};
-
-// Map of types to information about the values their fields can take.
-// Concretely, this maps a type to a StructValues which has one element per
-// field.
-struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
-  // When we access an item, if it does not already exist, create it with a
-  // vector of the right length for that type.
-  StructValues& operator[](HeapType type) {
-    auto inserted = insert({type, {}});
-    auto& values = inserted.first->second;
-    if (inserted.second) {
-      values.resize(type.getStruct().fields.size());
-    }
-    return values;
-  }
-
-  void dump(std::ostream& o) {
-    o << "dump " << this << '\n';
-    for (auto& kv : (*this)) {
-      auto type = kv.first;
-      auto& vec = kv.second;
-      o << "dump " << type << " " << &vec << ' ';
-      for (auto x : vec) {
-        x.dump(o);
-        o << " ";
-      };
-      o << '\n';
-    }
-  }
-};
-
-// Map of functions to their field value infos. We compute those in parallel,
-// then later we will merge them all.
-using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap>;
-
-// Scan each function to note all its writes to struct fields.
-//
-// We track information from struct.new and struct.set separately, because in
-// struct.new we know more about the type - we know the actual exact type being
-// written to, and not just that it is of a subtype of the instruction's type,
-// which helps later.
-struct Scanner : public WalkerPass<PostWalker<Scanner>> {
-  bool isFunctionParallel() override { return true; }
-
-  Pass* create() override {
-    return new Scanner(functionNewInfos, functionSetInfos);
-  }
-
-  Scanner(FunctionStructValuesMap& functionNewInfos,
-          FunctionStructValuesMap& functionSetInfos)
-    : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
-
-  void visitStructNew(StructNew* curr) {
-    auto type = curr->type;
-    if (type == Type::unreachable) {
-      return;
-    }
-
-    // Note writes to all the fields of the struct.
-    auto heapType = type.getHeapType();
-    auto& values = functionNewInfos[getFunction()][heapType];
-    auto& fields = heapType.getStruct().fields;
-    for (Index i = 0; i < fields.size(); i++) {
-      if (curr->isWithDefault()) {
-        values[i].note(Literal::makeZero(fields[i].type));
-      } else {
-        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
-      }
-    }
-  }
-
-  void visitStructSet(StructSet* curr) {
-    auto type = curr->ref->type;
-    if (type == Type::unreachable) {
-      return;
-    }
-
-    // Note a write to this field of the struct.
-    noteExpression(
-      curr->value, type.getHeapType(), curr->index, functionSetInfos);
-  }
-
-private:
-  FunctionStructValuesMap& functionNewInfos;
-  FunctionStructValuesMap& functionSetInfos;
-
-  // Note a value, checking whether it is a constant or not.
-  void noteExpression(Expression* expr,
-                      HeapType type,
-                      Index index,
-                      FunctionStructValuesMap& valuesMap) {
-    expr = Properties::getFallthrough(expr, getPassOptions(), *getModule());
-
-    // Ignore copies: when we set a value to a field from that same field, no
-    // new values are actually introduced.
-    //
-    // Note that this is only sound by virtue of the overall analysis in this
-    // pass: the object read from may be of a subclass, and so subclass values
-    // may be actually written here. But as our analysis considers subclass
-    // values too (as it must) then that is safe. That is, if a subclass of $A
-    // adds a value X that can be loaded from (struct.get $A $b), then consider
-    // a copy
-    //
-    //   (struct.set $A $b (struct.get $A $b))
-    //
-    // Our analysis will figure out that X can appear in that copy's get, and so
-    // the copy itself does not add any information about values.
-    //
-    // TODO: This may be extensible to a copy from a subtype by the above
-    //       analysis (but this is already entering the realm of diminishing
-    //       returns).
-    if (auto* get = expr->dynCast<StructGet>()) {
-      if (get->index == index && get->ref->type != Type::unreachable &&
-          get->ref->type.getHeapType() == type) {
-        return;
-      }
-    }
-
-    auto& info = valuesMap[getFunction()][type][index];
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
-      info.note(Properties::getLiteral(expr));
-    }
-  }
-};
+using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
+using PCVFunctionStructValuesMap =
+  FunctionStructValuesMap<PossibleConstantValues>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -312,7 +145,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   Pass* create() override { return new FunctionOptimizer(infos); }
 
-  FunctionOptimizer(StructValuesMap& infos) : infos(infos) {}
+  FunctionOptimizer(PCVStructValuesMap& infos) : infos(infos) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -374,9 +207,60 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  StructValuesMap& infos;
+  PCVStructValuesMap& infos;
 
   bool changed = false;
+};
+
+struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
+  Pass* create() override {
+    return new PCVScanner(functionNewInfos, functionSetInfos);
+  }
+
+  PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
+             FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
+    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos,
+                                                  functionSetInfos) {}
+
+  void noteExpression(Expression* expr,
+                      HeapType type,
+                      Index index,
+                      PossibleConstantValues& info) {
+
+    if (!Properties::isConstantExpression(expr)) {
+      info.noteUnknown();
+    } else {
+      info.note(Properties::getLiteral(expr));
+    }
+  }
+
+  void noteDefault(Type fieldType,
+                   HeapType type,
+                   Index index,
+                   PossibleConstantValues& info) {
+    info.note(Literal::makeZero(fieldType));
+  }
+
+  void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
+    // Ignore copies: when we set a value to a field from that same field, no
+    // new values are actually introduced.
+    //
+    // Note that this is only sound by virtue of the overall analysis in this
+    // pass: the object read from may be of a subclass, and so subclass values
+    // may be actually written here. But as our analysis considers subclass
+    // values too (as it must) then that is safe. That is, if a subclass of $A
+    // adds a value X that can be loaded from (struct.get $A $b), then consider
+    // a copy
+    //
+    //   (struct.set $A $b (struct.get $A $b))
+    //
+    // Our analysis will figure out that X can appear in that copy's get, and so
+    // the copy itself does not add any information about values.
+    //
+    // TODO: This may be extensible to a copy from a subtype by the above
+    //       analysis (but this is already entering the realm of diminishing
+    //       returns).
+  }
 };
 
 struct ConstantFieldPropagation : public Pass {
@@ -386,34 +270,16 @@ struct ConstantFieldPropagation : public Pass {
     }
 
     // Find and analyze all writes inside each function.
-    FunctionStructValuesMap functionNewInfos, functionSetInfos;
-    for (auto& func : module->functions) {
-      // Initialize the data for each function, so that we can operate on this
-      // structure in parallel without modifying it.
-      functionNewInfos[func.get()];
-      functionSetInfos[func.get()];
-    }
-    Scanner scanner(functionNewInfos, functionSetInfos);
+    PCVFunctionStructValuesMap functionNewInfos(*module),
+      functionSetInfos(*module);
+    PCVScanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
-    scanner.walkModuleCode(module);
+    scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
-    auto combine = [](const FunctionStructValuesMap& functionInfos,
-                      StructValuesMap& combinedInfos) {
-      for (auto& kv : functionInfos) {
-        const StructValuesMap& infos = kv.second;
-        for (auto& kv : infos) {
-          auto type = kv.first;
-          auto& info = kv.second;
-          for (Index i = 0; i < info.size(); i++) {
-            combinedInfos[type][i].combine(info[i]);
-          }
-        }
-      }
-    };
-    StructValuesMap combinedNewInfos, combinedSetInfos;
-    combine(functionNewInfos, combinedNewInfos);
-    combine(functionSetInfos, combinedSetInfos);
+    PCVStructValuesMap combinedNewInfos, combinedSetInfos;
+    functionNewInfos.combineInto(combinedNewInfos);
+    functionSetInfos.combineInto(combinedSetInfos);
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
@@ -446,61 +312,15 @@ struct ConstantFieldPropagation : public Pass {
     // and so given a get of $A and a new of $B, the new is relevant for the get
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
-    //
-    // TODO: A topological sort could avoid repeated work here perhaps.
 
-    SubTypes subTypes(*module);
-
-    auto propagate = [&subTypes](StructValuesMap& combinedInfos,
-                                 bool toSubTypes) {
-      UniqueDeferredQueue<HeapType> work;
-      for (auto& kv : combinedInfos) {
-        auto type = kv.first;
-        work.push(type);
-      }
-      while (!work.empty()) {
-        auto type = work.pop();
-        auto& infos = combinedInfos[type];
-
-        // Propagate shared fields to the supertype.
-        HeapType superType;
-        if (type.getSuperType(superType)) {
-          auto& superInfos = combinedInfos[superType];
-          auto& superFields = superType.getStruct().fields;
-          for (Index i = 0; i < superFields.size(); i++) {
-            if (superInfos[i].combine(infos[i])) {
-              work.push(superType);
-            }
-          }
-        }
-
-        if (toSubTypes) {
-          // Propagate shared fields to the subtypes.
-          auto numFields = type.getStruct().fields.size();
-          for (auto subType : subTypes.getSubTypes(type)) {
-            auto& subInfos = combinedInfos[subType];
-            for (Index i = 0; i < numFields; i++) {
-              if (subInfos[i].combine(infos[i])) {
-                work.push(subType);
-              }
-            }
-          }
-        }
-      }
-    };
-    propagate(combinedNewInfos, false);
-    propagate(combinedSetInfos, true);
+    TypeHierarchyPropagator<PossibleConstantValues> propagator(*module);
+    propagator.propagateToSuperTypes(combinedNewInfos);
+    propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
     // Combine both sources of information to the final information that gets
     // care about.
-    StructValuesMap combinedInfos = std::move(combinedNewInfos);
-    for (auto& kv : combinedSetInfos) {
-      auto type = kv.first;
-      auto& info = kv.second;
-      for (Index i = 0; i < info.size(); i++) {
-        combinedInfos[type][i].combine(info[i]);
-      }
-    }
+    PCVStructValuesMap combinedInfos = std::move(combinedNewInfos);
+    combinedSetInfos.combineInto(combinedInfos);
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything

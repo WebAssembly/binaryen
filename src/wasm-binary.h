@@ -422,6 +422,7 @@ extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
+extern const char* RelaxedSIMDFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -472,6 +473,9 @@ enum ASTNodes {
   LocalTee = 0x22,
   GlobalGet = 0x23,
   GlobalSet = 0x24,
+
+  TableGet = 0x25,
+  TableSet = 0x26,
 
   I32LoadMem = 0x28,
   I64LoadMem = 0x29,
@@ -1021,6 +1025,7 @@ enum ASTNodes {
 
   // reference types opcodes
 
+  TableSize = 0x10,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1052,6 +1057,8 @@ enum ASTNodes {
   StructGetS = 0x04,
   StructGetU = 0x05,
   StructSet = 0x06,
+  StructNew = 0x07,
+  StructNewDefault = 0x08,
   ArrayNewWithRtt = 0x11,
   ArrayNewDefaultWithRtt = 0x12,
   ArrayGet = 0x13,
@@ -1061,6 +1068,9 @@ enum ASTNodes {
   ArrayLen = 0x17,
   ArrayCopy = 0x18,
   ArrayInit = 0x19,
+  ArrayInitStatic = 0x1a,
+  ArrayNew = 0x1b,
+  ArrayNewDefault = 0x1c,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
@@ -1071,6 +1081,10 @@ enum ASTNodes {
   RefCast = 0x41,
   BrOnCast = 0x42,
   BrOnCastFail = 0x43,
+  RefTestStatic = 0x44,
+  RefCastStatic = 0x45,
+  BrOnCastStatic = 0x46,
+  BrOnCastStaticFail = 0x47,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,
@@ -1622,6 +1636,7 @@ public:
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
+  bool maybeVisitTableSize(Expression*& out, uint32_t code);
   bool maybeVisitI31New(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
@@ -1649,6 +1664,9 @@ public:
   void visitRefIs(RefIs* curr, uint8_t code);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
+  void visitTableGet(TableGet* curr);
+  void visitTableSet(TableSet* curr);
+  void visitTableSize(TableSize* curr);
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

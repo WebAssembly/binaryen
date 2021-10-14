@@ -26,10 +26,19 @@ BinaryenFeatureMultivalue: 512
 BinaryenFeatureGC: 1024
 BinaryenFeatureMemory64: 2048
 BinaryenFeatureTypedFunctionReferences: 4096
-BinaryenFeatureAll: 16383
+BinaryenFeatureRelaxedSIMD: 16384
+BinaryenFeatureAll: 32767
 (f32.neg
  (f32.const -33.61199951171875)
 )
+(table.set $0
+ (i32.const 0)
+ (ref.func "$kitchen()sinker")
+)
+(table.get $0
+ (i32.const 0)
+)
+(table.size $0)
 (module
  (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
  (type $i32_=>_none (func (param i32)))

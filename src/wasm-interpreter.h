@@ -1358,6 +1358,9 @@ public:
     NOTE_EVAL2(left, right);
     return Literal(int32_t(left == right));
   }
+  Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSize(TableSize* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -1424,11 +1427,16 @@ public:
       cast.breaking = ref;
       return cast;
     }
-    Flow rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      cast.outcome = cast.Break;
-      cast.breaking = rtt;
-      return cast;
+    Literal intendedRtt;
+    if (curr->rtt) {
+      // This is a dynamic check with an rtt.
+      Flow rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        cast.outcome = cast.Break;
+        cast.breaking = rtt;
+        return cast;
+      }
+      intendedRtt = rtt.getSingleValue();
     }
     cast.originalRef = ref.getSingleValue();
     if (cast.originalRef.isNull()) {
@@ -1443,8 +1451,6 @@ public:
       cast.outcome = cast.Failure;
       return cast;
     }
-    Literal seenRtt;
-    Literal intendedRtt = rtt.getSingleValue();
     if (cast.originalRef.isFunction()) {
       // Function casts are simple in that they have no RTT hierarchies; instead
       // each reference has the canonical RTT for the signature.
@@ -1460,24 +1466,42 @@ public:
         cast.breaking = NONCONSTANT_FLOW;
         return cast;
       }
-      seenRtt = Literal(Type(Rtt(0, func->type)));
-      if (!seenRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-        return cast;
+      if (curr->rtt) {
+        Literal seenRtt = Literal(Type(Rtt(0, func->type)));
+        if (!seenRtt.isSubRtt(intendedRtt)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef = Literal(
+          func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
+      } else {
+        if (!HeapType::isSubType(func->type, curr->intendedType)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef =
+          Literal(func->name, Type(curr->intendedType, NonNullable));
       }
-      cast.castRef =
-        Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
     } else {
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
-      seenRtt = gcData->rtt;
-      if (!seenRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-        return cast;
+      if (curr->rtt) {
+        Literal seenRtt = gcData->rtt;
+        if (!seenRtt.isSubRtt(intendedRtt)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef =
+          Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
+      } else {
+        auto seenType = gcData->type;
+        if (!HeapType::isSubType(seenType, curr->intendedType)) {
+          cast.outcome = cast.Failure;
+          return cast;
+        }
+        cast.castRef = Literal(gcData, Type(seenType, NonNullable));
       }
-      cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
     }
     cast.outcome = cast.Success;
     return cast;
@@ -1607,13 +1631,42 @@ public:
     }
     return Literal(std::move(newSupers), curr->type);
   }
+
+  // Generates GC data for either dynamic (with an RTT) or static (with a type)
+  // typing. Dynamic typing will provide an rtt expression and an rtt flow with
+  // the value, while static typing only provides a heap type directly.
+  template<typename T>
+  std::shared_ptr<GCData>
+  makeGCData(Expression* rttExpr, Flow& rttFlow, HeapType type, T& data) {
+    if (rttExpr) {
+      return std::make_shared<GCData>(rttFlow.getSingleValue(), data);
+    } else {
+      return std::make_shared<GCData>(type, data);
+    }
+  }
+
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Flow rtt;
+    if (curr->rtt) {
+      rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
     }
-    const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // find why we are unreachable, and stop there.
+      for (auto* operand : curr->operands) {
+        auto value = this->visit(operand);
+        if (value.breaking()) {
+          return value;
+        }
+      }
+      WASM_UNREACHABLE("unreachable but no unreachable child");
+    }
+    auto heapType = curr->type.getHeapType();
+    const auto& fields = heapType.getStruct().fields;
     Literals data(fields.size());
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
@@ -1626,8 +1679,8 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
-                        curr->type));
+    return Flow(
+      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1670,15 +1723,26 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Flow rtt;
+    if (curr->rtt) {
+      rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
     }
     auto size = this->visit(curr->size);
     if (size.breaking()) {
       return size;
     }
-    const auto& element = curr->rtt->type.getHeapType().getArray().element;
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // visit the unreachable child, and stop there.
+      auto init = this->visit(curr->init);
+      assert(init.breaking());
+      return init;
+    }
+    auto heapType = curr->type.getHeapType();
+    const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
@@ -1699,20 +1763,35 @@ public:
         data[i] = value;
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
-                        curr->type));
+    return Flow(
+      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Flow rtt;
+    if (curr->rtt) {
+      rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
     }
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
     }
-    auto field = curr->type.getHeapType().getArray().element;
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // find why we are unreachable, and stop there.
+      for (auto* value : curr->values) {
+        auto result = this->visit(value);
+        if (result.breaking()) {
+          return result;
+        }
+      }
+      WASM_UNREACHABLE("unreachable but no unreachable child");
+    }
+    auto heapType = curr->type.getHeapType();
+    auto field = heapType.getArray().element;
     Literals data(num);
     for (Index i = 0; i < num; i++) {
       auto value = this->visit(curr->values[i]);
@@ -1721,8 +1800,8 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
-                        curr->type));
+    return Flow(
+      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1851,12 +1930,12 @@ public:
         // We've already checked for a null.
         break;
       case RefAsFunc:
-        if (value.type.isFunction()) {
+        if (!value.type.isFunction()) {
           trap("not a func");
         }
         break;
       case RefAsData:
-        if (value.isData()) {
+        if (!value.isData()) {
           trap("not a data");
         }
         break;
@@ -2079,6 +2158,18 @@ public:
   }
   Flow visitCallRef(CallRef* curr) {
     NOTE_ENTER("CallRef");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableGet(TableGet* curr) {
+    NOTE_ENTER("TableGet");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableSet(TableSet* curr) {
+    NOTE_ENTER("TableSet");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableSize(TableSize* curr) {
+    NOTE_ENTER("TableSize");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitLoad(Load* curr) {
@@ -2365,6 +2456,9 @@ public:
     tableStore(Name tableName, Address addr, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
+    virtual Literal tableLoad(Name tableName, Address addr) {
+      WASM_UNREACHABLE("unimp");
+    }
   };
 
   SubType* self() { return static_cast<SubType*>(this); }
@@ -2452,7 +2546,37 @@ private:
 
   std::unordered_set<size_t> droppedSegments;
 
+  struct TableInterfaceInfo {
+    // The external interface in which the table is defined.
+    ExternalInterface* interface;
+    // The name the table has in that interface.
+    Name name;
+  };
+
+  TableInterfaceInfo getTableInterfaceInfo(Name name) {
+    auto* table = wasm.getTable(name);
+    if (table->imported()) {
+      auto& importedInstance = linkedInstances.at(table->module);
+      auto* tableExport = importedInstance->wasm.getExport(table->base);
+      return TableInterfaceInfo{importedInstance->externalInterface,
+                                tableExport->value};
+    } else {
+      return TableInterfaceInfo{externalInterface, name};
+    }
+  }
+
   void initializeTableContents() {
+    for (auto& table : wasm.tables) {
+      if (table->type.isNullable()) {
+        // Initial with nulls in a nullable table.
+        auto info = getTableInterfaceInfo(table->name);
+        auto null = Literal::makeNull(table->type);
+        for (Address i = 0; i < table->initial; i++) {
+          info.interface->tableStore(info.name, i, null);
+        }
+      }
+    }
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Function dummyFunc;
       dummyFunc.type = Signature(Type::none, Type::none);
@@ -2470,6 +2594,7 @@ private:
         extInterface = inst->externalInterface;
         tableName = inst->wasm.getExport(table->base)->value;
       }
+
       for (Index i = 0; i < segment->data.size(); ++i) {
         Flow ret = runner.visit(segment->data[i]);
         extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
@@ -2610,6 +2735,7 @@ private:
       }
       return ret;
     }
+
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
       LiteralList arguments;
@@ -2625,21 +2751,9 @@ private:
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
-      Flow ret;
-      auto* table = instance.wasm.getTable(curr->table);
-      if (table->imported()) {
-        auto inst = instance.linkedInstances.at(table->module);
-        Export* tableExport = inst->wasm.getExport(table->base);
-        ret = inst->externalInterface->callTable(tableExport->value,
-                                                 index,
-                                                 curr->sig,
-                                                 arguments,
-                                                 type,
-                                                 *instance.self());
-      } else {
-        ret = instance.externalInterface->callTable(
-          curr->table, index, curr->sig, arguments, type, *instance.self());
-      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      Flow ret = info.interface->callTable(
+        info.name, index, curr->sig, arguments, type, *instance.self());
 
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
@@ -2677,6 +2791,39 @@ private:
         ret.breakTo = RETURN_FLOW;
       }
       return ret;
+    }
+
+    Flow visitTableGet(TableGet* curr) {
+      NOTE_ENTER("TableGet");
+      Flow index = this->visit(curr->index);
+      if (index.breaking()) {
+        return index;
+      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      return info.interface->tableLoad(info.name,
+                                       index.getSingleValue().geti32());
+    }
+    Flow visitTableSet(TableSet* curr) {
+      NOTE_ENTER("TableSet");
+      Flow index = this->visit(curr->index);
+      if (index.breaking()) {
+        return index;
+      }
+      Flow flow = this->visit(curr->value);
+      if (flow.breaking()) {
+        return flow;
+      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      info.interface->tableStore(
+        info.name, index.getSingleValue().geti32(), flow.getSingleValue());
+      return Flow();
+    }
+
+    Flow visitTableSize(TableSize* curr) {
+      NOTE_ENTER("TableSize");
+      auto table = instance.wasm.getTable(curr->table);
+      // TODO: properly handle table size when TableGrow exists
+      return Literal::makeFromInt32(table->initial, Type::i32);
     }
 
     Flow visitLocalGet(LocalGet* curr) {

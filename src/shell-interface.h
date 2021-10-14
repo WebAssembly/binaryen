@@ -163,7 +163,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
 
     auto& table = it->second;
-
     if (index >= table.size()) {
       trap("callTable overflow");
     }
@@ -231,6 +230,20 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     } else {
       table[addr] = entry;
     }
+  }
+
+  Literal tableLoad(Name tableName, Address addr) override {
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+      trap("tableGet on non-existing table");
+    }
+
+    auto& table = it->second;
+    if (addr >= table.size()) {
+      trap("out of bounds table access");
+    }
+
+    return table[addr];
   }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {

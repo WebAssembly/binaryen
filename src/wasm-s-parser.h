@@ -191,6 +191,7 @@ private:
   bool isType(cashew::IString str) {
     return stringToType(str, true) != Type::none;
   }
+  HeapType getFunctionType(Name name, Element& s);
 
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
@@ -264,6 +265,9 @@ private:
   Expression* makeRefIs(Element& s, RefIsOp op);
   Expression* makeRefFunc(Element& s);
   Expression* makeRefEq(Element& s);
+  Expression* makeTableGet(Element& s);
+  Expression* makeTableSet(Element& s);
+  Expression* makeTableSize(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
@@ -274,17 +278,23 @@ private:
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s);
+  Expression* makeRefTestStatic(Element& s);
   Expression* makeRefCast(Element& s);
+  Expression* makeRefCastStatic(Element& s);
   Expression* makeBrOn(Element& s, BrOnOp op);
+  Expression* makeBrOnStatic(Element& s, BrOnOp op);
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeRttFreshSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
+  Expression* makeStructNewStatic(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
+  Expression* makeArrayNewStatic(Element& s, bool default_);
   Expression* makeArrayInit(Element& s);
+  Expression* makeArrayInitStatic(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);

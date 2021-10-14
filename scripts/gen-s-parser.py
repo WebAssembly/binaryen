@@ -516,10 +516,20 @@ instructions = [
     ("f64x2.promote_low_f32x4",       "makeUnary(s, UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
 
     # reference types instructions
-    # TODO Add table instructions
     ("ref.null",             "makeRefNull(s)"),
     ("ref.is_null",          "makeRefIs(s, RefIsNull)"),
     ("ref.func",             "makeRefFunc(s)"),
+    ("ref.eq",               "makeRefEq(s)"),
+    # table instructions
+    ("table.get",            "makeTableGet(s)"),
+    ("table.set",            "makeTableSet(s)"),
+    ("table.size",           "makeTableSize(s)"),
+    # TODO:
+    # table.init
+    # table.fill
+    # table.copy
+    # table.grow
+    #
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),
@@ -532,16 +542,19 @@ instructions = [
     ("call_ref",             "makeCallRef(s, /*isReturn=*/false)"),
     ("return_call_ref",      "makeCallRef(s, /*isReturn=*/true)"),
     # GC
-    ("ref.eq",               "makeRefEq(s)"),
     ("i31.new",              "makeI31New(s)"),
     ("i31.get_s",            "makeI31Get(s, true)"),
     ("i31.get_u",            "makeI31Get(s, false)"),
     ("ref.test",             "makeRefTest(s)"),
+    ("ref.test_static",      "makeRefTestStatic(s)"),
     ("ref.cast",             "makeRefCast(s)"),
+    ("ref.cast_static",      "makeRefCastStatic(s)"),
     ("br_on_null",           "makeBrOn(s, BrOnNull)"),
     ("br_on_non_null",       "makeBrOn(s, BrOnNonNull)"),
     ("br_on_cast",           "makeBrOn(s, BrOnCast)"),
+    ("br_on_cast_static",    "makeBrOnStatic(s, BrOnCast)"),
     ("br_on_cast_fail",      "makeBrOn(s, BrOnCastFail)"),
+    ("br_on_cast_static_fail", "makeBrOnStatic(s, BrOnCastFail)"),
     ("br_on_func",           "makeBrOn(s, BrOnFunc)"),
     ("br_on_non_func",       "makeBrOn(s, BrOnNonFunc)"),
     ("br_on_data",           "makeBrOn(s, BrOnData)"),
@@ -553,13 +566,18 @@ instructions = [
     ("rtt.fresh_sub",        "makeRttFreshSub(s)"),
     ("struct.new_with_rtt",  "makeStructNew(s, false)"),
     ("struct.new_default_with_rtt", "makeStructNew(s, true)"),
+    ("struct.new",           "makeStructNewStatic(s, false)"),
+    ("struct.new_default",   "makeStructNewStatic(s, true)"),
     ("struct.get",           "makeStructGet(s)"),
     ("struct.get_s",         "makeStructGet(s, true)"),
     ("struct.get_u",         "makeStructGet(s, false)"),
     ("struct.set",           "makeStructSet(s)"),
     ("array.new_with_rtt",   "makeArrayNew(s, false)"),
     ("array.new_default_with_rtt", "makeArrayNew(s, true)"),
+    ("array.new",            "makeArrayNewStatic(s, false)"),
+    ("array.new_default",    "makeArrayNewStatic(s, true)"),
     ("array.init",           "makeArrayInit(s)"),
+    ("array.init_static",    "makeArrayInitStatic(s)"),
     ("array.get",            "makeArrayGet(s)"),
     ("array.get_s",          "makeArrayGet(s, true)"),
     ("array.get_u",          "makeArrayGet(s, false)"),

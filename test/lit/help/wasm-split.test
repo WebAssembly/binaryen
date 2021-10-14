@@ -35,21 +35,18 @@
 ;; CHECK-NEXT:                                        splitting.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
-;; CHECK-NEXT:                                        to keep in the primary module, regardless
-;; CHECK-NEXT:                                        of any profile. You can also pass a file
-;; CHECK-NEXT:                                        with a list of functions separated by new
-;; CHECK-NEXT:                                        lines. To do this, prepend @ before
-;; CHECK-NEXT:                                        filename (--keep-funcs @myfile)
+;; CHECK-NEXT:                                        to keep in the primary module. The rest
+;; CHECK-NEXT:                                        will be split out. Cannot be used with
+;; CHECK-NEXT:                                        --profile or --split-funcs. You can also
+;; CHECK-NEXT:                                        pass a file with one function per line by
+;; CHECK-NEXT:                                        passing @filename.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --split-funcs                        [split] Comma-separated list of functions
-;; CHECK-NEXT:                                        to split into the secondary module,
-;; CHECK-NEXT:                                        regardless of any profile. If there is no
-;; CHECK-NEXT:                                        profile, then this defaults to all
-;; CHECK-NEXT:                                        functions defined in the module. You can
-;; CHECK-NEXT:                                        also pass a file with a list of functions
-;; CHECK-NEXT:                                        separated by new lines. To do this,
-;; CHECK-NEXT:                                        prepend @ before filename (--split-funcs
-;; CHECK-NEXT:                                        @myfile)
+;; CHECK-NEXT:                                        to split out to the secondary module. The
+;; CHECK-NEXT:                                        rest will be kept. Cannot be used with
+;; CHECK-NEXT:                                        --profile or --keep-funcs. You can also
+;; CHECK-NEXT:                                        pass a file with one function per line by
+;; CHECK-NEXT:                                        passing @filename.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
 ;; CHECK-NEXT:                                        module.

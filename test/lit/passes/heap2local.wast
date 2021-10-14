@@ -254,7 +254,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:      (rtt.canon $struct.A)
@@ -1935,6 +1935,29 @@
         )
         (return (f64.const 2.1828))
       )
+    )
+  )
+
+  ;; CHECK:      (func $simple-no-rtt
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simple-no-rtt
+    (drop
+      ;; This allocation has no rtt, so we have nothing to drop from it when
+      ;; we optimize.
+      (struct.new_default $struct.A)
     )
   )
 )

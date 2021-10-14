@@ -80,6 +80,11 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
 }
 
+// This leads to similar choices as LLVM does.
+// See https://github.com/WebAssembly/binaryen/pull/4228
+// It can be tuned more later.
+const Index TooCostlyToRunUnconditionally = 9;
+
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously
 // only one of the two might have executed. We assume here that
@@ -92,9 +97,18 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
     return false;
   }
   // Consider the cost of executing all the code unconditionally.
-  const auto TOO_MUCH = 7;
   auto total = CostAnalyzer(one).cost + CostAnalyzer(two).cost;
-  return total >= TOO_MUCH;
+  return total >= TooCostlyToRunUnconditionally;
+}
+
+// As above, but a single expression that we are considering moving to a place
+// where it executes unconditionally.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* curr) {
+  if (passOptions.shrinkLevel) {
+    return false;
+  }
+  return CostAnalyzer(curr).cost >= TooCostlyToRunUnconditionally;
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
@@ -373,6 +387,34 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
+      }
+
+      // if (condition-A) { if (condition-B) .. }
+      //   =>
+      // if (condition-A ? condition-B : 0) { .. }
+      //
+      // This replaces an if, which is 3 bytes, with a select plus a zero, which
+      // is also 3 bytes. The benefit is that the select may be faster, and also
+      // further optimizations may be possible on the select.
+      if (auto* child = curr->ifTrue->dynCast<If>()) {
+        if (child->ifFalse) {
+          return;
+        }
+        // If running the child's condition unconditionally is too expensive,
+        // give up.
+        if (tooCostlyToRunUnconditionally(getPassOptions(), child->condition)) {
+          return;
+        }
+        // Of course we can't do this if the inner if's condition has side
+        // effects, as we would then execute those unconditionally.
+        if (EffectAnalyzer(getPassOptions(), *getModule(), child->condition)
+              .hasSideEffects()) {
+          return;
+        }
+        Builder builder(*getModule());
+        curr->condition = builder.makeSelect(
+          child->condition, curr->condition, builder.makeConst(int32_t(0)));
+        curr->ifTrue = child->ifTrue;
       }
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is

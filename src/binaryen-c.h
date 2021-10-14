@@ -161,6 +161,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureGC(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMemory64(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedSIMD(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -850,6 +851,17 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);
+BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                                    const char* name,
+                                                    BinaryenExpressionRef index,
+                                                    BinaryenType type);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSet(BinaryenModuleRef module,
+                 const char* name,
+                 BinaryenExpressionRef index,
+                 BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
+                                                     const char* name);
 // Try: name can be NULL. delegateTarget should be NULL in try-catch.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTry(BinaryenModuleRef module,
@@ -1194,6 +1206,47 @@ BinaryenGlobalSetGetValue(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
                                             BinaryenExpressionRef valueExpr);
 
+// TableGet
+
+// Gets the name of the table being accessed by a `table.get` expression.
+BINARYEN_API const char* BinaryenTableGetGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.get` expression.
+BINARYEN_API void BinaryenTableGetSetTable(BinaryenExpressionRef expr,
+                                           const char* table);
+// Gets the index expression of a `table.get` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGetGetIndex(BinaryenExpressionRef expr);
+// Sets the index expression of a `table.get` expression.
+BINARYEN_API void BinaryenTableGetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef indexExpr);
+
+// TableSet
+
+// Gets the name of the table being accessed by a `table.set` expression.
+BINARYEN_API const char* BinaryenTableSetGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetTable(BinaryenExpressionRef expr,
+                                           const char* table);
+// Gets the index expression of a `table.set` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSetGetIndex(BinaryenExpressionRef expr);
+// Sets the index expression of a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef indexExpr);
+// Gets the value expression of a `table.set` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSetGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef valueExpr);
+
+// TableSize
+
+// Gets the name of the table being accessed by a `table.size` expression.
+BINARYEN_API const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.size` expression.
+BINARYEN_API void BinaryenTableSizeSetTable(BinaryenExpressionRef expr,
+                                            const char* table);
 // MemoryGrow
 
 // Gets the delta of a `memory.grow` expression.
@@ -2624,6 +2677,8 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsGlobal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesGlobal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsTable(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesTable(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
