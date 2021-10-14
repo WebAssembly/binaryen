@@ -1353,28 +1353,42 @@ struct OptimizeInstructions
   // =>
   //  (local.set $x (struct.new X' Y Z))
   //
+  // We also handle other struct.sets immediately after this one, but we only
+  // handle the case where they are all in sequence and right after the
+  // local.set (anything in the middle of this pattern will stop us from
+  // optimizing later struct.sets, which might be improved later but would
+  // require an analysis of effects TODO).
   void optimizeHeapStores(ExpressionList& list) {
     for (Index i = 0; i < list.size(); i++) {
-      if (auto* localSet = list[i]->dynCast<LocalSet>()) {
-        if (auto* new_ = localSet->value->dynCast<StructNew>()) {
-          for (Index j = i + 1; j < list.size(); j++) {
-            if (auto* structSet = list[j]->dynCast<StructSet>()) {
-              if (auto* localGet = structSet->ref->dynCast<LocalGet>()) {
-                if (localGet->index == localSet->index &&
-                    optimizeSubsequentStructSet(
-                      new_, structSet, localGet->index)) {
-                  // Success. Replace the set with a nop, and continue to
-                  // perhaps optimize more.
-                  ExpressionManipulator::nop(structSet);
-                  continue;
-                }
-              }
-            }
+      auto* localSet = list[i]->dynCast<LocalSet>();
+      if (!localSet) {
+        continue;
+      }
+      auto* new_ = localSet->value->dynCast<StructNew>();
+      if (!new_) {
+        continue;
+      }
 
-            // Stop when we fail to optimize, as then there would be things in
-            // the middle whose side effects we need to take into account TODO
-            break;
-          }
+      // This local.set of a struct.new looks good. Find struct.sets after it
+      // to optimize.
+      for (Index j = i + 1; j < list.size(); j++) {
+        auto* structSet = list[j]->dynCast<StructSet>();
+        if (!structSet) {
+          // Any time the pattern no longer matches, stop optimizing possible
+          // struct.sets for this struct.new.
+          break;
+        }
+        auto* localGet = structSet->ref->dynCast<LocalGet>();
+        if (!localGet || localGet->index != localSet->index) {
+          break;
+        }
+        if (!optimizeSubsequentStructSet(
+                new_, structSet, localGet->index)) {
+          break;
+        } else {
+          // Success. Replace the set with a nop, and continue to
+          // perhaps optimize more.
+          ExpressionManipulator::nop(structSet);
         }
       }
     }
