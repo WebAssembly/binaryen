@@ -141,7 +141,8 @@
   ;; CHECK-NEXT: )
   (func $local-null
     (local $ref-imm (ref null $struct-imm))
-    ;; Test we ignore a local value that is null, whose data we do not know.
+    ;; Test we ignore a local value that is null.
+    ;; TODO: this could be precomputed to an unreachable
     (call $helper
       (struct.get $struct-imm 0
         (local.get $ref-imm)
