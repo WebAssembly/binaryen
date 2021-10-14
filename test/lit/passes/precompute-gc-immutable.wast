@@ -59,6 +59,34 @@
     )
   )
 
+  ;; CHECK:      (func $non-constant (param $param i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct-imm))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct-imm
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $struct-imm 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-constant (param $param i32)
+    (local $ref (ref null $struct-imm))
+    (local.set $ref
+      (struct.new $struct-imm
+        ;; This value is not constant, so we have nothing to propagate.
+        (local.get $param)
+      )
+    )
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref)
+      )
+    )
+  )
+
   ;; CHECK:      (func $unreachable
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (local.tee $ref-imm
