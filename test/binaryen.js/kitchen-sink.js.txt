@@ -91,6 +91,7 @@ RefEqId: 44
 TableGetId: 45
 TableSetId: 46
 TableSizeId: 47
+TableGrowId: 48
 TryId: 49
 ThrowId: 50
 RethrowId: 51
