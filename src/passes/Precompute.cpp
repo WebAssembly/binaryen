@@ -137,7 +137,8 @@ public:
       // rest (and fail if we do not have GC data there to read, which would
       // indicate we didn't create it in this function).
       // Is it null in that case ..?
-      auto& field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
+      auto& field =
+        curr->ref->type.getHeapType().getStruct().fields[curr->index];
       if (field.mutable_ == Immutable) {
         return Super::visitStructGet(curr);
       }
