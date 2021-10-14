@@ -122,26 +122,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case WrapInt64:
       case PromoteFloat32:
       case DemoteFloat64:
-      case TruncSFloat32ToInt32:
-      case TruncUFloat32ToInt32:
-      case TruncSFloat64ToInt32:
-      case TruncUFloat64ToInt32:
       case ReinterpretFloat32:
-      case TruncSFloat32ToInt64:
-      case TruncUFloat32ToInt64:
-      case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt64:
       case ReinterpretFloat64:
       case ReinterpretInt32:
-      case ConvertSInt32ToFloat32:
-      case ConvertUInt32ToFloat32:
-      case ConvertSInt64ToFloat32:
-      case ConvertUInt64ToFloat32:
       case ReinterpretInt64:
-      case ConvertSInt32ToFloat64:
-      case ConvertUInt32ToFloat64:
-      case ConvertSInt64ToFloat64:
-      case ConvertUInt64ToFloat64:
       case ExtendS8Int32:
       case ExtendS16Int32:
       case ExtendS8Int64:
@@ -165,6 +149,22 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case CtzInt64:
       case SqrtFloat32:
       case SqrtFloat64:
+      case TruncSFloat32ToInt32:
+      case TruncUFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncUFloat64ToInt32:
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case ConvertSInt32ToFloat32:
+      case ConvertUInt32ToFloat32:
+      case ConvertSInt64ToFloat32:
+      case ConvertUInt64ToFloat32:
+      case ConvertSInt32ToFloat64:
+      case ConvertUInt32ToFloat64:
+      case ConvertSInt64ToFloat64:
+      case ConvertUInt64ToFloat64:
         ret = 2;
         break;
       case SplatVecI8x16:
@@ -179,7 +179,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case NegVecI8x16:
       case AllTrueVecI8x16:
       case BitmaskVecI8x16:
-      case PopcntVecI8x16:
       case AbsVecI16x8:
       case NegVecI16x8:
       case AllTrueVecI16x8:
@@ -194,26 +193,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case BitmaskVecI64x2:
       case AbsVecF32x4:
       case NegVecF32x4:
-      case SqrtVecF32x4:
-      case CeilVecF32x4:
-      case FloorVecF32x4:
-      case TruncVecF32x4:
-      case NearestVecF32x4:
       case AbsVecF64x2:
       case NegVecF64x2:
-      case SqrtVecF64x2:
-      case CeilVecF64x2:
-      case FloorVecF64x2:
-      case TruncVecF64x2:
-      case NearestVecF64x2:
       case ExtAddPairwiseSVecI8x16ToI16x8:
       case ExtAddPairwiseUVecI8x16ToI16x8:
       case ExtAddPairwiseSVecI16x8ToI32x4:
       case ExtAddPairwiseUVecI16x8ToI32x4:
-      case TruncSatSVecF32x4ToVecI32x4:
-      case TruncSatUVecF32x4ToVecI32x4:
-      case ConvertSVecI32x4ToVecF32x4:
-      case ConvertUVecI32x4ToVecF32x4:
       case ExtendLowSVecI8x16ToVecI16x8:
       case ExtendHighSVecI8x16ToVecI16x8:
       case ExtendLowUVecI8x16ToVecI16x8:
@@ -226,13 +211,30 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case ExtendHighSVecI32x4ToVecI64x2:
       case ExtendLowUVecI32x4ToVecI64x2:
       case ExtendHighUVecI32x4ToVecI64x2:
+        ret = 1;
+        break;
+      case PopcntVecI8x16:
+      case SqrtVecF32x4:
+      case SqrtVecF64x2:
+      case CeilVecF32x4:
+      case CeilVecF64x2:
+      case FloorVecF32x4:
+      case FloorVecF64x2:
+      case TruncVecF32x4:
+      case TruncVecF64x2:
+      case NearestVecF32x4:
+      case NearestVecF64x2:
+      case TruncSatSVecF32x4ToVecI32x4:
+      case TruncSatUVecF32x4ToVecI32x4:
+      case ConvertSVecI32x4ToVecF32x4:
+      case ConvertUVecI32x4ToVecF32x4:
       case ConvertLowSVecI32x4ToVecF64x2:
       case ConvertLowUVecI32x4ToVecF64x2:
       case TruncSatZeroSVecF64x2ToVecI32x4:
       case TruncSatZeroUVecF64x2ToVecI32x4:
       case DemoteZeroVecF64x2ToVecF32x4:
       case PromoteLowVecF32x4ToVecF64x2:
-        ret = 1;
+        ret = 2;
         break;
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
