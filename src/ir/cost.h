@@ -103,18 +103,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitUnary(Unary* curr) {
     CostType ret = 0;
     switch (curr->op) {
-      case ClzInt32:
-      case CtzInt32:
-      case PopcntInt32:
       case NegFloat32:
       case AbsFloat32:
       case CeilFloat32:
       case FloorFloat32:
       case TruncFloat32:
       case NearestFloat32:
-      case ClzInt64:
-      case CtzInt64:
-      case PopcntInt64:
       case NegFloat64:
       case AbsFloat64:
       case CeilFloat64:
@@ -163,6 +157,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case TruncSatUFloat64ToInt64:
         ret = 1;
         break;
+      case PopcntInt32:
+      case PopcntInt64:
+      case ClzInt32:
+      case ClzInt64:
+      case CtzInt32:
+      case CtzInt64:
       case SqrtFloat32:
       case SqrtFloat64:
         ret = 2;
