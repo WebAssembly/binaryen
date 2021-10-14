@@ -211,6 +211,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case ExtendHighSVecI32x4ToVecI64x2:
       case ExtendLowUVecI32x4ToVecI64x2:
       case ExtendHighUVecI32x4ToVecI64x2:
+      case TruncSatSVecF32x4ToVecI32x4:
+      case TruncSatUVecF32x4ToVecI32x4:
+      case TruncSatZeroSVecF64x2ToVecI32x4:
+      case TruncSatZeroUVecF64x2ToVecI32x4:
+      case DemoteZeroVecF64x2ToVecF32x4:
+      case PromoteLowVecF32x4ToVecF64x2:
         ret = 1;
         break;
       case PopcntVecI8x16:
@@ -224,16 +230,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case TruncVecF64x2:
       case NearestVecF32x4:
       case NearestVecF64x2:
-      case TruncSatSVecF32x4ToVecI32x4:
-      case TruncSatUVecF32x4ToVecI32x4:
       case ConvertSVecI32x4ToVecF32x4:
       case ConvertUVecI32x4ToVecF32x4:
       case ConvertLowSVecI32x4ToVecF64x2:
       case ConvertLowUVecI32x4ToVecF64x2:
-      case TruncSatZeroSVecF64x2ToVecI32x4:
-      case TruncSatZeroUVecF64x2ToVecI32x4:
-      case DemoteZeroVecF64x2ToVecF32x4:
-      case PromoteLowVecF32x4ToVecF64x2:
         ret = 2;
         break;
       case InvalidUnary:
