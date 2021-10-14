@@ -751,11 +751,12 @@ public:
 
 class If : public SpecificExpression<Expression::IfId> {
 public:
-  If(MixedArena& allocator) {}
+  If() : ifFalse(nullptr) {}
+  If(MixedArena& allocator) : If() {}
 
   Expression* condition;
   Expression* ifTrue;
-  Expression* ifFalse = nullptr;
+  Expression* ifFalse;
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional
