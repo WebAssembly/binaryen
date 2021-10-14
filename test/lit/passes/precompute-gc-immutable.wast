@@ -89,6 +89,40 @@
     )
   )
 
+  ;; CHECK:      (func $param (param $ref-imm (ref null $struct-imm))
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $struct-imm 0
+  ;; CHECK-NEXT:    (local.get $ref-imm)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $param (param $ref-imm (ref null $struct-imm))
+    ;; Test we ignore a param value, whose data we do not know.
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref-imm)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local-null
+  ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $struct-imm 0
+  ;; CHECK-NEXT:    (ref.null $struct-imm)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-null
+    (local $ref-imm (ref null $struct-imm))
+    ;; Test we ignore a local value that is null, whose data we do not know.
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref-imm)
+      )
+    )
+  )
+
   ;; CHECK:      (func $propagate-multi-refs (param $x i32)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
