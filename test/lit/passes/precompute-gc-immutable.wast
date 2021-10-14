@@ -321,6 +321,9 @@
 )
 
 (module
+  ;; Create an immutable vtable in an immutable field, which lets us read from
+  ;; it.
+
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
 
   ;; CHECK:      (type $vtable (struct (field funcref)))
@@ -468,3 +471,55 @@
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
 )
+
+(module
+  ;; Create an immutable vtable in an immutable global, which we can optimize
+  ;; with.
+
+  ;; CHECK:      (type $vtable (struct (field funcref)))
+  (type $vtable (struct funcref))
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
+  (type $object (struct (ref $vtable)))
+
+  ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $nested-creations)
+  ;; CHECK-NEXT: ))
+  (global $vtable (ref $vtable)
+    (struct.new $vtable
+      (ref.func $nested-creations)
+    )
+  )
+
+  ;; CHECK:      (func $nested-creations
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (ref.func $nested-creations)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-creations
+    (local $ref (ref null $object))
+    (local.set $ref
+      (struct.new $object
+        (global.get $vtable)
+      )
+    )
+    (call $helper
+      (struct.get $vtable 0
+        (struct.get $object 0
+          (local.get $ref)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper (param funcref))
+)
+
