@@ -5,9 +5,10 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $struct-imm (struct (field i32)))
+
   ;; CHECK:      (type $struct-mut (struct (field (mut i32))))
   (type $struct-mut (struct (mut i32)))
-  ;; CHECK:      (type $struct-imm (struct (field i32)))
   (type $struct-imm (struct i32))
 
   ;; CHECK:      (func $propagate
@@ -56,6 +57,135 @@
     (call $helper
       (struct.get $struct-mut 0
         (local.get $ref-mut)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $unreachable
+  ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
+  ;; CHECK-NEXT:  (local.tee $ref-imm
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $struct-imm 0
+  ;; CHECK-NEXT:    (local.get $ref-imm)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable
+    (local $ref-imm (ref null $struct-imm))
+    ;; Test we do not error on an unreachable value.
+    (local.set $ref-imm
+      (struct.new $struct-imm
+        (unreachable)
+      )
+    )
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref-imm)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $propagate-multi-refs (param $x i32)
+  ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $ref-imm
+  ;; CHECK-NEXT:     (struct.new $struct-imm
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $helper
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $ref-imm
+  ;; CHECK-NEXT:     (struct.new $struct-imm
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $helper
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-multi-refs (param $x i32)
+    (local $ref-imm (ref null $struct-imm))
+    ;; Propagate more than once in a function, using the same local that is
+    ;; reused.
+    (if
+      (local.get $x)
+      (block
+        (local.set $ref-imm
+          (struct.new $struct-imm
+            (i32.const 1)
+          )
+        )
+        (call $helper
+          (struct.get $struct-imm 0
+            (local.get $ref-imm)
+          )
+        )
+      )
+      (block
+        (local.set $ref-imm
+          (struct.new $struct-imm
+            (i32.const 2)
+          )
+        )
+        (call $helper
+          (struct.get $struct-imm 0
+            (local.get $ref-imm)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $propagate-multi-values (param $x i32)
+  ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
+  ;; CHECK-NEXT:  (local.set $ref-imm
+  ;; CHECK-NEXT:   (struct.new $struct-imm
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-multi-values (param $x i32)
+    (local $ref-imm (ref null $struct-imm))
+    ;; Propagate a ref's value more than once
+    (local.set $ref-imm
+      (struct.new $struct-imm
+        (i32.const 1)
+      )
+    )
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref-imm)
+      )
+    )
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref-imm)
+      )
+    )
+    (call $helper
+      (struct.get $struct-imm 0
+        (local.get $ref-imm)
       )
     )
   )
