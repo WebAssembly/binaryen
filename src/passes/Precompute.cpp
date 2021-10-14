@@ -129,7 +129,23 @@ public:
     return getHeapCreationFlow(flow, curr);
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructGet(StructGet* curr) {
+    if (curr->ref->type != Type::unreachable) {
+      // If this field is immutable then we may be able to precompute this, as
+      // if we also created the data in this function then we know the value in
+      // the field. If it is immutable, call the super method which will do the
+      // rest (and fail if we do not have GC data there to read, which would
+      // indicate we didn't create it in this function).
+      // Is it null in that case ..?
+      auto& field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
+      if (field.mutable_ == Immutable) {
+        return Super::visitStructGet(curr);
+      }
+    }
+
+    // Otherwise, we've failed to precompute.
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitArrayNew(ArrayNew* curr) {
     auto flow = Super::visitArrayNew(curr);
     if (flow.breaking()) {
@@ -163,6 +179,8 @@ public:
     }
     return Literal(canonical, curr->type);
   }
+
+  // TODO propagate from globals, which is where vtables are normally defined.
 };
 
 struct Precompute
