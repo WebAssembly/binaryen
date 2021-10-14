@@ -1382,8 +1382,7 @@ struct OptimizeInstructions
         if (!localGet || localGet->index != localSet->index) {
           break;
         }
-        if (!optimizeSubsequentStructSet(
-                new_, structSet, localGet->index)) {
+        if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
           break;
         } else {
           // Success. Replace the set with a nop, and continue to
