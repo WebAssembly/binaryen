@@ -591,6 +591,7 @@ private:
       parent.isAtomic = true;
     }
     void visitMemoryGrow(MemoryGrow* curr) {
+      // TODO: find out if calls is necessary here
       parent.calls = true;
       // memory.grow technically does a read-modify-write operation on the
       // memory size in the successful case, modifying the set of valid
@@ -614,7 +615,6 @@ private:
     }
     void visitTableSize(TableSize* curr) { parent.readsTable = true; }
     void visitTableGrow(TableGrow* curr) {
-      parent.calls = true;
       // table.grow technically does a read-modify-write operation on the
       // table size in the successful case, modifying the set of valid
       // indices, and just a read operation in the failure case
