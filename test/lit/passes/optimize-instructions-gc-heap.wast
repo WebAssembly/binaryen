@@ -9,11 +9,11 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
-  (type $struct2 (struct (field (mut i32)) (field (mut i32))))
-
   ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
   (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
+  (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
@@ -561,6 +561,122 @@
         (struct.new_default $struct)
       )
       (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $many-news
+  ;; CHECK-NEXT:  (local $ref (ref null $struct3))
+  ;; CHECK-NEXT:  (local $ref2 (ref null $struct3))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct3
+  ;; CHECK-NEXT:    (i32.const 40)
+  ;; CHECK-NEXT:    (i32.const 50)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.set $struct3 2
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 60)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct3
+  ;; CHECK-NEXT:    (i32.const 400)
+  ;; CHECK-NEXT:    (i32.const 200)
+  ;; CHECK-NEXT:    (i32.const 500)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct3
+  ;; CHECK-NEXT:     (i32.const 40)
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $ref2
+  ;; CHECK-NEXT:    (struct.new $struct3
+  ;; CHECK-NEXT:     (i32.const 400)
+  ;; CHECK-NEXT:     (i32.const 600)
+  ;; CHECK-NEXT:     (i32.const 500)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $many-news
+    (local $ref (ref null $struct3))
+    (local $ref2 (ref null $struct3))
+    ;; Test that we optimize for multiple struct.news in the same function.
+    (struct.set $struct3 0
+      (local.tee $ref
+        (struct.new $struct3
+          (i32.const 10)
+          (i32.const 20)
+          (i32.const 30)
+        )
+      )
+      (i32.const 40)
+    )
+    (struct.set $struct3 1
+      (local.get $ref)
+      (i32.const 50)
+    )
+    (nop)
+    (struct.set $struct3 2
+      (local.get $ref)
+      (i32.const 60)
+    )
+    (nop)
+    (struct.set $struct3 0
+      (local.tee $ref
+        (struct.new $struct3
+          (i32.const 100)
+          (i32.const 200)
+          (i32.const 300)
+        )
+      )
+      (i32.const 400)
+    )
+    (struct.set $struct3 2
+      (local.get $ref)
+      (i32.const 500)
+    )
+    ;; Test inside an inner block.
+    (block $inner
+      (struct.set $struct3 0
+        (local.tee $ref
+          (struct.new $struct3
+            (i32.const 10)
+            (i32.const 20)
+            (i32.const 30)
+          )
+        )
+        (i32.const 40)
+      )
+      ;; Use a different ref local here.
+      (struct.set $struct3 0
+        (local.tee $ref2
+          (struct.new $struct3
+            (i32.const 100)
+            (i32.const 200)
+            (i32.const 300)
+          )
+        )
+        (i32.const 400)
+      )
+      (struct.set $struct3 2
+        (local.get $ref2)
+        (i32.const 500)
+      )
+      (struct.set $struct3 1
+        (local.get $ref2)
+        (i32.const 600)
+      )
     )
   )
 
