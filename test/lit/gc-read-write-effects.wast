@@ -4,10 +4,11 @@
 ;; struct field.
 
 ;; RUN: wasm-opt -all --simplify-locals %s -S -o - | filecheck %s
-;; RUN: wasm-opt -all --simplify-locals %s --nominal -S -o - | filecheck %s
+;; RUN: wasm-opt -all --simplify-locals %s --nominal -S -o - | filecheck %s --check-prefix=NOMNL
 
 (module
   ;; CHECK:      (type $A (struct (field (mut i32))))
+  ;; NOMNL:      (type $A (struct_subtype (field (mut i32)) data))
   (type $A (struct
     (field (mut i32))
   ))
@@ -36,6 +37,19 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $y)
   ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $test (param $x (ref null $A)) (result i32)
+  ;; NOMNL-NEXT:  (local $y i32)
+  ;; NOMNL-NEXT:  (local.set $y
+  ;; NOMNL-NEXT:   (struct.get $A 0
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (struct.set $A 0
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:   (i32.const 10)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (local.get $y)
+  ;; NOMNL-NEXT: )
   (func $test (export "test") (param $x (ref null $A)) (result i32)
     (local $y i32)
     (local.set $y

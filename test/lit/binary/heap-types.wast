@@ -10,9 +10,9 @@
 
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
-  ;; NOMNL:      (type $struct.A (struct (field i32)))
+  ;; NOMNL:      (type $struct.A (struct_subtype (field i32) data))
   (type $struct.A (struct i32))
-  ;; NOMNL:      (type $struct.B (struct (field i32)))
+  ;; NOMNL:      (type $struct.B (struct_subtype (field i32) data))
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
@@ -37,9 +37,9 @@
 
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
-  ;; NOMNL:      (type $struct.A (struct (field i32)))
+  ;; NOMNL:      (type $struct.A (struct_subtype (field i32) data))
   (type $struct.A (struct i32))
-  ;; NOMNL:      (type $struct.B (struct (field i32)))
+  ;; NOMNL:      (type $struct.B (struct_subtype (field i32) data))
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
@@ -64,7 +64,7 @@
 
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
-  ;; NOMNL:      (type $struct.A (struct (field i32)))
+  ;; NOMNL:      (type $struct.A (struct_subtype (field i32) data))
   (type $struct.A (struct i32))
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
@@ -85,7 +85,7 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
-  ;; NOMNL:      (type $vector (array (mut f64)))
+  ;; NOMNL:      (type $vector (array_subtype (mut f64) data))
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
@@ -115,7 +115,7 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
-  ;; NOMNL:      (type $vector (array (mut f64)))
+  ;; NOMNL:      (type $vector (array_subtype (mut f64) data))
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
