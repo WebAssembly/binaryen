@@ -365,3 +365,106 @@
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
 )
+
+(module
+  ;; As above, but make $vtable not immutable, which prevents optimization.
+
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
+
+  ;; CHECK:      (type $vtable (struct (field (mut funcref))))
+  (type $vtable (struct (mut funcref)))
+  (type $object (struct (ref $vtable)))
+
+  ;; CHECK:      (func $nested-creations
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (struct.new $vtable
+  ;; CHECK-NEXT:     (ref.func $nested-creations)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (struct.get $object 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-creations
+    (local $ref (ref null $object))
+    (local.set $ref
+      (struct.new $object
+        (struct.new $vtable
+          (ref.func $nested-creations)
+        )
+      )
+    )
+    (call $helper
+      (struct.get $vtable 0
+        ;; Note that we *can* precompute the first struct.get here, but there
+        ;; is no constant expression we can emit for it, so we do nothing.
+        (struct.get $object 0
+          (local.get $ref)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper (param funcref))
+)
+
+
+(module
+  ;; As above, but make $object not immutable, which prevents optimization.
+
+  ;; CHECK:      (type $object (struct (field (mut (ref $vtable)))))
+
+  ;; CHECK:      (type $vtable (struct (field funcref)))
+  (type $vtable (struct funcref))
+  (type $object (struct (mut (ref $vtable))))
+
+  ;; CHECK:      (func $nested-creations
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (struct.new $vtable
+  ;; CHECK-NEXT:     (ref.func $nested-creations)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (struct.get $object 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-creations
+    (local $ref (ref null $object))
+    (local.set $ref
+      (struct.new $object
+        (struct.new $vtable
+          (ref.func $nested-creations)
+        )
+      )
+    )
+    (call $helper
+      (struct.get $vtable 0
+        (struct.get $object 0
+          (local.get $ref)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper (param funcref))
+)
