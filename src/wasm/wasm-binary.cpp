@@ -219,11 +219,11 @@ void WasmBinaryWriter::writeTypes() {
     return;
   }
   BYN_TRACE("== writeTypes\n");
-  bool nominal = getTypeSystem() == TypeSystem::Nominal;
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(types.size());
   for (Index i = 0; i < types.size(); ++i) {
     auto type = types[i];
+    bool nominal = type.isNominal() || getTypeSystem() == TypeSystem::Nominal;
     BYN_TRACE("write " << type << std::endl);
     if (type.isSignature()) {
       o << S32LEB(nominal ? BinaryConsts::EncodedType::FuncExtending
@@ -1959,6 +1959,8 @@ void WasmBinaryBuilder::readTypes() {
     if (form == BinaryConsts::EncodedType::FuncExtending ||
         form == BinaryConsts::EncodedType::StructExtending ||
         form == BinaryConsts::EncodedType::ArrayExtending) {
+      // TODO: Let the new nominal types coexist with equirecursive types
+      // builder[i].setNominal();
       auto superIndex = getS64LEB(); // TODO: Actually s33
       if (superIndex >= 0) {
         if (size_t(superIndex) >= numTypes) {

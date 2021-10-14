@@ -10,16 +10,16 @@
  ;; distinct nominally. The three tables will use different ones, and the
  ;; emitted call_indirects should use the corresponding ones.
 
- ;; CHECK:      (type $v1 (func))
+ ;; CHECK:      (type $v1 (func_subtype func))
  (type $v1 (func))
 
- ;; CHECK:      (type $v2 (func))
+ ;; CHECK:      (type $v2 (func_subtype func))
  (type $v2 (func))
 
- ;; CHECK:      (type $v3 (func))
+ ;; CHECK:      (type $v3 (func_subtype func))
  (type $v3 (func))
 
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
  ;; CHECK:      (table $table-1 10 (ref null $v1))
  (table $table-1 10 (ref null $v1))

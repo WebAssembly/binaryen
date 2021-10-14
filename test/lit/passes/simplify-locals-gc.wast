@@ -2,11 +2,16 @@
 ;; RUN: wasm-opt %s --simplify-locals -all -S -o - \
 ;; RUN:   | filecheck %s
 ;; RUN: wasm-opt %s --simplify-locals -all --nominal -S -o - \
-;; RUN:   | filecheck %s
+;; RUN:   | filecheck %s --check-prefix=NOMNL
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut i32))))
+  ;; NOMNL:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (field (mut i32))))
+
+  ;; CHECK:      (type $struct-immutable (struct (field i32)))
+  ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
+  (type $struct-immutable (struct (field i32)))
 
   ;; Writes to heap objects cannot be reordered with reads.
   ;; CHECK:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
@@ -22,11 +27,108 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $temp)
   ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
+  ;; NOMNL-NEXT:  (local $temp i32)
+  ;; NOMNL-NEXT:  (local.set $temp
+  ;; NOMNL-NEXT:   (struct.get $struct 0
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (struct.set $struct 0
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:   (i32.const 42)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (local.get $temp)
+  ;; NOMNL-NEXT: )
   (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
     (local $temp i32)
     (local.set $temp
       (struct.get $struct 0
         (local.get $x)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (i32.const 42)
+    )
+    (local.get $temp)
+  )
+
+  ;; CHECK:      (func $reorder-past-write-if-immutable (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct-immutable 0
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $reorder-past-write-if-immutable (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; NOMNL-NEXT:  (local $temp i32)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (struct.set $struct 0
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:   (i32.const 42)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (struct.get $struct-immutable 0
+  ;; NOMNL-NEXT:   (local.get $y)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $reorder-past-write-if-immutable (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+    (local $temp i32)
+    (local.set $temp
+      (struct.get $struct-immutable 0
+        (local.get $y)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (i32.const 42)
+    )
+    (local.get $temp)
+  )
+
+  ;; CHECK:      (func $unreachable-struct.get (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $temp)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $unreachable-struct.get (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; NOMNL-NEXT:  (local $temp i32)
+  ;; NOMNL-NEXT:  (local.tee $temp
+  ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (struct.set $struct 0
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:   (i32.const 42)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (local.get $temp)
+  ;; NOMNL-NEXT: )
+  (func $unreachable-struct.get (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+    (local $temp i32)
+    ;; As above, but the get's ref is unreachable. This tests we do not hit an
+    ;; assertion on the get's type not having a heap type (as we depend on
+    ;; finding the heap type there in the reachable case).
+    ;; We simply do not handle this case, leaving it for DCE.
+    (local.set $temp
+      (struct.get $struct-immutable 0
+        (unreachable)
       )
     )
     (struct.set $struct 0
@@ -58,6 +160,28 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $no-block-values-if-br_on
+  ;; NOMNL-NEXT:  (local $temp anyref)
+  ;; NOMNL-NEXT:  (block $block
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (br_on_null $block
+  ;; NOMNL-NEXT:     (ref.null any)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (local.set $temp
+  ;; NOMNL-NEXT:    (ref.null any)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (br $block)
+  ;; NOMNL-NEXT:   (local.set $temp
+  ;; NOMNL-NEXT:    (ref.null any)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.as_non_null
+  ;; NOMNL-NEXT:    (local.get $temp)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
   (func $no-block-values-if-br_on
    (local $temp (ref null any))
    (block $block
