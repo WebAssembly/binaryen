@@ -9,12 +9,6 @@
   (type $struct-mut (struct (mut i32)))
   (type $struct-imm (struct i32))
 
-  ;; CHECK:      (type $object (struct (field (ref $vtable))))
-
-  ;; CHECK:      (type $vtable (struct (field funcref)))
-  (type $vtable (struct funcref))
-  (type $object (struct (ref $vtable)))
-
   ;; CHECK:      (func $propagate
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (local $ref-mut (ref null $struct-mut))
@@ -320,6 +314,19 @@
     )
   )
 
+  ;; CHECK:      (func $helper (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper (param i32))
+)
+
+(module
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
+
+  ;; CHECK:      (type $vtable (struct (field funcref)))
+  (type $vtable (struct funcref))
+  (type $object (struct (ref $vtable)))
+
   ;; CHECK:      (func $nested-creations
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
@@ -329,7 +336,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $helper-func
+  ;; CHECK-NEXT:  (call $helper
   ;; CHECK-NEXT:   (ref.func $nested-creations)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -344,7 +351,7 @@
         )
       )
     )
-    (call $helper-func
+    (call $helper
       (struct.get $vtable 0
         (struct.get $object 0
           (local.get $ref)
@@ -353,15 +360,8 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 i32)
+  ;; CHECK:      (func $helper (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $helper (param i32))
-
-  ;; CHECK:      (func $helper-func (param $0 funcref)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $helper-func (param funcref))
-
-  ;; TODO layered
+  (func $helper (param funcref))
 )
