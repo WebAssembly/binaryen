@@ -263,9 +263,7 @@ struct MetaDCEGraph {
       }
       void visitGlobalGet(GlobalGet* curr) { handleGlobal(curr->name); }
       void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
-      void visitThrow(Throw* curr) {
-        handleTag(curr->tag);
-      }
+      void visitThrow(Throw* curr) { handleTag(curr->tag); }
       void visitTry(Try* curr) {
         for (auto tag : curr->catchTags) {
           handleTag(tag);
