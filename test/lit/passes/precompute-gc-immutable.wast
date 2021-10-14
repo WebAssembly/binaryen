@@ -728,3 +728,88 @@
   (func $helper (param funcref))
 )
 
+(module
+  ;; A j2wasm-like itable pattern: An itable is an array of (possibly-null)
+  ;; data that is filled with vtables of different types. On usage, we do a
+  ;; cast of the vtable type.
+
+  ;; CHECK:      (type $vtable-0 (struct (field funcref)))
+  (type $vtable-0 (struct funcref))
+  (type $vtable-1 (struct funcref))
+  ;; CHECK:      (type $itable (array (ref null data)))
+  (type $itable (array (ref null data)))
+  ;; CHECK:      (type $object (struct (field (ref $itable))))
+  (type $object (struct (ref $itable)))
+
+  ;; CHECK:      (global $itable (ref $itable) (array.init_static $itable
+  ;; CHECK-NEXT:  (struct.new $vtable-0
+  ;; CHECK-NEXT:   (ref.func $nested-creations)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $vtable-0
+  ;; CHECK-NEXT:   (ref.func $helper)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $itable (ref $itable)
+    (array.init_static $itable
+      (struct.new $vtable-0
+        (ref.func $nested-creations)
+      )
+      (struct.new $vtable-1
+        (ref.func $helper)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-creations
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (global.get $itable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (ref.func $nested-creations)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (ref.func $helper)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-creations
+    (local $ref (ref null $object))
+    (local.set $ref
+      (struct.new $object
+        (global.get $itable)
+      )
+    )
+    ;; We can precompute all these operations away into the final constants.
+    (call $helper
+      (struct.get $vtable-0 0
+        (ref.cast_static $vtable-0
+          (array.get $itable
+            (struct.get $object 0
+              (local.get $ref)
+            )
+            (i32.const 0)
+          )
+        )
+      )
+    )
+    (call $helper
+      (struct.get $vtable-1 0
+        (ref.cast_static $vtable-1
+          (array.get $itable
+            (struct.get $object 0
+              (local.get $ref)
+            )
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper (param funcref))
+)
