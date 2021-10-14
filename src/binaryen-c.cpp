@@ -1315,6 +1315,12 @@ BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenExpressionRef value,
                                         BinaryenExpressionRef delta) {
+  if (value == nullptr) {
+    auto tableType = (*(Module*)module).getTableOrNull(name)->type;
+    auto type = tableType == Type::funcref ? BinaryenTypeFuncref()
+                                           : BinaryenTypeExternref();
+    value = BinaryenRefNull(module, type);
+  }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeTableGrow(name, (Expression*)value, (Expression*)delta));
