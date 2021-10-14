@@ -6,21 +6,21 @@
 
 (module
 
-  ;; NOMINAL:      (type $super-struct (struct (field i32)))
+  ;; NOMINAL:      (type $super-struct (struct_subtype (field i32) data))
   ;; EQUIREC:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct i32))
 
-  ;; NOMINAL:      (type $sub-struct (struct (field i32) (field i64)) (extends $super-struct))
+  ;; NOMINAL:      (type $sub-struct (struct_subtype (field i32) (field i64) $super-struct))
   ;; EQUIREC:      (type $sub-struct (struct (field i32) (field i64)))
-  (type $sub-struct (struct i32 i64) (extends $super-struct))
+  (type $sub-struct (struct_subtype i32 i64 $super-struct))
 
-  ;; NOMINAL:      (type $super-array (array (ref $super-struct)))
+  ;; NOMINAL:      (type $super-array (array_subtype (ref $super-struct) data))
   ;; EQUIREC:      (type $super-array (array (ref $super-struct)))
   (type $super-array (array (ref $super-struct)))
 
-  ;; NOMINAL:      (type $sub-array (array (ref $sub-struct)) (extends $super-array))
+  ;; NOMINAL:      (type $sub-array (array_subtype (ref $sub-struct) $super-array))
   ;; EQUIREC:      (type $sub-array (array (ref $sub-struct)))
-  (type $sub-array (array (ref $sub-struct)) (extends $super-array))
+  (type $sub-array (array_subtype (ref $sub-struct) $super-array))
 
   ;; TODO: signature types as well, once functions store their HeapTypes.
 
