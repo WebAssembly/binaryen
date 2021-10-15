@@ -447,8 +447,10 @@ HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   return (HeapTypeInfo*)ht.getID();
 }
 
+HeapType asHeapType(HeapTypeInfo* info) { return HeapType(uintptr_t(info)); }
+
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
-  return HeapType(uintptr_t(info.get()));
+  return asHeapType(info.get());
 }
 
 Type markTemp(Type type) {
@@ -2509,25 +2511,20 @@ size_t Partitions::Set::split() {
   return newIndex;
 }
 
+// The results of either nominal or equirecursive type canonicalization. Given a
+// list of HeapTypeInfos, produce `heapTypes`, a corresponding list of canonical
+// HeapTypes, and `newCanonInfos`, a list of HeapTypeInfos newly placed in the
+// global heap type store that may still contain references to temporary Types.
+struct BuildResults {
+  std::vector<HeapType> heapTypes;
+  std::vector<HeapTypeInfo*> newCanonInfos;
+};
+
 // Uses Valmari and Lehtinen's partial DFA minimization algorithm to construct a
 // minimal type definition graph from an input graph. See
 // https://arxiv.org/pdf/0802.2826.pdf.
 struct ShapeCanonicalizer {
-  // The minimized HeapTypes, possibly including both new temporary HeapTypes as
-  // well as globally canonical HeapTypes that were reachable from the input
-  // roots.
-  std::vector<HeapType> results;
-
-  // The new, temporary, minimal HeapTypeInfos. Contains empty unique_ptrs at
-  // indices corresponding to globally canonical HeapTypes.
-  std::vector<std::unique_ptr<HeapTypeInfo>> infos;
-
-  // Returns the partition index for an input root HeapType. This index is also
-  // the index of its minimized version in `minimized`, and if that minimized
-  // version is not globally canonical, also the index of the minimized
-  // HeapTypeInfo in `infos`.
-  size_t getIndex(HeapType type);
-
+  BuildResults results;
   ShapeCanonicalizer(std::vector<HeapType>& roots);
 
 private:
@@ -2553,8 +2550,7 @@ private:
   Partitions splitters;
 
   void initialize(std::vector<HeapType>& roots);
-  bool replaceHeapType(HeapType* heapType);
-  void translatePartitionsToTypes();
+  BuildResults translatePartitionsToTypes(std::vector<HeapType>& roots);
 
   // Return pointers to the non-basic HeapType children of `ht`, including
   // BasicKind children.
@@ -2576,10 +2572,6 @@ private:
   }
 #endif
 };
-
-size_t ShapeCanonicalizer::getIndex(HeapType type) {
-  return partitions.getSetForElem(states.at(type)).index;
-}
 
 ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
 #if TRACE_CANONICALIZATION
@@ -2669,7 +2661,7 @@ ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
   dumpPartitions();
 #endif
 
-  translatePartitionsToTypes();
+  results = translatePartitionsToTypes(roots);
 }
 
 void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
@@ -2800,18 +2792,8 @@ void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
   }
 }
 
-bool ShapeCanonicalizer::replaceHeapType(HeapType* heapType) {
-  auto it = states.find(*heapType);
-  if (it != states.end()) {
-    // heapType hasn't already been replaced; replace it.
-    auto set = partitions.getSetForElem(it->second);
-    *heapType = results.at(set.index);
-    return true;
-  }
-  return false;
-}
-
-void ShapeCanonicalizer::translatePartitionsToTypes() {
+BuildResults
+ShapeCanonicalizer::translatePartitionsToTypes(std::vector<HeapType>& roots) {
   // Create a single new HeapTypeInfo for each partition. Initialize each new
   // HeapTypeInfo as a copy of a representative HeapTypeInfo from its partition,
   // then patch all the children of the new HeapTypeInfos to refer to other new
@@ -2825,6 +2807,10 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
   // globally canonical type, no temporary types will end up being patched into
   // the globally canonical types and we can skip patching the children of those
   // types.
+  std::vector<HeapType> canonPartitionTypes;
+  std::vector<HeapTypeInfo*> newCanonInfos;
+  canonPartitionTypes.reserve(partitions.sets);
+  newCanonInfos.reserve(partitions.sets);
   for (size_t p = 0; p < partitions.sets; ++p) {
     auto partition = partitions.getSet(p);
     auto it = std::find_if(partition.begin(),
@@ -2835,138 +2821,103 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
       // partition. Create a copy.
       const auto& representative =
         *getHeapTypeInfo(heapTypes[*partition.begin()]);
-      infos.push_back(std::make_unique<HeapTypeInfo>(representative));
-      infos.back()->isTemp = true;
-      results.push_back(asHeapType(infos.back()));
+      auto info = std::make_unique<HeapTypeInfo>(representative);
+      HeapTypeInfo* infoPtr = info.get();
+      auto original = asHeapType(info);
+      auto canonical = globalHeapTypeStore.insert(std::move(info));
+      if (canonical == original) {
+        newCanonInfos.push_back(infoPtr);
+      }
+      canonPartitionTypes.push_back(canonical);
     } else {
       // We already have a globally canonical type for this partition.
-      results.push_back(heapTypes[*it]);
-      infos.push_back({});
-    }
-  }
-  for (auto& info : infos) {
-    if (!info) {
-      // No need to replace the children of globally canonical HeapTypes.
-      continue;
-    }
-
-    struct ChildUpdater : HeapTypeChildWalker<ChildUpdater> {
-      ShapeCanonicalizer& canonicalizer;
-      ChildUpdater(ShapeCanonicalizer& canonicalizer)
-        : canonicalizer(canonicalizer) {}
-      void noteChild(HeapType* child) {
-        if (child->isBasic() || !isTemp(*child)) {
-          // Child doesn't need replacement.
-          return;
-        }
-        canonicalizer.replaceHeapType(child);
-      }
-    };
-    HeapType root = asHeapType(info);
-    ChildUpdater(*this).walkRoot(&root);
-
-    // If this is a nominal type, we may need to update its supertype as well.
-    if (info->supertype) {
-      HeapType heapType(uintptr_t(info->supertype));
-      replaceHeapType(&heapType);
-      info->supertype = getHeapTypeInfo(heapType);
+      canonPartitionTypes.push_back(heapTypes[*it]);
     }
   }
 
 #if TRACE_CANONICALIZATION
-  std::cerr << "Minimization results:\n";
-  for (HeapType ht : results) {
+  std::cerr << "Canonical partition heap types:\n";
+  for (HeapType ht : canonPartitionTypes) {
+    std::cerr << ht << '\n';
+  }
+  std::cerr << '\n';
+  std::cerr << "Newly canonical heap types:\n";
+  for (auto* info : newCanonInfos) {
+    std::cerr << asHeapType(info) << '\n';
+  }
+  std::cerr << '\n';
+#endif
+
+  // Walk each of the new globally canonical HeapTypes and update all the
+  // HeapTypes it reaches.
+  for (auto& info : newCanonInfos) {
+    struct ChildUpdater : HeapTypeChildWalker<ChildUpdater> {
+      ShapeCanonicalizer& canonicalizer;
+      std::vector<HeapType>& canonPartitionTypes;
+      ChildUpdater(ShapeCanonicalizer& canonicalizer,
+                   std::vector<HeapType>& canonPartitionTypes)
+        : canonicalizer(canonicalizer),
+          canonPartitionTypes(canonPartitionTypes) {}
+      void noteChild(HeapType* child) {
+        if (child->isBasic()) {
+          // Child doesn't need replacement.
+          return;
+        }
+        auto it = canonicalizer.states.find(*child);
+        if (it != canonicalizer.states.end()) {
+          // heapType hasn't already been replaced; replace it.
+          auto set = canonicalizer.partitions.getSetForElem(it->second);
+          *child = canonPartitionTypes.at(set.index);
+        }
+      }
+    };
+    HeapType root = asHeapType(info);
+    ChildUpdater(*this, canonPartitionTypes).walkRoot(&root);
+  }
+
+#if TRACE_CANONICALIZATION
+  std::cerr << "Updated partition heap types:\n";
+  for (HeapType ht : canonPartitionTypes) {
     std::cerr << ht << '\n';
   }
   std::cerr << '\n';
 #endif
+
+  // Now that we have produced a minimized, canonical HeapType for each
+  // partition, produce the final list of minimized HeapTypes by matching each
+  // original HeapType up with the canonical type for its partition.
+  std::vector<HeapType> finalTypes;
+  finalTypes.reserve(roots.size());
+  for (auto type : roots) {
+    size_t index = partitions.getSetForElem(states.at(type)).index;
+    finalTypes.push_back(canonPartitionTypes.at(index));
+  }
+  return {std::move(finalTypes), std::move(newCanonInfos)};
 }
 
-// Replaces temporary types and heap types in a type definition graph with their
-// globally canonical versions to prevent temporary types or heap type from
-// leaking into the global stores.
-std::vector<HeapType>
-globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
-  // Map each temporary Type and HeapType to the locations where they will
-  // have to be replaced with canonical Types and HeapTypes.
+// Replaces temporary types in a type definition graph with their globally
+// canonical versions to prevent temporary types from leaking into the global
+// stores.
+void canonicalizeTypes(std::vector<HeapType> heapTypes) {
+  // Map each Type to the locations where it will have to be replaced with a
+  // canonical Type.
   struct Locations : TypeGraphWalker<Locations> {
     std::unordered_map<Type, std::unordered_set<Type*>> types;
-    std::unordered_map<HeapType, std::unordered_set<HeapType*>> heapTypes;
-
     void preVisitType(Type* type) {
       if (!type->isBasic()) {
         types[*type].insert(type);
       }
     }
-    void preVisitHeapType(HeapType* ht) {
-      if (!ht->isBasic()) {
-        heapTypes[*ht].insert(ht);
-      }
-    }
   } locations;
 
-  std::vector<HeapType> results;
-  results.reserve(infos.size());
-  for (auto& info : infos) {
-    if (!info) {
-      // TODO: That we have to deal with null info pointers here is a sign of a
-      // very leaky abstraction. Hack around it by for now to keep the diff for
-      // this change easier to reason about, but fix this in a followup to make
-      // the code itself easier to reason about.
-
-      // Produce an arbitrary HeapType that will not be used.
-      results.push_back(HeapType(0));
-      continue;
-    }
-
-    results.push_back(asHeapType(info));
-    locations.walkRoot(&results.back());
+  for (auto& type : heapTypes) {
+    locations.walkRoot(&type);
   }
 
-#if TRACE_CANONICALIZATION
-  std::cerr << "Initial Types:\n";
-  for (HeapType type : results) {
-    std::cerr << type << '\n';
-  }
-  std::cerr << '\n';
-#endif
-
-  // Canonicalize HeapTypes at all their use sites. HeapTypes for which there
-  // was not already a globally canonical version are moved to the global store
-  // to become the canonical version. These new canonical HeapTypes still
-  // contain references to temporary Types owned by the TypeBuilder, so we must
-  // subsequently replace those references with references to canonical Types.
   // Canonicalize non-tuple Types (which never directly refer to other Types)
   // before tuple Types to avoid canonicalizing a tuple that still contains
   // non-canonical Types.
-  //
-  // Keep a lock on the global HeapType store as long as it can reach temporary
-  // types to ensure that no other threads observe the temporary types, for
-  // example if another thread concurrently constructs a new HeapType with the
-  // same shape as one being canonicalized here. This cannot happen with Types
-  // because they are hashed in the global store by pointer identity, which has
-  // not yet escaped the builder, rather than shape.
-  std::lock_guard<std::recursive_mutex> lock(globalHeapTypeStore.mutex);
-  std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
-  for (auto& info : infos) {
-    if (!info) {
-      continue;
-    }
-    HeapType original = asHeapType(info);
-    HeapType canonical = globalHeapTypeStore.insert(std::move(info));
-    if (original != canonical) {
-      canonicalHeapTypes[original] = canonical;
-    }
-  }
-  for (auto& pair : canonicalHeapTypes) {
-    HeapType original = pair.first;
-    HeapType canonical = pair.second;
-    for (HeapType* use : locations.heapTypes.at(original)) {
-      *use = canonical;
-    }
-  }
-
-  auto canonicalizeTypes = [&](bool tuples) {
+  auto canonicalize = [&](bool tuples) {
     for (auto& pair : locations.types) {
       Type original = pair.first;
       auto& uses = pair.second;
@@ -2978,29 +2929,22 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
       }
     }
   };
-  canonicalizeTypes(false);
-  canonicalizeTypes(true);
+  canonicalize(false);
+  canonicalize(true);
 
 #if TRACE_CANONICALIZATION
-  std::cerr << "Final Types:\n";
-  for (HeapType type : results) {
+  std::cerr << "Type-canonicalized Types:\n";
+  for (HeapType type : heapTypes) {
     std::cerr << type << '\n';
   }
   std::cerr << '\n';
 #endif
-
-  return results;
 }
 
-std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
+BuildResults buildEquirec(std::vector<std::unique_ptr<HeapTypeInfo>> infos) {
   std::vector<HeapType> heapTypes;
-  for (auto& entry : builder.impl->entries) {
-    assert(entry.initialized && "Cannot access uninitialized HeapType");
-    entry.info->isFinalized = true;
-    if (!entry.info->isNominal) {
-      entry.info->supertype = nullptr;
-    }
-    heapTypes.push_back(entry.get());
+  for (auto& info : infos) {
+    heapTypes.push_back(asHeapType(info));
   }
 
 #if TIME_CANONICALIZATION
@@ -3011,50 +2955,30 @@ std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
   ShapeCanonicalizer minimized(heapTypes);
 
 #if TIME_CANONICALIZATION
-  auto afterShape = std::chrono::steady_clock::now();
-#endif
-
-  // The shape of the definition graph is now canonicalized, but it is still
-  // comprised of temporary types and heap types. Get or create their globally
-  // canonical versions.
-  std::vector<HeapType> canonical = globallyCanonicalize(minimized.infos);
-
-#if TIME_CANONICALIZATION
-  auto afterGlobal = std::chrono::steady_clock::now();
-
+  auto stop = std::chrono::steady_clock::now();
   std::cerr << "Starting types: " << heapTypes.size() << '\n';
-  std::cerr << "Minimized types: " << minimized.results.size() << '\n';
+  std::cerr << "Minimized types: " << minimized.results.heapTypes.size()
+            << '\n';
 
   std::cerr << "Shape canonicalization: "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(
-                 afterShape - start)
-                 .count()
-            << " ms\n";
-  std::cerr << "Global canonicalization: "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(
-                 afterGlobal - afterShape)
+            << std::chrono::duration_cast<std::chrono::milliseconds>(stop -
+                                                                     start)
                  .count()
             << " ms\n";
 #endif
 
-  // Map the original heap types to their minimized and globally canonical
-  // versions.
-  for (auto& type : heapTypes) {
-    size_t index = minimized.getIndex(type);
-    // TODO: This is messy. Clean it up.
-    if (minimized.infos.at(index)) {
-      type = canonical.at(index);
-    } else {
-      type = minimized.results.at(index);
-    }
+#if TRACE_CANONICALIZATION
+  std::cerr << "Final equirecursive types:\n";
+  for (auto type : minimized.results.heapTypes) {
+    std::cerr << type << "\n";
+    ;
   }
+#endif
 
-  return heapTypes;
+  return minimized.results;
 }
 
 void validateNominalSubTyping(const std::vector<HeapType>& heapTypes) {
-  assert(typeSystem == TypeSystem::Nominal);
-
   // Ensure there are no cycles in the subtype graph. This is the classic DFA
   // algorithm for detecting cycles, but in the form of a simple loop because
   // each node (type) has at most one child (supertype).
@@ -3110,18 +3034,35 @@ void validateNominalSubTyping(const std::vector<HeapType>& heapTypes) {
   }
 }
 
-std::vector<HeapType> buildNominal(TypeBuilder& builder) {
+BuildResults buildNominal(std::vector<std::unique_ptr<HeapTypeInfo>> infos) {
+#if TRACE_CANONICALIZATION
+  std::cerr << "Before nominal canonicalization:\n";
+  for (auto& info : infos) {
+    std::cerr << asHeapType(info) << "\n";
+  }
+#endif
 #if TIME_CANONICALIZATION
   auto start = std::chrono::steady_clock::now();
 #endif
 
-  // Just move the HeapTypes to the global store. The Types are already in the
-  // global store.
+  // Just move the HeapTypes to the global store. In --nominal mode, there are
+  // no temporary types, so we don't need to report anything in `newCanonInfos`.
   std::vector<HeapType> heapTypes;
-  for (auto& entry : builder.impl->entries) {
-    assert(entry.initialized && "Cannot access uninitialized HeapType");
-    entry.info->isFinalized = true;
-    heapTypes.push_back(globalHeapTypeStore.insert(std::move(entry.info)));
+  heapTypes.reserve(infos.size());
+  std::vector<HeapTypeInfo*> newCanonInfos;
+  if (getTypeSystem() != TypeSystem::Nominal) {
+    newCanonInfos.reserve(infos.size());
+  }
+  for (auto& info : infos) {
+    if (getTypeSystem() != TypeSystem::Nominal) {
+      newCanonInfos.push_back(info.get());
+    }
+#ifndef NDEBUG
+    HeapType original = asHeapType(info);
+#endif
+    HeapType canonical = globalHeapTypeStore.insert(std::move(info));
+    heapTypes.push_back(canonical);
+    assert(canonical == original);
   }
 
 #if TIME_CANONICALIZATION
@@ -3143,20 +3084,82 @@ std::vector<HeapType> buildNominal(TypeBuilder& builder) {
                  .count()
             << " ms\n";
 #endif
-
-  return heapTypes;
+#if TRACE_CANONICALIZATION
+  std::cerr << "\nAfter nominal canonicalization:\n";
+  for (auto type : heapTypes) {
+    std::cerr << type << "\n";
+  }
+#endif
+  return {std::move(heapTypes), std::move(newCanonInfos)};
 }
 
 } // anonymous namespace
 
 std::vector<HeapType> TypeBuilder::build() {
-  switch (typeSystem) {
-    case TypeSystem::Equirecursive:
-      return buildEquirecursive(*this);
-    case TypeSystem::Nominal:
-      return buildNominal(*this);
+  auto& entries = impl->entries;
+  // Separate infos by type system. Keep track of how they are separated so we
+  // can combine them back in the original order afterwards.
+  std::vector<std::unique_ptr<HeapTypeInfo>> nominalInfos, equirecInfos;
+  std::vector<bool> isTypeNominal;
+  nominalInfos.reserve(entries.size());
+  equirecInfos.reserve(entries.size());
+  isTypeNominal.reserve(entries.size());
+  for (auto& entry : entries) {
+    assert(entry.initialized && "Cannot access uninitialized HeapType");
+    entry.info->isFinalized = true;
+    bool nominal =
+      entry.info->isNominal || getTypeSystem() == TypeSystem::Nominal;
+    isTypeNominal.push_back(nominal);
+    if (nominal) {
+      nominalInfos.push_back(std::move(entry.info));
+    } else {
+      entry.info->supertype = nullptr;
+      equirecInfos.push_back(std::move(entry.info));
+    }
   }
-  WASM_UNREACHABLE("unexpected type system");
+
+  // Keep a lock on the global HeapType store as long as it can reach temporary
+  // types to ensure that no other threads observe the temporary types, for
+  // example if another thread concurrently constructs a new HeapType with the
+  // same shape as one being canonicalized here. This cannot happen with Types
+  // because they are hashed in the global store by pointer identity, which has
+  // not yet escaped the builder, rather than shape.
+  BuildResults nominalResults, equirecResults;
+  {
+    std::lock_guard<std::recursive_mutex> lock(globalHeapTypeStore.mutex);
+
+    // Canonicalize HeapTypes.
+    nominalResults = buildNominal(std::move(nominalInfos));
+    equirecResults = buildEquirec(std::move(equirecInfos));
+
+    // The shape of the definition graph is now canonicalized, but still
+    // contains temporary types. Replace them with globally canonical types to
+    // avoid leaking temporary types.
+    std::vector<HeapType> roots;
+    roots.reserve(nominalResults.newCanonInfos.size() +
+                  equirecResults.newCanonInfos.size());
+    for (auto& infos :
+         {nominalResults.newCanonInfos, equirecResults.newCanonInfos}) {
+      for (auto& info : infos) {
+        roots.push_back(asHeapType(info));
+      }
+    }
+    canonicalizeTypes(std::move(roots));
+  }
+
+  // Recombine the nominal and equirecursive HeapTypes.
+  size_t nominalIdx = 0, equirecIdx = 0;
+  std::vector<HeapType> results;
+  results.reserve(entries.size());
+  for (bool nominal : isTypeNominal) {
+    if (nominal) {
+      results.push_back(nominalResults.heapTypes[nominalIdx++]);
+    } else {
+      results.push_back(equirecResults.heapTypes[equirecIdx++]);
+    }
+  }
+
+  return results;
 }
 
 } // namespace wasm
