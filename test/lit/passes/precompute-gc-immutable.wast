@@ -4,10 +4,10 @@
 
 (module
   ;; CHECK:      (type $struct-imm (struct (field i32)))
+  (type $struct-imm (struct_subtype i32 data))
 
   ;; CHECK:      (type $struct-mut (struct (field (mut i32))))
   (type $struct-mut (struct_subtype (mut i32) data))
-  (type $struct-imm (struct_subtype i32 data))
 
   ;; CHECK:      (func $propagate
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
