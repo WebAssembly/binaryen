@@ -344,7 +344,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   Index tableSize(Name tableName) override {
-    throw FailToEvalException("getTableData");
+    throw FailToEvalException("table size");
   }
 
   Literal tableLoad(Name tableName, Index index) override {
