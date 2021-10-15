@@ -2301,6 +2301,7 @@ public:
     ExternalInterface(
       std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
+    virtual std::vector<Literal> getTableData(Name name) = 0;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
@@ -2489,10 +2490,6 @@ public:
     externalInterface->importGlobals(globals, wasm);
     // prepare memory
     memorySize = wasm.memory.initial;
-    // prepare tables
-    for (auto& table : wasm.tables) {
-      tableSizes[table->name] = table->initial;
-    }
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       globals[global->name] =
@@ -2845,8 +2842,9 @@ private:
 
     Flow visitTableSize(TableSize* curr) {
       NOTE_ENTER("TableSize");
-      auto* inst = getTableInstance(curr->table);
-      return Literal::makeFromInt32(inst->tableSizes[curr->table], Type::i32);
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      Index tableSize = info.interface->getTableData(curr->table).size();
+      return Literal::makeFromInt32(tableSize, Type::i32);
     }
 
     Flow visitTableGrow(TableGrow* curr) {
@@ -2860,27 +2858,27 @@ private:
         return deltaFlow;
       }
       Name tableName = curr->table;
-      auto* inst = getTableInstance(tableName);
-      Index tableSize = inst->tableSizes[tableName];
-      Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
+      auto info = instance.getTableInterfaceInfo(tableName);
 
-      auto fail = Literal::makeFromInt32(-1, Type::i32);
+      Index tableSize = info.interface->getTableData(tableName).size();
+      Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
+      Flow fail = Literal::makeFromInt32(-1, Type::i32);
       Index delta = deltaFlow.getSingleValue().geti32();
+
       if (tableSize >= uint32_t(-1) - delta) {
         return fail;
       }
-      if (uint64_t(tableSize) + uint64_t(delta) >
-          uint64_t(inst->wasm.getTable(tableName)->max)) {
+      auto maxTableSize = instance.self()->wasm.getTable(tableName)->max;
+      if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(maxTableSize)) {
         return fail;
       }
       Index newSize = tableSize + delta;
-      if (!inst->externalInterface->growTable(
+      if (!info.interface->growTable(
             tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
         // We failed to grow the table in practice, even though it was valid
         // to try to do so.
         return fail;
       }
-      inst->tableSizes[tableName] = newSize;
       return ret;
     }
 
@@ -3604,8 +3602,6 @@ public:
 
 protected:
   Address memorySize; // in pages
-  std::unordered_map<Name, Index> tableSizes;
-
   static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {

@@ -104,6 +104,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
   virtual ~ShellExternalInterface() = default;
 
+  std::vector<Literal> getTableData(Name name) override { return tables[name]; }
+
   ModuleInstance* getImportInstance(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {

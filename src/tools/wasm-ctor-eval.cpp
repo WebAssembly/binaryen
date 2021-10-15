@@ -250,6 +250,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     instance = &instance_;
   }
 
+  std::vector<Literal> getTableData(Name name) override {
+    throw FailToEvalException("getTableData");
+  }
+
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
       auto it = linkedInstances.find(global->module);
