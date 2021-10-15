@@ -250,10 +250,6 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     instance = &instance_;
   }
 
-  std::vector<Literal> getTableData(Name name) override {
-    throw FailToEvalException("getTableData");
-  }
-
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
       auto it = linkedInstances.find(global->module);
@@ -345,6 +341,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException(
       std::string("callTable on index not found in static segments: ") +
       std::to_string(index));
+  }
+
+  Index tableSize(Name tableName) override {
+    throw FailToEvalException("getTableData");
   }
 
   Literal tableLoad(Name tableName, Index index) override {

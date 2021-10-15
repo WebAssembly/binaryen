@@ -2301,7 +2301,6 @@ public:
     ExternalInterface(
       std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
-    virtual std::vector<Literal> getTableData(Name name) = 0;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
@@ -2461,6 +2460,8 @@ public:
     virtual void store128(Address addr, const std::array<uint8_t, 16>&) {
       WASM_UNREACHABLE("unimp");
     }
+
+    virtual Index tableSize(Name tableName) = 0;
 
     virtual void tableStore(Name tableName, Index index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
@@ -2832,7 +2833,7 @@ private:
     Flow visitTableSize(TableSize* curr) {
       NOTE_ENTER("TableSize");
       auto info = instance.getTableInterfaceInfo(curr->table);
-      Index tableSize = info.interface->getTableData(curr->table).size();
+      Index tableSize = info.interface->tableSize(curr->table);
       return Literal::makeFromInt32(tableSize, Type::i32);
     }
 
@@ -2849,7 +2850,7 @@ private:
       Name tableName = curr->table;
       auto info = instance.getTableInterfaceInfo(tableName);
 
-      Index tableSize = info.interface->getTableData(tableName).size();
+      Index tableSize = info.interface->tableSize(tableName);
       Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
       Flow fail = Literal::makeFromInt32(-1, Type::i32);
       Index delta = deltaFlow.getSingleValue().geti32();

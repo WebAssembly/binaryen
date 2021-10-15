@@ -104,8 +104,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
   virtual ~ShellExternalInterface() = default;
 
-  std::vector<Literal> getTableData(Name name) override { return tables[name]; }
-
   ModuleInstance* getImportInstance(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
@@ -223,6 +221,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
   void store128(Address addr, const std::array<uint8_t, 16>& value) override {
     memory.set<std::array<uint8_t, 16>>(addr, value);
+  }
+
+  Index tableSize(Name tableName) override {
+    return (Index)tables[tableName].size();
   }
 
   void tableStore(Name tableName, Index index, const Literal& entry) override {
