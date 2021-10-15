@@ -665,7 +665,7 @@
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
 
   ;; CHECK:      (type $vtable (array funcref))
-  (type $vtable (array funcref))
+  (type $vtable (array_subtype funcref data))
   (type $object (struct_subtype (ref $vtable) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (array.init_static $vtable
@@ -735,7 +735,7 @@
   ;; cast of the vtable type.
 
   ;; CHECK:      (type $itable (array (ref null data)))
-  (type $itable (array (ref null data)))
+  (type $itable (array_subtype (ref null data) data))
 
   ;; CHECK:      (type $object (struct (field (ref $itable))))
   (type $object (struct_subtype (ref $itable) data))
