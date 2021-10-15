@@ -7,9 +7,9 @@
   ;; A struct with a field that is never read or written, so it can be
   ;; removed.
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct (field (mut funcref))))
 
   ;; CHECK:      (func $func (param $x (ref $struct))
@@ -22,9 +22,9 @@
 (module
   ;; A write does not keep a field from being removed.
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct (field (mut funcref))))
 
   ;; CHECK:      (func $func (param $x (ref $struct))
@@ -48,10 +48,10 @@
 (module
   ;; A new does not keep a field from being removed.
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct (field (mut funcref))))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
   ;; CHECK:      (func $func (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -71,10 +71,10 @@
 (module
   ;; A new_default does not keep a field from being removed.
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct (field (mut funcref))))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
   ;; CHECK:      (func $func (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -93,10 +93,10 @@
 (module
   ;; A read *does* keep a field from being removed.
 
-  ;; CHECK:      (type $struct (struct (field funcref)))
+  ;; CHECK:      (type $struct (struct_subtype (field funcref) data))
   (type $struct (struct (field (mut funcref))))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
   ;; CHECK:      (func $func (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -120,17 +120,17 @@
   ;; of removing with the immutability inference that --gto does.)
 
   ;; A struct with all fields marked mutable.
-  ;; CHECK:      (type $mut-struct (struct (field $r i32) (field $rw (mut i32)) (field $r-2 i32) (field $rw-2 (mut i32))))
+  ;; CHECK:      (type $mut-struct (struct_subtype (field $r i32) (field $rw (mut i32)) (field $r-2 i32) (field $rw-2 (mut i32)) data))
   (type $mut-struct (struct (field $r (mut i32)) (field $w (mut i32)) (field $rw (mut i32)) (field $r-2 (mut i32)) (field $w-2 (mut i32)) (field $rw-2 (mut i32))))
 
   ;; A similar struct but with all fields marked immutable, and the only
   ;; writes are from during creation (so all fields are at least writeable).
-  ;; CHECK:      (type $imm-struct (struct (field $rw i32) (field $rw-2 i32)))
+  ;; CHECK:      (type $imm-struct (struct_subtype (field $rw i32) (field $rw-2 i32) data))
   (type $imm-struct (struct (field $w i32) (field $rw i32) (field $w-2 i32) (field $rw-2 i32)))
 
-  ;; CHECK:      (type $ref|$mut-struct|_=>_none (func (param (ref $mut-struct))))
+  ;; CHECK:      (type $ref|$mut-struct|_=>_none (func_subtype (param (ref $mut-struct)) func))
 
-  ;; CHECK:      (type $ref|$imm-struct|_=>_none (func (param (ref $imm-struct))))
+  ;; CHECK:      (type $ref|$imm-struct|_=>_none (func_subtype (param (ref $imm-struct)) func))
 
   ;; CHECK:      (func $func-mut (param $x (ref $mut-struct))
   ;; CHECK-NEXT:  (drop
@@ -267,9 +267,9 @@
   ;; A vtable-like structure created in a global location. Only some of the
   ;; fields are accessed.
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $vtable (struct (field $v1 funcref) (field $v2 funcref)))
+  ;; CHECK:      (type $vtable (struct_subtype (field $v1 funcref) (field $v2 funcref) data))
   (type $vtable (struct (field $v0 funcref) (field $v1 funcref) (field $v2 funcref) (field $v3 funcref) (field $v4 funcref)))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
@@ -341,10 +341,10 @@
   ;; by coincidence.
 
 
-  ;; CHECK:      (type $vtable (struct (field $v1 i64) (field $v2 f32)))
+  ;; CHECK:      (type $vtable (struct_subtype (field $v1 i64) (field $v2 f32) data))
   (type $vtable (struct (field $v0 i32) (field $v1 i64) (field $v2 f32) (field $v3 f64) (field $v4 anyref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (i64.const 1)

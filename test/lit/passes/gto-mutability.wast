@@ -15,7 +15,7 @@
 
   ;; CHECK:      (type $none_=>_ref?|$struct| (func_subtype (result (ref null $struct)) func))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (tag $tag (param (ref $struct)))
   (tag $tag (param (ref $struct)))
@@ -142,7 +142,7 @@
 
   ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (param $x (ref $A))
   ;; CHECK-NEXT:  (struct.set $A 0
@@ -206,7 +206,7 @@
 
   ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (param $x (ref $B))
   ;; CHECK-NEXT:  (struct.set $B 0
@@ -270,7 +270,7 @@
 
   ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func_subtype (param (ref $A) (ref $B)) func))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (param $x (ref $A)) (param $y (ref $B))
   ;; CHECK-NEXT:  (struct.set $A 0
@@ -333,7 +333,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (param $x (ref $struct))
   ;; CHECK-NEXT:  (struct.set $struct 2
@@ -376,11 +376,12 @@
   ;; Subtyping. Without a write in either supertype or subtype, we can
   ;; optimize the field to be immutable.
 
+  ;; CHECK:      (type $super (struct_subtype (field i32) data))
   (type $super (struct (field (mut i32))))
   ;; CHECK:      (type $sub (struct_subtype (field i32) $super))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func
   ;; CHECK-NEXT:  (drop
@@ -431,14 +432,12 @@
 
   ;; CHECK:      (type $super (struct_subtype (field (mut i32)) data))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $ref|$super|_=>_none (func_subtype (param (ref $super)) func))
-
   ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
-  ;; CHECK:      (type $ref|$super|_=>_none (func (param (ref $super))))
+  ;; CHECK:      (type $ref|$super|_=>_none (func_subtype (param (ref $super)) func))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (param $x (ref $super))
   ;; CHECK-NEXT:  (drop
@@ -495,14 +494,16 @@
 (module
   ;; As above, but add a write in the sub, which prevents optimization.
 
+
   ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
 
+  ;; CHECK:      (type $super (struct_subtype (field (mut i32)) data))
   (type $super (struct (field (mut i32))))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
-  ;; CHECK:      (type $ref|$sub|_=>_none (func (param (ref $sub))))
+  ;; CHECK:      (type $ref|$sub|_=>_none (func_subtype (param (ref $sub)) func))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (param $x (ref $sub))
   ;; CHECK-NEXT:  (struct.set $sub 0
