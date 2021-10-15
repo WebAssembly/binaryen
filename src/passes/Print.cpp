@@ -2510,9 +2510,22 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     visitExpression(curr);
   }
   // Module-level visitors
+  void printSupertypeOr(HeapType curr, std::string noSuper) {
+    HeapType super;
+    if (curr.getSuperType(super)) {
+      TypeNamePrinter(o, currModule).print(super);
+    } else {
+      o << noSuper;
+    }
+  }
+
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    o << "(func";
+    if (!name.is() && getTypeSystem() == TypeSystem::Nominal) {
+      o << "(func_subtype";
+    } else {
+      o << "(func";
+    }
     if (name.is()) {
       o << " $" << name;
     }
@@ -2538,6 +2551,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')';
     }
+    if (!name.is() && getTypeSystem() == TypeSystem::Nominal) {
+      o << ' ';
+      printSupertypeOr(curr, "func");
+    }
     o << ")";
   }
   void handleFieldBody(const Field& field) {
@@ -2560,13 +2577,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    o << "(array ";
+    if (getTypeSystem() == TypeSystem::Nominal) {
+      o << "(array_subtype ";
+    } else {
+      o << "(array ";
+    }
     handleFieldBody(curr.getArray().element);
+    if (getTypeSystem() == TypeSystem::Nominal) {
+      o << ' ';
+      printSupertypeOr(curr, "data");
+    }
     o << ')';
   }
   void handleStruct(HeapType curr) {
     const auto& fields = curr.getStruct().fields;
-    o << "(struct ";
+    if (getTypeSystem() == TypeSystem::Nominal) {
+      o << "(struct_subtype ";
+    } else {
+      o << "(struct ";
+    }
     auto sep = "";
     for (Index i = 0; i < fields.size(); i++) {
       o << sep << "(field ";
@@ -2579,9 +2608,13 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
       sep = " ";
     }
+    if (getTypeSystem() == TypeSystem::Nominal) {
+      o << ' ';
+      printSupertypeOr(curr, "data");
+    }
     o << ')';
   }
-  void handleHeapType(HeapType type, Module* module) {
+  void handleHeapType(HeapType type) {
     if (type.isSignature()) {
       handleSignature(type);
     } else if (type.isArray()) {
@@ -2590,12 +2623,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       handleStruct(type);
     } else {
       o << type;
-    }
-    HeapType super;
-    if (type.getSuperType(super)) {
-      o << " (extends ";
-      TypeNamePrinter(o, module).print(super);
-      o << ')';
     }
   }
   void visitExport(Export* curr) {
@@ -2981,7 +3008,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printMedium(o, "type") << ' ';
       TypeNamePrinter(o, curr).print(type);
       o << ' ';
-      handleHeapType(type, curr);
+      handleHeapType(type);
       o << ")" << maybeNewLine;
     }
     ModuleUtils::iterImportedMemories(
