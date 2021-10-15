@@ -2700,17 +2700,6 @@ private:
       return inst;
     }
 
-    SubType* getTableInstance(Name name) {
-      auto* inst = instance.self();
-      auto* table = inst->wasm.getTable(name);
-      assert(table);
-
-      while (table->imported()) {
-        inst = inst->linkedInstances.at(table->module).get();
-      }
-      return inst;
-    }
-
     // Returns a reference to the current value of a potentially imported global
     Literals& getGlobal(Name name) {
       auto* inst = instance.self();
