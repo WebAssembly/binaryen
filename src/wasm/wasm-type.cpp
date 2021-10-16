@@ -2807,6 +2807,9 @@ ShapeCanonicalizer::translatePartitionsToTypes(std::vector<HeapType>& roots) {
   // globally canonical type, no temporary types will end up being patched into
   // the globally canonical types and we can skip patching the children of those
   // types.
+  //
+  // Reserve enough room in these vectors so that no reallocations will be
+  // necessary. It's ok if `newCanonInfos` doesn't fill the reserved space.
   std::vector<HeapType> canonPartitionTypes;
   std::vector<HeapTypeInfo*> newCanonInfos;
   canonPartitionTypes.reserve(partitions.sets);
@@ -2849,7 +2852,7 @@ ShapeCanonicalizer::translatePartitionsToTypes(std::vector<HeapType>& roots) {
 #endif
 
   // Walk each of the new globally canonical HeapTypes and update all the
-  // HeapTypes it reaches.
+  // HeapTypes it reaches to also be globally canonical.
   for (auto& info : newCanonInfos) {
     struct ChildUpdater : HeapTypeChildWalker<ChildUpdater> {
       ShapeCanonicalizer& canonicalizer;
@@ -2865,7 +2868,7 @@ ShapeCanonicalizer::translatePartitionsToTypes(std::vector<HeapType>& roots) {
         }
         auto it = canonicalizer.states.find(*child);
         if (it != canonicalizer.states.end()) {
-          // heapType hasn't already been replaced; replace it.
+          // `child` hasn't already been replaced; replace it.
           auto set = canonicalizer.partitions.getSetForElem(it->second);
           *child = canonPartitionTypes.at(set.index);
         }
