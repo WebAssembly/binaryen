@@ -49,18 +49,7 @@
 
 ;; Skip standard tool options
 
-;; CHECK:        --no-validation,-n                   Disables validation, assumes inputs are
-;; CHECK-NEXT:                                        correct
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
-;; CHECK-NEXT:                                        passes being run. Must be in the form
-;; CHECK-NEXT:                                        KEY@VALUE
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --nominal                            Use the prototype nominal type system
-;; CHECK-NEXT:                                        instead of the normal equirecursive type
-;; CHECK-NEXT:                                        system.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
+;; CHECK:        --output,-o                          Output file (stdout if not specified)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
 ;; CHECK-NEXT:                                        output file

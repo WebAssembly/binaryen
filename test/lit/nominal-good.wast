@@ -3,6 +3,8 @@
 ;; RUN: wasm-opt %s -all --nominal --roundtrip -S -o - | filecheck %s --check-prefix NOMINAL
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s --check-prefix EQUIREC
 ;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s --check-prefix EQUIREC
+;; RUN: wasm-opt %s -all --structural -S -o - | filecheck %s --check-prefix EQUIREC
+;; RUN: wasm-opt %s -all --structural --roundtrip -S -o - | filecheck %s --check-prefix EQUIREC
 
 (module
 

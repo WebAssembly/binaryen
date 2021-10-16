@@ -112,11 +112,18 @@ struct ToolOptions : public Options {
            })
       .add("--nominal",
            "",
-           "Use the prototype nominal type system instead of the normal "
-           "equirecursive type system.",
+           "Force all GC type definitions to be parsed as nominal.",
            Options::Arguments::Zero,
            [](Options* o, const std::string& argument) {
              setTypeSystem(TypeSystem::Nominal);
+           })
+      .add("--structural",
+           "",
+           "Force all GC type definitions to be parsed as structural "
+           "(i.e. equirecursive). This is the default.",
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             setTypeSystem(TypeSystem::Equirecursive);
            });
   }
 
