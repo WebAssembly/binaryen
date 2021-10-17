@@ -2002,3 +2002,49 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global i32 (i32.const 42))
+  (global $global i32 (i32.const 42))
+  ;; CHECK:      (global $global-2 i32 (i32.const 1337))
+  (global $global-2 i32 (i32.const 1337))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (global.get $global-2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.new $struct
+        (global.get $global)
+      )
+    )
+    ;; As above, but set a different global, which prevents optimization.
+    (struct.set $struct 0
+      (ref.null $struct)
+      (global.get $global-2)
+    )
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
