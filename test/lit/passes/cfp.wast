@@ -1951,3 +1951,54 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global i32 (i32.const 42))
+  (global $global i32 (i32.const 42))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (global.get $global)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.new $struct
+        (global.get $global)
+      )
+    )
+    ;; As above, but there is another set of the field. It is the same, though,
+    ;; so that is fine. Also, the struct's field is now mutable as well to allow
+    ;; that, and that also does not prevent optimization.
+    (struct.set $struct 0
+      (ref.null $struct)
+      (global.get $global)
+    )
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
