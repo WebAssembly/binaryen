@@ -299,12 +299,23 @@ struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
                       HeapType type,
                       Index index,
                       PossibleConstantValues& info) {
-
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
+    // If this is a constant literal value, note that.
+    if (Properties::isConstantExpression(expr)) {
       info.note(Properties::getLiteral(expr));
+      return;
     }
+
+    // If this is an immutable global that we get, note that.
+    if (auto* get = expr->dynCast<GlobalGet>()) {
+      auto* global = getModule()->getGlobal(get->name);
+      if (global->mutable_ == Immutable) {
+        info.note(get->name);
+        return;
+      }
+    }
+
+    // Otherwise, this is not something we can reason about.
+    info.noteUnknown();
   }
 
   void noteDefault(Type fieldType,
