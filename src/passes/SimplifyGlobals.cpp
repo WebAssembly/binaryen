@@ -107,7 +107,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       return;
     }
 
-    auto global = firstOnlyReadsGlobalWhichSecondOnlyWrites(curr->condition, curr->ifTrue);
+    auto global =
+      firstOnlyReadsGlobalWhichSecondOnlyWrites(curr->condition, curr->ifTrue);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
@@ -117,7 +118,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   // Checks if the first expression only reads a certain global, and has no
   // other effects, and the second only writes that same global, and also has no
   // other effects. Returns the global name if so, or a null name otherwise.
-  Name firstOnlyReadsGlobalWhichSecondOnlyWrites(Expression* first, Expression* second) {
+  Name firstOnlyReadsGlobalWhichSecondOnlyWrites(Expression* first,
+                                                 Expression* second) {
     // See if reading a specific global is the only effect the first has.
     EffectAnalyzer firstEffects(getPassOptions(), *getModule(), first);
 
@@ -179,7 +181,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       return;
     }
 
-    auto global = firstOnlyReadsGlobalWhichSecondOnlyWrites(iff->condition, list[1]);
+    auto global =
+      firstOnlyReadsGlobalWhichSecondOnlyWrites(iff->condition, list[1]);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
