@@ -2048,3 +2048,78 @@
   )
 )
 
+(module
+  ;; Test a global type other than i32. Arrays of structs are a realistic case
+  ;; as they are used to implement itables.
+
+  ;; CHECK:      (type $vtable (struct_subtype (field funcref) data))
+  (type $vtable (struct funcref))
+
+  ;; CHECK:      (type $itable (array_subtype (ref $vtable) data))
+  (type $itable (array (ref $vtable)))
+
+  ;; CHECK:      (type $object (struct_subtype (field $itable (ref $itable)) data))
+  (type $object (struct (field $itable (ref $itable))))
+
+  ;; CHECK:      (type $none_=>_funcref (func_subtype (result funcref) func))
+
+  ;; CHECK:      (global $global (ref $itable) (array.init_static $itable
+  ;; CHECK-NEXT:  (struct.new $vtable
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $vtable
+  ;; CHECK-NEXT:   (ref.func $test)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $global (ref $itable) (array.init_static $itable
+    (struct.new $vtable
+      (ref.null func)
+    )
+    (struct.new $vtable
+      (ref.func $test)
+    )
+  ))
+
+  ;; CHECK:      (func $test (result funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $vtable 0
+  ;; CHECK-NEXT:   (array.get $itable
+  ;; CHECK-NEXT:    (block (result (ref $itable))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (ref.null $object)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result funcref)
+    (drop
+      (struct.new $object
+        (global.get $global)
+      )
+    )
+    ;; Realistic usage of an itable: read an item from it, then a func from
+    ;; that, and return the value (all verifying that the types are correct
+    ;; after optimization). Note how after optimization everything is lined up
+    ;; so that precompute-propagate can infer from the global.get the specific
+    ;; object the array.get is on, allowing us to emit a constant value for the
+    ;; outer struct.get in principle.
+    (struct.get $vtable 0
+      (array.get $itable
+        (struct.get $object $itable
+          (ref.null $object)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+)
+
