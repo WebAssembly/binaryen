@@ -44,7 +44,8 @@ namespace {
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
-// anything.
+// anything. The values can either be literal values (Literal) or the names of
+// immutable globals (Name).
 //
 // Currently this just looks for a single constant value, and even two constant
 // values are treated as unknown. It may be worth optimizing more than that TODO
@@ -52,16 +53,54 @@ struct PossibleConstantValues {
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
+    // We already know we cannot reason about values here.
+    if (unknown) {
+      return;
+    }
+
     if (!noted) {
-      // This is the first value.
-      value = curr;
+      // This is the first literal.
+      literal = curr;
       noted = true;
+      return;
+    }
+
+    // We noted a global before, which means the value is unknown.
+    if (global.is()) {
+      unknown = true;
       return;
     }
 
     // This is a subsequent value. Check if it is different from all previous
     // ones.
-    if (curr != value) {
+    if (curr != literal) {
+      noteUnknown();
+    }
+  }
+
+  // Note an immutable global.
+  void note(Name curr) {
+    // We already know we cannot reason about values here.
+    if (unknown) {
+      return;
+    }
+
+    if (!noted) {
+      // This is the first value.
+      global = curr;
+      noted = true;
+      return;
+    }
+
+    // We noted a non-global before, which means the value is unknown.
+    if (!global.is()) {
+      unknown = true;
+      return;
+    }
+
+    // This is a subsequent value. Check if it is different from all previous
+    // ones.
+    if (curr != global) {
       noteUnknown();
     }
   }
@@ -69,8 +108,12 @@ struct PossibleConstantValues {
   // Notes a value that is unknown - it can be anything. We have failed to
   // identify a constant value here.
   void noteUnknown() {
-    value = Literal(Type::none);
     noted = true;
+    unknown = true;
+
+    // While not strictly necessary, zero out the fields for simplicity.
+    literal = Literal(Type::none);
+    global = Name();
   }
 
   // Combine the information in a given PossibleConstantValues to this one. This
@@ -86,23 +129,39 @@ struct PossibleConstantValues {
       *this = other;
       return other.noted;
     }
-    if (!isConstant()) {
+    if (unknown) {
       return false;
     }
-    if (!other.isConstant() || getConstantValue() != other.getConstantValue()) {
+    if (other.unknown) {
+      unknown = true;
+      return true;
+    }
+
+    // Both locations have noted, and are not unknown, so check if the single
+    // constant value in them matches. Note that this assumes the value not set
+    // (global if literal is set, literal if global is set) contains null, which
+    // is an invariant that we preserve.
+    if (literal != other.literal || global != other.global) {
       noteUnknown();
       return true;
     }
     return false;
   }
 
-  // Check if all the values are identical and constant.
-  bool isConstant() const { return noted && value.type.isConcrete(); }
+  bool isConstant() const { return noted && !unknown; }
 
-  // Returns the single constant value.
-  Literal getConstantValue() const {
-    assert(isConstant());
-    return value;
+  bool isConstantLiteral() const { return isConstant() && !global.is(); }
+
+  bool isConstantGlobal() const { return isConstant() && global.is(); }
+
+  Literal getConstantLiteral() const {
+    assert(isConstantLiteral());
+    return literal;
+  }
+
+  Name getConstantGlobal() const {
+    assert(isConstantGlobal());
+    return global;
   }
 
   // Returns whether we have ever noted a value.
@@ -112,23 +171,31 @@ struct PossibleConstantValues {
     o << '[';
     if (!hasNoted()) {
       o << "unwritten";
-    } else if (!isConstant()) {
+    } else if (unknown) {
       o << "unknown";
-    } else {
-      o << value;
+    } else if (!global.is()) {
+      o << literal;
+    } else if (global.is()) {
+      o << '$' << global;
     }
     o << ']';
   }
 
 private:
-  // Whether we have noted any values at all.
+  // Whether we have noted anything at all - a value or a global.
   bool noted = false;
 
-  // The one value we have seen, if there is one. If we realize there is no
-  // single constant value here, we make this have a non-concrete (impossible)
-  // type to indicate that. Otherwise, a concrete type indicates we have a
-  // constant value.
-  Literal value;
+  // Whether we have nothing more than one incompatible thing, that is, there
+  // are multiple values possible here, or multiple globals, or a value and a
+  // global.
+  bool unknown = false;
+
+  // The one litearl value we have seen, if there is one. (If there is more than
+  // one the value here does not matter as |unknown| is set.)
+  Literal literal;
+
+  // As |literal|, but for immutable globals written to this field.
+  Name global;
 };
 
 using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
@@ -190,9 +257,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
+    Expression* value;
+    if (info.isConstantLiteral()) {
+      value = builder.makeConstantExpression(info.getConstantLiteral());
+    } else {
+      value = builder.makeGlobalGet(info.getConstantGlobal(), curr->type);
+    }
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-      builder.makeConstantExpression(info.getConstantValue())));
+      value));
     changed = true;
   }
 
