@@ -1872,3 +1872,46 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global i32 (i32.const 42))
+  (global $global i32 (i32.const 42))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; An immutable global is the only thing written to this field, so we can
+    ;; propagate the value to the struct.get and replace it with a global.get.
+    (drop
+      (struct.new $struct
+        (global.get $global)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
