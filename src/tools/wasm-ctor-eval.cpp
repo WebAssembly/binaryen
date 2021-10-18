@@ -351,7 +351,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException("table.get: TODO");
   }
 
-  // called during initialization, but we don't keep track of a table
+  // called during initialization
   void tableStore(Name tableName, Index index, const Literal& value) override {}
 
   int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
