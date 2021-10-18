@@ -14,10 +14,14 @@
 
   ;; CHECK-BINARY:      (type $none_=>_i32 (func (result i32)))
 
+  ;; CHECK-BINARY:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
   ;; CHECK-BINARY:      (table $table-1 1 1 funcref)
   ;; CHECK-TEXT:      (type $none_=>_none (func))
 
   ;; CHECK-TEXT:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK-TEXT:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; CHECK-TEXT:      (table $table-1 1 1 funcref)
   (table $table-1 funcref
@@ -127,10 +131,28 @@
   (func $get-table-size (result i32)
     (table.size $table-1)
   )
+
+  ;; CHECK-BINARY:      (func $table-grow (param $sz i32) (result i32)
+  ;; CHECK-BINARY-NEXT:  (table.grow $table-1
+  ;; CHECK-BINARY-NEXT:   (ref.null func)
+  ;; CHECK-BINARY-NEXT:   (local.get $sz)
+  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT: )
+  ;; CHECK-TEXT:      (func $table-grow (param $sz i32) (result i32)
+  ;; CHECK-TEXT-NEXT:  (table.grow $table-1
+  ;; CHECK-TEXT-NEXT:   (ref.null func)
+  ;; CHECK-TEXT-NEXT:   (local.get $sz)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  (func $table-grow (param $sz i32) (result i32)
+    (table.grow $table-1 (ref.null func) (local.get $sz))
+  )
 )
 ;; CHECK-NODEBUG:      (type $none_=>_none (func))
 
 ;; CHECK-NODEBUG:      (type $none_=>_i32 (func (result i32)))
+
+;; CHECK-NODEBUG:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
 ;; CHECK-NODEBUG:      (table $0 1 1 funcref)
 
@@ -171,4 +193,11 @@
 
 ;; CHECK-NODEBUG:      (func $3 (result i32)
 ;; CHECK-NODEBUG-NEXT:  (table.size $0)
+;; CHECK-NODEBUG-NEXT: )
+
+;; CHECK-NODEBUG:      (func $4 (param $0 i32) (result i32)
+;; CHECK-NODEBUG-NEXT:  (table.grow $0
+;; CHECK-NODEBUG-NEXT:   (ref.null func)
+;; CHECK-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )

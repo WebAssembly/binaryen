@@ -822,9 +822,9 @@ void RefNull::finalize() {}
 void RefIs::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
-    return;
+  } else {
+    type = Type::i32;
   }
-  type = Type::i32;
 }
 
 void RefFunc::finalize() {
@@ -859,6 +859,14 @@ void TableSet::finalize() {
 
 void TableSize::finalize() {
   // Nothing to do - the type must have been set already during construction.
+}
+
+void TableGrow::finalize() {
+  if (delta->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
 }
 
 void Try::finalize() {
