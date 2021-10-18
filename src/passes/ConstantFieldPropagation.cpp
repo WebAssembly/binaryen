@@ -185,8 +185,8 @@ private:
   // Whether we have noted anything at all - a value or a global.
   bool noted = false;
 
-  // Whether we have nothing more than one incompatible thing, that is, there
-  // are multiple values possible here, or multiple globals, or a value and a
+  // Whether we have more than one incompatible thing here, that is, there are
+  // multiple possible literals here, or multiple globals, or a literal and a
   // global.
   bool unknown = false;
 
