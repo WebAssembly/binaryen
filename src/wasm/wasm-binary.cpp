@@ -251,12 +251,11 @@ void WasmBinaryWriter::writeTypes() {
       WASM_UNREACHABLE("TODO GC type writing");
     }
     if (nominal) {
-      HeapType super;
-      bool hasSuper = type.getSuperType(super);
-      if (!hasSuper) {
+      auto super = type.getSuperType();
+      if (!super) {
         super = type.isFunction() ? HeapType::func : HeapType::data;
       }
-      writeHeapType(super);
+      writeHeapType(*super);
     }
   }
   finishSection(start);
