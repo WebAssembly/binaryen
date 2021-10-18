@@ -6,7 +6,7 @@
 ;; RUN: wasm-opt %s -all --nominal --roundtrip -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32)) (field f32) (field $named f64)))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) (field f32) (field $named f64) data))
   (type $struct (struct
     (field (mut i32))
     (field f32)

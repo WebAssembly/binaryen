@@ -1359,6 +1359,9 @@ public:
     return Literal(int32_t(left == right));
   }
   Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSize(TableSize* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -2162,6 +2165,18 @@ public:
     NOTE_ENTER("TableGet");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableSet(TableSet* curr) {
+    NOTE_ENTER("TableSet");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableSize(TableSize* curr) {
+    NOTE_ENTER("TableSize");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableGrow(TableGrow* curr) {
+    NOTE_ENTER("TableGrow");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2296,6 +2311,10 @@ public:
                                Type result,
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
+    virtual bool growTable(Name name,
+                           const Literal& value,
+                           Index oldSize,
+                           Index newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
@@ -2442,11 +2461,12 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void
-    tableStore(Name tableName, Address addr, const Literal& entry) {
+    virtual Index tableSize(Name tableName) = 0;
+
+    virtual void tableStore(Name tableName, Index index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual Literal tableLoad(Name tableName, Address addr) {
+    virtual Literal tableLoad(Name tableName, Index index) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2792,6 +2812,64 @@ private:
       auto info = instance.getTableInterfaceInfo(curr->table);
       return info.interface->tableLoad(info.name,
                                        index.getSingleValue().geti32());
+    }
+    Flow visitTableSet(TableSet* curr) {
+      NOTE_ENTER("TableSet");
+      Flow indexFlow = this->visit(curr->index);
+      if (indexFlow.breaking()) {
+        return indexFlow;
+      }
+      Flow valueFlow = this->visit(curr->value);
+      if (valueFlow.breaking()) {
+        return valueFlow;
+      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      info.interface->tableStore(info.name,
+                                 indexFlow.getSingleValue().geti32(),
+                                 valueFlow.getSingleValue());
+      return Flow();
+    }
+
+    Flow visitTableSize(TableSize* curr) {
+      NOTE_ENTER("TableSize");
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      Index tableSize = info.interface->tableSize(curr->table);
+      return Literal::makeFromInt32(tableSize, Type::i32);
+    }
+
+    Flow visitTableGrow(TableGrow* curr) {
+      NOTE_ENTER("TableGrow");
+      Flow valueFlow = this->visit(curr->value);
+      if (valueFlow.breaking()) {
+        return valueFlow;
+      }
+      Flow deltaFlow = this->visit(curr->delta);
+      if (deltaFlow.breaking()) {
+        return deltaFlow;
+      }
+      Name tableName = curr->table;
+      auto info = instance.getTableInterfaceInfo(tableName);
+
+      Index tableSize = info.interface->tableSize(tableName);
+      Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
+      Flow fail = Literal::makeFromInt32(-1, Type::i32);
+      Index delta = deltaFlow.getSingleValue().geti32();
+
+      if (tableSize >= uint32_t(-1) - delta) {
+        return fail;
+      }
+      auto maxTableSize = instance.self()->wasm.getTable(tableName)->max;
+      if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(maxTableSize)) {
+        return fail;
+      }
+      Index newSize = tableSize + delta;
+      if (!info.interface->growTable(
+            tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
+        // We failed to grow the table in practice, even though it was valid
+        // to try to do so.
+        return fail;
+      }
+      return ret;
     }
 
     Flow visitLocalGet(LocalGet* curr) {
@@ -3514,7 +3592,6 @@ public:
 
 protected:
   Address memorySize; // in pages
-
   static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {

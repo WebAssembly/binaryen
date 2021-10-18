@@ -787,12 +787,10 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module,
                                  BinaryenExpressionRef condition,
                                  BinaryenExpressionRef ifTrue,
                                  BinaryenExpressionRef ifFalse) {
-  auto* ret = ((Module*)module)->allocator.alloc<If>();
-  ret->condition = (Expression*)condition;
-  ret->ifTrue = (Expression*)ifTrue;
-  ret->ifFalse = (Expression*)ifFalse;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeIf((Expression*)condition,
+                                            (Expression*)ifTrue,
+                                            (Expression*)ifFalse));
 }
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
                                    const char* name,
@@ -902,50 +900,34 @@ BinaryenReturnCallIndirect(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<LocalGet>();
-  ret->index = index;
-  ret->type = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeLocalGet(index, Type(type)));
 }
 BinaryenExpressionRef BinaryenLocalSet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
-  ret->index = index;
-  ret->value = (Expression*)value;
-  ret->makeSet();
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeLocalSet(index, (Expression*)value));
 }
 BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value,
                                        BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
-  ret->index = index;
-  ret->value = (Expression*)value;
-  ret->makeTee(Type(type));
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeLocalTee(index, (Expression*)value, Type(type)));
 }
 BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<GlobalGet>();
-  ret->name = name;
-  ret->type = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeGlobalGet(name, Type(type)));
 }
 BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<GlobalSet>();
-  ret->name = name;
-  ret->value = (Expression*)value;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeGlobalSet(name, (Expression*)value));
 }
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                    uint32_t bytes,
@@ -954,16 +936,13 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                    uint32_t align,
                                    BinaryenType type,
                                    BinaryenExpressionRef ptr) {
-  auto* ret = ((Module*)module)->allocator.alloc<Load>();
-  ret->isAtomic = false;
-  ret->bytes = bytes;
-  ret->signed_ = !!signed_;
-  ret->offset = offset;
-  ret->align = align ? align : bytes;
-  ret->type = Type(type);
-  ret->ptr = (Expression*)ptr;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeLoad(bytes,
+                                              !!signed_,
+                                              offset,
+                                              align ? align : bytes,
+                                              (Expression*)ptr,
+                                              Type(type)));
 }
 BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     uint32_t bytes,
@@ -972,16 +951,13 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     BinaryenExpressionRef ptr,
                                     BinaryenExpressionRef value,
                                     BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<Store>();
-  ret->isAtomic = false;
-  ret->bytes = bytes;
-  ret->offset = offset;
-  ret->align = align ? align : bytes;
-  ret->ptr = (Expression*)ptr;
-  ret->value = (Expression*)value;
-  ret->valueType = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeStore(bytes,
+                                               offset,
+                                               align ? align : bytes,
+                                               (Expression*)ptr,
+                                               (Expression*)value,
+                                               Type(type)));
 }
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
                                     BinaryenLiteral value) {
@@ -1020,9 +996,7 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
                                    BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<Drop>();
-  ret->value = (Expression*)value;
-  ret->finalize();
+  auto* ret = Builder(*(Module*)module).makeDrop((Expression*)value);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
@@ -1040,11 +1014,10 @@ BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
-  return static_cast<Expression*>(((Module*)module)->allocator.alloc<Nop>());
+  return static_cast<Expression*>(Builder(*(Module*)module).makeNop());
 }
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
-  return static_cast<Expression*>(
-    ((Module*)module)->allocator.alloc<Unreachable>());
+  return static_cast<Expression*>(Builder(*(Module*)module).makeUnreachable());
 }
 BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                          uint32_t bytes,
@@ -1285,6 +1258,43 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                     BinaryenExpressionRef right) {
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeRefEq((Expression*)left, (Expression*)right));
+}
+
+BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenType type) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableGet(name, (Expression*)index, Type(type)));
+}
+
+BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableSet(name, (Expression*)index, (Expression*)value));
+}
+
+BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
+                                        const char* name) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeTableSize(name));
+}
+
+BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
+                                        const char* name,
+                                        BinaryenExpressionRef value,
+                                        BinaryenExpressionRef delta) {
+  if (value == nullptr) {
+    auto tableType = (*(Module*)module).getTableOrNull(name)->type;
+    value = BinaryenRefNull(module, (BinaryenType)tableType.getID());
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableGrow(name, (Expression*)value, (Expression*)delta));
 }
 
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
@@ -1871,6 +1881,114 @@ void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
   assert(expression->is<GlobalSet>());
   assert(valueExpr);
   static_cast<GlobalSet*>(expression)->value = (Expression*)valueExpr;
+}
+// TableGet
+const char* BinaryenTableGetGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  return static_cast<TableGet*>(expression)->table.c_str();
+}
+void BinaryenTableGetSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  assert(table);
+  static_cast<TableGet*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableGetGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  return static_cast<TableGet*>(expression)->index;
+}
+void BinaryenTableGetSetIndex(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef indexExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  assert(indexExpr);
+  static_cast<TableGet*>(expression)->index = (Expression*)indexExpr;
+}
+// TableSet
+const char* BinaryenTableSetGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->table.c_str();
+}
+void BinaryenTableSetSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(table);
+  static_cast<TableSet*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableSetGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->index;
+}
+void BinaryenTableSetSetIndex(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef indexExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(indexExpr);
+  static_cast<TableSet*>(expression)->index = (Expression*)indexExpr;
+}
+BinaryenExpressionRef BinaryenTableSetGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->value;
+}
+void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(valueExpr);
+  static_cast<TableSet*>(expression)->value = (Expression*)valueExpr;
+}
+// TableSize
+const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  return static_cast<TableSize*>(expression)->table.c_str();
+}
+void BinaryenTableSizeSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  assert(table);
+  static_cast<TableSize*>(expression)->table = table;
+}
+// TableGrow
+const char* BinaryenTableGrowGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->table.c_str();
+}
+void BinaryenTableGrowSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(table);
+  static_cast<TableGrow*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableGrowGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->value;
+}
+void BinaryenTableGrowSetValue(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(valueExpr);
+  static_cast<TableGrow*>(expression)->value = (Expression*)valueExpr;
+}
+BinaryenExpressionRef BinaryenTableGrowGetDelta(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->delta;
+}
+void BinaryenTableGrowSetDelta(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef deltaExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(deltaExpr);
+  static_cast<TableGrow*>(expression)->delta = (Expression*)deltaExpr;
 }
 // MemoryGrow
 BinaryenExpressionRef BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr) {
@@ -4312,6 +4430,14 @@ BinaryenSideEffects BinaryenSideEffectReadsMemory(void) {
 BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::WritesMemory);
+}
+BinaryenSideEffects BinaryenSideEffectReadsTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsTable);
+}
+BinaryenSideEffects BinaryenSideEffectWritesTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesTable);
 }
 BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
   return static_cast<BinaryenSideEffects>(

@@ -6,7 +6,7 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
-  ;; NOMNL:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
+  ;; NOMNL:      (type $struct (struct_subtype (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64)) data))
   (type $struct (struct
     (field $i8  (mut i8))
     (field $i16 (mut i16))
@@ -15,28 +15,28 @@
   ))
 
   ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $A (struct (field i32)))
+  ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct (field i32)))
 
   ;; CHECK:      (type $array (array (mut i8)))
-  ;; NOMNL:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $array (array_subtype (mut i8) data))
   (type $array (array (mut i8)))
 
   ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
-  ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
-  (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+  (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)))
-  ;; NOMNL:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)) (extends $B))
-  (type $B-child (struct (field i32) (field i32) (field f32) (field i64)) (extends $B))
+  ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
+  (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
   ;; CHECK:      (type $empty (struct ))
-  ;; NOMNL:      (type $empty (struct ))
+  ;; NOMNL:      (type $empty (struct_subtype  data))
   (type $empty (struct))
 
   ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
-  ;; NOMNL:      (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
-  (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
+  ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
+  (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   ;; NOMNL:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -1250,6 +1250,37 @@
         ;; this can be moved through the tee outward.
         (ref.as_non_null
           (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.tee $x
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.null any)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+    (drop
+      (local.tee $x
+        ;; this *cannnot* be moved through the tee outward, as the param is in
+        ;; fact non-nullable, and we depend on the ref.as_non_null in order to
+        ;; get a valid type to assign to it
+        (ref.as_non_null
+          (ref.null any)
         )
       )
     )

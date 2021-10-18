@@ -151,8 +151,13 @@ if(BYN_ENABLE_LTO)
 endif()
 
 if(MSVC)
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
-    add_compile_flag("/arch:sse2")
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # multi-core build.
+    add_compile_flag("/MP")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0")
+      # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
+      add_compile_flag("/arch:sse2")
+    endif()
   endif()
   add_compile_flag("/std:c++17") # VS2017 generates "error C2429: attribute 'fallthrough' requires compiler flag '/std:c++17'"
   add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
@@ -175,9 +180,6 @@ if(MSVC)
   add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
-
-  # multi-core build.
-  add_compile_flag("/MP")
 
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we

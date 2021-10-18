@@ -520,8 +520,16 @@ instructions = [
     ("ref.is_null",          "makeRefIs(s, RefIsNull)"),
     ("ref.func",             "makeRefFunc(s)"),
     ("ref.eq",               "makeRefEq(s)"),
-    # TODO Add table instructions
+    # table instructions
     ("table.get",            "makeTableGet(s)"),
+    ("table.set",            "makeTableSet(s)"),
+    ("table.size",           "makeTableSize(s)"),
+    ("table.grow",           "makeTableGrow(s)"),
+    # TODO:
+    # table.init
+    # table.fill
+    # table.copy
+    #
     # exception handling instructions
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),

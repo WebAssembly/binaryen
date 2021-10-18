@@ -253,7 +253,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case DivUInt32:
       case RemSInt32:
       case RemUInt32:
-        ret = 3;
+        ret = curr->right->is<Const>() ? 2 : 3;
         break;
       case AndInt32:
       case OrInt32:
@@ -274,7 +274,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case DivUInt64:
       case RemSInt64:
       case RemUInt64:
-        ret = 3;
+        ret = curr->right->is<Const>() ? 3 : 4;
         break;
       case AndInt64:
       case OrInt64:
@@ -541,6 +541,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 1 + visit(curr->left) + visit(curr->right);
   }
   CostType visitTableGet(TableGet* curr) { return 1 + visit(curr->index); }
+  CostType visitTableSet(TableSet* curr) {
+    return 2 + visit(curr->index) + visit(curr->value);
+  }
+  CostType visitTableSize(TableSize* curr) { return 1; }
+  CostType visitTableGrow(TableGrow* curr) {
+    return 100 + visit(curr->value) + visit(curr->delta);
+  }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);

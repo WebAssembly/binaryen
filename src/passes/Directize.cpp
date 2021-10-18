@@ -173,33 +173,63 @@ private:
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    std::unordered_map<Name, TableUtils::FlatTable> validTables;
+    // Find which tables are valid to optimize on. They must not be imported nor
+    // exported (so the outside cannot modify them), and must have no sets in
+    // any part of the module.
 
-    for (auto& table : module->tables) {
-      if (!table->imported()) {
-        bool canOptimizeCallIndirect = true;
+    // First, find which tables have sets.
+    using TablesWithSet = std::unordered_set<Name>;
 
-        for (auto& ex : module->exports) {
-          if (ex->kind == ExternalKind::Table && ex->value == table->name) {
-            canOptimizeCallIndirect = false;
-          }
+    ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
+      *module, [&](Function* func, TablesWithSet& tablesWithSet) {
+        if (func->imported()) {
+          return;
         }
-
-        if (canOptimizeCallIndirect) {
-          TableUtils::FlatTable flatTable(*module, *table);
-          if (flatTable.valid) {
-            validTables.emplace(table->name, flatTable);
-          }
+        for (auto* set : FindAll<TableSet>(func->body).list) {
+          tablesWithSet.insert(set->table);
         }
+      });
+
+    TablesWithSet tablesWithSet;
+    for (auto& kv : analysis.map) {
+      for (auto name : kv.second) {
+        tablesWithSet.insert(name);
       }
     }
 
-    // Without typed function references, all we can do is optimize table
-    // accesses, so if we can't do that, stop.
-    if (validTables.empty() && !module->features.hasTypedFunctionReferences()) {
+    std::unordered_map<Name, TableUtils::FlatTable> validTables;
+
+    for (auto& table : module->tables) {
+      if (table->imported()) {
+        continue;
+      }
+
+      if (tablesWithSet.count(table->name)) {
+        continue;
+      }
+
+      bool canOptimizeCallIndirect = true;
+      for (auto& ex : module->exports) {
+        if (ex->kind == ExternalKind::Table && ex->value == table->name) {
+          canOptimizeCallIndirect = false;
+          break;
+        }
+      }
+      if (!canOptimizeCallIndirect) {
+        continue;
+      }
+
+      // All conditions are valid, this is optimizable.
+      TableUtils::FlatTable flatTable(*module, *table);
+      if (flatTable.valid) {
+        validTables.emplace(table->name, flatTable);
+      }
+    }
+
+    if (validTables.empty()) {
       return;
     }
-    // The table exists and is constant, so this is possible.
+
     FunctionDirectizer(validTables).run(runner, module);
   }
 };

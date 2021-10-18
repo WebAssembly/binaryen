@@ -656,6 +656,28 @@ public:
     ret->finalize();
     return ret;
   }
+  TableSet* makeTableSet(Name table, Expression* index, Expression* value) {
+    auto* ret = wasm.allocator.alloc<TableSet>();
+    ret->table = table;
+    ret->index = index;
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  TableSize* makeTableSize(Name table) {
+    auto* ret = wasm.allocator.alloc<TableSize>();
+    ret->table = table;
+    ret->finalize();
+    return ret;
+  }
+  TableGrow* makeTableGrow(Name table, Expression* value, Expression* delta) {
+    auto* ret = wasm.allocator.alloc<TableGrow>();
+    ret->table = table;
+    ret->value = value;
+    ret->delta = delta;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,
