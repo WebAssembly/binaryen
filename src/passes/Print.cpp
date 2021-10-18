@@ -2515,9 +2515,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   // Module-level visitors
   void printSupertypeOr(HeapType curr, std::string noSuper) {
-    HeapType super;
-    if (curr.getSuperType(super)) {
-      TypeNamePrinter(o, currModule).print(super);
+    if (auto super = curr.getSuperType()) {
+      TypeNamePrinter(o, currModule).print(*super);
     } else {
       o << noSuper;
     }
