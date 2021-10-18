@@ -190,7 +190,7 @@ private:
   // global.
   bool unknown = false;
 
-  // The one litearl value we have seen, if there is one. (If there is more than
+  // The one literal value we have seen, if there is one. (If there is more than
   // one the value here does not matter as |unknown| is set.)
   Literal literal;
 
