@@ -520,6 +520,11 @@ struct MergeBlocks
     }
   }
 
+  void visitIf(If* curr) {
+    // We can move code out of the condition, but not any of the other children.
+    optimize(curr, curr->condition);
+  }
+
   void optimizeTernary(Expression* curr,
                        Expression*& first,
                        Expression*& second,
