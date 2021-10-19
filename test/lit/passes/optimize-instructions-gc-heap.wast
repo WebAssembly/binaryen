@@ -710,6 +710,53 @@
     )
   )
 
+  ;; CHECK:      (func $unreachable
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.tee $ref
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable
+    (local $ref (ref null $struct))
+    ;; Do not optimize unreachable code, either in the new (first pair) or the
+    ;; set (second pair)
+    (local.set $ref
+      (struct.new $struct
+        (unreachable)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $ref)
+      (i32.const 10)
+    )
+    (nop)
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 20)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $ref)
+      (unreachable)
+    )
+  )
+
   ;; CHECK:      (func $helper-i32 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )

@@ -1415,6 +1415,11 @@ struct OptimizeInstructions
   bool optimizeSubsequentStructSet(StructNew* new_,
                                    StructSet* set,
                                    Index refLocalIndex) {
+    // Leave unreachable code for DCE, to avoid updating types here.
+    if (new_->type == Type::unreachable || set->type == Type::unreachable) {
+      return false;
+    }
+
     if (new_->isWithDefault()) {
       // Ignore a new_default for now. If the fields are defaultable then we
       // could add them, in principle, but that might increase code size.
