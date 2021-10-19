@@ -25,7 +25,7 @@ import sys
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with CMakeLists.txt CXX_STANDARD
-cxx_standard = 14
+cxx_standard = 17
 
 
 def parse_args(args):
@@ -50,10 +50,15 @@ def parse_args(args):
               ' earlier errors.'))
     parser.add_argument(
         '--binaryen-bin', dest='binaryen_bin', default='',
-        help=('Specifies a path to where the built Binaryen executables reside at.'
-              ' Default: bin/ of current directory (i.e. assume an in-tree build).'
+        help=('Specifies the path to the Binaryen executables in the CMake build'
+              ' directory. Default: bin/ of current directory (i.e. assume an'
+              ' in-tree build).'
               ' If not specified, the environment variable BINARYEN_ROOT= can also'
               ' be used to adjust this.'))
+    parser.add_argument(
+        '--binaryen-lib', dest='binaryen_lib', default='',
+        help=('Specifies a path to where the built Binaryen shared library resides at.'
+              ' Default: ./lib relative to bin specified above.'))
     parser.add_argument(
         '--binaryen-root', dest='binaryen_root', default='',
         help=('Specifies a path to the root of the Binaryen repository tree.'
@@ -87,6 +92,14 @@ def parse_args(args):
         '--filter', dest='test_name_filter', default='',
         help=('Specifies a filter. Only tests whose paths contains this '
               'substring will be run'))
+    # This option is only for fuzz_opt.py
+    # TODO Allow each script to inherit the default set of options and add its
+    # own custom options on top of that
+    parser.add_argument(
+        '--auto-initial-contents', dest='auto_initial_contents',
+        action='store_true', default=False,
+        help='Select important initial contents automaticaly in fuzzer. '
+             'Default: disabled.')
 
     return parser.parse_args(args)
 
@@ -120,10 +133,17 @@ if not options.binaryen_bin:
 
 options.binaryen_bin = os.path.normpath(os.path.abspath(options.binaryen_bin))
 
+if not options.binaryen_lib:
+    options.binaryen_lib = os.path.join(os.path.dirname(options.binaryen_bin),  'lib')
+
+options.binaryen_lib = os.path.normpath(os.path.abspath(options.binaryen_lib))
+
+options.binaryen_build = os.path.dirname(options.binaryen_bin)
+
 # ensure BINARYEN_ROOT is set up
 os.environ['BINARYEN_ROOT'] = os.path.dirname(options.binaryen_bin)
 
-wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
+wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe', 'wasm-dis.js']
 if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
            for f in wasm_dis_filenames):
     warn('Binaryen not found (or has not been successfully built to bin/ ?')
@@ -179,7 +199,7 @@ NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
             which('gcc') or which('clang'))
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
-NODEJS = os.getenv('NODE', which('nodejs') or which('node'))
+NODEJS = os.getenv('NODE', which('node') or which('nodejs'))
 MOZJS = which('mozjs') or which('spidermonkey')
 V8 = which('v8') or which('d8')
 
@@ -187,7 +207,6 @@ BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
 WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
-ASM2WASM = [os.path.join(options.binaryen_bin, 'asm2wasm')]
 WASM2JS = [os.path.join(options.binaryen_bin, 'wasm2js')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
@@ -212,7 +231,6 @@ if options.valgrind:
     WASM_OPT = wrap_with_valgrind(WASM_OPT)
     WASM_AS = wrap_with_valgrind(WASM_AS)
     WASM_DIS = wrap_with_valgrind(WASM_DIS)
-    ASM2WASM = wrap_with_valgrind(ASM2WASM)
     WASM_SHELL = wrap_with_valgrind(WASM_SHELL)
 
 
@@ -240,10 +258,10 @@ def has_shell_timeout():
 V8_OPTS = [
     '--wasm-staging',
     '--experimental-wasm-eh',
-    '--experimental-wasm-simd',
-    '--experimental-wasm-reftypes',
     '--experimental-wasm-compilation-hints',
-    '--experimental-wasm-return-call'
+    '--experimental-wasm-gc',
+    '--experimental-wasm-typed-funcref',
+    '--experimental-wasm-memory64'
 ]
 
 # external tools
@@ -354,15 +372,16 @@ def get_test_dir(name):
     return os.path.join(options.binaryen_test, name)
 
 
-def get_tests(test_dir, extensions=[]):
+def get_tests(test_dir, extensions=[], recursive=False):
     """Returns the list of test files in a given directory. 'extensions' is a
     list of file extensions. If 'extensions' is empty, returns all files.
     """
     tests = []
+    star = '**/*' if recursive else '*'
     if not extensions:
-        tests += glob.glob(os.path.join(test_dir, '*'))
+        tests += glob.glob(os.path.join(test_dir, star), recursive=True)
     for ext in extensions:
-        tests += glob.glob(os.path.join(test_dir, '*' + ext))
+        tests += glob.glob(os.path.join(test_dir, star + ext), recursive=True)
     if options.test_name_filter:
         tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
@@ -411,7 +430,6 @@ SPEC_TESTS_TO_SKIP = [
     'utf8-invalid-encoding.wast',
 
     # 'register' command
-    'imports.wast',
     'linking.wast',
 
     # Misc. unsupported constructs
@@ -453,7 +471,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
     assert os.path.exists('a.wasm')
 
-    cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
+    cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast', '-all']
     print('            ', ' '.join(cmd))
     if os.path.exists('ab.wast'):
         os.unlink('ab.wast')
@@ -479,19 +497,8 @@ def minify_check(wast, verify_final_result=True):
     cmd = WASM_OPT + [wast, '--print-minified', '-all']
     print('      ', ' '.join(cmd))
     subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
-    assert os.path.exists('a.wast')
-    subprocess.check_call(WASM_OPT + ['a.wast', '--print-minified', '-all'],
-                          stdout=open('b.wast', 'w'), stderr=subprocess.PIPE)
-    assert os.path.exists('b.wast')
-    if verify_final_result:
-        expected = open('a.wast').read()
-        actual = open('b.wast').read()
-        if actual != expected:
-            fail(actual, expected)
-    if os.path.exists('a.wast'):
-        os.unlink('a.wast')
-    if os.path.exists('b.wast'):
-        os.unlink('b.wast')
+    subprocess.check_call(WASM_OPT + ['a.wast', '-all'],
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 # run a check with BINARYEN_PASS_DEBUG set, to do full validation

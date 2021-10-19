@@ -44,8 +44,20 @@ struct LoggingExternalInterface : public ShellExternalInterface {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls
       for (auto argument : arguments) {
-        std::cout << ' ' << argument;
-        loggings.push_back(argument);
+        if (argument.type == Type::i64) {
+          // To avoid JS legalization changing logging results, treat a logging
+          // of an i64 as two i32s (which is what legalization would turn us
+          // into).
+          auto low = Literal(int32_t(argument.getInteger()));
+          auto high = Literal(int32_t(argument.getInteger() >> int32_t(32)));
+          std::cout << ' ' << low;
+          loggings.push_back(low);
+          std::cout << ' ' << high;
+          loggings.push_back(high);
+        } else {
+          std::cout << ' ' << argument;
+          loggings.push_back(argument);
+        }
       }
       std::cout << "]\n";
       return {};
@@ -78,6 +90,9 @@ struct ExecutionResults {
   std::map<Name, Literals> results;
   Loggings loggings;
 
+  // If set, we should ignore this and not compare it to anything.
+  bool ignore = false;
+
   // get results of execution
   void get(Module& wasm) {
     LoggingExternalInterface interface(loggings);
@@ -91,22 +106,22 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        if (func->sig.results != Type::none) {
+        if (func->getResults() != Type::none) {
           // this has a result
           Literals ret = run(func, wasm, instance);
-          // We cannot compare funcrefs by name because function names can
-          // change (after duplicate function elimination or roundtripping)
-          // while the function contents are still the same
-          for (Literal& val : ret) {
-            if (val.type == Type::funcref && !val.isNull()) {
-              val = Literal::makeFunc(Name("funcref"));
-            }
-          }
           results[exp->name] = ret;
           // ignore the result if we hit an unreachable and returned no value
           if (ret.size() > 0) {
-            std::cout << "[fuzz-exec] note result: " << exp->name << " => "
-                      << ret << '\n';
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
+            auto resultType = func->getResults();
+            if (resultType.isRef()) {
+              // Don't print reference values, as funcref(N) contains an index
+              // for example, which is not guaranteed to remain identical after
+              // optimizations.
+              std::cout << resultType << '\n';
+            } else {
+              std::cout << ret << '\n';
+            }
           }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
@@ -123,12 +138,53 @@ struct ExecutionResults {
     ExecutionResults optimizedResults;
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
-      std::cout << "[fuzz-exec] optimization passes changed execution results";
+      std::cout << "[fuzz-exec] optimization passes changed results\n";
       exit(1);
     }
   }
 
+  bool areEqual(Literal a, Literal b) {
+    // We allow nulls to have different types (as they compare equal regardless)
+    // but anything else must have an identical type.
+    if (a.type != b.type && !(a.isNull() && b.isNull())) {
+      std::cout << "types not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    if (a.type.isRef()) {
+      // Don't compare references - only their types. There are several issues
+      // here that we can't fully handle, see
+      // https://github.com/WebAssembly/binaryen/issues/3378, but the core issue
+      // is that we are comparing results between two separate wasm modules (and
+      // a separate instance of each) - we can't really identify an identical
+      // reference between such things. We can only compare things structurally,
+      // for which we compare the types.
+      return true;
+    }
+    if (a != b) {
+      std::cout << "values not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    return true;
+  }
+
+  bool areEqual(Literals a, Literals b) {
+    if (a.size() != b.size()) {
+      std::cout << "literal counts not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    for (Index i = 0; i < a.size(); i++) {
+      if (!areEqual(a[i], b[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool operator==(ExecutionResults& other) {
+    if (ignore || other.ignore) {
+      std::cout << "ignoring comparison of ExecutionResults!\n";
+      return true;
+    }
     for (auto& iter : other.results) {
       auto name = iter.first;
       if (results.find(name) == results.end()) {
@@ -136,15 +192,18 @@ struct ExecutionResults {
         return false;
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
-      if (results[name] != other.results[name]) {
-        std::cout << "not identical! " << results[name]
-                  << " != " << other.results[name] << "\n";
+      if (!areEqual(results[name], other.results[name])) {
         return false;
       }
     }
-    if (loggings != other.loggings) {
-      std::cout << "logging not identical!\n";
+    if (loggings.size() != other.loggings.size()) {
+      std::cout << "logging counts not identical!\n";
       return false;
+    }
+    for (Index i = 0; i < loggings.size(); i++) {
+      if (!areEqual(loggings[i], other.loggings[i])) {
+        return false;
+      }
     }
     return true;
   }
@@ -170,12 +229,21 @@ struct ExecutionResults {
         instance.callFunction(ex->value, arguments);
       }
       // call the method
-      for (const auto& param : func->sig.params) {
+      for (const auto& param : func->getParams()) {
         // zeros in arguments TODO: more?
+        if (!param.isDefaultable()) {
+          std::cout << "[trap fuzzer can only send defaultable parameters to "
+                       "exports]\n";
+        }
         arguments.push_back(Literal::makeZero(param));
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
+      return {};
+    } catch (const HostLimitException&) {
+      // This should be ignored and not compared with, as optimizations can
+      // change whether a host limit is reached.
+      ignore = true;
       return {};
     }
   }

@@ -71,9 +71,9 @@
 [trap final > memory: 18446744073709551512 > 65514]
 (module
  (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $none_=>_none (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "unaligned_load" (func $0))
@@ -98,7 +98,7 @@
   )
  )
  (func $3 (result i32)
-  (atomic.notify
+  (memory.atomic.notify
    (i32.const 1)
    (i32.const 1)
   )
@@ -119,7 +119,7 @@
  )
  (func $5
   (drop
-   (atomic.notify offset=22
+   (memory.atomic.notify offset=22
     (i32.const -104)
     (i32.const -72)
    )
@@ -162,8 +162,8 @@
 [fuzz-exec] calling rmw-reads-modifies-and-writes
 [LoggingExternalInterface logging 0]
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "rmw-reads-modifies-and-writes" (func $0))
@@ -186,8 +186,8 @@
 [fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "rmw-reads-modifies-and-writes-asymmetrical" (func $0))
@@ -207,3 +207,16 @@
 )
 [fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
+[fuzz-exec] calling func
+[fuzz-exec] note result: func => funcref
+(module
+ (type $none_=>_funcref (func (result funcref)))
+ (elem declare func $func)
+ (export "func" (func $func))
+ (func $func (result funcref)
+  (ref.func $func)
+ )
+)
+[fuzz-exec] calling func
+[fuzz-exec] note result: func => funcref
+[fuzz-exec] comparing func

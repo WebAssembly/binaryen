@@ -1,17 +1,18 @@
 
-function asmFunc(global, env) {
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  function $0(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
@@ -65,7 +66,7 @@ function asmFunc(global, env) {
  
  function $9(x) {
   x = Math_fround(x);
-  return Math_fround(Math_fround(__wasm_trunc_f32(Math_fround(x))));
+  return Math_fround(Math_fround(Math_trunc(x)));
  }
  
  function $10(x) {
@@ -91,11 +92,6 @@ function asmFunc(global, env) {
   return Math_fround(var$1);
  }
  
- function __wasm_trunc_f32(var$0) {
-  var$0 = Math_fround(var$0);
-  return Math_fround(var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0)));
- }
- 
  return {
   "add": $0, 
   "sub": $1, 
@@ -111,20 +107,7 @@ function asmFunc(global, env) {
  };
 }
 
-var retasmFunc = asmFunc({
-    Math,
-    Int8Array,
-    Uint8Array,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array,
-    NaN,
-    Infinity
-  }, {
-    abort: function() { throw new Error('abort'); }
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
   });
 export var add = retasmFunc.add;
 export var sub = retasmFunc.sub;

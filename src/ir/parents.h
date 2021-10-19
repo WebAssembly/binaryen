@@ -17,6 +17,8 @@
 #ifndef wasm_ir_parents_h
 #define wasm_ir_parents_h
 
+#include "parsing.h"
+
 namespace wasm {
 
 struct Parents {

@@ -3,14 +3,14 @@
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_f64 (func (result f64)))
  (type $none_=>_v128 (func (result v128)))
- (type $i32_=>_none (func (param i32)))
+ (type $0 (func (param i32)))
  (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $none_=>_externref (func (result externref)))
- (memory $0 512 512)
- (data (i32.const 0) "passive")
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
- (event $event$0 (attr 0) (param))
+ (memory $0 512 512)
+ (data (i32.const 0) "hello!")
+ (elem declare func $dummy)
  (func $x (param $x i32)
   (call $x
    (i32.const 2300)
@@ -312,15 +312,6 @@
      )
     )
     (ref.null func)
-   )
-  )
- )
- (func $unreachable-br_on_exn
-  (block $label$1
-   (drop
-    (loop $label$2
-     (br $label$2)
-    )
    )
   )
  )

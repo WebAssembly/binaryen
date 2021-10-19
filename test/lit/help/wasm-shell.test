@@ -1,0 +1,17 @@
+;; RUN: wasm-shell --help | filecheck %s
+
+wasm-shell INFILE
+
+;; CHECK:      Execute .wast files
+;; CHECK-NEXT:
+;; CHECK-NEXT: Options:
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --version  Output version information and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --help,-h  Show this help message and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debug,-d Print debug information to stderr
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --entry,-e Call the entry point after parsing the module
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --skip,-s  Skip input on certain lines (comma-separated-list)

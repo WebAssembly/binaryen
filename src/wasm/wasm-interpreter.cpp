@@ -19,4 +19,8 @@ void Indenter::print() {
 }
 #endif // WASM_INTERPRETER_DEBUG
 
+std::ostream& operator<<(std::ostream& o, const WasmException& exn) {
+  return o << exn.tag << " " << exn.values;
+}
+
 } // namespace wasm

@@ -135,7 +135,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
           case dwarf::DW_FORM_block:
             onValue((uint64_t)FormVal->BlockData.size(), true);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;
@@ -143,7 +143,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
             auto writeSize = FormVal->BlockData.size();
             onValue((uint8_t)writeSize);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;
@@ -152,7 +152,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
             auto writeSize = FormVal->BlockData.size();
             onValue((uint16_t)writeSize);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;
@@ -161,7 +161,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
             auto writeSize = FormVal->BlockData.size();
             onValue((uint32_t)writeSize);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;

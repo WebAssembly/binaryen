@@ -1,0 +1,18 @@
+;; RUN: wasm-ctor-eval --help | filecheck %s
+
+;; CHECK:      wasm-ctor-eval INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Execute C++ global constructors ahead of time
+;; CHECK-NEXT:
+
+;; Skip standard tool options
+
+;; CHECK:        --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
+;; CHECK-NEXT:                                        output file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debuginfo,-g                       Emit names section and debug info
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --ctors,-c                           Comma-separated list of global
+;; CHECK-NEXT:                                        constructor functions to evaluate

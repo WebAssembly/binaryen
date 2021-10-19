@@ -29,27 +29,14 @@ from scripts.test import wasm_opt
 
 def update_example_tests():
     print('\n[ checking example testcases... ]\n')
-    for t in shared.get_tests(shared.get_test_dir('example')):
-        basename = os.path.basename(t)
+    for src in shared.get_tests(shared.get_test_dir('example')):
+        basename = os.path.basename(src)
         output_file = os.path.join(shared.options.binaryen_bin, 'example')
         libdir = os.path.join(shared.BINARYEN_INSTALL_DIR, 'lib')
         cmd = ['-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-pthread', '-o', output_file]
-        if t.endswith('.txt'):
-            # check if there is a trace in the file, if so, we should build it
-            out = subprocess.Popen([os.path.join(shared.options.binaryen_root, 'scripts', 'clean_c_api_trace.py'), t], stdout=subprocess.PIPE).communicate()[0]
-            if len(out) == 0:
-                print('  (no trace in ', basename, ')')
-                continue
-            print('  (will check trace in ', basename, ')')
-            src = 'trace.cpp'
-            with open(src, 'wb') as o:
-                o.write(out)
-            expected = t + '.txt'
-        else:
-            src = t
-            expected = os.path.splitext(t)[0] + '.txt'
         if not src.endswith(('.c', '.cpp')):
             continue
+        expected = os.path.splitext(src)[0] + '.txt'
         # windows + gcc will need some work
         if shared.skip_if_on_windows('gcc'):
             return
@@ -127,8 +114,8 @@ def update_reduce_tests():
     for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))
         # convert to wasm
-        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm'])
-        print(support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm']))
+        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
+        print(support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm']))
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', expected])
 
@@ -151,6 +138,19 @@ def update_spec_tests():
                 o.write(stdout)
 
 
+def update_lit_tests():
+    print('\n[ updating lit testcases... ]\n')
+    script = os.path.join(shared.options.binaryen_root,
+                          'scripts',
+                          'update_lit_checks.py')
+    lit_dir = shared.get_test_dir('lit')
+    subprocess.check_output([sys.executable,
+                             script,
+                             '--binaryen-bin=' + shared.options.binaryen_bin,
+                             os.path.join(lit_dir, '**', '*.wast'),
+                             os.path.join(lit_dir, '**', '*.wat')])
+
+
 TEST_SUITES = OrderedDict([
     ('wasm-opt', wasm_opt.update_wasm_opt_tests),
     ('wasm-dis', update_wasm_dis_tests),
@@ -162,6 +162,7 @@ TEST_SUITES = OrderedDict([
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
     ('binaryenjs', binaryenjs.update_binaryen_js_tests),
+    ('lit', update_lit_tests),
 ])
 
 

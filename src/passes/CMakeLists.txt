@@ -15,6 +15,7 @@ set(passes_SOURCES
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
+  ConstantFieldPropagation.cpp
   ConstHoisting.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
@@ -25,18 +26,20 @@ set(passes_SOURCES
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
-  EmscriptenPIC.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
+  Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
+  Intrinsics.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LocalCSE.cpp
+  LocalSubtyping.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
   Memory64Lowering.cpp
@@ -46,11 +49,14 @@ set(passes_SOURCES
   Metrics.cpp
   MinifyImportsAndExports.cpp
   NameList.cpp
+  NameTypes.cpp
   NoExitRuntime.cpp
+  OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
+  OptimizeForJS.cpp
   PickLoadSigns.cpp
-  PostAssemblyScript.cpp
+  Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -58,6 +64,7 @@ set(passes_SOURCES
   PrintFeatures.cpp
   PrintFunctionMap.cpp
   RoundTrip.cpp
+  SetGlobals.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp
@@ -80,6 +87,7 @@ set(passes_SOURCES
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
+  GlobalTypeOptimization.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   ${passes_HEADERS}
 )

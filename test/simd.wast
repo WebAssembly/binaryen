@@ -5,6 +5,56 @@
     (local.get $0)
   )
  )
+ (func $v128.load8x8_s (param $0 i32) (result v128)
+  (v128.load8x8_s
+   (local.get $0)
+  )
+ )
+ (func $v128.load8x8_u (param $0 i32) (result v128)
+  (v128.load8x8_u
+   (local.get $0)
+  )
+ )
+ (func $v128.load16x4_s (param $0 i32) (result v128)
+  (v128.load16x4_s
+   (local.get $0)
+  )
+ )
+ (func $v128.load16x4_u (param $0 i32) (result v128)
+  (v128.load16x4_u
+   (local.get $0)
+  )
+ )
+ (func $v128.load32x2_s (param $0 i32) (result v128)
+  (v128.load32x2_s
+   (local.get $0)
+  )
+ )
+ (func $v128.load32x2_u (param $0 i32) (result v128)
+  (v128.load32x2_u
+   (local.get $0)
+  )
+ )
+ (func $v128.load8_splat (param $0 i32) (result v128)
+  (v128.load8_splat
+   (local.get $0)
+  )
+ )
+ (func $v128.load16_splat (param $0 i32) (result v128)
+  (v128.load16_splat
+   (local.get $0)
+  )
+ )
+ (func $v128.load32_splat (param $0 i32) (result v128)
+  (v128.load32_splat
+   (local.get $0)
+  )
+ )
+ (func $v128.load64_splat (param $0 i32) (result v128)
+  (v128.load64_splat
+   (local.get $0)
+  )
+ )
  (func $v128.store (param $0 i32) (param $1 v128)
   (v128.store offset=0 align=16
    (local.get $0)
@@ -29,14 +79,35 @@
  (func $v128.const.f64x2 (result v128)
   (v128.const f64x2 1.0 2)
  )
- (func $v128.shuffle (param $0 v128) (param $1 v128) (result v128)
-  (v8x16.shuffle 0 17 2 19 4 21 6 23 8 25 10 27 12 29 14 31
+ (func $i8x16.shuffle (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.shuffle 0 17 2 19 4 21 6 23 8 25 10 27 12 29 14 31
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i8x16.swizzle (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.swizzle
    (local.get $0)
    (local.get $1)
   )
  )
  (func $i8x16.splat (param $0 i32) (result v128)
   (i8x16.splat
+   (local.get $0)
+  )
+ )
+ (func $i16x8.splat (param $0 i32) (result v128)
+  (i16x8.splat
+   (local.get $0)
+  )
+ )
+ (func $f32x4.splat (param $0 f32) (result v128)
+  (f32x4.splat
+   (local.get $0)
+  )
+ )
+ (func $f64x2.splat (param $0 f64) (result v128)
+  (f64x2.splat
    (local.get $0)
   )
  )
@@ -56,11 +127,6 @@
    (local.get $1)
   )
  )
- (func $i16x8.splat (param $0 i32) (result v128)
-  (i16x8.splat
-   (local.get $0)
-  )
- )
  (func $i16x8.extract_lane_s (param $0 v128) (result i32)
   (i16x8.extract_lane_s 0
    (local.get $0)
@@ -75,11 +141,6 @@
   (i16x8.replace_lane 0
    (local.get $0)
    (local.get $1)
-  )
- )
- (func $i32x4.splat (param $0 i32) (result v128)
-  (i32x4.splat
-   (local.get $0)
   )
  )
  (func $i32x4.extract_lane (param $0 v128) (result i32)
@@ -104,11 +165,6 @@
    (local.get $1)
   )
  )
- (func $f32x4.splat (param $0 f32) (result v128)
-  (f32x4.splat
-   (local.get $0)
-  )
- )
  (func $f32x4.extract_lane (param $0 v128) (result f32)
   (f32x4.extract_lane 0
    (local.get $0)
@@ -118,11 +174,6 @@
   (f32x4.replace_lane 0
    (local.get $0)
    (local.get $1)
-  )
- )
- (func $f64x2.splat (param $0 f64) (result v128)
-  (f64x2.splat
-   (local.get $0)
   )
  )
  (func $f64x2.extract_lane (param $0 v128) (result f64)
@@ -399,6 +450,12 @@
    (local.get $1)
   )
  )
+ (func $v128.andnot (param $0 v128) (param $1 v128) (result v128)
+  (v128.andnot
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $v128.or (param $0 v128) (param $1 v128) (result v128)
   (v128.or
    (local.get $0)
@@ -411,17 +468,16 @@
    (local.get $1)
   )
  )
- (func $v128.andnot (param $0 v128) (param $1 v128) (result v128)
-  (v128.andnot
-   (local.get $0)
-   (local.get $1)
-  )
- )
  (func $v128.bitselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
   (v128.bitselect
    (local.get $0)
    (local.get $1)
    (local.get $2)
+  )
+ )
+ (func $v128.any_true (param $0 v128) (result i32)
+  (v128.any_true
+   (local.get $0)
   )
  )
  (func $v128.load8_lane (param $0 i32) (param $1 v128) (result v128)
@@ -508,6 +564,26 @@
    (local.get $1)
   )
  )
+ (func $v128.load32_zero (param $0 i32) (result v128)
+  (v128.load32_zero
+   (local.get $0)
+  )
+ )
+ (func $v128.load64_zero (param $0 i32) (result v128)
+  (v128.load64_zero
+   (local.get $0)
+  )
+ )
+  (func $f32x4.demote_f64x2_zero (param $0 v128) (result v128)
+  (f32x4.demote_f64x2_zero
+   (local.get $0)
+  )
+ )
+ (func $f64x2.promote_low_f32x4 (param $0 v128) (result v128)
+  (f64x2.promote_low_f32x4
+   (local.get $0)
+  )
+ )
  (func $i8x16.abs (param $0 v128) (result v128)
   (i8x16.abs
    (local.get $0)
@@ -518,8 +594,8 @@
    (local.get $0)
   )
  )
- (func $i8x16.any_true (param $0 v128) (result i32)
-  (i8x16.any_true
+ (func $i8x16.popcnt (param $0 v128) (result v128)
+  (i8x16.popcnt
    (local.get $0)
   )
  )
@@ -530,6 +606,38 @@
  )
  (func $i8x16.bitmask (param $0 v128) (result i32)
   (i8x16.bitmask
+   (local.get $0)
+  )
+ )
+ (func $i8x16.narrow_i16x8_s (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.narrow_i16x8_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i8x16.narrow_i16x8_u (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.narrow_i16x8_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $f32x4.ceil (param $0 v128) (result v128)
+  (f32x4.ceil
+   (local.get $0)
+  )
+ )
+ (func $f32x4.floor (param $0 v128) (result v128)
+  (f32x4.floor
+   (local.get $0)
+  )
+ )
+ (func $f32x4.trunc (param $0 v128) (result v128)
+  (f32x4.trunc
+   (local.get $0)
+  )
+ )
+ (func $f32x4.nearest (param $0 v128) (result v128)
+  (f32x4.nearest
    (local.get $0)
   )
  )
@@ -557,14 +665,14 @@
    (local.get $1)
   )
  )
- (func $i8x16.add_saturate_s (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.add_saturate_s
+ (func $i8x16.add_sat_s (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.add_sat_s
    (local.get $0)
    (local.get $1)
   )
  )
- (func $i8x16.add_saturate_u (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.add_saturate_u
+ (func $i8x16.add_sat_u (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.add_sat_u
    (local.get $0)
    (local.get $1)
   )
@@ -575,22 +683,26 @@
    (local.get $1)
   )
  )
- (func $i8x16.sub_saturate_s (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.sub_saturate_s
+ (func $i8x16.sub_sat_s (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.sub_sat_s
    (local.get $0)
    (local.get $1)
   )
  )
- (func $i8x16.sub_saturate_u (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.sub_saturate_u
+ (func $i8x16.sub_sat_u (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.sub_sat_u
    (local.get $0)
    (local.get $1)
   )
  )
- (func $i8x16.mul (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.mul
+ (func $f64x2.ceil (param $0 v128) (result v128)
+  (f64x2.ceil
    (local.get $0)
-   (local.get $1)
+  )
+ )
+ (func $f64x2.floor (param $0 v128) (result v128)
+  (f64x2.floor
+   (local.get $0)
   )
  )
  (func $i8x16.min_s (param $0 v128) (param $1 v128) (result v128)
@@ -617,10 +729,35 @@
    (local.get $1)
   )
  )
+ (func $f64x2.trunc (param $0 v128) (result v128)
+  (f64x2.trunc
+   (local.get $0)
+  )
+ )
  (func $i8x16.avgr_u (param $0 v128) (param $1 v128) (result v128)
   (i8x16.avgr_u
    (local.get $0)
    (local.get $1)
+  )
+ )
+ (func $i16x8.extadd_pairwise_i8x16_s (param $0 v128) (result v128)
+  (i16x8.extadd_pairwise_i8x16_s
+   (local.get $0)
+  )
+ )
+ (func $i16x8.extadd_pairwise_i8x16_u (param $0 v128) (result v128)
+  (i16x8.extadd_pairwise_i8x16_u
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extadd_pairwise_i16x8_s (param $0 v128) (result v128)
+  (i32x4.extadd_pairwise_i16x8_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extadd_pairwise_i16x8_u (param $0 v128) (result v128)
+  (i32x4.extadd_pairwise_i16x8_u
+   (local.get $0)
   )
  )
  (func $i16x8.abs (param $0 v128) (result v128)
@@ -633,9 +770,10 @@
    (local.get $0)
   )
  )
- (func $i16x8.any_true (param $0 v128) (result i32)
-  (i16x8.any_true
+ (func $i16x8.q15mulr_sat_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.q15mulr_sat_s
    (local.get $0)
+   (local.get $1)
   )
  )
  (func $i16x8.all_true (param $0 v128) (result i32)
@@ -648,7 +786,39 @@
    (local.get $0)
   )
  )
- (func $i16x8.shl (param $0 v128) (param $1 i32) (result v128)
+ (func $i16x8.narrow_i32x4_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.narrow_i32x4_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.narrow_i32x4_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.narrow_i32x4_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extend_low_i8x16_s (param $0 v128) (result v128)
+  (i16x8.extend_low_i8x16_s
+   (local.get $0)
+  )
+ )
+ (func $i16x8.extend_high_i8x16_s (param $0 v128) (result v128)
+  (i16x8.extend_high_i8x16_s
+   (local.get $0)
+  )
+ )
+ (func $i16x8.extend_low_i8x16_u (param $0 v128) (result v128)
+  (i16x8.extend_low_i8x16_u
+   (local.get $0)
+  )
+ )
+ (func $i16x8.extend_high_i8x16_u (param $0 v128) (result v128)
+  (i16x8.extend_high_i8x16_u
+   (local.get $0)
+  )
+ )
+(func $i16x8.shl (param $0 v128) (param $1 i32) (result v128)
   (i16x8.shl
    (local.get $0)
    (local.get $1)
@@ -672,14 +842,14 @@
    (local.get $1)
   )
  )
- (func $i16x8.add_saturate_s (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.add_saturate_s
+ (func $i16x8.add_sat_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.add_sat_s
    (local.get $0)
    (local.get $1)
   )
  )
- (func $i16x8.add_saturate_u (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.add_saturate_u
+ (func $i16x8.add_sat_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.add_sat_u
    (local.get $0)
    (local.get $1)
   )
@@ -690,16 +860,21 @@
    (local.get $1)
   )
  )
- (func $i16x8.sub_saturate_s (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.sub_saturate_s
+ (func $i16x8.sub_sat_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.sub_sat_s
    (local.get $0)
    (local.get $1)
   )
  )
- (func $i16x8.sub_saturate_u (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.sub_saturate_u
+ (func $i16x8.sub_sat_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.sub_sat_u
    (local.get $0)
    (local.get $1)
+  )
+ )
+ (func $f64x2.nearest (param $0 v128) (result v128)
+  (f64x2.nearest
+   (local.get $0)
   )
  )
  (func $i16x8.mul (param $0 v128) (param $1 v128) (result v128)
@@ -738,6 +913,30 @@
    (local.get $1)
   )
  )
+ (func $i16x8.extmul_low_i8x16_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_low_i8x16_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extmul_high_i8x16_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_high_i8x16_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extmul_low_i8x16_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_low_i8x16_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extmul_high_i8x16_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_high_i8x16_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $i32x4.abs (param $0 v128) (result v128)
   (i32x4.abs
    (local.get $0)
@@ -748,11 +947,6 @@
    (local.get $0)
   )
  )
- (func $i32x4.any_true (param $0 v128) (result i32)
-  (i32x4.any_true
-   (local.get $0)
-  )
- )
  (func $i32x4.all_true (param $0 v128) (result i32)
   (i32x4.all_true
    (local.get $0)
@@ -760,6 +954,26 @@
  )
  (func $i32x4.bitmask (param $0 v128) (result i32)
   (i32x4.bitmask
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extend_low_i16x8_s (param $0 v128) (result v128)
+  (i32x4.extend_low_i16x8_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extend_high_i16x8_s (param $0 v128) (result v128)
+  (i32x4.extend_high_i16x8_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extend_low_i16x8_u (param $0 v128) (result v128)
+  (i32x4.extend_low_i16x8_u
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extend_high_i16x8_u (param $0 v128) (result v128)
+  (i32x4.extend_high_i16x8_u
    (local.get $0)
   )
  )
@@ -829,18 +1043,67 @@
    (local.get $1)
   )
  )
+ (func $i32x4.extmul_low_i16x8_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_low_i16x8_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.extmul_high_i16x8_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_high_i16x8_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.extmul_low_i16x8_u (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_low_i16x8_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.extmul_high_i16x8_u (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_high_i16x8_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.abs (param $0 v128) (result v128)
+  (i64x2.abs
+   (local.get $0)
+  )
+ )
  (func $i64x2.neg (param $0 v128) (result v128)
   (i64x2.neg
    (local.get $0)
   )
  )
- (func $i64x2.any_true (param $0 v128) (result i32)
-  (i64x2.any_true
+ (func $i64x2.all_true (param $0 v128) (result i32)
+  (i64x2.all_true
    (local.get $0)
   )
  )
- (func $i64x2.all_true (param $0 v128) (result i32)
-  (i64x2.all_true
+ (func $i64x2.bitmask (param $0 v128) (result i32)
+  (i64x2.bitmask
+   (local.get $0)
+  )
+ )
+ (func $i64x2.extend_low_i32x4_s (param $0 v128) (result v128)
+  (i64x2.extend_low_i32x4_s
+   (local.get $0)
+  )
+ )
+ (func $i64x2.extend_high_i32x4_s (param $0 v128) (result v128)
+  (i64x2.extend_high_i32x4_s
+   (local.get $0)
+  )
+ )
+ (func $i64x2.extend_low_i32x4_u (param $0 v128) (result v128)
+  (i64x2.extend_low_i32x4_u
+   (local.get $0)
+  )
+ )
+ (func $i64x2.extend_high_i32x4_u (param $0 v128) (result v128)
+  (i64x2.extend_high_i32x4_u
    (local.get $0)
   )
  )
@@ -878,6 +1141,81 @@
   (i64x2.mul
    (local.get $0)
    (local.get $1)
+  )
+ )
+ (func $i64x2.eq (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.eq
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.ne (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.ne
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.lt_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.lt_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.gt_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.gt_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.le_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.le_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.ge_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.ge_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_low_i32x4_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_low_i32x4_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_high_i32x4_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_high_i32x4_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_low_i32x4_u (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_low_i32x4_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_high_i32x4_u (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_high_i32x4_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $f32x4.abs (param $0 v128) (result v128)
+  (f32x4.abs
+   (local.get $0)
+  )
+ )
+ (func $f32x4.neg (param $0 v128) (result v128)
+  (f32x4.neg
+   (local.get $0)
+  )
+ )
+ (func $f32x4.sqrt (param $0 v128) (result v128)
+  (f32x4.sqrt
+   (local.get $0)
   )
  )
  (func $f32x4.add (param $0 v128) (param $1 v128) (result v128)
@@ -928,53 +1266,19 @@
    (local.get $1)
   )
  )
- (func $f32x4.ceil (param $0 v128) (result v128)
-  (f32x4.ceil
+ (func $f64x2.abs (param $0 v128) (result v128)
+  (f64x2.abs
    (local.get $0)
   )
  )
- (func $f32x4.floor (param $0 v128) (result v128)
-  (f32x4.floor
+ (func $f64x2.neg (param $0 v128) (result v128)
+  (f64x2.neg
    (local.get $0)
   )
  )
- (func $f32x4.trunc (param $0 v128) (result v128)
-  (f32x4.trunc
+ (func $f64x2.sqrt (param $0 v128) (result v128)
+  (f64x2.sqrt
    (local.get $0)
-  )
- )
- (func $f32x4.nearest (param $0 v128) (result v128)
-  (f32x4.nearest
-   (local.get $0)
-  )
- )
- (func $f32x4.abs (param $0 v128) (result v128)
-  (f32x4.abs
-   (local.get $0)
-  )
- )
- (func $f32x4.neg (param $0 v128) (result v128)
-  (f32x4.neg
-   (local.get $0)
-  )
- )
- (func $f32x4.sqrt (param $0 v128) (result v128)
-  (f32x4.sqrt
-   (local.get $0)
-  )
- )
- (func $f32x4.qfma (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (f32x4.qfma
-   (local.get $0)
-   (local.get $1)
-   (local.get $2)
-  )
- )
- (func $f32x4.qfms (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (f32x4.qfms
-   (local.get $0)
-   (local.get $1)
-   (local.get $2)
   )
  )
  (func $f64x2.add (param $0 v128) (param $1 v128) (result v128)
@@ -1025,55 +1329,6 @@
    (local.get $1)
   )
  )
- (func $f64x2.ceil (param $0 v128) (result v128)
-  (f64x2.ceil
-   (local.get $0)
-  )
- )
- (func $f64x2.floor (param $0 v128) (result v128)
-  (f64x2.floor
-   (local.get $0)
-  )
- )
- (func $f64x2.trunc (param $0 v128) (result v128)
-  (f64x2.trunc
-   (local.get $0)
-  )
- )
- (func $f64x2.nearest (param $0 v128) (result v128)
-  (f64x2.nearest
-   (local.get $0)
-  )
- )
- (func $f64x2.abs (param $0 v128) (result v128)
-  (f64x2.abs
-   (local.get $0)
-  )
- )
- (func $f64x2.neg (param $0 v128) (result v128)
-  (f64x2.neg
-   (local.get $0)
-  )
- )
- (func $f64x2.sqrt (param $0 v128) (result v128)
-  (f64x2.sqrt
-   (local.get $0)
-  )
- )
- (func $f64x2.qfma (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (f64x2.qfma
-   (local.get $0)
-   (local.get $1)
-   (local.get $2)
-  )
- )
- (func $f64x2.qfms (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (f64x2.qfms
-   (local.get $0)
-   (local.get $1)
-   (local.get $2)
-  )
- )
  (func $i32x4.trunc_sat_f32x4_s (param $0 v128) (result v128)
   (i32x4.trunc_sat_f32x4_s
    (local.get $0)
@@ -1081,16 +1336,6 @@
  )
  (func $i32x4.trunc_sat_f32x4_u (param $0 v128) (result v128)
   (i32x4.trunc_sat_f32x4_u
-   (local.get $0)
-  )
- )
- (func $i64x2.trunc_sat_f64x2_s (param $0 v128) (result v128)
-  (i64x2.trunc_sat_f64x2_s
-   (local.get $0)
-  )
- )
- (func $i64x2.trunc_sat_f64x2_u (param $0 v128) (result v128)
-  (i64x2.trunc_sat_f64x2_u
    (local.get $0)
   )
  )
@@ -1104,144 +1349,24 @@
    (local.get $0)
   )
  )
- (func $f64x2.convert_i64x2_s (param $0 v128) (result v128)
-  (f64x2.convert_i64x2_s
+ (func $i32x4.trunc_sat_f64x2_s_zero (param $0 v128) (result v128)
+  (i32x4.trunc_sat_f64x2_s_zero
    (local.get $0)
   )
  )
- (func $f64x2.convert_i64x2_u (param $0 v128) (result v128)
-  (f64x2.convert_i64x2_u
+ (func $i32x4.trunc_sat_f64x2_u_zero (param $0 v128) (result v128)
+  (i32x4.trunc_sat_f64x2_u_zero
    (local.get $0)
   )
  )
- (func $v8x16.load_splat (param $0 i32) (result v128)
-  (v8x16.load_splat
+ (func $f64x2.convert_low_i32x4_s (param $0 v128) (result v128)
+  (f64x2.convert_low_i32x4_s
    (local.get $0)
   )
  )
- (func $v16x8.load_splat (param $0 i32) (result v128)
-  (v16x8.load_splat
+ (func $f64x2.convert_low_i32x4_u (param $0 v128) (result v128)
+  (f64x2.convert_low_i32x4_u
    (local.get $0)
-  )
- )
- (func $v32x4.load_splat (param $0 i32) (result v128)
-  (v32x4.load_splat
-   (local.get $0)
-  )
- )
- (func $v64x2.load_splat (param $0 i32) (result v128)
-  (v64x2.load_splat
-   (local.get $0)
-  )
- )
- (func $i8x16.narrow_i16x8_s (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.narrow_i16x8_s
-   (local.get $0)
-   (local.get $1)
-  )
- )
- (func $i8x16.narrow_i16x8_u (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.narrow_i16x8_u
-   (local.get $0)
-   (local.get $1)
-  )
- )
- (func $i16x8.narrow_i32x4_s (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.narrow_i32x4_s
-   (local.get $0)
-   (local.get $1)
-  )
- )
- (func $i16x8.narrow_i32x4_u (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.narrow_i32x4_u
-   (local.get $0)
-   (local.get $1)
-  )
- )
- (func $i16x8.widen_low_i8x16_s (param $0 v128) (result v128)
-  (i16x8.widen_low_i8x16_s
-   (local.get $0)
-  )
- )
- (func $i16x8.widen_high_i8x16_s (param $0 v128) (result v128)
-  (i16x8.widen_high_i8x16_s
-   (local.get $0)
-  )
- )
- (func $i16x8.widen_low_i8x16_u (param $0 v128) (result v128)
-  (i16x8.widen_low_i8x16_u
-   (local.get $0)
-  )
- )
- (func $i16x8.widen_high_i8x16_u (param $0 v128) (result v128)
-  (i16x8.widen_high_i8x16_u
-   (local.get $0)
-  )
- )
- (func $i32x4.widen_low_i16x8_s (param $0 v128) (result v128)
-  (i32x4.widen_low_i16x8_s
-   (local.get $0)
-  )
- )
- (func $i32x4.widen_high_i16x8_s (param $0 v128) (result v128)
-  (i32x4.widen_high_i16x8_s
-   (local.get $0)
-  )
- )
- (func $i32x4.widen_low_i16x8_u (param $0 v128) (result v128)
-  (i32x4.widen_low_i16x8_u
-   (local.get $0)
-  )
- )
- (func $i32x4.widen_high_i16x8_u (param $0 v128) (result v128)
-  (i32x4.widen_high_i16x8_u
-   (local.get $0)
-  )
- )
- (func $i16x8.load8x8_u (param $0 i32) (result v128)
-  (i16x8.load8x8_u
-   (local.get $0)
-  )
- )
- (func $i16x8.load8x8_s (param $0 i32) (result v128)
-  (i16x8.load8x8_s
-   (local.get $0)
-  )
- )
- (func $i32x4.load16x4_s (param $0 i32) (result v128)
-  (i32x4.load16x4_s
-   (local.get $0)
-  )
- )
- (func $i32x4.load16x4_u (param $0 i32) (result v128)
-  (i32x4.load16x4_u
-   (local.get $0)
-  )
- )
- (func $i64x2.load32x2_s (param $0 i32) (result v128)
-  (i64x2.load32x2_s
-   (local.get $0)
-  )
- )
- (func $i64x2.load32x2_u (param $0 i32) (result v128)
-  (i64x2.load32x2_u
-   (local.get $0)
-  )
- )
- (func $v128.load32_zero (param $0 i32) (result v128)
-  (v128.load32_zero
-   (local.get $0)
-  )
- )
- (func $v128.load64_zero (param $0 i32) (result v128)
-  (v128.load64_zero
-   (local.get $0)
-  )
- )
- (func $v8x16.swizzle (param $0 v128) (param $1 v128) (result v128)
-  (v8x16.swizzle
-   (local.get $0)
-   (local.get $1)
   )
  )
 )

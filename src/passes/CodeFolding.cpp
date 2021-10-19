@@ -155,8 +155,6 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     unoptimizables.insert(curr->default_);
   }
 
-  void visitBrOnExn(BrOnExn* curr) { unoptimizables.insert(curr->name); }
-
   void visitUnreachable(Unreachable* curr) {
     // we can only optimize if we are at the end of the parent block
     if (!controlFlowStack.empty()) {
@@ -305,11 +303,11 @@ private:
         return false;
       }
       if (getModule()->features.hasExceptionHandling()) {
-        EffectAnalyzer effects(getPassOptions(), getModule()->features, item);
-        // Currently pop instructions are only used for exnref.pop, which is a
-        // pseudo instruction following a catch. We cannot move expressions
-        // containing pops if they are not enclosed in a 'catch' body, because a
-        // pop instruction should follow right after 'catch'.
+        EffectAnalyzer effects(getPassOptions(), *getModule(), item);
+        // Pop instructions are pseudoinstructions used only after 'catch' to
+        // simulate its behavior. We cannot move expressions containing pops if
+        // they are not enclosed in a 'catch' body, because a pop instruction
+        // should follow right after 'catch'.
         if (effects.danglingPop) {
           return false;
         }
@@ -593,9 +591,8 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(getPassOptions(),
-                                                   getModule()->features,
-                                                   newItem)
+                                if (EffectAnalyzer(
+                                      getPassOptions(), *getModule(), newItem)
                                       .hasExternalBreakTargets()) {
                                   return true;
                                 }
@@ -744,7 +741,7 @@ private:
       mergeable.pop_back();
     }
     // ensure the replacement has the same type, so the outside is not surprised
-    outer->finalize(getFunction()->sig.results);
+    outer->finalize(getFunction()->getResults());
     getFunction()->body = outer;
     return true;
   }

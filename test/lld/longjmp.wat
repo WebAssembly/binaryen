@@ -20,11 +20,9 @@
  (table $0 2 2 funcref)
  (elem (i32.const 1) $fimport$3)
  (global $global$0 (mut i32) (i32.const 66112))
- (global $global$1 i32 (i32.const 576))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $0))
  (export "main" (func $2))
- (export "__data_end" (global $global$1))
  (func $0
  )
  (func $1 (result i32)

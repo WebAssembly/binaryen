@@ -30,12 +30,11 @@
 //       <= 1 byte to declare the local and 2-3 to use it!
 //
 
-#include <map>
-
-#include <pass.h>
-#include <wasm-binary.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "pass.h"
+#include "support/insert_ordered.h"
+#include "wasm-binary.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -47,7 +46,7 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
 
   Pass* create() override { return new ConstHoisting; }
 
-  std::map<Literal, std::vector<Expression**>> uses;
+  InsertOrderedMap<Literal, std::vector<Expression**>> uses;
 
   void visitConst(Const* curr) {
     uses[curr->value].push_back(getCurrentPointer());
@@ -94,10 +93,10 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
-      case Type::i31ref: {
+      case Type::i31ref:
+      case Type::dataref: {
         return false;
       }
       case Type::none:

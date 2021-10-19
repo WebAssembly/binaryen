@@ -20,6 +20,7 @@
 #include "ir/branch-utils.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -70,6 +71,8 @@ public:
     LoopEnd,    // the ending of a loop
     TryBegin,   // the beginning of a try
     Catch,      // the catch within a try
+    CatchAll,   // the catch_all within a try
+    Delegate,   // the delegate within a try
     TryEnd      // the ending of a try
   } op;
 
@@ -99,80 +102,24 @@ public:
     }
   }
 
-  void visitBlock(Block* curr);
-  void visitIf(If* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallIndirect(CallIndirect* curr);
-  void visitLocalGet(LocalGet* curr);
-  void visitLocalSet(LocalSet* curr);
-  void visitGlobalGet(GlobalGet* curr);
-  void visitGlobalSet(GlobalSet* curr);
-  void visitLoad(Load* curr);
-  void visitStore(Store* curr);
-  void visitAtomicRMW(AtomicRMW* curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
-  void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicNotify(AtomicNotify* curr);
-  void visitAtomicFence(AtomicFence* curr);
-  void visitSIMDExtract(SIMDExtract* curr);
-  void visitSIMDReplace(SIMDReplace* curr);
-  void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDTernary(SIMDTernary* curr);
-  void visitSIMDShift(SIMDShift* curr);
-  void visitSIMDLoad(SIMDLoad* curr);
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
-  void visitMemoryInit(MemoryInit* curr);
-  void visitDataDrop(DataDrop* curr);
-  void visitMemoryCopy(MemoryCopy* curr);
-  void visitMemoryFill(MemoryFill* curr);
-  void visitConst(Const* curr);
-  void visitUnary(Unary* curr);
-  void visitBinary(Binary* curr);
-  void visitSelect(Select* curr);
-  void visitReturn(Return* curr);
-  void visitMemorySize(MemorySize* curr);
-  void visitMemoryGrow(MemoryGrow* curr);
-  void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
-  void visitRefFunc(RefFunc* curr);
-  void visitRefEq(RefEq* curr);
-  void visitTry(Try* curr);
-  void visitThrow(Throw* curr);
-  void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
-  void visitNop(Nop* curr);
-  void visitUnreachable(Unreachable* curr);
-  void visitDrop(Drop* curr);
-  void visitPop(Pop* curr);
-  void visitTupleMake(TupleMake* curr);
-  void visitTupleExtract(TupleExtract* curr);
-  void visitI31New(I31New* curr);
-  void visitI31Get(I31Get* curr);
-  void visitRefTest(RefTest* curr);
-  void visitRefCast(RefCast* curr);
-  void visitBrOnCast(BrOnCast* curr);
-  void visitRttCanon(RttCanon* curr);
-  void visitRttSub(RttSub* curr);
-  void visitStructNew(StructNew* curr);
-  void visitStructGet(StructGet* curr);
-  void visitStructSet(StructSet* curr);
-  void visitArrayNew(ArrayNew* curr);
-  void visitArrayGet(ArrayGet* curr);
-  void visitArraySet(ArraySet* curr);
-  void visitArrayLen(ArrayLen* curr);
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
+
+#include "wasm-delegations.def"
 
   void emitResultType(Type type);
   void emitIfElse(If* curr);
-  void emitCatch(Try* curr);
+  void emitCatch(Try* curr, Index i);
+  void emitCatchAll(Try* curr);
+  void emitDelegate(Try* curr);
   // emit an end at the end of a block/loop/if/try
   void emitScopeEnd(Expression* curr);
   // emit an end at the end of a function
   void emitFunctionEnd();
   void emitUnreachable();
   void mapLocalsAndEmitHeader();
+
+  MappedLocals mappedLocals;
 
 private:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
@@ -186,14 +133,16 @@ private:
 
   std::vector<Name> breakStack;
 
+  // The types of locals in the compact form, in order.
+  std::vector<Type> localTypes;
   // type => number of locals of that type in the compact form
-  std::map<Type, size_t> numLocalsByType;
-  // (local index, tuple index) => binary local index
-  std::map<std::pair<Index, Index>, size_t> mappedLocals;
+  std::unordered_map<Type, size_t> numLocalsByType;
+
+  void noteLocalType(Type type);
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
-  std::map<Type, Index> scratchLocals;
+  InsertOrderedMap<Type, Index> scratchLocals;
   void countScratchLocals();
   void setScratchLocals();
 };
@@ -221,7 +170,15 @@ private:
   void emit(Expression* curr) { static_cast<SubType*>(this)->emit(curr); }
   void emitHeader() { static_cast<SubType*>(this)->emitHeader(); }
   void emitIfElse(If* curr) { static_cast<SubType*>(this)->emitIfElse(curr); }
-  void emitCatch(Try* curr) { static_cast<SubType*>(this)->emitCatch(curr); }
+  void emitCatch(Try* curr, Index i) {
+    static_cast<SubType*>(this)->emitCatch(curr, i);
+  }
+  void emitCatchAll(Try* curr) {
+    static_cast<SubType*>(this)->emitCatchAll(curr);
+  }
+  void emitDelegate(Try* curr) {
+    static_cast<SubType*>(this)->emitDelegate(curr);
+  }
   void emitScopeEnd(Expression* curr) {
     static_cast<SubType*>(this)->emitScopeEnd(curr);
   }
@@ -388,9 +345,21 @@ void BinaryenIRWriter<SubType>::visitLoop(Loop* curr) {
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
-  emitCatch(curr);
-  visitPossibleBlockContents(curr->catchBody);
-  emitScopeEnd(curr);
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    emitCatch(curr, i);
+    visitPossibleBlockContents(curr->catchBodies[i]);
+  }
+  if (curr->hasCatchAll()) {
+    emitCatchAll(curr);
+    visitPossibleBlockContents(curr->catchBodies.back());
+  }
+  if (curr->isDelegate()) {
+    emitDelegate(curr);
+    // Note that when we emit a delegate we do not need to also emit a scope
+    // ending, as the delegate ends the scope.
+  } else {
+    emitScopeEnd(curr);
+  }
   if (curr->type == Type::unreachable) {
     emitUnreachable();
   }
@@ -420,7 +389,9 @@ public:
     writer.mapLocalsAndEmitHeader();
   }
   void emitIfElse(If* curr) { writer.emitIfElse(curr); }
-  void emitCatch(Try* curr) { writer.emitCatch(curr); }
+  void emitCatch(Try* curr, Index i) { writer.emitCatch(curr, i); }
+  void emitCatchAll(Try* curr) { writer.emitCatchAll(curr); }
+  void emitDelegate(Try* curr) { writer.emitDelegate(curr); }
   void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
@@ -434,6 +405,8 @@ public:
       parent.writeDebugLocation(curr, func);
     }
   }
+
+  MappedLocals& getMappedLocals() { return writer.mappedLocals; }
 
 private:
   WasmBinaryWriter& parent;
@@ -454,8 +427,14 @@ public:
   void emitIfElse(If* curr) {
     stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
   }
-  void emitCatch(Try* curr) {
+  void emitCatch(Try* curr, Index i) {
     stackIR.push_back(makeStackInst(StackInst::Catch, curr));
+  }
+  void emitCatchAll(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
+  }
+  void emitDelegate(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::Delegate, curr));
   }
   void emitFunctionEnd() {}
   void emitUnreachable() {
@@ -485,6 +464,8 @@ public:
       func(func) {}
 
   void write();
+
+  MappedLocals& getMappedLocals() { return writer.mappedLocals; }
 
 private:
   BinaryInstWriter writer;

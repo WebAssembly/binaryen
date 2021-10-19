@@ -22,7 +22,6 @@
 //
 
 #include "abi/js.h"
-#include "asmjs/shared-constants.h"
 #include "emscripten-optimizer/istring.h"
 #include "ir/flat.h"
 #include "ir/iteration.h"
@@ -114,11 +113,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       }
       originallyI64Globals.insert(curr->name);
       curr->type = Type::i32;
-      auto* high = builder->makeGlobal(makeHighName(curr->name),
-                                       Type::i32,
-                                       builder->makeConst(int32_t(0)),
-                                       Builder::Mutable);
-      module->addGlobal(high);
+      auto high = builder->makeGlobal(makeHighName(curr->name),
+                                      Type::i32,
+                                      builder->makeConst(int32_t(0)),
+                                      Builder::Mutable);
       if (curr->imported()) {
         Fatal() << "TODO: imported i64 globals";
       } else {
@@ -135,6 +133,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         }
         curr->init->type = Type::i32;
       }
+      module->addGlobal(std::move(high));
     }
 
     // For functions that return 64-bit values, we use this global variable
@@ -159,7 +158,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     freeTemps.clear();
     Module temp;
     auto* oldFunc = ModuleUtils::copyFunction(func, temp);
-    func->sig.params = Type::none;
+    func->setParams(Type::none);
     func->vars.clear();
     func->localNames.clear();
     func->localIndices.clear();
@@ -192,8 +191,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (func->imported()) {
       return;
     }
-    if (func->sig.results == Type::i64) {
-      func->sig.results = Type::i32;
+    if (func->getResults() == Type::i64) {
+      func->setResults(Type::i32);
       // body may not have out param if it ends with control flow
       if (hasOutParam(func->body)) {
         TempVar highBits = fetchOutParam(func->body);
@@ -251,7 +250,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn &&
-        getModule()->getFunction(curr->target)->sig.results == Type::i64) {
+        getModule()->getFunction(curr->target)->getResults() == Type::i64) {
       Fatal()
         << "i64 to i32 lowering of return_call values not yet implemented";
     }
@@ -283,8 +282,11 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
             params.push_back(param);
           }
         }
-        return builder->makeCallIndirect(
-          curr->target, args, Signature(Type(params), results), curr->isReturn);
+        return builder->makeCallIndirect(curr->table,
+                                         curr->target,
+                                         args,
+                                         Signature(Type(params), results),
+                                         curr->isReturn);
       });
   }
 

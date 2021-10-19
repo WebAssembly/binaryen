@@ -57,7 +57,8 @@ def test_wasm_opt():
         passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
         if os.path.exists(passes_file):
             passname = open(passes_file).read().strip()
-        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
+        passes = [p for p in passname.split('_') if p != 'noprint']
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
@@ -73,7 +74,8 @@ def test_wasm_opt():
 
             # also check pass-debug mode
             def check():
-                pass_debug = support.run_command(cmd)
+                # ignore stderr, as the pass-debug output is very verbose in CI
+                pass_debug = support.run_command(cmd, stderr=subprocess.PIPE)
                 shared.fail_if_not_identical(curr, pass_debug)
             shared.with_pass_debug(check)
 
@@ -171,7 +173,8 @@ def update_wasm_opt_tests():
         passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
         if os.path.exists(passes_file):
             passname = open(passes_file).read().strip()
-        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
+        passes = [p for p in passname.split('_') if p != 'noprint']
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
@@ -223,7 +226,7 @@ def update_wasm_opt_tests():
             subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             assert os.path.exists('a.wasm')
 
-            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast']
+            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast', '-all']
             print(' '.join(cmd))
             if os.path.exists('a.wast'):
                 os.unlink('a.wast')

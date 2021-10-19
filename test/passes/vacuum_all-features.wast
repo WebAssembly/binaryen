@@ -797,54 +797,46 @@
 )
 
 (module
-  (event $e (attr 0) (param i32))
-  ;; When try body does not throw, try-body can be replaced with the try body
-  (func $try-test
-    (try
-      (do
-        (drop (i32.const 0))
-      )
-      (catch
-        (drop (pop exnref))
-      )
+ (type $A (struct (field (mut i32))))
+ (func $foo
+  (drop
+   (block (result dataref)
+    ;; this dropped item can be vacuumed out in principle, but it is a non-
+    ;; nullable reference type and we don't have a type to put in its place, so
+    ;; don't try to replace it. (later operations will remove all the body of
+    ;; this function; this test verifies we don't crash along the way)
+    (struct.new_default_with_rtt $A
+     (rtt.canon $A)
     )
+   )
   )
-
-  ;; The exception thrown in the inner try is caught by the inner catch, so the
-  ;; outer try body does not throw and the outer try-catch can be removed
-  (func $inner-try-test (local $0 i32)
-    (try
-      (do
-        (try
-          (do
-            (throw $e (i32.const 0))
-          )
-          (catch
-            (drop (pop exnref))
-            (local.set $0 (i32.const 1))
-          )
-        )
+ )
+)
+(module
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $1
+  (drop
+   (block $block (result funcref i32)
+    ;; we can vaccum out all parts of this block: the br_if is not taken, there
+    ;; is a nop, and the tuple at the end goes to a dropped block anyhow. this
+    ;; test specifically verifies handling of tuples containing non-nullable
+    ;; types, for which we try to create a zero in an intermediate step along
+    ;; the way.
+    (drop
+     (br_if $block
+      (tuple.make
+       (ref.func $1)
+       (i32.const 0)
       )
-      (catch
-        (drop (pop exnref))
-      )
+      (i32.const 0)
+     )
     )
-  )
-
-  ;; When catch body is removed, the removal of 'br' inside the catch body
-  ;; should be propagated up to the outer block, so that its type will be
-  ;; correctly updated to unreachable.
-  (func $br-in-catch
-    (block $label$1
-      (try
-        (do
-          (unreachable)
-        )
-        (catch
-          (drop (pop exnref))
-          (br $label$1)
-        )
-      )
+    (nop)
+    (tuple.make
+     (ref.func $1)
+     (i32.const 1)
     )
+   )
   )
+ )
 )

@@ -16,55 +16,7 @@
 
 //
 // stack-utils.h: Utilities for manipulating and analyzing stack machine code in
-// the form of Poppy IR.
-//
-// Poppy IR represents stack machine code using normal Binaryen IR types by
-// imposing the following constraints:
-//
-//  1. Function bodies and children of control flow (except If conditions) must
-//     be blocks.
-//
-//  2. Blocks may have any Expressions except for Pops as children. The sequence
-//     of instructions in a block follows the same validation rules as in
-//     WebAssembly. That means that any expression may have a concrete type, not
-//     just the final expression in the block.
-//
-//  3. All other children must be Pops, which are used to determine the input
-//     stack type of each instruction. Pops may not have `unreachable` type.
-//
-//  4. Only control flow structures and instructions that have polymorphic
-//     unreachable behavior in WebAssembly may have unreachable type. Blocks may
-//     be unreachable when they are not branch targets and when they have an
-//     unreachable child. Note that this means a block may be unreachable even
-//     if it would otherwise have a concrete type, unlike in Binaryen IR.
-//
-// For example, the following Binaryen IR Function:
-//
-//   (func $foo (result i32)
-//    (i32.add
-//     (i32.const 42)
-//     (i32.const 5)
-//    )
-//   )
-//
-// would look like this in Poppy IR:
-//
-//   (func $foo (result i32)
-//    (block
-//     (i32.const 42)
-//     (i32.const 5)
-//     (i32.add
-//      (i32.pop)
-//      (i32.pop)
-//     )
-//    )
-//   )
-//
-// Notice that the sequence of instructions in the block is now identical to the
-// sequence of instructions in raw WebAssembly. Also note that Poppy IR's
-// validation rules are largely additional on top of the normal Binaryen IR
-// validation rules, with the only exceptions being block body validation and
-// block unreahchability rules.
+// the form of Poppy IR. See src/passes/Poppify.cpp for Poppy IR documentation.
 //
 
 #ifndef wasm_ir_stack_h
@@ -88,12 +40,12 @@ bool mayBeUnreachable(Expression* expr);
 } // namespace StackUtils
 
 // Stack signatures are like regular function signatures, but they are used to
-// represent the stack parameters and results of arbitrary sequences of stacky
-// instructions. They have to record whether they cover an unreachable
-// instruction because their composition takes into account the polymorphic
-// results of unreachable instructions. For example, the following instruction
-// sequences both have params {i32, i32} and results {f32}, but only sequence B
-// is unreachable:
+// represent the stack parameters and results of arbitrary sequences of stack
+// machine instructions. Stack signatures that represent instruction sequences
+// including unreachable instructions are `Polymorphic` and otherwise they are
+// `Fixed`. For example, the following instruction sequences both have params
+// {i32, i32} and results {f32}, but sequence A is `Fixed` while sequence B is
+// `Polymorphic.`
 //
 //  A:
 //    i32.add
@@ -107,8 +59,8 @@ bool mayBeUnreachable(Expression* expr);
 //
 // Notice that this distinction is important because sequence B can be the body
 // of the blocks below but sequence A cannot. In other words, the stack
-// signature of sequence B satisfies the signatures of these blocks, but the
-// stack signature of sequence A does not.
+// signature of sequence B is a subtype of the signatures of these blocks, but
+// the stack signature of sequence A is not.
 //
 //  (block (param f64 i32 i32) (result f32) ... )
 //  (block (param i32 i32) (result f64 f32) ... )
@@ -117,12 +69,14 @@ bool mayBeUnreachable(Expression* expr);
 struct StackSignature {
   Type params;
   Type results;
-  bool unreachable;
+  enum Kind {
+    Fixed,
+    Polymorphic,
+  } kind;
 
-  StackSignature()
-    : params(Type::none), results(Type::none), unreachable(false) {}
-  StackSignature(Type params, Type results, bool unreachable = false)
-    : params(params), results(results), unreachable(unreachable) {}
+  StackSignature() : params(Type::none), results(Type::none), kind(Fixed) {}
+  StackSignature(Type params, Type results, Kind kind)
+    : params(params), results(results), kind(kind) {}
 
   StackSignature(const StackSignature&) = default;
   StackSignature& operator=(const StackSignature&) = default;
@@ -135,7 +89,7 @@ struct StackSignature {
   // compose.
   template<class InputIt>
   explicit StackSignature(InputIt first, InputIt last)
-    : params(Type::none), results(Type::none), unreachable(false) {
+    : params(Type::none), results(Type::none), kind(Fixed) {
     // TODO: It would be more efficient to build the signature directly and
     // construct the params in reverse to avoid quadratic behavior.
     while (first != last) {
@@ -146,18 +100,79 @@ struct StackSignature {
   // Return `true` iff `next` composes after this stack signature.
   bool composes(const StackSignature& next) const;
 
-  // Whether a block whose contents have this stack signature could be typed
-  // with `sig`.
-  bool satisfies(Signature sig) const;
-
   // Compose stack signatures. Assumes they actually compose.
   StackSignature& operator+=(const StackSignature& next);
   StackSignature operator+(const StackSignature& next) const;
 
   bool operator==(const StackSignature& other) const {
     return params == other.params && results == other.results &&
-           unreachable == other.unreachable;
+           kind == other.kind;
   }
+
+  // Whether a block whose contents have stack signature `a` could be typed with
+  // stack signature `b`, i.e. whether it could be used in a context that
+  // expects signature `b`. Formally, where `a` is the LHS and `b` the RHS:
+  //
+  // [t1*] -> [t2*] <: [s1* t1'*] -> [s2* t2'*] iff
+  //
+  //  - t1' <: t1
+  //  - t2 <: t2'
+  //  - s1 <: s2
+  //
+  //  Note that neither signature is polymorphic in this rule and that the
+  //  cardinalities of t1* and t1'*, t2* and t2'*, and s1* and s2* must match.
+  //
+  // [t1*] -> [t2*] {poly} <: [s1* t1'*] -> [s2* t2'*] {poly?} iff
+  //
+  //  - [t1*] -> [t2*] <: [t1'*] -> [t2'*]
+  //
+  //  Note that s1* and s2* can have different cardinalities and arbitrary types
+  //  in this rule.
+  //
+  // As an example of the first rule, consider this instruction sequence:
+  //
+  //   ref.as_func
+  //   drop
+  //   i32.add
+  //
+  // The most specific type you could give this sequence is [i32, i32, anyref]
+  // -> [i32]. But it could also be used in a context that expects [i32, i32,
+  // funcref] -> [i32] because ref.as_func can accept funcref or any other
+  // subtype of anyref. That's where the contravariance comes from. This
+  // instruction sequence could also be used anywhere that expects [f32, i32,
+  // i32, anyref] -> [f32, i32] because the f32 simply stays on the stack
+  // throughout the sequence. That's where the the prefix extension comes from.
+  //
+  // For the second rule, consider this sequence:
+  //
+  //   ref.as_func
+  //   drop
+  //   i32.add
+  //   unreachable
+  //   i32.const 0
+  //
+  // This instruction sequence has the specific type [i32, i32, anyref] -> [i32]
+  // {poly}. It can be used in any situation the previous block can be used in,
+  // but can additionally be used in contexts that expect something like [f32,
+  // i32, i32, anyref] -> [v128, i32]. Because of the polymorphism, the
+  // additional prefixes on the params and results do not need to match.
+  //
+  // Note that a fixed stack signature (without a {poly}) is never a subtype of
+  // any polymorphic stack signature (with a {poly}). This makes sense because a
+  // sequence of instructions that has no polymorphic behavior cannot be given a
+  // type that says it does have polymorphic behavior.
+  //
+  // Also, [] -> [] {poly} is the bottom type here; it is a subtype of every
+  // other stack signature. This corresponds to the `unreachable` instruction
+  // being able to be given any stack signature.
+  static bool isSubType(StackSignature a, StackSignature b);
+
+  // Returns true iff `a` and `b` have a LUB, i.e. a minimal StackSignature that
+  // could type block contents of either type `a` or type `b`.
+  static bool haveLeastUpperBound(StackSignature a, StackSignature b);
+
+  // Returns the LUB of `a` and `b`. Assumes that the LUB exists.
+  static StackSignature getLeastUpperBound(StackSignature a, StackSignature b);
 };
 
 // Calculates stack machine data flow, associating the sources and destinations

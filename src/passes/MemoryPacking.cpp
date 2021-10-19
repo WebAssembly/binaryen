@@ -97,7 +97,7 @@ struct MemoryPacking : public Pass {
   uint32_t maxSegments;
 
   void run(PassRunner* runner, Module* module) override;
-  bool canOptimize(const std::vector<Memory::Segment>& segments);
+  bool canOptimize(const Memory& memory, const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
@@ -122,19 +122,15 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!module->memory.exists) {
-    return;
-  }
-
-  auto& segments = module->memory.segments;
-
-  if (!canOptimize(segments)) {
+  if (!canOptimize(module->memory, runner->options)) {
     return;
   }
 
   maxSegments = module->features.hasBulkMemory()
                   ? 63
                   : uint32_t(WebLimitations::MaxDataSegments);
+
+  auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
   std::vector<Referrers> referrers(segments.size());
@@ -160,6 +156,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     auto& currReferrers = referrers[origIndex];
 
     std::vector<Range> ranges;
+
     if (canSplit(segment, currReferrers)) {
       calculateRanges(segment, currReferrers, ranges);
     } else {
@@ -182,7 +179,21 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 }
 
-bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
+bool MemoryPacking::canOptimize(const Memory& memory,
+                                const PassOptions& passOptions) {
+  if (!memory.exists) {
+    return false;
+  }
+
+  // We must optimize under the assumption that memory has been initialized to
+  // zero. That is the case for a memory declared in the module, but for a
+  // memory that is imported, we must be told that it is zero-initialized.
+  if (memory.imported() && !passOptions.zeroFilledMemory) {
+    return false;
+  }
+
+  auto& segments = memory.segments;
+
   // One segment is always ok to optimize, as it does not have the potential
   // problems handled below.
   if (segments.size() <= 1) {
@@ -217,7 +228,7 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
       }
       // Note the maximum address so far.
       maxAddress = std::max(
-        maxAddress, Address(c->value.getInteger() + segment.data.size()));
+        maxAddress, Address(c->value.getUnsigned() + segment.data.size()));
     }
   }
   // All active segments have constant offsets, known at this time, so we may be
@@ -228,7 +239,7 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
   for (auto& segment : segments) {
     if (!segment.isPassive) {
       auto* c = segment.offset->cast<Const>();
-      Address start = c->value.getInteger();
+      Address start = c->value.getUnsigned();
       DisjointSpans::Span span{start, start + segment.data.size()};
       if (space.addAndCheckOverlap(span)) {
         std::cerr << "warning: active memory segments have overlap, which "
@@ -242,6 +253,14 @@ bool MemoryPacking::canOptimize(const std::vector<Memory::Segment>& segments) {
 
 bool MemoryPacking::canSplit(const Memory::Segment& segment,
                              const Referrers& referrers) {
+  // Don't mess with segments related to llvm coverage tools such as
+  // __llvm_covfun. There segments are expected/parsed by external downstream
+  // tools (llvm-cov) so they need to be left intact.
+  // See https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
+  if (segment.name.is() && segment.name.startsWith("__llvm")) {
+    return false;
+  }
+
   if (segment.isPassive) {
     for (auto* referrer : referrers) {
       if (auto* init = referrer->dynCast<MemoryInit>()) {
@@ -252,10 +271,10 @@ bool MemoryPacking::canSplit(const Memory::Segment& segment,
       }
     }
     return true;
-  } else {
-    // Active segments can only be split if they have constant offsets
-    return segment.offset->is<Const>();
   }
+
+  // Active segments can only be split if they have constant offsets
+  return segment.offset->is<Const>();
 }
 
 void MemoryPacking::calculateRanges(const Memory::Segment& segment,
@@ -495,6 +514,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
                                         std::vector<Range>& ranges,
                                         std::vector<Memory::Segment>& packed,
                                         size_t segmentsRemaining) {
+  size_t segmentCount = 0;
   for (size_t i = 0; i < ranges.size(); ++i) {
     Range& range = ranges[i];
     if (range.isZero) {
@@ -503,7 +523,12 @@ void MemoryPacking::createSplitSegments(Builder& builder,
     Expression* offset = nullptr;
     if (!segment.isPassive) {
       if (auto* c = segment.offset->dynCast<Const>()) {
-        offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
+        if (c->value.type == Type::i32) {
+          offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
+        } else {
+          assert(c->value.type == Type::i64);
+          offset = builder.makeConst(int64_t(c->value.geti64() + range.start));
+        }
       } else {
         assert(ranges.size() == 1);
         offset = segment.offset;
@@ -518,7 +543,22 @@ void MemoryPacking::createSplitSegments(Builder& builder,
       range.end = lastNonzero->end;
       ranges.erase(ranges.begin() + i + 1, lastNonzero + 1);
     }
-    packed.emplace_back(segment.isPassive,
+    Name name;
+    if (segment.name.is()) {
+      // Name the first range after the original segment and all following
+      // ranges get numbered accordingly.  This means that for segments that
+      // canot be split (segments that contains a single range) the input and
+      // output segment have the same name.
+      if (!segmentCount) {
+        name = segment.name;
+      } else {
+        name = std::string(segment.name.c_str()) + "." +
+               std::to_string(segmentCount);
+      }
+      segmentCount++;
+    }
+    packed.emplace_back(name,
+                        segment.isPassive,
                         offset,
                         &segment.data[range.start],
                         range.end - range.start);

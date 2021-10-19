@@ -15,10 +15,8 @@
  */
 
 //
-// Optimizes call arguments in a whole-program manner, removing ones
-// that are not used (dead).
-//
-// Specifically, this does these things:
+// Optimizes call arguments in a whole-program manner. In particular, this
+// removes ones that are not used (dead), but it also does more things:
 //
 //  * Find functions for whom an argument is always passed the same
 //    constant. If so, we can just set that local to that constant
@@ -28,6 +26,8 @@
 //    the previous point was true for an argument, then the second
 //    must as well.)
 //  * Find return values ("return arguments" ;) that are never used.
+//  * Refine the types of arguments, that is make the argument type more
+//    specific if all the passed values allow that.
 //
 // This pass does not depend on flattening, but it may be more effective,
 // as then call arguments never have side effects (which we need to
@@ -39,7 +39,11 @@
 
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
+#include "ir/element-utils.h"
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -72,7 +76,11 @@ struct DAEFunctionInfo {
   // see inhibits our optimizations, but TODO: an export
   // could be worked around by exporting a thunk that
   // adds the parameter.
-  bool hasUnseenCalls = false;
+  // This is atomic so that we can write to it from any function at any time
+  // during the parallel analysis phase which is run in DAEScanner.
+  std::atomic<bool> hasUnseenCalls;
+
+  DAEFunctionInfo() { hasUnseenCalls = false; }
 };
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
@@ -139,10 +147,27 @@ struct DAEScanner
     }
   }
 
+  void visitCallRef(CallRef* curr) {
+    if (curr->isReturn) {
+      info->hasTailCalls = true;
+    }
+  }
+
   void visitDrop(Drop* curr) {
     if (auto* call = curr->value->dynCast<Call>()) {
       info->droppedCalls[call] = getCurrentPointer();
     }
+  }
+
+  void visitRefFunc(RefFunc* curr) {
+    // We can't modify another function in parallel.
+    assert((*infoMap).count(curr->func));
+    // Treat a ref.func as an unseen call, preventing us from changing the
+    // function's type. If we did change it, it could be an observable
+    // difference from the outside, if the reference escapes, for example.
+    // TODO: look for actual escaping?
+    // TODO: create a thunk for external uses that allow internal optimizations
+    (*infoMap)[curr->func].hasUnseenCalls = true;
   }
 
   // main entry point
@@ -152,14 +177,22 @@ struct DAEScanner
     info = &((*infoMap)[func->name]);
     CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(
       func);
-    // If there are relevant params, check if they are used. (If
-    // we can't optimize the function anyhow, there's no point.)
+    // If there are relevant params, check if they are used. If we can't
+    // optimize the function anyhow, there's no point (note that our check here
+    // is technically racy - another thread could update hasUnseenCalls to true
+    // around when we check it - but that just means that we might or might not
+    // do some extra work, as we'll ignore the results later if we have unseen
+    // calls. That is, the check for hasUnseenCalls here is just a minor
+    // optimization to avoid pointless work. We can avoid that work if either
+    // we know there is an unseen call before the parallel analysis that we are
+    // part of, say if we are exported, or if another parallel function finds a
+    // RefFunc to us and updates it before we check it).
     if (numParams > 0 && !info->hasUnseenCalls) {
-      findUnusedParams(func);
+      findUnusedParams();
     }
   }
 
-  void findUnusedParams(Function* func) {
+  void findUnusedParams() {
     // Flow the incoming parameter values, see if they reach a read.
     // Once we've seen a parameter at a block, we need never consider it there
     // again.
@@ -223,6 +256,10 @@ struct DAEScanner
 };
 
 struct DAE : public Pass {
+  // This pass changes locals and parameters.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   bool optimize = false;
 
   void run(PassRunner* runner, Module* module) override {
@@ -240,21 +277,18 @@ struct DAE : public Pass {
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data
     // structure.
-    ModuleUtils::iterDefinedFunctions(
-      *module, [&](Function* func) { infoMap[func->name]; });
-    // Check the influence of the table and exports.
+    for (auto& func : module->functions) {
+      infoMap[func->name];
+    }
+    DAEScanner scanner(&infoMap);
+    scanner.walkModuleCode(module);
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         infoMap[curr->value].hasUnseenCalls = true;
       }
     }
-    for (auto& segment : module->table.segments) {
-      for (auto name : segment.data) {
-        infoMap[name].hasUnseenCalls = true;
-      }
-    }
     // Scan all the functions.
-    DAEScanner(&infoMap).run(runner, module);
+    scanner.run(runner, module);
     // Combine all the info.
     std::unordered_map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
@@ -273,18 +307,29 @@ struct DAE : public Pass {
         allDroppedCalls[pair.first] = pair.second;
       }
     }
-    // We now have a mapping of all call sites for each function. Check which
-    // are always passed the same constant for a particular argument.
+    // If we refine return types then we will need to do more type updating
+    // at the end.
+    bool refinedReturnTypes = false;
+    // We now have a mapping of all call sites for each function, and can look
+    // for optimization opportunities.
     for (auto& pair : allCalls) {
       auto name = pair.first;
-      // We can only optimize if we see all the calls and can modify
-      // them.
+      // We can only optimize if we see all the calls and can modify them.
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
+      // Refine argument types before doing anything else. This does not
+      // affect whether an argument is used or not, it just refines the type
+      // where possible.
+      refineArgumentTypes(func, calls, module);
+      // Refine return types as well.
+      if (refineReturnTypes(func, calls, module)) {
+        refinedReturnTypes = true;
+      }
+      // Check if all calls pass the same constant for a particular argument.
       for (Index i = 0; i < numParams; i++) {
         Literal value;
         for (auto* call : calls) {
@@ -318,12 +363,21 @@ struct DAE : public Pass {
         }
       }
     }
+    if (refinedReturnTypes) {
+      // Changing a call expression's return type can propagate out to its
+      // parents, and so we must refinalize.
+      // TODO: We could track in which functions we actually make changes.
+      ReFinalize().run(runner, module);
+    }
     // Track which functions we changed, and optimize them later if necessary.
     std::unordered_set<Function*> changed;
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& pair : allCalls) {
       auto name = pair.first;
       auto& calls = pair.second;
+      if (infoMap[name].hasUnseenCalls) {
+        continue;
+      }
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
       if (numParams == 0) {
@@ -336,16 +390,23 @@ struct DAE : public Pass {
           // Great, it's not used. Check if none of the calls has a param with
           // side effects, as that would prevent us removing them (flattening
           // should have been done earlier).
-          bool canRemove =
+          bool callParamsAreValid =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
-              return EffectAnalyzer(runner->options, module->features, operand)
+              return EffectAnalyzer(runner->options, *module, operand)
                 .hasSideEffects();
             });
-          if (canRemove) {
+          // The type must be valid for us to handle as a local (since we
+          // replace the parameter with a local).
+          // TODO: if there are no references at all, we can avoid creating a
+          //       local
+          bool typeIsValid =
+            TypeUpdating::canHandleAsLocal(func->getLocalType(i));
+          if (callParamsAreValid && typeIsValid) {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
+            TypeUpdating::handleNonDefaultableLocals(func, *module);
             changed.insert(func);
           }
         }
@@ -361,7 +422,7 @@ struct DAE : public Pass {
     // once to remove a param, once to drop the return value).
     if (changed.empty()) {
       for (auto& func : module->functions) {
-        if (func->sig.results == Type::none) {
+        if (func->getResults() == Type::none) {
           continue;
         }
         auto name = func->name;
@@ -371,7 +432,7 @@ struct DAE : public Pass {
         if (infoMap[name].hasTailCalls) {
           continue;
         }
-        if (tailCallees.find(name) != tailCallees.end()) {
+        if (tailCallees.count(name)) {
           continue;
         }
         auto iter = allCalls.find(name);
@@ -395,7 +456,7 @@ struct DAE : public Pass {
     if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, runner);
     }
-    return !changed.empty();
+    return !changed.empty() || refinedReturnTypes;
   }
 
 private:
@@ -407,10 +468,11 @@ private:
     // Remove the parameter from the function. We must add a new local
     // for uses of the parameter, but cannot make it use the same index
     // (in general).
-    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
+    auto paramsType = func->getParams();
+    std::vector<Type> params(paramsType.begin(), paramsType.end());
     auto type = params[i];
     params.erase(params.begin() + i);
-    func->sig.params = Type(params);
+    func->setParams(Type(params));
     Index newIndex = Builder::addVar(func, type);
     // Update local operations.
     struct LocalUpdater : public PostWalker<LocalUpdater> {
@@ -438,7 +500,7 @@ private:
 
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
-    func->sig.results = Type::none;
+    func->setResults(Type::none);
     Builder builder(*module);
     // Remove any return values.
     struct ReturnUpdater : public PostWalker<ReturnUpdater> {
@@ -469,6 +531,184 @@ private:
         call->type = Type::none;
       }
     }
+  }
+
+  // Given a function and all the calls to it, see if we can refine the type of
+  // its arguments. If we only pass in a subtype, we may as well refine the type
+  // to that.
+  //
+  // This assumes that the function has no calls aside from |calls|, that is, it
+  // is not exported or called from the table or by reference.
+  void refineArgumentTypes(Function* func,
+                           const std::vector<Call*>& calls,
+                           Module* module) {
+    if (!module->features.hasGC()) {
+      return;
+    }
+    auto numParams = func->getNumParams();
+    std::vector<Type> newParamTypes;
+    newParamTypes.reserve(numParams);
+    for (Index i = 0; i < numParams; i++) {
+      auto originalType = func->getLocalType(i);
+      if (!originalType.isRef()) {
+        newParamTypes.push_back(originalType);
+        continue;
+      }
+      Type refinedType = Type::unreachable;
+      for (auto* call : calls) {
+        auto* operand = call->operands[i];
+        refinedType = Type::getLeastUpperBound(refinedType, operand->type);
+        if (refinedType == originalType) {
+          // We failed to refine this parameter to anything more specific.
+          break;
+        }
+      }
+
+      // Nothing is sent here at all; leave such optimizations to DCE.
+      if (refinedType == Type::unreachable) {
+        return;
+      }
+      newParamTypes.push_back(refinedType);
+    }
+
+    // Check if we are able to optimize here before we do the work to scan the
+    // function body.
+    if (Type(newParamTypes) == func->getParams()) {
+      return;
+    }
+
+    // In terms of parameters, we can do this. However, we must also check
+    // local operations in the body, as if the parameter is reused and written
+    // to, then those types must be taken into account as well.
+    FindAll<LocalSet> sets(func->body);
+    for (auto* set : sets.list) {
+      auto index = set->index;
+      if (func->isParam(index) &&
+          !Type::isSubType(set->value->type, newParamTypes[index])) {
+        // TODO: we could still optimize here, by creating a new local.
+        newParamTypes[index] = func->getLocalType(index);
+      }
+    }
+
+    auto newParams = Type(newParamTypes);
+    if (newParams == func->getParams()) {
+      return;
+    }
+
+    // We can do this! Update the types, including the types of gets and tees.
+    func->setParams(newParams);
+    for (auto* get : FindAll<LocalGet>(func->body).list) {
+      auto index = get->index;
+      if (func->isParam(index)) {
+        get->type = func->getLocalType(index);
+      }
+    }
+    for (auto* set : sets.list) {
+      auto index = set->index;
+      if (func->isParam(index) && set->isTee()) {
+        set->type = func->getLocalType(index);
+        set->finalize();
+      }
+    }
+
+    // Propagate the new get and set types outwards.
+    ReFinalize().walkFunctionInModule(func, module);
+  }
+
+  // See if the types returned from a function allow us to define a more refined
+  // return type for it. If so, we can update it and all calls going to it.
+  //
+  // This assumes that the function has no calls aside from |calls|, that is, it
+  // is not exported or called from the table or by reference. Exports should be
+  // fine, as should indirect calls in principle, but VMs will need to support
+  // function subtyping in indirect calls. TODO: relax this when possible
+  //
+  // Returns whether we optimized.
+  //
+  // TODO: We may be missing a global optimum here, as e.g. if a function calls
+  //       itself and returns that value, then we would not do any change here,
+  //       as one of the return values is exactly what it already is. Similar
+  //       unoptimality can happen with multiple functions, more local code in
+  //       the middle, etc.
+  bool refineReturnTypes(Function* func,
+                         const std::vector<Call*>& calls,
+                         Module* module) {
+    if (!module->features.hasGC()) {
+      return false;
+    }
+
+    Type originalType = func->getResults();
+    if (!originalType.hasRef()) {
+      // Nothing to refine.
+      return false;
+    }
+
+    // Before we do anything, we must refinalize the function, because otherwise
+    // its body may contain a block with a forced type,
+    //
+    // (func (result X)
+    //  (block (result X)
+    //   (..content with more specific type Y..)
+    //  )
+    ReFinalize().walkFunctionInModule(func, module);
+
+    Type refinedType = func->body->type;
+    if (refinedType == originalType) {
+      return false;
+    }
+
+    // Scan the body and look at the returns.
+    auto processReturnType = [&](Type type) {
+      refinedType = Type::getLeastUpperBound(refinedType, type);
+      // Return whether we still look ok to do the optimization. If this is
+      // false then we can stop here.
+      return refinedType != originalType;
+    };
+    for (auto* ret : FindAll<Return>(func->body).list) {
+      if (!processReturnType(ret->value->type)) {
+        return false;
+      }
+    }
+    for (auto* call : FindAll<Call>(func->body).list) {
+      if (call->isReturn &&
+          !processReturnType(module->getFunction(call->target)->getResults())) {
+        return false;
+      }
+    }
+    for (auto* call : FindAll<CallIndirect>(func->body).list) {
+      if (call->isReturn && !processReturnType(call->sig.results)) {
+        return false;
+      }
+    }
+    for (auto* call : FindAll<CallRef>(func->body).list) {
+      if (call->isReturn) {
+        auto targetType = call->target->type;
+        if (targetType == Type::unreachable) {
+          continue;
+        }
+        if (!processReturnType(
+              targetType.getHeapType().getSignature().results)) {
+          return false;
+        }
+      }
+    }
+    assert(refinedType != originalType);
+
+    // If the refined type is unreachable then nothing actually returns from
+    // this function.
+    // TODO: We can propagate that to the outside, and not just for GC.
+    if (refinedType == Type::unreachable) {
+      return false;
+    }
+
+    // Success. Update the type, and the calls.
+    func->setResults(refinedType);
+    for (auto* call : calls) {
+      if (call->type != Type::unreachable) {
+        call->type = refinedType;
+      }
+    }
+    return true;
   }
 };
 

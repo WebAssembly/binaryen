@@ -1,0 +1,94 @@
+;; Test TypeBuilder
+Before setting heap types:
+(ref $sig) => (ref [T](func))
+(ref $struct) => (ref [T](func))
+(ref $array) => (ref [T](func))
+(ref null $array) => (ref null [T](func))
+(rtt 0 $array) => (rtt 0 [T](func))
+
+After setting heap types:
+(ref $sig) => (ref [T](func (param (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))) (result (ref [T](array (mut externref))) i32)))
+(ref $struct) => (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))
+(ref $array) => (ref [T](array (mut externref)))
+(ref null $array) => (ref null [T](array (mut externref)))
+(rtt 0 $array) => (rtt 0 [T](array (mut externref)))
+
+After building types:
+(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
+(ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))
+(ref $array) => (ref (array (mut externref)))
+(ref null $array) => (ref null (array (mut externref)))
+(rtt 0 $array) => (rtt 0 (array (mut externref)))
+
+;; Test canonicalization
+;; Test canonical signatures
+;; Test recursive types
+(func (result (ref null ...1)))
+
+(func (result (ref null (func (result (ref null ...3))))))
+(func (result (ref null (func (result (ref null ...3))))))
+
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+
+(func (result (ref null ...1) (ref null (func))))
+(func (result (ref null ...1) (ref null (func))))
+(func)
+(func)
+(func (result (ref null (func (result ...1 (ref null (func)))))))
+(func (result (ref null (func (result ...1 (ref null (func)))))))
+
+(func (result (ref null ...1)))
+(func (result (ref null (func (result ...1)))))
+
+;; Test subtyping
+;; Test TypeBuilder
+Before setting heap types:
+(ref $sig) => (ref [T](func))
+(ref $struct) => (ref [T](func))
+(ref $array) => (ref [T](func))
+(ref null $array) => (ref null [T](func))
+(rtt 0 $array) => (rtt 0 [T](func))
+
+After setting heap types:
+(ref $sig) => (ref [T](func (param (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))) (result (ref [T](array (mut externref))) i32)))
+(ref $struct) => (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))
+(ref $array) => (ref [T](array (mut externref)))
+(ref null $array) => (ref null [T](array (mut externref)))
+(rtt 0 $array) => (rtt 0 [T](array (mut externref)))
+
+After building types:
+(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
+(ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))
+(ref $array) => (ref (array (mut externref)))
+(ref null $array) => (ref null (array (mut externref)))
+(rtt 0 $array) => (rtt 0 (array (mut externref)))
+
+;; Test canonicalization
+;; Test canonical signatures
+;; Test recursive types
+(func (result (ref null ...1)))
+
+(func (result (ref null (func (result (ref null ...3))))))
+(func (result (ref null (func (result (ref null ...3))))))
+
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+
+(func (result (ref null ...1) (ref null (func))))
+(func (result (ref null ...1) (ref null (func))))
+(func)
+(func)
+(func (result (ref null (func (result ...1 (ref null (func)))))))
+(func (result (ref null (func (result ...1 (ref null (func)))))))
+
+(func (result (ref null ...1)))
+(func (result (ref null (func (result ...1)))))
+
+;; Test subtyping

@@ -29,6 +29,7 @@ enum Op {
   // Unary
   Abs,
   Neg,
+  Popcnt,
   // Binary
   Add,
   Sub,
@@ -67,6 +68,11 @@ inline bool hasAnyShift(BinaryOp op) {
          op == RotRInt64;
 }
 
+inline bool hasAnyReinterpret(UnaryOp op) {
+  return op == ReinterpretInt32 || op == ReinterpretInt64 ||
+         op == ReinterpretFloat32 || op == ReinterpretFloat64;
+}
+
 // Provide a wasm type and an abstract op and get the concrete one. For example,
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
@@ -76,6 +82,8 @@ inline UnaryOp getUnary(Type type, Op op) {
       switch (op) {
         case EqZ:
           return EqZInt32;
+        case Popcnt:
+          return PopcntInt32;
         default:
           return InvalidUnary;
       }
@@ -85,6 +93,8 @@ inline UnaryOp getUnary(Type type, Op op) {
       switch (op) {
         case EqZ:
           return EqZInt64;
+        case Popcnt:
+          return PopcntInt64;
         default:
           return InvalidUnary;
       }
@@ -115,10 +125,10 @@ inline UnaryOp getUnary(Type type, Op op) {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidUnary;
@@ -288,10 +298,10 @@ inline BinaryOp getBinary(Type type, Op op) {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidBinary;

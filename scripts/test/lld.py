@@ -26,8 +26,6 @@ def args_for_finalize(filename):
         ret += ['--side-module']
     if 'standalone-wasm' in filename:
         ret += ['--standalone-wasm']
-    if 'bigint' in filename:
-        ret += ['--bigint']
     return ret
 
 
@@ -51,7 +49,10 @@ def run_test(input_path):
             else:
                 continue
 
-        cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [input_path, '-S'] + args
+        cmd = shared.WASM_EMSCRIPTEN_FINALIZE + args
+        if '64' in input_path:
+            cmd += ['--enable-memory64', '--bigint']
+        cmd += [input_path, '-S']
         cmd += args_for_finalize(os.path.basename(input_path))
         actual = support.run_command(cmd)
 
@@ -96,9 +97,12 @@ def update_lld_tests():
             out_path = input_path + ext
             if ext != '.out' and not os.path.exists(out_path):
                 continue
-            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + [input_path, '-S'] + \
-                ext_args
+            cmd = shared.WASM_EMSCRIPTEN_FINALIZE + ext_args
+            if '64' in input_path:
+                cmd += ['--enable-memory64', '--bigint']
+            cmd += [input_path, '-S']
             cmd += args_for_finalize(os.path.basename(input_path))
             actual = support.run_command(cmd)
+
             with open(out_path, 'w') as o:
                 o.write(actual)

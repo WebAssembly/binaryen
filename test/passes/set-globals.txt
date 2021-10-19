@@ -1,0 +1,4 @@
+(module
+ (global $foo i32 (i32.const 1337))
+ (global $bar i64 (i64.const 42))
+)

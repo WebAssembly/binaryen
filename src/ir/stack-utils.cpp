@@ -65,10 +65,10 @@ StackSignature::StackSignature(Expression* expr) {
   }
   params = Type(inputs);
   if (expr->type == Type::unreachable) {
-    unreachable = true;
+    kind = Polymorphic;
     results = Type::none;
   } else {
-    unreachable = false;
+    kind = Fixed;
     results = expr->type;
   }
 }
@@ -83,48 +83,6 @@ bool StackSignature::composes(const StackSignature& next) const {
                     });
 }
 
-bool StackSignature::satisfies(Signature sig) const {
-  if (sig.params.size() < params.size() ||
-      sig.results.size() < results.size()) {
-    // Not enough values provided or too many produced
-    return false;
-  }
-  bool paramSuffixMatches =
-    std::equal(params.begin(),
-               params.end(),
-               sig.params.end() - params.size(),
-               [](const Type& consumed, const Type& provided) {
-                 return Type::isSubType(provided, consumed);
-               });
-  if (!paramSuffixMatches) {
-    return false;
-  }
-  bool resultSuffixMatches =
-    std::equal(results.begin(),
-               results.end(),
-               sig.results.end() - results.size(),
-               [](const Type& produced, const Type& expected) {
-                 return Type::isSubType(produced, expected);
-               });
-  if (!resultSuffixMatches) {
-    return false;
-  }
-  if (unreachable) {
-    // The unreachable can consume any additional provided params and produce
-    // any additional expected results, so we are done.
-    return true;
-  }
-  // Any additional provided params will pass through untouched, so they must be
-  // equivalent to the additional produced results.
-  return std::equal(sig.params.begin(),
-                    sig.params.end() - params.size(),
-                    sig.results.begin(),
-                    sig.results.end() - results.size(),
-                    [](const Type& produced, const Type& expected) {
-                      return Type::isSubType(produced, expected);
-                    });
-}
-
 StackSignature& StackSignature::operator+=(const StackSignature& next) {
   assert(composes(next));
   std::vector<Type> stack(results.begin(), results.end());
@@ -133,7 +91,7 @@ StackSignature& StackSignature::operator+=(const StackSignature& next) {
   if (stack.size() >= required) {
     stack.resize(stack.size() - required);
   } else {
-    if (!unreachable) {
+    if (kind == Fixed) {
       // Prepend the unsatisfied params of `next` to the current params
       size_t unsatisfied = required - stack.size();
       std::vector<Type> newParams(next.params.begin(),
@@ -144,9 +102,9 @@ StackSignature& StackSignature::operator+=(const StackSignature& next) {
     stack.clear();
   }
   // Add stack values according to next's results
-  if (next.unreachable) {
+  if (next.kind == Polymorphic) {
     results = next.results;
-    unreachable = true;
+    kind = Polymorphic;
   } else {
     stack.insert(stack.end(), next.results.begin(), next.results.end());
     results = Type(stack);
@@ -158,6 +116,141 @@ StackSignature StackSignature::operator+(const StackSignature& next) const {
   StackSignature sig = *this;
   sig += next;
   return sig;
+}
+
+bool StackSignature::isSubType(StackSignature a, StackSignature b) {
+  if (a.params.size() > b.params.size() ||
+      a.results.size() > b.results.size()) {
+    // `a` consumes or produces more values than `b` can provides or expects.
+    return false;
+  }
+  if (a.kind == Fixed && b.kind == Polymorphic) {
+    // Non-polymorphic sequences cannot be typed as being polymorphic.
+    return false;
+  }
+  bool paramSuffixMatches =
+    std::equal(a.params.begin(),
+               a.params.end(),
+               b.params.end() - a.params.size(),
+               [](const Type& consumed, const Type& provided) {
+                 return Type::isSubType(provided, consumed);
+               });
+  if (!paramSuffixMatches) {
+    return false;
+  }
+  bool resultSuffixMatches =
+    std::equal(a.results.begin(),
+               a.results.end(),
+               b.results.end() - a.results.size(),
+               [](const Type& produced, const Type& expected) {
+                 return Type::isSubType(produced, expected);
+               });
+  if (!resultSuffixMatches) {
+    return false;
+  }
+  if (a.kind == Polymorphic) {
+    // The polymorphism can consume any additional provided params and produce
+    // any additional expected results, so we are done.
+    return true;
+  }
+  // Any additional provided params will pass through untouched, so they must be
+  // compatible with the additional produced results.
+  return std::equal(b.params.begin(),
+                    b.params.end() - a.params.size(),
+                    b.results.begin(),
+                    b.results.end() - a.results.size(),
+                    [](const Type& provided, const Type& expected) {
+                      return Type::isSubType(provided, expected);
+                    });
+}
+
+bool StackSignature::haveLeastUpperBound(StackSignature a, StackSignature b) {
+  // If a signature is polymorphic, the LUB could extend its params and results
+  // arbitrarily. Otherwise, the LUB must extend its params and results
+  // uniformly so that each additional param is a subtype of the corresponding
+  // additional result.
+  auto extensionCompatible = [](auto self, auto other) -> bool {
+    if (self.kind == Polymorphic) {
+      return true;
+    }
+    // If no extension, then no problem.
+    if (self.params.size() >= other.params.size() &&
+        self.results.size() >= other.results.size()) {
+      return true;
+    }
+    auto extSize = other.params.size() - self.params.size();
+    if (extSize != other.results.size() - self.results.size()) {
+      return false;
+    }
+    return std::equal(other.params.begin(),
+                      other.params.begin() + extSize,
+                      other.results.begin(),
+                      other.results.begin() + extSize,
+                      [](const Type& param, const Type& result) {
+                        return Type::isSubType(param, result);
+                      });
+  };
+  if (!extensionCompatible(a, b) || !extensionCompatible(b, a)) {
+    return false;
+  }
+
+  auto valsCompatible = [](auto as, auto bs, auto compatible) -> bool {
+    // Canonicalize so the as are shorter and any unshared prefix is on bs.
+    if (bs.size() < as.size()) {
+      std::swap(as, bs);
+    }
+    // Check that shared values after the unshared prefix have are compatible.
+    size_t diff = bs.size() - as.size();
+    for (size_t i = 0, shared = as.size(); i < shared; ++i) {
+      if (!compatible(as[i], bs[i + diff])) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  bool paramsOk = valsCompatible(a.params, b.params, [](Type a, Type b) {
+    assert(a == b && "TODO: calculate greatest lower bound to handle "
+                     "contravariance correctly");
+    return true;
+  });
+  bool resultsOk = valsCompatible(a.results, b.results, [](Type a, Type b) {
+    return Type::getLeastUpperBound(a, b) != Type::none;
+  });
+  return paramsOk && resultsOk;
+}
+
+StackSignature StackSignature::getLeastUpperBound(StackSignature a,
+                                                  StackSignature b) {
+  assert(haveLeastUpperBound(a, b));
+
+  auto combineVals = [](auto as, auto bs, auto combine) -> std::vector<Type> {
+    // Canonicalize so the as are shorter and any unshared prefix is on bs.
+    if (bs.size() < as.size()) {
+      std::swap(as, bs);
+    }
+    // Combine shared values after the unshared prefix.
+    size_t diff = bs.size() - as.size();
+    std::vector<Type> vals(bs.begin(), bs.begin() + diff);
+    for (size_t i = 0, shared = as.size(); i < shared; ++i) {
+      vals.push_back(combine(as[i], bs[i + diff]));
+    }
+    return vals;
+  };
+
+  auto params = combineVals(a.params, b.params, [&](Type a, Type b) {
+    assert(a == b && "TODO: calculate greatest lower bound to handle "
+                     "contravariance correctly");
+    return a;
+  });
+
+  auto results = combineVals(a.results, b.results, [&](Type a, Type b) {
+    return Type::getLeastUpperBound(a, b);
+  });
+
+  Kind kind =
+    a.kind == Polymorphic && b.kind == Polymorphic ? Polymorphic : Fixed;
+  return StackSignature{Type(params), Type(results), kind};
 }
 
 StackFlow::StackFlow(Block* block) {
@@ -172,9 +265,10 @@ StackFlow::StackFlow(Block* block) {
     for (auto* expr : block->list) {
       process(expr, StackSignature(expr));
     }
-    bool unreachable = block->type == Type::unreachable;
-    Type params = unreachable ? Type::none : block->type;
-    process(block, StackSignature(params, Type::none, unreachable));
+    auto kind = block->type == Type::unreachable ? StackSignature::Polymorphic
+                                                 : StackSignature::Fixed;
+    Type params = block->type == Type::unreachable ? Type::none : block->type;
+    process(block, StackSignature(params, Type::none, kind));
   };
 
   // We need to make an initial pass through the block to figure out how many
@@ -197,7 +291,7 @@ StackFlow::StackFlow(Block* block) {
       }
 
       // Handle unreachable or produce results
-      if (sig.unreachable) {
+      if (sig.kind == StackSignature::Polymorphic) {
         if (lastUnreachable) {
           producedByUnreachable[lastUnreachable] = produced;
           produced = 0;
@@ -224,13 +318,14 @@ StackFlow::StackFlow(Block* block) {
            "Block inputs not yet supported");
 
     // Unreachable instructions consume all available values
-    size_t consumed = sig.unreachable
+    size_t consumed = sig.kind == StackSignature::Polymorphic
                         ? std::max(values.size(), sig.params.size())
                         : sig.params.size();
 
     // We previously calculated how many values unreachable instructions produce
-    size_t produced =
-      sig.unreachable ? producedByUnreachable[expr] : sig.results.size();
+    size_t produced = sig.kind == StackSignature::Polymorphic
+                        ? producedByUnreachable[expr]
+                        : sig.results.size();
 
     srcs[expr] = std::vector<Location>(consumed);
     dests[expr] = std::vector<Location>(produced);
@@ -284,7 +379,7 @@ StackFlow::StackFlow(Block* block) {
     }
 
     // Update the last unreachable instruction
-    if (sig.unreachable) {
+    if (sig.kind == StackSignature::Polymorphic) {
       assert(producedByUnreachable[lastUnreachable] == 0);
       lastUnreachable = expr;
     }
@@ -302,8 +397,9 @@ StackSignature StackFlow::getSignature(Expression* expr) {
   for (auto& dest : exprDests->second) {
     results.push_back(dest.type);
   }
-  bool unreachable = expr->type == Type::unreachable;
-  return StackSignature(Type(params), Type(results), unreachable);
+  auto kind = expr->type == Type::unreachable ? StackSignature::Polymorphic
+                                              : StackSignature::Fixed;
+  return StackSignature(Type(params), Type(results), kind);
 }
 
 } // namespace wasm

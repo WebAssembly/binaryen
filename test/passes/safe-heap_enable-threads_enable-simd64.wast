@@ -45,7 +45,7 @@
 ;; pre-existing
 (module
  (type $FUNCSIG$v (func))
- (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
+ (import "env" "emscripten_get_sbrk_ptr" (func $foo (result i64)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 (shared i64 100 100))

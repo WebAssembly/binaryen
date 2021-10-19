@@ -4,7 +4,7 @@
   (data (i32.const 10) "waka waka waka waka waka")
   (table funcref (elem $callee))
   (export "sig_mismatch" (func $sig_mismatch))
-  (func $callee (param $0 exnref)
+  (func $callee (param $0 externref)
     (i32.store8 (i32.const 40) (i32.const 67))
   )
   (func $sig_mismatch

@@ -30,7 +30,6 @@
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 #include "wasm-validator.h"
 
 #define DEBUG_TYPE "emscripten"
@@ -51,7 +50,6 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
-  bool legacyPIC = true;
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
@@ -114,9 +112,7 @@ int main(int argc, const char* argv[]) {
          "",
          "Use new/llvm PIC abi",
          Options::Arguments::Zero,
-         [&legacyPIC](Options* o, const std::string& argument) {
-           legacyPIC = false;
-         })
+         [&](Options* o, const std::string& argument) {})
     .add("--input-source-map",
          "-ism",
          "Consume source map from the specified file",
@@ -207,9 +203,31 @@ int main(int argc, const char* argv[]) {
     Fatal() << "Need to specify an infile\n";
   }
 
+  // We will write the modified wasm if the user asked us to, either by
+  // specifying an output file or requesting text output (which goes to stdout
+  // by default).
+  auto writeOutput = outfile.size() > 0 || !emitBinary;
+
   Module wasm;
+  options.applyFeatures(wasm);
   ModuleReader reader;
-  reader.setDWARF(DWARF);
+  // If we are not writing output then we definitely don't need to read debug
+  // info, as it does not affect the metadata we will emit. (However, if we
+  // emit output then definitely load the names section so that we roundtrip
+  // names properly.)
+  reader.setDebugInfo(writeOutput);
+  reader.setDWARF(DWARF && writeOutput);
+  if (!writeOutput) {
+    // If we are not writing the output then all we are doing is simple parsing
+    // of metadata from global parts of the wasm such as imports and exports. In
+    // that case, it is unnecessary to parse function contents which are the
+    // great bulk of the work, and we can skip all that.
+    // Note that the one case we do need function bodies for, pthreads + EM_ASM
+    // parsing, requires special handling. The start function has code that we
+    // parse in order to find the EM_ASMs, and for that reason the binary reader
+    // will still parse the start function even in this mode.
+    reader.setSkipFunctionBodies(true);
+  }
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
   } catch (ParseException& p) {
@@ -222,35 +240,8 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in parsing wasm source map";
   }
 
-  options.applyFeatures(wasm);
-
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump",
-                      WasmPrinter::printModule(&wasm, std::cerr));
-
-  uint32_t dataSize = 0;
-
-  if (!sideModule) {
-    if (globalBase == INVALID_BASE) {
-      Fatal() << "globalBase must be set";
-    }
-    Export* dataEndExport = wasm.getExport("__data_end");
-    if (dataEndExport == nullptr) {
-      Fatal() << "__data_end export not found";
-    }
-    Global* dataEnd = wasm.getGlobal(dataEndExport->value);
-    if (dataEnd == nullptr) {
-      Fatal() << "__data_end global not found";
-    }
-    if (dataEnd->type != Type::i32) {
-      Fatal() << "__data_end global has wrong type";
-    }
-    if (dataEnd->imported()) {
-      Fatal() << "__data_end must not be an imported global";
-    }
-    Const* dataEndConst = dataEnd->init->cast<Const>();
-    dataSize = dataEndConst->value.geti32() - globalBase;
-  }
+  BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);
 
   EmscriptenGlueGenerator generator(wasm);
   generator.standalone = standaloneWasm;
@@ -258,8 +249,6 @@ int main(int argc, const char* argv[]) {
   generator.minimizeWasmChanges = minimizeWasmChanges;
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
-
-  std::vector<Name> initializerFunctions;
 
   if (!standaloneWasm) {
     // This is also not needed in standalone mode since standalone mode uses
@@ -279,14 +268,6 @@ int main(int argc, const char* argv[]) {
         "__handle_stack_overflow";
     }
     passRunner.add("stack-check");
-  }
-
-  if (legacyPIC) {
-    if (sideModule) {
-      passRunner.add("emscripten-pic");
-    } else {
-      passRunner.add("emscripten-pic-main-module");
-    }
   }
 
   if (!noDynCalls && !standaloneWasm) {
@@ -316,35 +297,9 @@ int main(int argc, const char* argv[]) {
 
   passRunner.run();
 
-  if (sideModule) {
-    BYN_TRACE("finalizing as side module\n");
-    generator.generatePostInstantiateFunction();
-  } else {
-    BYN_TRACE("finalizing as regular module\n");
-    if (legacyPIC) {
-      // For side modules these gets called via __post_instantiate
-      if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
-        auto* ex = new Export();
-        ex->value = F->name;
-        ex->name = F->name;
-        ex->kind = ExternalKind::Function;
-        wasm.addExport(ex);
-        initializerFunctions.push_back(F->name);
-      }
-    }
-    // Costructors get called from crt1 in wasm standalone mode.
-    // Unless there is no entry point.
-    if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
-      if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-        initializerFunctions.push_back(e->name);
-      }
-    }
-  }
-
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata =
-    generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
+  std::string metadata = generator.generateEmscriptenMetadata();
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
@@ -357,12 +312,9 @@ int main(int argc, const char* argv[]) {
   }
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump",
-                      WasmPrinter::printModule(&wasm, std::cerr));
+  BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << wasm << '\n');
 
-  // Write the modified wasm if the user asked us to, either by specifying an
-  // output file, or requesting text output (which goes to stdout by default).
-  if (outfile.size() > 0 || !emitBinary) {
+  if (writeOutput) {
     Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
     ModuleWriter writer;
     writer.setDebugInfo(debugInfo);

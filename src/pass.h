@@ -69,17 +69,24 @@ struct InliningOptions {
   // More generally, with 2 items we may have a local.get, but no way to
   // require it to be saved instead of directly consumed.
   Index alwaysInlineMaxSize = 2;
-  // Function size which we inline when functions are lightweight (no loops
-  // and calls) and we are doing aggressive optimisation for speed (-O3).
-  // In particular it's nice that with this limit we can inline the clamp
-  // functions (i32s-div, f64-to-int, etc.), that can affect perf.
+  // Function size which we inline when there is only one caller. By default we
+  // inline all such functions (as after inlining we can remove the original
+  // function).
+  Index oneCallerInlineMaxSize = -1;
+  // Function size above which we never inline, ignoring the various flexible
+  // factors (like whether we are optimizing for size or speed) that could
+  // influence us.
+  // This is checked after alwaysInlineMaxSize and oneCallerInlineMaxSize, but
+  // the order normally won't matter.
   Index flexibleInlineMaxSize = 20;
-  // Function size which we inline when there is only one caller.
-  // FIXME: this should logically be higher than flexibleInlineMaxSize.
-  Index oneCallerInlineMaxSize = 15;
   // Loops usually mean the function does heavy work, so the call overhead
   // is not significant and we do not inline such functions by default.
   bool allowFunctionsWithLoops = false;
+  // The number of ifs to allow partial inlining of their conditions. A value of
+  // zero disables partial inlining.
+  // TODO: Investigate enabling this. Locally 4 appears useful on real-world
+  //       code, but reports of regressions have arrived.
+  Index partialInliningIfs = 0;
 };
 
 struct PassOptions {
@@ -96,7 +103,38 @@ struct PassOptions {
   // Tweak thresholds for the Inlining pass.
   InliningOptions inlining;
   // Optimize assuming things like div by 0, bad load/store, will not trap.
+  // This is deprecated in favor of trapsNeverHappen.
   bool ignoreImplicitTraps = false;
+  // Optimize assuming a trap will never happen at runtime. This is similar to
+  // ignoreImplicitTraps, but different:
+  //
+  //  * ignoreImplicitTraps simply ignores the side effect of trapping when it
+  //    computes side effects, and then passes work with that data.
+  //  * trapsNeverHappen assumes that if an instruction with a possible trap is
+  //    reached, then it does not trap, and an (unreachable) - that always
+  //    traps - is never reached.
+  //
+  // The main difference is that in trapsNeverHappen mode we will not move
+  // around code that might trap, like this:
+  //
+  //  (if (condition) (code))
+  //
+  // If (code) might trap, ignoreImplicitTraps ignores that trap, and it might
+  // end up moving (code) to happen before the (condition), that is,
+  // unconditionally. trapsNeverHappen, on the other hand, does not ignore the
+  // side effect of the trap; instead, it will potentially remove the trapping
+  // instruction, if it can - it is always safe to remove a trap in this mode,
+  // as the traps are assumed to not happen. Where it cannot remove the side
+  // effect, it will at least not move code around.
+  //
+  // A consequence of this difference is that code that puts a possible trap
+  // behind a condition is unsafe in ignoreImplicitTraps, but safe in
+  // trapsNeverHappen. In general, trapsNeverHappen is safe on production code
+  // where traps are either fatal errors or assertions, and it is assumed
+  // neither of those can happen (and it is undefined behavior if they do).
+  //
+  // TODO: deprecate and remove ignoreImplicitTraps.
+  bool trapsNeverHappen = false;
   // Optimize assuming that the low 1K of memory is not valid memory for the
   // application to use. In that case, we can optimize load/store offsets in
   // many cases.
@@ -107,15 +145,15 @@ struct PassOptions {
   // forth (which IEEE floats do not, strictly speaking). This is inspired by
   // gcc/clang's -ffast-math flag.
   bool fastMath = false;
-  // Whether to assume that an imported memory has not been modified. Without
+  // Whether to assume that an imported memory is zero-initialized. Without
   // this, we can do fewer optimizations on memory segments, because if memory
   // *was* modified then the wasm's segments may trample those previous
-  // modifications. If memory was not modified, we can assume it starts as zero,
-  // which allows us to remove zeros from wasm's segments.
+  // modifications. If memory was zero-initialized then we can remove zeros from
+  // the wasm's segments.
   // (This is not a problem if the memory is *not* imported, since then wasm
   // creates it and we know it is all zeros right before the active segments are
   // applied.)
-  bool unmodifiedImportedMemory = false;
+  bool zeroFilledMemory = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
   // Arbitrary string arguments from the commandline, which we forward to
@@ -170,6 +208,12 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
+  // But we can make it easy to create a nested runner
+  // TODO: Go through and use this in more places
+  explicit PassRunner(const PassRunner* runner)
+    : wasm(runner->wasm), allocator(runner->allocator),
+      options(runner->options), isNested(true) {}
+
   void setDebug(bool debug) {
     options.debug = debug;
     // validate everything by default if debugging
@@ -182,17 +226,23 @@ struct PassRunner {
 
   // Add a pass using its name.
   void add(std::string passName) {
-    auto pass = PassRegistry::get()->createPass(passName);
-    if (!pass) {
-      Fatal() << "Could not find pass: " << passName << "\n";
-    }
-    doAdd(std::move(pass));
+    doAdd(PassRegistry::get()->createPass(passName));
   }
 
   // Add a pass given an instance.
   template<class P> void add(std::unique_ptr<P> pass) {
     doAdd(std::move(pass));
   }
+
+  // Adds the pass if there are no DWARF-related issues. There is an issue if
+  // there is DWARF and if the pass does not support DWARF (as defined by the
+  // pass returning true from invalidatesDWARF); otherwise, if there is no
+  // DWARF, or the pass supports it, the pass is added.
+  // In contrast to add(), add() will always add the pass, and it will print a
+  // warning if there is an issue with DWARF. This method is useful for a pass
+  // that is optional, to avoid adding it and therefore avoid getting the
+  // warning.
+  void addIfNoDWARFIssues(std::string passName);
 
   // Adds the default set of optimization passes; this is
   // what -O does.
@@ -242,10 +292,20 @@ struct PassRunner {
   //  3: like 1, and also dumps out byn-* files for each pass as it is run.
   static int getPassDebug();
 
-protected:
-  bool isNested = false;
+  // Returns whether a pass by that name will remove debug info.
+  static bool passRemovesDebugInfo(const std::string& name);
 
 private:
+  // Whether this is a nested pass runner.
+  bool isNested = false;
+
+  // Whether the passes we have added so far to be run (but not necessarily run
+  // yet) have removed DWARF.
+  bool addedPassesRemovedDWARF = false;
+
+  // Whether this pass runner has run. A pass runner should only be run once.
+  bool ran = false;
+
   void doAdd(std::unique_ptr<Pass> pass);
 
   void runPass(Pass* pass);
@@ -258,6 +318,8 @@ private:
   // If a function is passed, we operate just on that function;
   // otherwise, the whole module.
   void handleAfterEffects(Pass* pass, Function* func = nullptr);
+
+  bool shouldPreserveDWARF();
 };
 
 //
@@ -266,10 +328,6 @@ private:
 class Pass {
 public:
   virtual ~Pass() = default;
-
-  // Override this to perform preparation work before the pass runs.
-  // This will be called before the pass is run on a module.
-  virtual void prepareToRun(PassRunner* runner, Module* module) {}
 
   // Implement this with code to run the pass on the whole module
   virtual void run(PassRunner* runner, Module* module) {
@@ -315,6 +373,10 @@ public:
   // out any Stack IR - it would need to be regenerated and optimized.
   virtual bool modifiesBinaryenIR() { return true; }
 
+  // Some passes modify the wasm in a way that we cannot update DWARF properly
+  // for. This is used to issue a proper warning about that.
+  virtual bool invalidatesDWARF() { return false; }
+
   std::string name;
 
 protected:
@@ -329,7 +391,7 @@ protected:
 //
 template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
-  PassRunner* runner;
+  PassRunner* runner = nullptr;
 
 protected:
   typedef WalkerPass<WalkerType> super;
@@ -357,6 +419,12 @@ public:
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkFunction(func);
+  }
+
+  void runOnModuleCode(PassRunner* runner, Module* module) {
+    setPassRunner(runner);
+    WalkerType::setModule(module);
+    WalkerType::walkModuleCode(module);
   }
 
   PassRunner* getPassRunner() { return runner; }

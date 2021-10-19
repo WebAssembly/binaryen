@@ -1548,7 +1548,7 @@
 )
 (module
  (memory 256 256)
- (data passive "hello, there!")
+ (data "hello, there!")
  (func $memory-init-load
   (local $x i32)
   (local.set $x
@@ -1671,121 +1671,10 @@
   (local.get $1)
  )
 )
-(module
-  (event $event$0 (attr 0) (param))
-  (func $unoptimizable-br_on_exn-block (result exnref) (local $0 exnref)
-    (block $label$0
-      (local.set $0
-        ;; br_on_exn's target block cannot be optimized to have a return value
-        (br_on_exn $label$0 $event$0
-          (ref.null exn)
-        )
-      )
-    )
-    (local.get $0)
-  )
-
-  (event $event$1 (attr 0) (param exnref))
-  (func $br_on_exn-trap (local $0 exnref)
-    ;; This dead local.set cannot be replaced with a nop because br_on_exn can
-    ;; trap.
-    (local.set $0
-      (block $label$1 (result exnref)
-        (br_on_exn $label$1 $event$1
-          (ref.null exn)
-        )
-      )
-    )
-  )
-
-  (func $rethrow-trap (local $0 i32)
-    ;; This dead local.set cannot be replaced with a nop because rethrow can
-    ;; trap.
-    (local.set $0
-      (block $label$1 (result i32)
-        (try
-          (do (rethrow (ref.null exn)))
-          (catch)
-        )
-        (i32.const 0)
-      )
-    )
-  )
-
-  (func $foo (param i32 exnref))
-  (func $pop-cannot-be-sinked (local $0 exnref)
-    (try
-      (do)
-      (catch
-        ;; This (local.set $0) of (pop exnref) cannot be sinked to
-        ;; (local.get $0) below, because pop exnref should follow right after
-        ;; 'catch'.
-        (local.set $0 (pop exnref))
-        (call $foo
-          (i32.const 3)
-          (local.get $0)
-        )
-      )
-    )
-  )
-
-  (func $pop-within-catch-can-be-sinked (local $0 exnref)
-    (try
-      (do)
-      (catch
-        ;; This whole 'try' body can be sinked to eliminate local.set /
-        ;; local.get. Even though it contains a pop, it is enclosed within
-        ;; try-catch, so it is OK.
-        (local.set $0
-          (try (result exnref)
-            (do (ref.null exn))
-            (catch (pop exnref))
-          )
-        )
-        (call $foo
-          (i32.const 3)
-          (local.get $0)
-        )
-      )
-    )
-  )
-
-  (func $bar (result i32) (i32.const 3))
-  (func $call-cannot-be-sinked-into-try (local $0 i32)
-    (drop
-      ;; This local.tee should NOT be sinked into 'try' below, because it may
-      ;; throw
-      (local.tee $0 (call $bar))
-    )
-    (try
-      (do
-        (drop (local.get $0))
-      )
-      (catch
-        (drop (pop exnref))
-      )
-    )
-  )
-
-  (func $non-call-can-be-sinked-into-try (local $0 i32)
-    (drop
-      ;; This local.tee can be sinked into 'try' below, because it cannot throw
-      (local.tee $0 (i32.const 3))
-    )
-    (try
-      (do
-        (drop (local.get $0))
-      )
-      (catch
-        (drop (pop exnref))
-      )
-    )
-  )
-)
 ;; data.drop has global side effects
 (module
  (memory $0 (shared 1 1))
- (data passive "data")
+ (data "data")
  (func "foo" (result i32)
   (local $0 i32)
   (block (result i32)
@@ -1804,16 +1693,16 @@
 ;; it is no longer equivalent
 ;; (see https://github.com/WebAssembly/binaryen/issues/3266)
 (module
- (func "test" (param $0 eqref) (param $1 i31ref) (result i32)
+ (func "test" (param $0 eqref) (param $1 (ref null i31)) (result i32)
   (local $2 eqref)
-  (local $3 i31ref)
+  (local $3 (ref null i31))
   (local.set $2
    (local.get $0) ;; $0 and $2 are equivalent
   )
   (local.set $0   ;; set $0 to something with another type
    (local.get $3)
   )
-  ;; compares a null eqref and a zero i31ref - should be false
+  ;; compares a null eqref and a zero (ref null i31) - should be false
   (ref.eq
    (local.get $2)
    (local.get $1)

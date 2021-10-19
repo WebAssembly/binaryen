@@ -28,6 +28,7 @@
 #include <array>
 #include <cassert>
 #include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -54,7 +55,7 @@ struct Address {
     return *this;
   }
   operator address64_t() const { return addr; }
-  Address& operator++() {
+  Address& operator++(int) {
     ++addr;
     return *this;
   }
@@ -156,24 +157,24 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AnyTrueVec128,
   AbsVecI8x16,
   NegVecI8x16,
-  AnyTrueVecI8x16,
   AllTrueVecI8x16,
   BitmaskVecI8x16,
+  PopcntVecI8x16,
   AbsVecI16x8,
   NegVecI16x8,
-  AnyTrueVecI16x8,
   AllTrueVecI16x8,
   BitmaskVecI16x8,
   AbsVecI32x4,
   NegVecI32x4,
-  AnyTrueVecI32x4,
   AllTrueVecI32x4,
   BitmaskVecI32x4,
+  AbsVecI64x2,
   NegVecI64x2,
-  AnyTrueVecI64x2,
   AllTrueVecI64x2,
+  BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
   SqrtVecF32x4,
@@ -188,24 +189,35 @@ enum UnaryOp {
   FloorVecF64x2,
   TruncVecF64x2,
   NearestVecF64x2,
+  ExtAddPairwiseSVecI8x16ToI16x8,
+  ExtAddPairwiseUVecI8x16ToI16x8,
+  ExtAddPairwiseSVecI16x8ToI32x4,
+  ExtAddPairwiseUVecI16x8ToI32x4,
 
   // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
   TruncSatUVecF32x4ToVecI32x4,
-  TruncSatSVecF64x2ToVecI64x2,
-  TruncSatUVecF64x2ToVecI64x2,
   ConvertSVecI32x4ToVecF32x4,
   ConvertUVecI32x4ToVecF32x4,
-  ConvertSVecI64x2ToVecF64x2,
-  ConvertUVecI64x2ToVecF64x2,
-  WidenLowSVecI8x16ToVecI16x8,
-  WidenHighSVecI8x16ToVecI16x8,
-  WidenLowUVecI8x16ToVecI16x8,
-  WidenHighUVecI8x16ToVecI16x8,
-  WidenLowSVecI16x8ToVecI32x4,
-  WidenHighSVecI16x8ToVecI32x4,
-  WidenLowUVecI16x8ToVecI32x4,
-  WidenHighUVecI16x8ToVecI32x4,
+  ExtendLowSVecI8x16ToVecI16x8,
+  ExtendHighSVecI8x16ToVecI16x8,
+  ExtendLowUVecI8x16ToVecI16x8,
+  ExtendHighUVecI8x16ToVecI16x8,
+  ExtendLowSVecI16x8ToVecI32x4,
+  ExtendHighSVecI16x8ToVecI32x4,
+  ExtendLowUVecI16x8ToVecI32x4,
+  ExtendHighUVecI16x8ToVecI32x4,
+  ExtendLowSVecI32x4ToVecI64x2,
+  ExtendHighSVecI32x4ToVecI64x2,
+  ExtendLowUVecI32x4ToVecI64x2,
+  ExtendHighUVecI32x4ToVecI64x2,
+
+  ConvertLowSVecI32x4ToVecF64x2,
+  ConvertLowUVecI32x4ToVecF64x2,
+  TruncSatZeroSVecF64x2ToVecI32x4,
+  TruncSatZeroUVecF64x2ToVecI32x4,
+  DemoteZeroVecF64x2ToVecF32x4,
+  PromoteLowVecF32x4ToVecF64x2,
 
   InvalidUnary
 };
@@ -350,6 +362,12 @@ enum BinaryOp {
   LeUVecI32x4,
   GeSVecI32x4,
   GeUVecI32x4,
+  EqVecI64x2,
+  NeVecI64x2,
+  LtSVecI64x2,
+  GtSVecI64x2,
+  LeSVecI64x2,
+  GeSVecI64x2,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -374,7 +392,6 @@ enum BinaryOp {
   SubVecI8x16,
   SubSatSVecI8x16,
   SubSatUVecI8x16,
-  MulVecI8x16,
   MinSVecI8x16,
   MinUVecI8x16,
   MaxSVecI8x16,
@@ -392,6 +409,11 @@ enum BinaryOp {
   MaxSVecI16x8,
   MaxUVecI16x8,
   AvgrUVecI16x8,
+  Q15MulrSatSVecI16x8,
+  ExtMulLowSVecI16x8,
+  ExtMulHighSVecI16x8,
+  ExtMulLowUVecI16x8,
+  ExtMulHighUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
@@ -400,9 +422,17 @@ enum BinaryOp {
   MaxSVecI32x4,
   MaxUVecI32x4,
   DotSVecI16x8ToVecI32x4,
+  ExtMulLowSVecI32x4,
+  ExtMulHighSVecI32x4,
+  ExtMulLowUVecI32x4,
+  ExtMulHighUVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
   MulVecI64x2,
+  ExtMulLowSVecI64x2,
+  ExtMulHighSVecI64x2,
+  ExtMulLowUVecI64x2,
+  ExtMulHighUVecI64x2,
   AddVecF32x4,
   SubVecF32x4,
   MulVecF32x4,
@@ -451,7 +481,7 @@ enum SIMDReplaceOp {
   ReplaceLaneVecI32x4,
   ReplaceLaneVecI64x2,
   ReplaceLaneVecF32x4,
-  ReplaceLaneVecF64x2
+  ReplaceLaneVecF64x2,
 };
 
 enum SIMDShiftOp {
@@ -470,41 +500,72 @@ enum SIMDShiftOp {
 };
 
 enum SIMDLoadOp {
-  LoadSplatVec8x16,
-  LoadSplatVec16x8,
-  LoadSplatVec32x4,
-  LoadSplatVec64x2,
-  LoadExtSVec8x8ToVecI16x8,
-  LoadExtUVec8x8ToVecI16x8,
-  LoadExtSVec16x4ToVecI32x4,
-  LoadExtUVec16x4ToVecI32x4,
-  LoadExtSVec32x2ToVecI64x2,
-  LoadExtUVec32x2ToVecI64x2,
-  Load32Zero,
-  Load64Zero,
+  Load8SplatVec128,
+  Load16SplatVec128,
+  Load32SplatVec128,
+  Load64SplatVec128,
+  Load8x8SVec128,
+  Load8x8UVec128,
+  Load16x4SVec128,
+  Load16x4UVec128,
+  Load32x2SVec128,
+  Load32x2UVec128,
+  Load32ZeroVec128,
+  Load64ZeroVec128,
 };
 
 enum SIMDLoadStoreLaneOp {
-  LoadLaneVec8x16,
-  LoadLaneVec16x8,
-  LoadLaneVec32x4,
-  LoadLaneVec64x2,
-  StoreLaneVec8x16,
-  StoreLaneVec16x8,
-  StoreLaneVec32x4,
-  StoreLaneVec64x2,
+  Load8LaneVec128,
+  Load16LaneVec128,
+  Load32LaneVec128,
+  Load64LaneVec128,
+  Store8LaneVec128,
+  Store16LaneVec128,
+  Store32LaneVec128,
+  Store64LaneVec128,
 };
 
-enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
+enum SIMDTernaryOp {
+  Bitselect,
+};
+
+enum RefIsOp {
+  RefIsNull,
+  RefIsFunc,
+  RefIsData,
+  RefIsI31,
+};
+
+enum RefAsOp {
+  RefAsNonNull,
+  RefAsFunc,
+  RefAsData,
+  RefAsI31,
+};
+
+enum BrOnOp {
+  BrOnNull,
+  BrOnNonNull,
+  BrOnCast,
+  BrOnCastFail,
+  BrOnFunc,
+  BrOnNonFunc,
+  BrOnData,
+  BrOnNonData,
+  BrOnI31,
+  BrOnNonI31,
+};
+
+// Forward declaration for methods that receive a Module as a parameter.
+class Module;
 
 //
 // Expressions
 //
 // Note that little is provided in terms of constructors for these. The
-// rationale is that writing  new Something(a, b, c, d, e)  is not the clearest,
-// and it would be better to write   new Something(name=a, leftOperand=b...
-// etc., but C++ lacks named operands, so in asm2wasm etc. you will see things
-// like
+// rationale is that writing `new Something(a, b, c, d, e)` is not the clearest,
+// and it would be better to write new `Something(name=a, leftOperand=b...`
+// etc., but C++ lacks named operands so you will see things like
 //   auto x = new Something();
 //   x->name = a;
 //   x->leftOperand = b;
@@ -563,29 +624,36 @@ public:
     MemoryFillId,
     PopId,
     RefNullId,
-    RefIsNullId,
+    RefIsId,
     RefFuncId,
     RefEqId,
+    TableGetId,
+    TableSetId,
+    TableSizeId,
+    TableGrowId,
     TryId,
     ThrowId,
     RethrowId,
-    BrOnExnId,
     TupleMakeId,
     TupleExtractId,
     I31NewId,
     I31GetId,
+    CallRefId,
     RefTestId,
     RefCastId,
-    BrOnCastId,
+    BrOnId,
     RttCanonId,
     RttSubId,
     StructNewId,
     StructGetId,
     StructSetId,
     ArrayNewId,
+    ArrayInitId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
+    ArrayCopyId,
+    RefAsId,
     NumExpressionIds
   };
   Id _id;
@@ -672,11 +740,13 @@ public:
   // needed (which may require scanning the block)
   void finalize(Type type_);
 
+  enum Breakability { Unknown, HasBreak, NoBreak };
+
   // set the type given you know its type, and you know if there is a break to
   // this block. this avoids the need to scan the contents of the block in the
   // case that it might be unreachable, so it is recommended if you already know
   // the type and breakability anyhow.
-  void finalize(Type type_, bool hasBreak);
+  void finalize(Type type_, Breakability breakability);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -736,8 +806,8 @@ public:
 
   ArenaVector<Name> targets;
   Name default_;
-  Expression* condition = nullptr;
   Expression* value = nullptr;
+  Expression* condition = nullptr;
 
   void finalize();
 };
@@ -759,9 +829,19 @@ public:
   Signature sig;
   ExpressionList operands;
   Expression* target;
+  Name table;
   bool isReturn = false;
 
   void finalize();
+
+  // FIXME We should probably store a heap type here, and not a signature, see
+  //       https://github.com/WebAssembly/binaryen/issues/4220
+  //       For now, copy the heap type from the table if it matches - then a
+  //       nominal check will succeed too. If it does not match, then just
+  //       emit something for it like we always used to, using
+  //       HeapType(sig) (also do that if no module is provided).
+  // FIXME When we remove this, also remove the forward decl of Module, above.
+  HeapType getHeapType(Module* module = nullptr);
 };
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {
@@ -812,7 +892,7 @@ public:
   Load(MixedArena& allocator) {}
 
   uint8_t bytes;
-  bool signed_;
+  bool signed_ = false;
   Address offset;
   Address align;
   bool isAtomic;
@@ -1168,9 +1248,12 @@ public:
   void finalize(Type type);
 };
 
-class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
+class RefIs : public SpecificExpression<Expression::RefIsId> {
 public:
-  RefIsNull(MixedArena& allocator) {}
+  RefIs(MixedArena& allocator) {}
+
+  // RefIs can represent ref.is_null, ref.is_func, ref.is_data, and ref.is_i31.
+  RefIsOp op;
 
   Expression* value;
 
@@ -1184,6 +1267,7 @@ public:
   Name func;
 
   void finalize();
+  void finalize(Type type_);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
@@ -1196,13 +1280,66 @@ public:
   void finalize();
 };
 
+class TableGet : public SpecificExpression<Expression::TableGetId> {
+public:
+  TableGet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+
+  void finalize();
+};
+
+class TableSet : public SpecificExpression<Expression::TableSetId> {
+public:
+  TableSet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+  Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
+
+  void finalize();
+};
+
+class TableGrow : public SpecificExpression<Expression::TableGrowId> {
+public:
+  TableGrow() { type = Type::i32; }
+  TableGrow(MixedArena& allocator) : TableGrow() {}
+
+  Name table;
+  Expression* value;
+  Expression* delta;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
-  Try(MixedArena& allocator) {}
+  Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
 
+  Name name; // label that can only be targeted by 'delegate's
   Expression* body;
-  Expression* catchBody;
+  ArenaVector<Name> catchTags;
+  ExpressionList catchBodies;
+  Name delegateTarget; // target try's label
 
+  bool hasCatchAll() const {
+    return catchBodies.size() - catchTags.size() == 1;
+  }
+  bool isCatch() const { return !catchBodies.empty(); }
+  bool isDelegate() const { return delegateTarget.is(); }
   void finalize();
   void finalize(Type type_);
 };
@@ -1211,7 +1348,7 @@ class Throw : public SpecificExpression<Expression::ThrowId> {
 public:
   Throw(MixedArena& allocator) : operands(allocator) {}
 
-  Name event;
+  Name tag;
   ExpressionList operands;
 
   void finalize();
@@ -1221,22 +1358,7 @@ class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
   Rethrow(MixedArena& allocator) {}
 
-  Expression* exnref;
-
-  void finalize();
-};
-
-class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
-public:
-  BrOnExn() { type = Type::unreachable; }
-  BrOnExn(MixedArena& allocator) : BrOnExn() {}
-
-  Name name;
-  Name event;
-  Expression* exnref;
-  // This is duplicate info of param types stored in Event, but this is required
-  // for us to know the type of the value sent to the target block.
-  Type sent;
+  Name target;
 
   void finalize();
 };
@@ -1274,98 +1396,237 @@ public:
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
-  bool signed_;
+  bool signed_ = false;
 
   void finalize();
+};
+
+class CallRef : public SpecificExpression<Expression::CallRefId> {
+public:
+  CallRef(MixedArena& allocator) : operands(allocator) {}
+  ExpressionList operands;
+  Expression* target;
+  bool isReturn = false;
+
+  void finalize();
+  void finalize(Type type_);
 };
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {
 public:
   RefTest(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
+  Expression* ref;
+
+  // If rtt is provided then this is a dynamic test with an rtt. If nullptr then
+  // this is a static cast and intendedType is set, and it contains the type we
+  // intend to cast to.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
+
+  void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
 public:
   RefCast(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
+  Expression* ref;
+
+  // See above with RefTest.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
+
+  void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
-class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
+class BrOn : public SpecificExpression<Expression::BrOnId> {
 public:
-  BrOnCast(MixedArena& allocator) {}
+  BrOn(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
+  BrOnOp op;
+  Name name;
+  Expression* ref;
+
+  // BrOnCast* has, like RefCast and RefTest, either an rtt or a static intended
+  // type.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
+
+  // TODO: BrOnNull also has an optional extra value in the spec, which we do
+  //       not support. See also the discussion on
+  //       https://github.com/WebAssembly/function-references/issues/45
+  //       - depending on the decision there, we may want to move BrOnNull into
+  //       Break or a new class of its own.
+
+  void finalize();
+
+  // Returns the type we intend to cast to. Relevant only for the cast variants.
+  HeapType getIntendedType();
+
+  // Returns the type sent on the branch, if it is taken.
+  Type getSentType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
 public:
   RttCanon(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
+  void finalize();
 };
 
 class RttSub : public SpecificExpression<Expression::RttSubId> {
 public:
   RttSub(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+  Expression* parent;
+
+  // rtt.fresh_sub is like rtt.sub, but never caching or canonicalizing (i.e.,
+  // it always returns a fresh RTT, non-identical to any other RTT in the
+  // system).
+  bool fresh = false;
+
+  void finalize();
 };
 
 class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
-  StructNew(MixedArena& allocator) {}
+  StructNew(MixedArena& allocator) : operands(allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
+  // A dynamic StructNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
+
+  // A struct.new_with_default has empty operands. This does leave the case of a
+  // struct with no fields ambiguous, but it doesn't make a difference in that
+  // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
+  ExpressionList operands;
+
+  bool isWithDefault() { return operands.empty(); }
+
+  void finalize();
 };
 
 class StructGet : public SpecificExpression<Expression::StructGetId> {
 public:
   StructGet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
+  Index index;
+  Expression* ref;
+  // Packed fields have a sign.
+  bool signed_ = false;
+
+  void finalize();
 };
 
 class StructSet : public SpecificExpression<Expression::StructSetId> {
 public:
   StructSet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
+  Index index;
+  Expression* ref;
+  Expression* value;
+
+  void finalize();
 };
 
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
+  // If set, then the initial value is assigned to all entries in the array. If
+  // not set, this is array.new_with_default and the default of the type is
+  // used.
+  Expression* init = nullptr;
+  Expression* size;
+
+  // A dynamic ArrayNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
+
+  bool isWithDefault() { return !init; }
+
+  void finalize();
+};
+
+class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+public:
+  ArrayInit(MixedArena& allocator) : values(allocator) {}
+
+  ExpressionList values;
+
+  // A dynamic ArrayInit has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
+
+  void finalize();
 };
 
 class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
 public:
   ArrayGet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
+  Expression* ref;
+  Expression* index;
+  // Packed fields have a sign.
+  bool signed_ = false;
+
+  void finalize();
 };
 
 class ArraySet : public SpecificExpression<Expression::ArraySetId> {
 public:
   ArraySet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+
+  void finalize();
 };
 
 class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
 public:
   ArrayLen(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
+  Expression* ref;
+
+  void finalize();
+};
+
+class ArrayCopy : public SpecificExpression<Expression::ArrayCopyId> {
+public:
+  ArrayCopy(MixedArena& allocator) {}
+
+  Expression* destRef;
+  Expression* destIndex;
+  Expression* srcRef;
+  Expression* srcIndex;
+  Expression* length;
+
+  void finalize();
+};
+
+class RefAs : public SpecificExpression<Expression::RefAsId> {
+public:
+  RefAs(MixedArena& allocator) {}
+
+  RefAsOp op;
+
+  Expression* value;
+
+  void finalize();
 };
 
 // Globals
 
-struct Importable {
+struct Named {
   Name name;
 
   // Explicit names are ones that we read from the input file and
@@ -1374,17 +1635,19 @@ struct Importable {
   // use only and will not be written the name section.
   bool hasExplicitName = false;
 
-  // If these are set, then this is an import, as module.base
-  Name module, base;
-
-  bool imported() { return module.is(); }
-
   void setName(Name name_, bool hasExplicitName_) {
     name = name_;
     hasExplicitName = hasExplicitName_;
   }
 
   void setExplicitName(Name name_) { setName(name_, true); }
+};
+
+struct Importable : Named {
+  // If these are set, then this is an import, as module.base
+  Name module, base;
+
+  bool imported() const { return module.is(); }
 };
 
 class Function;
@@ -1411,27 +1674,15 @@ struct BinaryLocations {
   // Track the extra delimiter positions that some instructions, in particular
   // control flow, have, like 'end' for loop and block. We keep these in a
   // separate map because they are rare and we optimize for the storage space
-  // for the common type of instruction which just needs a Span. We implement
-  // this as a simple struct with two elements (as two extra elements is the
-  // maximum currently needed; due to 'catch' and 'end' for try-catch). The
-  // second value may be 0, indicating it is not used.
-  struct DelimiterLocations : public std::array<BinaryLocation, 2> {
-    DelimiterLocations() {
-      // Ensure zero-initialization.
-      for (auto& item : *this) {
-        item = 0;
-      }
-    }
-  };
+  // for the common type of instruction which just needs a Span.
+  // For "else" (from an if) we use index 0, and for catch (from a try) we use
+  // indexes 0 and above.
+  // We use automatic zero-initialization here because that indicates a "null"
+  // debug value, indicating the information is not present.
+  using DelimiterLocations = ZeroInitSmallVector<BinaryLocation, 1>;
 
-  enum DelimiterId {
-    // All control flow structures have an end, so use index 0 for that.
-    End = 0,
-    // Use index 1 for all other current things.
-    Else = 1,
-    Catch = 1,
-    Invalid = -1
-  };
+  enum DelimiterId : size_t { Else = 0, Invalid = size_t(-1) };
+
   std::unordered_map<Expression*, DelimiterLocations> delimiters;
 
   // DWARF debug info can refer to multiple interesting positions in a function.
@@ -1457,7 +1708,7 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  Signature sig; // parameters and return value
+  HeapType type = HeapType(Signature()); // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
@@ -1475,8 +1726,8 @@ public:
   std::unique_ptr<StackIR> stackIR;
 
   // local names. these are optional.
-  std::map<Index, Name> localNames;
-  std::map<Name, Index> localIndices;
+  std::unordered_map<Index, Name> localNames;
+  std::unordered_map<Name, Index> localIndices;
 
   // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
@@ -1506,6 +1757,12 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  Signature getSig() { return type.getSignature(); }
+  Type getParams() { return getSig().params; }
+  Type getResults() { return getSig().results; }
+  void setParams(Type params) { type = Signature(params, getResults()); }
+  void setResults(Type results) { type = Signature(getParams(), results); }
+
   size_t getNumParams();
   size_t getNumVars();
   size_t getNumLocals();
@@ -1534,7 +1791,7 @@ enum class ExternalKind {
   Table = 1,
   Memory = 2,
   Global = 3,
-  Event = 4,
+  Tag = 4,
   Invalid = -1
 };
 
@@ -1547,6 +1804,25 @@ public:
   ExternalKind kind;
 };
 
+class ElementSegment : public Named {
+public:
+  Name table;
+  Expression* offset;
+  Type type = Type::funcref;
+  std::vector<Expression*> data;
+
+  ElementSegment() = default;
+  ElementSegment(Name table, Expression* offset, Type type = Type::funcref)
+    : table(table), offset(offset), type(type) {}
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type,
+                 std::vector<Expression*>& init)
+    : table(table), offset(offset), type(type) {
+    data.swap(init);
+  }
+};
+
 class Table : public Importable {
 public:
   static const Address::address32_t kPageSize = 1;
@@ -1554,32 +1830,15 @@ public:
   // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
-  struct Segment {
-    Expression* offset;
-    std::vector<Name> data;
-    Segment() = default;
-    Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
-      data.swap(init);
-    }
-  };
-
-  // Currently the wasm object always 'has' one Table. It 'exists' if it has
-  // been defined or imported. The table can exist but be empty and have no
-  // defined initial or max size.
-  bool exists = false;
   Address initial = 0;
   Address max = kMaxSize;
-  std::vector<Segment> segments;
+  Type type = Type::funcref;
 
-  Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {
-    exists = false;
     name = "";
     initial = 0;
     max = kMaxSize;
-    segments.clear();
   }
 };
 
@@ -1592,6 +1851,8 @@ public:
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
   struct Segment {
+    // For use in name section only
+    Name name;
     bool isPassive = false;
     Expression* offset = nullptr;
     std::vector<char> data; // TODO: optimize
@@ -1605,8 +1866,12 @@ public:
     Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
     }
-    Segment(bool isPassive, Expression* offset, const char* init, Address size)
-      : isPassive(isPassive), offset(offset) {
+    Segment(Name name,
+            bool isPassive,
+            Expression* offset,
+            const char* init,
+            Address size)
+      : name(name), isPassive(isPassive), offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }
@@ -1617,7 +1882,6 @@ public:
   Address max = kMaxSize32;
   std::vector<Segment> segments;
 
-  // See comment in Table.
   bool shared = false;
   Type indexType = Type::i32;
 
@@ -1642,13 +1906,8 @@ public:
   bool mutable_ = false;
 };
 
-// Kinds of event attributes.
-enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
-
-class Event : public Importable {
+class Tag : public Importable {
 public:
-  // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
-  uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   Signature sig;
 };
 
@@ -1663,8 +1922,10 @@ public:
 // The optional "dylink" section is used in dynamic linking.
 class DylinkSection {
 public:
+  bool isLegacy = false;
   Index memorySize, memoryAlignment, tableSize, tableAlignment;
   std::vector<Name> neededDynlibs;
+  std::vector<char> tail;
 };
 
 class Module {
@@ -1674,9 +1935,10 @@ public:
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
-  std::vector<std::unique_ptr<Event>> events;
+  std::vector<std::unique_ptr<Tag>> tags;
+  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  std::vector<std::unique_ptr<Table>> tables;
 
-  Table table;
   Memory memory;
   Name start;
 
@@ -1698,56 +1960,80 @@ public:
   // Module name, if specified. Serves a documentary role only.
   Name name;
 
+  // Optional type name information, used in printing only. Note that Types are
+  // globally interned, but type names are specific to a module.
+  struct TypeNames {
+    // The name of the type.
+    Name name;
+    // For a Struct, names of fields.
+    std::unordered_map<Index, Name> fieldNames;
+  };
+  std::unordered_map<HeapType, TypeNames> typeNames;
+
   MixedArena allocator;
 
 private:
   // TODO: add a build option where Names are just indices, and then these
   // methods are not needed
   // exports map is by the *exported* name, which is unique
-  std::map<Name, Export*> exportsMap;
-  std::map<Name, Function*> functionsMap;
-  std::map<Name, Global*> globalsMap;
-  std::map<Name, Event*> eventsMap;
+  std::unordered_map<Name, Export*> exportsMap;
+  std::unordered_map<Name, Function*> functionsMap;
+  std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
+  std::unordered_map<Name, Global*> globalsMap;
+  std::unordered_map<Name, Tag*> tagsMap;
 
 public:
   Module() = default;
 
   Export* getExport(Name name);
   Function* getFunction(Name name);
+  Table* getTable(Name name);
+  ElementSegment* getElementSegment(Name name);
   Global* getGlobal(Name name);
-  Event* getEvent(Name name);
+  Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
+  Table* getTableOrNull(Name name);
+  ElementSegment* getElementSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
-  Event* getEventOrNull(Name name);
+  Tag* getTagOrNull(Name name);
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
   Global* addGlobal(Global* curr);
-  Event* addEvent(Event* curr);
+  Tag* addTag(Tag* curr);
 
-  Export* addExport(std::unique_ptr<Export> curr);
-  Function* addFunction(std::unique_ptr<Function> curr);
-  Global* addGlobal(std::unique_ptr<Global> curr);
-  Event* addEvent(std::unique_ptr<Event> curr);
+  Export* addExport(std::unique_ptr<Export>&& curr);
+  Function* addFunction(std::unique_ptr<Function>&& curr);
+  Table* addTable(std::unique_ptr<Table>&& curr);
+  ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
+  Global* addGlobal(std::unique_ptr<Global>&& curr);
+  Tag* addTag(std::unique_ptr<Tag>&& curr);
 
   void addStart(const Name& s);
 
   void removeExport(Name name);
   void removeFunction(Name name);
+  void removeTable(Name name);
+  void removeElementSegment(Name name);
   void removeGlobal(Name name);
-  void removeEvent(Name name);
+  void removeTag(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
+  void removeTables(std::function<bool(Table*)> pred);
+  void removeElementSegments(std::function<bool(ElementSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
-  void removeEvents(std::function<bool(Event*)> pred);
+  void removeTags(std::function<bool(Tag*)> pred);
 
   void updateMaps();
 
   void clearDebugInfo();
 };
+
+using ModuleExpression = std::pair<Module&, Expression*>;
 
 } // namespace wasm
 
@@ -1757,6 +2043,13 @@ template<> struct hash<wasm::Address> {
     return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
+
+std::ostream& operator<<(std::ostream& o, wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
+std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
+std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
+
 } // namespace std
 
 #endif // wasm_wasm_h

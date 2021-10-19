@@ -1,28 +1,24 @@
 #!/bin/bash
 
 set -o errexit
+set -o pipefail
 
-# When we are running on travis and *not* part of a pull request we don't
-# have any upstream branch to compare against.
-if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-  echo "Skipping since not running on travis PR"
-  exit 0
-fi
-
-if [ -n "$TRAVIS_BRANCH" ]; then
-  BRANCH=$TRAVIS_BRANCH
+if [ -n "$1" ]; then
+  BRANCH="$1"
+elif [ -n "$GITHUB_BASE_REF" ]; then
+  BRANCH="origin/$GITHUB_BASE_REF"
 else
-  BRANCH=origin/master
+  BRANCH="@{upstream}"
 fi
 
 MERGE_BASE=$(git merge-base $BRANCH HEAD)
-FORMAT_MSG=$(git clang-format $MERGE_BASE -q --diff -- src/)
+FORMAT_MSG=$(git clang-format $MERGE_BASE -q --diff)
 if [ -n "$FORMAT_MSG" -a "$FORMAT_MSG" != "no modified files to format" ]
 then
   echo "Please run git clang-format before committing, or apply this diff:"
   echo
   # Run git clang-format again, this time without capruting stdout.  This way
   # clang-format format the message nicely and add color.
-  git clang-format $MERGE_BASE -q --diff -- src/
+  git clang-format $MERGE_BASE -q --diff
   exit 1
 fi

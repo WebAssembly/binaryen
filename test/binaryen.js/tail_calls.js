@@ -18,6 +18,7 @@ var bar = module.addFunction(
   binaryen.none,
   [],
   module.return_call_indirect(
+    "0",
     module.i32.const(0),
     [],
     binaryen.none,

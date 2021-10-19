@@ -1,5 +1,6 @@
 import { setTempRet0 } from 'env';
 
+  var bufferView;
 
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
@@ -26,35 +27,32 @@ import { setTempRet0 } from 'env';
     return f32ScratchView[2];
   }
       
-function asmFunc(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
+ var HEAP8 = new Int8Array(buffer);
+ var HEAP16 = new Int16Array(buffer);
+ var HEAP32 = new Int32Array(buffer);
+ var HEAPU8 = new Uint8Array(buffer);
+ var HEAPU16 = new Uint16Array(buffer);
+ var HEAPU32 = new Uint32Array(buffer);
+ var HEAPF32 = new Float32Array(buffer);
+ var HEAPF64 = new Float64Array(buffer);
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
-  return HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
- }
- 
- function $1() {
-  i64toi32_i32$HIGH_BITS = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
   return HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
  }
  
@@ -89,14 +87,14 @@ function asmFunc(global, env, buffer) {
  }
  
  function $7() {
-  var $0_1 = 0, $1_1 = 0;
+  var $0_1 = 0, $1 = 0;
   wasm2js_scratch_store_f64(0.0);
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
-  $1_1 = wasm2js_scratch_load_i32(0) | 0;
-  HEAP8[0] = $1_1;
-  HEAP8[1] = $1_1 >>> 8;
-  HEAP8[2] = $1_1 >>> 16;
-  HEAP8[3] = $1_1 >>> 24;
+  $1 = wasm2js_scratch_load_i32(0) | 0;
+  HEAP8[0] = $1;
+  HEAP8[1] = $1 >>> 8;
+  HEAP8[2] = $1 >>> 16;
+  HEAP8[3] = $1 >>> 24;
   HEAP8[4] = $0_1;
   HEAP8[5] = $0_1 >>> 8;
   HEAP8[6] = $0_1 >>> 16;
@@ -105,11 +103,13 @@ function asmFunc(global, env, buffer) {
  
  function legalstub$1() {
   var $0_1 = 0;
-  $0_1 = $1();
+  i64toi32_i32$HIGH_BITS = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
+  $0_1 = HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $0_1;
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -126,26 +126,9 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
-var retasmFunc = asmFunc({
-    Math,
-    Int8Array,
-    Uint8Array,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array,
-    NaN,
-    Infinity
-  }, {
-    abort: function() { throw new Error('abort'); },
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
     setTempRet0
-  },
-  memasmFunc
-);
+  });
 export var i32_load = retasmFunc.i32_load;
 export var i64_load = retasmFunc.i64_load;
 export var f32_load = retasmFunc.f32_load;

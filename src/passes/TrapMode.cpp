@@ -20,14 +20,12 @@
 // generates a check and replaces the result with zero in that case.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/trapping.h"
 #include "mixed_arena.h"
 #include "pass.h"
 #include "support/name.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -37,6 +35,18 @@ Name I64S_REM("i64s-rem");
 Name I64U_REM("i64u-rem");
 Name I64S_DIV("i64s-div");
 Name I64U_DIV("i64u-div");
+
+static Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
+  if (expr->type == Type::f32) {
+    auto conv = allocator.alloc<Unary>();
+    conv->op = PromoteFloat32;
+    conv->value = expr;
+    conv->type = Type::f64;
+    return conv;
+  }
+  assert(expr->type == Type::f64);
+  return expr;
+}
 
 Name getBinaryFuncName(Binary* curr) {
   switch (curr->op) {
@@ -122,14 +132,14 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
       builder.makeConst(zeroLit),
       result);
   }
-  auto func = new Function;
-  func->name = getBinaryFuncName(curr);
-  func->sig = Signature({type, type}, type);
+  auto funcSig = Signature({type, type}, type);
+  auto func = Builder::makeFunction(getBinaryFuncName(curr), funcSig, {});
   func->body =
     builder.makeIf(builder.makeUnary(eqZOp, builder.makeLocalGet(1, type)),
                    builder.makeConst(zeroLit),
                    result);
-  return func;
+  // TODO: use unique_ptr properly and do not release ownership.
+  return func.release();
 }
 
 template<typename IntType, typename FloatType>
@@ -183,9 +193,8 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
       WASM_UNREACHABLE("unexpected op");
   }
 
-  auto func = new Function;
-  func->name = getUnaryFuncName(curr);
-  func->sig = Signature(type, retType);
+  auto func =
+    Builder::makeFunction(getUnaryFuncName(curr), Signature(type, retType), {});
   func->body = builder.makeUnary(truncOp, builder.makeLocalGet(0, type));
   // too small XXX this is different than asm.js, which does frem. here we
   // clamp, which is much simpler/faster, and similar to native builds
@@ -208,7 +217,8 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
     // NB: min here as well. anything invalid => to the min
     builder.makeConst(iMin),
     func->body);
-  return func;
+  // TODO: use unique_ptr properly and do not release ownership.
+  return func.release();
 }
 
 void ensureBinaryFunc(Binary* curr,
@@ -241,7 +251,7 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer& trappingFunctions) {
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  import->sig = Signature(Type::f64, Type::i32);
+  import->type = Signature(Type::f64, Type::i32);
   trappingFunctions.addImport(import);
 }
 

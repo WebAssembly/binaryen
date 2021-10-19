@@ -33,17 +33,22 @@ struct RoundTrip : public Pass {
   void run(PassRunner* runner, Module* module) override {
     BufferWithRandomAccess buffer;
     // Save features, which would not otherwise make it through a round trip if
-    // the target features section has been stripped.
+    // the target features section has been stripped. We also need them in order
+    // to tell the builder which features to build with.
     auto features = module->features;
     // Write, clear, and read the module
     WasmBinaryWriter(module, buffer).write();
     ModuleUtils::clearModule(*module);
     auto input = buffer.getAsChars();
-    WasmBinaryBuilder parser(*module, input);
+    WasmBinaryBuilder parser(*module, features, input);
     parser.setDWARF(runner->options.debugInfo);
-    parser.read();
-    // Reapply features
-    module->features = features;
+    try {
+      parser.read();
+    } catch (ParseException& p) {
+      p.dump(std::cerr);
+      std::cerr << '\n';
+      Fatal() << "error in parsing wasm binary";
+    }
   }
 };
 

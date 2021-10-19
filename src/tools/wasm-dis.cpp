@@ -19,19 +19,19 @@
 //
 
 #include "support/colors.h"
-#include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
+
+#include "tool-options.h"
 
 using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
-  Options options("wasm-dis",
-                  "Un-assemble a .wasm (WebAssembly binary format) into a "
-                  ".wat (WebAssembly text format)");
+  ToolOptions options("wasm-dis",
+                      "Un-assemble a .wasm (WebAssembly binary format) into a "
+                      ".wat (WebAssembly text format)");
   options
     .add("--output",
          "-o",
@@ -60,6 +60,7 @@ int main(int argc, const char* argv[]) {
     std::cerr << "parsing binary..." << std::endl;
   }
   Module wasm;
+  options.applyFeatures(wasm);
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
@@ -72,12 +73,17 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in parsing wasm source mapping";
   }
 
+  // TODO: Validation. However, validating would mean that users are forced to
+  //       run with  wasm-dis -all  or such, to enable the features (unless the
+  //       features section is present, but that's rare in general). It would be
+  //       better to have an "autodetect" code path that enables used features
+  //       eventually.
+
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }
   Output output(options.extra["output"], Flags::Text);
-  WasmPrinter::printModule(&wasm, output.getStream());
-  output << '\n';
+  output.getStream() << wasm << '\n';
 
   if (options.debug) {
     std::cerr << "Done." << std::endl;

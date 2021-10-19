@@ -41,8 +41,7 @@ struct ToolOptions : public Options {
            "Disable all non-MVP features",
            Arguments::Zero,
            [this](Options*, const std::string&) {
-             hasFeatureOptions = true;
-             enabledFeatures.makeMVP();
+             enabledFeatures.setMVP();
              disabledFeatures.setAll();
            })
       .add("--all-features",
@@ -50,20 +49,14 @@ struct ToolOptions : public Options {
            "Enable all features",
            Arguments::Zero,
            [this](Options*, const std::string&) {
-             hasFeatureOptions = true;
              enabledFeatures.setAll();
-             disabledFeatures.makeMVP();
+             disabledFeatures.setMVP();
            })
       .add("--detect-features",
            "",
-           "Use features from the target features section, or MVP (default)",
+           "(deprecated - this flag does nothing)",
            Arguments::Zero,
-           [this](Options*, const std::string&) {
-             hasFeatureOptions = true;
-             detectFeatures = true;
-             enabledFeatures.makeMVP();
-             disabledFeatures.makeMVP();
-           })
+           [](Options*, const std::string&) {})
       .add("--quiet",
            "-q",
            "Emit less verbose output and hide trivial warnings.",
@@ -89,6 +82,10 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Multivalue, "multivalue functions")
       .addFeature(FeatureSet::GC, "garbage collection")
       .addFeature(FeatureSet::Memory64, "memory64")
+      .addFeature(FeatureSet::TypedFunctionReferences,
+                  "typed function references")
+      .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
+      .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",
@@ -112,6 +109,21 @@ struct ToolOptions : public Options {
                value = argument.substr(colon + 1);
              }
              passOptions.arguments[key] = value;
+           })
+      .add("--nominal",
+           "",
+           "Force all GC type definitions to be parsed as nominal.",
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             setTypeSystem(TypeSystem::Nominal);
+           })
+      .add("--structural",
+           "",
+           "Force all GC type definitions to be parsed as structural "
+           "(i.e. equirecursive). This is the default.",
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             setTypeSystem(TypeSystem::Equirecursive);
            });
   }
 
@@ -123,7 +135,6 @@ struct ToolOptions : public Options {
            std::string("Enable ") + description,
            Arguments::Zero,
            [=](Options*, const std::string&) {
-             hasFeatureOptions = true;
              enabledFeatures.set(feature, true);
              disabledFeatures.set(feature, false);
            })
@@ -133,32 +144,18 @@ struct ToolOptions : public Options {
            std::string("Disable ") + description,
            Arguments::Zero,
            [=](Options*, const std::string&) {
-             hasFeatureOptions = true;
              enabledFeatures.set(feature, false);
              disabledFeatures.set(feature, true);
            });
     return *this;
   }
 
-  void applyFeatures(Module& module) {
-    if (hasFeatureOptions) {
-      if (!detectFeatures && module.hasFeaturesSection) {
-        FeatureSet optionsFeatures = FeatureSet::MVP;
-        optionsFeatures.enable(enabledFeatures);
-        optionsFeatures.disable(disabledFeatures);
-        if (module.features != optionsFeatures) {
-          Fatal() << "module features do not match specified features. "
-                  << "Use --detect-features to resolve.";
-        }
-      }
-      module.features.enable(enabledFeatures);
-      module.features.disable(disabledFeatures);
-    }
+  void applyFeatures(Module& module) const {
+    module.features.enable(enabledFeatures);
+    module.features.disable(disabledFeatures);
   }
 
 private:
-  bool hasFeatureOptions = false;
-  bool detectFeatures = false;
   FeatureSet enabledFeatures = FeatureSet::MVP;
   FeatureSet disabledFeatures = FeatureSet::MVP;
 };

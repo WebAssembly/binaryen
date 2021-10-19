@@ -5,13 +5,13 @@
  (export "call_indirect" (func $0))
  (func $0
   (drop
-   (call_indirect (type $i32_f64_=>_i32)
+   (call_indirect $timport$0 (type $i32_f64_=>_i32)
     (i32.const 10)
     (f64.const 20)
     (i32.const 30)
    )
   )
-  (call_indirect (type $none_=>_none)
+  (call_indirect $timport$0 (type $none_=>_none)
    (i32.const 1)
   )
  )

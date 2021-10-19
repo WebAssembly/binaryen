@@ -19,16 +19,15 @@
 // and executes it. This provides similar functionality as the reference
 // interpreter, like assert_* calls, so it can run the spec test suite.
 //
-
 #include <memory>
 
 #include "execution-results.h"
+#include "ir/element-utils.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-interpreter.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
@@ -41,290 +40,381 @@ Name ASSERT_INVALID("assert_invalid");
 Name ASSERT_MALFORMED("assert_malformed");
 Name ASSERT_UNLINKABLE("assert_unlinkable");
 Name INVOKE("invoke");
+Name REGISTER("register");
 Name GET("get");
 
-// Modules named in the file
-
-std::map<Name, std::unique_ptr<Module>> modules;
-std::map<Name, std::unique_ptr<SExpressionWasmBuilder>> builders;
-std::map<Name, std::unique_ptr<ShellExternalInterface>> interfaces;
-std::map<Name, std::unique_ptr<ModuleInstance>> instances;
-
-//
-// An operation on a module
-//
-
-struct Operation {
-  ModuleInstance* instance;
-  Name operation;
-  Name name;
-  LiteralList arguments;
-
-  Operation(Element& element,
-            ModuleInstance* instanceInit,
-            SExpressionWasmBuilder& builder)
-    : instance(instanceInit) {
-    operation = element[0]->str();
-    Index i = 1;
-    if (element.size() >= 3 && element[2]->isStr()) {
-      // module also specified
-      Name moduleName = element[i++]->str();
-      instance = instances[moduleName].get();
-    }
-    name = element[i++]->str();
-    for (size_t j = i; j < element.size(); j++) {
-      Expression* argument = builder.parseExpression(*element[j]);
-      arguments.push_back(getLiteralFromConstExpression(argument));
-    }
-  }
-
-  Literals operate() {
-    if (operation == INVOKE) {
-      return instance->callExport(name, arguments);
-    } else if (operation == GET) {
-      return {instance->getExport(name)};
-    } else {
-      WASM_UNREACHABLE("unknown operation");
-    }
-  }
-};
-
-static void run_asserts(Name moduleName,
-                        size_t* i,
-                        bool* checked,
-                        Module* wasm,
-                        Element* root,
-                        SExpressionWasmBuilder* builder,
-                        Name entry) {
-  ModuleInstance* instance = nullptr;
-  if (wasm) {
-    // prefix make_unique to work around visual studio bugs
-    auto tempInterface = wasm::make_unique<ShellExternalInterface>();
-    auto tempInstance =
-      wasm::make_unique<ModuleInstance>(*wasm, tempInterface.get());
-    interfaces[moduleName].swap(tempInterface);
-    instances[moduleName].swap(tempInstance);
-    instance = instances[moduleName].get();
-    if (entry.is()) {
-      Function* function = wasm->getFunction(entry);
-      if (!function) {
-        std::cerr << "Unknown entry " << entry << std::endl;
-      } else {
-        LiteralList arguments;
-        for (const auto& param : function->sig.params) {
-          arguments.push_back(Literal(param));
-        }
-        try {
-          instance->callExport(entry, arguments);
-        } catch (ExitException&) {
-        }
-      }
-    }
-  }
-  while (*i < root->size()) {
-    Element& curr = *(*root)[*i];
-    IString id = curr[0]->str();
-    if (id == MODULE) {
-      break;
-    }
-    *checked = true;
-    Colors::red(std::cerr);
-    std::cerr << *i << '/' << (root->size() - 1);
-    Colors::green(std::cerr);
-    std::cerr << " CHECKING: ";
-    Colors::normal(std::cerr);
-    std::cerr << curr;
-    Colors::green(std::cerr);
-    std::cerr << " [line: " << curr.line << "]\n";
-    Colors::normal(std::cerr);
-    if (id == ASSERT_INVALID || id == ASSERT_MALFORMED ||
-        id == ASSERT_UNLINKABLE) {
-      // a module invalidity test
-      Module wasm;
-      wasm.features = FeatureSet::All;
-      bool invalid = false;
-      std::unique_ptr<SExpressionWasmBuilder> builder;
-      try {
-        builder = std::unique_ptr<SExpressionWasmBuilder>(
-          new SExpressionWasmBuilder(wasm, *curr[1], IRProfile::Normal));
-      } catch (const ParseException&) {
-        invalid = true;
-      }
-      if (!invalid) {
-        // maybe parsed ok, but otherwise incorrect
-        invalid = !WasmValidator().validate(wasm);
-      }
-      if (!invalid && id == ASSERT_UNLINKABLE) {
-        // validate "instantiating" the mdoule
-        auto reportUnknownImport = [&](Importable* import) {
-          std::cerr << "unknown import: " << import->module << '.'
-                    << import->base << '\n';
-          invalid = true;
-        };
-        ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
-        ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
-          if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
-            // We can handle it.
-          } else {
-            reportUnknownImport(import);
-          }
-        });
-        if (wasm.memory.imported()) {
-          reportUnknownImport(&wasm.memory);
-        }
-        if (wasm.table.imported()) {
-          reportUnknownImport(&wasm.table);
-        }
-        for (auto& segment : wasm.table.segments) {
-          for (auto name : segment.data) {
-            // spec tests consider it illegal to use spectest.print in a table
-            if (auto* import = wasm.getFunction(name)) {
-              if (import->imported() && import->module == SPECTEST &&
-                  import->base.startsWith(PRINT)) {
-                std::cerr << "cannot put spectest.print in table\n";
-                invalid = true;
-              }
-            }
-          }
-        }
-      }
-      if (!invalid) {
-        Colors::red(std::cerr);
-        std::cerr << "[should have been invalid]\n";
-        Colors::normal(std::cerr);
-        Fatal() << &wasm << '\n';
-      }
-    } else if (id == INVOKE) {
-      assert(wasm);
-      Operation operation(curr, instance, *builder);
-      operation.operate();
-    } else if (wasm) { // if no wasm, we skipped the module
-      // an invoke test
-      bool trapped = false;
-      WASM_UNUSED(trapped);
-      Literals result;
-      try {
-        Operation operation(*curr[1], instance, *builder);
-        result = operation.operate();
-      } catch (const TrapException&) {
-        trapped = true;
-      } catch (const WasmException& e) {
-        std::cout << "[exception thrown: " << e.exn << "]" << std::endl;
-        trapped = true;
-      }
-      if (id == ASSERT_RETURN) {
-        assert(!trapped);
-        Literals expected;
-        if (curr.size() >= 3) {
-          expected =
-            getLiteralsFromConstExpression(builder->parseExpression(*curr[2]));
-        }
-        std::cerr << "seen " << result << ", expected " << expected << '\n';
-        if (expected != result) {
-          Fatal() << "unexpected, should be identical\n";
-        }
-      }
-      if (id == ASSERT_TRAP) {
-        assert(trapped);
-      }
-    }
-    *i += 1;
-  }
-}
-
-//
-// main
-//
-
-int main(int argc, const char* argv[]) {
+struct ShellOptions : public Options {
   Name entry;
   std::set<size_t> skipped;
 
-  Options options("wasm-shell", "Execute .wast files");
-  options
-    .add("--entry",
-         "-e",
-         "Call the entry point after parsing the module",
-         Options::Arguments::One,
-         [&entry](Options*, const std::string& argument) { entry = argument; })
-    .add("--skip",
-         "-s",
-         "Skip input on certain lines (comma-separated-list)",
-         Options::Arguments::One,
-         [&skipped](Options*, const std::string& argument) {
-           size_t i = 0;
-           while (i < argument.size()) {
-             auto ending = argument.find(',', i);
-             if (ending == std::string::npos) {
-               ending = argument.size();
+  ShellOptions(const std::string& command, const std::string& description)
+    : Options(command, description) {
+    (*this)
+      .add("--entry",
+           "-e",
+           "Call the entry point after parsing the module",
+           Options::Arguments::One,
+           [this](Options*, const std::string& argument) { entry = argument; })
+      .add("--skip",
+           "-s",
+           "Skip input on certain lines (comma-separated-list)",
+           Options::Arguments::One,
+           [this](Options*, const std::string& argument) {
+             size_t i = 0;
+             while (i < argument.size()) {
+               auto ending = argument.find(',', i);
+               if (ending == std::string::npos) {
+                 ending = argument.size();
+               }
+               auto sub = argument.substr(i, ending - i);
+               skipped.insert(atoi(sub.c_str()));
+               i = ending + 1;
              }
-             auto sub = argument.substr(i, ending - i);
-             skipped.insert(atoi(sub.c_str()));
-             i = ending + 1;
-           }
-         })
-    .add_positional("INFILE",
-                    Options::Arguments::One,
-                    [](Options* o, const std::string& argument) {
-                      o->extra["infile"] = argument;
-                    });
-  options.parse(argc, argv);
+           })
+      .add_positional("INFILE",
+                      Options::Arguments::One,
+                      [](Options* o, const std::string& argument) {
+                        o->extra["infile"] = argument;
+                      });
+  }
+};
 
-  auto input(
-    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
+class Shell {
+protected:
+  std::map<Name, std::shared_ptr<Module>> modules;
+  std::map<Name, std::shared_ptr<SExpressionWasmBuilder>> builders;
+  std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
+  std::map<Name, std::shared_ptr<ModuleInstance>> instances;
+  // used for imports
+  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
 
-  bool checked = false;
+  Name lastModule;
 
-  try {
-    if (options.debug) {
-      std::cerr << "parsing text to s-expressions...\n";
+  void instantiate(Module* wasm) {
+    auto tempInterface =
+      std::make_shared<ShellExternalInterface>(linkedInstances);
+    auto tempInstance = std::make_shared<ModuleInstance>(
+      *wasm, tempInterface.get(), linkedInstances);
+    interfaces[wasm->name].swap(tempInterface);
+    instances[wasm->name].swap(tempInstance);
+  }
+
+  void parse(Element& s) {
+    IString id = s[0]->str();
+    if (id == MODULE) {
+      parseModule(s);
+    } else if (id == REGISTER) {
+      parseRegister(s);
+    } else if (id == INVOKE) {
+      parseOperation(s);
+    } else if (id == ASSERT_RETURN) {
+      parseAssertReturn(s);
+    } else if (id == ASSERT_TRAP) {
+      parseAssertTrap(s);
+    } else if ((id == ASSERT_INVALID) || (id == ASSERT_MALFORMED)) {
+      parseModuleAssertion(s);
     }
-    SExpressionParser parser(input.data());
-    Element& root = *parser.root;
+  }
 
-    // A .wast may have multiple modules, with some asserts after them
+  Module* parseModule(Element& s) {
+    if (options.debug) {
+      std::cerr << "parsing s-expressions to wasm...\n";
+    }
+    Colors::green(std::cerr);
+    std::cerr << "BUILDING MODULE [line: " << s.line << "]\n";
+    Colors::normal(std::cerr);
+    auto module = std::make_shared<Module>();
+    auto builder =
+      std::make_shared<SExpressionWasmBuilder>(*module, s, IRProfile::Normal);
+    auto moduleName = module->name;
+    lastModule = module->name;
+    builders[moduleName] = builder;
+    modules[moduleName].swap(module);
+    modules[moduleName]->features = FeatureSet::All;
+    bool valid = WasmValidator().validate(*modules[moduleName]);
+    if (!valid) {
+      std::cout << *modules[moduleName] << '\n';
+      Fatal() << "module failed to validate, see above";
+    }
+
+    instantiate(modules[moduleName].get());
+
+    return modules[moduleName].get();
+  }
+
+  void parseRegister(Element& s) {
+    auto instance = instances[lastModule];
+    if (!instance) {
+      Fatal() << "register called without a module";
+    }
+    auto name = s[1]->str();
+    linkedInstances[name] = instance;
+
+    // we copy pointers as a registered module's name might still be used
+    // in an assertion or invoke command.
+    modules[name] = modules[lastModule];
+    builders[name] = builders[lastModule];
+    interfaces[name] = interfaces[lastModule];
+    instances[name] = instances[lastModule];
+
+    Colors::green(std::cerr);
+    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.c_str()
+              << "\"  [line: " << s.line << "]\n";
+    Colors::normal(std::cerr);
+  }
+
+  Literals parseOperation(Element& s) {
+    Index i = 1;
+    Name moduleName = lastModule;
+    if (s[i]->dollared()) {
+      moduleName = s[i++]->str();
+    }
+    ModuleInstance* instance = instances[moduleName].get();
+    assert(instance);
+
+    Name base = s[i++]->str();
+
+    if (s[0]->str() == INVOKE) {
+      LiteralList args;
+      while (i < s.size()) {
+        Expression* argument = builders[moduleName]->parseExpression(*s[i++]);
+        args.push_back(getLiteralFromConstExpression(argument));
+      }
+
+      return instance->callExport(base, args);
+    } else if (s[0]->str() == GET) {
+      return instance->getExport(base);
+    }
+
+    Fatal() << "Invalid operation " << s[0]->c_str();
+  }
+
+  void parseAssertTrap(Element& s) {
+    bool trapped = false;
+    auto& inner = *s[1];
+    if (inner[0]->str() == MODULE) {
+      return parseModuleAssertion(s);
+    }
+
+    try {
+      parseOperation(inner);
+    } catch (const TrapException&) {
+      trapped = true;
+    } catch (const WasmException& e) {
+      std::cout << "[exception thrown: " << e << "]" << std::endl;
+      trapped = true;
+    }
+
+    assert(trapped);
+  }
+
+  void parseAssertReturn(Element& s) {
+    Literals actual;
+    Literals expected;
+    if (s.size() >= 3) {
+      expected = getLiteralsFromConstExpression(
+        builders[lastModule]->parseExpression(*s[2]));
+    }
+    bool trapped = false;
+    try {
+      actual = parseOperation(*s[1]);
+    } catch (const TrapException&) {
+      trapped = true;
+    } catch (const WasmException& e) {
+      std::cout << "[exception thrown: " << e << "]" << std::endl;
+      trapped = true;
+    }
+    assert(!trapped);
+    std::cerr << "seen " << actual << ", expected " << expected << '\n';
+    if (expected != actual) {
+      Fatal() << "unexpected, should be identical\n";
+    }
+  }
+
+  void parseModuleAssertion(Element& s) {
+    Module wasm;
+    wasm.features = FeatureSet::All;
+    std::unique_ptr<SExpressionWasmBuilder> builder;
+    auto id = s[0]->str();
+
+    bool invalid = false;
+    try {
+      SExpressionWasmBuilder(wasm, *s[1], IRProfile::Normal);
+    } catch (const ParseException&) {
+      invalid = true;
+    }
+
+    if (!invalid) {
+      // maybe parsed ok, but otherwise incorrect
+      invalid = !WasmValidator().validate(wasm);
+    }
+
+    if (!invalid && id == ASSERT_UNLINKABLE) {
+      // validate "instantiating" the mdoule
+      auto reportUnknownImport = [&](Importable* import) {
+        auto it = linkedInstances.find(import->module);
+        if (it == linkedInstances.end() ||
+            it->second->wasm.getExportOrNull(import->base) == nullptr) {
+          std::cerr << "unknown import: " << import->module << '.'
+                    << import->base << '\n';
+          invalid = true;
+        }
+      };
+      ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
+      ModuleUtils::iterImportedTables(wasm, reportUnknownImport);
+      ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
+        if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
+          // We can handle it.
+        } else {
+          reportUnknownImport(import);
+        }
+      });
+      ElementUtils::iterAllElementFunctionNames(&wasm, [&](Name name) {
+        // spec tests consider it illegal to use spectest.print in a table
+        if (auto* import = wasm.getFunction(name)) {
+          if (import->imported() && import->module == SPECTEST &&
+              import->base.startsWith(PRINT)) {
+            std::cerr << "cannot put spectest.print in table\n";
+            invalid = true;
+          }
+        }
+      });
+      if (wasm.memory.imported()) {
+        reportUnknownImport(&wasm.memory);
+      }
+    }
+
+    if (!invalid && id == ASSERT_TRAP) {
+      try {
+        instantiate(&wasm);
+      } catch (const TrapException&) {
+        invalid = true;
+      } catch (const WasmException& e) {
+        std::cout << "[exception thrown: " << e << "]" << std::endl;
+        invalid = true;
+      }
+    }
+
+    if (!invalid) {
+      Colors::red(std::cerr);
+      std::cerr << "[should have been invalid]\n";
+      Colors::normal(std::cerr);
+      Fatal() << &wasm << '\n';
+    }
+  }
+
+protected:
+  ShellOptions& options;
+
+  // spectest module is a default host-provided module defined by the spec's
+  // reference interpreter. It's been replaced by the `(register ...)`
+  // mechanism in the recent spec tests, and is kept for legacy tests only.
+  //
+  // TODO: spectest module is considered deprecated by the spec. Remove when
+  // is actually removed from the spec test.
+  void buildSpectestModule() {
+    auto spectest = std::make_shared<Module>();
+    spectest->name = "spectest";
+    Builder builder(*spectest);
+
+    spectest->addGlobal(builder.makeGlobal(Name::fromInt(0),
+                                           Type::i32,
+                                           builder.makeConst<uint32_t>(666),
+                                           Builder::Immutable));
+    spectest->addGlobal(builder.makeGlobal(Name::fromInt(1),
+                                           Type::i64,
+                                           builder.makeConst<uint64_t>(666),
+                                           Builder::Immutable));
+    spectest->addGlobal(builder.makeGlobal(Name::fromInt(2),
+                                           Type::f32,
+                                           builder.makeConst<float>(666.6f),
+                                           Builder::Immutable));
+    spectest->addGlobal(builder.makeGlobal(Name::fromInt(3),
+                                           Type::f64,
+                                           builder.makeConst<double>(666.6),
+                                           Builder::Immutable));
+    spectest->addExport(
+      builder.makeExport("global_i32", Name::fromInt(0), ExternalKind::Global));
+    spectest->addExport(
+      builder.makeExport("global_i64", Name::fromInt(1), ExternalKind::Global));
+    spectest->addExport(
+      builder.makeExport("global_f32", Name::fromInt(2), ExternalKind::Global));
+    spectest->addExport(
+      builder.makeExport("global_f64", Name::fromInt(3), ExternalKind::Global));
+
+    spectest->addTable(
+      builder.makeTable(Name::fromInt(0), Type::funcref, 10, 20));
+    spectest->addExport(
+      builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
+
+    spectest->memory.exists = true;
+    spectest->memory.initial = 1;
+    spectest->memory.max = 2;
+    spectest->addExport(builder.makeExport(
+      "memory", spectest->memory.name, ExternalKind::Memory));
+
+    modules["spectest"].swap(spectest);
+    modules["spectest"]->features = FeatureSet::All;
+    instantiate(modules["spectest"].get());
+    linkedInstances["spectest"] = instances["spectest"];
+    // print_* functions are handled separately, no need to define here.
+  }
+
+public:
+  Shell(ShellOptions& options) : options(options) { buildSpectestModule(); }
+
+  bool parseAndRun(Element& root) {
     size_t i = 0;
     while (i < root.size()) {
       Element& curr = *root[i];
-      if (skipped.count(curr.line) > 0) {
+
+      if (options.skipped.count(curr.line) > 0) {
         Colors::green(std::cerr);
         std::cerr << "SKIPPING [line: " << curr.line << "]\n";
         Colors::normal(std::cerr);
         i++;
         continue;
       }
-      IString id = curr[0]->str();
-      if (id == MODULE) {
-        if (options.debug) {
-          std::cerr << "parsing s-expressions to wasm...\n";
-        }
+
+      if (curr[0]->str() != MODULE) {
+        Colors::red(std::cerr);
+        std::cerr << i << '/' << (root.size() - 1);
         Colors::green(std::cerr);
-        std::cerr << "BUILDING MODULE [line: " << curr.line << "]\n";
+        std::cerr << " CHECKING: ";
         Colors::normal(std::cerr);
-        auto module = wasm::make_unique<Module>();
-        auto builder = wasm::make_unique<SExpressionWasmBuilder>(
-          *module, *root[i], IRProfile::Normal);
-        auto moduleName = module->name;
-        builders[moduleName].swap(builder);
-        modules[moduleName].swap(module);
-        i++;
-        modules[moduleName]->features = FeatureSet::All;
-        bool valid = WasmValidator().validate(*modules[moduleName]);
-        if (!valid) {
-          WasmPrinter::printModule(modules[moduleName].get());
-          Fatal() << "module failed to validate, see above";
-        }
-        run_asserts(moduleName,
-                    &i,
-                    &checked,
-                    modules[moduleName].get(),
-                    &root,
-                    builders[moduleName].get(),
-                    entry);
-      } else {
-        run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry);
+        std::cerr << curr;
+        Colors::green(std::cerr);
+        std::cerr << " [line: " << curr.line << "]\n";
+        Colors::normal(std::cerr);
       }
+
+      parse(curr);
+
+      i += 1;
     }
+
+    return false;
+  }
+};
+
+int main(int argc, const char* argv[]) {
+  Name entry;
+  std::set<size_t> skipped;
+
+  ShellOptions options("wasm-shell", "Execute .wast files");
+  options.parse(argc, argv);
+
+  auto input(
+    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
+
+  bool checked = false;
+  try {
+    if (options.debug) {
+      std::cerr << "parsing text to s-expressions...\n";
+    }
+    SExpressionParser parser(input.data());
+    Element& root = *parser.root;
+    checked = Shell(options).parseAndRun(root);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     exit(1);

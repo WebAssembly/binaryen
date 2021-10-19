@@ -1,6 +1,6 @@
 (module
   (memory 512 512
-   (data passive "hello!")
+   (data "hello!")
   )
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))
@@ -460,20 +460,5 @@
      (ref.null func)
     )
    )
-  )
-
-  ;; br_on_exn's argument becomes unreachable, so br_on_exn itself is replaced
-  ;; with its argument in ReFinalize process after precompute.
-  (event $event$0 (attr 0) (param))
-  (func $unreachable-br_on_exn
-    (block $label$1
-      (drop
-        (br_on_exn $label$1 $event$0
-          (loop $label$2 (result exnref)
-            (br $label$2)
-          )
-        )
-      )
-    )
   )
 )

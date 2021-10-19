@@ -7,10 +7,13 @@ console.log("SideEffects.ReadsGlobal=" + binaryen.SideEffects.ReadsGlobal);
 console.log("SideEffects.WritesGlobal=" + binaryen.SideEffects.WritesGlobal);
 console.log("SideEffects.ReadsMemory=" + binaryen.SideEffects.ReadsMemory);
 console.log("SideEffects.WritesMemory=" + binaryen.SideEffects.WritesMemory);
+console.log("SideEffects.ReadsTable=" + binaryen.SideEffects.ReadsTable);
+console.log("SideEffects.WritesTable=" + binaryen.SideEffects.WritesTable);
 console.log("SideEffects.ImplicitTrap=" + binaryen.SideEffects.ImplicitTrap);
 console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
 console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
 console.log("SideEffects.DanglingPop=" + binaryen.SideEffects.DanglingPop);
+console.log("SideEffects.TrapsNeverHappen=" + binaryen.SideEffects.TrapsNeverHappen);
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();
@@ -100,7 +103,7 @@ module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
     module.call("test", [], binaryen.i32),
-    module.getFeatures()
+    module
   )
   ==
   binaryen.SideEffects.Calls | binaryen.SideEffects.Throws
@@ -108,8 +111,8 @@ assert(
 
 assert(
   binaryen.getSideEffects(
-    module.drop(module.exnref.pop()),
-    module.getFeatures()
+    module.drop(module.i32.pop()),
+    module
   )
   ==
   binaryen.SideEffects.DanglingPop

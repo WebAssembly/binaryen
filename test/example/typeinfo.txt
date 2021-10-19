@@ -14,9 +14,6 @@ eqref
 i31
 (ref null i31)
 i31ref
-exn
-exnref
-(ref exn)
 (func)
 (struct)
 (array i32)
@@ -62,8 +59,6 @@ none
 (rtt 3 eq)
 (rtt 4 i31)
 (rtt 4 i31)
-(rtt 5 exn)
-(rtt 5 exn)
 (rtt 6 (func))
 (rtt 6 (func))
 (rtt 7 (struct))

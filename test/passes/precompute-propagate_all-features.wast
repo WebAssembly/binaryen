@@ -141,7 +141,12 @@
   (func $multipass (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
    (local $3 i32)
    (if
-    (local.get $3)
+    (local.get $3) ;; this will be precomputed to 0. after that, the if will be
+                   ;; precomputed to not exist at all. removing the set in the
+                   ;; if body then allows us to optimize the value of $3 in the
+                   ;; if lower down, but we do not do an additional cycle of
+                   ;; this pass automatically as such things are fairly rare,
+                   ;; so that opportunity remains unoptimized in this test.
     (local.set $3 ;; this set is completely removed, allowing later opts
      (i32.const 24)
     )
@@ -172,7 +177,7 @@
   )
   (func $simd-load (result v128)
    (local $x v128)
-   (local.set $x (v8x16.load_splat (i32.const 0)))
+   (local.set $x (v128.load8_splat (i32.const 0)))
    (local.get $x)
   )
   (func $tuple-local (result i32 i64)

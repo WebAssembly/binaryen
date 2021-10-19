@@ -5,7 +5,6 @@
 #include "literal.h"
 #include "mixed_arena.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -26,11 +25,9 @@ void test_remove_nops() {
       builder.makeNop(),
     },
     {Type::i32, Type::i64});
-  WasmPrinter::printExpression(block, std::cout);
-  std::cout << "\n";
+  std::cout << *block << '\n';
   StackUtils::removeNops(block);
-  WasmPrinter::printExpression(block, std::cout);
-  std::cout << "\n";
+  std::cout << *block << '\n';
 }
 
 void test_stack_signatures() {
@@ -38,37 +35,38 @@ void test_stack_signatures() {
   // Typed block
   auto* block = builder.makeBlock({builder.makeUnreachable()}, Type::f32);
   assert(StackSignature(block) ==
-         (StackSignature{Type::none, Type::f32, false}));
+         (StackSignature{Type::none, Type::f32, StackSignature::Fixed}));
   // Unreachable block
   auto* unreachable =
     builder.makeBlock({builder.makeUnreachable()}, Type::unreachable);
   assert(StackSignature(unreachable) ==
-         (StackSignature{Type::none, Type::none, true}));
+         (StackSignature{Type::none, Type::none, StackSignature::Polymorphic}));
   {
     // Typed loop
     auto* loop = builder.makeLoop("loop", unreachable, Type::f32);
     assert(StackSignature(loop) ==
-           (StackSignature{Type::none, Type::f32, false}));
+           (StackSignature{Type::none, Type::f32, StackSignature::Fixed}));
   }
   {
     // Unreachable loop
     auto* loop = builder.makeLoop("loop", unreachable, Type::unreachable);
-    assert(StackSignature(loop) ==
-           (StackSignature{Type::none, Type::none, true}));
+    assert(
+      StackSignature(loop) ==
+      (StackSignature{Type::none, Type::none, StackSignature::Polymorphic}));
   }
   {
     // If (no else)
     auto* if_ = builder.makeIf(
       builder.makePop(Type::i32), unreachable, nullptr, Type::none);
     assert(StackSignature(if_) ==
-           (StackSignature{Type::i32, Type::none, false}));
+           (StackSignature{Type::i32, Type::none, StackSignature::Fixed}));
   }
   {
     // If (with else)
     auto* if_ =
       builder.makeIf(builder.makePop(Type::i32), block, block, Type::f32);
     assert(StackSignature(if_) ==
-           (StackSignature{Type::i32, Type::f32, false}));
+           (StackSignature{Type::i32, Type::f32, StackSignature::Fixed}));
   }
   {
     // Call
@@ -76,9 +74,9 @@ void test_stack_signatures() {
       builder.makeCall("foo",
                        {builder.makePop(Type::i32), builder.makePop(Type::f32)},
                        {Type::i64, Type::f64});
-    assert(
-      StackSignature(call) ==
-      (StackSignature{{Type::i32, Type::f32}, {Type::i64, Type::f64}, false}));
+    assert(StackSignature(call) == (StackSignature{{Type::i32, Type::f32},
+                                                   {Type::i64, Type::f64},
+                                                   StackSignature::Fixed}));
   }
   {
     // Return Call
@@ -86,21 +84,24 @@ void test_stack_signatures() {
       builder.makeCall("bar",
                        {builder.makePop(Type::i32), builder.makePop(Type::f32)},
                        Type::unreachable,
-                       true);
+                       StackSignature::Polymorphic);
     assert(StackSignature(call) ==
-           (StackSignature{{Type::i32, Type::f32}, Type::none, true}));
+           (StackSignature{
+             {Type::i32, Type::f32}, Type::none, StackSignature::Polymorphic}));
   }
   {
     // Return
     auto* ret = builder.makeReturn(builder.makePop(Type::i32));
-    assert(StackSignature(ret) ==
-           (StackSignature{Type::i32, Type::none, true}));
+    assert(
+      StackSignature(ret) ==
+      (StackSignature{Type::i32, Type::none, StackSignature::Polymorphic}));
   }
   {
     // Multivalue return
     auto* ret = builder.makeReturn(builder.makePop({Type::i32, Type::f32}));
     assert(StackSignature(ret) ==
-           (StackSignature{{Type::i32, Type::f32}, Type::none, true}));
+           (StackSignature{
+             {Type::i32, Type::f32}, Type::none, StackSignature::Polymorphic}));
   }
 }
 
@@ -108,195 +109,360 @@ void test_signature_composition() {
   std::cout << ";; Test stack signature composition\n";
   // No unreachables
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, false};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, false};
+    StackSignature a{Type::none, {Type::f32, Type::i32}, StackSignature::Fixed};
+    StackSignature b{{Type::f32, Type::i32}, Type::none, StackSignature::Fixed};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::none, false}));
+    assert(a + b ==
+           (StackSignature{Type::none, Type::none, StackSignature::Fixed}));
   }
   {
-    StackSignature a{Type::none, Type::i32, false};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, false};
+    StackSignature a{Type::none, Type::i32, StackSignature::Fixed};
+    StackSignature b{{Type::f32, Type::i32}, Type::none, StackSignature::Fixed};
     assert(a.composes(b));
-    assert(a + b == StackSignature(Type::f32, Type::none, false));
+    assert(a + b ==
+           StackSignature(Type::f32, Type::none, StackSignature::Fixed));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, false};
-    StackSignature b{Type::i32, Type::none, false};
+    StackSignature a{Type::none, {Type::f32, Type::i32}, StackSignature::Fixed};
+    StackSignature b{Type::i32, Type::none, StackSignature::Fixed};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::f32, false}));
+    assert(a + b ==
+           (StackSignature{Type::none, Type::f32, StackSignature::Fixed}));
   }
   {
-    StackSignature a{Type::none, Type::f32, false};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, false};
+    StackSignature a{Type::none, Type::f32, StackSignature::Fixed};
+    StackSignature b{{Type::f32, Type::i32}, Type::none, StackSignature::Fixed};
     assert(!a.composes(b));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, false};
-    StackSignature b{Type::f32, Type::none, false};
+    StackSignature a{Type::none, {Type::f32, Type::i32}, StackSignature::Fixed};
+    StackSignature b{Type::f32, Type::none, StackSignature::Fixed};
     assert(!a.composes(b));
   }
   // First unreachable
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, true};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, false};
+    StackSignature a{
+      Type::none, {Type::f32, Type::i32}, StackSignature::Polymorphic};
+    StackSignature b{{Type::f32, Type::i32}, Type::none, StackSignature::Fixed};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::none, true}));
+    assert(a + b == (StackSignature{
+                      Type::none, Type::none, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::i32, true};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, false};
+    StackSignature a{Type::none, Type::i32, StackSignature::Polymorphic};
+    StackSignature b{{Type::f32, Type::i32}, Type::none, StackSignature::Fixed};
     assert(a.composes(b));
-    assert(a + b == StackSignature(Type::none, Type::none, true));
+    assert(a + b ==
+           StackSignature(Type::none, Type::none, StackSignature::Polymorphic));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, true};
-    StackSignature b{Type::i32, Type::none, false};
+    StackSignature a{
+      Type::none, {Type::f32, Type::i32}, StackSignature::Polymorphic};
+    StackSignature b{Type::i32, Type::none, StackSignature::Fixed};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::f32, true}));
+    assert(a + b == (StackSignature{
+                      Type::none, Type::f32, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::f32, true};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, false};
+    StackSignature a{Type::none, Type::f32, StackSignature::Polymorphic};
+    StackSignature b{{Type::f32, Type::i32}, Type::none, StackSignature::Fixed};
     assert(!a.composes(b));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, true};
-    StackSignature b{Type::f32, Type::none, false};
+    StackSignature a{
+      Type::none, {Type::f32, Type::i32}, StackSignature::Polymorphic};
+    StackSignature b{Type::f32, Type::none, StackSignature::Fixed};
     assert(!a.composes(b));
   }
   // Second unreachable
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, false};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, true};
+    StackSignature a{Type::none, {Type::f32, Type::i32}, StackSignature::Fixed};
+    StackSignature b{
+      {Type::f32, Type::i32}, Type::none, StackSignature::Polymorphic};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::none, true}));
+    assert(a + b == (StackSignature{
+                      Type::none, Type::none, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::i32, false};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, true};
+    StackSignature a{Type::none, Type::i32, StackSignature::Fixed};
+    StackSignature b{
+      {Type::f32, Type::i32}, Type::none, StackSignature::Polymorphic};
     assert(a.composes(b));
-    assert(a + b == StackSignature(Type::f32, Type::none, true));
+    assert(a + b ==
+           StackSignature(Type::f32, Type::none, StackSignature::Polymorphic));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, false};
-    StackSignature b{Type::i32, Type::none, true};
+    StackSignature a{Type::none, {Type::f32, Type::i32}, StackSignature::Fixed};
+    StackSignature b{Type::i32, Type::none, StackSignature::Polymorphic};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::none, true}));
+    assert(a + b == (StackSignature{
+                      Type::none, Type::none, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::f32, false};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, true};
+    StackSignature a{Type::none, Type::f32, StackSignature::Fixed};
+    StackSignature b{
+      {Type::f32, Type::i32}, Type::none, StackSignature::Polymorphic};
     assert(!a.composes(b));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, false};
-    StackSignature b{Type::f32, Type::none, true};
+    StackSignature a{Type::none, {Type::f32, Type::i32}, StackSignature::Fixed};
+    StackSignature b{Type::f32, Type::none, StackSignature::Polymorphic};
     assert(!a.composes(b));
   }
   // Both unreachable
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, true};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, true};
+    StackSignature a{
+      Type::none, {Type::f32, Type::i32}, StackSignature::Polymorphic};
+    StackSignature b{
+      {Type::f32, Type::i32}, Type::none, StackSignature::Polymorphic};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::none, true}));
+    assert(a + b == (StackSignature{
+                      Type::none, Type::none, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::i32, true};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, true};
+    StackSignature a{Type::none, Type::i32, StackSignature::Polymorphic};
+    StackSignature b{
+      {Type::f32, Type::i32}, Type::none, StackSignature::Polymorphic};
     assert(a.composes(b));
-    assert(a + b == StackSignature(Type::none, Type::none, true));
+    assert(a + b ==
+           StackSignature(Type::none, Type::none, StackSignature::Polymorphic));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, true};
-    StackSignature b{Type::i32, Type::none, true};
+    StackSignature a{
+      Type::none, {Type::f32, Type::i32}, StackSignature::Polymorphic};
+    StackSignature b{Type::i32, Type::none, StackSignature::Polymorphic};
     assert(a.composes(b));
-    assert(a + b == (StackSignature{Type::none, Type::none, true}));
+    assert(a + b == (StackSignature{
+                      Type::none, Type::none, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::f32, true};
-    StackSignature b{{Type::f32, Type::i32}, Type::none, true};
+    StackSignature a{Type::none, Type::f32, StackSignature::Polymorphic};
+    StackSignature b{
+      {Type::f32, Type::i32}, Type::none, StackSignature::Polymorphic};
     assert(!a.composes(b));
   }
   {
-    StackSignature a{Type::none, {Type::f32, Type::i32}, true};
-    StackSignature b{Type::f32, Type::none, true};
+    StackSignature a{
+      Type::none, {Type::f32, Type::i32}, StackSignature::Polymorphic};
+    StackSignature b{Type::f32, Type::none, StackSignature::Polymorphic};
     assert(!a.composes(b));
   }
 }
 
-void test_signature_satisfaction() {
-  std::cout << ";; Test stack signature satisfaction\n";
-  // No unreachable
+void test_signature_subtype() {
+  std::cout << ";; Test stack signature subtyping\n";
+  // Differences in unreachability only
   {
-    StackSignature a{Type::i32, Type::f32, false};
-    Signature b(Type::i32, Type::f32);
-    assert(a.satisfies(b));
+    StackSignature a(Type::none, Type::none, StackSignature::Polymorphic);
+    StackSignature b(Type::none, Type::none, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
+    assert(!StackSignature::isSubType(b, a));
+  }
+  // Covariance of results
+  {
+    StackSignature a(Type::none, Type::funcref, StackSignature::Fixed);
+    StackSignature b(Type::none, Type::anyref, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
+    assert(!StackSignature::isSubType(b, a));
+  }
+  // Contravariance of params
+  {
+    StackSignature a(Type::anyref, Type::none, StackSignature::Fixed);
+    StackSignature b(Type::funcref, Type::none, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
+    assert(!StackSignature::isSubType(b, a));
+  }
+  // First not unreachable
+  {
+    StackSignature a(Type::i32, Type::f32, StackSignature::Fixed);
+    StackSignature b(Type::i32, Type::f32, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, false};
-    Signature b({Type::i64, Type::i32}, {Type::i64, Type::f32});
-    assert(a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Fixed);
+    StackSignature b(
+      {Type::i64, Type::i32}, {Type::i64, Type::f32}, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, false};
-    Signature b({Type::i64, Type::i32}, {Type::i64, Type::i64, Type::f32});
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Fixed);
+    StackSignature b({Type::i64, Type::i32},
+                     {Type::i64, Type::i64, Type::f32},
+                     StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, false};
-    Signature b({Type::i64, Type::i32}, {Type::f64, Type::f32});
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Fixed);
+    StackSignature b(
+      {Type::i64, Type::i32}, {Type::f64, Type::f32}, StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, false};
-    Signature b(Type::none, Type::f32);
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Fixed);
+    StackSignature b(Type::none, Type::f32, StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, false};
-    Signature b(Type::i32, Type::none);
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Fixed);
+    StackSignature b(Type::i32, Type::none, StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, false};
-    Signature b(Type::f32, Type::i32);
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Fixed);
+    StackSignature b(Type::f32, Type::i32, StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
   }
-  // With unreachable
+  // First unreachable
   {
-    StackSignature a{Type::i32, Type::f32, true};
-    Signature b(Type::i32, Type::f32);
-    assert(a.satisfies(b));
-  }
-  {
-    StackSignature a{Type::i32, Type::f32, true};
-    Signature b({Type::i64, Type::i32}, {Type::i64, Type::f32});
-    assert(a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Polymorphic);
+    StackSignature b(Type::i32, Type::f32, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, true};
-    Signature b({Type::i64, Type::i32}, {Type::i64, Type::i64, Type::f32});
-    assert(a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Polymorphic);
+    StackSignature b(
+      {Type::i64, Type::i32}, {Type::i64, Type::f32}, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, true};
-    Signature b({Type::i64, Type::i32}, {Type::f64, Type::f32});
-    assert(a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Polymorphic);
+    StackSignature b({Type::i64, Type::i32},
+                     {Type::i64, Type::i64, Type::f32},
+                     StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, true};
-    Signature b(Type::none, Type::f32);
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Polymorphic);
+    StackSignature b(
+      {Type::i64, Type::i32}, {Type::f64, Type::f32}, StackSignature::Fixed);
+    assert(StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, true};
-    Signature b(Type::i32, Type::none);
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Polymorphic);
+    StackSignature b(Type::none, Type::f32, StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
   }
   {
-    StackSignature a{Type::i32, Type::f32, true};
-    Signature b(Type::f32, Type::i32);
-    assert(!a.satisfies(b));
+    StackSignature a(Type::i32, Type::f32, StackSignature::Polymorphic);
+    StackSignature b(Type::i32, Type::none, StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
+  }
+  {
+    StackSignature a(Type::i32, Type::f32, StackSignature::Polymorphic);
+    StackSignature b(Type::f32, Type::i32, StackSignature::Fixed);
+    assert(!StackSignature::isSubType(a, b));
+  }
+}
+
+void test_signature_lub() {
+  std::cout << ";; Test stack signature lub\n";
+  {
+    StackSignature a{Type::none, Type::none, StackSignature::Fixed};
+    StackSignature b{Type::none, Type::none, StackSignature::Fixed};
+    assert(StackSignature::haveLeastUpperBound(a, b));
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::none, Type::none, StackSignature::Fixed}));
+  }
+  {
+    StackSignature a{Type::none, Type::none, StackSignature::Polymorphic};
+    StackSignature b{Type::none, Type::none, StackSignature::Fixed};
+    assert(StackSignature::haveLeastUpperBound(a, b));
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::none, Type::none, StackSignature::Fixed}));
+  }
+  {
+    StackSignature a{Type::none, Type::none, StackSignature::Fixed};
+    StackSignature b{Type::none, Type::none, StackSignature::Polymorphic};
+    assert(StackSignature::haveLeastUpperBound(a, b));
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::none, Type::none, StackSignature::Fixed}));
+  }
+  {
+    StackSignature a{Type::i32, Type::none, StackSignature::Polymorphic};
+    StackSignature b{Type::none, Type::i32, StackSignature::Polymorphic};
+    assert(StackSignature::haveLeastUpperBound(a, b));
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::i32, Type::i32, StackSignature::Polymorphic}));
+  }
+  {
+    StackSignature a{Type::none, Type::i32, StackSignature::Polymorphic};
+    StackSignature b{Type::i32, Type::none, StackSignature::Polymorphic};
+    assert(StackSignature::haveLeastUpperBound(a, b));
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::i32, Type::i32, StackSignature::Polymorphic}));
+  }
+  {
+    StackSignature a{Type::none, Type::externref, StackSignature::Polymorphic};
+    StackSignature b{Type::none, Type::funcref, StackSignature::Polymorphic};
+    assert(StackSignature::haveLeastUpperBound(a, b));
+    assert(
+      StackSignature::getLeastUpperBound(a, b) ==
+      (StackSignature{Type::none, Type::anyref, StackSignature::Polymorphic}));
+  }
+  {
+    StackSignature a{Type::anyref, Type::none, StackSignature::Polymorphic};
+    StackSignature b{Type::funcref, Type::none, StackSignature::Polymorphic};
+    // assert(StackSignature::haveLeastUpperBound(a, b));
+    // assert(StackSignature::getLeastUpperBound(a, b) ==
+    //        (StackSignature{Type::funcref, Type::none,
+    //        StackSignature::Polymorphic}));
+  }
+  {
+    StackSignature a{
+      {Type::i32, Type::funcref}, Type::funcref, StackSignature::Polymorphic};
+    StackSignature b{
+      Type::funcref, {Type::f32, Type::externref}, StackSignature::Polymorphic};
+    assert(StackSignature::haveLeastUpperBound(a, b));
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{{Type::i32, Type::funcref},
+                           {Type::f32, Type::anyref},
+                           StackSignature::Polymorphic}));
+  }
+  // No LUB
+  {
+    StackSignature a(Type::none, Type::i32, StackSignature::Fixed);
+    StackSignature b(Type::none, Type::f32, StackSignature::Fixed);
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a(Type::none, Type::i32, StackSignature::Polymorphic);
+    StackSignature b(Type::none, Type::f32, StackSignature::Polymorphic);
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a(Type::i32, Type::none, StackSignature::Fixed);
+    StackSignature b(Type::f32, Type::none, StackSignature::Fixed);
+    // assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a(Type::i32, Type::none, StackSignature::Polymorphic);
+    StackSignature b(Type::f32, Type::none, StackSignature::Polymorphic);
+    // assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a(Type::none, Type::none, StackSignature::Fixed);
+    StackSignature b(Type::none, Type::i32, StackSignature::Polymorphic);
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a(Type::none, Type::none, StackSignature::Fixed);
+    StackSignature b(Type::i32, Type::none, StackSignature::Polymorphic);
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a{Type::none, Type::i32, StackSignature::Fixed};
+    StackSignature b{Type::i32, Type::none, StackSignature::Fixed};
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a{Type::none, Type::i32, StackSignature::Polymorphic};
+    StackSignature b{Type::i32, Type::none, StackSignature::Fixed};
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a{Type::none, Type::i32, StackSignature::Fixed};
+    StackSignature b{Type::i32, Type::none, StackSignature::Polymorphic};
+    assert(!StackSignature::haveLeastUpperBound(a, b));
   }
 }
 
@@ -429,7 +595,7 @@ void test_stack_flow() {
     assert(flow.getSignature(ret) ==
            (StackSignature{{Type::i32, Type::i64, Type::f32},
                            {Type::i64, Type::f64, Type::i32},
-                           true}));
+                           StackSignature::Polymorphic}));
     assert(flow.getSignature(quux) == StackSignature(quux));
   }
 }
@@ -438,6 +604,7 @@ int main() {
   test_remove_nops();
   test_stack_signatures();
   test_signature_composition();
-  test_signature_satisfaction();
+  test_signature_subtype();
+  test_signature_lub();
   test_stack_flow();
 }

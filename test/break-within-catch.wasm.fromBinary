@@ -1,14 +1,16 @@
 (module
+ (type $i32_=>_none (func (param i32)))
  (type $none_=>_none (func))
+ (tag $tag$0 (param i32))
  (func $0
   (block $label$2
-   (try
+   (try $label$3
     (do
      (nop)
     )
-    (catch
+    (catch $tag$0
      (drop
-      (pop exnref)
+      (pop i32)
      )
      (br $label$2)
     )

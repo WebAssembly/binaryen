@@ -29,6 +29,7 @@
 
 #include <memory>
 
+#include <ir/element-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -70,11 +71,8 @@ struct ReorderFunctions : public Pass {
     for (auto& curr : module->exports) {
       counts[curr->value]++;
     }
-    for (auto& segment : module->table.segments) {
-      for (auto& curr : segment.data) {
-        counts[curr]++;
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(
+      module, [&](Name& name) { counts[name]++; });
     // sort
     std::sort(module->functions.begin(),
               module->functions.end(),

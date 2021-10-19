@@ -19,9 +19,13 @@
 // values, useful for fuzzing.
 //
 
+#include "wasm-type.h"
+#include "wasm.h"
+#include <string>
+
 namespace wasm {
 
-static std::string generateJSWrapper(Module& wasm) {
+inline std::string generateJSWrapper(Module& wasm) {
   std::string ret;
   ret += "if (typeof console === 'undefined') {\n"
          "  console = { log: print };\n"
@@ -56,7 +60,8 @@ static std::string generateJSWrapper(Module& wasm) {
          "      ret += Number(x).toString();\n"
          "      break;\n"
          "    }\n"
-         "    default: throw 'what?';\n"
+         "    // For anything else, just print the type.\n"
+         "    default: ret += type; break;\n"
          "  }\n"
          "  return ret;\n"
          "}\n"
@@ -91,7 +96,7 @@ static std::string generateJSWrapper(Module& wasm) {
     ret += "try {\n";
     ret += std::string("  console.log('[fuzz-exec] calling ") + exp->name.str +
            "');\n";
-    if (func->sig.results != Type::none) {
+    if (func->getResults() != Type::none) {
       ret += std::string("  console.log('[fuzz-exec] note result: ") +
              exp->name.str + " => ' + literal(";
     } else {
@@ -99,21 +104,25 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
-    for (const auto& param : func->sig.params) {
+    for (auto param : func->getParams()) {
       // zeros in arguments TODO more?
       if (first) {
         first = false;
       } else {
         ret += ", ";
       }
-      ret += "0";
-      if (param == Type::i64) {
-        ret += ", 0";
+      if (param.isRef()) {
+        ret += "null";
+      } else {
+        ret += "0";
+        if (param == Type::i64) {
+          ret += ", 0";
+        }
       }
     }
     ret += ")";
-    if (func->sig.results != Type::none) {
-      ret += ", '" + func->sig.results.toString() + "'))";
+    if (func->getResults() != Type::none) {
+      ret += ", '" + func->getResults().toString() + "'))";
       // TODO: getTempRet
     }
     ret += ";\n";

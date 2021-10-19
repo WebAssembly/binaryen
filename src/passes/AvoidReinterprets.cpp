@@ -40,7 +40,7 @@ static bool canReplaceWithReinterpret(Load* load) {
 static Load* getSingleLoad(LocalGraph* localGraph,
                            LocalGet* get,
                            const PassOptions& passOptions,
-                           FeatureSet features) {
+                           Module& module) {
   std::set<LocalGet*> seen;
   seen.insert(get);
   while (1) {
@@ -52,7 +52,7 @@ static Load* getSingleLoad(LocalGraph* localGraph,
     if (!set) {
       return nullptr;
     }
-    auto* value = Properties::getFallthrough(set->value, passOptions, features);
+    auto* value = Properties::getFallthrough(set->value, passOptions, module);
     if (auto* parentGet = value->dynCast<LocalGet>()) {
       if (seen.count(parentGet)) {
         // We are in a cycle of gets, in unreachable code.
@@ -102,12 +102,11 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
   void visitUnary(Unary* curr) {
     if (isReinterpret(curr)) {
-      FeatureSet features = getModule()->features;
-      if (auto* get =
-            Properties::getFallthrough(curr->value, getPassOptions(), features)
-              ->dynCast<LocalGet>()) {
+      if (auto* get = Properties::getFallthrough(
+                        curr->value, getPassOptions(), *getModule())
+                        ->dynCast<LocalGet>()) {
         if (auto* load =
-              getSingleLoad(localGraph, get, getPassOptions(), features)) {
+              getSingleLoad(localGraph, get, getPassOptions(), *getModule())) {
           auto& info = infos[load];
           info.reinterpreted = true;
         }
@@ -154,8 +153,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
               replaceCurrent(makeReinterpretedLoad(load, load->ptr));
             }
           } else if (auto* get = value->dynCast<LocalGet>()) {
-            if (auto* load = getSingleLoad(
-                  localGraph, get, passOptions, module->features)) {
+            if (auto* load =
+                  getSingleLoad(localGraph, get, passOptions, *module)) {
               auto iter = infos.find(load);
               if (iter != infos.end()) {
                 auto& info = iter->second;

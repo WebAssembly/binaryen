@@ -9,10 +9,10 @@
   (unreachable)
  )
 
- (export "wasm_event_a" (event $a_wasm_event))
- (export "wasm_event_b" (event $b_wasm_event))
+ (export "wasm_tag_a" (tag $a_wasm_tag))
+ (export "wasm_tag_b" (tag $b_wasm_tag))
 
- (event $a_wasm_event (attr 0) (param i32))
- (event $b_wasm_event (attr 0) (param i32))
+ (tag $a_wasm_tag (param i32))
+ (tag $b_wasm_tag (param i32))
 )
 

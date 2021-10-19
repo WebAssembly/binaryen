@@ -34,7 +34,19 @@ namespace wasm {
 class Options {
 public:
   using Action = std::function<void(Options*, const std::string&)>;
-  enum class Arguments { Zero, One, N, Optional };
+
+  enum class Arguments {
+    // No arguments.
+    Zero,
+    // One argument, in the form  --flag A  or  --flag=A
+    One,
+    // Multiple arguments, in the form --flag A B C
+    N,
+    // An optional single argument, in the form --flag=A (we disallow --flag A
+    // as that would be ambiguous regarding whether A is another flag, or an
+    // argument to us).
+    Optional
+  };
 
   bool debug;
   std::map<std::string, std::string> extra;

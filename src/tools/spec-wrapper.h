@@ -19,9 +19,12 @@
 // values, useful for fuzzing.
 //
 
+#include "wasm-type.h"
+#include "wasm.h"
+
 namespace wasm {
 
-static std::string generateSpecWrapper(Module& wasm) {
+inline std::string generateSpecWrapper(Module& wasm) {
   std::string ret;
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
@@ -30,7 +33,7 @@ static std::string generateSpecWrapper(Module& wasm) {
     }
     ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") +
            exp->name.str + "\" ";
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       // zeros in arguments TODO more?
       TODO_SINGLE_COMPOUND(param);
       switch (param.getBasic()) {
@@ -55,9 +58,6 @@ static std::string generateSpecWrapper(Module& wasm) {
         case Type::externref:
           ret += "(ref.null extern)";
           break;
-        case Type::exnref:
-          ret += "(ref.null exn)";
-          break;
         case Type::anyref:
           ret += "(ref.null any)";
           break;
@@ -66,6 +66,8 @@ static std::string generateSpecWrapper(Module& wasm) {
           break;
         case Type::i31ref:
           WASM_UNREACHABLE("TODO: i31ref");
+        case Type::dataref:
+          WASM_UNREACHABLE("TODO: dataref");
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

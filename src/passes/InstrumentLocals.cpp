@@ -43,7 +43,6 @@
 //    )
 //   )
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include <pass.h>
@@ -56,25 +55,25 @@ Name get_i32("get_i32");
 Name get_i64("get_i64");
 Name get_f32("get_f32");
 Name get_f64("get_f64");
+Name get_v128("get_v128");
 Name get_funcref("get_funcref");
 Name get_externref("get_externref");
-Name get_exnref("get_exnref");
 Name get_anyref("get_anyref");
 Name get_eqref("get_eqref");
 Name get_i31ref("get_i31ref");
-Name get_v128("get_v128");
+Name get_dataref("get_dataref");
 
 Name set_i32("set_i32");
 Name set_i64("set_i64");
 Name set_f32("set_f32");
 Name set_f64("set_f64");
+Name set_v128("set_v128");
 Name set_funcref("set_funcref");
 Name set_externref("set_externref");
-Name set_exnref("set_exnref");
 Name set_anyref("set_anyref");
 Name set_eqref("set_eqref");
 Name set_i31ref("set_i31ref");
-Name set_v128("set_v128");
+Name set_dataref("set_dataref");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
@@ -102,9 +101,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::externref:
         import = get_externref;
         break;
-      case Type::exnref:
-        import = get_exnref;
-        break;
       case Type::anyref:
         import = get_anyref;
         break;
@@ -113,6 +109,9 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case Type::i31ref:
         import = get_i31ref;
+        break;
+      case Type::dataref:
+        import = get_dataref;
         break;
       case Type::none:
       case Type::unreachable:
@@ -135,8 +134,13 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
 
     Builder builder(*getModule());
     Name import;
+    auto type = curr->value->type;
+    if (type.isFunction() && type != Type::funcref) {
+      // FIXME: support typed function references
+      return;
+    }
     TODO_SINGLE_COMPOUND(curr->value->type);
-    switch (curr->value->type.getBasic()) {
+    switch (type.getBasic()) {
       case Type::i32:
         import = set_i32;
         break;
@@ -157,9 +161,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::externref:
         import = set_externref;
         break;
-      case Type::exnref:
-        import = set_exnref;
-        break;
       case Type::anyref:
         import = set_anyref;
         break;
@@ -169,9 +170,12 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::i31ref:
         import = set_i31ref;
         break;
+      case Type::dataref:
+        import = set_dataref;
+        break;
       case Type::unreachable:
         return; // nothing to do here
-      case Type::none:
+      default:
         WASM_UNREACHABLE("unexpected type");
     }
     curr->value = builder.makeCall(import,
@@ -208,12 +212,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
                 set_externref,
                 {Type::i32, Type::i32, Type::externref},
                 Type::externref);
-      if (curr->features.hasExceptionHandling()) {
-        addImport(
-          curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
-        addImport(
-          curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
-      }
       if (curr->features.hasGC()) {
         addImport(
           curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);
@@ -227,6 +225,14 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
           curr, get_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
         addImport(
           curr, set_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
+        addImport(curr,
+                  get_dataref,
+                  {Type::i32, Type::i32, Type::dataref},
+                  Type::dataref);
+        addImport(curr,
+                  set_dataref,
+                  {Type::i32, Type::i32, Type::dataref},
+                  Type::dataref);
       }
     }
     if (curr->features.hasSIMD()) {
@@ -239,12 +245,10 @@ private:
   Index id = 0;
 
   void addImport(Module* wasm, Name name, Type params, Type results) {
-    auto import = new Function;
-    import->name = name;
+    auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
-    import->sig = Signature(params, results);
-    wasm->addFunction(import);
+    wasm->addFunction(std::move(import));
   }
 };
 

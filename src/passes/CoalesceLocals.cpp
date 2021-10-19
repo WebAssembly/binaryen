@@ -34,7 +34,6 @@
 #include "pass.h"
 #include "support/learning.h"
 #include "support/permutations.h"
-#include "wasm-builder.h"
 #include "wasm.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
@@ -45,6 +44,10 @@ namespace wasm {
 struct CoalesceLocals
   : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor<CoalesceLocals>>> {
   bool isFunctionParallel() override { return true; }
+
+  // This pass merges locals, mapping the originals to new ones.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
 
   Pass* create() override { return new CoalesceLocals; }
 
@@ -296,7 +299,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
       // go in the order, we only need to update for those we will see later
       auto j = order[k];
       newInterferences[found * numLocals + j] =
-        newInterferences[found * numLocals + j] | interferes(actual, j);
+        newInterferences[found * numLocals + j] || interferes(actual, j);
       newCopies[found * numLocals + j] += getCopies(actual, j);
     }
   }

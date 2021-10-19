@@ -1,4 +1,4 @@
-[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
+[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
 
 # Binaryen
 
@@ -26,8 +26,8 @@ effective**:
 
 Compilers using Binaryen include:
 
- * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles a subset of TypeScript to WebAssembly
- * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2js.h) which compiles WebAssembly to JS
+ * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles a variant of TypeScript to WebAssembly
+ * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/main/src/wasm2js.h) which compiles WebAssembly to JS
  * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
  * [`Grain`](https://github.com/grain-lang/grain) which compiles Grain to WebAssembly
 
@@ -70,7 +70,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      multivalue instructions and blocks, it is represented with tuple types that
      do not exist in the WebAssembly language. In addition to multivalue
      instructions, locals and globals can also have tuple types in Binaryen IR
-     but not in WebAssembly.
+     but not in WebAssembly. Experiments show that better support for
+     multivalue could enable useful but small code size savings of 1-3%, so it
+     has not been worth changing the core IR structure to support it better.
+   * Block input values (currently only supported in `catch` blocks in the
+     exception handling feature) are represented as `pop` subexpressions.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
@@ -107,19 +111,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      emitted when generating wasm. Instead its list of operands will be directly
      used in the containing node. Such a block is sometimes called an "implicit
      block".
- * Multivalue
-   * Binaryen will not represent multivalue instructions and values directly.
-     Binaryen's main focus is on optimization of wasm, and therefore the question
-     of whether we should have multivalue in the main IR is whether it justifes
-     the extra complexity there. Experiments show that the shrinking of code
-     size thanks to multivalue is useful but small, just 1-3% or so. Given that,
-     we prefer to keep the main IR simple, and focus on multivalue optimizations
-     in Stack IR, which is more suitable for such things.
-   * Binaryen does still need to implement the "ABI" level of multivalue, that
-     is, we need multivalue calls because those may cross module boundaries,
-     and so they are observable externally. To support that, Binaryen may use
-     `push` and `pop` as mentioned earlier; another option is to add LLVM-like
-     `extractvalue/composevalue` instructions.
+ * Reference Types
+  * The wasm text and binary formats require that a function whose address is
+    taken by `ref.func` must be either in the table, or declared via an
+    `(elem declare func $..)`. Binaryen will emit that data when necessary, but
+    it does not represent it in IR. That is, IR can be worked on without needing
+    to think about declaring function references.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
@@ -144,6 +141,46 @@ Notes when working with Binaryen IR:
    incorrectly.
  * For similar reasons, nodes should not appear in more than one functions.
 
+### Intrinsics
+
+Binaryen intrinsic functions look like calls to imports, e.g.,
+
+```wat
+(import "binaryen-intrinsics" "foo" (func $foo))
+```
+
+Implementing them that way allows them to be read and written by other tools,
+and it avoids confusing errors on a binary format error that could happen in
+those tools if we had a custom binary format extension.
+
+An intrinsic method may be optimized away by the optimizer. If it is not, it
+must be **lowered** before shipping the wasm, as otherwise it will look like a
+call to an import that does not exist (and VMs will show an error on not having
+a proper value for that import). That final lowering is *not* done
+automatically. A user of intrinsics must run the pass for that explicitly,
+because the tools do not know when the user intends to finish optimizing, as the
+user may have a pipeline of multiple optimization steps, or may be doing local
+experimentation, or fuzzing/reducing, etc. Only the user knows when the final
+optimization happens before the wasm is "final" and ready to be shipped. Note
+that, in general, some additional optimizations may be possible after the final
+lowering, and so a useful pattern is to  optimize once normally with intrinsics,
+then lower them away, then optimize after that, e.g.:
+
+```
+wasm-opt input.wasm -o output.wasm  -O --intrinsic-lowering -O
+```
+
+Each intrinsic defines its semantics, which includes what the optimizer is
+allowed to do with it and what the final lowering will turn it to. See
+[intrinsics.h](https://github.com/WebAssembly/binaryen/blob/main/src/ir/intrinsics.h)
+for the detailed definitions. A quick summary appears here:
+
+* `call.without.effects`: Similar to a `call_ref` in that it receives
+  parameters, and a reference to a function to call, and calls that function
+  with those parameters, except that the optimizer can assume the call has no
+  side effects, and may be able to optimize it out (if it does not have a
+  result that is used, generally).
+
 ## Tools
 
 This repository contains code that builds the following tools in `bin/`:
@@ -167,14 +204,14 @@ This repository contains code that builds the following tools in `bin/`:
    performs emscripten-specific passes over it.
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
    time. Used by Emscripten.
- * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
+ * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
 
 ## Binaryen Optimizations
 
 Binaryen contains
-[a lot of optimization passes](https://github.com/WebAssembly/binaryen/tree/master/src/passes)
+[a lot of optimization passes](https://github.com/WebAssembly/binaryen/tree/main/src/passes)
 to make WebAssembly smaller and faster. You can run the Binaryen optimizer by
 using ``wasm-opt``, but also they can be run while using other tools, like
 ``wasm2js`` and ``wasm-metadce``.
@@ -256,14 +293,14 @@ it works across multiple functions, but in a sense Binaryen is always “LTO” 
 it usually is run on the final linked wasm.
 
 Advanced optimization techniques in the Binaryen optimizer include
-[SSAification](https://github.com/WebAssembly/binaryen/blob/master/src/passes/SSAify.cpp),
-[Flat IR](https://github.com/WebAssembly/binaryen/blob/master/src/ir/flat.h), and
-[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/master/src/ir/stack-utils.h).
+[SSAification](https://github.com/WebAssembly/binaryen/blob/main/src/passes/SSAify.cpp),
+[Flat IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/flat.h), and
+[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/stack-utils.h).
 
 Binaryen also contains various passes that do other things than optimizations,
 like
-[legalization for JavaScript](https://github.com/WebAssembly/binaryen/blob/master/src/passes/LegalizeJSInterface.cpp),
-[Asyncify](https://github.com/WebAssembly/binaryen/blob/master/src/passes/Asyncify.cpp),
+[legalization for JavaScript](https://github.com/WebAssembly/binaryen/blob/main/src/passes/LegalizeJSInterface.cpp),
+[Asyncify](https://github.com/WebAssembly/binaryen/blob/main/src/passes/Asyncify.cpp),
 etc.
 
 ## Building
@@ -335,7 +372,7 @@ commands.
 
 It's easy to add your own transformation passes to the shell, just add `.cpp`
 files into `src/passes`, and rebuild the shell. For example code, take a look at
-the [`lower-if-else` pass](https://github.com/WebAssembly/binaryen/blob/master/src/passes/LowerIfElse.cpp).
+the [`lower-if-else` pass](https://github.com/WebAssembly/binaryen/blob/main/src/passes/LowerIfElse.cpp).
 
 Some more notes:
 
@@ -444,6 +481,10 @@ The `check.py` script supports some options:
 (or `python third_party/setup.py`) installs required dependencies like the SpiderMonkey JS shell, the V8 JS shell
 and WABT in `third_party/`. Other scripts automatically pick these up when installed.
 
+Run `pip3 install -r requirements-dev.txt` to get the requirements for the `lit`
+tests. Note that you need to have the location `pip` installs to in your `$PATH`
+(on linux, `~/.local/bin`).
+
 ### Fuzzing
 
 ```
@@ -480,8 +521,9 @@ Emscripten's WebAssembly processing library (`wasm-emscripten`).
 * Does it compile under Windows and/or Visual Studio?
 
 Yes, it does. Here's a step-by-step [tutorial][win32]  on how to compile it
-under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. Help
-would be appreciated on Windows and OS X as most of the core devs are on Linux.
+under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. 
+However, Visual Studio 2017 may now be required. Help would be appreciated on
+Windows and OS X as most of the core devs are on Linux.
 
 [compiling to WebAssembly]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen
 [win32]: https://github.com/brakmic/bazaar/blob/master/webassembly/COMPILING_WIN32.md

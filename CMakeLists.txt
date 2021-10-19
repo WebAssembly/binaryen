@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.1.3)
-project(binaryen LANGUAGES C CXX VERSION 98)
+# Version set according the the cmake versions available in Ubuntu/Bionic:
+# https://packages.ubuntu.com/bionic/cmake
+cmake_minimum_required(VERSION 3.10.2)
+project(binaryen LANGUAGES C CXX VERSION 102)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -36,41 +38,41 @@ configure_file(config.h.in config.h)
 
 # Support functionality.
 
-function(ADD_COMPILE_FLAG value)
+function(add_compile_flag value)
   message(STATUS "Building with ${value}")
-  FOREACH(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+  foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  ENDFOREACH(variable)
+  endforeach(variable)
 endfunction()
 
-function(ADD_CXX_FLAG value)
+function(add_cxx_flag value)
   message(STATUS "Building with ${value}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${value}" PARENT_SCOPE)
 endfunction()
 
-function(ADD_DEBUG_COMPILE_FLAG value)
+function(add_debug_compile_flag value)
   if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     message(STATUS "Building with ${value}")
   endif()
-  FOREACH(variable CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+  foreach(variable CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  ENDFOREACH(variable)
+  endforeach(variable)
 endfunction()
 
-function(ADD_NONDEBUG_COMPILE_FLAG value)
+function(add_nondebug_compile_flag value)
   if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     message(STATUS "Building with ${value}")
   endif()
-  FOREACH(variable CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL)
+  foreach(variable CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  ENDFOREACH(variable)
+  endforeach(variable)
 endfunction()
 
-function(ADD_LINK_FLAG value)
+function(add_link_flag value)
   message(STATUS "Linking with ${value}")
-  FOREACH(variable CMAKE_EXE_LINKER_FLAGS)
+  foreach(variable CMAKE_EXE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  ENDFOREACH(variable)
+  endforeach(variable)
 endfunction()
 
 function(binaryen_setup_rpath name)
@@ -78,11 +80,11 @@ function(binaryen_setup_rpath name)
     return()
   endif()
 
-  if (APPLE)
+  if(APPLE)
     set(_install_name_dir INSTALL_NAME_DIR "@rpath")
     set(_install_rpath "@loader_path/../lib")
   elseif(UNIX)
-    set(_install_rpath "\$ORIGIN/../lib")
+    set(_install_rpath "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
     if(${CMAKE_SYSTEM_NAME} MATCHES "(FreeBSD|DragonFly)")
       set_property(TARGET ${name} APPEND_STRING PROPERTY
                    LINK_FLAGS " -Wl,-z,origin ")
@@ -100,13 +102,13 @@ endfunction()
 # Options
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
-if (MSVC)
+if(MSVC)
   # We don't have dllexport declarations set up for windows yet.
   set(BUILD_STATIC_LIB ON)
 endif()
 
 # For now, don't include full DWARF support in JS builds, for size.
-if (NOT EMSCRIPTEN)
+if(NOT EMSCRIPTEN)
   option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
 
   if(BUILD_LLVM_DWARF)
@@ -129,15 +131,33 @@ endif()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
-FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
+foreach(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/bin")
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
-ENDFOREACH()
+endforeach()
+
+option(BYN_ENABLE_LTO "Build with LTO" Off)
+if(BYN_ENABLE_LTO)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "ThinLTO is only supported by clang")
+  endif()
+  if(NOT APPLE)
+    add_link_flag("-fuse-ld=lld")
+  endif()
+  set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=2)
+  set(CMAKE_JOB_POOL_LINK link_job_pool)
+  add_compile_flag("-flto=thin")
+endif()
 
 if(MSVC)
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
-    add_compile_flag("/arch:sse2")
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # multi-core build.
+    add_compile_flag("/MP")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0")
+      # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
+      add_compile_flag("/arch:sse2")
+    endif()
   endif()
   add_compile_flag("/std:c++${CXX_STANDARD}")
   add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
@@ -153,14 +173,13 @@ if(MSVC)
   add_nondebug_compile_flag("/O2")
   add_compile_flag("/D_CRT_SECURE_NO_WARNINGS")
   add_compile_flag("/D_SCL_SECURE_NO_WARNINGS")
+  # workaround for https://github.com/WebAssembly/binaryen/issues/3661
+  add_compile_flag("/D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING")
   # Visual Studio 2018 15.8 implemented conformant support for std::aligned_storage, but the conformant support is only enabled when the following flag is passed, to avoid
   # breaking backwards compatibility with code that relied on the non-conformant behavior (the old nonconformant behavior is not used with Binaryen)
   add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
-
-  # multi-core build.
-  add_compile_flag("/MP")
 
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
@@ -222,6 +241,9 @@ else()
   add_compile_flag("-Wno-implicit-int-float-conversion")
   add_compile_flag("-Wno-unknown-warning-option")
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
+  add_compile_flag("-Wimplicit-fallthrough")
+  add_compile_flag("-Wnon-virtual-dtor")
+
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_compile_flag("-D__STDC_FORMAT_MACROS")
@@ -269,7 +291,7 @@ endif()
 
 # Static libraries
 # Current (partial) dependency structure is as follows:
-# passes -> wasm -> asmjs -> support
+# tools -> passes -> wasm -> asmjs -> support
 # TODO: It's odd that wasm should depend on asmjs, maybe we should fix that.
 add_subdirectory(src/ir)
 add_subdirectory(src/asmjs)
@@ -278,7 +300,11 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
+add_subdirectory(src/tools)
 add_subdirectory(third_party)
+
+# Configure lit tests
+add_subdirectory(test/lit)
 
 # Object files
 set(binaryen_objs
@@ -290,9 +316,9 @@ set(binaryen_objs
     $<TARGET_OBJECTS:cfg>
     $<TARGET_OBJECTS:support>)
 
-IF(BUILD_LLVM_DWARF)
+if(BUILD_LLVM_DWARF)
   SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
-ENDIF()
+endif()
 
 # Sources.
 
@@ -309,33 +335,15 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
-install(TARGETS binaryen
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-install(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-function(binaryen_add_executable name sources)
-  add_executable(${name} ${sources})
-  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
-  target_link_libraries(${name} binaryen)
-  set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
-  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
-  binaryen_setup_rpath(${name})
-  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
-endfunction()
-
-binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
-binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
-binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
-binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
-binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)
-binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
-binaryen_add_executable(wasm-dis src/tools/wasm-dis.cpp)
-binaryen_add_executable(wasm-ctor-eval src/tools/wasm-ctor-eval.cpp)
-binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
-
+if(NOT (BUILD_STATIC_LIB AND BYN_INSTALL_TOOLS_ONLY))
+  install(TARGETS binaryen
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+if(NOT BYN_INSTALL_TOOLS_ONLY)
+  install(FILES src/binaryen-c.h src/wasm-delegations.def DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
 
 # binaryen.js
 #
@@ -392,3 +400,5 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
+
+configure_file(scripts/binaryen-lit.in ${CMAKE_BINARY_DIR}/bin/binaryen-lit @ONLY)

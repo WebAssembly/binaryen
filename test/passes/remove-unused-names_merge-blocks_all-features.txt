@@ -1,9 +1,9 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $3 (func))
+ (type $i (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $ii (func (param i32 i32)))
+ (type $iii (func (param i32 i32 i32)))
  (type $none_=>_f64 (func (result f64)))
  (memory $0 (shared 256 256))
  (table $0 1 1 funcref)
@@ -417,24 +417,26 @@
    )
   )
   (drop
-   (select
-    (block (result i32)
-     (unreachable)
+   (block (result i32)
+    (unreachable)
+    (drop
+     (i32.const 30)
+    )
+    (drop
+     (i32.const 50)
+    )
+    (select
      (i32.const 20)
-    )
-    (block (result i32)
-     (drop
-      (i32.const 30)
-     )
      (i32.const 40)
-    )
-    (block (result i32)
-     (drop
-      (i32.const 50)
-     )
      (i32.const 60)
     )
    )
+  )
+  (drop
+   (i32.const 30)
+  )
+  (drop
+   (i32.const 50)
   )
   (drop
    (select
@@ -444,18 +446,8 @@
      )
      (unreachable)
     )
-    (block (result i32)
-     (drop
-      (i32.const 30)
-     )
-     (i32.const 40)
-    )
-    (block (result i32)
-     (drop
-      (i32.const 50)
-     )
-     (i32.const 60)
-    )
+    (i32.const 40)
+    (i32.const 60)
    )
   )
   (drop
@@ -694,12 +686,12 @@
   (drop
    (i32.const 50)
   )
-  (call_indirect (type $i32_i32_=>_none)
+  (call_indirect $0 (type $ii)
    (i32.const 20)
    (i32.const 40)
    (i32.const 60)
   )
-  (call_indirect (type $i32_i32_=>_none)
+  (call_indirect $0 (type $ii)
    (unreachable)
    (block (result i32)
     (drop
@@ -717,7 +709,7 @@
   (drop
    (i32.const 31)
   )
-  (call_indirect (type $i32_i32_=>_none)
+  (call_indirect $0 (type $ii)
    (i32.const 41)
    (unreachable)
    (block (result i32)
@@ -733,7 +725,7 @@
   (drop
    (i32.const 52)
   )
-  (call_indirect (type $i32_i32_=>_none)
+  (call_indirect $0 (type $ii)
    (i32.const 42)
    (i32.const 62)
    (unreachable)
@@ -1700,8 +1692,7 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (type $none_=>_i32 (func (result i32)))
- (event $e (attr 0) (param i32))
+ (tag $e (param i32))
  (func $foo
   (nop)
  )
@@ -1709,38 +1700,6 @@
   (nop)
   (throw $e
    (i32.const 3)
-  )
- )
- (func $rethrow
-  (local $0 exnref)
-  (call $foo)
-  (rethrow
-   (local.get $0)
-  )
- )
- (func $br_on_exn (result i32)
-  (local $0 exnref)
-  (block $label$0 (result i32)
-   (call $foo)
-   (drop
-    (br_on_exn $label$0 $e
-     (local.get $0)
-    )
-   )
-   (i32.const 3)
-  )
- )
- (func $cannot_extract_br_on_exn_exnref
-  (local $0 exnref)
-  (drop
-   (block $label$0 (result i32)
-    (drop
-     (br_on_exn $label$0 $e
-      (local.get $0)
-     )
-    )
-    (i32.const 5)
-   )
   )
  )
 )

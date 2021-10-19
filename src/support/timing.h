@@ -22,6 +22,8 @@
 #define wasm_support_timing_h
 
 #include <chrono>
+#include <iostream>
+#include <string>
 
 namespace wasm {
 

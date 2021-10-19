@@ -1,13 +1,13 @@
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_f32 (func (result f32)))
- (type $i32_f64_i32_i32_=>_none (func (param i32 f64 i32 i32)))
+ (type $0 (func))
+ (type $3 (func (result i32)))
+ (type $1 (func (param i32)))
+ (type $2 (func (result f32)))
+ (type $4 (func (param i32 f64 i32 i32)))
  (type $none_=>_f64 (func (result f64)))
  (import "env" "int" (func $int (result i32)))
- (memory $0 256 256)
  (global $Int i32 (i32.const 0))
+ (memory $0 256 256)
  (func $b
   (nop)
  )
@@ -261,12 +261,6 @@
  )
  (func $unary-binary-may-trap
   (drop
-   (i64.div_s
-    (i64.const -1)
-    (i64.const 729618461987467893)
-   )
-  )
-  (drop
    (i64.trunc_f32_u
     (f32.const 70847791997969805621592064)
    )
@@ -305,8 +299,8 @@
  )
 )
 (module
- (type $i64_=>_none (func (param i64)))
- (type $f32_i32_=>_i32 (func (param f32 i32) (result i32)))
+ (type $0 (func (param i64)))
+ (type $1 (func (param f32 i32) (result i32)))
  (func $0 (param $0 i64)
   (nop)
  )
@@ -328,8 +322,8 @@
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (memory $0 1 1)
  (global $global$1 (mut i32) (i32.const 0))
+ (memory $0 1 1)
  (export "compress" (func $3))
  (func $_deflate (param $0 i32) (result i32)
   (call $_deflate
@@ -442,30 +436,14 @@
 )
 (module
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (event $e (attr 0) (param i32))
- (func $try-test
+ (func $foo
   (nop)
  )
- (func $inner-try-test
-  (local $0 i32)
-  (try
-   (do
-    (throw $e
-     (i32.const 0)
-    )
-   )
-   (catch
-    (drop
-     (pop exnref)
-    )
-    (local.set $0
-     (i32.const 1)
-    )
-   )
-  )
- )
- (func $br-in-catch
-  (unreachable)
+)
+(module
+ (type $none_=>_none (func))
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $1
+  (nop)
  )
 )

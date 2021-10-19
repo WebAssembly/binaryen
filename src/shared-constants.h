@@ -21,7 +21,6 @@
 
 namespace wasm {
 
-extern Name WASM_CALL_CTORS;
 extern Name MEMORY_BASE;
 extern Name TABLE_BASE;
 extern Name STACK_POINTER;
@@ -39,9 +38,12 @@ extern Name PASSIVE;
 extern Name EXPORT;
 extern Name IMPORT;
 extern Name TABLE;
+extern Name GLOBAL;
 extern Name ELEM;
 extern Name LOCAL;
 extern Name TYPE;
+extern Name REF;
+extern Name NULL_;
 extern Name CALL;
 extern Name CALL_IMPORT;
 extern Name CALL_INDIRECT;
@@ -57,14 +59,13 @@ extern Name CASE;
 extern Name BR;
 extern Name FUNCREF;
 extern Name FAKE_RETURN;
+extern Name DELEGATE_CALLER_TARGET;
 extern Name MUT;
 extern Name SPECTEST;
 extern Name PRINT;
 extern Name EXIT;
 extern Name SHARED;
-extern Name EVENT;
-extern Name ATTR;
-extern Name ASSIGN_GOT_ENTRIES;
+extern Name TAG;
 
 } // namespace wasm
 

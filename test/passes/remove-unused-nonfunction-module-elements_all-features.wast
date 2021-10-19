@@ -128,7 +128,7 @@
     (local $0 i32)
     (local $1 i64)
     (drop
-     (i32.atomic.wait
+     (memory.atomic.wait32
       (local.get $0)
       (local.get $0)
       (local.get $1)
@@ -140,7 +140,7 @@
   (memory $0 (shared 23 256))
   (export "user" $user)
   (func $user (result i32)
-    (atomic.notify (i32.const 0) (i32.const 0))
+    (memory.atomic.notify (i32.const 0) (i32.const 0))
   )
 )
 (module ;; more use checks
@@ -261,11 +261,11 @@
   )
  )
 )
-(module ;; non-exported events can be removed
+(module ;; non-exported tags can be removed
  (type $0 (func (param i32)))
- (event $e0 (attr 0) (type $0))
- (event $e1 (attr 0) (param i64))
- (export "e1" (event $e1))
- (import "env" "e" (event $e2 (attr 0) (param i32)))
+ (tag $e0 (type $0))
+ (tag $e1 (param i64))
+ (export "e1" (tag $e1))
+ (import "env" "e" (tag $e2 (param i32)))
  (func $f (; 0 ;) (type $0))
 )

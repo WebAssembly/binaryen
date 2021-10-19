@@ -26,8 +26,6 @@
  (export "__wasm_i64_srem" (func $__wasm_i64_srem))
  (export "__wasm_i64_urem" (func $__wasm_i64_urem))
  (export "__wasm_i64_mul" (func $__wasm_i64_mul))
- (export "__wasm_trunc_f32" (func $__wasm_trunc_f32))
- (export "__wasm_trunc_f64" (func $__wasm_trunc_f64))
  (export "__wasm_ctz_i32" (func $__wasm_ctz_i32))
  (export "__wasm_ctz_i64" (func $__wasm_ctz_i64))
  (export "__wasm_rotl_i32" (func $__wasm_rotl_i32))
@@ -142,38 +140,6 @@
   (call $_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE
    (local.get $var$0)
    (local.get $var$1)
-  )
- )
- ;; lowering of the f32.trunc instruction, rounds to the nearest integer,
- ;; towards zero
- (func $__wasm_trunc_f32 (; 5 ;) (type $1) (param $var$0 f32) (result f32)
-  (select
-   (f32.ceil
-    (local.get $var$0)
-   )
-   (f32.floor
-    (local.get $var$0)
-   )
-   (f32.lt
-    (local.get $var$0)
-    (f32.const 0)
-   )
-  )
- )
- ;; lowering of the f64.trunc instruction, rounds to the nearest integer,
- ;; towards zero
- (func $__wasm_trunc_f64 (; 6 ;) (type $2) (param $var$0 f64) (result f64)
-  (select
-   (f64.ceil
-    (local.get $var$0)
-   )
-   (f64.floor
-    (local.get $var$0)
-   )
-   (f64.lt
-    (local.get $var$0)
-    (f64.const 0)
-   )
   )
  )
  ;; lowering of the i32.ctz instruction, counting the number of zeros in $var$0

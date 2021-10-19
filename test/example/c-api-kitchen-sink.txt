@@ -7,10 +7,10 @@
   // BinaryenTypeVec128: 6
   // BinaryenTypeFuncref: 7
   // BinaryenTypeExternref: 8
-  // BinaryenTypeExnref: 9
-  // BinaryenTypeAnyref: 10
-  // BinaryenTypeEqref: 11
-  // BinaryenTypeI31ref: 12
+  // BinaryenTypeAnyref: 9
+  // BinaryenTypeEqref: 10
+  // BinaryenTypeI31ref: 11
+  // BinaryenTypeDataref: 12
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -25,30 +25,46 @@ BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
 BinaryenFeatureGC: 1024
 BinaryenFeatureMemory64: 2048
-BinaryenFeatureAll: 4095
+BinaryenFeatureTypedFunctionReferences: 4096
+BinaryenFeatureRelaxedSIMD: 16384
+BinaryenFeatureAll: 32767
 (f32.neg
  (f32.const -33.61199951171875)
 )
+(table.set $0
+ (i32.const 0)
+ (ref.func "$kitchen()sinker")
+)
+(table.get $0
+ (i32.const 0)
+)
+(table.size $0)
+(table.grow $0
+ (ref.null func)
+ (i32.const 0)
+)
 (module
  (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
+ (type $none_=>_none (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
- (memory $0 (shared 1 256))
- (data (i32.const 10) "hello, world")
- (data passive "I am passive")
- (table $0 1 1 funcref)
- (elem (i32.const 0) "$kitchen()sinker")
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
- (event $a-event (attr 0) (param i32))
+ (memory $0 (shared 1 256))
+ (data (i32.const 10) "hello, world")
+ (data "I am passive")
+ (table $tab 0 100 funcref)
+ (table $0 1 1 funcref)
+ (elem $0 (table $0) (i32.const 0) func "$kitchen()sinker")
+ (elem $passive func "$kitchen()sinker")
+ (tag $a-tag (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
-  (local $5 exnref)
+  (local $5 externref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -309,17 +325,22 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
+       (v128.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i8x16.popcnt
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i8x16.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
        (i8x16.neg
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.any_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -344,11 +365,6 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i16x8.any_true
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
        (i16x8.all_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -369,11 +385,6 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i32x4.any_true
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
        (i32x4.all_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -384,17 +395,22 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
+       (i64x2.abs
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i64x2.neg
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i64x2.any_true
+       (i64x2.all_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i64x2.all_true
+       (i64x2.bitmask
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -439,16 +455,6 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i64x2.trunc_sat_f64x2_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i64x2.trunc_sat_f64x2_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
        (f32x4.convert_i32x4_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -459,52 +465,92 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (f64x2.convert_i64x2_s
+       (i16x8.extend_low_i8x16_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.convert_i64x2_u
+       (i16x8.extend_high_i8x16_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_low_i8x16_s
+       (i16x8.extend_low_i8x16_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_high_i8x16_s
+       (i16x8.extend_high_i8x16_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_low_i8x16_u
+       (i32x4.extend_low_i16x8_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_high_i8x16_u
+       (i32x4.extend_high_i16x8_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.widen_low_i16x8_s
+       (i32x4.extend_low_i16x8_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.widen_high_i16x8_s
+       (i32x4.extend_high_i16x8_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.widen_low_i16x8_u
+       (i64x2.extend_low_i32x4_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.widen_high_i16x8_u
+       (i64x2.extend_high_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extend_low_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extend_high_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_low_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_low_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f64x2_s_zero
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f64x2_u_zero
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.demote_f64x2_zero
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.promote_low_f32x4
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -881,6 +927,42 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
+       (i64x2.eq
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.ne
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.lt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.gt_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.le_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.ge_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (f32x4.eq
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -983,13 +1065,13 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i8x16.add_saturate_s
+       (i8x16.add_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i8x16.add_saturate_u
+       (i8x16.add_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1001,19 +1083,13 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i8x16.sub_saturate_s
+       (i8x16.sub_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i8x16.sub_saturate_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.mul
+       (i8x16.sub_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1055,13 +1131,13 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i16x8.add_saturate_s
+       (i16x8.add_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.add_saturate_u
+       (i16x8.add_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1073,13 +1149,13 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i16x8.sub_saturate_s
+       (i16x8.sub_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.sub_saturate_u
+       (i16x8.sub_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1121,6 +1197,36 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
+       (i16x8.q15mulr_sat_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extmul_low_i8x16_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extmul_high_i8x16_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extmul_low_i8x16_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extmul_high_i8x16_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i32x4.add
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -1152,6 +1258,30 @@ BinaryenFeatureAll: 4095
       )
       (drop
        (i64x2.mul
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extmul_low_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extmul_high_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extmul_low_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i64x2.extmul_high_i32x4_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1205,6 +1335,30 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
+       (i32x4.extmul_low_i16x8_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.extmul_high_i16x8_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.extmul_low_i16x8_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.extmul_high_i16x8_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (f32x4.div
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -1235,26 +1389,22 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i16x8.lt_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i16x8.lt_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f32x4.ceil
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.gt_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f32x4.floor
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.gt_u
+       (f32x4.trunc
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.nearest
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -1307,26 +1457,42 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i16x8.ge_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i32x4.eq
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f64x2.ceil
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.ne
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       (f64x2.floor
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.lt_s
+       (f64x2.trunc
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.nearest
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extadd_pairwise_i8x16_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i16x8.extadd_pairwise_i8x16_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.extadd_pairwise_i16x8_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.extadd_pairwise_i16x8_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -1355,7 +1521,7 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (v8x16.swizzle
+       (i8x16.swizzle
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1509,91 +1675,113 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (v8x16.load_splat
+       (v128.load8_splat
         (i32.const 128)
        )
       )
       (drop
-       (v16x8.load_splat offset=16 align=1
+       (v128.load16_splat offset=16 align=1
         (i32.const 128)
        )
       )
       (drop
-       (v32x4.load_splat offset=16
+       (v128.load32_splat offset=16
         (i32.const 128)
        )
       )
       (drop
-       (v64x2.load_splat align=4
+       (v128.load64_splat align=4
         (i32.const 128)
        )
       )
       (drop
-       (i16x8.load8x8_s
+       (v128.load8x8_s
         (i32.const 128)
        )
       )
       (drop
-       (i16x8.load8x8_u
+       (v128.load8x8_u
         (i32.const 128)
        )
       )
       (drop
-       (i32x4.load16x4_s
+       (v128.load16x4_s
         (i32.const 128)
        )
       )
       (drop
-       (i32x4.load16x4_u
+       (v128.load16x4_u
         (i32.const 128)
        )
       )
       (drop
-       (i64x2.load32x2_s
+       (v128.load32x2_s
         (i32.const 128)
        )
       )
       (drop
-       (i64x2.load32x2_u
+       (v128.load32x2_u
         (i32.const 128)
        )
       )
       (drop
-       (v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+       (v128.load32_zero
+        (i32.const 128)
+       )
+      )
+      (drop
+       (v128.load64_zero
+        (i32.const 128)
+       )
+      )
+      (drop
+       (v128.load8_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load16_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load32_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load64_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (v128.store8_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store16_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store32_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store64_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (drop
+       (i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
        (v128.bitselect
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f32x4.qfma
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f32x4.qfms
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f64x2.qfma
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f64x2.qfms
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -1684,7 +1872,7 @@ BinaryenFeatureAll: 4095
       )
       (drop
        (i32.eqz
-        (call_indirect (type $i32_i64_f32_f64_=>_i32)
+        (call_indirect $tab (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -1748,7 +1936,7 @@ BinaryenFeatureAll: 4095
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
+      (return_call_indirect $tab (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -1766,11 +1954,6 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (ref.is_null
-        (ref.null exn)
-       )
-      )
-      (drop
        (select (result funcref)
         (ref.null func)
         (ref.func "$kitchen()sinker")
@@ -1783,25 +1966,69 @@ BinaryenFeatureAll: 4095
         (ref.null eq)
        )
       )
+      (drop
+       (ref.is_func
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.is_data
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.is_i31
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_non_null
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_func
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_data
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_i31
+        (ref.null any)
+       )
+      )
       (try
        (do
-        (throw $a-event
+        (throw $a-tag
          (i32.const 0)
         )
        )
-       (catch
-        (local.set $5
-         (pop exnref)
-        )
+       (catch $a-tag
         (drop
-         (block $try-block (result i32)
-          (rethrow
-           (br_on_exn $try-block $a-event
-            (local.get $5)
-           )
+         (pop i32)
+        )
+       )
+       (catch_all
+        (nop)
+       )
+      )
+      (try $try_outer
+       (do
+        (try
+         (do
+          (throw $a-tag
+           (i32.const 0)
           )
          )
+         (delegate $try_outer)
         )
+       )
+       (catch_all
+        (nop)
        )
       )
       (i32.atomic.store
@@ -1811,14 +2038,14 @@ BinaryenFeatureAll: 4095
        )
       )
       (drop
-       (i32.atomic.wait
+       (memory.atomic.wait32
         (i32.const 0)
         (i32.const 0)
         (i64.const 111)
        )
       )
       (drop
-       (atomic.notify
+       (memory.atomic.notify
         (i32.const 0)
         (i32.const 0)
        )
@@ -1859,9 +2086,6 @@ BinaryenFeatureAll: 4095
       )
       (drop
        (pop externref)
-      )
-      (drop
-       (pop exnref)
       )
       (drop
        (pop i32 i64 f32 f64)
@@ -2415,8 +2639,8 @@ module s-expr printed (in memory, caller-owned):
 )
 
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
  (func $starter
@@ -2438,12 +2662,12 @@ module s-expr printed (in memory, caller-owned):
 validation: 0
 (module
  (type $none_=>_none (func))
+ (global $a-global i32 (i32.const 125))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
  (table $0 1 1 funcref)
- (elem (i32.const 0) $fn0 $fn1 $fn2)
- (global $a-global i32 (i32.const 125))
+ (elem $0 (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))
  (export "export1" (func $fn1))
  (export "export2" (func $fn2))
@@ -2456,5 +2680,22 @@ validation: 0
  )
  (func $fn2
   (nop)
+ )
+)
+module with a function to optimize:
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (func $adder (result i32)
+  (i32.add
+   (i32.const 1)
+   (i32.const 3)
+  )
+ )
+)
+optimized:
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (func $adder (result i32)
+  (i32.const 4)
  )
 )

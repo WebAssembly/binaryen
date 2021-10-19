@@ -557,7 +557,9 @@ private:
   ToolOptions options;
   Module tempAllocationModule;
 
+  Expression* parseInvoke(Builder& wasmBuilder, Module& module, Element& e);
   Ref emitAssertReturnFunc(Builder& wasmBuilder,
+                           Module& module,
                            Element& e,
                            Name testFuncName,
                            Name asmModule);
@@ -566,10 +568,12 @@ private:
                               Name testFuncName,
                               Name asmModule);
   Ref emitAssertTrapFunc(Builder& wasmBuilder,
+                         Module& module,
                          Element& e,
                          Name testFuncName,
                          Name asmModule);
   Ref emitInvokeFunc(Builder& wasmBuilder,
+                     Module& module,
                      Element& e,
                      Name testFuncName,
                      Name asmModule);
@@ -589,11 +593,27 @@ private:
   }
 };
 
+Expression* AssertionEmitter::parseInvoke(Builder& wasmBuilder,
+                                          Module& module,
+                                          Element& e) {
+  // After legalization, the sexpBuilder doesn't necessarily have correct type
+  // information about all of the functions in the module, so create the call
+  // manually and only use the parser for the operands.
+  Name target = e[1]->str();
+  std::vector<Expression*> args;
+  for (size_t i = 2; i < e.size(); ++i) {
+    args.push_back(sexpBuilder.parseExpression(e[i]));
+  }
+  Type type = module.getFunction(module.getExport(target)->value)->getResults();
+  return wasmBuilder.makeCall(target, args, type);
+}
+
 Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
+                                           Module& module,
                                            Element& e,
                                            Name testFuncName,
                                            Name asmModule) {
-  Expression* actual = sexpBuilder.parseExpression(e[1]);
+  Expression* actual = parseInvoke(wasmBuilder, module, *e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
     if (actual->type == Type::none) {
@@ -604,7 +624,6 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   } else if (e.size() == 3) {
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     Type resType = expected->type;
-    actual->type = resType;
     TODO_SINGLE_COMPOUND(resType);
     switch (resType.getBasic()) {
       case Type::i32:
@@ -639,7 +658,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},
-                             body->type,
+                             Signature(Type::none, body->type),
                              std::vector<NameType>{},
                              body));
   Ref jsFunc = processFunction(testFunc.get());
@@ -657,7 +676,7 @@ Ref AssertionEmitter::emitAssertReturnNanFunc(Builder& wasmBuilder,
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},
-                             body->type,
+                             Signature(Type::none, body->type),
                              std::vector<NameType>{},
                              body));
   Ref jsFunc = processFunction(testFunc.get());
@@ -667,15 +686,16 @@ Ref AssertionEmitter::emitAssertReturnNanFunc(Builder& wasmBuilder,
 }
 
 Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
+                                         Module& module,
                                          Element& e,
                                          Name testFuncName,
                                          Name asmModule) {
   Name innerFuncName("f");
-  Expression* expr = sexpBuilder.parseExpression(e[1]);
+  Expression* expr = parseInvoke(wasmBuilder, module, *e[1]);
   std::unique_ptr<Function> exprFunc(
     wasmBuilder.makeFunction(innerFuncName,
                              std::vector<NameType>{},
-                             expr->type,
+                             Signature(Type::none, expr->type),
                              std::vector<NameType>{},
                              expr));
   IString expectedErr = e[2]->str();
@@ -701,14 +721,15 @@ Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
 }
 
 Ref AssertionEmitter::emitInvokeFunc(Builder& wasmBuilder,
+                                     Module& module,
                                      Element& e,
                                      Name testFuncName,
                                      Name asmModule) {
-  Expression* body = sexpBuilder.parseExpression(e);
+  Expression* body = parseInvoke(wasmBuilder, module, e);
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},
-                             body->type,
+                             Signature(Type::none, body->type),
                              std::vector<NameType>{},
                              body));
   Ref jsFunc = processFunction(testFunc.get());
@@ -812,17 +833,19 @@ void AssertionEmitter::emit() {
 
   Builder wasmBuilder(sexpBuilder.getModule());
   Name asmModule = std::string("ret") + ASM_FUNC.str;
+  // Track the last built module.
+  Module wasm;
   for (size_t i = 0; i < root.size(); ++i) {
     Element& e = *root[i];
     if (e.isList() && e.size() >= 1 && e[0]->isStr() &&
         e[0]->str() == Name("module")) {
+      ModuleUtils::clearModule(wasm);
       std::stringstream funcNameS;
       funcNameS << ASM_FUNC.c_str() << i;
       std::stringstream moduleNameS;
       moduleNameS << "ret" << ASM_FUNC.c_str() << i;
       Name funcName(funcNameS.str().c_str());
       asmModule = Name(moduleNameS.str().c_str());
-      Module wasm;
       options.applyFeatures(wasm);
       SExpressionWasmBuilder builder(wasm, e, options.profile);
       emitWasm(wasm, out, flags, options.passOptions, funcName);
@@ -836,29 +859,18 @@ void AssertionEmitter::emit() {
     bool isInvoke = (e[0]->str() == Name("invoke"));
     bool isReturn = (e[0]->str() == Name("assert_return"));
     bool isReturnNan = (e[0]->str() == Name("assert_return_nan"));
-    Element* assertOp;
-    // An assertion of an invoke has the invoke inside the assert.
-    if (isAssertHandled(e)) {
-      assertOp = e[1];
-    } else {
-      assertOp = &e;
-    }
-    // Replace "invoke" with "call"
-    (*assertOp)[0]->setString(IString("call"), false, false);
-    // Need to claim dollared to get string as function target
-    (*assertOp)[1]->setString((*assertOp)[1]->str(), /*dollared=*/true, false);
     if (isInvoke) {
-      emitInvokeFunc(wasmBuilder, e, testFuncName, asmModule);
+      emitInvokeFunc(wasmBuilder, wasm, e, testFuncName, asmModule);
       out << testFuncName.str << "();\n";
       continue;
     }
     // Otherwise, this is some form of assertion.
     if (isReturn) {
-      emitAssertReturnFunc(wasmBuilder, e, testFuncName, asmModule);
+      emitAssertReturnFunc(wasmBuilder, wasm, e, testFuncName, asmModule);
     } else if (isReturnNan) {
       emitAssertReturnNanFunc(wasmBuilder, e, testFuncName, asmModule);
     } else {
-      emitAssertTrapFunc(wasmBuilder, e, testFuncName, asmModule);
+      emitAssertTrapFunc(wasmBuilder, wasm, e, testFuncName, asmModule);
     }
 
     out << "if (!" << testFuncName.str << "()) throw 'assertion failed: " << e
@@ -982,9 +994,14 @@ int main(int argc, const char* argv[]) {
                "request for silly amounts of memory)";
   }
 
+  // TODO: Remove this restriction when wasm2js can handle multiple tables
+  if (wasm.tables.size() > 1) {
+    Fatal() << "error: modules with multiple tables are not supported yet.";
+  }
+
   if (options.passOptions.validate) {
     if (!WasmValidator().validate(wasm)) {
-      WasmPrinter::printModule(&wasm);
+      std::cout << wasm << '\n';
       Fatal() << "error in validating input";
     }
   }

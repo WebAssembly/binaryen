@@ -277,7 +277,7 @@ struct OptimizeAddedConstants
       propagatable.clear();
       if (propagate) {
         localGraph = make_unique<LocalGraph>(func);
-        localGraph->computeInfluences();
+        localGraph->computeSetInfluences();
         localGraph->computeSSAIndexes();
         findPropagatable();
       }
@@ -360,8 +360,7 @@ private:
   void cleanUpAfterPropagation() {
     // Remove sets that no longer have uses. This allows further propagation by
     // letting us see the accurate amount of uses of each set.
-    UnneededSetRemover remover(
-      getFunction(), getPassOptions(), getModule()->features);
+    UnneededSetRemover remover(getFunction(), getPassOptions(), *getModule());
   }
 
   std::map<LocalSet*, Index> helperIndexes;

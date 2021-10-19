@@ -59,21 +59,21 @@ module.addFunction("main", binaryen.none, binaryen.none, [], module.block("", [
   ),
   // wait and notify
   module.drop(
-    module.i32.atomic.wait(
+    module.memory.atomic.wait32(
       module.i32.const(0),
       module.i32.const(0),
       module.i64.const(0)
     )
   ),
   module.drop(
-    module.i64.atomic.wait(
+    module.memory.atomic.wait64(
       module.i32.const(0),
       module.i64.const(0),
       module.i64.const(0)
     )
   ),
   module.drop(
-    module.atomic.notify(
+    module.memory.atomic.notify(
       module.i32.const(0),
       module.i32.const(0)
     )

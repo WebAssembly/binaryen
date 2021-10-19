@@ -18,6 +18,7 @@
 #define wasm_wasm_builder_h
 
 #include "ir/manipulation.h"
+#include "parsing.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -39,36 +40,38 @@ class Builder {
 public:
   Builder(Module& wasm) : wasm(wasm) {}
 
-  // make* functions, other globals
+  // make* functions create an expression instance.
 
-  Function* makeFunction(Name name,
-                         Signature sig,
-                         std::vector<Type>&& vars,
-                         Expression* body = nullptr) {
-    auto* func = new Function;
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                HeapType type,
+                                                std::vector<Type>&& vars,
+                                                Expression* body = nullptr) {
+    assert(type.isSignature());
+    auto func = std::make_unique<Function>();
     func->name = name;
-    func->sig = sig;
+    func->type = type;
     func->body = body;
     func->vars.swap(vars);
     return func;
   }
 
-  Function* makeFunction(Name name,
-                         std::vector<NameType>&& params,
-                         Type resultType,
-                         std::vector<NameType>&& vars,
-                         Expression* body = nullptr) {
-    auto* func = new Function;
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                std::vector<NameType>&& params,
+                                                HeapType type,
+                                                std::vector<NameType>&& vars,
+                                                Expression* body = nullptr) {
+    assert(type.isSignature());
+    auto func = std::make_unique<Function>();
     func->name = name;
+    func->type = type;
     func->body = body;
-    std::vector<Type> paramVec;
-    for (auto& param : params) {
-      paramVec.push_back(param.type);
+    for (size_t i = 0; i < params.size(); ++i) {
+      NameType& param = params[i];
+      assert(func->getParams()[i] == param.type);
       Index index = func->localNames.size();
       func->localIndices[param.name] = index;
       func->localNames[index] = param.name;
     }
-    func->sig = Signature(Type(paramVec), resultType);
     for (auto& var : vars) {
       func->vars.push_back(var.type);
       Index index = func->localNames.size();
@@ -78,12 +81,57 @@ public:
     return func;
   }
 
-  Export* makeExport(Name name, Name value, ExternalKind kind) {
-    auto* export_ = new Export();
+  static std::unique_ptr<Table> makeTable(Name name,
+                                          Type type = Type::funcref,
+                                          Address initial = 0,
+                                          Address max = Table::kMaxSize) {
+    auto table = std::make_unique<Table>();
+    table->name = name;
+    table->type = type;
+    table->initial = initial;
+    table->max = max;
+    return table;
+  }
+
+  static std::unique_ptr<ElementSegment>
+  makeElementSegment(Name name,
+                     Name table,
+                     Expression* offset = nullptr,
+                     Type type = Type::funcref) {
+    auto seg = std::make_unique<ElementSegment>();
+    seg->name = name;
+    seg->table = table;
+    seg->offset = offset;
+    seg->type = type;
+    return seg;
+  }
+
+  static std::unique_ptr<Export>
+  makeExport(Name name, Name value, ExternalKind kind) {
+    auto export_ = std::make_unique<Export>();
     export_->name = name;
     export_->value = value;
     export_->kind = kind;
     return export_;
+  }
+
+  enum Mutability { Mutable, Immutable };
+
+  static std::unique_ptr<Global>
+  makeGlobal(Name name, Type type, Expression* init, Mutability mutable_) {
+    auto glob = std::make_unique<Global>();
+    glob->name = name;
+    glob->type = type;
+    glob->init = init;
+    glob->mutable_ = mutable_ == Mutable;
+    return glob;
+  }
+
+  static std::unique_ptr<Tag> makeTag(Name name, Signature sig) {
+    auto tag = std::make_unique<Tag>();
+    tag->name = name;
+    tag->sig = sig;
+    return tag;
   }
 
   // IR nodes
@@ -221,13 +269,29 @@ public:
     call->finalize();
     return call;
   }
-  CallIndirect* makeCallIndirect(Expression* target,
-                                 const std::vector<Expression*>& args,
+  template<typename T>
+  CallIndirect* makeCallIndirect(const Name table,
+                                 Expression* target,
+                                 const T& args,
                                  Signature sig,
                                  bool isReturn = false) {
     auto* call = wasm.allocator.alloc<CallIndirect>();
+    call->table = table;
     call->sig = sig;
     call->type = sig.results;
+    call->target = target;
+    call->operands.set(args);
+    call->isReturn = isReturn;
+    call->finalize();
+    return call;
+  }
+  template<typename T>
+  CallRef* makeCallRef(Expression* target,
+                       const T& args,
+                       Type type,
+                       bool isReturn = false) {
+    auto* call = wasm.allocator.alloc<CallRef>();
+    call->type = type;
     call->target = target;
     call->operands.set(args);
     call->isReturn = isReturn;
@@ -554,21 +618,27 @@ public:
     ret->finalize();
     return ret;
   }
+  RefNull* makeRefNull(HeapType type) {
+    auto* ret = wasm.allocator.alloc<RefNull>();
+    ret->finalize(Type(type, Nullable));
+    return ret;
+  }
   RefNull* makeRefNull(Type type) {
     auto* ret = wasm.allocator.alloc<RefNull>();
     ret->finalize(type);
     return ret;
   }
-  RefIsNull* makeRefIsNull(Expression* value) {
-    auto* ret = wasm.allocator.alloc<RefIsNull>();
+  RefIs* makeRefIs(RefIsOp op, Expression* value) {
+    auto* ret = wasm.allocator.alloc<RefIs>();
+    ret->op = op;
     ret->value = value;
     ret->finalize();
     return ret;
   }
-  RefFunc* makeRefFunc(Name func) {
+  RefFunc* makeRefFunc(Name func, HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize();
+    ret->finalize(Type(heapType, NonNullable));
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
@@ -578,47 +648,110 @@ public:
     ret->finalize();
     return ret;
   }
-  Try* makeTry(Expression* body, Expression* catchBody) {
-    auto* ret = wasm.allocator.alloc<Try>();
-    ret->body = body;
-    ret->catchBody = catchBody;
+  TableGet* makeTableGet(Name table, Expression* index, Type type) {
+    auto* ret = wasm.allocator.alloc<TableGet>();
+    ret->table = table;
+    ret->index = index;
+    ret->type = type;
     ret->finalize();
     return ret;
   }
-  Try* makeTry(Expression* body, Expression* catchBody, Type type) {
-    auto* ret = wasm.allocator.alloc<Try>();
-    ret->body = body;
-    ret->catchBody = catchBody;
-    ret->finalize(type);
+  TableSet* makeTableSet(Name table, Expression* index, Expression* value) {
+    auto* ret = wasm.allocator.alloc<TableSet>();
+    ret->table = table;
+    ret->index = index;
+    ret->value = value;
+    ret->finalize();
     return ret;
   }
-  Throw* makeThrow(Event* event, const std::vector<Expression*>& args) {
-    return makeThrow(event->name, args);
+  TableSize* makeTableSize(Name table) {
+    auto* ret = wasm.allocator.alloc<TableSize>();
+    ret->table = table;
+    ret->finalize();
+    return ret;
   }
-  Throw* makeThrow(Name event, const std::vector<Expression*>& args) {
+  TableGrow* makeTableGrow(Name table, Expression* value, Expression* delta) {
+    auto* ret = wasm.allocator.alloc<TableGrow>();
+    ret->table = table;
+    ret->value = value;
+    ret->delta = delta;
+    ret->finalize();
+    return ret;
+  }
+
+private:
+  Try* makeTry(Name name,
+               Expression* body,
+               const std::vector<Name>& catchTags,
+               const std::vector<Expression*>& catchBodies,
+               Name delegateTarget,
+               Type type,
+               bool hasType) { // differentiate whether a type was passed in
+    auto* ret = wasm.allocator.alloc<Try>();
+    ret->name = name;
+    ret->body = body;
+    ret->catchTags.set(catchTags);
+    ret->catchBodies.set(catchBodies);
+    if (hasType) {
+      ret->finalize(type);
+    } else {
+      ret->finalize();
+    }
+    return ret;
+  }
+
+public:
+  Try* makeTry(Expression* body,
+               const std::vector<Name>& catchTags,
+               const std::vector<Expression*>& catchBodies) {
+    return makeTry(
+      Name(), body, catchTags, catchBodies, Name(), Type::none, false);
+  }
+  Try* makeTry(Expression* body,
+               const std::vector<Name>& catchTags,
+               const std::vector<Expression*>& catchBodies,
+               Type type) {
+    return makeTry(Name(), body, catchTags, catchBodies, Name(), type, true);
+  }
+  Try* makeTry(Name name,
+               Expression* body,
+               const std::vector<Name>& catchTags,
+               const std::vector<Expression*>& catchBodies) {
+    return makeTry(
+      name, body, catchTags, catchBodies, Name(), Type::none, false);
+  }
+  Try* makeTry(Name name,
+               Expression* body,
+               const std::vector<Name>& catchTags,
+               const std::vector<Expression*>& catchBodies,
+               Type type) {
+    return makeTry(name, body, catchTags, catchBodies, Name(), type, true);
+  }
+  Try* makeTry(Expression* body, Name delegateTarget) {
+    return makeTry(Name(), body, {}, {}, delegateTarget, Type::none, false);
+  }
+  Try* makeTry(Expression* body, Name delegateTarget, Type type) {
+    return makeTry(Name(), body, {}, {}, delegateTarget, type, true);
+  }
+  Try* makeTry(Name name, Expression* body, Name delegateTarget) {
+    return makeTry(name, body, {}, {}, delegateTarget, Type::none, false);
+  }
+  Try* makeTry(Name name, Expression* body, Name delegateTarget, Type type) {
+    return makeTry(name, body, {}, {}, delegateTarget, type, true);
+  }
+  Throw* makeThrow(Tag* tag, const std::vector<Expression*>& args) {
+    return makeThrow(tag->name, args);
+  }
+  Throw* makeThrow(Name tag, const std::vector<Expression*>& args) {
     auto* ret = wasm.allocator.alloc<Throw>();
-    ret->event = event;
+    ret->tag = tag;
     ret->operands.set(args);
     ret->finalize();
     return ret;
   }
-  Rethrow* makeRethrow(Expression* exnref) {
+  Rethrow* makeRethrow(Name target) {
     auto* ret = wasm.allocator.alloc<Rethrow>();
-    ret->exnref = exnref;
-    ret->finalize();
-    return ret;
-  }
-  BrOnExn* makeBrOnExn(Name name, Event* event, Expression* exnref) {
-    return makeBrOnExn(name, event->name, exnref, event->sig.params);
-  }
-  BrOnExn* makeBrOnExn(Name name, Name event, Expression* exnref, Type sent) {
-    auto* ret = wasm.allocator.alloc<BrOnExn>();
-    ret->name = name;
-    ret->event = event;
-    ret->exnref = exnref;
-    // Copy params info into BrOnExn, because it is necessary when BrOnExn is
-    // refinalized without the module.
-    ret->sent = sent;
+    ret->target = target;
     ret->finalize();
     return ret;
   }
@@ -655,75 +788,185 @@ public:
     ret->finalize();
     return ret;
   }
-  RefTest* makeRefTest() {
+  RefTest* makeRefTest(Expression* ref, Expression* rtt) {
     auto* ret = wasm.allocator.alloc<RefTest>();
-    WASM_UNREACHABLE("TODO (gc): ref.test");
+    ret->ref = ref;
+    ret->rtt = rtt;
     ret->finalize();
     return ret;
   }
-  RefCast* makeRefCast() {
+  RefTest* makeRefTest(Expression* ref, HeapType intendedType) {
+    auto* ret = wasm.allocator.alloc<RefTest>();
+    ret->ref = ref;
+    ret->intendedType = intendedType;
+    ret->finalize();
+    return ret;
+  }
+  RefCast* makeRefCast(Expression* ref, Expression* rtt) {
     auto* ret = wasm.allocator.alloc<RefCast>();
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    ret->ref = ref;
+    ret->rtt = rtt;
     ret->finalize();
     return ret;
   }
-  BrOnCast* makeBrOnCast() {
-    auto* ret = wasm.allocator.alloc<BrOnCast>();
-    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  RefCast* makeRefCast(Expression* ref, HeapType intendedType) {
+    auto* ret = wasm.allocator.alloc<RefCast>();
+    ret->ref = ref;
+    ret->intendedType = intendedType;
     ret->finalize();
     return ret;
   }
-  RttCanon* makeRttCanon() {
+  BrOn*
+  makeBrOn(BrOnOp op, Name name, Expression* ref, Expression* rtt = nullptr) {
+    auto* ret = wasm.allocator.alloc<BrOn>();
+    ret->op = op;
+    ret->name = name;
+    ret->ref = ref;
+    ret->rtt = rtt;
+    ret->finalize();
+    return ret;
+  }
+  BrOn* makeBrOn(BrOnOp op, Name name, Expression* ref, HeapType intendedType) {
+    auto* ret = wasm.allocator.alloc<BrOn>();
+    ret->op = op;
+    ret->name = name;
+    ret->ref = ref;
+    ret->intendedType = intendedType;
+    ret->finalize();
+    return ret;
+  }
+  RttCanon* makeRttCanon(HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RttCanon>();
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    ret->type = Type(Rtt(0, heapType));
     ret->finalize();
     return ret;
   }
-  RttSub* makeRttSub() {
+  RttSub* makeRttSub(HeapType heapType, Expression* parent) {
     auto* ret = wasm.allocator.alloc<RttSub>();
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    ret->parent = parent;
+    auto parentRtt = parent->type.getRtt();
+    if (parentRtt.hasDepth()) {
+      ret->type = Type(Rtt(parentRtt.depth + 1, heapType));
+    } else {
+      ret->type = Type(Rtt(heapType));
+    }
     ret->finalize();
     return ret;
   }
-  StructNew* makeStructNew() {
+  RttSub* makeRttFreshSub(HeapType heapType, Expression* parent) {
+    auto* ret = makeRttSub(heapType, parent);
+    ret->fresh = true;
+    return ret;
+  }
+  template<typename T>
+  StructNew* makeStructNew(Expression* rtt, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    ret->rtt = rtt;
+    ret->operands.set(args);
     ret->finalize();
     return ret;
   }
-  StructGet* makeStructGet() {
+  template<typename T> StructNew* makeStructNew(HeapType type, const T& args) {
+    auto* ret = wasm.allocator.alloc<StructNew>();
+    ret->operands.set(args);
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
+  StructGet*
+  makeStructGet(Index index, Expression* ref, Type type, bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<StructGet>();
-    WASM_UNREACHABLE("TODO (gc): struct.get");
+    ret->index = index;
+    ret->ref = ref;
+    ret->type = type;
+    ret->signed_ = signed_;
     ret->finalize();
     return ret;
   }
-  StructSet* makeStructSet() {
+  StructSet* makeStructSet(Index index, Expression* ref, Expression* value) {
     auto* ret = wasm.allocator.alloc<StructSet>();
-    WASM_UNREACHABLE("TODO (gc): struct.set");
+    ret->index = index;
+    ret->ref = ref;
+    ret->value = value;
     ret->finalize();
     return ret;
   }
-  ArrayNew* makeArrayNew() {
+  ArrayNew*
+  makeArrayNew(Expression* rtt, Expression* size, Expression* init = nullptr) {
     auto* ret = wasm.allocator.alloc<ArrayNew>();
-    WASM_UNREACHABLE("TODO (gc): array.new");
+    ret->rtt = rtt;
+    ret->size = size;
+    ret->init = init;
     ret->finalize();
     return ret;
   }
-  ArrayGet* makeArrayGet() {
+  ArrayNew*
+  makeArrayNew(HeapType type, Expression* size, Expression* init = nullptr) {
+    auto* ret = wasm.allocator.alloc<ArrayNew>();
+    ret->size = size;
+    ret->init = init;
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
+  ArrayInit* makeArrayInit(Expression* rtt,
+                           const std::vector<Expression*>& values) {
+    auto* ret = wasm.allocator.alloc<ArrayInit>();
+    ret->rtt = rtt;
+    ret->values.set(values);
+    ret->finalize();
+    return ret;
+  }
+  ArrayInit* makeArrayInit(HeapType type,
+                           const std::vector<Expression*>& values) {
+    auto* ret = wasm.allocator.alloc<ArrayInit>();
+    ret->values.set(values);
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
+  ArrayGet*
+  makeArrayGet(Expression* ref, Expression* index, bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<ArrayGet>();
-    WASM_UNREACHABLE("TODO (gc): array.get");
+    ret->ref = ref;
+    ret->index = index;
+    ret->signed_ = signed_;
     ret->finalize();
     return ret;
   }
-  ArraySet* makeArraySet() {
+  ArraySet*
+  makeArraySet(Expression* ref, Expression* index, Expression* value) {
     auto* ret = wasm.allocator.alloc<ArraySet>();
-    WASM_UNREACHABLE("TODO (gc): array.set");
+    ret->ref = ref;
+    ret->index = index;
+    ret->value = value;
     ret->finalize();
     return ret;
   }
-  ArrayLen* makeArrayLen() {
+  ArrayLen* makeArrayLen(Expression* ref) {
     auto* ret = wasm.allocator.alloc<ArrayLen>();
-    WASM_UNREACHABLE("TODO (gc): array.len");
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
+  ArrayCopy* makeArrayCopy(Expression* destRef,
+                           Expression* destIndex,
+                           Expression* srcRef,
+                           Expression* srcIndex,
+                           Expression* length) {
+    auto* ret = wasm.allocator.alloc<ArrayCopy>();
+    ret->destRef = destRef;
+    ret->destIndex = destIndex;
+    ret->srcRef = srcRef;
+    ret->srcIndex = srcIndex;
+    ret->length = length;
+    ret->finalize();
+    return ret;
+  }
+  RefAs* makeRefAs(RefAsOp op, Expression* value) {
+    auto* ret = wasm.allocator.alloc<RefAs>();
+    ret->op = op;
+    ret->value = value;
     ret->finalize();
     return ret;
   }
@@ -740,24 +983,30 @@ public:
   // Make a constant expression. This might be a wasm Const, or something
   // else of constant value like ref.null.
   Expression* makeConstantExpression(Literal value) {
-    TODO_SINGLE_COMPOUND(value.type);
-    switch (value.type.getBasic()) {
-      case Type::funcref:
-        if (!value.isNull()) {
-          return makeRefFunc(value.getFunc());
-        }
-        return makeRefNull(value.type);
+    auto type = value.type;
+    if (type.isNumber()) {
+      return makeConst(value);
+    }
+    if (value.isNull()) {
+      return makeRefNull(type);
+    }
+    if (type.isFunction()) {
+      return makeRefFunc(value.getFunc(), type.getHeapType());
+    }
+    if (type.isRtt()) {
+      return makeRtt(value.type);
+    }
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::externref:
-      case Type::exnref: // TODO: ExceptionPackage?
       case Type::anyref:
       case Type::eqref:
         assert(value.isNull() && "unexpected non-null reference type literal");
-        return makeRefNull(value.type);
+        return makeRefNull(type);
       case Type::i31ref:
         return makeI31New(makeConst(value.geti31()));
       default:
-        assert(value.type.isNumber());
-        return makeConst(value);
+        WASM_UNREACHABLE("invalid constant expression");
     }
   }
 
@@ -774,16 +1023,29 @@ public:
     }
   }
 
+  // Given a type, creates an RTT expression of that type, using a combination
+  // of rtt.canon and rtt.subs.
+  Expression* makeRtt(Type type) {
+    Expression* ret = makeRttCanon(type.getHeapType());
+    if (type.getRtt().hasDepth()) {
+      for (Index i = 0; i < type.getRtt().depth; i++) {
+        ret = makeRttSub(type.getHeapType(), ret);
+      }
+    }
+    return ret;
+  }
+
   // Additional utility functions for building on top of nodes
   // Convenient to have these on Builder, as it has allocation built in
 
   static Index addParam(Function* func, Name name, Type type) {
     // only ok to add a param if no vars, otherwise indices are invalidated
-    assert(func->localIndices.size() == func->sig.params.size());
+    assert(func->localIndices.size() == func->getParams().size());
     assert(name.is());
-    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
+    Signature sig = func->getSig();
+    std::vector<Type> params(sig.params.begin(), sig.params.end());
     params.push_back(type);
-    func->sig.params = Type(params);
+    func->type = Signature(Type(params), sig.results);
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;
@@ -809,12 +1071,6 @@ public:
   static void clearLocalNames(Function* func) {
     func->localNames.clear();
     func->localIndices.clear();
-  }
-
-  static void clearLocals(Function* func) {
-    func->sig.params = Type::none;
-    func->vars.clear();
-    clearLocalNames(func);
   }
 
   // ensure a node is a block, if it isn't already, and optionally append to the
@@ -875,33 +1131,6 @@ public:
     return block;
   }
 
-  // Grab a slice out of a block, replacing it with nops, and returning
-  // either another block with the contents (if more than 1) or a single
-  // expression
-  Expression* stealSlice(Block* input, Index from, Index to) {
-    Expression* ret;
-    if (to == from + 1) {
-      // just one
-      ret = input->list[from];
-    } else {
-      auto* block = wasm.allocator.alloc<Block>();
-      for (Index i = from; i < to; i++) {
-        block->list.push_back(input->list[i]);
-      }
-      block->finalize();
-      ret = block;
-    }
-    if (to == input->list.size()) {
-      input->list.resize(from);
-    } else {
-      for (Index i = from; i < to; i++) {
-        input->list[i] = wasm.allocator.alloc<Nop>();
-      }
-    }
-    input->finalize();
-    return ret;
-  }
-
   // Drop an expression if it has a concrete type
   Expression* dropIfConcretelyTyped(Expression* curr) {
     if (!curr->type.isConcrete()) {
@@ -915,16 +1144,21 @@ public:
     iff->condition = makeUnary(EqZInt32, iff->condition);
   }
 
-  // returns a replacement with the precise same type, and with
-  // minimal contents. as a replacement, this may reuse the
-  // input node
+  // Returns a replacement with the precise same type, and with minimal contents
+  // as best we can. As a replacement, this may reuse the input node.
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
     if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
+    if (curr->type.isNullable()) {
+      return ExpressionManipulator::refNull(curr, curr->type);
+    }
+    if (curr->type.isFunction() || !curr->type.isBasic()) {
+      // We can't do any better, keep the original.
+      return curr;
+    }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
-    TODO_SINGLE_COMPOUND(curr->type);
     switch (curr->type.getBasic()) {
       case Type::i32:
         value = Literal(int32_t(0));
@@ -945,13 +1179,15 @@ public:
         break;
       }
       case Type::funcref:
+        WASM_UNREACHABLE("handled above");
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);
       case Type::i31ref:
         return makeI31New(makeConst(0));
+      case Type::dataref:
+        return curr;
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:
@@ -959,27 +1195,64 @@ public:
     }
     return makeConst(value);
   }
+};
 
-  // Module-level helpers
+// This class adds methods that first inspect the input. They may not have fully
+// comprehensive error checking, when that can be left to the validator; the
+// benefit of the validate* methods is that they can share code between the
+// text and binary format parsers, for handling certain situations in the
+// input which preclude even creating valid IR, which the validator depends
+// on.
+class ValidatingBuilder : public Builder {
+  size_t line = -1, col = -1;
 
-  enum Mutability { Mutable, Immutable };
+public:
+  ValidatingBuilder(Module& wasm, size_t line) : Builder(wasm), line(line) {}
+  ValidatingBuilder(Module& wasm, size_t line, size_t col)
+    : Builder(wasm), line(line), col(col) {}
 
-  static Global*
-  makeGlobal(Name name, Type type, Expression* init, Mutability mutable_) {
-    auto* glob = new Global;
-    glob->name = name;
-    glob->type = type;
-    glob->init = init;
-    glob->mutable_ = mutable_ == Mutable;
-    return glob;
+  Expression* validateAndMakeBrOn(BrOnOp op,
+                                  Name name,
+                                  Expression* ref,
+                                  Expression* rtt = nullptr) {
+    if (op == BrOnCast) {
+      if (rtt->type == Type::unreachable) {
+        // An unreachable rtt is not supported: the text and binary formats do
+        // not provide the type, so if it's unreachable we should not even
+        // create a br_on_cast in such a case, as we'd have no idea what it
+        // casts to.
+        return makeSequence(makeDrop(ref), rtt);
+      }
+    }
+    if (op == BrOnNull) {
+      if (!ref->type.isRef() && ref->type != Type::unreachable) {
+        throw ParseException("Invalid ref for br_on_null", line, col);
+      }
+    }
+    return makeBrOn(op, name, ref, rtt);
   }
 
-  static Event* makeEvent(Name name, uint32_t attribute, Signature sig) {
-    auto* event = new Event;
-    event->name = name;
-    event->attribute = attribute;
-    event->sig = sig;
-    return event;
+  template<typename T>
+  Expression* validateAndMakeCallRef(Expression* target,
+                                     const T& args,
+                                     bool isReturn = false) {
+    if (!target->type.isRef()) {
+      if (target->type == Type::unreachable) {
+        // An unreachable target is not supported. Similiar to br_on_cast, just
+        // emit an unreachable sequence, since we don't have enough information
+        // to create a full call_ref.
+        auto* block = makeBlock(args);
+        block->list.push_back(target);
+        block->finalize(Type::unreachable);
+        return block;
+      }
+      throw ParseException("Non-reference type for a call_ref", line, col);
+    }
+    auto heapType = target->type.getHeapType();
+    if (!heapType.isSignature()) {
+      throw ParseException("Invalid reference type for a call_ref", line, col);
+    }
+    return makeCallRef(target, args, heapType.getSignature().results, isReturn);
   }
 };
 

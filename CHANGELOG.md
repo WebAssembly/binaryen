@@ -15,9 +15,109 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v102
+----
+
+- Add `BinaryenUpdateMaps` to the C API.
+
+- Adds a TrapsNeverHappen mode (#4059). This has many of the benefits of
+  IgnoreImplicitTraps, but can be used safely in more cases. IgnoreImplicitTraps
+  is now deprecated.
+
+- Adds type argument for BinaryenAddTable method (#4107). For the binaryen.js api
+  this parameter is optional and by default is set to funcref type.
+
+- Replace `BinaryenExpressionGetSideEffects`'s features parameter with a module
+  parameter.
+
+v101
+----
+
+- `BinaryenSetFunctionTable` and `module.setFunctionTable` have been removed
+  in favor of `BinaryenAddTable` and `module.addTable` respectively.
+- `BinaryenIsFunctionTableImported` is removed.
+- A new type `BinaryenElementSegmentRef` has been added to the C API with
+  new apis in both C & JS:
+  - `BinaryenAddActiveElementSegment`
+  - `BinaryenAddPassiveElementSegment`
+  - `BinaryenRemoveElementSegment`
+  - `BinaryenGetElementSegment`
+  - `BinaryenGetElementSegmentByIndex`
+  - `BinaryenElementSegmentGetName`
+  - `BinaryenElementSegmentSetName`
+  - `BinaryenElementSegmentGetTable`
+  - `BinaryenElementSegmentSetTable`
+  - `BinayenElementSegmentIsPassive`
+  - `module.addActiveElementSegment`
+  - `module.addPassiveElementSegment`
+  - `module.removeElementSegment`
+  - `module.getElementSegment`
+  - `module.getElementSegmentByIndex`
+  - `module.getTableSegments`
+  - `module.getNumElementSegments`
+  - `binaryen.getElementSegmentInfo`
+- `BinaryenAddTable` and `module.addTable` no longer take offset and function
+    names.
+- `BinaryenGetNumFunctionTableSegments` is replaced with
+  `BinaryenGetNumElementSegments`.
+- `BinaryenGetFunctionTableSegmentOffset` is replaced with
+  `BinaryenElementSegmentGetOffset`.
+- `BinaryenGetFunctionTableSegmentLength` is replaced with
+  `BinaryenElementSegmentGetLength`.
+- `BinaryenGetFunctionTableSegmentData` is replaced with
+  `BinaryenElementSegmentGetData`.
+- Boolean values in the C API now should use `bool` instead of `int`.
+- Experimental SIMD instructions have been removed and the names and opcodes of
+  the standard instructions have been updated to match the final spec.
+
+v100
+----
+
+- `wasm-dis` now supports options to enable or disable Wasm features.
+- Reference types support has been improved by allowing multiple tables in a
+  module.
+- `call_indirect` and `return_call_indirect` now take an additional table name
+  parameter. This is necessary for reference types support.
+- New getter/setter methods have been introduced for `call_indirect` table name:
+  - `BinaryenCallIndirectGetTable`
+  - `BinaryenCallIndirectSetTable`
+  - JS API `CallIndirect.table`
+- New APIs have been added to add and manipulate multiple tables in a module:
+  - `BinaryenAddTable`
+  - `BinaryenRemoveTable`
+  - `BinaryenGetNumTables`
+  - `BinaryenGetTable`
+  - `BinaryenGetTableByIndex`
+  - `BinaryenTableGetName`
+  - `BinaryenTableGetInitial`
+  - `BinaryenTableHasMax`
+  - `BinaryenTableGetMax`
+  - `BinaryenTableImportGetModule`
+  - `BinaryenTableImportGetBase`
+  - `module.addTable`
+  - `module.removeTable`
+  - `module.getTable`
+  - `module.getTableByIndex`
+  - `module.getNumTables`
+  - `binaryen.getTableInfo`
+
+v99
+---
+
+- `RefFunc` C and JS API constructors (`BinaryenRefFunc` and `ref.func`
+  respectively) now take an extra `type` parameter, similar to `RefNull`. This
+  is necessary for typed function references support.
+- JS API functions for atomic notify/wait instructions are renamed.
+  - `module.atomic.notify` -> `module.memory.atomic.notify`
+  - `module.i32.atomic.wait` -> `module.memory.atomic.wait32`
+  - `module.i64.atomic.wait` -> `module.memory.atomic.wait64`
 - Remove old/broken SpollPointers pass.  This pass: Spills values that might be
   pointers to the C stack. This allows Boehm-style GC to see them properly.
   This can be revived if needed from git history (#3261).
+- Make `NUM_PARAMS` in `FuncCastEmulation` a runtime configuration option named
+  `max-func-params`. This defaults to the original value of 16.
+- `BinaryenGetFunction`, `BinaryenGetGlobal` and `BinaryenGetEvent` now return
+  `NULL` instead of aborting when the respective element does not yet exist.
 
 v98
 ---

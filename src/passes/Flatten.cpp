@@ -17,11 +17,33 @@
 //
 // Flattens code into "Flat IR" form. See ir/flat.h.
 //
+// TODO: handle non-nullability. for example:
+//
+//      (module
+//       (type $none (func))
+//       (func $foo
+//        (drop
+//         (block (result funcref (ref $none))
+//          (tuple.make
+//           (ref.null func)
+//           (ref.func $foo)
+//          )
+//         )
+//        )
+//       )
+//      )
+//
+// The tuple has a non-nullable type, and so it cannot be set to a local. We
+// would need to split up the tuple and reconstruct it later, but that would
+// require allowing tuple operations in more nested places than Flat IR allows
+// today. For now, error on this; eventually changes in the spec regarding
+// null-nullability may make this easier.
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -49,6 +71,11 @@ struct Flatten
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }
 
+  // Flattening splits the original locals into a great many other ones, losing
+  // track of the originals that DWARF refers to.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new Flatten; }
 
   // For each expression, a bunch of expressions that should execute right
@@ -65,11 +92,6 @@ struct Flatten
     // Nothing to do for constants and nop.
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
-    }
-
-    if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
-        curr->is<BrOnExn>()) {
-      Fatal() << "Flatten does not support EH instructions yet";
     }
 
     if (Properties::isControlFlowStructure(curr)) {
@@ -275,7 +297,6 @@ struct Flatten
         }
       }
     }
-    // TODO Handle br_on_exn
 
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it
@@ -315,6 +336,17 @@ struct Flatten
     }
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
+    // New locals we added may be non-nullable.
+    TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
+    // We cannot handle non-nullable tuples currently, see the comment at the
+    // top of the file.
+    for (auto type : curr->vars) {
+      if (!type.isDefaultable()) {
+        Fatal() << "Flatten was forced to add a local of a type it cannot "
+                   "handle yet: "
+                << type;
+      }
+    }
   }
 
 private:

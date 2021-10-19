@@ -1353,6 +1353,93 @@
     )
     (unreachable)
   )
+  (func $br-to-table-initial-tee (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x
+            (i32.eq
+              (local.tee $a
+                (i32.add
+                  (i32.const 10)
+                  (i32.const 1)
+                )
+              )
+              (i32.const 10)
+            )
+          )
+          (br_if $y (i32.eq (local.get $a) (i32.const 11)))
+          (br_if $z (i32.eq (local.get $a) (i32.const 12)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-initial-tee-wrong-index (param $a i32)
+    (local $b i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x
+            (i32.eq
+              (local.tee $a (i32.const 99))
+              (i32.const 10)
+            )
+          )
+          ;; The subsequent conditions use a different local, $b, so we cannot
+          ;; optimize here.
+          (br_if $y (i32.eq (local.get $b) (i32.const 11)))
+          (br_if $z (i32.eq (local.get $b) (i32.const 12)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-eqz (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x (i32.eqz (local.get $a)))
+          (br_if $y (i32.eq (local.get $a) (i32.const 1)))
+          (br_if $z (i32.eq (local.get $a) (i32.const 2)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-tee-eqz (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x
+            (i32.eqz
+              (local.tee $a
+                (i32.add
+                  (i32.const 0)
+                  (i32.const 1)
+                )
+              )
+            )
+          )
+          (br_if $y (i32.eq (local.get $a) (i32.const 1)))
+          (br_if $z (i32.eq (local.get $a) (i32.const 2)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
   (func $tiny-switch
     (block $x
       (block $y
@@ -1615,7 +1702,7 @@
     (i32.const 0)
    )
   )
-  (func $drop-restructure-if-bad (param $x i32) (param $y i32) (result i32)
+  (func $drop-restructure-select (param $x i32) (param $y i32) (result i32)
    (block $label$2 (result i32)
     (drop
      (br_if $label$2
@@ -1890,6 +1977,62 @@
       )
     )
   )
+  (func $selectify-even-with-condition-side-effects (param $0 i32)
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.get $0)
+        (i32.const 2)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    ))
+  )
+  (func $no-selectify-when-arm-side-effects (param $0 i32)
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.get $0)
+        (i32.const 2)
+      )
+      (local.tee $0 (i32.const 1))
+      (i32.const 0)
+    ))
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.get $0)
+        (i32.const 2)
+      )
+      (i32.const 0)
+      (local.tee $0 (i32.const 1))
+    ))
+  )
+  (func $no-selectify-when-effects-invalidate (param $0 i32)
+    (local $1 i32)
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.tee $0 (i32.const 3))
+        (i32.const 2)
+      )
+      (local.get $0)
+      (i32.const 0)
+    ))
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.tee $0 (i32.const 3))
+        (i32.const 2)
+      )
+      (i32.const 0)
+      (local.get $0)
+    ))
+    ;; but different locals do not invalidate
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.tee $0 (i32.const 3))
+        (i32.const 2)
+      )
+      (i32.const 0)
+      (local.get $1)
+    ))
+  )
   (func $if-one-side (result i32)
    (local $x i32)
    (local.set $x
@@ -2126,6 +2269,17 @@
      (i32.const 6)
     )
    )
+  )
+ )
+ (func $no-selectify-if-condition-unreachable (result i32)
+  (select
+   (if (result i32)
+    (unreachable)
+    (i32.const 3)
+    (i32.const 4)
+   )
+   (i32.const 1)
+   (i32.const 2)
   )
  )
 )

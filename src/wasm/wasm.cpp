@@ -16,7 +16,6 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
-#include "wasm-printing.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -32,6 +31,7 @@ namespace UserSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
+const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
 const char* TargetFeatures = "target_features";
@@ -47,10 +47,11 @@ const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
+const char* TypedFunctionReferencesFeature = "typed-function-references";
+const char* RelaxedSIMDFeature = "relaxed-simd";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name WASM_CALL_CTORS("__wasm_call_ctors");
 Name MEMORY_BASE("__memory_base");
 Name TABLE_BASE("__table_base");
 Name STACK_POINTER("__stack_pointer");
@@ -59,6 +60,7 @@ Name SET_TEMP_RET0("setTempRet0");
 Name NEW_SIZE("newSize");
 Name MODULE("module");
 Name START("start");
+Name GLOBAL("global");
 Name FUNC("func");
 Name PARAM("param");
 Name RESULT("result");
@@ -69,8 +71,13 @@ Name EXPORT("export");
 Name IMPORT("import");
 Name TABLE("table");
 Name ELEM("elem");
+Name DECLARE("declare");
+Name OFFSET("offset");
+Name ITEM("item");
 Name LOCAL("local");
 Name TYPE("type");
+Name REF("ref");
+Name NULL_("null");
 Name CALL("call");
 Name CALL_INDIRECT("call_indirect");
 Name BLOCK("block");
@@ -85,160 +92,30 @@ Name CASE("case");
 Name BR("br");
 Name FUNCREF("funcref");
 Name FAKE_RETURN("fake_return_waka123");
+Name DELEGATE_CALLER_TARGET("delegate_caller_target_waka123");
 Name MUT("mut");
 Name SPECTEST("spectest");
 Name PRINT("print");
 Name EXIT("exit");
 Name SHARED("shared");
-Name EVENT("event");
-Name ATTR("attr");
-Name ASSIGN_GOT_ENTRIES("__assign_got_enties");
+Name TAG("tag");
 
 // Expressions
 
-void Expression::dump() {
-  WasmPrinter::printExpression(this,
-                               std::cerr,
-                               /*minify=*/false,
-                               /*full=*/true);
-}
+void Expression::dump() { std::cout << *this << '\n'; }
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
-    case Expression::Id::InvalidId:
-      WASM_UNREACHABLE("invalid expr id");
-    case Expression::Id::BlockId:
-      return "block";
-    case Expression::Id::IfId:
-      return "if";
-    case Expression::Id::LoopId:
-      return "loop";
-    case Expression::Id::BreakId:
-      return "break";
-    case Expression::Id::SwitchId:
-      return "switch";
-    case Expression::Id::CallId:
-      return "call";
-    case Expression::Id::CallIndirectId:
-      return "call_indirect";
-    case Expression::Id::LocalGetId:
-      return "local.get";
-    case Expression::Id::LocalSetId:
-      return "local.set";
-    case Expression::Id::GlobalGetId:
-      return "global.get";
-    case Expression::Id::GlobalSetId:
-      return "global.set";
-    case Expression::Id::LoadId:
-      return "load";
-    case Expression::Id::StoreId:
-      return "store";
-    case Expression::Id::ConstId:
-      return "const";
-    case Expression::Id::UnaryId:
-      return "unary";
-    case Expression::Id::BinaryId:
-      return "binary";
-    case Expression::Id::SelectId:
-      return "select";
-    case Expression::Id::DropId:
-      return "drop";
-    case Expression::Id::ReturnId:
-      return "return";
-    case Expression::Id::MemorySizeId:
-      return "memory.size";
-    case Expression::Id::MemoryGrowId:
-      return "memory.grow";
-    case Expression::Id::NopId:
-      return "nop";
-    case Expression::Id::UnreachableId:
-      return "unreachable";
-    case Expression::Id::AtomicCmpxchgId:
-      return "atomic_cmpxchg";
-    case Expression::Id::AtomicRMWId:
-      return "atomic_rmw";
-    case Expression::Id::AtomicWaitId:
-      return "atomic_wait";
-    case Expression::Id::AtomicNotifyId:
-      return "atomic_notify";
-    case Expression::Id::AtomicFenceId:
-      return "atomic_fence";
-    case Expression::Id::SIMDExtractId:
-      return "simd_extract";
-    case Expression::Id::SIMDReplaceId:
-      return "simd_replace";
-    case Expression::Id::SIMDShuffleId:
-      return "simd_shuffle";
-    case Expression::Id::SIMDTernaryId:
-      return "simd_ternary";
-    case Expression::Id::SIMDShiftId:
-      return "simd_shift";
-    case Expression::Id::SIMDLoadId:
-      return "simd_load";
-    case Expression::Id::SIMDLoadStoreLaneId:
-      return "simd_load_store_lane";
-    case Expression::Id::MemoryInitId:
-      return "memory_init";
-    case Expression::Id::DataDropId:
-      return "data_drop";
-    case Expression::Id::MemoryCopyId:
-      return "memory_copy";
-    case Expression::Id::MemoryFillId:
-      return "memory_fill";
-    case Expression::Id::PopId:
-      return "pop";
-    case Expression::Id::RefNullId:
-      return "ref.null";
-    case Expression::Id::RefIsNullId:
-      return "ref.is_null";
-    case Expression::Id::RefFuncId:
-      return "ref.func";
-    case Expression::Id::RefEqId:
-      return "ref.eq";
-    case Expression::Id::TryId:
-      return "try";
-    case Expression::Id::ThrowId:
-      return "throw";
-    case Expression::Id::RethrowId:
-      return "rethrow";
-    case Expression::Id::BrOnExnId:
-      return "br_on_exn";
-    case Expression::Id::TupleMakeId:
-      return "tuple.make";
-    case Expression::Id::TupleExtractId:
-      return "tuple.extract";
-    case Expression::Id::I31NewId:
-      return "i31.new";
-    case Expression::Id::I31GetId:
-      return "i31.get";
-    case Expression::Id::RefTestId:
-      return "ref.test";
-    case Expression::Id::RefCastId:
-      return "ref.cast";
-    case Expression::Id::BrOnCastId:
-      return "br_on_cast";
-    case Expression::Id::RttCanonId:
-      return "rtt.canon";
-    case Expression::Id::RttSubId:
-      return "rtt.sub";
-    case Expression::Id::StructNewId:
-      return "struct.new";
-    case Expression::Id::StructGetId:
-      return "struct.get";
-    case Expression::Id::StructSetId:
-      return "struct.set";
-    case Expression::Id::ArrayNewId:
-      return "array.new";
-    case Expression::Id::ArrayGetId:
-      return "array.get";
-    case Expression::Id::ArraySetId:
-      return "array.set";
-    case Expression::Id::ArrayLenId:
-      return "array.len";
-    case Expression::Id::NumExpressionIds:
-      WASM_UNREACHABLE("invalid expr id");
+
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  case Expression::Id::CLASS_TO_VISIT##Id:                                     \
+    return #CLASS_TO_VISIT;
+
+#include "wasm-delegations.def"
+
+    default:
+      WASM_UNREACHABLE("invalid id");
   }
-  WASM_UNREACHABLE("invalid expr id");
 }
 
 Literal getLiteralFromConstExpression(Expression* curr) {
@@ -262,72 +139,12 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
   }
 }
 
-// core AST type checking
-
-struct TypeSeeker : public PostWalker<TypeSeeker> {
-  Expression* target; // look for this one
-  Name targetName;
-  std::vector<Type> types;
-
-  TypeSeeker(Expression* target, Name targetName)
-    : target(target), targetName(targetName) {
-    Expression* temp = target;
-    walk(temp);
-  }
-
-  void visitBreak(Break* curr) {
-    if (curr->name == targetName) {
-      types.push_back(curr->value ? curr->value->type : Type::none);
-    }
-  }
-
-  void visitSwitch(Switch* curr) {
-    for (auto name : curr->targets) {
-      if (name == targetName) {
-        types.push_back(curr->value ? curr->value->type : Type::none);
-      }
-    }
-    if (curr->default_ == targetName) {
-      types.push_back(curr->value ? curr->value->type : Type::none);
-    }
-  }
-
-  void visitBrOnExn(BrOnExn* curr) {
-    if (curr->name == targetName) {
-      types.push_back(curr->sent);
-    }
-  }
-
-  void visitBlock(Block* curr) {
-    if (curr == target) {
-      if (curr->list.size() > 0) {
-        types.push_back(curr->list.back()->type);
-      } else {
-        types.push_back(Type::none);
-      }
-    } else if (curr->name == targetName) {
-      // ignore all breaks til now, they were captured by someone with the same
-      // name
-      types.clear();
-    }
-  }
-
-  void visitLoop(Loop* curr) {
-    if (curr == target) {
-      types.push_back(curr->body->type);
-    } else if (curr->name == targetName) {
-      // ignore all breaks til now, they were captured by someone with the same
-      // name
-      types.clear();
-    }
-  }
-};
-
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
-static void handleUnreachable(Block* block,
-                              bool breakabilityKnown = false,
-                              bool hasBreak = false) {
+
+static void
+handleUnreachable(Block* block,
+                  Block::Breakability breakability = Block::Unknown) {
   if (block->type == Type::unreachable) {
     return; // nothing to do
   }
@@ -345,10 +162,12 @@ static void handleUnreachable(Block* block,
     if (child->type == Type::unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a
       // break
-      if (!breakabilityKnown) {
-        hasBreak = BranchUtils::BranchSeeker::has(block, block->name);
+      if (breakability == Block::Unknown) {
+        breakability = BranchUtils::BranchSeeker::has(block, block->name)
+                         ? Block::HasBreak
+                         : Block::NoBreak;
       }
-      if (!hasBreak) {
+      if (breakability == Block::NoBreak) {
         block->type = Type::unreachable;
       }
       return;
@@ -357,41 +176,34 @@ static void handleUnreachable(Block* block,
 }
 
 void Block::finalize() {
+  if (list.size() == 0) {
+    type = Type::none;
+    return;
+  }
+  // The default type is what is at the end. Next we need to see if breaks and/
+  // or unreachabitily change that.
+  type = list.back()->type;
   if (!name.is()) {
-    if (list.size() > 0) {
-      // nothing branches here, so this is easy
-      // normally the type is the type of the final child
-      type = list.back()->type;
-      // and even if we have an unreachable child somewhere,
-      // we still mark ourselves as having that type,
-      // (block (result i32)
-      //  (return)
-      //  (i32.const 10)
-      // )
-      if (type.isConcrete()) {
-        return;
-      }
-      // if we are unreachable, we are done
-      if (type == Type::unreachable) {
-        return;
-      }
-      // we may still be unreachable if we have an unreachable
-      // child
-      for (auto* child : list) {
-        if (child->type == Type::unreachable) {
-          type = Type::unreachable;
-          return;
-        }
-      }
-    } else {
-      type = Type::none;
-    }
+    // Nothing branches here, so this is easy.
+    handleUnreachable(this, NoBreak);
     return;
   }
 
-  TypeSeeker seeker(this, this->name);
-  type = Type::mergeTypes(seeker.types);
-  handleUnreachable(this);
+  // The default type is according to the value that flows out.
+  BranchUtils::BranchSeeker seeker(this->name);
+  Expression* temp = this;
+  seeker.walk(temp);
+  if (seeker.found) {
+    // Calculate the supertype of the branch types and the flowed-out type. If
+    // there is no supertype among the available types, assume the current type
+    // is already correct. TODO: calculate proper LUBs to compute a new correct
+    // type in this situation.
+    seeker.types.insert(type);
+    type = Type::getLeastUpperBound(seeker.types);
+  } else {
+    // There are no branches, so this block may be unreachable.
+    handleUnreachable(this, NoBreak);
+  }
 }
 
 void Block::finalize(Type type_) {
@@ -401,10 +213,10 @@ void Block::finalize(Type type_) {
   }
 }
 
-void Block::finalize(Type type_, bool hasBreak) {
+void Block::finalize(Type type_, Breakability breakability) {
   type = type_;
   if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this, true, hasBreak);
+    handleUnreachable(this, breakability);
   }
 }
 
@@ -425,7 +237,7 @@ void If::finalize() {
   // (if (result i32)
   //  (unreachable)
   //  (i32.const 10)
-  //  (i32.const 20
+  //  (i32.const 20)
   // )
   // otherwise, if the condition is unreachable, so is the if
   if (type == Type::none && condition->type == Type::unreachable) {
@@ -458,13 +270,16 @@ void Break::finalize() {
 
 void Switch::finalize() { type = Type::unreachable; }
 
-template<typename T> void handleUnreachableOperands(T* curr) {
+// Sets the type to unreachable if there is an unreachable operand. Returns true
+// if so.
+template<typename T> bool handleUnreachableOperands(T* curr) {
   for (auto* child : curr->operands) {
     if (child->type == Type::unreachable) {
       curr->type = Type::unreachable;
-      break;
+      return true;
     }
   }
+  return false;
 }
 
 void Call::finalize() {
@@ -483,6 +298,30 @@ void CallIndirect::finalize() {
   if (target->type == Type::unreachable) {
     type = Type::unreachable;
   }
+}
+
+HeapType CallIndirect::getHeapType(Module* module) {
+  auto heapType = HeapType(sig);
+  // See comment in wasm.h
+  if (module) {
+    // The table may not yet exist if the wasm module is still being
+    // constructed. This should perhaps be an error, but as this is a hack for
+    // the time being, handle this the same as the case where module is null.
+    // Note: table_ (with underscore) is needed as |table| is a field on |this|.
+    if (auto* table_ = module->getTableOrNull(table)) {
+      // The wasm spec may allow more things eventually, and if so we'd need to
+      // add more checking here.
+      assert(table_->type.isRef());
+      auto tableHeapType = table_->type.getHeapType();
+      if (tableHeapType.isSignature()) {
+        auto tableSig = tableHeapType.getSignature();
+        if (sig == tableSig) {
+          heapType = tableHeapType;
+        }
+      }
+    }
+  }
+  return heapType;
 }
 
 bool LocalSet::isTee() const { return type != Type::none; }
@@ -656,21 +495,21 @@ void SIMDLoad::finalize() {
 
 Index SIMDLoad::getMemBytes() {
   switch (op) {
-    case LoadSplatVec8x16:
+    case Load8SplatVec128:
       return 1;
-    case LoadSplatVec16x8:
+    case Load16SplatVec128:
       return 2;
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       return 4;
-    case LoadSplatVec64x2:
-    case LoadExtSVec8x8ToVecI16x8:
-    case LoadExtUVec8x8ToVecI16x8:
-    case LoadExtSVec16x4ToVecI32x4:
-    case LoadExtUVec16x4ToVecI32x4:
-    case LoadExtSVec32x2ToVecI64x2:
-    case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64SplatVec128:
+    case Load8x8SVec128:
+    case Load8x8UVec128:
+    case Load16x4SVec128:
+    case Load16x4UVec128:
+    case Load32x2SVec128:
+    case Load32x2UVec128:
+    case Load64ZeroVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -686,17 +525,17 @@ void SIMDLoadStoreLane::finalize() {
 
 Index SIMDLoadStoreLane::getMemBytes() {
   switch (op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       return 1;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       return 2;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       return 4;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -704,15 +543,15 @@ Index SIMDLoadStoreLane::getMemBytes() {
 
 bool SIMDLoadStoreLane::isStore() {
   switch (op) {
-    case StoreLaneVec8x16:
-    case StoreLaneVec16x8:
-    case StoreLaneVec32x4:
-    case StoreLaneVec64x2:
+    case Store8LaneVec128:
+    case Store16LaneVec128:
+    case Store32LaneVec128:
+    case Store64LaneVec128:
       return true;
-    case LoadLaneVec16x8:
-    case LoadLaneVec32x4:
-    case LoadLaneVec64x2:
-    case LoadLaneVec8x16:
+    case Load16LaneVec128:
+    case Load32LaneVec128:
+    case Load64LaneVec128:
+    case Load8LaneVec128:
       return false;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -826,6 +665,8 @@ void Unary::finalize() {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case AbsVecI64x2:
+    case PopcntVecI8x16:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -844,28 +685,35 @@ void Unary::finalize() {
     case FloorVecF64x2:
     case TruncVecF64x2:
     case NearestVecF64x2:
+    case ExtAddPairwiseSVecI8x16ToI16x8:
+    case ExtAddPairwiseUVecI8x16ToI16x8:
+    case ExtAddPairwiseSVecI16x8ToI32x4:
+    case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
-    case TruncSatSVecF64x2ToVecI64x2:
-    case TruncSatUVecF64x2ToVecI64x2:
     case ConvertSVecI32x4ToVecF32x4:
     case ConvertUVecI32x4ToVecF32x4:
-    case ConvertSVecI64x2ToVecF64x2:
-    case ConvertUVecI64x2ToVecF64x2:
-    case WidenLowSVecI8x16ToVecI16x8:
-    case WidenHighSVecI8x16ToVecI16x8:
-    case WidenLowUVecI8x16ToVecI16x8:
-    case WidenHighUVecI8x16ToVecI16x8:
-    case WidenLowSVecI16x8ToVecI32x4:
-    case WidenHighSVecI16x8ToVecI32x4:
-    case WidenLowUVecI16x8ToVecI32x4:
-    case WidenHighUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI8x16ToVecI16x8:
+    case ExtendHighSVecI8x16ToVecI16x8:
+    case ExtendLowUVecI8x16ToVecI16x8:
+    case ExtendHighUVecI8x16ToVecI16x8:
+    case ExtendLowSVecI16x8ToVecI32x4:
+    case ExtendHighSVecI16x8ToVecI32x4:
+    case ExtendLowUVecI16x8ToVecI32x4:
+    case ExtendHighUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI32x4ToVecI64x2:
+    case ExtendHighSVecI32x4ToVecI64x2:
+    case ExtendLowUVecI32x4ToVecI64x2:
+    case ExtendHighUVecI32x4ToVecI64x2:
+    case ConvertLowSVecI32x4ToVecF64x2:
+    case ConvertLowUVecI32x4ToVecF64x2:
+    case TruncSatZeroSVecF64x2ToVecI32x4:
+    case TruncSatZeroUVecF64x2ToVecI32x4:
+    case DemoteZeroVecF64x2ToVecF32x4:
+    case PromoteLowVecF32x4ToVecF64x2:
       type = Type::v128;
       break;
-    case AnyTrueVecI8x16:
-    case AnyTrueVecI16x8:
-    case AnyTrueVecI32x4:
-    case AnyTrueVecI64x2:
+    case AnyTrueVec128:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
@@ -873,6 +721,7 @@ void Unary::finalize() {
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
+    case BitmaskVecI64x2:
       type = Type::i32;
       break;
 
@@ -964,26 +813,26 @@ void MemoryGrow::finalize() {
   }
 }
 
-void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
+void RefNull::finalize(HeapType heapType) { type = Type(heapType, Nullable); }
 
-void RefNull::finalize(Type type_) {
-  assert(type_ == Type::unreachable || type_.isNullable());
-  type = type_;
-}
+void RefNull::finalize(Type type_) { type = type_; }
 
-void RefNull::finalize() {
-  assert(type == Type::unreachable || type.isNullable());
-}
+void RefNull::finalize() {}
 
-void RefIsNull::finalize() {
+void RefIs::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
-    return;
+  } else {
+    type = Type::i32;
   }
-  type = Type::i32;
 }
 
-void RefFunc::finalize() { type = Type::funcref; }
+void RefFunc::finalize() {
+  // No-op. We assume that the full proper typed function type has been applied
+  // previously.
+}
+
+void RefFunc::finalize(Type type_) { type = type_; }
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
@@ -993,14 +842,51 @@ void RefEq::finalize() {
   }
 }
 
+void TableGet::finalize() {
+  if (index->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+  // Otherwise, the type should have been set already.
+}
+
+void TableSet::finalize() {
+  if (index->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void TableSize::finalize() {
+  // Nothing to do - the type must have been set already during construction.
+}
+
+void TableGrow::finalize() {
+  if (delta->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 void Try::finalize() {
-  type = Type::getLeastUpperBound(body->type, catchBody->type);
+  // If none of the component bodies' type is a supertype of the others, assume
+  // the current type is already correct. TODO: Calculate a proper LUB.
+  std::unordered_set<Type> types{body->type};
+  types.reserve(catchBodies.size());
+  for (auto catchBody : catchBodies) {
+    types.insert(catchBody->type);
+  }
+  type = Type::getLeastUpperBound(types);
 }
 
 void Try::finalize(Type type_) {
   type = type_;
-  if (type == Type::none && body->type == Type::unreachable &&
-      catchBody->type == Type::unreachable) {
+  bool allUnreachable = body->type == Type::unreachable;
+  for (auto catchBody : catchBodies) {
+    allUnreachable &= catchBody->type == Type::unreachable;
+  }
+  if (type == Type::none && allUnreachable) {
     type = Type::unreachable;
   }
 }
@@ -1009,16 +895,9 @@ void Throw::finalize() { type = Type::unreachable; }
 
 void Rethrow::finalize() { type = Type::unreachable; }
 
-void BrOnExn::finalize() {
-  if (exnref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::exnref;
-  }
-}
-
 void TupleMake::finalize() {
   std::vector<Type> types;
+  types.reserve(operands.size());
   for (auto* op : operands) {
     if (op->type == Type::unreachable) {
       type = Type::unreachable;
@@ -1033,6 +912,7 @@ void TupleExtract::finalize() {
   if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    assert(index < tuple->type.size());
     type = tuple->type[index];
   }
 }
@@ -1053,27 +933,273 @@ void I31Get::finalize() {
   }
 }
 
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
-// TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
+void CallRef::finalize() {
+  handleUnreachableOperands(this);
+  if (isReturn) {
+    type = Type::unreachable;
+  }
+  if (target->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
 
-size_t Function::getNumParams() { return sig.params.size(); }
+void CallRef::finalize(Type type_) {
+  type = type_;
+  finalize();
+}
+
+void RefTest::finalize() {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+HeapType RefTest::getIntendedType() {
+  return rtt ? rtt->type.getHeapType() : intendedType;
+}
+
+void RefCast::finalize() {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
+    type = Type::unreachable;
+  } else {
+    // The output of ref.cast may be null if the input is null (in that case the
+    // null is passed through).
+    type = Type(getIntendedType(), ref->type.getNullability());
+  }
+}
+
+HeapType RefCast::getIntendedType() {
+  return rtt ? rtt->type.getHeapType() : intendedType;
+}
+
+void BrOn::finalize() {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
+    type = Type::unreachable;
+    return;
+  }
+  switch (op) {
+    case BrOnNull:
+      // If we do not branch, we flow out the existing value as non-null.
+      type = Type(ref->type.getHeapType(), NonNullable);
+      break;
+    case BrOnNonNull:
+      // If we do not branch, we flow out nothing (the spec could also have had
+      // us flow out the null, but it does not).
+      type = Type::none;
+      break;
+    case BrOnCast:
+    case BrOnFunc:
+    case BrOnData:
+    case BrOnI31:
+      // If we do not branch, we return the input in this case.
+      type = ref->type;
+      break;
+    case BrOnCastFail:
+      // If we do not branch, the cast worked, and we have something of the cast
+      // type.
+      type = Type(getIntendedType(), NonNullable);
+      break;
+    case BrOnNonFunc:
+      type = Type(HeapType::func, NonNullable);
+      break;
+    case BrOnNonData:
+      type = Type(HeapType::data, NonNullable);
+      break;
+    case BrOnNonI31:
+      type = Type(HeapType::i31, NonNullable);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid br_on_*");
+  }
+}
+
+HeapType BrOn::getIntendedType() {
+  assert(op == BrOnCast || op == BrOnCastFail);
+  return rtt ? rtt->type.getHeapType() : intendedType;
+}
+
+Type BrOn::getSentType() {
+  switch (op) {
+    case BrOnNull:
+      // BrOnNull does not send a value on the branch.
+      return Type::none;
+    case BrOnNonNull:
+      // If the input is unreachable, the branch is not taken, and there is no
+      // valid type we can report as being sent. Report it as unreachable.
+      if (ref->type == Type::unreachable) {
+        return Type::unreachable;
+      }
+      // BrOnNonNull sends the non-nullable type on the branch.
+      return Type(ref->type.getHeapType(), NonNullable);
+    case BrOnCast:
+      if (ref->type == Type::unreachable) {
+        return Type::unreachable;
+      }
+      return Type(getIntendedType(), NonNullable);
+    case BrOnFunc:
+      return Type::funcref;
+    case BrOnData:
+      return Type::dataref;
+    case BrOnI31:
+      return Type::i31ref;
+    case BrOnCastFail:
+    case BrOnNonFunc:
+    case BrOnNonData:
+    case BrOnNonI31:
+      return ref->type;
+    default:
+      WASM_UNREACHABLE("invalid br_on_*");
+  }
+}
+
+void RttCanon::finalize() {
+  // Nothing to do - the type must have been set already during construction.
+}
+
+void RttSub::finalize() {
+  if (parent->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+  // Else nothing to do - the type must have been set already during
+  // construction.
+}
+
+void StructNew::finalize() {
+  if (rtt && rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+  // A dynamic StructNew infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
+}
+
+void StructGet::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
+void StructSet::finalize() {
+  if (ref->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayNew::finalize() {
+  if ((rtt && rtt->type == Type::unreachable) ||
+      size->type == Type::unreachable ||
+      (init && init->type == Type::unreachable)) {
+    type = Type::unreachable;
+    return;
+  }
+  // A dynamic ArrayNew infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
+}
+
+void ArrayInit::finalize() {
+  if (rtt && rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  for (auto* value : values) {
+    if (value->type == Type::unreachable) {
+      type = Type::unreachable;
+      return;
+    }
+  }
+  // A dynamic ArrayInit infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
+}
+
+void ArrayGet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArraySet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayLen::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void ArrayCopy::finalize() {
+  if (srcRef->type == Type::unreachable ||
+      srcIndex->type == Type::unreachable ||
+      destRef->type == Type::unreachable ||
+      destIndex->type == Type::unreachable ||
+      length->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void RefAs::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  switch (op) {
+    case RefAsNonNull:
+      type = Type(value->type.getHeapType(), NonNullable);
+      break;
+    case RefAsFunc:
+      type = Type(HeapType::func, NonNullable);
+      break;
+    case RefAsData:
+      type = Type::dataref;
+      break;
+    case RefAsI31:
+      type = Type::i31ref;
+      break;
+    default:
+      WASM_UNREACHABLE("invalid ref.as_*");
+  }
+}
+
+size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }
 
-size_t Function::getNumLocals() { return sig.params.size() + vars.size(); }
+size_t Function::getNumLocals() { return getParams().size() + vars.size(); }
 
 bool Function::isParam(Index index) {
-  size_t size = sig.params.size();
+  size_t size = getParams().size();
   assert(index < size + vars.size());
   return index < size;
 }
@@ -1120,12 +1246,12 @@ Index Function::getLocalIndex(Name name) {
   return iter->second;
 }
 
-Index Function::getVarIndexBase() { return sig.params.size(); }
+Index Function::getVarIndexBase() { return getParams().size(); }
 
 Type Function::getLocalType(Index index) {
-  auto numParams = sig.params.size();
+  auto numParams = getParams().size();
   if (index < numParams) {
-    return sig.params[index];
+    return getParams()[index];
   } else if (isVar(index)) {
     return vars[index - numParams];
   } else {
@@ -1160,12 +1286,20 @@ Function* Module::getFunction(Name name) {
   return getModuleElement(functionsMap, name, "getFunction");
 }
 
+Table* Module::getTable(Name name) {
+  return getModuleElement(tablesMap, name, "getTable");
+}
+
+ElementSegment* Module::getElementSegment(Name name) {
+  return getModuleElement(elementSegmentsMap, name, "getElementSegment");
+}
+
 Global* Module::getGlobal(Name name) {
   return getModuleElement(globalsMap, name, "getGlobal");
 }
 
-Event* Module::getEvent(Name name) {
-  return getModuleElement(eventsMap, name, "getEvent");
+Tag* Module::getTag(Name name) {
+  return getModuleElement(tagsMap, name, "getTag");
 }
 
 template<typename Map>
@@ -1185,12 +1319,20 @@ Function* Module::getFunctionOrNull(Name name) {
   return getModuleElementOrNull(functionsMap, name);
 }
 
+Table* Module::getTableOrNull(Name name) {
+  return getModuleElementOrNull(tablesMap, name);
+}
+
+ElementSegment* Module::getElementSegmentOrNull(Name name) {
+  return getModuleElementOrNull(elementSegmentsMap, name);
+}
+
 Global* Module::getGlobalOrNull(Name name) {
   return getModuleElementOrNull(globalsMap, name);
 }
 
-Event* Module::getEventOrNull(Name name) {
-  return getModuleElementOrNull(eventsMap, name);
+Tag* Module::getTagOrNull(Name name) {
+  return getModuleElementOrNull(tagsMap, name);
 }
 
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
@@ -1237,25 +1379,35 @@ Global* Module::addGlobal(Global* curr) {
   return addModuleElement(globals, globalsMap, curr, "addGlobal");
 }
 
-Event* Module::addEvent(Event* curr) {
-  return addModuleElement(events, eventsMap, curr, "addEvent");
+Tag* Module::addTag(Tag* curr) {
+  return addModuleElement(tags, tagsMap, curr, "addTag");
 }
 
-Export* Module::addExport(std::unique_ptr<Export> curr) {
+Export* Module::addExport(std::unique_ptr<Export>&& curr) {
   return addModuleElement(exports, exportsMap, std::move(curr), "addExport");
 }
 
-Function* Module::addFunction(std::unique_ptr<Function> curr) {
+Function* Module::addFunction(std::unique_ptr<Function>&& curr) {
   return addModuleElement(
     functions, functionsMap, std::move(curr), "addFunction");
 }
 
-Global* Module::addGlobal(std::unique_ptr<Global> curr) {
+Table* Module::addTable(std::unique_ptr<Table>&& curr) {
+  return addModuleElement(tables, tablesMap, std::move(curr), "addTable");
+}
+
+ElementSegment*
+Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
+  return addModuleElement(
+    elementSegments, elementSegmentsMap, std::move(curr), "addElementSegment");
+}
+
+Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {
   return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
 }
 
-Event* Module::addEvent(std::unique_ptr<Event> curr) {
-  return addModuleElement(events, eventsMap, std::move(curr), "addEvent");
+Tag* Module::addTag(std::unique_ptr<Tag>&& curr) {
+  return addModuleElement(tags, tagsMap, std::move(curr), "addTag");
 }
 
 void Module::addStart(const Name& s) { start = s; }
@@ -1277,12 +1429,16 @@ void Module::removeExport(Name name) {
 void Module::removeFunction(Name name) {
   removeModuleElement(functions, functionsMap, name);
 }
+void Module::removeTable(Name name) {
+  removeModuleElement(tables, tablesMap, name);
+}
+void Module::removeElementSegment(Name name) {
+  removeModuleElement(elementSegments, elementSegmentsMap, name);
+}
 void Module::removeGlobal(Name name) {
   removeModuleElement(globals, globalsMap, name);
 }
-void Module::removeEvent(Name name) {
-  removeModuleElement(events, eventsMap, name);
-}
+void Module::removeTag(Name name) { removeModuleElement(tags, tagsMap, name); }
 
 template<typename Vector, typename Map, typename Elem>
 void removeModuleElements(Vector& v,
@@ -1306,11 +1462,17 @@ void Module::removeExports(std::function<bool(Export*)> pred) {
 void Module::removeFunctions(std::function<bool(Function*)> pred) {
   removeModuleElements(functions, functionsMap, pred);
 }
+void Module::removeTables(std::function<bool(Table*)> pred) {
+  removeModuleElements(tables, tablesMap, pred);
+}
+void Module::removeElementSegments(std::function<bool(ElementSegment*)> pred) {
+  removeModuleElements(elementSegments, elementSegmentsMap, pred);
+}
 void Module::removeGlobals(std::function<bool(Global*)> pred) {
   removeModuleElements(globals, globalsMap, pred);
 }
-void Module::removeEvents(std::function<bool(Event*)> pred) {
-  removeModuleElements(events, eventsMap, pred);
+void Module::removeTags(std::function<bool(Tag*)> pred) {
+  removeModuleElements(tags, tagsMap, pred);
 }
 
 void Module::updateMaps() {
@@ -1322,13 +1484,21 @@ void Module::updateMaps() {
   for (auto& curr : exports) {
     exportsMap[curr->name] = curr.get();
   }
+  tablesMap.clear();
+  for (auto& curr : tables) {
+    tablesMap[curr->name] = curr.get();
+  }
+  elementSegmentsMap.clear();
+  for (auto& curr : elementSegments) {
+    elementSegmentsMap[curr->name] = curr.get();
+  }
   globalsMap.clear();
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
-  eventsMap.clear();
-  for (auto& curr : events) {
-    eventsMap[curr->name] = curr.get();
+  tagsMap.clear();
+  for (auto& curr : tags) {
+    tagsMap[curr->name] = curr.get();
   }
 }
 

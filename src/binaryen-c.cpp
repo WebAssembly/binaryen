@@ -29,7 +29,6 @@
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -72,13 +71,14 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
       assert(x.isNull() && "unexpected non-null reference type literal");
       break;
     case Type::i31ref:
       WASM_UNREACHABLE("TODO: i31ref");
+    case Type::dataref:
+      WASM_UNREACHABLE("TODO: dataref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -101,12 +101,13 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::funcref:
       return Literal::makeFunc(x.func);
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
       return Literal::makeNull(Type(x.type));
     case Type::i31ref:
       WASM_UNREACHABLE("TODO: i31ref");
+    case Type::dataref:
+      WASM_UNREACHABLE("TODO: dataref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -140,10 +141,10 @@ BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
-BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
 BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
+BinaryenType BinaryenTypeDataref(void) { return Type::dataref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
@@ -178,151 +179,13 @@ WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 BinaryenExpressionId BinaryenInvalidId(void) {
   return Expression::Id::InvalidId;
 }
-BinaryenExpressionId BinaryenBlockId(void) { return Expression::Id::BlockId; }
-BinaryenExpressionId BinaryenIfId(void) { return Expression::Id::IfId; }
-BinaryenExpressionId BinaryenLoopId(void) { return Expression::Id::LoopId; }
-BinaryenExpressionId BinaryenBreakId(void) { return Expression::Id::BreakId; }
-BinaryenExpressionId BinaryenSwitchId(void) { return Expression::Id::SwitchId; }
-BinaryenExpressionId BinaryenCallId(void) { return Expression::Id::CallId; }
-BinaryenExpressionId BinaryenCallIndirectId(void) {
-  return Expression::Id::CallIndirectId;
-}
-BinaryenExpressionId BinaryenLocalGetId(void) {
-  return Expression::Id::LocalGetId;
-}
-BinaryenExpressionId BinaryenLocalSetId(void) {
-  return Expression::Id::LocalSetId;
-}
-BinaryenExpressionId BinaryenGlobalGetId(void) {
-  return Expression::Id::GlobalGetId;
-}
-BinaryenExpressionId BinaryenGlobalSetId(void) {
-  return Expression::Id::GlobalSetId;
-}
-BinaryenExpressionId BinaryenLoadId(void) { return Expression::Id::LoadId; }
-BinaryenExpressionId BinaryenStoreId(void) { return Expression::Id::StoreId; }
-BinaryenExpressionId BinaryenConstId(void) { return Expression::Id::ConstId; }
-BinaryenExpressionId BinaryenUnaryId(void) { return Expression::Id::UnaryId; }
-BinaryenExpressionId BinaryenBinaryId(void) { return Expression::Id::BinaryId; }
-BinaryenExpressionId BinaryenSelectId(void) { return Expression::Id::SelectId; }
-BinaryenExpressionId BinaryenDropId(void) { return Expression::Id::DropId; }
-BinaryenExpressionId BinaryenReturnId(void) { return Expression::Id::ReturnId; }
-BinaryenExpressionId BinaryenMemorySizeId(void) {
-  return Expression::Id::MemorySizeId;
-}
-BinaryenExpressionId BinaryenMemoryGrowId(void) {
-  return Expression::Id::MemoryGrowId;
-}
-BinaryenExpressionId BinaryenNopId(void) { return Expression::Id::NopId; }
-BinaryenExpressionId BinaryenUnreachableId(void) {
-  return Expression::Id::UnreachableId;
-}
-BinaryenExpressionId BinaryenAtomicCmpxchgId(void) {
-  return Expression::Id::AtomicCmpxchgId;
-}
-BinaryenExpressionId BinaryenAtomicRMWId(void) {
-  return Expression::Id::AtomicRMWId;
-}
-BinaryenExpressionId BinaryenAtomicWaitId(void) {
-  return Expression::Id::AtomicWaitId;
-}
-BinaryenExpressionId BinaryenAtomicNotifyId(void) {
-  return Expression::Id::AtomicNotifyId;
-}
-BinaryenExpressionId BinaryenAtomicFenceId(void) {
-  return Expression::Id::AtomicFenceId;
-}
-BinaryenExpressionId BinaryenSIMDExtractId(void) {
-  return Expression::Id::SIMDExtractId;
-}
-BinaryenExpressionId BinaryenSIMDReplaceId(void) {
-  return Expression::Id::SIMDReplaceId;
-}
-BinaryenExpressionId BinaryenSIMDShuffleId(void) {
-  return Expression::Id::SIMDShuffleId;
-}
-BinaryenExpressionId BinaryenSIMDTernaryId(void) {
-  return Expression::Id::SIMDTernaryId;
-}
-BinaryenExpressionId BinaryenSIMDShiftId(void) {
-  return Expression::Id::SIMDShiftId;
-}
-BinaryenExpressionId BinaryenSIMDLoadId(void) {
-  return Expression::Id::SIMDLoadId;
-}
-BinaryenExpressionId BinaryenMemoryInitId(void) {
-  return Expression::Id::MemoryInitId;
-}
-BinaryenExpressionId BinaryenDataDropId(void) {
-  return Expression::Id::DataDropId;
-}
-BinaryenExpressionId BinaryenMemoryCopyId(void) {
-  return Expression::Id::MemoryCopyId;
-}
-BinaryenExpressionId BinaryenMemoryFillId(void) {
-  return Expression::Id::MemoryFillId;
-}
-BinaryenExpressionId BinaryenRefNullId(void) {
-  return Expression::Id::RefNullId;
-}
-BinaryenExpressionId BinaryenRefIsNullId(void) {
-  return Expression::Id::RefIsNullId;
-}
-BinaryenExpressionId BinaryenRefFuncId(void) {
-  return Expression::Id::RefFuncId;
-}
-BinaryenExpressionId BinaryenRefEqId(void) { return Expression::Id::RefEqId; }
-BinaryenExpressionId BinaryenTryId(void) { return Expression::Id::TryId; }
-BinaryenExpressionId BinaryenThrowId(void) { return Expression::Id::ThrowId; }
-BinaryenExpressionId BinaryenRethrowId(void) {
-  return Expression::Id::RethrowId;
-}
-BinaryenExpressionId BinaryenBrOnExnId(void) {
-  return Expression::Id::BrOnExnId;
-}
-BinaryenExpressionId BinaryenTupleMakeId(void) {
-  return Expression::Id::TupleMakeId;
-}
-BinaryenExpressionId BinaryenTupleExtractId(void) {
-  return Expression::Id::TupleExtractId;
-}
-BinaryenExpressionId BinaryenPopId(void) { return Expression::Id::PopId; }
-BinaryenExpressionId BinaryenI31NewId(void) { return Expression::Id::I31NewId; }
-BinaryenExpressionId BinaryenI31GetId(void) { return Expression::Id::I31GetId; }
-BinaryenExpressionId BinaryenRefTestId(void) {
-  return Expression::Id::RefTestId;
-}
-BinaryenExpressionId BinaryenRefCastId(void) {
-  return Expression::Id::RefCastId;
-}
-BinaryenExpressionId BinaryenBrOnCastId(void) {
-  return Expression::Id::BrOnCastId;
-}
-BinaryenExpressionId BinaryenRttCanonId(void) {
-  return Expression::Id::RttCanonId;
-}
-BinaryenExpressionId BinaryenRttSubId(void) { return Expression::Id::RttSubId; }
-BinaryenExpressionId BinaryenStructNewId(void) {
-  return Expression::Id::StructNewId;
-}
-BinaryenExpressionId BinaryenStructGetId(void) {
-  return Expression::Id::StructGetId;
-}
-BinaryenExpressionId BinaryenStructSetId(void) {
-  return Expression::Id::StructSetId;
-}
-BinaryenExpressionId BinaryenArrayNewId(void) {
-  return Expression::Id::ArrayNewId;
-}
-BinaryenExpressionId BinaryenArrayGetId(void) {
-  return Expression::Id::ArrayGetId;
-}
-BinaryenExpressionId BinaryenArraySetId(void) {
-  return Expression::Id::ArraySetId;
-}
-BinaryenExpressionId BinaryenArrayLenId(void) {
-  return Expression::Id::ArrayLenId;
-}
+
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  BinaryenExpressionId Binaryen##CLASS_TO_VISIT##Id(void) {                    \
+    return Expression::Id::CLASS_TO_VISIT##Id;                                 \
+  }
+
+#include "wasm-delegations.def"
 
 // External kinds
 
@@ -338,8 +201,8 @@ BinaryenExternalKind BinaryenExternalMemory(void) {
 BinaryenExternalKind BinaryenExternalGlobal(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Global);
 }
-BinaryenExternalKind BinaryenExternalEvent(void) {
-  return static_cast<BinaryenExternalKind>(ExternalKind::Event);
+BinaryenExternalKind BinaryenExternalTag(void) {
+  return static_cast<BinaryenExternalKind>(ExternalKind::Tag);
 }
 
 // Features
@@ -382,6 +245,12 @@ BinaryenFeatures BinaryenFeatureGC(void) {
 }
 BinaryenFeatures BinaryenFeatureMemory64(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Memory64);
+}
+BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::TypedFunctionReferences);
+}
+BinaryenFeatures BinaryenFeatureRelaxedSIMD(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::RelaxedSIMD);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -642,6 +511,12 @@ BinaryenOp BinaryenLeSVecI32x4(void) { return LeSVecI32x4; }
 BinaryenOp BinaryenLeUVecI32x4(void) { return LeUVecI32x4; }
 BinaryenOp BinaryenGeSVecI32x4(void) { return GeSVecI32x4; }
 BinaryenOp BinaryenGeUVecI32x4(void) { return GeUVecI32x4; }
+BinaryenOp BinaryenEqVecI64x2(void) { return EqVecI64x2; }
+BinaryenOp BinaryenNeVecI64x2(void) { return NeVecI64x2; }
+BinaryenOp BinaryenLtSVecI64x2(void) { return LtSVecI64x2; }
+BinaryenOp BinaryenGtSVecI64x2(void) { return GtSVecI64x2; }
+BinaryenOp BinaryenLeSVecI64x2(void) { return LeSVecI64x2; }
+BinaryenOp BinaryenGeSVecI64x2(void) { return GeSVecI64x2; }
 BinaryenOp BinaryenEqVecF32x4(void) { return EqVecF32x4; }
 BinaryenOp BinaryenNeVecF32x4(void) { return NeVecF32x4; }
 BinaryenOp BinaryenLtVecF32x4(void) { return LtVecF32x4; }
@@ -660,11 +535,12 @@ BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
 BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
 BinaryenOp BinaryenAndNotVec128(void) { return AndNotVec128; }
 BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
+BinaryenOp BinaryenAnyTrueVec128(void) { return AnyTrueVec128; }
 BinaryenOp BinaryenAbsVecI8x16(void) { return AbsVecI8x16; }
 BinaryenOp BinaryenNegVecI8x16(void) { return NegVecI8x16; }
-BinaryenOp BinaryenAnyTrueVecI8x16(void) { return AnyTrueVecI8x16; }
 BinaryenOp BinaryenAllTrueVecI8x16(void) { return AllTrueVecI8x16; }
 BinaryenOp BinaryenBitmaskVecI8x16(void) { return BitmaskVecI8x16; }
+BinaryenOp BinaryenPopcntVecI8x16(void) { return PopcntVecI8x16; }
 BinaryenOp BinaryenShlVecI8x16(void) { return ShlVecI8x16; }
 BinaryenOp BinaryenShrSVecI8x16(void) { return ShrSVecI8x16; }
 BinaryenOp BinaryenShrUVecI8x16(void) { return ShrUVecI8x16; }
@@ -674,7 +550,6 @@ BinaryenOp BinaryenAddSatUVecI8x16(void) { return AddSatUVecI8x16; }
 BinaryenOp BinaryenSubVecI8x16(void) { return SubVecI8x16; }
 BinaryenOp BinaryenSubSatSVecI8x16(void) { return SubSatSVecI8x16; }
 BinaryenOp BinaryenSubSatUVecI8x16(void) { return SubSatUVecI8x16; }
-BinaryenOp BinaryenMulVecI8x16(void) { return MulVecI8x16; }
 BinaryenOp BinaryenMinSVecI8x16(void) { return MinSVecI8x16; }
 BinaryenOp BinaryenMinUVecI8x16(void) { return MinUVecI8x16; }
 BinaryenOp BinaryenMaxSVecI8x16(void) { return MaxSVecI8x16; }
@@ -682,7 +557,6 @@ BinaryenOp BinaryenMaxUVecI8x16(void) { return MaxUVecI8x16; }
 BinaryenOp BinaryenAvgrUVecI8x16(void) { return AvgrUVecI8x16; }
 BinaryenOp BinaryenAbsVecI16x8(void) { return AbsVecI16x8; }
 BinaryenOp BinaryenNegVecI16x8(void) { return NegVecI16x8; }
-BinaryenOp BinaryenAnyTrueVecI16x8(void) { return AnyTrueVecI16x8; }
 BinaryenOp BinaryenAllTrueVecI16x8(void) { return AllTrueVecI16x8; }
 BinaryenOp BinaryenBitmaskVecI16x8(void) { return BitmaskVecI16x8; }
 BinaryenOp BinaryenShlVecI16x8(void) { return ShlVecI16x8; }
@@ -700,9 +574,13 @@ BinaryenOp BinaryenMinUVecI16x8(void) { return MinUVecI16x8; }
 BinaryenOp BinaryenMaxSVecI16x8(void) { return MaxSVecI16x8; }
 BinaryenOp BinaryenMaxUVecI16x8(void) { return MaxUVecI16x8; }
 BinaryenOp BinaryenAvgrUVecI16x8(void) { return AvgrUVecI16x8; }
+BinaryenOp BinaryenQ15MulrSatSVecI16x8(void) { return Q15MulrSatSVecI16x8; }
+BinaryenOp BinaryenExtMulLowSVecI16x8(void) { return ExtMulLowSVecI16x8; }
+BinaryenOp BinaryenExtMulHighSVecI16x8(void) { return ExtMulHighSVecI16x8; }
+BinaryenOp BinaryenExtMulLowUVecI16x8(void) { return ExtMulLowUVecI16x8; }
+BinaryenOp BinaryenExtMulHighUVecI16x8(void) { return ExtMulHighUVecI16x8; }
 BinaryenOp BinaryenAbsVecI32x4(void) { return AbsVecI32x4; }
 BinaryenOp BinaryenNegVecI32x4(void) { return NegVecI32x4; }
-BinaryenOp BinaryenAnyTrueVecI32x4(void) { return AnyTrueVecI32x4; }
 BinaryenOp BinaryenAllTrueVecI32x4(void) { return AllTrueVecI32x4; }
 BinaryenOp BinaryenBitmaskVecI32x4(void) { return BitmaskVecI32x4; }
 BinaryenOp BinaryenShlVecI32x4(void) { return ShlVecI32x4; }
@@ -718,20 +596,27 @@ BinaryenOp BinaryenMaxUVecI32x4(void) { return MaxUVecI32x4; }
 BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void) {
   return DotSVecI16x8ToVecI32x4;
 }
+BinaryenOp BinaryenExtMulLowSVecI32x4(void) { return ExtMulLowSVecI32x4; }
+BinaryenOp BinaryenExtMulHighSVecI32x4(void) { return ExtMulHighSVecI32x4; }
+BinaryenOp BinaryenExtMulLowUVecI32x4(void) { return ExtMulLowUVecI32x4; }
+BinaryenOp BinaryenExtMulHighUVecI32x4(void) { return ExtMulHighUVecI32x4; }
+BinaryenOp BinaryenAbsVecI64x2(void) { return AbsVecI64x2; }
 BinaryenOp BinaryenNegVecI64x2(void) { return NegVecI64x2; }
-BinaryenOp BinaryenAnyTrueVecI64x2(void) { return AnyTrueVecI64x2; }
 BinaryenOp BinaryenAllTrueVecI64x2(void) { return AllTrueVecI64x2; }
+BinaryenOp BinaryenBitmaskVecI64x2(void) { return BitmaskVecI64x2; }
 BinaryenOp BinaryenShlVecI64x2(void) { return ShlVecI64x2; }
 BinaryenOp BinaryenShrSVecI64x2(void) { return ShrSVecI64x2; }
 BinaryenOp BinaryenShrUVecI64x2(void) { return ShrUVecI64x2; }
 BinaryenOp BinaryenAddVecI64x2(void) { return AddVecI64x2; }
 BinaryenOp BinaryenSubVecI64x2(void) { return SubVecI64x2; }
 BinaryenOp BinaryenMulVecI64x2(void) { return MulVecI64x2; }
+BinaryenOp BinaryenExtMulLowSVecI64x2(void) { return ExtMulLowSVecI64x2; }
+BinaryenOp BinaryenExtMulHighSVecI64x2(void) { return ExtMulHighSVecI64x2; }
+BinaryenOp BinaryenExtMulLowUVecI64x2(void) { return ExtMulLowUVecI64x2; }
+BinaryenOp BinaryenExtMulHighUVecI64x2(void) { return ExtMulHighUVecI64x2; }
 BinaryenOp BinaryenAbsVecF32x4(void) { return AbsVecF32x4; }
 BinaryenOp BinaryenNegVecF32x4(void) { return NegVecF32x4; }
 BinaryenOp BinaryenSqrtVecF32x4(void) { return SqrtVecF32x4; }
-BinaryenOp BinaryenQFMAVecF32x4(void) { return QFMAF32x4; }
-BinaryenOp BinaryenQFMSVecF32x4(void) { return QFMSF32x4; }
 BinaryenOp BinaryenAddVecF32x4(void) { return AddVecF32x4; }
 BinaryenOp BinaryenSubVecF32x4(void) { return SubVecF32x4; }
 BinaryenOp BinaryenMulVecF32x4(void) { return MulVecF32x4; }
@@ -747,8 +632,6 @@ BinaryenOp BinaryenPMaxVecF32x4(void) { return PMaxVecF32x4; }
 BinaryenOp BinaryenAbsVecF64x2(void) { return AbsVecF64x2; }
 BinaryenOp BinaryenNegVecF64x2(void) { return NegVecF64x2; }
 BinaryenOp BinaryenSqrtVecF64x2(void) { return SqrtVecF64x2; }
-BinaryenOp BinaryenQFMAVecF64x2(void) { return QFMAF64x2; }
-BinaryenOp BinaryenQFMSVecF64x2(void) { return QFMSF64x2; }
 BinaryenOp BinaryenAddVecF64x2(void) { return AddVecF64x2; }
 BinaryenOp BinaryenSubVecF64x2(void) { return SubVecF64x2; }
 BinaryenOp BinaryenMulVecF64x2(void) { return MulVecF64x2; }
@@ -761,17 +644,23 @@ BinaryenOp BinaryenCeilVecF64x2(void) { return CeilVecF64x2; }
 BinaryenOp BinaryenFloorVecF64x2(void) { return FloorVecF64x2; }
 BinaryenOp BinaryenTruncVecF64x2(void) { return TruncVecF64x2; }
 BinaryenOp BinaryenNearestVecF64x2(void) { return NearestVecF64x2; }
+BinaryenOp BinaryenExtAddPairwiseSVecI8x16ToI16x8(void) {
+  return ExtAddPairwiseSVecI8x16ToI16x8;
+}
+BinaryenOp BinaryenExtAddPairwiseUVecI8x16ToI16x8(void) {
+  return ExtAddPairwiseUVecI8x16ToI16x8;
+}
+BinaryenOp BinaryenExtAddPairwiseSVecI16x8ToI32x4(void) {
+  return ExtAddPairwiseSVecI16x8ToI32x4;
+}
+BinaryenOp BinaryenExtAddPairwiseUVecI16x8ToI32x4(void) {
+  return ExtAddPairwiseUVecI16x8ToI32x4;
+}
 BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void) {
   return TruncSatSVecF32x4ToVecI32x4;
 }
 BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void) {
   return TruncSatUVecF32x4ToVecI32x4;
-}
-BinaryenOp BinaryenTruncSatSVecF64x2ToVecI64x2(void) {
-  return TruncSatSVecF64x2ToVecI64x2;
-}
-BinaryenOp BinaryenTruncSatUVecF64x2ToVecI64x2(void) {
-  return TruncSatUVecF64x2ToVecI64x2;
 }
 BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void) {
   return ConvertSVecI32x4ToVecF32x4;
@@ -779,34 +668,26 @@ BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void) {
 BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void) {
   return ConvertUVecI32x4ToVecF32x4;
 }
-BinaryenOp BinaryenConvertSVecI64x2ToVecF64x2(void) {
-  return ConvertSVecI64x2ToVecF64x2;
-}
-BinaryenOp BinaryenConvertUVecI64x2ToVecF64x2(void) {
-  return ConvertUVecI64x2ToVecF64x2;
-}
-BinaryenOp BinaryenLoadSplatVec8x16(void) { return LoadSplatVec8x16; }
-BinaryenOp BinaryenLoadSplatVec16x8(void) { return LoadSplatVec16x8; }
-BinaryenOp BinaryenLoadSplatVec32x4(void) { return LoadSplatVec32x4; }
-BinaryenOp BinaryenLoadSplatVec64x2(void) { return LoadSplatVec64x2; }
-BinaryenOp BinaryenLoadExtSVec8x8ToVecI16x8(void) {
-  return LoadExtSVec8x8ToVecI16x8;
-}
-BinaryenOp BinaryenLoadExtUVec8x8ToVecI16x8(void) {
-  return LoadExtUVec8x8ToVecI16x8;
-}
-BinaryenOp BinaryenLoadExtSVec16x4ToVecI32x4(void) {
-  return LoadExtSVec16x4ToVecI32x4;
-}
-BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void) {
-  return LoadExtUVec16x4ToVecI32x4;
-}
-BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void) {
-  return LoadExtSVec32x2ToVecI64x2;
-}
-BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
-  return LoadExtUVec32x2ToVecI64x2;
-}
+BinaryenOp BinaryenLoad8SplatVec128(void) { return Load8SplatVec128; }
+BinaryenOp BinaryenLoad16SplatVec128(void) { return Load16SplatVec128; }
+BinaryenOp BinaryenLoad32SplatVec128(void) { return Load32SplatVec128; }
+BinaryenOp BinaryenLoad64SplatVec128(void) { return Load64SplatVec128; }
+BinaryenOp BinaryenLoad8x8SVec128(void) { return Load8x8SVec128; }
+BinaryenOp BinaryenLoad8x8UVec128(void) { return Load8x8UVec128; }
+BinaryenOp BinaryenLoad16x4SVec128(void) { return Load16x4SVec128; }
+BinaryenOp BinaryenLoad16x4UVec128(void) { return Load16x4UVec128; }
+BinaryenOp BinaryenLoad32x2SVec128(void) { return Load32x2SVec128; }
+BinaryenOp BinaryenLoad32x2UVec128(void) { return Load32x2UVec128; }
+BinaryenOp BinaryenLoad32ZeroVec128(void) { return Load32ZeroVec128; }
+BinaryenOp BinaryenLoad64ZeroVec128(void) { return Load64ZeroVec128; }
+BinaryenOp BinaryenLoad8LaneVec128(void) { return Load8LaneVec128; }
+BinaryenOp BinaryenLoad16LaneVec128(void) { return Load16LaneVec128; }
+BinaryenOp BinaryenLoad32LaneVec128(void) { return Load32LaneVec128; }
+BinaryenOp BinaryenLoad64LaneVec128(void) { return Load64LaneVec128; }
+BinaryenOp BinaryenStore8LaneVec128(void) { return Store8LaneVec128; }
+BinaryenOp BinaryenStore16LaneVec128(void) { return Store16LaneVec128; }
+BinaryenOp BinaryenStore32LaneVec128(void) { return Store32LaneVec128; }
+BinaryenOp BinaryenStore64LaneVec128(void) { return Store64LaneVec128; }
 BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }
@@ -819,31 +700,69 @@ BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void) {
 BinaryenOp BinaryenNarrowUVecI32x4ToVecI16x8(void) {
   return NarrowUVecI32x4ToVecI16x8;
 }
-BinaryenOp BinaryenWidenLowSVecI8x16ToVecI16x8(void) {
-  return WidenLowSVecI8x16ToVecI16x8;
+BinaryenOp BinaryenExtendLowSVecI8x16ToVecI16x8(void) {
+  return ExtendLowSVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenHighSVecI8x16ToVecI16x8(void) {
-  return WidenHighSVecI8x16ToVecI16x8;
+BinaryenOp BinaryenExtendHighSVecI8x16ToVecI16x8(void) {
+  return ExtendHighSVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenLowUVecI8x16ToVecI16x8(void) {
-  return WidenLowUVecI8x16ToVecI16x8;
+BinaryenOp BinaryenExtendLowUVecI8x16ToVecI16x8(void) {
+  return ExtendLowUVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenHighUVecI8x16ToVecI16x8(void) {
-  return WidenHighUVecI8x16ToVecI16x8;
+BinaryenOp BinaryenExtendHighUVecI8x16ToVecI16x8(void) {
+  return ExtendHighUVecI8x16ToVecI16x8;
 }
-BinaryenOp BinaryenWidenLowSVecI16x8ToVecI32x4(void) {
-  return WidenLowSVecI16x8ToVecI32x4;
+BinaryenOp BinaryenExtendLowSVecI16x8ToVecI32x4(void) {
+  return ExtendLowSVecI16x8ToVecI32x4;
 }
-BinaryenOp BinaryenWidenHighSVecI16x8ToVecI32x4(void) {
-  return WidenHighSVecI16x8ToVecI32x4;
+BinaryenOp BinaryenExtendHighSVecI16x8ToVecI32x4(void) {
+  return ExtendHighSVecI16x8ToVecI32x4;
 }
-BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void) {
-  return WidenLowUVecI16x8ToVecI32x4;
+BinaryenOp BinaryenExtendLowUVecI16x8ToVecI32x4(void) {
+  return ExtendLowUVecI16x8ToVecI32x4;
 }
-BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void) {
-  return WidenHighUVecI16x8ToVecI32x4;
+BinaryenOp BinaryenExtendHighUVecI16x8ToVecI32x4(void) {
+  return ExtendHighUVecI16x8ToVecI32x4;
+}
+BinaryenOp BinaryenExtendLowSVecI32x4ToVecI64x2(void) {
+  return ExtendLowSVecI32x4ToVecI64x2;
+}
+BinaryenOp BinaryenExtendHighSVecI32x4ToVecI64x2(void) {
+  return ExtendHighSVecI32x4ToVecI64x2;
+}
+BinaryenOp BinaryenExtendLowUVecI32x4ToVecI64x2(void) {
+  return ExtendLowUVecI32x4ToVecI64x2;
+}
+BinaryenOp BinaryenExtendHighUVecI32x4ToVecI64x2(void) {
+  return ExtendHighUVecI32x4ToVecI64x2;
+}
+BinaryenOp BinaryenConvertLowSVecI32x4ToVecF64x2(void) {
+  return ConvertLowSVecI32x4ToVecF64x2;
+}
+BinaryenOp BinaryenConvertLowUVecI32x4ToVecF64x2(void) {
+  return ConvertLowUVecI32x4ToVecF64x2;
+}
+BinaryenOp BinaryenTruncSatZeroSVecF64x2ToVecI32x4(void) {
+  return TruncSatZeroSVecF64x2ToVecI32x4;
+}
+BinaryenOp BinaryenTruncSatZeroUVecF64x2ToVecI32x4(void) {
+  return TruncSatZeroUVecF64x2ToVecI32x4;
+}
+BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
+  return DemoteZeroVecF64x2ToVecF32x4;
+}
+BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
+  return PromoteLowVecF32x4ToVecF64x2;
 }
 BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
+BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
+BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
+BinaryenOp BinaryenRefIsData(void) { return RefIsData; }
+BinaryenOp BinaryenRefIsI31(void) { return RefIsI31; }
+BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; };
+BinaryenOp BinaryenRefAsFunc(void) { return RefAsFunc; }
+BinaryenOp BinaryenRefAsData(void) { return RefAsData; };
+BinaryenOp BinaryenRefAsI31(void) { return RefAsI31; };
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
@@ -868,12 +787,10 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module,
                                  BinaryenExpressionRef condition,
                                  BinaryenExpressionRef ifTrue,
                                  BinaryenExpressionRef ifFalse) {
-  auto* ret = ((Module*)module)->allocator.alloc<If>();
-  ret->condition = (Expression*)condition;
-  ret->ifTrue = (Expression*)ifTrue;
-  ret->ifFalse = (Expression*)ifFalse;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeIf((Expression*)condition,
+                                            (Expression*)ifTrue,
+                                            (Expression*)ifFalse));
 }
 BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
                                    const char* name,
@@ -940,6 +857,7 @@ BinaryenExpressionRef BinaryenReturnCall(BinaryenModuleRef module,
 }
 static BinaryenExpressionRef
 makeBinaryenCallIndirect(BinaryenModuleRef module,
+                         const char* table,
                          BinaryenExpressionRef target,
                          BinaryenExpressionRef* operands,
                          BinaryenIndex numOperands,
@@ -947,6 +865,7 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
                          BinaryenType results,
                          bool isReturn) {
   auto* ret = ((Module*)module)->allocator.alloc<CallIndirect>();
+  ret->table = table;
   ret->target = (Expression*)target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
@@ -958,89 +877,72 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
+                                           const char* table,
                                            BinaryenExpressionRef target,
                                            BinaryenExpressionRef* operands,
                                            BinaryenIndex numOperands,
                                            BinaryenType params,
                                            BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, params, results, false);
+    module, table, target, operands, numOperands, params, results, false);
 }
 BinaryenExpressionRef
 BinaryenReturnCallIndirect(BinaryenModuleRef module,
+                           const char* table,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
                            BinaryenType params,
                            BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, params, results, true);
+    module, table, target, operands, numOperands, params, results, true);
 }
 BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<LocalGet>();
-  ret->index = index;
-  ret->type = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeLocalGet(index, Type(type)));
 }
 BinaryenExpressionRef BinaryenLocalSet(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
-  ret->index = index;
-  ret->value = (Expression*)value;
-  ret->makeSet();
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeLocalSet(index, (Expression*)value));
 }
 BinaryenExpressionRef BinaryenLocalTee(BinaryenModuleRef module,
                                        BinaryenIndex index,
                                        BinaryenExpressionRef value,
                                        BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<LocalSet>();
-  ret->index = index;
-  ret->value = (Expression*)value;
-  ret->makeTee(Type(type));
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeLocalTee(index, (Expression*)value, Type(type)));
 }
 BinaryenExpressionRef BinaryenGlobalGet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<GlobalGet>();
-  ret->name = name;
-  ret->type = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeGlobalGet(name, Type(type)));
 }
 BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
                                         const char* name,
                                         BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<GlobalSet>();
-  ret->name = name;
-  ret->value = (Expression*)value;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeGlobalSet(name, (Expression*)value));
 }
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                    uint32_t bytes,
-                                   int8_t signed_,
+                                   bool signed_,
                                    uint32_t offset,
                                    uint32_t align,
                                    BinaryenType type,
                                    BinaryenExpressionRef ptr) {
-  auto* ret = ((Module*)module)->allocator.alloc<Load>();
-  ret->isAtomic = false;
-  ret->bytes = bytes;
-  ret->signed_ = !!signed_;
-  ret->offset = offset;
-  ret->align = align ? align : bytes;
-  ret->type = Type(type);
-  ret->ptr = (Expression*)ptr;
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeLoad(bytes,
+                                              !!signed_,
+                                              offset,
+                                              align ? align : bytes,
+                                              (Expression*)ptr,
+                                              Type(type)));
 }
 BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     uint32_t bytes,
@@ -1049,16 +951,13 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     BinaryenExpressionRef ptr,
                                     BinaryenExpressionRef value,
                                     BinaryenType type) {
-  auto* ret = ((Module*)module)->allocator.alloc<Store>();
-  ret->isAtomic = false;
-  ret->bytes = bytes;
-  ret->offset = offset;
-  ret->align = align ? align : bytes;
-  ret->ptr = (Expression*)ptr;
-  ret->value = (Expression*)value;
-  ret->valueType = Type(type);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeStore(bytes,
+                                               offset,
+                                               align ? align : bytes,
+                                               (Expression*)ptr,
+                                               (Expression*)value,
+                                               Type(type)));
 }
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
                                     BinaryenLiteral value) {
@@ -1097,9 +996,7 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
                                    BinaryenExpressionRef value) {
-  auto* ret = ((Module*)module)->allocator.alloc<Drop>();
-  ret->value = (Expression*)value;
-  ret->finalize();
+  auto* ret = Builder(*(Module*)module).makeDrop((Expression*)value);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
@@ -1117,11 +1014,10 @@ BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
-  return static_cast<Expression*>(((Module*)module)->allocator.alloc<Nop>());
+  return static_cast<Expression*>(Builder(*(Module*)module).makeNop());
 }
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
-  return static_cast<Expression*>(
-    ((Module*)module)->allocator.alloc<Unreachable>());
+  return static_cast<Expression*>(Builder(*(Module*)module).makeUnreachable());
 }
 BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                          uint32_t bytes,
@@ -1252,6 +1148,22 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
       .makeSIMDLoad(
         SIMDLoadOp(op), Address(offset), Address(align), (Expression*)ptr));
 }
+BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
+                                                BinaryenOp op,
+                                                uint32_t offset,
+                                                uint32_t align,
+                                                uint8_t index,
+                                                BinaryenExpressionRef ptr,
+                                                BinaryenExpressionRef vec) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp(op),
+                             Address(offset),
+                             Address(align),
+                             index,
+                             (Expression*)ptr,
+                             (Expression*)vec));
+}
 BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          uint32_t segment,
                                          BinaryenExpressionRef dest,
@@ -1319,15 +1231,26 @@ BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
   return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull(type_));
 }
 
-BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
-                                        BinaryenExpressionRef value) {
+BinaryenExpressionRef BinaryenRefIs(BinaryenModuleRef module,
+                                    BinaryenOp op,
+                                    BinaryenExpressionRef value) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefIsNull((Expression*)value));
+    Builder(*(Module*)module).makeRefIs(RefIsOp(op), (Expression*)value));
 }
 
-BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
-                                      const char* func) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRefFunc(func));
+BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
+                                    BinaryenOp op,
+                                    BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefAs(RefAsOp(op), (Expression*)value));
+}
+
+BinaryenExpressionRef
+BinaryenRefFunc(BinaryenModuleRef module, const char* func, BinaryenType type) {
+  // TODO: consider changing the C API to receive a heap type
+  Type type_(type);
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefFunc(func, type_.getHeapType()));
 }
 
 BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
@@ -1337,16 +1260,71 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
     Builder(*(Module*)module).makeRefEq((Expression*)left, (Expression*)right));
 }
 
-BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
-                                  BinaryenExpressionRef body,
-                                  BinaryenExpressionRef catchBody) {
+BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenType type) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeTry((Expression*)body, (Expression*)catchBody));
+      .makeTableGet(name, (Expression*)index, Type(type)));
+}
+
+BinaryenExpressionRef BinaryenTableSet(BinaryenModuleRef module,
+                                       const char* name,
+                                       BinaryenExpressionRef index,
+                                       BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableSet(name, (Expression*)index, (Expression*)value));
+}
+
+BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
+                                        const char* name) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeTableSize(name));
+}
+
+BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
+                                        const char* name,
+                                        BinaryenExpressionRef value,
+                                        BinaryenExpressionRef delta) {
+  if (value == nullptr) {
+    auto tableType = (*(Module*)module).getTableOrNull(name)->type;
+    value = BinaryenRefNull(module, (BinaryenType)tableType.getID());
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableGrow(name, (Expression*)value, (Expression*)delta));
+}
+
+BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
+                                  const char* name,
+                                  BinaryenExpressionRef body,
+                                  const char** catchTags,
+                                  BinaryenIndex numCatchTags,
+                                  BinaryenExpressionRef* catchBodies,
+                                  BinaryenIndex numCatchBodies,
+                                  const char* delegateTarget) {
+  auto* ret = ((Module*)module)->allocator.alloc<Try>();
+  if (name) {
+    ret->name = name;
+  }
+  ret->body = (Expression*)body;
+  for (BinaryenIndex i = 0; i < numCatchTags; i++) {
+    ret->catchTags.push_back(catchTags[i]);
+  }
+  for (BinaryenIndex i = 0; i < numCatchBodies; i++) {
+    ret->catchBodies.push_back((Expression*)catchBodies[i]);
+  }
+  if (delegateTarget) {
+    ret->delegateTarget = delegateTarget;
+  }
+  ret->finalize();
+  return static_cast<Expression*>(ret);
 }
 
 BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
-                                    const char* event,
+                                    const char* tag,
                                     BinaryenExpressionRef* operands,
                                     BinaryenIndex numOperands) {
   std::vector<Expression*> args;
@@ -1354,24 +1332,13 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
     args.push_back((Expression*)operands[i]);
   }
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeThrow(event, args));
+    Builder(*(Module*)module).makeThrow(tag, args));
 }
 
 BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
-                                      BinaryenExpressionRef exnref) {
+                                      const char* target) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRethrow((Expression*)exnref));
-}
-
-BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
-                                      const char* name,
-                                      const char* eventName,
-                                      BinaryenExpressionRef exnref) {
-  auto* wasm = (Module*)module;
-  auto* event = wasm->getEventOrNull(eventName);
-  assert(event && "br_on_exn's event must exist");
-  return static_cast<Expression*>(
-    Builder(*wasm).makeBrOnExn(name, event, (Expression*)exnref));
+    Builder(*(Module*)module).makeRethrow(target));
 }
 
 BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
@@ -1382,7 +1349,7 @@ BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
 
 BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
                                      BinaryenExpressionRef i31,
-                                     int signed_) {
+                                     bool signed_) {
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeI31Get((Expression*)i31, signed_ != 0));
 }
@@ -1412,8 +1379,7 @@ void BinaryenExpressionSetType(BinaryenExpressionRef expr, BinaryenType type) {
   ((Expression*)expr)->type = Type(type);
 }
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
-  WasmPrinter::printExpression((Expression*)expr, std::cout);
-  std::cout << '\n';
+  std::cout << *(Expression*)expr << '\n';
 }
 void BinaryenExpressionFinalize(BinaryenExpressionRef expr) {
   ReFinalizeNode().visit((Expression*)expr);
@@ -1721,12 +1687,12 @@ BinaryenExpressionRef BinaryenCallRemoveOperandAt(BinaryenExpressionRef expr,
   assert(expression->is<Call>());
   return static_cast<Call*>(expression)->operands.removeAt(index);
 }
-int BinaryenCallIsReturn(BinaryenExpressionRef expr) {
+bool BinaryenCallIsReturn(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Call>());
   return static_cast<Call*>(expression)->isReturn;
 }
-void BinaryenCallSetReturn(BinaryenExpressionRef expr, int isReturn) {
+void BinaryenCallSetReturn(BinaryenExpressionRef expr, bool isReturn) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Call>());
   static_cast<Call*>(expression)->isReturn = isReturn != 0;
@@ -1744,6 +1710,19 @@ void BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
   assert(expression->is<CallIndirect>());
   assert(targetExpr);
   static_cast<CallIndirect*>(expression)->target = (Expression*)targetExpr;
+}
+const char* BinaryenCallIndirectGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->table.c_str();
+}
+void BinaryenCallIndirectSetTable(BinaryenExpressionRef expr,
+                                  const char* table) {
+  Name name(table);
+  auto* expression = (Expression*)expr;
+
+  assert(expression->is<CallIndirect>());
+  static_cast<CallIndirect*>(expression)->table = name;
 }
 BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -1795,12 +1774,12 @@ BinaryenCallIndirectRemoveOperandAt(BinaryenExpressionRef expr,
   assert(expression->is<CallIndirect>());
   return static_cast<CallIndirect*>(expression)->operands.removeAt(index);
 }
-int BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr) {
+bool BinaryenCallIndirectIsReturn(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
   return static_cast<CallIndirect*>(expression)->isReturn;
 }
-void BinaryenCallIndirectSetReturn(BinaryenExpressionRef expr, int isReturn) {
+void BinaryenCallIndirectSetReturn(BinaryenExpressionRef expr, bool isReturn) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
   static_cast<CallIndirect*>(expression)->isReturn = isReturn != 0;
@@ -1839,7 +1818,7 @@ void BinaryenLocalGetSetIndex(BinaryenExpressionRef expr, BinaryenIndex index) {
   static_cast<LocalGet*>(expression)->index = index;
 }
 // LocalSet
-int BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
+bool BinaryenLocalSetIsTee(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<LocalSet>());
   return static_cast<LocalSet*>(expression)->isTee();
@@ -1903,6 +1882,114 @@ void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
   assert(valueExpr);
   static_cast<GlobalSet*>(expression)->value = (Expression*)valueExpr;
 }
+// TableGet
+const char* BinaryenTableGetGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  return static_cast<TableGet*>(expression)->table.c_str();
+}
+void BinaryenTableGetSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  assert(table);
+  static_cast<TableGet*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableGetGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  return static_cast<TableGet*>(expression)->index;
+}
+void BinaryenTableGetSetIndex(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef indexExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGet>());
+  assert(indexExpr);
+  static_cast<TableGet*>(expression)->index = (Expression*)indexExpr;
+}
+// TableSet
+const char* BinaryenTableSetGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->table.c_str();
+}
+void BinaryenTableSetSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(table);
+  static_cast<TableSet*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableSetGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->index;
+}
+void BinaryenTableSetSetIndex(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef indexExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(indexExpr);
+  static_cast<TableSet*>(expression)->index = (Expression*)indexExpr;
+}
+BinaryenExpressionRef BinaryenTableSetGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  return static_cast<TableSet*>(expression)->value;
+}
+void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSet>());
+  assert(valueExpr);
+  static_cast<TableSet*>(expression)->value = (Expression*)valueExpr;
+}
+// TableSize
+const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  return static_cast<TableSize*>(expression)->table.c_str();
+}
+void BinaryenTableSizeSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableSize>());
+  assert(table);
+  static_cast<TableSize*>(expression)->table = table;
+}
+// TableGrow
+const char* BinaryenTableGrowGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->table.c_str();
+}
+void BinaryenTableGrowSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(table);
+  static_cast<TableGrow*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableGrowGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->value;
+}
+void BinaryenTableGrowSetValue(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(valueExpr);
+  static_cast<TableGrow*>(expression)->value = (Expression*)valueExpr;
+}
+BinaryenExpressionRef BinaryenTableGrowGetDelta(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->delta;
+}
+void BinaryenTableGrowSetDelta(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef deltaExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(deltaExpr);
+  static_cast<TableGrow*>(expression)->delta = (Expression*)deltaExpr;
+}
 // MemoryGrow
 BinaryenExpressionRef BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -1917,22 +2004,22 @@ void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
   static_cast<MemoryGrow*>(expression)->delta = (Expression*)deltaExpr;
 }
 // Load
-int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
+bool BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->isAtomic;
 }
-void BinaryenLoadSetAtomic(BinaryenExpressionRef expr, int isAtomic) {
+void BinaryenLoadSetAtomic(BinaryenExpressionRef expr, bool isAtomic) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   static_cast<Load*>(expression)->isAtomic = isAtomic != 0;
 }
-int BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
+bool BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->signed_;
 }
-void BinaryenLoadSetSigned(BinaryenExpressionRef expr, int isSigned) {
+void BinaryenLoadSetSigned(BinaryenExpressionRef expr, bool isSigned) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   static_cast<Load*>(expression)->signed_ = isSigned != 0;
@@ -1980,12 +2067,12 @@ void BinaryenLoadSetPtr(BinaryenExpressionRef expr,
   static_cast<Load*>(expression)->ptr = (Expression*)ptrExpr;
 }
 // Store
-int BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
+bool BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
   return static_cast<Store*>(expression)->isAtomic;
 }
-void BinaryenStoreSetAtomic(BinaryenExpressionRef expr, int isAtomic) {
+void BinaryenStoreSetAtomic(BinaryenExpressionRef expr, bool isAtomic) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Store>());
   static_cast<Store*>(expression)->isAtomic = isAtomic != 0;
@@ -2702,6 +2789,81 @@ void BinaryenSIMDLoadSetPtr(BinaryenExpressionRef expr,
   assert(ptrExpr);
   static_cast<SIMDLoad*>(expression)->ptr = (Expression*)ptrExpr;
 }
+// SIMDLoadStoreLane
+BinaryenOp BinaryenSIMDLoadStoreLaneGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->op;
+}
+void BinaryenSIMDLoadStoreLaneSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->op = SIMDLoadStoreLaneOp(op);
+}
+uint32_t BinaryenSIMDLoadStoreLaneGetOffset(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->offset;
+}
+void BinaryenSIMDLoadStoreLaneSetOffset(BinaryenExpressionRef expr,
+                                        uint32_t offset) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->offset = offset;
+}
+uint32_t BinaryenSIMDLoadStoreLaneGetAlign(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->align;
+}
+void BinaryenSIMDLoadStoreLaneSetAlign(BinaryenExpressionRef expr,
+                                       uint32_t align) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->align = align;
+}
+uint8_t BinaryenSIMDLoadStoreLaneGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->index;
+}
+void BinaryenSIMDLoadStoreLaneSetIndex(BinaryenExpressionRef expr,
+                                       uint8_t index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->index = index;
+}
+BinaryenExpressionRef
+BinaryenSIMDLoadStoreLaneGetPtr(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->ptr;
+}
+void BinaryenSIMDLoadStoreLaneSetPtr(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef ptrExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  assert(ptrExpr);
+  static_cast<SIMDLoadStoreLane*>(expression)->ptr = (Expression*)ptrExpr;
+}
+BinaryenExpressionRef
+BinaryenSIMDLoadStoreLaneGetVec(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->vec;
+}
+void BinaryenSIMDLoadStoreLaneSetVec(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef vecExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  assert(vecExpr);
+  static_cast<SIMDLoadStoreLane*>(expression)->vec = (Expression*)vecExpr;
+}
+bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->isStore();
+}
 // MemoryInit
 uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -2835,18 +2997,51 @@ void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
   assert(sizeExpr);
   static_cast<MemoryFill*>(expression)->size = (Expression*)sizeExpr;
 }
-// RefIsNull
-BinaryenExpressionRef BinaryenRefIsNullGetValue(BinaryenExpressionRef expr) {
+// RefIs
+BinaryenOp BinaryenRefIsGetOp(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<RefIsNull>());
-  return static_cast<RefIsNull*>(expression)->value;
+  assert(expression->is<RefIs>());
+  return static_cast<RefIs*>(expression)->op;
 }
-void BinaryenRefIsNullSetValue(BinaryenExpressionRef expr,
-                               BinaryenExpressionRef valueExpr) {
+void BinaryenRefIsSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<RefIsNull>());
+  assert(expression->is<RefIs>());
+  static_cast<RefIs*>(expression)->op = RefIsOp(op);
+}
+BinaryenExpressionRef BinaryenRefIsGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefIs>());
+  return static_cast<RefIs*>(expression)->value;
+}
+void BinaryenRefIsSetValue(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefIs>());
   assert(valueExpr);
-  static_cast<RefIsNull*>(expression)->value = (Expression*)valueExpr;
+  static_cast<RefIs*>(expression)->value = (Expression*)valueExpr;
+}
+// RefAs
+BinaryenOp BinaryenRefAsGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  return static_cast<RefAs*>(expression)->op;
+}
+void BinaryenRefAsSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  static_cast<RefAs*>(expression)->op = RefAsOp(op);
+}
+BinaryenExpressionRef BinaryenRefAsGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  return static_cast<RefAs*>(expression)->value;
+}
+void BinaryenRefAsSetValue(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  assert(valueExpr);
+  static_cast<RefAs*>(expression)->value = (Expression*)valueExpr;
 }
 // RefFunc
 const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr) {
@@ -2883,6 +3078,16 @@ void BinaryenRefEqSetRight(BinaryenExpressionRef expr,
   static_cast<RefEq*>(expression)->right = (Expression*)right;
 }
 // Try
+const char* BinaryenTryGetName(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->name.c_str();
+}
+void BinaryenTrySetName(BinaryenExpressionRef expr, const char* name) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  static_cast<Try*>(expression)->name = name;
+}
 BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
@@ -2895,28 +3100,128 @@ void BinaryenTrySetBody(BinaryenExpressionRef expr,
   assert(bodyExpr);
   static_cast<Try*>(expression)->body = (Expression*)bodyExpr;
 }
-BinaryenExpressionRef BinaryenTryGetCatchBody(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenTryGetNumCatchTags(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->catchBody;
+  return static_cast<Try*>(expression)->catchTags.size();
 }
-void BinaryenTrySetCatchBody(BinaryenExpressionRef expr,
-                             BinaryenExpressionRef catchBodyExpr) {
+BinaryenIndex BinaryenTryGetNumCatchBodies(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(catchBodyExpr);
-  static_cast<Try*>(expression)->catchBody = (Expression*)catchBodyExpr;
+  return static_cast<Try*>(expression)->catchBodies.size();
+}
+const char* BinaryenTryGetCatchTagAt(BinaryenExpressionRef expr,
+                                     BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchTags.size());
+  return static_cast<Try*>(expression)->catchTags[index].c_str();
+}
+void BinaryenTrySetCatchTagAt(BinaryenExpressionRef expr,
+                              BinaryenIndex index,
+                              const char* catchTag) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchTags.size());
+  assert(catchTag);
+  static_cast<Try*>(expression)->catchTags[index] = catchTag;
+}
+BinaryenIndex BinaryenTryAppendCatchTag(BinaryenExpressionRef expr,
+                                        const char* catchTag) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchTag);
+  auto& list = static_cast<Try*>(expression)->catchTags;
+  auto index = list.size();
+  list.push_back(catchTag);
+  return index;
+}
+void BinaryenTryInsertCatchTagAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 const char* catchTag) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchTag);
+  static_cast<Try*>(expression)->catchTags.insertAt(index, catchTag);
+}
+const char* BinaryenTryRemoveCatchTagAt(BinaryenExpressionRef expr,
+                                        BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->catchTags.removeAt(index).c_str();
+}
+BinaryenExpressionRef BinaryenTryGetCatchBodyAt(BinaryenExpressionRef expr,
+                                                BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchBodies.size());
+  return static_cast<Try*>(expression)->catchBodies[index];
+}
+void BinaryenTrySetCatchBodyAt(BinaryenExpressionRef expr,
+                               BinaryenIndex index,
+                               BinaryenExpressionRef catchExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchBodies.size());
+  assert(catchExpr);
+  static_cast<Try*>(expression)->catchBodies[index] = (Expression*)catchExpr;
+}
+BinaryenIndex BinaryenTryAppendCatchBody(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef catchExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchExpr);
+  auto& list = static_cast<Try*>(expression)->catchBodies;
+  auto index = list.size();
+  list.push_back((Expression*)catchExpr);
+  return index;
+}
+void BinaryenTryInsertCatchBodyAt(BinaryenExpressionRef expr,
+                                  BinaryenIndex index,
+                                  BinaryenExpressionRef catchExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchExpr);
+  static_cast<Try*>(expression)
+    ->catchBodies.insertAt(index, (Expression*)catchExpr);
+}
+BinaryenExpressionRef BinaryenTryRemoveCatchBodyAt(BinaryenExpressionRef expr,
+                                                   BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->catchBodies.removeAt(index);
+}
+bool BinaryenTryHasCatchAll(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->hasCatchAll();
+}
+const char* BinaryenTryGetDelegateTarget(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->delegateTarget.c_str();
+}
+void BinaryenTrySetDelegateTarget(BinaryenExpressionRef expr,
+                                  const char* delegateTarget) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  static_cast<Try*>(expression)->delegateTarget = delegateTarget;
+}
+bool BinaryenTryIsDelegate(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->isDelegate();
 }
 // Throw
-const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
+const char* BinaryenThrowGetTag(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  return static_cast<Throw*>(expression)->event.c_str();
+  return static_cast<Throw*>(expression)->tag.c_str();
 }
-void BinaryenThrowSetEvent(BinaryenExpressionRef expr, const char* eventName) {
+void BinaryenThrowSetTag(BinaryenExpressionRef expr, const char* tagName) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  static_cast<Throw*>(expression)->event = eventName;
+  static_cast<Throw*>(expression)->tag = tagName;
 }
 BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -2965,51 +3270,15 @@ BinaryenExpressionRef BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr,
   return static_cast<Throw*>(expression)->operands.removeAt(index);
 }
 // Rethrow
-BinaryenExpressionRef BinaryenRethrowGetExnref(BinaryenExpressionRef expr) {
+const char* BinaryenRethrowGetTarget(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
-  return static_cast<Rethrow*>(expression)->exnref;
+  return static_cast<Rethrow*>(expression)->target.c_str();
 }
-void BinaryenRethrowSetExnref(BinaryenExpressionRef expr,
-                              BinaryenExpressionRef exnrefExpr) {
+void BinaryenRethrowSetTarget(BinaryenExpressionRef expr, const char* target) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
-  assert(exnrefExpr);
-  static_cast<Rethrow*>(expression)->exnref = (Expression*)exnrefExpr;
-}
-// BrOnExn
-const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  return static_cast<BrOnExn*>(expression)->event.c_str();
-}
-void BinaryenBrOnExnSetEvent(BinaryenExpressionRef expr,
-                             const char* eventName) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  static_cast<BrOnExn*>(expression)->event = eventName;
-}
-const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  return static_cast<BrOnExn*>(expression)->name.c_str();
-}
-void BinaryenBrOnExnSetName(BinaryenExpressionRef expr, const char* name) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  static_cast<BrOnExn*>(expression)->name = name;
-}
-BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  return static_cast<BrOnExn*>(expression)->exnref;
-}
-void BinaryenBrOnExnSetExnref(BinaryenExpressionRef expr,
-                              BinaryenExpressionRef exnrefExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  assert(exnrefExpr);
-  static_cast<BrOnExn*>(expression)->exnref = (Expression*)exnrefExpr;
+  static_cast<Rethrow*>(expression)->target = target;
 }
 // TupleMake
 BinaryenIndex BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr) {
@@ -3110,12 +3379,12 @@ void BinaryenI31GetSetI31(BinaryenExpressionRef expr,
   assert(i31Expr);
   static_cast<I31Get*>(expression)->i31 = (Expression*)i31Expr;
 }
-int BinaryenI31GetIsSigned(BinaryenExpressionRef expr) {
+bool BinaryenI31GetIsSigned(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<I31Get>());
   return static_cast<I31Get*>(expression)->signed_;
 }
-void BinaryenI31GetSetSigned(BinaryenExpressionRef expr, int signed_) {
+void BinaryenI31GetSetSigned(BinaryenExpressionRef expr, bool signed_) {
   auto* expression = (Expression*)expr;
   assert(expression->is<I31Get>());
   static_cast<I31Get*>(expression)->signed_ = signed_ != 0;
@@ -3132,7 +3401,8 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
-  ret->sig = Signature(Type(params), Type(results));
+  // TODO: Take a HeapType rather than params and results.
+  ret->type = Signature(Type(params), Type(results));
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -3149,21 +3419,21 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
 }
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name) {
-  return ((Module*)module)->getFunction(name);
+  return ((Module*)module)->getFunctionOrNull(name);
 }
 void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
   ((Module*)module)->removeFunction(name);
 }
-uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module) {
+BinaryenIndex BinaryenGetNumFunctions(BinaryenModuleRef module) {
   return ((Module*)module)->functions.size();
 }
 BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module,
-                                               BinaryenIndex id) {
+                                               BinaryenIndex index) {
   const auto& functions = ((Module*)module)->functions;
-  if (functions.size() <= id) {
-    Fatal() << "invalid function id.";
+  if (functions.size() <= index) {
+    Fatal() << "invalid function index.";
   }
-  return functions[id].get();
+  return functions[index].get();
 }
 
 // Globals
@@ -3171,44 +3441,53 @@ BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module,
 BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                     const char* name,
                                     BinaryenType type,
-                                    int8_t mutable_,
+                                    bool mutable_,
                                     BinaryenExpressionRef init) {
   auto* ret = new Global();
   ret->setExplicitName(name);
   ret->type = Type(type);
-  ret->mutable_ = !!mutable_;
+  ret->mutable_ = mutable_;
   ret->init = (Expression*)init;
   ((Module*)module)->addGlobal(ret);
   return ret;
 }
 BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
                                     const char* name) {
-  return ((Module*)module)->getGlobal(name);
+  return ((Module*)module)->getGlobalOrNull(name);
 }
 void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
   ((Module*)module)->removeGlobal(name);
 }
+BinaryenIndex BinaryenGetNumGlobals(BinaryenModuleRef module) {
+  return ((Module*)module)->globals.size();
+}
+BinaryenGlobalRef BinaryenGetGlobalByIndex(BinaryenModuleRef module,
+                                           BinaryenIndex index) {
+  const auto& globals = ((Module*)module)->globals;
+  if (globals.size() <= index) {
+    Fatal() << "invalid global index.";
+  }
+  return globals[index].get();
+}
 
-// Events
+// Tags
 
-BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
-                                  const char* name,
-                                  uint32_t attribute,
-                                  BinaryenType params,
-                                  BinaryenType results) {
-  auto* ret = new Event();
+BinaryenTagRef BinaryenAddTag(BinaryenModuleRef module,
+                              const char* name,
+                              BinaryenType params,
+                              BinaryenType results) {
+  auto* ret = new Tag();
   ret->setExplicitName(name);
-  ret->attribute = attribute;
   ret->sig = Signature(Type(params), Type(results));
-  ((Module*)module)->addEvent(ret);
+  ((Module*)module)->addTag(ret);
   return ret;
 }
 
-BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
-  return ((Module*)module)->getEvent(name);
+BinaryenTagRef BinaryenGetTag(BinaryenModuleRef module, const char* name) {
+  return ((Module*)module)->getTagOrNull(name);
 }
-void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
-  ((Module*)module)->removeEvent(name);
+void BinaryenRemoveTag(BinaryenModuleRef module, const char* name) {
+  ((Module*)module)->removeTag(name);
 }
 
 // Imports
@@ -3223,16 +3502,19 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->sig = Signature(Type(params), Type(results));
+  // TODO: Take a HeapType rather than params and results.
+  ret->type = Signature(Type(params), Type(results));
   ((Module*)module)->addFunction(ret);
 }
 void BinaryenAddTableImport(BinaryenModuleRef module,
                             const char* internalName,
                             const char* externalModuleName,
                             const char* externalBaseName) {
-  auto& table = ((Module*)module)->table;
-  table.module = externalModuleName;
-  table.base = externalBaseName;
+  auto table = std::make_unique<Table>();
+  table->name = internalName;
+  table->module = externalModuleName;
+  table->base = externalBaseName;
+  ((Module*)module)->addTable(std::move(table));
 }
 void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* internalName,
@@ -3249,28 +3531,27 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              BinaryenType globalType,
-                             int mutable_) {
+                             bool mutable_) {
   auto* ret = new Global();
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->type = Type(globalType);
-  ret->mutable_ = mutable_ != 0;
+  ret->mutable_ = mutable_;
   ((Module*)module)->addGlobal(ret);
 }
-void BinaryenAddEventImport(BinaryenModuleRef module,
-                            const char* internalName,
-                            const char* externalModuleName,
-                            const char* externalBaseName,
-                            uint32_t attribute,
-                            BinaryenType params,
-                            BinaryenType results) {
-  auto* ret = new Event();
+void BinaryenAddTagImport(BinaryenModuleRef module,
+                          const char* internalName,
+                          const char* externalModuleName,
+                          const char* externalBaseName,
+                          BinaryenType params,
+                          BinaryenType results) {
+  auto* ret = new Tag();
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->sig = Signature(Type(params), Type(results));
-  ((Module*)module)->addEvent(ret);
+  ((Module*)module)->addTag(ret);
 }
 
 // Exports
@@ -3320,71 +3601,139 @@ BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
   ((Module*)module)->addExport(ret);
   return ret;
 }
-BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
-                                         const char* internalName,
-                                         const char* externalName) {
+BinaryenExportRef BinaryenAddTagExport(BinaryenModuleRef module,
+                                       const char* internalName,
+                                       const char* externalName) {
   auto* ret = new Export();
   ret->value = internalName;
   ret->name = externalName;
-  ret->kind = ExternalKind::Event;
+  ret->kind = ExternalKind::Tag;
   ((Module*)module)->addExport(ret);
   return ret;
+}
+BinaryenExportRef BinaryenGetExport(BinaryenModuleRef module,
+                                    const char* externalName) {
+  return ((Module*)module)->getExportOrNull(externalName);
 }
 void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
   ((Module*)module)->removeExport(externalName);
 }
-
-// Function table. One per module
-
-void BinaryenSetFunctionTable(BinaryenModuleRef module,
-                              BinaryenIndex initial,
-                              BinaryenIndex maximum,
-                              const char** funcNames,
-                              BinaryenIndex numFuncNames,
-                              BinaryenExpressionRef offset) {
-  Table::Segment segment((Expression*)offset);
-  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
-    segment.data.push_back(funcNames[i]);
+BinaryenIndex BinaryenGetNumExports(BinaryenModuleRef module) {
+  return ((Module*)module)->exports.size();
+}
+BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
+                                           BinaryenIndex index) {
+  const auto& exports = ((Module*)module)->exports;
+  if (exports.size() <= index) {
+    Fatal() << "invalid export index.";
   }
-  auto& table = ((Module*)module)->table;
-  table.initial = initial;
-  table.max = maximum;
-  table.exists = true;
-  table.segments.push_back(segment);
+  return exports[index].get();
 }
 
-int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
-  return ((Module*)module)->table.imported();
+BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
+                                  const char* name,
+                                  BinaryenIndex initial,
+                                  BinaryenIndex maximum,
+                                  BinaryenType tableType) {
+  auto table = Builder::makeTable(name, Type(tableType), initial, maximum);
+  table->hasExplicitName = true;
+  return ((Module*)module)->addTable(std::move(table));
 }
-BinaryenIndex BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module) {
-  return ((Module*)module)->table.segments.size();
+void BinaryenRemoveTable(BinaryenModuleRef module, const char* table) {
+  ((Module*)module)->removeTable(table);
+}
+BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module) {
+  return ((Module*)module)->tables.size();
+}
+BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module, const char* name) {
+  return ((Module*)module)->getTableOrNull(name);
+}
+BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
+                                         BinaryenIndex index) {
+  const auto& tables = ((Module*)module)->tables;
+  if (tables.size() <= index) {
+    Fatal() << "invalid table index.";
+  }
+  return tables[index].get();
+}
+BinaryenElementSegmentRef
+BinaryenAddActiveElementSegment(BinaryenModuleRef module,
+                                const char* table,
+                                const char* name,
+                                const char** funcNames,
+                                BinaryenIndex numFuncNames,
+                                BinaryenExpressionRef offset) {
+  auto segment = std::make_unique<ElementSegment>(table, (Expression*)offset);
+  segment->setExplicitName(name);
+  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
+    auto* func = ((Module*)module)->getFunctionOrNull(funcNames[i]);
+    if (func == nullptr) {
+      Fatal() << "invalid function '" << funcNames[i] << "'.";
+    }
+    segment->data.push_back(
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
+  }
+  return ((Module*)module)->addElementSegment(std::move(segment));
+}
+BinaryenElementSegmentRef
+BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
+                                 const char* name,
+                                 const char** funcNames,
+                                 BinaryenIndex numFuncNames) {
+  auto segment = std::make_unique<ElementSegment>();
+  segment->setExplicitName(name);
+  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
+    auto* func = ((Module*)module)->getFunctionOrNull(funcNames[i]);
+    if (func == nullptr) {
+      Fatal() << "invalid function '" << funcNames[i] << "'.";
+    }
+    segment->data.push_back(
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
+  }
+  return ((Module*)module)->addElementSegment(std::move(segment));
+}
+void BinaryenRemoveElementSegment(BinaryenModuleRef module, const char* name) {
+  ((Module*)module)->removeElementSegment(name);
+}
+BinaryenElementSegmentRef BinaryenGetElementSegment(BinaryenModuleRef module,
+                                                    const char* name) {
+  return ((Module*)module)->getElementSegmentOrNull(name);
+}
+BinaryenElementSegmentRef
+BinaryenGetElementSegmentByIndex(BinaryenModuleRef module,
+                                 BinaryenIndex index) {
+  const auto& elementSegments = ((Module*)module)->elementSegments;
+  if (elementSegments.size() <= index) {
+    Fatal() << "invalid table index.";
+  }
+  return elementSegments[index].get();
+}
+BinaryenIndex BinaryenGetNumElementSegments(BinaryenModuleRef module) {
+  return ((Module*)module)->elementSegments.size();
 }
 BinaryenExpressionRef
-BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
-                                      BinaryenIndex segmentId) {
-  const auto& segments = ((Module*)module)->table.segments;
-  if (segments.size() <= segmentId) {
-    Fatal() << "invalid function table segment id.";
+BinaryenElementSegmentGetOffset(BinaryenElementSegmentRef elem) {
+  if (((ElementSegment*)elem)->table.isNull()) {
+    Fatal() << "elem segment is passive.";
   }
-  return segments[segmentId].offset;
+  return ((ElementSegment*)elem)->offset;
 }
-BinaryenIndex BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
-                                                    BinaryenIndex segmentId) {
-  const auto& segments = ((Module*)module)->table.segments;
-  if (segments.size() <= segmentId) {
-    Fatal() << "invalid function table segment id.";
-  }
-  return segments[segmentId].data.size();
+BinaryenIndex BinaryenElementSegmentGetLength(BinaryenElementSegmentRef elem) {
+  return ((ElementSegment*)elem)->data.size();
 }
-const char* BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module,
-                                                BinaryenIndex segmentId,
-                                                BinaryenIndex dataId) {
-  const auto& segments = ((Module*)module)->table.segments;
-  if (segments.size() <= segmentId ||
-      segments[segmentId].data.size() <= dataId) {
-    Fatal() << "invalid function table segment or data id.";
+const char* BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
+                                          BinaryenIndex dataId) {
+  const auto& data = ((ElementSegment*)elem)->data;
+  if (data.size() <= dataId) {
+    Fatal() << "invalid segment data id.";
   }
-  return segments[segmentId].data[dataId].c_str();
+  if (data[dataId]->is<RefNull>()) {
+    return NULL;
+  } else if (auto* get = data[dataId]->dynCast<RefFunc>()) {
+    return get->func.c_str();
+  } else {
+    Fatal() << "invalid expression in segment data.";
+  }
 }
 
 // Memory. One per module
@@ -3394,11 +3743,11 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex maximum,
                        const char* exportName,
                        const char** segments,
-                       int8_t* segmentPassive,
+                       bool* segmentPassive,
                        BinaryenExpressionRef* segmentOffsets,
                        BinaryenIndex* segmentSizes,
                        BinaryenIndex numSegments,
-                       uint8_t shared) {
+                       bool shared) {
   auto* wasm = (Module*)module;
   wasm->memory.initial = initial;
   wasm->memory.max = int32_t(maximum); // Make sure -1 extends.
@@ -3412,7 +3761,8 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    wasm->memory.segments.emplace_back(segmentPassive[i],
+    wasm->memory.segments.emplace_back(Name(),
+                                       segmentPassive[i],
                                        (Expression*)segmentOffsets[i],
                                        segments[i],
                                        segmentSizes[i]);
@@ -3464,8 +3814,8 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
   }
   return segments[id].data.size();
 }
-int BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                    BinaryenIndex id) {
+bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
+                                     BinaryenIndex id) {
   const auto& segments = ((Module*)module)->memory.segments;
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
@@ -3518,7 +3868,7 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
 }
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
-  WasmPrinter::printModule((Module*)module);
+  std::cout << *(Module*)module;
 }
 
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
@@ -3535,8 +3885,8 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   glue.emitPost();
 }
 
-int BinaryenModuleValidate(BinaryenModuleRef module) {
-  return WasmValidator().validate(*(Module*)module) ? 1 : 0;
+bool BinaryenModuleValidate(BinaryenModuleRef module) {
+  return WasmValidator().validate(*(Module*)module);
 }
 
 void BinaryenModuleOptimize(BinaryenModuleRef module) {
@@ -3544,6 +3894,10 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
+}
+
+void BinaryenModuleUpdateMaps(BinaryenModuleRef module) {
+  ((Module*)module)->updateMaps();
 }
 
 int BinaryenGetOptimizeLevel(void) { return globalPassOptions.optimizeLevel; }
@@ -3558,21 +3912,29 @@ void BinaryenSetShrinkLevel(int level) {
   globalPassOptions.shrinkLevel = level;
 }
 
-int BinaryenGetDebugInfo(void) { return globalPassOptions.debugInfo; }
+bool BinaryenGetDebugInfo(void) { return globalPassOptions.debugInfo; }
 
-void BinaryenSetDebugInfo(int on) { globalPassOptions.debugInfo = on != 0; }
+void BinaryenSetDebugInfo(bool on) { globalPassOptions.debugInfo = on != 0; }
 
-int BinaryenGetLowMemoryUnused(void) {
+bool BinaryenGetLowMemoryUnused(void) {
   return globalPassOptions.lowMemoryUnused;
 }
 
-void BinaryenSetLowMemoryUnused(int on) {
+void BinaryenSetLowMemoryUnused(bool on) {
   globalPassOptions.lowMemoryUnused = on != 0;
 }
 
-int BinaryenGetFastMath(void) { return globalPassOptions.fastMath; }
+bool BinaryenGetZeroFilledMemory(void) {
+  return globalPassOptions.zeroFilledMemory;
+}
 
-void BinaryenSetFastMath(int value) { globalPassOptions.fastMath = value != 0; }
+void BinaryenSetZeroFilledMemory(bool on) {
+  globalPassOptions.zeroFilledMemory = on != 0;
+}
+
+bool BinaryenGetFastMath(void) { return globalPassOptions.fastMath; }
+
+void BinaryenSetFastMath(bool value) { globalPassOptions.fastMath = value; }
 
 const char* BinaryenGetPassArgument(const char* key) {
   assert(key);
@@ -3620,11 +3982,11 @@ void BinaryenSetOneCallerInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.oneCallerInlineMaxSize = size;
 }
 
-int BinaryenGetAllowInliningFunctionsWithLoops(void) {
+bool BinaryenGetAllowInliningFunctionsWithLoops(void) {
   return globalPassOptions.inlining.allowFunctionsWithLoops;
 }
 
-void BinaryenSetAllowInliningFunctionsWithLoops(int enabled) {
+void BinaryenSetAllowInliningFunctionsWithLoops(bool enabled) {
   globalPassOptions.inlining.allowFunctionsWithLoops = enabled;
 }
 
@@ -3682,7 +4044,7 @@ size_t BinaryenModuleWriteText(BinaryenModuleRef module,
   // use a stringstream as an std::ostream. Extract the std::string
   // representation, and then store in the output.
   std::stringstream ss;
-  WasmPrinter::printModule((Module*)module, ss);
+  ss << *(Module*)module;
 
   const auto temp = ss.str();
   const auto ctemp = temp.c_str();
@@ -3727,7 +4089,11 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 
 char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   std::stringstream ss;
-  WasmPrinter::printModule((Module*)module, ss);
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
+  ss << *(Module*)module;
+  Colors::setEnabled(colors); // restore colors state
 
   const std::string out = ss.str();
   const int len = out.length() + 1;
@@ -3742,7 +4108,8 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    WasmBinaryBuilder parser(*wasm, buffer);
+    // TODO: allow providing features in the C API
+    WasmBinaryBuilder parser(*wasm, FeatureSet::MVP, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);
@@ -3753,7 +4120,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
 
 void BinaryenModuleInterpret(BinaryenModuleRef module) {
   ShellExternalInterface interface;
-  ModuleInstance instance(*(Module*)module, &interface);
+  ModuleInstance instance(*(Module*)module, &interface, {});
 }
 
 BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
@@ -3776,14 +4143,16 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 // ========== Function Operations ==========
 //
 
+// TODO: add BinaryenFunctionGetType
+
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
   return ((Function*)func)->name.c_str();
 }
 BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func) {
-  return ((Function*)func)->sig.params.getID();
+  return ((Function*)func)->getParams().getID();
 }
 BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func) {
-  return ((Function*)func)->sig.results.getID();
+  return ((Function*)func)->getResults().getID();
 }
 BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
   return ((Function*)func)->vars.size();
@@ -3797,8 +4166,8 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
 BinaryenIndex BinaryenFunctionGetNumLocals(BinaryenFunctionRef func) {
   return ((Function*)func)->getNumLocals();
 }
-int BinaryenFunctionHasLocalName(BinaryenFunctionRef func,
-                                 BinaryenIndex index) {
+bool BinaryenFunctionHasLocalName(BinaryenFunctionRef func,
+                                  BinaryenIndex index) {
   return ((Function*)func)->hasLocalName(index);
 }
 const char* BinaryenFunctionGetLocalName(BinaryenFunctionRef func,
@@ -3822,7 +4191,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func,
                               BinaryenModuleRef module) {
   PassRunner passRunner((Module*)module);
   passRunner.options = globalPassOptions;
-  passRunner.addDefaultOptimizationPasses();
+  passRunner.addDefaultFunctionOptimizationPasses();
   passRunner.runOnFunction((Function*)func);
 }
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
@@ -3849,6 +4218,53 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
 }
 
 //
+// =========== Table operations ===========
+//
+
+const char* BinaryenTableGetName(BinaryenTableRef table) {
+  return ((Table*)table)->name.c_str();
+}
+void BinaryenTableSetName(BinaryenTableRef table, const char* name) {
+  ((Table*)table)->name = name;
+}
+BinaryenIndex BinaryenTableGetInitial(BinaryenTableRef table) {
+  return ((Table*)table)->initial;
+}
+void BinaryenTableSetInitial(BinaryenTableRef table, BinaryenIndex initial) {
+  ((Table*)table)->initial = initial;
+}
+bool BinaryenTableHasMax(BinaryenTableRef table) {
+  return ((Table*)table)->hasMax();
+}
+BinaryenIndex BinaryenTableGetMax(BinaryenTableRef table) {
+  return ((Table*)table)->max;
+}
+void BinaryenTableSetMax(BinaryenTableRef table, BinaryenIndex max) {
+  ((Table*)table)->max = max;
+}
+
+//
+// =========== ElementSegment operations ===========
+//
+const char* BinaryenElementSegmentGetName(BinaryenElementSegmentRef elem) {
+  return ((ElementSegment*)elem)->name.c_str();
+}
+void BinaryenElementSegmentSetName(BinaryenElementSegmentRef elem,
+                                   const char* name) {
+  ((ElementSegment*)elem)->name = name;
+}
+const char* BinaryenElementSegmentGetTable(BinaryenElementSegmentRef elem) {
+  return ((ElementSegment*)elem)->table.c_str();
+}
+void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
+                                    const char* table) {
+  ((ElementSegment*)elem)->table = table;
+}
+bool BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
+  return ((ElementSegment*)elem)->table.isNull();
+}
+
+//
 // =========== Global operations ===========
 //
 
@@ -3858,7 +4274,7 @@ const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
 BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
   return ((Global*)global)->type.getID();
 }
-int BinaryenGlobalIsMutable(BinaryenGlobalRef global) {
+bool BinaryenGlobalIsMutable(BinaryenGlobalRef global) {
   return ((Global*)global)->mutable_;
 }
 BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
@@ -3866,21 +4282,18 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 }
 
 //
-// =========== Event operations ===========
+// =========== Tag operations ===========
 //
 
-const char* BinaryenEventGetName(BinaryenEventRef event) {
-  return ((Event*)event)->name.c_str();
+const char* BinaryenTagGetName(BinaryenTagRef tag) {
+  return ((Tag*)tag)->name.c_str();
 }
-int BinaryenEventGetAttribute(BinaryenEventRef event) {
-  return ((Event*)event)->attribute;
-}
-BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
-  return ((Event*)event)->sig.params.getID();
+BinaryenType BinaryenTagGetParams(BinaryenTagRef tag) {
+  return ((Tag*)tag)->sig.params.getID();
 }
 
-BinaryenType BinaryenEventGetResults(BinaryenEventRef event) {
-  return ((Event*)event)->sig.results.getID();
+BinaryenType BinaryenTagGetResults(BinaryenTagRef tag) {
+  return ((Tag*)tag)->sig.results.getID();
 }
 
 //
@@ -3895,6 +4308,14 @@ const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
     return "";
   }
 }
+const char* BinaryenTableImportGetModule(BinaryenTableRef import) {
+  auto* table = (Table*)import;
+  if (table->imported()) {
+    return table->module.c_str();
+  } else {
+    return "";
+  }
+}
 const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
   auto* global = (Global*)import;
   if (global->imported()) {
@@ -3903,10 +4324,10 @@ const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetModule(BinaryenEventRef import) {
-  auto* event = (Event*)import;
-  if (event->imported()) {
-    return event->module.c_str();
+const char* BinaryenTagImportGetModule(BinaryenTagRef import) {
+  auto* tag = (Tag*)import;
+  if (tag->imported()) {
+    return tag->module.c_str();
   } else {
     return "";
   }
@@ -3919,6 +4340,14 @@ const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
     return "";
   }
 }
+const char* BinaryenTableImportGetBase(BinaryenTableRef import) {
+  auto* table = (Table*)import;
+  if (table->imported()) {
+    return table->base.c_str();
+  } else {
+    return "";
+  }
+}
 const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
   auto* global = (Global*)import;
   if (global->imported()) {
@@ -3927,10 +4356,10 @@ const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetBase(BinaryenEventRef import) {
-  auto* event = (Event*)import;
-  if (event->imported()) {
-    return event->base.c_str();
+const char* BinaryenTagImportGetBase(BinaryenTagRef import) {
+  auto* tag = (Tag*)import;
+  if (tag->imported()) {
+    return tag->base.c_str();
   } else {
     return "";
   }
@@ -3948,17 +4377,6 @@ const char* BinaryenExportGetName(BinaryenExportRef export_) {
 }
 const char* BinaryenExportGetValue(BinaryenExportRef export_) {
   return ((Export*)export_)->value.c_str();
-}
-uint32_t BinaryenGetNumExports(BinaryenModuleRef module) {
-  return ((Module*)module)->exports.size();
-}
-BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
-                                           BinaryenIndex id) {
-  const auto& exports = ((Module*)module)->exports;
-  if (exports.size() <= id) {
-    Fatal() << "invalid export id.";
-  }
-  return exports[id].get();
 }
 
 //
@@ -4013,9 +4431,21 @@ BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::WritesMemory);
 }
+BinaryenSideEffects BinaryenSideEffectReadsTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsTable);
+}
+BinaryenSideEffects BinaryenSideEffectWritesTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesTable);
+}
 BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::ImplicitTrap);
+}
+BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::TrapsNeverHappen);
 }
 BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
   return static_cast<BinaryenSideEffects>(
@@ -4032,10 +4462,9 @@ BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
 }
 
-BinaryenSideEffects
-BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
-                                 BinaryenFeatures features) {
-  return EffectAnalyzer(globalPassOptions, features, (Expression*)expr)
+BinaryenSideEffects BinaryenExpressionGetSideEffects(BinaryenExpressionRef expr,
+                                                     BinaryenModuleRef module) {
+  return EffectAnalyzer(globalPassOptions, *(Module*)module, (Expression*)expr)
     .getSideEffects();
 }
 
@@ -4135,9 +4564,9 @@ ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
     new CExpressionRunner((Module*)module, flags, maxDepth, maxLoopIterations));
 }
 
-int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
-                                  BinaryenIndex index,
-                                  BinaryenExpressionRef value) {
+bool ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
+                                   BinaryenIndex index,
+                                   BinaryenExpressionRef value) {
   auto* R = (CExpressionRunner*)runner;
   auto setFlow = R->visit(value);
   if (!setFlow.breaking()) {
@@ -4147,9 +4576,9 @@ int ExpressionRunnerSetLocalValue(ExpressionRunnerRef runner,
   return 0;
 }
 
-int ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
-                                   const char* name,
-                                   BinaryenExpressionRef value) {
+bool ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
+                                    const char* name,
+                                    BinaryenExpressionRef value) {
   auto* R = (CExpressionRunner*)runner;
   auto setFlow = R->visit(value);
   if (!setFlow.breaking()) {
@@ -4179,9 +4608,9 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
 // ========= Utilities =========
 //
 
-void BinaryenSetColorsEnabled(int enabled) { Colors::setEnabled(enabled); }
+void BinaryenSetColorsEnabled(bool enabled) { Colors::setEnabled(enabled); }
 
-int BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
+bool BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
 
 #ifdef __EMSCRIPTEN__
 // Override atexit - we don't need any global ctors to actually run, and

@@ -54,11 +54,11 @@
 ;; Globals
 
 (module
-  (import "spectest" "global" (global i32))
-  (global (import "spectest" "global") i32)
+  (import "spectest" "global_i32" (global i32))
+  (global (import "spectest" "global_i32") i32)
 
-  (import "spectest" "global" (global $x i32))
-  (global $y (import "spectest" "global") i32)
+  (import "spectest" "global_i32" (global $x i32))
+  (global $y (import "spectest" "global_i32") i32)
 
   (func (export "get-0") (result i32) (global.get 0))
   (func (export "get-1") (result i32) (global.get 1))
@@ -86,9 +86,9 @@
   "type mismatch"
 )
 
-(module (import "spectest" "global" (global i64)))
-(module (import "spectest" "global" (global f32)))
-(module (import "spectest" "global" (global f64)))
+(module (import "spectest" "global_i64" (global i64)))
+(module (import "spectest" "global_i64" (global f32)))
+(module (import "spectest" "global_i64" (global f64)))
 
 
 ;; Tables
@@ -96,7 +96,7 @@
 (module
   (type (func (result i32)))
   (import "spectest" "table" (table 10 20 funcref))
-  (elem 0 (i32.const 1) $f $g)
+  (elem (i32.const 1) $f $g)
 
   (func (export "call") (param i32) (result i32) (call_indirect (type 0) (local.get 0)))
   (func $f (result i32) (i32.const 11))
@@ -113,7 +113,7 @@
 (module
   (type (func (result i32)))
   (table (import "spectest" "table") 10 20 funcref)
-  (elem 0 (i32.const 1) $f $g)
+  (elem (i32.const 1) $f $g)
 
   (func (export "call") (param i32) (result i32) (call_indirect (type 0) (local.get 0)))
   (func $f (result i32) (i32.const 11))
@@ -133,10 +133,6 @@
 )
 (assert_invalid
   (module (import "" "" (table 10 funcref)) (table 10 funcref))
-  "multiple tables"
-)
-(assert_invalid
-  (module (table 10 funcref) (table 10 funcref))
   "multiple tables"
 )
 
@@ -162,7 +158,7 @@
 
 (module
   (import "spectest" "memory" (memory 1 2))
-  (data 0 (i32.const 10) "\10")
+  (data (i32.const 10) "\10")
 
   (func (export "load") (param i32) (result i32) (i32.load (local.get 0)))
 )
@@ -174,7 +170,7 @@
 
 (module
   (memory (import "spectest" "memory") 1 2)
-  (data 0 (i32.const 10) "\10")
+  (data (i32.const 10) "\10")
 
   (func (export "load") (param i32) (result i32) (i32.load (local.get 0)))
 )

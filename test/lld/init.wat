@@ -4,12 +4,10 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (memory $0 2)
  (table $0 1 1 funcref)
- (global $global$0 (mut i32) (i32.const 66112))
- (global $global$1 i32 (i32.const 576))
+ (global $__stack_pointer (mut i32) (i32.const 66112))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
   (call $init_x)
   (call $init_y)

@@ -1221,7 +1221,7 @@ longname3489 => M9
 longname1491 => MA
 longname4947 => MAa
 longname1545 => MB
-eventname1 => MBa
+tagname1 => MBa
 longname1599 => MC
 longname1653 => MD
 longname1707 => ME
@@ -1500,7 +1500,7 @@ longname3492 => P9
 longname1494 => PA
 longname4950 => PAa
 longname1548 => PB
-event1 => PBa
+tag1 => PBa
 longname1602 => PC
 longname1656 => PD
 longname1710 => PE
@@ -10014,11 +10014,11 @@ longname4880 => zza
  (import "other" "anything" (func $internalInfinity))
  (import "wasi_unstable" "f" (func $internal3_wasi))
  (import "wasi_unstable" "LBa" (func $internal3_wasi_only))
- (import "env" "MBa" (event $eventname1 (attr 0) (param i32)))
- (event $event1 (attr 0) (param i32 i32))
+ (import "env" "MBa" (tag $tagname1 (param i32)))
+ (tag $tag1 (param i32 i32))
  (export "NBa" (func $foo1))
  (export "OBa" (func $foo2))
- (export "PBa" (event $event1))
+ (export "PBa" (tag $tag1))
  (func $foo1
   (nop)
  )

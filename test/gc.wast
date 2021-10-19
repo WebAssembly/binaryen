@@ -15,10 +15,12 @@
   (global $global_eqref2 (mut eqref) (i31.new (i32.const 0)))
 
   (func $test
+    (param $local_i31ref i31ref)
+    (param $local_dataref dataref)
+
     (local $local_i32 i32)
     (local $local_anyref anyref)
     (local $local_eqref eqref)
-    (local $local_i31ref i31ref)
 
     ;; Test types for local.get/set
     (local.set $local_anyref (local.get $local_anyref))
@@ -67,5 +69,12 @@
     ;; Test i31.get_s/u
     (local.set $local_i32 (i31.get_s (local.get $local_i31ref)))
     (local.set $local_i32 (i31.get_u (local.get $local_i31ref)))
+  )
+
+  (func $test-variants
+    (param $local_i31refnull (ref null i31))
+    (param $local_i31refnonnull (ref i31))
+    (param $local_datarefnull (ref null data))
+    (param $local_datarefnonnull (ref data))
   )
 )

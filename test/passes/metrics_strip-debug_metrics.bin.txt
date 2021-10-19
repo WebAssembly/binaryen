@@ -1,21 +1,23 @@
 total
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 0       
+ [tables]       : 0       
+ [tags]         : 0       
  [total]        : 1       
  [vars]         : 0       
- nop            : 1       
+ Nop            : 1       
 total
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 0       
+ [tables]       : 0       
+ [tags]         : 0       
  [total]        : 1       
  [vars]         : 0       
- nop            : 1       
+ Nop            : 1       
 (module
  (type $none_=>_none (func))
  (export "a" (func $0))

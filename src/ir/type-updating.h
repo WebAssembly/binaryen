@@ -17,6 +17,7 @@
 #ifndef wasm_ir_type_updating_h
 #define wasm_ir_type_updating_h
 
+#include "ir/branch-utils.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -56,17 +57,11 @@ struct TypeUpdater
       if (block->name.is()) {
         blockInfos[block->name].block = block;
       }
-    } else if (auto* br = curr->dynCast<Break>()) {
-      // ensure info exists, discoverBreaks can then fill it
-      blockInfos[br->name];
-    } else if (auto* sw = curr->dynCast<Switch>()) {
-      // ensure info exists, discoverBreaks can then fill it
-      for (auto target : sw->targets) {
-        blockInfos[target];
-      }
-      blockInfos[sw->default_];
-    } else if (auto* br = curr->dynCast<BrOnExn>()) {
-      blockInfos[br->name];
+    } else {
+      BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+        // ensure info exists, discoverBreaks can then fill it
+        blockInfos[name];
+      });
     }
     // add a break to the info, for break and switch
     discoverBreaks(curr, +1);
@@ -157,30 +152,12 @@ struct TypeUpdater
 
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
-    if (auto* br = curr->dynCast<Break>()) {
-      noteBreakChange(br->name, change, br->value);
-    } else if (auto* sw = curr->dynCast<Switch>()) {
-      applySwitchChanges(sw, change);
-    } else if (auto* br = curr->dynCast<BrOnExn>()) {
-      noteBreakChange(br->name, change, br->sent);
-    }
-  }
-
-  void applySwitchChanges(Switch* sw, int change) {
-    std::set<Name> seen;
-    for (auto target : sw->targets) {
-      if (seen.insert(target).second) {
-        noteBreakChange(target, change, sw->value);
-      }
-    }
-    if (seen.insert(sw->default_).second) {
-      noteBreakChange(sw->default_, change, sw->value);
-    }
-  }
-
-  // note the addition of a node
-  void noteBreakChange(Name name, int change, Expression* value) {
-    noteBreakChange(name, change, value ? value->type : Type::none);
+    BranchUtils::operateOnScopeNameUsesAndSentTypes(
+      curr,
+      [&](Name& name, Type type) { noteBreakChange(name, change, type); });
+    // TODO: it may be faster to accumulate all changes to a set first, then
+    // call noteBreakChange on the unique values, as a switch can be quite
+    // large and have lots of repeated targets.
   }
 
   void noteBreakChange(Name name, int change, Type type) {
@@ -327,6 +304,66 @@ struct TypeUpdater
     return block->name.is() && blockInfos[block->name].numBreaks > 0;
   }
 };
+
+// Rewrites global heap types across an entire module, allowing changes to be
+// made while doing so.
+class GlobalTypeRewriter {
+public:
+  GlobalTypeRewriter(Module& wasm);
+  virtual ~GlobalTypeRewriter() {}
+
+  // Main entry point. This performs the entire process of creating new heap
+  // types and calling the hooks below, then applies the new types throughout
+  // the module.
+  void update();
+
+  // Subclasses can implement these methods to modify the new set of types that
+  // we map to. By default, we simply copy over the types, and these functions
+  // are the hooks to apply changes through. The methods receive as input the
+  // old type, and a structure that they can modify. That structure is the one
+  // used to define the new type in the TypeBuilder.
+  virtual void modifyStruct(HeapType oldType, Struct& struct_) {}
+  virtual void modifyArray(HeapType oldType, Array& array) {}
+  virtual void modifySignature(HeapType oldType, Signature& sig) {}
+
+  // Map an old type to a temp type. This can be called from the above hooks,
+  // so that they can use a proper temp type of the TypeBuilder while modifying
+  // things.
+  Type getTempType(Type type);
+
+private:
+  Module& wasm;
+  TypeBuilder typeBuilder;
+
+  // The list of old types.
+  std::vector<HeapType> types;
+
+  // Type indices of the old types.
+  std::unordered_map<HeapType, Index> typeIndices;
+};
+
+namespace TypeUpdating {
+
+// Checks whether a type is valid as a local, or whether
+// handleNonDefaultableLocals() can handle it if not.
+bool canHandleAsLocal(Type type);
+
+// Finds non-nullable locals, which are currently not supported, and handles
+// them. Atm this turns them into nullable ones, and adds ref.as_non_null on
+// their uses (which keeps the type of the users identical).
+// This may also handle other types of nondefaultable locals in the future.
+void handleNonDefaultableLocals(Function* func, Module& wasm);
+
+// Returns the type that a local should be, after handling of non-
+// defaultability.
+Type getValidLocalType(Type type, FeatureSet features);
+
+// Given a local.get, returns a proper replacement for it, taking into account
+// the extra work we need to do to handle non-defaultable values (e.g., add a
+// ref.as_non_null around it, if the local should be non-nullable but is not).
+Expression* fixLocalGet(LocalGet* get, Module& wasm);
+
+} // namespace TypeUpdating
 
 } // namespace wasm
 

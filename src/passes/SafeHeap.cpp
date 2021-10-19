@@ -20,7 +20,6 @@
 // top of sbrk()-addressible memory, and incorrect alignment notation.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/bits.h"
 #include "ir/import-utils.h"
@@ -31,7 +30,6 @@
 
 namespace wasm {
 
-static const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR");
 static const Name GET_SBRK_PTR("emscripten_get_sbrk_ptr");
 static const Name SBRK("sbrk");
 static const Name SEGFAULT_IMPORT("segfault");
@@ -68,6 +66,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   // If the getSbrkPtr function is implemented in the wasm, we must not
   // instrument that, as it would lead to infinite recursion of it calling
   // SAFE_HEAP_LOAD that calls it and so forth.
+  // As well as the getSbrkPtr function we also avoid instrumenting the
+  // module start function.  This is because this function is used in
+  // shared memory builds to load the passive memory segments, which in
+  // turn means that value of sbrk() is not available.
   Name getSbrkPtr;
 
   bool isFunctionParallel() override { return true; }
@@ -79,7 +81,12 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
 
   void visitLoad(Load* curr) {
-    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    // As well as the getSbrkPtr function we also avoid insturmenting the
+    // module start function.  This is because this function is used in
+    // shared memory builds to load the passive memory segments, which in
+    // turn means that value of sbrk() is not available.
+    if (getFunction()->name == getModule()->start ||
+        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -90,7 +97,8 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    if (getFunction()->name == getModule()->start ||
+        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -119,43 +127,40 @@ struct SafeHeap : public Pass {
   void addImports(Module* module) {
     ImportInfo info(*module);
     auto indexType = module->memory.indexType;
-    // Older emscripten imports env.DYNAMICTOP_PTR.
-    // Newer emscripten imports or exports emscripten_get_sbrk_ptr().
-    if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
-      dynamicTopPtr = existing->name;
-    } else if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
+    if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       getSbrkPtr = existing->value;
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
-      auto* import = new Function;
-      import->name = getSbrkPtr = GET_SBRK_PTR;
+      auto import = Builder::makeFunction(
+        GET_SBRK_PTR, Signature(Type::none, indexType), {});
+      getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
       import->base = GET_SBRK_PTR;
-      import->sig = Signature(Type::none, indexType);
-      module->addFunction(import);
+      module->addFunction(std::move(import));
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
       segfault = existing->name;
     } else {
-      auto* import = new Function;
-      import->name = segfault = SEGFAULT_IMPORT;
+      auto import = Builder::makeFunction(
+        SEGFAULT_IMPORT, Signature(Type::none, Type::none), {});
+      segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
-      import->sig = Signature(Type::none, Type::none);
-      module->addFunction(import);
+      module->addFunction(std::move(import));
     }
     if (auto* existing = info.getImportedFunction(ENV, ALIGNFAULT_IMPORT)) {
       alignfault = existing->name;
     } else {
-      auto* import = new Function;
-      import->name = alignfault = ALIGNFAULT_IMPORT;
+      auto import = Builder::makeFunction(
+        ALIGNFAULT_IMPORT, Signature(Type::none, Type::none), {});
+
+      alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
       import->base = ALIGNFAULT_IMPORT;
-      import->sig = Signature(Type::none, Type::none);
-      module->addFunction(import);
+      module->addFunction(std::move(import));
     }
   }
 
@@ -242,12 +247,10 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto* func = new Function;
-    func->name = name;
     // pointer, offset
     auto indexType = module->memory.indexType;
-    func->sig = Signature({indexType, indexType}, style.type);
-    func->vars.push_back(indexType); // pointer + offset
+    auto funcSig = Signature({indexType, indexType}, style.type);
+    auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -275,7 +278,7 @@ struct SafeHeap : public Pass {
     block->list.push_back(last);
     block->finalize(style.type);
     func->body = block;
-    module->addFunction(func);
+    module->addFunction(std::move(func));
   }
 
   // creates a function for a particular type of store
@@ -284,12 +287,11 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto* func = new Function;
-    func->name = name;
-    // pointer, offset, value
     auto indexType = module->memory.indexType;
-    func->sig = Signature({indexType, indexType, style.valueType}, Type::none);
-    func->vars.push_back(indexType); // pointer + offset
+    // pointer, offset, value
+    auto funcSig =
+      Signature({indexType, indexType, style.valueType}, Type::none);
+    auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -312,7 +314,7 @@ struct SafeHeap : public Pass {
     block->list.push_back(store);
     block->finalize(Type::none);
     func->body = block;
-    module->addFunction(func);
+    module->addFunction(std::move(func));
   }
 
   Expression*

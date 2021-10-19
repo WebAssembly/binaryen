@@ -82,7 +82,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         return counts[a] > counts[b];
       });
     // sorting left params in front, perhaps slightly reordered. verify and fix.
-    size_t numParams = curr->sig.params.size();
+    size_t numParams = curr->getParams().size();
     for (size_t i = 0; i < numParams; i++) {
       assert(newToOld[i] < numParams);
       newToOld[i] = i;

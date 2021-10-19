@@ -40,6 +40,8 @@ template<typename T> struct FindAll {
     finder.list = &list;
     finder.walk(ast);
   }
+
+  bool has() { return !list.empty(); }
 };
 
 // Find all pointers to instances of a certain node type

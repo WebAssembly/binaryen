@@ -49,8 +49,12 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
                                   Module& wasm,
                                   std::string sourceMapFilename) {
   std::unique_ptr<std::ifstream> sourceMapStream;
-  WasmBinaryBuilder parser(wasm, input);
+  // Assume that the wasm has had its initial features applied, and use those
+  // while parsing.
+  WasmBinaryBuilder parser(wasm, wasm.features, input);
+  parser.setDebugInfo(debugInfo);
   parser.setDWARF(DWARF);
+  parser.setSkipFunctionBodies(skipFunctionBodies);
   if (sourceMapFilename.size()) {
     sourceMapStream = make_unique<std::ifstream>();
     sourceMapStream->open(sourceMapFilename);
@@ -84,8 +88,8 @@ bool ModuleReader::isBinaryFile(std::string filename) {
 void ModuleReader::read(std::string filename,
                         Module& wasm,
                         std::string sourceMapFilename) {
-  // empty filename means read from stdin
-  if (!filename.size()) {
+  // empty filename or "-" means read from stdin
+  if (!filename.size() || filename == "-") {
     readStdin(wasm, sourceMapFilename);
     return;
   }
@@ -121,7 +125,7 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
 #define DEBUG_TYPE "writer"
 
 void ModuleWriter::writeText(Module& wasm, Output& output) {
-  WasmPrinter::printModule(&wasm, output.getStream());
+  output.getStream() << wasm;
 }
 
 void ModuleWriter::writeText(Module& wasm, std::string filename) {
@@ -135,6 +139,9 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   WasmBinaryWriter writer(&wasm, buffer);
   // if debug info is used, then we want to emit the names section
   writer.setNamesSection(debugInfo);
+  if (emitModuleName) {
+    writer.setEmitModuleName(true);
+  }
   std::unique_ptr<std::ofstream> sourceMapStream;
   if (sourceMapFilename.size()) {
     sourceMapStream = make_unique<std::ofstream>();
