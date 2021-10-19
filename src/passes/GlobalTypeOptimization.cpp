@@ -178,8 +178,8 @@ struct GlobalTypeOptimization : public Pass {
       // Process removability. First, see if we can remove anything before we
       // start to allocate info for that.
       if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-        return !hasRead;
-      })) {
+            return !hasRead;
+          })) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
