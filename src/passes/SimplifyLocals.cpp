@@ -407,9 +407,9 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(std::make_pair(
+      self->sinkables.emplace(std::pair{
         index,
-        SinkableInfo(currp, self->getPassOptions(), *self->getModule())));
+        SinkableInfo(currp, self->getPassOptions(), *self->getModule())});
     }
 
     if (!allowNesting) {
