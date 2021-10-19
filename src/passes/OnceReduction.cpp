@@ -156,6 +156,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     //    foo$once = 1;
     //    ...
     //
+    // TODO: if we generalize this to allow more conditions than just a
+    //       global.get, this could be merged with
+    //       SimplifyGlobals::GlobalUseScanner::visitFunction().
     auto* block = body->dynCast<Block>();
     if (!block) {
       return Name();
