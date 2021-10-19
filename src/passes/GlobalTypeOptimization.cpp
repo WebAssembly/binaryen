@@ -218,8 +218,9 @@ struct GlobalTypeOptimization : public Pass {
         auto& newFields = struct_.fields;
 
         // Adjust immutability.
-        if (parent.canBecomeImmutable.count(oldStructType)) {
-          auto& immutableVec = parent.canBecomeImmutable[oldStructType];
+        auto immIter = parent.canBecomeImmutable.find(oldStructType);
+        if (immIter != parent.canBecomeImmutable.end()) {
+          auto& immutableVec = immIter->second;
           for (Index i = 0; i < immutableVec.size(); i++) {
             if (immutableVec[i]) {
               newFields[i].mutable_ = Immutable;
@@ -228,9 +229,9 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         // Remove fields where we can.
-        if (parent.indexesAfterRemovals.count(oldStructType)) {
-          auto& indexesAfterRemoval =
-            parent.indexesAfterRemovals[oldStructType];
+        auto remIter = parent.indexesAfterRemovals.find(oldStructType);
+        if (remIter != parent.indexesAfterRemovals.end()) {
+          auto& indexesAfterRemoval = remIter->second;
           Index removed = 0;
           for (Index i = 0; i < newFields.size(); i++) {
             auto newIndex = indexesAfterRemoval[i];
