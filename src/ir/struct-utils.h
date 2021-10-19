@@ -241,13 +241,12 @@ private:
       auto& infos = combinedInfos[type];
 
       // Propagate shared fields to the supertype.
-      HeapType superType;
-      if (type.getSuperType(superType)) {
-        auto& superInfos = combinedInfos[superType];
-        auto& superFields = superType.getStruct().fields;
+      if (auto superType = type.getSuperType()) {
+        auto& superInfos = combinedInfos[*superType];
+        auto& superFields = superType->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
           if (superInfos[i].combine(infos[i])) {
-            work.push(superType);
+            work.push(*superType);
           }
         }
       }

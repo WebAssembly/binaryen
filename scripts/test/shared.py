@@ -25,7 +25,7 @@ import sys
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with CMakeLists.txt CXX_STANDARD
-cxx_standard = 14
+cxx_standard = 17
 
 
 def parse_args(args):
