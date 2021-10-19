@@ -165,9 +165,9 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // we are at the right absolute address.
     // We are relative to the section start.
     auto totalAdjustment = adjustmentForLEBShrinking + body;
-    for (auto& [_, span] : binaryLocations.expressions) {
-      span.start -= totalAdjustment;
-      span.end -= totalAdjustment;
+    for (auto& [_, locations] : binaryLocations.expressions) {
+      locations.start -= totalAdjustment;
+      locations.end -= totalAdjustment;
     }
     for (auto& [_, locations] : binaryLocations.functions) {
       locations.start -= totalAdjustment;

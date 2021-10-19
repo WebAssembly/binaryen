@@ -162,7 +162,7 @@ void writePlaceholderMap(const std::map<size_t, Name> placeholderMap,
   Output output(filename, Flags::Text);
   auto& o = output.getStream();
   for (auto& [index, func] : placeholderMap) {
-    o << key << ':' << value << '\n';
+    o << index << ':' << func << '\n';
   }
 }
 

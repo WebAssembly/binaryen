@@ -800,8 +800,8 @@ struct Optimizer : public RelooperRecursor {
       } else {
         // If the block has no switch, the branches must not as well.
 #ifndef NDEBUG
-        for (auto& [_, info] : ParentBlock->BranchesOut) {
-          assert(!info->SwitchValues);
+        for (auto& [_, CurrBranch] : ParentBlock->BranchesOut) {
+          assert(!CurrBranch->SwitchValues);
         }
 #endif
       }
@@ -1021,9 +1021,9 @@ private:
     wasm::rehash(digest, uint8_t(2));
     for (auto& [CurrBlock, CurrBranch] : Curr->BranchesOut) {
       // Hash the Block* as a pointer TODO: full hash?
-      wasm::rehash(digest, reinterpret_cast<size_t>(target));
+      wasm::rehash(digest, reinterpret_cast<size_t>(CurrBlock));
       // Hash the Branch info properly
-      wasm::hash_combine(digest, Hash(info));
+      wasm::hash_combine(digest, Hash(CurrBranch));
     }
     return digest;
   }
@@ -1067,7 +1067,7 @@ void Relooper::Calculate(Block* Entry) {
       continue;
     }
     for (auto& [CurrBlock, _] : Curr->BranchesOut) {
-      target->BranchesIn.insert(Curr);
+      CurrBlock->BranchesIn.insert(Curr);
     }
   }
 
@@ -1082,8 +1082,8 @@ void Relooper::Calculate(Block* Entry) {
                       BlockSet& Entries,
                       BlockSet* LimitTo = nullptr) {
       for (auto& [CurrBlock, _] : Source->BranchesOut) {
-        if (!LimitTo || contains(*LimitTo, target)) {
-          Entries.insert(target);
+        if (!LimitTo || contains(*LimitTo, CurrBlock)) {
+          Entries.insert(CurrBlock);
         }
       }
     }
