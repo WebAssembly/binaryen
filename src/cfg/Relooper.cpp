@@ -1019,7 +1019,7 @@ private:
                          wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition));
     }
     wasm::rehash(digest, uint8_t(2));
-    for (auto& [target, info] : Curr->BranchesOut) {
+    for (auto& [CurrBlock, CurrBranch] : Curr->BranchesOut) {
       // Hash the Block* as a pointer TODO: full hash?
       wasm::rehash(digest, reinterpret_cast<size_t>(target));
       // Hash the Branch info properly
