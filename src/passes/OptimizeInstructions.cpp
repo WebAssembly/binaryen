@@ -205,10 +205,10 @@ struct OptimizeInstructions
 
   Pass* create() override { return new OptimizeInstructions; }
 
-  bool fastMath;
+  bool ignoreNaNs;
 
   void doWalkFunction(Function* func) {
-    fastMath = getPassOptions().fastMath;
+    ignoreNaNs = getPassOptions().fastMath.ignoreNaNs;
 
     // First, scan locals.
     {
@@ -967,7 +967,7 @@ struct OptimizeInstructions
         }
         // abs(0 - x)   ==>   abs(x),
         // only for fast math
-        if (fastMath &&
+        if (ignoreNaNs &&
             binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
           if (auto* c = binary->left->dynCast<Const>()) {
             if (c->value.isZero()) {
@@ -2812,7 +2812,7 @@ private:
           curr->op = Abstract::getBinary(type, Add);
           right->value = right->value.neg();
           return curr;
-        } else if (fastMath) {
+        } else if (ignoreNaNs) {
           // x - 0.0   ==>   x
           return curr->left;
         }
@@ -2834,7 +2834,7 @@ private:
     {
       // x + (-0.0)   ==>   x
       double value;
-      if (fastMath && matches(curr, binary(Add, any(), fval(&value))) &&
+      if (ignoreNaNs && matches(curr, binary(Add, any(), fval(&value))) &&
           value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
@@ -2848,10 +2848,10 @@ private:
       return curr;
     }
     // x * -1.0   ==>
-    //       -x,  if fastMath == true
-    // -0.0 - x,  if fastMath == false
+    //       -x,  if ignoreNaNs == true
+    // -0.0 - x,  if ignoreNaNs == false
     if (matches(curr, binary(Mul, any(), fval(-1.0)))) {
-      if (fastMath) {
+      if (ignoreNaNs) {
         return builder.makeUnary(Abstract::getUnary(type, Neg), left);
       }
       // x * -1.0   ==>  -0.0 - x
@@ -2863,7 +2863,7 @@ private:
     if (matches(curr, binary(Mul, any(&left), constant(1))) ||
         matches(curr, binary(DivS, any(&left), constant(1))) ||
         matches(curr, binary(DivU, any(&left), constant(1)))) {
-      if (curr->type.isInteger() || fastMath) {
+      if (curr->type.isInteger() || ignoreNaNs) {
         return left;
       }
     }
