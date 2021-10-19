@@ -91,7 +91,7 @@ struct InliningOptions {
 
 struct FastMathOptions {
   // Allow optimizing under the assumption that NaNs don't happen. This lets us
-  // ignore all the NaN-relaed corner cases.
+  // ignore all the NaN-related corner cases.
   bool ignoreNaNs = false;
 };
 
