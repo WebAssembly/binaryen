@@ -372,11 +372,11 @@ struct AddrExprMap {
   // Construct the map from the binaryLocations loaded from the wasm.
   AddrExprMap(const Module& wasm) {
     for (auto& func : wasm.functions) {
-      for (auto& [first, second] : func->expressionLocations) {
-        add(first, second);
+      for (auto& [expr, span] : func->expressionLocations) {
+        add(expr, span);
       }
-      for (auto& [first, second] : func->delimiterLocations) {
-        add(first, second);
+      for (auto& [expr, delim] : func->delimiterLocations) {
+        add(expr, delim);
       }
     }
   }
