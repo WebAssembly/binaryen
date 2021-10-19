@@ -2,6 +2,7 @@
 ;; NOTE: This test was ported using port_test.py and could be cleaned up.
 
 ;; RUN: foreach %s %t wasm-opt -O --fast-math-ignore-nans -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt -O --fast-math             -S -o - | filecheck %s --check-prefix GENRL
 
 ;; with fast-math we can optimize some of these patterns
 (module
@@ -157,3 +158,71 @@
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+
+;; GENRL:      (type $none_=>_f32 (func (result f32)))
+
+;; GENRL:      (type $f32_=>_f32 (func (param f32) (result f32)))
+
+;; GENRL:      (type $f64_=>_f64 (func (param f64) (result f64)))
+
+;; GENRL:      (export "div" (func $0))
+
+;; GENRL:      (export "mul1" (func $1))
+
+;; GENRL:      (export "mul2" (func $2))
+
+;; GENRL:      (export "add1" (func $1))
+
+;; GENRL:      (export "add2" (func $2))
+
+;; GENRL:      (export "add3" (func $2))
+
+;; GENRL:      (export "add4" (func $2))
+
+;; GENRL:      (export "sub1" (func $1))
+
+;; GENRL:      (export "sub2" (func $2))
+
+;; GENRL:      (export "mul_neg_one1" (func $9))
+
+;; GENRL:      (export "mul_neg_one2" (func $10))
+
+;; GENRL:      (export "abs_sub_zero1" (func $11))
+
+;; GENRL:      (export "abs_sub_zero2" (func $12))
+
+;; GENRL:      (func $0 (; has Stack IR ;) (result f32)
+;; GENRL-NEXT:  (f32.const -nan:0x23017a)
+;; GENRL-NEXT: )
+
+;; GENRL:      (func $1 (; has Stack IR ;) (result f32)
+;; GENRL-NEXT:  (f32.const -nan:0x34546d)
+;; GENRL-NEXT: )
+
+;; GENRL:      (func $2 (; has Stack IR ;) (result f32)
+;; GENRL-NEXT:  (f32.const nan:0x400000)
+;; GENRL-NEXT: )
+
+;; GENRL:      (func $9 (; has Stack IR ;) (param $0 f32) (result f32)
+;; GENRL-NEXT:  (f32.neg
+;; GENRL-NEXT:   (local.get $0)
+;; GENRL-NEXT:  )
+;; GENRL-NEXT: )
+
+;; GENRL:      (func $10 (; has Stack IR ;) (param $0 f64) (result f64)
+;; GENRL-NEXT:  (f64.neg
+;; GENRL-NEXT:   (local.get $0)
+;; GENRL-NEXT:  )
+;; GENRL-NEXT: )
+
+;; GENRL:      (func $11 (; has Stack IR ;) (param $0 f32) (result f32)
+;; GENRL-NEXT:  (f32.abs
+;; GENRL-NEXT:   (local.get $0)
+;; GENRL-NEXT:  )
+;; GENRL-NEXT: )
+
+;; GENRL:      (func $12 (; has Stack IR ;) (param $0 f64) (result f64)
+;; GENRL-NEXT:  (f64.abs
+;; GENRL-NEXT:   (local.get $0)
+;; GENRL-NEXT:  )
+;; GENRL-NEXT: )

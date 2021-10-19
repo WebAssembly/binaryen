@@ -205,6 +205,14 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.lowMemoryUnused = true;
            })
+      .add("--fast-math",
+           "-ffm",
+           "Optimize floats without handling various corner cases. This "
+           "enables all fast-math flags",
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.fastMath.ignoreNaNs = true;
+           })
       .add("--fast-math-ignore-nans",
            "-fmin",
            "Optimize floats without handling corner cases of NaNs",
