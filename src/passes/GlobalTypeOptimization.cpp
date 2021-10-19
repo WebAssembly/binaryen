@@ -155,6 +155,7 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
+      auto& infos = combinedSetGetInfos[type];
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
@@ -163,7 +164,7 @@ struct GlobalTypeOptimization : public Pass {
           continue;
         }
 
-        if (combinedSetGetInfos[type][i].hasWrite) {
+        if (infos[i].hasWrite) {
           // A set exists.
           continue;
         }
@@ -176,19 +177,14 @@ struct GlobalTypeOptimization : public Pass {
 
       // Process removability. First, see if we can remove anything before we
       // start to allocate info for that.
-      bool canRemove = false;
-      for (Index i = 0; i < fields.size(); i++) {
-        if (!combinedSetGetInfos[type][i].hasRead) {
-          canRemove = true;
-          break;
-        }
-      }
-      if (canRemove) {
+      if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
+        return !hasRead;
+      })) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
         for (Index i = 0; i < fields.size(); i++) {
-          if (combinedSetGetInfos[type][i].hasRead) {
+          if (infos[i].hasRead) {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
