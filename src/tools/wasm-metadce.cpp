@@ -368,8 +368,7 @@ public:
   // removed, including on the outside
   void printAllUnused() {
     std::set<std::string> unused;
-    for (auto& pair : nodes) {
-      auto name = pair.first;
+    for (auto& [name, _] : nodes) {
       if (reached.find(name) == reached.end()) {
         unused.insert(name.str);
       }
@@ -389,9 +388,7 @@ public:
     for (auto& [id, dceName] : importIdToDCENode) {
       importMap[dceName] = id;
     }
-    for (auto& pair : nodes) {
-      auto name = pair.first;
-      auto& node = pair.second;
+    for (auto& [name, node] : nodes) {
       std::cout << "node: " << name << '\n';
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';
