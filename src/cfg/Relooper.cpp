@@ -1081,7 +1081,7 @@ void Relooper::Calculate(Block* Entry) {
     void GetBlocksOut(Block* Source,
                       BlockSet& Entries,
                       BlockSet* LimitTo = nullptr) {
-      for (auto& [target, _] : Source->BranchesOut) {
+      for (auto& [CurrBlock, _] : Source->BranchesOut) {
         if (!LimitTo || contains(*LimitTo, target)) {
           Entries.insert(target);
         }
