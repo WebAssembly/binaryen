@@ -191,8 +191,8 @@ struct Directize : public Pass {
       });
 
     TablesWithSet tablesWithSet;
-    for (auto& kv : analysis.map) {
-      for (auto name : kv.second) {
+    for (auto& [_, names] : analysis.map) {
+      for (auto name : names) {
         tablesWithSet.insert(name);
       }
     }

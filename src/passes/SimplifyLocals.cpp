@@ -280,9 +280,9 @@ struct SimplifyLocals
   void checkInvalidations(EffectAnalyzer& effects) {
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
-    for (auto& sinkable : sinkables) {
-      if (effects.invalidates(sinkable.second.effects)) {
-        invalidated.push_back(sinkable.first);
+    for (auto& [index, info] : sinkables) {
+      if (effects.invalidates(info.effects)) {
+        invalidated.push_back(index);
       }
     }
     for (auto index : invalidated) {
@@ -493,8 +493,7 @@ struct SimplifyLocals
     // look for a local.set that is present in them all
     bool found = false;
     Index sharedIndex = -1;
-    for (auto& sinkable : sinkables) {
-      Index index = sinkable.first;
+    for (auto& [index, _] : sinkables) {
       bool inAll = true;
       for (size_t j = 0; j < breaks.size(); j++) {
         if (breaks[j].sinkables.count(index) == 0) {

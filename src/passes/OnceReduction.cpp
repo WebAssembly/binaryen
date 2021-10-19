@@ -130,9 +130,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
       }
     }
 
-    for (auto& kv : readGlobals) {
-      auto global = kv.first;
-      auto count = kv.second;
+    for (auto& [global, count] : readGlobals) {
       if (count > 0) {
         // This global has reads we cannot reason about, so do not optimize it.
         optInfo.onceGlobals.at(global) = false;
@@ -376,8 +374,7 @@ struct OnceReduction : public Pass {
     // Combine the information. We found which globals appear to be "once", but
     // other information may have proven they are not so, in fact. Specifically,
     // for a function to be "once" we need its global to also be such.
-    for (auto& kv : optInfo.onceFuncs) {
-      Name& onceGlobal = kv.second;
+    for (auto& [_, onceGlobal] : optInfo.onceFuncs) {
       if (onceGlobal.is() && !optInfo.onceGlobals[onceGlobal]) {
         onceGlobal = Name();
       }
@@ -425,8 +422,7 @@ struct OnceReduction : public Pass {
       // Count how many once globals are set, and see if we have any more work
       // to do.
       Index currOnceGlobalsSet = 0;
-      for (auto& kv : optInfo.onceGlobalsSetInFuncs) {
-        auto& globals = kv.second;
+      for (auto& [_, globals] : optInfo.onceGlobalsSetInFuncs) {
         currOnceGlobalsSet += globals.size();
       }
       assert(currOnceGlobalsSet >= lastOnceGlobalsSet);
