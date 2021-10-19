@@ -91,8 +91,8 @@ private:
     }
     module->updateMaps();
     // Emit the mapping.
-    for (auto& pair : newToOld) {
-      std::cout << pair.second.str << " => " << pair.first.str << '\n';
+    for (auto& [new_, old] : newToOld) {
+      std::cout << old.str << " => " << new_.str << '\n';
     }
 
     if (minifyModules) {

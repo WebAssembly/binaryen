@@ -77,7 +77,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
           if (!global->imported()) {
             walk(global->init);
           }
-        } else if (curr.first == ModuleElementKind::Table) {
+        } else if (kind == ModuleElementKind::Table) {
           ModuleUtils::iterTableSegments(
             *module, curr.second, [&](ElementSegment* segment) {
               walk(segment->offset);

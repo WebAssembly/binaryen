@@ -346,8 +346,8 @@ public:
     size_t TotalMemory = 0;
     for (auto I = Slabs.begin(), E = Slabs.end(); I != E; ++I)
       TotalMemory += computeSlabSize(std::distance(Slabs.begin(), I));
-    for (auto &PtrAndSize : CustomSizedSlabs)
-      TotalMemory += PtrAndSize.second;
+    for (auto& [_, size] : CustomSizedSlabs)
+      TotalMemory += size;
     return TotalMemory;
   }
 
@@ -424,9 +424,7 @@ private:
 
   /// Deallocate all memory for custom sized slabs.
   void DeallocateCustomSizedSlabs() {
-    for (auto &PtrAndSize : CustomSizedSlabs) {
-      void *Ptr = PtrAndSize.first;
-      size_t Size = PtrAndSize.second;
+    for (auto& [Ptr, Size] : CustomSizedSlabs) {
       Allocator.Deallocate(Ptr, Size);
     }
   }
@@ -482,11 +480,9 @@ public:
       DestroyElements(Begin, End);
     }
 
-    for (auto &PtrAndSize : Allocator.CustomSizedSlabs) {
-      void *Ptr = PtrAndSize.first;
-      size_t Size = PtrAndSize.second;
-      DestroyElements((char *)alignAddr(Ptr, Align::Of<T>()),
-                      (char *)Ptr + Size);
+    for (auto& [ptr, size]: Allocator.CustomSizedSlabs) {
+      DestroyElements((char *)alignAddr(ptr, Align::Of<T>()),
+                      (char *)ptr + size);
     }
 
     Allocator.Reset();

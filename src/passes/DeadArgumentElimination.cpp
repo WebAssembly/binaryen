@@ -292,19 +292,16 @@ struct DAE : public Pass {
     // Combine all the info.
     std::unordered_map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
-    for (auto& pair : infoMap) {
-      auto& info = pair.second;
-      for (auto& pair : info.calls) {
-        auto name = pair.first;
-        auto& calls = pair.second;
+    for (auto& [_, info] : infoMap) {
+      for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[name];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
       }
       for (auto& callee : info.tailCallees) {
         tailCallees.insert(callee);
       }
-      for (auto& pair : info.droppedCalls) {
-        allDroppedCalls[pair.first] = pair.second;
+      for (auto& [name, calls] : info.droppedCalls) {
+        allDroppedCalls[name] = calls;
       }
     }
     // If we refine return types then we will need to do more type updating
@@ -312,13 +309,11 @@ struct DAE : public Pass {
     bool refinedReturnTypes = false;
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
-    for (auto& pair : allCalls) {
-      auto name = pair.first;
+    for (auto& [name, calls] : allCalls) {
       // We can only optimize if we see all the calls and can modify them.
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }
-      auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
       // Refine argument types before doing anything else. This does not
@@ -372,9 +367,7 @@ struct DAE : public Pass {
     // Track which functions we changed, and optimize them later if necessary.
     std::unordered_set<Function*> changed;
     // We now know which parameters are unused, and can potentially remove them.
-    for (auto& pair : allCalls) {
-      auto name = pair.first;
-      auto& calls = pair.second;
+    for (auto& [name, calls] : allCalls) {
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }

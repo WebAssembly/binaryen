@@ -630,9 +630,7 @@ public:
       });
 
     // Functions in the remove-list are assumed to not change the state.
-    for (auto& pair : scanner.map) {
-      auto* func = pair.first;
-      auto& info = pair.second;
+    for (auto& [func, info] : scanner.map) {
       if (removeList.match(func->name)) {
         info.inRemoveList = true;
         if (verbose && info.canChangeState) {
@@ -645,9 +643,8 @@ public:
 
     // Remove the asyncify imports, if any, and any calls to them.
     std::vector<Name> funcsToDelete;
-    for (auto& pair : scanner.map) {
-      auto* func = pair.first;
-      auto& callsTo = pair.second.callsTo;
+    for (auto& [func, info] : scanner.map) {
+      auto& callsTo = info.callsTo;
       if (func->imported() && func->module == ASYNCIFY) {
         funcsToDelete.push_back(func->name);
       }

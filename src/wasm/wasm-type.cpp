@@ -2957,18 +2957,14 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
       canonicalHeapTypes[original] = canonical;
     }
   }
-  for (auto& pair : canonicalHeapTypes) {
-    HeapType original = pair.first;
-    HeapType canonical = pair.second;
+  for (auto& [original, canonical] : canonicalHeapTypes) {
     for (HeapType* use : locations.heapTypes.at(original)) {
       *use = canonical;
     }
   }
 
   auto canonicalizeTypes = [&](bool tuples) {
-    for (auto& pair : locations.types) {
-      Type original = pair.first;
-      auto& uses = pair.second;
+    for (auto& [original, uses] : locations.types) {
       if (original.isTuple() == tuples) {
         Type canonical = globalTypeStore.insert(*getTypeInfo(original));
         for (Type* use : uses) {

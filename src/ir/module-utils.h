@@ -579,8 +579,8 @@ inline void collectHeapTypes(Module& wasm,
   // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
   InsertOrderedSet<HeapType> newTypes;
-  for (auto& pair : counts) {
-    newTypes.insert(pair.first);
+  for (auto& [type, _] : counts) {
+    newTypes.insert(type);
   }
   while (!newTypes.empty()) {
     auto iter = newTypes.begin();
