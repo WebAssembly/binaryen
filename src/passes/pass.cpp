@@ -59,7 +59,7 @@ std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
 
 std::vector<std::string> PassRegistry::getRegisteredNames() {
   std::vector<std::string> ret;
-  for (auto [name, _] : passInfos) {
+  for (auto& [name, _] : passInfos) {
     ret.push_back(name);
   }
   return ret;

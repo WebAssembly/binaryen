@@ -161,7 +161,7 @@ void writePlaceholderMap(const std::map<size_t, Name> placeholderMap,
                          std::string filename) {
   Output output(filename, Flags::Text);
   auto& o = output.getStream();
-  for (auto [key, value] : placeholderMap) {
+  for (auto& [key, value] : placeholderMap) {
     o << key << ':' << value << '\n';
   }
 }
