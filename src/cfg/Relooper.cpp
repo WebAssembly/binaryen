@@ -1066,7 +1066,7 @@ void Relooper::Calculate(Block* Entry) {
     if (!contains(Live.Live, Curr)) {
       continue;
     }
-    for (auto& [target, _] : Curr->BranchesOut) {
+    for (auto& [CurrBlock, _] : Curr->BranchesOut) {
       target->BranchesIn.insert(Curr);
     }
   }
