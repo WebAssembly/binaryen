@@ -1940,8 +1940,8 @@ template <typename T> struct StdMapStringCustomMappingTraitsImpl {
   }
 
   static void output(IO &io, map_type &v) {
-    for (auto& [key, trait] : v)
-      io.mapRequired(key.c_str(), trait);
+    for (auto &p : v)
+      io.mapRequired(p.first.c_str(), p.second);
   }
 };
 
