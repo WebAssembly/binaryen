@@ -205,12 +205,13 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.lowMemoryUnused = true;
            })
-      .add(
-        "--fast-math-ignore-nans",
-        "-ffm",
-        "Optimize floats without handling corner cases of NaNs",
-        Options::Arguments::Zero,
-        [this](Options*, const std::string&) { passOptions.fastMath.ignoreNaNs = true; })
+      .add("--fast-math-ignore-nans",
+           "-ffm",
+           "Optimize floats without handling corner cases of NaNs",
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.fastMath.ignoreNaNs = true;
+           })
       .add("--zero-filled-memory",
            "-uim",
            "Assume that an imported memory will be zero-initialized",
