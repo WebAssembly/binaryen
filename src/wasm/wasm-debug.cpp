@@ -29,9 +29,7 @@ std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
 #include "wasm-debug.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Debug {
+namespace wasm::Debug {
 
 bool isDWARFSection(Name name) { return name.startsWith(".debug_"); }
 
@@ -1105,6 +1103,4 @@ bool shouldPreserveDWARF(PassOptions& options, Module& wasm) { return false; }
 
 #endif // BUILD_LLVM_DWARF
 
-} // namespace Debug
-
-} // namespace wasm
+} // namespace wasm::Debug

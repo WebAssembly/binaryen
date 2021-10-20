@@ -29,9 +29,7 @@
 #include "dataflow/node.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace DataFlow {
+namespace wasm::DataFlow {
 
 inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
   auto doIndent = [&]() {
@@ -147,8 +145,6 @@ inline bool allInputsConstant(Node* node) {
   return false;
 }
 
-} // namespace DataFlow
-
-} // namespace wasm
+} // namespace wasm::DataFlow
 
 #endif // wasm_dataflow_utils

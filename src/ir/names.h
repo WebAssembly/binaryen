@@ -18,9 +18,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Names {
+namespace wasm::Names {
 
 // Add explicit names for function locals not yet named, and do not
 // modify existing names
@@ -95,8 +93,6 @@ public:
   std::string getName();
 };
 
-} // namespace Names
-
-} // namespace wasm
+} // namespace wasm::Names
 
 #endif // wasm_ir_names_h

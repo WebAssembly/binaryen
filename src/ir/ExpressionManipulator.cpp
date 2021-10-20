@@ -17,9 +17,7 @@
 #include "ir/load-utils.h"
 #include "ir/utils.h"
 
-namespace wasm {
-
-namespace ExpressionManipulator {
+namespace wasm::ExpressionManipulator {
 
 Expression*
 flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
@@ -119,6 +117,4 @@ void spliceIntoBlock(Block* block, Index index, Expression* add) {
   block->finalize(block->type);
 }
 
-} // namespace ExpressionManipulator
-
-} // namespace wasm
+} // namespace wasm::ExpressionManipulator

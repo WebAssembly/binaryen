@@ -22,9 +22,7 @@
 #include "ir/match.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Properties {
+namespace wasm::Properties {
 
 inline bool emitsBoolean(Expression* curr) {
   if (auto* unary = curr->dynCast<Unary>()) {
@@ -417,8 +415,6 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //
 bool isGenerative(Expression* curr, FeatureSet features);
 
-} // namespace Properties
-
-} // namespace wasm
+} // namespace wasm::Properties
 
 #endif // wasm_ir_properties_h

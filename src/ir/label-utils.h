@@ -20,9 +20,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace LabelUtils {
+namespace wasm::LabelUtils {
 
 // Handles branch/loop labels in a function; makes it easy to add new
 // ones without duplicates
@@ -48,8 +46,6 @@ private:
   size_t counter = 0;
 };
 
-} // namespace LabelUtils
-
-} // namespace wasm
+} // namespace wasm::LabelUtils
 
 #endif // wasm_ir_label_h

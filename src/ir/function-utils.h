@@ -20,9 +20,7 @@
 #include "ir/utils.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace FunctionUtils {
+namespace wasm::FunctionUtils {
 
 // Checks if two functions are equal in all functional aspects,
 // everything but their name (which can't be the same, in the same
@@ -45,8 +43,6 @@ inline bool equal(Function* left, Function* right) {
   return left->imported() && right->imported();
 }
 
-} // namespace FunctionUtils
-
-} // namespace wasm
+} // namespace wasm::FunctionUtils
 
 #endif // wasm_ir_function_h

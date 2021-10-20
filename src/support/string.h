@@ -26,9 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace wasm {
-
-namespace String {
+namespace wasm::String {
 
 // Creates a vector of the split parts of a string, by a delimiter.
 class Split : public std::vector<std::string> {
@@ -120,8 +118,6 @@ inline bool isNumber(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
-} // namespace String
-
-} // namespace wasm
+} // namespace wasm::String
 
 #endif // wasm_support_string_h

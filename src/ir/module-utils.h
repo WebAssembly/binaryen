@@ -26,9 +26,7 @@
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace ModuleUtils {
+namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied).
@@ -618,8 +616,6 @@ inline void collectHeapTypes(Module& wasm,
   }
 }
 
-} // namespace ModuleUtils
-
-} // namespace wasm
+} // namespace wasm::ModuleUtils
 
 #endif // wasm_ir_module_h
