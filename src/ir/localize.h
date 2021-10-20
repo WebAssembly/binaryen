@@ -44,8 +44,13 @@ struct Localizer {
   }
 };
 
-// Replaces all children with gets of locals, and sets to those locals earlier.
-// This stops at the first unreachable child.
+// Replaces all children with gets of locals, if they have any effects. After
+// this, the original input has only local.gets as inputs, or other things that
+// have no interacting effects, and so those children can be reordered.
+// The sets of the locals are emitted on a |sets| property on the class. Those
+// must be emitted right before the input.
+// This stops at the first unreachable child, as there is no code executing
+// after that point anyhow.
 struct ChildLocalizer {
   std::vector<LocalSet*> sets;
 

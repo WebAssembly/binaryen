@@ -465,6 +465,8 @@
     ;; reads. It has side effects, though, so the operands will be saved in
     ;; locals. Note that we can't save the rtt.canon in locals, but it has
     ;; no effects, and we leave such arguments as they are.
+    ;; Note also that one of the fields is non-nullable, and we need to use a
+    ;; nullable local for it.
     (drop
       (struct.new $struct
         (call $helper0 (i32.const 0))
@@ -506,8 +508,4 @@
   (func $helper2 (param $x i32) (result (ref any))
     (unreachable)
   )
-
-  ;; TODO: test unreachable param, we stop there.
-  ;; TODO: test nonnullable
-  ;; TODO: test rtt
 )
