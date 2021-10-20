@@ -318,7 +318,8 @@ struct GlobalTypeOptimization : public Pass {
             Fatal() << "TODO: side effects in removed fields in globals\n";
           }
           auto* block = Builder(*getModule()).makeBlock();
-          auto sets = ChildLocalizer(curr, func, getModule(), getPassOptions()).sets;
+          auto sets =
+            ChildLocalizer(curr, func, getModule(), getPassOptions()).sets;
           block->list.set(sets);
           block->list.push_back(curr);
           block->finalize(curr->type);
