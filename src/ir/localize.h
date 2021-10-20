@@ -49,7 +49,10 @@ struct Localizer {
 struct ChildLocalizer {
   std::vector<LocalSet*> sets;
 
-  ChildLocalizer(Expression* input, Function* func, Module* wasm, const PassOptions& options) {
+  ChildLocalizer(Expression* input,
+                 Function* func,
+                 Module* wasm,
+                 const PassOptions& options) {
     Builder builder(*wasm);
     ChildIterator iterator(input);
     auto& children = iterator.children;
