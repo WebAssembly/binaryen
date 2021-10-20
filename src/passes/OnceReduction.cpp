@@ -282,7 +282,8 @@ struct Optimizer
         // instruction, optimize.
         auto optimizeOnce = [&](Name globalName) {
           assert(optInfo.onceGlobals.at(globalName));
-          if (onceGlobalsWritten.count(globalName)) {
+          auto res = onceGlobalsWritten.emplace(globalName);
+          if (!res.second) {
             // This global has already been written, so this expr is not needed,
             // regardless of whether it is a global.set or a call.
             //
@@ -292,7 +293,6 @@ struct Optimizer
           } else {
             // From here on, this global is set, hopefully allowing us to
             // optimize away others.
-            onceGlobalsWritten.insert(globalName);
           }
         };
 

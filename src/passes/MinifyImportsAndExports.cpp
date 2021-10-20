@@ -111,8 +111,8 @@ private:
     ModuleUtils::iterImports(*module, [&](Importable* curr) {
       curr->module = SINGLETON_MODULE_NAME;
 #ifndef NDEBUG
-      assert(seenImports.count(curr->base) == 0);
-      seenImports.insert(curr->base);
+      auto res = seenImports.emplace(curr->base);
+      assert(res.second);
 #endif
     });
   }

@@ -640,18 +640,15 @@ struct Optimizer : public RelooperRecursor {
             if (!NextNextBranch->Code) { // TODO: handle extra code too
               // We can skip through!
               Next = Replacement = NextNext;
+              auto res = Seen.emplace(Replacement);
               // If we've already seen this, stop - it's an infinite loop of
               // empty blocks we can skip through.
-              if (Seen.count(Replacement)) {
+              if (!res.second) {
                 // Stop here. Note that if we started from X and ended up with X
                 // once more, then Replacement == First and so lower down we
                 // will not report that we did any work, avoiding an infinite
                 // loop due to always thinking there is more work to do.
                 break;
-              } else {
-                // Otherwise, keep going.
-                Seen.insert(Replacement);
-                continue;
               }
             }
           }

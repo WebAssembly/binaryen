@@ -32,10 +32,9 @@ inline void ensureNames(Function* func) {
     if (!func->hasLocalName(i)) {
       while (1) {
         auto name = Name::fromInt(nameIndex++);
-        if (seen.count(name) == 0) {
+        if (seen.emplace(name).second) {
           func->localNames[i] = name;
           func->localIndices[name] = i;
-          seen.insert(name);
           break;
         }
       }

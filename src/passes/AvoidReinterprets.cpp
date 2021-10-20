@@ -54,13 +54,12 @@ static Load* getSingleLoad(LocalGraph* localGraph,
     }
     auto* value = Properties::getFallthrough(set->value, passOptions, module);
     if (auto* parentGet = value->dynCast<LocalGet>()) {
-      if (seen.count(parentGet)) {
-        // We are in a cycle of gets, in unreachable code.
-        return nullptr;
+      if (seen.emplace(parentGet).second) {
+        get = parentGet;
+        continue;
       }
-      get = parentGet;
-      seen.insert(get);
-      continue;
+      // We are in a cycle of gets, in unreachable code.
+      return nullptr;
     }
     if (auto* load = value->dynCast<Load>()) {
       return load;
