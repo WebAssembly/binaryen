@@ -22,10 +22,10 @@
 #define wasm_support_string_h
 
 #include "support/utilities.h"
+#include <algorithm>
 #include <cctype>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 namespace wasm::String {
 
