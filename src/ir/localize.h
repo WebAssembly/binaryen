@@ -56,7 +56,6 @@ struct ChildLocalizer {
     // The children are in reverse order, so allocate the output first and
     // apply items as we go.
     auto num = children.size();
-    sets.resize(num);
     for (Index i = 0; i < num; i++) {
       auto** childp = children[num - 1 - i];
       auto* child = *childp;
@@ -67,7 +66,7 @@ struct ChildLocalizer {
       // TODO: Compare interactions between their side effects.
       if (EffectAnalyzer(options, *wasm, child).hasAnything()) {
         auto local = builder.addVar(func, child->type);
-        sets[i] = builder.makeLocalSet(local, child);
+        sets.push_back(builder.makeLocalSet(local, child));
         *childp = builder.makeLocalGet(local, child->type);
       }
     }
