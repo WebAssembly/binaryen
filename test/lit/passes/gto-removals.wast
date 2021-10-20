@@ -450,7 +450,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func (param $x (ref any))
+  (func $gets (param $x (ref any))
+    ;; Gets to keep certain fields alive.
     (drop
       (struct.get $struct 0
         (ref.null $struct)
@@ -461,8 +462,11 @@
         (ref.null $struct)
       )
     )
-    ;; The 2nd&3rd fields in this new will be removed, since that field has no
-    ;; reads. It has side effects, though, so the operands will be saved in
+  )
+
+  (func $new-side-effect
+    ;; The 2nd&3rd fields here will be removed, since those fields have no
+    ;; reads. They has side effects, though, so the operands will be saved in
     ;; locals. Note that we can't save the rtt.canon in locals, but it has
     ;; no effects, and we leave such arguments as they are.
     ;; Note also that one of the fields is non-nullable, and we need to use a
@@ -475,7 +479,9 @@
         (rtt.canon $struct)
       )
     )
+  )
 
+  (func $new-unreachable
     ;; Another case with side effects. We stop at the unreachable param before
     ;; it, however.
     (drop
@@ -483,6 +489,19 @@
         (i32.const 2)
         (unreachable)
         (call $helper2 (i32.const 3))
+        (rtt.canon $struct)
+      )
+    )
+  )
+
+  (func $new-side-effect-in-kept (param $any (ref $any))
+    ;; Side effects appear in fields that we do *not* remove. In that case,
+    ;; we do not need ot use locals.
+    (drop
+      (struct.new $struct
+        (call $helper0 (i32.const 0)
+        (f64.const 3.14159)
+        (local.get $any)
         (rtt.canon $struct)
       )
     )
