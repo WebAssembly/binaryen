@@ -192,7 +192,8 @@ jobs:
     name: ubsan
     runs-on: ubuntu-latest
     env:
-      COMPILER_FLAGS: "-fsanitize=undefined -fno-sanitize-recover=all"
+      COMPILER_FLAGS: "-fsanitize=undefined,address -fno-sanitize-recover=all"
+      LINKER_FLAGS: "-fsanitize=undefined,address"
       CC: "clang"
       CXX: "clang++"
     steps:
@@ -217,9 +218,9 @@ jobs:
   build-tsan:
     name: tsan
     runs-on: ubuntu-latest
-    env:
-      COMPILER_FLAGS: "-fsanitize=thread"
-      LINKER_FLAGS: "-fsanitize=thread"
+    # env:
+    #   COMPILER_FLAGS: "-fsanitize=thread"
+    #   LINKER_FLAGS: "-fsanitize=thread"
     steps:
     - uses: actions/setup-python@v1
       with:
