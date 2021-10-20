@@ -220,13 +220,13 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   Block* DefaultTarget = nullptr;
 
   // Find the default target, the one without a condition
-  for (auto& [target, info] : ProcessedBranchesOut) {
-    if ((!SwitchCondition && !info->Condition) ||
-        (SwitchCondition && !info->SwitchValues)) {
+  for (auto& [Target, Details] : ProcessedBranchesOut) {
+    if ((!SwitchCondition && !Details->Condition) ||
+        (SwitchCondition && !Details->SwitchValues)) {
       assert(!DefaultTarget &&
              "block has branches without a default (nullptr for the "
              "condition)"); // Must be exactly one default // nullptr
-      DefaultTarget = target;
+      DefaultTarget = Target;
     }
   }
   // Since each Block* must* branch somewhere, this must be set
