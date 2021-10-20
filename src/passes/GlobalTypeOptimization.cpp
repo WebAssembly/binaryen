@@ -251,7 +251,7 @@ struct GlobalTypeOptimization : public Pass {
             auto& nameInfo = iter->second;
 
             // Make a copy of the old ones to base ourselves off of as we do so.
-            auto oldFieldNames = fieldNames;
+            auto oldFieldNames = nameInfo.fieldNames;
 
             // Clear the old names and write the new ones.
             nameInfo.fieldNames.clear();
