@@ -22,7 +22,6 @@
 //  * Fields that are never read from can be removed entirely.
 //
 // TODO: Specialize field types.
-// TODO: Remove unused fields.
 //
 
 #include "ir/effects.h"

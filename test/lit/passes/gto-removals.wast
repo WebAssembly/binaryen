@@ -392,9 +392,9 @@
   ;; A new with side effects
 
   ;; CHECK:      (type $struct (struct_subtype  data))
-  (type $struct (struct i32 f64 i64))
+  (type $struct (struct i32 f64 (ref any) (rtt $struct)))
 
-  (func $func (param $x (ref $struct))
+  (func $func (param $x (ref any))
     (drop
       (struct.get $struct 0
         (ref.null $struct)
@@ -405,25 +405,44 @@
         (ref.null $struct)
       )
     )
-    ;; The middle field in this new will be removed, since that field has no
-    ;; reads. It has side effects, though, so all the operands will be saved
-    ;; in locals.
+    (drop
+      (struct.get $struct 3
+        (ref.null $struct)
+      )
+    )
+    ;; The second field in this new will be removed, since that field has no
+    ;; reads. It has side effects, though, so the operands will be saved in
+    ;; locals. Note that we can't save the rtt.canon in locals, but it has
+    ;; no effects, and we leave such arguments as they are.
     (drop
       (struct.new $struct
-        (call $helper-i32 (i32.const 0))
-        (call $helper-f64 (f64.const 1))
-        (i64.const 2)
+        (i32.const 1)
+        (call $helper1 (i32.const 1))
+        (call $helper2 (i32.const 2))
+        (rtt.canon $struct)
+      )
+    )
+
+    ;; Another case with side effects. We stop at the unreachable param before
+    ;; it, however.
+    (drop
+      (struct.new $struct
+        (i32.const 2)
+        (unreachable)
+        (call $helper2 (i32.const 3))
+        (rtt.canon $struct)
       )
     )
   )
 
-  (func $helper-i32 (param $x i32) (result i32)
-    (local.get $x)
+  (func $helper1 (param $x i32) (result f64)
+    (unreachable)
   )
 
-  (func $helper-f64 (param $x f64) (result f64)
-    (local.get $x)
+  (func $helper2 (param $x i32) (result (ref any))
+    (unreachable)
   )
+
   ;; TODO: test unreachable param, we stop there.
   ;; TODO: test nonnullable
   ;; TODO: test rtt
