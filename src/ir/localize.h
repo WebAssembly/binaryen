@@ -51,6 +51,7 @@ struct Localizer {
 // must be emitted right before the input.
 // This stops at the first unreachable child, as there is no code executing
 // after that point anyhow.
+// TODO: use in more places
 struct ChildLocalizer {
   std::vector<LocalSet*> sets;
 
