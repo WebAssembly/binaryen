@@ -289,8 +289,6 @@ if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
   endif()
 endif()
 
-add_compile_flag("-fsanitize=undefined,address")
-
 # Static libraries
 # Current (partial) dependency structure is as follows:
 # tools -> passes -> wasm -> asmjs -> support
