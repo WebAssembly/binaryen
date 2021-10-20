@@ -649,6 +649,9 @@ struct Optimizer : public RelooperRecursor {
                 // will not report that we did any work, avoiding an infinite
                 // loop due to always thinking there is more work to do.
                 break;
+              } else {
+                // Otherwise, keep going.
+                continue;
               }
             }
           }
