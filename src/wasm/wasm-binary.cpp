@@ -2301,10 +2301,9 @@ void WasmBinaryBuilder::readExports() {
     BYN_TRACE("read one\n");
     auto curr = new Export;
     curr->name = getInlineString();
-    if (names.count(curr->name) > 0) {
+    if (!names.emplace(curr->name).second) {
       throwError("duplicate export name");
     }
-    names.insert(curr->name);
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
     exportIndices[curr] = index;

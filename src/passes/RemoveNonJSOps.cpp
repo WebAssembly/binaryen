@@ -139,10 +139,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void addNeededFunctions(Module& m, Name name, std::set<Name>& needed) {
-    if (needed.count(name)) {
+    if (!needed.emplace(name).second) {
       return;
     }
-    needed.insert(name);
 
     auto function = m.getFunction(name);
     FindAll<Call> calls(function->body);
