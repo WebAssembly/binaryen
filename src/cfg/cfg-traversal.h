@@ -519,8 +519,7 @@ private:
   void checkDuplicates(std::vector<BasicBlock*>& list) {
     std::unordered_set<BasicBlock*> seen;
     for (auto* curr : list) {
-      assert(seen.count(curr) == 0);
-      seen.insert(curr);
+      assert(seen.emplace(curr).second);
     }
   }
 
