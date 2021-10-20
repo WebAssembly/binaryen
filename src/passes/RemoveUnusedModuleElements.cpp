@@ -60,7 +60,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
     // main loop
     while (queue.size()) {
-      auto& curr = queue.back();
+      auto curr = queue.back();
       queue.pop_back();
       if (reachable.emplace(curr).second) {
         auto& [kind, value] = curr;
