@@ -2409,7 +2409,7 @@ private:
         inner->value =
           Builder(*getModule())
             .makeBinary(Abstract::getBinary(inner->value->type, Or), x, y);
-        return curr->left;
+        return inner;
       }
     }
     {
@@ -2424,7 +2424,7 @@ private:
         inner->left =
           Builder(*getModule())
             .makeBinary(Abstract::getBinary(inner->right->type, And), x, y);
-        return curr->left;
+        return inner;
       }
     }
     return nullptr;
@@ -2472,7 +2472,7 @@ private:
         inner->left =
           Builder(*getModule())
             .makeBinary(Abstract::getBinary(inner->right->type, Or), x, y);
-        return curr->left;
+        return inner;
       }
     }
     {
@@ -2487,7 +2487,7 @@ private:
         inner->left =
           Builder(*getModule())
             .makeBinary(Abstract::getBinary(inner->right->type, Or), x, y);
-        return curr->left;
+        return inner;
       }
     }
     return nullptr;
