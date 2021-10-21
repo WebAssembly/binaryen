@@ -884,7 +884,7 @@
   ;; CHECK-NEXT: )
   (func $select-or-negation (param $x i32) (param $y i32) (result i32)
     (select
-      ;; With a zero here we must negate the condition.
+      ;; We can turn this select into an and, by negating the condition.
       (i32.const 0)
       (i32.eq
         (local.get $y)
@@ -966,7 +966,7 @@
         (local.get $y)
         (i32.const 1337)
       )
-      ;; With a 1 here, we must negate the condition.
+      ;; With a 1 here, we negate the condition.
       (i32.const 1)
       (i32.eq
         (local.get $x)
@@ -999,6 +999,22 @@
       (i32.shr_u
         (local.get $x)
         (i32.const 31)
+      )
+    )
+  )
+  (func $select-and-negation-impossible-float (param $x f64) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; With a 1 here, we must negate the condition, but the condition here
+      ;; cannot be negated due to it operating on floats (where NaNs cause
+      ;; difficulties), so we skip.
+      (i32.const 1)
+      (i32.le
+        (local.get $x)
+        (f64.const 3.14159)
       )
     )
   )
