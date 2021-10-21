@@ -259,7 +259,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // end
     assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
     for (int i = self->throwingInstsStack.size() - 1; i >= 0; i--) {
-      Try* tryy = self->unwindExprStack[i]->template cast<Try>();
+      auto* tryy = self->unwindExprStack[i]->template cast<Try>();
       // Exception thrown. Note outselves so that we will create a link to each
       // catch within the try when we get there.
       self->throwingInstsStack[i].push_back(self->currBasicBlock);
