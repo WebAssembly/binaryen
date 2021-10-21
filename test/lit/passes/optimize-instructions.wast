@@ -1002,6 +1002,19 @@
       )
     )
   )
+  ;; CHECK:      (func $select-and-negation-impossible-float (param $x f64) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (f64.le
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $select-and-negation-impossible-float (param $x f64) (param $y i32) (result i32)
     (select
       (i32.eq
@@ -1012,7 +1025,7 @@
       ;; cannot be negated due to it operating on floats (where NaNs cause
       ;; difficulties), so we skip.
       (i32.const 1)
-      (i32.le
+      (f64.le
         (local.get $x)
         (f64.const 3.14159)
       )

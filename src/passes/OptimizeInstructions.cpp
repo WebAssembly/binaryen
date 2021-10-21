@@ -2156,7 +2156,7 @@ private:
           // x ? 0 : y   ==>   z & y   where z is the inverse of x
           if (matches(curr->ifTrue, ival(0))) {
             // Check if the binary operation is invertible.
-            auto inv = invertBinaryOp(inner->op);
+            auto inv = invertBinaryOp(binary->op);
             if (inv != InvalidBinary) {
               binary->op = inv;
               return builder.makeBinary(AndInt32, curr->ifFalse, binary);
@@ -2165,7 +2165,7 @@ private:
 
           // x ? y : 1  ==>   z | y   where z is the inverse of x
           if (matches(curr->ifFalse, ival(1))) {
-            auto inv = invertBinaryOp(inner->op);
+            auto inv = invertBinaryOp(binary->op);
             if (inv != InvalidBinary) {
               binary->op = inv;
               return builder.makeBinary(OrInt32, curr->ifTrue, binary);
