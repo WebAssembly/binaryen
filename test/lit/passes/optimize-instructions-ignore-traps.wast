@@ -30,36 +30,39 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (if (result i32)
-  ;; CHECK-NEXT:      (if (result i32)
-  ;; CHECK-NEXT:       (i32.rem_s
-  ;; CHECK-NEXT:        (i32.add
-  ;; CHECK-NEXT:         (i32.mul
-  ;; CHECK-NEXT:          (local.get $0)
-  ;; CHECK-NEXT:          (local.tee $7
-  ;; CHECK-NEXT:           (i32.add
-  ;; CHECK-NEXT:            (local.get $0)
-  ;; CHECK-NEXT:            (i32.const 2)
+  ;; CHECK-NEXT:      (i32.or
+  ;; CHECK-NEXT:       (i32.eqz
+  ;; CHECK-NEXT:        (i32.rem_s
+  ;; CHECK-NEXT:         (i32.add
+  ;; CHECK-NEXT:          (i32.mul
+  ;; CHECK-NEXT:           (local.get $0)
+  ;; CHECK-NEXT:           (local.tee $7
+  ;; CHECK-NEXT:            (i32.add
+  ;; CHECK-NEXT:             (local.get $0)
+  ;; CHECK-NEXT:             (i32.const 2)
+  ;; CHECK-NEXT:            )
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (i32.const 17)
   ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (i32.const 17)
+  ;; CHECK-NEXT:         (i32.const 5)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 5)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.rem_u
-  ;; CHECK-NEXT:        (i32.add
-  ;; CHECK-NEXT:         (i32.mul
-  ;; CHECK-NEXT:          (local.get $0)
-  ;; CHECK-NEXT:          (local.get $0)
+  ;; CHECK-NEXT:       (i32.eqz
+  ;; CHECK-NEXT:        (i32.rem_u
+  ;; CHECK-NEXT:         (i32.add
+  ;; CHECK-NEXT:          (i32.mul
+  ;; CHECK-NEXT:           (local.get $0)
+  ;; CHECK-NEXT:           (local.get $0)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (i32.const 11)
   ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (i32.const 11)
+  ;; CHECK-NEXT:         (i32.const 3)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 3)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $6)
   ;; CHECK-NEXT:      (local.get $7)
+  ;; CHECK-NEXT:      (local.get $6)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br_if $while-in6
