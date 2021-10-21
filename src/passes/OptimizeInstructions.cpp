@@ -2404,7 +2404,8 @@ private:
       // (i64(x) == 0) & (i64(y) == 0)   ==>   i64(x | y) == 0
       Expression *x, *y;
       if (matches(curr,
-                  binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y))))) {
+                  binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y)))) &&
+          x->type == y->type) {
         auto* inner = curr->left->cast<Unary>();
         inner->value =
           Builder(*getModule())
@@ -2419,7 +2420,8 @@ private:
       if (matches(curr,
                   binary(AndInt32,
                          binary(LtS, any(&x), ival(0)),
-                         binary(LtS, any(&y), ival(0))))) {
+                         binary(LtS, any(&y), ival(0)))) &&
+          x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
         inner->left =
           Builder(*getModule())
@@ -2467,7 +2469,8 @@ private:
       if (matches(curr,
                   binary(OrInt32,
                          binary(Ne, any(&x), ival(0)),
-                         binary(Ne, any(&y), ival(0))))) {
+                         binary(Ne, any(&y), ival(0)))) &&
+          x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
         inner->left =
           Builder(*getModule())
@@ -2482,7 +2485,8 @@ private:
       if (matches(curr,
                   binary(OrInt32,
                          binary(LtS, any(&x), ival(0)),
-                         binary(LtS, any(&y), ival(0))))) {
+                         binary(LtS, any(&y), ival(0)))) &&
+          x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
         inner->left =
           Builder(*getModule())
