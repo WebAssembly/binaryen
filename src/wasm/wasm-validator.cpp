@@ -198,7 +198,20 @@ struct ValidationInfo {
       return true;
     }
     fail(text, curr, func);
+    emitTypeName(left, "first type (that should be a subtype of the other)", func);
+    emitTypeName(right, "second type (that the other should be a subtype of it)", func);
     return false;
+  }
+
+  // If a name exists for a type, emit that together with a description.
+  void emitTypeName(Type type, std::string description, Function* func = nullptr) {
+    if (!type.isRef() && !type.isRtt()) {
+      return;
+    }
+    auto iter = wasm.typeNames.find(type.getHeapType());
+    if (iter != wasm.typeNames.end()) {
+      getStream(func) << "- " << description << " has name: $" << iter->second.name << '\n';
+    }
   }
 };
 
