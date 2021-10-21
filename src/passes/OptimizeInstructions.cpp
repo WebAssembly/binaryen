@@ -2153,16 +2153,23 @@ private:
       // and false arms can be flipped given that one of them is a constant.)
       if (auto* binary = curr->condition->dynCast<Binary>()) {
         if (binary->isRelational()) {
-          // x ? 0 : y   ==>   !x & y
+          // x ? 0 : y   ==>   z & y   where z is the inverse of x
           if (matches(curr->ifTrue, ival(0))) {
-            binary->op = invertBinaryOp(binary->op);
-            return builder.makeBinary(AndInt32, curr->ifFalse, binary);
+            // Check if the binary operation is invertible.
+            auto inv = invertBinaryOp(inner->op);
+            if (inv != InvalidBinary) {
+              binary->op = inv;
+              return builder.makeBinary(AndInt32, curr->ifFalse, binary);
+            }
           }
 
-          // x ? y : 1  ==>   !x | y
+          // x ? y : 1  ==>   z | y   where z is the inverse of x
           if (matches(curr->ifFalse, ival(1))) {
-            binary->op = invertBinaryOp(binary->op);
-            return builder.makeBinary(OrInt32, curr->ifTrue, binary);
+            auto inv = invertBinaryOp(inner->op);
+            if (inv != InvalidBinary) {
+              binary->op = inv;
+              return builder.makeBinary(OrInt32, curr->ifTrue, binary);
+            }
           }
         }
       }
