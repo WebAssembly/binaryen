@@ -63,43 +63,44 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   WASM_UNUSED(castCopy);
 
 // Handle each type of field, copying it appropriately.
-#define DELEGATE_FIELD_CHILD(id, name)                                         \
-  tasks.push_back({castOriginal->name, &castCopy->name});
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  tasks.push_back({castOriginal->field, &castCopy->field});
 
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-  castCopy->name.resize(castOriginal->name.size());                            \
-  for (Index i = 0; i < castOriginal->name.size(); i++) {                      \
-    tasks.push_back({castOriginal->name[i], &castCopy->name[i]});              \
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  castCopy->field.resize(castOriginal->field.size());                          \
+  for (Index i = 0; i < castOriginal->field.size(); i++) {                     \
+    tasks.push_back({castOriginal->field[i], &castCopy->field[i]});            \
   }
 
-#define COPY_FIELD(name) castCopy->name = castOriginal->name;
+#define COPY_FIELD(field) castCopy->field = castOriginal->field;
 
-#define DELEGATE_FIELD_INT(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_LITERAL(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_NAME(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_SIGNATURE(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_TYPE(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_ADDRESS(id, name) COPY_FIELD(name)
+#define DELEGATE_FIELD_INT(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_LITERAL(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_NAME(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_SIGNATURE(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_TYPE(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field) COPY_FIELD(field)
+#define DELEGATE_FIELD_ADDRESS(id, field) COPY_FIELD(field)
 
-#define COPY_FIELD_LIST(name)                                                  \
-  for (Index i = 0; i < castOriginal->name.size(); i++) {                      \
-    castCopy->name[i] = castOriginal->name[i];                                 \
+#define COPY_FIELD_LIST(field)                                                 \
+  for (Index i = 0; i < castOriginal->field.size(); i++) {                     \
+    castCopy->field[i] = castOriginal->field[i];                               \
   }
 
-#define COPY_VECTOR(name)                                                      \
-  castCopy->name.resize(castOriginal->name.size());                            \
-  COPY_FIELD_LIST(name)
+#define COPY_VECTOR(field)                                                     \
+  castCopy->field.resize(castOriginal->field.size());                          \
+  COPY_FIELD_LIST(field)
 
-#define COPY_ARRAY(name)                                                       \
-  assert(castCopy->name.size() == castOriginal->name.size());                  \
-  COPY_FIELD_LIST(name)
+#define COPY_ARRAY(field)                                                      \
+  assert(castCopy->field.size() == castOriginal->field.size());                \
+  COPY_FIELD_LIST(field)
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name) COPY_VECTOR(name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name) COPY_VECTOR(name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field) COPY_VECTOR(field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field) COPY_VECTOR(field)
 
-#define DELEGATE_FIELD_INT_ARRAY(id, name) COPY_ARRAY(name)
+#define DELEGATE_FIELD_INT_ARRAY(id, field) COPY_ARRAY(field)
 
 #include "wasm-delegations-fields.def"
 
@@ -114,17 +115,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 
 // Splice an item into the middle of a block's list
 void spliceIntoBlock(Block* block, Index index, Expression* add) {
-  auto& list = block->list;
-  if (index == list.size()) {
-    list.push_back(add); // simple append
-  } else {
-    // we need to make room
-    list.push_back(nullptr);
-    for (Index i = list.size() - 1; i > index; i--) {
-      list[i] = list[i - 1];
-    }
-    list[index] = add;
-  }
+  block->list.insertAt(index, add);
   block->finalize(block->type);
 }
 

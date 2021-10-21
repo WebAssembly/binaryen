@@ -232,18 +232,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
-    // Even if the instruction can possibly throw, we don't end the current
-    // basic block unless the instruction is within a try-catch, because the CFG
-    // will have too many blocks that way, and if an exception is thrown, the
-    // function will be exited anyway.
-    if (self->throwingInstsStack.empty()) {
-      return;
-    }
-
-    // Exception thrown. Note outselves so that we will create a link to each
-    // catch within the innermost try when we get there.
-    self->throwingInstsStack.back().push_back(self->currBasicBlock);
-
     // If the innermost try does not have a catch_all clause, an exception
     // thrown can be caught by any of its outer catch block. And if that outer
     // try-catch also does not have a catch_all, this continues until we
@@ -269,11 +257,18 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // catch $e3
     //   ...
     // end
-    for (int i = self->throwingInstsStack.size() - 1; i > 0; i--) {
-      if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
+    assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
+    for (int i = self->throwingInstsStack.size() - 1; i >= 0; i--) {
+      auto* tryy = self->unwindExprStack[i]->template cast<Try>();
+      // Exception thrown. Note outselves so that we will create a link to each
+      // catch within the try when we get there.
+      self->throwingInstsStack[i].push_back(self->currBasicBlock);
+
+      // If this try has catch_all, there is no possibility that this
+      // instruction can throw to outer catches. Stop here.
+      if (tryy->hasCatchAll()) {
         break;
       }
-      self->throwingInstsStack[i - 1].push_back(self->currBasicBlock);
     }
   }
 

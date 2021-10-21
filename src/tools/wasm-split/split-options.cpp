@@ -109,11 +109,10 @@ WasmSplitOptions::WasmSplitOptions()
       [&](Options* o, const std::string& argument) { profileFile = argument; })
     .add("--keep-funcs",
          "",
-         "Comma-separated list of functions to keep in the primary module, "
-         "regardless of any profile. "
-         "You can also pass a file with a list of functions separated by new "
-         "lines. "
-         "To do this, prepend @ before filename (--keep-funcs @myfile)",
+         "Comma-separated list of functions to keep in the primary module. The "
+         "rest will be split out. Cannot be used with --profile or "
+         "--split-funcs. You can also pass a file with one function per line "
+         "by passing @filename.",
          {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
@@ -121,12 +120,10 @@ WasmSplitOptions::WasmSplitOptions()
          })
     .add("--split-funcs",
          "",
-         "Comma-separated list of functions to split into the secondary "
-         "module, regardless of any profile. If there is no profile, then "
-         "this defaults to all functions defined in the module. "
-         "You can also pass a file with a list of functions separated by new "
-         "lines. "
-         "To do this, prepend @ before filename (--split-funcs @myfile)",
+         "Comma-separated list of functions to split out to the secondary "
+         "module. The rest will be kept. Cannot be used with --profile or "
+         "--keep-funcs. You can also pass a file with one function per line "
+         "by passing @filename.",
          {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
@@ -342,15 +339,14 @@ bool WasmSplitOptions::validate() {
   }
 
   if (mode == Mode::Split) {
-    std::vector<Name> impossible;
-    std::set_intersection(keepFuncs.begin(),
-                          keepFuncs.end(),
-                          splitFuncs.begin(),
-                          splitFuncs.end(),
-                          std::inserter(impossible, impossible.end()));
-    for (auto& func : impossible) {
-      fail(std::string("Cannot both keep and split out function ") +
-           func.c_str());
+    if (profileFile.size() && keepFuncs.size()) {
+      fail("Cannot use both --profile and --keep-funcs.");
+    }
+    if (profileFile.size() && splitFuncs.size()) {
+      fail("Cannot use both --profile and --split-funcs.");
+    }
+    if (keepFuncs.size() && splitFuncs.size()) {
+      fail("Cannot use both --keep-funcs and --split-funcs.");
     }
   }
 

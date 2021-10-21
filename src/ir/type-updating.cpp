@@ -16,8 +16,215 @@
 
 #include "type-updating.h"
 #include "find_all.h"
+#include "ir/module-utils.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 namespace wasm {
+
+GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
+
+void GlobalTypeRewriter::update() {
+  ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
+  typeBuilder.grow(types.size());
+
+  // Create the temporary heap types.
+  for (Index i = 0; i < types.size(); i++) {
+    auto type = types[i];
+    if (type.isSignature()) {
+      auto sig = type.getSignature();
+      TypeList newParams, newResults;
+      for (auto t : sig.params) {
+        newParams.push_back(getTempType(t));
+      }
+      for (auto t : sig.results) {
+        newResults.push_back(getTempType(t));
+      }
+      Signature newSig(typeBuilder.getTempTupleType(newParams),
+                       typeBuilder.getTempTupleType(newResults));
+      modifySignature(types[i], newSig);
+      typeBuilder.setHeapType(i, newSig);
+    } else if (type.isStruct()) {
+      auto struct_ = type.getStruct();
+      // Start with a copy to get mutability/packing/etc.
+      auto newStruct = struct_;
+      for (auto& field : newStruct.fields) {
+        field.type = getTempType(field.type);
+      }
+      modifyStruct(types[i], newStruct);
+      typeBuilder.setHeapType(i, newStruct);
+    } else if (type.isArray()) {
+      auto array = type.getArray();
+      // Start with a copy to get mutability/packing/etc.
+      auto newArray = array;
+      newArray.element.type = getTempType(newArray.element.type);
+      modifyArray(types[i], newArray);
+      typeBuilder.setHeapType(i, newArray);
+    } else {
+      WASM_UNREACHABLE("bad type");
+    }
+
+    // Apply a super, if there is one
+    if (auto super = type.getSuperType()) {
+      typeBuilder.setSubType(i, typeIndices[*super]);
+    }
+  }
+
+  auto newTypes = typeBuilder.build();
+
+  // Map the old types to the new ones. This uses the fact that type indices
+  // are the same in the old and new types, that is, we have not added or
+  // removed types, just modified them.
+  using OldToNewTypes = std::unordered_map<HeapType, HeapType>;
+  OldToNewTypes oldToNewTypes;
+  for (Index i = 0; i < types.size(); i++) {
+    oldToNewTypes[types[i]] = newTypes[i];
+  }
+
+  // Replace all the old types in the module with the new ones.
+  struct CodeUpdater
+    : public WalkerPass<
+        PostWalker<CodeUpdater, UnifiedExpressionVisitor<CodeUpdater>>> {
+    bool isFunctionParallel() override { return true; }
+
+    OldToNewTypes& oldToNewTypes;
+
+    CodeUpdater(OldToNewTypes& oldToNewTypes) : oldToNewTypes(oldToNewTypes) {}
+
+    CodeUpdater* create() override { return new CodeUpdater(oldToNewTypes); }
+
+    Type getNew(Type type) {
+      if (type.isRef()) {
+        return Type(getNew(type.getHeapType()), type.getNullability());
+      }
+      if (type.isRtt()) {
+        return Type(Rtt(type.getRtt().depth, getNew(type.getHeapType())));
+      }
+      return type;
+    }
+
+    HeapType getNew(HeapType type) {
+      if (type.isBasic()) {
+        return type;
+      }
+      if (type.isFunction() || type.isData()) {
+        assert(oldToNewTypes.count(type));
+        return oldToNewTypes[type];
+      }
+      return type;
+    }
+
+    Signature getNew(Signature sig) {
+      return Signature(getNew(sig.params), getNew(sig.results));
+    }
+
+    void visitExpression(Expression* curr) {
+      // Update the type to the new one.
+      curr->type = getNew(curr->type);
+
+      // Update any other type fields as well.
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_TYPE(id, field) cast->field = getNew(cast->field);
+
+#define DELEGATE_FIELD_HEAPTYPE(id, field) cast->field = getNew(cast->field);
+
+#define DELEGATE_FIELD_SIGNATURE(id, field) cast->field = getNew(cast->field);
+
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#include "wasm-delegations-fields.def"
+    }
+  };
+
+  CodeUpdater updater(oldToNewTypes);
+  PassRunner runner(&wasm);
+  updater.run(&runner, &wasm);
+  updater.walkModuleCode(&wasm);
+
+  // Update global locations that refer to types.
+  for (auto& table : wasm.tables) {
+    table->type = updater.getNew(table->type);
+  }
+  for (auto& elementSegment : wasm.elementSegments) {
+    elementSegment->type = updater.getNew(elementSegment->type);
+  }
+  for (auto& global : wasm.globals) {
+    global->type = updater.getNew(global->type);
+  }
+  for (auto& func : wasm.functions) {
+    func->type = updater.getNew(func->type);
+    for (auto& var : func->vars) {
+      var = updater.getNew(var);
+    }
+  }
+  for (auto& tag : wasm.tags) {
+    tag->sig = updater.getNew(tag->sig);
+  }
+
+  // Update type names.
+  for (auto& kv : oldToNewTypes) {
+    auto old = kv.first;
+    auto new_ = kv.second;
+    if (wasm.typeNames.count(old)) {
+      wasm.typeNames[new_] = wasm.typeNames[old];
+    }
+  }
+}
+
+Type GlobalTypeRewriter::getTempType(Type type) {
+  if (type.isBasic()) {
+    return type;
+  }
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (!typeIndices.count(heapType)) {
+      // This type was not present in the module, but is now being used when
+      // defining new types. That is fine; just use it.
+      return type;
+    }
+    return typeBuilder.getTempRefType(
+      typeBuilder.getTempHeapType(typeIndices[heapType]),
+      type.getNullability());
+  }
+  if (type.isRtt()) {
+    auto rtt = type.getRtt();
+    auto newRtt = rtt;
+    auto heapType = type.getHeapType();
+    if (!typeIndices.count(heapType)) {
+      // See above with references.
+      return type;
+    }
+    newRtt.heapType = typeBuilder.getTempHeapType(typeIndices[heapType]);
+    return typeBuilder.getTempRttType(newRtt);
+  }
+  if (type.isTuple()) {
+    auto& tuple = type.getTuple();
+    auto newTuple = tuple;
+    for (auto& t : newTuple.types) {
+      t = getTempType(t);
+    }
+    return typeBuilder.getTempTupleType(newTuple);
+  }
+  WASM_UNREACHABLE("bad type");
+}
 
 namespace TypeUpdating {
 

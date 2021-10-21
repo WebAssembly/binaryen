@@ -82,6 +82,11 @@ struct InliningOptions {
   // Loops usually mean the function does heavy work, so the call overhead
   // is not significant and we do not inline such functions by default.
   bool allowFunctionsWithLoops = false;
+  // The number of ifs to allow partial inlining of their conditions. A value of
+  // zero disables partial inlining.
+  // TODO: Investigate enabling this. Locally 4 appears useful on real-world
+  //       code, but reports of regressions have arrived.
+  Index partialInliningIfs = 0;
 };
 
 struct PassOptions {
@@ -386,7 +391,7 @@ protected:
 //
 template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
-  PassRunner* runner;
+  PassRunner* runner = nullptr;
 
 protected:
   typedef WalkerPass<WalkerType> super;
@@ -414,6 +419,12 @@ public:
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkFunction(func);
+  }
+
+  void runOnModuleCode(PassRunner* runner, Module* module) {
+    setPassRunner(runner);
+    WalkerType::setModule(module);
+    WalkerType::walkModuleCode(module);
   }
 
   PassRunner* getPassRunner() { return runner; }

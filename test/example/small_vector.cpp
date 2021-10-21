@@ -1,12 +1,11 @@
-#include <iostream>
 #include <cassert>
+#include <iostream>
 
 #include "support/small_vector.h"
 
 using namespace wasm;
 
-template<typename T>
-void test() {
+template<typename T> void test() {
   {
     T t;
     // build up
@@ -65,4 +64,3 @@ int main() {
   test<SmallVector<int, 10>>();
   std::cout << "ok.\n";
 }
-

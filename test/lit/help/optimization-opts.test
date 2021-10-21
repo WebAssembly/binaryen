@@ -87,6 +87,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-gc-nn-locals                        Disable GC non-null locals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                         Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd                        Disable relaxed SIMD
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct
 ;; CHECK-NEXT:
@@ -94,9 +98,13 @@
 ;; CHECK-NEXT:                                                 optimization passes being run.
 ;; CHECK-NEXT:                                                 Must be in the form KEY@VALUE
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --nominal                                     Use the prototype nominal type
-;; CHECK-NEXT:                                                 system instead of the normal
-;; CHECK-NEXT:                                                 equirecursive type system.
+;; CHECK-NEXT:   --nominal                                     Force all GC type definitions to
+;; CHECK-NEXT:                                                 be parsed as nominal.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --structural                                  Force all GC type definitions to
+;; CHECK-NEXT:                                                 be parsed as structural (i.e.
+;; CHECK-NEXT:                                                 equirecursive). This is the
+;; CHECK-NEXT:                                                 default.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:    -O                                           execute default optimization
 ;; CHECK-NEXT:                                                 passes
@@ -155,6 +163,11 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --inline-functions-with-loops,-ifwl           Allow inlining functions with
 ;; CHECK-NEXT:                                                 loops
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --partial-inlining-ifs,-pii                   Number of ifs allowed in partial
+;; CHECK-NEXT:                                                 inlining (zero means partial
+;; CHECK-NEXT:                                                 inlining is disabled) (default:
+;; CHECK-NEXT:                                                 0)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --ignore-implicit-traps,-iit                  Optimize under the helpful
 ;; CHECK-NEXT:                                                 assumption that no surprising
@@ -262,6 +275,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate Stack IR
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gto                                         globally optimize GC types
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-NEXT:
@@ -303,7 +318,7 @@
 ;; CHECK-NEXT:                                                 inside basic blocks
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --local-subtyping                             apply more specific subtypes to
-;; CHECK-NEXT:                                                 locals where possible 
+;; CHECK-NEXT:                                                 locals where possible
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --log-execution                               instrument the build with
 ;; CHECK-NEXT:                                                 logging of where execution goes
@@ -360,7 +375,7 @@
 ;; CHECK-NEXT:                                                 load/store offsets, propagating
 ;; CHECK-NEXT:                                                 them across locals too
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --optimize-for-js                             early optimize of the 
+;; CHECK-NEXT:   --optimize-for-js                             early optimize of the
 ;; CHECK-NEXT:                                                 instruction combinations for js
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-instructions                       optimizes instruction

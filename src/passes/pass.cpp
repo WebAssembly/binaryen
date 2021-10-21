@@ -155,6 +155,8 @@ void PassRegistry::registerPasses() {
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
+    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
@@ -522,6 +524,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   }
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
+    // TODO: investigate enabling --gto and --remove-module-elements before cfp
     addIfNoDWARFIssues("cfp");
   }
 }

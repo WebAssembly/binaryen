@@ -104,6 +104,7 @@ struct HeapTypeInfo {
   // Otherwise, the type definition tree is still being constructed via the
   // TypeBuilder interface, so hashing and equality use pointer identity.
   bool isFinalized = true;
+  bool isNominal = false;
   // In nominal mode, the supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   enum Kind {
@@ -590,6 +591,7 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
   supertype = other.supertype;
+  isNominal = other.isNominal;
   switch (kind) {
     case BasicKind:
       new (&basic) auto(other.basic);
@@ -641,11 +643,15 @@ HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
-  // HeapTypeInfos with the same shape are considered equivalent. This is
-  // important during global canonicalization, when newly created
+  if (isNominal != other.isNominal) {
+    return false;
+  }
+
+  // Structural HeapTypeInfos with the same shape are considered equivalent.
+  // This is important during global canonicalization, when newly created
   // canonically-shaped graphs are checked against the existing globally
   // canonical graphs.
-  if (typeSystem == TypeSystem::Equirecursive) {
+  if (!isNominal && typeSystem == TypeSystem::Equirecursive) {
     return FiniteShapeEquator().eq(*this, other);
   }
 
@@ -1200,16 +1206,23 @@ Array HeapType::getArray() const {
   return getHeapTypeInfo(*this)->array;
 }
 
-bool HeapType::getSuperType(HeapType& out) const {
+std::optional<HeapType> HeapType::getSuperType() const {
   if (isBasic()) {
-    return false;
+    return {};
   }
   HeapTypeInfo* super = getHeapTypeInfo(*this)->supertype;
   if (super != nullptr) {
-    out = HeapType(uintptr_t(super));
-    return true;
+    return HeapType(uintptr_t(super));
   }
-  return false;
+  return {};
+}
+
+bool HeapType::isNominal() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    return getHeapTypeInfo(*this)->isNominal;
+  }
 }
 
 bool HeapType::isSubType(HeapType left, HeapType right) {
@@ -1323,7 +1336,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     // Basic HeapTypes are never subtypes of compound HeapTypes.
     return false;
   }
-  if (typeSystem == TypeSystem::Nominal) {
+  // Nominal and structural types are never subtypes of each other.
+  if (a.isNominal() != b.isNominal()) {
+    return false;
+  }
+  if (a.isNominal() || typeSystem == TypeSystem::Nominal) {
     // Subtyping must be declared in a nominal system, not derived from
     // structure, so we will not recurse. TODO: optimize this search with some
     // form of caching.
@@ -1497,6 +1514,9 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
   if (a.isBasic() || b.isBasic()) {
     return getBasicLUB();
   }
+  if (a.isNominal() != b.isNominal()) {
+    return getBasicLUB();
+  }
 
   HeapTypeInfo* infoA = getHeapTypeInfo(a);
   HeapTypeInfo* infoB = getHeapTypeInfo(b);
@@ -1505,7 +1525,7 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
     return getBasicLUB();
   }
 
-  if (typeSystem == TypeSystem::Nominal) {
+  if (a.isNominal() || typeSystem == TypeSystem::Nominal) {
     // Walk up the subtype tree to find the LUB. Ascend the tree from both `a`
     // and `b` in lockstep. The first type we see for a second time must be the
     // LUB because there are no cycles and the only way to encounter a type
@@ -1781,6 +1801,10 @@ std::ostream& TypePrinter::print(HeapType heapType) {
     }
 #if TRACE_CANONICALIZATION
     os << "[" << ((heapType.getID() >> 4) % 1000) << "]";
+    HeapType super;
+    if (heapType.getSuperType(super)) {
+      os << "[super " << ((super.getID() >> 4) % 1000) << "]";
+    }
 #endif
     if (getHeapTypeInfo(heapType)->kind == HeapTypeInfo::BasicKind) {
       os << '*';
@@ -1934,10 +1958,15 @@ size_t FiniteShapeHasher::hash(const TypeInfo& info) {
 }
 
 size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
+  size_t digest = wasm::hash(info.isNominal);
+  if (info.isNominal) {
+    rehash(digest, uintptr_t(&info));
+    return digest;
+  }
   // If the HeapTypeInfo is not finalized, then it is mutable and its shape
   // might change in the future. In that case, fall back to pointer identity to
   // keep the hash consistent until all the TypeBuilder's types are finalized.
-  size_t digest = wasm::hash(info.isFinalized);
+  digest = wasm::hash(info.isFinalized);
   if (!info.isFinalized) {
     rehash(digest, uintptr_t(&info));
     return digest;
@@ -2052,6 +2081,11 @@ bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
 }
 
 bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
+  if (a.isNominal != b.isNominal) {
+    return false;
+  } else if (a.isNominal) {
+    return &a == &b;
+  }
   if (a.isFinalized != b.isFinalized) {
     return false;
   } else if (!a.isFinalized) {
@@ -2213,9 +2247,11 @@ struct TypeBuilder::Impl {
       // value.
       info = std::make_unique<HeapTypeInfo>(Signature());
       set(Signature());
+      initialized = false;
     }
     void set(HeapTypeInfo&& hti) {
       hti.supertype = info->supertype;
+      hti.isNominal = info->isNominal;
       *info = std::move(hti);
       info->isTemp = true;
       info->isFinalized = false;
@@ -2249,7 +2285,7 @@ void TypeBuilder::setHeapType(size_t i, HeapType::BasicHeapType basic) {
 }
 
 void TypeBuilder::setHeapType(size_t i, Signature signature) {
-  assert(i < size() && "Index out of bounds");
+  assert(i < size() && "index out of bounds");
   impl->entries[i].set(signature);
 }
 
@@ -2302,11 +2338,14 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
 
 void TypeBuilder::setSubType(size_t i, size_t j) {
   assert(i < size() && j < size() && "index out of bounds");
-  if (typeSystem == TypeSystem::Nominal) {
-    HeapTypeInfo* sub = impl->entries[i].info.get();
-    HeapTypeInfo* super = impl->entries[j].info.get();
-    sub->supertype = super;
-  }
+  HeapTypeInfo* sub = impl->entries[i].info.get();
+  HeapTypeInfo* super = impl->entries[j].info.get();
+  sub->supertype = super;
+}
+
+void TypeBuilder::setNominal(size_t i) {
+  assert(i < size() && "index out of bounds");
+  impl->entries[i].info->isNominal = true;
 }
 
 namespace {
@@ -2513,6 +2552,7 @@ private:
   Partitions splitters;
 
   void initialize(std::vector<HeapType>& roots);
+  bool replaceHeapType(HeapType* heapType);
   void translatePartitionsToTypes();
 
   // Return pointers to the non-basic HeapType children of `ht`, including
@@ -2759,6 +2799,17 @@ void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
   }
 }
 
+bool ShapeCanonicalizer::replaceHeapType(HeapType* heapType) {
+  auto it = states.find(*heapType);
+  if (it != states.end()) {
+    // heapType hasn't already been replaced; replace it.
+    auto set = partitions.getSetForElem(it->second);
+    *heapType = results.at(set.index);
+    return true;
+  }
+  return false;
+}
+
 void ShapeCanonicalizer::translatePartitionsToTypes() {
   // Create a single new HeapTypeInfo for each partition. Initialize each new
   // HeapTypeInfo as a copy of a representative HeapTypeInfo from its partition,
@@ -2807,16 +2858,18 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
           // Child doesn't need replacement.
           return;
         }
-        auto it = canonicalizer.states.find(*child);
-        if (it != canonicalizer.states.end()) {
-          // Child hasn't already been replaced; replace it.
-          auto set = canonicalizer.partitions.getSetForElem(it->second);
-          *child = canonicalizer.results.at(set.index);
-        }
+        canonicalizer.replaceHeapType(child);
       }
     };
     HeapType root = asHeapType(info);
     ChildUpdater(*this).walkRoot(&root);
+
+    // If this is a nominal type, we may need to update its supertype as well.
+    if (info->supertype) {
+      HeapType heapType(uintptr_t(info->supertype));
+      replaceHeapType(&heapType);
+      info->supertype = getHeapTypeInfo(heapType);
+    }
   }
 
 #if TRACE_CANONICALIZATION
@@ -2943,6 +2996,9 @@ std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
   for (auto& entry : builder.impl->entries) {
     assert(entry.initialized && "Cannot access uninitialized HeapType");
     entry.info->isFinalized = true;
+    if (!entry.info->isNominal) {
+      entry.info->supertype = nullptr;
+    }
     heapTypes.push_back(entry.get());
   }
 

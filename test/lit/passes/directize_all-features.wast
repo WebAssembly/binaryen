@@ -6,17 +6,21 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
+
  ;; CHECK:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
+
  ;; CHECK:      (elem (i32.const 1) $foo)
 
  ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $foo (param i32) (param i32)
+  ;; helper function
   (unreachable)
  )
+
  ;; CHECK:      (func $bar (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
@@ -31,6 +35,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -72,6 +77,7 @@
   )
  )
 )
+
 ;; at table edges
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -103,6 +109,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -131,6 +138,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -164,6 +172,7 @@
   )
  )
 )
+
 ;; imported table
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -194,6 +203,7 @@
   )
  )
 )
+
 ;; exported table
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -226,6 +236,7 @@
   )
  )
 )
+
 ;; non-constant table offset
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -259,6 +270,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -293,6 +305,7 @@
   )
  )
 )
+
 ;; non-constant call index
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -325,6 +338,7 @@
   )
  )
 )
+
 ;; bad index
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -359,6 +373,7 @@
   )
  )
 )
+
 ;; missing index
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
@@ -393,6 +408,7 @@
   )
  )
 )
+
 ;; bad type
 (module
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
@@ -429,6 +445,7 @@
   )
  )
 )
+
 ;; no table
 (module
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
@@ -440,6 +457,7 @@
   (unreachable)
  )
 )
+
 ;; change types
 (module
  (type (func))
@@ -466,6 +484,7 @@
   )
  )
 )
+
 (module ;; indirect tail call
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -490,6 +509,350 @@
   (return_call_indirect (type $ii)
    (local.get $x)
    (local.get $y)
+   (i32.const 1)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+
+ ;; CHECK:      (type $ii (func (param i32 i32)))
+ (type $ii (func (param i32 i32)))
+ ;; CHECK:      (table $0 5 5 funcref)
+ (table $0 5 5 funcref)
+ (elem (i32.const 1) $foo1 $foo2)
+ ;; CHECK:      (elem (i32.const 1) $foo1 $foo2)
+
+ ;; CHECK:      (func $foo1 (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $foo1 (param i32) (param i32)
+  (unreachable)
+ )
+ ;; CHECK:      (func $foo2 (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $foo2 (param i32) (param i32)
+  (unreachable)
+ )
+ ;; CHECK:      (func $select (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local $4 i32)
+ ;; CHECK-NEXT:  (local.set $3
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $4
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:   (call $foo1
+ ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:    (local.get $4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (call $foo2
+ ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:    (local.get $4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select (param $x i32) (param $y i32) (param $z i32)
+  ;; Test we can optimize a call_indirect whose index is a select between two
+  ;; constants. We can emit an if and two direct calls for that.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (i32.const 1)
+    (i32.const 2)
+    (local.get $z)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-bad-1 (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-bad-1 (param $x i32) (param $y i32) (param $z i32)
+  ;; As above but one select arm is not constant.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (local.get $z)
+    (i32.const 2)
+    (local.get $z)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-bad-2 (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-bad-2 (param $x i32) (param $y i32) (param $z i32)
+  ;; As above but the other select arm is not constant.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (i32.const 2)
+    (local.get $z)
+    (local.get $z)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-out-of-range (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local $4 i32)
+ ;; CHECK-NEXT:  (local.set $3
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $4
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $4)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (call $foo2
+ ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:    (local.get $4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-out-of-range (param $x i32) (param $y i32) (param $z i32)
+  ;; Both are constants, but one is out of range for the table, and there is no
+  ;; valid function to call there; emit an unreachable.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (i32.const 99999)
+    (i32.const 2)
+    (local.get $z)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local $4 i32)
+ ;; CHECK-NEXT:  (local.set $3
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $4
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $4)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $4)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
+  ;; Both are constants, and both are out of range for the table.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (i32.const 99999)
+    (i32.const -1)
+    (local.get $z)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-unreachable-operand (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-unreachable-operand (param $x i32) (param $y i32) (param $z i32)
+  ;; One operand is unreachable.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (unreachable)
+    (i32.const 2)
+    (local.get $z)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-unreachable-condition (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local $4 i32)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-unreachable-condition (param $x i32) (param $y i32) (param $z i32)
+  ;; The condition is unreachable.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (select
+    (i32.const 1)
+    (i32.const 2)
+    (unreachable)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+ ;; CHECK:      (type $F (func (param (ref func))))
+
+ ;; CHECK:      (table $0 15 15 funcref)
+ (table $0 15 15 funcref)
+ (type $F (func (param (ref func))))
+ (elem (i32.const 10) $foo-ref $foo-ref)
+
+ ;; CHECK:      (elem (i32.const 10) $foo-ref $foo-ref)
+
+ ;; CHECK:      (elem declare func $select-non-nullable)
+
+ ;; CHECK:      (func $foo-ref (param $0 (ref func))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $foo-ref (param (ref func))
+  ;; helper function
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $select-non-nullable (param $x i32)
+ ;; CHECK-NEXT:  (local $1 (ref null $i32_=>_none))
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (ref.func $select-non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (call $foo-ref
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (call $foo-ref
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-non-nullable (param $x i32)
+  ;; Test we can handle a non-nullable value when optimizing a select, during
+  ;; which we place values in locals.
+  (call_indirect (type $F)
+   (ref.func $select-non-nullable)
+   (select
+    (i32.const 10)
+    (i32.const 11)
+    (local.get $x)
+   )
+  )
+ )
+)
+
+;; A table.set prevents optimization.
+(module
+ ;; CHECK:      (type $v (func))
+ (type $v (func))
+
+ ;; CHECK:      (table $has-set 5 5 funcref)
+ (table $has-set 5 5 funcref)
+
+ ;; CHECK:      (table $no-set 5 5 funcref)
+ (table $no-set 5 5 funcref)
+
+ ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
+ (elem $0 (table $has-set) (i32.const 1) $foo)
+
+ ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
+ (elem $1 (table $no-set) (i32.const 1) $foo)
+
+ ;; CHECK:      (func $foo
+ ;; CHECK-NEXT:  (table.set $has-set
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (ref.func $foo)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $foo
+  ;; Technically this set writes the same value as is already there, but the
+  ;; analysis will give up on optimizing when it sees any set to a table.
+  (table.set $has-set
+   (i32.const 1)
+   (ref.func $foo)
+  )
+ )
+
+ ;; CHECK:      (func $bar
+ ;; CHECK-NEXT:  (call_indirect $has-set (type $v)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $foo)
+ ;; CHECK-NEXT: )
+ (func $bar
+  ;; We can't optimize this one, but we can the one after it.
+  (call_indirect $has-set (type $v)
+   (i32.const 1)
+  )
+  (call_indirect $no-set (type $v)
    (i32.const 1)
   )
  )

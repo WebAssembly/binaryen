@@ -417,24 +417,26 @@
    )
   )
   (drop
-   (select
-    (block (result i32)
-     (unreachable)
+   (block (result i32)
+    (unreachable)
+    (drop
+     (i32.const 30)
+    )
+    (drop
+     (i32.const 50)
+    )
+    (select
      (i32.const 20)
-    )
-    (block (result i32)
-     (drop
-      (i32.const 30)
-     )
      (i32.const 40)
-    )
-    (block (result i32)
-     (drop
-      (i32.const 50)
-     )
      (i32.const 60)
     )
    )
+  )
+  (drop
+   (i32.const 30)
+  )
+  (drop
+   (i32.const 50)
   )
   (drop
    (select
@@ -444,18 +446,8 @@
      )
      (unreachable)
     )
-    (block (result i32)
-     (drop
-      (i32.const 30)
-     )
-     (i32.const 40)
-    )
-    (block (result i32)
-     (drop
-      (i32.const 50)
-     )
-     (i32.const 60)
-    )
+    (i32.const 40)
+    (i32.const 60)
    )
   )
   (drop
@@ -783,13 +775,11 @@
  (func $block-type-change
   (local $0 f64)
   (local $1 f64)
+  (nop)
   (if
-   (block (result i32)
-    (nop)
-    (f64.gt
-     (local.get $0)
-     (local.get $1)
-    )
+   (f64.gt
+    (local.get $0)
+    (local.get $1)
    )
    (nop)
   )

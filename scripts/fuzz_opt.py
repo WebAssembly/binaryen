@@ -44,6 +44,8 @@ INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
 PRINT_WATS = False
 
+given_seed = None
+
 
 # utilities
 
@@ -164,19 +166,92 @@ def randomize_fuzz_settings():
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
-IMPORTANT_INITIAL_CONTENTS = [
-    # Perenially-important passes
-    os.path.join('lit', 'passes', 'optimize-instructions.wast'),
-    os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+def init_important_initial_contents():
+    FIXED_IMPORTANT_INITIAL_CONTENTS = [
+        # Perenially-important passes
+        os.path.join('lit', 'passes', 'optimize-instructions.wast'),
+        os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+    ]
+    MANUAL_RECENT_INITIAL_CONTENTS = [
+        # Recently-added or modified passes. These can be added to and pruned
+        # frequently.
+        os.path.join('lit', 'passes', 'once-reduction.wast'),
+        os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-gc-iit.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-call_ref.wast'),
+        os.path.join('lit', 'passes', 'inlining_splitting.wast'),
+        os.path.join('heap-types.wast'),
+    ]
+    RECENT_DAYS = 30
 
-    # Recently-added or modified passes. These can be added to and pruned
-    # frequently.
-    os.path.join('lit', 'passes', 'once-reduction.wast'),
-    os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
-    os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
-    os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
-]
-IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
+    # Returns the list of test wast/wat files added or modified within the
+    # RECENT_DAYS number of days counting from the commit time of HEAD
+    def auto_select_recent_initial_contents():
+        # Print 'git log' with changed file status and without commit messages,
+        # with commits within RECENT_DAYS number of days, counting from the
+        # commit time of HEAD. The reason we use the commit time of HEAD instead
+        # of the current system time is to make the results deterministic given
+        # the Binaryen HEAD commit.
+        from datetime import datetime, timedelta, timezone
+        head_ts_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
+                          silent=True).split()[0]
+        head_dt = datetime.utcfromtimestamp(int(head_ts_str))
+        start_dt = head_dt - timedelta(days=RECENT_DAYS)
+        start_ts = start_dt.replace(tzinfo=timezone.utc).timestamp()
+        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_ts}'], silent=True).splitlines()
+        # Pick up lines in the form of
+        # A       test/../something.wast
+        # M       test/../something.wast
+        # (wat extension is also included)
+        p = re.compile(r'^[AM]\stest' + os.sep + r'(.*\.(wat|wast))$')
+        matches = [p.match(e) for e in log]
+        auto_set = set([match.group(1) for match in matches if match])
+        auto_set = auto_set.difference(set(FIXED_IMPORTANT_INITIAL_CONTENTS))
+        return sorted(list(auto_set))
+
+    def is_git_repo():
+        try:
+            ret = run(['git', 'rev-parse', '--is-inside-work-tree'],
+                      silent=True, stderr=subprocess.DEVNULL)
+            return ret == 'true\n'
+        except subprocess.CalledProcessError:
+            return False
+
+    if not is_git_repo() and shared.options.auto_initial_contents:
+        print('Warning: The current directory is not a git repository, so you cannot use "--auto-initial-contents". Using the manually selected contents.\n')
+        shared.options.auto_initial_contents = False
+
+    print('- Perenially-important initial contents:')
+    for test in FIXED_IMPORTANT_INITIAL_CONTENTS:
+        print('  ' + test)
+    print()
+
+    recent_contents = []
+    print('- Recently added or modified initial contents ', end='')
+    if shared.options.auto_initial_contents:
+        print(f'(automatically selected: within last {RECENT_DAYS} days):')
+        recent_contents += auto_select_recent_initial_contents()
+    else:
+        print('(manually selected):')
+        recent_contents = MANUAL_RECENT_INITIAL_CONTENTS
+    for test in recent_contents:
+        print('  ' + test)
+    print()
+
+    # We prompt the user only when there is no seed given. This fuzz_opt.py is
+    # often used with seed in a script called from wasm-reduce, in which case we
+    # should not pause for a user input.
+    if given_seed is None:
+        ret = input('Do you want to proceed with these initial contents? (Y/n) ').lower()
+        if ret != 'y' and ret != '':
+            sys.exit(1)
+
+    initial_contents = FIXED_IMPORTANT_INITIAL_CONTENTS + recent_contents
+    global IMPORTANT_INITIAL_CONTENTS
+    IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
 
 
 def pick_initial_contents():
@@ -1176,6 +1251,9 @@ if __name__ == '__main__':
     else:
         given_seed = None
         print('checking infinite random inputs')
+
+    init_important_initial_contents()
+
     seed = time.time() * os.getpid()
     raw_input_data = 'input.dat'
     counter = 0
@@ -1265,6 +1343,9 @@ on valid wasm files.)
                 original_wasm = os.path.abspath('original.wasm')
                 shutil.copyfile('a.wasm', original_wasm)
                 # write out a useful reduce.sh
+                auto_init = ''
+                if shared.options.auto_initial_contents:
+                    auto_init = '--auto-initial-contents'
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
@@ -1276,7 +1357,7 @@ echo "  " $?
 
 # run the command
 echo "The following value should be 1:"
-./scripts/fuzz_opt.py --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "  " $?
 
 #
@@ -1305,6 +1386,7 @@ echo "  " $?
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
                          'bin': shared.options.binaryen_bin,
                          'seed': seed,
+                         'auto_init': auto_init,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
                          'reduce_sh': os.path.abspath('reduce.sh')})

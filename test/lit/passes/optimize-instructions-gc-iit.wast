@@ -9,16 +9,16 @@
 
 (module
   ;; CHECK:      (type $parent (struct (field i32)))
-  ;; NOMNL:      (type $parent (struct (field i32)))
-  ;; NOMNL-TNH:      (type $parent (struct (field i32)))
+  ;; NOMNL:      (type $parent (struct_subtype (field i32) data))
+  ;; NOMNL-TNH:      (type $parent (struct_subtype (field i32) data))
   (type $parent (struct (field i32)))
   ;; CHECK:      (type $child (struct (field i32) (field f64)))
-  ;; NOMNL:      (type $child (struct (field i32) (field f64)) (extends $parent))
-  ;; NOMNL-TNH:      (type $child (struct (field i32) (field f64)) (extends $parent))
-  (type $child  (struct (field i32) (field f64)) (extends $parent))
+  ;; NOMNL:      (type $child (struct_subtype (field i32) (field f64) $parent))
+  ;; NOMNL-TNH:      (type $child (struct_subtype (field i32) (field f64) $parent))
+  (type $child (struct_subtype (field i32) (field f64) $parent))
   ;; CHECK:      (type $other (struct (field i64) (field f32)))
-  ;; NOMNL:      (type $other (struct (field i64) (field f32)))
-  ;; NOMNL-TNH:      (type $other (struct (field i64) (field f32)))
+  ;; NOMNL:      (type $other (struct_subtype (field i64) (field f32) data))
+  ;; NOMNL-TNH:      (type $other (struct_subtype (field i64) (field f32) data))
   (type $other  (struct (field i64) (field f32)))
 
   ;; CHECK:      (func $foo
@@ -57,7 +57,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result (ref $other))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $child)
   ;; CHECK-NEXT:    )
@@ -92,7 +92,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block (result (ref $other))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $child)
   ;; NOMNL-NEXT:    )
@@ -127,7 +127,7 @@
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (block
+  ;; NOMNL-TNH-NEXT:   (block (result (ref $other))
   ;; NOMNL-TNH-NEXT:    (drop
   ;; NOMNL-TNH-NEXT:     (local.get $child)
   ;; NOMNL-TNH-NEXT:    )
@@ -339,6 +339,30 @@
           (local.get $x)
           (rtt.canon $parent)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $set-of-as-non-null (param $x anyref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $set-of-as-non-null (param $x anyref)
+  ;; NOMNL-NEXT:  (local.set $x
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  ;; NOMNL-TNH:      (func $set-of-as-non-null (param $x anyref)
+  ;; NOMNL-TNH-NEXT:  (local.set $x
+  ;; NOMNL-TNH-NEXT:   (local.get $x)
+  ;; NOMNL-TNH-NEXT:  )
+  ;; NOMNL-TNH-NEXT: )
+  (func $set-of-as-non-null (param $x anyref)
+    ;; As we ignore such traps, we can remove the ref.as here.
+    (local.set $x
+      (ref.as_non_null
+        (local.get $x)
       )
     )
   )

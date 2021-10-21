@@ -17,6 +17,7 @@
 #ifndef wasm_ir_local_graph_h
 #define wasm_ir_local_graph_h
 
+#include "support/small_set.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -35,12 +36,14 @@ struct LocalGraph {
   // the constructor computes getSetses, the sets affecting each get
   LocalGraph(Function* func);
 
-  // the local.sets relevant for an index or a get.
-  typedef std::set<LocalSet*> Sets;
+  // The local.sets relevant for an index or a get. The most common case is to
+  // have a single set; after that, to be a phi of 2 items, so we use a small
+  // set of size 2 to avoid allocations there.
+  using Sets = SmallSet<LocalSet*, 2>;
 
-  typedef std::map<LocalGet*, Sets> GetSetses;
+  using GetSetses = std::unordered_map<LocalGet*, Sets>;
 
-  typedef std::map<Expression*, Expression**> Locations;
+  using Locations = std::map<Expression*, Expression**>;
 
   // externally useful information
   GetSetses getSetses; // the sets affecting each get. a nullptr set means the
@@ -64,9 +67,10 @@ struct LocalGraph {
   }
 
   // for each get, the sets whose values are influenced by that get
-  std::unordered_map<LocalGet*, std::unordered_set<LocalSet*>> getInfluences;
-  // for each set, the gets whose values are influenced by that set
-  std::unordered_map<LocalSet*, std::unordered_set<LocalGet*>> setInfluences;
+  using GetInfluences = std::unordered_set<LocalSet*>;
+  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
+  using SetInfluences = std::unordered_set<LocalGet*>;
+  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
 
   // Optional: Compute the local indexes that are SSA, in the sense of
   //  * a single set for all the gets for that local index

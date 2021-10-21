@@ -402,7 +402,9 @@ struct Heap2LocalOptimizer {
       }
 
       // Drop the RTT (as it may have side effects; leave it to other passes).
-      contents.push_back(builder.makeDrop(allocation->rtt));
+      if (allocation->rtt) {
+        contents.push_back(builder.makeDrop(allocation->rtt));
+      }
       // Replace the allocation with a null reference. This changes the type
       // from non-nullable to nullable, but as we optimize away the code that
       // the allocation reaches, we will handle that.
@@ -684,7 +686,7 @@ struct Heap2LocalOptimizer {
     return ParentChildInteraction::Mixes;
   }
 
-  std::unordered_set<LocalGet*>* getGetsReached(LocalSet* set) {
+  LocalGraph::SetInfluences* getGetsReached(LocalSet* set) {
     auto iter = localGraph.setInfluences.find(set);
     if (iter != localGraph.setInfluences.end()) {
       return &iter->second;

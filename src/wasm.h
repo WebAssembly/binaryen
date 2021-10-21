@@ -556,6 +556,9 @@ enum BrOnOp {
   BrOnNonI31,
 };
 
+// Forward declaration for methods that receive a Module as a parameter.
+class Module;
+
 //
 // Expressions
 //
@@ -624,6 +627,10 @@ public:
     RefIsId,
     RefFuncId,
     RefEqId,
+    TableGetId,
+    TableSetId,
+    TableSizeId,
+    TableGrowId,
     TryId,
     ThrowId,
     RethrowId,
@@ -826,6 +833,15 @@ public:
   bool isReturn = false;
 
   void finalize();
+
+  // FIXME We should probably store a heap type here, and not a signature, see
+  //       https://github.com/WebAssembly/binaryen/issues/4220
+  //       For now, copy the heap type from the table if it matches - then a
+  //       nominal check will succeed too. If it does not match, then just
+  //       emit something for it like we always used to, using
+  //       HeapType(sig) (also do that if no module is provided).
+  // FIXME When we remove this, also remove the forward decl of Module, above.
+  HeapType getHeapType(Module* module = nullptr);
 };
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {
@@ -1264,6 +1280,51 @@ public:
   void finalize();
 };
 
+class TableGet : public SpecificExpression<Expression::TableGetId> {
+public:
+  TableGet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+
+  void finalize();
+};
+
+class TableSet : public SpecificExpression<Expression::TableSetId> {
+public:
+  TableSet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+  Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
+
+  void finalize();
+};
+
+class TableGrow : public SpecificExpression<Expression::TableGrowId> {
+public:
+  TableGrow() { type = Type::i32; }
+  TableGrow(MixedArena& allocator) : TableGrow() {}
+
+  Name table;
+  Expression* value;
+  Expression* delta;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
@@ -1356,9 +1417,17 @@ public:
   RefTest(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // If rtt is provided then this is a dynamic test with an rtt. If nullptr then
+  // this is a static cast and intendedType is set, and it contains the type we
+  // intend to cast to.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1366,9 +1435,15 @@ public:
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // See above with RefTest.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1379,8 +1454,10 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast* has an rtt that is used in the cast.
-  Expression* rtt;
+  // BrOnCast* has, like RefCast and RefTest, either an rtt or a static intended
+  // type.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do
   //       not support. See also the discussion on
@@ -1389,6 +1466,9 @@ public:
   //       Break or a new class of its own.
 
   void finalize();
+
+  // Returns the type we intend to cast to. Relevant only for the cast variants.
+  HeapType getIntendedType();
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();
@@ -1419,7 +1499,10 @@ class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
   StructNew(MixedArena& allocator) : operands(allocator) {}
 
-  Expression* rtt;
+  // A dynamic StructNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
+
   // A struct.new_with_default has empty operands. This does leave the case of a
   // struct with no fields ambiguous, but it doesn't make a difference in that
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
@@ -1462,7 +1545,10 @@ public:
   // used.
   Expression* init = nullptr;
   Expression* size;
-  Expression* rtt;
+
+  // A dynamic ArrayNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
 
   bool isWithDefault() { return !init; }
 
@@ -1474,7 +1560,10 @@ public:
   ArrayInit(MixedArena& allocator) : values(allocator) {}
 
   ExpressionList values;
-  Expression* rtt;
+
+  // A dynamic ArrayInit has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
 
   void finalize();
 };

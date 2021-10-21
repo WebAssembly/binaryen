@@ -11,6 +11,9 @@
  ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (field (mut i32))))
 
+ ;; CHECK:      (type $array (array (mut i32)))
+ (type $array (array (mut i32)))
+
  ;; CHECK:      (func $br_on_to_drop
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
@@ -88,6 +91,139 @@
     )
    )
    (nop)
+  )
+ )
+
+ ;; CHECK:      (func $array.set (param $foo (ref $array))
+ ;; CHECK-NEXT:  (local $bar (ref null $array))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (array.set $array
+ ;; CHECK-NEXT:   (local.tee $bar
+ ;; CHECK-NEXT:    (local.get $foo)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 37)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array.set (param $foo (ref $array))
+  (local $bar (ref null $array))
+  (array.set $array
+   (block $block (result (ref null $array))
+    (nop)
+    (nop)
+    (nop)
+    ;; Side effects in the first item on the array.set do not prevent moving
+    ;; the nops outside.
+    (local.tee $bar
+     (local.get $foo)
+    )
+   )
+   (i32.const 0)
+   (i32.const 37)
+  )
+ )
+
+ ;; CHECK:      (func $array.set-no-1 (param $foo (ref $array))
+ ;; CHECK-NEXT:  (local $bar i32)
+ ;; CHECK-NEXT:  (array.set $array
+ ;; CHECK-NEXT:   (local.get $foo)
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (local.tee $bar
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 37)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array.set-no-1 (param $foo (ref $array))
+  (local $bar i32)
+  (array.set $array
+   (local.get $foo)
+   (block $block (result i32)
+    (nop)
+    (nop)
+    (nop)
+    ;; Side effects in the second item do prevent optimizations, currently.
+    (local.tee $bar
+     (i32.const 0)
+    )
+   )
+   (i32.const 37)
+  )
+ )
+
+ ;; CHECK:      (func $array.set-no-2 (param $foo (ref $array))
+ ;; CHECK-NEXT:  (local $bar i32)
+ ;; CHECK-NEXT:  (array.set $array
+ ;; CHECK-NEXT:   (local.get $foo)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (local.tee $bar
+ ;; CHECK-NEXT:     (i32.const 37)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array.set-no-2 (param $foo (ref $array))
+  (local $bar i32)
+  (array.set $array
+   (local.get $foo)
+   (i32.const 0)
+   (block $block (result i32)
+    (nop)
+    (nop)
+    (nop)
+    ;; Side effects in the third item do prevent optimizations, currently.
+    (local.tee $bar
+     (i32.const 37)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-condition (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 4)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 5)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-condition (result i32)
+  ;; Content can be moved out of an if condition, but not anywhere else.
+  (if (result i32)
+   (block (result i32)
+    (drop (i32.const 0))
+    (i32.const 1)
+   )
+   (block (result i32)
+    (drop (i32.const 2))
+    (i32.const 3)
+   )
+   (block (result i32)
+    (drop (i32.const 4))
+    (i32.const 5)
+   )
   )
  )
 )

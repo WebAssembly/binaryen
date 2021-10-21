@@ -253,7 +253,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case DivUInt32:
       case RemSInt32:
       case RemUInt32:
-        ret = 3;
+        ret = curr->right->is<Const>() ? 2 : 3;
         break;
       case AndInt32:
       case OrInt32:
@@ -274,7 +274,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case DivUInt64:
       case RemSInt64:
       case RemUInt64:
-        ret = 3;
+        ret = curr->right->is<Const>() ? 3 : 4;
         break;
       case AndInt64:
       case OrInt64:
@@ -540,6 +540,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitRefEq(RefEq* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
   }
+  CostType visitTableGet(TableGet* curr) { return 1 + visit(curr->index); }
+  CostType visitTableSet(TableSet* curr) {
+    return 2 + visit(curr->index) + visit(curr->value);
+  }
+  CostType visitTableSize(TableSize* curr) { return 1; }
+  CostType visitTableGrow(TableGrow* curr) {
+    return 100 + visit(curr->value) + visit(curr->delta);
+  }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
@@ -567,15 +575,17 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitI31New(I31New* curr) { return 3 + visit(curr->value); }
   CostType visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
   CostType visitRefTest(RefTest* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           maybeVisit(curr->rtt);
   }
   CostType visitRefCast(RefCast* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           maybeVisit(curr->rtt);
   }
   CostType visitBrOn(BrOn* curr) {
     // BrOnCast has more work to do with the rtt, so add a little there.
     CostType base = curr->op == BrOnCast ? 3 : 2;
-    return base + nullCheckCost(curr->ref) + visit(curr->ref) +
+    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref) +
            maybeVisit(curr->rtt);
   }
   CostType visitRttCanon(RttCanon* curr) {
@@ -591,7 +601,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // at least some baseline cost, plus writing the fields. (If we use default
     // values for the fields, then it is possible they are all 0 and if so, we
     // can get that almost for free as well, so don't add anything there.)
-    CostType ret = 4 + visit(curr->rtt) + curr->operands.size();
+    CostType ret = 4 + maybeVisit(curr->rtt) + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
@@ -604,10 +614,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
   }
   CostType visitArrayNew(ArrayNew* curr) {
-    return 4 + visit(curr->rtt) + visit(curr->size) + maybeVisit(curr->init);
+    return 4 + maybeVisit(curr->rtt) + visit(curr->size) +
+           maybeVisit(curr->init);
   }
   CostType visitArrayInit(ArrayInit* curr) {
-    CostType ret = 4 + visit(curr->rtt);
+    CostType ret = 4 + maybeVisit(curr->rtt);
     for (auto* child : curr->values) {
       ret += visit(child);
     }

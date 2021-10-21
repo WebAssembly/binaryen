@@ -115,6 +115,7 @@ function test_features() {
   console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.Memory64: " + binaryen.Features.Memory64);
   console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
+  console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -163,6 +164,10 @@ function test_ids() {
   console.log("RefIsId: " + binaryen.RefIsId);
   console.log("RefFuncId: " + binaryen.RefFuncId);
   console.log("RefEqId: " + binaryen.RefEqId);
+  console.log("TableGetId: " + binaryen.TableGetId);
+  console.log("TableSetId: " + binaryen.TableSetId);
+  console.log("TableSizeId: " + binaryen.TableSizeId);
+  console.log("TableGrowId: " + binaryen.TableGrowId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);

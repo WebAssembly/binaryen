@@ -14,12 +14,18 @@
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
 
+ ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
  ;; CHECK:      (type $data_=>_none (func (param dataref)))
  (type $data_=>_none (func (param (ref data))))
 
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (table $table-1 10 (ref null $i32_i32_=>_none))
+ (table $table-1 10 (ref null $i32_i32_=>_none))
+ ;; CHECK:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none) (ref.func $foo))
+ (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none)
+  (ref.func $foo))
 
- ;; CHECK:      (elem declare func $fallthrough-no-params $fallthrough-non-nullable $foo $return-nothing)
+ ;; CHECK:      (elem declare func $fallthrough-no-params $fallthrough-non-nullable $return-nothing)
 
  ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
@@ -143,7 +149,7 @@
 
  ;; CHECK:      (func $fallthrough-bad-type (result i32)
  ;; CHECK-NEXT:  (call_ref
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.func $return-nothing)
  ;; CHECK-NEXT:    )
@@ -204,6 +210,23 @@
   ;; Ignore an unreachable call_ref target entirely.
   (call_ref
    (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $call-table-get (param $x i32)
+ ;; CHECK-NEXT:  (call_indirect $table-1 (type $i32_i32_=>_none)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-table-get (param $x i32)
+  (call_ref
+   (i32.const 1)
+   (i32.const 2)
+   (table.get $table-1
+    (local.get $x)
+   )
   )
  )
 )

@@ -343,6 +343,17 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       std::to_string(index));
   }
 
+  Index tableSize(Name tableName) override {
+    throw FailToEvalException("table size");
+  }
+
+  Literal tableLoad(Name tableName, Index index) override {
+    throw FailToEvalException("table.get: TODO");
+  }
+
+  // called during initialization
+  void tableStore(Name tableName, Index index, const Literal& value) override {}
+
   int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
   uint8_t load8u(Address addr) override { return doLoad<uint8_t>(addr); }
   int16_t load16s(Address addr) override { return doLoad<int16_t>(addr); }
@@ -365,12 +376,15 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     doStore<int64_t>(addr, value);
   }
 
-  // called during initialization, but we don't keep track of a table
-  void tableStore(Name tableName, Address addr, const Literal& value) override {
+  bool growMemory(Address /*oldSize*/, Address /*newSize*/) override {
+    throw FailToEvalException("grow memory");
   }
 
-  bool growMemory(Address /*oldSize*/, Address newSize) override {
-    throw FailToEvalException("grow memory");
+  bool growTable(Name /*name*/,
+                 const Literal& /*value*/,
+                 Index /*oldSize*/,
+                 Index /*newSize*/) override {
+    throw FailToEvalException("grow table");
   }
 
   void trap(const char* why) override {

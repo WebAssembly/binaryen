@@ -520,18 +520,19 @@ struct MergeBlocks
     }
   }
 
+  void visitIf(If* curr) {
+    // We can move code out of the condition, but not any of the other children.
+    optimize(curr, curr->condition);
+  }
+
   void optimizeTernary(Expression* curr,
                        Expression*& first,
                        Expression*& second,
                        Expression*& third) {
-    // TODO: for now, just stop when we see any side effect. instead, we could
-    //       check effects carefully for reordering
     Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), *getModule(), first)
-          .hasSideEffects()) {
-      return;
-    }
     outer = optimize(curr, first, outer);
+    // TODO: for now, just stop when we see any side effect after the first
+    //       item, but we could handle them carefully like we do for binaries.
     if (EffectAnalyzer(getPassOptions(), *getModule(), second)
           .hasSideEffects()) {
       return;

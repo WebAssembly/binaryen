@@ -396,4 +396,61 @@
       (rtt.canon $bytes)
     )
   )
+  (func $static-operations
+    (local $temp.A (ref null $struct.A))
+    (local $temp.B (ref null $struct.B))
+    (drop
+      (ref.test_static $struct.B (ref.null $struct.A))
+    )
+    (drop
+      (ref.cast_static $struct.B (ref.null $struct.A))
+    )
+    (drop
+      (block $out-B (result (ref $struct.B))
+        (local.set $temp.A
+          (br_on_cast_static $out-B $struct.B (ref.null $struct.A))
+        )
+        (unreachable)
+      )
+    )
+    (drop
+      (block $out-A (result (ref null $struct.A))
+        (local.set $temp.B
+          (br_on_cast_static_fail $out-A $struct.B (ref.null $struct.A))
+        )
+        (unreachable)
+      )
+    )
+  )
+  (func $static-constructions
+    (drop
+      (struct.new_default $struct.A)
+    )
+    (drop
+      (struct.new $struct.A
+        (i32.const 1)
+        (f32.const 2.345)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (array.new $vector
+        (f64.const 3.14159)
+        (i32.const 3)
+      )
+    )
+    (drop
+      (array.new_default $matrix
+        (i32.const 10)
+      )
+    )
+    (drop
+      (array.init_static $vector
+        (f64.const 1)
+        (f64.const 2)
+        (f64.const 4)
+        (f64.const 8)
+      )
+    )
+  )
 )

@@ -207,8 +207,6 @@ struct OptimizeInstructions
 
   bool fastMath;
 
-  bool refinalize = false;
-
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
 
@@ -221,11 +219,6 @@ struct OptimizeInstructions
 
     // Main walk.
     super::doWalkFunction(func);
-
-    // If we need to update parent types, do so.
-    if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
 
     // Final optimizations.
     {
@@ -1013,6 +1006,12 @@ struct OptimizeInstructions
     }
   }
 
+  void visitBlock(Block* curr) {
+    if (getModule()->features.hasGC()) {
+      optimizeHeapStores(curr->list);
+    }
+  }
+
   void visitIf(If* curr) {
     curr->condition = optimizeBoolean(curr->condition);
     if (curr->ifFalse) {
@@ -1054,21 +1053,40 @@ struct OptimizeInstructions
   }
 
   void visitLocalSet(LocalSet* curr) {
-    //   (local.tee (ref.as_non_null ..))
-    // can be reordered to
-    //   (ref.as_non_null (local.tee ..))
-    // if the local is nullable (which it must be until some form of let is
-    // added). The reordering allows the ref.as to be potentially optimized
-    // further based on where the value flows to.
-    if (curr->isTee()) {
-      if (auto* as = curr->value->dynCast<RefAs>()) {
-        if (as->op == RefAsNonNull &&
-            getFunction()->getLocalType(curr->index).isNullable()) {
+    // Interactions between local.set/tee and ref.as_non_null can be optimized
+    // in some cases, by removing or moving the ref.as_non_null operation. In
+    // all cases, we only do this when we do *not* allow non-nullable locals. If
+    // we do allow such locals, then (1) this local might be non-nullable, so we
+    // can't remove or move a ref.as_non_null flowing into a local.set/tee, and
+    // (2) even if the local were nullable, if we change things we might prevent
+    // the LocalSubtyping pass from turning it into a non-nullable local later.
+    // Note that we must also check if this local is nullable regardless, as a
+    // parameter might be non-nullable even if nullable locals are disallowed
+    // (as that just affects vars, and not params).
+    if (auto* as = curr->value->dynCast<RefAs>()) {
+      if (as->op == RefAsNonNull && !getModule()->features.hasGCNNLocals() &&
+          getFunction()->getLocalType(curr->index).isNullable()) {
+        //   (local.tee (ref.as_non_null ..))
+        // =>
+        //   (ref.as_non_null (local.tee ..))
+        //
+        // The reordering allows the ref.as to be potentially optimized further
+        // based on where the value flows to.
+        if (curr->isTee()) {
           curr->value = as->value;
           curr->finalize();
           as->value = curr;
           as->finalize();
           replaceCurrent(as);
+          return;
+        }
+
+        // Otherwise, if this is not a tee, then no value falls through. The
+        // ref.as_non_null acts as a null check here, basically. If we are
+        // ignoring such traps, we can remove it.
+        auto passOptions = getPassOptions();
+        if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+          curr->value = as->value;
         }
       }
     }
@@ -1179,6 +1197,19 @@ struct OptimizeInstructions
       replaceCurrent(
         Builder(*getModule())
           .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+      return;
+    }
+
+    if (auto* get = curr->target->dynCast<TableGet>()) {
+      // (call_ref ..args.. (table.get $table (index))
+      //   =>
+      // (call_indirect $table ..args.. (index))
+      replaceCurrent(Builder(*getModule())
+                       .makeCallIndirect(get->table,
+                                         get->index,
+                                         curr->operands,
+                                         get->type.getHeapType().getSignature(),
+                                         curr->isReturn));
       return;
     }
 
@@ -1294,6 +1325,146 @@ struct OptimizeInstructions
       const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
       optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }
+
+    // If our reference is a tee of a struct.new, we may be able to fold the
+    // stored value into the new itself:
+    //
+    //  (struct.set (local.tee $x (struct.new X Y Z)) X')
+    // =>
+    //  (local.set $x (struct.new X' Y Z))
+    //
+    if (auto* tee = curr->ref->dynCast<LocalSet>()) {
+      if (auto* new_ = tee->value->dynCast<StructNew>()) {
+        if (optimizeSubsequentStructSet(new_, curr, tee->index)) {
+          // Success, so we do not need the struct.set any more, and the tee
+          // can just be a set instead of us.
+          tee->makeSet();
+          replaceCurrent(tee);
+        }
+      }
+    }
+  }
+
+  // Similar to the above with struct.set whose reference is a tee of a new, we
+  // can do the same for subsequent sets in a list:
+  //
+  //  (local.set $x (struct.new X Y Z))
+  //  (struct.set (local.get $x) X')
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // We also handle other struct.sets immediately after this one, but we only
+  // handle the case where they are all in sequence and right after the
+  // local.set (anything in the middle of this pattern will stop us from
+  // optimizing later struct.sets, which might be improved later but would
+  // require an analysis of effects TODO).
+  void optimizeHeapStores(ExpressionList& list) {
+    for (Index i = 0; i < list.size(); i++) {
+      auto* localSet = list[i]->dynCast<LocalSet>();
+      if (!localSet) {
+        continue;
+      }
+      auto* new_ = localSet->value->dynCast<StructNew>();
+      if (!new_) {
+        continue;
+      }
+
+      // This local.set of a struct.new looks good. Find struct.sets after it
+      // to optimize.
+      for (Index j = i + 1; j < list.size(); j++) {
+        auto* structSet = list[j]->dynCast<StructSet>();
+        if (!structSet) {
+          // Any time the pattern no longer matches, stop optimizing possible
+          // struct.sets for this struct.new.
+          break;
+        }
+        auto* localGet = structSet->ref->dynCast<LocalGet>();
+        if (!localGet || localGet->index != localSet->index) {
+          break;
+        }
+        if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
+          break;
+        } else {
+          // Success. Replace the set with a nop, and continue to
+          // perhaps optimize more.
+          ExpressionManipulator::nop(structSet);
+        }
+      }
+    }
+  }
+
+  // Given a struct.new and a struct.set that occurs right after it, and that
+  // applies to the same data, try to apply the set during the new. This can be
+  // either with a nested tee:
+  //
+  //  (struct.set
+  //    (local.tee $x (struct.new X Y Z))
+  //    X'
+  //  )
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // or without:
+  //
+  //  (local.set $x (struct.new X Y Z))
+  //  (struct.set (local.get $x) X')
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // Returns true if we succeeded.
+  bool optimizeSubsequentStructSet(StructNew* new_,
+                                   StructSet* set,
+                                   Index refLocalIndex) {
+    // Leave unreachable code for DCE, to avoid updating types here.
+    if (new_->type == Type::unreachable || set->type == Type::unreachable) {
+      return false;
+    }
+
+    if (new_->isWithDefault()) {
+      // Ignore a new_default for now. If the fields are defaultable then we
+      // could add them, in principle, but that might increase code size.
+      return false;
+    }
+
+    auto index = set->index;
+    auto& operands = new_->operands;
+
+    // Check for effects that prevent us moving the struct.set's value (X' in
+    // the function comment) into its new position in the struct.new. First, it
+    // must be ok to move it past the local.set (otherwise, it might read from
+    // memory using that local, and depend on the struct.new having already
+    // occurred; or, if it writes to that local, then it would cross another
+    // write).
+    auto setValueEffects = effects(set->value);
+    if (setValueEffects.localsRead.count(refLocalIndex) ||
+        setValueEffects.localsWritten.count(refLocalIndex)) {
+      return false;
+    }
+
+    // We must move the set's value past indexes greater than it (Y and Z in
+    // the example in the comment on this function).
+    // TODO When this function is called repeatedly in a sequence this can
+    //      become quadratic - perhaps we should memoize (though, struct sizes
+    //      tend to not be ridiculously large).
+    for (Index i = index + 1; i < operands.size(); i++) {
+      auto operandEffects = effects(operands[i]);
+      if (operandEffects.invalidates(setValueEffects)) {
+        // TODO: we could use locals to reorder everything
+        return false;
+      }
+    }
+
+    Builder builder(*getModule());
+
+    // See if we need to keep the old value.
+    if (effects(operands[index]).hasUnremovableSideEffects()) {
+      operands[index] =
+        builder.makeSequence(builder.makeDrop(operands[index]), set->value);
+    } else {
+      operands[index] = set->value;
+    }
+
+    return true;
   }
 
   void visitArrayGet(ArrayGet* curr) { skipNonNullCast(curr->ref); }
@@ -1329,93 +1500,132 @@ struct OptimizeInstructions
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
-    // If the value is a null, it will just flow through, and we do not need the
-    // cast. However, if that would change the type, then things are less
+    auto intendedType = curr->getIntendedType();
+
+    // If the value is a null, it will just flow through, and we do not need
+    // the cast. However, if that would change the type, then things are less
     // simple: if the original type was non-nullable, replacing it with a null
     // would change the type, which can happen in e.g.
     //   (ref.cast (ref.as_non_null (.. (ref.null)
     if (fallthrough->is<RefNull>()) {
-      // Replace the expression with drops of the inputs, and a null. Note that
-      // we provide a null of the type the outside expects - that of the rtt,
-      // which is what was cast to.
-      Expression* rep =
-        builder.makeBlock({builder.makeDrop(curr->ref),
-                           builder.makeDrop(curr->rtt),
-                           builder.makeRefNull(curr->rtt->type.getHeapType())});
+      // Replace the expression with drops of the inputs, and a null. Note
+      // that we provide a null of the previous type, so that we do not alter
+      // the type received by our parent.
+      std::vector<Expression*> items;
+      items.push_back(builder.makeDrop(curr->ref));
+      if (curr->rtt) {
+        items.push_back(builder.makeDrop(curr->rtt));
+      }
+      items.push_back(builder.makeRefNull(intendedType));
+      Expression* rep = builder.makeBlock(items);
       if (curr->ref->type.isNonNullable()) {
-        // Avoid a type change by forcing to be non-nullable. In practice, this
-        // would have trapped before we get here, so this is just for
+        // Avoid a type change by forcing to be non-nullable. In practice,
+        // this would have trapped before we get here, so this is just for
         // validation.
         rep = builder.makeRefAs(RefAsNonNull, rep);
       }
       replaceCurrent(rep);
       return;
-      // TODO: The optimal ordering of this and the other ref.as_non_null stuff
-      //       later down in this functions is unclear and may be worth looking
-      //       into.
+      // TODO: The optimal ordering of this and the other ref.as_non_null
+      //       stuff later down in this functions is unclear and may be worth
+      //       looking into.
     }
 
     // For the cast to be able to succeed, the value being cast must be a
     // subtype of the desired type, as RTT subtyping is a subset of static
     // subtyping. For example, trying to cast an array to a struct would be
     // incompatible.
-    if (!canBeCastTo(curr->ref->type.getHeapType(),
-                     curr->rtt->type.getHeapType())) {
+    if (!canBeCastTo(curr->ref->type.getHeapType(), intendedType)) {
       // This cast cannot succeed. If the input is not a null, it will
       // definitely trap.
       if (fallthrough->type.isNonNullable()) {
-        // Our type will now be unreachable; update the parents.
-        refinalize = true;
-        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->rtt),
-                                          builder.makeUnreachable()}));
+        // Make sure to emit a block with the same type as us; leave updating
+        // types for other passes.
+        std::vector<Expression*> items;
+        items.push_back(builder.makeDrop(curr->ref));
+        if (curr->rtt) {
+          items.push_back(builder.makeDrop(curr->rtt));
+        }
+        items.push_back(builder.makeUnreachable());
+        replaceCurrent(builder.makeBlock(items, curr->type));
         return;
       }
-      // Otherwise, we are not sure what it is, and need to wait for runtime to
-      // see if it is a null or not. (We've already handled the case where we
-      // can see the value is definitely a null at compile time, earlier.)
+      // Otherwise, we are not sure what it is, and need to wait for runtime
+      // to see if it is a null or not. (We've already handled the case where
+      // we can see the value is definitely a null at compile time, earlier.)
     }
 
-    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen ||
+        !curr->rtt) {
       // Aside from the issue of type incompatibility as mentioned above, the
       // cast can trap if the types *are* compatible but it happens to be the
       // case at runtime that the value is not of the desired subtype. If we
-      // do not consider such traps possible, we can ignore that. Note, though,
-      // that we cannot do this if we cannot replace the current type with the
-      // reference's type.
-      if (HeapType::isSubType(curr->ref->type.getHeapType(),
-                              curr->rtt->type.getHeapType())) {
-        replaceCurrent(getResultOfFirst(curr->ref,
-                                        builder.makeDrop(curr->rtt),
-                                        getFunction(),
-                                        getModule(),
-                                        passOptions));
+      // do not consider such traps possible, we can ignore that. (Note,
+      // though, that we cannot do this if we cannot replace the current type
+      // with the reference's type.) We can also do this if this is a static
+      // cast: in that case, all we need to know about are the types.
+      if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
+        if (curr->rtt) {
+          replaceCurrent(getResultOfFirst(curr->ref,
+                                          builder.makeDrop(curr->rtt),
+                                          getFunction(),
+                                          getModule(),
+                                          passOptions));
+        } else {
+          replaceCurrent(curr->ref);
+        }
         return;
       }
     }
 
-    // Repeated identical ref.cast operations are unnecessary, if using the
-    // exact same rtt - the result will be the same. Find the immediate child
-    // cast, if there is one, and see if it is identical.
+    // Repeated identical ref.cast operations are unnecessary. First, find the
+    // immediate child cast, if there is one.
     // TODO: Look even further through incompatible casts?
     auto* ref = curr->ref;
     while (!ref->is<RefCast>()) {
       auto* last = ref;
-      // RefCast falls through the value, so instead of calling getFallthrough()
-      // to look through all fallthroughs, we must iterate manually. Keep going
-      // until we reach either the end of things falling-through, or a cast.
+      // RefCast falls through the value, so instead of calling
+      // getFallthrough() to look through all fallthroughs, we must iterate
+      // manually. Keep going until we reach either the end of things
+      // falling-through, or a cast.
       ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
       if (ref == last) {
         break;
       }
     }
     if (auto* child = ref->dynCast<RefCast>()) {
-      // Check if the casts are identical.
-      if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
-          !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
-             .hasSideEffects()) {
-        replaceCurrent(curr->ref);
-        return;
+      if (curr->rtt && child->rtt) {
+        // Check if the casts are identical.
+        if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
+            !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
+               .hasSideEffects()) {
+          replaceCurrent(curr->ref);
+          return;
+        }
+      } else if (!curr->rtt && !child->rtt) {
+        // Repeated static casts can be removed, leaving just the most demanding
+        // of them.
+        auto childIntendedType = child->getIntendedType();
+        if (HeapType::isSubType(intendedType, childIntendedType)) {
+          // Skip the child.
+          curr->ref = child->ref;
+          return;
+        } else if (HeapType::isSubType(childIntendedType, intendedType)) {
+          // Skip the parent.
+          replaceCurrent(child);
+          return;
+        } else {
+          // The types are not compatible, so if the input is not null, this
+          // will trap.
+          if (!curr->type.isNullable()) {
+            // Make sure to emit a block with the same type as us; leave
+            // updating types for other passes.
+            replaceCurrent(builder.makeBlock(
+              {builder.makeDrop(child->ref), builder.makeUnreachable()},
+              curr->type));
+            return;
+          }
+        }
       }
     }
 
@@ -1450,14 +1660,34 @@ struct OptimizeInstructions
   }
 
   void visitRefTest(RefTest* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    auto refType = curr->ref->type.getHeapType();
+    auto intendedType = curr->getIntendedType();
+
     // See above in RefCast.
-    if (!canBeCastTo(curr->ref->type.getHeapType(),
-                     curr->rtt->type.getHeapType())) {
+    if (!canBeCastTo(refType, intendedType)) {
       // This test cannot succeed, and will definitely return 0.
-      Builder builder(*getModule());
-      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->rtt),
-                                        builder.makeConst(int32_t(0))}));
+      std::vector<Expression*> items;
+      items.push_back(builder.makeDrop(curr->ref));
+      if (curr->rtt) {
+        items.push_back(builder.makeDrop(curr->rtt));
+      }
+      items.push_back(builder.makeConst(int32_t(0)));
+      replaceCurrent(builder.makeBlock(items));
+      return;
+    }
+
+    if (!curr->rtt && curr->ref->type.isNonNullable() &&
+        HeapType::isSubType(refType, intendedType)) {
+      // This static test will definitely succeed.
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
+      return;
     }
   }
 
@@ -1545,8 +1775,11 @@ struct OptimizeInstructions
       // drop, which is no worse, and the value and the drop can be optimized
       // out later if the value has no side effects.
       Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
-                                          builder.makeUnreachable()));
+      // Make sure to emit a block with the same type as us; leave updating
+      // types for other passes.
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->value), builder.makeUnreachable()},
+        curr->type));
       return;
     }
 
@@ -1597,6 +1830,25 @@ private:
       return false;
     }
     return true;
+  }
+
+  // Check if two consecutive inputs to an instruction are equal and can be
+  // folded into the first of the two. This identifies reads from the same local
+  // variable when one of them is a "tee" operation.
+  // The inputs here must be consecutive, but it is also ok to have code with no
+  // side effects at all in the middle. For example, a Const in between is ok.
+  bool areConsecutiveInputsEqualAndFoldable(Expression* left,
+                                            Expression* right) {
+    if (auto* set = left->dynCast<LocalSet>()) {
+      if (auto* get = right->dynCast<LocalGet>()) {
+        if (set->isTee() && get->index == set->index) {
+          return true;
+        }
+      }
+    }
+    // stronger property than we need - we can not only fold
+    // them but remove them entirely.
+    return areConsecutiveInputsEqualAndRemovable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
@@ -1789,6 +2041,44 @@ private:
         s->ifTrue = ifFalse;
         s->ifFalse = ifTrue;
         s->condition = c;
+        return s;
+      }
+    }
+    {
+      // TODO: Remove this after landing SCCP pass. See: #4161
+
+      // i32(x) ? i32(x) : 0  ==>  x
+      Expression *x, *y;
+      if (matches(curr, select(any(&x), i32(0), any(&y))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return curr->ifTrue;
+      }
+      // i32(x) ? 0 : i32(x)  ==>  { x, 0 }
+      if (matches(curr, select(i32(0), any(&x), any(&y))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return builder.makeSequence(builder.makeDrop(x), curr->ifTrue);
+      }
+
+      // i64(x) == 0 ? 0 : i64(x)  ==>  x
+      // i64(x) != 0 ? i64(x) : 0  ==>  x
+      if ((matches(curr, select(i64(0), any(&x), unary(EqZInt64, any(&y)))) ||
+           matches(
+             curr,
+             select(any(&x), i64(0), binary(NeInt64, any(&y), i64(0))))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue;
+      }
+
+      // i64(x) == 0 ? i64(x) : 0  ==>  { x, 0 }
+      // i64(x) != 0 ? 0 : i64(x)  ==>  { x, 0 }
+      if ((matches(curr, select(any(&x), i64(0), unary(EqZInt64, any(&y)))) ||
+           matches(
+             curr,
+             select(i64(0), any(&x), binary(NeInt64, any(&y), i64(0))))) &&
+          areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return builder.makeSequence(
+          builder.makeDrop(x),
+          curr->condition->is<Unary>() ? curr->ifFalse : curr->ifTrue);
       }
     }
     {
@@ -2959,6 +3249,10 @@ private:
   }
 
   Expression* optimizeMemoryFill(MemoryFill* memFill) {
+    if (memFill->type == Type::unreachable) {
+      return nullptr;
+    }
+
     if (!memFill->size->is<Const>()) {
       return nullptr;
     }
@@ -3040,19 +3334,21 @@ private:
                                        Type::v128);
             } else {
               // { i64.store(d, C', 0), i64.store(d, C', 8) }
+              auto destType = memFill->dest->type;
+              Index tempLocal = builder.addVar(getFunction(), destType);
               return builder.makeBlock({
                 builder.makeStore(
                   8,
                   offset,
                   align,
-                  memFill->dest,
+                  builder.makeLocalTee(tempLocal, memFill->dest, destType),
                   builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
                   Type::i64),
                 builder.makeStore(
                   8,
                   offset + 8,
                   align,
-                  memFill->dest,
+                  builder.makeLocalGet(tempLocal, destType),
                   builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
                   Type::i64),
               });
@@ -3348,14 +3644,9 @@ private:
         curr->ifTrue->type != Type::unreachable &&
         curr->ifFalse->type != Type::unreachable) {
       Unary* un;
-      Expression* x;
       Const* c;
       auto check = [&](Expression* a, Expression* b) {
-        if (matches(a, unary(&un, EqZ, any(&x))) && matches(b, ival(&c))) {
-          auto value = c->value.getInteger();
-          return value == 0 || value == 1;
-        }
-        return false;
+        return matches(b, bval(&c)) && matches(a, unary(&un, EqZ, any()));
       };
       if (check(curr->ifTrue, curr->ifFalse) ||
           check(curr->ifFalse, curr->ifTrue)) {
