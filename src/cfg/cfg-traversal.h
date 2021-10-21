@@ -259,7 +259,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // end
     assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
     for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
-      auto * tryy = self->unwindExprStack[i]->template cast<Try>();
+      auto* tryy = self->unwindExprStack[i]->template cast<Try>();
       if (tryy->isDelegate()) {
         // If this delegates to the caller, there is no possibility that this
         // instruction can throw to outer catches.
