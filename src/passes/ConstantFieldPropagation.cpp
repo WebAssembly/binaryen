@@ -27,6 +27,8 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
+#include <variant>
+
 #include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "ir/struct-utils.h"
@@ -41,6 +43,19 @@ namespace wasm {
 
 namespace {
 
+template<typename T>
+struct Univalue {
+  bool operator==(const T& other) const { return true; }
+  bool operator!=(const T& other) const { return false; }
+};
+
+// No possible value.
+struct None : public Univalue<None> {};
+
+// Many possible values, and so this represents unknown data: we cannot infer
+// anything there.
+struct Many : public Univalue<Many> {};
+
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
@@ -49,28 +64,37 @@ namespace {
 // Currently this just looks for a single constant value, and even two constant
 // values are treated as unknown. It may be worth optimizing more than that TODO
 struct PossibleConstantValues {
+private:
+  std::variant<None, Literal, Many> value;
+
+public:
+  PossibleConstantValues() : value(None()) {}
+
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
-    if (!noted) {
+    if (std::holds_alternative<None>(value)) {
       // This is the first value.
       value = curr;
-      noted = true;
+      return;
+    }
+
+    if (std::holds_alternative<Many>(value)) {
+      // This was already representing multiple values; nothing changes.
       return;
     }
 
     // This is a subsequent value. Check if it is different from all previous
-    // ones.
-    if (curr != value) {
-      noteUnknown();
+    // ones, and if so, we now represent many possible values.
+    if (curr != std::get<Literal>(value)) {
+      value = Many();
     }
   }
 
   // Notes a value that is unknown - it can be anything. We have failed to
   // identify a constant value here.
   void noteUnknown() {
-    value = Literal(Type::none);
-    noted = true;
+    value = Many();
   }
 
   // Combine the information in a given PossibleConstantValues to this one. This
@@ -79,34 +103,38 @@ struct PossibleConstantValues {
   //
   // Returns whether we changed anything.
   bool combine(const PossibleConstantValues& other) {
-    if (!other.noted) {
+    if (std::holds_alternative<None>(other.value)) {
       return false;
     }
-    if (!noted) {
-      *this = other;
-      return other.noted;
-    }
-    if (!isConstant()) {
-      return false;
-    }
-    if (!other.isConstant() || getConstantValue() != other.getConstantValue()) {
-      noteUnknown();
+
+    if (std::holds_alternative<None>(value)) {
+      value = other.value;
       return true;
     }
+
+    if (std::holds_alternative<Many>(value)) {
+      return false;
+    }
+
+    if (other.value != value) {
+      value = Many();
+      return true;
+    }
+
     return false;
   }
 
   // Check if all the values are identical and constant.
-  bool isConstant() const { return noted && value.type.isConcrete(); }
+  bool isConstant() const { return std::holds_alternative<Literal>(value); }
 
   // Returns the single constant value.
   Literal getConstantValue() const {
     assert(isConstant());
-    return value;
+    return std::get<Literal>(value);
   }
 
   // Returns whether we have ever noted a value.
-  bool hasNoted() const { return noted; }
+  bool hasNoted() const { return !std::holds_alternative<None>(value); }
 
   void dump(std::ostream& o) {
     o << '[';
@@ -115,20 +143,10 @@ struct PossibleConstantValues {
     } else if (!isConstant()) {
       o << "unknown";
     } else {
-      o << value;
+      o << getConstantValue();
     }
     o << ']';
   }
-
-private:
-  // Whether we have noted any values at all.
-  bool noted = false;
-
-  // The one value we have seen, if there is one. If we realize there is no
-  // single constant value here, we make this have a non-concrete (impossible)
-  // type to indicate that. Otherwise, a concrete type indicates we have a
-  // constant value.
-  Literal value;
 };
 
 using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
