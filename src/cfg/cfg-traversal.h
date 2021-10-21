@@ -258,8 +258,29 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     //   ...
     // end
     assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
-    for (int i = self->throwingInstsStack.size() - 1; i >= 0; i--) {
+    for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
       auto* tryy = self->unwindExprStack[i]->template cast<Try>();
+      if (tryy->isDelegate()) {
+        // If this delegates to the caller, there is no possibility that this
+        // instruction can throw to outer catches.
+        if (tryy->delegateTarget == DELEGATE_CALLER_TARGET) {
+          break;
+        }
+        // If this delegates to an outer try, we skip catches between this try
+        // and the target try.
+        bool found = false;
+        for (int j = i - 1; j >= 0; j--) {
+          if (self->unwindExprStack[j]->template cast<Try>()->name ==
+              tryy->delegateTarget) {
+            i = j;
+            found = true;
+            break;
+          }
+        }
+        assert(found);
+        continue;
+      }
+
       // Exception thrown. Note outselves so that we will create a link to each
       // catch within the try when we get there.
       self->throwingInstsStack[i].push_back(self->currBasicBlock);
@@ -269,6 +290,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       if (tryy->hasCatchAll()) {
         break;
       }
+      i--;
     }
   }
 
