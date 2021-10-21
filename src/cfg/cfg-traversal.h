@@ -269,7 +269,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         // If this delegates to an outer try, we skip catches between this try
         // and the target try.
         bool found = false;
-        for (int j = i; j >= 0; j--) {
+        for (int j = i - 1; j >= 0; j--) {
           if (self->unwindExprStack[j]->template cast<Try>()->name ==
               tryy->delegateTarget) {
             i = j;

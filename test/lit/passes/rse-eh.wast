@@ -729,7 +729,7 @@
       )
       (catch_all)
     )
-    ;; The innermost try delegates to $l1, which in turn delgates to $l0,
+    ;; The innermost try delegates to $l1, which in turn delegates to $l0,
     ;; skipping all local.sets in between. So this should NOT be dropped.
     (local.set $x (i32.const 1))
   )
