@@ -43,8 +43,7 @@ namespace wasm {
 
 namespace {
 
-template<typename T>
-struct Univalue {
+template<typename T> struct Univalue {
   bool operator==(const T& other) const { return true; }
   bool operator!=(const T& other) const { return false; }
 };
@@ -93,9 +92,7 @@ public:
 
   // Notes a value that is unknown - it can be anything. We have failed to
   // identify a constant value here.
-  void noteUnknown() {
-    value = Many();
-  }
+  void noteUnknown() { value = Many(); }
 
   // Combine the information in a given PossibleConstantValues to this one. This
   // is the same as if we have called note*() on us with all the history of
