@@ -8882,19 +8882,16 @@
  ;; CHECK-NEXT:                  (i32.or
  ;; CHECK-NEXT:                   (local.get $6)
  ;; CHECK-NEXT:                   (local.tee $12
- ;; CHECK-NEXT:                    (i32.or
- ;; CHECK-NEXT:                     (i32.ne
+ ;; CHECK-NEXT:                    (i32.ne
+ ;; CHECK-NEXT:                     (i32.or
  ;; CHECK-NEXT:                      (i32.load
  ;; CHECK-NEXT:                       (local.get $13)
  ;; CHECK-NEXT:                      )
- ;; CHECK-NEXT:                      (i32.const 0)
- ;; CHECK-NEXT:                     )
- ;; CHECK-NEXT:                     (i32.ne
  ;; CHECK-NEXT:                      (i32.load offset=4
  ;; CHECK-NEXT:                       (local.get $13)
  ;; CHECK-NEXT:                      )
- ;; CHECK-NEXT:                      (i32.const 0)
  ;; CHECK-NEXT:                     )
+ ;; CHECK-NEXT:                     (i32.const 0)
  ;; CHECK-NEXT:                    )
  ;; CHECK-NEXT:                   )
  ;; CHECK-NEXT:                  )

@@ -772,17 +772,22 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    // bitwise operations
-    // for and and or, we can potentially conditionalize
     if (curr->op == AndInt32 || curr->op == OrInt32) {
+      // bitwise operations
+      // for and and or, we can potentially conditionalize
       if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
         return replaceCurrent(ret);
       }
-    }
-    // for or, we can potentially combine
-    if (curr->op == OrInt32) {
-      if (auto* ret = combineOr(curr)) {
-        return replaceCurrent(ret);
+      if (curr->op == AndInt32) {
+        if (auto* ret = combineAnd(curr)) {
+          return replaceCurrent(ret);
+        }
+      }
+      // for or, we can potentially combine
+      if (curr->op == OrInt32) {
+        if (auto* ret = combineOr(curr)) {
+          return replaceCurrent(ret);
+        }
       }
     }
     // relation/comparisons allow for math optimizations
@@ -2388,12 +2393,53 @@ private:
     }
   }
 
+  // We can combine `and` operations, e.g.
+  //   (x == 0) & (y == 0)   ==>    (x | y) == 0
+  //   (x < 0) & (y < 0)     ==>    (x & y) < 0
+  Expression* combineAnd(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      // (i32(x) == 0) & (i32(y) == 0)   ==>   i32(x | y) == 0
+      // (i64(x) == 0) & (i64(y) == 0)   ==>   i64(x | y) == 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y))))) {
+        auto* inner = curr->left->cast<Unary>();
+        inner->value =
+          Builder(*getModule())
+            .makeBinary(Abstract::getBinary(inner->value->type, Or), x, y);
+        return curr->left;
+      }
+    }
+    {
+      // (i32(x) < 0) & (i32(y) < 0)   ==>   i32(x & y) < 0
+      // (i64(x) < 0) & (i64(y) < 0)   ==>   i64(x & y) < 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(AndInt32,
+                         binary(LtS, any(&x), ival(0)),
+                         binary(LtS, any(&y), ival(0))))) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left =
+          Builder(*getModule())
+            .makeBinary(Abstract::getBinary(inner->right->type, And), x, y);
+        return curr->left;
+      }
+    }
+    return nullptr;
+  }
+
   // We can combine `or` operations, e.g.
   //   (x > y) | (x == y)    ==>    x >= y
-  Expression* combineOr(Binary* binary) {
-    assert(binary->op == OrInt32);
-    if (auto* left = binary->left->dynCast<Binary>()) {
-      if (auto* right = binary->right->dynCast<Binary>()) {
+  //   (x != 0) | (y != 0)   ==>    (x | y) != 0
+  Expression* combineOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    assert(curr->op == OrInt32);
+    if (auto* left = curr->left->dynCast<Binary>()) {
+      if (auto* right = curr->right->dynCast<Binary>()) {
         if (left->op != right->op &&
             ExpressionAnalyzer::equal(left->left, right->left) &&
             ExpressionAnalyzer::equal(left->right, right->right) &&
@@ -2412,6 +2458,36 @@ private:
             }
           }
         }
+      }
+    }
+    {
+      // (i32(x) != 0) | (i32(y) != 0)   ==>   i32(x | y) != 0
+      // (i64(x) != 0) | (i64(y) != 0)   ==>   i64(x | y) != 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(OrInt32,
+                         binary(Ne, any(&x), ival(0)),
+                         binary(Ne, any(&y), ival(0))))) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left =
+          Builder(*getModule())
+            .makeBinary(Abstract::getBinary(inner->right->type, Or), x, y);
+        return curr->left;
+      }
+    }
+    {
+      // (i32(x) < 0) | (i32(y) < 0)   ==>   i32(x | y) < 0
+      // (i64(x) < 0) | (i64(y) < 0)   ==>   i64(x | y) < 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(OrInt32,
+                         binary(LtS, any(&x), ival(0)),
+                         binary(LtS, any(&y), ival(0))))) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left =
+          Builder(*getModule())
+            .makeBinary(Abstract::getBinary(inner->right->type, Or), x, y);
+        return curr->left;
       }
     }
     return nullptr;
@@ -2957,14 +3033,14 @@ private:
           }
         }
       }
+
+      using namespace Abstract;
+      using namespace Match;
       // x - y == 0  =>  x == y
       // x - y != 0  =>  x != y
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
       {
-        using namespace Abstract;
-        using namespace Match;
-
         Binary* inner;
         // unsigned(x - y) > 0    =>   x != y
         if (matches(curr,
