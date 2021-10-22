@@ -197,6 +197,7 @@ public:
     if (allowMemory) {
       setupMemory();
     }
+    setupHeapTypes();
     setupTables();
     setupGlobals();
     if (wasm.features.hasExceptionHandling()) {
@@ -221,6 +222,7 @@ public:
 private:
   Module& wasm;
   Builder builder;
+  std::vector<HeapType> heapTypes;
   std::vector<char> bytes; // the input bytes
   size_t pos;              // the position in the input
   // whether we already cycled through all the input (if so, we should try to
@@ -238,6 +240,15 @@ private:
 
   // The maximum number of tuple elements.
   static const int MAX_TUPLE_SIZE = 6;
+
+  // The maximum number of struct fields.
+  static const int MAX_STRUCT_SIZE = 6;
+
+  // The maximum RTT depth.
+  static const int MAX_RTT_DEPTH = 4;
+
+  // The maximum number of GC heap types to build.
+  static const int MAX_HEAPTYPES = 20;
 
   // some things require luck, try them a few times
   static const int TRIES = 10;
@@ -423,6 +434,334 @@ private:
     if (!wasm.getExportOrNull("memory")) {
       wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
     }
+  }
+
+  struct HeapTypeGeneratorState {
+    TypeBuilder& builder;
+    Index i;
+    const std::vector<std::vector<Index>>& subtypeIndices;
+  };
+
+  HeapType::BasicHeapType generateBasicHeapType() {
+    return pick(HeapType::func,
+                HeapType::ext,
+                HeapType::any,
+                HeapType::eq,
+                HeapType::i31,
+                HeapType::data);
+  }
+
+  Type::BasicType generateBasicType() {
+    // Exclude basic reference types because we will construct them via the
+    // TypeBuilder.
+    return pick(
+      FeatureOptions<Type::BasicType>{}
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+        .add(FeatureSet::SIMD, Type::v128));
+  }
+
+  HeapType generateHeapType(const HeapTypeGeneratorState& state) {
+    if (oneIn(2)) {
+      return generateBasicHeapType();
+    } else {
+      return state.builder[upTo(state.builder.size())];
+    }
+  }
+
+  Type generateRefType(const HeapTypeGeneratorState& state,
+                       bool defaultable = false) {
+    auto heapType = generateHeapType(state);
+    auto nullability = (defaultable || oneIn(2)) ? Nullable : NonNullable;
+    return state.builder.getTempRefType(heapType, nullability);
+  }
+
+  Type generateRttType(const HeapTypeGeneratorState& state) {
+    auto heapType = generateHeapType(state);
+    auto depth = oneIn(2) ? Rtt::NoDepth : upTo(MAX_RTT_DEPTH);
+    return state.builder.getTempRttType(Rtt(depth, heapType));
+  }
+
+  Type generateSingleType(const HeapTypeGeneratorState& state,
+                          bool defaultable = false) {
+    switch (upTo(defaultable ? 2 : 3)) {
+      case 0:
+        return generateBasicType();
+      case 1:
+        return generateRefType(state, defaultable);
+      case 2:
+        return generateRttType(state);
+    }
+    WASM_UNREACHABLE("unexpected");
+  }
+
+  Type generateTupleType(const HeapTypeGeneratorState& state) {
+    std::vector<Type> types(2 + upTo(MAX_TUPLE_SIZE - 1));
+    for (auto& type : types) {
+      // Make sure tuples are defaultable. See comment in getTupleType.
+      type = generateSingleType(state, /*defaultable=*/true);
+    }
+    return state.builder.getTempTupleType(Tuple(types));
+  }
+
+  Type generateControlFlowType(const HeapTypeGeneratorState& state) {
+    if (oneIn(10)) {
+      return Type::none;
+    } else if (wasm.features.hasMultivalue() && oneIn(5)) {
+      return generateTupleType(state);
+    } else {
+      return generateSingleType(state, /*defaultable=*/true);
+    }
+  }
+
+  Signature generateSignature(const HeapTypeGeneratorState& state) {
+    std::vector<Type> types(upToSquared(MAX_PARAMS));
+    for (auto& type : types) {
+      type = generateSingleType(state);
+    }
+    auto params = state.builder.getTempTupleType(types);
+    return {params, generateControlFlowType(state)};
+  }
+
+  Field generateField(const HeapTypeGeneratorState& state) {
+    auto mutability = oneIn(2) ? Mutable : Immutable;
+    if (oneIn(6)) {
+      return {oneIn(2) ? Field::i8 : Field::i16, mutability};
+    } else {
+      return {generateSingleType(state), mutability};
+    }
+  }
+
+  Struct generateStruct(const HeapTypeGeneratorState& state) {
+    std::vector<Field> fields(upTo(MAX_STRUCT_SIZE + 1));
+    for (auto& field : fields) {
+      field = generateField(state);
+    }
+    return {fields};
+  }
+
+  Array generateArray(const HeapTypeGeneratorState& state) {
+    return {generateField(state)};
+  }
+
+  void assignSubData(const HeapTypeGeneratorState& state) {
+    switch (upTo(2)) {
+      case 0:
+        state.builder[state.i] = generateStruct(state);
+        break;
+      case 1:
+        state.builder[state.i] = generateArray(state);
+        break;
+    }
+  }
+
+  void assignSubEq(const HeapTypeGeneratorState& state) {
+    switch (upTo(3)) {
+      case 0:
+        state.builder[state.i] = HeapType::i31;
+        break;
+      case 1:
+        state.builder[state.i] = HeapType::data;
+        break;
+      case 2:
+        assignSubData(state);
+        break;
+    }
+  }
+
+  void assignSubAny(const HeapTypeGeneratorState& state) {
+    switch (upTo(4)) {
+      case 0:
+        state.builder[state.i] = HeapType::eq;
+        break;
+      case 1:
+        state.builder[state.i] = HeapType::func;
+        break;
+      case 2:
+        assignSubEq(state);
+        break;
+      case 3:
+        state.builder[state.i] = generateSignature(state);
+        break;
+    }
+  }
+
+  void assignSubBasic(const HeapTypeGeneratorState& state,
+                      HeapType::BasicHeapType type) {
+    if (oneIn(2)) {
+      state.builder[state.i] = type;
+    } else {
+      switch (type) {
+        case HeapType::ext:
+        case HeapType::i31:
+          // No other subtypes.
+          state.builder[state.i] = type;
+          break;
+        case HeapType::func:
+          state.builder[state.i] = generateSignature(state);
+          break;
+        case HeapType::any:
+          assignSubAny(state);
+          break;
+        case HeapType::eq:
+          assignSubEq(state);
+          break;
+        case HeapType::data:
+          assignSubData(state);
+          break;
+      }
+    }
+  }
+
+  HeapType chooseSubHeapType(const HeapTypeGeneratorState& state) {
+    return state.builder[pick(state.subtypeIndices[state.i])];
+  }
+
+  // TODO: Make this part of the wasm-type.h API
+  struct Ref {
+    HeapType type;
+    Nullability nullability;
+  };
+
+  Ref generateSubRef(const HeapTypeGeneratorState& state, Ref super) {
+    auto nullability = super.nullability == NonNullable ? NonNullable
+                       : oneIn(2)                       ? Nullable
+                                                        : NonNullable;
+    return {chooseSubHeapType(state), nullability};
+  }
+
+  Rtt generateSubRtt(const HeapTypeGeneratorState& state, Rtt super) {
+    auto depth = super.hasDepth() ? super.depth
+                 : oneIn(2)       ? Rtt::NoDepth
+                                  : upTo(MAX_RTT_DEPTH);
+    return {depth, chooseSubHeapType(state)};
+  }
+
+  Type generateSubtype(const HeapTypeGeneratorState& state, Type type) {
+    if (type.isBasic()) {
+      // We do not construct types with basic reference types (we go through the
+      // TypeBuilder for those intead), so this must be a non-reference basic
+      // type, which means it has no other subtypes.
+      return type;
+    } else if (type.isRef()) {
+      auto ref =
+        generateSubRef(state, {type.getHeapType(), type.getNullability()});
+      return state.builder.getTempRefType(ref.type, ref.nullability);
+    } else if (type.isRtt()) {
+      auto rtt = generateSubRtt(state, type.getRtt());
+      return state.builder.getTempRttType(rtt);
+    } else {
+      WASM_UNREACHABLE("unexpected type kind");
+    }
+  }
+
+  Signature generateSubSignature(const HeapTypeGeneratorState& state,
+                                 Signature super) {
+    // TODO: Update this once we support nontrivial function subtyping.
+    return super;
+  }
+
+  Field generateSubField(const HeapTypeGeneratorState& state, Field super) {
+    if (super.mutable_ == Mutable) {
+      // Only immutable fields support subtyping.
+      return super;
+    }
+    if (super.isPacked()) {
+      // No other subtypes of i8 or i16.
+      return super;
+    }
+    return {generateSubtype(state, super.type), Immutable};
+  }
+
+  Struct generateSubStruct(const HeapTypeGeneratorState& state,
+                           const Struct& super) {
+    if (oneIn(2)) {
+      return super;
+    }
+    std::vector<Field> fields;
+    // Depth subtyping
+    for (auto field : super.fields) {
+      fields.push_back(generateSubField(state, field));
+    }
+    // Width subtyping
+    Index extra = upTo(MAX_STRUCT_SIZE + 1 - fields.size());
+    for (Index i = 0; i < extra; ++i) {
+      fields.push_back(generateField(state));
+    }
+    return {fields};
+  }
+
+  Array generateSubArray(const HeapTypeGeneratorState& state, Array super) {
+    if (oneIn(2)) {
+      return super;
+    }
+    return {generateSubField(state, super.element)};
+  }
+
+  void setupHeapTypes() {
+    if (!wasm.features.hasGC()) {
+      return;
+    }
+
+    // TODO: determine individually whether each HeapType is nominal once
+    // mixing type systems is expected to work.
+    TypeBuilder typeBuilder(upTo(MAX_HEAPTYPES));
+
+    // Set up the subtype relationships. Start with some number of root types,
+    // then after that start creating subtypes of existing types.
+    std::vector<std::optional<Index>> supertypeIndices(typeBuilder.size());
+    std::vector<std::vector<Index>> subtypeIndices(typeBuilder.size());
+    Index numRoots = 1 + upTo(typeBuilder.size());
+    for (Index i = 0; i < typeBuilder.size(); ++i) {
+      // Everything is a subtype of itself.
+      subtypeIndices[i].push_back(i);
+      if (i < numRoots) {
+        // This is a root type with no supertype.
+        continue;
+      }
+      // Choose one of the previous types to be the supertype.
+      Index super = upTo(i);
+      typeBuilder[i].subTypeOf(typeBuilder[super]);
+      supertypeIndices[i] = super;
+      subtypeIndices[super].push_back(i);
+    }
+
+    // Create the heap types.
+    for (Index i = 0; i < typeBuilder.size(); ++i) {
+      HeapTypeGeneratorState state{typeBuilder, i, subtypeIndices};
+      if (supertypeIndices[i]) {
+        // We have a supertype, so create a subtype.
+        HeapType supertype = typeBuilder[*supertypeIndices[i]];
+        if (supertype.isBasic()) {
+          assignSubBasic(state, supertype.getBasic());
+        } else if (supertype.isSignature()) {
+          typeBuilder[i] =
+            generateSubSignature(state, supertype.getSignature());
+        } else if (supertype.isStruct()) {
+          typeBuilder[i] = generateSubStruct(state, supertype.getStruct());
+        } else if (supertype.isArray()) {
+          typeBuilder[i] = generateSubArray(state, supertype.getArray());
+        } else {
+          WASM_UNREACHABLE("unexpected kind");
+        }
+        continue;
+      }
+      // Create a root type.
+      switch (upTo(4)) {
+        case 0:
+          typeBuilder[i] = generateBasicHeapType();
+          break;
+        case 1:
+          typeBuilder[i] = generateSignature(state);
+          break;
+        case 2:
+          typeBuilder[i] = generateStruct(state);
+          break;
+        case 3:
+          typeBuilder[i] = generateArray(state);
+          break;
+      }
+    }
+    heapTypes = typeBuilder.build();
   }
 
   Name funcrefTableName;
