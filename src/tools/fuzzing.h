@@ -730,9 +730,10 @@ private:
       HeapTypeGeneratorState state{typeBuilder, i, subtypeIndices};
       if (supertypeIndices[i]) {
         // We have a supertype, so create a subtype.
-        HeapType supertype = typeBuilder[*supertypeIndices[i]];
-        if (supertype.isBasic()) {
-          assignSubBasic(state, supertype.getBasic());
+        Index super = *supertypeIndices[i];
+        HeapType supertype = typeBuilder[super];
+        if (typeBuilder.isBasic(super)) {
+          assignSubBasic(state, typeBuilder.getBasic(super));
         } else if (supertype.isSignature()) {
           typeBuilder[i] =
             generateSubSignature(state, supertype.getSignature());

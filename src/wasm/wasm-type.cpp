@@ -2309,6 +2309,16 @@ HeapType TypeBuilder::getTempHeapType(size_t i) {
   return impl->entries[i].get();
 }
 
+bool TypeBuilder::isBasic(size_t i) {
+  assert(i < size() && "index out of bounds");
+  return impl->entries[i].info->kind == HeapTypeInfo::BasicKind;
+}
+
+HeapType::BasicHeapType TypeBuilder::getBasic(size_t i) {
+  assert(isBasic(i));
+  return impl->entries[i].info->basic;
+}
+
 Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
   if (typeSystem == TypeSystem::Nominal) {
     return globalTypeStore.insert(tuple);
