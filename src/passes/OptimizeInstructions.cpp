@@ -2427,6 +2427,21 @@ private:
         return inner;
       }
     }
+    {
+      // (i32(x) >= 0) & (i32(y) >= 0)   =>   i32(x | y) >= 0
+      // (i64(x) >= 0) & (i64(y) >= 0)   =>   i64(x | y) >= 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(AndInt32,
+                         binary(GeS, any(&x), ival(0)),
+                         binary(GeS, any(&y), ival(0)))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left = Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return inner;
+      }
+    }
     return nullptr;
   }
 
@@ -2487,6 +2502,21 @@ private:
         auto* inner = curr->left->cast<Binary>();
         inner->left = Builder(*getModule())
                         .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return inner;
+      }
+    }
+    {
+      // (i32(x) >= 0) | (i32(y) >= 0)   =>   i32(x & y) >= 0
+      // (i64(x) >= 0) | (i64(y) >= 0)   =>   i64(x & y) >= 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(OrInt32,
+                         binary(GeS, any(&x), ival(0)),
+                         binary(GeS, any(&y), ival(0)))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left = Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(x->type, And), x, y);
         return inner;
       }
     }
