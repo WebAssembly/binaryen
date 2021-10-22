@@ -1326,11 +1326,11 @@
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (block $do-once (result i32)
  ;; CHECK-NEXT:     (if
- ;; CHECK-NEXT:      (i32.le_s
+ ;; CHECK-NEXT:      (i32.lt_s
  ;; CHECK-NEXT:       (i32.load offset=76
  ;; CHECK-NEXT:        (local.get $0)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (i32.const -1)
+ ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (br $do-once
  ;; CHECK-NEXT:       (call $___fflush_unlocked
@@ -2709,11 +2709,11 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $2
  ;; CHECK-NEXT:    (if (result i32)
- ;; CHECK-NEXT:     (i32.gt_s
+ ;; CHECK-NEXT:     (i32.ge_s
  ;; CHECK-NEXT:      (i32.load8_s offset=75
  ;; CHECK-NEXT:       (local.get $2)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (i32.const -1)
+ ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (block $label$break$L10 (result i32)
  ;; CHECK-NEXT:      (local.set $3
@@ -4232,9 +4232,9 @@
  ;; CHECK-NEXT:    (loop $label$continue$L1
  ;; CHECK-NEXT:     (block $label$break$L1
  ;; CHECK-NEXT:      (if
- ;; CHECK-NEXT:       (i32.gt_s
+ ;; CHECK-NEXT:       (i32.ge_s
  ;; CHECK-NEXT:        (local.get $18)
- ;; CHECK-NEXT:        (i32.const -1)
+ ;; CHECK-NEXT:        (i32.const 0)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (local.set $18
  ;; CHECK-NEXT:        (if (result i32)
@@ -5089,9 +5089,9 @@
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (local.set $16
- ;; CHECK-NEXT:       (i32.gt_s
+ ;; CHECK-NEXT:       (i32.ge_s
  ;; CHECK-NEXT:        (local.get $19)
- ;; CHECK-NEXT:        (i32.const -1)
+ ;; CHECK-NEXT:        (i32.const 0)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (block $__rjto$2
@@ -7975,9 +7975,9 @@
  ;; CHECK-NEXT:                               (i32.const 48)
  ;; CHECK-NEXT:                               (i32.add
  ;; CHECK-NEXT:                                (if (result i32)
- ;; CHECK-NEXT:                                 (i32.gt_s
+ ;; CHECK-NEXT:                                 (i32.ge_s
  ;; CHECK-NEXT:                                  (local.get $5)
- ;; CHECK-NEXT:                                  (i32.const -1)
+ ;; CHECK-NEXT:                                  (i32.const 0)
  ;; CHECK-NEXT:                                 )
  ;; CHECK-NEXT:                                 (block (result i32)
  ;; CHECK-NEXT:                                  (local.set $16
@@ -8138,14 +8138,14 @@
  ;; CHECK-NEXT:                                      )
  ;; CHECK-NEXT:                                      (local.get $20)
  ;; CHECK-NEXT:                                     )
- ;; CHECK-NEXT:                                     (i32.gt_s
+ ;; CHECK-NEXT:                                     (i32.ge_s
  ;; CHECK-NEXT:                                      (local.tee $7
  ;; CHECK-NEXT:                                       (i32.sub
  ;; CHECK-NEXT:                                        (local.get $7)
  ;; CHECK-NEXT:                                        (local.get $10)
  ;; CHECK-NEXT:                                       )
  ;; CHECK-NEXT:                                      )
- ;; CHECK-NEXT:                                      (i32.const -1)
+ ;; CHECK-NEXT:                                      (i32.const 0)
  ;; CHECK-NEXT:                                     )
  ;; CHECK-NEXT:                                    )
  ;; CHECK-NEXT:                                   )
@@ -8871,9 +8871,9 @@
  ;; CHECK-NEXT:                   (i32.const -65537)
  ;; CHECK-NEXT:                  )
  ;; CHECK-NEXT:                  (local.get $7)
- ;; CHECK-NEXT:                  (i32.gt_s
+ ;; CHECK-NEXT:                  (i32.ge_s
  ;; CHECK-NEXT:                   (local.get $6)
- ;; CHECK-NEXT:                   (i32.const -1)
+ ;; CHECK-NEXT:                   (i32.const 0)
  ;; CHECK-NEXT:                  )
  ;; CHECK-NEXT:                 )
  ;; CHECK-NEXT:                )

@@ -1869,14 +1869,29 @@ private:
     };
     // Prefer a const on the right.
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
-      return swap();
+      swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
-      // x - C  ==>   x + (-C)
+      // x - C   ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
       if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
         c->value = c->value.neg();
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
+        return;
+      }
+      // x > -1   ==>   x >= 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GtS) &&
+          c->value.getInteger() == -1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::GeS);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
+      // x <= -1   ==>   x < 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::LeS) &&
+          c->value.getInteger() == -1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::LtS);
+        c->value = Literal::makeZero(c->type);
+        return;
       }
       return;
     }
