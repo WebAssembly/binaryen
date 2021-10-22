@@ -2530,36 +2530,37 @@ private:
     switch (type.getBasic()) {
       case Type::i32: {
         auto singleConcreteType = getSingleConcreteType();
-        TODO_SINGLE_COMPOUND(singleConcreteType);
-        switch (singleConcreteType.getBasic()) {
+        if (singleConcreteType.isBasic()) {
+          TODO_SINGLE_COMPOUND(singleConcreteType);
+          switch (singleConcreteType.getBasic()) {
           case Type::i32: {
             auto op = pick(
               FeatureOptions<UnaryOp>()
-                .add(FeatureSet::MVP, EqZInt32, ClzInt32, CtzInt32, PopcntInt32)
-                .add(FeatureSet::SignExt, ExtendS8Int32, ExtendS16Int32));
+              .add(FeatureSet::MVP, EqZInt32, ClzInt32, CtzInt32, PopcntInt32)
+              .add(FeatureSet::SignExt, ExtendS8Int32, ExtendS16Int32));
             return buildUnary({op, make(Type::i32)});
           }
           case Type::i64:
             return buildUnary({pick(EqZInt64, WrapInt64), make(Type::i64)});
           case Type::f32: {
             auto op = pick(FeatureOptions<UnaryOp>()
-                             .add(FeatureSet::MVP,
-                                  TruncSFloat32ToInt32,
-                                  TruncUFloat32ToInt32,
-                                  ReinterpretFloat32)
-                             .add(FeatureSet::TruncSat,
-                                  TruncSatSFloat32ToInt32,
-                                  TruncSatUFloat32ToInt32));
+                               .add(FeatureSet::MVP,
+                                    TruncSFloat32ToInt32,
+                                    TruncUFloat32ToInt32,
+                                    ReinterpretFloat32)
+                               .add(FeatureSet::TruncSat,
+                                    TruncSatSFloat32ToInt32,
+                                    TruncSatUFloat32ToInt32));
             return buildUnary({op, make(Type::f32)});
           }
           case Type::f64: {
             auto op = pick(FeatureOptions<UnaryOp>()
-                             .add(FeatureSet::MVP,
-                                  TruncSFloat64ToInt32,
-                                  TruncUFloat64ToInt32)
-                             .add(FeatureSet::TruncSat,
-                                  TruncSatSFloat64ToInt32,
-                                  TruncSatUFloat64ToInt32));
+                               .add(FeatureSet::MVP,
+                                    TruncSFloat64ToInt32,
+                                    TruncUFloat64ToInt32)
+                               .add(FeatureSet::TruncSat,
+                                    TruncSatSFloat64ToInt32,
+                                    TruncSatUFloat64ToInt32));
             return buildUnary({op, make(Type::f64)});
           }
           case Type::v128: {
@@ -2569,7 +2570,7 @@ private:
                                     AllTrueVecI8x16,
                                     AllTrueVecI16x8,
                                     AllTrueVecI32x4),
-                               make(Type::v128)});
+                make(Type::v128)});
           }
           case Type::funcref:
           case Type::externref:
@@ -2581,8 +2582,12 @@ private:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
+          }
+          WASM_UNREACHABLE("invalid type");
+        } else {
+          // TODO: ref.is
+          return makeTrivial(type);
         }
-        WASM_UNREACHABLE("invalid type");
       }
       case Type::i64: {
         switch (upTo(4)) {
@@ -3423,40 +3428,78 @@ private:
   }
 
   // special getters
-  std::vector<Type> getSingleConcreteTypes() {
-    return items(
-      FeatureOptions<Type>()
+  Type getTrivialReferenceType(bool defaultable = false) {
+    FeatureOptions<Type> options;
+    options
+            .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                 Type::anyref,
+                 Type::eqref);
+    if (!defaultable) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  Type::i31ref,
+                  Type::dataref);
+    }
+    return pick(options);
+  }
+
+  Type getNontrivialReferenceType(bool defaultable = false) {
+    if (heapTypes.empty()) {
+      return getTrivialReferenceType();
+    }
+    auto type = heapTypes[upTo(heapTypes.size())];
+    auto nullability = (defaultable || oneIn(2)) ? Nullable : NonNullable;
+    return Type(type, nullability);
+  }
+
+  Type getReferenceType() {
+    if (oneIn(2)) {
+      return getTrivialReferenceType();
+    } else {
+      return getNontrivialReferenceType();
+    }
+  }
+
+  Type getEqReferenceType() {
+    if (oneIn(2)) {
+      auto type = getNontrivialReferenceType();
+      if (Type::isSubType(type, Type::eqref)) {
+        return type;
+      }
+    }
+    return pick(FeatureOptions<Type>().add(
+                  FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  Type::eqref, Type::i31ref, Type::dataref));
+  }
+
+  Type getRttType() {
+    auto type = heapTypes[upTo(heapTypes.size())];
+    auto depth = oneIn(2) ? Rtt::NoDepth : upTo(MAX_RTT_DEPTH);
+    return Type(Rtt(depth, type));
+  }
+
+  Type getSingleConcreteType(bool defaultable = false) {
+    if (!wasm.features.hasGC() || oneIn(2)) {
+      FeatureOptions<Type> options;
+      options
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
-             Type::eqref));
+             Type::eqref);
+      if (!defaultable) {
+        options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                    Type::i31ref, Type::dataref);
+      }
+      return pick(options);
+    } else if (!defaultable && oneIn(4)) {
+      return getRttType();
+    } else {
+      return getNontrivialReferenceType(defaultable);
+    }
     // TODO: emit typed function references types
-    // TODO: i31ref, dataref
   }
-
-  Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
-
-  std::vector<Type> getReferenceTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-             Type::anyref,
-             Type::eqref));
-    // TODO: i31ref, dataref
-  }
-
-  Type getReferenceType() { return pick(getReferenceTypes()); }
-
-  std::vector<Type> getEqReferenceTypes() {
-    return items(FeatureOptions<Type>().add(
-      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref));
-    // TODO: i31ref, dataref
-  }
-
-  Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getMVPType() {
     return pick(items(FeatureOptions<Type>().add(
@@ -3467,12 +3510,10 @@ private:
     std::vector<Type> elements;
     size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
     for (size_t i = 0; i < maxElements; ++i) {
-      auto type = getSingleConcreteType();
       // Don't add a non-defaultable type into a tuple, as currently we can't
       // spill them into locals (that would require a "let").
-      if (type.isDefaultable()) {
-        elements.push_back(type);
-      }
+      auto type = getSingleConcreteType(/*defaultable=*/true);
+      elements.push_back(type);
     }
     while (elements.size() < 2) {
       elements.push_back(getMVPType());
