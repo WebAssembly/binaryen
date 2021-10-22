@@ -2407,9 +2407,8 @@ private:
                   binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y)))) &&
           x->type == y->type) {
         auto* inner = curr->left->cast<Unary>();
-        inner->value =
-          Builder(*getModule())
-            .makeBinary(Abstract::getBinary(inner->value->type, Or), x, y);
+        inner->value = Builder(*getModule())
+                         .makeBinary(Abstract::getBinary(x->type, Or), x, y);
         return inner;
       }
     }
@@ -2423,9 +2422,8 @@ private:
                          binary(LtS, any(&y), ival(0)))) &&
           x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
-        inner->left =
-          Builder(*getModule())
-            .makeBinary(Abstract::getBinary(inner->right->type, And), x, y);
+        inner->left = Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(x->type, And), x, y);
         return inner;
       }
     }
@@ -2472,9 +2470,8 @@ private:
                          binary(Ne, any(&y), ival(0)))) &&
           x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
-        inner->left =
-          Builder(*getModule())
-            .makeBinary(Abstract::getBinary(inner->right->type, Or), x, y);
+        inner->left = Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
         return inner;
       }
     }
@@ -2488,9 +2485,8 @@ private:
                          binary(LtS, any(&y), ival(0)))) &&
           x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
-        inner->left =
-          Builder(*getModule())
-            .makeBinary(Abstract::getBinary(inner->right->type, Or), x, y);
+        inner->left = Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
         return inner;
       }
     }
