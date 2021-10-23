@@ -1549,7 +1549,7 @@
       )
     ))
   )
-  ;; CHECK:      (func $canonicalize-gt_s-le_s-neg-one (param $x i32)
+  ;; CHECK:      (func $canonicalize-gt_s-le_s-lt_u (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.ge_s
   ;; CHECK-NEXT:    (local.get $x)
@@ -1572,29 +1572,39 @@
   ;; CHECK-NEXT:   (i32.lt_s
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $canonicalize-gt_s-le_s-neg-one (param $x i32)
-    ;; x > -1  ==>  x >= 0
+  (func $canonicalize-gt_s-le_s-lt_u (param $x i32)
+    ;; i32(x) > -1  ==>  x >= 0
     (drop (i32.gt_s
       (local.get $x)
       (i32.const -1)
     ))
-    ;; x <= -1  ==>  x < 0
+    ;; i32(x) <= -1  ==>  x < 0
     (drop (i32.le_s
       (local.get $x)
       (i32.const -1)
     ))
-    ;; -1 < x  ==>  x >= 0
+    ;; -1 < i32(x)  ==>  x >= 0
     (drop (i32.lt_s
       (i32.const -1)
       (local.get $x)
     ))
-    ;; -1 >= x  ==>  x < 0
+    ;; -1 >= i32(x)  ==>  x < 0
     (drop (i32.ge_s
       (i32.const -1)
       (local.get $x)
+    ))
+    ;; u32(x) < 1   ==>   x == 0
+    (drop (i32.lt_u
+      (local.get $x)
+      (i32.const 1)
     ))
   )
   ;; CHECK:      (func $canonicalize-cmp-const (param $x i32) (param $fx f64)
