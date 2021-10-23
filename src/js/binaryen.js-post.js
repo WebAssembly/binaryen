@@ -94,6 +94,7 @@ function initializeConstants() {
     'TableGet',
     'TableSet',
     'TableSize',
+    'TableGrow',
     'Try',
     'Throw',
     'Rethrow',
@@ -675,6 +676,9 @@ function wrapModule(module, self = {}) {
     },
     'size'(name) {
       return Module['_BinaryenTableSize'](module, strToStack(name));
+    },
+    'grow'(name, value, delta) {
+      return Module['_BinaryenTableGrow'](module, strToStack(name), value, delta);
     }
   }
 
@@ -2835,6 +2839,14 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'table': UTF8ToString(Module['_BinaryenTableSizeGetTable'](expr)),
       };
+    case Module['TableGrowId']:
+      return {
+        'id': id,
+        'type': type,
+        'table': UTF8ToString(Module['_BinaryenTableGrowGetTable'](expr)),
+        'value': Module['_BinaryenTableGrowGetValue'](expr),
+        'delta': Module['_BinaryenTableGrowGetDelta'](expr),
+      };
     case Module['LoadId']:
       return {
         'id': id,
@@ -3848,6 +3860,27 @@ Module['TableSize'] = makeExpressionWrapper({
   'setTable'(expr, name) {
     preserveStack(() => { Module['_BinaryenTableSizeSetTable'](expr, strToStack(name)) });
   },
+});
+
+Module['TableGrow'] = makeExpressionWrapper({
+  'getTable'(expr) {
+    return UTF8ToString(Module['_BinaryenTableGrowGetTable'](expr));
+  },
+  'setTable'(expr, name) {
+    preserveStack(() => { Module['_BinaryenTableGrowSetTable'](expr, strToStack(name)) });
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenTableGrowGetValue'](expr);
+  },
+  'setValue'(expr, valueExpr) {
+    Module['_BinaryenTableGrowSetValue'](expr, valueExpr);
+  },
+  'getDelta'(expr) {
+    return Module['_BinaryenTableGrowGetDelta'](expr);
+  },
+  'setDelta'(expr, deltaExpr) {
+    Module['_BinaryenTableGrowSetDelta'](expr, deltaExpr);
+  }
 });
 
 Module['MemorySize'] = makeExpressionWrapper({});

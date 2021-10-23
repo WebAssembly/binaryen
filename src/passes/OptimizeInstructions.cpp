@@ -1006,6 +1006,12 @@ struct OptimizeInstructions
     }
   }
 
+  void visitBlock(Block* curr) {
+    if (getModule()->features.hasGC()) {
+      optimizeHeapStores(curr->list);
+    }
+  }
+
   void visitIf(If* curr) {
     curr->condition = optimizeBoolean(curr->condition);
     if (curr->ifFalse) {
@@ -1319,6 +1325,146 @@ struct OptimizeInstructions
       const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
       optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }
+
+    // If our reference is a tee of a struct.new, we may be able to fold the
+    // stored value into the new itself:
+    //
+    //  (struct.set (local.tee $x (struct.new X Y Z)) X')
+    // =>
+    //  (local.set $x (struct.new X' Y Z))
+    //
+    if (auto* tee = curr->ref->dynCast<LocalSet>()) {
+      if (auto* new_ = tee->value->dynCast<StructNew>()) {
+        if (optimizeSubsequentStructSet(new_, curr, tee->index)) {
+          // Success, so we do not need the struct.set any more, and the tee
+          // can just be a set instead of us.
+          tee->makeSet();
+          replaceCurrent(tee);
+        }
+      }
+    }
+  }
+
+  // Similar to the above with struct.set whose reference is a tee of a new, we
+  // can do the same for subsequent sets in a list:
+  //
+  //  (local.set $x (struct.new X Y Z))
+  //  (struct.set (local.get $x) X')
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // We also handle other struct.sets immediately after this one, but we only
+  // handle the case where they are all in sequence and right after the
+  // local.set (anything in the middle of this pattern will stop us from
+  // optimizing later struct.sets, which might be improved later but would
+  // require an analysis of effects TODO).
+  void optimizeHeapStores(ExpressionList& list) {
+    for (Index i = 0; i < list.size(); i++) {
+      auto* localSet = list[i]->dynCast<LocalSet>();
+      if (!localSet) {
+        continue;
+      }
+      auto* new_ = localSet->value->dynCast<StructNew>();
+      if (!new_) {
+        continue;
+      }
+
+      // This local.set of a struct.new looks good. Find struct.sets after it
+      // to optimize.
+      for (Index j = i + 1; j < list.size(); j++) {
+        auto* structSet = list[j]->dynCast<StructSet>();
+        if (!structSet) {
+          // Any time the pattern no longer matches, stop optimizing possible
+          // struct.sets for this struct.new.
+          break;
+        }
+        auto* localGet = structSet->ref->dynCast<LocalGet>();
+        if (!localGet || localGet->index != localSet->index) {
+          break;
+        }
+        if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
+          break;
+        } else {
+          // Success. Replace the set with a nop, and continue to
+          // perhaps optimize more.
+          ExpressionManipulator::nop(structSet);
+        }
+      }
+    }
+  }
+
+  // Given a struct.new and a struct.set that occurs right after it, and that
+  // applies to the same data, try to apply the set during the new. This can be
+  // either with a nested tee:
+  //
+  //  (struct.set
+  //    (local.tee $x (struct.new X Y Z))
+  //    X'
+  //  )
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // or without:
+  //
+  //  (local.set $x (struct.new X Y Z))
+  //  (struct.set (local.get $x) X')
+  // =>
+  //  (local.set $x (struct.new X' Y Z))
+  //
+  // Returns true if we succeeded.
+  bool optimizeSubsequentStructSet(StructNew* new_,
+                                   StructSet* set,
+                                   Index refLocalIndex) {
+    // Leave unreachable code for DCE, to avoid updating types here.
+    if (new_->type == Type::unreachable || set->type == Type::unreachable) {
+      return false;
+    }
+
+    if (new_->isWithDefault()) {
+      // Ignore a new_default for now. If the fields are defaultable then we
+      // could add them, in principle, but that might increase code size.
+      return false;
+    }
+
+    auto index = set->index;
+    auto& operands = new_->operands;
+
+    // Check for effects that prevent us moving the struct.set's value (X' in
+    // the function comment) into its new position in the struct.new. First, it
+    // must be ok to move it past the local.set (otherwise, it might read from
+    // memory using that local, and depend on the struct.new having already
+    // occurred; or, if it writes to that local, then it would cross another
+    // write).
+    auto setValueEffects = effects(set->value);
+    if (setValueEffects.localsRead.count(refLocalIndex) ||
+        setValueEffects.localsWritten.count(refLocalIndex)) {
+      return false;
+    }
+
+    // We must move the set's value past indexes greater than it (Y and Z in
+    // the example in the comment on this function).
+    // TODO When this function is called repeatedly in a sequence this can
+    //      become quadratic - perhaps we should memoize (though, struct sizes
+    //      tend to not be ridiculously large).
+    for (Index i = index + 1; i < operands.size(); i++) {
+      auto operandEffects = effects(operands[i]);
+      if (operandEffects.invalidates(setValueEffects)) {
+        // TODO: we could use locals to reorder everything
+        return false;
+      }
+    }
+
+    Builder builder(*getModule());
+
+    // See if we need to keep the old value.
+    if (effects(operands[index]).hasUnremovableSideEffects()) {
+      operands[index] =
+        builder.makeSequence(builder.makeDrop(operands[index]), set->value);
+    } else {
+      operands[index] = set->value;
+    }
+
+    return true;
   }
 
   void visitArrayGet(ArrayGet* curr) { skipNonNullCast(curr->ref); }

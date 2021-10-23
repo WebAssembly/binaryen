@@ -9,16 +9,16 @@
 
 (module
   ;; CHECK:      (type $parent (struct (field i32)))
-  ;; NOMNL:      (type $parent (struct (field i32)))
-  ;; NOMNL-TNH:      (type $parent (struct (field i32)))
+  ;; NOMNL:      (type $parent (struct_subtype (field i32) data))
+  ;; NOMNL-TNH:      (type $parent (struct_subtype (field i32) data))
   (type $parent (struct (field i32)))
   ;; CHECK:      (type $child (struct (field i32) (field f64)))
-  ;; NOMNL:      (type $child (struct (field i32) (field f64)) (extends $parent))
-  ;; NOMNL-TNH:      (type $child (struct (field i32) (field f64)) (extends $parent))
-  (type $child  (struct (field i32) (field f64)) (extends $parent))
+  ;; NOMNL:      (type $child (struct_subtype (field i32) (field f64) $parent))
+  ;; NOMNL-TNH:      (type $child (struct_subtype (field i32) (field f64) $parent))
+  (type $child (struct_subtype (field i32) (field f64) $parent))
   ;; CHECK:      (type $other (struct (field i64) (field f32)))
-  ;; NOMNL:      (type $other (struct (field i64) (field f32)))
-  ;; NOMNL-TNH:      (type $other (struct (field i64) (field f32)))
+  ;; NOMNL:      (type $other (struct_subtype (field i64) (field f32) data))
+  ;; NOMNL-TNH:      (type $other (struct_subtype (field i64) (field f32) data))
   (type $other  (struct (field i64) (field f32)))
 
   ;; CHECK:      (func $foo

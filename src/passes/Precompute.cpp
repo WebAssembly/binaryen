@@ -129,7 +129,25 @@ public:
     return getHeapCreationFlow(flow, curr);
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructGet(StructGet* curr) {
+    if (curr->ref->type != Type::unreachable) {
+      // If this field is immutable then we may be able to precompute this, as
+      // if we also created the data in this function (or it was created in an
+      // immutable global) then we know the value in the field. If it is
+      // immutable, call the super method which will do the rest here. That
+      // includes checking for the data being properly created, as if it was
+      // not then we will not have a constant value for it, which means the
+      // local.get of that value will stop us.
+      auto& field =
+        curr->ref->type.getHeapType().getStruct().fields[curr->index];
+      if (field.mutable_ == Immutable) {
+        return Super::visitStructGet(curr);
+      }
+    }
+
+    // Otherwise, we've failed to precompute.
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitArrayNew(ArrayNew* curr) {
     auto flow = Super::visitArrayNew(curr);
     if (flow.breaking()) {
@@ -145,7 +163,18 @@ public:
     return getHeapCreationFlow(flow, curr);
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayGet(ArrayGet* curr) {
+    if (curr->ref->type != Type::unreachable) {
+      // See above with struct.get
+      auto element = curr->ref->type.getHeapType().getArray().element;
+      if (element.mutable_ == Immutable) {
+        return Super::visitArrayGet(curr);
+      }
+    }
+
+    // Otherwise, we've failed to precompute.
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
 

@@ -524,9 +524,9 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   }
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
+    // TODO: investigate enabling --gto and --remove-module-elements before cfp
     addIfNoDWARFIssues("cfp");
   }
-  // TODO: investigate enabling --gto
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {

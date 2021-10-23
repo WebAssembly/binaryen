@@ -39,6 +39,10 @@ BinaryenFeatureAll: 32767
  (i32.const 0)
 )
 (table.size $0)
+(table.grow $0
+ (ref.null func)
+ (i32.const 0)
+)
 (module
  (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
  (type $i32_=>_none (func (param i32)))

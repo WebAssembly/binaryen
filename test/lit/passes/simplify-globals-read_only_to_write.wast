@@ -238,3 +238,152 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once i32 (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $clinit
+    ;; A read-only-to-write that takes an entire function body, and is in the
+    ;; form if "if already set, return; set it". In particular, the set is not
+    ;; in the if body in this case.
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once
+      (i32.const 1)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $clinit
+    ;; As above, but the optimization fails because the function body has too
+    ;; many elements - a nop is added at the end.
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once
+      (i32.const 1)
+    )
+    (nop)
+  )
+)
+
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $clinit
+    ;; As above, but the optimization fails because the if has an else.
+    (if
+      (global.get $once)
+      (return)
+      (nop)
+    )
+    (global.set $once
+      (i32.const 1)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $clinit
+    ;; As above, but the optimization fails because the if body is not a
+    ;; return.
+    (if
+      (global.get $once)
+      (nop)
+    )
+    (global.set $once
+      (i32.const 1)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (global.get $once)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $clinit
+    ;; As above, but the optimization fails because the if body has effects.
+    (if
+      (block (result i32)
+        (unreachable)
+        (global.get $once)
+      )
+      (return)
+    )
+    (global.set $once
+      (i32.const 1)
+    )
+  )
+)

@@ -119,17 +119,22 @@ struct FunctionStructValuesMap
 //
 //   void noteCopy(HeapType type, Index index, T& info);
 //
-// We track information from struct.new and struct.set separately, because in
-// struct.new we know more about the type - we know the actual exact type being
-// written to, and not just that it is of a subtype of the instruction's type,
-// which helps later.
+// * Note a read
+//
+//   void noteRead(HeapType type, Index index, T& info);
+//
+// We track information from struct.new and struct.set/struct.get separately,
+// because in struct.new we know more about the type - we know the actual exact
+// type being written to, and not just that it is of a subtype of the
+// instruction's type, which helps later.
 template<typename T, typename SubType>
 struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
   Scanner(FunctionStructValuesMap<T>& functionNewInfos,
-          FunctionStructValuesMap<T>& functionSetInfos)
-    : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
+          FunctionStructValuesMap<T>& functionSetGetInfos)
+    : functionNewInfos(functionNewInfos),
+      functionSetGetInfos(functionSetGetInfos) {}
 
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
@@ -158,11 +163,25 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
     }
 
     // Note a write to this field of the struct.
-    noteExpressionOrCopy(
-      curr->value,
-      type.getHeapType(),
-      curr->index,
-      functionSetInfos[this->getFunction()][type.getHeapType()][curr->index]);
+    noteExpressionOrCopy(curr->value,
+                         type.getHeapType(),
+                         curr->index,
+                         functionSetGetInfos[this->getFunction()]
+                                            [type.getHeapType()][curr->index]);
+  }
+
+  void visitStructGet(StructGet* curr) {
+    auto type = curr->ref->type;
+    if (type == Type::unreachable) {
+      return;
+    }
+
+    auto heapType = type.getHeapType();
+    auto index = curr->index;
+    static_cast<SubType*>(this)->noteRead(
+      heapType,
+      index,
+      functionSetGetInfos[this->getFunction()][heapType][index]);
   }
 
   void
@@ -186,7 +205,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
-  FunctionStructValuesMap<T>& functionSetInfos;
+  FunctionStructValuesMap<T>& functionSetGetInfos;
 };
 
 // Helper class to propagate information about fields to sub- and/or super-
@@ -222,13 +241,12 @@ private:
       auto& infos = combinedInfos[type];
 
       // Propagate shared fields to the supertype.
-      HeapType superType;
-      if (type.getSuperType(superType)) {
-        auto& superInfos = combinedInfos[superType];
-        auto& superFields = superType.getStruct().fields;
+      if (auto superType = type.getSuperType()) {
+        auto& superInfos = combinedInfos[*superType];
+        auto& superFields = superType->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
           if (superInfos[i].combine(infos[i])) {
-            work.push(superType);
+            work.push(*superType);
           }
         }
       }

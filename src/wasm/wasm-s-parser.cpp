@@ -2453,12 +2453,12 @@ Expression* SExpressionWasmBuilder::makeTableGet(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeTableSet(Element& s) {
   auto tableName = s[1]->str();
-  auto* index = parseExpression(s[2]);
-  auto* value = parseExpression(s[3]);
   auto* table = wasm.getTableOrNull(tableName);
   if (!table) {
     throw ParseException("invalid table name in table.set", s.line, s.col);
   }
+  auto* index = parseExpression(s[2]);
+  auto* value = parseExpression(s[3]);
   return Builder(wasm).makeTableSet(tableName, index, value);
 }
 
@@ -2469,6 +2469,20 @@ Expression* SExpressionWasmBuilder::makeTableSize(Element& s) {
     throw ParseException("invalid table name in table.size", s.line, s.col);
   }
   return Builder(wasm).makeTableSize(tableName);
+}
+
+Expression* SExpressionWasmBuilder::makeTableGrow(Element& s) {
+  auto tableName = s[1]->str();
+  auto* table = wasm.getTableOrNull(tableName);
+  if (!table) {
+    throw ParseException("invalid table name in table.grow", s.line, s.col);
+  }
+  auto* value = parseExpression(s[2]);
+  if (!value->type.isRef()) {
+    throw ParseException("only reference types are valid for tables");
+  }
+  auto* delta = parseExpression(s[3]);
+  return Builder(wasm).makeTableGrow(tableName, value, delta);
 }
 
 // try can be either in the form of try-catch or try-delegate.

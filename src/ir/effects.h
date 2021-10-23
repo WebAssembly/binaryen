@@ -534,7 +534,6 @@ private:
       parent.writesMemory = true;
       parent.implicitTrap = true;
     }
-    void visitTableSize(TableSize* curr) { parent.readsTable = true; }
     void visitConst(Const* curr) {}
     void visitUnary(Unary* curr) {
       switch (curr->op) {
@@ -592,6 +591,7 @@ private:
       parent.isAtomic = true;
     }
     void visitMemoryGrow(MemoryGrow* curr) {
+      // TODO: find out if calls is necessary here
       parent.calls = true;
       // memory.grow technically does a read-modify-write operation on the
       // memory size in the successful case, modifying the set of valid
@@ -612,6 +612,14 @@ private:
     void visitTableSet(TableSet* curr) {
       parent.writesTable = true;
       parent.implicitTrap = true;
+    }
+    void visitTableSize(TableSize* curr) { parent.readsTable = true; }
+    void visitTableGrow(TableGrow* curr) {
+      // table.grow technically does a read-modify-write operation on the
+      // table size in the successful case, modifying the set of valid
+      // indices, and just a read operation in the failure case
+      parent.readsTable = true;
+      parent.writesTable = true;
     }
     void visitTry(Try* curr) {}
     void visitThrow(Throw* curr) {

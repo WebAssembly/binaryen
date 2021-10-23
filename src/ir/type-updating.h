@@ -309,6 +309,8 @@ struct TypeUpdater
 // made while doing so.
 class GlobalTypeRewriter {
 public:
+  Module& wasm;
+
   GlobalTypeRewriter(Module& wasm);
   virtual ~GlobalTypeRewriter() {}
 
@@ -332,7 +334,6 @@ public:
   Type getTempType(Type type);
 
 private:
-  Module& wasm;
   TypeBuilder typeBuilder;
 
   // The list of old types.

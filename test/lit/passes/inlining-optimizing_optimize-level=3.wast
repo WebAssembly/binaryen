@@ -2584,79 +2584,77 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (local.set $3
+ ;; CHECK-NEXT:     (i32.load8_s
+ ;; CHECK-NEXT:      (local.tee $4
+ ;; CHECK-NEXT:       (i32.add
+ ;; CHECK-NEXT:        (local.get $2)
+ ;; CHECK-NEXT:        (i32.const 74)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.store8
+ ;; CHECK-NEXT:     (local.get $4)
+ ;; CHECK-NEXT:     (i32.or
+ ;; CHECK-NEXT:      (i32.add
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:       (i32.const 255)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $3
  ;; CHECK-NEXT:     (if (result i32)
- ;; CHECK-NEXT:      (block (result i32)
- ;; CHECK-NEXT:       (local.set $3
- ;; CHECK-NEXT:        (i32.load8_s
- ;; CHECK-NEXT:         (local.tee $4
- ;; CHECK-NEXT:          (i32.add
- ;; CHECK-NEXT:           (local.get $2)
- ;; CHECK-NEXT:           (i32.const 74)
- ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (i32.and
+ ;; CHECK-NEXT:        (local.tee $3
+ ;; CHECK-NEXT:         (i32.load
+ ;; CHECK-NEXT:          (local.get $2)
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.const 8)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (i32.store8
- ;; CHECK-NEXT:        (local.get $4)
- ;; CHECK-NEXT:        (i32.or
- ;; CHECK-NEXT:         (i32.add
+ ;; CHECK-NEXT:       (block (result i32)
+ ;; CHECK-NEXT:        (i32.store
+ ;; CHECK-NEXT:         (local.get $2)
+ ;; CHECK-NEXT:         (i32.or
  ;; CHECK-NEXT:          (local.get $3)
- ;; CHECK-NEXT:          (i32.const 255)
+ ;; CHECK-NEXT:          (i32.const 32)
  ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (local.get $3)
  ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.const -1)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (if (result i32)
- ;; CHECK-NEXT:        (i32.and
- ;; CHECK-NEXT:         (local.tee $3
- ;; CHECK-NEXT:          (i32.load
- ;; CHECK-NEXT:           (local.get $2)
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.const 8)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (block (result i32)
- ;; CHECK-NEXT:         (i32.store
- ;; CHECK-NEXT:          (local.get $2)
- ;; CHECK-NEXT:          (i32.or
- ;; CHECK-NEXT:           (local.get $3)
- ;; CHECK-NEXT:           (i32.const 32)
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.const -1)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (block (result i32)
- ;; CHECK-NEXT:         (i32.store offset=8
- ;; CHECK-NEXT:          (local.get $2)
- ;; CHECK-NEXT:          (i32.const 0)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.store offset=4
- ;; CHECK-NEXT:          (local.get $2)
- ;; CHECK-NEXT:          (i32.const 0)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.store offset=28
- ;; CHECK-NEXT:          (local.get $2)
- ;; CHECK-NEXT:          (local.tee $3
- ;; CHECK-NEXT:           (i32.load offset=44
- ;; CHECK-NEXT:            (local.get $2)
- ;; CHECK-NEXT:           )
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.store offset=20
- ;; CHECK-NEXT:          (local.get $2)
- ;; CHECK-NEXT:          (local.get $3)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.store offset=16
- ;; CHECK-NEXT:          (local.get $2)
- ;; CHECK-NEXT:          (i32.add
- ;; CHECK-NEXT:           (local.get $3)
- ;; CHECK-NEXT:           (i32.load offset=48
- ;; CHECK-NEXT:            (local.get $2)
- ;; CHECK-NEXT:           )
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:       (block (result i32)
+ ;; CHECK-NEXT:        (i32.store offset=8
+ ;; CHECK-NEXT:         (local.get $2)
  ;; CHECK-NEXT:         (i32.const 0)
  ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.store offset=4
+ ;; CHECK-NEXT:         (local.get $2)
+ ;; CHECK-NEXT:         (i32.const 0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.store offset=28
+ ;; CHECK-NEXT:         (local.get $2)
+ ;; CHECK-NEXT:         (local.tee $3
+ ;; CHECK-NEXT:          (i32.load offset=44
+ ;; CHECK-NEXT:           (local.get $2)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.store offset=20
+ ;; CHECK-NEXT:         (local.get $2)
+ ;; CHECK-NEXT:         (local.get $3)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.store offset=16
+ ;; CHECK-NEXT:         (local.get $2)
+ ;; CHECK-NEXT:         (i32.add
+ ;; CHECK-NEXT:          (local.get $3)
+ ;; CHECK-NEXT:          (i32.load offset=48
+ ;; CHECK-NEXT:           (local.get $2)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.const 0)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (i32.const 0)

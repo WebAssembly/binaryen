@@ -209,9 +209,7 @@ struct MetaDCEGraph {
           // it's an import.
           dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
         }
-        if (parentDceName.isNull()) {
-          parent->roots.insert(parentDceName);
-        } else {
+        if (!parentDceName.isNull()) {
           parent->nodes[parentDceName].reaches.push_back(dceName);
         }
       }
@@ -265,6 +263,12 @@ struct MetaDCEGraph {
       }
       void visitGlobalGet(GlobalGet* curr) { handleGlobal(curr->name); }
       void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
+      void visitThrow(Throw* curr) { handleTag(curr->tag); }
+      void visitTry(Try* curr) {
+        for (auto tag : curr->catchTags) {
+          handleTag(tag);
+        }
+      }
 
     private:
       MetaDCEGraph* parent;
@@ -280,6 +284,17 @@ struct MetaDCEGraph {
         } else {
           // it's an import.
           dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
+        }
+        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+          .reaches.push_back(dceName);
+      }
+
+      void handleTag(Name name) {
+        Name dceName;
+        if (!getModule()->getTag(name)->imported()) {
+          dceName = parent->tagToDCENode[name];
+        } else {
+          dceName = parent->importIdToDCENode[parent->getTagImportId(name)];
         }
         parent->nodes[parent->functionToDCENode[getFunction()->name]]
           .reaches.push_back(dceName);
@@ -368,7 +383,7 @@ public:
   void dump() {
     std::cout << "=== graph ===\n";
     for (auto root : roots) {
-      std::cout << "root: " << root.str << '\n';
+      std::cout << "root: " << root << '\n';
     }
     std::map<Name, ImportId> importMap;
     for (auto& pair : importIdToDCENode) {
@@ -379,12 +394,12 @@ public:
     for (auto& pair : nodes) {
       auto name = pair.first;
       auto& node = pair.second;
-      std::cout << "node: " << name.str << '\n';
+      std::cout << "node: " << name << '\n';
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';
       }
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
-        std::cout << "  is export " << DCENodeToExport[name].str << ", "
+        std::cout << "  is export " << DCENodeToExport[name] << ", "
                   << wasm.getExport(DCENodeToExport[name])->value << '\n';
       }
       if (DCENodeToFunction.find(name) != DCENodeToFunction.end()) {
@@ -397,7 +412,7 @@ public:
         std::cout << "  is tag " << DCENodeToTag[name] << '\n';
       }
       for (auto target : node.reaches) {
-        std::cout << "  reaches: " << target.str << '\n';
+        std::cout << "  reaches: " << target << '\n';
       }
     }
     std::cout << "=============\n";

@@ -107,36 +107,86 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       return;
     }
 
-    // See if reading a specific global is the only effect the condition has.
-    EffectAnalyzer condition(getPassOptions(), *getModule(), curr->condition);
+    auto global =
+      firstOnlyReadsGlobalWhichSecondOnlyWrites(curr->condition, curr->ifTrue);
+    if (global.is()) {
+      // This is exactly the pattern we sought!
+      (*infos)[global].readOnlyToWrite++;
+    }
+  }
 
-    if (condition.globalsRead.size() != 1) {
-      return;
+  // Checks if the first expression only reads a certain global, and has no
+  // other effects, and the second only writes that same global, and also has no
+  // other effects. Returns the global name if so, or a null name otherwise.
+  Name firstOnlyReadsGlobalWhichSecondOnlyWrites(Expression* first,
+                                                 Expression* second) {
+    // See if reading a specific global is the only effect the first has.
+    EffectAnalyzer firstEffects(getPassOptions(), *getModule(), first);
+
+    if (firstEffects.globalsRead.size() != 1) {
+      return Name();
     }
-    auto global = *condition.globalsRead.begin();
-    condition.globalsRead.clear();
-    if (condition.hasAnything()) {
-      return;
+    auto global = *firstEffects.globalsRead.begin();
+    firstEffects.globalsRead.clear();
+    if (firstEffects.hasAnything()) {
+      return Name();
     }
 
-    // See if writing the same global is the only effect the body has. (Note
-    // that we don't need to care about the case where the body has no effects
-    // at all - other pass would handle that trivial situation.)
-    EffectAnalyzer ifTrue(getPassOptions(), *getModule(), curr->ifTrue);
-    if (ifTrue.globalsWritten.size() != 1) {
-      return;
+    // See if writing the same global is the only effect the second has. (Note
+    // that we don't need to care about the case where the second has no effects
+    // at all - other passes would handle that trivial situation.)
+    EffectAnalyzer secondEffects(getPassOptions(), *getModule(), second);
+    if (secondEffects.globalsWritten.size() != 1) {
+      return Name();
     }
-    auto writtenGlobal = *ifTrue.globalsWritten.begin();
+    auto writtenGlobal = *secondEffects.globalsWritten.begin();
     if (writtenGlobal != global) {
-      return;
+      return Name();
     }
-    ifTrue.globalsWritten.clear();
-    if (ifTrue.hasAnything()) {
+    secondEffects.globalsWritten.clear();
+    if (secondEffects.hasAnything()) {
+      return Name();
+    }
+
+    return global;
+  }
+
+  void visitFunction(Function* curr) {
+    // We are looking for a function body like this:
+    //
+    //   if (global == X) return;
+    //   global = Y;
+    //
+    // And nothing else at all. Note that this does not overlap with the if
+    // pattern above (the assignment is in the if body) so we will never have
+    // overlapping matchings (which would each count as 1, leading to a
+    // miscount).
+
+    if (curr->body->type != Type::none) {
       return;
     }
 
-    // This is exactly the pattern we sought!
-    (*infos)[global].readOnlyToWrite++;
+    auto* block = curr->body->dynCast<Block>();
+    if (!block) {
+      return;
+    }
+
+    auto& list = block->list;
+    if (list.size() != 2) {
+      return;
+    }
+
+    auto* iff = list[0]->dynCast<If>();
+    if (!iff || iff->ifFalse || !iff->ifTrue->is<Return>()) {
+      return;
+    }
+
+    auto global =
+      firstOnlyReadsGlobalWhichSecondOnlyWrites(iff->condition, list[1]);
+    if (global.is()) {
+      // This is exactly the pattern we sought!
+      (*infos)[global].readOnlyToWrite++;
+    }
   }
 
 private:
