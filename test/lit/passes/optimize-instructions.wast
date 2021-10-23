@@ -1575,6 +1575,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -1601,6 +1607,11 @@
       (i32.const -1)
       (local.get $x)
     ))
+    ;; i32(x) < 1   ==>   x <= 0
+    (drop (i32.lt_s
+      (local.get $x)
+      (i32.const 1)
+    ))
     ;; u32(x) < 1   ==>   x == 0
     (drop (i32.lt_u
       (local.get $x)
@@ -1609,9 +1620,9 @@
   )
   ;; CHECK:      (func $canonicalize-cmp-const (param $x i32) (param $fx f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:   (i32.le_s
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop

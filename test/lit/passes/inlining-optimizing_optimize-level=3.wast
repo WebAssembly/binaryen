@@ -434,11 +434,11 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (if
- ;; CHECK-NEXT:      (i32.lt_s
+ ;; CHECK-NEXT:      (i32.le_s
  ;; CHECK-NEXT:       (i32.load8_s offset=74
  ;; CHECK-NEXT:        (local.get $0)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (i32.const 1)
+ ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (i32.store
  ;; CHECK-NEXT:       (local.get $0)
@@ -6103,9 +6103,9 @@
  ;; CHECK-NEXT:                               )
  ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                              (local.set $15
- ;; CHECK-NEXT:                               (i32.lt_s
+ ;; CHECK-NEXT:                               (i32.le_s
  ;; CHECK-NEXT:                                (local.get $6)
- ;; CHECK-NEXT:                                (i32.const 1)
+ ;; CHECK-NEXT:                                (i32.const 0)
  ;; CHECK-NEXT:                               )
  ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                              (local.set $20
@@ -8048,9 +8048,9 @@
  ;; CHECK-NEXT:                                      (br_if $do-once115
  ;; CHECK-NEXT:                                       (i32.and
  ;; CHECK-NEXT:                                        (local.get $16)
- ;; CHECK-NEXT:                                        (i32.lt_s
+ ;; CHECK-NEXT:                                        (i32.le_s
  ;; CHECK-NEXT:                                         (local.get $7)
- ;; CHECK-NEXT:                                         (i32.const 1)
+ ;; CHECK-NEXT:                                         (i32.const 0)
  ;; CHECK-NEXT:                                        )
  ;; CHECK-NEXT:                                       )
  ;; CHECK-NEXT:                                      )
