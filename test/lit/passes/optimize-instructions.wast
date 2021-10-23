@@ -1591,6 +1591,12 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $canonicalize-gt_s-le_s-lt_u (param $x i32)
     ;; i32(x) > -1  ==>  x >= 0
@@ -1625,6 +1631,11 @@
     ))
     ;; u32(x) < 1   ==>   x == 0
     (drop (i32.lt_u
+      (local.get $x)
+      (i32.const 1)
+    ))
+    ;; u32(x) >= 1   ==>   x != 0
+    (drop (i32.ge_u
       (local.get $x)
       (i32.const 1)
     ))

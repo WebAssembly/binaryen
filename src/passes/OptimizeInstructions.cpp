@@ -1914,6 +1914,13 @@ private:
         c->value = Literal::makeZero(c->type);
         return;
       }
+      // (unsigned)x >= 1   ==>   x != 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GeU) &&
+          c->value.getInteger() == 1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
       return;
     }
     // Prefer a get on the right.
