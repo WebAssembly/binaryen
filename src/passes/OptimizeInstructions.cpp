@@ -1900,6 +1900,13 @@ private:
         c->value = Literal::makeZero(c->type);
         return;
       }
+      // (signed)x >= 1   ==>   x > 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GeS) &&
+          c->value.getInteger() == 1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::GtS);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
       // (unsigned)x < 1   ==>   x == 0
       if (binary->op == Abstract::getBinary(c->type, Abstract::LtU) &&
           c->value.getInteger() == 1LL) {

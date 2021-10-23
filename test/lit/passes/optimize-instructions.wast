@@ -1581,6 +1581,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -1609,6 +1615,11 @@
     ))
     ;; i32(x) < 1   ==>   x <= 0
     (drop (i32.lt_s
+      (local.get $x)
+      (i32.const 1)
+    ))
+    ;; (signed)x >= 1   ==>   x > 0
+    (drop (i32.ge_s
       (local.get $x)
       (i32.const 1)
     ))
