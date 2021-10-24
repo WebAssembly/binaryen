@@ -1549,7 +1549,7 @@
       )
     ))
   )
-  ;; CHECK:      (func $canonicalize-gt_s-le_s-lt_u (param $x i32)
+  ;; CHECK:      (func $canonicalize-cmp-near-zero (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.ge_s
   ;; CHECK-NEXT:    (local.get $x)
@@ -1598,7 +1598,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $canonicalize-gt_s-le_s-lt_u (param $x i32)
+  (func $canonicalize-cmp-near-zero (param $x i32)
     ;; i32(x) > -1  ==>  x >= 0
     (drop (i32.gt_s
       (local.get $x)
