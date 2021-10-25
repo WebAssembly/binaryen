@@ -43,17 +43,12 @@ namespace wasm {
 
 namespace {
 
-template<typename T> struct Univalue {
-  bool operator==(const T& other) const { return true; }
-  bool operator!=(const T& other) const { return false; }
-};
-
 // No possible value.
-struct None : public Univalue<None> {};
+struct None : public std::monostate {};
 
 // Many possible values, and so this represents unknown data: we cannot infer
 // anything there.
-struct Many : public Univalue<Many> {};
+struct Many : public std::monostate {};
 
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
