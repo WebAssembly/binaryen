@@ -7,10 +7,10 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 553     
+ [total]        : 552     
  [vars]         : 2       
  Binary         : 12      
- Block          : 7       
+ Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
@@ -69,28 +69,26 @@ total
     )
    )
   )
-  (if
-   (block (result i32)
-    (local.set $0
-     (i32.const 10888)
-    )
-    (loop $label$3
-     (br_if $label$3
-      (i32.load8_s
-       (local.tee $0
-        (i32.add
-         (local.get $0)
-         (i32.const 1)
-        )
-       )
+  (local.set $0
+   (i32.const 10888)
+  )
+  (loop $label$3
+   (br_if $label$3
+    (i32.load8_s
+     (local.tee $0
+      (i32.add
+       (local.get $0)
+       (i32.const 1)
       )
      )
     )
-    (local.tee $0
-     (i32.sub
-      (local.get $0)
-      (i32.const 10888)
-     )
+   )
+  )
+  (if
+   (local.tee $0
+    (i32.sub
+     (local.get $0)
+     (i32.const 10888)
     )
    )
    (block $label$2
@@ -237,10 +235,10 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 549           -4
+ [total]        : 548           -4
  [vars]         : 2       
  Binary         : 12      
- Block          : 7       
+ Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
@@ -297,28 +295,26 @@ total
     )
    )
   )
-  (if
-   (block (result i32)
-    (local.set $0
-     (i32.const 10888)
-    )
-    (loop $label$3
-     (br_if $label$3
-      (i32.load8_s
-       (local.tee $0
-        (i32.add
-         (local.get $0)
-         (i32.const 1)
-        )
-       )
+  (local.set $0
+   (i32.const 10888)
+  )
+  (loop $label$3
+   (br_if $label$3
+    (i32.load8_s
+     (local.tee $0
+      (i32.add
+       (local.get $0)
+       (i32.const 1)
       )
      )
     )
-    (local.tee $0
-     (i32.sub
-      (local.get $0)
-      (i32.const 10888)
-     )
+   )
+  )
+  (if
+   (local.tee $0
+    (i32.sub
+     (local.get $0)
+     (i32.const 10888)
     )
    )
    (block $label$2
@@ -460,10 +456,10 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 549     
+ [total]        : 548     
  [vars]         : 2       
  Binary         : 12      
- Block          : 7       
+ Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
@@ -520,28 +516,26 @@ total
     )
    )
   )
-  (if
-   (block (result i32)
-    (local.set $0
-     (i32.const 10888)
-    )
-    (loop $label$3
-     (br_if $label$3
-      (i32.load8_s
-       (local.tee $0
-        (i32.add
-         (local.get $0)
-         (i32.const 1)
-        )
-       )
+  (local.set $0
+   (i32.const 10888)
+  )
+  (loop $label$3
+   (br_if $label$3
+    (i32.load8_s
+     (local.tee $0
+      (i32.add
+       (local.get $0)
+       (i32.const 1)
       )
      )
     )
-    (local.tee $0
-     (i32.sub
-      (local.get $0)
-      (i32.const 10888)
-     )
+   )
+  )
+  (if
+   (local.tee $0
+    (i32.sub
+     (local.get $0)
+     (i32.const 10888)
     )
    )
    (block $label$2
