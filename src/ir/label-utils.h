@@ -31,8 +31,7 @@ public:
   Name getUnique(std::string prefix) {
     while (1) {
       auto curr = Name(prefix + std::to_string(counter++));
-      if (labels.find(curr) == labels.end()) {
-        labels.insert(curr);
+      if (labels.emplace(curr).second) {
         return curr;
       }
     }

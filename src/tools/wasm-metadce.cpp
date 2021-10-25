@@ -334,8 +334,7 @@ public:
       queue.pop_back();
       auto& node = nodes[name];
       for (auto target : node.reaches) {
-        if (reached.find(target) == reached.end()) {
-          reached.insert(target);
+        if (reached.emplace(target).second) {
           queue.push_back(target);
         }
       }

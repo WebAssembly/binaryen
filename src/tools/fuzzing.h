@@ -891,10 +891,8 @@ private:
         // Note all scope names, and fix up all uses.
         BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
           if (name.is()) {
-            if (seen.count(name)) {
+            if (!seen.emplace(name).second) {
               replace();
-            } else {
-              seen.insert(name);
             }
           }
         });
