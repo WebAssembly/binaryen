@@ -72,13 +72,13 @@ public:
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
-    if (std::holds_alternative<None>(value)) {
+    if (std::get_if<None>(&value)) {
       // This is the first value.
       value = curr;
       return;
     }
 
-    if (std::holds_alternative<Many>(value)) {
+    if (std::get_if<Many>(&value)) {
       // This was already representing multiple values; nothing changes.
       return;
     }
@@ -100,16 +100,16 @@ public:
   //
   // Returns whether we changed anything.
   bool combine(const PossibleConstantValues& other) {
-    if (std::holds_alternative<None>(other.value)) {
+    if (std::get_if<None>(&other.value)) {
       return false;
     }
 
-    if (std::holds_alternative<None>(value)) {
+    if (std::get_if<None>(&value)) {
       value = other.value;
       return true;
     }
 
-    if (std::holds_alternative<Many>(value)) {
+    if (std::get_if<Many>(&value)) {
       return false;
     }
 
@@ -122,7 +122,7 @@ public:
   }
 
   // Check if all the values are identical and constant.
-  bool isConstant() const { return std::holds_alternative<Literal>(value); }
+  bool isConstant() const { return std::get_if<Literal>(&value); }
 
   // Returns the single constant value.
   Literal getConstantValue() const {
@@ -131,7 +131,7 @@ public:
   }
 
   // Returns whether we have ever noted a value.
-  bool hasNoted() const { return !std::holds_alternative<None>(value); }
+  bool hasNoted() const { return !std::get_if<None>(&value); }
 
   void dump(std::ostream& o) {
     o << '[';
