@@ -639,7 +639,7 @@ private:
   Type generateSubtype(const HeapTypeGeneratorState& state, Type type) {
     if (type.isBasic()) {
       // We do not construct types with basic reference types (we go through the
-      // TypeBuilder for those intead), so this must be a non-reference basic
+      // TypeBuilder for those instead), so this must be a non-reference basic
       // type, which means it has no other subtypes.
       return type;
     } else if (type.isRef()) {
