@@ -1272,19 +1272,27 @@
  )
 
  ;; CHECK:      (func $new_block_unreachable (result anyref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (rtt.canon $struct)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (rtt.canon $struct)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $new_block_unreachable (result anyref)
- ;; NOMNL-NEXT:  (block
- ;; NOMNL-NEXT:   (block
- ;; NOMNL-NEXT:    (unreachable)
+ ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (block
+ ;; NOMNL-NEXT:     (unreachable)
+ ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (rtt.canon $struct)
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (rtt.canon $struct)
+ ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $new_block_unreachable (result anyref)

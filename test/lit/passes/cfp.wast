@@ -511,9 +511,13 @@
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
