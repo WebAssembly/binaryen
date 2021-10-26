@@ -1879,6 +1879,7 @@ private:
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
         return;
       }
+      // Prefer to compare to 0 instead of to -1 or 1.
       // (signed)x > -1   ==>   x >= 0
       if (binary->op == Abstract::getBinary(c->type, Abstract::GtS) &&
           c->value.getInteger() == -1LL) {
