@@ -69,8 +69,7 @@ public:
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted. This can be called using either a
   // Literal or a Name, so it uses a template.
-  template<typename T>
-  void note(T curr) {
+  template<typename T> void note(T curr) {
     if (std::get_if<None>(&value)) {
       // This is the first value.
       value = curr;
@@ -121,7 +120,9 @@ public:
   }
 
   // Check if all the values are identical and constant.
-  bool isConstant() const { return !std::get_if<None>(&value) && !std::get_if<Many>(&value); }
+  bool isConstant() const {
+    return !std::get_if<None>(&value) && !std::get_if<Many>(&value);
+  }
 
   bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
 
