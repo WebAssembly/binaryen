@@ -630,6 +630,7 @@ public:
     TableGetId,
     TableSetId,
     TableSizeId,
+    TableGrowId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1308,6 +1309,18 @@ public:
   TableSize(MixedArena& allocator) : TableSize() {}
 
   Name table;
+
+  void finalize();
+};
+
+class TableGrow : public SpecificExpression<Expression::TableGrowId> {
+public:
+  TableGrow() { type = Type::i32; }
+  TableGrow(MixedArena& allocator) : TableGrow() {}
+
+  Name table;
+  Expression* value;
+  Expression* delta;
 
   void finalize();
 };

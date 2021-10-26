@@ -1284,6 +1284,19 @@ BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
     Builder(*(Module*)module).makeTableSize(name));
 }
 
+BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
+                                        const char* name,
+                                        BinaryenExpressionRef value,
+                                        BinaryenExpressionRef delta) {
+  if (value == nullptr) {
+    auto tableType = (*(Module*)module).getTableOrNull(name)->type;
+    value = BinaryenRefNull(module, (BinaryenType)tableType.getID());
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeTableGrow(name, (Expression*)value, (Expression*)delta));
+}
+
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenExpressionRef body,
@@ -1940,6 +1953,42 @@ void BinaryenTableSizeSetTable(BinaryenExpressionRef expr, const char* table) {
   assert(expression->is<TableSize>());
   assert(table);
   static_cast<TableSize*>(expression)->table = table;
+}
+// TableGrow
+const char* BinaryenTableGrowGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->table.c_str();
+}
+void BinaryenTableGrowSetTable(BinaryenExpressionRef expr, const char* table) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(table);
+  static_cast<TableGrow*>(expression)->table = table;
+}
+BinaryenExpressionRef BinaryenTableGrowGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->value;
+}
+void BinaryenTableGrowSetValue(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(valueExpr);
+  static_cast<TableGrow*>(expression)->value = (Expression*)valueExpr;
+}
+BinaryenExpressionRef BinaryenTableGrowGetDelta(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  return static_cast<TableGrow*>(expression)->delta;
+}
+void BinaryenTableGrowSetDelta(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef deltaExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TableGrow>());
+  assert(deltaExpr);
+  static_cast<TableGrow*>(expression)->delta = (Expression*)deltaExpr;
 }
 // MemoryGrow
 BinaryenExpressionRef BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr) {

@@ -862,6 +862,11 @@ BinaryenTableSet(BinaryenModuleRef module,
                  BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
                                                      const char* name);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGrow(BinaryenModuleRef module,
+                  const char* name,
+                  BinaryenExpressionRef value,
+                  BinaryenExpressionRef delta);
 // Try: name can be NULL. delegateTarget should be NULL in try-catch.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTry(BinaryenModuleRef module,
@@ -1247,6 +1252,26 @@ BINARYEN_API const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr);
 // Sets the name of the table being accessed by a `table.size` expression.
 BINARYEN_API void BinaryenTableSizeSetTable(BinaryenExpressionRef expr,
                                             const char* table);
+
+// TableGrow
+
+// Gets the name of the table being accessed by a `table.grow` expression.
+BINARYEN_API const char* BinaryenTableGrowGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.grow` expression.
+BINARYEN_API void BinaryenTableGrowSetTable(BinaryenExpressionRef expr,
+                                            const char* table);
+// Gets the value expression of a `table.grow` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGrowGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `table.grow` expression.
+BINARYEN_API void BinaryenTableGrowSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
+// Gets the delta of a `table.grow` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGrowGetDelta(BinaryenExpressionRef expr);
+// Sets the delta of a `table.grow` expression.
+BINARYEN_API void BinaryenTableGrowSetDelta(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef deltaExpr);
 // MemoryGrow
 
 // Gets the delta of a `memory.grow` expression.
@@ -1254,7 +1279,7 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr);
 // Sets the delta of a `memory.grow` expression.
 BINARYEN_API void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
-                                             BinaryenExpressionRef delta);
+                                             BinaryenExpressionRef deltaExpr);
 
 // Load
 

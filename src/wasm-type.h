@@ -19,6 +19,7 @@
 
 #include "support/name.h"
 #include "wasm-features.h"
+#include <optional>
 #include <ostream>
 #include <vector>
 
@@ -382,12 +383,12 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
-  // Return whether there is a nontrivial (i.e. non-basic) nominal supertype and
-  // store it in `out` if there is. Nominal types (in the sense of isNominal,
+  // If there is a nontrivial (i.e. non-basic) nominal supertype, return it,
+  // else an empty optional. Nominal types (in the sense of isNominal,
   // i.e. Milestone 4 nominal types) may always have supertypes and other types
   // may have supertypes in `TypeSystem::Nominal` mode but not in
   // `TypeSystem::Equirecursive` mode.
-  bool getSuperType(HeapType& out) const;
+  std::optional<HeapType> getSuperType() const;
 
   // Whether this is a nominal type in the sense of being a GC Milestone 4
   // nominal type. Although all non-basic HeapTypes are nominal in

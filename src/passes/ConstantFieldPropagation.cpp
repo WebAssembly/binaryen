@@ -27,6 +27,8 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
+#include <variant>
+
 #include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "ir/struct-utils.h"
@@ -41,6 +43,13 @@ namespace wasm {
 
 namespace {
 
+// No possible value.
+struct None : public std::monostate {};
+
+// Many possible values, and so this represents unknown data: we cannot infer
+// anything there.
+struct Many : public std::monostate {};
+
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
@@ -50,71 +59,58 @@ namespace {
 // Currently this just looks for a single constant value, and even two constant
 // values are treated as unknown. It may be worth optimizing more than that TODO
 struct PossibleConstantValues {
+private:
+  using Variant = std::variant<None, Literal, Name, Many>;
+  Varient value;
+
+public:
+  PossibleConstantValues() : value(None()) {}
+
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
-    // We already know we cannot reason about values here.
-    if (unknown) {
+    if (std::get_if<None>(&value)) {
+      // This is the first value.
+      value = curr;
       return;
     }
 
-    if (!noted) {
-      // This is the first literal.
-      literal = curr;
-      noted = true;
-      return;
-    }
-
-    // We noted a global before, which means the value is unknown.
-    if (global.is()) {
-      unknown = true;
+    if (std::get_if<Many>(&value)) {
+      // This was already representing multiple values; nothing changes.
       return;
     }
 
     // This is a subsequent value. Check if it is different from all previous
     // ones.
-    if (curr != literal) {
+    if (Variant(curr) != value) {
       noteUnknown();
     }
   }
 
   // Note an immutable global.
+  // TODO: template
   void note(Name curr) {
-    // We already know we cannot reason about values here.
-    if (unknown) {
-      return;
-    }
-
-    if (!noted) {
+    if (std::get_if<None>(&value)) {
       // This is the first value.
-      global = curr;
-      noted = true;
+      value = curr;
       return;
     }
 
-    // We noted a non-global before, which means the value is unknown.
-    if (!global.is()) {
-      unknown = true;
+    if (std::get_if<Many>(&value)) {
+      // This was already representing multiple values; nothing changes.
       return;
     }
 
     // This is a subsequent value. Check if it is different from all previous
     // ones.
-    if (curr != global) {
+    if (Variant(curr) != value) {
       noteUnknown();
     }
   }
 
   // Notes a value that is unknown - it can be anything. We have failed to
   // identify a constant value here.
-  void noteUnknown() {
-    noted = true;
-    unknown = true;
-
-    // While not strictly necessary, zero out the fields for simplicity.
-    literal = Literal(Type::none);
-    global = Name();
-  }
+  void noteUnknown() { value = Many(); }
 
   // Combine the information in a given PossibleConstantValues to this one. This
   // is the same as if we have called note*() on us with all the history of
@@ -122,61 +118,58 @@ struct PossibleConstantValues {
   //
   // Returns whether we changed anything.
   bool combine(const PossibleConstantValues& other) {
-    if (!other.noted) {
+    if (std::get_if<None>(&other.value)) {
       return false;
     }
-    if (!noted) {
-      *this = other;
-      return other.noted;
-    }
-    if (unknown) {
-      return false;
-    }
-    if (other.unknown) {
-      unknown = true;
+
+    if (std::get_if<None>(&value)) {
+      value = other.value;
       return true;
     }
 
-    // Both locations have noted, and are not unknown, so check if the single
-    // constant value in them matches. Note that this assumes the value not set
-    // (global if literal is set, literal if global is set) contains null, which
-    // is an invariant that we preserve.
-    if (literal != other.literal || global != other.global) {
-      noteUnknown();
+    if (std::get_if<Many>(&value)) {
+      return false;
+    }
+
+    if (other.value != value) {
+      value = Many();
       return true;
     }
+
     return false;
   }
 
-  bool isConstant() const { return noted && !unknown; }
+  // Check if all the values are identical and constant.
+  bool isConstant() const { return !std::get_if<None>(&value) && !std::get_if<Many>(&value); }
 
-  bool isConstantLiteral() const { return isConstant() && !global.is(); }
+  bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
 
-  bool isConstantGlobal() const { return isConstant() && global.is(); }
+  bool isConstantGlobal() const { return std::get_if<Name>(&value); }
 
-  Literal getConstantLiteral() const {
-    assert(isConstantLiteral());
-    return literal;
+  // Returns the single constant value.
+  Literal getConstantValue() const {
+    assert(isConstant());
+    return std::get<Literal>(value);
   }
 
   Name getConstantGlobal() const {
-    assert(isConstantGlobal());
-    return global;
+    assert(isConstant());
+    return std::get<Name>(value);
   }
 
   // Returns whether we have ever noted a value.
-  bool hasNoted() const { return noted; }
+  bool hasNoted() const { return !std::get_if<None>(&value); }
 
   void dump(std::ostream& o) {
     o << '[';
     if (!hasNoted()) {
       o << "unwritten";
-    } else if (unknown) {
+    } else if (!isConstant()) {
       o << "unknown";
-    } else if (!global.is()) {
-      o << literal;
-    } else if (global.is()) {
-      o << '$' << global;
+    } else if (isConstantLiteral()) {
+      o << getConstantLiteral();
+    } else if (isConstantGlobal()) {
+      o << '$' << getConstantGlobal();
     }
     o << ']';
   }
@@ -195,6 +188,13 @@ private:
 
   // As |literal|, but for immutable globals written to this field.
   Name global;
+=======
+    } else {
+      o << getConstantValue();
+    }
+    o << ']';
+  }
+>>>>>>> origin/main
 };
 
 using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
@@ -285,7 +285,7 @@ private:
 
 struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
-    return new PCVScanner(functionNewInfos, functionSetInfos);
+    return new PCVScanner(functionNewInfos, functionSetGetInfos);
   }
 
   PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
@@ -342,6 +342,10 @@ struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
     // TODO: This may be extensible to a copy from a subtype by the above
     //       analysis (but this is already entering the realm of diminishing
     //       returns).
+  }
+
+  void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
+    // Reads do not interest us.
   }
 };
 

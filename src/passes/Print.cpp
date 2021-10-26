@@ -1856,6 +1856,10 @@ struct PrintExpressionContents
     printMedium(o, "table.size ");
     printName(curr->table, o);
   }
+  void visitTableGrow(TableGrow* curr) {
+    printMedium(o, "table.grow ");
+    printName(curr->table, o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {
@@ -2511,9 +2515,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   // Module-level visitors
   void printSupertypeOr(HeapType curr, std::string noSuper) {
-    HeapType super;
-    if (curr.getSuperType(super)) {
-      TypeNamePrinter(o, currModule).print(super);
+    if (auto super = curr.getSuperType()) {
+      TypeNamePrinter(o, currModule).print(*super);
     } else {
       o << noSuper;
     }
