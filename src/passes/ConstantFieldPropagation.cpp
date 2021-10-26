@@ -61,7 +61,7 @@ struct Many : public std::monostate {};
 struct PossibleConstantValues {
 private:
   using Variant = std::variant<None, Literal, Name, Many>;
-  Varient value;
+  Variant value;
 
 public:
   PossibleConstantValues() : value(None()) {}
@@ -147,7 +147,7 @@ public:
   bool isConstantGlobal() const { return std::get_if<Name>(&value); }
 
   // Returns the single constant value.
-  Literal getConstantValue() const {
+  Literal getConstantLiteral() const {
     assert(isConstant());
     return std::get<Literal>(value);
   }
@@ -173,28 +173,6 @@ public:
     }
     o << ']';
   }
-
-private:
-  // Whether we have noted anything at all - a value or a global.
-  bool noted = false;
-
-  // Whether we have more than one incompatible thing here, that is, there are
-  // multiple possible literals here, or multiple globals, or a literal and a
-  // global.
-  bool unknown = false;
-
-  // The one literal value we have seen, if there is one.
-  Literal literal;
-
-  // As |literal|, but for immutable globals written to this field.
-  Name global;
-=======
-    } else {
-      o << getConstantValue();
-    }
-    o << ']';
-  }
->>>>>>> origin/main
 };
 
 using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
