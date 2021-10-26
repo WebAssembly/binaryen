@@ -512,7 +512,7 @@
   ;; CHECK-NEXT: )
   (func $new-side-effect-in-kept (param $any (ref any))
     ;; Side effects appear in fields that we do *not* remove. In that case,
-    ;; we do not need ot use locals.
+    ;; we do not need to use locals.
     (drop
       (struct.new $struct
         (call $helper0 (i32.const 0))
