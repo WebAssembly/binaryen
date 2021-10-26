@@ -67,29 +67,10 @@ public:
   PossibleConstantValues() : value(None()) {}
 
   // Note a written value as we see it, and update our internal knowledge based
-  // on it and all previous values noted.
-  void note(Literal curr) {
-    if (std::get_if<None>(&value)) {
-      // This is the first value.
-      value = curr;
-      return;
-    }
-
-    if (std::get_if<Many>(&value)) {
-      // This was already representing multiple values; nothing changes.
-      return;
-    }
-
-    // This is a subsequent value. Check if it is different from all previous
-    // ones.
-    if (Variant(curr) != value) {
-      noteUnknown();
-    }
-  }
-
-  // Note an immutable global.
-  // TODO: template
-  void note(Name curr) {
+  // on it and all previous values noted. This can be called using either a
+  // Literal or a Name, so it uses a template.
+  template<typename T>
+  void note(T curr) {
     if (std::get_if<None>(&value)) {
       // This is the first value.
       value = curr;
