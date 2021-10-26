@@ -10,12 +10,20 @@
   ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) (field funcref) (field (mut funcref)) data))
   (type $struct (struct (field (mut funcref)) (field (mut funcref)) (field (mut funcref))))
 
+  ;; CHECK:      (type $two-params (func_subtype (param (ref $struct) (ref $struct)) func))
+  (type $two-params (func (param (ref $struct)) (param (ref $struct))))
+
   ;; Test that we update tag types properly.
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
   ;; CHECK:      (type $none_=>_ref?|$struct| (func_subtype (result (ref null $struct)) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (table $0 0 funcref)
+  (table 0 funcref)
+
+  ;; CHECK:      (elem declare func $func-two-params)
 
   ;; CHECK:      (tag $tag (param (ref $struct)))
   (tag $tag (param (ref $struct)))
@@ -115,6 +123,33 @@
       )
     )
     (ref.null $struct)
+  )
+
+  ;; CHECK:      (func $func-two-params (param $x (ref $struct)) (param $y (ref $struct))
+  ;; CHECK-NEXT:  (local $z (ref null $two-params))
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (ref.func $func-two-params)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $two-params)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func-two-params (param $x (ref $struct)) (param $y (ref $struct))
+    ;; This function has two params, which means a tuple type is used for its
+    ;; signature, which we must also update. To verify the update is correct,
+    ;; assign it to a local.
+    (local $z (ref null $two-params))
+    (local.set $z
+      (ref.func $func-two-params)
+    )
+    ;; Also check that a call_indirect still validates after the rewriting.
+    (call_indirect (type $two-params)
+     (local.get $x)
+     (local.get $y)
+     (i32.const 0)
+    )
   )
 
   ;; CHECK:      (func $field-keepalive
