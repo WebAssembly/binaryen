@@ -26,7 +26,16 @@
     )
   )
 
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (export "main" (func $main))
+
+  ;; CHECK:      (func $main (; has Stack IR ;) (result i32)
+  ;; CHECK-NEXT:  (i32.const 100)
+  ;; CHECK-NEXT: )
   (func $main (export "main") (result i32)
+    ;; After all the above optimizations, we can infer that $main should simply
+    ;; return 100.
     (struct.get $struct 1
       (global.get $glob)
     )
