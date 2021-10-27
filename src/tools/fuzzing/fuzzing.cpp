@@ -1,4 +1,4 @@
-#include "tools/fuzzing.h"
+#include "tools/fuzzing/fuzzing.h"
 
 namespace wasm {
 

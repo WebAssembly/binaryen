@@ -22,7 +22,7 @@
 #include <memory>
 
 #include "execution-results.h"
-#include "fuzzing.h"
+#include "fuzzing/fuzzing.h"
 #include "js-wrapper.h"
 #include "optimization-options.h"
 #include "pass.h"
