@@ -1974,29 +1974,17 @@ private:
       }
       // Prefer compare to unsigned max (u_max) instead of u_max - 1.
       // (unsigned)x <= u_max - 1   ==>   x == u_max
-      if (binary->op == LeUInt32 &&
-          (uint32_t)c->value.geti32() == 0xFFFFFFFEU) {
-        binary->op = EqInt32;
-        c->value = Literal::makeUnsignedMax(Type::i32);
-        return;
-      }
-      if (binary->op == LeUInt64 &&
-          (uint64_t)c->value.geti64() == 0xFFFFFFFFFFFFFFFEULL) {
-        binary->op = EqInt64;
-        c->value = Literal::makeUnsignedMax(Type::i64);
+      if (binary->op == Abstract::getBinary(c->type, Abstract::LeU) &&
+          c->value.getInteger() == -2LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Eq);
+        c->value = Literal::makeUnsignedMax(c->type);
         return;
       }
       // (unsigned)x > u_max - 1   ==>   x != u_max
-      if (binary->op == GtUInt32 &&
-          (uint32_t)c->value.geti32() == 0xFFFFFFFEU) {
-        binary->op = NeInt32;
-        c->value = Literal::makeUnsignedMax(Type::i32);
-        return;
-      }
-      if (binary->op == GtUInt64 &&
-          (uint64_t)c->value.geti64() == 0xFFFFFFFFFFFFFFFEULL) {
-        binary->op = NeInt64;
-        c->value = Literal::makeUnsignedMax(Type::i64);
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GtU) &&
+          c->value.getInteger() == -2LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
+        c->value = Literal::makeUnsignedMax(c->type);
         return;
       }
       return;
