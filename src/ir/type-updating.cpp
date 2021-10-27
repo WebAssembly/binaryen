@@ -100,6 +100,13 @@ void GlobalTypeRewriter::update() {
       if (type.isRtt()) {
         return Type(Rtt(type.getRtt().depth, getNew(type.getHeapType())));
       }
+      if (type.isTuple()) {
+        auto tuple = type.getTuple();
+        for (auto& t : tuple.types) {
+          t = getNew(t);
+        }
+        return Type(tuple);
+      }
       return type;
     }
 

@@ -17,7 +17,8 @@
 #ifndef wasm_ir_localizer_h
 #define wasm_ir_localizer_h
 
-#include <wasm-builder.h>
+#include "ir/iteration.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -26,7 +27,6 @@ namespace wasm {
 //
 // Note that if the local is reused, this assumes it is not modified in between
 // the set and the get, which the caller must ensure.
-
 struct Localizer {
   Index index;
   Expression* expr;
@@ -40,6 +40,44 @@ struct Localizer {
     } else {
       index = Builder::addVar(func, expr->type);
       expr = Builder(*wasm).makeLocalTee(index, expr, expr->type);
+    }
+  }
+};
+
+// Replaces all children with gets of locals, if they have any effects. After
+// this, the original input has only local.gets as inputs, or other things that
+// have no interacting effects, and so those children can be reordered.
+// The sets of the locals are emitted on a |sets| property on the class. Those
+// must be emitted right before the input.
+// This stops at the first unreachable child, as there is no code executing
+// after that point anyhow.
+// TODO: use in more places
+struct ChildLocalizer {
+  std::vector<LocalSet*> sets;
+
+  ChildLocalizer(Expression* input,
+                 Function* func,
+                 Module* wasm,
+                 const PassOptions& options) {
+    Builder builder(*wasm);
+    ChildIterator iterator(input);
+    auto& children = iterator.children;
+    // The children are in reverse order, so allocate the output first and
+    // apply items as we go.
+    auto num = children.size();
+    for (Index i = 0; i < num; i++) {
+      auto** childp = children[num - 1 - i];
+      auto* child = *childp;
+      if (child->type == Type::unreachable) {
+        break;
+      }
+      // If there are effects, use a local for this.
+      // TODO: Compare interactions between their side effects.
+      if (EffectAnalyzer(options, *wasm, child).hasAnything()) {
+        auto local = builder.addVar(func, child->type);
+        sets.push_back(builder.makeLocalSet(local, child));
+        *childp = builder.makeLocalGet(local, child->type);
+      }
     }
   }
 };

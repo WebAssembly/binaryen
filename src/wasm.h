@@ -48,8 +48,8 @@ struct Address {
   typedef uint32_t address32_t;
   typedef uint64_t address64_t;
   address64_t addr;
-  Address() : addr(0) {}
-  Address(uint64_t a) : addr(a) {}
+  constexpr Address() : addr(0) {}
+  constexpr Address(uint64_t a) : addr(a) {}
   Address& operator=(uint64_t a) {
     addr = a;
     return *this;

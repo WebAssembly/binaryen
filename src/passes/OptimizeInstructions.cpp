@@ -1874,14 +1874,58 @@ private:
     };
     // Prefer a const on the right.
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
-      return swap();
+      swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
-      // x - C  ==>   x + (-C)
+      // x - C   ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
       if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
         c->value = c->value.neg();
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
+        return;
+      }
+      // Prefer to compare to 0 instead of to -1 or 1.
+      // (signed)x > -1   ==>   x >= 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GtS) &&
+          c->value.getInteger() == -1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::GeS);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
+      // (signed)x <= -1   ==>   x < 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::LeS) &&
+          c->value.getInteger() == -1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::LtS);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
+      // (signed)x < 1   ==>   x <= 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::LtS) &&
+          c->value.getInteger() == 1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::LeS);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
+      // (signed)x >= 1   ==>   x > 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GeS) &&
+          c->value.getInteger() == 1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::GtS);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
+      // (unsigned)x < 1   ==>   x == 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::LtU) &&
+          c->value.getInteger() == 1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Eq);
+        c->value = Literal::makeZero(c->type);
+        return;
+      }
+      // (unsigned)x >= 1   ==>   x != 0
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GeU) &&
+          c->value.getInteger() == 1LL) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
+        c->value = Literal::makeZero(c->type);
+        return;
       }
       return;
     }

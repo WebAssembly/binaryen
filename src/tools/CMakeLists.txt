@@ -8,7 +8,14 @@ function(binaryen_add_executable name sources)
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endfunction()
 
-binaryen_add_executable(wasm-opt wasm-opt.cpp)
+include_directories(fuzzing)
+FILE(GLOB fuzzing_HEADERS fuzzing/*h)
+set(fuzzing_SOURCES
+  fuzzing/fuzzing.cpp
+  ${fuzzing_HEADERS}
+)
+
+binaryen_add_executable(wasm-opt "${fuzzing_SOURCES};wasm-opt.cpp")
 binaryen_add_executable(wasm-shell wasm-shell.cpp)
 binaryen_add_executable(wasm-metadce wasm-metadce.cpp)
 binaryen_add_executable(wasm2js wasm2js.cpp)

@@ -22,10 +22,10 @@
 //  * Fields that are never read from can be removed entirely.
 //
 // TODO: Specialize field types.
-// TODO: Remove unused fields.
 //
 
 #include "ir/effects.h"
+#include "ir/localize.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -300,6 +300,33 @@ struct GlobalTypeOptimization : public Pass {
         auto& operands = curr->operands;
         assert(indexesAfterRemoval.size() == operands.size());
 
+        // Check for side effects in removed fields. If there are any, we must
+        // use locals to save the values (while keeping them in order).
+        bool useLocals = false;
+        for (Index i = 0; i < operands.size(); i++) {
+          auto newIndex = indexesAfterRemoval[i];
+          if (newIndex == RemovedField &&
+              EffectAnalyzer(getPassOptions(), *getModule(), operands[i])
+                .hasUnremovableSideEffects()) {
+            useLocals = true;
+            break;
+          }
+        }
+        if (useLocals) {
+          auto* func = getFunction();
+          if (!func) {
+            Fatal() << "TODO: side effects in removed fields in globals\n";
+          }
+          auto* block = Builder(*getModule()).makeBlock();
+          auto sets =
+            ChildLocalizer(curr, func, getModule(), getPassOptions()).sets;
+          block->list.set(sets);
+          block->list.push_back(curr);
+          block->finalize(curr->type);
+          replaceCurrent(block);
+          addedLocals = true;
+        }
+
         // Remove the unneeded operands.
         Index removed = 0;
         for (Index i = 0; i < operands.size(); i++) {
@@ -308,11 +335,6 @@ struct GlobalTypeOptimization : public Pass {
             assert(newIndex < operands.size());
             operands[newIndex] = operands[i];
           } else {
-            if (EffectAnalyzer(getPassOptions(), *getModule(), operands[i])
-                  .hasUnremovableSideEffects()) {
-              Fatal() << "TODO: handle side effects in field removal "
-                         "(impossible in global locations?)";
-            }
             removed++;
           }
         }
@@ -346,6 +368,15 @@ struct GlobalTypeOptimization : public Pass {
         assert(newIndex != RemovedField);
         curr->index = newIndex;
       }
+
+      void visitFunction(Function* curr) {
+        if (addedLocals) {
+          TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
+        }
+      }
+
+    private:
+      bool addedLocals = false;
 
       Index getNewIndex(HeapType type, Index index) {
         auto iter = parent.indexesAfterRemovals.find(type);
