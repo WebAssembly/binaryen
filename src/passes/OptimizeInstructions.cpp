@@ -1973,17 +1973,17 @@ private:
         return;
       }
       // Prefer compare to unsigned max (u_max) instead of u_max - 1.
-      // (unsigned)x <= u_max - 1   ==>   x == u_max
+      // (unsigned)x <= u_max - 1   ==>   x != u_max
       if (binary->op == Abstract::getBinary(c->type, Abstract::LeU) &&
           c->value.getInteger() == -2LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::Eq);
+        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
         c->value = Literal::makeUnsignedMax(c->type);
         return;
       }
-      // (unsigned)x > u_max - 1   ==>   x != u_max
+      // (unsigned)x > u_max - 1   ==>   x == u_max
       if (binary->op == Abstract::getBinary(c->type, Abstract::GtU) &&
           c->value.getInteger() == -2LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
+        binary->op = Abstract::getBinary(c->type, Abstract::Eq);
         c->value = Literal::makeUnsignedMax(c->type);
         return;
       }

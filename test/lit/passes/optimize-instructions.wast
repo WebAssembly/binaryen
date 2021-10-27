@@ -1690,18 +1690,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const -1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.eq
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const -1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.ne
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const -1)
@@ -1709,6 +1697,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i64.const -1)
   ;; CHECK-NEXT:   )
