@@ -1922,6 +1922,83 @@ private:
         c->value = Literal::makeZero(c->type);
         return;
       }
+      // Prefer compare to signed min (s_min) instead of s_min + 1.
+      // (signed)x < s_min + 1   ==>   x == s_min
+      if (binary->op == LtSInt32 && c->value.geti32() == -2147483647L) {
+        binary->op = EqInt32;
+        c->value = Literal::makeSignedMin(Type::i32);
+        return;
+      }
+      if (binary->op == LtSInt64 &&
+          c->value.geti64() == -9223372036854775807LL) {
+        binary->op = EqInt64;
+        c->value = Literal::makeSignedMin(Type::i64);
+        return;
+      }
+      // (signed)x >= s_min + 1   ==>   x != s_min
+      if (binary->op == GeSInt32 && c->value.geti32() == -2147483647L) {
+        binary->op = NeInt32;
+        c->value = Literal::makeSignedMin(Type::i32);
+        return;
+      }
+      if (binary->op == GeSInt64 &&
+          c->value.geti64() == -9223372036854775807LL) {
+        binary->op = NeInt64;
+        c->value = Literal::makeSignedMin(Type::i64);
+        return;
+      }
+      // Prefer compare to signed max (s_max) instead of s_max - 1.
+      // (signed)x > s_max - 1   ==>   x == s_max
+      if (binary->op == GtSInt32 && c->value.geti32() == 2147483646L) {
+        binary->op = EqInt32;
+        c->value = Literal::makeSignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == GtSInt64 &&
+          c->value.geti64() == 9223372036854775806LL) {
+        binary->op = EqInt64;
+        c->value = Literal::makeSignedMax(Type::i64);
+        return;
+      }
+      // (signed)x <= s_max - 1   ==>   x != s_max
+      if (binary->op == LeSInt32 && c->value.geti32() == 2147483646L) {
+        binary->op = NeInt32;
+        c->value = Literal::makeSignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == LeSInt64 &&
+          c->value.geti64() == 9223372036854775806LL) {
+        binary->op = NeInt64;
+        c->value = Literal::makeSignedMax(Type::i64);
+        return;
+      }
+      // Prefer compare to unsigned max (u_max) instead of u_max - 1.
+      // (unsigned)x <= u_max - 1   ==>   x == u_max
+      if (binary->op == LeUInt32 &&
+          (uint32_t)c->value.geti32() == 0xFFFFFFFEU) {
+        binary->op = EqInt32;
+        c->value = Literal::makeUnsignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == LeUInt64 &&
+          (uint64_t)c->value.geti64() == 0xFFFFFFFFFFFFFFFEULL) {
+        binary->op = EqInt64;
+        c->value = Literal::makeUnsignedMax(Type::i64);
+        return;
+      }
+      // (unsigned)x > u_max - 1   ==>   x != u_max
+      if (binary->op == GtUInt32 &&
+          (uint32_t)c->value.geti32() == 0xFFFFFFFEU) {
+        binary->op = NeInt32;
+        c->value = Literal::makeUnsignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == GtUInt64 &&
+          (uint64_t)c->value.geti64() == 0xFFFFFFFFFFFFFFFEULL) {
+        binary->op = NeInt64;
+        c->value = Literal::makeUnsignedMax(Type::i64);
+        return;
+      }
       return;
     }
     // Prefer a get on the right.
