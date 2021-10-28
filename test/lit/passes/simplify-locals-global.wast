@@ -2,11 +2,9 @@
 ;; RUN: wasm-opt %s --simplify-locals -S -o - | filecheck %s
 
 (module
-  ;; NOMNL:      (global $imm-glob i32 (i32.const 1234))
   ;; CHECK:      (global $imm-glob i32 (i32.const 1234))
   (global $imm-glob i32 (i32.const 1234))
 
-  ;; NOMNL:      (global $mut-glob (mut i32) (i32.const 5678))
   ;; CHECK:      (global $mut-glob (mut i32) (i32.const 5678))
   (global $mut-glob (mut i32) (i32.const 5678))
 
@@ -46,9 +44,6 @@
     (local.get $temp)
   )
 
-  ;; NOMNL:      (func $helper
-  ;; NOMNL-NEXT:  (nop)
-  ;; NOMNL-NEXT: )
   ;; CHECK:      (func $helper
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
