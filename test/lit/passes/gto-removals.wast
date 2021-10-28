@@ -477,13 +477,21 @@
 
   ;; CHECK:      (func $new-unreachable
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (call $helper2
-  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $helper2
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

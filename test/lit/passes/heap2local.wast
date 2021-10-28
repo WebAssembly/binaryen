@@ -405,10 +405,16 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (i32.const 2)
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -418,10 +424,16 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block
-  ;; NOMNL-NEXT:      (i32.const 2)
-  ;; NOMNL-NEXT:      (unreachable)
-  ;; NOMNL-NEXT:      (rtt.canon $struct.A)
+  ;; NOMNL-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:      (drop
+  ;; NOMNL-NEXT:       (i32.const 2)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (drop
+  ;; NOMNL-NEXT:       (unreachable)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (drop
+  ;; NOMNL-NEXT:       (rtt.canon $struct.A)
+  ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
