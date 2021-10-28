@@ -15,6 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- JS and Wasm builds now emit ECMAScript modules. New usage is:
+  ```js
+  import Binaryen from "path/to/binaryen.js";
+  const binaryen = await Binaryen();
+  ...
+  ```
+
 v102
 ----
 
