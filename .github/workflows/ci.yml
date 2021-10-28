@@ -164,7 +164,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: start docker
       run: |
-        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
+        docker run -w /src -dit --name alpine -v $PWD:/src --entrypoint python3 node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
 
