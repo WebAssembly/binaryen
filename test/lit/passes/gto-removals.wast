@@ -404,6 +404,10 @@
 
   ;; CHECK:      (type $i32_=>_ref|any| (func_subtype (param i32) (result (ref any)) func))
 
+  (global $imm-i32 i32 (i32.const 1234))
+
+  (global $mut-i32 (mut i32) (i32.const 5678))
+
   ;; CHECK:      (func $gets (param $x (ref any))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
@@ -470,6 +474,34 @@
         (call $helper0 (i32.const 0))
         (call $helper1 (i32.const 1))
         (call $helper2 (i32.const 2))
+        (rtt.canon $struct)
+      )
+    )
+  )
+
+  (func $new-side-effect-global-imm
+    ;; As above, the 2nd&3rd fields here will be removed. The first field does
+    ;; a global.get, which has effects, but those effects do not interact with
+    ;; anything else (since it is an immutable global), so we do not need a
+    ;; local for it.
+    (drop
+      (struct.new $struct
+        (global.get $imm-i32)
+        (call $helper1 (i32.const 0))
+        (call $helper2 (i32.const 1))
+        (rtt.canon $struct)
+      )
+    )
+  )
+
+  (func $new-side-effect-global-mut
+    ;; As above, but the global is mutable, so we will use a local: the calls
+    ;; might alter that global, in theory.
+    (drop
+      (struct.new $struct
+        (global.get $mut-i32)
+        (call $helper1 (i32.const 0))
+        (call $helper2 (i32.const 1))
         (rtt.canon $struct)
       )
     )
