@@ -123,11 +123,17 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     // See if reading a specific global is the only effect the first has.
     EffectAnalyzer firstEffects(getPassOptions(), *getModule(), first);
 
-    if (firstEffects.globalsRead.size() != 1) {
+    if (firstEffects.immutableGlobalsRead.size() + firstEffects.mutableGlobalsRead.size() != 1) {
       return Name();
     }
-    auto global = *firstEffects.globalsRead.begin();
-    firstEffects.globalsRead.clear();
+    Name global;
+    if (firstEffects.immutableGlobalsRead.size() == 1) {
+      global = *firstEffects.immutableGlobalsRead.begin();
+      firstEffects.immutableGlobalsRead.clear();
+    } else {
+      global = *firstEffects.mutableGlobalsRead.begin();
+      firstEffects.mutableGlobalsRead.clear();
+    }
     if (firstEffects.hasAnything()) {
       return Name();
     }
