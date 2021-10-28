@@ -292,13 +292,9 @@ struct Heap2LocalOptimizer {
       curr->type = Type(curr->type.getHeapType(), Nullable);
     }
 
-    void visitBlock(Block* curr) {
-      adjustTypeFlowingThrough(curr);
-    }
+    void visitBlock(Block* curr) { adjustTypeFlowingThrough(curr); }
 
-    void visitLoop(Loop* curr) {
-      adjustTypeFlowingThrough(curr);
-    }
+    void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
 
     void visitLocalSet(LocalSet* curr) {
       if (!reached.count(curr)) {
