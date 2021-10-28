@@ -274,12 +274,14 @@ struct Heap2LocalOptimizer {
     // left to other passes, like getting rid of dropped code without side
     // effects.
 
-    void visitBlock(Block* curr) {
+    // Adjust the type that flows through an expression, updating that type as
+    // necessary.
+    void adjustTypeFlowingThrough(Expression* curr) {
       if (!reached.count(curr)) {
         return;
       }
 
-      // Our allocation passes through this block. We must turn its type into a
+      // Our allocation passes through this expr. We must turn its type into a
       // nullable one, because we will remove things like RefAsNonNull of it,
       // which means we may no longer have a non-nullable value as our input,
       // and we could fail to validate. It is safe to make this change in terms
@@ -288,6 +290,14 @@ struct Heap2LocalOptimizer {
       // care about non-nullability.
       assert(curr->type.isRef());
       curr->type = Type(curr->type.getHeapType(), Nullable);
+    }
+
+    void visitBlock(Block* curr) {
+      adjustTypeFlowingThrough(curr);
+    }
+
+    void visitLoop(Loop* curr) {
+      adjustTypeFlowingThrough(curr);
     }
 
     void visitLocalSet(LocalSet* curr) {
