@@ -71,7 +71,8 @@ public:
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
-  std::set<Name> globalsRead;
+  std::set<Name> mutableGlobalsRead;
+  std::set<Name> immutableGlobalsRead;
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
@@ -128,8 +129,11 @@ public:
   bool accessesLocal() const {
     return localsRead.size() + localsWritten.size() > 0;
   }
+  bool accessesMutableGlobal() const {
+    return globalsWritten.size() + mutableGlobalsRead.size() > 0;
+  }
   bool accessesGlobal() const {
-    return globalsRead.size() + globalsWritten.size() > 0;
+    return accessesMutableGlobal() + immutableGlobalsRead.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
   bool accessesTable() const { return calls || readsTable || writesTable; }
@@ -157,7 +161,7 @@ public:
            writesStruct || writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsTable ||
+    return immutableGlobalsRead.size() || mutableGlobalsRead.size() || readsMemory || readsTable ||
            readsMutableStruct || readsImmutableStruct || readsArray ||
            isAtomic || calls;
   }
@@ -233,17 +237,17 @@ public:
         return true;
       }
     }
-    if ((other.calls && accessesGlobal()) ||
-        (calls && other.accessesGlobal())) {
+    if ((other.calls && accessesMutableGlobal()) ||
+        (calls && other.accessesMutableGlobal())) {
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.globalsRead.count(global) ||
+      if (other.mutableGlobalsRead.count(global) ||
           other.globalsWritten.count(global)) {
         return true;
       }
     }
-    for (auto global : globalsRead) {
+    for (auto global : mutableGlobalsRead) {
       if (other.globalsWritten.count(global)) {
         return true;
       }
@@ -292,8 +296,11 @@ public:
     for (auto i : other.localsWritten) {
       localsWritten.insert(i);
     }
-    for (auto i : other.globalsRead) {
-      globalsRead.insert(i);
+    for (auto i : other.mutableGlobalsRead) {
+      mutableGlobalsRead.insert(i);
+    }
+    for (auto i : other.immutableGlobalsRead) {
+      immutableGlobalsRead.insert(i);
     }
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
@@ -445,7 +452,11 @@ private:
       parent.localsWritten.insert(curr->index);
     }
     void visitGlobalGet(GlobalGet* curr) {
-      parent.globalsRead.insert(curr->name);
+      if (parent.module.getGlobal(curr->name)->mutable_ == Mutable) {
+        parent.mutableGlobalsRead.insert(curr->name);
+      } else {
+        parent.immutableGlobalsRead.insert(curr->name);
+      }
     }
     void visitGlobalSet(GlobalSet* curr) {
       parent.globalsWritten.insert(curr->name);
@@ -768,7 +779,7 @@ public:
     if (localsWritten.size() > 0) {
       effects |= SideEffects::WritesLocal;
     }
-    if (globalsRead.size() > 0) {
+    if (mutableGlobalsRead.size() + immutableGlobalsRead.size() > 0) {
       effects |= SideEffects::ReadsGlobal;
     }
     if (globalsWritten.size() > 0) {
