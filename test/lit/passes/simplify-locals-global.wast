@@ -2,21 +2,19 @@
 ;; RUN: wasm-opt %s --simplify-locals -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (global $imm-glob i32 (i32.const 1234))
   ;; NOMNL:      (global $imm-glob i32 (i32.const 1234))
+  ;; CHECK:      (global $imm-glob i32 (i32.const 1234))
   (global $imm-glob i32 (i32.const 1234))
 
-  ;; CHECK:      (global $mut-glob (mut i32) (i32.const 5678))
   ;; NOMNL:      (global $mut-glob (mut i32) (i32.const 5678))
+  ;; CHECK:      (global $mut-glob (mut i32) (i32.const 5678))
   (global $mut-glob (mut i32) (i32.const 5678))
 
   ;; CHECK:      (func $reorder-of-immmutable-global (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
-  ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (global.get $imm-glob)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $helper)
-  ;; CHECK-NEXT:  (local.get $temp)
+  ;; CHECK-NEXT:  (global.get $imm-glob)
   ;; CHECK-NEXT: )
   (func $reorder-of-immmutable-global (result i32)
     (local $temp i32)
@@ -48,11 +46,11 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $helper
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
   ;; NOMNL:      (func $helper
   ;; NOMNL-NEXT:  (nop)
   ;; NOMNL-NEXT: )
+  ;; CHECK:      (func $helper
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $helper)
 )
