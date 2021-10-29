@@ -3181,7 +3181,9 @@ Module['getExpressionInfo'] = function(expr) {
 
 // Gets the side effects of the specified expression
 Module['getSideEffects'] = function(expr, module) {
-  return Module['_BinaryenExpressionGetSideEffects'](expr, module);
+  assert(module); // guard against incorrect old API usage: a module must be
+                  // provided here.
+  return Module['_BinaryenExpressionGetSideEffects'](expr, module['ptr']);
 };
 
 Module['createType'] = function(types) {
