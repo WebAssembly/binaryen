@@ -405,14 +405,14 @@
     (local $x i32)
     (loop $loop
       ;; As above, but now the loop does a call, which might in theory change
-      ;; mutable global state.
+      ;; mutable global state, so we cannot optimize.
       (local.set $x (global.get $glob))
       (call $global)
       (drop (local.get $x))
       (br_if $loop (local.get $x))
     )
   )
-  (func $global-call
+  (func $global-call-immutable
     (local $x i32)
     (loop $loop
       ;; As above, but now the global is immutable, so the call does not
