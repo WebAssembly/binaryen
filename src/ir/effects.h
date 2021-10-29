@@ -161,9 +161,8 @@ public:
            writesStruct || writesArray || isAtomic || calls;
   }
   bool readsMutableGlobalState() const {
-    return mutableGlobalsRead.size() ||
-           readsMemory || readsTable || readsMutableStruct ||
-           readsArray || isAtomic || calls;
+    return mutableGlobalsRead.size() || readsMemory || readsTable ||
+           readsMutableStruct || readsArray || isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
