@@ -1487,8 +1487,9 @@ public:
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
+      assert(bool(curr->rtt) == gcData->hasRtt());
       if (curr->rtt) {
-        Literal seenRtt = gcData->rtt;
+        auto seenRtt = gcData->getRtt();
         if (!seenRtt.isSubRtt(intendedRtt)) {
           cast.outcome = cast.Failure;
           return cast;
@@ -1496,7 +1497,7 @@ public:
         cast.castRef =
           Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
       } else {
-        auto seenType = gcData->type;
+        auto seenType = gcData->getHeapType();
         if (!HeapType::isSubType(seenType, curr->intendedType)) {
           cast.outcome = cast.Failure;
           return cast;
