@@ -54,6 +54,10 @@ assert(
   ==
   binaryen.SideEffects.WritesLocal
 );
+
+// Add a global for the test, as computing side effects will look for it.
+binaryen.addGlobal('test', binaryen.i32, true, module.i32.const(42));
+
 assert(
   binaryen.getSideEffects(
     module.global.get("test", binaryen.i32)
