@@ -1496,7 +1496,7 @@
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $ref-test-rtt-canons (result i32)
- ;; NOMNL-NEXT:  (i32.const 0)
+ ;; NOMNL-NEXT:  (i32.const 1)
  ;; NOMNL-NEXT: )
  (func $ref-test-rtt-canons (result i32)
   ;; Create a struct of a subtype, test against the supertype. Both use
