@@ -122,7 +122,7 @@ struct LoopInvariantCodeMotion
         // stores.
         bool unsafeToMove =
           effects.writesGlobalState() || effectsSoFar.invalidates(effects) ||
-          (effects.readsGlobalState() && loopEffects.writesGlobalState());
+          (effects.readsMutableGlobalState() && loopEffects.writesGlobalState());
         // TODO: look into optimizing this with exceptions. for now, disallow
         if (effects.throws || loopEffects.throws) {
           unsafeToMove = true;

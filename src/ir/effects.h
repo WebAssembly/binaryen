@@ -160,10 +160,10 @@ public:
     return globalsWritten.size() || writesMemory || writesTable ||
            writesStruct || writesArray || isAtomic || calls;
   }
-  bool readsGlobalState() const {
-    return immutableGlobalsRead.size() || mutableGlobalsRead.size() ||
+  bool readsMutableGlobalState() const {
+    return mutableGlobalsRead.size() ||
            readsMemory || readsTable || readsMutableStruct ||
-           readsImmutableStruct || readsArray || isAtomic || calls;
+           readsArray || isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
