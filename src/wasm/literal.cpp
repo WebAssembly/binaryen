@@ -2562,7 +2562,17 @@ bool Literal::isSubRtt(const Literal& other) const {
   if (otherSupers.size() < supers.size()) {
     return other.type == supers[otherSupers.size()].type;
   } else {
-    return other.type == type;
+    if (getTypeSystem() == TypeSystem::Nominal) {
+      // If the type system is nominal, then allow not just type equality here
+      // but also subtyping. This allows, for example, (rtt.canon $B) to be a
+      // sub-rtt of (rtt.canon $A), if $B is a subtype of $A. But it is unclear
+      // how sub-RTT semantics should actually work with nominal subtyping
+      // (really, nominal subtyping makes the most sense in the *non*-rtt case).
+      // XXX Remove this hack once the typesystem spec stabilizes.
+      return HeapType::isSubType(type.getHeapType(), other.type.getHeapType());
+    } else {
+      return other.type == type;
+    }
   }
 }
 

@@ -15,12 +15,16 @@
 
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
- ;; CHECK:      (type $B (struct (field (mut f64))))
- ;; NOMNL:      (type $B (struct_subtype (field (mut f64)) data))
- (type $B (struct (field (mut f64))))
-
  ;; CHECK:      (type $func-return-i32 (func (result i32)))
+
+ ;; CHECK:      (type $B (struct (field (mut f64))))
  ;; NOMNL:      (type $func-return-i32 (func_subtype (result i32) func))
+
+ ;; NOMNL:      (type $B (struct_subtype (field (mut f64)) data))
+ (type $B (struct_subtype (field (mut f64)) data))
+
+ (type $B-prime (struct_subtype (field (mut f64)) (field (mut i32)) $B))
+
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
@@ -1485,6 +1489,42 @@
      (local.get $ref)
     )
    )
+  )
+ )
+
+ ;; CHECK:      (func $ref-test-rtt-canons (result i32)
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $ref-test-rtt-canons (result i32)
+ ;; NOMNL-NEXT:  (i32.const 0)
+ ;; NOMNL-NEXT: )
+ (func $ref-test-rtt-canons (result i32)
+  ;; Create a struct of a subtype, test against the supertype. Both use
+  ;; rtt.canon for their rtt. In nominal subtyping, this should work, but not
+  ;; otherwise.
+  ;; TODO: clean this up once the typesystem stuff stabilizes.
+  (ref.test
+   (struct.new_default_with_rtt $B-prime
+    (rtt.canon $B-prime)
+   )
+   (rtt.canon $B)
+  )
+ )
+
+ ;; CHECK:      (func $ref-test-rtt-canons-flip (result i32)
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $ref-test-rtt-canons-flip (result i32)
+ ;; NOMNL-NEXT:  (i32.const 0)
+ ;; NOMNL-NEXT: )
+ (func $ref-test-rtt-canons-flip (result i32)
+  ;; The same as before, but flipping the struct and substruct. This test will
+  ;; always fail.
+  (ref.test
+   (struct.new_default_with_rtt $B
+    (rtt.canon $B)
+   )
+   (rtt.canon $B-prime)
   )
  )
 )
