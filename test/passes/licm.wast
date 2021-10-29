@@ -1,6 +1,7 @@
 (module
   (memory 1)
   (global $glob (mut i32) (i32.const 1))
+  (global $glob-imm i32 (i32.const 1))
   (func $loop1
     (loop $loop
       (drop (i32.const 10))
@@ -393,7 +394,32 @@
   (func $global
     (local $x i32)
     (loop $loop
+      ;; Moving this global.get out of the loop is ok. It is mutable, but there
+      ;; is no possible place where it can be set in the loop.
       (local.set $x (global.get $glob))
+      (drop (local.get $x))
+      (br_if $loop (local.get $x))
+    )
+  )
+  (func $global-call
+    (local $x i32)
+    (loop $loop
+      ;; As above, but now the loop does a call, which might in theory change
+      ;; mutable global state.
+      (local.set $x (global.get $glob))
+      (call $global)
+      (drop (local.get $x))
+      (br_if $loop (local.get $x))
+    )
+  )
+  (func $global-call
+    (local $x i32)
+    (loop $loop
+      ;; As above, but now the global is immutable, so the call does not
+      ;; prevent us from optimizing.
+      ;; mutable global state.
+      (local.set $x (global.get $glob-imm))
+      (call $global)
       (drop (local.get $x))
       (br_if $loop (local.get $x))
     )
