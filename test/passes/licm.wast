@@ -417,7 +417,6 @@
     (loop $loop
       ;; As above, but now the global is immutable, so the call does not
       ;; prevent us from optimizing.
-      ;; mutable global state.
       (local.set $x (global.get $glob-imm))
       (call $global)
       (drop (local.get $x))
