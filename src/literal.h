@@ -19,6 +19,7 @@
 
 #include <array>
 #include <iostream>
+#include <variant>
 
 #include "compiler-support.h"
 #include "support/hash.h"
@@ -700,13 +701,17 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // instead we have a static type.
 struct GCData {
   // Either the RTT or the type must be present, but not both.
-  Literal rtt;
-  HeapType type;
+  std::variant<Literal, HeapType> typeInfo;
 
   Literals values;
 
-  GCData(HeapType type, Literals values) : type(type), values(values) {}
-  GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
+  GCData(HeapType type, Literals values) : typeInfo(type), values(values) {}
+  GCData(Literal rtt, Literals values) : typeInfo(rtt), values(values) {}
+
+  bool hasRtt() { return std::get_if<Literal>(&typeInfo); }
+  bool hasHeapType() { return std::get_if<HeapType>(&typeInfo); }
+  Literal getRtt() { return std::get<Literal>(typeInfo); }
+  HeapType getHeapType() { return std::get<HeapType>(typeInfo); }
 };
 
 struct RttSuper {

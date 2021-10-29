@@ -495,7 +495,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     if (literal.isData()) {
       auto data = literal.getGCData();
       if (data) {
-        o << "[ref " << data->rtt << ' ' << data->values << ']';
+        o << "[ref ";
+        std::visit([&](auto& info) { o << info; }, data->typeInfo);
+        o << ' ' << data->values << ']';
       } else {
         o << "[ref null " << literal.type << ']';
       }
