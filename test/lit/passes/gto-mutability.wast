@@ -14,6 +14,8 @@
   (type $two-params (func (param (ref $struct)) (param (ref $struct))))
 
   ;; Test that we update tag types properly.
+  (table 0 funcref)
+
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
   ;; CHECK:      (type $none_=>_ref?|$struct| (func_subtype (result (ref null $struct)) func))
@@ -21,7 +23,6 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (table $0 0 funcref)
-  (table 0 funcref)
 
   ;; CHECK:      (elem declare func $func-two-params)
 

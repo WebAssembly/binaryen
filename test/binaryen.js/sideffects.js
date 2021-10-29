@@ -19,28 +19,32 @@ console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 var module = new binaryen.Module();
 assert(
   binaryen.getSideEffects(
-    module.i32.const(1)
+    module.i32.const(1),
+    module
   )
   ==
   binaryen.SideEffects.None
 );
 assert(
   binaryen.getSideEffects(
-    module.br("test")
+    module.br("test"),
+    module
   )
   ==
   binaryen.SideEffects.Branches
 );
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32)
+    module.call("test", [], binaryen.i32),
+    module
   )
   ==
   binaryen.SideEffects.Calls
 );
 assert(
   binaryen.getSideEffects(
-    module.local.get("test", binaryen.i32)
+    module.local.get("test", binaryen.i32),
+    module
   )
   ==
   binaryen.SideEffects.ReadsLocal
@@ -49,21 +53,28 @@ assert(
   binaryen.getSideEffects(
     module.local.set("test",
       module.i32.const(1)
-    )
+    ),
+    module
   )
   ==
   binaryen.SideEffects.WritesLocal
 );
+
+// Add a global for the test, as computing side effects will look for it.
+module.addGlobal('test', binaryen.i32, true, module.i32.const(42));
+
 assert(
   binaryen.getSideEffects(
-    module.global.get("test", binaryen.i32)
+    module.global.get("test", binaryen.i32),
+    module
   )
   ==
   binaryen.SideEffects.ReadsGlobal
 );
 assert(
   binaryen.getSideEffects(
-    module.global.set("test", module.i32.const(1))
+    module.global.set("test", module.i32.const(1)),
+    module
   )
   ==
   binaryen.SideEffects.WritesGlobal
@@ -72,7 +83,8 @@ assert(
   binaryen.getSideEffects(
     module.i32.load(0, 0,
       module.i32.const(0)
-    )
+    ),
+    module
   )
   ==
   binaryen.SideEffects.ReadsMemory | binaryen.SideEffects.ImplicitTrap
@@ -82,7 +94,8 @@ assert(
     module.i32.store(0, 0,
       module.i32.const(0),
       module.i32.const(1)
-    )
+    ),
+    module
   )
   ==
   binaryen.SideEffects.WritesMemory | binaryen.SideEffects.ImplicitTrap
@@ -92,7 +105,8 @@ assert(
     module.i32.div_s(
       module.i32.const(1),
       module.i32.const(0)
-    )
+    ),
+    module
   )
   ==
   binaryen.SideEffects.ImplicitTrap
