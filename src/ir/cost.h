@@ -251,9 +251,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
         break;
       case DivSInt32:
       case DivUInt32:
+        ret = curr->right->is<Const>() ? 2 : 4;
+        break;
       case RemSInt32:
       case RemUInt32:
-        ret = curr->right->is<Const>() ? 2 : 3;
+        ret = curr->right->is<Const>() ? 3 : 4;
         break;
       case AndInt32:
       case OrInt32:
@@ -272,9 +274,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
         break;
       case DivSInt64:
       case DivUInt64:
+        ret = curr->right->is<Const>() ? 3 : 5;
+        break;
       case RemSInt64:
       case RemUInt64:
-        ret = curr->right->is<Const>() ? 3 : 4;
+        ret = curr->right->is<Const>() ? 4 : 5;
         break;
       case AndInt64:
       case OrInt64:
