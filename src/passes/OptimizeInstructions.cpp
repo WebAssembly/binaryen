@@ -3223,9 +3223,9 @@ private:
             // }
             return builder.makeBlock(
               {builder.makeDrop(
-                builder.makeLoad(1, false, 0, 1, memCopy->dest, Type::i32)),
-              builder.makeDrop(builder.makeLoad(
-                1, false, 0, 1, memCopy->source, Type::i32))});
+                 builder.makeLoad(1, false, 0, 1, memCopy->dest, Type::i32)),
+               builder.makeDrop(builder.makeLoad(
+                 1, false, 0, 1, memCopy->source, Type::i32))});
           }
           break;
         }
