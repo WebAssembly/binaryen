@@ -29,7 +29,9 @@ struct LUBFinder {
   // Note another type to take into account in the lub. Returns the new lub.
   Type note(Type type) {
     assert(!finalized);
-    return lub = Type::getLeastUpperBound(lub, type);
+    lub = Type::getLeastUpperBound(lub, type);
+    updateLUBNullability();
+    return lub;
   }
 
   // Note an expression that can be updated, that is, that we can modify in
@@ -51,6 +53,7 @@ struct LUBFinder {
     assert(!finalized);
     if (auto* null = curr->dynCast<RefNull>()) {
       updatableNulls.push_back(null);
+      updateLUBNullability();
       return lub;
     } else {
       return note(curr->type);
@@ -65,18 +68,23 @@ struct LUBFinder {
     if (!finalized) {
       finalized = true;
 
-      // Update any nulls with the final lub's type.
-      for (auto* null : updatableNulls) {
-        // The existence of a null means the lub must be nullable.
-        assert(lub.isNullable());
-        null->finalize(lub);
+      // Update any nulls with the final lub's type. Note that we can only do
+      // that if we've noted a reachable type for the lub, or else we have no
+      // type to give the nulls (in that case, all we've every seen are nulls,
+      // and we have no idea of what type to change to).
+      if (noted()) {
+        for (auto* null : updatableNulls) {
+          assert(lub.isNullable());
+          null->finalize(lub);
+        }
       }
     }
     return lub;
   }
 
 private:
-  // The least upper bound.
+  // The least upper bound. As we go this always contains the latest value based
+  // on everything we've seen so far.
   Type lub = Type::unreachable;
 
   // Whether we computed the final value.
@@ -84,6 +92,16 @@ private:
 
   // Nulls that we can update.
   std::vector<RefNull*> updatableNulls;
+
+  // Update the nullability of the LUB based on all we've seen. In particular,
+  // if we've noted an updatable null then we must make the LUB nullable.
+  void updateLUBNullability() {
+    // The existence of a null means the lub must be nullable. (Note that we can
+    // only do that if the lub is not Type::unreachable, hence the last check.)
+    if (!lub.isNullable() && !updatableNulls.empty() && lub.isRef()) {
+      lub = Type(lub.getHeapType(), Nullable);
+    }
+  }
 };
 
 } // namespace wasm
