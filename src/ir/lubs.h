@@ -120,7 +120,8 @@ private:
   void updateLUBNullability() {
     // The existence of a null means the lub must be nullable. (Note that we can
     // only do that if the lub is not Type::unreachable, hence the last check.)
-    if (!lub.isNullable() && updatableNulls.size() && lub != Type::unreachable) {
+    if (!lub.isNullable() && updatableNulls.size() &&
+        lub != Type::unreachable) {
       lub = Type(lub.getHeapType(), Nullable);
     }
   }
