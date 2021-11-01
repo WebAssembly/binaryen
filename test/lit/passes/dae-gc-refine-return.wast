@@ -68,7 +68,7 @@
   (local $temp anyref)
   (local.set $temp (call $refine-return-no-refining))
 
-  (ref.null any)
+  (ref.as_non_null (ref.null any))
  )
 
  ;; Refine the return type based on the value flowing out.
@@ -90,7 +90,7 @@
   (local $temp anyref)
   (local.set $temp (call $refine-return-flow))
 
-  (ref.null func)
+  (ref.as_non_null (ref.null func))
  )
  ;; CHECK:      (func $call-refine-return-flow (result funcref)
  ;; CHECK-NEXT:  (local $temp anyref)
@@ -151,7 +151,7 @@
   (local $temp anyref)
   (local.set $temp (call $refine-return-return))
 
-  (return (ref.null func))
+  (return (ref.as_non_null (ref.null func)))
  )
 
  ;; Refine the return type based on multiple values.
@@ -199,13 +199,13 @@
 
   (if
    (i32.const 1)
-   (return (ref.null func))
+   (return (ref.as_non_null (ref.null func)))
   )
   (if
    (i32.const 2)
-   (return (ref.null func))
+   (return (ref.as_non_null (ref.null func))
   )
-  (ref.null func)
+  (ref.as_non_null (ref.null func))
  )
 
  ;; CHECK:      (func $refine-return-many-blocked (result funcref)
@@ -252,14 +252,14 @@
 
   (if
    (i32.const 1)
-   (return (ref.null func))
+   (return (ref.as_non_null (ref.null func)))
   )
   (if
    (i32.const 2)
    ;; The refined return value is blocked by this return.
-   (return (ref.null data))
+   (return (ref.as_non_null (ref.null data)))
   )
-  (ref.null func)
+  (ref.as_non_null (ref.null func))
  )
 
  ;; CHECK:      (func $refine-return-many-blocked-2 (result (ref null data))
@@ -306,14 +306,14 @@
 
   (if
    (i32.const 1)
-   (return (ref.null func))
+   (return (ref.as_non_null (ref.null func)))
   )
   (if
    (i32.const 2)
-   (return (ref.null func))
+   (return (ref.as_non_null (ref.null func)))
   )
   ;; The refined return value is blocked by this value.
-  (ref.null data)
+  (ref.as_non_null (ref.null data))
  )
 
  ;; CHECK:      (func $refine-return-many-middle (result (ref null ${i32_f32}))
@@ -350,9 +350,9 @@
   ;; of them.
   (if
    (i32.const 1)
-   (return (ref.null ${i32_i64}))
+   (return (ref.as_non_null (ref.null ${i32_i64})))
   )
-  (ref.null ${i32_f32})
+  (ref.as_non_null (ref.null ${i32_f32}))
  )
 
  ;; We can refine the return types of tuples.
@@ -389,7 +389,7 @@
   )
 
   (tuple.make
-   (ref.null func)
+   (ref.as_non_null (ref.null func))
    (i32.const 1)
   )
  )
@@ -461,7 +461,7 @@
   ;; This function's return type cannot be refined because of another return
   ;; whose type prevents it.
   (if (i32.const 1)
-   (return (ref.null any))
+   (return (ref.as_non_null (ref.null any)))
   )
   (return_call $tail-callee)
  )
@@ -538,7 +538,7 @@
  ;; NOMNL-NEXT: )
  (func $tail-caller-indirect-no (result anyref)
   (if (i32.const 1)
-   (return (ref.null any))
+   (return (ref.as_non_null (ref.null any)))
   )
   (return_call_indirect (type $return_{}) (i32.const 0))
  )
@@ -588,7 +588,7 @@
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $tail-caller-call_ref-yes (result anyref)
-  (return_call_ref (ref.null $return_{}))
+  (return_call_ref (ref.as_non_null (ref.null $return_{})))
  )
  ;; CHECK:      (func $tail-caller-call_ref-no (result (ref null ${}))
  ;; CHECK-NEXT:  (if
@@ -614,9 +614,9 @@
  ;; NOMNL-NEXT: )
  (func $tail-caller-call_ref-no (result anyref)
   (if (i32.const 1)
-   (return (ref.null any))
+   (return (ref.as_non_null (ref.null any)))
   )
-  (return_call_ref (ref.null $return_{}))
+  (return_call_ref (ref.as_non_null (ref.null $return_{})))
  )
  ;; CHECK:      (func $tail-caller-call_ref-unreachable
  ;; CHECK-NEXT:  (unreachable)
