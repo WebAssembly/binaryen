@@ -61,24 +61,46 @@ struct LUBFinder {
   }
 
   // Returns whether we noted any (reachable) value.
-  bool noted() { return lub != Type::unreachable; }
+  bool noted() { return lub != Type::unreachable || updatableNulls.size(); }
 
   // Finalizes and returns the lub that we found.
   Type get() {
     if (!finalized) {
       finalized = true;
 
-      // Update any nulls with the final lub's type. Note that we can only do
-      // that if we've noted a reachable type for the lub, or else we have no
-      // type to give the nulls (in that case, all we've every seen are nulls,
-      // and we have no idea of what type to change to).
-      if (noted()) {
+      // There are four possibilities for the lub of types and the presence of
+      // nulls:
+      //
+      //  1. We have no lub (it is unreachable) and we've seen no nulls. In this
+      //     case we've seen literally nothing, and the lub can stay as
+      //     the unreachable type.
+      //  2. We have a lub and no nulls. There is nothing more to do here: we
+      //     already know the lub.
+      //  3. We have both a lub and nulls. In this case we can update the nulls
+      //     to be whatever type we want, and we do so in order to make the most
+      //     specific type we can - which is that of the lub.
+      //  4. We have no lub, but we *do* have nulls. Set the LUB based on their
+      //     types, as we need a lub to report here, and that is a valid value.
+      //     (In theory, it could be an even more specific type, if we updated
+      //     all the nulls to the "most specific" of them, for example, but this
+      //     case does not matter much as other optimizations can handle it.)
+
+      if (lub == Type::unreachable && updatableNulls.size()) {
+        // This is case 4 from above: calculate the LUB from the nulls.
+        std::vector<Type> types;
+        for (auto* null : updatableNulls) {
+          types.push_back(null->type);
+        }
+        lub = Type::getLeastUpperBound(types);
+      } else if (lub != Type::unreachable && updatableNulls.size()) {
+        // This is case 3 from above: update the nulls based on the lub.
         for (auto* null : updatableNulls) {
           assert(lub.isNullable());
           null->finalize(lub);
         }
       }
     }
+
     return lub;
   }
 
@@ -98,7 +120,7 @@ private:
   void updateLUBNullability() {
     // The existence of a null means the lub must be nullable. (Note that we can
     // only do that if the lub is not Type::unreachable, hence the last check.)
-    if (!lub.isNullable() && !updatableNulls.empty() && lub.isRef()) {
+    if (!lub.isNullable() && updatableNulls.size() && lub != Type::unreachable) {
       lub = Type(lub.getHeapType(), Nullable);
     }
   }

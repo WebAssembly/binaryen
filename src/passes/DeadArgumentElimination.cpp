@@ -696,7 +696,12 @@ private:
         }
       }
     }
-    assert(lub.get() != originalType);
+
+    // We can compute the optimal LUB, which is hopefully not the same as the
+    // original type.
+    if (lub.get() == originalType) {
+      return false;
+    }
 
     // If the refined type is unreachable then nothing actually returns from
     // this function.
