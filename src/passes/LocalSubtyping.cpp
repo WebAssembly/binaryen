@@ -25,6 +25,7 @@
 #include <ir/find_all.h>
 #include <ir/linear-execution.h>
 #include <ir/local-graph.h>
+#include <ir/lubs.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -118,18 +119,21 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // type.
 
       for (Index i = varBase; i < numLocals; i++) {
+        auto oldType = func->getLocalType(i);
+
         // Find all the types assigned to the var, and compute the optimal LUB.
-        std::unordered_set<Type> types;
+        LUBFinder lub;
         for (auto* set : setsForLocal[i]) {
-          types.insert(set->value->type);
+          if (lub.note(set->value) == oldType) {
+            break;
+          }
         }
-        if (types.empty()) {
+        if (!lub.noted()) {
           // Nothing is assigned to this local (other opts will remove it).
           continue;
         }
 
-        auto oldType = func->getLocalType(i);
-        auto newType = Type::getLeastUpperBound(types);
+        auto newType = lub.get();
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
         // Remove non-nullability if we disallow that in locals.
