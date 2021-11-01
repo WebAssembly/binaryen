@@ -369,6 +369,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "-flto")
+  target_link_libraries(binaryen_wasm optimized "-msign-ext") # enable sign-extending proposal
   target_link_libraries(binaryen_wasm debug "--profiling")
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
