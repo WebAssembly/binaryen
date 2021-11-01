@@ -35,7 +35,7 @@ struct LUBFinder {
   Type note(Expression* curr) { return note(curr->type); }
 
   // Returns whether we noted any (reachable) value.
-  bool noted() { return lub == Type::unreachable; }
+  bool noted() { return lub != Type::unreachable; }
 
   // Returns the lub that we found.
   Type get() { return lub; }
