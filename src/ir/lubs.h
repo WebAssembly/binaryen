@@ -30,23 +30,15 @@ struct LUBFinder {
   Type lub = Type::unreachable;
 
   // Note another type to take into account in the lub. Returns the new lub.
-  Type note(Type type) {
-    return lub = Type::getLeastUpperBound(lub, type);
-  }
+  Type note(Type type) { return lub = Type::getLeastUpperBound(lub, type); }
 
-  Type note(Expression* curr) {
-    return note(curr->type);
-  }
+  Type note(Expression* curr) { return note(curr->type); }
 
   // Returns whether we noted any (reachable) value.
-  bool noted() {
-    return lub == Type::unreachable;
-  }
+  bool noted() { return lub == Type::unreachable; }
 
   // Returns the lub that we found.
-  Type get() {
-    return lub;
-  }
+  Type get() { return lub; }
 };
 
 } // namespace wasm
