@@ -124,7 +124,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         // Find all the types assigned to the var, and compute the optimal LUB.
         LUBFinder lub;
         for (auto* set : setsForLocal[i]) {
-          if (lub.note(set->value) == oldType) {
+          if (lub.noteUpdatableExpression(set->value) == oldType) {
             break;
           }
         }

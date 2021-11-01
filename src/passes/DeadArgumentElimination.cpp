@@ -560,7 +560,7 @@ private:
       LUBFinder lub;
       for (auto* call : calls) {
         auto* operand = call->operands[i];
-        if (lub.note(operand) == originalType) {
+        if (lub.noteUpdatableExpression(operand) == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;
         }
@@ -655,7 +655,7 @@ private:
     ReFinalize().walkFunctionInModule(func, module);
 
     LUBFinder lub;
-    if (lub.note(func->body) == originalType) {
+    if (lub.noteUpdatableExpression(func->body) == originalType) {
       return false;
     }
 
@@ -665,8 +665,11 @@ private:
       // false then we can stop here.
       return lub.note(type) != originalType;
     };
+    auto processReturnValue = [&](Expression* value) {
+      return lub.noteUpdatableExpression(value) != originalType;
+    };
     for (auto* ret : FindAll<Return>(func->body).list) {
-      if (!processReturnType(ret->value->type)) {
+      if (!processReturnValue(ret->value)) {
         return false;
       }
     }
