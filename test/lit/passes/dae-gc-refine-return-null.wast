@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s -all --dae --nominal -S -o - | filecheck %s --check-prefix NOMNL
 
 ;; Similar to dae-gc-refine-return.wast, but with nulls (that is, without
-;; ref.as_non_null everywhere), which tests updating of null values.
+;; anything wrapping the nulls that would prevent us updating their types).
 
 (module
  ;; CHECK:      (type $return_{} (func (result (ref ${}))))
