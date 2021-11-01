@@ -277,7 +277,6 @@ if(EMSCRIPTEN)
   add_link_flag("-s NODERAWFS")
   # in opt builds, LTO helps so much (>20%) it's worth slow compile times
   add_nondebug_compile_flag("-flto")
-  add_compile_flag("-msign-ext") # enable sign-extending proposal
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
@@ -370,6 +369,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "-flto")
+  target_link_libraries(binaryen_wasm optimized "-msign-ext") # enable sign-extending proposal
   target_link_libraries(binaryen_wasm debug "--profiling")
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD ${CXX_STANDARD})
   set_property(TARGET binaryen_wasm PROPERTY CXX_STANDARD_REQUIRED ON)
