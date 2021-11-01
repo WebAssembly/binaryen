@@ -1446,14 +1446,14 @@ public:
     // The RTT value for the type we are trying to cast to.
     Literal intendedRtt;
     if (curr->rtt) {
-      // This is a dynamic check with an rtt.
+      // This is a dynamic check with an RTT.
       Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return typename Cast::Breaking{ref};
       }
       intendedRtt = rtt.getSingleValue();
     } else {
-      // If there is no explicit rtt, use the canonical rtt for the static type.
+      // If there is no explicit RTT, use the canonical RTT for the static type.
       intendedRtt = Literal::makeCanonicalRtt(curr->intendedType);
     }
     Literal original = ref.getSingleValue();
@@ -1467,9 +1467,9 @@ public:
     }
     Literal actualRtt;
     if (original.isFunction()) {
-      // Function references always have the canonical rTTs of the functions
+      // Function references always have the canonical RTTs of the functions
       // they reference. We must have a module to look up the function's type to
-      // get that canonical rtt.
+      // get that canonical RTT.
       auto* func =
         module ? module->getFunctionOrNull(original.getFunc()) : nullptr;
       if (!func) {
@@ -1480,7 +1480,7 @@ public:
       assert(original.isData());
       actualRtt = original.getGCData()->rtt;
     };
-    // We have the actual and intended rtts, so perform the cast.
+    // We have the actual and intended RTTs, so perform the cast.
     if (actualRtt.isSubRtt(intendedRtt)) {
       Type resultType(intendedRtt.type.getHeapType(), NonNullable);
       if (original.isFunction()) {
@@ -1499,10 +1499,8 @@ public:
     auto cast = doCast(curr);
     if (auto* breaking = cast.getBreaking()) {
       return *breaking;
-    } else if (cast.getSuccess()) {
-      return Literal(int32_t(1));
     } else {
-      return Literal(int32_t(0));
+      return Literal(int32_t(bool(cast.getSuccess())));
     }
   }
   Flow visitRefCast(RefCast* curr) {

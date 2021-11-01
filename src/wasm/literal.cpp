@@ -149,8 +149,8 @@ Literal& Literal::operator=(const Literal& other) {
 
 Literal Literal::makeCanonicalRtt(HeapType type) {
   auto supers = std::make_unique<RttSupers>();
-  for (auto curr = type; auto supertype = curr.getSuperType();
-       curr = *supertype) {
+  std::optional<HeapType> supertype;
+  for (auto curr = type; (supertype = curr.getSuperType()); curr = *supertype) {
     supers->emplace_back(*supertype);
   }
   // We want the highest types to be first.

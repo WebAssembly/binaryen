@@ -261,8 +261,8 @@ public:
     return lit;
   }
 
-  // Get the canonical Rtt value for a given HeapType. For nominal types, the
-  // canonical Rtt reflects the static supertype chain.
+  // Get the canonical RTT value for a given HeapType. For nominal types, the
+  // canonical RTT reflects the static supertype chain.
   static Literal makeCanonicalRtt(HeapType type);
 
   Literal castToF32();
