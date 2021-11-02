@@ -289,9 +289,6 @@ struct Reducer
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
         currCommand += working + " -o " + test + " " + pass + " " + extraFlags;
-        if (debugInfo) {
-          currCommand += " -g ";
-        }
         if (!binary) {
           currCommand += " -S ";
         }
@@ -1260,6 +1257,9 @@ int main(int argc, const char* argv[]) {
       [&](Options* o, const std::string& argument) { input = argument; });
   options.parse(argc, argv);
 
+  if (debugInfo) {
+    extraFlags += " -g ";
+  }
   if (getTypeSystem() == TypeSystem::Nominal) {
     extraFlags += " --nominal";
   }
@@ -1282,6 +1282,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|test: " << test << '\n';
   std::cerr << "|working: " << working << '\n';
   std::cerr << "|bin dir: " << binDir << '\n';
+  std::cerr << "|extra flags: " << extraFlags << '\n';
 
   // get the expected output
   copy_file(input, test);

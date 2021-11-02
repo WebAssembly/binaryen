@@ -839,7 +839,7 @@ function test_relooper() {
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
-    temp = makeDroppedInt32(10);
+    var temp = makeDroppedInt32(10);
     relooper.addBranch(block0, block1, makeInt32(55), temp);
     relooper.addBranch(block0, block2, null, makeDroppedInt32(20));
     var body = relooper.renderAndDispose(block0, 0, module);
@@ -1006,7 +1006,7 @@ function test_interpret() {
   module = new binaryen.Module();
 
   module.addFunctionImport("print-i32", "spectest", "print", binaryen.i32, binaryen.none);
-  call = module.call("print-i32", [ makeInt32(1234) ], binaryen.None);
+  var call = module.call("print-i32", [ makeInt32(1234) ], binaryen.None);
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], call);
   module.setStart(starter);
 

@@ -41,6 +41,7 @@
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
+#include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -547,21 +548,20 @@ private:
         newParamTypes.push_back(originalType);
         continue;
       }
-      Type refinedType = Type::unreachable;
+      LUBFinder lub;
       for (auto* call : calls) {
         auto* operand = call->operands[i];
-        refinedType = Type::getLeastUpperBound(refinedType, operand->type);
-        if (refinedType == originalType) {
+        if (lub.note(operand) == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;
         }
       }
 
       // Nothing is sent here at all; leave such optimizations to DCE.
-      if (refinedType == Type::unreachable) {
+      if (!lub.noted()) {
         return;
       }
-      newParamTypes.push_back(refinedType);
+      newParamTypes.push_back(lub.get());
     }
 
     // Check if we are able to optimize here before we do the work to scan the
@@ -645,17 +645,16 @@ private:
     //  )
     ReFinalize().walkFunctionInModule(func, module);
 
-    Type refinedType = func->body->type;
-    if (refinedType == originalType) {
+    LUBFinder lub;
+    if (lub.note(func->body) == originalType) {
       return false;
     }
 
     // Scan the body and look at the returns.
     auto processReturnType = [&](Type type) {
-      refinedType = Type::getLeastUpperBound(refinedType, type);
       // Return whether we still look ok to do the optimization. If this is
       // false then we can stop here.
-      return refinedType != originalType;
+      return lub.note(type) != originalType;
     };
     for (auto* ret : FindAll<Return>(func->body).list) {
       if (!processReturnType(ret->value->type)) {
@@ -685,20 +684,20 @@ private:
         }
       }
     }
-    assert(refinedType != originalType);
+    assert(lub.get() != originalType);
 
     // If the refined type is unreachable then nothing actually returns from
     // this function.
     // TODO: We can propagate that to the outside, and not just for GC.
-    if (refinedType == Type::unreachable) {
+    if (!lub.noted()) {
       return false;
     }
 
     // Success. Update the type, and the calls.
-    func->setResults(refinedType);
+    func->setResults(lub.get());
     for (auto* call : calls) {
       if (call->type != Type::unreachable) {
-        call->type = refinedType;
+        call->type = lub.get();
       }
     }
     return true;

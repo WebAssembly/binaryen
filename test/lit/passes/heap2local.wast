@@ -405,10 +405,16 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (i32.const 2)
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -418,10 +424,16 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block
-  ;; NOMNL-NEXT:      (i32.const 2)
-  ;; NOMNL-NEXT:      (unreachable)
-  ;; NOMNL-NEXT:      (rtt.canon $struct.A)
+  ;; NOMNL-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:      (drop
+  ;; NOMNL-NEXT:       (i32.const 2)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (drop
+  ;; NOMNL-NEXT:       (unreachable)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (drop
+  ;; NOMNL-NEXT:       (rtt.canon $struct.A)
+  ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
@@ -3098,6 +3110,72 @@
       ;; This allocation has no rtt, so we have nothing to drop from it when
       ;; we optimize.
       (struct.new_default $struct.A)
+    )
+  )
+
+  ;; CHECK:      (func $pass-through-loop
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (loop $loop (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (br_if $loop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (f64.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pass-through-loop
+  ;; NOMNL-NEXT:  (local $0 (ref null $struct.A))
+  ;; NOMNL-NEXT:  (local $1 i32)
+  ;; NOMNL-NEXT:  (local $2 f64)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (loop $loop (result (ref null $struct.A))
+  ;; NOMNL-NEXT:    (br_if $loop
+  ;; NOMNL-NEXT:     (i32.const 0)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:     (local.set $1
+  ;; NOMNL-NEXT:      (i32.const 0)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (local.set $2
+  ;; NOMNL-NEXT:      (f64.const 0)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (drop
+  ;; NOMNL-NEXT:      (rtt.canon $struct.A)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $pass-through-loop
+    (local $0 (ref null $struct.A))
+    ;; The allocation pass through a loop, which should change type to be
+    ;; nullable.
+    (drop
+      (loop $loop (result (ref $struct.A))
+        ;; Include a branch to the loop, so that the testcase does not become
+        ;; trivial (remove-unused-names will turn a loop with no name into a
+        ;; block).
+        (br_if $loop (i32.const 0))
+        ;; The allocation that will be turned into locals.
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
     )
   )
 )
