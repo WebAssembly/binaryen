@@ -45,6 +45,7 @@ ITEM_RE = re.compile(r'(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM_NAME + ').*$',
 
 FUZZ_EXEC_FUNC = re.compile(r'^\[fuzz-exec\] calling (?P<name>\S*)$')
 
+
 def warn(msg):
     print(f'warning: {msg}', file=sys.stderr)
 
@@ -202,7 +203,7 @@ def update_test(args, test, lines, tmp):
         # Apply previously used options for this file
         if '--all-items' in lines[0]:
             all_items = True
-        output = re.search('--output=(?P<kind>\S*)', lines[0])
+        output = re.search(r'--output=(?P<kind>\S*)', lines[0])
         if output:
             output_kind = output.group('kind')
         # Skip the notice if it is already in the output
