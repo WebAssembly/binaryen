@@ -352,7 +352,7 @@
       (ref.func $i32)
     )
     (local.set $x
-      (ref.null any) ;; this null should be updated to a nul of the LUB. just
+      (ref.null any) ;; this null should be updated to a null of the LUB. just
                      ;; like the initial value of null in this local, a null
                      ;; later does not prevent subtyping (though a null later
                      ;; does force the local to be nullable, at least).
