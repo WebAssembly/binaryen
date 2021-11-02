@@ -310,9 +310,10 @@ struct DAE : public Pass {
         allDroppedCalls[pair.first] = pair.second;
       }
     }
-    // If we refine return types then we will need to do more type updating
-    // at the end.
+    // If we refine return or argument types then we will need to do more type
+    // updating at the end.
     bool refinedReturnTypes = false;
+    bool refinedArgumentTypes = false;
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (auto& pair : allCalls) {
@@ -327,7 +328,9 @@ struct DAE : public Pass {
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
-      refineArgumentTypes(func, calls, module, runner->options);
+      if (refineArgumentTypes(func, calls, module, runner->options)) {
+        refinedArgumentTypes = true;
+      }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module, runner->options)) {
         refinedReturnTypes = true;
@@ -366,9 +369,9 @@ struct DAE : public Pass {
         }
       }
     }
-    if (refinedReturnTypes) {
+    if (refinedReturnTypes || refinedArgumentTypes) {
       // Changing a call expression's return type can propagate out to its
-      // parents, and so we must refinalize.
+      // parents, and likewise for parameters, and so we must refinalize.
       // TODO: We could track in which functions we actually make changes.
       ReFinalize().run(runner, module);
     }
@@ -542,12 +545,14 @@ private:
   //
   // This assumes that the function has no calls aside from |calls|, that is, it
   // is not exported or called from the table or by reference.
-  void refineArgumentTypes(Function* func,
+  //
+  // Returns whether we optimized.
+  bool refineArgumentTypes(Function* func,
                            const std::vector<Call*>& calls,
                            Module* module,
                            const PassOptions& passOptions) {
     if (!module->features.hasGC()) {
-      return;
+      return false;
     }
     auto numParams = func->getNumParams();
     std::vector<Type> newParamTypes;
@@ -569,7 +574,7 @@ private:
 
       // Nothing is sent here at all; leave such optimizations to DCE.
       if (!lub.noted()) {
-        return;
+        return false;
       }
       newParamTypes.push_back(lub.get());
     }
@@ -577,7 +582,7 @@ private:
     // Check if we are able to optimize here before we do the work to scan the
     // function body.
     if (Type(newParamTypes) == func->getParams()) {
-      return;
+      return false;
     }
 
     // In terms of parameters, we can do this. However, we must also check
@@ -595,7 +600,7 @@ private:
 
     auto newParams = Type(newParamTypes);
     if (newParams == func->getParams()) {
-      return;
+      return false;
     }
 
     // We can do this! Update the types, including the types of gets and tees.
@@ -614,8 +619,7 @@ private:
       }
     }
 
-    // Propagate the new get and set types outwards.
-    ReFinalize().walkFunctionInModule(func, module);
+    return true;
   }
 
   // See if the types returned from a function allow us to define a more refined
