@@ -312,8 +312,8 @@ struct DAE : public Pass {
     }
     // If we refine return or argument types then we will need to do more type
     // updating at the end.
+    bool needRefinalize = false;
     bool refinedReturnTypes = false;
-    bool refinedArgumentTypes = false;
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (auto& pair : allCalls) {
@@ -329,11 +329,17 @@ struct DAE : public Pass {
       // affect whether an argument is used or not, it just refines the type
       // where possible.
       if (refineArgumentTypes(func, calls, module, runner->options)) {
-        refinedArgumentTypes = true;
+        // Changing argument types can also lead to updating nulls in the
+        // parameters to calling functions by LUBBuilder, so we must refinalize.
+        needRefinalize = true;
       }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module, runner->options)) {
         refinedReturnTypes = true;
+        // Changing a call expression's return type can propagate out to its
+        // parents, and so we must refinalize.
+        // TODO: We could track in which functions we actually make changes.
+        needRefinalize = true;
       }
       // Check if all calls pass the same constant for a particular argument.
       for (Index i = 0; i < numParams; i++) {
@@ -369,10 +375,7 @@ struct DAE : public Pass {
         }
       }
     }
-    if (refinedReturnTypes || refinedArgumentTypes) {
-      // Changing a call expression's return type can propagate out to its
-      // parents, and likewise for parameters, and so we must refinalize.
-      // TODO: We could track in which functions we actually make changes.
+    if (needRefinalize) {
       ReFinalize().run(runner, module);
     }
     // Track which functions we changed, and optimize them later if necessary.
