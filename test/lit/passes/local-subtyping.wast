@@ -333,4 +333,32 @@
     )
     (unreachable)
   )
+
+  ;; CHECK:      (func $update-null
+  ;; CHECK-NEXT:  (local $x funcref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $i64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null
+    (local $x anyref)
+    (local.set $x
+      (ref.func $i32)
+    )
+    (local.set $x
+      (ref.null any) ;; this null should be updated to a nul of the LUB. just
+                     ;; like the initial value of null in this local, a null
+                     ;; later does not prevent subtyping (though a null later
+                     ;; does force the local to be nullable, at least).
+    )
+    (local.set $x
+      (ref.func $i64)
+    )
+  )
 )
