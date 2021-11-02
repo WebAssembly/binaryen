@@ -60,12 +60,6 @@ struct LUBFinder {
     // input, not the fallthrough), and if it has a less specific type then that
     // is not helpful anyhow.
     curr = Properties::getIdenticallyTypedFallthrough(curr, passOptions, module);
-    if (auto* block = curr->dynCast<Block>()) {
-      if (!block->name.is()) {
-        // TODO: use fallthrough
-        curr = block->list.back();
-      }
-    }
     if (auto* null = curr->dynCast<RefNull>()) {
       updatableNulls.push_back(null);
       updateLUBNullability();
