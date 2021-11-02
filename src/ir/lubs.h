@@ -97,18 +97,20 @@ struct LUBFinder {
       //     all the nulls to the "most specific" of them, for example, but this
       //     case does not matter much as other optimizations can handle it.)
 
-      if (lub == Type::unreachable && updatableNulls.size()) {
-        // This is case 4 from above: calculate the LUB from the nulls.
-        std::vector<Type> types;
-        for (auto* null : updatableNulls) {
-          types.push_back(null->type);
-        }
-        lub = Type::getLeastUpperBound(types);
-      } else if (lub != Type::unreachable && updatableNulls.size()) {
-        // This is case 3 from above: update the nulls based on the lub.
-        for (auto* null : updatableNulls) {
-          assert(lub.isNullable());
-          null->finalize(lub);
+      if (updatableNulls.size()) {
+        if (lub == Type::unreachable) {
+          // This is case 4 from above: calculate the LUB from the nulls.
+          std::vector<Type> types;
+          for (auto* null : updatableNulls) {
+            types.push_back(null->type);
+          }
+          lub = Type::getLeastUpperBound(types);
+        } else {
+          // This is case 3 from above: update the nulls based on the lub.
+          for (auto* null : updatableNulls) {
+            assert(lub.isNullable());
+            null->finalize(lub);
+          }
         }
       }
     }
