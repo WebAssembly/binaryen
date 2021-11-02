@@ -27,32 +27,9 @@
 
  (table 1 1 funcref)
 
- ;; We cannot refine the return type if nothing is actually returned.
- ;; CHECK:      (func $refine-return-no-return (result anyref)
- ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-no-return)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-no-return (result anyref)
- ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (call $refine-return-no-return)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (unreachable)
- ;; NOMNL-NEXT: )
- (func $refine-return-no-return (result anyref)
-  ;; Call this function, so that we attempt to optimize it. Note that we do not
-  ;; just drop the result, as that would cause the drop optimizations to kick
-  ;; in.
-  (local $temp anyref)
-  (local.set $temp (call $refine-return-no-return))
 
-  (unreachable)
- )
-
- ;; We cannot refine the return type if it is already the best it can be.
+ ;; We cannot refine the return type if there is nothing obvious to improve
+ ;; it to: a null anyref will leave the function returning anyref.
  ;; CHECK:      (func $refine-return-no-refining (result anyref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
@@ -94,67 +71,6 @@
   (local.set $temp (call $refine-return-flow))
 
   (ref.null func)
- )
- ;; CHECK:      (func $call-refine-return-flow (result funcref)
- ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $call-refine-return-flow)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (if (result funcref)
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (call $refine-return-flow)
- ;; CHECK-NEXT:   (call $refine-return-flow)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $call-refine-return-flow (result funcref)
- ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (call $call-refine-return-flow)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (if (result funcref)
- ;; NOMNL-NEXT:   (i32.const 1)
- ;; NOMNL-NEXT:   (call $refine-return-flow)
- ;; NOMNL-NEXT:   (call $refine-return-flow)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $call-refine-return-flow (result anyref)
-  (local $temp anyref)
-  (local.set $temp (call $call-refine-return-flow))
-
-  ;; After refining the return value of the above function, refinalize will
-  ;; update types here, which will lead to updating the if, and then the entire
-  ;; function's return value.
-  (if (result anyref)
-   (i32.const 1)
-   (call $refine-return-flow)
-   (call $refine-return-flow)
-  )
- )
-
- ;; Refine the return type based on a return.
- ;; CHECK:      (func $refine-return-return (result funcref)
- ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-return)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (ref.null func)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-return (result funcref)
- ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (call $refine-return-return)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (return
- ;; NOMNL-NEXT:   (ref.null func)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $refine-return-return (result anyref)
-  (local $temp anyref)
-  (local.set $temp (call $refine-return-return))
-
-  (return (ref.null func))
  )
 
  ;; Refine the return type based on multiple values.
