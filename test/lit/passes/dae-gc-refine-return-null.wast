@@ -6,19 +6,6 @@
 ;; anything wrapping the nulls that would prevent us updating their types).
 
 (module
- (type $return_{} (func (result (ref ${}))))
-
- (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
-
- (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
-
- (type ${i32} (struct_subtype (field i32) ${}))
-
- (type ${} (struct))
-
- (table 1 1 funcref)
-
-
  ;; We cannot refine the return type if there is nothing obvious to improve
  ;; it to: a null anyref will leave the function returning anyref.
  ;; CHECK:      (func $refine-return-no-refining (result anyref)
@@ -177,5 +164,72 @@
    (return (ref.as_non_null (ref.null data)))
   )
   (ref.null func)
+ )
+
+ ;; Another mixed case, but with 2 non-null values. We should LUB between them,
+ ;; and update the null.
+ ;; CHECK:      (func $refine-return-mixed-2 (result eqref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-mixed-2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null eq)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (ref.null data)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (ref.null eq)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $refine-return-mixed-2 (result eqref)
+ ;; NOMNL-NEXT:  (local $temp anyref)
+ ;; NOMNL-NEXT:  (local.set $temp
+ ;; NOMNL-NEXT:   (call $refine-return-mixed-2)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (if
+ ;; NOMNL-NEXT:   (i32.const 1)
+ ;; NOMNL-NEXT:   (return
+ ;; NOMNL-NEXT:    (ref.null eq)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (if
+ ;; NOMNL-NEXT:   (i32.const 2)
+ ;; NOMNL-NEXT:   (return
+ ;; NOMNL-NEXT:    (ref.as_non_null
+ ;; NOMNL-NEXT:     (ref.null data)
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (return
+ ;; NOMNL-NEXT:   (ref.as_non_null
+ ;; NOMNL-NEXT:    (ref.null eq)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $refine-return-mixed-2 (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-mixed-2))
+
+  (if
+   (i32.const 1)
+   (return (ref.null func))
+  )
+  (if
+   (i32.const 2)
+   (return (ref.as_non_null (ref.null data)))
+  )
+   (return (ref.as_non_null (ref.null eq)))
  )
 )
