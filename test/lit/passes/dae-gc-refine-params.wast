@@ -429,7 +429,7 @@
   (call $fallthrough-more-specific
    ;; The fallthrough of this if has a more specific type. We'd like to
    ;; use that, but LUBFinder will not because in general we can't - we still
-   ;; have the block as the received type on the outside. We rely on other
+   ;; have the if's type as the received type on the outside. We rely on other
    ;; passes to improve things locally where possible (as is the case here).
    ;;
    ;; Note that the if's type will update to dataref, but that is just because
