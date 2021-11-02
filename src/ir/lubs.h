@@ -26,7 +26,8 @@ namespace wasm {
 // that if we see we are not improving on an existing type then we can stop
 // early.
 struct LUBFinder {
-  LUBFinder(const PassOptions& passOptions, Module& module) : passOptions(passOptions), module(module) {}
+  LUBFinder(const PassOptions& passOptions, Module& module)
+    : passOptions(passOptions), module(module) {}
 
   // Note another type to take into account in the lub. Returns the new lub.
   Type note(Type type) {

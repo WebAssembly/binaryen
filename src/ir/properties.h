@@ -315,9 +315,8 @@ inline Expression* getFallthrough(Expression* curr,
 // Similar to getFallthrough, but only returns a fallthrough if it has the
 // exact same type as the original. For example, this will not look through a
 // ref.as_non_null if the input to it is nullable.
-inline Expression* getIdenticallyTypedFallthrough(Expression* curr,
-                                                  const PassOptions& passOptions,
-                                                  Module& module) {
+inline Expression* getIdenticallyTypedFallthrough(
+  Expression* curr, const PassOptions& passOptions, Module& module) {
   while (1) {
     auto* next = getImmediateFallthrough(curr, passOptions, module);
     if (next == curr || next->type != curr->type) {
