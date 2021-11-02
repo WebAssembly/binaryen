@@ -310,6 +310,9 @@
  (func $call-various-params-null
   ;; The first argument gets non-null values, allowing us to refine it. The
   ;; second gets only one.
+  ;; Note that this also tests that we do not look at the fallthrough of the
+  ;; ref.as_non_null, which is nullable - less specific - and which would be
+  ;; counterproductive.
   (call $various-params-null
    (ref.as_non_null (ref.null ${i32}))
    (ref.null ${i32})
