@@ -3,8 +3,6 @@
 ;; Check that allocation and casting instructions with and without RTTs can be
 ;; mixed correctly.
 
-;; TODO: Fix the implementation to not fail an assertion on the functions commented out below.
-
 ;; RUN: wasm-opt %s -all --fuzz-exec-before -q --structural -o /dev/null 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix=EQREC
 
@@ -52,11 +50,10 @@
     )
   )
 
-  ;; TODO: This should succeed in --nominal mode
   ;; EQREC:      [fuzz-exec] calling canon-sub
   ;; EQREC-NEXT: [LoggingExternalInterface logging 0]
   ;; NOMNL:      [fuzz-exec] calling canon-sub
-  ;; NOMNL-NEXT: [LoggingExternalInterface logging 0]
+  ;; NOMNL-NEXT: [LoggingExternalInterface logging 1]
   (func "canon-sub"
     (call $log
       (ref.test
@@ -66,19 +63,22 @@
     )
   )
 
-  ;; (func "canon-static"
-  ;;   (call $log
-  ;;     (ref.test_static $sub-struct
-  ;;       (call $make-sub-struct-canon)
-  ;;     )
-  ;;   )
-  ;; )
+  ;; EQREC:      [fuzz-exec] calling canon-static
+  ;; EQREC-NEXT: [LoggingExternalInterface logging 1]
+  ;; NOMNL:      [fuzz-exec] calling canon-static
+  ;; NOMNL-NEXT: [LoggingExternalInterface logging 1]
+  (func "canon-static"
+    (call $log
+      (ref.test_static $sub-struct
+        (call $make-sub-struct-canon)
+      )
+    )
+  )
 
-  ;; TODO: This should succeed in --nominal mode
   ;; EQREC:      [fuzz-exec] calling sub-canon
   ;; EQREC-NEXT: [LoggingExternalInterface logging 0]
   ;; NOMNL:      [fuzz-exec] calling sub-canon
-  ;; NOMNL-NEXT: [LoggingExternalInterface logging 0]
+  ;; NOMNL-NEXT: [LoggingExternalInterface logging 1]
   (func "sub-canon"
     (call $log
       (ref.test
@@ -101,31 +101,43 @@
     )
   )
 
-  ;; (func "sub-static"
-  ;;   (call $log
-  ;;     (ref.test_static $sub-struct
-  ;;       (call $make-sub-struct-sub)
-  ;;     )
-  ;;   )
-  ;; )
+  ;; EQREC:      [fuzz-exec] calling sub-static
+  ;; EQREC-NEXT: [LoggingExternalInterface logging 0]
+  ;; NOMNL:      [fuzz-exec] calling sub-static
+  ;; NOMNL-NEXT: [LoggingExternalInterface logging 1]
+  (func "sub-static"
+    (call $log
+      (ref.test_static $sub-struct
+        (call $make-sub-struct-sub)
+      )
+    )
+  )
 
-  ;; (func "static-canon"
-  ;;   (call $log
-  ;;     (ref.test
-  ;;       (call $make-sub-struct-static)
-  ;;       (rtt.canon $sub-struct)
-  ;;     )
-  ;;   )
-  ;; )
+  ;; EQREC:      [fuzz-exec] calling static-canon
+  ;; EQREC-NEXT: [LoggingExternalInterface logging 1]
+  ;; NOMNL:      [fuzz-exec] calling static-canon
+  ;; NOMNL-NEXT: [LoggingExternalInterface logging 1]
+  (func "static-canon"
+    (call $log
+      (ref.test
+        (call $make-sub-struct-static)
+        (rtt.canon $sub-struct)
+      )
+    )
+  )
 
-  ;; (func "static-sub"
-  ;;   (call $log
-  ;;     (ref.test
-  ;;       (call $make-sub-struct-static)
-  ;;       (global.get $sub-rtt)
-  ;;     )
-  ;;   )
-  ;; )
+  ;; EQREC:      [fuzz-exec] calling static-sub
+  ;; EQREC-NEXT: [LoggingExternalInterface logging 0]
+  ;; NOMNL:      [fuzz-exec] calling static-sub
+  ;; NOMNL-NEXT: [LoggingExternalInterface logging 1]
+  (func "static-sub"
+    (call $log
+      (ref.test
+        (call $make-sub-struct-static)
+        (global.get $sub-rtt)
+      )
+    )
+  )
 
   ;; EQREC:      [fuzz-exec] calling static-static
   ;; EQREC-NEXT: [LoggingExternalInterface logging 1]
