@@ -51,6 +51,12 @@ struct LUBFinder {
   // more specific type if we do not update the null.
   Type noteUpdatableExpression(Expression* curr) {
     assert(!finalized);
+    if (auto* block = curr->dynCast<Block>()) {
+      if (!block->name.is()) {
+        // TODO: use fallthrough
+        curr = block->list.back();
+      }
+    }
     if (auto* null = curr->dynCast<RefNull>()) {
       updatableNulls.push_back(null);
       updateLUBNullability();
