@@ -6,24 +6,12 @@
 ;; anything wrapping the nulls that would prevent us updating their types).
 
 (module
- ;; CHECK:      (type $return_{} (func (result (ref ${}))))
- ;; NOMNL:      (type $return_{} (func_subtype (result (ref ${})) func))
  (type $return_{} (func (result (ref ${}))))
 
- ;; CHECK:      (type ${} (struct ))
-
- ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
- ;; NOMNL:      (type ${} (struct_subtype  data))
-
- ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
- ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
- ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
- ;; CHECK:      (type ${i32} (struct (field i32)))
- ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32} (struct_subtype (field i32) ${}))
 
  (type ${} (struct))
@@ -54,33 +42,34 @@
   (ref.null any)
  )
 
- ;; Refine the return type based on the value flowing out.
- ;; CHECK:      (func $refine-return-flow (result funcref)
+ ;; Refine the return type based on the value flowing out, even though it is
+ ;; a null.
+ ;; CHECK:      (func $refine-return-null (result funcref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-flow)
+ ;; CHECK-NEXT:   (call $refine-return-null)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.null func)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-flow (result funcref)
+ ;; NOMNL:      (func $refine-return-null (result funcref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (call $refine-return-flow)
+ ;; NOMNL-NEXT:   (call $refine-return-null)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (ref.null func)
  ;; NOMNL-NEXT: )
- (func $refine-return-flow (result anyref)
+ (func $refine-return-null (result anyref)
   (local $temp anyref)
-  (local.set $temp (call $refine-return-flow))
+  (local.set $temp (call $refine-return-null))
 
   (ref.null func)
  )
 
- ;; Refine the return type based on multiple values.
- ;; CHECK:      (func $refine-return-many (result funcref)
+ ;; Refine the return type based on multiple null values.
+ ;; CHECK:      (func $refine-return-many-nulls (result funcref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-many)
+ ;; CHECK-NEXT:   (call $refine-return-many-nulls)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
@@ -96,10 +85,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.null func)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many (result funcref)
+ ;; NOMNL:      (func $refine-return-many-nulls (result funcref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (call $refine-return-many)
+ ;; NOMNL-NEXT:   (call $refine-return-many-nulls)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 1)
@@ -115,9 +104,9 @@
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (ref.null func)
  ;; NOMNL-NEXT: )
- (func $refine-return-many (result anyref)
+ (func $refine-return-many-nulls (result anyref)
   (local $temp anyref)
-  (local.set $temp (call $refine-return-many))
+  (local.set $temp (call $refine-return-many-nulls))
 
   (if
    (i32.const 1)
@@ -130,47 +119,54 @@
   (ref.null func)
  )
 
- ;; CHECK:      (func $refine-return-many-blocked (result anyref)
+ ;; One returned value is not a null. Pick that as the LUB, and update the
+ ;; null types to match it, using the fact that all nulls are identical
+ ;; regardless of the type.
+ ;; CHECK:      (func $refine-return-mixed (result (ref null data))
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-many-blocked)
+ ;; CHECK-NEXT:   (call $refine-return-mixed)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (ref.null func)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (i32.const 2)
  ;; CHECK-NEXT:   (return
  ;; CHECK-NEXT:    (ref.null data)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (ref.null func)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (ref.null data)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null data)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many-blocked (result anyref)
+ ;; NOMNL:      (func $refine-return-mixed (result (ref null data))
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (call $refine-return-many-blocked)
+ ;; NOMNL-NEXT:   (call $refine-return-mixed)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 1)
  ;; NOMNL-NEXT:   (return
- ;; NOMNL-NEXT:    (ref.null func)
+ ;; NOMNL-NEXT:    (ref.null data)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 2)
  ;; NOMNL-NEXT:   (return
- ;; NOMNL-NEXT:    (ref.null data)
+ ;; NOMNL-NEXT:    (ref.as_non_null
+ ;; NOMNL-NEXT:     (ref.null data)
+ ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (ref.null func)
+ ;; NOMNL-NEXT:  (ref.null data)
  ;; NOMNL-NEXT: )
- (func $refine-return-many-blocked (result anyref)
+ (func $refine-return-mixed (result anyref)
   (local $temp anyref)
-  (local.set $temp (call $refine-return-many-blocked))
+  (local.set $temp (call $refine-return-mixed))
 
   (if
    (i32.const 1)
@@ -178,51 +174,8 @@
   )
   (if
    (i32.const 2)
-   ;; The refined return value is blocked by this return: all we see are various
-   ;; nulls here, and their LUB is not useful.
-   (return (ref.null data))
+   (return (ref.as_non_null (ref.null data)))
   )
   (ref.null func)
  )
-
- ;; CHECK:      (func $refine-return-many-middle (result (ref null ${i32}))
- ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-many-middle)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (ref.null ${i32_i64})
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (ref.null ${i32_f32})
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many-middle (result (ref null ${i32}))
- ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (call $refine-return-many-middle)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (if
- ;; NOMNL-NEXT:   (i32.const 1)
- ;; NOMNL-NEXT:   (return
- ;; NOMNL-NEXT:    (ref.null ${i32_i64})
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (ref.null ${i32_f32})
- ;; NOMNL-NEXT: )
- (func $refine-return-many-middle (result anyref)
-  (local $temp anyref)
-  (local.set $temp (call $refine-return-many-middle))
-
-  ;; Return two different struct types, with an LUB that is not equal to either
-  ;; of them.
-  (if
-   (i32.const 1)
-   (return (ref.null ${i32_i64}))
-  )
-  (ref.null ${i32_f32})
- )
-
- ;; TODO: new tests for new stuff
 )
