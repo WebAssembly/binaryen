@@ -54,7 +54,12 @@ struct LUBFinder {
   // more specific type if we do not update the null.
   Type noteUpdatableExpression(Expression* curr) {
     assert(!finalized);
-    curr = Properties::getFallthrough(curr, passOptions, module);
+    // Look at the fallthrough value if there is one, but only if it has the
+    // identical type. If it has a more specific type, we may not be able to
+    // emit a LUB for it (the code still receives the original expression as an
+    // input, not the fallthrough), and if it has a less specific type then that
+    // is not helpful anyhow.
+    curr = Properties::getIdenticallyTypedFallthrough(curr, passOptions, module);
     if (auto* block = curr->dynCast<Block>()) {
       if (!block->name.is()) {
         // TODO: use fallthrough
