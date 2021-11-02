@@ -59,7 +59,8 @@ struct LUBFinder {
     // emit a LUB for it (the code still receives the original expression as an
     // input, not the fallthrough), and if it has a less specific type then that
     // is not helpful anyhow.
-    curr = Properties::getIdenticallyTypedFallthrough(curr, passOptions, module);
+    curr =
+      Properties::getIdenticallyTypedFallthrough(curr, passOptions, module);
     if (auto* null = curr->dynCast<RefNull>()) {
       updatableNulls.push_back(null);
       updateLUBNullability();
