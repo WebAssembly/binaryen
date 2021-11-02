@@ -69,7 +69,9 @@ struct LUBFinder {
   // Returns whether we noted any (reachable) value.
   bool noted() { return lub != Type::unreachable || updatableNulls.size(); }
 
-  // Finalizes and returns the lub that we found.
+  // Finalizes and returns the lub that we found. While doing so this will
+  // update the types of updatable nulls, if there were any, and if there is a
+  // useful lub to update them to.
   Type get() {
     if (!finalized) {
       finalized = true;
