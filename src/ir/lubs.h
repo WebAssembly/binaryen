@@ -26,6 +26,8 @@ namespace wasm {
 // that if we see we are not improving on an existing type then we can stop
 // early.
 struct LUBFinder {
+  LUBFinder(const PassOptions& passOptions, Module& module) : passOptions(passOptions), module(module) {}
+
   // Note another type to take into account in the lub. Returns the new lub.
   Type note(Type type) {
     assert(!finalized);
@@ -51,6 +53,7 @@ struct LUBFinder {
   // more specific type if we do not update the null.
   Type noteUpdatableExpression(Expression* curr) {
     assert(!finalized);
+    curr = Properties::getFallthrough(curr, passOptions, module);
     if (auto* block = curr->dynCast<Block>()) {
       if (!block->name.is()) {
         // TODO: use fallthrough
@@ -113,6 +116,9 @@ struct LUBFinder {
   }
 
 private:
+  const PassOptions& passOptions;
+  Module& module;
+
   // The least upper bound. As we go this always contains the latest value based
   // on everything we've seen so far.
   Type lub = Type::unreachable;

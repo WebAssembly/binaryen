@@ -122,7 +122,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         auto oldType = func->getLocalType(i);
 
         // Find all the types assigned to the var, and compute the optimal LUB.
-        LUBFinder lub;
+        LUBFinder lub(getPassOptions(), *getModule());
         for (auto* set : setsForLocal[i]) {
           if (lub.noteUpdatableExpression(set->value) == oldType) {
             break;

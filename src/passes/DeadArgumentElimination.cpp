@@ -327,9 +327,9 @@ struct DAE : public Pass {
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
-      refineArgumentTypes(func, calls, module);
+      refineArgumentTypes(func, calls, module, runner->options);
       // Refine return types as well.
-      if (refineReturnTypes(func, calls, module)) {
+      if (refineReturnTypes(func, calls, module, runner->options)) {
         refinedReturnTypes = true;
       }
       // Check if all calls pass the same constant for a particular argument.
@@ -544,7 +544,8 @@ private:
   // is not exported or called from the table or by reference.
   void refineArgumentTypes(Function* func,
                            const std::vector<Call*>& calls,
-                           Module* module) {
+                           Module* module,
+                           const PassOptions& passOptions) {
     if (!module->features.hasGC()) {
       return;
     }
@@ -557,7 +558,7 @@ private:
         newParamTypes.push_back(originalType);
         continue;
       }
-      LUBFinder lub;
+      LUBFinder lub(passOptions, *module);
       for (auto* call : calls) {
         auto* operand = call->operands[i];
         if (lub.noteUpdatableExpression(operand) == originalType) {
@@ -634,7 +635,8 @@ private:
   //       the middle, etc.
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
-                         Module* module) {
+                         Module* module,
+                         const PassOptions& passOptions) {
     if (!module->features.hasGC()) {
       return false;
     }
@@ -654,7 +656,7 @@ private:
     //  )
     ReFinalize().walkFunctionInModule(func, module);
 
-    LUBFinder lub;
+    LUBFinder lub(passOptions, *module);
     if (lub.noteUpdatableExpression(func->body) == originalType) {
       return false;
     }
