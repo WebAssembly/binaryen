@@ -34,8 +34,34 @@ namespace {
 
 // We use a LUBFinder to track field info. A LUBFinder keeps track of the best
 // possible LUB so far, as well as the list of nulls that might be updated in
-// order to get a better LUB overall at the end.
-using FieldInfo = LUBFinder;
+// order to get a better LUB overall at the end. The only extra functionality
+// we need here is whether there is a default null value (which would force us
+// to keep the type nullable).
+struct FieldInfo : public LUBFinder {
+  bool nullDefault = false;
+
+  void noteNullDefault() { nullDefault = true; }
+
+  bool noted() { return lub != Type::unreachable || nullDefault; }
+
+  bool hasNullDefault() { return nullDefault; }
+
+  Type get() {
+    auto ret = lub;
+    if (nullDefault && !ret.isNullable()) {
+      ret = Type(ret.getHeapType(), Nullable);
+    }
+    return ret;
+  }
+
+  bool combine(const FieldInfo& other) {
+    auto old = nullDefault;
+    if (other.nullDefault) {
+      noteNullDefault();
+    }
+    return LUBFinder::combine(other) || nullDefault != old;
+  }
+};
 
 struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
@@ -58,7 +84,11 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   noteDefault(Type fieldType, HeapType type, Index index, FieldInfo& info) {
     // Default values do not affect what the type of a field can be turned into,
     // as they are nullable, and we can ignore nulls there (LUBFinder will even
-    // modify them, but here there isn't even anything to modify).
+    // modify them, but here there isn't even anything to modify). We will
+    // however need to keep the type nullable.
+    if (fieldType.isRef()) {
+      info.noteNullDefault();
+    }
   }
 
   void noteCopy(HeapType type, Index index, FieldInfo& info) {

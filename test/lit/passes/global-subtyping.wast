@@ -33,3 +33,35 @@
     )
   )
 )
+
+(module
+  ;; A struct with a nullable field and a write of a non-nullable value. We
+  ;; must keep the type nullable.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $ref|$struct|_=>_none))) data))
+  (type $struct (struct_subtype (field (mut anyref)) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (elem declare func $work)
+
+  ;; CHECK:      (func $work (param $x (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $work)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $x (ref $struct))
+    (drop
+      (struct.new_default $struct)
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (ref.func $work)
+    )
+  )
+)
+
