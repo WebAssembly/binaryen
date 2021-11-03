@@ -246,3 +246,41 @@
   )
 )
 
+(module
+  ;; Write a parent to the parent and a child to the child. We can specialize
+  ;; each of them to contain their own type.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (ref $struct)) data))
+  (type $struct (struct_subtype (field dataref) data))
+
+  ;; CHECK:      (type $child (struct_subtype (field (ref $child)) $struct))
+  (type $child (struct_subtype (field dataref) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $work (param $struct (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child
+  ;; CHECK-NEXT:    (local.get $child)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct)) (param $child (ref $child))
+    (drop
+      (struct.new $struct
+        (local.get $struct)
+      )
+    )
+    (drop
+      (struct.new $child
+        (local.get $child)
+      )
+    )
+  )
+)
+
