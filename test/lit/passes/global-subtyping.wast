@@ -36,7 +36,7 @@
 
 (module
   ;; A struct with a nullable field and a write of a non-nullable value. We
-  ;; must keep the type nullable.
+  ;; must keep the type nullable, unlike in the previous module.
 
   ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $ref|$struct|_=>_none))) data))
   (type $struct (struct_subtype (field (mut anyref)) data))
@@ -65,3 +65,76 @@
   )
 )
 
+(module
+  ;; Multiple writes to a field, with a LUB that is not equal to any of them:
+  ;; we write the type children of a struct. We can at least improve from
+  ;; dataref to a ref of $struct.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $struct))) data))
+  (type $struct (struct_subtype (field (mut dataref)) data))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child-A|_ref|$child-B|_=>_none (func_subtype (param (ref $struct) (ref $child-A) (ref $child-B)) func))
+
+  ;; CHECK:      (type $child-A (struct_subtype (field (mut (ref $struct))) $struct))
+  (type $child-A (struct_subtype (field (mut dataref)) $struct))
+
+  ;; CHECK:      (type $child-B (struct_subtype (field (mut (ref $struct))) $struct))
+  (type $child-B (struct_subtype (field (mut dataref)) $struct))
+
+  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child-A (ref $child-A)) (param $child-B (ref $child-B))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $child-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $child-B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $x (ref $struct)) (param $child-A (ref $child-A)) (param $child-B (ref $child-B))
+    (struct.set $struct 0
+      (local.get $x)
+      (local.get $child-A)
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (local.get $child-B)
+    )
+  )
+)
+
+(module
+  ;; As above, but all writes are of $child-A, which allows more optimization
+  ;; up to that type.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child-A))) data))
+  (type $struct (struct_subtype (field (mut dataref)) data))
+
+  ;; CHECK:      (type $child-A (struct_subtype (field (mut (ref $child-A))) $struct))
+  (type $child-A (struct_subtype (field (mut dataref)) $struct))
+
+  (type $child-B (struct_subtype (field (mut dataref)) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child-A|_=>_none (func_subtype (param (ref $struct) (ref $child-A)) func))
+
+  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child-A (ref $child-A))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $child-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $child-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $x (ref $struct)) (param $child-A (ref $child-A))
+    (struct.set $struct 0
+      (local.get $x)
+      (local.get $child-A)
+    )
+    (struct.set $struct 0
+      (local.get $x)
+      (local.get $child-A)
+    )
+  )
+)
