@@ -12,23 +12,23 @@
 
   ;; CHECK:      (elem declare func $work)
 
-  ;; CHECK:      (func $work (param $x (ref $struct))
+  ;; CHECK:      (func $work (param $struct (ref $struct))
   ;; CHECK-NEXT:  (struct.set $struct 1
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (ref.null any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 2
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (ref.func $work)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $work (param $x (ref $struct))
+  (func $work (param $struct (ref $struct))
     (struct.set $struct 1
-      (local.get $x)
+      (local.get $struct)
       (ref.null any)
     )
     (struct.set $struct 2
-      (local.get $x)
+      (local.get $struct)
       (ref.func $work)
     )
   )
@@ -45,21 +45,21 @@
 
   ;; CHECK:      (elem declare func $work)
 
-  ;; CHECK:      (func $work (param $x (ref $struct))
+  ;; CHECK:      (func $work (param $struct (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (ref.func $work)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $work (param $x (ref $struct))
+  (func $work (param $struct (ref $struct))
     (drop
       (struct.new_default $struct)
     )
     (struct.set $struct 0
-      (local.get $x)
+      (local.get $struct)
       (ref.func $work)
     )
   )
@@ -81,23 +81,23 @@
   ;; CHECK:      (type $child-B (struct_subtype (field (mut (ref $struct))) $struct))
   (type $child-B (struct_subtype (field (mut dataref)) $struct))
 
-  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child-A (ref $child-A)) (param $child-B (ref $child-B))
+  ;; CHECK:      (func $work (param $struct (ref $struct)) (param $child-A (ref $child-A)) (param $child-B (ref $child-B))
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $child-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $child-B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $work (param $x (ref $struct)) (param $child-A (ref $child-A)) (param $child-B (ref $child-B))
+  (func $work (param $struct (ref $struct)) (param $child-A (ref $child-A)) (param $child-B (ref $child-B))
     (struct.set $struct 0
-      (local.get $x)
+      (local.get $struct)
       (local.get $child-A)
     )
     (struct.set $struct 0
-      (local.get $x)
+      (local.get $struct)
       (local.get $child-B)
     )
   )
@@ -117,23 +117,23 @@
 
   ;; CHECK:      (type $ref|$struct|_ref|$child-A|_=>_none (func_subtype (param (ref $struct) (ref $child-A)) func))
 
-  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child-A (ref $child-A))
+  ;; CHECK:      (func $work (param $struct (ref $struct)) (param $child-A (ref $child-A))
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $child-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $child-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $work (param $x (ref $struct)) (param $child-A (ref $child-A))
+  (func $work (param $struct (ref $struct)) (param $child-A (ref $child-A))
     (struct.set $struct 0
-      (local.get $x)
+      (local.get $struct)
       (local.get $child-A)
     )
     (struct.set $struct 0
-      (local.get $x)
+      (local.get $struct)
       (local.get $child-A)
     )
   )
@@ -152,24 +152,24 @@
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
 
-  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child (ref $child))
+  ;; CHECK:      (func $work (param $struct (ref $struct)) (param $child (ref $child))
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $child)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $child 0
   ;; CHECK-NEXT:   (local.get $child)
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $work (param $x (ref $struct)) (param $child (ref $child))
+  (func $work (param $struct (ref $struct)) (param $child (ref $child))
     (struct.set $struct 0
-      (local.get $x)
+      (local.get $struct)
       (local.get $child)
     )
     (struct.set $child 0
       (local.get $child)
-      (local.get $x)
+      (local.get $struct)
     )
   )
 )
@@ -185,9 +185,9 @@
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
 
-  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child (ref $child))
+  ;; CHECK:      (func $work (param $struct (ref $struct)) (param $child (ref $child))
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $child)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $child 0
@@ -195,9 +195,9 @@
   ;; CHECK-NEXT:   (local.get $child)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $work (param $x (ref $struct)) (param $child (ref $child))
+  (func $work (param $struct (ref $struct)) (param $child (ref $child))
     (struct.set $struct 0
-      (local.get $x)
+      (local.get $struct)
       (local.get $child)
     )
     (struct.set $child 0
@@ -206,3 +206,43 @@
     )
   )
 )
+
+(module
+  ;; As in GP, write to the parent a child, and to the child a parent, but now
+  ;; the writes happen in struct.new. Even with that precise info, however, we
+  ;; can't make the parent field more specific than the child's.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $struct))) data))
+  (type $struct (struct_subtype (field (mut dataref)) data))
+
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) $struct))
+  (type $child (struct_subtype (field (mut dataref)) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $work (param $struct (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (local.get $child)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct)) (param $child (ref $child))
+    (drop
+      (struct.new $struct
+        (local.get $child)
+      )
+    )
+    (drop
+      (struct.new $child
+        (local.get $struct)
+      )
+    )
+  )
+)
+

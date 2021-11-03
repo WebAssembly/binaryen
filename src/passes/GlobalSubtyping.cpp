@@ -122,12 +122,11 @@ struct GlobalSubtyping : public Pass {
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
-    // Propagate things written during new to subtypes, as they must also be
-    // able to contain that type. Propagate things written using set to super-
-    // types as well, as the reference might be to a supertype if the field is
-    // present there.
+    // Propagate in both directions because regardless of whether a field was
+    // written in struct.new or struct.set, to specialize a field we must not
+    // make it more specific than fields in subtypes.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    propagator.propagateToSubTypes(combinedNewInfos);
+    propagator.propagateToSuperAndSubTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     // Combine everything together.
