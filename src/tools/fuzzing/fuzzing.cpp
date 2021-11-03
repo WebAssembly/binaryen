@@ -3074,8 +3074,7 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
 
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   return nullability == NonNullable ? NonNullable
-         : oneIn(2)                 ? Nullable
-                                    : NonNullable;
+                                    : oneIn(2) ? Nullable : NonNullable;
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
@@ -3109,9 +3108,9 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
 }
 
 Rtt TranslateToFuzzReader::getSubType(Rtt rtt) {
-  uint32_t depth = rtt.depth != Rtt::NoDepth ? rtt.depth
-                   : oneIn(2)                ? Rtt::NoDepth
-                                             : upTo(MAX_RTT_DEPTH + 1);
+  uint32_t depth = rtt.depth != Rtt::NoDepth
+                     ? rtt.depth
+                     : oneIn(2) ? Rtt::NoDepth : upTo(MAX_RTT_DEPTH + 1);
   return Rtt(depth, rtt.heapType);
 }
 
