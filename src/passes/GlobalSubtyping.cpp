@@ -19,15 +19,10 @@
 // writes to that field in the entire program allow doing so.
 //
 
-#include "ir/effects.h"
-#include "ir/localize.h"
+#include "ir/lubs.h"
 #include "ir/struct-utils.h"
-#include "ir/subtypes.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
-#include "support/small_set.h"
-#include "wasm-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -120,7 +115,7 @@ struct GlobalSubtyping : public Pass {
 
       for (Index i = 0; i < fields.size(); i++) {
         auto oldType = fields[i].type;
-        auto newType = finalInfos[type][i].get();
+        auto newType = infos[i].get();
         if (newType != Type::unreachable && newType != oldType) {
           found = true;
           break;

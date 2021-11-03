@@ -40,12 +40,12 @@ struct LUBFinder {
   // Returns the lub that we found.
   Type get() { return lub; }
 
-  // Combines the information into another LUBFinder, and returns whether we
-  // changed anything.
-  bool combineInfo(LUBFinder& other) const {
-    auto old = other.lub;
-    other.note(lub);
-    return other.lub != old;
+  // Combines the information in another LUBFinder into this one, and returns
+  // whether we changed anything.
+  bool combine(const LUBFinder& other) {
+    auto old = lub;
+    note(other.lub);
+    return lub != old;
   }
 };
 
