@@ -40,12 +40,7 @@ namespace {
 // We use a LUBFinder to track field info. A LUBFinder keeps track of the best
 // possible LUB so far, as well as the list of nulls that might be updated in
 // order to get a better LUB overall at the end.
-//
-// A std::optional is used for simplicity as FieldInfo is used in ways that
-// assume a default value in the supporting code, and LUBFinder requires
-// arguments to its constructor.
-// TODO: find a way to avoid this overhead
-using FieldInfo = std::optional<LUBFinder>;
+using FieldInfo = LUBFinder;
 
 struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
@@ -61,10 +56,7 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    if (!info) {
-      info = LUBFinder(getPassOptions(), *getModule());
-    }
-    info.noteUpdatableExpression(expr);
+    info.note(expr);
   }
 
   void
@@ -85,6 +77,7 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 };
 
 struct GlobalTypeOptimization : public Pass {
+  StructValuesMap<FieldInfo> combinedNewInfos;
   StructValuesMap<FieldInfo> combinedSetGetInfos;
 
   void run(PassRunner* runner, Module* module) override {
@@ -100,26 +93,11 @@ struct GlobalTypeOptimization : public Pass {
     scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
+    functionNewInfos.combineInto(combinedNewInfos);
     functionSetGetInfos.combineInto(combinedSetGetInfos);
-    // TODO: combine newInfos as well, once we have a need for that (we will
-    //       when we do things like subtyping).
 
-    // Propagate information to super and subtypes on set/get infos:
-    //
-    //  * For removing unread fields, we can only remove a field if it is never
-    //    read in any sub or supertype, as such a read may alias any of those
-    //    types (where the field is present).
-    //
-    //  * For immutability, this is necessary because we cannot have a
-    //    supertype's field be immutable while a subtype's is not - they must
-    //    match for us to preserve subtyping.
-    //
-    //    Note that we do not need to care about types here: If the fields were
-    //    mutable before, then they must have had identical types for them to be
-    //    subtypes (as wasm only allows the type to differ if the fields are
-    //    immutable). Note that by making more things immutable we therefore
-    //    make it possible to apply more specific subtypes in subtype fields.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
+    propagator.propagateToSubTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     // Process the propagated info.

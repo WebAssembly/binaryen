@@ -39,6 +39,14 @@ struct LUBFinder {
 
   // Returns the lub that we found.
   Type get() { return lub; }
+
+  // Combines the information into another LUBFinder, and returns whether we
+  // changed anything.
+  bool combineInfo(LUBFinder& other) const {
+    auto old = other.lub;
+    other.note(lub);
+    return other.lub != old;
+  }
 };
 
 } // namespace wasm
