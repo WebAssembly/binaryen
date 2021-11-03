@@ -126,7 +126,7 @@ struct GlobalSubtyping : public Pass {
     // written in struct.new or struct.set, to specialize a field we must not
     // make it more specific than fields in subtypes.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    propagator.propagateToSuperAndSubTypes(combinedNewInfos);
+    propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     // Combine everything together.
