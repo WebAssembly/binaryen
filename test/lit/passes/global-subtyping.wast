@@ -138,3 +138,71 @@
     )
   )
 )
+
+(module
+  ;; Write to the parent a child, and to the child a parent. The write to the
+  ;; child prevents specialization even in the parent and we only improve up to
+  ;; $struct but not to $child.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $struct))) data))
+  (type $struct (struct_subtype (field (mut dataref)) data))
+
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) $struct))
+  (type $child (struct_subtype (field (mut dataref)) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $child 0
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $x (ref $struct)) (param $child (ref $child))
+    (struct.set $struct 0
+      (local.get $x)
+      (local.get $child)
+    )
+    (struct.set $child 0
+      (local.get $child)
+      (local.get $x)
+    )
+  )
+)
+
+(module
+  ;; As above, but both writes are of $child, so we can optimize.
+
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref $child))) $struct))
+  (type $child (struct_subtype (field (mut dataref)) $struct))
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child))) data))
+  (type $struct (struct_subtype (field (mut dataref)) data))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $work (param $x (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $child 0
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $x (ref $struct)) (param $child (ref $child))
+    (struct.set $struct 0
+      (local.get $x)
+      (local.get $child)
+    )
+    (struct.set $child 0
+      (local.get $child)
+      (local.get $child)
+    )
+  )
+)
