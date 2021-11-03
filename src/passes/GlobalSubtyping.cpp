@@ -104,7 +104,9 @@ struct GlobalSubtyping : public Pass {
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
 
-    // Check if we found anything to improve.
+#if 0
+    // As an optimization, check if we found anything to improve. If not, do not
+    // bother to update types throughout the whole module.
     bool found = false;
     for (auto type : propagator.subTypes.types) {
       if (!type.isStruct()) {
@@ -126,8 +128,11 @@ struct GlobalSubtyping : public Pass {
       }
     }
     if (found) {
+#endif
       updateTypes(*module);
+#if 0
     }
+#endif
   }
 
   void updateTypes(Module& wasm) {
@@ -139,13 +144,17 @@ struct GlobalSubtyping : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
+        auto& oldFields = oldStructType.getStruct().fields;
         auto& newFields = struct_.fields;
 
         for (Index i = 0; i < newFields.size(); i++) {
-          auto newType = newFields[i].type;
-          if (newType.isRef() && newType.getHeapType().isStruct()) {
-            newFields[i].type =
-              getTempType(parent.finalInfos[oldStructType][i].get());
+          auto oldType = oldFields[i].type;
+          if (oldType.isRef()) {
+            auto newType = parent.finalInfos[oldStructType][i].get(); 
+            if (newType != Type::unreachable) {
+              assert(Type::isSubType(newType, oldType));
+              newFields[i].type = getTempType(newType);
+            }
           }
         }
       }

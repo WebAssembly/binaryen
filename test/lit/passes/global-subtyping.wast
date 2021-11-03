@@ -5,13 +5,30 @@
   ;; A struct with three fields. The first will have no writes, the second one
   ;; write of the same type, and the last a write of a subtype, which will allow
   ;; us to specialize that one.
-  (type $struct (struct (field (mut anyref)) (field (mut anyref)) (field (mut anyref))))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut (ref $ref|$struct|_=>_none))) data))
+  (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut anyref)) data))
 
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (elem declare func $work)
+
+  ;; CHECK:      (func $work (param $x (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (ref.func $work)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $work (param $x (ref $struct))
     (struct.set $struct 1
+      (local.get $x)
       (ref.null any)
     )
     (struct.set $struct 2
+      (local.get $x)
       (ref.func $work)
     )
   )
