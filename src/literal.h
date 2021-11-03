@@ -62,9 +62,6 @@ class Literal {
     // as the Literal class itself.
     // To support the experimental RttFreshSub instruction, we not only store
     // the type, but also a reference to an allocation.
-    // The above describes dynamic data, that is with an actual RTT. The static
-    // case just has a static type in its GCData.
-    // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -263,6 +260,10 @@ public:
     lit.i32 = value & 0x7fffffff;
     return lit;
   }
+
+  // Get the canonical RTT value for a given HeapType. For nominal types, the
+  // canonical RTT reflects the static supertype chain.
+  static Literal makeCanonicalRtt(HeapType type);
 
   Literal castToF32();
   Literal castToF64();
@@ -700,23 +701,18 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // is. In the case of static (rtt-free) typing, the rtt is not present and
 // instead we have a static type.
 struct GCData {
-  // Either the RTT or the type must be present, but not both.
-  std::variant<Literal, HeapType> typeInfo;
+  // The runtime type info for this struct or array.
+  Literal rtt;
 
+  // The element or field values.
   Literals values;
 
-  GCData(HeapType type, Literals values) : typeInfo(type), values(values) {}
-  GCData(Literal rtt, Literals values) : typeInfo(rtt), values(values) {}
-
-  bool hasRtt() { return std::get_if<Literal>(&typeInfo); }
-  bool hasHeapType() { return std::get_if<HeapType>(&typeInfo); }
-  Literal getRtt() { return std::get<Literal>(typeInfo); }
-  HeapType getHeapType() { return std::get<HeapType>(typeInfo); }
+  GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 
 struct RttSuper {
   // The type of the super.
-  Type type;
+  HeapType type;
   // A shared allocation, used to implement rtt.fresh_sub. This is null for a
   // normal sub, and for a fresh one we allocate a value here, which can then be
   // used to differentiate rtts. (The allocation is shared so that when copying
@@ -724,7 +720,7 @@ struct RttSuper {
   // TODO: Remove or optimize this when the spec stabilizes.
   std::shared_ptr<size_t> freshPtr;
 
-  RttSuper(Type type) : type(type) {}
+  RttSuper(HeapType type) : type(type) {}
 
   void makeFresh() { freshPtr = std::make_shared<size_t>(); }
 

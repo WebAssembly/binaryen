@@ -38,8 +38,7 @@ Literal::Literal(Type type) : type(type) {
     if (isData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
-      // Allocate a new RttSupers (with no data).
-      new (&rttSupers) auto(std::make_unique<RttSupers>());
+      new (this) Literal(Literal::makeCanonicalRtt(type.getHeapType()));
     } else {
       memset(&v128, 0, 16);
     }
@@ -146,6 +145,18 @@ Literal& Literal::operator=(const Literal& other) {
     new (this) auto(other);
   }
   return *this;
+}
+
+Literal Literal::makeCanonicalRtt(HeapType type) {
+  auto supers = std::make_unique<RttSupers>();
+  std::optional<HeapType> supertype;
+  for (auto curr = type; (supertype = curr.getSuperType()); curr = *supertype) {
+    supers->emplace_back(*supertype);
+  }
+  // We want the highest types to be first.
+  std::reverse(supers->begin(), supers->end());
+  size_t depth = supers->size();
+  return Literal(std::move(supers), Type(Rtt(depth, type)));
 }
 
 template<typename LaneT, int Lanes>
@@ -495,9 +506,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     if (literal.isData()) {
       auto data = literal.getGCData();
       if (data) {
-        o << "[ref ";
-        std::visit([&](auto& info) { o << info; }, data->typeInfo);
-        o << ' ' << data->values << ']';
+        o << "[ref " << data->rtt << ' ' << data->values << ']';
       } else {
         o << "[ref null " << literal.type << ']';
       }
@@ -2560,7 +2569,7 @@ bool Literal::isSubRtt(const Literal& other) const {
   // we have the same amount of supers, and must be completely identical to
   // other.
   if (otherSupers.size() < supers.size()) {
-    return other.type == supers[otherSupers.size()].type;
+    return other.type.getHeapType() == supers[otherSupers.size()].type;
   } else {
     return other.type == type;
   }
