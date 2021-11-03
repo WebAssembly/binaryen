@@ -21,6 +21,11 @@
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (ref.func $work)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 2
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
     (struct.set $struct 1
@@ -30,6 +35,13 @@
     (struct.set $struct 2
       (local.get $struct)
       (ref.func $work)
+    )
+    (drop
+      ;; The type of this struct.get must be updated after the field's type
+      ;; changes, or the validator will complain.
+      (struct.get $struct 2
+        (local.get $struct)
+      )
     )
   )
 )

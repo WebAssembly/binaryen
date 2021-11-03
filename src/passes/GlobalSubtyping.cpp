@@ -22,6 +22,7 @@
 #include "ir/lubs.h"
 #include "ir/struct-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -163,13 +164,13 @@ struct GlobalSubtyping : public Pass {
     }
     if (found) {
 #endif
-    updateTypes(*module);
+    updateTypes(*module, runner);
 #if 0
     }
 #endif
   }
 
-  void updateTypes(Module& wasm) {
+  void updateTypes(Module& wasm, PassRunner* runner) {
     class TypeRewriter : public GlobalTypeRewriter {
       GlobalSubtyping& parent;
 
@@ -231,6 +232,8 @@ struct GlobalSubtyping : public Pass {
     };
 
     TypeRewriter(wasm, *this).update();
+
+    ReFinalize().run(runner, &wasm);
   }
 };
 
