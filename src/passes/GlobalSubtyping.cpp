@@ -188,14 +188,50 @@ combinedSetGetInfos.dump(std::cout);
 
         for (Index i = 0; i < newFields.size(); i++) {
           auto oldType = oldFields[i].type;
-          if (oldType.isRef()) {
-            auto newType = parent.finalInfos[oldStructType][i].get(); 
-            if (newType != Type::unreachable) {
-              assert(Type::isSubType(newType, oldType));
-              newFields[i].type = getTempType(newType);
-            }
+          if (!oldType.isRef()) {
+            continue;
           }
+          auto newType = parent.finalInfos[oldStructType][i].get(); 
+          if (newType == Type::unreachable) {
+            continue;
+          }
+
+          // We are almost ready to apply a more specific type here. One
+          // last thing we need to take into account is mutability: only
+          // immutable fields can be strict subtypes, that is, if this field
+          // is mutable then the types must remain identical. Note that we can
+          // still improve the type compared to before, but we most improve the
+          // super's field at the same time.
+          auto mutable_ = oldFields[i].mutable_ == Mutable;
+          if (mutable_) {
+            newType = getMutableSuperField(oldStructType, i);
+          }
+
+          assert(Type::isSubType(newType, oldType));
+          newFields[i].type = getTempType(newType);
         }
+      }
+
+      // Given a type (an old struct type, before the rewrite) and an index in
+      // it, and given it is a mutable field, get the proper type for it. The
+      // proper type is that of its super's field, which in return is also
+      // dependent on its own super, and so forth.
+      // TODO: add some memoization here for speed
+      Type getMutableSuperField(HeapType oldStructType, Index index) {
+        assert(oldStructType.getStruct().fields[index].mutable_ == Mutable);
+        auto newType = parent.finalInfos[oldStructType][index].get(); 
+        auto super = oldStructType.getSuperType();
+        if (!super) {
+          // There is no super to take into account.
+          return newType;
+        }
+        if (index >= (*super).getStruct().fields.size()) {
+          // This field does not exist in the super.
+          return newType;
+        }
+
+        // There is a field in the super.
+        return getMutableSuperField(*super, index);
       }
     };
 
