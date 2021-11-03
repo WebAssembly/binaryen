@@ -157,6 +157,10 @@ void PassRegistry::registerPasses() {
   registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
   registerPass(
+    "global-subtyping",
+    "apply more specific subtypes to type fields where possible",
+    createGlobalSubTypingPass);
+  registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
@@ -524,6 +528,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   }
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("global-subtyping");
     // TODO: investigate enabling --gto and --remove-module-elements before cfp
     addIfNoDWARFIssues("cfp");
   }
