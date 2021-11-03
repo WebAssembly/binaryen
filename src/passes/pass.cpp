@@ -159,7 +159,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "global-subtyping",
     "apply more specific subtypes to type fields where possible",
-    createGlobalSubTypingPass);
+    createGlobalSubtypingPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
