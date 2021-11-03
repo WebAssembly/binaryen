@@ -61,6 +61,10 @@ struct FieldInfo : public LUBFinder {
     }
     return LUBFinder::combine(other) || nullDefault != old;
   }
+
+  void dump(std::ostream& o) {
+    std::cout << "FieldInfo(" << lub << ", " << nullDefault << ")";
+  }
 };
 
 struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
@@ -122,9 +126,10 @@ struct GlobalSubtyping : public Pass {
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
-    // Propagate in both directions because regardless of whether a field was
-    // written in struct.new or struct.set, to specialize a field we must not
-    // make it more specific than fields in subtypes.
+    // Propagate things written during new to supertypes, as they must also be
+    // able to contain that type. Propagate things written using set to super-
+    // types as well, as the reference might be to a supertype if the field is
+    // present there.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
