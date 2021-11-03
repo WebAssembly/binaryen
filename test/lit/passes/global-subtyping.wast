@@ -377,3 +377,38 @@
     )
   )
 )
+
+(module
+  ;; A copy of a field does not prevent optimization (even though it assigns
+  ;; the old type).
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $struct))) data))
+  (type $struct (struct_subtype (field (mut dataref)) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $work (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct))
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+    (struct.set $struct 0
+      (local.get $struct)
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
