@@ -76,13 +76,12 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
   }
 };
 
-struct GlobalTypeOptimization : public Pass {
-  StructValuesMap<FieldInfo> combinedNewInfos;
-  StructValuesMap<FieldInfo> combinedSetGetInfos;
+struct GlobalSubtyping : public Pass {
+  StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "GlobalTypeOptimization requires nominal typing";
+      Fatal() << "GlobalSubtyping requires nominal typing";
     }
 
     // Find and analyze struct operations inside each function.
@@ -93,126 +92,64 @@ struct GlobalTypeOptimization : public Pass {
     scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
+    StructValuesMap<FieldInfo> combinedNewInfos;
+    StructValuesMap<FieldInfo> combinedSetGetInfos;
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
+    // Propagate things written during new to subtypes, as they must also be
+    // able to contain that type. Propagate things written using set to super-
+    // types as well, as the reference might be to a supertype if the field is
+    // present there.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSubTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
-    // Process the propagated info.
+    // Combine everything together.
+    combinedNewInfos.combineInto(finalInfos);
+    combinedSetGetInfos.combineInto(finalInfos);
+
+    // Check if we found anything to improve.
+    bool found = false;
     for (auto type : propagator.subTypes.types) {
       if (!type.isStruct()) {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      auto& infos = combinedSetGetInfos[type];
+      auto& infos = finalInfos[type];
 
-      // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
-        if (fields[i].mutable_ == Immutable) {
-          // Already immutable; nothing to do.
-          continue;
-        }
-
-        if (infos[i].hasWrite) {
-          // A set exists.
-          continue;
-        }
-
-        // No set exists. Mark it as something we can make immutable.
-        auto& vec = canBecomeImmutable[type];
-        vec.resize(i + 1);
-        vec[i] = true;
-      }
-
-      // Process removability. First, see if we can remove anything before we
-      // start to allocate info for that.
-      if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-            return !info.hasRead;
-          })) {
-        auto& indexesAfterRemoval = indexesAfterRemovals[type];
-        indexesAfterRemoval.resize(fields.size());
-        Index skip = 0;
-        for (Index i = 0; i < fields.size(); i++) {
-          if (infos[i].hasRead) {
-            indexesAfterRemoval[i] = i - skip;
-          } else {
-            indexesAfterRemoval[i] = RemovedField;
-            skip++;
-          }
+        auto oldType = fields[i].type;
+        auto newType = finalInfos[type][i].get();
+        if (newType != Type::unreachable && newType != oldType) {
+          found = true;
+          break;
         }
       }
+      if (found) {
+        break;
+      }
     }
-
-    // If we found fields that can be removed, remove them from instructions.
-    // (Note that we must do this first, while we still have the old heap types
-    // that we can identify, and only after this should we update all the types
-    // throughout the module.)
-    if (!indexesAfterRemovals.empty()) {
-      removeFieldsInInstructions(runner, *module);
+    if (found) {
+      updateTypes(*module);
     }
-
-    // Update the types in the entire module.
-    updateTypes(*module);
   }
 
   void updateTypes(Module& wasm) {
     class TypeRewriter : public GlobalTypeRewriter {
-      GlobalTypeOptimization& parent;
+      GlobalSubtyping& parent;
 
     public:
-      TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
+      TypeRewriter(Module& wasm, GlobalSubtyping& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
         auto& newFields = struct_.fields;
 
-        // Adjust immutability.
-        auto immIter = parent.canBecomeImmutable.find(oldStructType);
-        if (immIter != parent.canBecomeImmutable.end()) {
-          auto& immutableVec = immIter->second;
-          for (Index i = 0; i < immutableVec.size(); i++) {
-            if (immutableVec[i]) {
-              newFields[i].mutable_ = Immutable;
-            }
-          }
-        }
-
-        // Remove fields where we can.
-        auto remIter = parent.indexesAfterRemovals.find(oldStructType);
-        if (remIter != parent.indexesAfterRemovals.end()) {
-          auto& indexesAfterRemoval = remIter->second;
-          Index removed = 0;
-          for (Index i = 0; i < newFields.size(); i++) {
-            auto newIndex = indexesAfterRemoval[i];
-            if (newIndex != RemovedField) {
-              newFields[newIndex] = newFields[i];
-            } else {
-              removed++;
-            }
-          }
-          newFields.resize(newFields.size() - removed);
-
-          // Update field names as well. The Type Rewriter cannot do this for
-          // us, as it does not know which old fields map to which new ones (it
-          // just keeps the names in sequence).
-          auto iter = wasm.typeNames.find(oldStructType);
-          if (iter != wasm.typeNames.end()) {
-            auto& nameInfo = iter->second;
-
-            // Make a copy of the old ones to base ourselves off of as we do so.
-            auto oldFieldNames = nameInfo.fieldNames;
-
-            // Clear the old names and write the new ones.
-            nameInfo.fieldNames.clear();
-            for (Index i = 0; i < oldFieldNames.size(); i++) {
-              auto newIndex = indexesAfterRemoval[i];
-              if (newIndex != RemovedField && oldFieldNames.count(i)) {
-                assert(oldFieldNames[i].is());
-                nameInfo.fieldNames[newIndex] = oldFieldNames[i];
-              }
-            }
+        for (Index i = 0; i < newFields.size(); i++) {
+          auto newType = newFields[i].type;
+          if (newType.isRef() && newType.getHeapType().isStruct()) {
+            newFields[i].type = getTempType(parent.finalInfos[oldStructType][i].get());
           }
         }
       }
@@ -220,138 +157,12 @@ struct GlobalTypeOptimization : public Pass {
 
     TypeRewriter(wasm, *this).update();
   }
-
-  // After updating the types to remove certain fields, we must also remove
-  // them from struct instructions.
-  void removeFieldsInInstructions(PassRunner* runner, Module& wasm) {
-    struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
-      bool isFunctionParallel() override { return true; }
-
-      GlobalTypeOptimization& parent;
-
-      FieldRemover(GlobalTypeOptimization& parent) : parent(parent) {}
-
-      FieldRemover* create() override { return new FieldRemover(parent); }
-
-      void visitStructNew(StructNew* curr) {
-        if (curr->type == Type::unreachable) {
-          return;
-        }
-        if (curr->isWithDefault()) {
-          // Nothing to do, a default was written and will no longer be.
-          return;
-        }
-
-        auto iter = parent.indexesAfterRemovals.find(curr->type.getHeapType());
-        if (iter == parent.indexesAfterRemovals.end()) {
-          return;
-        }
-        auto& indexesAfterRemoval = iter->second;
-
-        auto& operands = curr->operands;
-        assert(indexesAfterRemoval.size() == operands.size());
-
-        // Check for side effects in removed fields. If there are any, we must
-        // use locals to save the values (while keeping them in order).
-        bool useLocals = false;
-        for (Index i = 0; i < operands.size(); i++) {
-          auto newIndex = indexesAfterRemoval[i];
-          if (newIndex == RemovedField &&
-              EffectAnalyzer(getPassOptions(), *getModule(), operands[i])
-                .hasUnremovableSideEffects()) {
-            useLocals = true;
-            break;
-          }
-        }
-        if (useLocals) {
-          auto* func = getFunction();
-          if (!func) {
-            Fatal() << "TODO: side effects in removed fields in globals\n";
-          }
-          auto* block = Builder(*getModule()).makeBlock();
-          auto sets =
-            ChildLocalizer(curr, func, getModule(), getPassOptions()).sets;
-          block->list.set(sets);
-          block->list.push_back(curr);
-          block->finalize(curr->type);
-          replaceCurrent(block);
-          addedLocals = true;
-        }
-
-        // Remove the unneeded operands.
-        Index removed = 0;
-        for (Index i = 0; i < operands.size(); i++) {
-          auto newIndex = indexesAfterRemoval[i];
-          if (newIndex != RemovedField) {
-            assert(newIndex < operands.size());
-            operands[newIndex] = operands[i];
-          } else {
-            removed++;
-          }
-        }
-        operands.resize(operands.size() - removed);
-      }
-
-      void visitStructSet(StructSet* curr) {
-        if (curr->ref->type == Type::unreachable) {
-          return;
-        }
-
-        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
-        if (newIndex != RemovedField) {
-          // Map to the new index.
-          curr->index = newIndex;
-        } else {
-          // This field was removed, so just emit drops of our children.
-          Builder builder(*getModule());
-          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                              builder.makeDrop(curr->value)));
-        }
-      }
-
-      void visitStructGet(StructGet* curr) {
-        if (curr->ref->type == Type::unreachable) {
-          return;
-        }
-
-        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
-        // We must not remove a field that is read from.
-        assert(newIndex != RemovedField);
-        curr->index = newIndex;
-      }
-
-      void visitFunction(Function* curr) {
-        if (addedLocals) {
-          TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
-        }
-      }
-
-    private:
-      bool addedLocals = false;
-
-      Index getNewIndex(HeapType type, Index index) {
-        auto iter = parent.indexesAfterRemovals.find(type);
-        if (iter == parent.indexesAfterRemovals.end()) {
-          return index;
-        }
-        auto& indexesAfterRemoval = iter->second;
-        auto newIndex = indexesAfterRemoval[index];
-        assert(newIndex < indexesAfterRemoval.size() ||
-               newIndex == RemovedField);
-        return newIndex;
-      }
-    };
-
-    FieldRemover remover(*this);
-    remover.run(runner, &wasm);
-    remover.runOnModuleCode(runner, &wasm);
-  }
 };
 
 } // anonymous namespace
 
-Pass* createGlobalTypeOptimizationPass() {
-  return new GlobalTypeOptimization();
+Pass* createGlobalSubtypingPass() {
+  return new GlobalSubtyping();
 }
 
 } // namespace wasm
