@@ -163,7 +163,7 @@ struct GlobalSubtyping : public Pass {
     }
     if (found) {
 #endif
-      updateTypes(*module);
+    updateTypes(*module);
 #if 0
     }
 #endif
@@ -186,7 +186,7 @@ struct GlobalSubtyping : public Pass {
           if (!oldType.isRef()) {
             continue;
           }
-          auto newType = parent.finalInfos[oldStructType][i].get(); 
+          auto newType = parent.finalInfos[oldStructType][i].get();
           if (newType == Type::unreachable) {
             continue;
           }
@@ -214,7 +214,7 @@ struct GlobalSubtyping : public Pass {
       // TODO: add some memoization here for speed
       Type getMutableSuperField(HeapType oldStructType, Index index) {
         assert(oldStructType.getStruct().fields[index].mutable_ == Mutable);
-        auto newType = parent.finalInfos[oldStructType][index].get(); 
+        auto newType = parent.finalInfos[oldStructType][index].get();
         auto super = oldStructType.getSuperType();
         if (!super) {
           // There is no super to take into account.
