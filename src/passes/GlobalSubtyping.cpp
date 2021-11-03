@@ -144,7 +144,8 @@ struct GlobalSubtyping : public Pass {
         for (Index i = 0; i < newFields.size(); i++) {
           auto newType = newFields[i].type;
           if (newType.isRef() && newType.getHeapType().isStruct()) {
-            newFields[i].type = getTempType(parent.finalInfos[oldStructType][i].get());
+            newFields[i].type =
+              getTempType(parent.finalInfos[oldStructType][i].get());
           }
         }
       }
@@ -156,8 +157,6 @@ struct GlobalSubtyping : public Pass {
 
 } // anonymous namespace
 
-Pass* createGlobalSubtypingPass() {
-  return new GlobalSubtyping();
-}
+Pass* createGlobalSubtypingPass() { return new GlobalSubtyping(); }
 
 } // namespace wasm
