@@ -134,11 +134,6 @@ struct GlobalSubtyping : public Pass {
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
-std::cout << "new\n";
-combinedNewInfos.dump(std::cout);
-std::cout << "set\n";
-combinedSetGetInfos.dump(std::cout);
-
     // Combine everything together.
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);

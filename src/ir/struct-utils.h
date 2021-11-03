@@ -222,21 +222,16 @@ public:
   SubTypes subTypes;
 
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
-    propagate(infos, false, true);
+    propagate(infos, false);
   }
 
   void propagateToSuperAndSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true, true);
-  }
-
-  void propagateToSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true, false);
+    propagate(infos, true);
   }
 
 private:
   void propagate(StructValuesMap<T>& combinedInfos,
-                 bool toSubTypes,
-                 bool toSuperTypes) {
+                 bool toSubTypes) {
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
       auto type = kv.first;
@@ -246,14 +241,12 @@ private:
       auto type = work.pop();
       auto& infos = combinedInfos[type];
 
-      if (toSuperTypes) {
-        if (auto superType = type.getSuperType()) {
-          auto& superInfos = combinedInfos[*superType];
-          auto& superFields = superType->getStruct().fields;
-          for (Index i = 0; i < superFields.size(); i++) {
-            if (superInfos[i].combine(infos[i])) {
-              work.push(*superType);
-            }
+      if (auto superType = type.getSuperType()) {
+        auto& superInfos = combinedInfos[*superType];
+        auto& superFields = superType->getStruct().fields;
+        for (Index i = 0; i < superFields.size(); i++) {
+          if (superInfos[i].combine(infos[i])) {
+            work.push(*superType);
           }
         }
       }

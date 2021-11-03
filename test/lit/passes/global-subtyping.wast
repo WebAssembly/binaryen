@@ -249,6 +249,9 @@
 (module
   ;; Write a parent to the parent and a child to the child. We can specialize
   ;; each of them to contain their own type.
+  ;; (Note that we can't do a similar test with struct.set, and that would
+  ;; imply the fields are mutable, which limits optimization, see the next
+  ;; testcase after this.)
 
   ;; CHECK:      (type $struct (struct_subtype (field (ref $struct)) data))
   (type $struct (struct_subtype (field dataref) data))
