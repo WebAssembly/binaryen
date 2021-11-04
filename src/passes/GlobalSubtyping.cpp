@@ -35,21 +35,20 @@ namespace wasm {
 namespace {
 
 // We use a LUBFinder to track field info. A LUBFinder keeps track of the best
-// possible LUB so far, as well as the list of nulls that might be updated in
-// order to get a better LUB overall at the end. The only extra functionality
-// we need here is whether there is a default null value (which would force us
-// to keep the type nullable).
+// possible LUB so far. The only extra functionality we need here is whether
+// there is a default null value (which would force us to keep the
+// type nullable).
 struct FieldInfo : public LUBFinder {
   bool nullDefault = false;
 
   void noteNullDefault() { nullDefault = true; }
 
-  bool noted() { return lub != Type::unreachable || nullDefault; }
-
   bool hasNullDefault() { return nullDefault; }
 
+  bool noted() { return LUBFinder::noted() || nullDefault; }
+
   Type get() {
-    auto ret = lub;
+    auto ret = LUBFinder::get();
     if (nullDefault && !ret.isNullable()) {
       ret = Type(ret.getHeapType(), Nullable);
     }
