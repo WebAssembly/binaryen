@@ -493,3 +493,41 @@
     (drop (struct.new $Y))
   )
 )
+
+(module
+  ;; CHECK:      (type $X (struct_subtype  data))
+  (type $X (struct_subtype data))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $B (struct_subtype (field (ref $Y)) $A))
+
+  ;; CHECK:      (type $A (struct_subtype (field (ref $X)) data))
+
+  ;; CHECK:      (type $Y (struct_subtype  $X))
+  (type $Y (struct_subtype $X))
+
+  (type $A (struct_subtype (field (ref $X)) data))
+  (type $B (struct_subtype (field (ref $Y)) $A))
+
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (local $unused2 (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (struct.new_default $X)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; $B begins with its field of type $Y, which is more specific than the
+    ;; field is in the supertype $A. There are no writes to $B, and so we end
+    ;; up looking in the parent to see what to do; we should still emit a
+    ;; reasonable type for $B, and there is no reason to make it *less*
+    ;; specific.
+    (local $unused2 (ref null $B))
+    (drop
+      (struct.new $A
+        (struct.new $X)
+      )
+    )
+  )
+)

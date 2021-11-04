@@ -214,8 +214,14 @@ struct GlobalSubtyping : public Pass {
             refinedType = getMutableSuperField(oldStructType, i);
           }
 
-          assert(Type::isSubType(refinedType, oldType));
-          newFields[i].type = getTempType(refinedType);
+          // After all the above, it is possible that the refined type is not
+          // actually a subtype of the old type: for example, if we have no
+          // writes to us, but the parent does, and so we looked to the parent
+          // and used its type, which might be a supertype. If we do not have a
+          // more specific subtype here, keep the old type.
+          if (Type::isSubType(refinedType, oldType)) {
+            newFields[i].type = getTempType(refinedType);
+          }
         }
       }
 
