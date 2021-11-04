@@ -48,7 +48,8 @@
 
 (module
   ;; A struct with a nullable field and a write of a non-nullable value. We
-  ;; must keep the type nullable, unlike in the previous module.
+  ;; must keep the type nullable, unlike in the previous module, due to the
+  ;; default value being null.
 
   ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $ref|$struct|_=>_none))) data))
   (type $struct (struct_subtype (field (mut anyref)) data))
@@ -78,9 +79,10 @@
 )
 
 (module
-  ;; Multiple writes to a field, with a LUB that is not equal to any of them:
-  ;; we write the type children of a struct. We can at least improve from
-  ;; dataref to a ref of $struct.
+  ;; Multiple writes to a field, with a LUB that is not equal to any of them.
+  ;; We can at least improve from dataref to a ref of $struct here. Note also
+  ;; that we do so in all three types, not just the parent to which we write
+  ;; (the children have no writes, but must still be updated).
 
   ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $struct))) data))
   (type $struct (struct_subtype (field (mut dataref)) data))
@@ -340,7 +342,8 @@
 
 (module
   ;; As above, but the child also has a new field that is not in the parent. In
-  ;; that case there is nothing stopping us from specializing.
+  ;; that case there is nothing stopping us from specializing that new field
+  ;; to $child.
 
   ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $struct))) data))
   (type $struct (struct_subtype (field (mut dataref)) data))
@@ -500,14 +503,13 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $B (struct_subtype (field (ref $Y)) $A))
+  (type $B (struct_subtype (field (ref $Y)) $A))
 
   ;; CHECK:      (type $A (struct_subtype (field (ref $X)) data))
+  (type $A (struct_subtype (field (ref $X)) data))
 
   ;; CHECK:      (type $Y (struct_subtype  $X))
   (type $Y (struct_subtype $X))
-
-  (type $A (struct_subtype (field (ref $X)) data))
-  (type $B (struct_subtype (field (ref $Y)) $A))
 
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (local $unused2 (ref null $B))
@@ -522,7 +524,7 @@
     ;; field is in the supertype $A. There are no writes to $B, and so we end
     ;; up looking in the parent to see what to do; we should still emit a
     ;; reasonable type for $B, and there is no reason to make it *less*
-    ;; specific.
+    ;; specific, so leave things as they are.
     (local $unused2 (ref null $B))
     (drop
       (struct.new $A
