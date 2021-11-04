@@ -143,6 +143,10 @@ struct GlobalSubtyping : public Pass {
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
 
+    // While we do the following work, see if we have anything to optimize, so
+    // that we can avoid wasteful work later if not.
+    bool canOptimize = false;
+
     // We have combined all the information we have about writes to the fields,
     // but we still need to make sure that the new types makes sense. In
     // particular, subtyping cares about things like mutability, and we also
@@ -197,40 +201,25 @@ struct GlobalSubtyping : public Pass {
         }
       }
 
+      if (!canOptimize) {
+        for (Index i = 0; i < fields.size(); i++) {
+          auto oldType = fields[i].type;
+          auto newType = finalInfos[type][i].get();
+          if (newType != oldType) {
+            canOptimize = true;
+            break;
+          }
+        }
+      }
+
       for (auto subType : subTypes.getSubTypes(type)) {
         work.push(subType);
       }
     }
 
-#if 0
-    // As an optimization, check if we found anything to improve. If not, do not
-    // bother to update types throughout the whole module.
-    bool found = false;
-    for (auto type : propagator.subTypes.types) {
-      if (!type.isStruct()) {
-        continue;
-      }
-      auto& fields = type.getStruct().fields;
-      auto& infos = finalInfos[type];
-
-      for (Index i = 0; i < fields.size(); i++) {
-        auto oldType = fields[i].type;
-        auto newType = infos[i].get();
-        if (newType != Type::unreachable && newType != oldType) {
-          found = true;
-          break;
-        }
-      }
-      if (found) {
-        break;
-      }
+    if (canOptimize) {
+      updateTypes(*module, runner);
     }
-    if (found) {
-#endif
-    updateTypes(*module, runner);
-#if 0
-    }
-#endif
   }
 
   void updateTypes(Module& wasm, PassRunner* runner) {
