@@ -19,6 +19,7 @@
 // writes to that field in the entire program allow doing so.
 //
 
+#include "support/unique_deferring_queue.h"
 #include "ir/lubs.h"
 #include "ir/struct-utils.h"
 #include "ir/type-updating.h"
@@ -61,6 +62,11 @@ struct FieldInfo : public LUBFinder {
       noteNullDefault();
     }
     return LUBFinder::combine(other) || nullDefault != old;
+  }
+
+  // Force the lub to a particular type.
+  void set(Type type) {
+    lub = type;
   }
 
   void dump(std::ostream& o) {
@@ -139,6 +145,65 @@ struct GlobalSubtyping : public Pass {
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
 
+    // We have combined all the information we have about writes to the fields,
+    // but we still need to make sure that the new types makes sense. In
+    // particular, subtyping cares about things like mutability, and we also
+    // need to handle the case where we have no writes to a type but do have
+    // them to subtypes and supertypes; in all these cases, we must preserve
+    // that a field is always a subtype of the parent field. To do so, we go
+    // through all the types downward from supertypes to subtypes, ensuring the
+    // subtypes are suitable.
+    auto& subTypes = propagator.subTypes;
+    UniqueDeferredQueue<HeapType> work;
+    for (auto type : subTypes.types) {
+      if (!type.getSuperType()) {
+        work.push(type);
+      }
+    }
+    while (!work.empty()) {
+      auto type = work.pop();
+      if (!type.isStruct()) {
+        continue;
+      }
+
+      auto& fields = type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        auto& info = finalInfos[type][i];
+        auto oldType = fields[i].type;
+        auto newType = info.get();
+        if (newType == Type::unreachable) {
+          // We had no info on this field, so use the old type.
+          info.set(oldType);
+        } else {
+          // We saw writes to this field, which must have been of subtypes of
+          // the old type.
+          assert(Type::isSubType(newType, oldType));
+        }
+      }
+
+      if (auto super = type.getSuperType()) {
+        auto& superFields = super->getStruct().fields;
+        for (Index i = 0; i < superFields.size(); i++) {
+          auto newSuperType = finalInfos[*super][i].get();
+          auto& info = finalInfos[type][i];
+          auto newType = info.get();
+          if (!Type::isSubType(newType, newSuperType)) {
+            // To ensure we are a subtype of the super's field, simply copy that
+            // value, which is more specific than us.
+            info.set(newSuperType);
+          } else if (fields[i].mutable_ == Mutable) {
+            // Mutable fields must have identical types, so we cannot
+            // specialize.
+            info.set(newSuperType);
+          }
+        }
+      }
+
+      for (auto subType : subTypes.getSubTypes(type)) {
+        work.push(subType);
+      }
+    }
+
 #if 0
     // As an optimization, check if we found anything to improve. If not, do not
     // bother to update types throughout the whole module.
@@ -188,88 +253,8 @@ struct GlobalSubtyping : public Pass {
             continue;
           }
           auto refinedType = parent.finalInfos[oldStructType][i].get();
-          if (refinedType == Type::unreachable) {
-            // We saw no writes to this field. However, it is possible that we
-            // saw writes to a parent field. Normally those would be propagated
-            // to us, but not if they only happened in a struct.new, where we
-            // know that they happened in that precise type and so we did not
-            // propagate. In that case we must still preserve the necessary
-            // property that our field is a subtype of the parent.
-            refinedType = getReachableSuperField(oldStructType, i);
-            if (refinedType == Type::unreachable) {
-              // There is no parent with reachable data, so there is truly
-              // nothing to do here.
-              continue;
-            }
-          }
-
-          // We are almost ready to apply a more specific type here. One
-          // last thing we need to take into account is mutability: only
-          // immutable fields can be strict subtypes, that is, if this field
-          // is mutable then the types must remain identical. Note that we can
-          // still improve the type compared to before, but we most improve the
-          // super's field at the same time.
-          auto mutable_ = oldFields[i].mutable_ == Mutable;
-          if (mutable_) {
-            refinedType = getMutableSuperField(oldStructType, i);
-          }
-
-          // After all the above, it is possible that the refined type is not
-          // actually a subtype of the old type: for example, if we have no
-          // writes to us, but the parent does, and so we looked to the parent
-          // and used its type, which might be a supertype. If we do not have a
-          // more specific subtype here, keep the old type.
-          if (Type::isSubType(refinedType, oldType)) {
-            newFields[i].type = getTempType(refinedType);
-          }
+          newFields[i].type = getTempType(refinedType);
         }
-      }
-
-      // Given a type (an old struct type, before the rewrite) and an index in
-      // it, find the first parent that has reachable data for that field, and
-      // return that.
-      // TODO: add some memoization here for speed
-      Type getReachableSuperField(HeapType oldStructType, Index index) {
-        auto refinedType = parent.finalInfos[oldStructType][index].get();
-        if (refinedType != Type::unreachable) {
-          return refinedType;
-        }
-
-        // This field is unreachable, so look in our super.
-        auto super = oldStructType.getSuperType();
-        if (!super) {
-          // There is no super to take into account.
-          return refinedType;
-        }
-        if (index >= (*super).getStruct().fields.size()) {
-          // This field does not exist in the super.
-          return refinedType;
-        }
-
-        // There is a field in the super.
-        return getReachableSuperField(*super, index);
-      }
-
-      // Given a type (an old struct type, before the rewrite) and an index in
-      // it, and given it is a mutable field, get the proper type for it. The
-      // proper type is that of its super's field, which in return is also
-      // dependent on its own super, and so forth.
-      // TODO: add some memoization here for speed
-      Type getMutableSuperField(HeapType oldStructType, Index index) {
-        assert(oldStructType.getStruct().fields[index].mutable_ == Mutable);
-        auto refinedType = parent.finalInfos[oldStructType][index].get();
-        auto super = oldStructType.getSuperType();
-        if (!super) {
-          // There is no super to take into account.
-          return refinedType;
-        }
-        if (index >= (*super).getStruct().fields.size()) {
-          // This field does not exist in the super.
-          return refinedType;
-        }
-
-        // There is a field in the super.
-        return getMutableSuperField(*super, index);
       }
     };
 
