@@ -262,8 +262,11 @@
 
 (module
   ;; Write a parent to the parent and a child to the child. We can specialize
-  ;; each of them to contain their own type.
-  ;; (Note that we can't do a similar test with struct.set, and that would
+  ;; each of them to contain their own type. This tests that we are aware that
+  ;; a struct.new is of a precise type, which means that seeing a type written
+  ;; to a parent does not limit specialization in a child.
+  ;;
+  ;; (Note that we can't do a similar test with struct.set, as that would
   ;; imply the fields are mutable, which limits optimization, see the next
   ;; testcase after this.)
 
