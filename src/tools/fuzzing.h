@@ -238,6 +238,7 @@ private:
   // Makes a small change to a constant value.
   Literal tweak(Literal value);
   Literal makeLiteral(Type type);
+  Expression* makeRefFuncConst(Type type);
   Expression* makeConst(Type type);
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
@@ -280,6 +281,9 @@ private:
   Type getStorableType();
   Type getLoggableType();
   bool isLoggableType(Type type);
+  Nullability getSubType(Nullability nullability);
+  HeapType getSubType(HeapType type);
+  Rtt getSubType(Rtt rtt);
   Type getSubType(Type type);
 
   // Utilities
