@@ -412,3 +412,84 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $Y (struct_subtype  $X))
+  (type $Y (struct_subtype $X))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref $Y)) $A))
+  (type $C (struct_subtype (field (ref $X)) $A))
+
+  ;; CHECK:      (type $B (struct_subtype (field (ref $Y)) $A))
+  (type $B (struct_subtype (field (ref $X)) $A))
+
+  ;; CHECK:      (type $A (struct_subtype (field (ref $Y)) data))
+  (type $A (struct_subtype (field (ref $X)) data))
+
+  ;; CHECK:      (type $X (struct_subtype  data))
+  (type $X (struct_subtype data))
+
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (local $unused (ref null $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (struct.new_default $Y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; A use of type $C without ever creating an instance of it. We do still need
+    ;; to update the type if we update the parent type, and we will in fact update
+    ;; the parent $A's field from $X to $Y (see below), so we must do the same in
+    ;; $C. As a result, all the fields with $X in them in all of $A, $B, $C will
+    ;; be improved to contain $Y.
+    (local $unused (ref null $C))
+
+    (drop
+      (struct.new $B
+        (struct.new $Y) ;; This value is more specific than the field, which is an
+                        ;; opportunity to subtype, which we do for $B. As $A, our
+                        ;; parent, has no writes at all, we can propagate this
+                        ;; info to there as well, which means we can perform the
+                        ;; same optimization in $A as well.
+      )
+    )
+  )
+)
+
+(module
+  ;; As above, but remove the struct.new to $B, which means $A, $B, $C all have
+  ;; no writes to them. There are no optimizations to do here.
+
+  ;; CHECK:      (type $X (struct_subtype  data))
+  (type $X (struct_subtype data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref $X)) $A))
+  (type $C (struct_subtype (field (ref $X)) $A))
+
+  ;; CHECK:      (type $B (struct_subtype (field (ref $X)) $A))
+  (type $B (struct_subtype (field (ref $X)) $A))
+
+  ;; CHECK:      (type $Y (struct_subtype  $X))
+  (type $Y (struct_subtype $X))
+
+  ;; CHECK:      (type $A (struct_subtype (field (ref $X)) data))
+  (type $A (struct_subtype (field (ref $X)) data))
+
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (local $unused1 (ref null $C))
+  ;; CHECK-NEXT:  (local $unused2 (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $Y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    (local $unused1 (ref null $C))
+    (local $unused2 (ref null $B))
+    (drop (struct.new $Y))
+  )
+)
