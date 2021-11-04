@@ -46,15 +46,8 @@ constexpr size_t Important = 2;
 } // anonymous namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::vector<char> input)
-  : wasm(wasm), builder(wasm) {
-  bytes.swap(input);
-  pos = 0;
-  finishedInput = false;
-  // ensure *some* input to be read
-  if (bytes.size() == 0) {
-    bytes.push_back(0);
-  }
+                                             std::vector<char>&& input)
+  : wasm(wasm), builder(wasm), random(std::move(input)) {
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
   // - there's no point in logging externref or anyref because these are opaque
@@ -70,51 +63,8 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   : TranslateToFuzzReader(
       wasm, read_file<std::vector<char>>(filename, Flags::Binary)) {}
 
-int8_t TranslateToFuzzReader::get() {
-  if (pos == bytes.size()) {
-    // we ran out of input, go to the start for more stuff
-    finishedInput = true;
-    pos = 0;
-    xorFactor++;
-  }
-  return bytes[pos++] ^ xorFactor;
-}
-
-int16_t TranslateToFuzzReader::get16() {
-  auto temp = uint16_t(get()) << 8;
-  return temp | uint16_t(get());
-}
-
-int32_t TranslateToFuzzReader::get32() {
-  auto temp = uint32_t(get16()) << 16;
-  return temp | uint32_t(get16());
-}
-
-int64_t TranslateToFuzzReader::get64() {
-  auto temp = uint64_t(get32()) << 32;
-  return temp | uint64_t(get32());
-}
-
-Index TranslateToFuzzReader::upTo(Index x) {
-  if (x == 0) {
-    return 0;
-  }
-  Index raw;
-  if (x <= 255) {
-    raw = get();
-  } else if (x <= 65535) {
-    raw = get16();
-  } else {
-    raw = get32();
-  }
-  auto ret = raw % x;
-  // use extra bits as "noise" for later
-  xorFactor += raw / x;
-  return ret;
-}
-
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
-  while (options.passes.size() < 20 && !finishedInput && !oneIn(3)) {
+  while (options.passes.size() < 20 && !random.finished() && !oneIn(3)) {
     switch (upTo(32)) {
       case 0:
       case 1:
@@ -238,7 +188,7 @@ void TranslateToFuzzReader::build() {
   modifyInitialFunctions();
   addImportLoggingSupport();
   // keep adding functions until we run out of input
-  while (!finishedInput) {
+  while (!random.finished()) {
     auto* func = addFunction();
     addInvocations(func);
   }
@@ -614,7 +564,7 @@ Function* TranslateToFuzzReader::addFunction() {
     wasm.addExport(export_);
   }
   // add some to an elem segment
-  while (oneIn(3) && !finishedInput) {
+  while (oneIn(3) && !random.finished()) {
     auto type = Type(func->type, NonNullable);
     std::vector<ElementSegment*> compatibleSegments;
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
@@ -890,7 +840,7 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   invoker->body = body;
   FunctionCreationContext context(*this, invoker);
   std::vector<Expression*> invocations;
-  while (oneIn(2) && !finishedInput) {
+  while (oneIn(2) && !random.finished()) {
     std::vector<Expression*> args;
     for (const auto& type : func->getParams()) {
       args.push_back(makeConst(type));
@@ -920,7 +870,7 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
 Expression* TranslateToFuzzReader::make(Type type) {
   auto subtype = getSubType(type);
   // When we should stop, emit something small (but not necessarily trivial).
-  if (finishedInput || nesting >= 5 * NESTING_LIMIT || // hard limit
+  if (random.finished() || nesting >= 5 * NESTING_LIMIT || // hard limit
       (nesting >= NESTING_LIMIT && !oneIn(3))) {
     if (type.isConcrete()) {
       if (oneIn(2)) {
@@ -1101,13 +1051,13 @@ Expression* TranslateToFuzzReader::makeBlock(Type type) {
   if (num == 0 && !oneIn(10)) {
     num++;
   }
-  while (num > 0 && !finishedInput) {
+  while (num > 0 && !random.finished()) {
     ret->list.push_back(make(Type::none));
     num--;
   }
   // give a chance to make the final element an unreachable break, instead
   // of concrete - a common pattern (branch to the top of a loop etc.)
-  if (!finishedInput && type.isConcrete() && oneIn(2)) {
+  if (!random.finished() && type.isConcrete() && oneIn(2)) {
     ret->list.push_back(makeBreak(Type::unreachable));
   } else {
     ret->list.push_back(make(type));
