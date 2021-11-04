@@ -187,8 +187,8 @@ struct GlobalSubtyping : public Pass {
           if (!oldType.isRef()) {
             continue;
           }
-          auto newType = parent.finalInfos[oldStructType][i].get();
-          if (newType == Type::unreachable) {
+          auto refinedType = parent.finalInfos[oldStructType][i].get();
+          if (refinedType == Type::unreachable) {
             continue;
           }
 
@@ -200,11 +200,11 @@ struct GlobalSubtyping : public Pass {
           // super's field at the same time.
           auto mutable_ = oldFields[i].mutable_ == Mutable;
           if (mutable_) {
-            newType = getMutableSuperField(oldStructType, i);
+            refinedType = getMutableSuperField(oldStructType, i);
           }
 
-          assert(Type::isSubType(newType, oldType));
-          newFields[i].type = getTempType(newType);
+          assert(Type::isSubType(refinedType, oldType));
+          newFields[i].type = getTempType(refinedType);
         }
       }
 
