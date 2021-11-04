@@ -19,12 +19,12 @@
 // writes to that field in the entire program allow doing so.
 //
 
-#include "support/unique_deferring_queue.h"
 #include "ir/lubs.h"
 #include "ir/struct-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -65,9 +65,7 @@ struct FieldInfo : public LUBFinder {
   }
 
   // Force the lub to a particular type.
-  void set(Type type) {
-    lub = type;
-  }
+  void set(Type type) { lub = type; }
 
   void dump(std::ostream& o) {
     std::cout << "FieldInfo(" << lub << ", " << nullDefault << ")";
