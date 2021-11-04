@@ -90,10 +90,8 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 
   void
   noteDefault(Type fieldType, HeapType type, Index index, FieldInfo& info) {
-    // Default values do not affect what the type of a field can be turned into,
-    // as they are nullable, and we can ignore nulls there (LUBFinder will even
-    // modify them, but here there isn't even anything to modify). We will
-    // however need to keep the type nullable.
+    // Default values do not affect what the heap type of a field can be turned
+    // into. Note them, however, as they force us to keep the type nullable.
     if (fieldType.isRef()) {
       info.noteNullDefault();
     }
@@ -101,7 +99,7 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 
   void noteCopy(HeapType type, Index index, FieldInfo& info) {
     // Copies do not add any type requirements at all: the type will always be
-    // perfect.
+    // read and written to a place with the same type.
   }
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
@@ -131,9 +129,9 @@ struct GlobalSubtyping : public Pass {
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
     // Propagate things written during new to supertypes, as they must also be
-    // able to contain that type. Propagate things written using set to super-
-    // types as well, as the reference might be to a supertype if the field is
-    // present there.
+    // able to contain that type. Propagate things written using set to subtypes
+    // as well, as the reference might be to a supertype if the field is present
+    // there.
     TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
@@ -150,22 +148,19 @@ struct GlobalSubtyping : public Pass {
     // but we still need to make sure that the new types makes sense. In
     // particular, subtyping cares about things like mutability, and we also
     // need to handle the case where we have no writes to a type but do have
-    // them to subtypes and supertypes; in all these cases, we must preserve
+    // them to subtypes or supertypes; in all these cases, we must preserve
     // that a field is always a subtype of the parent field. To do so, we go
     // through all the types downward from supertypes to subtypes, ensuring the
     // subtypes are suitable.
     auto& subTypes = propagator.subTypes;
     UniqueDeferredQueue<HeapType> work;
     for (auto type : subTypes.types) {
-      if (!type.getSuperType()) {
+      if (type.isStruct() && !type.getSuperType()) {
         work.push(type);
       }
     }
     while (!work.empty()) {
       auto type = work.pop();
-      if (!type.isStruct()) {
-        continue;
-      }
 
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
