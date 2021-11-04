@@ -234,8 +234,8 @@ struct GlobalSubtyping : public Pass {
           if (!oldType.isRef()) {
             continue;
           }
-          auto refinedType = parent.finalInfos[oldStructType][i].get();
-          newFields[i].type = getTempType(refinedType);
+          auto newType = parent.finalInfos[oldStructType][i].get();
+          newFields[i].type = getTempType(newType);
         }
       }
     };
