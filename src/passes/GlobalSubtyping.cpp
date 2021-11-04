@@ -164,11 +164,11 @@ struct GlobalSubtyping : public Pass {
 
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
-        auto& info = finalInfos[type][i];
         auto oldType = fields[i].type;
+        auto& info = finalInfos[type][i];
         auto newType = info.get();
         if (newType == Type::unreachable) {
-          // We had no info on this field, so use the old type.
+          // We have no info on this field, so use the old type.
           info.set(oldType);
         } else {
           // We saw writes to this field, which must have been of subtypes of
@@ -195,6 +195,7 @@ struct GlobalSubtyping : public Pass {
         }
       }
 
+      // After all those decisions, see if we found anything to optimize.
       if (!canOptimize) {
         for (Index i = 0; i < fields.size(); i++) {
           auto oldType = fields[i].type;
