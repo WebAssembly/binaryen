@@ -15,6 +15,17 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- The EffectAnalyzer now takes advantage of immutability of globals. To achieve
+  that it must have access to the module. That is already the case in the C++
+  API, but the JS API allowed one to optionally not add a module when calling
+  `getSideEffects()`. It is now mandatory to pass in the module.
+- JS and Wasm builds now emit ECMAScript modules. New usage is:
+  ```js
+  import Binaryen from "path/to/binaryen.js";
+  const binaryen = await Binaryen();
+  ...
+  ```
+
 v102
 ----
 

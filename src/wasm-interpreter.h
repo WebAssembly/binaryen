@@ -26,6 +26,7 @@
 #include <cmath>
 #include <limits.h>
 #include <sstream>
+#include <variant>
 
 #include "ir/module-utils.h"
 #include "support/bits.h"
@@ -1404,153 +1405,139 @@ public:
   // Helper for ref.test, ref.cast, and br_on_cast, which share almost all their
   // logic except for what they return.
   struct Cast {
-    enum Outcome {
-      // We took a break before doing anything.
-      Break,
-      // The input was null.
-      Null,
-      // The cast succeeded.
-      Success,
-      // The cast failed.
-      Failure
-    } outcome;
+    // The control flow that preempts the cast.
+    struct Breaking : Flow {
+      Breaking(Flow breaking) : Flow(breaking) {}
+    };
+    // The null input to the cast.
+    struct Null : Literal {
+      Null(Literal original) : Literal(original) {}
+    };
+    // The result of the successful cast.
+    struct Success : Literal {
+      Success(Literal result) : Literal(result) {}
+    };
+    // The input to a failed cast.
+    struct Failure : Literal {
+      Failure(Literal original) : Literal(original) {}
+    };
 
-    Flow breaking;
-    Literal originalRef;
-    Literal castRef;
+    std::variant<Breaking, Null, Success, Failure> state;
+
+    template<class T> Cast(T state) : state(state) {}
+    Flow* getBreaking() { return std::get_if<Breaking>(&state); }
+    Literal* getNull() { return std::get_if<Null>(&state); }
+    Literal* getSuccess() { return std::get_if<Success>(&state); }
+    Literal* getFailure() { return std::get_if<Failure>(&state); }
+    Literal* getNullOrFailure() {
+      if (auto* original = getNull()) {
+        return original;
+      } else {
+        return getFailure();
+      }
+    }
   };
 
   template<typename T> Cast doCast(T* curr) {
-    Cast cast;
     Flow ref = this->visit(curr->ref);
     if (ref.breaking()) {
-      cast.outcome = cast.Break;
-      cast.breaking = ref;
-      return cast;
+      return typename Cast::Breaking{ref};
     }
+    // The RTT value for the type we are trying to cast to.
     Literal intendedRtt;
     if (curr->rtt) {
-      // This is a dynamic check with an rtt.
+      // This is a dynamic check with an RTT.
       Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
-        cast.outcome = cast.Break;
-        cast.breaking = rtt;
-        return cast;
+        return typename Cast::Breaking{ref};
       }
       intendedRtt = rtt.getSingleValue();
+    } else {
+      // If there is no explicit RTT, use the canonical RTT for the static type.
+      intendedRtt = Literal::makeCanonicalRtt(curr->intendedType);
     }
-    cast.originalRef = ref.getSingleValue();
-    if (cast.originalRef.isNull()) {
-      cast.outcome = cast.Null;
-      return cast;
+    Literal original = ref.getSingleValue();
+    if (original.isNull()) {
+      return typename Cast::Null{original};
     }
     // The input may not be GC data or a function; for example it could be an
-    // anyref of null (already handled above) or anything else (handled here,
-    // but this is for future use as atm the binaryen interpreter cannot
-    // represent external references).
-    if (!cast.originalRef.isData() && !cast.originalRef.isFunction()) {
-      cast.outcome = cast.Failure;
-      return cast;
+    // externref or an i31. The cast definitely fails in these cases.
+    if (!original.isData() && !original.isFunction()) {
+      return typename Cast::Failure{original};
     }
-    if (cast.originalRef.isFunction()) {
-      // Function casts are simple in that they have no RTT hierarchies; instead
-      // each reference has the canonical RTT for the signature.
-      // We must have a module in order to perform the cast, to get the type. If
-      // we do not have one, or if the function is not present (which may happen
-      // if we are optimizing a function before the entire module is built),
-      // then this is something we cannot precompute.
-      auto* func = module
-                     ? module->getFunctionOrNull(cast.originalRef.getFunc())
-                     : nullptr;
+    Literal actualRtt;
+    if (original.isFunction()) {
+      // Function references always have the canonical RTTs of the functions
+      // they reference. We must have a module to look up the function's type to
+      // get that canonical RTT.
+      auto* func =
+        module ? module->getFunctionOrNull(original.getFunc()) : nullptr;
       if (!func) {
-        cast.outcome = cast.Break;
-        cast.breaking = NONCONSTANT_FLOW;
-        return cast;
+        return typename Cast::Breaking{NONCONSTANT_FLOW};
       }
-      if (curr->rtt) {
-        Literal seenRtt = Literal(Type(Rtt(0, func->type)));
-        if (!seenRtt.isSubRtt(intendedRtt)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef = Literal(
-          func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
+      actualRtt = Literal::makeCanonicalRtt(func->type);
+    } else {
+      assert(original.isData());
+      actualRtt = original.getGCData()->rtt;
+    };
+    // We have the actual and intended RTTs, so perform the cast.
+    if (actualRtt.isSubRtt(intendedRtt)) {
+      Type resultType(intendedRtt.type.getHeapType(), NonNullable);
+      if (original.isFunction()) {
+        return typename Cast::Success{Literal{original.getFunc(), resultType}};
       } else {
-        if (!HeapType::isSubType(func->type, curr->intendedType)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef =
-          Literal(func->name, Type(curr->intendedType, NonNullable));
+        return
+          typename Cast::Success{Literal(original.getGCData(), resultType)};
       }
     } else {
-      // GC data store an RTT in each instance.
-      assert(cast.originalRef.isData());
-      auto gcData = cast.originalRef.getGCData();
-      if (curr->rtt) {
-        Literal seenRtt = gcData->rtt;
-        if (!seenRtt.isSubRtt(intendedRtt)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef =
-          Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
-      } else {
-        auto seenType = gcData->type;
-        if (!HeapType::isSubType(seenType, curr->intendedType)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef = Literal(gcData, Type(seenType, NonNullable));
-      }
+      return typename Cast::Failure{original};
     }
-    cast.outcome = cast.Success;
-    return cast;
   }
 
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
     auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
+    if (auto* breaking = cast.getBreaking()) {
+      return *breaking;
+    } else {
+      return Literal(int32_t(bool(cast.getSuccess())));
     }
-    return Literal(int32_t(cast.outcome == cast.Success));
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
     auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
-    }
-    if (cast.outcome == cast.Null) {
+    if (auto* breaking = cast.getBreaking()) {
+      return *breaking;
+    } else if (cast.getNull()) {
       return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
+    } else if (auto* result = cast.getSuccess()) {
+      return *result;
     }
-    if (cast.outcome == cast.Failure) {
-      trap("cast error");
-    }
-    assert(cast.outcome == cast.Success);
-    return cast.castRef;
+    assert(cast.getFailure());
+    trap("cast error");
+    WASM_UNREACHABLE("unreachable");
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
-    // BrOnCast* uses the casting infrastructure, so handle it first.
+    // BrOnCast* uses the casting infrastructure, so handle them first.
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       auto cast = doCast(curr);
-      if (cast.outcome == cast.Break) {
-        return cast.breaking;
-      }
-      if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+      if (auto* breaking = cast.getBreaking()) {
+        return *breaking;
+      } else if (auto* original = cast.getNullOrFailure()) {
         if (curr->op == BrOnCast) {
-          return cast.originalRef;
+          return *original;
         } else {
-          return Flow(curr->name, cast.originalRef);
+          return Flow(curr->name, *original);
         }
-      }
-      assert(cast.outcome == cast.Success);
-      if (curr->op == BrOnCast) {
-        return Flow(curr->name, cast.castRef);
       } else {
-        return cast.castRef;
+        auto* result = cast.getSuccess();
+        assert(result);
+        if (curr->op == BrOnCast) {
+          return Flow(curr->name, *result);
+        } else {
+          return *result;
+        }
       }
     }
     // The others do a simpler check for the type.
@@ -1618,7 +1605,9 @@ public:
     }
     return {value};
   }
-  Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
+  Flow visitRttCanon(RttCanon* curr) {
+    return Literal::makeCanonicalRtt(curr->type.getHeapType());
+  }
   Flow visitRttSub(RttSub* curr) {
     Flow parent = this->visit(curr->parent);
     if (parent.breaking()) {
@@ -1626,34 +1615,22 @@ public:
     }
     auto parentValue = parent.getSingleValue();
     auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
-    newSupers->push_back(parentValue.type);
+    newSupers->push_back(parentValue.type.getHeapType());
     if (curr->fresh) {
       newSupers->back().makeFresh();
     }
     return Literal(std::move(newSupers), curr->type);
   }
 
-  // Generates GC data for either dynamic (with an RTT) or static (with a type)
-  // typing. Dynamic typing will provide an rtt expression and an rtt flow with
-  // the value, while static typing only provides a heap type directly.
-  template<typename T>
-  std::shared_ptr<GCData>
-  makeGCData(Expression* rttExpr, Flow& rttFlow, HeapType type, T& data) {
-    if (rttExpr) {
-      return std::make_shared<GCData>(rttFlow.getSingleValue(), data);
-    } else {
-      return std::make_shared<GCData>(type, data);
-    }
-  }
-
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    Flow rtt;
+    Literal rttVal;
     if (curr->rtt) {
-      rtt = this->visit(curr->rtt);
+      Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
+      rttVal = rtt.getSingleValue();
     }
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
@@ -1680,8 +1657,10 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(
-      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1724,12 +1703,13 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    Flow rtt;
+    Literal rttVal;
     if (curr->rtt) {
-      rtt = this->visit(curr->rtt);
+      Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
+      rttVal = rtt.getSingleValue();
     }
     auto size = this->visit(curr->size);
     if (size.breaking()) {
@@ -1764,17 +1744,20 @@ public:
         data[i] = value;
       }
     }
-    return Flow(
-      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
-    Flow rtt;
+    Literal rttVal;
     if (curr->rtt) {
-      rtt = this->visit(curr->rtt);
+      Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
+      rttVal = rtt.getSingleValue();
     }
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
@@ -1801,8 +1784,10 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return Flow(
-      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
