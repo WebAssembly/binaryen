@@ -170,10 +170,6 @@ struct GlobalSubtyping : public Pass {
         if (newType == Type::unreachable) {
           // We have no info on this field, so use the old type.
           info.set(oldType);
-        } else {
-          // We saw writes to this field, which must have been of subtypes of
-          // the old type.
-          assert(Type::isSubType(newType, oldType));
         }
       }
 
