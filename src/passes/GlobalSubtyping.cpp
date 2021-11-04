@@ -189,7 +189,18 @@ struct GlobalSubtyping : public Pass {
           }
           auto refinedType = parent.finalInfos[oldStructType][i].get();
           if (refinedType == Type::unreachable) {
-            continue;
+            // We saw no writes to this field. However, it is possible that we
+            // saw writes to a parent field. Normally those would be propagated
+            // to us, but not if they only happened in a struct.new, where we
+            // know that they happened in that precise type and so we did not
+            // propagate. In that case we must still preserve the necessary
+            // property that our field is a subtype of the parent.
+            refinedType = getReachableSuperField(oldStructType, i);
+            if (refinedType == Type::unreachable) {
+              // There is no parent with reachable data, so there is truly
+              // nothing to do here.
+              continue;
+            }
           }
 
           // We are almost ready to apply a more specific type here. One
@@ -209,21 +220,46 @@ struct GlobalSubtyping : public Pass {
       }
 
       // Given a type (an old struct type, before the rewrite) and an index in
+      // it, find the first parent that has reachable data for that field, and
+      // return that.
+      // TODO: add some memoization here for speed
+      Type getReachableSuperField(HeapType oldStructType, Index index) {
+        auto refinedType = parent.finalInfos[oldStructType][index].get();
+        if (refinedType != Type::unreachable) {
+          return refinedType;
+        }
+
+        // This field is unreachable, so look in our super.
+        auto super = oldStructType.getSuperType();
+        if (!super) {
+          // There is no super to take into account.
+          return refinedType;
+        }
+        if (index >= (*super).getStruct().fields.size()) {
+          // This field does not exist in the super.
+          return refinedType;
+        }
+
+        // There is a field in the super.
+        return getReachableSuperField(*super, index);
+      }
+
+      // Given a type (an old struct type, before the rewrite) and an index in
       // it, and given it is a mutable field, get the proper type for it. The
       // proper type is that of its super's field, which in return is also
       // dependent on its own super, and so forth.
       // TODO: add some memoization here for speed
       Type getMutableSuperField(HeapType oldStructType, Index index) {
         assert(oldStructType.getStruct().fields[index].mutable_ == Mutable);
-        auto newType = parent.finalInfos[oldStructType][index].get();
+        auto refinedType = parent.finalInfos[oldStructType][index].get();
         auto super = oldStructType.getSuperType();
         if (!super) {
           // There is no super to take into account.
-          return newType;
+          return refinedType;
         }
         if (index >= (*super).getStruct().fields.size()) {
           // This field does not exist in the super.
-          return newType;
+          return refinedType;
         }
 
         // There is a field in the super.
