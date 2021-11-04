@@ -833,12 +833,10 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return;
   }
-  auto* invoker = new Function;
-  invoker->name = name;
-  invoker->type = Signature(Type::none, Type::none);
+  auto invoker = builder.makeFunction(name, Signature(), {});
   Block* body = builder.makeBlock();
   invoker->body = body;
-  FunctionCreationContext context(*this, invoker);
+  FunctionCreationContext context(*this, invoker.get());
   std::vector<Expression*> invocations;
   while (oneIn(2) && !random.finished()) {
     std::vector<Expression*> args;
@@ -859,12 +857,8 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
     return;
   }
   body->list.set(invocations);
-  wasm.addFunction(invoker);
-  auto* export_ = new Export;
-  export_->name = name;
-  export_->value = name;
-  export_->kind = ExternalKind::Function;
-  wasm.addExport(export_);
+  wasm.addFunction(std::move(invoker));
+  wasm.addExport(builder.makeExport(name, name, ExternalKind::Function));
 }
 
 Expression* TranslateToFuzzReader::make(Type type) {
@@ -1882,8 +1876,11 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
-  // Neither ref.func nor ref.as_non_null are allowed in globals, so we can only
-  // create non-nullable function references if we are in a function context.
+  // ref.as_non_null is allowed in globals and we don't yet support func.ref in
+  // globals because we create globals before we create functions. As a result,
+  // we can only create non-nullable function references if we are in a function
+  // context for now.
+  // TODO: Generate trivial functions to support ref.func in globals.
   assert(type.isNullable() || funcContext);
   if (!funcContext || (type.isNullable() && oneIn(8))) {
     return builder.makeRefNull(type);
