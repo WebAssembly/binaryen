@@ -2361,7 +2361,10 @@ void FunctionValidator::visitRttCanon(RttCanon* curr) {
     getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
   shouldBeTrue(curr->type.isRtt(), curr, "rtt.canon must have RTT type");
   auto rtt = curr->type.getRtt();
-  shouldBeEqual(rtt.depth, Index(0), curr, "rtt.canon has a depth of 0");
+  shouldBeEqual(rtt.depth,
+                Index(curr->type.getHeapType().getDepth()),
+                curr,
+                "rtt.canon must have the depth of its heap type");
 }
 
 void FunctionValidator::visitRttSub(RttSub* curr) {

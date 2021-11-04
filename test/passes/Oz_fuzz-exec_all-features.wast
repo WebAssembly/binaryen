@@ -574,7 +574,9 @@
     (struct.new_default $struct)
    )
   )
-  ;; Casting to a supertype works.
+  ;; Casting to a supertype does not work because the canonical RTT for the
+  ;; subtype is not a sub-rtt of the canonical RTT of the supertype in
+  ;; structural mode.
   (call $log
    (ref.test_static $struct
     (struct.new_default $extendedstruct)

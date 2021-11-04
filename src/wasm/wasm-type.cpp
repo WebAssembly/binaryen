@@ -1217,6 +1217,15 @@ std::optional<HeapType> HeapType::getSuperType() const {
   return {};
 }
 
+size_t HeapType::getDepth() const {
+  size_t depth = 0;
+  std::optional<HeapType> super;
+  for (auto curr = *this; (super = curr.getSuperType()); curr = *super) {
+    ++depth;
+  }
+  return depth;
+}
+
 bool HeapType::isNominal() const {
   if (isBasic()) {
     return false;

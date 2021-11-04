@@ -390,6 +390,10 @@ public:
   // `TypeSystem::Equirecursive` mode.
   std::optional<HeapType> getSuperType() const;
 
+  // Return the depth of this heap type in the nominal type hierarchy, i.e. the
+  // number of supertypes in its supertype chain.
+  size_t getDepth() const;
+
   // Whether this is a nominal type in the sense of being a GC Milestone 4
   // nominal type. Although all non-basic HeapTypes are nominal in
   // `TypeSystem::Nominal` mode, this will still return false unless the type is
