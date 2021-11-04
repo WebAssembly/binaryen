@@ -240,6 +240,7 @@ private:
       auto type = work.pop();
       auto& infos = combinedInfos[type];
 
+      // Propagate shared fields to the supertype.
       if (auto superType = type.getSuperType()) {
         auto& superInfos = combinedInfos[*superType];
         auto& superFields = superType->getStruct().fields;
