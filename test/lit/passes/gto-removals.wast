@@ -394,15 +394,22 @@
   ;; CHECK:      (type $struct (struct_subtype (field i32) (field (rtt $struct)) data))
   (type $struct (struct i32 f64 (ref any) (rtt $struct)))
 
-  ;; CHECK:      (type $ref|any|_=>_none (func_subtype (param (ref any)) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref|any|_=>_none (func_subtype (param (ref any)) func))
 
   ;; CHECK:      (type $i32_=>_i32 (func_subtype (param i32) (result i32) func))
 
   ;; CHECK:      (type $i32_=>_f64 (func_subtype (param i32) (result f64) func))
 
   ;; CHECK:      (type $i32_=>_ref|any| (func_subtype (param i32) (result (ref any)) func))
+
+  ;; CHECK:      (global $imm-i32 i32 (i32.const 1234))
+  (global $imm-i32 i32 (i32.const 1234))
+
+  ;; CHECK:      (global $mut-i32 (mut i32) (i32.const 5678))
+  (global $mut-i32 (mut i32) (i32.const 5678))
 
   ;; CHECK:      (func $gets (param $x (ref any))
   ;; CHECK-NEXT:  (drop
@@ -470,6 +477,82 @@
         (call $helper0 (i32.const 0))
         (call $helper1 (i32.const 1))
         (call $helper2 (i32.const 2))
+        (rtt.canon $struct)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $new-side-effect-global-imm
+  ;; CHECK-NEXT:  (local $0 f64)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (call $helper1
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper2
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (global.get $imm-i32)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-side-effect-global-imm
+    ;; As above, the 2nd&3rd fields here will be removed. The first field does
+    ;; a global.get, which has effects, but those effects do not interact with
+    ;; anything else (since it is an immutable global), so we do not need a
+    ;; local for it.
+    (drop
+      (struct.new $struct
+        (global.get $imm-i32)
+        (call $helper1 (i32.const 0))
+        (call $helper2 (i32.const 1))
+        (rtt.canon $struct)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $new-side-effect-global-mut
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (global.get $mut-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper1
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (call $helper2
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-side-effect-global-mut
+    ;; As above, but the global is mutable, so we will use a local: the calls
+    ;; might alter that global, in theory.
+    (drop
+      (struct.new $struct
+        (global.get $mut-i32)
+        (call $helper1 (i32.const 0))
+        (call $helper2 (i32.const 1))
         (rtt.canon $struct)
       )
     )
