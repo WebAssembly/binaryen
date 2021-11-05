@@ -909,7 +909,11 @@ struct OptimizeInstructions
 
     if (curr->op == ExtendUInt32 || curr->op == ExtendSInt32) {
       if (auto* load = curr->value->dynCast<Load>()) {
-        if (!load->isAtomic) {
+        if (curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2) {
+          // Skip special this cases:
+          // i64.extend_i32_u(i32.load8_s(x))
+          // i64.extend_i32_u(i32.load16_s(x))
+        } else if (!load->isAtomic) {
           // i64.extend_i32_s(i32.load(_8|_16)(_u|_s)(x))  =>
           //    i64.load(_8|_16|_32)(_u|_s)(x)
           //
