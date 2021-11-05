@@ -1271,6 +1271,51 @@
   )
  )
 
+ ;; Regression test checking that breaking RTTs are interpreted correctly.
+ ;; CHECK:      (func $cast-breaking-rtt
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast
+ ;; CHECK-NEXT:    (ref.cast
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:     (call $unreachable-rtt)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (call $unreachable-rtt)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $cast-breaking-rtt
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (ref.cast
+ ;; NOMNL-NEXT:    (ref.cast
+ ;; NOMNL-NEXT:     (struct.new_default $struct)
+ ;; NOMNL-NEXT:     (call $unreachable-rtt)
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (call $unreachable-rtt)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $cast-breaking-rtt
+  (drop
+   (ref.cast
+    (ref.cast
+     (struct.new_default $struct)
+     (call $unreachable-rtt)
+    )
+    (call $unreachable-rtt)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $unreachable-rtt (result (rtt $struct))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $unreachable-rtt (result (rtt $struct))
+ ;; NOMNL-NEXT:  (unreachable)
+ ;; NOMNL-NEXT: )
+ (func $unreachable-rtt (result (rtt $struct))
+  (unreachable)
+ )
+
  ;; CHECK:      (func $new_block_unreachable (result anyref)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:   (drop
