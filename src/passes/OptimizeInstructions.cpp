@@ -907,6 +907,25 @@ struct OptimizeInstructions
       }
     }
 
+    if (curr->op == ExtendUInt32 || curr->op == ExtendSInt32) {
+      if (auto* load = curr->value->dynCast<Load>()) {
+        if (!load->isAtomic) {
+          // i64.extend_i32_s(i32.load(_8|_16)(_u|_s)(x))  =>
+          //    i64.load(_8|_16|_32)(_u|_s)(x)
+          //
+          // i64.extend_i32_u(i32.load(_8|_16)(_u|_s)(x))  =>
+          //    i64.load(_8|_16|_32)(_u|_s)(x)
+          load->type = Type::i64;
+          if (load->bytes == 4) {
+            // Special case for i32.load. In this case signedness depends on
+            // extend operation.
+            load->signed_ = curr->op == ExtendSInt32;
+          }
+          return replaceCurrent(load);
+        }
+      }
+    }
+
     if (Abstract::hasAnyReinterpret(curr->op)) {
       // i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
       // i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
