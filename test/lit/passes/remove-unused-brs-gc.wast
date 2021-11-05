@@ -3,6 +3,9 @@
 ;; RUN:  | filecheck %s
 
 (module
+ ;; CHECK:      (type $struct (struct ))
+ (type $struct (struct ))
+
  ;; CHECK:      (func $br_on_non_data-1
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $any (result anyref)
@@ -82,4 +85,31 @@
    )
   )
  )
+
+ ;; CHECK:      (func $nested_br_on (result dataref)
+ ;; CHECK-NEXT:  (block $label$1 (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $label$1
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $nested_br_on (result dataref)
+  (block $label$1 (result dataref)
+   (drop
+    ;; The inner br_on_data will become a direct br since the type proves it
+    ;; is in fact data. That then becomes unreachable, and the parent must
+    ;; handle that properly (do nothing without hitting an assertion).
+    (br_on_data $label$1
+     (br_on_data $label$1
+      (struct.new_default $struct)
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
 )
+
