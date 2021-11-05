@@ -725,9 +725,7 @@ private:
     }
     void visitRefAs(RefAs* curr) {
       // traps when the arg is not valid
-      if (curr->value->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      parent.implicitTrap = true;
     }
   };
 
