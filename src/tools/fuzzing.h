@@ -98,6 +98,8 @@ private:
 
   Name funcrefTableName;
 
+  std::vector<HeapType> heapTypes;
+
   std::unordered_map<Type, std::vector<Name>> globalsByType;
 
   std::vector<Type> loggableTypes;
@@ -141,6 +143,19 @@ private:
   Index upTo(Index x) { return random.upTo(x); }
   bool oneIn(Index x) { return random.oneIn(x); }
   Index upToSquared(Index x) { return random.upToSquared(x); }
+
+  // Pick from a vector-like container or a fixed list.
+  template<typename T> const typename T::value_type& pick(const T& vec) {
+    return random.pick(vec);
+  }
+  template<typename T, typename... Args> T pick(T first, Args... args) {
+    return random.pick(first, args...);
+  }
+  // Pick from options associated with features.
+  template<typename T> using FeatureOptions = Random::FeatureOptions<T>;
+  template<typename T> const T pick(FeatureOptions<T>& picker) {
+    return random.pick(picker);
+  }
 
   // Setup methods
   void setupMemory();
@@ -295,87 +310,6 @@ private:
   // 0 to the limit, logarithmic scale
   Index logify(Index x) {
     return std::floor(std::log(std::max(Index(1) + x, Index(1))));
-  }
-
-  // Pick from a vector-like container
-  template<typename T> const typename T::value_type& pick(const T& vec) {
-    assert(!vec.empty());
-    auto index = upTo(vec.size());
-    return vec[index];
-  }
-
-  // pick from a fixed list
-  template<typename T, typename... Args> T pick(T first, Args... args) {
-    auto num = sizeof...(Args) + 1;
-    auto temp = upTo(num);
-    return pickGivenNum<T>(temp, first, args...);
-  }
-
-  template<typename T> T pickGivenNum(size_t num, T first) {
-    assert(num == 0);
-    return first;
-  }
-
-// Trick to avoid a bug in GCC 7.x.
-// Upstream bug report: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82800
-#define GCC_VERSION                                                            \
-  (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION > 70000 && GCC_VERSION < 70300
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-
-  template<typename T, typename... Args>
-  T pickGivenNum(size_t num, T first, Args... args) {
-    if (num == 0) {
-      return first;
-    }
-    return pickGivenNum<T>(num - 1, args...);
-  }
-
-#if GCC_VERSION > 70000 && GCC_VERSION < 70300
-#pragma GCC diagnostic pop
-#endif
-
-  template<typename T> struct FeatureOptions {
-    template<typename... Ts>
-    FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
-      options[feature].push_back(option);
-      return add(feature, rest...);
-    }
-
-    struct WeightedOption {
-      T option;
-      size_t weight;
-    };
-
-    template<typename... Ts>
-    FeatureOptions<T>&
-    add(FeatureSet feature, WeightedOption weightedOption, Ts... rest) {
-      for (size_t i = 0; i < weightedOption.weight; i++) {
-        options[feature].push_back(weightedOption.option);
-      }
-      return add(feature, rest...);
-    }
-
-    FeatureOptions<T>& add(FeatureSet feature) { return *this; }
-
-    std::map<FeatureSet, std::vector<T>> options;
-  };
-
-  template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {
-    std::vector<T> matches;
-    for (const auto& item : picker.options) {
-      if (wasm.features.has(item.first)) {
-        matches.reserve(matches.size() + item.second.size());
-        matches.insert(matches.end(), item.second.begin(), item.second.end());
-      }
-    }
-    return matches;
-  }
-
-  template<typename T> const T pick(FeatureOptions<T>& picker) {
-    return pick(items(picker));
   }
 };
 

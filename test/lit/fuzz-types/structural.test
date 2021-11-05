@@ -1,0 +1,24 @@
+;; RUN: binaryen-fuzz-types --structural -v --seed=0
+
+;; CHECK:      Running with seed 0
+;; CHECK-NEXT: Built 20 types:
+;; CHECK-NEXT: 0: (struct (field anyref (mut f32)))
+;; CHECK-NEXT: 1: (func (result i64))
+;; CHECK-NEXT: 2: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 3: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 4: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 5: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 6: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 7: (struct (field anyref (mut f32)))
+;; CHECK-NEXT: 8: (struct (field anyref (mut f32) f64 i8 v128 (mut i8)))
+;; CHECK-NEXT: 9: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 10: (struct (field anyref (mut f32) (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))) (ref (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))) (rtt 1 (struct (field anyref (mut f32) (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq)) i16))) (ref (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))) ...1)))))
+;; CHECK-NEXT: 11: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 12: (struct (field anyref (mut f32) (mut (rtt 2 eq))))
+;; CHECK-NEXT: 13: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 14: (struct (field anyref (mut f32) (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq)) i16))) (ref (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))) (rtt 1 ...1)))
+;; CHECK-NEXT: 15: (func (result i64))
+;; CHECK-NEXT: 16: (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))
+;; CHECK-NEXT: 17: (struct (field anyref (mut f32) (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq)) i16))) (ref (struct (field (rtt 0 ...1) (ref (func (result i64))) (mut (ref null (struct (field anyref (mut f32))))) (mut i8) i64 (mut (ref null (struct (field anyref (mut f32) (mut (rtt 2 eq))))))))) (rtt 1 ...1)))
+;; CHECK-NEXT: 18: (struct (field anyref (mut f32) (mut (rtt 2 eq)) i16))
+;; CHECK-NEXT: 19: (func (result i64))
