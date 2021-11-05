@@ -25,6 +25,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-ref-as (param $x anyref)
+    ;; Without -tnh, we must assume all ref_as* can have a trap effect, and so
+    ;; we cannot remove anything here.
     (drop
       (ref.as_non_null
         (local.get $x)
