@@ -1628,7 +1628,7 @@ struct OptimizeInstructions
             // trapsNeverHappen will help if the code validates without the
             // child).
           }
-        } else {
+        } else if (!canBeCastTo(intendedType, childIntendedType)) {
           // The types are not compatible, so if the input is not null, this
           // will trap.
           if (!curr->type.isNullable()) {

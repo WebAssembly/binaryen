@@ -2561,6 +2561,54 @@
     )
   )
 
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (block (result (ref eq))
+  ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $A
+  ;; NOMNL-NEXT:    (block (result (ref eq))
+  ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+    ;; The input is non-nullable here, and the middle block is of a simpler
+    ;; type than either the parent or the child. This checks that we do not
+    ;; mis-optimize this case: In general the outer cast is not needed, but
+    ;; the middle block prevents us from seeing that (after other opts run,
+    ;; however, we would).
+    (drop
+      (ref.cast_static $A
+        (block (result (ref eq))
+          (call $ref-cast-static-fallthrough-remaining
+            (local.get $x)
+          )
+          (ref.cast_static $B
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $ref-cast-static-squared-impossible (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct
