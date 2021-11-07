@@ -224,6 +224,10 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
         }
       }
     }
+
+    // Aside from live necessarily being the same as the set of live locals at
+    // the start, we will also use live in the next loop, and assume it begins
+    // at that state.
     assert(live == curr->contents.start);
 
     // Now that we know live ranges, check if locals interfere in this block.
@@ -238,31 +242,31 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     // index i+2 is a set of that tee, then indexes [i, i+2] form a
     // "copy range" and all the locals involved there do not conflict.
 
-    // Track the values in each local, using a numbering: 0 means the local is
-    // not alive currently, and 1 and above each identify a unique different
-    // value.
-    std::vector<Index> localValues(numLocals, 0);
-    Index nextValueId = 1;
+    // Track the values in each local, using a numbering where each index
+    // represents a unique different value.
+    // TODO: optimize: map? hoist out of loop?
+    std::vector<Index> values(numLocals);
+    Index nextValue = 1;
 
     if (curr->get() == entry) {
       // Each parameter is assumed to have a different value on entry.
       for (Index i = 0; i < getFunction()->getNumParams(); i++) {
-        localValues[i] = nextValueId++;
+        values[i] = nextValue++;
       }
 
       // Locals with the same type have the same default value, so we can give
       // all default values the same ID (since we do not coalesce across types
       // anyhow, comparisons across types are not relevant).
-      auto zeroInitId = nextValueId++;
+      auto zeroInit = nextValue++;
       for (Index i = getFunction()->getNumParams(); i < getFunction()->getNumLocals(); i++) {
-        localValues[i] = zeroInitId;
+        values[i] = zeroInit;
       }
     } else {
       // In any block but the entry, assume that each live local might have a
       // different value at the start.
       // TODO: Propagating SSA values across blocks could identify more copies.
       for (auto index : curr->contents.start) {
-        localValues[index] = nextValueId++;
+        values[index] = nextValue++;
       }
     }
 
@@ -271,11 +275,40 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
       auto index = action.index;
       if (action.isGet()) {
         if (endsLiveRange(i)) {
-          assert(localValues[index] > 0);
-          localValues[index] = 0;
+          bool erased = live.erase(action.index);
+          assert(erased);
+          std::ignore == erased;
         }
-      } else {
-        // TODO: Use !action.effective to ignore sets?
+      } else if (action.effective) {
+        // This is an effective set. Find the value being assigned to the local.
+        auto* set = (*action.origin)->cast<LocalSet>();
+        Index newValue;
+        if (set->value->is<LocalGet>()) {
+          // This is a copy, of the get right before us.
+          assert(i > 0 && s->value == *actions[i - 1].origin);
+          newValue = lastGetValue;
+        } else if (auto* subSet = set->value->dynCast<LocalSet>()) {
+          // This is a copy, of a tee right before us.
+          assert(i > 0 && subSet == *actions[i - 1].origin);
+          newValue = values[subSet->index];
+        } else {
+          // This is not a copy; assign a new unique value.
+          newValue = nextValue++;
+        }
+
+        // Update interferences: This will interfere with any other local that
+        // is currently live and contains a different value.
+        for (auto other : live) {
+          // This index was not live before this set.
+          assert(other != index);
+          if (values[other] != values[index]) {
+            interfere(other, index);
+          }
+        }
+
+        // Finally, note that this index is now live, as a live range has begun
+        // by this effective set.
+        live.insert(action.index);
       }
     }
 
