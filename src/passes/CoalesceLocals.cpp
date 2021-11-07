@@ -59,10 +59,6 @@ struct CoalesceLocals
 
   void calculateInterferences();
 
-  void calculateInterferences(const SetOfLocals& locals);
-
-  void calculateInterferencesWhileIgnoringCopies();
-
   void pickIndicesFromOrder(std::vector<Index>& order,
                             std::vector<Index>& indices);
   void pickIndicesFromOrder(std::vector<Index>& order,
@@ -109,7 +105,7 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   // prioritize back edges
   increaseBackEdgePriorities();
   // use liveness to find interference
-  calculateInterferencesWhileIgnoringCopies();
+  calculateInterferences();
   // pick new indices
   std::vector<Index> indices;
   pickIndices(indices);
@@ -148,56 +144,12 @@ void CoalesceLocals::increaseBackEdgePriorities() {
 void CoalesceLocals::calculateInterferences() {
   interferences.resize(numLocals * numLocals);
   std::fill(interferences.begin(), interferences.end(), false);
-  for (auto& curr : basicBlocks) {
-    if (liveBlocks.count(curr.get()) == 0) {
-      continue; // ignore dead blocks
-    }
-    // everything coming in might interfere, as it might come from a different
-    // block
-    auto live = curr->contents.end;
-    calculateInterferences(live);
-    // scan through the block itself
-    auto& actions = curr->contents.actions;
-    for (int i = int(actions.size()) - 1; i >= 0; i--) {
-      auto& action = actions[i];
-      auto index = action.index;
-      if (action.isGet()) {
-        // new live local, interferes with all the rest
-        // TODO: this could be faster if it only does the loop if it actually
-        //       inserts?
-        live.insert(index);
-        for (auto i : live) {
-          interfere(i, index);
-        }
-      } else {
-        if (live.erase(index)) {
-          action.effective = true;
-        }
-      }
-    }
-  }
-  // Params have a value on entry, so mark them as live, as variables
-  // live at the entry expect their zero-init value.
-  SetOfLocals start = entry->contents.start;
-  auto numParams = getFunction()->getNumParams();
-  for (Index i = 0; i < numParams; i++) {
-    start.insert(i);
-  }
-  calculateInterferences(start);
-}
 
-void CoalesceLocals::calculateInterferences(const SetOfLocals& locals) {
-  Index size = locals.size();
-  for (Index i = 0; i < size; i++) {
-    for (Index j = i + 1; j < size; j++) {
-      interfereLowHigh(locals[i], locals[j]);
-    }
-  }
-}
+  // We will track the values in each local, using a numbering where each index
+  // represents a unique different value. To avoid reallocating this array all
+  // the time, allocate it once outside the loop.
+  std::vector<Index> values(numLocals);
 
-void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
-  interferences.resize(numLocals * numLocals);
-  std::fill(interferences.begin(), interferences.end(), false);
   for (auto& curr : basicBlocks) {
     if (liveBlocks.count(curr.get()) == 0) {
       continue; // ignore dead blocks
@@ -232,8 +184,7 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
 
     // Now that we know live ranges, check if locals interfere in this block.
     // Locals interfere if they might have different values where their live
-    // ranges overlap; what we do here over what calculateInterferences() does
-    // is that we do an SSA-like analysis inside the block to see where their
+    // ranges overlap. We do an SSA-like analysis inside the block to see where their
     // values are identical. That is, if one local is known to be a copy of
     // another, then we can ignore interferences there.
     //
@@ -241,11 +192,6 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     // That is, if index i has a get, and index i+1 has a tee of that get, and
     // index i+2 is a set of that tee, then indexes [i, i+2] form a
     // "copy range" and all the locals involved there do not conflict.
-
-    // Track the values in each local, using a numbering where each index
-    // represents a unique different value.
-    // TODO: optimize: map? hoist out of loop?
-    std::vector<Index> values(numLocals);
 
     // Locals with the same type have the same default value, so we can give all
     // default values the same ID (since we do not coalesce across types anyhow,
