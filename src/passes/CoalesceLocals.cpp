@@ -280,36 +280,43 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
           assert(erased);
           WASM_UNUSED(erased);
         }
-      } else if (action.effective) {
-        // This is an effective set. Find the value being assigned to the local.
-        auto* set = (*action.origin)->cast<LocalSet>();
-        Index newValue;
-        if (set->value->is<LocalGet>() || set->value->is<LocalSet>()) {
-          // This is a copy: Either it is a get or a tee, that occurs right
-          // before us.
-          assert(i > 0 && set->value == *actions[i - 1].origin);
-          newValue = values[actions[i - 1].index];
-        } else {
-          // This is not a copy; assign a new unique value.
-          newValue = nextValue++;
-        }
-        values[index] = newValue;
-
-        // Update interferences: This will interfere with any other local that
-        // is currently live and contains a different value.
-        for (auto other : live) {
-          // This index was not live before this set (we will mark it as live
-          // right after this loop).
-          assert(other != index);
-          if (values[other] != newValue) {
-            interfere(other, index);
-          }
-        }
-
-        // Finally, note that this index is now live, as a live range has begun
-        // by this effective set.
-        live.insert(action.index);
+        continue;
       }
+
+      // This is a set. Find the value being assigned to the local.
+      auto* set = (*action.origin)->cast<LocalSet>();
+      Index newValue;
+      if (set->value->is<LocalGet>() || set->value->is<LocalSet>()) {
+        // This is a copy: Either it is a get or a tee, that occurs right
+        // before us.
+        assert(i > 0 && set->value == *actions[i - 1].origin);
+        newValue = values[actions[i - 1].index];
+      } else {
+        // This is not a copy; assign a new unique value.
+        newValue = nextValue++;
+      }
+      values[index] = newValue;
+
+      // If this set has no gets that read from it, then it does not start a
+      // live range, and it cannot cause interference.
+      if (!action.effective) {
+        continue;
+      }
+
+      // Update interferences: This will interfere with any other local that
+      // is currently live and contains a different value.
+      for (auto other : live) {
+        // This index was not live before this set (we will mark it as live
+        // right after this loop).
+        assert(other != index);
+        if (values[other] != newValue) {
+          interfere(other, index);
+        }
+      }
+
+      // Finally, note that this index is now live, as a live range has begun
+      // by this effective set.
+      live.insert(action.index);
     }
 
     // Note that we do not need to do anything for merges: while in general an

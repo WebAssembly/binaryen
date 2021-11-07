@@ -11,9 +11,9 @@
 
   ;; CHECK:      (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $f64_i32_=>_i64 (func (param f64 i32) (result i64)))
-
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (type $f64_i32_=>_i64 (func (param f64 i32) (result i64)))
 
   ;; CHECK:      (type $3 (func (param i32 f32)))
 
@@ -2498,6 +2498,37 @@
     )
     (local.get $temp)
    )
+  )
+
+  ;; CHECK:      (func $ineffective-set (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $1)
+  ;; CHECK-NEXT: )
+  (func $ineffective-set (result i32)
+   (local $0 i32)
+   (local $1 i32)
+   (local $2 i32)
+   (local.set $0
+    ;; This set of $2 is ineffective in that there are no gets of $2, but the
+    ;; value does flow through to the outer set, and we must notice that. In
+    ;; particular, we must see that $0 and $1 conflict, and cannot be coalesced
+    ;; together ($1 is alive from the zero init to the very end, and so $0's
+    ;; set means it diverges).
+    (local.tee $2
+     (i32.const 100)
+    )
+   )
+   (drop
+    (local.get $0)
+   )
+   (local.get $1)
   )
 )
 
