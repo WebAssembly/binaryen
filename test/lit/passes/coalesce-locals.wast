@@ -2644,6 +2644,45 @@
    (local.get $1)
   )
 
+  ;; CHECK:      (func $copy-third-party (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
+  ;; CHECK-NEXT: )
+  (func $copy-third-party (result i32)
+   (local $0 i32)
+   (local $1 i32)
+   (local $2 i32)
+   ;; $2 begins with a value, which is copied to $0 and $1. None of these
+   ;; interfere and they can all be coalesced.
+   (local.set $2
+    (i32.const 100)
+   )
+   (local.set $1
+    (local.get $2)
+   )
+   (local.set $0
+    (local.get $2)
+   )
+   (drop
+    (local.get $0)
+   )
+   (drop
+    (local.get $1)
+   )
+   (local.get $2)
+  )
+
   ;; CHECK:      (func $ineffective-set (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
