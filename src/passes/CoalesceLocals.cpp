@@ -57,6 +57,8 @@ struct CoalesceLocals
 
   void increaseBackEdgePriorities();
 
+  // Calculate interferences between locals. This will will fill
+  // the data structure |interferences|.
   void calculateInterferences();
 
   void pickIndicesFromOrder(std::vector<Index>& order,
