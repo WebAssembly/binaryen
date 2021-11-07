@@ -165,6 +165,8 @@ void CoalesceLocals::calculateInterferences() {
       auto index = action.index;
       if (action.isGet()) {
         // new live local, interferes with all the rest
+        // TODO: this could be faster if it only does the loop if it actually
+        //       inserts?
         live.insert(index);
         for (auto i : live) {
           interfere(i, index);
@@ -203,29 +205,38 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
       continue; // ignore dead blocks
     }
 
-
-    // First, find which gets end a live range.
-    // everything coming in might interfere, as it might come from a different
-    // block
-    auto live = curr->contents.end;
-    calculateInterferences(live);
-    // scan through the block itself
+    // First, find which gets end a live range. While doing so, also calculate
+    // the effectiveness of sets.
     auto& actions = curr->contents.actions;
+    std::vector<bool> endsLiveRange(actions.size(), false);
+    auto live = curr->contents.end;
     for (int i = int(actions.size()) - 1; i >= 0; i--) {
       auto& action = actions[i];
       auto index = action.index;
       if (action.isGet()) {
-        // new live local, interferes with all the rest
-        live.insert(index);
-        for (auto i : live) {
-          interfere(i, index);
+        if (!live.count(index)) {
+          // The local is not live after us, so its liveness ends here.
+          endsLiveRange[i] = true;
+          live.insert(index);
         }
       } else {
         if (live.erase(index)) {
+          // This set is effective: there are gets that read from it.
           action.effective = true;
         }
       }
     }
+
+    // Now that we know live ranges, check if locals interfere in this block.
+    // Locals interfere if they might have different values where their live
+    // ranges overlap; what we do here over what calculateInterferences() does
+    // is that we do an SSA-like analysis inside the block to see where their
+    // values are identical. That is, if one local is known to be a copy of
+    // another, then we can ignore interferences there.
+    // ...
+
+    // Locals arriving from different blocks might interfere.
+    calculateInterferencesWhileIgnoringCopies(curr);
   }
 
 
