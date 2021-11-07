@@ -212,7 +212,7 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
       auto& action = actions[i];
       auto index = action.index;
       if (action.isGet()) {
-        if (!live.count(index)) {
+        if (!live.has(index)) {
           // The local is not live after us, so its liveness ends here.
           endsLiveRange[i] = true;
           live.insert(index);
@@ -248,7 +248,7 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     std::vector<Index> values(numLocals);
     Index nextValue = 1;
 
-    if (curr->get() == entry) {
+    if (curr.get() == entry) {
       // Each parameter is assumed to have a different value on entry.
       for (Index i = 0; i < getFunction()->getNumParams(); i++) {
         values[i] = nextValue++;
@@ -274,34 +274,32 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
       auto& action = actions[i];
       auto index = action.index;
       if (action.isGet()) {
-        if (endsLiveRange(i)) {
+        if (endsLiveRange[i]) {
           bool erased = live.erase(action.index);
           assert(erased);
-          std::ignore == erased;
+          WASM_UNUSED(erased);
         }
       } else if (action.effective) {
         // This is an effective set. Find the value being assigned to the local.
         auto* set = (*action.origin)->cast<LocalSet>();
         Index newValue;
-        if (set->value->is<LocalGet>()) {
-          // This is a copy, of the get right before us.
-          assert(i > 0 && s->value == *actions[i - 1].origin);
-          newValue = lastGetValue;
-        } else if (auto* subSet = set->value->dynCast<LocalSet>()) {
-          // This is a copy, of a tee right before us.
-          assert(i > 0 && subSet == *actions[i - 1].origin);
-          newValue = values[subSet->index];
+        if (set->value->is<LocalGet>() || set->value->is<LocalSet>()) {
+          // This is a copy: Either it is a get or a tee, that occurs right
+          // before us.
+          assert(i > 0 && set->value == *actions[i - 1].origin);
+          newValue = values[actions[i - 1].index];
         } else {
           // This is not a copy; assign a new unique value.
           newValue = nextValue++;
         }
+        values[index] = newValue;
 
         // Update interferences: This will interfere with any other local that
         // is currently live and contains a different value.
         for (auto other : live) {
           // This index was not live before this set.
           assert(other != index);
-          if (values[other] != values[index]) {
+          if (values[other] != newValue) {
             interfere(other, index);
           }
         }
@@ -331,42 +329,6 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     start.insert(i);
   }
   calculateInterferences(start);
-}
-
-void CoalesceLocals::calculateInterferencesWhileIgnoringCopies(BasicBlock* block) {
-  const auto& mergedLocals = block->contents.start;
-  if (block->in.size() >= 64) {
-    // Too many merging blocks to do a simple optimized calculation here; fall
-    // back to one that ignores copying.
-    calcualteInferences(mergedLocals); // XXX why is it "end" before?
-    return;
-  }
-
-  // A vector mapping each merging local to the blocks it arrives from, as a
-  // bitfield. That is, vector[k] is a series of bits where the i-th bit says
-  // that local k arrived from incoming block i.
-  std::vector<uint64_t> arrivesFrom(numLocals, 0);
-  for (Index i = 0; i < block->in.size(); i++) {
-    for (Index k : block->in[i]->out->contents.end) {
-      // If k is live at the end of an incoming block, it is live at the start
-      // of this one.
-      assert(mergedLocals.count(k));
-      arrivesFrom[k] |= uint64_t(1) << uint64_t(i);
-    }
-  }
-
-  // Now that we know where locals arrive from, we can mark as interfering any
-  // that arrive from different blocks, as we assume that when they arrive from
-  // the same block then we have already determined if they interfere or not.
-  // TODO: A full cross-block SSA-like analysis could handle more cases here.
-  Index size = mergedLocals.size();
-  for (Index i = 0; i < size; i++) {
-    for (Index j = i + 1; j < size; j++) {
-      if (arrivesFrom[locals[i]] != arrivesFrom[locals[j]]) {
-        interfereLowHigh(locals[i], locals[j]);
-      }
-    }
-  }
 }
 
 // Indices decision making
