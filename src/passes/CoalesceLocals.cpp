@@ -61,6 +61,10 @@ struct CoalesceLocals
 
   void calculateInterferences(const SetOfLocals& locals);
 
+  void calculateInterferencesWhileIgnoringCopies();
+
+  void calculateInterferencesWhileIgnoringCopies(BasicBlock* block);
+
   void pickIndicesFromOrder(std::vector<Index>& order,
                             std::vector<Index>& indices);
   void pickIndicesFromOrder(std::vector<Index>& order,
@@ -107,7 +111,7 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   // prioritize back edges
   increaseBackEdgePriorities();
   // use liveness to find interference
-  calculateInterferences();
+  calculateInterferencesWhileIgnoringCopies();
   // pick new indices
   std::vector<Index> indices;
   pickIndices(indices);
@@ -187,6 +191,88 @@ void CoalesceLocals::calculateInterferences(const SetOfLocals& locals) {
   for (Index i = 0; i < size; i++) {
     for (Index j = i + 1; j < size; j++) {
       interfereLowHigh(locals[i], locals[j]);
+    }
+  }
+}
+
+void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
+  interferences.resize(numLocals * numLocals);
+  std::fill(interferences.begin(), interferences.end(), false);
+  for (auto& curr : basicBlocks) {
+    if (liveBlocks.count(curr.get()) == 0) {
+      continue; // ignore dead blocks
+    }
+
+
+    // First, find which gets end a live range.
+    // everything coming in might interfere, as it might come from a different
+    // block
+    auto live = curr->contents.end;
+    calculateInterferences(live);
+    // scan through the block itself
+    auto& actions = curr->contents.actions;
+    for (int i = int(actions.size()) - 1; i >= 0; i--) {
+      auto& action = actions[i];
+      auto index = action.index;
+      if (action.isGet()) {
+        // new live local, interferes with all the rest
+        live.insert(index);
+        for (auto i : live) {
+          interfere(i, index);
+        }
+      } else {
+        if (live.erase(index)) {
+          action.effective = true;
+        }
+      }
+    }
+  }
+
+
+
+// TODO: share from here
+  // Params have a value on entry, so mark them as live, as variables
+  // live at the entry expect their zero-init value.
+  SetOfLocals start = entry->contents.start;
+  auto numParams = getFunction()->getNumParams();
+  for (Index i = 0; i < numParams; i++) {
+    start.insert(i);
+  }
+  calculateInterferences(start);
+}
+
+void CoalesceLocals::calculateInterferencesWhileIgnoringCopies(BasicBlock* block) {
+  const auto& mergedLocals = block->contents.start;
+  if (block->in.size() >= 64) {
+    // Too many merging blocks to do a simple optimized calculation here; fall
+    // back to one that ignores copying.
+    calcualteInferences(mergedLocals); // XXX why is it "end" before?
+    return;
+  }
+
+  // A vector mapping each merging local to the blocks it arrives from, as a
+  // bitfield. That is, vector[k] is a series of bits where the i-th bit says
+  // that local k arrived from incoming block i.
+  std::vector<uint64_t> arrivesFrom(numLocals, 0);
+  for (Index i = 0; i < block->in.size(); i++) {
+    for (Index k : block->in[i]->out->contents.end) {
+      // If k is live at the end of an incoming block, it is live at the start
+      // of this one.
+      assert(mergedLocals.count(k));
+      arrivesFrom[k] |= uint64_t(1) << uint64_t(i);
+    }
+  }
+
+  // Now that we know where locals arrive from, we can mark as interfering any
+  // that arrive from different blocks, as we assume that when they arrive from
+  // the same block then we have already determined if they interfere or not.
+  // TODO: A full cross-block SSA-like analysis could handle more cases here.
+  Index size = mergedLocals.size();
+  for (Index i = 0; i < size; i++) {
+    for (Index j = i + 1; j < size; j++) {
+      if (arrivesFrom[locals[i]] != arrivesFrom[locals[j]]) {
+        interfereLowHigh(locals[i], locals[j]);
+      }
     }
   }
 }
