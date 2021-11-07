@@ -27,17 +27,17 @@
     ;; Other ref.as* as well.
     (drop
       (ref.as_func
-        (local.get $x)
+        (local.get $y)
       )
     )
     (drop
       (ref.as_data
-        (local.get $x)
+        (local.get $y)
       )
     )
     (drop
       (ref.as_i31
-        (local.get $x)
+        (local.get $y)
       )
     )
 
