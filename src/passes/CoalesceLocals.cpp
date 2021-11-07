@@ -246,6 +246,11 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     // represents a unique different value.
     // TODO: optimize: map? hoist out of loop?
     std::vector<Index> values(numLocals);
+
+    // Locals with the same type have the same default value, so we can give all
+    // default values the same ID (since we do not coalesce across types anyhow,
+    // comparisons across types are not relevant).
+    auto zeroInit = 0;
     Index nextValue = 1;
 
     if (curr.get() == entry) {
@@ -254,10 +259,6 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
         values[i] = nextValue++;
       }
 
-      // Locals with the same type have the same default value, so we can give
-      // all default values the same ID (since we do not coalesce across types
-      // anyhow, comparisons across types are not relevant).
-      auto zeroInit = nextValue++;
       for (Index i = getFunction()->getNumParams(); i < getFunction()->getNumLocals(); i++) {
         values[i] = zeroInit;
       }
@@ -337,15 +338,30 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     // block, somewhere, and therefore we leave it to that block to identify,
     // and so blocks only need to reason about their contents, not what arrives
     // to them.
+    //
+    // The one exception here is the entry to the function, see below.
   }
 
   // Finally, we must not try to coalesce parameters are they are fixed. Mark
   // them as "interfering" so that we do not need to special-case them later.
-  SetOfLocals start = entry->contents.start;
   auto numParams = getFunction()->getNumParams();
   for (Index i = 0; i < numParams; i++) {
     for (Index j = i + 1; j < numParams; j++) {
       interfereLowHigh(i, j);
+    }
+  }
+
+  // Parameters also interfere with locals that use the zero-init value, as they
+  // are live at the same place with different values (the start of the entry
+  // block) and there is no previous block with a set that would represent the
+  // place where the conflict happens: the conflict occurs due to the zero-init
+  // value, which is set implicitly, without a local.set (which would have
+  // alerted us to the conflict).
+  for (auto i : entry->contents.start) {
+    if (i >= numParams) {
+      for (Index j = 0; j < numParams; j++) {
+        interfereLowHigh(j, i);
+      }
     }
   }
 }

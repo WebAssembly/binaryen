@@ -872,14 +872,15 @@
     )
   )
   ;; CHECK:      (func $params (param $0 i32) (param $1 f32)
+  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $params (type $3) (param $p i32) (param $q f32)
