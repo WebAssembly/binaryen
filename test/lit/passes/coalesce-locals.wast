@@ -2529,6 +2529,33 @@
    (local.get $1)
   )
 
+  ;; CHECK:      (func $tee-copies-do-not-interfere (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
+  ;; CHECK-NEXT: )
+  (func $tee-copies-do-not-interfere (result i32)
+   (local $0 i32)
+   (local $1 i32)
+   ;; Similar to the above, but now the copying is done using a tee.
+   (local.set $1
+    (local.tee $0
+     (i32.const 100)
+    )
+   )
+   (drop
+    (local.get $0)
+   )
+   (local.get $1)
+  )
+
   ;; CHECK:      (func $ineffective-set (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
