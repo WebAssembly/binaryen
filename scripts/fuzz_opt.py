@@ -1169,7 +1169,6 @@ opt_choices = [
 
 
 def randomize_opt_flags():
-    return     ["--coalesce-locals"]
     flag_groups = []
     has_flatten = False
     # core opts

@@ -297,7 +297,8 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
         // Update interferences: This will interfere with any other local that
         // is currently live and contains a different value.
         for (auto other : live) {
-          // This index was not live before this set.
+          // This index was not live before this set (we will mark it as live
+          // right after this loop).
           assert(other != index);
           if (values[other] != newValue) {
             interfere(other, index);
