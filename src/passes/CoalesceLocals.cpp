@@ -63,8 +63,6 @@ struct CoalesceLocals
 
   void calculateInterferencesWhileIgnoringCopies();
 
-  void calculateInterferencesWhileIgnoringCopies(BasicBlock* block);
-
   void pickIndicesFromOrder(std::vector<Index>& order,
                             std::vector<Index>& indices);
   void pickIndicesFromOrder(std::vector<Index>& order,
@@ -226,6 +224,7 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
         }
       }
     }
+    assert(live == curr->contents.start);
 
     // Now that we know live ranges, check if locals interfere in this block.
     // Locals interfere if they might have different values where their live
@@ -233,17 +232,66 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     // is that we do an SSA-like analysis inside the block to see where their
     // values are identical. That is, if one local is known to be a copy of
     // another, then we can ignore interferences there.
-    // ...
+    //
+    // ??! To track copies, we maintain a range of the current copying operation.
+    // That is, if index i has a get, and index i+1 has a tee of that get, and
+    // index i+2 is a set of that tee, then indexes [i, i+2] form a
+    // "copy range" and all the locals involved there do not conflict.
 
-    // Locals arriving from different blocks might interfere.
-    calculateInterferencesWhileIgnoringCopies(curr);
+    // Track the values in each local, using a numbering: 0 means the local is
+    // not alive currently, and 1 and above each identify a unique different
+    // value.
+    std::vector<Index> localValues(numLocals, 0);
+    Index nextValueId = 1;
+
+    if (curr->get() == entry) {
+      // Each parameter is assumed to have a different value on entry.
+      for (Index i = 0; i < getFunction()->getNumParams(); i++) {
+        localValues[i] = nextValueId++;
+      }
+
+      // Locals with the same type have the same default value, so we can give
+      // all default values the same ID (since we do not coalesce across types
+      // anyhow, comparisons across types are not relevant).
+      auto zeroInitId = nextValueId++;
+      for (Index i = getFunction()->getNumParams(); i < getFunction()->getNumLocals(); i++) {
+        localValues[i] = zeroInitId;
+      }
+    } else {
+      // In any block but the entry, assume that each live local might have a
+      // different value at the start.
+      // TODO: Propagating SSA values across blocks could identify more copies.
+      for (auto index : curr->contents.start) {
+        localValues[index] = nextValueId++;
+      }
+    }
+
+    for (Index i = 0; i < actions.size(); i++) {
+      auto& action = actions[i];
+      auto index = action.index;
+      if (action.isGet()) {
+        if (endsLiveRange(i)) {
+          assert(localValues[index] > 0);
+          localValues[index] = 0;
+        }
+      } else {
+        // TODO: Use !action.effective to ignore sets?
+      }
+    }
+
+    // Note that we do not need to do anything for merges: while in general an
+    // interference can happen either in a block or when control flow merges,
+    // in wasm we have default values for all locals. As a result, if a local is
+    // live at the beginning of a block, it will be live at the ends of *all*
+    // the blocks reaching it: there is no possibility of an "undefined value."
+    // Consequently, we don't need to do anything more than scan through blocks
+    // as we have: if there is a conflict between locals then it must occur in
+    // some block, and we will see it at that time.
   }
 
-
-
 // TODO: share from here
-  // Params have a value on entry, so mark them as live, as variables
-  // live at the entry expect their zero-init value.
+  // Params are fixed and we cannot coalesce them, so mark them as
+  // "interfering."
   SetOfLocals start = entry->contents.start;
   auto numParams = getFunction()->getNumParams();
   for (Index i = 0; i < numParams; i++) {
