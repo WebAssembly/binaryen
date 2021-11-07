@@ -2644,6 +2644,47 @@
    (local.get $1)
   )
 
+  ;; CHECK:      (func $copies-and-then-set-without-interfering (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 123)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
+  ;; CHECK-NEXT: )
+  (func $copies-and-then-set-without-interfering (result i32)
+   (local $0 i32)
+   (local $1 i32)
+   (local.set $0
+    (i32.const 100)
+   )
+   (local.set $1
+    (local.get $0)
+   )
+   (drop
+    (local.get $0)
+   )
+   (drop
+    (local.get $1)
+   )
+   ;; Similar to the above, but now $0's live range has ended (there is no get
+   ;; of it at the point of this set), and so there is no interference, and
+   ;; these locals can be coalesced.
+   (local.set $1
+    (i32.const 123)
+   )
+   (local.get $1)
+  )
+
   ;; CHECK:      (func $copy-third-party (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
