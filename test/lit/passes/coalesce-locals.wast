@@ -318,12 +318,11 @@
   )
   ;; CHECK:      (func $zero-init
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-init (type $2)
@@ -338,12 +337,11 @@
   )
   ;; CHECK:      (func $multi
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $multi (type $2)
@@ -359,14 +357,13 @@
   )
   ;; CHECK:      (func $if-else
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -747,20 +744,19 @@
   )
   ;; CHECK:      (func $if5
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (block $block1
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if5 (type $2)
@@ -889,17 +885,14 @@
     )
   )
   ;; CHECK:      (func $params (param $0 i32) (param $1 f32)
-  ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $params (type $3) (param $p i32) (param $q f32)
@@ -919,7 +912,6 @@
   )
   ;; CHECK:      (func $interfere-in-dead4
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (br_if $block
   ;; CHECK-NEXT:    (i32.const 0)
@@ -928,7 +920,7 @@
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -949,8 +941,6 @@
   )
   ;; CHECK:      (func $switch
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block $switch$def
   ;; CHECK-NEXT:   (block $switch-case$1
   ;; CHECK-NEXT:    (block $switch-case$2
@@ -966,11 +956,11 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $switch (type $2)

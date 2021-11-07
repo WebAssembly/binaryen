@@ -315,21 +315,39 @@ void CoalesceLocals::calculateInterferencesWhileIgnoringCopies() {
     // interference can happen either in a block or when control flow merges,
     // in wasm we have default values for all locals. As a result, if a local is
     // live at the beginning of a block, it will be live at the ends of *all*
-    // the blocks reaching it: there is no possibility of an "undefined value."
-    // Consequently, we don't need to do anything more than scan through blocks
-    // as we have: if there is a conflict between locals then it must occur in
-    // some block, and we will see it at that time.
+    // the blocks reaching it: there is no possibility of an "unset local." That
+    // is, imagine we have this merge with a conflict:
+    //
+    //  [a is set to some value] ->-
+    //                              |
+    //                              |->- [merge block where a and b are used]
+    //                              |
+    //  [b is set to some value] ->-
+    //
+    // It is true that a conflict happens in the merge block, and if we had
+    // unset locals then the top block would have b unset, and the bottom block
+    // would have a unset, and so there would be no conflict there and the
+    // problem would only appear in the merge. But in wasm, that a and b are
+    // used in the merge block means that they are live at the end of both the
+    // top and bottom block, and that liveness will extend all the way back to
+    // *some* set of those values, possibly only the zero-initialization at the
+    // function start. Therefore a conflict will be noticed in both the top and
+    // bottom blocks, and that merge block does not need to reason about merging
+    // its inputs. In other words, a conflict will appear in the middle of a
+    // block, somewhere, and therefore we leave it to that block to identify,
+    // and so blocks only need to reason about their contents, not what arrives
+    // to them.
   }
 
-// TODO: share from here
-  // Params are fixed and we cannot coalesce them, so mark them as
-  // "interfering."
+  // Finally, we must not try to coalesce parameters are they are fixed. Mark
+  // them as "interfering" so that we do not need to special-case them later.
   SetOfLocals start = entry->contents.start;
   auto numParams = getFunction()->getNumParams();
   for (Index i = 0; i < numParams; i++) {
-    start.insert(i);
+    for (Index j = i + 1; j < numParams; j++) {
+      interfereLowHigh(i, j);
+    }
   }
-  calculateInterferences(start);
 }
 
 // Indices decision making
@@ -517,11 +535,17 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
         set->index = indices[set->index];
         // in addition, we can optimize out redundant copies and ineffective
         // sets
-        LocalGet* get;
-        if ((get = set->value->dynCast<LocalGet>()) &&
-            get->index == set->index) {
-          action.removeCopy();
-          continue;
+        if (auto* get = set->value->dynCast<LocalGet>()) {
+          if (get->index == set->index) {
+            action.removeCopy();
+            continue;
+          }
+        }
+        if (auto* subSet = set->value->dynCast<LocalSet>()) {
+          if (subSet->index == set->index) {
+            set->value = subSet->value;
+            continue;
+          }
         }
         // remove ineffective actions
         if (!action.effective) {
