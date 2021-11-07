@@ -7,11 +7,11 @@
   (memory 10)
   ;; CHECK:      (type $2 (func))
 
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
   ;; CHECK:      (type $4 (func (param i32)))
 
   ;; CHECK:      (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
-
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (type $f64_i32_=>_i64 (func (param f64 i32) (result i64)))
 
@@ -2498,6 +2498,35 @@
     )
     (local.get $temp)
    )
+  )
+
+  ;; CHECK:      (func $copies-do-not-interfere (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
+  ;; CHECK-NEXT: )
+  (func $copies-do-not-interfere (result i32)
+   (local $0 i32)
+   (local $1 i32)
+   (local.set $0
+    (i32.const 100)
+   )
+   ;; The two locals are copies, and so they do not interfere, even though
+   ;; their live ranges overlap and there is a set of one of them in that
+   ;; overlap. We can coalesce them together to a single local.
+   (local.set $1
+    (local.get $0)
+   )
+   (drop
+    (local.get $0)
+   )
+   (local.get $1)
   )
 
   ;; CHECK:      (func $ineffective-set (result i32)
