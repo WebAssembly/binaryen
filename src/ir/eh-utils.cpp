@@ -66,7 +66,6 @@ bool isPopValid(Expression* catchBody) {
     }
     firstChild = *it.begin();
   }
-  assert(false); // Shouldn't be reached
 }
 
 } // namespace EHUtils

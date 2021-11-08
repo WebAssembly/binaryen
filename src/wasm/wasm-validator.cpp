@@ -2170,9 +2170,9 @@ void FunctionValidator::visitTry(Try* curr) {
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     Name tagName = curr->catchTags[i];
     auto* tag = getModule()->getTagOrNull(tagName);
-    std::string msg =
-      std::string("catch's tag name is invalid: ") + tagName.c_str();
-    shouldBeTrue(tag != nullptr, curr, msg.c_str());
+    if (!shouldBeTrue(tag != nullptr, curr)) {
+      getStream() << "tag name is invalid: " << tagName << "\n";
+    }
 
     auto* catchBody = curr->catchBodies[i];
     std::vector<Pop*> pops = findPops(catchBody);
@@ -2184,8 +2184,7 @@ void FunctionValidator::visitTry(Try* curr) {
       std::string msg =
         std::string("catch's tag (") + tagName.c_str() +
         ") has params, so there should be a single pop within the catch body";
-      shouldBeTrue(pops.size() == 1, curr, msg.c_str());
-      if (pops.size() == 1) {
+      if (shouldBeTrue(pops.size() == 1, curr, msg.c_str())) {
         auto* pop = *pops.begin();
         msg = std::string("catch's tag (") + tagName.c_str() +
               ")'s pop doesn't have the same type as the tag's params";
