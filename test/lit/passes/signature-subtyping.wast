@@ -2,6 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --signature-subtyping -all -S -o - | filecheck %s
 
 (module
+  ;; $func is defined with an anyref parameter but always called with a $struct,
+  ;; and we can specialize the heap type to that. That will both update the
+  ;; heap type's definition as well as the types of the parameters as printed
+  ;; on the function (which are derived from the heap type).
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
@@ -14,8 +19,6 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
-    ;; This function is called with a $struct, and we can specialize the heap
-    ;; type to that.
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
