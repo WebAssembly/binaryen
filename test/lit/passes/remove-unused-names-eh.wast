@@ -10,7 +10,7 @@
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $tag$0
+  ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (try $label$8
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (try
@@ -32,7 +32,7 @@
   (func $func0
     (try $label$9 ;; needed due to a rethrow
       (do)
-      (catch $tag$0
+      (catch_all
         (try $label$8 ;; needed due to a delegate
           (do
             (try $label$6 ;; this one is not needed

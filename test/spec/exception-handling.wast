@@ -191,12 +191,29 @@
             )
           )
           (catch $e-i32
+            (drop (pop i32))
             (rethrow $l0) ;; rethrow (i32.const 1) again
           )
         )
       )
       (catch $e-i32
         (pop i32) ;; result is (i32.const 1)
+      )
+    )
+  )
+
+  (func (export "pop_validation_test")
+    (try
+      (do)
+      (catch $e-i32
+        (throw $e-i32
+          (if (result i32)
+            ;; pop is within an if condition, so this is OK.
+            (pop i32)
+            (i32.const 0)
+            (i32.const 3)
+          )
+        )
       )
     )
   )
@@ -215,6 +232,7 @@
 (assert_return (invoke "rethrow_target_test1") (i32.const 2))
 (assert_return (invoke "rethrow_target_test2") (i32.const 1))
 (assert_return (invoke "rethrow_target_test3") (i32.const 1))
+(assert_return (invoke  "pop_validation_test"))
 
 (assert_invalid
   (module
@@ -232,6 +250,7 @@
 
 (assert_invalid
   (module
+    (tag $e-i32 (param i32))
     (func $f0
       (try
         (do (i32.const 0))
@@ -328,4 +347,202 @@
     )
   )
   "all rethrow targets must be valid"
+)
+
+(assert_invalid
+  (module
+    (func $f0
+      (try
+        (do)
+        (catch $e)
+      )
+    )
+  )
+  "catch's tag name is invalid: e"
+)
+
+(assert_invalid
+  (module
+    (tag $e-none (param))
+    (func $f0 (result i32)
+      (try (result i32)
+        (do
+          (i32.const 0)
+        )
+        (catch $e-none
+          (pop i32)
+        )
+      )
+    )
+  )
+  "catch's tag (e-none) doesn't have any params, but there are pops"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0
+      (try
+        (do)
+        (catch $e-i32)
+      )
+    )
+  )
+  "catch's tag (e-i32) has params, so there should be a single pop within the catch body"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0
+      (try
+        (do)
+        (catch $e-i32
+          (drop
+            (pop i32)
+          )
+          (drop
+            (pop i32)
+          )
+        )
+      )
+    )
+  )
+  "catch's tag (e-i32) has params, so there should be a single pop within the catch body"
+)
+
+(assert_invalid
+  (module
+    (func $f0 (result i32)
+      (try (result i32)
+        (do
+          (i32.const 0)
+        )
+        (catch_all
+          (pop i32)
+        )
+      )
+    )
+  )
+  "catch_all's body should not have pops"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0 (result f32)
+      (try (result f32)
+        (do
+          (f32.const 0)
+        )
+        (catch $e-i32
+          (pop f32)
+        )
+      )
+    )
+  )
+  "catch's tag (e-i32)'s pop doesn't have the same type as the tag's params"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0 (result i32)
+      (try (result i32)
+        (do
+          (i32.const 0)
+        )
+        (catch $e-i32
+          (drop
+            (i32.const 0)
+          )
+          (pop i32) ;; Not the first children within 'catch'
+        )
+      )
+    )
+  )
+  "catch's body (e-i32)'s pop's location is not valid"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0
+      (try
+        (do)
+        (catch $e-i32
+          (throw $e-i32
+            (block (result i32)
+              (pop i32) ;; pop is within a block
+            )
+          )
+        )
+      )
+    )
+  )
+  "catch's body (e-i32)'s pop's location is not valid"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0
+      (try
+        (do)
+        (catch $e-i32
+          (throw $e-i32
+            (loop (result i32)
+              (pop i32) ;; pop is within a loop
+            )
+          )
+        )
+      )
+    )
+  )
+  "catch's body (e-i32)'s pop's location is not valid"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0
+      (try
+        (do)
+        (catch $e-i32
+          (throw $e-i32
+            (try (result i32)
+              (do
+                (pop i32) ;; pop is within a try
+              )
+              (catch_all
+                (i32.const 0)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  "catch's body (e-i32)'s pop's location is not valid"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (func $f0
+      (try
+        (do)
+        (catch $e-i32
+          (throw $e-i32
+            (if (result i32)
+              (i32.const 0)
+              (pop i32) ;; pop is within an if true body
+              (i32.const 3)
+            )
+          )
+        )
+      )
+    )
+  )
+  "catch's body (e-i32)'s pop's location is not valid"
 )

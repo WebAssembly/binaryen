@@ -19,6 +19,7 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "ir/eh-utils.h"
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
@@ -2142,6 +2143,66 @@ void FunctionValidator::visitTry(Try* curr) {
   shouldBeFalse(curr->isCatch() && curr->isDelegate(),
                 curr,
                 "try cannot have both catch and delegate at the same time");
+
+  // Given a catch body, find pops corresponding to the catch
+  auto findPops = [](Expression* expr) {
+    std::vector<Pop*> pops;
+    std::vector<Expression*> work;
+    work.push_back(expr);
+    while (!work.empty()) {
+      auto* curr = work.back();
+      work.pop_back();
+      if (auto* pop = curr->dynCast<Pop>()) {
+        pops.push_back(pop);
+      } else if (auto* try_ = curr->dynCast<Try>()) {
+        // We don't go into inner catch bodies; pops in inner catch bodies
+        // belong to the inner catches
+        work.push_back(try_->body);
+      } else {
+        for (auto* child : ChildIterator(curr)) {
+          work.push_back(child);
+        }
+      }
+    }
+    return pops;
+  };
+
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    Name tagName = curr->catchTags[i];
+    auto* tag = getModule()->getTagOrNull(tagName);
+    std::string msg =
+      std::string("catch's tag name is invalid: ") + tagName.c_str();
+    shouldBeTrue(tag != nullptr, curr, msg.c_str());
+
+    auto* catchBody = curr->catchBodies[i];
+    std::vector<Pop*> pops = findPops(catchBody);
+    if (tag->sig.params == Type::none) {
+      std::string msg = std::string("catch's tag (") + tagName.c_str() +
+                        ") doesn't have any params, but there are pops";
+      shouldBeTrue(pops.empty(), curr, msg.c_str());
+    } else {
+      std::string msg =
+        std::string("catch's tag (") + tagName.c_str() +
+        ") has params, so there should be a single pop within the catch body";
+      shouldBeTrue(pops.size() == 1, curr, msg.c_str());
+      if (pops.size() == 1) {
+        auto* pop = *pops.begin();
+        msg = std::string("catch's tag (") + tagName.c_str() +
+              ")'s pop doesn't have the same type as the tag's params";
+        shouldBeTrue(pop->type == tag->sig.params, curr, msg.c_str());
+        msg = std::string("catch's body (") + tagName.c_str() +
+              ")'s pop's location is not valid";
+        shouldBeTrue(EHUtils::isPopValid(catchBody), curr, msg.c_str());
+      }
+    }
+  }
+
+  if (curr->hasCatchAll()) {
+    auto* catchAllBody = curr->catchBodies.back();
+    shouldBeTrue(findPops(catchAllBody).empty(),
+                 curr,
+                 "catch_all's body should not have pops");
+  }
 
   if (curr->isDelegate()) {
     noteDelegate(curr->delegateTarget, curr);
