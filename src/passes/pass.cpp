@@ -157,7 +157,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
   registerPass("signature-subtyping",
-               "apply more specific subtypes to type fields where possible",
+               "apply more specific subtypes to signature types where possible",
                createSignatureSubtypingPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);

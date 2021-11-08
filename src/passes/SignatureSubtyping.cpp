@@ -15,16 +15,16 @@
  */
 
 //
-// Apply more specific subtypes to type fields where possible, where all the
-// writes to that field in the entire program allow doing so.
+// Apply more specific subtypes to signature/function types where possible.
+//
+// TODO: optimize results too and not just params.
 //
 
+#include "ir/find_all.h"
 #include "ir/lubs.h"
-#include "ir/struct-utils.h"
+#include "ir/module-utils.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -34,186 +34,47 @@ namespace wasm {
 
 namespace {
 
-// We use a LUBFinder to track field info. A LUBFinder keeps track of the best
-// possible LUB so far. The only extra functionality we need here is whether
-// there is a default null value (which would force us to keep the
-// type nullable).
-struct FieldInfo : public LUBFinder {
-  bool nullDefault = false;
-
-  void noteNullDefault() { nullDefault = true; }
-
-  bool hasNullDefault() { return nullDefault; }
-
-  bool noted() { return LUBFinder::noted() || nullDefault; }
-
-  Type get() {
-    auto ret = LUBFinder::get();
-    if (nullDefault && !ret.isNullable()) {
-      ret = Type(ret.getHeapType(), Nullable);
-    }
-    return ret;
-  }
-
-  bool combine(const FieldInfo& other) {
-    auto old = nullDefault;
-    if (other.nullDefault) {
-      noteNullDefault();
-    }
-    return LUBFinder::combine(other) || nullDefault != old;
-  }
-
-  // Force the lub to a particular type.
-  void set(Type type) { lub = type; }
-
-  void dump(std::ostream& o) {
-    std::cout << "FieldInfo(" << lub << ", " << nullDefault << ")";
-  }
-};
-
-struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
-  Pass* create() override {
-    return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
-  }
-
-  FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
-                   FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
-    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos,
-                                           functionSetGetInfos) {}
-
-  void noteExpression(Expression* expr,
-                      HeapType type,
-                      Index index,
-                      FieldInfo& info) {
-    info.note(expr);
-  }
-
-  void
-  noteDefault(Type fieldType, HeapType type, Index index, FieldInfo& info) {
-    // Default values do not affect what the heap type of a field can be turned
-    // into. Note them, however, as they force us to keep the type nullable.
-    if (fieldType.isRef()) {
-      info.noteNullDefault();
-    }
-  }
-
-  void noteCopy(HeapType type, Index index, FieldInfo& info) {
-    // Copies do not add any type requirements at all: the type will always be
-    // read and written to a place with the same type.
-  }
-
-  void noteRead(HeapType type, Index index, FieldInfo& info) {
-    // Nothing to do for a read, we just care about written values.
-  }
-};
-
 struct SignatureSubtyping : public Pass {
-  StructValuesMap<FieldInfo> finalInfos;
+  // A list of the type relevant types of calls for us, calls and call_refs.
+  struct CallInfo {
+    std::vector<Call*> calls;
+    std::vector<CallRef*> callRefs;
+  };
+
+  // A map of function types to the calls and call_refs that involve that type.
+  std::unordered_map<HeapType, CallInfo> allCallsTo;
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "SignatureSubtyping requires nominal typing";
     }
 
-    // Find and analyze struct operations inside each function.
-    FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
-      functionSetGetInfos(*module);
-    FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
-    scanner.run(runner, module);
-    scanner.runOnModuleCode(runner, module);
+    // First, find all the calls and call_refs.
 
-    // Combine the data from the functions.
-    StructValuesMap<FieldInfo> combinedNewInfos;
-    StructValuesMap<FieldInfo> combinedSetGetInfos;
-    functionNewInfos.combineInto(combinedNewInfos);
-    functionSetGetInfos.combineInto(combinedSetGetInfos);
-
-    // Propagate things written during new to supertypes, as they must also be
-    // able to contain that type. Propagate things written using set to subtypes
-    // as well, as the reference might be to a supertype if the field is present
-    // there.
-    TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    propagator.propagateToSuperTypes(combinedNewInfos);
-    propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
-
-    // Combine everything together.
-    combinedNewInfos.combineInto(finalInfos);
-    combinedSetGetInfos.combineInto(finalInfos);
-
-    // While we do the following work, see if we have anything to optimize, so
-    // that we can avoid wasteful work later if not.
-    bool canOptimize = false;
-
-    // We have combined all the information we have about writes to the fields,
-    // but we still need to make sure that the new types makes sense. In
-    // particular, subtyping cares about things like mutability, and we also
-    // need to handle the case where we have no writes to a type but do have
-    // them to subtypes or supertypes; in all these cases, we must preserve
-    // that a field is always a subtype of the parent field. To do so, we go
-    // through all the types downward from supertypes to subtypes, ensuring the
-    // subtypes are suitable.
-    auto& subTypes = propagator.subTypes;
-    UniqueDeferredQueue<HeapType> work;
-    for (auto type : subTypes.types) {
-      if (type.isStruct() && !type.getSuperType()) {
-        work.push(type);
-      }
-    }
-    while (!work.empty()) {
-      auto type = work.pop();
-
-      auto& fields = type.getStruct().fields;
-      for (Index i = 0; i < fields.size(); i++) {
-        auto oldType = fields[i].type;
-        auto& info = finalInfos[type][i];
-        auto newType = info.get();
-        if (newType == Type::unreachable) {
-          // We have no info on this field, so use the old type.
-          info.set(oldType);
+    ModuleUtils::ParallelFunctionAnalysis<CallRef> analysis(
+      wasm, [&](Function* func, CallInfo& info) {
+        if (func->imported()) {
+          return;
         }
-      }
+        info.calls = std::move(FindAll<Call>(func->body).list);
+        info.callRefs = std::move(FindAll<CallRef>(func->body).list);
+      });
 
-      if (auto super = type.getSuperType()) {
-        auto& superFields = super->getStruct().fields;
-        for (Index i = 0; i < superFields.size(); i++) {
-          auto newSuperType = finalInfos[*super][i].get();
-          auto& info = finalInfos[type][i];
-          auto newType = info.get();
-          if (!Type::isSubType(newType, newSuperType)) {
-            // To ensure we are a subtype of the super's field, simply copy that
-            // value, which is more specific than us.
-            info.set(newSuperType);
-          } else if (fields[i].mutable_ == Mutable) {
-            // Mutable fields must have identical types, so we cannot
-            // specialize.
-            info.set(newSuperType);
-          }
+    // Combine all the information into the map of function types to the calls and
+    // call_refs that involve that type.
+    for (auto& [func, info] : analysis.map) {
+      for (auto* call : info.calls) {
+        allCallsTo[module->getFunction(call->target)->type].calls.push_back(call);
+      }
+      for (auto* callRef : info.callRefs) {
+        auto calledType = callRef->target->type;
+        if (calledType != Type::unreachable) {
+          allCallsTo[calledType.getHeapType()].callRefs.push_back(callRef);
         }
-      }
-
-      // After all those decisions, see if we found anything to optimize.
-      if (!canOptimize) {
-        for (Index i = 0; i < fields.size(); i++) {
-          auto oldType = fields[i].type;
-          auto newType = finalInfos[type][i].get();
-          if (newType != oldType) {
-            canOptimize = true;
-            break;
-          }
-        }
-      }
-
-      for (auto subType : subTypes.getSubTypes(type)) {
-        work.push(subType);
       }
     }
 
-    if (canOptimize) {
-      updateTypes(*module, runner);
-    }
-  }
-
-  void updateTypes(Module& wasm, PassRunner* runner) {
+    // Rewrite the types, computing optimal LUBs for each one.
     class TypeRewriter : public GlobalTypeRewriter {
       SignatureSubtyping& parent;
 
@@ -221,18 +82,34 @@ struct SignatureSubtyping : public Pass {
       TypeRewriter(Module& wasm, SignatureSubtyping& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
-      virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
-        auto& oldFields = oldStructType.getStruct().fields;
-        auto& newFields = struct_.fields;
+      virtual void modifySignature(HeapType oldSignatureType, Signature& sig) {
+        auto oldSig = oldSignatureType.getSignature;
+        auto oldParams = oldSig.params;
+        auto numParams = oldParams.size();
 
-        for (Index i = 0; i < newFields.size(); i++) {
-          auto oldType = oldFields[i].type;
-          if (!oldType.isRef()) {
-            continue;
+        // Compute LUBs for the params.
+        std::vector<LUBFinder> paramLUBs(numParams);
+
+        auto updateLUBs = [&](const ExpressionList& operands) {
+          for (Index i = 0; i < numParams; i++) {
+            paramLUBs[i].note(operands[i]->type);
           }
-          auto newType = parent.finalInfos[oldStructType][i].get();
-          newFields[i].type = getTempType(newType);
+        };
+
+        auto& callsTo = parent.allCallsTo[oldSignatureType];
+        for (auto* call : callsTo.calls) {
+          updateLUBs(call->operands);
         }
+        for (auto* callRef : callsTo.callRefs) {
+          updateLUBs(callRef->operands);
+        }
+
+        // Apply the LUBs to the type.
+        std::vector<Type> newParams;
+        for (auto lub : paramLUBs) {
+          newParams.push_back(lub.get());
+        }
+        sig.params = getTempType(Type(newParams));
       }
     };
 
