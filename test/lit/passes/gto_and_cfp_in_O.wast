@@ -30,7 +30,7 @@
 
   ;; CHECK:      (export "main" (func $main))
 
-  ;; CHECK:      (func $main (; has Stack IR ;) (result i32)
+  ;; CHECK:      (func $main (type $none_=>_i32) (; has Stack IR ;) (result i32)
   ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT: )
   (func $main (export "main") (result i32)

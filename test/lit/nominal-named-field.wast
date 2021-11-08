@@ -13,7 +13,7 @@
     (field $named f64)
   ))
 
-  ;; CHECK:      (func $foo (param $0 (ref $struct))
+  ;; CHECK:      (func $foo (type $ref|$struct|_=>_none) (param $0 (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct $named
   ;; CHECK-NEXT:    (local.get $0)
