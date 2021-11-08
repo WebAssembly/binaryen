@@ -51,8 +51,8 @@ struct SignatureSubtyping : public Pass {
 
     // First, find all the calls and call_refs.
 
-    ModuleUtils::ParallelFunctionAnalysis<CallRef> analysis(
-      wasm, [&](Function* func, CallInfo& info) {
+    ModuleUtils::ParallelFunctionAnalysis<CallInfo> analysis(
+      *module, [&](Function* func, CallInfo& info) {
         if (func->imported()) {
           return;
         }
@@ -83,7 +83,7 @@ struct SignatureSubtyping : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifySignature(HeapType oldSignatureType, Signature& sig) {
-        auto oldSig = oldSignatureType.getSignature;
+        auto oldSig = oldSignatureType.getSignature();
         auto oldParams = oldSig.params;
         auto numParams = oldParams.size();
 
@@ -113,9 +113,7 @@ struct SignatureSubtyping : public Pass {
       }
     };
 
-    TypeRewriter(wasm, *this).update();
-
-    ReFinalize().run(runner, &wasm);
+    TypeRewriter(*module, *this).update();
   }
 };
 
