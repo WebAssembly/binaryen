@@ -364,6 +364,13 @@ Type getValidLocalType(Type type, FeatureSet features);
 // ref.as_non_null around it, if the local should be non-nullable but is not).
 Expression* fixLocalGet(LocalGet* get, Module& wasm);
 
+// Applies the types of params and vars to local.get/local.tee operations, and
+// does a refinalize to propagate those outwards as well.
+void updateLocalTypes(Function* func, Module& wasm);
+
+// As above, but runs on all functions in a module.
+void updateLocalTypes(Module& wasm);
+
 } // namespace TypeUpdating
 
 } // namespace wasm

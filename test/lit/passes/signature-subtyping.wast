@@ -164,11 +164,10 @@
   ;; updated, though, as they share a heap type.
 
   ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
-
-  (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -191,6 +190,25 @@
   ;; CHECK-NEXT: )
   (func $caller
     (call $func-1
+      (struct.new $struct)
+    )
+  )
+)
+
+(module
+  (type $struct (struct_subtype data))
+
+  (type $sig (func_subtype (param anyref) func))
+
+  (func $func (type $sig) (param $x anyref)
+    ;; Use a local whose type is updated, to verify the IR type is updated too.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  (func $caller
+    (call $func
       (struct.new $struct)
     )
   )

@@ -313,6 +313,55 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
   return get;
 }
 
+void updateLocalTypes(Function* func, Module& wasm) {
+  bool changed = false;
+
+  for (auto* get : FindAll<LocalGet>(func->body).list) {
+    auto index = get->index;
+    auto newType = func->getLocalType(index);
+    if (get->type != newType) {
+      get->type = newType;
+      changed = true;
+    }
+  }
+
+  for (auto* set : sets.list) {
+    auto index = set->index;
+    if (set->isTee()) {
+      auto newType = func->getLocalType(index);
+      if (set->type != newType) {
+        set->type = newType;
+        set->finalize();
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    // Propagate the new get and set types outwards.
+    ReFinalize().walkFunctionInModule(func, &wasm);
+  }
+}
+
+void updateLocalTypes(Module& wasm) {
+  struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
+    bool isFunctionParallel() override { return true; }
+
+    Module& wasm;
+
+    CodeUpdater(Module& wasm) {}
+
+    CodeUpdater* create() override { return new CodeUpdater(wasm); }
+
+    void doWalkFunction(Function* func) {
+      updateLocalTypes(func, wasm);
+    }
+  };
+
+  PassRunner runner(&wasm);
+  CodeUpdater(wasm).run(&runner, &wasm);
+}
+
 } // namespace TypeUpdating
 
 } // namespace wasm

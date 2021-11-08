@@ -17,6 +17,12 @@
 //
 // Apply more specific subtypes to signature/function types where possible.
 //
+// This differs from DeadArgumentElimination's refineArgumentTypes() etc. in
+// that DAE will update the type of a function. It can only do that if the
+// function is not taken by reference, in particular. This pass will modify the
+// type of that function itself, in a coordinated way across all the things that
+// use that type.
+//
 // TODO: optimize results too and not just params.
 //
 
@@ -115,6 +121,9 @@ struct SignatureSubtyping : public Pass {
     };
 
     TypeRewriter(*module, *this).update();
+
+    // Update local types everywhere, as parameters may have changed.
+    TypeUpdating::updateLocalTypes(*module);
   }
 };
 

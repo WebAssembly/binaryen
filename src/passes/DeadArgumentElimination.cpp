@@ -599,22 +599,7 @@ private:
 
     // We can do this! Update the types, including the types of gets and tees.
     func->setParams(newParams);
-    for (auto* get : FindAll<LocalGet>(func->body).list) {
-      auto index = get->index;
-      if (func->isParam(index)) {
-        get->type = func->getLocalType(index);
-      }
-    }
-    for (auto* set : sets.list) {
-      auto index = set->index;
-      if (func->isParam(index) && set->isTee()) {
-        set->type = func->getLocalType(index);
-        set->finalize();
-      }
-    }
-
-    // Propagate the new get and set types outwards.
-    ReFinalize().walkFunctionInModule(func, module);
+    TypeUpdating::updateLocalTypes(func, *module);
   }
 
   // See if the types returned from a function allow us to define a more refined
