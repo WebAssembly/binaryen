@@ -13,6 +13,8 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x anyref)
+    ;; This function is called with a $struct, and we can specialize the heap
+    ;; type to that.
   )
 
   ;; CHECK:      (func $caller

@@ -60,11 +60,12 @@ struct SignatureSubtyping : public Pass {
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
       });
 
-    // Combine all the information into the map of function types to the calls and
-    // call_refs that involve that type.
+    // Combine all the information into the map of function types to the calls
+    // and call_refs that involve that type.
     for (auto& [func, info] : analysis.map) {
       for (auto* call : info.calls) {
-        allCallsTo[module->getFunction(call->target)->type].calls.push_back(call);
+        allCallsTo[module->getFunction(call->target)->type].calls.push_back(
+          call);
       }
       for (auto* callRef : info.callRefs) {
         auto calledType = callRef->target->type;
