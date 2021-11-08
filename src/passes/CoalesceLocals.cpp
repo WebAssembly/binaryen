@@ -294,14 +294,14 @@ void CoalesceLocals::calculateInterferences() {
     // bottom blocks, and that merge block does not need to reason about merging
     // its inputs. In other words, a conflict will appear in the middle of a
     // block, somewhere, and therefore we leave it to that block to identify,
-    // and so blocks only need to reason about their contents, not what arrives
-    // to them.
+    // and so blocks only need to reason about their own contents and not what
+    // arrives to them.
     //
     // The one exception here is the entry to the function, see below.
   }
 
-  // Finally, we must not try to coalesce parameters are they are fixed. Mark
-  // them as "interfering" so that we do not need to special-case them later.
+  // We must not try to coalesce parameters as they are fixed. Mark them as
+  // "interfering" so that we do not need to special-case them later.
   auto numParams = getFunction()->getNumParams();
   for (Index i = 0; i < numParams; i++) {
     for (Index j = i + 1; j < numParams; j++) {
@@ -309,12 +309,10 @@ void CoalesceLocals::calculateInterferences() {
     }
   }
 
-  // Parameters also interfere with locals that use the zero-init value, as they
-  // are live at the same place with different values (the start of the entry
-  // block) and there is no previous block with a set that would represent the
-  // place where the conflict happens: the conflict occurs due to the zero-init
-  // value, which is set implicitly, without a local.set (which would have
-  // alerted us to the conflict).
+  // We must handle interference between uses of the zero-init value and
+  // parameters manually. A zero initialization represents a set (to a default
+  // value), and that set would be what alerts us to a conflict, but there is no
+  // actual set in the IR since the zero-init value is applied implicitly.
   for (auto i : entry->contents.start) {
     if (i >= numParams) {
       for (Index j = 0; j < numParams; j++) {
