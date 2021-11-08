@@ -110,3 +110,88 @@
     )
   )
 )
+
+(module
+  ;; Multiple functions with the same heap type. Again, the LUB is in the
+  ;; middle, this time the parent $struct and not a subtype.
+
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $struct-sub1 (struct_subtype  $struct))
+
+  ;; CHECK:      (type $struct-sub2 (struct_subtype  $struct))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+  (type $struct-sub1 (struct_subtype $struct))
+  (type $struct-sub2 (struct_subtype $struct))
+
+  ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func-1 (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $func-2 (type $sig) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func-2 (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func-1
+  ;; CHECK-NEXT:   (struct.new_default $struct-sub1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $func-2
+  ;; CHECK-NEXT:   (struct.new_default $struct-sub2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func-1
+      (struct.new $struct-sub1)
+    )
+    (call $func-2
+      (struct.new $struct-sub2)
+    )
+  )
+)
+
+(module
+  ;; As above, but now only one of the functions is called. The other is still
+  ;; updated, though, as they share a heap type.
+
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func-1 (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $func-2 (type $sig) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func-2 (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func-1
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func-1
+      (struct.new $struct)
+    )
+  )
+)
