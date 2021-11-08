@@ -65,3 +65,48 @@
     )
   )
 )
+
+(module
+  ;; A combination of call types, and the LUB is affected by all of them: one
+  ;; call uses a nullable $struct, the other a non-nullable dataref, so the LUB
+  ;; is a nullable dataref.
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (type $sig (func_subtype (param (ref null data)) func))
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $sig) (param $x (ref null data))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.as_data
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (ref.null $struct)
+    )
+    (call_ref
+      (ref.as_data
+        (struct.new $struct)
+      )
+      (ref.func $func)
+    )
+  )
+)
