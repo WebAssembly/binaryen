@@ -2146,8 +2146,8 @@ void FunctionValidator::visitTry(Try* curr) {
 
   // Given a catch body, find pops corresponding to the catch
   auto findPops = [](Expression* expr) {
-    std::vector<Pop*> pops;
-    std::vector<Expression*> work;
+    SmallVector<Pop*, 1> pops;
+    SmallVector<Expression*, 8> work;
     work.push_back(expr);
     while (!work.empty()) {
       auto* curr = work.back();
@@ -2170,12 +2170,12 @@ void FunctionValidator::visitTry(Try* curr) {
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     Name tagName = curr->catchTags[i];
     auto* tag = getModule()->getTagOrNull(tagName);
-    if (!shouldBeTrue(tag != nullptr, curr)) {
+    if (!shouldBeTrue(tag != nullptr, curr, "")) {
       getStream() << "tag name is invalid: " << tagName << "\n";
     }
 
     auto* catchBody = curr->catchBodies[i];
-    std::vector<Pop*> pops = findPops(catchBody);
+    SmallVector<Pop*, 1> pops = findPops(catchBody);
     if (tag->sig.params == Type::none) {
       std::string msg = std::string("catch's tag (") + tagName.c_str() +
                         ") doesn't have any params, but there are pops";
