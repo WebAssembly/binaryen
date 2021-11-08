@@ -156,6 +156,9 @@ void PassRegistry::registerPasses() {
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass("signature-subtyping",
+               "apply more specific subtypes to type fields where possible",
+               createSignatureSubtypingPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
