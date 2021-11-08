@@ -207,7 +207,9 @@ void CoalesceLocals::calculateInterferences() {
         values[i] = nextValue++;
       }
 
-      for (Index i = getFunction()->getNumParams(); i < getFunction()->getNumLocals(); i++) {
+      for (Index i = getFunction()->getNumParams();
+           i < getFunction()->getNumLocals();
+           i++) {
         values[i] = zeroInit;
       }
     } else {
