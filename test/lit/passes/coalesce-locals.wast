@@ -765,11 +765,51 @@
     (if
       (i32.const 0)
       (block $block1
+        ;; These locals can be coalesced together: $x's live range ends here,
+        ;; and $y's begins right after it, so they do not have an overlap with
+        ;; a different value.
         (drop
           (local.get $x)
         )
         (local.set $y
           (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+  ;; CHECK:      (func $if5-flip
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (block $block1
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if5-flip (type $2)
+    (local $x i32)
+    (local $y i32)
+    (if
+      (i32.const 0)
+      (block $block1
+        ;; As above, but flipping these two instructions causes a conflict.
+        (local.set $y
+          (i32.const 1)
+        )
+        (drop
+          (local.get $x)
         )
       )
     )
