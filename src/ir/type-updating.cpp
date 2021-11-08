@@ -17,6 +17,7 @@
 #include "type-updating.h"
 #include "find_all.h"
 #include "ir/module-utils.h"
+#include "ir/utils.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -325,7 +326,7 @@ void updateLocalTypes(Function* func, Module& wasm) {
     }
   }
 
-  for (auto* set : sets.list) {
+  for (auto* set : FindAll<LocalSet>(func->body).list) {
     auto index = set->index;
     if (set->isTee()) {
       auto newType = func->getLocalType(index);
@@ -349,7 +350,7 @@ void updateLocalTypes(Module& wasm) {
 
     Module& wasm;
 
-    CodeUpdater(Module& wasm) {}
+    CodeUpdater(Module& wasm) : wasm(wasm) {}
 
     CodeUpdater* create() override { return new CodeUpdater(wasm); }
 
