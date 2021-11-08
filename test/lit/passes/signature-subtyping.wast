@@ -32,3 +32,36 @@
     )
   )
 )
+
+(module
+  ;; As above, but the all is via call_ref.
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call_ref
+      (struct.new $struct)
+      (ref.func $func)
+    )
+  )
+)
