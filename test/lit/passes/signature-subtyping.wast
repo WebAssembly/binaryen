@@ -5,19 +5,20 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $func (param $x anyref)
+  (func $func (type $sig) (param $x anyref)
     ;; This function is called with a $struct, and we can specialize the heap
     ;; type to that.
   )
 
-  ;; CHECK:      (func $caller
+  ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $func
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
