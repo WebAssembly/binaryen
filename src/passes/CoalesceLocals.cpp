@@ -148,8 +148,11 @@ void CoalesceLocals::calculateInterferences() {
   std::fill(interferences.begin(), interferences.end(), false);
 
   // We will track the values in each local, using a numbering where each index
-  // represents a unique different value. To avoid reallocating this array all
-  // the time, allocate it once outside the loop.
+  // represents a unique different value. This array maps a local index to the
+  // value index it contains.
+  //
+  // To avoid reallocating this array all the time, allocate it once outside the
+  // loop.
   std::vector<Index> values(numLocals);
 
   for (auto& curr : basicBlocks) {
@@ -172,32 +175,29 @@ void CoalesceLocals::calculateInterferences() {
           live.insert(index);
         }
       } else {
+        // This is a set. Check if the local is alive after it; if it is then
+        // the set if effective as there is some get that can read the value.
         if (live.erase(index)) {
-          // This set is effective: there are gets that read from it.
           action.effective = true;
         }
       }
     }
 
-    // Aside from live necessarily being the same as the set of live locals at
-    // the start, we will also use live in the next loop, and assume it begins
-    // at that state.
+    // We have processed from the end of the block to the start, updating |live|
+    // as we go, and now it must be equal to the state at the start of the
+    // block. WWe will also use |live| in the next loop, and assume it begins
+    // in that state.
     assert(live == curr->contents.start);
 
     // Now that we know live ranges, check if locals interfere in this block.
-    // Locals interfere if they might have different values where their live
-    // ranges overlap. We do an SSA-like analysis inside the block to see where their
-    // values are identical. That is, if one local is known to be a copy of
-    // another, then we can ignore interferences there.
-    //
-    // ??! To track copies, we maintain a range of the current copying operation.
-    // That is, if index i has a get, and index i+1 has a tee of that get, and
-    // index i+2 is a set of that tee, then indexes [i, i+2] form a
-    // "copy range" and all the locals involved there do not conflict.
+    // Locals interfere if they might contain different values on areas where
+    // their live ranges overlap. To evaluate that, we do an analysis inside
+    // the block that gives each set a unique value number, and as those flow
+    // around through copies between sets we can see when sets are guaranteed to
+    // be equal.
 
-    // Locals with the same type have the same default value, so we can give all
-    // default values the same ID (since we do not coalesce across types anyhow,
-    // comparisons across types are not relevant).
+    // Give all default values the same value ID, regardless of their type. This
+    // is valid since we only coalesce locals of the same type anyhow.
     auto zeroInit = 0;
     Index nextValue = 1;
 
@@ -213,12 +213,16 @@ void CoalesceLocals::calculateInterferences() {
     } else {
       // In any block but the entry, assume that each live local might have a
       // different value at the start.
-      // TODO: Propagating SSA values across blocks could identify more copies.
+      // TODO: Propagating value IDs across blocks could identify more copies,
+      //       however, it would also be nonlinear.
       for (auto index : curr->contents.start) {
         values[index] = nextValue++;
       }
     }
 
+    // Traverse through the block from start to finish. We keep track of both
+    // liveness (in |live|) and the value IDs in each local (in |values|)
+    // while doing so.
     for (Index i = 0; i < actions.size(); i++) {
       auto& action = actions[i];
       auto index = action.index;
@@ -236,7 +240,7 @@ void CoalesceLocals::calculateInterferences() {
       Index newValue;
       if (set->value->is<LocalGet>() || set->value->is<LocalSet>()) {
         // This is a copy: Either it is a get or a tee, that occurs right
-        // before us.
+        // before us. Set our new value to theirs.
         assert(i > 0 && set->value == *actions[i - 1].origin);
         newValue = values[actions[i - 1].index];
       } else {
@@ -254,16 +258,15 @@ void CoalesceLocals::calculateInterferences() {
       // Update interferences: This will interfere with any other local that
       // is currently live and contains a different value.
       for (auto other : live) {
-        // This index was not live before this set (we will mark it as live
-        // right after this loop).
+        // This index cannot have been live before this set (as we would be
+        // trampling some other set before us, if so; and then that set would
+        // have been ineffective). We will mark this index as live right after
+        // this loop).
         assert(other != index);
         if (values[other] != newValue) {
           interfere(other, index);
         }
       }
-
-      // Finally, note that this index is now live, as a live range has begun
-      // by this effective set.
       live.insert(action.index);
     }
 
