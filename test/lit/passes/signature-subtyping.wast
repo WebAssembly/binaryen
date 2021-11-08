@@ -196,10 +196,19 @@
 )
 
 (module
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
   (type $sig (func_subtype (param anyref) func))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
     ;; Use a local whose type is updated, to verify the IR type is updated too.
     (drop
@@ -207,6 +216,11 @@
     )
   )
 
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $caller
     (call $func
       (struct.new $struct)
