@@ -31,7 +31,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $foo (param $a (ref null $A)) (result (ref null $A))
+ ;; NOMNL:      (func $foo (type $ref?|$A|_=>_ref?|$A|) (param $a (ref null $A)) (result (ref null $A))
  ;; NOMNL-NEXT:  (select (result (ref null $A))
  ;; NOMNL-NEXT:   (local.get $a)
  ;; NOMNL-NEXT:   (ref.null $B)

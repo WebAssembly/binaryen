@@ -26,7 +26,7 @@
 
   ;; TODO: signature types as well, once functions store their HeapTypes.
 
-  ;; NOMINAL:      (func $make-super-struct (result (ref $super-struct))
+  ;; NOMINAL:      (func $make-super-struct (type $none_=>_ref|$super-struct|) (result (ref $super-struct))
   ;; NOMINAL-NEXT:  (call $make-sub-struct)
   ;; NOMINAL-NEXT: )
   ;; EQUIREC:      (func $make-super-struct (result (ref $super-struct))
@@ -36,7 +36,7 @@
     (call $make-sub-struct)
   )
 
-  ;; NOMINAL:      (func $make-sub-struct (result (ref $sub-struct))
+  ;; NOMINAL:      (func $make-sub-struct (type $none_=>_ref|$sub-struct|) (result (ref $sub-struct))
   ;; NOMINAL-NEXT:  (unreachable)
   ;; NOMINAL-NEXT: )
   ;; EQUIREC:      (func $make-sub-struct (result (ref $sub-struct))
@@ -46,7 +46,7 @@
     (unreachable)
   )
 
-  ;; NOMINAL:      (func $make-super-array (result (ref $super-array))
+  ;; NOMINAL:      (func $make-super-array (type $none_=>_ref|$super-array|) (result (ref $super-array))
   ;; NOMINAL-NEXT:  (call $make-sub-array)
   ;; NOMINAL-NEXT: )
   ;; EQUIREC:      (func $make-super-array (result (ref $super-array))
@@ -56,7 +56,7 @@
     (call $make-sub-array)
   )
 
-  ;; NOMINAL:      (func $make-sub-array (result (ref $sub-array))
+  ;; NOMINAL:      (func $make-sub-array (type $none_=>_ref|$sub-array|) (result (ref $sub-array))
   ;; NOMINAL-NEXT:  (unreachable)
   ;; NOMINAL-NEXT: )
   ;; EQUIREC:      (func $make-sub-array (result (ref $sub-array))

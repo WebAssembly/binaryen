@@ -22,7 +22,7 @@
  ;; CHECK:      (func $foo (param $x (ref $type$1)) (param $y (ref $reasonable-name))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $foo (param $x (ref $type$1)) (param $y (ref $reasonable-name))
+ ;; NOMNL:      (func $foo (type $type$0) (param $x (ref $type$1)) (param $y (ref $reasonable-name))
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $foo
