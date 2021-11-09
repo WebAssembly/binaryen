@@ -64,15 +64,17 @@ struct FieldInfo {
   }
 };
 
-struct FieldInfoScanner : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
+struct FieldInfoScanner
+  : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
     return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
   }
 
-  FieldInfoScanner(StructUtils::FunctionStructValuesMap<FieldInfo>& functionNewInfos,
-                   StructUtils::FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
-    : StructUtils::StructScanner<FieldInfo, FieldInfoScanner>(functionNewInfos,
-                                           functionSetGetInfos) {}
+  FieldInfoScanner(
+    StructUtils::FunctionStructValuesMap<FieldInfo>& functionNewInfos,
+    StructUtils::FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
+    : StructUtils::StructScanner<FieldInfo, FieldInfoScanner>(
+        functionNewInfos, functionSetGetInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,

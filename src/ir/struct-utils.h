@@ -130,11 +130,12 @@ struct FunctionStructValuesMap
 // type being written to, and not just that it is of a subtype of the
 // instruction's type, which helps later.
 template<typename T, typename SubType>
-struct StructScanner : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
+struct StructScanner
+  : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
   StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
-          FunctionStructValuesMap<T>& functionSetGetInfos)
+                FunctionStructValuesMap<T>& functionSetGetInfos)
     : functionNewInfos(functionNewInfos),
       functionSetGetInfos(functionSetGetInfos) {}
 
