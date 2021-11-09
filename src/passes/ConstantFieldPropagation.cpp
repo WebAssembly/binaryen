@@ -157,9 +157,9 @@ public:
   }
 };
 
-using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
+using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
-  FunctionStructValuesMap<PossibleConstantValues>;
+  StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -243,15 +243,18 @@ private:
   bool changed = false;
 };
 
-struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
+struct PCVScanner
+  : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
     return new PCVScanner(functionNewInfos, functionSetGetInfos);
   }
 
-  PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
-             FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
-    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos,
-                                                  functionSetInfos) {}
+  PCVScanner(StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
+               functionNewInfos,
+             StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
+               functionSetInfos)
+    : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
+        functionNewInfos, functionSetInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
@@ -359,7 +362,8 @@ struct ConstantFieldPropagation : public Pass {
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
 
-    TypeHierarchyPropagator<PossibleConstantValues> propagator(*module);
+    StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
+      *module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
