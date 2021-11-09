@@ -599,7 +599,7 @@ private:
 
     // We can do this! Update the types, including the types of gets and tees.
     func->setParams(newParams);
-    TypeUpdating::updateLocalTypes(func, *module);
+    TypeUpdating::updateParamTypes(func, *module);
   }
 
   // See if the types returned from a function allow us to define a more refined

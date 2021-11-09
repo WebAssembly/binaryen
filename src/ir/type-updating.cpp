@@ -314,13 +314,13 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
   return get;
 }
 
-void updateLocalTypes(Function* func, Module& wasm) {
+void updateParamTypes(Function* func, Module& wasm) {
   bool changed = false;
 
   for (auto* get : FindAll<LocalGet>(func->body).list) {
     auto index = get->index;
     auto newType = func->getLocalType(index);
-    if (get->type != newType) {
+    if (func->isParam(index) && get->type != newType) {
       get->type = newType;
       changed = true;
     }
@@ -328,13 +328,11 @@ void updateLocalTypes(Function* func, Module& wasm) {
 
   for (auto* set : FindAll<LocalSet>(func->body).list) {
     auto index = set->index;
-    if (set->isTee()) {
-      auto newType = func->getLocalType(index);
-      if (set->type != newType) {
-        set->type = newType;
-        set->finalize();
-        changed = true;
-      }
+    auto newType = func->getLocalType(index);
+    if (set->isTee() && func->isParam(index) && set->type != newType) {
+      set->type = newType;
+      set->finalize();
+      changed = true;
     }
   }
 
@@ -344,7 +342,7 @@ void updateLocalTypes(Function* func, Module& wasm) {
   }
 }
 
-void updateLocalTypes(Module& wasm) {
+void updateParamTypes(Module& wasm) {
   struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
     bool isFunctionParallel() override { return true; }
 
@@ -355,7 +353,7 @@ void updateLocalTypes(Module& wasm) {
     CodeUpdater* create() override { return new CodeUpdater(wasm); }
 
     void doWalkFunction(Function* func) {
-      updateLocalTypes(func, wasm);
+      updateParamTypes(func, wasm);
     }
   };
 

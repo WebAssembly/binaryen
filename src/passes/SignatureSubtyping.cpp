@@ -122,8 +122,8 @@ struct SignatureSubtyping : public Pass {
 
     TypeRewriter(*module, *this).update();
 
-    // Update local types everywhere, as parameters may have changed.
-    TypeUpdating::updateLocalTypes(*module);
+    // Update param types everywhere for their new types.
+    TypeUpdating::updateParamTypes(*module);
   }
 };
 
