@@ -182,6 +182,20 @@ struct GlobalSubtyping : public Pass {
           if (!Type::isSubType(newType, newSuperType)) {
             // To ensure we are a subtype of the super's field, simply copy that
             // value, which is more specific than us.
+            //
+            // This situation cannot happen normally, but if a type is not used
+            // then it can. For example, imagine that $B and $C are subtypes of
+            // $A, and that $C is never created anywhere. A struct.new of $B
+            // propagates info to $A (forcing $A's type to take it into account
+            // and not be more specific than it), but that does not reach $C
+            // (struct.new propagates only up, not down; if it propagated down
+            // then we could never specialize a subtype more than its super). If
+            // $C had some value written to it then that value would force the
+            // LUB of $A to take it into account, but as here $C is never even
+            // created, that does not happen. And then if we update $A's type
+            // to something more specific than $C's old type, we end up with the
+            // problem that this code path fixes: we just need to get $C's type
+            // to be identical to its super so that validation works.
             info.set(newSuperType);
           } else if (fields[i].mutable_ == Mutable) {
             // Mutable fields must have identical types, so we cannot
