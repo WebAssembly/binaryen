@@ -238,7 +238,7 @@ struct GlobalSubtyping : public Pass {
       TypeRewriter(Module& wasm, GlobalSubtyping& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
-      virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
+      void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         auto& oldFields = oldStructType.getStruct().fields;
         auto& newFields = struct_.fields;
 

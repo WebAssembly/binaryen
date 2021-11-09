@@ -214,7 +214,7 @@ struct GlobalTypeOptimization : public Pass {
       TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
-      virtual void modifyStruct(HeapType oldStructType, Struct& struct_) {
+      void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         auto& newFields = struct_.fields;
 
         // Adjust immutability.
