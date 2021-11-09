@@ -196,34 +196,52 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype  data))
-  (type $struct (struct_subtype data))
+  ;; Define a field in the struct of the signature type that will be updated,
+  ;; to check for proper validation after the update.
 
   ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (type $struct (struct_subtype (field (ref $sig)) data))
+  (type $struct (struct_subtype (field (ref $sig)) data))
+
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (elem declare func $func)
+
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (local $temp (ref null $sig))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
-    ;; Use a local whose type is updated, to verify the IR type is updated too.
+    ;; Define a local of the signature type that is updated.
+    (local $temp (ref null $sig))
+    ;; Do a local.get of the param, to verify it's type is valid.
     (drop
       (local.get $x)
     )
+    ;; Copy between the param and the local, to verify their types are still
+    ;; compatible after the update.
+    ;;(local.set $x
+    ;;  (local.get $temp)
+    ;;)
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $func
-  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
     (call $func
-      (struct.new $struct)
+      (struct.new $struct
+        (ref.func $func)
+      )
     )
   )
 )
