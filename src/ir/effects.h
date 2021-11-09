@@ -726,6 +726,14 @@ private:
     void visitRefAs(RefAs* curr) {
       // traps when the arg is not valid
       parent.implicitTrap = true;
+      // Note: We could be more precise here and report the lack of a possible
+      // trap if the input is non-nullable (and also of the right kind for
+      // RefAsFunc etc.). However, we have optimization passes that will
+      // remove a RefAs in such a case (in OptimizeInstructions, and also
+      // Vacuum in trapsNeverHappen mode), so duplicating that code here would
+      // only help until the next time those optimizations run. As a tradeoff,
+      // we keep the code here simpler, but it does mean another optimization
+      // cycle may be needed in some cases.
     }
   };
 
