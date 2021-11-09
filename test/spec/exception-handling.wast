@@ -201,22 +201,6 @@
       )
     )
   )
-
-  (func (export "pop_validation_test")
-    (try
-      (do)
-      (catch $e-i32
-        (throw $e-i32
-          (if (result i32)
-            ;; pop is within an if condition, so this is OK.
-            (pop i32)
-            (i32.const 0)
-            (i32.const 3)
-          )
-        )
-      )
-    )
-  )
 )
 
 (assert_trap (invoke "throw_single_value"))
@@ -232,7 +216,6 @@
 (assert_return (invoke "rethrow_target_test1") (i32.const 2))
 (assert_return (invoke "rethrow_target_test2") (i32.const 1))
 (assert_return (invoke "rethrow_target_test3") (i32.const 1))
-(assert_return (invoke  "pop_validation_test"))
 
 (assert_invalid
   (module

@@ -2,6 +2,7 @@
   (tag $e-i32 (param i32))
   (tag $e-i64 (param i64))
   (tag $e-i32-i64 (param i32 i64))
+  (tag $e-anyref (param anyref))
   (tag $e-empty)
 
   (func $foo)
@@ -307,6 +308,31 @@
             (rethrow 1) ;; by depth
           )
           (catch_all)
+        )
+      )
+    )
+  )
+
+  (func $pop_test
+    (try
+      (do)
+      (catch $e-i32
+        (throw $e-i32
+          (if (result i32)
+            ;; pop is within an if condition, so this is OK.
+            (pop i32)
+            (i32.const 0)
+            (i32.const 3)
+          )
+        )
+      )
+    )
+
+    (try
+      (do)
+      (catch $e-anyref
+        (drop
+          (pop funcref) ;; pop can be subtype
         )
       )
     )

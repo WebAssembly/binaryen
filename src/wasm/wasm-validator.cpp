@@ -2177,21 +2177,26 @@ void FunctionValidator::visitTry(Try* curr) {
     auto* catchBody = curr->catchBodies[i];
     SmallVector<Pop*, 1> pops = findPops(catchBody);
     if (tag->sig.params == Type::none) {
-      std::string msg = std::string("catch's tag (") + tagName.c_str() +
-                        ") doesn't have any params, but there are pops";
-      shouldBeTrue(pops.empty(), curr, msg.c_str());
+      if (!shouldBeTrue(pops.empty(), curr, "")) {
+        getStream() << "catch's tag (" << tagName
+                    << ") doesn't have any params, but there are pops";
+      }
     } else {
-      std::string msg =
-        std::string("catch's tag (") + tagName.c_str() +
-        ") has params, so there should be a single pop within the catch body";
-      if (shouldBeTrue(pops.size() == 1, curr, msg.c_str())) {
+      if (shouldBeTrue(pops.size() == 1, curr, "")) {
         auto* pop = *pops.begin();
-        msg = std::string("catch's tag (") + tagName.c_str() +
-              ")'s pop doesn't have the same type as the tag's params";
-        shouldBeSubType(pop->type, tag->sig.params, curr, msg.c_str());
-        msg = std::string("catch's body (") + tagName.c_str() +
-              ")'s pop's location is not valid";
-        shouldBeTrue(EHUtils::isPopValid(catchBody), curr, msg.c_str());
+        if (!shouldBeSubType(pop->type, tag->sig.params, curr, "")) {
+          getStream()
+            << "catch's tag (" << tagName
+            << ")'s pop doesn't have the same type as the tag's params";
+        }
+        if (!shouldBeTrue(EHUtils::isPopValid(catchBody), curr, "")) {
+          getStream() << "catch's body (" << tagName
+                      << ")'s pop's location is not valid";
+        }
+      } else {
+        getStream() << "catch's tag (" << tagName
+                    << ") has params, so there should be a single pop within "
+                       "the catch body";
       }
     }
   }
