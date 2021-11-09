@@ -82,7 +82,7 @@ struct SortedVector : public std::vector<Index> {
     return false;
   }
 
-  bool has(Index x) {
+  bool has(Index x) const {
     auto it = std::lower_bound(begin(), end(), x);
     return it != end() && *it == x;
   }

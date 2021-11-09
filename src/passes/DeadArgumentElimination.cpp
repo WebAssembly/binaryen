@@ -327,7 +327,7 @@ struct DAE : public Pass {
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
-      refineArgumentTypes(func, calls, module);
+      refineArgumentTypes(func, calls, module, infoMap[name]);
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
@@ -339,6 +339,7 @@ struct DAE : public Pass {
           assert(call->target == name);
           assert(call->operands.size() == numParams);
           auto* operand = call->operands[i];
+          // TODO: refnull etc.
           if (auto* c = operand->dynCast<Const>()) {
             if (value.type == Type::none) {
               // This is the first value seen.
@@ -544,7 +545,8 @@ private:
   // is not exported or called from the table or by reference.
   void refineArgumentTypes(Function* func,
                            const std::vector<Call*>& calls,
-                           Module* module) {
+                           Module* module,
+                           const DAEFunctionInfo& info) {
     if (!module->features.hasGC()) {
       return;
     }
@@ -553,7 +555,13 @@ private:
     newParamTypes.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto originalType = func->getLocalType(i);
-      if (!originalType.isRef()) {
+      // If the parameter type is not a reference, there is nothing to refine.
+      // And if it is unused, also do nothing, as we can leave it to the other
+      // parts of this pass to optimize it properly, which avoids having to
+      // think about corner cases involving refining the type of an unused
+      // param (in particular, unused params are turned into locals, which means
+      // we'd need to think about defaultability etc.).
+      if (!originalType.isRef() || info.unusedParams.has(i)) {
         newParamTypes.push_back(originalType);
         continue;
       }
