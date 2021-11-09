@@ -39,8 +39,12 @@ struct PassRegistry {
   typedef std::function<Pass*()> Creator;
 
   void registerPass(const char* name, const char* description, Creator create);
+  // Register a pass that's used for internal testing. These pass do not show up
+  // in --help.
+  void
+  registerTestPass(const char* name, const char* description, Creator create);
   std::unique_ptr<Pass> createPass(std::string name);
-  std::vector<std::string> getRegisteredNames();
+  std::vector<std::string> getRegisteredNames(bool includeHidden = false);
   std::string getPassDescription(std::string name);
 
 private:
@@ -49,9 +53,10 @@ private:
   struct PassInfo {
     std::string description;
     Creator create;
+    bool hidden;
     PassInfo() = default;
-    PassInfo(std::string description, Creator create)
-      : description(description), create(create) {}
+    PassInfo(std::string description, Creator create, bool hidden = false)
+      : description(description), create(create), hidden(false) {}
   };
   std::map<std::string, PassInfo> passInfos;
 };
