@@ -1449,7 +1449,7 @@ public:
       // This is a dynamic check with an RTT.
       Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
-        return typename Cast::Breaking{ref};
+        return typename Cast::Breaking{rtt};
       }
       intendedRtt = rtt.getSingleValue();
     } else {
