@@ -626,12 +626,8 @@ private:
         auto iter = paramFixups.find(index);
         if (iter != paramFixups.end()) {
           auto fixup = iter->second;
-          contents.push_back(
-            builder.makeLocalSet(
-              fixup,
-              builder.makeLocalGet(index, newParamTypes[index])
-            )
-          );
+          contents.push_back(builder.makeLocalSet(
+            fixup, builder.makeLocalGet(index, newParamTypes[index])));
         }
       }
       contents.push_back(func->body);
