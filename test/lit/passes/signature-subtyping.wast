@@ -266,3 +266,69 @@
     )
   )
 )
+
+(module
+  ;; Test multiple fields in multiple types.
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (type $sig-1 (func_subtype (param (ref null data) anyref) func))
+  (type $sig-1 (func_subtype (param anyref) (param anyref) func))
+  ;; CHECK:      (type $sig-2 (func_subtype (param anyref (ref $struct)) func))
+  (type $sig-2 (func_subtype (param anyref) (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (elem declare func $func-2)
+
+  ;; CHECK:      (func $func-1 (type $sig-1) (param $x (ref null data)) (param $y anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func-1 (type $sig-1) (param $x anyref) (param $y anyref)
+  )
+
+  ;; CHECK:      (func $func-2 (type $sig-2) (param $x anyref) (param $y (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func-2 (type $sig-2) (param $x anyref) (param $y anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func-1
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (ref.null data)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $func-1
+  ;; CHECK-NEXT:   (ref.null data)
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $func-2
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (ref.func $func-2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func-1
+      (struct.new $struct)
+      (ref.null data)
+    )
+    (call $func-1
+      (ref.null data)
+      (ref.null any)
+    )
+    (call $func-2
+      (struct.new $struct)
+      (struct.new $struct)
+    )
+    (call_ref
+      (ref.null func)
+      (struct.new $struct)
+      (ref.func $func-2)
+    )
+  )
+)
