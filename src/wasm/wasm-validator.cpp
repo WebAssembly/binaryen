@@ -2188,7 +2188,7 @@ void FunctionValidator::visitTry(Try* curr) {
         auto* pop = *pops.begin();
         msg = std::string("catch's tag (") + tagName.c_str() +
               ")'s pop doesn't have the same type as the tag's params";
-        shouldBeTrue(pop->type == tag->sig.params, curr, msg.c_str());
+        shouldBeSubType(pop->type, tag->sig.params, curr, msg.c_str());
         msg = std::string("catch's body (") + tagName.c_str() +
               ")'s pop's location is not valid";
         shouldBeTrue(EHUtils::isPopValid(catchBody), curr, msg.c_str());
