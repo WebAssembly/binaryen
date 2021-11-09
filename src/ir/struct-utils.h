@@ -22,6 +22,8 @@
 
 namespace wasm {
 
+namespace StructUtils {
+
 // A vector of a template type's values. One such vector will be used per struct
 // type, where each element in the vector represents a field. We always assume
 // that the vectors are pre-initialized to the right length before accessing any
@@ -128,10 +130,10 @@ struct FunctionStructValuesMap
 // type being written to, and not just that it is of a subtype of the
 // instruction's type, which helps later.
 template<typename T, typename SubType>
-struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
+struct StructScanner : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
-  Scanner(FunctionStructValuesMap<T>& functionNewInfos,
+  StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
           FunctionStructValuesMap<T>& functionSetGetInfos)
     : functionNewInfos(functionNewInfos),
       functionSetGetInfos(functionSetGetInfos) {}
@@ -266,6 +268,8 @@ private:
     }
   }
 };
+
+} // namespace StructUtils
 
 } // namespace wasm
 

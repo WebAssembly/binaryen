@@ -64,14 +64,14 @@ struct FieldInfo {
   }
 };
 
-struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
+struct FieldInfoScanner : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
     return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
   }
 
-  FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
-                   FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
-    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos,
+  FieldInfoScanner(StructUtils::FunctionStructValuesMap<FieldInfo>& functionNewInfos,
+                   StructUtils::FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
+    : StructUtils::StructScanner<FieldInfo, FieldInfoScanner>(functionNewInfos,
                                            functionSetGetInfos) {}
 
   void noteExpression(Expression* expr,
@@ -96,7 +96,7 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 };
 
 struct GlobalTypeOptimization : public Pass {
-  StructValuesMap<FieldInfo> combinedSetGetInfos;
+  StructUtils::StructValuesMap<FieldInfo> combinedSetGetInfos;
 
   // Maps types to a vector of booleans that indicate whether a field can
   // become immutable. To avoid eager allocation of memory, the vectors are
@@ -120,7 +120,7 @@ struct GlobalTypeOptimization : public Pass {
     }
 
     // Find and analyze struct operations inside each function.
-    FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
+    StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
     scanner.run(runner, module);
@@ -146,7 +146,7 @@ struct GlobalTypeOptimization : public Pass {
     //    subtypes (as wasm only allows the type to differ if the fields are
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
-    TypeHierarchyPropagator<FieldInfo> propagator(*module);
+    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     // Process the propagated info.
