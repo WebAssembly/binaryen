@@ -95,4 +95,35 @@
    (rtt.canon ${})
   )
  )
+
+ ;; CHECK:      (func $unused-and-refinable
+ ;; CHECK-NEXT:  (local $0 (ref null data))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $unused-and-refinable (type $none_=>_none)
+ ;; NOMNL-NEXT:  (local $0 (ref null data))
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT: )
+ (func $unused-and-refinable (param $0 dataref)
+  ;; This function does not use $0. It is called with ${}, so it is also
+  ;; a parameter whose type we can refine. Do not do both operations: instead,
+  ;; just remove it because it is ignored, without altering the type (handling
+  ;; both operations would introduce some corner cases, and it just isn't worth
+  ;; handling them if the param is completely unused anyhow). We should see in
+  ;; the test output that the local $0 (the unused param is turned into a local)
+  ;; we remain with type data, only modified to be nullable, and we are not
+  ;; refined to ${} which is how we are called.
+ )
+
+ ;; CHECK:      (func $call-unused-and-refinable
+ ;; CHECK-NEXT:  (call $unused-and-refinable)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-unused-and-refinable (type $none_=>_none)
+ ;; NOMNL-NEXT:  (call $unused-and-refinable)
+ ;; NOMNL-NEXT: )
+ (func $call-unused-and-refinable
+  (call $unused-and-refinable
+   (struct.new_default ${})
+  )
+ )
 )
