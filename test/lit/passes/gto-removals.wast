@@ -12,7 +12,7 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
@@ -27,7 +27,7 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -53,7 +53,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
@@ -76,7 +76,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
@@ -98,7 +98,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (local.get $x)
@@ -132,7 +132,7 @@
 
   ;; CHECK:      (type $ref|$imm-struct|_=>_none (func_subtype (param (ref $imm-struct)) func))
 
-  ;; CHECK:      (func $func-mut (param $x (ref $mut-struct))
+  ;; CHECK:      (func $func-mut (type $ref|$mut-struct|_=>_none) (param $x (ref $mut-struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $mut-struct $r
   ;; CHECK-NEXT:    (local.get $x)
@@ -221,7 +221,7 @@
     )
   )
 
-  ;; CHECK:      (func $func-imm (param $x (ref $imm-struct))
+  ;; CHECK:      (func $func-imm (type $ref|$imm-struct|_=>_none) (param $x (ref $imm-struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $imm-struct
   ;; CHECK-NEXT:    (i32.const 1)
@@ -284,7 +284,7 @@
     (ref.func $func-4)
   ))
 
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $vtable $v1
   ;; CHECK-NEXT:    (global.get $vtable)
@@ -313,23 +313,23 @@
     ;; one before it.
   )
 
-  ;; CHECK:      (func $func-0
+  ;; CHECK:      (func $func-0 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-0)
-  ;; CHECK:      (func $func-1
+  ;; CHECK:      (func $func-1 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1)
-  ;; CHECK:      (func $func-2
+  ;; CHECK:      (func $func-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2)
-  ;; CHECK:      (func $func-3
+  ;; CHECK:      (func $func-3 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-3)
-  ;; CHECK:      (func $func-4
+  ;; CHECK:      (func $func-4 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-4)
@@ -358,7 +358,7 @@
     (ref.null data)
   ))
 
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $i64 i64)
   ;; CHECK-NEXT:  (local $f32 f32)
   ;; CHECK-NEXT:  (local.set $i64
@@ -411,7 +411,7 @@
   ;; CHECK:      (global $mut-i32 (mut i32) (i32.const 5678))
   (global $mut-i32 (mut i32) (i32.const 5678))
 
-  ;; CHECK:      (func $gets (param $x (ref any))
+  ;; CHECK:      (func $gets (type $ref|any|_=>_none) (param $x (ref any))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (ref.null $struct)
@@ -437,7 +437,7 @@
     )
   )
 
-  ;; CHECK:      (func $new-side-effect
+  ;; CHECK:      (func $new-side-effect (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -482,7 +482,7 @@
     )
   )
 
-  ;; CHECK:      (func $new-side-effect-global-imm
+  ;; CHECK:      (func $new-side-effect-global-imm (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 f64)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
@@ -519,7 +519,7 @@
     )
   )
 
-  ;; CHECK:      (func $new-side-effect-global-mut
+  ;; CHECK:      (func $new-side-effect-global-mut (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -558,7 +558,7 @@
     )
   )
 
-  ;; CHECK:      (func $new-unreachable
+  ;; CHECK:      (func $new-unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -591,7 +591,7 @@
     )
   )
 
-  ;; CHECK:      (func $new-side-effect-in-kept (param $any (ref any))
+  ;; CHECK:      (func $new-side-effect-in-kept (type $ref|any|_=>_none) (param $any (ref any))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (call $helper0
@@ -614,21 +614,21 @@
     )
   )
 
-  ;; CHECK:      (func $helper0 (param $x i32) (result i32)
+  ;; CHECK:      (func $helper0 (type $i32_=>_i32) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper0 (param $x i32) (result i32)
     (unreachable)
   )
 
-  ;; CHECK:      (func $helper1 (param $x i32) (result f64)
+  ;; CHECK:      (func $helper1 (type $i32_=>_f64) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper1 (param $x i32) (result f64)
     (unreachable)
   )
 
-  ;; CHECK:      (func $helper2 (param $x i32) (result (ref any))
+  ;; CHECK:      (func $helper2 (type $i32_=>_ref|any|) (param $x i32) (result (ref any))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper2 (param $x i32) (result (ref any))

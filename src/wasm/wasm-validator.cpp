@@ -19,6 +19,7 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "ir/eh-utils.h"
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
@@ -2142,6 +2143,70 @@ void FunctionValidator::visitTry(Try* curr) {
   shouldBeFalse(curr->isCatch() && curr->isDelegate(),
                 curr,
                 "try cannot have both catch and delegate at the same time");
+
+  // Given a catch body, find pops corresponding to the catch
+  auto findPops = [](Expression* expr) {
+    SmallVector<Pop*, 1> pops;
+    SmallVector<Expression*, 8> work;
+    work.push_back(expr);
+    while (!work.empty()) {
+      auto* curr = work.back();
+      work.pop_back();
+      if (auto* pop = curr->dynCast<Pop>()) {
+        pops.push_back(pop);
+      } else if (auto* try_ = curr->dynCast<Try>()) {
+        // We don't go into inner catch bodies; pops in inner catch bodies
+        // belong to the inner catches
+        work.push_back(try_->body);
+      } else {
+        for (auto* child : ChildIterator(curr)) {
+          work.push_back(child);
+        }
+      }
+    }
+    return pops;
+  };
+
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    Name tagName = curr->catchTags[i];
+    auto* tag = getModule()->getTagOrNull(tagName);
+    if (!shouldBeTrue(tag != nullptr, curr, "")) {
+      getStream() << "tag name is invalid: " << tagName << "\n";
+    }
+
+    auto* catchBody = curr->catchBodies[i];
+    SmallVector<Pop*, 1> pops = findPops(catchBody);
+    if (tag->sig.params == Type::none) {
+      if (!shouldBeTrue(pops.empty(), curr, "")) {
+        getStream() << "catch's tag (" << tagName
+                    << ") doesn't have any params, but there are pops";
+      }
+    } else {
+      if (shouldBeTrue(pops.size() == 1, curr, "")) {
+        auto* pop = *pops.begin();
+        if (!shouldBeSubType(pop->type, tag->sig.params, curr, "")) {
+          getStream()
+            << "catch's tag (" << tagName
+            << ")'s pop doesn't have the same type as the tag's params";
+        }
+        if (!shouldBeTrue(EHUtils::isPopValid(catchBody), curr, "")) {
+          getStream() << "catch's body (" << tagName
+                      << ")'s pop's location is not valid";
+        }
+      } else {
+        getStream() << "catch's tag (" << tagName
+                    << ") has params, so there should be a single pop within "
+                       "the catch body";
+      }
+    }
+  }
+
+  if (curr->hasCatchAll()) {
+    auto* catchAllBody = curr->catchBodies.back();
+    shouldBeTrue(findPops(catchAllBody).empty(),
+                 curr,
+                 "catch_all's body should not have pops");
+  }
 
   if (curr->isDelegate()) {
     noteDelegate(curr->delegateTarget, curr);
