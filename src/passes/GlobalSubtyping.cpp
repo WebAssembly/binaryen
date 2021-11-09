@@ -69,14 +69,14 @@ struct FieldInfo : public LUBFinder {
   }
 };
 
-struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
+struct FieldInfoScanner : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
     return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
   }
 
-  FieldInfoScanner(FunctionStructValuesMap<FieldInfo>& functionNewInfos,
-                   FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
-    : Scanner<FieldInfo, FieldInfoScanner>(functionNewInfos,
+  FieldInfoScanner(StructUtils::FunctionStructValuesMap<FieldInfo>& functionNewInfos,
+                   StructUtils::FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
+    : StructUtils::StructScanner<FieldInfo, FieldInfoScanner>(functionNewInfos,
                                            functionSetGetInfos) {}
 
   void noteExpression(Expression* expr,
@@ -106,7 +106,7 @@ struct FieldInfoScanner : public Scanner<FieldInfo, FieldInfoScanner> {
 };
 
 struct GlobalSubtyping : public Pass {
-  StructValuesMap<FieldInfo> finalInfos;
+  StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
@@ -114,15 +114,15 @@ struct GlobalSubtyping : public Pass {
     }
 
     // Find and analyze struct operations inside each function.
-    FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
+    StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
     scanner.run(runner, module);
     scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
-    StructValuesMap<FieldInfo> combinedNewInfos;
-    StructValuesMap<FieldInfo> combinedSetGetInfos;
+    StructUtils::StructValuesMap<FieldInfo> combinedNewInfos;
+    StructUtils::StructValuesMap<FieldInfo> combinedSetGetInfos;
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
@@ -130,7 +130,7 @@ struct GlobalSubtyping : public Pass {
     // able to contain that type. Propagate things written using set to subtypes
     // as well, as the reference might be to a supertype if the field is present
     // there.
-    TypeHierarchyPropagator<FieldInfo> propagator(*module);
+    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
