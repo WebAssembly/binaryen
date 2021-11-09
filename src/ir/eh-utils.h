@@ -17,9 +17,9 @@
 #ifndef wasm_ir_eh_h
 #define wasm_ir_eh_h
 
-#include "wasm.h"
-
 namespace wasm {
+
+class Expression;
 
 namespace EHUtils {
 
