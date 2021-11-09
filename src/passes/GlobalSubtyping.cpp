@@ -34,8 +34,8 @@ namespace {
 
 // We use a LUBFinder to track field info. A LUBFinder keeps track of the best
 // possible LUB so far. The only extra functionality we need here is whether
-// there is a default null value (which would force us to keep the
-// type nullable).
+// there is a default null value (which would force us to keep the type
+// nullable).
 struct FieldInfo : public LUBFinder {
   bool nullDefault = false;
 
