@@ -161,9 +161,10 @@ struct GlobalSubtyping : public Pass {
       auto type = work.pop();
 
       // First, find fields that have nothing written to them at all, and set
-      // their value to their old type. (If we have a super, and it does have
-      // writes, then we may further update this type later, see the isSubType
-      // check in the loop after this.)
+      // their value to their old type. We must pick some type for the field,
+      // and we have nothing better to go on. (If we have a super, and it does
+      // have writes, then we may further update this type later, see the
+      // isSubType check in the loop after this.)
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         auto oldType = fields[i].type;
