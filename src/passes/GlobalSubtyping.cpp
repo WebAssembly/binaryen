@@ -205,6 +205,10 @@ struct GlobalSubtyping : public Pass {
           } else if (fields[i].mutable_ == Mutable) {
             // Mutable fields must have identical types, so we cannot
             // specialize.
+            // TODO: Perhaps we should be using a new Field::isSubType() method
+            //       here? This entire analysis might be done on fields, and not
+            //       types, which would also handle more things added to fields
+            //       in the future.
             info.set(newSuperType);
           }
         }
