@@ -241,7 +241,7 @@ struct GlobalSubtyping : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
-        auto& oldFields = oldStructType.getStruct().fields;
+        const auto& oldFields = oldStructType.getStruct().fields;
         auto& newFields = struct_.fields;
 
         for (Index i = 0; i < newFields.size(); i++) {
