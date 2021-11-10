@@ -24,6 +24,23 @@
       )
     )
 
+    ;; Other ref.as* as well.
+    (drop
+      (ref.as_func
+        (local.get $y)
+      )
+    )
+    (drop
+      (ref.as_data
+        (local.get $y)
+      )
+    )
+    (drop
+      (ref.as_i31
+        (local.get $y)
+      )
+    )
+
     ;; Ignore unreachable code.
     (drop
       (unreachable)

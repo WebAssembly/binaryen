@@ -11,7 +11,9 @@
     (try $label
       (do)
       (catch $tag$0
-        (nop)
+        (drop
+          (pop i32)
+        )
       )
     )
   )
@@ -27,7 +29,9 @@
   ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (catch $tag$0
-  ;; CHECK-NEXT:       (nop)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (pop i32)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

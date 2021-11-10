@@ -1631,20 +1631,34 @@ struct OptimizeInstructions
         auto childIntendedType = child->getIntendedType();
         if (HeapType::isSubType(intendedType, childIntendedType)) {
           // Skip the child.
-          curr->ref = child->ref;
-          return;
-        } else if (HeapType::isSubType(childIntendedType, intendedType)) {
-          // Skip the parent.
-          replaceCurrent(child);
-          return;
-        } else {
+          if (curr->ref == child) {
+            curr->ref = child->ref;
+            return;
+          } else {
+            // The child is not the direct child of the parent, but it is a
+            // fallthrough value, for example,
+            //
+            //  (ref.cast parent
+            //   (block
+            //    .. other code ..
+            //    (ref.cast child)))
+            //
+            // In this case it isn't obvious that we can remove the child, as
+            // doing so might require updating the types of the things in the
+            // middle - and in fact the sole purpose of the child may be to get
+            // a proper type for validation to work. Do nothing in this case,
+            // and hope that other opts will help here (for example,
+            // trapsNeverHappen will help if the code validates without the
+            // child).
+          }
+        } else if (!canBeCastTo(intendedType, childIntendedType)) {
           // The types are not compatible, so if the input is not null, this
           // will trap.
           if (!curr->type.isNullable()) {
             // Make sure to emit a block with the same type as us; leave
             // updating types for other passes.
             replaceCurrent(builder.makeBlock(
-              {builder.makeDrop(child->ref), builder.makeUnreachable()},
+              {builder.makeDrop(curr->ref), builder.makeUnreachable()},
               curr->type));
             return;
           }

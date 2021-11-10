@@ -53,6 +53,8 @@ template<class Specific> class AbstractChildIterator {
       return index != other.index || &parent != &(other.parent);
     }
 
+    bool operator==(const Iterator& other) const { return !(*this != other); }
+
     void operator++() { index++; }
 
     Expression*& operator*() {
