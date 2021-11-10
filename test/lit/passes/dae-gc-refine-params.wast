@@ -446,9 +446,10 @@
   ;; just remove it because it is ignored, without altering the type (handling
   ;; both operations would introduce some corner cases, and it just isn't worth
   ;; handling them if the param is completely unused anyhow). We should see in
-  ;; the test output that the local $0 (the unused param is turned into a local)
-  ;; we remain with type data, only modified to be nullable, and we are not
-  ;; refined to ${} which is how we are called.
+  ;; the test output that the local $0 (the unused param) becomes a local
+  ;; because it is unused, and that local does *not* have its type refined to
+  ;; ${} (it will however be changed to be nullable, which it must be as a
+  ;; local).
  )
 
  ;; CHECK:      (func $call-unused-and-refinable
