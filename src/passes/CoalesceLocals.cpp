@@ -185,7 +185,7 @@ void CoalesceLocals::calculateInterferences() {
 
     // We have processed from the end of the block to the start, updating |live|
     // as we go, and now it must be equal to the state at the start of the
-    // block. WWe will also use |live| in the next loop, and assume it begins
+    // block. We will also use |live| in the next loop, and assume it begins
     // in that state.
     assert(live == curr->contents.start);
 
