@@ -18,12 +18,14 @@
   ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct (field i32)))
 
+  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
+
   ;; CHECK:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+
   ;; NOMNL:      (type $array (array_subtype (mut i8) data))
   (type $array (array (mut i8)))
 
-  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)))
@@ -2414,6 +2416,199 @@
     )
   )
 
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $B))
+  ;; CHECK-NEXT:    (call $ref-cast-static-fallthrough-remaining
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast_static $B
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $B))
+  ;; NOMNL-NEXT:    (call $ref-cast-static-fallthrough-remaining
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.cast_static $B
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining (param $x eqref)
+    (drop
+      (ref.cast_static $A
+        (block (result (ref null $B))
+          ;; Additional contents in between redundant casts must be preserved.
+          ;; That is, when we see that the casts are redundant, by seeing that
+          ;; the fallthrough value reaching the outer cast is already cast, we
+          ;; can avoid a duplicate cast, but we do still need to keep any code
+          ;; in the middle, as it may have side effects.
+          ;;
+          ;; In this first testcase, the outer cast is not needed as the inside
+          ;; is already a more specific type.
+          (call $ref-cast-static-fallthrough-remaining
+            (local.get $x)
+          )
+          (ref.cast_static $B
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-child (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B
+  ;; CHECK-NEXT:    (block (result eqref)
+  ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining-child
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.cast_static $A
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-child (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B
+  ;; NOMNL-NEXT:    (block (result eqref)
+  ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining-child
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.cast_static $A
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining-child (param $x eqref)
+    (drop
+      ;; As above, but with $A and $B flipped. Now the inner cast is not needed.
+      ;; However, we do not remove it, as it may be necessary for validation,
+      ;; and we hope other opts help out here.
+      (ref.cast_static $B
+        (block (result (eqref))
+          (call $ref-cast-static-fallthrough-remaining-child
+            (local.get $x)
+          )
+          (ref.cast_static $A
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-impossible (param $x (ref eq))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref eq))
+  ;; CHECK-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.cast_static $struct
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-impossible (param $x (ref eq))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref $array))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result (ref eq))
+  ;; NOMNL-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (ref.cast_static $struct
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining-impossible (param $x (ref eq))
+    (drop
+      ;; As above, but with an impossible cast of an array to a struct. The
+      ;; block with the side effects and the inner cast must be kept around and
+      ;; dropped, and then we replace the outer cast with an unreachable.
+      (ref.cast_static $array
+        (block (result (ref eq))
+          (call $ref-cast-static-fallthrough-remaining-impossible
+            (local.get $x)
+          )
+          (ref.cast_static $struct
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (block (result (ref eq))
+  ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $A
+  ;; NOMNL-NEXT:    (block (result (ref eq))
+  ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+    ;; The input is non-nullable here, and the middle block is of a simpler
+    ;; type than either the parent or the child. This checks that we do not
+    ;; mis-optimize this case: In general the outer cast is not needed, but
+    ;; the middle block prevents us from seeing that (after other opts run,
+    ;; however, we would).
+    (drop
+      (ref.cast_static $A
+        (block (result (ref eq))
+          (call $ref-cast-static-fallthrough-remaining
+            (local.get $x)
+          )
+          (ref.cast_static $B
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $ref-cast-static-squared-impossible (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct
@@ -2425,7 +2620,11 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.cast_static $array
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -2442,7 +2641,11 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $struct))
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (ref.cast_static $array
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
