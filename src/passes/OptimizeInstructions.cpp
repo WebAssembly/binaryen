@@ -909,23 +909,25 @@ struct OptimizeInstructions
 
     if (curr->op == ExtendUInt32 || curr->op == ExtendSInt32) {
       if (auto* load = curr->value->dynCast<Load>()) {
-        // i64.extend_i32_s(i32.load(_8|_16)(_u|_s)(x))  =>
-        //    i64.load(_8|_16|_32)(_u|_s)(x)
-        //
-        // i64.extend_i32_u(i32.load(_8|_16)(_u|_s)(x))  =>
-        //    i64.load(_8|_16|_32)(_u|_s)(x)
-        if (curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2) {
-          // Skip special two special cases:
-          //   i64.extend_i32_u(i32.load8_s(x)) and
-          //   i64.extend_i32_u(i32.load16_s(x))
-        } else if (!load->isAtomic) {
-          load->type = Type::i64;
-          if (load->bytes == 4) {
-            // Special case for i32.load. In this case signedness depends on
-            // extend operation.
-            load->signed_ = curr->op == ExtendSInt32;
+        if (!load->isAtomic) {
+          // i64.extend_i32_s(i32.load(_8|_16)(_u|_s)(x))  =>
+          //    i64.load(_8|_16|_32)(_u|_s)(x)
+          //
+          // i64.extend_i32_u(i32.load(_8|_16)(_u|_s)(x))  =>
+          //    i64.load(_8|_16|_32)(_u|_s)(x)
+          if (curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2) {
+            // Skip special two special cases:
+            //   i64.extend_i32_u(i32.load8_s(x)) and
+            //   i64.extend_i32_u(i32.load16_s(x))
+          } else {
+            load->type = Type::i64;
+            if (load->bytes == 4) {
+              // Special case for i32.load. In this case signedness depends on
+              // extend operation.
+              load->signed_ = curr->op == ExtendSInt32;
+            }
+            return replaceCurrent(load);
           }
-          return replaceCurrent(load);
         }
       }
     }
