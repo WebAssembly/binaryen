@@ -515,7 +515,12 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
             continue;
           }
         }
-        // TODO: do the same for a tee
+        if (auto* subSet = set->value->dynCast<LocalSet>()) {
+          if (subSet->index == set->index) {
+            set->value = subSet->value;
+            continue;
+          }
+        }
         // remove ineffective actions
         if (!action.effective) {
           // value may have no side effects, further optimizations can eliminate

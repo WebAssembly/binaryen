@@ -2428,7 +2428,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref null $B))
   ;; NOMNL-NEXT:    (call $ref-cast-static-fallthrough-remaining
@@ -2477,7 +2477,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-child (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-child (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $B
   ;; NOMNL-NEXT:    (block (result eqref)
@@ -2526,7 +2526,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-impossible (param $x (ref eq))
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-impossible (type $ref|eq|_=>_none) (param $x (ref eq))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $array))
   ;; NOMNL-NEXT:    (drop
@@ -2575,7 +2575,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-nonnull (type $ref|eq|_=>_none) (param $x (ref eq))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $A
   ;; NOMNL-NEXT:    (block (result (ref eq))
