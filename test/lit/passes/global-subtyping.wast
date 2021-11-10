@@ -222,9 +222,10 @@
 )
 
 (module
-  ;; As in GP, write to the parent a child, and to the child a parent, but now
-  ;; the writes happen in struct.new. Even with that precise info, however, we
-  ;; can't make the parent field more specific than the child's.
+  ;; As in 2 testcases ago, write to the parent a child, and to the child a
+  ;; parent, but now the writes happen in struct.new. Even with that precise
+  ;; info, however, we can't make the parent field more specific than the
+  ;; child's.
 
   ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $struct))) data))
   (type $struct (struct_subtype (field (mut dataref)) data))
