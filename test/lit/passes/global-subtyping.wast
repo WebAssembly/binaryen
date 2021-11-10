@@ -121,15 +121,18 @@
   ;; As above, but all writes are of $child-A, which allows more optimization
   ;; up to that type.
 
-  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child-A))) data))
-  (type $struct (struct_subtype (field (mut dataref)) data))
-
   ;; CHECK:      (type $child-A (struct_subtype (field (mut (ref $child-A))) $struct))
   (type $child-A (struct_subtype (field (mut dataref)) $struct))
 
-  (type $child-B (struct_subtype (field (mut dataref)) $struct))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child-A))) data))
+  (type $struct (struct_subtype (field (mut dataref)) data))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child-A|_=>_none (func_subtype (param (ref $struct) (ref $child-A)) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $child-B (struct_subtype (field (mut (ref $child-A))) $struct))
+  (type $child-B (struct_subtype (field (mut dataref)) $struct))
 
   ;; CHECK:      (func $work (type $ref|$struct|_ref|$child-A|_=>_none) (param $struct (ref $struct)) (param $child-A (ref $child-A))
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -150,6 +153,17 @@
       (local.get $struct)
       (local.get $child-A)
     )
+  )
+
+  ;; CHECK:      (func $keepalive (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $temp (ref null $child-B))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $keepalive
+   ;; Add a reference to $child-B just to keep it alive in the output for easier
+   ;; comparisons to the previous testcase. Note that $child-B's field will be
+   ;; refined, because its parent $struct forces it to be.
+   (local $temp (ref null $child-B))
   )
 )
 
