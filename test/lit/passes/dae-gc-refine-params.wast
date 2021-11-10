@@ -310,6 +310,9 @@
  (func $call-various-params-null
   ;; The first argument gets non-null values, allowing us to refine it. The
   ;; second gets only one.
+  ;; Note that this also tests that we do not look at the fallthrough of the
+  ;; ref.as_non_null, which is nullable - less specific - and which would be
+  ;; counterproductive.
   (call $various-params-null
    (ref.as_non_null (ref.null ${i32}))
    (ref.null ${i32})
@@ -394,6 +397,122 @@
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $various-params-middle (param $x (ref null ${}))
+  ;; "Use" the local to avoid other optimizations kicking in.
+  (drop (local.get $x))
+ )
+
+ ;; CHECK:      (func $call-fallthrough-more-specific (param $data dataref)
+ ;; CHECK-NEXT:  (call $fallthrough-more-specific
+ ;; CHECK-NEXT:   (if (result dataref)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (local.get $data)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $fallthrough-more-specific
+ ;; CHECK-NEXT:   (ref.null eq)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-fallthrough-more-specific (param $data dataref)
+ ;; NOMNL-NEXT:  (call $fallthrough-more-specific
+ ;; NOMNL-NEXT:   (if (result dataref)
+ ;; NOMNL-NEXT:    (i32.const 1)
+ ;; NOMNL-NEXT:    (local.get $data)
+ ;; NOMNL-NEXT:    (unreachable)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (call $fallthrough-more-specific
+ ;; NOMNL-NEXT:   (ref.null eq)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $call-fallthrough-more-specific (param $data (ref data))
+  (call $fallthrough-more-specific
+   ;; The fallthrough of this if has a more specific type. We'd like to
+   ;; use that, but LUBFinder will not because in general we can't - we still
+   ;; have the if's type as the received type on the outside. We rely on other
+   ;; passes to improve things locally where possible (as is the case here).
+   ;;
+   ;; Note that the if's type will update to dataref, but that is just because
+   ;; we run refinalize on the entire module later in the optimization pass
+   ;; anyhow. The point of this test is that the type of
+   ;; $fallthrough-more-specific only changes from anyref to eqref (the type of
+   ;; the if) and not any further.
+   (if (result eqref)
+    (i32.const 1)
+    (local.get $data)
+    (unreachable)
+   )
+  )
+  (call $fallthrough-more-specific
+   (ref.null ${i32_f32})
+  )
+ )
+ ;; CHECK:      (func $fallthrough-more-specific (param $x eqref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $fallthrough-more-specific (param $x eqref)
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (local.get $x)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $fallthrough-more-specific (param $x anyref)
+  ;; "Use" the local to avoid other optimizations kicking in.
+  (drop (local.get $x))
+ )
+
+ ;; CHECK:      (func $call-fallthrough-null (param $data dataref)
+ ;; CHECK-NEXT:  (call $fallthrough-null
+ ;; CHECK-NEXT:   (local.get $data)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $fallthrough-null
+ ;; CHECK-NEXT:   (if (result (ref null data))
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (ref.null data)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-fallthrough-null (param $data dataref)
+ ;; NOMNL-NEXT:  (call $fallthrough-null
+ ;; NOMNL-NEXT:   (local.get $data)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (call $fallthrough-null
+ ;; NOMNL-NEXT:   (if (result (ref null data))
+ ;; NOMNL-NEXT:    (i32.const 1)
+ ;; NOMNL-NEXT:    (ref.null data)
+ ;; NOMNL-NEXT:    (unreachable)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $call-fallthrough-null (param $data (ref data))
+  ;; Pass a ref to data, which will be the computed LUB.
+  (call $fallthrough-null
+   (local.get $data)
+  )
+  ;; This if has a fallthrough of the same type as the if, and so we can look
+  ;; through it, and in fact we can update that null to a more specific
+  ;; type.
+  (call $fallthrough-null
+   (if (result funcref)
+    (i32.const 1)
+    (ref.null func)
+    (unreachable)
+   )
+  )
+ )
+ ;; CHECK:      (func $fallthrough-null (param $x (ref null data))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $fallthrough-null (param $x (ref null data))
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (local.get $x)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $fallthrough-null (param $x anyref)
   ;; "Use" the local to avoid other optimizations kicking in.
   (drop (local.get $x))
  )
