@@ -676,6 +676,11 @@ private:
 
     // Propagate the new get and set types outwards.
     ReFinalize().walkFunctionInModule(func, module);
+
+    if (!paramFixups.empty()) {
+      // We have added locals, and must handle non-nullability of them.
+      TypeUpdating::handleNonDefaultableLocals(func, *module);
+    }
   }
 
   // See if the types returned from a function allow us to define a more refined

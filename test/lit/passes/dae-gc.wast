@@ -126,4 +126,51 @@
    (struct.new_default ${})
   )
  )
+
+ ;; CHECK:      (func $non-nullable-fixup (param $0 (ref ${}))
+ ;; CHECK-NEXT:  (local $1 (ref null data))
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $non-nullable-fixup (type $ref|${}|_=>_none) (param $0 (ref ${}))
+ ;; NOMNL-NEXT:  (local $1 (ref null data))
+ ;; NOMNL-NEXT:  (local.set $1
+ ;; NOMNL-NEXT:   (local.get $0)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (local.set $1
+ ;; NOMNL-NEXT:   (ref.as_non_null
+ ;; NOMNL-NEXT:    (local.get $1)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $non-nullable-fixup (param $0 dataref)
+  ;; Use the param to avoid other opts removing it, and to force us to do a
+  ;; fixup when we refine the param's type. When doing so, we must handle the
+  ;; fact that the new local's type is non-nullable.
+  (local.set $0
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK:      (func $call-non-nullable-fixup
+ ;; CHECK-NEXT:  (call $non-nullable-fixup
+ ;; CHECK-NEXT:   (struct.new_default ${})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-non-nullable-fixup (type $none_=>_none)
+ ;; NOMNL-NEXT:  (call $non-nullable-fixup
+ ;; NOMNL-NEXT:   (struct.new_default ${})
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $call-non-nullable-fixup
+  (call $non-nullable-fixup
+   (struct.new_default ${})
+  )
+ )
 )
