@@ -515,6 +515,25 @@ instructions = [
     ("f32x4.demote_f64x2_zero",       "makeUnary(s, UnaryOp::DemoteZeroVecF64x2ToVecF32x4)"),
     ("f64x2.promote_low_f32x4",       "makeUnary(s, UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
 
+    # relaxed SIMD ops
+    ("i8x16.relaxed_swizzle", "makeBinary(s, BinaryOp::RelaxedSwizzleVec8x16)"),
+    ("i32x4.relaxed_trunc_f32x4_s", "makeUnary(s, UnaryOp::RelaxedTruncSVecF32x4ToVecI32x4)"),
+    ("i32x4.relaxed_trunc_f32x4_u", "makeUnary(s, UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4)"),
+    ("i32x4.relaxed_trunc_f64x2_s_zero", "makeUnary(s, UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4)"),
+    ("i32x4.relaxed_trunc_f64x2_u_zero", "makeUnary(s, UnaryOp::RelaxedTruncZeroUVecF64x2ToVecI32x4)"),
+    ("f32x4.relaxed_fma", "makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmaVecF32x4)"),
+    ("f32x4.relaxed_fms", "makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmsVecF32x4)"),
+    ("f64x2.relaxed_fma", "makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmaVecF64x2)"),
+    ("f64x2.relaxed_fms", "makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmsVecF64x2)"),
+    ("i8x16.laneselect", "makeSIMDTernary(s, SIMDTernaryOp::LaneselectI8x16)"),
+    ("i16x8.laneselect", "makeSIMDTernary(s, SIMDTernaryOp::LaneselectI16x8)"),
+    ("i32x4.laneselect", "makeSIMDTernary(s, SIMDTernaryOp::LaneselectI32x4)"),
+    ("i64x2.laneselect", "makeSIMDTernary(s, SIMDTernaryOp::LaneselectI64x2)"),
+    ("f32x4.relaxed_min", "makeBinary(s, BinaryOp::RelaxedMinVecF32x4)"),
+    ("f32x4.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF32x4)"),
+    ("f64x2.relaxed_min", "makeBinary(s, BinaryOp::RelaxedMinVecF64x2)"),
+    ("f64x2.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF64x2)"),
+
     # reference types instructions
     ("ref.null",             "makeRefNull(s)"),
     ("ref.is_null",          "makeRefIs(s, RefIsNull)"),
