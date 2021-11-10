@@ -915,11 +915,11 @@ struct OptimizeInstructions
           //
           // i64.extend_i32_u(i32.load(_8|_16)(_u|_s)(x))  =>
           //    i64.load(_8|_16|_32)(_u|_s)(x)
-          if (curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2) {
-            // Skip special two special cases:
-            //   i64.extend_i32_u(i32.load8_s(x)) and
-            //   i64.extend_i32_u(i32.load16_s(x))
-          } else {
+          //
+          // but skip special two special cases:
+          //   i64.extend_i32_u(i32.load8_s(x)) and
+          //   i64.extend_i32_u(i32.load16_s(x))
+          if (!(curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2)) {
             load->type = Type::i64;
             if (load->bytes == 4) {
               // Special case for i32.load. In this case signedness depends on
