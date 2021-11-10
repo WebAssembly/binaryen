@@ -915,9 +915,18 @@ struct OptimizeInstructions
         // i64.extend_i32_u(i32.load(_8|_16)(_u|_s)(x))  =>
         //    i64.load(_8|_16|_32)(_u|_s)(x)
         //
-        // but skip special two special cases:
-        //   i64.extend_i32_u(i32.load8_s(x)) and
-        //   i64.extend_i32_u(i32.load16_s(x))
+        // but we can't do this in following cases:
+        //
+        //    i64.extend_i32_u(i32.load8_s(x))
+        //    i64.extend_i32_u(i32.load16_s(x))
+        //
+        // this mixed sign/zero extensions can't represent in single
+        // signed or unsigned load operation. For example if `load_s(x)`
+        // return i8(-1) (0xFF) than sign extended result will be
+        // i32(-1) (0xFFFFFFFF).
+        // But with zero extension to i64 we got 0x00000000FFFFFFFF.
+        // With `i64.load8_s` in this situation we got `i64(-1)` (all ones).
+        // With `i64.load8_u` in this will be `0x00000000000000FF`.
         if (!(curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2)) {
           load->type = Type::i64;
           if (load->bytes == 4) {
