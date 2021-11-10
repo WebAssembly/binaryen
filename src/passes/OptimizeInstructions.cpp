@@ -921,7 +921,7 @@ struct OptimizeInstructions
         //    i64.extend_i32_u(i32.load16_s(x))
         //
         // this mixed sign/zero extensions can't represent in single
-        // signed or unsigned 64-bit load operation. For example if `load_s(x)`
+        // signed or unsigned 64-bit load operation. For example if `load8_s(x)`
         // return i8(-1) (0xFF) than sign extended result will be
         // i32(-1) (0xFFFFFFFF) and with zero extension to i64 we got
         // finally 0x00000000FFFFFFFF. However with `i64.load8_s` in this
