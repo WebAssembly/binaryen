@@ -2572,9 +2572,7 @@
   ;; CHECK:      (func $tee-copies-do-not-interfere (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (i32.const 100)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
@@ -2599,11 +2597,7 @@
   ;; CHECK:      (func $multiple-tee-copies-do-not-interfere (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (local.tee $0
-  ;; CHECK-NEXT:     (i32.const 100)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
