@@ -120,13 +120,9 @@ public:
   }
 
   // API for accessing children in random order.
-  Expression*& getChild(Index index) {
-    return *children[mapIndex(index)];
-  }
+  Expression*& getChild(Index index) { return *children[mapIndex(index)]; }
 
-  Index getNumChildren() {
-    return children.size();
-  }
+  Index getNumChildren() { return children.size(); }
 };
 
 class ChildIterator : public AbstractChildIterator<ChildIterator> {

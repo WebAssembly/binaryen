@@ -558,7 +558,8 @@ struct MergeBlocks
         bool fail = false;
         for (auto* blockChild : block->list) {
           if (blockChild != back &&
-              EffectAnalyzer(getPassOptions(), *getModule(), blockChild).invalidates(effectsToMovePast)) {
+              EffectAnalyzer(getPassOptions(), *getModule(), blockChild)
+                .invalidates(effectsToMovePast)) {
             fail = true;
             break;
           }
