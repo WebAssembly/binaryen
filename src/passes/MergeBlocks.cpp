@@ -509,8 +509,8 @@ struct MergeBlocks
       return;
     }
 
-    // As we go through the children, things we cannot move become effects that
-    // we must move past. Consider this:
+    // As we go through the children, to move things to the outside means
+    // moving them past the children before then:
     //
     //  (parent
     //   (child1
@@ -522,24 +522,52 @@ struct MergeBlocks
     // If we move (A) out of parent, then that is fine (further things moved
     // out would appear after it). But if we leave (B) in its current position
     // then if we try to move anything from child2 out of parent then we must
-    // move those things past (B).
-    EffectAnalyzer effectsToMovePast(getPassOptions(), *getModule());
+    // move those things past (B). We use a vector to track the effects of the
+    // children, where it contains the effects of what was left in the child
+    // after optimization.
+    std::vector<EffectAnalyzer> childEffects;
+
+    ChildIterator iterator(curr);
+    auto numChildren = iterator.getNumChildren();
+
+    Index lastBlock = -1;
+    for (Index i = 0; i < numChildren; i++) {
+      if (iterator.getChild(i)->isBlock()) {
+        lastBlock = i;
+      }
+    }
+    if (lastBlock == Index(-1)) {
+      // There are no blocks at all, so there is nothing to optimize.
+      return;
+    }
+
+    // We'll only compute effects up to the child before the last block, since
+    // we have nothing to optimize afterwards.
+    if (lastBlock > 0) {
+      childEffects.reserve(lastBlock);
+    }
 
     // The outer block that will replace us, containing the contents moved out
     // and then ourselves, assuming we manage to optimize.
     Block* outerBlock = nullptr;
 
-    ChildIterator iterator(curr);
-    auto numChildren = iterator.getNumChildren();
-    for (Index i = 0; i < numChildren; i++) {
+    for (Index i = 0; i <= lastBlock; i++) {
       auto* child = iterator.getChild(i);
       auto* block = child->dynCast<Block>();
+
+      auto continueEarly = [&]() {
+        // When we continue early, the effects we need to note for the child are
+        // simply those of the child in its original form, since we did not
+        // optimize it.
+        childEffects.emplace_back(getPassOptions(), *getModule(), child);
+      };
+
       // If there is no block, or it is one that might have branches, or it is
       // too small for us to remove anything from (we cannot remove the last
       // element, give up), or if it has unreachable code (leave that for dce).
       if (!block || block->name.is() || block->list.size() <= 1 ||
           hasUnreachableChild(block)) {
-        effectsToMovePast.walk(child);
+        continueEarly();
         continue;
       }
 
@@ -547,27 +575,38 @@ struct MergeBlocks
       // block (leave that for refinalize).
       auto* back = block->list.back();
       if (block->type != back->type) {
-        effectsToMovePast.walk(child);
+        continueEarly();
         continue;
       }
 
       // The block seems to have the shape we want. Check for effects: we want
       // to move all the items out but the last one, so they must all cross over
       // anything we need to move past.
-      if (effectsToMovePast.hasAnything()) {
-        bool fail = false;
-        for (auto* blockChild : block->list) {
-          if (blockChild != back &&
-              EffectAnalyzer(getPassOptions(), *getModule(), blockChild)
-                .invalidates(effectsToMovePast)) {
+      //
+      // In principle we could also handle the case where we can move out only
+      // some of the block items. However, that would be more complex (we'd need
+      // to allocate a new block sometimes), it is rare, and it may not always
+      // be helpful (we wouldn't actually be getting rid of the child block -
+      // although, in the binary format such blocks tend to vanish anyhow).
+      bool fail = false;
+      for (auto* blockChild : block->list) {
+        if (blockChild == back) {
+          break;
+        }
+        EffectAnalyzer blockChildEffects(getPassOptions(), *getModule(), blockChild);
+        for (auto& effects : childEffects) {
+          if (blockChildEffects.invalidates(effects)) {
             fail = true;
             break;
           }
         }
         if (fail) {
-          effectsToMovePast.walk(child);
-          continue;
+          break;
         }
+      }
+      if (fail) {
+        continueEarly();
+        continue;
       }
 
       // Wonderful, we can do this! Move our items to an outer block, reusing
@@ -593,7 +632,7 @@ struct MergeBlocks
       // If there are further elements, we need to know what effects the
       // remaining code base, as if they move they'll move past it.
       if (i != numChildren - 1) {
-        effectsToMovePast.walk(back);
+        childEffects.emplace_back(getPassOptions(), *getModule(), back);
       }
     }
 
