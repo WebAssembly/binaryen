@@ -368,6 +368,37 @@
   )
  )
 
+ ;; CHECK:      (func $subsequent-children-4 (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children-4
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-4 (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (call $subsequent-children-4
+   (block (result i32)
+    (drop (i32.const 0))
+    ;; Similar to the above, but remove the call on arg 1 as well. Now we *can*
+    ;; pull out the call with arg 3.
+    (i32.const 1)
+   )
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+   (i32.const 2)
+  )
+ )
+
  ;; CHECK:      (func $helper (param $x i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
