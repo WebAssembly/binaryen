@@ -532,7 +532,7 @@ struct MergeBlocks
 
     Index lastBlock = -1;
     for (Index i = 0; i < numChildren; i++) {
-      if (iterator.getChild(i)->isBlock()) {
+      if (iterator.getChild(i)->is<Block>()) {
         lastBlock = i;
       }
     }
