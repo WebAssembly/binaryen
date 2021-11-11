@@ -24,7 +24,8 @@
 // a less beneficial position for compression, that is, mutually-compressible
 // functions are no longer together (when they were before, in the original
 // order, the has some natural tendency one way or the other). TODO: investigate
-// similarity ordering here.
+// similarity ordering here (see similarity-ordering branch and
+// https://www.rfk.id.au/blog/entry/cromulate-improve-compressibility/)
 //
 
 #include <memory>

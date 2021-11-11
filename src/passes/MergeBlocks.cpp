@@ -509,14 +509,93 @@ struct MergeBlocks
       return;
     }
 
+    // As we go through the children, things we cannot move become effects that
+    // we must move past. Consider this:
+    //
+    //  (parent
+    //   (child1
+    //    (A)
+    //    (B)
+    //   )
+    //   (child2
+    //
+    // If we move (A) out of parent, then that is fine (further things moved
+    // out would appear after it). But if we leave (B) in its current position
+    // then if we try to move anything from child2 out of parent then we must
+    // move those things past (B).
+    EffectAnalyzer effectsToMovePast(getPassOptions(), *getModule());
+
+    // The outer block that will replace us, containing the contents moved out
+    // and then ourselves, assuming we manage to optimize.
+    Block* outerBlock = nullptr;
+
     ChildIterator iterator(curr);
-    auto& children = iterator.children;
-    if (children.size() == 1) {
-      optimize(curr, *children[0]);
-    } else if (children.size() == 2) {
-      optimize(curr, *children[0], optimize(curr, *children[1]), children[1]);
-    } else if (children.size() == 3) {
-      optimizeTernary(curr, *children[2], *children[1], *children[0]);
+    auto numChildren = iterator.getNumChildren();
+    for (Index i = 0; i < numChildren; i++) {
+      auto* block = iterator.getChild(i)->dynCast<Block>();
+      // If there is no block, or it is one that might have branches, or it is
+      // too small for us to remove anything from (we cannot remove the last
+      // element, give up), or if it has unreachable code (leave that for dce),
+      // or if the block's last element has a different type than the block
+      // (leave that for refinalize).
+      if (!block || block->name.is() || block->list.size() <= 1 ||
+          hasUnreachableChild(block) || block->type != back->type) {
+        effectsToMovePast.walk(child);
+        continue;
+      }
+
+      // The block seems to have the shape we want. Check for effects: we want
+      // to move all the items out but the last one, so they must all cross over
+      // anything we need to move past.
+      auto* back = block->list.back();
+      if (effectsToMovePast.hasAnything()) {
+        bool fail = false;
+        for (auto* blockChild : block->list) {
+          if (blockChild != back &&
+              EffectAnalyzer(getPassOptions(), *getModule(), blockChild).invalidates(effectsToMovePast)) {
+            fail = true;
+            break;
+          }
+        }
+        if (fail) {
+          effectsToMovePast.walk(child);
+          continue;
+        }
+      }
+
+      // Wonderful, we can do this! Move our items to an outer block, reusing
+      // this one if there isn't one already.
+      if (!outerBlock) {
+        // Leave all the items there, just remove the last one which will remain
+        // where it was.
+        block->list.pop_back();
+        outerBlock = block;
+      } else {
+        // Move the items to the existing outer block.
+        for (auto* blockChild : block->list) {
+          if (blockChild != back) {
+            outerBlock->list.push_back(blockChild);
+          }
+        }
+      }
+
+      // Set the back element as the new child, replacing the block that was
+      // there.
+      iterator.getChild(i) = back;
+
+      // If there are further elements, we need to know what effects the
+      // remaining code base, as if they move they'll move past it.
+      if (i != numChildren - 1) {
+        effectsToMovePast.walk(back);
+      }
+    }
+
+    if (outerBlock) {
+      // We moved items outside, which means we must replace ourselves with the
+      // block.
+      block->list.push_back(curr);
+      block->finalize(curr->type);
+      replaceCurrent(block);
     }
   }
 
