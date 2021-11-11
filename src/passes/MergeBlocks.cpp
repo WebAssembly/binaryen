@@ -510,7 +510,7 @@ struct MergeBlocks
     }
 
     // As we go through the children, to move things to the outside means
-    // moving them past the children before then:
+    // moving them past the children before them:
     //
     //  (parent
     //   (child1
@@ -530,6 +530,8 @@ struct MergeBlocks
     ChildIterator iterator(curr);
     auto numChildren = iterator.getNumChildren();
 
+    // Find the last block among the children, as all we are trying to do here
+    // is move the contents of blocks outwards.
     Index lastBlock = -1;
     for (Index i = 0; i < numChildren; i++) {
       if (iterator.getChild(i)->is<Block>()) {
@@ -542,7 +544,8 @@ struct MergeBlocks
     }
 
     // We'll only compute effects up to the child before the last block, since
-    // we have nothing to optimize afterwards.
+    // we have nothing to optimize afterwards, which sets a maximum size on the
+    // vector.
     if (lastBlock > 0) {
       childEffects.reserve(lastBlock);
     }
@@ -556,15 +559,16 @@ struct MergeBlocks
       auto* block = child->dynCast<Block>();
 
       auto continueEarly = [&]() {
-        // When we continue early, the effects we need to note for the child are
-        // simply those of the child in its original form, since we did not
-        // optimize it.
+        // When we continue early, after failing to find anything to optimize,
+        // the effects we need to note for the child are simply those of the
+        // child in its original form.
         childEffects.emplace_back(getPassOptions(), *getModule(), child);
       };
 
       // If there is no block, or it is one that might have branches, or it is
       // too small for us to remove anything from (we cannot remove the last
-      // element, give up), or if it has unreachable code (leave that for dce).
+      // element, give up), or if it has unreachable code (leave that for dce),
+      // then give up.
       if (!block || block->name.is() || block->list.size() <= 1 ||
           hasUnreachableChild(block)) {
         continueEarly();
@@ -620,9 +624,10 @@ struct MergeBlocks
       } else {
         // Move the items to the existing outer block.
         for (auto* blockChild : block->list) {
-          if (blockChild != back) {
-            outerBlock->list.push_back(blockChild);
+          if (blockChild == back) {
+            break;
           }
+          outerBlock->list.push_back(blockChild);
         }
       }
 
@@ -631,8 +636,8 @@ struct MergeBlocks
       iterator.getChild(i) = back;
 
       // If there are further elements, we need to know what effects the
-      // remaining code base, as if they move they'll move past it.
-      if (i != numChildren - 1) {
+      // remaining code has, as if they move they'll move past it.
+      if (i < lastBlock) {
         childEffects.emplace_back(getPassOptions(), *getModule(), back);
       }
     }
