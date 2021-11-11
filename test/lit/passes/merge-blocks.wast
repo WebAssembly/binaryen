@@ -222,4 +222,46 @@
    )
   )
  )
+
+ ;; CHECK:      (func $subsequent-children (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; Both of the calls to helper can be moved outside. Those calls remain in
+  ;; order after doing so, so there is no problem, and none of them are moved
+  ;; across anything with side effects. This leaves only consts in the call to
+  ;; $subsequent-children.
+  (call $subsequent-children
+   (block (result i32)
+    (drop (call $helper (i32.const 0)))
+    (i32.const 1)
+   )
+   (i32.const 2)
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $helper (param $x i32) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $helper (param $x i32) (result i32)
+  (unreachable)
+ )
 )
