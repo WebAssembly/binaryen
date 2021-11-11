@@ -258,6 +258,43 @@
   )
  )
 
+ ;; CHECK:      (func $subsequent-children-1 (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children-1
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $helper
+ ;; CHECK-NEXT:      (i32.const 3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-1 (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (call $subsequent-children-1
+   (block (result i32)
+    (drop (call $helper (i32.const 0)))
+    (call $helper (i32.const 1)) ;; Compared to before, this is now a call, so
+                                 ;; it has side effects, and the call with arg
+                                 ;; 3 cannot be moved past it.
+   )
+   (i32.const 2)
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+  )
+ )
+
  ;; CHECK:      (func $helper (param $x i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
