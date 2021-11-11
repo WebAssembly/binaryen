@@ -576,7 +576,10 @@ struct MergeBlocks
       }
 
       // Also give up if the block's last element has a different type than the
-      // block (leave that for refinalize).
+      // block, as that would mean we would change the type received by the
+      // parent (which might cause its type to need to be updated, for example).
+      // Leave this alone, as other passes will simplify this anyhow (using
+      // refinalize).
       auto* back = block->list.back();
       if (block->type != back->type) {
         continueEarly();
