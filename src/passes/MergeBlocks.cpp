@@ -593,7 +593,8 @@ struct MergeBlocks
         if (blockChild == back) {
           break;
         }
-        EffectAnalyzer blockChildEffects(getPassOptions(), *getModule(), blockChild);
+        EffectAnalyzer blockChildEffects(
+          getPassOptions(), *getModule(), blockChild);
         for (auto& effects : childEffects) {
           if (blockChildEffects.invalidates(effects)) {
             fail = true;
