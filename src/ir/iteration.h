@@ -62,7 +62,7 @@ template<class Specific> class AbstractChildIterator {
     }
   };
 
-  friend class Iterator;
+  friend struct Iterator;
 
   Index mapIndex(Index index) const {
     assert(index < children.size());
