@@ -295,6 +295,44 @@
   )
  )
 
+ ;; CHECK:      (func $subsequent-children-2 (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children-2
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $helper
+ ;; CHECK-NEXT:      (i32.const 3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-2 (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (call $subsequent-children-2
+   (block (result i32)
+    (drop (call $helper (i32.const 0)))
+    (call $helper (i32.const 1))
+   )
+   ;; Similar to the above, but with the main call's last two arguments flipped.
+   ;; This should not have an effect on the output: we still can't pull out the
+   ;; call with arg 3.
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+   (i32.const 2)
+  )
+ )
+
  ;; CHECK:      (func $helper (param $x i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
