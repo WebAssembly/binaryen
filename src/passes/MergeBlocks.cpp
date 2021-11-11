@@ -567,8 +567,8 @@ struct MergeBlocks
 
       // If there is no block, or it is one that might have branches, or it is
       // too small for us to remove anything from (we cannot remove the last
-      // element, give up), or if it has unreachable code (leave that for dce),
-      // then give up.
+      // element), or if it has unreachable code (leave that for dce), then give
+      // up.
       if (!block || block->name.is() || block->list.size() <= 1 ||
           hasUnreachableChild(block)) {
         continueEarly();
