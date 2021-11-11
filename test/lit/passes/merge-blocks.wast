@@ -127,15 +127,13 @@
 
  ;; CHECK:      (func $array.set-no-1 (param $foo (ref $array))
  ;; CHECK-NEXT:  (local $bar i32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (array.set $array
  ;; CHECK-NEXT:   (local.get $foo)
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (local.tee $bar
- ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   (local.tee $bar
+ ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 37)
  ;; CHECK-NEXT:  )
@@ -159,16 +157,14 @@
 
  ;; CHECK:      (func $array.set-no-2 (param $foo (ref $array))
  ;; CHECK-NEXT:  (local $bar i32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (array.set $array
  ;; CHECK-NEXT:   (local.get $foo)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (local.tee $bar
- ;; CHECK-NEXT:     (i32.const 37)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   (local.tee $bar
+ ;; CHECK-NEXT:    (i32.const 37)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

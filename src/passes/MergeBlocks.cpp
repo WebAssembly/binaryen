@@ -532,14 +532,21 @@ struct MergeBlocks
     ChildIterator iterator(curr);
     auto numChildren = iterator.getNumChildren();
     for (Index i = 0; i < numChildren; i++) {
-      auto* block = iterator.getChild(i)->dynCast<Block>();
+      auto* child = iterator.getChild(i);
+      auto* block = child->dynCast<Block>();
       // If there is no block, or it is one that might have branches, or it is
       // too small for us to remove anything from (we cannot remove the last
-      // element, give up), or if it has unreachable code (leave that for dce),
-      // or if the block's last element has a different type than the block
-      // (leave that for refinalize).
+      // element, give up), or if it has unreachable code (leave that for dce).
       if (!block || block->name.is() || block->list.size() <= 1 ||
-          hasUnreachableChild(block) || block->type != back->type) {
+          hasUnreachableChild(block)) {
+        effectsToMovePast.walk(child);
+        continue;
+      }
+
+      // Also give up if the block's last element has a different type than the
+      // block (leave that for refinalize).
+      auto* back = block->list.back();
+      if (block->type != back->type) {
         effectsToMovePast.walk(child);
         continue;
       }
@@ -547,7 +554,6 @@ struct MergeBlocks
       // The block seems to have the shape we want. Check for effects: we want
       // to move all the items out but the last one, so they must all cross over
       // anything we need to move past.
-      auto* back = block->list.back();
       if (effectsToMovePast.hasAnything()) {
         bool fail = false;
         for (auto* blockChild : block->list) {
@@ -593,9 +599,9 @@ struct MergeBlocks
     if (outerBlock) {
       // We moved items outside, which means we must replace ourselves with the
       // block.
-      block->list.push_back(curr);
-      block->finalize(curr->type);
-      replaceCurrent(block);
+      outerBlock->list.push_back(curr);
+      outerBlock->finalize(curr->type);
+      replaceCurrent(outerBlock);
     }
   }
 
@@ -603,59 +609,6 @@ struct MergeBlocks
     // We can move code out of the condition, but not any of the other children.
     optimize(curr, curr->condition);
   }
-
-  void optimizeTernary(Expression* curr,
-                       Expression*& first,
-                       Expression*& second,
-                       Expression*& third) {
-    Block* outer = nullptr;
-    outer = optimize(curr, first, outer);
-    // TODO: for now, just stop when we see any side effect after the first
-    //       item, but we could handle them carefully like we do for binaries.
-    if (EffectAnalyzer(getPassOptions(), *getModule(), second)
-          .hasSideEffects()) {
-      return;
-    }
-    outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), *getModule(), third)
-          .hasSideEffects()) {
-      return;
-    }
-    optimize(curr, third, outer);
-  }
-
-  template<typename T> void handleCall(T* curr) {
-    Block* outer = nullptr;
-    for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
-            .hasSideEffects()) {
-        return;
-      }
-      outer = optimize(curr, curr->operands[i], outer);
-    }
-  }
-
-  void visitCall(Call* curr) { handleCall(curr); }
-
-  template<typename T> void handleNonDirectCall(T* curr) {
-    Block* outer = nullptr;
-    for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
-            .hasSideEffects()) {
-        return;
-      }
-      outer = optimize(curr, curr->operands[i], outer);
-    }
-    if (EffectAnalyzer(getPassOptions(), *getModule(), curr->target)
-          .hasSideEffects()) {
-      return;
-    }
-    optimize(curr, curr->target, outer);
-  }
-
-  void visitCallIndirect(CallIndirect* curr) { handleNonDirectCall(curr); }
-
-  void visitCallRef(CallRef* curr) { handleNonDirectCall(curr); }
 
   void visitThrow(Throw* curr) {
     Block* outer = nullptr;

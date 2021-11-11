@@ -62,7 +62,9 @@ template<class Specific> class AbstractChildIterator {
     }
   };
 
-  Index mapIndex(Index index) {
+  friend class Iterator;
+
+  Index mapIndex(Index index) const {
     assert(index < children.size());
 
     // The vector of children is in reverse order, as that is how
