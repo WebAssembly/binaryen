@@ -87,7 +87,7 @@ struct SignatureSubtyping : public Pass {
 
     // Compute optimal LUBs.
     std::unordered_set<HeapType> seen;
-    for (auto* func : wasm->functions) {
+    for (auto& func : module->functions) {
       auto type = func->type;
       if (seen.count(type)) {
         continue;
@@ -107,7 +107,7 @@ struct SignatureSubtyping : public Pass {
         }
       };
 
-      auto& callsTo = parent.allCallsTo[oldSignatureType];
+      auto& callsTo = allCallsTo[type];
       for (auto* call : callsTo.calls) {
         updateLUBs(call->operands);
       }
@@ -137,10 +137,10 @@ struct SignatureSubtyping : public Pass {
       CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
 
       void doWalkFunction(Function* func) {
-        TypeUpdating::updateParamTypes(func, parent.newSignatures[func->type].params, wasm);
+        TypeUpdating::updateParamTypes(func, parent.newSignatures[func->type].params.getTuple().types, wasm);
       }
     };
-    CodeUpdater(wasm).run(runner, &wasm);
+    CodeUpdater(*this, *module).run(runner, module);
 
     // Rewrite the types, computing optimal LUBs for each one.
     class TypeRewriter : public GlobalTypeRewriter {
