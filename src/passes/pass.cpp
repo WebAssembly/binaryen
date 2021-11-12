@@ -531,6 +531,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("global-subtyping");
+    addIfNoDWARFIssues("signature-subtyping");
     // Global type optimization can remove fields that are not needed, which can
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,

@@ -119,7 +119,16 @@ struct SignatureSubtyping : public Pass {
       // Apply the LUBs to the type.
       std::vector<Type> newParamsTypes;
       for (auto lub : paramLUBs) {
+        if (!lub.noted()) {
+          break;
+        }
         newParamsTypes.push_back(lub.get());
+      }
+      if (newParamsTypes.size() < numParams) {
+        // We did not have type information to calculate a LUB (no calls, or the
+        // calls are unreachable), so there is nothing we can improve here.
+        // Other passes might remove the type entirely.
+        continue;
       }
       auto newParams = Type(newParamsTypes);
       if (newParams != func->getParams()) {

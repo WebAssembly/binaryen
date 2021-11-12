@@ -286,6 +286,53 @@
 )
 
 (module
+  ;; When we have only unreachable values, there is nothing to optimize.
+
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call_ref
+      (unreachable)
+      (ref.func $func)
+    )
+  )
+)
+
+(module
+  ;; When we have no calls, there is nothing to optimize.
+
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+  )
+)
+
+(module
   ;; Test multiple fields in multiple types.
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
