@@ -141,6 +141,11 @@ struct SignatureSubtyping : public Pass {
       }
     }
 
+    if (newSignatures.empty()) {
+      // We found nothing to optimize.
+      return;
+    }
+
     // Update function contents for their new parameter types.
     struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
       bool isFunctionParallel() override { return true; }
