@@ -371,7 +371,9 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm);
 // function does are to update the types of local.get/tee operations,
 // refinalize, etc., basically all operations necessary to ensure validation
 // with the new types.
-void updateParamTypes(Function* func, const std::vector<Type>& newParamTypes, Module& wasm);
+void updateParamTypes(Function* func,
+                      const std::vector<Type>& newParamTypes,
+                      Module& wasm);
 
 } // namespace TypeUpdating
 

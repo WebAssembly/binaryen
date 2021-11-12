@@ -314,7 +314,9 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
   return get;
 }
 
-void updateParamTypes(Function* func, const std::vector<Type>& newParamTypes, Module& wasm) {
+void updateParamTypes(Function* func,
+                      const std::vector<Type>& newParamTypes,
+                      Module& wasm) {
   // Before making this update, we must be careful if the param was "reused",
   // specifically, if it is assigned a less-specific type in the body then
   // we'd get a validation error when we refine it. To handle that, if a less-
