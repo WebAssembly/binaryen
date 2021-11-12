@@ -47,8 +47,9 @@ struct SignatureSubtyping : public Pass {
     std::vector<CallRef*> callRefs;
   };
 
-  // A map of function types to the calls and call_refs that involve that type.
-  std::unordered_map<HeapType, CallInfo> allCallsTo;
+  // Maps each heap type to the possible refinement of the types in their
+  // signatures.
+  std::unordered_map<HeapType, Signature> newSignatures;
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
@@ -66,6 +67,9 @@ struct SignatureSubtyping : public Pass {
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
       });
 
+    // A map of function types to the calls and call_refs that involve that type.
+    std::unordered_map<HeapType, CallInfo> allCallsTo;
+
     // Combine all the information into the map of function types to the calls
     // and call_refs that involve that type.
     for (auto& [func, info] : analysis.map) {
@@ -81,6 +85,63 @@ struct SignatureSubtyping : public Pass {
       }
     }
 
+    // Compute optimal LUBs.
+    std::unordered_set<HeapType> seen;
+    for (auto* func : wasm->functions) {
+      auto type = func->type;
+      if (seen.count(type)) {
+        continue;
+      }
+      seen.insert(type);
+
+      auto sig = type.getSignature();
+      auto params = sig.params;
+      auto numParams = params.size();
+
+      // Compute LUBs for the params.
+      std::vector<LUBFinder> paramLUBs(numParams);
+
+      auto updateLUBs = [&](const ExpressionList& operands) {
+        for (Index i = 0; i < numParams; i++) {
+          paramLUBs[i].note(operands[i]->type);
+        }
+      };
+
+      auto& callsTo = parent.allCallsTo[oldSignatureType];
+      for (auto* call : callsTo.calls) {
+        updateLUBs(call->operands);
+      }
+      for (auto* callRef : callsTo.callRefs) {
+        updateLUBs(callRef->operands);
+      }
+
+      // Apply the LUBs to the type.
+      std::vector<Type> newParams;
+      for (auto lub : paramLUBs) {
+        newParams.push_back(lub.get());
+      }
+      // TODO: return types too.
+      newSignatures[type] = Signature(Type(newParams), Type::none);
+      // TODO: mark if we found an improvement, to save work later.
+    }
+
+    // Update functions for their new parameter types.
+    struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      SignatureSubtyping& parent;
+      Module& wasm;
+
+      CodeUpdater(SignatureSubtyping& parent, Module& wasm) : parent(parent), wasm(wasm) {}
+
+      CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
+
+      void doWalkFunction(Function* func) {
+        TypeUpdating::updateParamTypes(func, parent.newSignatures[func->type].params, wasm);
+      }
+    };
+    CodeUpdater(wasm).run(runner, &wasm);
+
     // Rewrite the types, computing optimal LUBs for each one.
     class TypeRewriter : public GlobalTypeRewriter {
       SignatureSubtyping& parent;
@@ -90,40 +151,12 @@ struct SignatureSubtyping : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifySignature(HeapType oldSignatureType, Signature& sig) {
-        auto oldSig = oldSignatureType.getSignature();
-        auto oldParams = oldSig.params;
-        auto numParams = oldParams.size();
-
-        // Compute LUBs for the params.
-        std::vector<LUBFinder> paramLUBs(numParams);
-
-        auto updateLUBs = [&](const ExpressionList& operands) {
-          for (Index i = 0; i < numParams; i++) {
-            paramLUBs[i].note(operands[i]->type);
-          }
-        };
-
-        auto& callsTo = parent.allCallsTo[oldSignatureType];
-        for (auto* call : callsTo.calls) {
-          updateLUBs(call->operands);
-        }
-        for (auto* callRef : callsTo.callRefs) {
-          updateLUBs(callRef->operands);
-        }
-
-        // Apply the LUBs to the type.
-        std::vector<Type> newParams;
-        for (auto lub : paramLUBs) {
-          newParams.push_back(lub.get());
-        }
-        sig.params = getTempType(Type(newParams));
+        auto newSig = parent.newSignatures[oldSignatureType];
+        sig.params = getTempType(newSig.params);
       }
     };
 
     TypeRewriter(*module, *this).update();
-
-    // Update param types everywhere for their new types.
-    TypeUpdating::updateParamTypes(*module);
   }
 };
 
