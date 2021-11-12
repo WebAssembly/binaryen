@@ -364,6 +364,15 @@ Type getValidLocalType(Type type, FeatureSet features);
 // ref.as_non_null around it, if the local should be non-nullable but is not).
 Expression* fixLocalGet(LocalGet* get, Module& wasm);
 
+// Applies new types of parameters to a function. This does all the necessary
+// changes aside from altering the function type, which the caller is expected
+// to do (in a way that is appropriate for nominal typing (either set a new
+// type for the function, or alter the type itself). The specific things this
+// function does are to update the types of local.get/tee operations,
+// refinalize, etc., basically all operations necessary to ensure validation
+// with the new types.
+void updateParamTypes(Function* func, const std::vector<Type>& newParamTypes, Module& wasm);
+
 } // namespace TypeUpdating
 
 } // namespace wasm
