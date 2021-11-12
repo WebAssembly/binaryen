@@ -127,15 +127,13 @@
 
  ;; CHECK:      (func $array.set-no-1 (param $foo (ref $array))
  ;; CHECK-NEXT:  (local $bar i32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (array.set $array
  ;; CHECK-NEXT:   (local.get $foo)
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (local.tee $bar
- ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   (local.tee $bar
+ ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 37)
  ;; CHECK-NEXT:  )
@@ -159,16 +157,14 @@
 
  ;; CHECK:      (func $array.set-no-2 (param $foo (ref $array))
  ;; CHECK-NEXT:  (local $bar i32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (array.set $array
  ;; CHECK-NEXT:   (local.get $foo)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (local.tee $bar
- ;; CHECK-NEXT:     (i32.const 37)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   (local.tee $bar
+ ;; CHECK-NEXT:    (i32.const 37)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -225,5 +221,188 @@
     (i32.const 5)
    )
   )
+ )
+
+ ;; CHECK:      (func $subsequent-children (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; Both of the calls to helper can be moved outside. Those calls remain in
+  ;; order after doing so, so there is no problem, and none of them are moved
+  ;; across anything with side effects. This leaves only consts in the call to
+  ;; $subsequent-children.
+  (call $subsequent-children
+   (block (result i32)
+    (drop (call $helper (i32.const 0)))
+    (i32.const 1)
+   )
+   (i32.const 2)
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $subsequent-children-1 (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children-1
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $helper
+ ;; CHECK-NEXT:      (i32.const 3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-1 (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (call $subsequent-children-1
+   (block (result i32)
+    (drop (call $helper (i32.const 0)))
+    (call $helper (i32.const 1)) ;; Compared to before, this is now a call, so
+                                 ;; it has side effects, and the call with arg
+                                 ;; 3 cannot be moved past it.
+   )
+   (i32.const 2)
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $subsequent-children-2 (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children-2
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $helper
+ ;; CHECK-NEXT:      (i32.const 3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-2 (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (call $subsequent-children-2
+   (block (result i32)
+    (drop (call $helper (i32.const 0)))
+    (call $helper (i32.const 1))
+   )
+   ;; Similar to the above, but with the main call's last two arguments flipped.
+   ;; This should not have an effect on the output: we still can't pull out the
+   ;; call with arg 3.
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+   (i32.const 2)
+  )
+ )
+
+ ;; CHECK:      (func $subsequent-children-3 (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children-3
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $helper
+ ;; CHECK-NEXT:      (i32.const 3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-3 (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (call $subsequent-children-3
+   (block (result i32)
+    (drop (i32.const 0)) ;; Similar to the above, but this is just a const now
+                         ;; and not a call. We still can't pull out the call
+                         ;; with arg 3, due to the call with arg 1.
+    (call $helper (i32.const 1))
+   )
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+   (i32.const 2)
+  )
+ )
+
+ ;; CHECK:      (func $subsequent-children-4 (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $helper
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $subsequent-children-4
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-4 (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (call $subsequent-children-4
+   (block (result i32)
+    (drop (i32.const 0))
+    ;; Similar to the above, but remove the call on arg 1 as well. Now we *can*
+    ;; pull out the call with arg 3.
+    (i32.const 1)
+   )
+   (block (result i32)
+    (drop (call $helper (i32.const 3)))
+    (i32.const 4)
+   )
+   (i32.const 2)
+  )
+ )
+
+ ;; CHECK:      (func $helper (param $x i32) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $helper (param $x i32) (result i32)
+  (unreachable)
  )
 )
