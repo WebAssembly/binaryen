@@ -317,51 +317,97 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
   return get;
 }
 
-void updateParamTypes(Function* func, Module& wasm) {
-  bool changed = false;
+void updateParamTypes(Function* func,
+                      const std::vector<Type>& newParamTypes,
+                      Module& wasm) {
+  // Before making this update, we must be careful if the param was "reused",
+  // specifically, if it is assigned a less-specific type in the body then
+  // we'd get a validation error when we refine it. To handle that, if a less-
+  // specific type is assigned simply switch to a new local, that is, we can
+  // do a fixup like this:
+  //
+  // function foo(x : oldType) {
+  //   ..
+  //   x = (oldType)val;
+  //
+  // =>
+  //
+  // function foo(x : newType) {
+  //   var x_oldType = x; // assign the param immediately to a fixup var
+  //   ..
+  //   x_oldType = (oldType)val; // fixup var is used throughout the body
+  //
+  // Later optimization passes may be able to remove the extra var, and can
+  // take advantage of the refined argument type while doing so.
 
-  for (auto* get : FindAll<LocalGet>(func->body).list) {
-    auto index = get->index;
-    auto newType = func->getLocalType(index);
-    if (func->isParam(index) && get->type != newType) {
-      get->type = newType;
-      changed = true;
-    }
-  }
+  // A map of params that need a fixup to the new fixup var used for it.
+  std::unordered_map<Index, Index> paramFixups;
 
-  for (auto* set : FindAll<LocalSet>(func->body).list) {
+  FindAll<LocalSet> sets(func->body);
+
+  for (auto* set : sets.list) {
     auto index = set->index;
-    auto newType = func->getLocalType(index);
-    if (set->isTee() && func->isParam(index) && set->type != newType) {
-      set->type = newType;
+    if (func->isParam(index) && !paramFixups.count(index) &&
+        !Type::isSubType(set->value->type, newParamTypes[index])) {
+      paramFixups[index] = Builder::addVar(func, func->getLocalType(index));
+    }
+  }
+
+  FindAll<LocalGet> gets(func->body);
+
+  // Apply the fixups we identified that we need.
+  if (!paramFixups.empty()) {
+    // Write the params immediately to the fixups.
+    Builder builder(wasm);
+    std::vector<Expression*> contents;
+    for (Index index = 0; index < func->getNumParams(); index++) {
+      auto iter = paramFixups.find(index);
+      if (iter != paramFixups.end()) {
+        auto fixup = iter->second;
+        contents.push_back(builder.makeLocalSet(
+          fixup, builder.makeLocalGet(index, newParamTypes[index])));
+      }
+    }
+    contents.push_back(func->body);
+    func->body = builder.makeBlock(contents);
+
+    // Update gets and sets using the param to use the fixup.
+    for (auto* get : gets.list) {
+      auto iter = paramFixups.find(get->index);
+      if (iter != paramFixups.end()) {
+        get->index = iter->second;
+      }
+    }
+    for (auto* set : sets.list) {
+      auto iter = paramFixups.find(set->index);
+      if (iter != paramFixups.end()) {
+        set->index = iter->second;
+      }
+    }
+  }
+
+  // Update local.get/local.tee operations that use the modified param type.
+  for (auto* get : gets.list) {
+    auto index = get->index;
+    if (func->isParam(index)) {
+      get->type = newParamTypes[index];
+    }
+  }
+  for (auto* set : sets.list) {
+    auto index = set->index;
+    if (func->isParam(index) && set->isTee()) {
+      set->type = newParamTypes[index];
       set->finalize();
-      changed = true;
     }
   }
 
-  if (changed) {
-    // Propagate the new get and set types outwards.
-    ReFinalize().walkFunctionInModule(func, &wasm);
+  // Propagate the new get and set types outwards.
+  ReFinalize().walkFunctionInModule(func, &wasm);
+
+  if (!paramFixups.empty()) {
+    // We have added locals, and must handle non-nullability of them.
+    TypeUpdating::handleNonDefaultableLocals(func, wasm);
   }
-}
-
-void updateParamTypes(Module& wasm) {
-  struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
-    bool isFunctionParallel() override { return true; }
-
-    Module& wasm;
-
-    CodeUpdater(Module& wasm) : wasm(wasm) {}
-
-    CodeUpdater* create() override { return new CodeUpdater(wasm); }
-
-    void doWalkFunction(Function* func) {
-      updateParamTypes(func, wasm);
-    }
-  };
-
-  PassRunner runner(&wasm);
-  CodeUpdater(wasm).run(&runner, &wasm);
 }
 
 } // namespace TypeUpdating
