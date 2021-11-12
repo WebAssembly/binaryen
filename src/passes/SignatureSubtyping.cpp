@@ -117,13 +117,15 @@ struct SignatureSubtyping : public Pass {
       }
 
       // Apply the LUBs to the type.
-      std::vector<Type> newParams;
+      std::vector<Type> newParamsTypes;
       for (auto lub : paramLUBs) {
-        newParams.push_back(lub.get());
+        newParamsTypes.push_back(lub.get());
       }
-      // TODO: return types too.
-      newSignatures[type] = Signature(Type(newParams), Type::none);
-      // TODO: mark if we found an improvement, to save work later.
+      auto newParams = Type(newParamsTypes);
+      if (newParams != func->getParams()) {
+        // We found an improvement!
+        newSignatures[type] = Signature(newParams, Type::none);
+      }
     }
 
     // Update functions for their new parameter types.
@@ -139,11 +141,14 @@ struct SignatureSubtyping : public Pass {
       CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
 
       void doWalkFunction(Function* func) {
-        std::vector<Type> newParams;
-        for (auto param : parent.newSignatures[func->type].params) {
-          newParams.push_back(param);
+        auto iter = parent.newSignatures.find(func->type);
+        if (iter != parent.newSignatures.end()) {
+          std::vector<Type> newParamsTypes;
+          for (auto param : iter->second.params) {
+            newParamsTypes.push_back(param);
+          }
+          TypeUpdating::updateParamTypes(func, newParamsTypes, wasm);
         }
-        TypeUpdating::updateParamTypes(func, newParams, wasm);
       }
     };
     CodeUpdater(*this, *module).run(runner, module);
@@ -157,8 +162,10 @@ struct SignatureSubtyping : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifySignature(HeapType oldSignatureType, Signature& sig) {
-        auto newSig = parent.newSignatures[oldSignatureType];
-        sig.params = getTempType(newSig.params);
+        auto iter = parent.newSignatures.find(oldSignatureType);
+        if (iter != parent.newSignatures.end()) {
+          sig.params = getTempType(newSig.params);
+        }
       }
     };
 
