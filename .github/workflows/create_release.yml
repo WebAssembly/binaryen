@@ -21,9 +21,6 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.x'
     - uses: actions/checkout@v1
       with:
         submodules: true
