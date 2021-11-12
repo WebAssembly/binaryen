@@ -18,10 +18,12 @@
 // Apply more specific subtypes to signature/function types where possible.
 //
 // This differs from DeadArgumentElimination's refineArgumentTypes() etc. in
-// that DAE will update the type of a function. It can only do that if the
-// function is not taken by reference, in particular. This pass will modify the
-// type of that function itself, in a coordinated way across all the things that
-// use that type.
+// that DAE will modify the type of a function. It can only do that if the
+// function's type is not observable, which means it is not taken by reference.
+// On the other hand, this pass will modify the signature types themselves,
+// which means it can optimize functions whose reference is taken, and it does
+// so while considering all users of the type (across all functions sharing that
+// type, and all call_refs using it).
 //
 // TODO: optimize results too and not just params.
 //
