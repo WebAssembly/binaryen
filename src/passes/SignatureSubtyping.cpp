@@ -141,7 +141,7 @@ struct SignatureSubtyping : public Pass {
       }
     }
 
-    // Update functions for their new parameter types.
+    // Update function contents for their new parameter types.
     struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
       bool isFunctionParallel() override { return true; }
 
@@ -166,7 +166,7 @@ struct SignatureSubtyping : public Pass {
     };
     CodeUpdater(*this, *module).run(runner, module);
 
-    // Rewrite the types, computing optimal LUBs for each one.
+    // Rewrite the types.
     class TypeRewriter : public GlobalTypeRewriter {
       SignatureSubtyping& parent;
 
