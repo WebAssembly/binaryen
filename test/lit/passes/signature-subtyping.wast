@@ -125,13 +125,13 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $struct-sub1 (struct_subtype  $struct))
+  (type $struct-sub1 (struct_subtype $struct))
 
   ;; CHECK:      (type $struct-sub2 (struct_subtype  $struct))
+  (type $struct-sub2 (struct_subtype $struct))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
-  (type $struct-sub1 (struct_subtype $struct))
-  (type $struct-sub2 (struct_subtype $struct))
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
@@ -204,11 +204,10 @@
   ;; to check for proper validation after the update.
 
   ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $struct (struct_subtype (field (ref $sig)) data))
   (type $struct (struct_subtype (field (ref $sig)) data))
-
-  (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -216,22 +215,33 @@
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (local $temp (ref null $sig))
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (local.set $2
   ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
     ;; Define a local of the signature type that is updated.
     (local $temp (ref null $sig))
-    ;; Do a local.get of the param, to verify it's type is valid.
+    ;; Do a local.get of the param, to verify its type is valid.
     (drop
       (local.get $x)
     )
     ;; Copy between the param and the local, to verify their types are still
-    ;; compatible after the update.
-    ;;(local.set $x
-    ;;  (local.get $temp)
-    ;;)
+    ;; compatible after the update. Note that we will need to add a fixup local
+    ;; here, as $x's new type becomes too specific to be assigned the value
+    ;; here.
+    (local.set $x
+      (local.get $temp)
+    )
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
