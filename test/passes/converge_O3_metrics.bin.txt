@@ -54,21 +54,6 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local.set $1
-   (i32.load offset=24
-    (i32.add
-     (i32.load
-      (i32.sub
-       (i32.load
-        (i32.const 18100)
-       )
-       (i32.const 12)
-      )
-     )
-     (i32.const 18100)
-    )
-   )
-  )
   (local.set $0
    (i32.const 10888)
   )
@@ -81,6 +66,21 @@ total
        (i32.const 1)
       )
      )
+    )
+   )
+  )
+  (local.set $1
+   (i32.load offset=24
+    (i32.add
+     (i32.load
+      (i32.sub
+       (i32.load
+        (i32.const 18100)
+       )
+       (i32.const 12)
+      )
+     )
+     (i32.const 18100)
     )
    )
   )
@@ -278,21 +278,6 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local.set $1
-   (i32.load offset=24
-    (i32.add
-     (i32.load
-      (i32.sub
-       (i32.load
-        (i32.const 18100)
-       )
-       (i32.const 12)
-      )
-     )
-     (i32.const 18100)
-    )
-   )
-  )
   (local.set $0
    (i32.const 10888)
   )
@@ -305,6 +290,21 @@ total
        (i32.const 1)
       )
      )
+    )
+   )
+  )
+  (local.set $1
+   (i32.load offset=24
+    (i32.add
+     (i32.load
+      (i32.sub
+       (i32.load
+        (i32.const 18100)
+       )
+       (i32.const 12)
+      )
+     )
+     (i32.const 18100)
     )
    )
   )
@@ -497,21 +497,6 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local.set $1
-   (i32.load offset=24
-    (i32.add
-     (i32.load
-      (i32.sub
-       (i32.load
-        (i32.const 18100)
-       )
-       (i32.const 12)
-      )
-     )
-     (i32.const 18100)
-    )
-   )
-  )
   (local.set $0
    (i32.const 10888)
   )
@@ -524,6 +509,21 @@ total
        (i32.const 1)
       )
      )
+    )
+   )
+  )
+  (local.set $1
+   (i32.load offset=24
+    (i32.add
+     (i32.load
+      (i32.sub
+       (i32.load
+        (i32.const 18100)
+       )
+       (i32.const 12)
+      )
+     )
+     (i32.const 18100)
     )
    )
   )

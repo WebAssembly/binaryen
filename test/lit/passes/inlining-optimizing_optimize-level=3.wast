@@ -6478,34 +6478,32 @@
  ;; CHECK-NEXT:                                  (i32.const 0)
  ;; CHECK-NEXT:                                 )
  ;; CHECK-NEXT:                                 (loop $while-in66
+ ;; CHECK-NEXT:                                  (global.set $tempRet0
+ ;; CHECK-NEXT:                                   (i32.add
+ ;; CHECK-NEXT:                                    (i32.gt_u
+ ;; CHECK-NEXT:                                     (local.tee $20
+ ;; CHECK-NEXT:                                      (call $_bitshift64Shl
+ ;; CHECK-NEXT:                                       (i32.load
+ ;; CHECK-NEXT:                                        (local.get $11)
+ ;; CHECK-NEXT:                                       )
+ ;; CHECK-NEXT:                                       (i32.const 0)
+ ;; CHECK-NEXT:                                       (local.get $17)
+ ;; CHECK-NEXT:                                      )
+ ;; CHECK-NEXT:                                     )
+ ;; CHECK-NEXT:                                     (local.tee $12
+ ;; CHECK-NEXT:                                      (i32.add
+ ;; CHECK-NEXT:                                       (local.get $12)
+ ;; CHECK-NEXT:                                       (local.get $20)
+ ;; CHECK-NEXT:                                      )
+ ;; CHECK-NEXT:                                     )
+ ;; CHECK-NEXT:                                    )
+ ;; CHECK-NEXT:                                    (global.get $tempRet0)
+ ;; CHECK-NEXT:                                   )
+ ;; CHECK-NEXT:                                  )
  ;; CHECK-NEXT:                                  (i32.store
  ;; CHECK-NEXT:                                   (local.get $11)
  ;; CHECK-NEXT:                                   (call $___uremdi3
- ;; CHECK-NEXT:                                    (block (result i32)
- ;; CHECK-NEXT:                                     (global.set $tempRet0
- ;; CHECK-NEXT:                                      (i32.add
- ;; CHECK-NEXT:                                       (i32.gt_u
- ;; CHECK-NEXT:                                        (local.tee $20
- ;; CHECK-NEXT:                                         (call $_bitshift64Shl
- ;; CHECK-NEXT:                                          (i32.load
- ;; CHECK-NEXT:                                           (local.get $11)
- ;; CHECK-NEXT:                                          )
- ;; CHECK-NEXT:                                          (i32.const 0)
- ;; CHECK-NEXT:                                          (local.get $17)
- ;; CHECK-NEXT:                                         )
- ;; CHECK-NEXT:                                        )
- ;; CHECK-NEXT:                                        (local.tee $12
- ;; CHECK-NEXT:                                         (i32.add
- ;; CHECK-NEXT:                                          (local.get $12)
- ;; CHECK-NEXT:                                          (local.get $20)
- ;; CHECK-NEXT:                                         )
- ;; CHECK-NEXT:                                        )
- ;; CHECK-NEXT:                                       )
- ;; CHECK-NEXT:                                       (global.get $tempRet0)
- ;; CHECK-NEXT:                                      )
- ;; CHECK-NEXT:                                     )
- ;; CHECK-NEXT:                                     (local.get $12)
- ;; CHECK-NEXT:                                    )
+ ;; CHECK-NEXT:                                    (local.get $12)
  ;; CHECK-NEXT:                                    (local.tee $20
  ;; CHECK-NEXT:                                     (global.get $tempRet0)
  ;; CHECK-NEXT:                                    )
