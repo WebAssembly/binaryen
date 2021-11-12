@@ -164,7 +164,7 @@ struct SignatureSubtyping : public Pass {
       virtual void modifySignature(HeapType oldSignatureType, Signature& sig) {
         auto iter = parent.newSignatures.find(oldSignatureType);
         if (iter != parent.newSignatures.end()) {
-          sig.params = getTempType(newSig.params);
+          sig.params = getTempType(iter->second.params);
         }
       }
     };
