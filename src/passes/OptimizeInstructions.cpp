@@ -932,12 +932,13 @@ struct OptimizeInstructions
         // So we also avoid this only case:
         //
         //   i64.extend_i32_s(i32.atomic.load(x))
-        if (!(curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2) &&
-            !(load->isAtomic && load->bytes == 4 && curr->op == ExtendSInt32)) {
-          if (load->bytes == 4) {
+        bool willBeSigned = curr->op == ExtendSInt32 && load->bytes == 4;
+        if (!(curr->op == ExtendUInt32 && load->bytes <= 2 && load->signed_) &&
+            !(willBeSigned && load->isAtomic)) {
+          if (willBeSigned) {
             // Special case for i32.load. In this case signedness depends on
             // extend operation.
-            load->signed_ = curr->op == ExtendSInt32;
+            load->signed_ = true;
           }
           load->type = Type::i64;
           return replaceCurrent(load);
