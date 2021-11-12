@@ -927,13 +927,19 @@ struct OptimizeInstructions
         // finally 0x00000000FFFFFFFF. However with `i64.load8_s` in this
         // situation we got `i64(-1)` (all ones) and with `i64.load8_u` it
         // will be 0x00000000000000FF.
-        if (!(curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2)) {
-          load->type = Type::i64;
+        //
+        // Another limitation is atomics which only have unsigned loads.
+        // So we also avoid this only case:
+        //
+        //   i64.extend_i32_s(i32.atomic.load(x))
+        if (!(curr->op == ExtendUInt32 && load->signed_ && load->bytes <= 2) &&
+            !(load->isAtomic && load->bytes == 4 && curr->op == ExtendSInt32)) {
           if (load->bytes == 4) {
             // Special case for i32.load. In this case signedness depends on
             // extend operation.
             load->signed_ = curr->op == ExtendSInt32;
           }
+          load->type = Type::i64;
           return replaceCurrent(load);
         }
       }
