@@ -43,14 +43,10 @@ namespace wasm {
 namespace {
 
 struct SignatureSubtyping : public Pass {
-  // A list of the type relevant types of calls for us, calls and call_refs.
-  struct CallInfo {
-    std::vector<Call*> calls;
-    std::vector<CallRef*> callRefs;
-  };
-
   // Maps each heap type to the possible refinement of the types in their
-  // signatures.
+  // signatures. We will fill this during analysis and then use it while doing
+  // an update of the types. If a type has no improvement that we can find, it
+  // will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
 
   void run(PassRunner* runner, Module* module) override {
@@ -59,6 +55,11 @@ struct SignatureSubtyping : public Pass {
     }
 
     // First, find all the calls and call_refs.
+
+    struct CallInfo {
+      std::vector<Call*> calls;
+      std::vector<CallRef*> callRefs;
+    };
 
     ModuleUtils::ParallelFunctionAnalysis<CallInfo> analysis(
       *module, [&](Function* func, CallInfo& info) {
@@ -69,17 +70,19 @@ struct SignatureSubtyping : public Pass {
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
       });
 
-    // A map of function types to the calls and call_refs that involve that
-    // type.
+    // A map of types to the calls and call_refs that use that type.
     std::unordered_map<HeapType, CallInfo> allCallsTo;
 
-    // Combine all the information into the map of function types to the calls
-    // and call_refs that involve that type.
+    // Combine all the information we gathered into that map.
     for (auto& [func, info] : analysis.map) {
+      // For direct calls, add each call to the type of the function being
+      // called.
       for (auto* call : info.calls) {
         allCallsTo[module->getFunction(call->target)->type].calls.push_back(
           call);
       }
+
+      // For indirect calls, add each call_ref to the type the call_ref uses.
       for (auto* callRef : info.callRefs) {
         auto calledType = callRef->target->type;
         if (calledType != Type::unreachable) {
@@ -98,10 +101,9 @@ struct SignatureSubtyping : public Pass {
       seen.insert(type);
 
       auto sig = type.getSignature();
+
       auto params = sig.params;
       auto numParams = params.size();
-
-      // Compute LUBs for the params.
       std::vector<LUBFinder> paramLUBs(numParams);
 
       auto updateLUBs = [&](const ExpressionList& operands) {
@@ -118,7 +120,7 @@ struct SignatureSubtyping : public Pass {
         updateLUBs(callRef->operands);
       }
 
-      // Apply the LUBs to the type.
+      // Find the final LUBs, and see if we found an improvement.
       std::vector<Type> newParamsTypes;
       for (auto lub : paramLUBs) {
         if (!lub.noted()) {
