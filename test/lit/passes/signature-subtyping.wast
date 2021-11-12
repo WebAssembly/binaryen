@@ -261,7 +261,8 @@
 )
 
 (module
-  ;; An unreachable value does not prevent optimization.
+  ;; An unreachable value does not prevent optimization: we will update the
+  ;; param to be $struct.
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
@@ -300,7 +301,8 @@
 )
 
 (module
-  ;; When we have only unreachable values, there is nothing to optimize.
+  ;; When we have only unreachable values, there is nothing to optimize, and we
+  ;; should not crash.
 
   (type $struct (struct_subtype data))
 
@@ -332,7 +334,8 @@
 )
 
 (module
-  ;; When we have no calls, there is nothing to optimize.
+  ;; When we have no calls, there is nothing to optimize, and we should not
+  ;; crash.
 
   (type $struct (struct_subtype data))
 
