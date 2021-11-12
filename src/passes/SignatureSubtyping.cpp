@@ -129,9 +129,9 @@ struct SignatureSubtyping : public Pass {
         newParamsTypes.push_back(lub.get());
       }
       if (newParamsTypes.size() < numParams) {
-        // We did not have type information to calculate a LUB (no calls, or the
-        // calls are unreachable), so there is nothing we can improve here.
-        // Other passes might remove the type entirely.
+        // We did not have type information to calculate a LUB (no calls, or
+        // some param is always unreachable), so there is nothing we can improve
+        // here. Other passes might remove the type entirely.
         continue;
       }
       auto newParams = Type(newParamsTypes);
