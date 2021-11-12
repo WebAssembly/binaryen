@@ -34,7 +34,7 @@
 )
 
 (module
-  ;; As above, but the all is via call_ref.
+  ;; As above, but the call is via call_ref.
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
@@ -89,7 +89,9 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $func
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (block $block (result (ref null $struct))
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref
   ;; CHECK-NEXT:   (ref.as_data
@@ -100,7 +102,9 @@
   ;; CHECK-NEXT: )
   (func $caller
     (call $func
-      (ref.null $struct)
+      (block (result (ref null $struct))
+        (ref.null $struct)
+      )
     )
     (call_ref
       (ref.as_data
