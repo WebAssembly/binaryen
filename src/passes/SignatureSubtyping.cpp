@@ -137,7 +137,11 @@ struct SignatureSubtyping : public Pass {
       CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
 
       void doWalkFunction(Function* func) {
-        TypeUpdating::updateParamTypes(func, parent.newSignatures[func->type].params.getTuple().types, wasm);
+        std::vector<Type> newParams;
+        for (auto param : parent.newSignatures[func->type].params) {
+          newParams.push_back(param);
+        }
+        TypeUpdating::updateParamTypes(func, newParams, wasm);
       }
     };
     CodeUpdater(*this, *module).run(runner, module);

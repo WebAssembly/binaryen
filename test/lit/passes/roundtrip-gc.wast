@@ -7,7 +7,7 @@
  ;; CHECK:      (export "export" (func $test))
  ;; NOMNL:      (export "export" (func $test))
  (export "export" (func $test))
- ;; CHECK:      (func $test (type $none_=>_none)
+ ;; CHECK:      (func $test
  ;; CHECK-NEXT:  (call $help
  ;; CHECK-NEXT:   (rtt.canon $\7bi32\7d)
  ;; CHECK-NEXT:   (block $label$1 (result i32)
@@ -39,7 +39,7 @@
    )
   )
  )
- ;; CHECK:      (func $help (type $rtt_$\7bi32\7d_i32_=>_none) (param $3 (rtt $\7bi32\7d)) (param $4 i32)
+ ;; CHECK:      (func $help (param $3 (rtt $\7bi32\7d)) (param $4 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $help (type $rtt_$\7bi32\7d_i32_=>_none) (param $3 (rtt $\7bi32\7d)) (param $4 i32)
