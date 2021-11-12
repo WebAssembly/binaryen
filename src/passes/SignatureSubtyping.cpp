@@ -67,7 +67,8 @@ struct SignatureSubtyping : public Pass {
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
       });
 
-    // A map of function types to the calls and call_refs that involve that type.
+    // A map of function types to the calls and call_refs that involve that
+    // type.
     std::unordered_map<HeapType, CallInfo> allCallsTo;
 
     // Combine all the information into the map of function types to the calls
@@ -132,7 +133,8 @@ struct SignatureSubtyping : public Pass {
       SignatureSubtyping& parent;
       Module& wasm;
 
-      CodeUpdater(SignatureSubtyping& parent, Module& wasm) : parent(parent), wasm(wasm) {}
+      CodeUpdater(SignatureSubtyping& parent, Module& wasm)
+        : parent(parent), wasm(wasm) {}
 
       CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
 
