@@ -366,8 +366,9 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm);
 
 // Applies new types of parameters to a function. This does all the necessary
 // changes aside from altering the function type, which the caller is expected
-// to do (in a way that is appropriate for nominal typing (either set a new
-// type for the function, or alter the type itself). The specific things this
+// to do (the caller might simply change the type, but in other cases the caller
+// might be rewriting the types and need to preserve their identity in terms of
+// nominal typing, so we don't change the type here). The specific things this
 // function does are to update the types of local.get/tee operations,
 // refinalize, etc., basically all operations necessary to ensure validation
 // with the new types.
