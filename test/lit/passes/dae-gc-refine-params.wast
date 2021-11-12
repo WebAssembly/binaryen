@@ -184,42 +184,76 @@
  ;; This function is called in ways that *do* allow us to alter the types of
  ;; its parameters (see last function), however, we reuse the parameters by
  ;; writing to them, which causes problems in one case.
- ;; CHECK:      (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${i32}))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK:      (func $various-params-set (param $x (ref null ${i32})) (param $y (ref null ${i32}))
+ ;; CHECK-NEXT:  (local $2 (ref null ${}))
+ ;; CHECK-NEXT:  (local.set $2
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $y)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $x
- ;; CHECK-NEXT:   (ref.null ${})
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $y
- ;; CHECK-NEXT:   (ref.null ${i32_i64})
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (ref.null ${})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $y
+ ;; CHECK-NEXT:    (ref.null ${i32_i64})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $various-params-set (type $ref?|${}|_ref?|${i32}|_=>_none) (param $x (ref null ${})) (param $y (ref null ${i32}))
- ;; NOMNL-NEXT:  (drop
+ ;; NOMNL:      (func $various-params-set (type $ref?|${i32}|_ref?|${i32}|_=>_none) (param $x (ref null ${i32})) (param $y (ref null ${i32}))
+ ;; NOMNL-NEXT:  (local $2 (ref null ${}))
+ ;; NOMNL-NEXT:  (local.set $2
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (local.get $y)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (local.set $x
- ;; NOMNL-NEXT:   (ref.null ${})
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (local.set $y
- ;; NOMNL-NEXT:   (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:  (block
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (local.get $2)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (local.get $y)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (local.set $2
+ ;; NOMNL-NEXT:    (ref.null ${})
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (local.get $2)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (local.set $y
+ ;; NOMNL-NEXT:    (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (local.get $y)
+ ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${}))
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
   (drop (local.get $y))
-  ;; Write to $x in a way that prevents us making the type more specific.
+  ;; Write to $x a value that will not fit in the refined type, which will
+  ;; force us to do a fixup: the param will get the new type, and a new local
+  ;; will stay at the old type, and we will use that local throughout the
+  ;; function.
   (local.set $x (ref.null ${}))
-  ;; Write to $y in a way that still allows us to make the type more specific.
+  (drop
+   (local.get $x)
+  )
+  ;; Write to $y in a way that does not cause any issue, and we should not do
+  ;; any fixup while we refine the type.
   (local.set $y (ref.null ${i32_i64}))
+  (drop
+   (local.get $y)
+  )
  )
 
  ;; CHECK:      (func $call-various-params-tee
@@ -396,5 +430,84 @@
  (func $various-params-middle (param $x (ref null ${}))
   ;; "Use" the local to avoid other optimizations kicking in.
   (drop (local.get $x))
+ )
+
+ ;; CHECK:      (func $unused-and-refinable
+ ;; CHECK-NEXT:  (local $0 (ref null data))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $unused-and-refinable (type $none_=>_none)
+ ;; NOMNL-NEXT:  (local $0 (ref null data))
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT: )
+ (func $unused-and-refinable (param $0 dataref)
+  ;; This function does not use $0. It is called with ${}, so it is also
+  ;; a parameter whose type we can refine. Do not do both operations: instead,
+  ;; just remove it because it is ignored, without altering the type (handling
+  ;; both operations would introduce some corner cases, and it just isn't worth
+  ;; handling them if the param is completely unused anyhow). We should see in
+  ;; the test output that the local $0 (the unused param) becomes a local
+  ;; because it is unused, and that local does *not* have its type refined to
+  ;; ${} (it will however be changed to be nullable, which it must be as a
+  ;; local).
+ )
+
+ ;; CHECK:      (func $call-unused-and-refinable
+ ;; CHECK-NEXT:  (call $unused-and-refinable)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-unused-and-refinable (type $none_=>_none)
+ ;; NOMNL-NEXT:  (call $unused-and-refinable)
+ ;; NOMNL-NEXT: )
+ (func $call-unused-and-refinable
+  (call $unused-and-refinable
+   (struct.new_default ${})
+  )
+ )
+
+ ;; CHECK:      (func $non-nullable-fixup (param $0 (ref ${}))
+ ;; CHECK-NEXT:  (local $1 (ref null data))
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $non-nullable-fixup (type $ref|${}|_=>_none) (param $0 (ref ${}))
+ ;; NOMNL-NEXT:  (local $1 (ref null data))
+ ;; NOMNL-NEXT:  (local.set $1
+ ;; NOMNL-NEXT:   (local.get $0)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (local.set $1
+ ;; NOMNL-NEXT:   (ref.as_non_null
+ ;; NOMNL-NEXT:    (local.get $1)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $non-nullable-fixup (param $0 dataref)
+  ;; Use the param to avoid other opts removing it, and to force us to do a
+  ;; fixup when we refine the param's type. When doing so, we must handle the
+  ;; fact that the new local's type is non-nullable.
+  (local.set $0
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK:      (func $call-non-nullable-fixup
+ ;; CHECK-NEXT:  (call $non-nullable-fixup
+ ;; CHECK-NEXT:   (struct.new_default ${})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-non-nullable-fixup (type $none_=>_none)
+ ;; NOMNL-NEXT:  (call $non-nullable-fixup
+ ;; NOMNL-NEXT:   (struct.new_default ${})
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $call-non-nullable-fixup
+  (call $non-nullable-fixup
+   (struct.new_default ${})
+  )
  )
 )

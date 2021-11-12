@@ -51,6 +51,8 @@ Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateStackIRPass();
+Pass* createGlobalSubtypingPass();
+Pass* createGlobalTypeOptimizationPass();
 Pass* createHeap2LocalPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();
@@ -132,7 +134,6 @@ Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createUnteePass();
 Pass* createVacuumPass();
-Pass* createGlobalTypeOptimizationPass();
 
 } // namespace wasm
 
