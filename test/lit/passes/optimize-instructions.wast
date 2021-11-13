@@ -13680,4 +13680,87 @@
     (drop (f32.reinterpret_i32 (i32.reinterpret_f32 (local.get $z))))
     (drop (f64.reinterpret_i64 (i64.reinterpret_f64 (local.get $w))))
   )
+
+  ;; u64(i32.load(_8|_16)(_u|_s)(x))  =>  i64.load(_8|_16|_32)(_u|_s)(x)
+  ;; except:
+  ;;   i64.extend_i32_u(i32.load8_s(x)) and
+  ;;   i64.extend_i32_u(i32.load16_s(x))
+
+  ;; CHECK:      (func $combine_load_and_extend_u (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.load8_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.load16_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $combine_load_and_extend_u (param $x i32)
+    (drop (i64.extend_i32_u (i32.load8_u (local.get $x))))
+    (drop (i64.extend_i32_u (i32.load16_u (local.get $x))))
+    (drop (i64.extend_i32_u (i32.load (local.get $x))))
+
+    ;; skips
+    (drop (i64.extend_i32_u (i32.load8_s (local.get $x))))
+    (drop (i64.extend_i32_u (i32.load16_s (local.get $x))))
+  )
+
+  ;; i64(i32.load(_8|_16)(_u|_s)(x))  =>  i64.load(_8|_16|_32)(_u|_s)(x)
+
+  ;; CHECK:      (func $combine_load_and_extend_s (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $combine_load_and_extend_s (param $x i32)
+    (drop (i64.extend_i32_s (i32.load8_u (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load16_u (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load8_s (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load16_s (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load (local.get $x))))
+  )
 )

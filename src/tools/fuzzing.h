@@ -30,6 +30,7 @@ high chance for set at start of loop
 #include "ir/branch-utils.h"
 #include "ir/memory-utils.h"
 #include "support/insert_ordered.h"
+#include "tools/fuzzing/random.h"
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
@@ -65,7 +66,7 @@ struct BinaryArgs {
 
 class TranslateToFuzzReader {
 public:
-  TranslateToFuzzReader(Module& wasm, std::vector<char> input);
+  TranslateToFuzzReader(Module& wasm, std::vector<char>&& input);
   TranslateToFuzzReader(Module& wasm, std::string& filename);
 
   void pickPasses(OptimizationOptions& options);
@@ -77,11 +78,7 @@ public:
 private:
   Module& wasm;
   Builder builder;
-  std::vector<char> bytes; // the input bytes
-  size_t pos;              // the position in the input
-  // whether we already cycled through all the input (if so, we should try to
-  // finish things off)
-  bool finishedInput = false;
+  Random random;
 
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
@@ -92,10 +89,6 @@ private:
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
-
-  // After we finish the input, we start going through it again, but xoring
-  // so it's not identical
-  int xorFactor = 0;
 
   // The chance to emit a logging operation for a none expression. We
   // randomize this in each function.
@@ -137,25 +130,21 @@ private:
 
   int nesting = 0;
 
-  // Methods for getting random data.
-  int8_t get();
-  int16_t get16();
-  int32_t get32();
-  int64_t get64();
-  float getFloat() { return Literal(get32()).reinterpretf32(); }
-  double getDouble() { return Literal(get64()).reinterpretf64(); }
-
-  // Choose an integer value in [0, x). This doesn't use a perfectly uniform
-  // distribution, but it's fast and reasonable.
-  Index upTo(Index x);
-  bool oneIn(Index x) { return upTo(x) == 0; }
-
-  // Apply upTo twice, generating a skewed distribution towards
-  // low values.
-  Index upToSquared(Index x) { return upTo(upTo(x)); }
+  // Generating random data is common enough that it's worth having helpers that
+  // forward to `random`.
+  int8_t get() { return random.get(); }
+  int16_t get16() { return random.get16(); }
+  int32_t get32() { return random.get32(); }
+  int64_t get64() { return random.get64(); }
+  float getFloat() { return random.getFloat(); }
+  double getDouble() { return random.getDouble(); }
+  Index upTo(Index x) { return random.upTo(x); }
+  bool oneIn(Index x) { return random.oneIn(x); }
+  Index upToSquared(Index x) { return random.upToSquared(x); }
 
   // Setup methods
   void setupMemory();
+  void setupHeapTypes();
   void setupTables();
   void setupGlobals();
   void setupTags();
@@ -249,6 +238,7 @@ private:
   // Makes a small change to a constant value.
   Literal tweak(Literal value);
   Literal makeLiteral(Type type);
+  Expression* makeRefFuncConst(Type type);
   Expression* makeConst(Type type);
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
@@ -291,6 +281,9 @@ private:
   Type getStorableType();
   Type getLoggableType();
   bool isLoggableType(Type type);
+  Nullability getSubType(Nullability nullability);
+  HeapType getSubType(HeapType type);
+  Rtt getSubType(Rtt rtt);
   Type getSubType(Type type);
 
   // Utilities

@@ -3181,7 +3181,9 @@ Module['getExpressionInfo'] = function(expr) {
 
 // Gets the side effects of the specified expression
 Module['getSideEffects'] = function(expr, module) {
-  return Module['_BinaryenExpressionGetSideEffects'](expr, module);
+  assert(module); // guard against incorrect old API usage: a module must be
+                  // provided here.
+  return Module['_BinaryenExpressionGetSideEffects'](expr, module['ptr']);
 };
 
 Module['createType'] = function(types) {
@@ -4807,46 +4809,12 @@ Module['exit'] = function(status) {
   if (status != 0) throw new Error('exiting due to error: ' + status);
 };
 
-// Indicates if Binaryen has been loaded and is ready
-Module['isReady'] = runtimeInitialized;
-
-// Provide a mechanism to tell when the module is ready
-//
-// if (!binaryen.isReady) await binaryen.ready;
-// ...
-//
-let pendingPromises = [];
-let initializeError = null;
-
-Object.defineProperty(Module, 'ready', {
-  get() {
-    return new Promise((resolve, reject) => {
-      if (initializeError) {
-        reject(initializeError);
-      } else if (runtimeInitialized) {
-        resolve(Module);
-      } else {
-        pendingPromises.push({ resolve, reject });
-      }
-    });
-  }
-});
-
 // Intercept the onRuntimeInitialized hook if necessary
 if (runtimeInitialized) {
   initializeConstants();
 } else {
   Module['onRuntimeInitialized'] = (super_ => () => {
-    try {
-      initializeConstants();
-      if (super_) super_();
-      Module['isReady'] = true;
-      pendingPromises.forEach(p => { p.resolve(Module) });
-    } catch (e) {
-      initializeError = e;
-      pendingPromises.forEach(p => { p.reject(e) });
-    } finally {
-      pendingPromises = [];
-    }
+    initializeConstants();
+    if (super_) super_();
   })(Module['onRuntimeInitialized']);
 }

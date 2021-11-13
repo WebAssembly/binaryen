@@ -9,7 +9,7 @@
   ;; CHECK:      (type $struct-mut (struct_subtype (field (mut i32)) data))
   (type $struct-mut (struct_subtype (mut i32) data))
 
-  ;; CHECK:      (func $propagate
+  ;; CHECK:      (func $propagate (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (local $ref-mut (ref null $struct-mut))
   ;; CHECK-NEXT:  (local.set $ref-imm
@@ -59,7 +59,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-constant (param $param i32)
+  ;; CHECK:      (func $non-constant (type $i32_=>_none) (param $param i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-imm))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct-imm
@@ -87,11 +87,13 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable
+  ;; CHECK:      (func $unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (local.tee $ref-imm
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $helper
@@ -115,7 +117,7 @@
     )
   )
 
-  ;; CHECK:      (func $param (param $ref-imm (ref null $struct-imm))
+  ;; CHECK:      (func $param (type $ref?|$struct-imm|_=>_none) (param $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (call $helper
   ;; CHECK-NEXT:   (struct.get $struct-imm 0
   ;; CHECK-NEXT:    (local.get $ref-imm)
@@ -131,7 +133,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-null
+  ;; CHECK:      (func $local-null (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (call $helper
   ;; CHECK-NEXT:   (struct.get $struct-imm 0
@@ -150,7 +152,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-unknown (param $x i32)
+  ;; CHECK:      (func $local-unknown (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -195,7 +197,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-unknown-ref-same-value (param $x i32)
+  ;; CHECK:      (func $local-unknown-ref-same-value (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -242,7 +244,7 @@
     )
   )
 
-  ;; CHECK:      (func $propagate-multi-refs (param $x i32)
+  ;; CHECK:      (func $propagate-multi-refs (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -301,7 +303,7 @@
     )
   )
 
-  ;; CHECK:      (func $propagate-multi-values (param $x i32)
+  ;; CHECK:      (func $propagate-multi-values (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (local.set $ref-imm
   ;; CHECK-NEXT:   (struct.new $struct-imm
@@ -343,7 +345,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 i32)
+  ;; CHECK:      (func $helper (type $i32_=>_none) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param i32))
@@ -355,7 +357,7 @@
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) (field i32) data))
   (type $struct (struct_subtype (mut i32) i32 data))
 
-  ;; CHECK:      (func $propagate
+  ;; CHECK:      (func $propagate (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -394,7 +396,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 i32)
+  ;; CHECK:      (func $helper (type $i32_=>_none) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param i32))
@@ -410,7 +412,7 @@
   (type $vtable (struct_subtype funcref data))
   (type $object (struct_subtype (ref $vtable) data))
 
-  ;; CHECK:      (func $nested-creations
+  ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $object
@@ -443,7 +445,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK:      (func $helper (type $funcref_=>_none) (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
@@ -458,7 +460,7 @@
   (type $vtable (struct_subtype (mut funcref) data))
   (type $object (struct_subtype (ref $vtable) data))
 
-  ;; CHECK:      (func $nested-creations
+  ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $object
@@ -495,7 +497,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK:      (func $helper (type $funcref_=>_none) (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
@@ -511,7 +513,7 @@
   (type $vtable (struct_subtype funcref data))
   (type $object (struct_subtype (mut (ref $vtable)) data))
 
-  ;; CHECK:      (func $nested-creations
+  ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $object
@@ -546,7 +548,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK:      (func $helper (type $funcref_=>_none) (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
@@ -570,7 +572,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested-creations
+  ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $object
@@ -597,7 +599,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK:      (func $helper (type $funcref_=>_none) (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
@@ -621,7 +623,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested-creations
+  ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $object
@@ -652,7 +654,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK:      (func $helper (type $funcref_=>_none) (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
@@ -677,7 +679,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested-creations (param $param i32)
+  ;; CHECK:      (func $nested-creations (type $i32_=>_none) (param $param i32)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $object
@@ -723,7 +725,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK:      (func $helper (type $funcref_=>_none) (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param funcref))
@@ -765,7 +767,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested-creations
+  ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $object
@@ -813,7 +815,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper (param $0 funcref)
+  ;; CHECK:      (func $helper (type $funcref_=>_none) (param $0 funcref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param funcref))

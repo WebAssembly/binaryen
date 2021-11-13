@@ -1,6 +1,12 @@
 # Version set according the the cmake versions available in Ubuntu/Bionic:
 # https://packages.ubuntu.com/bionic/cmake
 cmake_minimum_required(VERSION 3.10.2)
+
+# Needed for C++17 (std::variant)
+# TODO(https://github.com/WebAssembly/binaryen/issues/4299): We need
+# to reduce this for compatability with emsdk.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
+
 project(binaryen LANGUAGES C CXX VERSION 102)
 include(GNUInstallDirs)
 
@@ -362,10 +368,10 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support wasm)
   target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
-  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_ES6=1")
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
-  target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "-flto")
@@ -386,10 +392,10 @@ if(EMSCRIPTEN)
   endif()
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
-  target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_ES6=1")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
-  target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_js optimized "-flto")

@@ -509,14 +509,148 @@ struct MergeBlocks
       return;
     }
 
+    // As we go through the children, to move things to the outside means
+    // moving them past the children before them:
+    //
+    //  (parent
+    //   (child1
+    //    (A)
+    //    (B)
+    //   )
+    //   (child2
+    //
+    // If we move (A) out of parent, then that is fine (further things moved
+    // out would appear after it). But if we leave (B) in its current position
+    // then if we try to move anything from child2 out of parent then we must
+    // move those things past (B). We use a vector to track the effects of the
+    // children, where it contains the effects of what was left in the child
+    // after optimization.
+    std::vector<EffectAnalyzer> childEffects;
+
     ChildIterator iterator(curr);
-    auto& children = iterator.children;
-    if (children.size() == 1) {
-      optimize(curr, *children[0]);
-    } else if (children.size() == 2) {
-      optimize(curr, *children[0], optimize(curr, *children[1]), children[1]);
-    } else if (children.size() == 3) {
-      optimizeTernary(curr, *children[2], *children[1], *children[0]);
+    auto numChildren = iterator.getNumChildren();
+
+    // Find the last block among the children, as all we are trying to do here
+    // is move the contents of blocks outwards.
+    Index lastBlock = -1;
+    for (Index i = 0; i < numChildren; i++) {
+      if (iterator.getChild(i)->is<Block>()) {
+        lastBlock = i;
+      }
+    }
+    if (lastBlock == Index(-1)) {
+      // There are no blocks at all, so there is nothing to optimize.
+      return;
+    }
+
+    // We'll only compute effects up to the child before the last block, since
+    // we have nothing to optimize afterwards, which sets a maximum size on the
+    // vector.
+    if (lastBlock > 0) {
+      childEffects.reserve(lastBlock);
+    }
+
+    // The outer block that will replace us, containing the contents moved out
+    // and then ourselves, assuming we manage to optimize.
+    Block* outerBlock = nullptr;
+
+    for (Index i = 0; i <= lastBlock; i++) {
+      auto* child = iterator.getChild(i);
+      auto* block = child->dynCast<Block>();
+
+      auto continueEarly = [&]() {
+        // When we continue early, after failing to find anything to optimize,
+        // the effects we need to note for the child are simply those of the
+        // child in its original form.
+        childEffects.emplace_back(getPassOptions(), *getModule(), child);
+      };
+
+      // If there is no block, or it is one that might have branches, or it is
+      // too small for us to remove anything from (we cannot remove the last
+      // element), or if it has unreachable code (leave that for dce), then give
+      // up.
+      if (!block || block->name.is() || block->list.size() <= 1 ||
+          hasUnreachableChild(block)) {
+        continueEarly();
+        continue;
+      }
+
+      // Also give up if the block's last element has a different type than the
+      // block, as that would mean we would change the type received by the
+      // parent (which might cause its type to need to be updated, for example).
+      // Leave this alone, as other passes will simplify this anyhow (using
+      // refinalize).
+      auto* back = block->list.back();
+      if (block->type != back->type) {
+        continueEarly();
+        continue;
+      }
+
+      // The block seems to have the shape we want. Check for effects: we want
+      // to move all the items out but the last one, so they must all cross over
+      // anything we need to move past.
+      //
+      // In principle we could also handle the case where we can move out only
+      // some of the block items. However, that would be more complex (we'd need
+      // to allocate a new block sometimes), it is rare, and it may not always
+      // be helpful (we wouldn't actually be getting rid of the child block -
+      // although, in the binary format such blocks tend to vanish anyhow).
+      bool fail = false;
+      for (auto* blockChild : block->list) {
+        if (blockChild == back) {
+          break;
+        }
+        EffectAnalyzer blockChildEffects(
+          getPassOptions(), *getModule(), blockChild);
+        for (auto& effects : childEffects) {
+          if (blockChildEffects.invalidates(effects)) {
+            fail = true;
+            break;
+          }
+        }
+        if (fail) {
+          break;
+        }
+      }
+      if (fail) {
+        continueEarly();
+        continue;
+      }
+
+      // Wonderful, we can do this! Move our items to an outer block, reusing
+      // this one if there isn't one already.
+      if (!outerBlock) {
+        // Leave all the items there, just remove the last one which will remain
+        // where it was.
+        block->list.pop_back();
+        outerBlock = block;
+      } else {
+        // Move the items to the existing outer block.
+        for (auto* blockChild : block->list) {
+          if (blockChild == back) {
+            break;
+          }
+          outerBlock->list.push_back(blockChild);
+        }
+      }
+
+      // Set the back element as the new child, replacing the block that was
+      // there.
+      iterator.getChild(i) = back;
+
+      // If there are further elements, we need to know what effects the
+      // remaining code has, as if they move they'll move past it.
+      if (i < lastBlock) {
+        childEffects.emplace_back(getPassOptions(), *getModule(), back);
+      }
+    }
+
+    if (outerBlock) {
+      // We moved items outside, which means we must replace ourselves with the
+      // block.
+      outerBlock->list.push_back(curr);
+      outerBlock->finalize(curr->type);
+      replaceCurrent(outerBlock);
     }
   }
 
@@ -524,59 +658,6 @@ struct MergeBlocks
     // We can move code out of the condition, but not any of the other children.
     optimize(curr, curr->condition);
   }
-
-  void optimizeTernary(Expression* curr,
-                       Expression*& first,
-                       Expression*& second,
-                       Expression*& third) {
-    Block* outer = nullptr;
-    outer = optimize(curr, first, outer);
-    // TODO: for now, just stop when we see any side effect after the first
-    //       item, but we could handle them carefully like we do for binaries.
-    if (EffectAnalyzer(getPassOptions(), *getModule(), second)
-          .hasSideEffects()) {
-      return;
-    }
-    outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), *getModule(), third)
-          .hasSideEffects()) {
-      return;
-    }
-    optimize(curr, third, outer);
-  }
-
-  template<typename T> void handleCall(T* curr) {
-    Block* outer = nullptr;
-    for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
-            .hasSideEffects()) {
-        return;
-      }
-      outer = optimize(curr, curr->operands[i], outer);
-    }
-  }
-
-  void visitCall(Call* curr) { handleCall(curr); }
-
-  template<typename T> void handleNonDirectCall(T* curr) {
-    Block* outer = nullptr;
-    for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
-            .hasSideEffects()) {
-        return;
-      }
-      outer = optimize(curr, curr->operands[i], outer);
-    }
-    if (EffectAnalyzer(getPassOptions(), *getModule(), curr->target)
-          .hasSideEffects()) {
-      return;
-    }
-    optimize(curr, curr->target, outer);
-  }
-
-  void visitCallIndirect(CallIndirect* curr) { handleNonDirectCall(curr); }
-
-  void visitCallRef(CallRef* curr) { handleNonDirectCall(curr); }
 
   void visitThrow(Throw* curr) {
     Block* outer = nullptr;

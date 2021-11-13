@@ -2469,9 +2469,22 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << " ;; end try";
     }
   }
-  void printUnreachableReplacement(Expression* curr) {
-    // See the parallel function in PrintExpressionContents for background.
+  void maybePrintUnreachableReplacement(Expression* curr, Type type) {
+    // See the parallel function
+    // PrintExpressionContents::printUnreachableReplacement for background. That
+    // one handles the header, and this one the body. For convenience, this one
+    // also gets a parameter of the type to check for unreachability, to avoid
+    // boilerplate in the callers; if the type is not unreachable, it does the
+    // normal behavior.
     //
+    // Note that the list of instructions using that function must match those
+    // using this one, so we print the header and body properly together.
+
+    if (type != Type::unreachable) {
+      visitExpression(curr);
+      return;
+    }
+
     // Emit a block with drops of the children.
     o << "(block";
     if (!minify) {
@@ -2485,33 +2498,26 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     decIndent();
   }
+  void visitStructNew(StructNew* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
   void visitStructSet(StructSet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement(curr);
-      return;
-    }
-    visitExpression(curr);
+    maybePrintUnreachableReplacement(curr, curr->ref->type);
   }
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement(curr);
-      return;
-    }
-    visitExpression(curr);
+    maybePrintUnreachableReplacement(curr, curr->ref->type);
+  }
+  void visitArrayNew(ArrayNew* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayInit(ArrayInit* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
   }
   void visitArraySet(ArraySet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement(curr);
-      return;
-    }
-    visitExpression(curr);
+    maybePrintUnreachableReplacement(curr, curr->ref->type);
   }
   void visitArrayGet(ArrayGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement(curr);
-      return;
-    }
-    visitExpression(curr);
+    maybePrintUnreachableReplacement(curr, curr->ref->type);
   }
   // Module-level visitors
   void printSupertypeOr(HeapType curr, std::string noSuper) {
@@ -2721,6 +2727,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
+    if (getTypeSystem() == TypeSystem::Nominal) {
+      o << " (type ";
+      printHeapType(o, curr->type, currModule) << ')';
+    }
     if (!stackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }

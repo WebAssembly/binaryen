@@ -53,17 +53,25 @@ template<class Specific> class AbstractChildIterator {
       return index != other.index || &parent != &(other.parent);
     }
 
+    bool operator==(const Iterator& other) const { return !(*this != other); }
+
     void operator++() { index++; }
 
     Expression*& operator*() {
-      assert(index < parent.children.size());
-
-      // The vector of children is in reverse order, as that is how
-      // wasm-delegations-fields works. To get the order of execution, reverse
-      // things.
-      return *parent.children[parent.children.size() - 1 - index];
+      return *parent.children[parent.mapIndex(index)];
     }
   };
+
+  friend struct Iterator;
+
+  Index mapIndex(Index index) const {
+    assert(index < children.size());
+
+    // The vector of children is in reverse order, as that is how
+    // wasm-delegations-fields works. To get the order of execution, reverse
+    // things.
+    return children.size() - 1 - index;
+  }
 
 public:
   // The vector of children in the order emitted by wasm-delegations-fields
@@ -110,6 +118,11 @@ public:
   void addChild(Expression* parent, Expression** child) {
     children.push_back(child);
   }
+
+  // API for accessing children in random order.
+  Expression*& getChild(Index index) { return *children[mapIndex(index)]; }
+
+  Index getNumChildren() { return children.size(); }
 };
 
 class ChildIterator : public AbstractChildIterator<ChildIterator> {

@@ -12,6 +12,7 @@ include_directories(fuzzing)
 FILE(GLOB fuzzing_HEADERS fuzzing/*h)
 set(fuzzing_SOURCES
   fuzzing/fuzzing.cpp
+  fuzzing/random.cpp
   ${fuzzing_HEADERS}
 )
 

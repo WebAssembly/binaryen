@@ -33,7 +33,7 @@ def do_test_binaryen_js_with(which):
         if not s.endswith('.js'):
             continue
         print(s)
-        f = open('a.js', 'w')
+        f = open('a.mjs', 'w')
         # avoid stdout/stderr ordering issues in some js shells - use just stdout
         f.write('''
             console.warn = console.error = console.log;
@@ -45,8 +45,7 @@ def do_test_binaryen_js_with(which):
         f.write(support.js_test_wrap().replace('%TEST%', test_src))
         f.close()
 
-        def test(engine):
-            cmd = [engine, 'a.js']
+        def test(cmd):
             if 'fatal' not in s:
                 out = support.run_command(cmd, stderr=subprocess.STDOUT)
             else:
@@ -58,10 +57,10 @@ def do_test_binaryen_js_with(which):
 
         # run in all possible shells
         if shared.MOZJS:
-            test(shared.MOZJS)
+            test([shared.MOZJS, '-m', 'a.mjs'])
         if shared.NODEJS:
             if node_has_wasm or 'WebAssembly.' not in test_src:
-                test(shared.NODEJS)
+                test([shared.NODEJS, 'a.mjs'])
             else:
                 print('Skipping ' + test_path + ' because WebAssembly might not be supported')
 
@@ -80,13 +79,17 @@ def update_binaryen_js_tests():
     for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
         basename = os.path.basename(s)
         print(basename)
-        f = open('a.js', 'w')
+        f = open('a.mjs', 'w')
+        # avoid stdout/stderr ordering issues in some js shells - use just stdout
+        f.write('''
+            console.warn = console.error = console.log;
+        ''')
         f.write(open(shared.BINARYEN_JS).read())
         test_src = open(s).read()
         f.write(support.js_test_wrap().replace('%TEST%', test_src))
         f.close()
-        if shared.MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
-            cmd = [shared.MOZJS or shared.NODEJS, 'a.js']
+
+        def update(cmd):
             if 'fatal' not in basename:
                 out = support.run_command(cmd, stderr=subprocess.STDOUT)
             else:
@@ -94,6 +97,12 @@ def update_binaryen_js_tests():
                 out = support.run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
             with open(s + '.txt', 'w') as o:
                 o.write(out)
+
+        # run in available shell
+        if shared.MOZJS:
+            update([shared.MOZJS, '-m', 'a.mjs'])
+        elif node_has_wasm or 'WebAssembly.' not in test_src:
+            update([shared.NODEJS, 'a.mjs'])
         else:
             print('Skipping ' + basename + ' because WebAssembly might not be supported')
 
