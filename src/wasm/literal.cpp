@@ -1636,7 +1636,6 @@ Literal Literal::fms(const Literal& left, const Literal& right) const {
   }
 }
 
-
 template<typename LaneT, int Lanes>
 static LaneArray<Lanes> getLanes(const Literal& val) {
   assert(val.type == Type::v128);
@@ -2591,19 +2590,23 @@ static Literal ternary(const Literal& a, const Literal& b, const Literal& c) {
 }
 } // namespace
 
-Literal Literal::relaxedFmaF32x4(const Literal& left, const Literal& right) const {
+Literal Literal::relaxedFmaF32x4(const Literal& left,
+                                 const Literal& right) const {
   return ternary<4, &Literal::getLanesF32x4, &Literal::fma>(*this, left, right);
 }
 
-Literal Literal::relaxedFmsF32x4(const Literal& left, const Literal& right) const {
+Literal Literal::relaxedFmsF32x4(const Literal& left,
+                                 const Literal& right) const {
   return ternary<4, &Literal::getLanesF32x4, &Literal::fms>(*this, left, right);
 }
 
-Literal Literal::relaxedFmaF64x2(const Literal& left, const Literal& right) const {
+Literal Literal::relaxedFmaF64x2(const Literal& left,
+                                 const Literal& right) const {
   return ternary<2, &Literal::getLanesF64x2, &Literal::fma>(*this, left, right);
 }
 
-Literal Literal::relaxedFmsF64x2(const Literal& left, const Literal& right) const {
+Literal Literal::relaxedFmsF64x2(const Literal& left,
+                                 const Literal& right) const {
   return ternary<2, &Literal::getLanesF64x2, &Literal::fms>(*this, left, right);
 }
 
