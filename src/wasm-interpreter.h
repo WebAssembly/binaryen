@@ -1121,15 +1121,15 @@ public:
         return c.bitselectV128(a, b);
 
       case RelaxedFmaVecF32x4:
-        return a.addF32x4(b.mulF32x4(c));
+        return a.relaxedFmaF32x4(b, c);
       case RelaxedFmsVecF32x4:
-        return a.subF32x4(b.mulF32x4(c));
+        return a.relaxedFmsF32x4(b, c);
       case RelaxedFmaVecF64x2:
-        return a.addF64x2(b.mulF64x2(c));
+        return a.relaxedFmaF64x2(b, c);
       case RelaxedFmsVecF64x2:
-        return a.subF64x2(b.mulF64x2(c));
+        return a.relaxedFmsF64x2(b, c);
       default:
-        // TODO: implement qfma/qfms and signselect
+        // TODO: implement signselect
         WASM_UNREACHABLE("not implemented");
     }
   }
