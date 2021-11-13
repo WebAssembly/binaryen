@@ -208,7 +208,7 @@ struct HeapTypeGenerator {
 
   template<typename Kind> std::optional<HeapType> pickKind() {
     std::vector<HeapType> candidates;
-    // Iterate through the top level kinds, finding functions.
+    // Iterate through the top level kinds, finding matches for `Kind`.
     for (Index i = 0; i < typeKinds.size(); ++i) {
       if (std::get_if<Kind>(&typeKinds[i])) {
         candidates.push_back(builder[i]);

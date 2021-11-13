@@ -98,8 +98,6 @@ private:
 
   Name funcrefTableName;
 
-  std::vector<HeapType> heapTypes;
-
   std::unordered_map<Type, std::vector<Name>> globalsByType;
 
   std::vector<Type> loggableTypes;
