@@ -251,14 +251,6 @@ void TranslateToFuzzReader::setupMemory() {
   }
 }
 
-void TranslateToFuzzReader::setupHeapTypes() {
-  // TODO: Use types from the initial contents as well.
-  if (wasm.features.hasGC()) {
-    size_t n = MIN_HEAPTYPES + upTo(MAX_HEAPTYPES - MIN_HEAPTYPES + 1);
-    heapTypes = HeapTypeFuzzer::generateHeapTypes(random, wasm.features, n);
-  }
-}
-
 // TODO(reference-types): allow the fuzzer to create multiple tables
 void TranslateToFuzzReader::setupTables() {
   // Ensure a funcref element segment and table exist. Segments with more
