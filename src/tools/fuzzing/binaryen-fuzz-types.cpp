@@ -67,7 +67,7 @@ struct Fuzzer {
 int main(int argc, const char* argv[]) {
   using namespace wasm;
 
-  Options options("fuzz-types",
+  Options options("binaryen-fuzz-types",
                   "Fuzz type construction, canonicalization, and operations");
 
   std::optional<uint64_t> seed;
