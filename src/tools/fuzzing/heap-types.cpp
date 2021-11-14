@@ -292,16 +292,16 @@ struct HeapTypeGenerator {
   };
 
   Ref generateSubRef(Ref super) {
-    auto nullability = super.nullability == NonNullable ? NonNullable
-                       : rand.oneIn(2)                  ? Nullable
-                                                        : NonNullable;
+    auto nullability = super.nullability == NonNullable
+                         ? NonNullable
+                         : rand.oneIn(2) ? Nullable : NonNullable;
     return {pickSubHeapType(super.type), nullability};
   }
 
   Rtt generateSubRtt(Rtt super) {
-    auto depth = super.hasDepth() ? super.depth
-                 : rand.oneIn(2)  ? Rtt::NoDepth
-                                  : rand.upTo(MAX_RTT_DEPTH);
+    auto depth = super.hasDepth()
+                   ? super.depth
+                   : rand.oneIn(2) ? Rtt::NoDepth : rand.upTo(MAX_RTT_DEPTH);
     return {depth, super.heapType};
   }
 
