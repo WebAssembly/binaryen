@@ -32,7 +32,7 @@ set(passes_SOURCES
   GenerateDynCalls.cpp
   GlobalTypeOptimization.cpp
   Heap2Local.cpp
-  HeapSubtyping.cpp
+  HeapRefining.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
