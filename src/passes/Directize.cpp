@@ -69,6 +69,11 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
         auto* func = getFunction();
         std::vector<Expression*> blockContents;
 
+        if (select->condition->type == Type::unreachable) {
+          // Leave this for DCE.
+          return;
+        }
+
         // We must use the operands twice, and also must move the condition to
         // execute first; use locals for them all. While doing so, if we see
         // any are unreachable, stop trying to optimize and leave this for DCE.
@@ -78,13 +83,16 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
               !TypeUpdating::canHandleAsLocal(operand->type)) {
             return;
           }
+        }
+
+        // None of the types are a problem, so we can proceed to add new vars as
+        // needed and perform this optimization.
+        for (auto* operand : curr->operands) {
           auto currLocal = builder.addVar(func, operand->type);
           operandLocals.push_back(currLocal);
           blockContents.push_back(builder.makeLocalSet(currLocal, operand));
-        }
-
-        if (select->condition->type == Type::unreachable) {
-          return;
+          // By adding locals we must make type adjustments at the end.
+          changedTypes = true;
         }
 
         // Build the calls.
@@ -106,9 +114,6 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
         auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);
         blockContents.push_back(iff);
         replaceCurrent(builder.makeBlock(blockContents));
-
-        // By adding locals we must make type adjustments at the end.
-        changedTypes = true;
       }
     }
   }
