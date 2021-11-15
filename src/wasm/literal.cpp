@@ -1613,10 +1613,10 @@ Literal Literal::copysign(const Literal& other) const {
 Literal Literal::fma(const Literal& left, const Literal& right) const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(fmaf(left.getf32(), right.getf32(), getf32()));
+      return Literal(::fmaf(left.getf32(), right.getf32(), getf32()));
       break;
     case Type::f64:
-      return Literal(fma(left.getf64(), right.getf64(), getf64()));
+      return Literal(::fma(left.getf64(), right.getf64(), getf64()));
       break;
     default:
       WASM_UNREACHABLE("unexpected type");
@@ -1626,10 +1626,10 @@ Literal Literal::fma(const Literal& left, const Literal& right) const {
 Literal Literal::fms(const Literal& left, const Literal& right) const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(fmaf(-left.getf32(), right.getf32(), getf32()));
+      return Literal(::fmaf(-left.getf32(), right.getf32(), getf32()));
       break;
     case Type::f64:
-      return Literal(fma(-left.getf64(), right.getf64(), getf64()));
+      return Literal(::fma(-left.getf64(), right.getf64(), getf64()));
       break;
     default:
       WASM_UNREACHABLE("unexpected type");
