@@ -425,6 +425,11 @@ public:
   Literal pmax(const Literal& other) const;
   Literal copysign(const Literal& other) const;
 
+  // Fused multiply add and subtract.
+  // Computes this + (left * right) to infinite precision then round once.
+  Literal fma(const Literal& left, const Literal& right) const;
+  Literal fms(const Literal& left, const Literal& right) const;
+
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
   std::array<Literal, 8> getLanesSI16x8() const;
@@ -647,6 +652,10 @@ public:
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
   Literal swizzleI8x16(const Literal& other) const;
+  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
   // with this object's RTT can be successfuly cast using the other RTT

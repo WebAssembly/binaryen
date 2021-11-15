@@ -219,6 +219,12 @@ enum UnaryOp {
   DemoteZeroVecF64x2ToVecF32x4,
   PromoteLowVecF32x4ToVecF64x2,
 
+  // Relaxed SIMD
+  RelaxedTruncSVecF32x4ToVecI32x4,
+  RelaxedTruncUVecF32x4ToVecI32x4,
+  RelaxedTruncZeroSVecF64x2ToVecI32x4,
+  RelaxedTruncZeroUVecF64x2ToVecI32x4,
+
   InvalidUnary
 };
 
@@ -459,6 +465,13 @@ enum BinaryOp {
   // SIMD Swizzle
   SwizzleVec8x16,
 
+  // Relaxed SIMD
+  RelaxedSwizzleVec8x16,
+  RelaxedMinVecF32x4,
+  RelaxedMaxVecF32x4,
+  RelaxedMinVecF64x2,
+  RelaxedMaxVecF64x2,
+
   InvalidBinary
 };
 
@@ -527,6 +540,16 @@ enum SIMDLoadStoreLaneOp {
 
 enum SIMDTernaryOp {
   Bitselect,
+
+  // Relaxed SIMD
+  RelaxedFmaVecF32x4,
+  RelaxedFmsVecF32x4,
+  RelaxedFmaVecF64x2,
+  RelaxedFmsVecF64x2,
+  LaneselectI8x16,
+  LaneselectI16x8,
+  LaneselectI32x4,
+  LaneselectI64x2,
 };
 
 enum RefIsOp {

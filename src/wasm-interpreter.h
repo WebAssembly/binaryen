@@ -538,8 +538,10 @@ public:
       case ExtAddPairwiseUVecI16x8ToI32x4:
         return value.extAddPairwiseToUI32x4();
       case TruncSatSVecF32x4ToVecI32x4:
+      case RelaxedTruncSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
+      case RelaxedTruncUVecF32x4ToVecI32x4:
         return value.truncSatToUI32x4();
       case ConvertSVecI32x4ToVecF32x4:
         return value.convertSToF32x4();
@@ -574,8 +576,10 @@ public:
       case ConvertLowUVecI32x4ToVecF64x2:
         return value.convertLowUToF64x2();
       case TruncSatZeroSVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroSVecF64x2ToVecI32x4:
         return value.truncSatZeroSToI32x4();
       case TruncSatZeroUVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroUVecF64x2ToVecI32x4:
         return value.truncSatZeroUToI32x4();
       case DemoteZeroVecF64x2ToVecF32x4:
         return value.demoteZeroToF32x4();
@@ -976,8 +980,10 @@ public:
       case DivVecF32x4:
         return left.divF32x4(right);
       case MinVecF32x4:
+      case RelaxedMinVecF32x4:
         return left.minF32x4(right);
       case MaxVecF32x4:
+      case RelaxedMaxVecF32x4:
         return left.maxF32x4(right);
       case PMinVecF32x4:
         return left.pminF32x4(right);
@@ -992,8 +998,10 @@ public:
       case DivVecF64x2:
         return left.divF64x2(right);
       case MinVecF64x2:
+      case RelaxedMinVecF64x2:
         return left.minF64x2(right);
       case MaxVecF64x2:
+      case RelaxedMaxVecF64x2:
         return left.maxF64x2(right);
       case PMinVecF64x2:
         return left.pminF64x2(right);
@@ -1010,6 +1018,7 @@ public:
         return left.narrowUToI16x8(right);
 
       case SwizzleVec8x16:
+      case RelaxedSwizzleVec8x16:
         return left.swizzleI8x16(right);
 
       case InvalidBinary:
@@ -1105,9 +1114,22 @@ public:
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
+      case LaneselectI8x16:
+      case LaneselectI16x8:
+      case LaneselectI32x4:
+      case LaneselectI64x2:
         return c.bitselectV128(a, b);
+
+      case RelaxedFmaVecF32x4:
+        return a.relaxedFmaF32x4(b, c);
+      case RelaxedFmsVecF32x4:
+        return a.relaxedFmsF32x4(b, c);
+      case RelaxedFmaVecF64x2:
+        return a.relaxedFmaF64x2(b, c);
+      case RelaxedFmsVecF64x2:
+        return a.relaxedFmsF64x2(b, c);
       default:
-        // TODO: implement qfma/qfms and signselect
+        // TODO: implement signselect
         WASM_UNREACHABLE("not implemented");
     }
   }
