@@ -728,8 +728,6 @@
   )
  )
  ;; CHECK:      (func $select-unreachable-condition (param $x i32) (param $y i32) (param $z i32)
- ;; CHECK-NEXT:  (local $3 i32)
- ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -741,7 +739,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $select-unreachable-condition (param $x i32) (param $y i32) (param $z i32)
-  ;; The condition is unreachable.
+  ;; The condition is unreachable. We should not even create any vars here, and
+  ;; just not do anything.
   (call_indirect (type $ii)
    (local.get $x)
    (local.get $y)
@@ -755,9 +754,11 @@
 )
 
 (module
+ ;; CHECK:      (type $F (func (param (ref func))))
+
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
- ;; CHECK:      (type $F (func (param (ref func))))
+ ;; CHECK:      (type $none_=>_none (func))
 
  ;; CHECK:      (table $0 15 15 funcref)
  (table $0 15 15 funcref)
@@ -800,6 +801,52 @@
   ;; which we place values in locals.
   (call_indirect (type $F)
    (ref.func $select-non-nullable)
+   (select
+    (i32.const 10)
+    (i32.const 11)
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $select-non-nullable-unreachable-condition
+ ;; CHECK-NEXT:  (call_indirect $0 (type $F)
+ ;; CHECK-NEXT:   (ref.func $select-non-nullable)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:    (i32.const 11)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-non-nullable-unreachable-condition
+  ;; Test we ignore an unreachable condition and don't make any changes at all
+  ;; to the code (in particular, we shouldn't add any vars).
+  (call_indirect (type $F)
+   (ref.func $select-non-nullable)
+   (select
+    (i32.const 10)
+    (i32.const 11)
+    (unreachable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $select-non-nullable-unreachable-arg (param $x i32)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $F)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:    (i32.const 11)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-non-nullable-unreachable-arg (param $x i32)
+  ;; Test we ignore an unreachable argument and don't make any changes at all
+  ;; to the code (in particular, we shouldn't add any vars).
+  (call_indirect (type $F)
+   (unreachable)
    (select
     (i32.const 10)
     (i32.const 11)
