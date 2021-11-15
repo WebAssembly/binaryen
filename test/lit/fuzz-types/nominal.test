@@ -1,4 +1,4 @@
-;; RUN: binaryen-fuzz-types --nominal -v --seed=0
+;; RUN: wasm-fuzz-types --nominal -v --seed=0
 
 ;; CHECK:      Running with seed 0
 ;; CHECK-NEXT: Built 20 types:
