@@ -107,12 +107,12 @@ struct FieldInfoScanner
   }
 };
 
-struct GlobalSubtyping : public Pass {
+struct HeapSubtyping : public Pass {
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "GlobalSubtyping requires nominal typing";
+      Fatal() << "HeapSubtyping requires nominal typing";
     }
 
     // Find and analyze struct operations inside each function.
@@ -238,10 +238,10 @@ struct GlobalSubtyping : public Pass {
 
   void updateTypes(Module& wasm, PassRunner* runner) {
     class TypeRewriter : public GlobalTypeRewriter {
-      GlobalSubtyping& parent;
+      HeapSubtyping& parent;
 
     public:
-      TypeRewriter(Module& wasm, GlobalSubtyping& parent)
+      TypeRewriter(Module& wasm, HeapSubtyping& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
@@ -267,6 +267,6 @@ struct GlobalSubtyping : public Pass {
 
 } // anonymous namespace
 
-Pass* createGlobalSubtypingPass() { return new GlobalSubtyping(); }
+Pass* createHeapSubtypingPass() { return new HeapSubtyping(); }
 
 } // namespace wasm
