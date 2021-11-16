@@ -58,12 +58,12 @@ struct GlobalRefining : public Pass {
       });
 
     // A map of globals to the lub for that global.
-    std::unordered_map<Name, GlobalInfo> lubs;
+    std::unordered_map<Name, LUBFinder> lubs;
 
     // Combine all the information we gathered and compute lubs.
-    for (auto& [global, info] : analysis.map) {
+    for (auto& [func, info] : analysis.map) {
       for (auto* set : info.sets) {
-        lubs[global].note(set->value->type);
+        lubs[set->name].note(set->value->type);
       }
     }
 
