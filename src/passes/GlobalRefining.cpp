@@ -33,9 +33,9 @@ namespace wasm {
 namespace {
 
 struct GlobalRefining : public Pass {
-  // Maps each global to the possible refinement of its type. We will fill this during analysis and then use it while doing
-  // an update of the types. If a global has no improvement that we can find, it
-  // will not appear in this map.
+  // Maps each global to the possible refinement of its type. We will fill this
+  // during analysis and then use it while doing an update of the types. If a
+  // global has no improvement that we can find, it will not appear in this map.
   std::unordered_map<Name, Type> newGlobalTypes;
 
   void run(PassRunner* runner, Module* module) override {
@@ -70,7 +70,7 @@ struct GlobalRefining : public Pass {
     for (auto& [global, lub] : lubs) {
       if (lub.noted()) {
         auto newType = lub.get();
-        auto oldType =module->getGlobal(global)->type;
+        auto oldType = module->getGlobal(global)->type;
         if (newType != oldType) {
           // We found an improvement!
           assert(Type::isSubType(newType, oldType));
