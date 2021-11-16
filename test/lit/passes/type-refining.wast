@@ -648,4 +648,22 @@
   )
 )
 
-;; null default
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct))
+    ;; The only write to this struct is of a null default value. There is
+    ;; nothing to optimize here.
+    (drop
+      (struct.new_default $struct)
+    )
+  )
+)
