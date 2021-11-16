@@ -32,7 +32,6 @@ set(passes_SOURCES
   GenerateDynCalls.cpp
   GlobalTypeOptimization.cpp
   Heap2Local.cpp
-  HeapRefining.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
@@ -81,6 +80,7 @@ set(passes_SOURCES
   ReorderFunctions.cpp
   ReReloop.cpp
   TrapMode.cpp
+  TypeRefining.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp

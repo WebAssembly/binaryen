@@ -107,12 +107,12 @@ struct FieldInfoScanner
   }
 };
 
-struct HeapRefining : public Pass {
+struct TypeRefining : public Pass {
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "HeapRefining requires nominal typing";
+      Fatal() << "TypeRefining requires nominal typing";
     }
 
     // Find and analyze struct operations inside each function.
@@ -238,10 +238,10 @@ struct HeapRefining : public Pass {
 
   void updateTypes(Module& wasm, PassRunner* runner) {
     class TypeRewriter : public GlobalTypeRewriter {
-      HeapRefining& parent;
+      TypeRefining& parent;
 
     public:
-      TypeRewriter(Module& wasm, HeapRefining& parent)
+      TypeRewriter(Module& wasm, TypeRefining& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
@@ -267,6 +267,6 @@ struct HeapRefining : public Pass {
 
 } // anonymous namespace
 
-Pass* createHeapRefiningPass() { return new HeapRefining(); }
+Pass* createTypeRefiningPass() { return new TypeRefining(); }
 
 } // namespace wasm
