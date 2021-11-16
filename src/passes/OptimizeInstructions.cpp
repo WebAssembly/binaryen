@@ -773,11 +773,6 @@ struct OptimizeInstructions
       }
     }
     if (curr->op == AndInt32 || curr->op == OrInt32) {
-      // bitwise operations
-      // for and and or, we can potentially conditionalize
-      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
-        return replaceCurrent(ret);
-      }
       if (curr->op == AndInt32) {
         if (auto* ret = combineAnd(curr)) {
           return replaceCurrent(ret);
@@ -788,6 +783,11 @@ struct OptimizeInstructions
         if (auto* ret = combineOr(curr)) {
           return replaceCurrent(ret);
         }
+      }
+      // bitwise operations
+      // for and and or, we can potentially conditionalize
+      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
+        return replaceCurrent(ret);
       }
     }
     // relation/comparisons allow for math optimizations
