@@ -2513,11 +2513,15 @@ private:
   }
 
   // We can combine `or` operations, e.g.
-  //   (x > y) | (x == y)    ==>    x >= y
-  Expression* combineOr(Binary* binary) {
-    assert(binary->op == OrInt32);
-    if (auto* left = binary->left->dynCast<Binary>()) {
-      if (auto* right = binary->right->dynCast<Binary>()) {
+  //   (x > y)  | (x == y)    ==>    x >= y
+  //   (x != 0) | (y != 0)    ==>    (x | y) != 0
+  Expression* combineOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    assert(curr->op == OrInt32);
+    if (auto* left = curr->left->dynCast<Binary>()) {
+      if (auto* right = curr->right->dynCast<Binary>()) {
         if (left->op != right->op &&
             ExpressionAnalyzer::equal(left->left, right->left) &&
             ExpressionAnalyzer::equal(left->right, right->right) &&
@@ -2536,6 +2540,21 @@ private:
             }
           }
         }
+      }
+    }
+    {
+      // (i32(x) != 0) | (i32(y) != 0)   ==>   i32(x | y) != 0
+      // (i64(x) != 0) | (i64(y) != 0)   ==>   i64(x | y) != 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(OrInt32,
+                         binary(Ne, any(&x), ival(0)),
+                         binary(Ne, any(&y), ival(0)))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left = Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return inner;
       }
     }
     return nullptr;
