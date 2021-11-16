@@ -15,12 +15,14 @@
  ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
+ ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+
  ;; CHECK:      (type ${f64} (struct (field f64)))
+ ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
+
  ;; NOMNL:      (type ${f64} (struct_subtype (field f64) ${}))
  (type ${f64} (struct_subtype (field f64) ${}))
 
- ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
- ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
  ;; CHECK:      (func $call-various-params-no
@@ -81,26 +83,26 @@
 
  ;; CHECK:      (func $call-various-params-yes
  ;; CHECK-NEXT:  (call $various-params-yes
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-yes
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (ref.null ${i32_i64})
+ ;; CHECK-NEXT:   (call $get_null_{i32_i64})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-various-params-yes (type $none_=>_none)
  ;; NOMNL-NEXT:  (call $various-params-yes
- ;; NOMNL-NEXT:   (ref.null ${i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
  ;; NOMNL-NEXT:   (i32.const 0)
- ;; NOMNL-NEXT:   (ref.null ${i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $various-params-yes
- ;; NOMNL-NEXT:   (ref.null ${i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
  ;; NOMNL-NEXT:   (i32.const 1)
- ;; NOMNL-NEXT:   (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:   (call $get_null_{i32_i64})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $call-various-params-yes
@@ -108,14 +110,14 @@
   ;; both of those pairs can be optimized to {i32}.
   ;; There is also an i32 in the middle, which should not confuse us.
   (call $various-params-yes
-   (ref.null ${i32})
+   (call $get_null_{i32})
    (i32.const 0)
-   (ref.null ${i32})
+   (call $get_null_{i32})
   )
   (call $various-params-yes
-   (ref.null ${i32})
+   (call $get_null_{i32})
    (i32.const 1)
-   (ref.null ${i32_i64})
+   (call $get_null_{i32_i64})
   )
  )
  ;; This function is called in ways that *do* allow us to alter the types of
@@ -151,34 +153,34 @@
 
  ;; CHECK:      (func $call-various-params-set
  ;; CHECK-NEXT:  (call $various-params-set
- ;; CHECK-NEXT:   (ref.null ${i32})
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-set
- ;; CHECK-NEXT:   (ref.null ${i32})
- ;; CHECK-NEXT:   (ref.null ${i32_i64})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32_i64})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-various-params-set (type $none_=>_none)
  ;; NOMNL-NEXT:  (call $various-params-set
- ;; NOMNL-NEXT:   (ref.null ${i32})
- ;; NOMNL-NEXT:   (ref.null ${i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $various-params-set
- ;; NOMNL-NEXT:   (ref.null ${i32})
- ;; NOMNL-NEXT:   (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32_i64})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $call-various-params-set
   ;; The first argument gets {i32} and {i32}; the second {i32} and {i32_i64;
   ;; both of those pairs can be optimized to {i32}
   (call $various-params-set
-   (ref.null ${i32})
-   (ref.null ${i32})
+   (call $get_null_{i32})
+   (call $get_null_{i32})
   )
   (call $various-params-set
-   (ref.null ${i32})
-   (ref.null ${i32_i64})
+   (call $get_null_{i32})
+   (call $get_null_{i32_i64})
   )
  )
  ;; This function is called in ways that *do* allow us to alter the types of
@@ -203,7 +205,7 @@
  ;; CHECK-NEXT:    (local.get $2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $y
- ;; CHECK-NEXT:    (ref.null ${i32_i64})
+ ;; CHECK-NEXT:    (call $get_null_{i32_i64})
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $y)
@@ -229,7 +231,7 @@
  ;; NOMNL-NEXT:    (local.get $2)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:   (local.set $y
- ;; NOMNL-NEXT:    (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:    (call $get_null_{i32_i64})
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:   (drop
  ;; NOMNL-NEXT:    (local.get $y)
@@ -250,7 +252,7 @@
   )
   ;; Write to $y in a way that does not cause any issue, and we should not do
   ;; any fixup while we refine the type.
-  (local.set $y (ref.null ${i32_i64}))
+  (local.set $y (call $get_null_{i32_i64}))
   (drop
    (local.get $y)
   )
@@ -258,18 +260,18 @@
 
  ;; CHECK:      (func $call-various-params-tee
  ;; CHECK-NEXT:  (call $various-params-tee
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-various-params-tee (type $none_=>_none)
  ;; NOMNL-NEXT:  (call $various-params-tee
- ;; NOMNL-NEXT:   (ref.null ${i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $call-various-params-tee
   ;; The argument gets {i32}, which allows us to refine.
   (call $various-params-tee
-   (ref.null ${i32})
+   (call $get_null_{i32})
   )
  )
  ;; CHECK:      (func $various-params-tee (param $x (ref null ${i32}))
@@ -279,7 +281,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref null ${i32}))
  ;; CHECK-NEXT:    (local.tee $x
- ;; CHECK-NEXT:     (ref.null ${i32_i64})
+ ;; CHECK-NEXT:     (call $get_null_{i32_i64})
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -291,7 +293,7 @@
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (block $block (result (ref null ${i32}))
  ;; NOMNL-NEXT:    (local.tee $x
- ;; NOMNL-NEXT:     (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:     (call $get_null_{i32_i64})
  ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
@@ -304,7 +306,7 @@
   ;; would occur), and that will also cause the block's type to update as well.
   (drop
    (block (result (ref null ${}))
-    (local.tee $x (ref.null ${i32_i64}))
+    (local.tee $x (call $get_null_{i32_i64}))
    )
   )
  )
@@ -314,7 +316,7 @@
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (ref.null ${i32})
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-null
  ;; CHECK-NEXT:   (ref.as_non_null
@@ -330,7 +332,7 @@
  ;; NOMNL-NEXT:   (ref.as_non_null
  ;; NOMNL-NEXT:    (ref.null ${i32})
  ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (ref.null ${i32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $various-params-null
  ;; NOMNL-NEXT:   (ref.as_non_null
@@ -346,7 +348,7 @@
   ;; second gets only one.
   (call $various-params-null
    (ref.as_non_null (ref.null ${i32}))
-   (ref.null ${i32})
+   (call $get_null_{i32})
   )
   (call $various-params-null
    (ref.as_non_null (ref.null ${i32}))
@@ -393,28 +395,28 @@
 
  ;; CHECK:      (func $call-various-params-middle
  ;; CHECK-NEXT:  (call $various-params-middle
- ;; CHECK-NEXT:   (ref.null ${i32_i64})
+ ;; CHECK-NEXT:   (call $get_null_{i32_i64})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-middle
- ;; CHECK-NEXT:   (ref.null ${i32_f32})
+ ;; CHECK-NEXT:   (call $get_null_{i32_f32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-various-params-middle (type $none_=>_none)
  ;; NOMNL-NEXT:  (call $various-params-middle
- ;; NOMNL-NEXT:   (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:   (call $get_null_{i32_i64})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $various-params-middle
- ;; NOMNL-NEXT:   (ref.null ${i32_f32})
+ ;; NOMNL-NEXT:   (call $get_null_{i32_f32})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $call-various-params-middle
   ;; The argument gets {i32_i64} and {i32_f32}. This allows us to refine from
   ;; {} to {i32}, a type "in the middle".
   (call $various-params-middle
-   (ref.null ${i32_i64})
+   (call $get_null_{i32_i64})
   )
   (call $various-params-middle
-   (ref.null ${i32_f32})
+   (call $get_null_{i32_f32})
   )
  )
  ;; CHECK:      (func $various-params-middle (param $x (ref null ${i32}))
@@ -509,5 +511,37 @@
   (call $non-nullable-fixup
    (struct.new_default ${})
   )
+ )
+
+ ;; CHECK:      (func $get_null_{i32} (result (ref null ${i32}))
+ ;; CHECK-NEXT:  (ref.null ${i32})
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $get_null_{i32} (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
+ ;; NOMNL-NEXT:  (ref.null ${i32})
+ ;; NOMNL-NEXT: )
+ (func $get_null_{i32} (result (ref null ${i32}))
+  ;; Helper function that returns a null value of ${i32}. We use this instead of
+  ;; a direct ref.null because those can be rewritten by LUBFinder.
+  (ref.null ${i32})
+ )
+
+ ;; CHECK:      (func $get_null_{i32_i64} (result (ref null ${i32_i64}))
+ ;; CHECK-NEXT:  (ref.null ${i32_i64})
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $get_null_{i32_i64} (type $none_=>_ref?|${i32_i64}|) (result (ref null ${i32_i64}))
+ ;; NOMNL-NEXT:  (ref.null ${i32_i64})
+ ;; NOMNL-NEXT: )
+ (func $get_null_{i32_i64} (result (ref null ${i32_i64}))
+  (ref.null ${i32_i64})
+ )
+
+ ;; CHECK:      (func $get_null_{i32_f32} (result (ref null ${i32_f32}))
+ ;; CHECK-NEXT:  (ref.null ${i32_f32})
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $get_null_{i32_f32} (type $none_=>_ref?|${i32_f32}|) (result (ref null ${i32_f32}))
+ ;; NOMNL-NEXT:  (ref.null ${i32_f32})
+ ;; NOMNL-NEXT: )
+ (func $get_null_{i32_f32} (result (ref null ${i32_f32}))
+  (ref.null ${i32_f32})
  )
 )
