@@ -2313,6 +2313,16 @@ void TypeBuilder::setHeapType(size_t i, Array array) {
   impl->entries[i].set(array);
 }
 
+bool TypeBuilder::isBasic(size_t i) {
+  assert(i < size() && "index out of bounds");
+  return impl->entries[i].info->kind == HeapTypeInfo::BasicKind;
+}
+
+HeapType::BasicHeapType TypeBuilder::getBasic(size_t i) {
+  assert(isBasic(i));
+  return impl->entries[i].info->basic;
+}
+
 HeapType TypeBuilder::getTempHeapType(size_t i) {
   assert(i < size() && "index out of bounds");
   return impl->entries[i].get();
@@ -3135,6 +3145,13 @@ std::vector<HeapType> buildNominal(TypeBuilder& builder) {
 #if TIME_CANONICALIZATION
   auto afterMove = std::chrono::steady_clock::now();
 #endif
+
+#if TRACE_CANONICALIZATION
+  std::cerr << "After building:\n";
+  for (size_t i = 0; i < heapTypes.size(); ++i) {
+    std::cerr << i << ": " << heapTypes[i] << "\n";
+  }
+#endif // TRACE_CANONICALIZATION
 
   validateNominalSubTyping(heapTypes);
 

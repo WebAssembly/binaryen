@@ -20,7 +20,8 @@
 
 namespace wasm {
 
-Random::Random(std::vector<char>&& bytes) : bytes(std::move(bytes)) {
+Random::Random(std::vector<char>&& bytes, FeatureSet features)
+  : bytes(std::move(bytes)), features(features) {
   // Ensure there is *some* input to be read.
   if (bytes.empty()) {
     bytes.push_back(0);
