@@ -667,3 +667,31 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct))
+    (drop
+      (struct.new_default $struct)
+    )
+    ;; Also write a $struct. The null default should not prevent us from
+    ;; refining the field's type to $struct (but nullable).
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+  )
+)
