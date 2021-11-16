@@ -553,6 +553,7 @@ private:
     auto numParams = func->getNumParams();
     std::vector<Type> newParamTypes;
     newParamTypes.reserve(numParams);
+    std::vector<LUBFinder> lubs(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto originalType = func->getLocalType(i);
       // If the parameter type is not a reference, there is nothing to refine.
@@ -565,10 +566,11 @@ private:
         newParamTypes.push_back(originalType);
         continue;
       }
-      LUBFinder lub;
+      auto& lub = lubs[i];
       for (auto* call : calls) {
         auto* operand = call->operands[i];
-        if (lub.note(operand) == originalType) {
+        lub.noteUpdatableExpression(operand);
+        if (lub.getBestPossible() == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;
         }
@@ -578,7 +580,7 @@ private:
       if (!lub.noted()) {
         return;
       }
-      newParamTypes.push_back(lub.get());
+      newParamTypes.push_back(lub.getBestPossible());
     }
 
     // Check if we are able to optimize here before we do the work to scan the
@@ -590,6 +592,11 @@ private:
 
     // We can do this!
     TypeUpdating::updateParamTypes(func, newParamTypes, *module);
+
+    // Update anything the lub needs to update.
+    for (auto& lub : lubs) {
+      lub.updateNulls();
+    }
 
     // Also update the function's type.
     func->setParams(newParams);
@@ -633,7 +640,8 @@ private:
     ReFinalize().walkFunctionInModule(func, module);
 
     LUBFinder lub;
-    if (lub.note(func->body) == originalType) {
+    lub.noteUpdatableExpression(func->body);
+    if (lub.getBestPossible() == originalType) {
       return false;
     }
 
@@ -641,7 +649,8 @@ private:
     auto processReturnType = [&](Type type) {
       // Return whether we still look ok to do the optimization. If this is
       // false then we can stop here.
-      return lub.note(type) != originalType;
+      lub.note(type);
+      return lub.getBestPossible() != originalType;
     };
     for (auto* ret : FindAll<Return>(func->body).list) {
       if (!processReturnType(ret->value->type)) {
@@ -671,7 +680,6 @@ private:
         }
       }
     }
-    assert(lub.get() != originalType);
 
     // If the refined type is unreachable then nothing actually returns from
     // this function.
@@ -680,13 +688,19 @@ private:
       return false;
     }
 
+    auto newType = lub.getBestPossible();
+    if (newType == originalType) {
+      return false;
+    }
+
     // Success. Update the type, and the calls.
-    func->setResults(lub.get());
+    func->setResults(newType);
     for (auto* call : calls) {
       if (call->type != Type::unreachable) {
-        call->type = lub.get();
+        call->type = newType;
       }
     }
+    lub.updateNulls();
     return true;
   }
 };

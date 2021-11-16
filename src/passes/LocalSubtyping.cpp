@@ -124,7 +124,8 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         // Find all the types assigned to the var, and compute the optimal LUB.
         LUBFinder lub;
         for (auto* set : setsForLocal[i]) {
-          if (lub.note(set->value) == oldType) {
+          lub.noteUpdatableExpression(set->value);
+          if (lub.getBestPossible() == oldType) {
             break;
           }
         }
@@ -133,7 +134,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           continue;
         }
 
-        auto newType = lub.get();
+        auto newType = lub.getBestPossible();
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
         // Remove non-nullability if we disallow that in locals.
@@ -152,6 +153,8 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         }
 
         if (newType != oldType) {
+          lub.updateNulls();
+
           // We found a more specific type!
           assert(Type::isSubType(newType, oldType));
           func->vars[i - varBase] = newType;
