@@ -189,7 +189,7 @@ struct TypeRefining : public Pass {
           auto newType = finalInfos[type][i].getBestPossible();
           if (newType != oldType) {
             canOptimize = true;
-            finalInfos[type][i].updateNulls(); // XXX a propagated null is in subtypes too, and we process them later - that means they can get specialized...
+            finalInfos[type][i].updateNulls();
             break;
           }
         }
