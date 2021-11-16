@@ -2493,7 +2493,6 @@ private:
 
   // We can combine `and` operations, e.g.
   //   (x == 0) & (y == 0)   ==>    (x | y) == 0
-  //   (x < 0) & (y < 0)     ==>    (x & y) < 0
   Expression* combineAnd(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
