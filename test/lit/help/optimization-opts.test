@@ -277,9 +277,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gto                                         globally optimize GC types
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --heap-refining                               apply more specific subtypes to
-;; CHECK-NEXT:                                                 type fields where possible
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-NEXT:
@@ -521,6 +518,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trap-mode-js                                replace trapping operations with
 ;; CHECK-NEXT:                                                 js semantics
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-refining                               apply more specific subtypes to
+;; CHECK-NEXT:                                                 type fields where possible
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --untee                                       removes local.tees, replacing
 ;; CHECK-NEXT:                                                 them with sets and gets

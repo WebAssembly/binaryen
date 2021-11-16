@@ -53,7 +53,6 @@ Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateStackIRPass();
 Pass* createGlobalTypeOptimizationPass();
 Pass* createHeap2LocalPass();
-Pass* createHeapRefiningPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();
 Pass* createInliningPass();
@@ -131,6 +130,7 @@ Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
+Pass* createTypeRefiningPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
 

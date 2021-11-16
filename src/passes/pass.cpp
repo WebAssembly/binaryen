@@ -156,9 +156,9 @@ void PassRegistry::registerPasses() {
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
-  registerPass("heap-refining",
+  registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
-               createHeapRefiningPass);
+               createTypeRefiningPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
@@ -527,7 +527,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   }
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
-    addIfNoDWARFIssues("heap-refining");
+    addIfNoDWARFIssues("type-refining");
     // Global type optimization can remove fields that are not needed, which can
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,
