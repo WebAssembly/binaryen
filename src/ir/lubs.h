@@ -67,7 +67,6 @@ struct LUBFinder {
       return false;
     }
 
-
     // We have nulls, and nothing else. If all we have is a default null value,
     // then we have seen nothing useful, as it does not even have a type - so we
     // cannot compute a lub from it, and unreachable remains all we can say, so
