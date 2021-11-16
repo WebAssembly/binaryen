@@ -58,7 +58,21 @@ struct LUBFinder {
   }
 
   // Returns whether we noted any (reachable) value.
-  bool noted() { return lub != Type::unreachable; }
+  bool noted() {
+    if (lub != Type::unreachable) {
+      return true;
+    }
+
+    if (nulls.empty()) {
+      return false;
+    }
+
+
+    // We have nulls, and nothing else. If all we have is a default null value,
+    // then we have seen nothing useful, as it does not even have a type - just
+    // the old type in that location.
+    return nulls.size() != 1 || *nulls.begin() != nullptr;
+  }
 
   // Returns the best possible lub. This ignores updatable nulls for the reasons
   // mentioned above, since they will not limit us, aside from making the type
@@ -111,14 +125,12 @@ struct LUBFinder {
     note(other.lub);
     bool changed = old != lub;
 
-#if 0
     // Check if we added new updatable nulls.
     for (auto* null : other.nulls) {
       if (nulls.insert(null).second) {
         changed = true;
       }
     }
-#endif
 
     return changed;
   }
