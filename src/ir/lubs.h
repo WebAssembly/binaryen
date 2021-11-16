@@ -27,9 +27,7 @@ namespace wasm {
 // early.
 struct LUBFinder {
   // Note another type to take into account in the lub. Returns the new lub.
-  void note(Type type) {
-    lub = Type::getLeastUpperBound(lub, type);
-  }
+  void note(Type type) { lub = Type::getLeastUpperBound(lub, type); }
 
   // Note an expression that can be updated, that is, that we can modify in
   // safe ways if doing so would allow us to get a better lub. The specific
