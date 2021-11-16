@@ -30,9 +30,9 @@ set(passes_SOURCES
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
-  GlobalSubtyping.cpp
   GlobalTypeOptimization.cpp
   Heap2Local.cpp
+  HeapRefining.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
