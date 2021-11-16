@@ -551,3 +551,34 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct))
+    (struct.set $struct 0
+      (local.get $struct)
+      ;; Write a $struct to the field.
+      (local.get $struct)
+    )
+    (struct.set $struct 0
+      (local.get $struct)
+      ;; This null can be updated, allowing us to refine the type of the field
+      ;; to a null of $struct.
+      (ref.null data)
+    )
+  )
+)
