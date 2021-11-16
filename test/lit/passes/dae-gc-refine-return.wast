@@ -17,12 +17,14 @@
  ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
+ ;; CHECK:      (type ${i32} (struct (field i32)))
+
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
+ ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
+
  ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
- ;; CHECK:      (type ${i32} (struct (field i32)))
- ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; CHECK:      (type ${} (struct ))
@@ -743,6 +745,93 @@
   )
   (drop
    (call $tail-caller-call_ref-unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $update-null (param $x i32) (param $y i32) (result (ref null ${i32}))
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (struct.new_default ${i32_f32})
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (ref.null ${i32})
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (struct.new_default ${i32_i64})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $update-null (type $i32_i32_=>_ref?|${i32}|) (param $x i32) (param $y i32) (result (ref null ${i32}))
+ ;; NOMNL-NEXT:  (if
+ ;; NOMNL-NEXT:   (local.get $x)
+ ;; NOMNL-NEXT:   (if
+ ;; NOMNL-NEXT:    (local.get $y)
+ ;; NOMNL-NEXT:    (return
+ ;; NOMNL-NEXT:     (struct.new_default ${i32_f32})
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (return
+ ;; NOMNL-NEXT:     (ref.null ${i32})
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (return
+ ;; NOMNL-NEXT:    (struct.new_default ${i32_i64})
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $update-null (param $x i32) (param $y i32) (result anyref)
+  ;; Of the three returns here, the null can be updated, and the LUB is
+  ;; determined by the other two, and is their shared parent ${}.
+  (if
+   (local.get $x)
+   (if
+    (local.get $y)
+    (return (struct.new ${i32_f32}))
+    (return (ref.null any))
+   )
+   (return (struct.new ${i32_i64}))
+  )
+ )
+
+ ;; CHECK:      (func $call-update-null (result anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $update-null
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $update-null
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-update-null (type $none_=>_anyref) (result anyref)
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (call $update-null
+ ;; NOMNL-NEXT:    (i32.const 0)
+ ;; NOMNL-NEXT:    (i32.const 1)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (call $update-null
+ ;; NOMNL-NEXT:   (i32.const 1)
+ ;; NOMNL-NEXT:   (i32.const 0)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $call-update-null (result anyref)
+  ;; Call $update-null so it gets optimized. (Call it with various values so
+  ;; that other opts do not inline the constants.)
+  (drop
+   ($call $update-null
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+  ($call $update-null
+   (i32.const 1)
+   (i32.const 0)
   )
  )
 )
