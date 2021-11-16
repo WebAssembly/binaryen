@@ -183,15 +183,13 @@ struct TypeRefining : public Pass {
       }
 
       // After all those decisions, see if we found anything to optimize.
-      if (!canOptimize) {
-        for (Index i = 0; i < fields.size(); i++) {
-          auto oldType = fields[i].type;
-          auto newType = finalInfos[type][i].getBestPossible();
-          if (newType != oldType) {
-            canOptimize = true;
-            finalInfos[type][i].updateNulls();
-            break;
-          }
+      for (Index i = 0; i < fields.size(); i++) {
+        auto oldType = fields[i].type;
+        auto& lub = finalInfos[type][i];
+        auto newType = lub.getBestPossible();
+        if (newType != oldType) {
+          canOptimize = true;
+          lub.updateNulls();
         }
       }
 

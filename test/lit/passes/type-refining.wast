@@ -729,3 +729,39 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) (field (mut (ref null data))) data))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct))
+    ;; Update nulls in two fields that are separately optimized.
+    (drop
+      (struct.new $struct
+        (local.get $struct)
+        (ref.null data)
+      )
+    )
+    (drop
+      (struct.new $struct
+        (ref.null data)
+        (local.get $struct)
+      )
+    )
+  )
+)
