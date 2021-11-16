@@ -60,16 +60,21 @@ struct HeapTypeGenerator {
   }
 
   Type::BasicType generateBasicType() {
-    // Exclude basic reference types because we will construct them via the
-    // TypeBuilder.
     return rand.pick(
       Random::FeatureOptions<Type::BasicType>{}
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128));
+        .add(FeatureSet::SIMD, Type::v128)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::funcref,
+             Type::externref,
+             Type::anyref,
+             Type::eqref,
+             Type::i31ref,
+             Type::dataref));
   }
 
   HeapType generateHeapType() {
-    if (rand.oneIn(2)) {
+    if (rand.oneIn(4)) {
       return generateBasicHeapType();
     } else {
       return builder[rand.upTo(builder.size())];
@@ -104,13 +109,15 @@ struct HeapTypeGenerator {
   Type generateTupleType() {
     std::vector<Type> types(2 + rand.upTo(MAX_TUPLE_SIZE - 1));
     for (auto& type : types) {
-      // Make sure tuples are defaultable. See comment in getTupleType.
+      // Make sure tuples are defaultable. See comment in
+      // TranslateToFuzzReader::getTupleType.
       type = generateSingleType(/*defaultable=*/true);
     }
     return builder.getTempTupleType(Tuple(types));
   }
 
-  Type generateControlFlowType() {
+  Type generateReturnType() {
+    // This is similar to TranslateToFuzzreader::getControlFlowType.
     if (rand.oneIn(10)) {
       return Type::none;
     } else if (features.hasMultivalue() && rand.oneIn(5)) {
@@ -126,7 +133,7 @@ struct HeapTypeGenerator {
       type = generateSingleType();
     }
     auto params = builder.getTempTupleType(types);
-    return {params, generateControlFlowType()};
+    return {params, generateReturnType()};
   }
 
   Field generateField() {
