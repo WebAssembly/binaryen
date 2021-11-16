@@ -582,3 +582,70 @@
     )
   )
 )
+
+(module
+  ;; As above, but now the null is in a child. The result should be the same:
+  ;; refine the field to nullable $struct.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) $struct))
+  (type $child (struct_subtype (field (mut (ref null data))) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_ref|$child|_=>_none) (param $struct (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $child 0
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct)) (param $child (ref $child))
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+    (struct.set $child 0
+      (local.get $child)
+      (ref.null data)
+    )
+  )
+)
+
+(module
+  ;; As above, but now the null is in a parent. The result should be the same.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) $struct))
+  (type $child (struct_subtype (field (mut (ref null data))) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_ref|$child|_=>_none) (param $struct (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $child 0
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct)) (param $child (ref $child))
+    (struct.set $struct 0
+      (local.get $struct)
+      (ref.null data)
+    )
+    (struct.set $child 0
+      (local.get $child)
+      (local.get $struct)
+    )
+  )
+)
+
+;; null default
