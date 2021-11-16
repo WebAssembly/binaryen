@@ -120,7 +120,7 @@
  )
  ;; This function is called in ways that *do* allow us to alter the types of
  ;; its parameters (see last function).
- ;; CHECK:      (func $various-params-yes (param $x (ref null ${i32})) (param $i i32) (param $y (ref null ${i32}))
+ ;; CHECK:      (func $various-params-yes (param $x (ref null ${})) (param $i i32) (param $y (ref null ${}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -131,7 +131,7 @@
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $various-params-yes (type $ref?|${i32}|_i32_ref?|${i32}|_=>_none) (param $x (ref null ${i32})) (param $i i32) (param $y (ref null ${i32}))
+ ;; NOMNL:      (func $various-params-yes (type $ref?|${}|_i32_ref?|${}|_=>_none) (param $x (ref null ${})) (param $i i32) (param $y (ref null ${}))
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:  )
@@ -184,56 +184,44 @@
  ;; This function is called in ways that *do* allow us to alter the types of
  ;; its parameters (see last function), however, we reuse the parameters by
  ;; writing to them, which causes problems in one case.
- ;; CHECK:      (func $various-params-set (param $x (ref null ${i32})) (param $y (ref null ${i32}))
- ;; CHECK-NEXT:  (local $2 (ref null ${}))
- ;; CHECK-NEXT:  (local.set $2
+ ;; CHECK:      (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${}))
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $2
- ;; CHECK-NEXT:    (ref.null ${})
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $y
- ;; CHECK-NEXT:    (ref.null ${i32_i64})
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (ref.null ${})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $y
+ ;; CHECK-NEXT:   (ref.null ${i32_i64})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $various-params-set (type $ref?|${i32}|_ref?|${i32}|_=>_none) (param $x (ref null ${i32})) (param $y (ref null ${i32}))
- ;; NOMNL-NEXT:  (local $2 (ref null ${}))
- ;; NOMNL-NEXT:  (local.set $2
+ ;; NOMNL:      (func $various-params-set (type $ref?|${}|_ref?|${}|_=>_none) (param $x (ref null ${})) (param $y (ref null ${}))
+ ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (block
- ;; NOMNL-NEXT:   (drop
- ;; NOMNL-NEXT:    (local.get $2)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (drop
- ;; NOMNL-NEXT:    (local.get $y)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.set $2
- ;; NOMNL-NEXT:    (ref.null ${})
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (drop
- ;; NOMNL-NEXT:    (local.get $2)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.set $y
- ;; NOMNL-NEXT:    (ref.null ${i32_i64})
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (drop
- ;; NOMNL-NEXT:    (local.get $y)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (local.get $y)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (local.set $x
+ ;; NOMNL-NEXT:   (ref.null ${})
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (local.get $x)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (local.set $y
+ ;; NOMNL-NEXT:   (ref.null ${i32_i64})
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (local.get $y)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${}))
@@ -272,24 +260,24 @@
    (ref.null ${i32})
   )
  )
- ;; CHECK:      (func $various-params-tee (param $x (ref null ${i32}))
+ ;; CHECK:      (func $various-params-tee (param $x (ref null ${}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $block (result (ref null ${i32}))
+ ;; CHECK-NEXT:   (block $block (result (ref null ${}))
  ;; CHECK-NEXT:    (local.tee $x
  ;; CHECK-NEXT:     (ref.null ${i32_i64})
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $various-params-tee (type $ref?|${i32}|_=>_none) (param $x (ref null ${i32}))
+ ;; NOMNL:      (func $various-params-tee (type $ref?|${}|_=>_none) (param $x (ref null ${}))
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (block $block (result (ref null ${i32}))
+ ;; NOMNL-NEXT:   (block $block (result (ref null ${}))
  ;; NOMNL-NEXT:    (local.tee $x
  ;; NOMNL-NEXT:     (ref.null ${i32_i64})
  ;; NOMNL-NEXT:    )
@@ -417,12 +405,12 @@
    (ref.null ${i32_f32})
   )
  )
- ;; CHECK:      (func $various-params-middle (param $x (ref null ${i32}))
+ ;; CHECK:      (func $various-params-middle (param $x (ref null ${}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $various-params-middle (type $ref?|${i32}|_=>_none) (param $x (ref null ${i32}))
+ ;; NOMNL:      (func $various-params-middle (type $ref?|${}|_=>_none) (param $x (ref null ${}))
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:  )

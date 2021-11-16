@@ -76,6 +76,7 @@ struct LUBFinder {
         // We had no nulls, or we had just a default value.
         return lub;
       }
+      // TODO: cache this?
       return Type::getLeastUpperBound(types);
     }
 
@@ -90,9 +91,13 @@ struct LUBFinder {
   // Update the nulls for the best possible LUB, if we found one.
   void updateNulls() {
     if (lub != Type::unreachable) {
+      auto newType = lub;
+      if (!newType.isNullable() && !nulls.empty()) {
+        newType = Type(newType.getHeapType(), Nullable);
+      }
       for (auto* null : nulls) {
         if (null) {
-          null->finalize(lub);
+          null->finalize(newType);
         }
       }
     }
