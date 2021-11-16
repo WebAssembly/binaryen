@@ -772,16 +772,21 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    // bitwise operations
-    // for and and or, we can potentially conditionalize
     if (curr->op == AndInt32 || curr->op == OrInt32) {
-      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
-        return replaceCurrent(ret);
+      if (curr->op == AndInt32) {
+        if (auto* ret = combineAnd(curr)) {
+          return replaceCurrent(ret);
+        }
       }
-    }
-    // for or, we can potentially combine
-    if (curr->op == OrInt32) {
-      if (auto* ret = combineOr(curr)) {
+      // for or, we can potentially combine
+      if (curr->op == OrInt32) {
+        if (auto* ret = combineOr(curr)) {
+          return replaceCurrent(ret);
+        }
+      }
+      // bitwise operations
+      // for and and or, we can potentially conditionalize
+      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
         return replaceCurrent(ret);
       }
     }
@@ -2484,6 +2489,27 @@ private:
       return builder.makeIf(
         left, right, builder.makeConst(Literal(int32_t(0))));
     }
+  }
+
+  // We can combine `and` operations, e.g.
+  //   (x == 0) & (y == 0)   ==>    (x | y) == 0
+  Expression* combineAnd(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      // (i32(x) == 0) & (i32(y) == 0)   ==>   i32(x | y) == 0
+      // (i64(x) == 0) & (i64(y) == 0)   ==>   i64(x | y) == 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y)))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Unary>();
+        inner->value = Builder(*getModule())
+                         .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return inner;
+      }
+    }
+    return nullptr;
   }
 
   // We can combine `or` operations, e.g.
