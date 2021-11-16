@@ -106,13 +106,15 @@ struct LUBFinder {
   // Update the nulls for the best possible LUB, if we found one.
   void updateNulls() {
     if (lub != Type::unreachable) {
-      auto newType = lub;
-      if (!newType.isNullable() && !nulls.empty()) {
-        newType = Type(newType.getHeapType(), Nullable);
-      }
+      auto newType = getBestPossible();
       for (auto* null : nulls) {
-        if (null) {
-          null->finalize(newType); // TODO: do not update if this is better? handles the case where we propagated nulls to moe than one place.
+        // Default null values (represented as nullptr here) do not need to be
+        // updated. Aside from that, if this null is already of a more specific
+        // type, also do not update it - it's never worth making a type less
+        // specific. What we care about here is making sure the nulls are all
+        // specific enough given the LUB that is being applied.
+        if (null && !Type::isSubType(null->type, newType)) {
+          null->finalize(newType);
         }
       }
     }
