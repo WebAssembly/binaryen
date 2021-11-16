@@ -57,41 +57,19 @@ struct LUBFinder {
     nulls.insert(nullptr);
   }
 
-  // Returns whether we noted any (reachable) value.
-  bool noted() {
-    if (lub != Type::unreachable) {
-      return true;
-    }
-
-    if (nulls.empty()) {
-      return false;
-    }
-
-    // We have nulls, and nothing else. If all we have is a default null value,
-    // then we have seen nothing useful, as it does not even have a type - so we
-    // cannot compute a lub from it, and unreachable remains all we can say, so
-    // return that we have not noted anything here.
-    return nulls.size() != 1 || *nulls.begin() != nullptr;
-  }
+  // Returns whether we noted any (reachable) value. This ignores nulls, as they
+  // do not contribute type information - we do not try to find a lub based on
+  // them.
+  bool noted() { return lub != Type::unreachable; }
 
   // Returns the best possible lub. This ignores updatable nulls for the reasons
   // mentioned above, since they will not limit us, aside from making the type
   // nullable if nulls exist. This does not update the nulls.
   Type getBestPossible() {
     if (lub == Type::unreachable) {
-      // Otherwise, all we have seen are nulls. Calculate a lub from them.
-      std::vector<Type> types;
-      for (auto* null : nulls) {
-        if (null) {
-          types.push_back(null->type);
-        }
-      }
-      if (types.empty()) {
-        // We had no nulls, or we had just a default value.
-        return lub;
-      }
-      // TODO: cache this?
-      return Type::getLeastUpperBound(types);
+      // Perhaps if we have seen nulls we could compute a lub on them, but it's
+      // not clear that is helpful.
+      return lub;
     }
 
     // We have a lub. Make it nullable if we need to.
@@ -104,8 +82,8 @@ struct LUBFinder {
 
   // Update the nulls for the best possible LUB, if we found one.
   void updateNulls() {
-    if (lub != Type::unreachable) {
-      auto newType = getBestPossible();
+    auto newType = getBestPossible();
+    if (newType != Type::unreachable) {
       for (auto* null : nulls) {
         // Default null values (represented as nullptr here) do not need to be
         // updated. Aside from that, if this null is already of a more specific
