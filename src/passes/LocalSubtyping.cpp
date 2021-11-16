@@ -153,13 +153,12 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         }
 
         if (newType != oldType) {
-          lub.updateNulls();
-
           // We found a more specific type!
           assert(Type::isSubType(newType, oldType));
           func->vars[i - varBase] = newType;
           more = true;
           optimized = true;
+          lub.updateNulls();
 
           // Update gets and tees.
           for (auto* get : getsForLocal[i]) {

@@ -69,8 +69,9 @@ struct LUBFinder {
 
 
     // We have nulls, and nothing else. If all we have is a default null value,
-    // then we have seen nothing useful, as it does not even have a type - just
-    // the old type in that location.
+    // then we have seen nothing useful, as it does not even have a type - so we
+    // cannot compute a lub from it, and unreachable remains all we can say, so
+    // return that we have not noted anything here.
     return nulls.size() != 1 || *nulls.begin() != nullptr;
   }
 
@@ -111,7 +112,7 @@ struct LUBFinder {
       }
       for (auto* null : nulls) {
         if (null) {
-          null->finalize(newType);
+          null->finalize(newType); // TODO: do not update if this is better? handles the case where we propagated nulls to moe than one place.
         }
       }
     }

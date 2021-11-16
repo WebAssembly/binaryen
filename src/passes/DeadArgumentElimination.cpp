@@ -645,18 +645,23 @@ private:
       return false;
     }
 
-    // Scan the body and look at the returns.
+    // Scan the body and look at the returns. First, return expressions.
+    for (auto* ret : FindAll<Return>(func->body).list) {
+      lub.noteUpdatableExpression(ret->value);
+      if (lub.getBestPossible() == originalType) {
+        return false;
+      }
+    }
+
+    // Process return_calls and call_refs. Unlike return expressions which we
+    // just handled, these only get a type to update, not a value.
     auto processReturnType = [&](Type type) {
       // Return whether we still look ok to do the optimization. If this is
       // false then we can stop here.
       lub.note(type);
       return lub.getBestPossible() != originalType;
     };
-    for (auto* ret : FindAll<Return>(func->body).list) {
-      if (!processReturnType(ret->value->type)) {
-        return false;
-      }
-    }
+
     for (auto* call : FindAll<Call>(func->body).list) {
       if (call->isReturn &&
           !processReturnType(module->getFunction(call->target)->getResults())) {
