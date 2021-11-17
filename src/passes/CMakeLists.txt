@@ -30,7 +30,6 @@ set(passes_SOURCES
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
-  GlobalSubtyping.cpp
   GlobalTypeOptimization.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
@@ -82,6 +81,7 @@ set(passes_SOURCES
   ReorderFunctions.cpp
   ReReloop.cpp
   TrapMode.cpp
+  TypeRefining.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp

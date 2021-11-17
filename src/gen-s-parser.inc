@@ -4,8 +4,8 @@
 
 #ifdef INSTRUCTION_PARSER
 #undef INSTRUCTION_PARSER
-char op[30] = {'\0'};
-strncpy(op, s[0]->c_str(), 29);
+char op[33] = {'\0'};
+strncpy(op, s[0]->c_str(), 32);
 switch (op[0]) {
   case 'a': {
     switch (op[1]) {
@@ -491,9 +491,41 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'r':
-                if (strcmp(op, "f32x4.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecF32x4, 4); }
-                goto parse_error;
+              case 'r': {
+                switch (op[8]) {
+                  case 'l': {
+                    switch (op[14]) {
+                      case 'f': {
+                        switch (op[16]) {
+                          case 'a':
+                            if (strcmp(op, "f32x4.relaxed_fma") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmaVecF32x4); }
+                            goto parse_error;
+                          case 's':
+                            if (strcmp(op, "f32x4.relaxed_fms") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmsVecF32x4); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'm': {
+                        switch (op[15]) {
+                          case 'a':
+                            if (strcmp(op, "f32x4.relaxed_max") == 0) { return makeBinary(s, BinaryOp::RelaxedMaxVecF32x4); }
+                            goto parse_error;
+                          case 'i':
+                            if (strcmp(op, "f32x4.relaxed_min") == 0) { return makeBinary(s, BinaryOp::RelaxedMinVecF32x4); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'p':
+                    if (strcmp(op, "f32x4.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecF32x4, 4); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 's': {
                 switch (op[7]) {
                   case 'p':
@@ -789,9 +821,41 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'r':
-                if (strcmp(op, "f64x2.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecF64x2, 2); }
-                goto parse_error;
+              case 'r': {
+                switch (op[8]) {
+                  case 'l': {
+                    switch (op[14]) {
+                      case 'f': {
+                        switch (op[16]) {
+                          case 'a':
+                            if (strcmp(op, "f64x2.relaxed_fma") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmaVecF64x2); }
+                            goto parse_error;
+                          case 's':
+                            if (strcmp(op, "f64x2.relaxed_fms") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::RelaxedFmsVecF64x2); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'm': {
+                        switch (op[15]) {
+                          case 'a':
+                            if (strcmp(op, "f64x2.relaxed_max") == 0) { return makeBinary(s, BinaryOp::RelaxedMaxVecF64x2); }
+                            goto parse_error;
+                          case 'i':
+                            if (strcmp(op, "f64x2.relaxed_min") == 0) { return makeBinary(s, BinaryOp::RelaxedMinVecF64x2); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'p':
+                    if (strcmp(op, "f64x2.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecF64x2, 2); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 's': {
                 switch (op[7]) {
                   case 'p':
@@ -987,6 +1051,9 @@ switch (op[0]) {
           }
           case 'l': {
             switch (op[7]) {
+              case 'a':
+                if (strcmp(op, "i16x8.laneselect") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::LaneselectI16x8); }
+                goto parse_error;
               case 'e': {
                 switch (op[9]) {
                   case 's':
@@ -1730,6 +1797,9 @@ switch (op[0]) {
                   }
                   case 'l': {
                     switch (op[7]) {
+                      case 'a':
+                        if (strcmp(op, "i32x4.laneselect") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::LaneselectI32x4); }
+                        goto parse_error;
                       case 'e': {
                         switch (op[9]) {
                           case 's':
@@ -1796,9 +1866,41 @@ switch (op[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'r':
-                    if (strcmp(op, "i32x4.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI32x4, 4); }
-                    goto parse_error;
+                  case 'r': {
+                    switch (op[8]) {
+                      case 'l': {
+                        switch (op[21]) {
+                          case '3': {
+                            switch (op[26]) {
+                              case 's':
+                                if (strcmp(op, "i32x4.relaxed_trunc_f32x4_s") == 0) { return makeUnary(s, UnaryOp::RelaxedTruncSVecF32x4ToVecI32x4); }
+                                goto parse_error;
+                              case 'u':
+                                if (strcmp(op, "i32x4.relaxed_trunc_f32x4_u") == 0) { return makeUnary(s, UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          case '6': {
+                            switch (op[26]) {
+                              case 's':
+                                if (strcmp(op, "i32x4.relaxed_trunc_f64x2_s_zero") == 0) { return makeUnary(s, UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4); }
+                                goto parse_error;
+                              case 'u':
+                                if (strcmp(op, "i32x4.relaxed_trunc_f64x2_u_zero") == 0) { return makeUnary(s, UnaryOp::RelaxedTruncZeroUVecF64x2ToVecI32x4); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'p':
+                        if (strcmp(op, "i32x4.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI32x4, 4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   case 's': {
                     switch (op[7]) {
                       case 'h': {
@@ -2487,6 +2589,9 @@ switch (op[0]) {
               }
               case 'l': {
                 switch (op[7]) {
+                  case 'a':
+                    if (strcmp(op, "i64x2.laneselect") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::LaneselectI64x2); }
+                    goto parse_error;
                   case 'e':
                     if (strcmp(op, "i64x2.le_s") == 0) { return makeBinary(s, BinaryOp::LeSVecI64x2); }
                     goto parse_error;
@@ -2635,6 +2740,9 @@ switch (op[0]) {
           }
           case 'l': {
             switch (op[7]) {
+              case 'a':
+                if (strcmp(op, "i8x16.laneselect") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::LaneselectI8x16); }
+                goto parse_error;
               case 'e': {
                 switch (op[9]) {
                   case 's':
@@ -2717,9 +2825,17 @@ switch (op[0]) {
           case 'p':
             if (strcmp(op, "i8x16.popcnt") == 0) { return makeUnary(s, UnaryOp::PopcntVecI8x16); }
             goto parse_error;
-          case 'r':
-            if (strcmp(op, "i8x16.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI8x16, 16); }
-            goto parse_error;
+          case 'r': {
+            switch (op[8]) {
+              case 'l':
+                if (strcmp(op, "i8x16.relaxed_swizzle") == 0) { return makeBinary(s, BinaryOp::RelaxedSwizzleVec8x16); }
+                goto parse_error;
+              case 'p':
+                if (strcmp(op, "i8x16.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI8x16, 16); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 's': {
             switch (op[7]) {
               case 'h': {
