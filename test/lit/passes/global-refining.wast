@@ -2,10 +2,18 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --global-refining -all -S -o - | filecheck %s
 
 (module
-  (global $func-1 (mut funcref) (ref.null func))
-  (global $func-2 (mut funcref) (ref.func $foo))
-  (func $foo
-   (global.set $func-1 (ref.null func))
-   (global.set $func-2 (ref.func $foo))
-  )
+  ;; Globals with no assignments aside from their initial values. The first is
+  ;; a null, so we have nothing concrete to improve with (though we could use
+  ;; the type of the null perhaps, TODO). The second is a ref.func which lets
+  ;; us refine.
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $func-null-init (mut anyref) (ref.null func))
+  (global $func-null-init (mut anyref) (ref.null func))
+  ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
+  (global $func-func-init (mut anyref) (ref.func $foo))
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo)
 )
