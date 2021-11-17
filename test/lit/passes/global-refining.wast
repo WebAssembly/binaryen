@@ -42,3 +42,30 @@
    (global.set $func-func-init (ref.null any))
   )
 )
+
+(module
+  ;; Globals with later assignments of something non-null. Both can be refined,
+  ;; and the one with a non-null initial value can even become non-nullable.
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null $none_=>_none))
+  (global $func-null-init (mut anyref) (ref.null func))
+  ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
+  (global $func-func-init (mut anyref) (ref.func $foo))
+
+  ;; CHECK:      (elem declare func $foo)
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $func-null-init
+  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $func-func-init
+  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+   (global.set $func-null-init (ref.func $foo))
+   (global.set $func-func-init (ref.func $foo))
+  )
+)
