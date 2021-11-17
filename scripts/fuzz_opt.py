@@ -270,6 +270,12 @@ def pick_initial_contents():
     else:
         test_name = random.choice(all_tests)
     print('initial contents:', test_name)
+    if shared.options.auto_initial_contents:
+        # when using auto initial contents, we look through the git history to
+        # find test files. if a test file was renamed or removed then it may
+        # no longer exist, and we should just skip it.
+        if not os.path.exists(test_name):
+            return
     assert os.path.exists(test_name)
     # tests that check validation errors are not helpful for us
     if '.fail.' in test_name:
