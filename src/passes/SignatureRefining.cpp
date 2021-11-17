@@ -56,9 +56,10 @@ struct SignatureRefining : public Pass {
 
     if (!module->tables.empty()) {
       // When there are tables we must also take their types into account, which
-      // has some corner cases. For now, do nothing if there are tables.
+      // would require us to take call_indirect, element segments, etc. into
+      // account. For now, do nothing if there are tables.
       // TODO
-//      return;
+      return;
     }
 
     // First, find all the calls and call_refs.
