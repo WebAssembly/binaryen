@@ -11034,7 +11034,7 @@
       (i64.ne (local.get $b) (i64.const 0))
     ))
   )
-  ;; CHECK:      (func $optimize-combined-by-or-lessthen-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK:      (func $optimize-combined-by-or-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.lt_s
   ;; CHECK-NEXT:    (i32.or
@@ -11054,7 +11054,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $optimize-combined-by-or-lessthen-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  (func $optimize-combined-by-or-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
     ;; (i32(x) < 0) | (i32(y) < 0)   ==>   i32(x | y) < 0
     (drop (i32.or
       (i32.lt_s (local.get $x) (i32.const 0))
