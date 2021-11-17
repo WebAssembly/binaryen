@@ -17,3 +17,28 @@
   ;; CHECK-NEXT: )
   (func $foo)
 )
+
+(module
+  ;; Globals with later assignments of null. The global with a function in its
+  ;; init will update the null to allow it to refine.
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $func-null-init (mut anyref) (ref.null func))
+  (global $func-null-init (mut anyref) (ref.null func))
+  ;; CHECK:      (global $func-func-init (mut (ref null $none_=>_none)) (ref.func $foo))
+  (global $func-func-init (mut anyref) (ref.func $foo))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $func-null-init
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $func-func-init
+  ;; CHECK-NEXT:   (ref.null $none_=>_none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+   (global.set $func-null-init (ref.null any))
+   (global.set $func-func-init (ref.null any))
+  )
+)
