@@ -721,8 +721,6 @@
         (ref.null data)
       )
     )
-    ;; Also write a $struct. The null default should not prevent us from
-    ;; refining the field's type to $struct (but nullable).
     (struct.set $struct 0
       (local.get $struct)
       (local.get $struct)
@@ -731,29 +729,34 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) (field (mut (ref null $struct))) data))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $child))) (field (mut (ref null $struct))) data))
   (type $struct (struct_subtype (field (mut (ref null data))) (field (mut (ref null data))) data))
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (func $update-null (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $child))) (field (mut (ref null $struct))) $struct))
+  (type $child (struct_subtype (field (mut (ref null data))) (field (mut (ref null data))) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_ref|$child|_=>_none) (param $struct (ref $struct)) (param $child (ref $child))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (local.get $child)
   ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null $child)
   ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $update-null (param $struct (ref $struct))
-    ;; Update nulls in two fields that are separately optimized.
+  (func $update-null (param $struct (ref $struct)) (param $child (ref $child))
+    ;; Update nulls in two fields that are separately optimized to separate
+    ;; values.
     (drop
       (struct.new $struct
-        (local.get $struct)
+        (local.get $child)
         (ref.null data)
       )
     )
