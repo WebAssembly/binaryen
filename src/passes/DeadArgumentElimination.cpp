@@ -593,7 +593,7 @@ private:
     // We can do this!
     TypeUpdating::updateParamTypes(func, newParamTypes, *module);
 
-    // Update anything the lub needs to update.
+    // Update anything the lubs need to update.
     for (auto& lub : lubs) {
       lub.updateNulls();
     }

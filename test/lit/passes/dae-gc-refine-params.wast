@@ -513,6 +513,50 @@
   )
  )
 
+ ;; CHECK:      (func $call-update-null
+ ;; CHECK-NEXT:  (call $update-null
+ ;; CHECK-NEXT:   (ref.null ${})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $update-null
+ ;; CHECK-NEXT:   (struct.new_default ${})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $call-update-null (type $none_=>_none)
+ ;; NOMNL-NEXT:  (call $update-null
+ ;; NOMNL-NEXT:   (ref.null ${})
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (call $update-null
+ ;; NOMNL-NEXT:   (struct.new_default ${})
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $call-update-null
+  ;; Call a function with one of the parameters a null of a type that we can
+  ;; update in order to get a better LUB.
+  (call $update-null
+   (ref.null any)
+  )
+  (call $update-null
+   (struct.new_default ${})
+  )
+ )
+
+ ;; CHECK:      (func $update-null (param $x (ref null ${}))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $update-null (type $ref?|${}|_=>_none) (param $x (ref null ${}))
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (local.get $x)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $update-null (param $x (ref null any))
+  ;; "Use" the param to avoid other optimizations kicking in. We should only
+  ;; see the type of the param refined to a null ${} after updating the null
+  ;; in the caller.
+  (drop (local.get $x))
+ )
+
  ;; CHECK:      (func $get_null_{i32} (result (ref null ${i32}))
  ;; CHECK-NEXT:  (ref.null ${i32})
  ;; CHECK-NEXT: )
