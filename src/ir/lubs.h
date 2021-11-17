@@ -22,28 +22,27 @@
 
 namespace wasm {
 
+//
 // Helper to find a LUB of a series of expressions. This works incrementally so
 // that if we see we are not improving on an existing type then we can stop
-// early.
+// early. It also notes null expressions that can be updated later, and if
+// updating them would allow a better LUB it can do so. That is, given this:
+//
+//   (ref.null any)  ;; an expression that we can update
+//   (.. something of type data ..)
+//
+// We can update that null to type (ref null data) which would allow setting
+// that as the LUB. This is important in cases where there is a null initial
+// value in a field, for example: we should not let the type there prevent us
+// from optimizing - after all, all nulls compare equally anyhow.
+//
 struct LUBFinder {
-  // Note another type to take into account in the lub. Returns the new lub.
+  // Note another type to take into account in the lub.
   void note(Type type) { lub = Type::getLeastUpperBound(lub, type); }
 
   // Note an expression that can be updated, that is, that we can modify in
   // safe ways if doing so would allow us to get a better lub. The specific
-  // optimization possible here involves nulls: the lub of
-  //
-  //   (ref.null any)  ;; an expression that we can update
-  //   (ref data)      ;; a type
-  //
-  // can be (ref null data), if we update that null to be
-  //
-  //   (ref.null data)
-  //
-  // It is safe to change the type of nulls, since all nulls are the same. This
-  // is a common case, as e.g. if a field has a nullable type, and it has a
-  // null assigned during creation, then that null would prevent us from using a
-  // more specific type if we do not update the null.
+  // optimization possible here involves nulls, see the top comment.
   void noteUpdatableExpression(Expression* curr) {
     if (auto* null = curr->dynCast<RefNull>()) {
       nulls.insert(null);
@@ -59,7 +58,7 @@ struct LUBFinder {
 
   // Returns whether we noted any (reachable) value. This ignores nulls, as they
   // do not contribute type information - we do not try to find a lub based on
-  // them.
+  // them (rather we update them to the LUB).
   bool noted() { return lub != Type::unreachable; }
 
   // Returns the best possible lub. This ignores updatable nulls for the reasons
@@ -124,7 +123,7 @@ struct LUBFinder {
 
 private:
   // The least upper bound. As we go this always contains the latest value based
-  // on everything we've seen so far.
+  // on everything we've seen so far, except for nulls.
   Type lub = Type::unreachable;
 
   // Nulls that we can update. A nullptr here indicates an "implicit" null, that
