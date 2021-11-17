@@ -33,11 +33,6 @@ namespace wasm {
 namespace {
 
 struct GlobalRefining : public Pass {
-  // Maps each global to the possible refinement of its type. We will fill this
-  // during analysis and then use it while doing an update of the types. If a
-  // global has no improvement that we can find, it will not appear in this map.
-  std::unordered_map<Name, Type> newGlobalTypes;
-
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalRefining requires nominal typing";
@@ -63,24 +58,41 @@ struct GlobalRefining : public Pass {
     // Combine all the information we gathered and compute lubs.
     for (auto& [func, info] : analysis.map) {
       for (auto* set : info.sets) {
-        lubs[set->name].note(set->value->type);
+        lubs[set->name].noteUpdatableExpression(set->value);
       }
     }
 
-    for (auto& [global, lub] : lubs) {
-      if (lub.noted()) {
-        auto newType = lub.get();
-        auto oldType = module->getGlobal(global)->type;
-        if (newType != oldType) {
-          // We found an improvement!
-          assert(Type::isSubType(newType, oldType));
-          newGlobalTypes[global] = newType;
-        }
+    bool optimized = false;
+
+    for (auto& global : module->globals) {
+      if (global->imported()) {
+        continue;
+      }
+
+      auto& lub = lubs[global->name];
+
+      // Note the initial value.
+      lub.noteUpdatableExpression(global->init);
+
+      // The initial value cannot be unreachable, but it might be null, and all
+      // other values might be too. In that case, we've noted nothing useful
+      // and we can move on.
+      if (!lub.noted()) {
+        continue;
+      }
+
+      auto oldType = global->type;
+      auto newType = lub.getBestPossible();
+      if (newType != oldType) {
+        // We found an improvement!
+        assert(Type::isSubType(newType, oldType));
+        global->type = newType;
+        lub.updateNulls();
+        optimized = true;
       }
     }
 
-    if (newGlobalTypes.empty()) {
-      // We found nothing to optimize.
+    if (!optimized) {
       return;
     }
 
@@ -102,9 +114,10 @@ struct GlobalRefining : public Pass {
       bool modified = false;
 
       void visitGlobalGet(GlobalGet* curr) {
-        auto iter = parent.newGlobalTypes.find(curr->name);
-        if (iter != parent.newGlobalTypes.end()) {
-          curr->type = iter->second;
+        auto oldType = curr->type;
+        auto newType = wasm.getGlobal(curr->name)->type;
+        if (newType != oldType) {
+          curr->type = newType;
           modified = true;
         }
       }
