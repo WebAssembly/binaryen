@@ -42,7 +42,7 @@ namespace wasm {
 
 namespace {
 
-struct SignatureSubtyping : public Pass {
+struct SignatureRefining : public Pass {
   // Maps each heap type to the possible refinement of the types in their
   // signatures. We will fill this during analysis and then use it while doing
   // an update of the types. If a type has no improvement that we can find, it
@@ -51,7 +51,14 @@ struct SignatureSubtyping : public Pass {
 
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "SignatureSubtyping requires nominal typing";
+      Fatal() << "SignatureRefining requires nominal typing";
+    }
+
+    if (!module->tables.empty()) {
+      // When there are tables we must also take their types into account, which
+      // has some corner cases. For now, do nothing if there are tables.
+      // TODO
+//      return;
     }
 
     // First, find all the calls and call_refs.
@@ -150,10 +157,10 @@ struct SignatureSubtyping : public Pass {
     struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
       bool isFunctionParallel() override { return true; }
 
-      SignatureSubtyping& parent;
+      SignatureRefining& parent;
       Module& wasm;
 
-      CodeUpdater(SignatureSubtyping& parent, Module& wasm)
+      CodeUpdater(SignatureRefining& parent, Module& wasm)
         : parent(parent), wasm(wasm) {}
 
       CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
@@ -173,10 +180,10 @@ struct SignatureSubtyping : public Pass {
 
     // Rewrite the types.
     class TypeRewriter : public GlobalTypeRewriter {
-      SignatureSubtyping& parent;
+      SignatureRefining& parent;
 
     public:
-      TypeRewriter(Module& wasm, SignatureSubtyping& parent)
+      TypeRewriter(Module& wasm, SignatureRefining& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       virtual void modifySignature(HeapType oldSignatureType, Signature& sig) {
@@ -193,6 +200,6 @@ struct SignatureSubtyping : public Pass {
 
 } // anonymous namespace
 
-Pass* createSignatureSubtypingPass() { return new SignatureSubtyping(); }
+Pass* createSignatureRefiningPass() { return new SignatureRefining(); }
 
 } // namespace wasm
