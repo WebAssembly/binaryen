@@ -2573,15 +2573,15 @@ private:
       // (x >>> z) op (y >>> z)    ==>   (x op y) >>> z,
       //    where op = `|`, `&`, `^`
       BinaryOp op;
-      Expression *x, *y, *z, *w;
+      Expression *x, *y, *z1, *z2;
       if (matches(curr,
                   binary(&op,
-                         binary(ShrU, any(&x), any(&z)),
-                         binary(ShrU, any(&y), any(&w)))) &&
-          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z, w)) {
+                         binary(ShrU, any(&x), any(&z1)),
+                         binary(ShrU, any(&y), any(&z2)))) &&
+          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z1, z2)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
-        curr->right = z;
+        curr->right = z1;
         std::swap(curr->op, lhs->op);
         return curr;
       }
@@ -2590,15 +2590,15 @@ private:
       // (x >> z) op (y >> z)    ==>   (x op y) >> z,
       //    where op = `|`, `&`, `^`
       BinaryOp op;
-      Expression *x, *y, *z, *w;
+      Expression *x, *y, *z1, *z2;
       if (matches(curr,
                   binary(&op,
-                         binary(ShrS, any(&x), any(&z)),
-                         binary(ShrS, any(&y), any(&w)))) &&
-          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z, w)) {
+                         binary(ShrS, any(&x), any(&z1)),
+                         binary(ShrS, any(&y), any(&z2)))) &&
+          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z1, z2)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
-        curr->right = z;
+        curr->right = z1;
         std::swap(curr->op, lhs->op);
         return curr;
       }
@@ -2607,17 +2607,17 @@ private:
       // (x << z) op (y << z)    ==>   (x op y) << z,
       //    where op = `|`, `&`, `^`, `+`, `-`
       BinaryOp op;
-      Expression *x, *y, *z, *w;
+      Expression *x, *y, *z1, *z2;
       if (matches(curr,
                   binary(&op,
-                         binary(Shl, any(&x), any(&z)),
-                         binary(Shl, any(&y), any(&w)))) &&
+                         binary(Shl, any(&x), any(&z1)),
+                         binary(Shl, any(&y), any(&z2)))) &&
           (hasAnyBitwise(op) || op == getBinary(curr->type, Add) ||
            op == getBinary(curr->type, Sub)) &&
-          areConsecutiveInputsEqualAndFoldable(z, w)) {
+          areConsecutiveInputsEqualAndFoldable(z1, z2)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
-        curr->right = z;
+        curr->right = z1;
         std::swap(curr->op, lhs->op);
         return curr;
       }
