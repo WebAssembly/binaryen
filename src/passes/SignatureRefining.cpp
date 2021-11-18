@@ -103,10 +103,9 @@ struct SignatureRefining : public Pass {
     std::unordered_set<HeapType> seen;
     for (auto& func : module->functions) {
       auto type = func->type;
-      if (seen.count(type)) {
+      if (!seen.insert(type).second) {
         continue;
       }
-      seen.insert(type);
 
       auto sig = type.getSignature();
 
