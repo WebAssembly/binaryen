@@ -13550,4 +13550,513 @@
     (drop (i64.extend_i32_s (i32.load16_s (local.get $x))))
     (drop (i64.extend_i32_s (i32.load (local.get $x))))
   )
+
+
+  ;; (x >>> z) | (y >>> z)    ==>   (x | y) >>> z,
+  ;;    where op = `|`, `&`, `^`
+  ;; CHECK:      (func $combine_partailly_equals_unsigned_right_shifts (param $x i32) (param $y i32) (param $z i32) (param $X i64) (param $Y i64) (param $Z i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_u
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_u
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.xor
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_u
+  ;; CHECK-NEXT:    (i64.xor
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.xor
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $combine_partailly_equals_unsigned_right_shifts
+    (param $x i32) (param $y i32) (param $z i32)
+    (param $X i64) (param $Y i64) (param $Z i64)
+
+    (drop (i32.or
+      (i32.shr_u (local.get $x) (local.get $z))
+      (i32.shr_u (local.get $y) (local.get $z))
+    ))
+    (drop (i64.or
+      (i64.shr_u (local.get $X) (local.get $Z))
+      (i64.shr_u (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.and
+      (i32.shr_u (local.get $x) (local.get $z))
+      (i32.shr_u (local.get $y) (local.get $z))
+    ))
+    (drop (i64.and
+      (i64.shr_u (local.get $X) (local.get $Z))
+      (i64.shr_u (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.xor
+      (i32.shr_u (local.get $x) (local.get $z))
+      (i32.shr_u (local.get $y) (local.get $z))
+    ))
+    (drop (i64.xor
+      (i64.shr_u (local.get $X) (local.get $Z))
+      (i64.shr_u (local.get $Y) (local.get $Z))
+    ))
+
+    ;; skips
+    (drop (i32.add
+      (i32.shr_u (local.get $x) (local.get $z))
+      (i32.shr_u (local.get $y) (local.get $z))
+    ))
+    (drop (i32.sub
+      (i32.shr_u (local.get $x) (local.get $z))
+      (i32.shr_u (local.get $y) (local.get $z))
+    ))
+    (drop (i32.xor
+      (i32.shr_u (local.get $z) (local.get $x))
+      (i32.shr_u (local.get $z) (local.get $y))
+    ))
+    (drop (i32.and
+      (i32.shr_u (local.get $x) (i32.div_u (i32.const 10) (local.get $z)))
+      (i32.shr_u (local.get $y) (i32.div_u (i32.const 10) (local.get $z)))
+    )) ;; side effects
+  )
+
+  ;; (x >> z) | (y >> z)    ==>   (x | y) >> z,
+  ;;    where op = `|`, `&`, `^`
+  ;; CHECK:      (func $combine_partailly_equals_signed_right_shifts (param $x i32) (param $y i32) (param $z i32) (param $X i64) (param $Y i64) (param $Z i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.xor
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (i64.xor
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.xor
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $combine_partailly_equals_signed_right_shifts
+    (param $x i32) (param $y i32) (param $z i32)
+    (param $X i64) (param $Y i64) (param $Z i64)
+
+    (drop (i32.or
+      (i32.shr_s (local.get $x) (local.get $z))
+      (i32.shr_s (local.get $y) (local.get $z))
+    ))
+    (drop (i64.or
+      (i64.shr_s (local.get $X) (local.get $Z))
+      (i64.shr_s (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.and
+      (i32.shr_s (local.get $x) (local.get $z))
+      (i32.shr_s (local.get $y) (local.get $z))
+    ))
+    (drop (i64.and
+      (i64.shr_s (local.get $X) (local.get $Z))
+      (i64.shr_s (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.xor
+      (i32.shr_s (local.get $x) (local.get $z))
+      (i32.shr_s (local.get $y) (local.get $z))
+    ))
+    (drop (i64.xor
+      (i64.shr_s (local.get $X) (local.get $Z))
+      (i64.shr_s (local.get $Y) (local.get $Z))
+    ))
+
+    ;; skips
+    (drop (i32.add
+      (i32.shr_s (local.get $x) (local.get $z))
+      (i32.shr_s (local.get $y) (local.get $z))
+    ))
+    (drop (i32.sub
+      (i32.shr_s (local.get $x) (local.get $z))
+      (i32.shr_s (local.get $y) (local.get $z))
+    ))
+    (drop (i32.xor
+      (i32.shr_s (local.get $z) (local.get $x))
+      (i32.shr_s (local.get $z) (local.get $y))
+    ))
+    (drop (i32.and
+      (i32.shr_s (local.get $x) (i32.div_u (i32.const 10) (local.get $z)))
+      (i32.shr_s (local.get $y) (i32.div_u (i32.const 10) (local.get $z)))
+    )) ;; side effects
+  )
+
+  ;; (x << z) | (y << z)    ==>   (x | y) << z,
+  ;;    where op = `|`, `&`, `^`, `+`, `-`
+  ;; CHECK:      (func $combine_partailly_equals_left_shifts (param $x i32) (param $y i32) (param $z i32) (param $X i64) (param $Y i64) (param $Z i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.xor
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.xor
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.add
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.sub
+  ;; CHECK-NEXT:     (local.get $X)
+  ;; CHECK-NEXT:     (local.get $Y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.xor
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $combine_partailly_equals_left_shifts
+    (param $x i32) (param $y i32) (param $z i32)
+    (param $X i64) (param $Y i64) (param $Z i64)
+
+    (drop (i32.or
+      (i32.shl (local.get $x) (local.get $z))
+      (i32.shl (local.get $y) (local.get $z))
+    ))
+    (drop (i64.or
+      (i64.shl (local.get $X) (local.get $Z))
+      (i64.shl (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.and
+      (i32.shl (local.get $x) (local.get $z))
+      (i32.shl (local.get $y) (local.get $z))
+    ))
+    (drop (i64.and
+      (i64.shl (local.get $X) (local.get $Z))
+      (i64.shl (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.xor
+      (i32.shl (local.get $x) (local.get $z))
+      (i32.shl (local.get $y) (local.get $z))
+    ))
+    (drop (i64.xor
+      (i64.shl (local.get $X) (local.get $Z))
+      (i64.shl (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.add
+      (i32.shl (local.get $x) (local.get $z))
+      (i32.shl (local.get $y) (local.get $z))
+    ))
+    (drop (i64.add
+      (i64.shl (local.get $X) (local.get $Z))
+      (i64.shl (local.get $Y) (local.get $Z))
+    ))
+
+    (drop (i32.sub
+      (i32.shl (local.get $x) (local.get $z))
+      (i32.shl (local.get $y) (local.get $z))
+    ))
+    (drop (i64.sub
+      (i64.shl (local.get $X) (local.get $Z))
+      (i64.shl (local.get $Y) (local.get $Z))
+    ))
+
+    ;; skips
+    (drop (i32.xor
+      (i32.shl (local.get $z) (local.get $x))
+      (i32.shl (local.get $z) (local.get $y))
+    ))
+    (drop (i32.and
+      (i32.shl (local.get $x) (i32.div_u (i32.const 10) (local.get $z)))
+      (i32.shl (local.get $y) (i32.div_u (i32.const 10) (local.get $z)))
+    )) ;; side effects
+  )
 )

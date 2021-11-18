@@ -796,6 +796,9 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
+    if (auto* ret = combineBinaryWithShifts(curr)) {
+      return replaceCurrent(ret);
+    }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
     if (!effects(curr->left).hasSideEffects()) {
@@ -2555,6 +2558,68 @@ private:
         inner->left = Builder(*getModule())
                         .makeBinary(Abstract::getBinary(x->type, Or), x, y);
         return inner;
+      }
+    }
+    return nullptr;
+  }
+
+  // (x << z) op (y << z)    ==>   (x op y) << z,   op = `|`, `&`, `^`, `+`, `-`
+  // (x >> z) op (y >> z)    ==>   (x op y) >> z,   op = `|`, `&`, `^`
+  // (x >>> z) op (y >>> z)  ==>   (x op y) >>> z,  op = `|`, `&`, `^`
+  Expression* combineBinaryWithShifts(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      // (x >>> z) op (y >>> z)    ==>   (x op y) >>> z,
+      //    where op = `|`, `&`, `^`
+      BinaryOp op;
+      Expression *x, *y, *z, *w;
+      if (matches(curr,
+                  binary(&op,
+                         binary(ShrU, any(&x), pure(&z)),
+                         binary(ShrU, any(&y), any(&w)))) &&
+          hasAnyBitwise(op) && ExpressionAnalyzer::equal(z, w)) {
+        auto* lhs = curr->left->cast<Binary>();
+        lhs->right = y;
+        curr->right = z;
+        std::swap(curr->op, lhs->op);
+        return curr;
+      }
+    }
+    {
+      // (x >> z) op (y >> z)    ==>   (x op y) >> z,
+      //    where op = `|`, `&`, `^`
+      BinaryOp op;
+      Expression *x, *y, *z, *w;
+      if (matches(curr,
+                  binary(&op,
+                         binary(ShrS, any(&x), pure(&z)),
+                         binary(ShrS, any(&y), any(&w)))) &&
+          hasAnyBitwise(op) && ExpressionAnalyzer::equal(z, w)) {
+        auto* lhs = curr->left->cast<Binary>();
+        lhs->right = y;
+        curr->right = z;
+        std::swap(curr->op, lhs->op);
+        return curr;
+      }
+    }
+    {
+      // (x << z) op (y << z)    ==>   (x op y) << z,
+      //    where op = `|`, `&`, `^`, `+`, `-`
+      BinaryOp op;
+      Expression *x, *y, *z, *w;
+      if (matches(curr,
+                  binary(&op,
+                         binary(Shl, any(&x), pure(&z)),
+                         binary(Shl, any(&y), any(&w)))) &&
+          (hasAnyBitwise(op) || op == getBinary(curr->type, Add) ||
+           op == getBinary(curr->type, Sub)) &&
+          ExpressionAnalyzer::equal(z, w)) {
+        auto* lhs = curr->left->cast<Binary>();
+        lhs->right = y;
+        curr->right = z;
+        std::swap(curr->op, lhs->op);
+        return curr;
       }
     }
     return nullptr;
