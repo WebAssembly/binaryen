@@ -109,8 +109,7 @@ struct SignatureRefining : public Pass {
 
       auto sig = type.getSignature();
 
-      auto params = sig.params;
-      auto numParams = params.size();
+      auto numParams = sig.params.size();
       std::vector<LUBFinder> paramLUBs(numParams);
 
       auto updateLUBs = [&](const ExpressionList& operands) {
