@@ -2576,9 +2576,9 @@ private:
       Expression *x, *y, *z, *w;
       if (matches(curr,
                   binary(&op,
-                         binary(ShrU, any(&x), pure(&z)),
+                         binary(ShrU, any(&x), any(&z)),
                          binary(ShrU, any(&y), any(&w)))) &&
-          hasAnyBitwise(op) && ExpressionAnalyzer::equal(z, w)) {
+          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z, w)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
         curr->right = z;
@@ -2593,9 +2593,9 @@ private:
       Expression *x, *y, *z, *w;
       if (matches(curr,
                   binary(&op,
-                         binary(ShrS, any(&x), pure(&z)),
+                         binary(ShrS, any(&x), any(&z)),
                          binary(ShrS, any(&y), any(&w)))) &&
-          hasAnyBitwise(op) && ExpressionAnalyzer::equal(z, w)) {
+          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z, w)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
         curr->right = z;
@@ -2610,11 +2610,11 @@ private:
       Expression *x, *y, *z, *w;
       if (matches(curr,
                   binary(&op,
-                         binary(Shl, any(&x), pure(&z)),
+                         binary(Shl, any(&x), any(&z)),
                          binary(Shl, any(&y), any(&w)))) &&
           (hasAnyBitwise(op) || op == getBinary(curr->type, Add) ||
            op == getBinary(curr->type, Sub)) &&
-          ExpressionAnalyzer::equal(z, w)) {
+          areConsecutiveInputsEqualAndFoldable(z, w)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
         curr->right = z;

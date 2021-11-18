@@ -13610,6 +13610,20 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.tee $z
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (i32.shr_u
   ;; CHECK-NEXT:     (local.get $x)
@@ -13695,6 +13709,12 @@
       (i64.shr_u (local.get $Y) (local.get $Z))
     ))
 
+    ;; foldable
+    (drop (i32.and
+      (i32.shr_u (local.get $x) (local.tee $z (i32.div_u (i32.const 10) (local.get $z))))
+      (i32.shr_u (local.get $y) (local.get $z))
+    ))
+
     ;; skips
     (drop (i32.add
       (i32.shr_u (local.get $x) (local.get $z))
@@ -13769,6 +13789,20 @@
   ;; CHECK-NEXT:     (local.get $Y)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $Z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.tee $z
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -13855,6 +13889,12 @@
     (drop (i64.xor
       (i64.shr_s (local.get $X) (local.get $Z))
       (i64.shr_s (local.get $Y) (local.get $Z))
+    ))
+
+    ;; foldable
+    (drop (i32.and
+      (i32.shr_s (local.get $x) (local.tee $z (i32.div_u (i32.const 10) (local.get $z))))
+      (i32.shr_s (local.get $y) (local.get $z))
     ))
 
     ;; skips
@@ -13970,6 +14010,20 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.tee $z
+  ;; CHECK-NEXT:     (i32.div_u
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.xor
   ;; CHECK-NEXT:    (i32.shl
   ;; CHECK-NEXT:     (local.get $z)
@@ -14047,6 +14101,12 @@
     (drop (i64.sub
       (i64.shl (local.get $X) (local.get $Z))
       (i64.shl (local.get $Y) (local.get $Z))
+    ))
+
+    ;; foldable
+    (drop (i32.and
+      (i32.shl (local.get $x) (local.tee $z (i32.div_u (i32.const 10) (local.get $z))))
+      (i32.shl (local.get $y) (local.get $z))
     ))
 
     ;; skips
