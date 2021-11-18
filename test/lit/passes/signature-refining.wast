@@ -376,39 +376,46 @@
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $any anyref)
+  ;; CHECK-NEXT:  (local $data (ref null data))
+  ;; CHECK-NEXT:  (local $func funcref)
   ;; CHECK-NEXT:  (call $func-1
   ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:   (ref.null data)
+  ;; CHECK-NEXT:   (local.get $data)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $func-1
-  ;; CHECK-NEXT:   (ref.null data)
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (local.get $any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $func-2
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (ref.func $func-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
+    (local $any (ref null any))
+    (local $data (ref null data))
+    (local $func (ref null func))
+
     (call $func-1
       (struct.new $struct)
-      (ref.null data)
+      (local.get $data)
     )
     (call $func-1
-      (ref.null data)
-      (ref.null any)
+      (local.get $data)
+      (local.get $any)
     )
     (call $func-2
       (struct.new $struct)
       (struct.new $struct)
     )
     (call_ref
-      (ref.null func)
+      (local.get $func)
       (struct.new $struct)
       (ref.func $func-2)
     )
@@ -444,6 +451,43 @@
   (func $caller
     (call $func
       (struct.new $struct)
+    )
+  )
+)
+
+(module
+  ;; Pass a null in one call to the function. The null can be updated which
+  ;; allows us to refine (but the new type must be nullable).
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+
+  ;; CHECK:      (type $sig (func_subtype (param (ref null $struct)) func))
+  (type $sig (func_subtype (param anyref) func))
+
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $func (type $sig) (param $x (ref null $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (struct.new $struct)
+    )
+    (call $func
+      (ref.null data)
     )
   )
 )

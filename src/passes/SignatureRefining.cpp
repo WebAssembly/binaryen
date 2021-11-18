@@ -116,7 +116,7 @@ struct SignatureRefining : public Pass {
 
       auto updateLUBs = [&](const ExpressionList& operands) {
         for (Index i = 0; i < numParams; i++) {
-          paramLUBs[i].note(operands[i]->type);
+          paramLUBs[i].noteUpdatableExpression(operands[i]);
         }
       };
 
@@ -130,11 +130,11 @@ struct SignatureRefining : public Pass {
 
       // Find the final LUBs, and see if we found an improvement.
       std::vector<Type> newParamsTypes;
-      for (auto lub : paramLUBs) {
+      for (auto& lub : paramLUBs) {
         if (!lub.noted()) {
           break;
         }
-        newParamsTypes.push_back(lub.get());
+        newParamsTypes.push_back(lub.getBestPossible());
       }
       if (newParamsTypes.size() < numParams) {
         // We did not have type information to calculate a LUB (no calls, or
@@ -146,6 +146,9 @@ struct SignatureRefining : public Pass {
       if (newParams != func->getParams()) {
         // We found an improvement!
         newSignatures[type] = Signature(newParams, Type::none);
+        for (auto& lub : paramLUBs) {
+          lub.updateNulls();
+        }
       }
     }
 
