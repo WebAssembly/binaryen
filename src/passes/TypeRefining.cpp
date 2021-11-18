@@ -141,7 +141,7 @@ struct TypeRefining : public Pass {
         auto oldType = fields[i].type;
         auto& info = finalInfos[type][i];
         if (!info.noted()) {
-          info.set(oldType);
+          info = LUBFinder(oldType);
         }
       }
 
@@ -169,7 +169,7 @@ struct TypeRefining : public Pass {
             // to something more specific than $C's old type, we end up with the
             // problem that this code path fixes: we just need to get $C's type
             // to be identical to its super so that validation works.
-            info.set(newSuperType);
+            info = LUBFinder(newSuperType);
           } else if (fields[i].mutable_ == Mutable) {
             // Mutable fields must have identical types, so we cannot
             // specialize.
@@ -177,7 +177,7 @@ struct TypeRefining : public Pass {
             //       here? This entire analysis might be done on fields, and not
             //       types, which would also handle more things added to fields
             //       in the future.
-            info.set(newSuperType);
+            info = LUBFinder(newSuperType);
           }
         }
       }

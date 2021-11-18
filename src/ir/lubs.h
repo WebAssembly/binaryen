@@ -37,6 +37,10 @@ namespace wasm {
 // from optimizing - after all, all nulls compare equally anyhow.
 //
 struct LUBFinder {
+  LUBFinder() {}
+
+  LUBFinder(Type initialType) { note(initialType); }
+
   // Note another type to take into account in the lub.
   void note(Type type) { lub = Type::getLeastUpperBound(lub, type); }
 
@@ -112,13 +116,6 @@ struct LUBFinder {
     }
 
     return changed;
-  }
-
-  // Force the lub to a particular type. This resets the entire state of the
-  // LUBFinder to just contain that type.
-  void set(Type type) {
-    lub = type;
-    nulls.clear();
   }
 
 private:
