@@ -36,38 +36,7 @@ namespace {
 // possible LUB so far. The only extra functionality we need here is whether
 // there is a default null value (which would force us to keep the type
 // nullable).
-struct FieldInfo : public LUBFinder {
-  bool nullDefault = false;
-
-  void noteNullDefault() { nullDefault = true; }
-
-  bool hasNullDefault() { return nullDefault; }
-
-  bool noted() { return LUBFinder::noted() || nullDefault; }
-
-  Type get() {
-    auto ret = LUBFinder::get();
-    if (nullDefault && !ret.isNullable()) {
-      ret = Type(ret.getHeapType(), Nullable);
-    }
-    return ret;
-  }
-
-  bool combine(const FieldInfo& other) {
-    auto old = nullDefault;
-    if (other.nullDefault) {
-      noteNullDefault();
-    }
-    return LUBFinder::combine(other) || nullDefault != old;
-  }
-
-  // Force the lub to a particular type.
-  void set(Type type) { lub = type; }
-
-  void dump(std::ostream& o) {
-    std::cout << "FieldInfo(" << lub << ", " << nullDefault << ")";
-  }
-};
+using FieldInfo = LUBFinder;
 
 struct FieldInfoScanner
   : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
@@ -85,7 +54,7 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    info.note(expr);
+    info.noteUpdatableExpression(expr);
   }
 
   void
@@ -171,9 +140,8 @@ struct TypeRefining : public Pass {
       for (Index i = 0; i < fields.size(); i++) {
         auto oldType = fields[i].type;
         auto& info = finalInfos[type][i];
-        auto newType = info.get();
-        if (newType == Type::unreachable) {
-          info.set(oldType);
+        if (!info.noted()) {
+          info = LUBFinder(oldType);
         }
       }
 
@@ -181,9 +149,9 @@ struct TypeRefining : public Pass {
       if (auto super = type.getSuperType()) {
         auto& superFields = super->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
-          auto newSuperType = finalInfos[*super][i].get();
+          auto newSuperType = finalInfos[*super][i].getBestPossible();
           auto& info = finalInfos[type][i];
-          auto newType = info.get();
+          auto newType = info.getBestPossible();
           if (!Type::isSubType(newType, newSuperType)) {
             // To ensure we are a subtype of the super's field, simply copy that
             // value, which is more specific than us.
@@ -201,7 +169,7 @@ struct TypeRefining : public Pass {
             // to something more specific than $C's old type, we end up with the
             // problem that this code path fixes: we just need to get $C's type
             // to be identical to its super so that validation works.
-            info.set(newSuperType);
+            info = LUBFinder(newSuperType);
           } else if (fields[i].mutable_ == Mutable) {
             // Mutable fields must have identical types, so we cannot
             // specialize.
@@ -209,20 +177,19 @@ struct TypeRefining : public Pass {
             //       here? This entire analysis might be done on fields, and not
             //       types, which would also handle more things added to fields
             //       in the future.
-            info.set(newSuperType);
+            info = LUBFinder(newSuperType);
           }
         }
       }
 
       // After all those decisions, see if we found anything to optimize.
-      if (!canOptimize) {
-        for (Index i = 0; i < fields.size(); i++) {
-          auto oldType = fields[i].type;
-          auto newType = finalInfos[type][i].get();
-          if (newType != oldType) {
-            canOptimize = true;
-            break;
-          }
+      for (Index i = 0; i < fields.size(); i++) {
+        auto oldType = fields[i].type;
+        auto& lub = finalInfos[type][i];
+        auto newType = lub.getBestPossible();
+        if (newType != oldType) {
+          canOptimize = true;
+          lub.updateNulls();
         }
       }
 
@@ -253,7 +220,7 @@ struct TypeRefining : public Pass {
           if (!oldType.isRef()) {
             continue;
           }
-          auto newType = parent.finalInfos[oldStructType][i].get();
+          auto newType = parent.finalInfos[oldStructType][i].getBestPossible();
           newFields[i].type = getTempType(newType);
         }
       }

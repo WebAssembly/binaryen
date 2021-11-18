@@ -54,9 +54,9 @@ struct Fuzzer {
 
     // TODO: Do some sort of checking or manipulation on the types
     if (verbose) {
-      std::cerr << "Built " << types.size() << " types:\n";
+      std::cout << "Built " << types.size() << " types:\n";
       for (size_t i = 0; i < types.size(); ++i) {
-        std::cerr << i << ": " << types[i] << "\n";
+        std::cout << i << ": " << types[i] << "\n";
       }
     }
   }

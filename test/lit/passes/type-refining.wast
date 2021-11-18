@@ -551,3 +551,220 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct))
+    (struct.set $struct 0
+      (local.get $struct)
+      ;; Write a $struct to the field.
+      (local.get $struct)
+    )
+    (struct.set $struct 0
+      (local.get $struct)
+      ;; This null can be updated, allowing us to refine the type of the field
+      ;; to a null of $struct.
+      (ref.null data)
+    )
+  )
+)
+
+(module
+  ;; As above, but now the null is in a child. The result should be the same:
+  ;; refine the field to nullable $struct.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) $struct))
+  (type $child (struct_subtype (field (mut (ref null data))) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_ref|$child|_=>_none) (param $struct (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $child 0
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct)) (param $child (ref $child))
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+    (struct.set $child 0
+      (local.get $child)
+      (ref.null data)
+    )
+  )
+)
+
+(module
+  ;; As above, but now the null is in a parent. The result should be the same.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) $struct))
+  (type $child (struct_subtype (field (mut (ref null data))) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_ref|$child|_=>_none) (param $struct (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $child 0
+  ;; CHECK-NEXT:   (local.get $child)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct)) (param $child (ref $child))
+    (struct.set $struct 0
+      (local.get $struct)
+      (ref.null data)
+    )
+    (struct.set $child 0
+      (local.get $child)
+      (local.get $struct)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct))
+    ;; The only write to this struct is of a null default value. There is
+    ;; nothing to optimize here.
+    (drop
+      (struct.new_default $struct)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct))
+    (drop
+      (struct.new_default $struct)
+    )
+    ;; Also write a $struct. The null default should not prevent us from
+    ;; refining the field's type to $struct (but nullable).
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct))
+    ;; As before, but instead of new_default, new, and use a null in the given
+    ;; value, which should be updated.
+    (drop
+      (struct.new $struct
+        (ref.null data)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $child))) (field (mut (ref null $struct))) data))
+  (type $struct (struct_subtype (field (mut (ref null data))) (field (mut (ref null data))) data))
+
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $child))) (field (mut (ref null $struct))) $struct))
+  (type $child (struct_subtype (field (mut (ref null data))) (field (mut (ref null data))) $struct))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
+
+  ;; CHECK:      (func $update-null (type $ref|$struct|_ref|$child|_=>_none) (param $struct (ref $struct)) (param $child (ref $child))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (local.get $child)
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.null $child)
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-null (param $struct (ref $struct)) (param $child (ref $child))
+    ;; Update nulls in two fields that are separately optimized to separate
+    ;; values.
+    (drop
+      (struct.new $struct
+        (local.get $child)
+        (ref.null data)
+      )
+    )
+    (drop
+      (struct.new $struct
+        (ref.null data)
+        (local.get $struct)
+      )
+    )
+  )
+)
