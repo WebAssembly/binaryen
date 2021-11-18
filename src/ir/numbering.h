@@ -22,7 +22,8 @@
 namespace wasm {
 
 // General value numbering: Returns a number for an expression. Expressions with
-// the same number must be identical in value.
+// the same number must be identical in value; expressions with different values
+// might happen to be identical at runtime.
 class ValueNumbering {
 public:
   // Get the value numbering of an arbitrary expression.
