@@ -54,9 +54,7 @@ public:
   // Return a new unique value. Normally this is called internally, but there
   // are also use cases for the user of the class to call this, when they want
   // to get a new value that will not collide with any others.
-  Index getUniqueValue() {
-    return nextValue++;
-  }
+  Index getUniqueValue() { return nextValue++; }
 
 private:
   // Cache the value numbers of literals and expressions.
