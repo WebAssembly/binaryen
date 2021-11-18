@@ -188,7 +188,7 @@ struct SignatureRefining : public Pass {
       TypeRewriter(Module& wasm, SignatureRefining& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
-      virtual void modifySignature(HeapType oldSignatureType, Signature& sig) {
+      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
         auto iter = parent.newSignatures.find(oldSignatureType);
         if (iter != parent.newSignatures.end()) {
           sig.params = getTempType(iter->second.params);
