@@ -7,16 +7,18 @@
  ;; NOMNL:      (type $return_{} (func_subtype (result (ref ${})) func))
  (type $return_{} (func (result (ref ${}))))
 
- ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
- ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
- (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
-
  ;; CHECK:      (type ${i32} (struct (field i32)))
 
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
+
+ ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
  ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
+
+ ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
+ (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
+
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
  (type ${i32} (struct_subtype (field i32) ${}))
@@ -230,6 +232,7 @@
  ;; CHECK:      (func $refine-return-many-blocked (result anyref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $func funcref)
+ ;; CHECK-NEXT:  (local $data (ref null data))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-blocked)
  ;; CHECK-NEXT:  )
@@ -242,9 +245,7 @@
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 2)
  ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (block $block (result (ref null data))
- ;; CHECK-NEXT:     (ref.null data)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $data)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $func)
@@ -252,6 +253,7 @@
  ;; NOMNL:      (func $refine-return-many-blocked (type $none_=>_anyref) (result anyref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
+ ;; NOMNL-NEXT:  (local $data (ref null data))
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-blocked)
  ;; NOMNL-NEXT:  )
@@ -264,9 +266,7 @@
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 2)
  ;; NOMNL-NEXT:   (return
- ;; NOMNL-NEXT:    (block $block (result (ref null data))
- ;; NOMNL-NEXT:     (ref.null data)
- ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (local.get $data)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (local.get $func)
@@ -274,6 +274,7 @@
  (func $refine-return-many-blocked (result anyref)
   (local $temp anyref)
   (local $func funcref)
+  (local $data (ref null data))
 
   (local.set $temp (call $refine-return-many-blocked))
 
@@ -284,7 +285,7 @@
   (if
    (i32.const 2)
    ;; The refined return value is blocked by this return.
-   (return (block (result (ref null data)) (ref.null data)))
+   (return (local.get $data))
   )
   (local.get $func)
  )
@@ -292,6 +293,7 @@
  ;; CHECK:      (func $refine-return-many-blocked-2 (result anyref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $func funcref)
+ ;; CHECK-NEXT:  (local $data (ref null data))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-blocked-2)
  ;; CHECK-NEXT:  )
@@ -307,13 +309,12 @@
  ;; CHECK-NEXT:    (local.get $func)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $block (result (ref null data))
- ;; CHECK-NEXT:   (ref.null data)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $data)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $refine-return-many-blocked-2 (type $none_=>_anyref) (result anyref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
+ ;; NOMNL-NEXT:  (local $data (ref null data))
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-blocked-2)
  ;; NOMNL-NEXT:  )
@@ -329,13 +330,12 @@
  ;; NOMNL-NEXT:    (local.get $func)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (block $block (result (ref null data))
- ;; NOMNL-NEXT:   (ref.null data)
- ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (local.get $data)
  ;; NOMNL-NEXT: )
  (func $refine-return-many-blocked-2 (result anyref)
   (local $temp anyref)
   (local $func funcref)
+  (local $data (ref null data))
 
   (local.set $temp (call $refine-return-many-blocked-2))
 
@@ -348,54 +348,57 @@
    (return (local.get $func))
   )
   ;; The refined return value is blocked by this value.
-  (block (result (ref null data)) (ref.null data))
+  (local.get $data)
  )
 
  ;; CHECK:      (func $refine-return-many-middle (result (ref null ${i32}))
  ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local ${i32_i64} (ref null ${i32_i64}))
+ ;; CHECK-NEXT:  (local ${i32_f32} (ref null ${i32_f32}))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-middle)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (block $block (result (ref null ${i32_i64}))
- ;; CHECK-NEXT:     (ref.null ${i32_i64})
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get ${i32_i64})
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $block3 (result (ref null ${i32_f32}))
- ;; CHECK-NEXT:   (ref.null ${i32_f32})
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (local.get ${i32_f32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $refine-return-many-middle (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
  ;; NOMNL-NEXT:  (local $temp anyref)
+ ;; NOMNL-NEXT:  (local ${i32_i64} (ref null ${i32_i64}))
+ ;; NOMNL-NEXT:  (local ${i32_f32} (ref null ${i32_f32}))
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-middle)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 1)
  ;; NOMNL-NEXT:   (return
- ;; NOMNL-NEXT:    (block $block (result (ref null ${i32_i64}))
- ;; NOMNL-NEXT:     (ref.null ${i32_i64})
- ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (local.get ${i32_i64})
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (block $block3 (result (ref null ${i32_f32}))
- ;; NOMNL-NEXT:   (ref.null ${i32_f32})
+ ;; NOMNL-NEXT:  (return
+ ;; NOMNL-NEXT:   (local.get ${i32_f32})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $refine-return-many-middle (result anyref)
   (local $temp anyref)
+  (local ${i32_i64} (ref null ${i32_i64}))
+  (local ${i32_f32} (ref null ${i32_f32}))
+
   (local.set $temp (call $refine-return-many-middle))
 
   ;; Return two different struct types, with an LUB that is not equal to either
   ;; of them.
   (if
    (i32.const 1)
-   (return (block (result (ref null ${i32_i64})) (ref.null ${i32_i64})))
+   (return (local.get ${i32_i64}))
   )
-  (block (result (ref null ${i32_f32})) (ref.null ${i32_f32}))
+  (return (local.get ${i32_f32}))
  )
 
  ;; We can refine the return types of tuples.
@@ -659,7 +662,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return_call_ref
- ;; CHECK-NEXT:   (block $block4 (result (ref null $return_{}))
+ ;; CHECK-NEXT:   (block $block3 (result (ref null $return_{}))
  ;; CHECK-NEXT:    (ref.null $return_{})
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -674,7 +677,7 @@
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (return_call_ref
- ;; NOMNL-NEXT:   (block $block4 (result (ref null $return_{}))
+ ;; NOMNL-NEXT:   (block $block3 (result (ref null $return_{}))
  ;; NOMNL-NEXT:    (ref.null $return_{})
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
