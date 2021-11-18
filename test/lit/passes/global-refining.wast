@@ -69,3 +69,51 @@
    (global.set $func-func-init (ref.func $foo))
   )
 )
+
+(module
+  ;; A global with multiple later assignments. The refined type is more
+  ;; specific than the original, but less than each of the non-null values.
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (global $global (mut funcref) (ref.null func))
+  (global $global (mut anyref) (ref.null any))
+
+  ;; CHECK:      (elem declare func $bar $foo)
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $global
+  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $global
+  ;; CHECK-NEXT:   (ref.func $bar)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $global
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $global
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $global
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+   (global.set $global (ref.func $foo))
+   (global.set $global (ref.func $bar))
+   (global.set $global (ref.null func))
+   ;; These nulls will be updated.
+   (global.set $global (ref.null eq))
+   (global.set $global (ref.null data))
+  )
+
+  ;; CHECK:      (func $bar (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $bar (param $x i32)
+    ;; A function with a different signature, whose reference is also assigned
+    ;; to the global.
+  )
+)
