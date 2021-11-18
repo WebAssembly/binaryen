@@ -81,10 +81,9 @@ struct HeapTypeGenerator {
     }
   }
 
-  // TODO: Create an enum for `Defaultable, NonDefaultable` in wasm-type.h.
-  Type generateRefType(bool defaultable = false) {
+  Type generateRefType() {
     auto heapType = generateHeapType();
-    auto nullability = (defaultable || rand.oneIn(2)) ? Nullable : NonNullable;
+    auto nullability = rand.oneIn(2) ? Nullable : NonNullable;
     return builder.getTempRefType(heapType, nullability);
   }
 
@@ -94,12 +93,12 @@ struct HeapTypeGenerator {
     return builder.getTempRttType(Rtt(depth, heapType));
   }
 
-  Type generateSingleType(bool defaultable = false) {
-    switch (rand.upTo(defaultable ? 2 : 3)) {
+  Type generateSingleType() {
+    switch (rand.upTo(3)) {
       case 0:
         return generateBasicType();
       case 1:
-        return generateRefType(defaultable);
+        return generateRefType();
       case 2:
         return generateRttType();
     }
@@ -109,21 +108,18 @@ struct HeapTypeGenerator {
   Type generateTupleType() {
     std::vector<Type> types(2 + rand.upTo(MAX_TUPLE_SIZE - 1));
     for (auto& type : types) {
-      // Make sure tuples are defaultable. See comment in
-      // TranslateToFuzzReader::getTupleType.
-      type = generateSingleType(/*defaultable=*/true);
+      type = generateSingleType();
     }
     return builder.getTempTupleType(Tuple(types));
   }
 
   Type generateReturnType() {
-    // This is similar to TranslateToFuzzreader::getControlFlowType.
-    if (rand.oneIn(10)) {
+    if (rand.oneIn(6)) {
       return Type::none;
     } else if (features.hasMultivalue() && rand.oneIn(5)) {
       return generateTupleType();
     } else {
-      return generateSingleType(/*defaultable=*/true);
+      return generateSingleType();
     }
   }
 
@@ -313,17 +309,15 @@ struct HeapTypeGenerator {
   }
 
   Type generateSubtype(Type type) {
-    if (type.isBasic()) {
-      // We do not construct types with basic reference types (we go through the
-      // TypeBuilder for those instead), so this must be a non-reference basic
-      // type, which means it has no other subtypes.
-      return type;
-    } else if (type.isRef()) {
+    if (type.isRef()) {
       auto ref = generateSubRef({type.getHeapType(), type.getNullability()});
       return builder.getTempRefType(ref.type, ref.nullability);
     } else if (type.isRtt()) {
       auto rtt = generateSubRtt(type.getRtt());
       return builder.getTempRttType(rtt);
+    } else if (type.isBasic()) {
+      // Non-reference basic types do not have subtypes.
+      return type;
     } else {
       WASM_UNREACHABLE("unexpected type kind");
     }
