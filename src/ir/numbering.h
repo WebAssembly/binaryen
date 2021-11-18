@@ -24,9 +24,6 @@ namespace wasm {
 // General value numbering: Returns a number for an expression. Expressions with
 // the same number must be identical in value.
 class ValueNumbering {
-private:
-  Index nextValue = 1;
-
 public:
   // Get the value numbering of an arbitrary expression.
   Index getValue(Expression* expr) {
@@ -57,6 +54,9 @@ public:
   Index getUniqueValue() { return nextValue++; }
 
 private:
+  // Reserve 0 for possible future use as a "null value".
+  Index nextValue = 1;
+
   // Cache the value numbers of literals and expressions.
   std::unordered_map<Literals, Index> literalValues;
   std::unordered_map<Expression*, Index> expressionValues;
