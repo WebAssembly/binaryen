@@ -772,6 +772,9 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
+    if (auto* ret = combineBinaryWithShifts(curr)) {
+      return replaceCurrent(ret);
+    }
     if (curr->op == AndInt32 || curr->op == OrInt32) {
       if (curr->op == AndInt32) {
         if (auto* ret = combineAnd(curr)) {
@@ -795,9 +798,6 @@ struct OptimizeInstructions
       if (auto* ret = optimizeRelational(curr)) {
         return replaceCurrent(ret);
       }
-    }
-    if (auto* ret = combineBinaryWithShifts(curr)) {
-      return replaceCurrent(ret);
     }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
