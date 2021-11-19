@@ -56,7 +56,7 @@ private:
     bool hidden;
     PassInfo() = default;
     PassInfo(std::string description, Creator create, bool hidden = false)
-      : description(description), create(create), hidden(false) {}
+      : description(description), create(create), hidden(hidden) {}
   };
   std::map<std::string, PassInfo> passInfos;
 };
