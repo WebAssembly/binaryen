@@ -67,8 +67,9 @@ std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
 std::vector<std::string> PassRegistry::getRegisteredNames(bool includeHidden) {
   std::vector<std::string> ret;
   for (auto pair : passInfos) {
-    if (includeHidden || !pair.second.hidden)
+    if (includeHidden || !pair.second.hidden) {
       ret.push_back(pair.first);
+    }
   }
   return ret;
 }
