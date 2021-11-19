@@ -114,22 +114,22 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (global $global (mut i32) (i32.const 0))
+  ;; CHECK:      (global $global i32 (i32.const 0))
   (global $global (mut i32) (i32.const 0))
-  ;; CHECK:      (global $other (mut i32) (i32.const 0))
+  ;; CHECK:      (global $other i32 (i32.const 0))
   (global $other (mut i32) (i32.const 0))
   ;; CHECK:      (func $side-effects-in-condition
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (block $block (result i32)
-  ;; CHECK-NEXT:    (global.set $other
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.set $global
+  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -358,18 +358,18 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  ;; CHECK:      (global $once i32 (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $clinit
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (block $block (result i32)
   ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (global.get $once)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -387,3 +387,108 @@
     )
   )
 )
+
+(module
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once i32 (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $x i32)
+    (local $y i32)
+    (if
+      ;; The condition has various side effects, but they do not cause any
+      ;; problems: $once is read in a way that only affects whether we get to
+      ;; the set of $once - its value does not cause anything else observable.
+      (select
+        (local.tee $x
+          (i32.const 1)
+        )
+        (i32.load
+          (i32.const 2)
+        )
+        (global.get $once)
+      )
+      (global.set $once
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once i32 (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $x i32)
+    (local $y i32)
+    (if
+      ;; As above, but with an extra eqz
+      (i32.eqz
+        (select
+          (local.tee $x
+            (i32.const 1)
+          )
+          (i32.load
+            (i32.const 2)
+          )
+          (global.get $once)
+        )
+      )
+      (global.set $once
+        (i32.const 1)
+      )
+    )
+  )
+)
+

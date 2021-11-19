@@ -61,13 +61,15 @@ struct GlobalInfo {
   std::atomic<Index> read{0};
 
   // How many times the global is "read, but only to write", that is, is used in
-  // this pattern:
+  // something like this pattern:
   //
   //   if (global == X) { global = Y }
   //
-  // where X and Y have no side effects. If all we have are such reads only to
-  // write then the global is really not necessary, even though there are both
-  // reads and writes of it.
+  // We don't allow any side effects aside from writing to |global| in the if
+  // body. But we do allow other things to happen in the if condition, so long
+  // as the global is read only in order to decide to write that same global.
+  // If all we have are such reads only to write then the global is really not
+  // necessary, even though there are both reads and writes of it.
   //
   // This pattern can show up in global initialization code, where in the block
   // alongside "global = Y" there was some useful code, but the optimizer
@@ -108,55 +110,104 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     }
 
     auto global =
-      firstOnlyReadsGlobalWhichSecondOnlyWrites(curr->condition, curr->ifTrue);
+      conditionReadsGlobalWhichIsOnlyWritten(curr->condition, curr->ifTrue);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
     }
   }
 
-  // Checks if the first expression only reads a certain global, and has no
-  // other effects, and the second only writes that same global, and also has no
-  // other effects. Returns the global name if so, or a null name otherwise.
-  Name firstOnlyReadsGlobalWhichSecondOnlyWrites(Expression* first,
-                                                 Expression* second) {
-    // See if reading a specific global is the only effect the first has.
-    EffectAnalyzer firstEffects(getPassOptions(), *getModule(), first);
-
-    if (firstEffects.immutableGlobalsRead.size() +
-          firstEffects.mutableGlobalsRead.size() !=
-        1) {
+  // Checks if second only writes some global, and the first reads that global
+  // in order to decide if to write it. It doesn't matter how the first uses
+  // that read value from that global, so long as it is only used to determine
+  // the result of the first expression. This is a simple case:
+  //
+  //      |  first  |    | second  |
+  //  if (global == 0) { global = 1; }
+  //
+  // But we also allow this:
+  //
+  //  if (global % 17 < 4) { global = 1 }
+  //
+  // What we want to disallow is using the global to actually do something that
+  // is noticeeable *aside* from writing the global, like this:
+  //
+  //  if (global ? foo() : bar()) { .. }
+  //
+  // Here ? : is another nested if, and we end up running different code based
+  // on global, which is noticeable.
+  //
+  // Returns the global name if things like up, or a null name otherwise.
+  Name conditionReadsGlobalWhichIsOnlyWritten(Expression* condition,
+                                              Expression* code) {
+    // See if writing a global is the only effect the code has. (Note that we
+    // don't need to care about the case where the code has no effects at
+    // all - other passes would handle that trivial situation.)
+    EffectAnalyzer codeEffects(getPassOptions(), *getModule(), code);
+    if (codeEffects.globalsWritten.size() != 1) {
       return Name();
     }
-    Name global;
-    if (firstEffects.immutableGlobalsRead.size() == 1) {
-      global = *firstEffects.immutableGlobalsRead.begin();
-      firstEffects.immutableGlobalsRead.clear();
-    } else {
-      global = *firstEffects.mutableGlobalsRead.begin();
-      firstEffects.mutableGlobalsRead.clear();
-    }
-    if (firstEffects.hasAnything()) {
-      return Name();
-    }
-
-    // See if writing the same global is the only effect the second has. (Note
-    // that we don't need to care about the case where the second has no effects
-    // at all - other passes would handle that trivial situation.)
-    EffectAnalyzer secondEffects(getPassOptions(), *getModule(), second);
-    if (secondEffects.globalsWritten.size() != 1) {
-      return Name();
-    }
-    auto writtenGlobal = *secondEffects.globalsWritten.begin();
-    if (writtenGlobal != global) {
-      return Name();
-    }
-    secondEffects.globalsWritten.clear();
-    if (secondEffects.hasAnything()) {
+    auto writtenGlobal = *codeEffects.globalsWritten.begin();
+    codeEffects.globalsWritten.clear();
+    if (codeEffects.hasAnything()) {
       return Name();
     }
 
-    return global;
+    // See if we read that global in the condition expression.
+    EffectAnalyzer conditionEffects(getPassOptions(), *getModule(), condition);
+    if (!conditionEffects.mutableGlobalsRead.count(writtenGlobal)) {
+      return Name();
+    }
+
+    // See if the condition has any other effects that could be a problem. If it has
+    // no side effects at all, then there is nothing noticeable. (Or, if it has
+    // side effects the optimizer is allowed to remove, that is fine too - we
+    // can ignore them too.)
+    if (!conditionEffects.hasUnremovableSideEffects()) {
+      // No side effects means there is nothing noticeable.
+      return writtenGlobal;
+    }
+
+    // There are unremovable side effects of some form. Handle at least one more
+    // case that is fairly common in practice, where multiple ifs are fused
+    // together to form this:
+    //
+    //  if (global ? .. : ..) { global = 1 }
+    //
+    // Here ? is a select inside the if, which combines some check on |global|
+    // with some other check. For example,
+    //
+    //  global ? 0 : x = 10
+    //
+    // That has the side effect of writing to x, but that is ok, all children of
+    // a select execute unconditionally anyhow, so |global|'s value is not used
+    // to cause anything noticeable. To check that, see if the get of the global
+    // is a child of condition, and that condition does not do anything dangerous with
+    // that value.
+    //
+    // Also, first look through a unary such as an EqZ.
+    if (auto* unary = condition->dynCast<Unary>()) {
+      condition = unary->value;
+    }
+    for (auto* conditionChild : ChildIterator(condition)) {
+      if (auto* get = conditionChild->dynCast<GlobalGet>()) {
+        if (get->name == writtenGlobal) {
+          // The get is indeed a child of condition. Verify that condition uses that
+          // value in a safe way.
+          EffectAnalyzer immediateConditionEffects(getPassOptions(), *getModule());
+          immediateConditionEffects.visit(condition);
+          if (!immediateConditionEffects.hasUnremovableSideEffects()) {
+            return writtenGlobal;
+          }
+
+          // Otherwise, exit: there is no point scanning the other children, as
+          // we found the one we were looking for.
+          break;
+        }
+      }
+    }
+
+    return Name();
   }
 
   void visitFunction(Function* curr) {
@@ -190,7 +241,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     }
 
     auto global =
-      firstOnlyReadsGlobalWhichSecondOnlyWrites(iff->condition, list[1]);
+      conditionReadsGlobalWhichIsOnlyWritten(iff->condition, list[1]);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
