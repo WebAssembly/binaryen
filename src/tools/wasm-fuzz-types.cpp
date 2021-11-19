@@ -49,14 +49,35 @@ struct Fuzzer {
     Random rand(std::move(bytes));
 
     // TODO: Options to control the size or set it randomly.
-    std::vector<HeapType> types =
-      HeapTypeFuzzer::generateHeapTypes(rand, FeatureSet::All, 20);
+    HeapTypeGenerator generator =
+      HeapTypeGenerator::create(rand, FeatureSet::All, 20);
+    std::vector<HeapType> types = generator.builder.build();
 
-    // TODO: Do some sort of checking or manipulation on the types
     if (verbose) {
-      std::cout << "Built " << types.size() << " types:\n";
-      for (size_t i = 0; i < types.size(); ++i) {
-        std::cout << i << ": " << types[i] << "\n";
+      printTypes(types);
+    }
+
+    checkSubtypes(types, generator.subtypeIndices);
+  }
+
+  void printTypes(const std::vector<HeapType>& types) {
+    std::cout << "Built " << types.size() << " types:\n";
+    for (size_t i = 0; i < types.size(); ++i) {
+      std::cout << i << ": " << types[i] << "\n";
+    }
+  }
+
+  void checkSubtypes(const std::vector<HeapType>& types,
+                     const std::vector<std::vector<Index>>& subtypeIndices) {
+    for (size_t super = 0; super < types.size(); ++super) {
+      for (size_t j = 0; j < subtypeIndices[super].size(); ++j) {
+        size_t sub = subtypeIndices[super][j];
+        if (!HeapType::isSubType(types[sub], types[super])) {
+          Fatal() << "HeapType " << sub << " should be a subtype of HeapType "
+                  << super << " but is not!\n"
+                  << sub << ": " << types[sub] << "\n"
+                  << super << ": " << types[super] << "\n";
+        }
       }
     }
   }
