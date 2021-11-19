@@ -40,8 +40,21 @@ namespace wasm {
 //                        this instruction. For example, includes If::condition
 //                        but not If::ifTrue.
 //
-template<class Specific> class AbstractChildIterator {
-  using Self = AbstractChildIterator<Specific>;
+// ChildPointerIterator and ValueChildPointerIterator iterate the same way
+// respectively, but they return pointers to children instead.
+
+template<bool isPointer> struct DereferenceKind {};
+template<> struct DereferenceKind<true> {
+  using type = Expression**;
+  static type ref(Expression** item) { return item; }
+};
+template<> struct DereferenceKind<false> {
+  using type = Expression*&;
+  static type ref(Expression** item) { return *item; }
+};
+
+template<class Specific, bool isPointer> class AbstractChildIterator {
+  using Self = AbstractChildIterator<Specific, isPointer>;
 
   struct Iterator {
     const Self& parent;
@@ -57,8 +70,11 @@ template<class Specific> class AbstractChildIterator {
 
     void operator++() { index++; }
 
-    Expression*& operator*() {
-      return *parent.children[parent.mapIndex(index)];
+    // Depending on which specilization of DereferenceKind we use, this returns
+    // either Expression* or Expression**.
+    typename DereferenceKind<isPointer>::type operator*() {
+      return DereferenceKind<isPointer>::ref(
+        parent.children[parent.mapIndex(index)]);
     }
   };
 
@@ -125,31 +141,41 @@ public:
   Index getNumChildren() { return children.size(); }
 };
 
-class ChildIterator : public AbstractChildIterator<ChildIterator> {
+template<bool isPointer>
+class ChildIteratorBase
+  : public AbstractChildIterator<ChildIteratorBase<isPointer>, isPointer> {
 public:
-  ChildIterator(Expression* parent)
-    : AbstractChildIterator<ChildIterator>(parent) {}
+  ChildIteratorBase(Expression* parent)
+    : AbstractChildIterator<ChildIteratorBase<isPointer>, isPointer>(parent) {}
 };
 
-class ValueChildIterator : public AbstractChildIterator<ValueChildIterator> {
+template<bool isPointer>
+class ValueChildIteratorBase
+  : public AbstractChildIterator<ValueChildIteratorBase<isPointer>, isPointer> {
 public:
-  ValueChildIterator(Expression* parent)
-    : AbstractChildIterator<ValueChildIterator>(parent) {}
+  ValueChildIteratorBase(Expression* parent)
+    : AbstractChildIterator<ValueChildIteratorBase<isPointer>, isPointer>(
+        parent) {}
 
   void addChild(Expression* parent, Expression** child) {
     if (Properties::isControlFlowStructure(parent)) {
       // If conditions are the only value children of control flow structures
       if (auto* iff = parent->dynCast<If>()) {
         if (child == &iff->condition) {
-          children.push_back(child);
+          this->children.push_back(child);
         }
       }
     } else {
       // All children on non-control flow expressions are value children
-      children.push_back(child);
+      this->children.push_back(child);
     }
   }
 };
+
+using ChildIterator = ChildIteratorBase<false>;
+using ValueChildIterator = ValueChildIteratorBase<false>;
+using ChildPointerIterator = ChildIteratorBase<true>;
+using ValueChildPointerIterator = ValueChildIteratorBase<true>;
 
 // Returns true if the current expression contains a certain kind of expression,
 // within the given depth of BFS. If depth is -1, this searches all children.
