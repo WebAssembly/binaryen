@@ -74,7 +74,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
@@ -90,7 +90,7 @@
       (i32.const 0)
     )
     (local.set $y
-      (i32.const 0)
+      (i32.const 1)
     )
     (drop
       (local.get $x)
@@ -207,7 +207,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block $block0
   ;; CHECK-NEXT:   (local.set $1
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -225,7 +225,7 @@
     )
     (block $block0
       (local.set $y
-        (i32.const 0)
+        (i32.const 1)
       )
     )
     (drop
@@ -286,7 +286,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (local.set $1
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $1)
@@ -305,7 +305,7 @@
     )
     (block $block
       (local.set $y
-        (i32.const 0)
+        (i32.const 1)
       )
       (drop
         (local.get $y)
@@ -599,7 +599,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
@@ -617,7 +617,7 @@
     (local $x i32)
     (local $y i32)
     (local.set $x
-      (i32.const 0)
+      (i32.const 1)
     )
     (if
       (i32.const 0)
@@ -636,7 +636,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block $block1
   ;; CHECK-NEXT:    (drop
@@ -653,7 +653,7 @@
     (local $y i32)
     (if
       (local.tee $x
-        (i32.const 0)
+        (i32.const 1)
       )
       (block $block1
         (drop
@@ -2920,5 +2920,92 @@
     (local.get $0)
    )
    (local.get $1)
+  )
+
+  ;; CHECK:      (func $equal-constants
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $equal-constants
+    (local $x i32)
+    (local $y i32)
+    ;; $x is written the same value as $y, so they do not interfere.
+    (local.set $x
+      (i32.const 0)
+    )
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $different-constants
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $different-constants
+    (local $x i32)
+    (local $y i32)
+    ;; $x is written a different value, so they do interfere.
+    (local.set $x
+      (i32.const 1)
+    )
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $equal-constants-nonzero
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $equal-constants-nonzero
+    (local $x i32)
+    (local $y i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (local.set $y
+      (i32.const 42)
+    )
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
   )
 )
