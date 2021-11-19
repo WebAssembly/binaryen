@@ -43,17 +43,16 @@ namespace wasm {
 // ChildPointerIterator and ValueChildPointerIterator iterate the same way
 // respectively, but they return pointers to children instead.
 
-template<bool isPointer> struct DereferenceKind {};
-template<> struct DereferenceKind<true> {
+struct PointerDereference {
   using type = Expression**;
   static type ref(Expression** item) { return item; }
 };
-template<> struct DereferenceKind<false> {
+struct NonPointerDereference {
   using type = Expression*&;
   static type ref(Expression** item) { return *item; }
 };
 
-template<class Specific, bool isPointer> class AbstractChildIterator {
+template<class Specific, class DereferenceKind> class AbstractChildIterator {
   using Self = AbstractChildIterator<Specific, isPointer>;
 
   struct Iterator {
@@ -71,9 +70,9 @@ template<class Specific, bool isPointer> class AbstractChildIterator {
     void operator++() { index++; }
 
     // Depending on which specilization of DereferenceKind we use, this returns
-    // either Expression* or Expression**.
-    typename DereferenceKind<isPointer>::type operator*() {
-      return DereferenceKind<isPointer>::ref(
+    // either Expression*& or Expression**.
+    typename DereferenceKind::type operator*() {
+      return DereferenceKind::ref(
         parent.children[parent.mapIndex(index)]);
     }
   };
