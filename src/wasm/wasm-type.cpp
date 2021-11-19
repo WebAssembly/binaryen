@@ -3165,10 +3165,15 @@ buildNominal(std::vector<std::unique_ptr<HeapTypeInfo>> infos) {
 }
 
 void replaceBasicHeapTypes(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
+  // Replace heap types backed by BasicKind HeapTypeInfos with their
+  // corresponding BasicHeapTypes. The heap types backed by BasicKind
+  // HeapTypeInfos exist only to support building basic types in a TypeBuilder
+  // and are never canonical.
   for (auto& info : infos) {
     struct BasicTypeReplacer : HeapTypeChildWalker<BasicTypeReplacer> {
       void noteChild(HeapType* child) {
         if (child->isBasic()) {
+          // This is already a real basic type. No canonicalization necessary.
           return;
         }
         auto* info = getHeapTypeInfo(*child);
