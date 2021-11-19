@@ -111,7 +111,7 @@ void handleBlockNestedPops(Function* func, Module& wasm) {
   for (auto* try_ : trys.list) {
     for (Index i = 0; i < try_->catchTags.size(); i++) {
       Name tagName = try_->catchTags[i];
-      auto* tag = wasm.getTagOrNull(tagName);
+      auto* tag = wasm.getTag(tagName);
       if (tag->sig.params == Type::none) {
         continue;
       }
