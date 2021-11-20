@@ -30,7 +30,7 @@
       (do)
       (catch $e-i32
         (throw $e-i32
-          ;; The pop is wihtin a block, so it will be handled
+          ;; The pop is within a block, so it will be handled
           (block (result i32)
             (pop i32)
           )

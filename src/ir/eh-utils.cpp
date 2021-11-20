@@ -55,8 +55,8 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
       // in binary, it is fine if a 'pop' is in there. We don't allow a 'pop' to
       // be in an 'if''s then or else body because they are not
       // first descendants.
-      if (auto* if_ = firstChild->dynCast<If>()) {
-        firstChild = if_->condition;
+      if (auto* iff = firstChild->dynCast<If>()) {
+        firstChild = iff->condition;
         continue;
       }
       // We don't allow the pop to be included in a loop, because it cannot be
@@ -90,7 +90,7 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
       }
     }
     ChildIterator it(firstChild);
-    if (it.begin() == it.end()) {
+    if (it.getNumChildren() == 0) {
       return nullptr;
     }
     firstChildPtr = &*it.begin();
