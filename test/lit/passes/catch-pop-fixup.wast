@@ -265,6 +265,52 @@
     )
   )
 
+  ;; CHECK:      (func $pop-within-block-within-if-condition (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (try $try (result i32)
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e-i32
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $l0 (result i32)
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $l0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $pop-within-block-within-if-condition (result i32)
+    (try (result i32)
+      (do
+        (i32.const 0)
+      )
+      (catch $e-i32
+        ;; This block cannot be removed because there is a branch targeting
+        ;; this. This pop should be handled because the whole 'if' is nested
+        ;; within the block.
+        (block $l0 (result i32)
+          (if (result i32)
+            (pop i32)
+            (then (i32.const 1))
+            (else (i32.const 0))
+          )
+          (br $l0
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $pop-tuple-within-block
   ;; CHECK-NEXT:  (local $x (i32 f32))
   ;; CHECK-NEXT:  (local $1 (i32 f32))

@@ -57,6 +57,7 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
       // first descendants.
       if (auto* iff = firstChild->dynCast<If>()) {
         firstChild = iff->condition;
+        firstChildPtr = &iff->condition;
         continue;
       }
       // We don't allow the pop to be included in a loop, because it cannot be
@@ -66,7 +67,7 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
       }
       if (firstChild->is<Block>()) {
         // If there are no branches that targets the implicit block, it will be
-        // removed when written back. But there are branches that target the
+        // removed when written back. But if there are branches that target the
         // implicit block,
         // (catch $e
         //   (block $l0
