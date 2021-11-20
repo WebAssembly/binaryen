@@ -88,10 +88,9 @@
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $struct (ref null $struct))
   ;; CHECK-NEXT:  (call $func
-  ;; CHECK-NEXT:   (block $block (result (ref null $struct))
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref
   ;; CHECK-NEXT:   (ref.as_data
@@ -101,10 +100,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
+    (local $struct (ref null $struct))
     (call $func
-      (block (result (ref null $struct))
-        (ref.null $struct)
-      )
+      ;; Use a local to avoid a ref.null being updated.
+      (local.get $struct)
     )
     (call_ref
       (ref.as_data
