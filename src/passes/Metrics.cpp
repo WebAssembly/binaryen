@@ -161,10 +161,10 @@ struct Metrics
 
   void printCounts(std::string title) {
     using std::left;
+    using std::noshowpos;
     using std::right;
     using std::setw;
     using std::showpos;
-    using std::noshowpos;
 
     std::ostream& o = std::cout;
     std::vector<const char*> keys;
