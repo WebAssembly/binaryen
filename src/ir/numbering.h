@@ -55,8 +55,7 @@ public:
   Index getUniqueValue() { return nextValue++; }
 
 private:
-  // Reserve 0 for possible future use as a "null value".
-  Index nextValue = 1;
+  Index nextValue = 0;
 
   // Cache the value numbers of literals and expressions.
   std::unordered_map<Literals, Index> literalValues;
