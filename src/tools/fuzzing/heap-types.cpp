@@ -23,16 +23,16 @@ namespace wasm {
 
 namespace {
 
-struct HeapTypeGenerator {
+struct HeapTypeGeneratorImpl {
+  HeapTypeGenerator result;
+  TypeBuilder& builder;
+  std::vector<std::vector<Index>>& subtypeIndices;
+  std::vector<std::optional<Index>> supertypeIndices;
   Random& rand;
   FeatureSet features;
-  TypeBuilder builder;
 
   // Map the HeapTypes we are building to their indices in the builder.
   std::unordered_map<HeapType, Index> typeIndices;
-
-  // For each type we will build, the indices of its subtypes we will build.
-  std::vector<std::vector<Index>> subtypeIndices;
 
   // Abstract over all the types that may be assigned to a builder slot.
   using Assignable =
@@ -47,8 +47,74 @@ struct HeapTypeGenerator {
   using HeapTypeKind = std::variant<BasicKind, SignatureKind, DataKind>;
   std::vector<HeapTypeKind> typeKinds;
 
-  HeapTypeGenerator(Random& rand, FeatureSet features, size_t n)
-    : rand(rand), features(features), builder(n), subtypeIndices(n) {}
+  HeapTypeGeneratorImpl(Random& rand, FeatureSet features, size_t n)
+    : result{TypeBuilder(n),
+             std::vector<std::vector<Index>>(n),
+             std::vector<std::optional<Index>>(n)},
+      builder(result.builder), subtypeIndices(result.subtypeIndices),
+      supertypeIndices(n), rand(rand), features(features) {
+    // Set up the subtype relationships. Start with some number of root types,
+    // then after that start creating subtypes of existing types. Determine the
+    // top-level kind of each type in advance so that we can appropriately use
+    // types we haven't constructed yet.
+    // TODO: Determine individually whether each HeapType is nominal once
+    // mixing type systems is expected to work.
+    typeKinds.reserve(builder.size());
+    supertypeIndices.reserve(builder.size());
+    Index numRoots = 1 + rand.upTo(builder.size());
+    for (Index i = 0; i < builder.size(); ++i) {
+      typeIndices.insert({builder[i], i});
+      // Everything is a subtype of itself.
+      subtypeIndices[i].push_back(i);
+      if (i < numRoots) {
+        // This is a root type with no supertype. Choose a kind for this type.
+        typeKinds.emplace_back(generateHeapTypeKind());
+      } else {
+        // This is a subtype. Choose one of the previous types to be the
+        // supertype.
+        Index super = rand.upTo(i);
+        builder[i].subTypeOf(builder[super]);
+        supertypeIndices[i] = super;
+        subtypeIndices[super].push_back(i);
+        typeKinds.push_back(getSubKind(typeKinds[super]));
+      }
+    }
+
+    // Create the heap types.
+    for (Index i = 0; i < builder.size(); ++i) {
+      auto kind = typeKinds[i];
+      if (auto* basic = std::get_if<BasicKind>(&kind)) {
+        // The type is already determined.
+        builder[i] = *basic;
+      } else if (!supertypeIndices[i] ||
+                 builder.isBasic(*supertypeIndices[i])) {
+        // No nontrivial supertype, so create a root type.
+        if (std::get_if<SignatureKind>(&kind)) {
+          builder[i] = generateSignature();
+        } else if (std::get_if<DataKind>(&kind)) {
+          if (rand.oneIn(2)) {
+            builder[i] = generateStruct();
+          } else {
+            builder[i] = generateArray();
+          }
+        } else {
+          WASM_UNREACHABLE("unexpected kind");
+        }
+      } else {
+        // We have a supertype, so create a subtype.
+        HeapType supertype = builder[*supertypeIndices[i]];
+        if (supertype.isSignature()) {
+          builder[i] = generateSubSignature(supertype.getSignature());
+        } else if (supertype.isStruct()) {
+          builder[i] = generateSubStruct(supertype.getStruct());
+        } else if (supertype.isArray()) {
+          builder[i] = generateSubArray(supertype.getArray());
+        } else {
+          WASM_UNREACHABLE("unexpected kind");
+        }
+      }
+    }
+  }
 
   HeapType::BasicHeapType generateBasicHeapType() {
     return rand.pick(HeapType::func,
@@ -404,82 +470,13 @@ struct HeapTypeGenerator {
       return super;
     }
   }
-
-  std::vector<HeapType> generate() {
-    // Set up the subtype relationships. Start with some number of root types,
-    // then after that start creating subtypes of existing types. Determine the
-    // top-level kind of each type in advance so that we can appropriately use
-    // types we haven't constructed yet.
-    // TODO: Determine individually whether each HeapType is nominal once
-    // mixing type systems is expected to work.
-    typeKinds.reserve(builder.size());
-    std::vector<std::optional<Index>> supertypeIndices(builder.size());
-    Index numRoots = 1 + rand.upTo(builder.size());
-    for (Index i = 0; i < builder.size(); ++i) {
-      typeIndices.insert({builder[i], i});
-      // Everything is a subtype of itself.
-      subtypeIndices[i].push_back(i);
-      if (i < numRoots) {
-        // This is a root type with no supertype. Choose a kind for this type.
-        typeKinds.emplace_back(generateHeapTypeKind());
-      } else {
-        // This is a subtype. Choose one of the previous types to be the
-        // supertype.
-        Index super = rand.upTo(i);
-        builder[i].subTypeOf(builder[super]);
-        supertypeIndices[i] = super;
-        subtypeIndices[super].push_back(i);
-        typeKinds.push_back(getSubKind(typeKinds[super]));
-      }
-    }
-
-    // Create the heap types.
-    for (Index i = 0; i < builder.size(); ++i) {
-      auto kind = typeKinds[i];
-      if (auto* basic = std::get_if<BasicKind>(&kind)) {
-        // The type is already determined.
-        builder[i] = *basic;
-      } else if (!supertypeIndices[i] ||
-                 builder.isBasic(*supertypeIndices[i])) {
-        // No nontrivial supertype, so create a root type.
-        if (std::get_if<SignatureKind>(&kind)) {
-          builder[i] = generateSignature();
-        } else if (std::get_if<DataKind>(&kind)) {
-          if (rand.oneIn(2)) {
-            builder[i] = generateStruct();
-          } else {
-            builder[i] = generateArray();
-          }
-        } else {
-          WASM_UNREACHABLE("unexpected kind");
-        }
-      } else {
-        // We have a supertype, so create a subtype.
-        HeapType supertype = builder[*supertypeIndices[i]];
-        if (supertype.isSignature()) {
-          builder[i] = generateSubSignature(supertype.getSignature());
-        } else if (supertype.isStruct()) {
-          builder[i] = generateSubStruct(supertype.getStruct());
-        } else if (supertype.isArray()) {
-          builder[i] = generateSubArray(supertype.getArray());
-        } else {
-          WASM_UNREACHABLE("unexpected kind");
-        }
-      }
-    }
-    return builder.build();
-  }
 };
 
 } // anonymous namespace
 
-namespace HeapTypeFuzzer {
-
-std::vector<HeapType>
-generateHeapTypes(Random& rand, FeatureSet features, size_t n) {
-  return HeapTypeGenerator(rand, features, n).generate();
+HeapTypeGenerator
+HeapTypeGenerator::create(Random& rand, FeatureSet features, size_t n) {
+  return HeapTypeGeneratorImpl(rand, features, n).result;
 }
-
-} // namespace HeapTypeFuzzer
 
 } // namespace wasm
