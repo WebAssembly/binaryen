@@ -342,6 +342,9 @@ void PassRegistry::registerPasses() {
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
+  registerPass("signature-refining",
+               "apply more specific subtypes to signature types where possible",
+               createSignatureRefiningPass);
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",
                createSimplifyGlobalsPass);
@@ -530,6 +533,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("type-refining");
+    addIfNoDWARFIssues("signature-refining");
     addIfNoDWARFIssues("global-refining");
     // Global type optimization can remove fields that are not needed, which can
     // remove ref.funcs that were once assigned to vtables but are no longer
