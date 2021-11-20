@@ -79,7 +79,6 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 #define DELEGATE_FIELD_NAME(id, field) COPY_FIELD(field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) COPY_FIELD(field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) COPY_FIELD(field)
-#define DELEGATE_FIELD_SIGNATURE(id, field) COPY_FIELD(field)
 #define DELEGATE_FIELD_TYPE(id, field) COPY_FIELD(field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field) COPY_FIELD(field)
 #define DELEGATE_FIELD_ADDRESS(id, field) COPY_FIELD(field)

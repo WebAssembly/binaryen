@@ -655,7 +655,8 @@ private:
       }
     }
     for (auto* call : FindAll<CallIndirect>(func->body).list) {
-      if (call->isReturn && !processReturnType(call->sig.results)) {
+      if (call->isReturn &&
+          !processReturnType(call->heapType.getSignature().results)) {
         return false;
       }
     }

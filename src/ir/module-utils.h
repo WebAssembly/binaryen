@@ -494,7 +494,7 @@ inline void collectHeapTypes(Module& wasm,
 
     void visitExpression(Expression* curr) {
       if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->getHeapType(getModule()));
+        counts.note(call->heapType);
       } else if (curr->is<RefNull>()) {
         counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {

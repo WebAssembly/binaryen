@@ -153,7 +153,7 @@ private:
       return replaceWithUnreachable(operands);
     }
     auto* func = getModule()->getFunction(name);
-    if (original->sig != func->getSig()) {
+    if (original->heapType != func->type) {
       return replaceWithUnreachable(operands);
     }
 

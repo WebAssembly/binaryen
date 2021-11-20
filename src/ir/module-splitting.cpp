@@ -407,7 +407,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
     }
     auto tableSlot = tableManager.getSlot(secondaryFunc, func->type);
     func->body = builder.makeCallIndirect(
-      tableSlot.tableName, tableSlot.makeExpr(primary), args, func->getSig());
+      tableSlot.tableName, tableSlot.makeExpr(primary), args, func->type);
   }
 }
 
@@ -431,7 +431,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
-                                 func->getSig(),
+                                 func->type,
                                  curr->isReturn));
     }
     void visitRefFunc(RefFunc* curr) {

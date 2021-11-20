@@ -25,6 +25,7 @@ Current Trunk
   const binaryen = await Binaryen();
   ...
   ```
+- CallIndirect changed from storing a Signature to storing a HeapType
 
 v102
 ----

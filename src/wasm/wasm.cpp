@@ -290,7 +290,7 @@ void Call::finalize() {
 }
 
 void CallIndirect::finalize() {
-  type = sig.results;
+  type = heapType.getSignature().results;
   handleUnreachableOperands(this);
   if (isReturn) {
     type = Type::unreachable;
@@ -298,30 +298,6 @@ void CallIndirect::finalize() {
   if (target->type == Type::unreachable) {
     type = Type::unreachable;
   }
-}
-
-HeapType CallIndirect::getHeapType(Module* module) {
-  auto heapType = HeapType(sig);
-  // See comment in wasm.h
-  if (module) {
-    // The table may not yet exist if the wasm module is still being
-    // constructed. This should perhaps be an error, but as this is a hack for
-    // the time being, handle this the same as the case where module is null.
-    // Note: table_ (with underscore) is needed as |table| is a field on |this|.
-    if (auto* table_ = module->getTableOrNull(table)) {
-      // The wasm spec may allow more things eventually, and if so we'd need to
-      // add more checking here.
-      assert(table_->type.isRef());
-      auto tableHeapType = table_->type.getHeapType();
-      if (tableHeapType.isSignature()) {
-        auto tableSig = tableHeapType.getSignature();
-        if (sig == tableSig) {
-          heapType = tableHeapType;
-        }
-      }
-    }
-  }
-  return heapType;
 }
 
 bool LocalSet::isTee() const { return type != Type::none; }
