@@ -365,13 +365,7 @@ struct HeapTypeGenerator {
   }
 
   HeapTypeKind generateHeapTypeKind() {
-    // Building basic heap types is only allowed in equirecursive mode.
-    // TODO: Relax this.
-    size_t options = 2;
-    if (getTypeSystem() == TypeSystem::Equirecursive) {
-      ++options;
-    }
-    switch (rand.upTo(options)) {
+    switch (rand.upTo(3)) {
       case 0:
         return SignatureKind{};
       case 1:
@@ -441,12 +435,14 @@ struct HeapTypeGenerator {
 
     // Create the heap types.
     for (Index i = 0; i < builder.size(); ++i) {
-      if (!supertypeIndices[i]) {
-        // Create a root type.
-        auto kind = typeKinds[i];
-        if (auto* basic = std::get_if<BasicKind>(&kind)) {
-          builder[i] = *basic;
-        } else if (std::get_if<SignatureKind>(&kind)) {
+      auto kind = typeKinds[i];
+      if (auto* basic = std::get_if<BasicKind>(&kind)) {
+        // The type is already determined.
+        builder[i] = *basic;
+      } else if (!supertypeIndices[i] ||
+                 builder.isBasic(*supertypeIndices[i])) {
+        // No nontrivial supertype, so create a root type.
+        if (std::get_if<SignatureKind>(&kind)) {
           builder[i] = generateSignature();
         } else if (std::get_if<DataKind>(&kind)) {
           if (rand.oneIn(2)) {
@@ -459,12 +455,8 @@ struct HeapTypeGenerator {
         }
       } else {
         // We have a supertype, so create a subtype.
-        Index super = *supertypeIndices[i];
-        HeapType supertype = builder[super];
-        if (builder.isBasic(super)) {
-          auto assignable = generateSubBasic(builder.getBasic(super));
-          std::visit([&](auto&& arg) { builder[i] = arg; }, assignable);
-        } else if (supertype.isSignature()) {
+        HeapType supertype = builder[*supertypeIndices[i]];
+        if (supertype.isSignature()) {
           builder[i] = generateSubSignature(supertype.getSignature());
         } else if (supertype.isStruct()) {
           builder[i] = generateSubStruct(supertype.getStruct());

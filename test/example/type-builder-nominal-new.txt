@@ -21,6 +21,7 @@ After building types:
 (rtt 0 $array) => (rtt 0 (array (mut externref)))
 
 ;; Test canonicalization
+;; Test basic
 ;; Test recursive types
 (func (result (ref null ...1)))
 
@@ -67,6 +68,7 @@ After building types:
 (rtt 0 $array) => (rtt 0 (array (mut externref)))
 
 ;; Test canonicalization
+;; Test basic
 ;; Test recursive types
 (func (result (ref null ...1)))
 
