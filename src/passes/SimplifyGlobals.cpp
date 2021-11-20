@@ -25,6 +25,7 @@
 //  * Apply the constant values of previous global.sets, in a linear
 //    execution trace.
 //  * Remove writes to globals that are never read from.
+//  * Remove writes to globals that are always assigned the same value.
 //  * Remove writes to globals that are only read from in order to write (see
 //    below, "readOnlyToWrite").
 //
@@ -60,6 +61,11 @@ struct GlobalInfo {
   std::atomic<Index> written{0};
   std::atomic<Index> read{0};
 
+  // How many times the global is written a value different from its initial
+  // value. If all writes end up to write the initial value, we may be able to
+  // remove all the writes.
+  std::atomic<bool> nonInitWritten{false};
+
   // How many times the global is "read, but only to write", that is, is used in
   // this pattern:
   //
@@ -93,7 +99,20 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
   GlobalUseScanner* create() override { return new GlobalUseScanner(infos); }
 
-  void visitGlobalSet(GlobalSet* curr) { (*infos)[curr->name].written++; }
+  void visitGlobalSet(GlobalSet* curr) {
+    (*infos)[curr->name].written++;
+
+    // If the global is not imported, there is an initial value and we can check
+    // if a value different from it may be written here.
+    auto* global = getModule()->getGlobal(curr->name);
+    if (!global->imported()) {
+      if (!Properties::isConstantExpression(curr->value) ||
+          !Properties::isConstantExpression(global->init) ||
+          Properties::getLiterals(curr->value) != Properties::getLiterals(global->init)) {
+        (*infos)[curr->name].nonInitWritten = true;
+      }
+    }
+  }
 
   void visitGlobalGet(GlobalGet* curr) { (*infos)[curr->name].read++; }
 
@@ -394,10 +413,11 @@ struct SimplifyGlobals : public Pass {
   bool removeUnneededWrites() {
     bool more = false;
 
-    // Globals that are not exports and not read from are unnecessary (even if
-    // they are written to). Likewise, globals that are only read from in order
-    // to write to themselves are unnecessary. First, find such globals.
-    NameSet unnecessaryGlobals;
+    // Globals that are not exports and not read from do not need their sets.
+    // Likewise, globals that only write their initial value later also do not
+    // need those writes. And, globals that are only read from in order to write
+    // to themselves as well. First, find such globals.
+    NameSet globalsToRemoveSets;
     for (auto& global : module->globals) {
       auto& info = map[global->name];
 
@@ -431,8 +451,8 @@ struct SimplifyGlobals : public Pass {
       // our logic is wrong somewhere.
       assert(info.written >= info.readOnlyToWrite);
 
-      if (!info.read || onlyReadOnlyToWrite) {
-        unnecessaryGlobals.insert(global->name);
+      if (!info.read || !info.nonInitWritten || onlyReadOnlyToWrite) {
+        globalsToRemoveSets.insert(global->name);
 
         // We can now mark this global as immutable, and un-written, since we
         // are about to remove all the operations on it.
@@ -462,7 +482,7 @@ struct SimplifyGlobals : public Pass {
     // then see that since the global has no writes, it is a constant, which
     // will lead to removal of gets, and after removing them, the global itself
     // will be removed as well.
-    GlobalSetRemover(&unnecessaryGlobals, optimize).run(runner, module);
+    GlobalSetRemover(&globalsToRemoveSets, optimize).run(runner, module);
 
     return more;
   }
