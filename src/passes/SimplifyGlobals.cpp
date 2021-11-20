@@ -106,10 +106,10 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     // one. If there is anything but identical constants in both the initial
     // value and the written value then we must assume that.
     auto* global = getModule()->getGlobal(curr->name);
-    if (global->imported() ||
-        !Properties::isConstantExpression(curr->value) ||
+    if (global->imported() || !Properties::isConstantExpression(curr->value) ||
         !Properties::isConstantExpression(global->init) ||
-        Properties::getLiterals(curr->value) != Properties::getLiterals(global->init)) {
+        Properties::getLiterals(curr->value) !=
+          Properties::getLiterals(global->init)) {
       (*infos)[curr->name].nonInitWritten = true;
     }
   }
