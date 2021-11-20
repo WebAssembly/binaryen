@@ -70,8 +70,7 @@ struct Fuzzer {
   void checkSubtypes(const std::vector<HeapType>& types,
                      const std::vector<std::vector<Index>>& subtypeIndices) {
     for (size_t super = 0; super < types.size(); ++super) {
-      for (size_t j = 0; j < subtypeIndices[super].size(); ++j) {
-        size_t sub = subtypeIndices[super][j];
+      for (auto sub : subtypeIndices[super]) {
         if (!HeapType::isSubType(types[sub], types[super])) {
           Fatal() << "HeapType " << sub << " should be a subtype of HeapType "
                   << super << " but is not!\n"
