@@ -64,12 +64,10 @@ std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
   return ret;
 }
 
-std::vector<std::string> PassRegistry::getRegisteredNames(bool includeHidden) {
+std::vector<std::string> PassRegistry::getRegisteredNames() {
   std::vector<std::string> ret;
   for (auto pair : passInfos) {
-    if (includeHidden || !pair.second.hidden) {
-      ret.push_back(pair.first);
-    }
+    ret.push_back(pair.first);
   }
   return ret;
 }
@@ -77,6 +75,11 @@ std::vector<std::string> PassRegistry::getRegisteredNames(bool includeHidden) {
 std::string PassRegistry::getPassDescription(std::string name) {
   assert(passInfos.find(name) != passInfos.end());
   return passInfos[name].description;
+}
+
+bool PassRegistry::isPassHidden(std::string name) {
+  assert(passInfos.find(name) != passInfos.end());
+  return passInfos[name].hidden;
 }
 
 // PassRunner
