@@ -376,7 +376,11 @@
       (do)
       (catch $e-struct.A
         (throw $e-struct.A
-          ;; The pop is within a block, so it will be handled
+          ;; The pop is within a block, so it will be handled. But because this
+          ;; pop is of non-defaultable type, we have to fix it up using
+          ;; TypeUpdating::handleNonDefaultableLocals: the new local created is
+          ;; converted to (ref null $struct.A) type and we read the local using
+          ;; 'ref.as_non_null'.
           (block (result (ref $struct.A))
             (pop (ref $struct.A))
           )
