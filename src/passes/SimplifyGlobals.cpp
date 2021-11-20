@@ -102,15 +102,15 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   void visitGlobalSet(GlobalSet* curr) {
     (*infos)[curr->name].written++;
 
-    // If the global is not imported, there is an initial value and we can check
-    // if a value different from it may be written here.
+    // Check if there is a write of a value that may differ from the initial
+    // one. If there is anything but identical constants in both the initial
+    // value and the written value then we must assume that.
     auto* global = getModule()->getGlobal(curr->name);
-    if (!global->imported()) {
-      if (!Properties::isConstantExpression(curr->value) ||
-          !Properties::isConstantExpression(global->init) ||
-          Properties::getLiterals(curr->value) != Properties::getLiterals(global->init)) {
-        (*infos)[curr->name].nonInitWritten = true;
-      }
+    if (global->imported() ||
+        !Properties::isConstantExpression(curr->value) ||
+        !Properties::isConstantExpression(global->init) ||
+        Properties::getLiterals(curr->value) != Properties::getLiterals(global->init)) {
+      (*infos)[curr->name].nonInitWritten = true;
     }
   }
 
