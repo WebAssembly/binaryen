@@ -39,8 +39,8 @@ struct PassRegistry {
   typedef std::function<Pass*()> Creator;
 
   void registerPass(const char* name, const char* description, Creator create);
-  // Register a pass that's used for internal testing. These passes do not show up
-  // in --help.
+  // Register a pass that's used for internal testing. These passes do not show
+  // up in --help.
   void
   registerTestPass(const char* name, const char* description, Creator create);
   std::unique_ptr<Pass> createPass(std::string name);
