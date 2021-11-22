@@ -2542,6 +2542,16 @@ private:
         }
       }
     }
+    if (auto* res = preserveOr(curr)) {
+      return res;
+    }
+    return nullptr;
+  }
+
+  // Aggregate rules matched by following formula F(x) | F(y) => F(x | y)
+  Expression* preserveOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
     {
       // (i32(x) != 0) | (i32(y) != 0)   ==>   i32(x | y) != 0
       // (i64(x) != 0) | (i64(y) != 0)   ==>   i64(x | y) != 0
