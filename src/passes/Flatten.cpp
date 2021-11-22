@@ -41,6 +41,7 @@
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/eh-utils.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
 #include <ir/type-updating.h>
@@ -196,7 +197,8 @@ struct Flatten
         // remove a try value
         Expression* rep = tryy;
         auto* originalBody = tryy->body;
-        auto* originalCatchBody = tryy->catchBody;
+        std::vector<Expression*> originalCatchBodies(tryy->catchBodies.begin(),
+                                                     tryy->catchBodies.end());
         auto type = tryy->type;
         Expression* prelude = nullptr;
         if (type.isConcrete()) {
@@ -204,8 +206,9 @@ struct Flatten
           if (tryy->body->type.isConcrete()) {
             tryy->body = builder.makeLocalSet(temp, tryy->body);
           }
-          if (tryy->catchBody->type.isConcrete()) {
-            tryy->catchBody = builder.makeLocalSet(temp, tryy->catchBody);
+          for (Index i = 0; i < tryy->catchBodies.size(); i++) {
+            tryy->catchBodies[i] =
+              builder.makeLocalSet(temp, tryy->catchBodies[i]);
           }
           // the whole try is now a prelude
           prelude = tryy;
@@ -213,8 +216,10 @@ struct Flatten
           rep = builder.makeLocalGet(temp, type);
         }
         tryy->body = getPreludesWithExpression(originalBody, tryy->body);
-        tryy->catchBody =
-          getPreludesWithExpression(originalCatchBody, tryy->catchBody);
+        for (Index i = 0; i < tryy->catchBodies.size(); i++) {
+          tryy->catchBodies[i] = getPreludesWithExpression(
+            originalCatchBodies[i], tryy->catchBodies[i]);
+        }
         tryy->finalize();
         if (prelude) {
           ReFinalizeNode().visit(prelude);
