@@ -34,9 +34,9 @@
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "wasm2c-wrapper.h"
 
 #define DEBUG_TYPE "opt"
 
@@ -61,7 +61,7 @@ static std::string runCommand(std::string command) {
 
 static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
   for (auto& pass : passes) {
-    if (pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf") {
+    if (PassRunner::passRemovesDebugInfo(pass)) {
       return true;
     }
   }
@@ -78,15 +78,15 @@ int main(int argc, const char* argv[]) {
   bool converge = false;
   bool fuzzExecBefore = false;
   bool fuzzExecAfter = false;
-  bool fuzzBinary = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
+  std::string initialFuzz;
   bool fuzzPasses = false;
-  bool fuzzNaNs = true;
   bool fuzzMemory = true;
   bool fuzzOOB = true;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
+  std::string emitWasm2CWrapper;
   std::string inputSourceMapFilename;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
@@ -125,12 +125,6 @@ int main(int argc, const char* argv[]) {
          [&](Options* o, const std::string& arguments) {
            fuzzExecBefore = fuzzExecAfter = true;
          })
-    .add("--fuzz-binary",
-         "-fb",
-         "Convert to binary and back after optimizations and before fuzz-exec, "
-         "helping fuzzing find binary format bugs",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) { fuzzBinary = true; })
     .add("--extra-fuzz-command",
          "-efc",
          "An extra command to run on the output before and after optimizing. "
@@ -147,18 +141,19 @@ int main(int argc, const char* argv[]) {
       "fuzzing",
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { translateToFuzz = true; })
+    .add("--initial-fuzz",
+         "-if",
+         "Initial wasm content in translate-to-fuzz (-ttf) mode",
+         Options::Arguments::One,
+         [&initialFuzz](Options* o, const std::string& argument) {
+           initialFuzz = argument;
+         })
     .add("--fuzz-passes",
          "-fp",
          "Pick a random set of passes to run, useful for fuzzing. this depends "
          "on translate-to-fuzz (it picks the passes from the input)",
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzPasses = true; })
-    .add("--no-fuzz-nans",
-         "",
-         "don't emit NaNs when fuzzing, and remove them at runtime as well "
-         "(helps avoid nondeterminism between VMs)",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) { fuzzNaNs = false; })
     .add("--no-fuzz-memory",
          "",
          "don't emit memory ops when fuzzing",
@@ -184,6 +179,14 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&](Options* o, const std::string& arguments) {
            emitSpecWrapper = arguments;
+         })
+    .add("--emit-wasm2c-wrapper",
+         "-esw",
+         "Emit a C wrapper file that can run the wasm after it is compiled "
+         "with wasm2c, useful for fuzzing",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& arguments) {
+           emitWasm2CWrapper = arguments;
          })
     .add("--input-source-map",
          "-ism",
@@ -214,54 +217,67 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   Module wasm;
+  options.applyFeatures(wasm);
 
   BYN_TRACE("reading...\n");
 
-  if (!translateToFuzz) {
+  auto exitOnInvalidWasm = [&](const char* message) {
+    // If the user asked to print the module, print it even if invalid,
+    // as otherwise there is no way to print the broken module (the pass
+    // to print would not be reached).
+    if (std::find(options.passes.begin(), options.passes.end(), "print") !=
+        options.passes.end()) {
+      std::cout << wasm << '\n';
+    }
+    Fatal() << message;
+  };
+
+  // In normal (non-translate-to-fuzz) mode we read the input file. In
+  // translate-to-fuzz mode the input file is the random data, and used later
+  // down in TranslateToFuzzReader, but there is also an optional initial fuzz
+  // file that if it exists we read it, then add more fuzz on top.
+  if (!translateToFuzz || initialFuzz.size()) {
+    std::string inputFile =
+      translateToFuzz ? initialFuzz : options.extra["infile"];
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
     // asked to remove it.
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
+    reader.setProfile(options.profile);
     try {
-      reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
+      reader.read(inputFile, wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing input";
+      Fatal() << "error parsing wasm";
     } catch (MapParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error in parsing wasm source map";
+      Fatal() << "error parsing wasm source map";
     } catch (std::bad_alloc&) {
-      Fatal() << "error in building module, std::bad_alloc (possibly invalid "
+      Fatal() << "error building module, std::bad_alloc (possibly invalid "
                  "request for silly amounts of memory)";
     }
 
-    options.applyFeatures(wasm);
-
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        WasmPrinter::printModule(&wasm);
-        Fatal() << "error in validating input";
+        exitOnInvalidWasm("error validating input");
       }
     }
-  } else {
-    // translate-to-fuzz
-    options.applyFeatures(wasm);
+  }
+  if (translateToFuzz) {
     TranslateToFuzzReader reader(wasm, options.extra["infile"]);
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
-    reader.setAllowNaNs(fuzzNaNs);
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        WasmPrinter::printModule(&wasm);
-        std::cerr << "translate-to-fuzz must always generate a valid module";
-        abort();
+        std::cout << wasm << '\n';
+        Fatal() << "error after translate-to-fuzz";
       }
     }
   }
@@ -284,11 +300,16 @@ int main(int argc, const char* argv[]) {
     outfile << generateJSWrapper(wasm);
     outfile.close();
   }
-
   if (emitSpecWrapper.size() > 0) {
     std::ofstream outfile;
     outfile.open(emitSpecWrapper, std::ofstream::out);
     outfile << generateSpecWrapper(wasm);
+    outfile.close();
+  }
+  if (emitWasm2CWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitWasm2CWrapper, std::ofstream::out);
+    outfile << generateWasm2CWrapper(wasm);
     outfile.close();
   }
 
@@ -304,29 +325,6 @@ int main(int argc, const char* argv[]) {
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
 
-  Module* curr = &wasm;
-  Module other;
-
-  if (fuzzExecAfter && fuzzBinary) {
-    BufferWithRandomAccess buffer;
-    // write the binary
-    WasmBinaryWriter writer(&wasm, buffer);
-    writer.write();
-    // read the binary
-    auto input = buffer.getAsChars();
-    WasmBinaryBuilder parser(other, input);
-    parser.read();
-    options.applyFeatures(other);
-    if (options.passOptions.validate) {
-      bool valid = WasmValidator().validate(other);
-      if (!valid) {
-        WasmPrinter::printModule(&other);
-      }
-      assert(valid);
-    }
-    curr = &other;
-  }
-
   if (!options.runningPasses()) {
     if (!options.quiet) {
       std::cerr << "warning: no passes specified, not doing any work\n";
@@ -334,13 +332,12 @@ int main(int argc, const char* argv[]) {
   } else {
     BYN_TRACE("running passes...\n");
     auto runPasses = [&]() {
-      options.runPasses(*curr);
+      options.runPasses(wasm);
       if (options.passOptions.validate) {
-        bool valid = WasmValidator().validate(*curr);
+        bool valid = WasmValidator().validate(wasm);
         if (!valid) {
-          WasmPrinter::printModule(&*curr);
+          exitOnInvalidWasm("error after opts");
         }
-        assert(valid);
       }
     };
     runPasses();
@@ -349,7 +346,7 @@ int main(int argc, const char* argv[]) {
       // size no longer decreasing.
       auto getSize = [&]() {
         BufferWithRandomAccess buffer;
-        WasmBinaryWriter writer(curr, buffer);
+        WasmBinaryWriter writer(&wasm, buffer);
         writer.write();
         return buffer.size();
       };
@@ -367,7 +364,7 @@ int main(int argc, const char* argv[]) {
   }
 
   if (fuzzExecAfter) {
-    results.check(*curr);
+    results.check(wasm);
   }
 
   if (options.extra.count("output") == 0) {
@@ -385,14 +382,13 @@ int main(int argc, const char* argv[]) {
     writer.setSourceMapFilename(outputSourceMapFilename);
     writer.setSourceMapUrl(outputSourceMapUrl);
   }
-  writer.write(*curr, options.extra["output"]);
+  writer.write(wasm, options.extra["output"]);
 
   if (extraFuzzCommand.size() > 0) {
     auto secondOutput = runCommand(extraFuzzCommand);
     std::cout << "[extra-fuzz-command second output:]\n" << firstOutput << '\n';
     if (firstOutput != secondOutput) {
-      std::cerr << "extra fuzz command output differs\n";
-      abort();
+      Fatal() << "extra fuzz command output differs\n";
     }
   }
   return 0;

@@ -2,34 +2,41 @@
 
 import path from 'path';
 import process from 'process';
-import Module from 'module';
-
-const builtins = Module.builtinModules;
 
 const baseURL = new URL('file://');
 const binaryen_root = path.dirname(path.dirname(process.cwd()));
 baseURL.pathname = `${binaryen_root}/`;
 
-
-export function resolve(specifier, parentModuleURL = baseURL, defaultResolve) {
-  if (builtins.includes(specifier)) {
-    return {
-      url: specifier,
-      format: 'builtin'
-    };
-  }
-  // Resolve special modules used in our test suite.
-  if (specifier == 'spectest' || specifier == 'env' || specifier == 'mod.ule') {
-    const resolved = new URL('./scripts/test/' + specifier + '.js', baseURL);
-    return {
-      url: resolved.href,
-      format: 'module'
-    };
-  }
-
-  const resolved = new URL(specifier, parentModuleURL);
-  return {
-    url: resolved.href,
+const specialTestSuiteModules = {
+  'spectest': {
+    url: new URL('scripts/test/spectest.js', baseURL).href,
     format: 'module'
-  };
+  },
+  'env': {
+    url: new URL('scripts/test/env.js', baseURL).href,
+    format: 'module'
+  },
+  'mod.ule': {
+    url: new URL('scripts/test/mod.ule.js', baseURL).href,
+    format: 'module'
+  }
+};
+
+export async function resolve(specifier, context, defaultResolve) {
+  const specialModule = specialTestSuiteModules[specifier];
+  if (specialModule) {
+    return specialModule;
+  }
+  return defaultResolve(specifier, context, defaultResolve);
+}
+
+export async function getFormat(url, context, defaultGetFormat) {
+  const specifiers = Object.keys(specialTestSuiteModules);
+  for (let i = 0, k = specifiers.length; i < k; ++i) {
+    const specialModule = specialTestSuiteModules[specifiers[i]];
+    if (specialModule.url == url) {
+      return specialModule;
+    }
+  }
+  return defaultGetFormat(url, context, defaultGetFormat);
 }

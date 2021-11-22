@@ -27,6 +27,7 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   auto AbbrevSetPtr = DCtx.getDebugAbbrev();
   if (AbbrevSetPtr) {
     for (auto AbbrvDeclSet : *AbbrevSetPtr) {
+      auto ListOffset = AbbrvDeclSet.second.getOffset();
       for (auto AbbrvDecl : AbbrvDeclSet.second) {
         DWARFYAML::Abbrev Abbrv;
         Abbrv.Code = AbbrvDecl.getCode();
@@ -41,8 +42,17 @@ void dumpDebugAbbrev(DWARFContext &DCtx, DWARFYAML::Data &Y) {
             AttAbrv.Value = Attribute.getImplicitConstValue();
           Abbrv.Attributes.push_back(AttAbrv);
         }
+        Abbrv.ListOffset = ListOffset;
         Y.AbbrevDecls.push_back(Abbrv);
       }
+      // XXX BINARYEN: null-terminate the DeclSet. This is needed to separate
+      // DeclSets from each other, and to null-terminate the entire list
+      // (LLVM works with or without this, but other decoders may error, see
+      //  https://bugs.llvm.org/show_bug.cgi?id=44511).
+      DWARFYAML::Abbrev Abbrv;
+      Abbrv.Code = 0;
+      Abbrv.Tag = dwarf::Tag(0);
+      Y.AbbrevDecls.push_back(Abbrv);
     }
   }
 }
@@ -102,6 +112,40 @@ void dumpDebugRanges(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
     range.End = 0;
     range.SectionIndex = -1;
     Y.Ranges.push_back(range);
+  }
+}
+
+void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
+  // This blindly grabs the first CU, which should be ok since they all have
+  // the same address size?
+  auto CU = DCtx.normal_units().begin()->get();
+  uint8_t savedAddressByteSize = CU->getFormParams().AddrSize;  // XXX BINARYEN
+  DWARFDataExtractor locsData(DCtx.getDWARFObj(), DCtx.getDWARFObj().getLocSection(),
+                              DCtx.isLittleEndian(), savedAddressByteSize);
+  uint64_t offset = 0;
+  DWARFDebugLoc locList;
+  while (locsData.isValidOffset(offset)) {
+    uint64_t locListOffset = offset; // XXX BINARYEN
+    auto list = locList.parseOneLocationList(locsData, &offset);
+    if (!list) {
+      errs() << "debug_loc error\n";
+      exit(1);
+    }
+    for (auto& entry : list.get().Entries) {
+      DWARFYAML::Loc loc;
+      loc.Start = entry.Begin;
+      loc.End = entry.End;
+      for (auto x : entry.Loc) {
+        loc.Location.push_back(x);
+      }
+      loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
+      Y.Locs.push_back(loc);
+    }
+    DWARFYAML::Loc loc;
+    loc.Start = 0;
+    loc.End = 0;
+    loc.CompileUnitOffset = locListOffset; // XXX BINARYEN
+    Y.Locs.push_back(loc);
   }
 }
 
@@ -207,11 +251,16 @@ void dumpDebugInfo(DWARFContext &DCtx, DWARFYAML::Data &Y) {
             case dwarf::DW_FORM_data2:
             case dwarf::DW_FORM_data4:
             case dwarf::DW_FORM_data8:
-            case dwarf::DW_FORM_sdata:
             case dwarf::DW_FORM_udata:
             case dwarf::DW_FORM_ref_sup4:
             case dwarf::DW_FORM_ref_sup8:
               if (auto Val = FormValue.getValue().getAsUnsignedConstant())
+                NewValue.Value = Val.getValue();
+              break;
+            // XXX BINARYEN: sdata is signed, and FormValue won't return it as
+            //               unsigned (it returns an empty value).
+            case dwarf::DW_FORM_sdata:
+              if (auto Val = FormValue.getValue().getAsSignedConstant())
                 NewValue.Value = Val.getValue();
               break;
             case dwarf::DW_FORM_string:
@@ -276,6 +325,8 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
       DataExtractor LineData(DCtx.getDWARFObj().getLineSection().Data,
                              DCtx.isLittleEndian(), CU->getAddressByteSize());
       uint64_t Offset = *StmtOffset;
+      DebugLines.Position = Offset;
+
       dumpInitialLength(LineData, Offset, DebugLines.Length);
       uint64_t LineTableLength = DebugLines.Length.getLength();
       uint64_t SizeOfPrologueLength = DebugLines.Length.isDWARF64() ? 8 : 4;
@@ -382,6 +433,8 @@ std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   dumpDebugRanges(DCtx, Y); // XXX BINARYEN
   dumpDebugPubSections(DCtx, Y);
   dumpDebugInfo(DCtx, Y);
+  // dumpDebugLoc relies on the address size being known from dumpDebugInfo.
+  dumpDebugLoc(DCtx, Y); // XXX BINARYEN
   dumpDebugLines(DCtx, Y);
   return obj2yaml_error::success;
 }

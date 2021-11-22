@@ -58,7 +58,7 @@ Options::Options(const std::string& command, const std::string& description)
       "Output version information and exit",
       Arguments::Zero,
       [command](Options*, const std::string&) {
-        std::cout << command << " " << CMAKE_PROJECT_VERSION << "\n";
+        std::cout << command << " version " << PROJECT_VERSION << "\n";
         exit(0);
       });
   add("--help",
@@ -79,6 +79,7 @@ Options::Options(const std::string& command, const std::string& description)
             std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
         for (const auto& o : options) {
+          std::cout << '\n';
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
           std::cout << "  " << o.longName << (long_n_short ? ',' : ' ')
@@ -123,30 +124,34 @@ void Options::parse(int argc, const char* argv[]) {
   assert(argc > 0 && "expect at least program name as an argument");
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string& s) {
-    for (size_t i = 0;; ++i) {
+    for (size_t i = 0; i < s.size(); ++i) {
       if (s[i] != '-') {
         return i;
       }
     }
+    return s.size();
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
     std::string currentOption = argv[i];
 
-    if (dashes(currentOption) == 0) {
+    // "-" alone is a positional option
+    if (dashes(currentOption) == 0 || currentOption == "-") {
       // Positional.
       switch (positional) {
         case Arguments::Zero:
+          // Optional arguments must use --flag=A format, and not separated by
+          // spaces (which would be ambiguous).
+        case Arguments::Optional:
           std::cerr << "Unexpected positional argument '" << currentOption
                     << "'\n";
           exit(EXIT_FAILURE);
         case Arguments::One:
-        case Arguments::Optional:
           if (positionalsSeen) {
             std::cerr << "Unexpected second positional argument '"
                       << currentOption << "' for " << positionalName << '\n';
             exit(EXIT_FAILURE);
           }
-        // Fallthrough.
+          [[fallthrough]];
         case Arguments::N:
           positionalAction(this, currentOption);
           ++positionalsSeen;
@@ -186,7 +191,7 @@ void Options::parse(int argc, const char* argv[]) {
                     << currentOption << "'\n";
           exit(EXIT_FAILURE);
         }
-      // Fallthrough.
+        [[fallthrough]];
       case Arguments::N:
         if (!argument.size()) {
           if (i + 1 == e) {
@@ -198,11 +203,6 @@ void Options::parse(int argc, const char* argv[]) {
         }
         break;
       case Arguments::Optional:
-        if (!argument.size()) {
-          if (i + 1 != e) {
-            argument = argv[++i];
-          }
-        }
         break;
     }
     option->action(this, argument);

@@ -17,6 +17,7 @@
 #include "ir/iteration.h"
 #include "ir/load-utils.h"
 #include "ir/utils.h"
+#include "shared-constants.h"
 #include "support/hash.h"
 #include "support/small_vector.h"
 #include "wasm-traversal.h"
@@ -59,7 +60,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
     }
   }
   // The value might be used, so it depends on if the function returns
-  return func->sig.results != Type::none;
+  return func->getResults() != Type::none;
 }
 
 // Checks if a value is dropped.
@@ -96,148 +97,6 @@ bool ExpressionAnalyzer::isResultDropped(ExpressionStack& stack) {
   return false;
 }
 
-//
-// Allows visiting the immediate fields of the expression. This is
-// useful for comparisons and hashing.
-//
-// The passed-in visitor object must implement:
-//  * visitScopeName - a Name that represents a block or loop scope
-//  * visitNonScopeName - a non-scope name
-//  * visitInt - anything that has a short enumeration, including
-//               opcodes, # of bytes in a load, bools, etc. - must be
-//               guaranteed to fit in an int32 or less.
-//  * visitLiteral - a Literal
-//  * visitType - a Type
-//  * visitIndex - an Index
-//  * visitAddress - an Address
-//
-
-namespace {
-
-template<typename T> void visitImmediates(Expression* curr, T& visitor) {
-  struct ImmediateVisitor : public OverriddenVisitor<ImmediateVisitor> {
-    T& visitor;
-
-    ImmediateVisitor(Expression* curr, T& visitor) : visitor(visitor) {
-      this->visit(curr);
-    }
-
-    void visitBlock(Block* curr) { visitor.visitScopeName(curr->name); }
-    void visitIf(If* curr) {}
-    void visitLoop(Loop* curr) { visitor.visitScopeName(curr->name); }
-    void visitBreak(Break* curr) { visitor.visitScopeName(curr->name); }
-    void visitSwitch(Switch* curr) {
-      for (auto target : curr->targets) {
-        visitor.visitScopeName(target);
-      }
-      visitor.visitScopeName(curr->default_);
-    }
-    void visitCall(Call* curr) {
-      visitor.visitNonScopeName(curr->target);
-      visitor.visitInt(curr->isReturn);
-    }
-    void visitCallIndirect(CallIndirect* curr) {
-      visitor.visitInt(curr->sig.params.getID());
-      visitor.visitInt(curr->sig.results.getID());
-      visitor.visitInt(curr->isReturn);
-    }
-    void visitLocalGet(LocalGet* curr) { visitor.visitIndex(curr->index); }
-    void visitLocalSet(LocalSet* curr) { visitor.visitIndex(curr->index); }
-    void visitGlobalGet(GlobalGet* curr) {
-      visitor.visitNonScopeName(curr->name);
-    }
-    void visitGlobalSet(GlobalSet* curr) {
-      visitor.visitNonScopeName(curr->name);
-    }
-    void visitLoad(Load* curr) {
-      visitor.visitInt(curr->bytes);
-      if (curr->type != Type::unreachable &&
-          curr->bytes < curr->type.getByteSize()) {
-        visitor.visitInt(curr->signed_);
-      }
-      visitor.visitAddress(curr->offset);
-      visitor.visitAddress(curr->align);
-      visitor.visitInt(curr->isAtomic);
-    }
-    void visitStore(Store* curr) {
-      visitor.visitInt(curr->bytes);
-      visitor.visitAddress(curr->offset);
-      visitor.visitAddress(curr->align);
-      visitor.visitInt(curr->isAtomic);
-      visitor.visitInt(curr->valueType.getID());
-    }
-    void visitAtomicRMW(AtomicRMW* curr) {
-      visitor.visitInt(curr->op);
-      visitor.visitInt(curr->bytes);
-      visitor.visitAddress(curr->offset);
-    }
-    void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-      visitor.visitInt(curr->bytes);
-      visitor.visitAddress(curr->offset);
-    }
-    void visitAtomicWait(AtomicWait* curr) {
-      visitor.visitAddress(curr->offset);
-      visitor.visitType(curr->expectedType);
-    }
-    void visitAtomicNotify(AtomicNotify* curr) {
-      visitor.visitAddress(curr->offset);
-    }
-    void visitAtomicFence(AtomicFence* curr) { visitor.visitInt(curr->order); }
-    void visitSIMDExtract(SIMDExtract* curr) {
-      visitor.visitInt(curr->op);
-      visitor.visitInt(curr->index);
-    }
-    void visitSIMDReplace(SIMDReplace* curr) {
-      visitor.visitInt(curr->op);
-      visitor.visitInt(curr->index);
-    }
-    void visitSIMDShuffle(SIMDShuffle* curr) {
-      for (auto x : curr->mask) {
-        visitor.visitInt(x);
-      }
-    }
-    void visitSIMDTernary(SIMDTernary* curr) { visitor.visitInt(curr->op); }
-    void visitSIMDShift(SIMDShift* curr) { visitor.visitInt(curr->op); }
-    void visitSIMDLoad(SIMDLoad* curr) {
-      visitor.visitInt(curr->op);
-      visitor.visitAddress(curr->offset);
-      visitor.visitAddress(curr->align);
-    }
-    void visitMemoryInit(MemoryInit* curr) {
-      visitor.visitIndex(curr->segment);
-    }
-    void visitDataDrop(DataDrop* curr) { visitor.visitIndex(curr->segment); }
-    void visitMemoryCopy(MemoryCopy* curr) {}
-    void visitMemoryFill(MemoryFill* curr) {}
-    void visitConst(Const* curr) { visitor.visitLiteral(curr->value); }
-    void visitUnary(Unary* curr) { visitor.visitInt(curr->op); }
-    void visitBinary(Binary* curr) { visitor.visitInt(curr->op); }
-    void visitSelect(Select* curr) {}
-    void visitDrop(Drop* curr) {}
-    void visitReturn(Return* curr) {}
-    void visitHost(Host* curr) {
-      visitor.visitInt(curr->op);
-      visitor.visitNonScopeName(curr->nameOperand);
-    }
-    void visitRefNull(RefNull* curr) {}
-    void visitRefIsNull(RefIsNull* curr) {}
-    void visitRefFunc(RefFunc* curr) { visitor.visitNonScopeName(curr->func); }
-    void visitTry(Try* curr) {}
-    void visitThrow(Throw* curr) { visitor.visitNonScopeName(curr->event); }
-    void visitRethrow(Rethrow* curr) {}
-    void visitBrOnExn(BrOnExn* curr) {
-      visitor.visitScopeName(curr->name);
-      visitor.visitNonScopeName(curr->event);
-    }
-    void visitNop(Nop* curr) {}
-    void visitUnreachable(Unreachable* curr) {}
-    void visitPush(Push* curr) {}
-    void visitPop(Pop* curr) {}
-  } singleton(curr, visitor);
-}
-
-} // namespace
-
 bool ExpressionAnalyzer::flexibleEqual(Expression* left,
                                        Expression* right,
                                        ExprComparer comparer) {
@@ -246,80 +105,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
     std::map<Name, Name> rightNames;
     std::vector<Expression*> leftStack;
     std::vector<Expression*> rightStack;
-
-    struct Immediates {
-      Comparer& parent;
-
-      Immediates(Comparer& parent) : parent(parent) {}
-
-      SmallVector<Name, 1> scopeNames;
-      SmallVector<Name, 1> nonScopeNames;
-      SmallVector<int32_t, 3> ints;
-      SmallVector<Literal, 1> literals;
-      SmallVector<Type, 1> types;
-      SmallVector<Index, 1> indexes;
-      SmallVector<Address, 2> addresses;
-
-      void visitScopeName(Name curr) { scopeNames.push_back(curr); }
-      void visitNonScopeName(Name curr) { nonScopeNames.push_back(curr); }
-      void visitInt(int32_t curr) { ints.push_back(curr); }
-      void visitLiteral(Literal curr) { literals.push_back(curr); }
-      void visitType(Type curr) { types.push_back(curr); }
-      void visitIndex(Index curr) { indexes.push_back(curr); }
-      void visitAddress(Address curr) { addresses.push_back(curr); }
-
-      // Comparison is by value, except for names, which must match.
-      bool operator==(const Immediates& other) {
-        if (scopeNames.size() != other.scopeNames.size()) {
-          return false;
-        }
-        for (Index i = 0; i < scopeNames.size(); i++) {
-          auto leftName = scopeNames[i];
-          auto rightName = other.scopeNames[i];
-          auto iter = parent.rightNames.find(leftName);
-          // If it's not found, that means it was defined out of the expression
-          // being compared, in which case we can just treat it literally - it
-          // must be exactly identical.
-          if (iter != parent.rightNames.end()) {
-            leftName = iter->second;
-          }
-          if (leftName != rightName) {
-            return false;
-          }
-        }
-        if (nonScopeNames != other.nonScopeNames) {
-          return false;
-        }
-        if (ints != other.ints) {
-          return false;
-        }
-        if (literals != other.literals) {
-          return false;
-        }
-        if (types != other.types) {
-          return false;
-        }
-        if (indexes != other.indexes) {
-          return false;
-        }
-        if (addresses != other.addresses) {
-          return false;
-        }
-        return true;
-      }
-
-      bool operator!=(const Immediates& other) { return !(*this == other); }
-
-      void clear() {
-        scopeNames.clear();
-        nonScopeNames.clear();
-        ints.clear();
-        literals.clear();
-        types.clear();
-        indexes.clear();
-        addresses.clear();
-      }
-    };
 
     bool noteNames(Name left, Name right) {
       if (left.is() != right.is()) {
@@ -333,8 +118,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
     }
 
     bool compare(Expression* left, Expression* right, ExprComparer comparer) {
-      Immediates leftImmediates(*this), rightImmediates(*this);
-
       // The empty name is the same on both sides.
       rightNames[Name()] = Name();
 
@@ -352,45 +135,16 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
         if (!left) {
           continue;
         }
+        // There are actual expressions to compare here. Start with the custom
+        // comparer function that was provided.
         if (comparer(left, right)) {
-          continue; // comparison hook, before all the rest
+          continue;
         }
-        // continue with normal structural comparison
-        if (left->_id != right->_id) {
+        if (left->type != right->type) {
           return false;
         }
-        // Blocks and loops introduce scoping.
-        if (auto* block = left->dynCast<Block>()) {
-          if (!noteNames(block->name, right->cast<Block>()->name)) {
-            return false;
-          }
-        } else if (auto* loop = left->dynCast<Loop>()) {
-          if (!noteNames(loop->name, right->cast<Loop>()->name)) {
-            return false;
-          }
-        } else {
-          // For all other nodes, compare their immediate values
-          visitImmediates(left, leftImmediates);
-          visitImmediates(right, rightImmediates);
-          if (leftImmediates != rightImmediates) {
-            return false;
-          }
-          leftImmediates.clear();
-          rightImmediates.clear();
-        }
-        // Add child nodes.
-        Index counter = 0;
-        for (auto* child : ChildIterator(left)) {
-          leftStack.push_back(child);
-          counter++;
-        }
-        for (auto* child : ChildIterator(right)) {
-          rightStack.push_back(child);
-          counter--;
-        }
-        // The number of child nodes must match (e.g. return has an optional
-        // one).
-        if (counter != 0) {
+        // Do the actual comparison, updating the names and stacks accordingly.
+        if (!compareNodes(left, right)) {
           return false;
         }
       }
@@ -399,98 +153,226 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
       }
       return true;
     }
+
+    bool compareNodes(Expression* left, Expression* right) {
+      if (left->_id != right->_id) {
+        return false;
+      }
+
+#define DELEGATE_ID left->_id
+
+// Create cast versions of it for later operations.
+#define DELEGATE_START(id)                                                     \
+  auto* castLeft = left->cast<id>();                                           \
+  WASM_UNUSED(castLeft);                                                       \
+  auto* castRight = right->cast<id>();                                         \
+  WASM_UNUSED(castRight);
+
+// Handle each type of field, comparing it appropriately.
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  leftStack.push_back(castLeft->field);                                        \
+  rightStack.push_back(castRight->field);
+
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
+    return false;                                                              \
+  }                                                                            \
+  for (auto* child : castLeft->field) {                                        \
+    leftStack.push_back(child);                                                \
+  }                                                                            \
+  for (auto* child : castRight->field) {                                       \
+    rightStack.push_back(child);                                               \
+  }
+
+#define COMPARE_FIELD(field)                                                   \
+  if (castLeft->field != castRight->field) {                                   \
+    return false;                                                              \
+  }
+
+#define DELEGATE_FIELD_INT(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_LITERAL(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_NAME(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_SIGNATURE(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_TYPE(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_ADDRESS(id, field) COMPARE_FIELD(field)
+
+#define COMPARE_LIST(field)                                                    \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
+    return false;                                                              \
+  }                                                                            \
+  for (Index i = 0; i < castLeft->field.size(); i++) {                         \
+    if (castLeft->field[i] != castRight->field[i]) {                           \
+      return false;                                                            \
+    }                                                                          \
+  }
+
+#define DELEGATE_FIELD_INT_ARRAY(id, field) COMPARE_LIST(field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field) COMPARE_LIST(field)
+
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
+  if (castLeft->field.is() != castRight->field.is()) {                         \
+    return false;                                                              \
+  }                                                                            \
+  rightNames[castLeft->field] = castRight->field;
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
+  if (!compareNames(castLeft->field, castRight->field)) {                      \
+    return false;                                                              \
+  }
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
+    return false;                                                              \
+  }                                                                            \
+  for (Index i = 0; i < castLeft->field.size(); i++) {                         \
+    if (!compareNames(castLeft->field[i], castRight->field[i])) {              \
+      return false;                                                            \
+    }                                                                          \
+  }
+
+#include "wasm-delegations-fields.def"
+
+      return true;
+    }
+
+    bool compareNames(Name left, Name right) {
+      auto iter = rightNames.find(left);
+      // If it's not found, that means it was defined out of the expression
+      // being compared, in which case we can just treat it literally - it
+      // must be exactly identical.
+      if (iter != rightNames.end()) {
+        left = iter->second;
+      }
+      return left == right;
+    }
   };
 
   return Comparer().compare(left, right, comparer);
 }
 
-// hash an expression, ignoring superficial details like specific internal names
-HashType ExpressionAnalyzer::hash(Expression* curr) {
-  struct Hasher {
-    HashType digest = 0;
+namespace {
 
-    Index internalCounter = 0;
-    // for each internal name, its unique id
-    std::map<Name, Index> internalNames;
-    ExpressionStack stack;
+struct Hasher {
+  bool visitChildren;
 
-    void noteScopeName(Name curr) {
-      if (curr.is()) {
-        internalNames[curr] = internalCounter++;
+  size_t digest = wasm::hash(0);
+
+  Index internalCounter = 0;
+  // for each internal name, its unique id
+  std::map<Name, Index> internalNames;
+  ExpressionStack stack;
+
+  Hasher(Expression* curr, bool visitChildren) : visitChildren(visitChildren) {
+    stack.push_back(curr);
+    // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to
+    // the caller. Add it here to prevent the unknown name error.
+    noteScopeName(DELEGATE_CALLER_TARGET);
+
+    while (stack.size() > 0) {
+      curr = stack.back();
+      stack.pop_back();
+      if (!curr) {
+        // This was an optional child that was not present. Hash a 0 to
+        // represent that.
+        rehash(digest, 0);
+        continue;
       }
+      rehash(digest, curr->_id);
+      // we often don't need to hash the type, as it is tied to other values
+      // we are hashing anyhow, but there are exceptions: for example, a
+      // local.get's type is determined by the function, so if we are
+      // hashing only expression fragments, then two from different
+      // functions may turn out the same even if the type differs. Likewise,
+      // if we hash between modules, then we need to take int account
+      // call_imports type, etc. The simplest thing is just to hash the
+      // type for all of them.
+      rehash(digest, curr->type.getID());
+      // Hash the contents of the expression.
+      hashExpression(curr);
     }
+  }
 
-    Hasher(Expression* curr) {
-      stack.push_back(curr);
+  void hashExpression(Expression* curr) {
 
-      while (stack.size() > 0) {
-        curr = stack.back();
-        stack.pop_back();
-        if (!curr) {
-          continue;
-        }
-        hash(curr->_id);
-        // we often don't need to hash the type, as it is tied to other values
-        // we are hashing anyhow, but there are exceptions: for example, a
-        // local.get's type is determined by the function, so if we are
-        // hashing only expression fragments, then two from different
-        // functions may turn out the same even if the type differs. Likewise,
-        // if we hash between modules, then we need to take int account
-        // call_imports type, etc. The simplest thing is just to hash the
-        // type for all of them.
-        hash(curr->type.getID());
-        // Blocks and loops introduce scoping.
-        if (auto* block = curr->dynCast<Block>()) {
-          noteScopeName(block->name);
-        } else if (auto* loop = curr->dynCast<Loop>()) {
-          noteScopeName(loop->name);
-        } else {
-          // For all other nodes, compare their immediate values
-          visitImmediates(curr, *this);
-        }
-        // Hash children
-        Index counter = 0;
-        for (auto* child : ChildIterator(curr)) {
-          stack.push_back(child);
-          counter++;
-        }
-        // Sometimes children are optional, e.g. return, so we must hash
-        // their number as well.
-        hash(counter);
-      }
-    }
+#define DELEGATE_ID curr->_id
 
-    void hash(HashType hash) { digest = rehash(digest, hash); }
-    void hash64(uint64_t hash) {
-      digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
-    }
+// Create cast versions of it for later operations.
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
 
-    void visitScopeName(Name curr) {
-      // Names are relative, we give the same hash for
-      // (block $x (br $x))
-      // (block $y (br $y))
-      static_assert(sizeof(Index) == sizeof(int32_t),
-                    "wasm64 will need changes here");
-      assert(internalNames.find(curr) != internalNames.end());
-      return hash(internalNames[curr]);
-    }
-    void visitNonScopeName(Name curr) { return hash64(uint64_t(curr.str)); }
-    void visitInt(int32_t curr) { hash(curr); }
-    void visitLiteral(Literal curr) { hash(std::hash<Literal>()(curr)); }
-    void visitType(Type curr) { hash(int32_t(curr.getSingle())); }
-    void visitIndex(Index curr) {
-      static_assert(sizeof(Index) == sizeof(int32_t),
-                    "wasm64 will need changes here");
-      hash(int32_t(curr));
-    }
-    void visitAddress(Address curr) {
-      static_assert(sizeof(Address) == sizeof(int32_t),
-                    "wasm64 will need changes here");
-      hash(int32_t(curr));
-    }
-  };
+// Handle each type of field, comparing it appropriately.
+#define DELEGATE_GET_FIELD(id, field) cast->field
 
-  return Hasher(curr).digest;
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  if (visitChildren) {                                                         \
+    stack.push_back(cast->field);                                              \
+  }
+
+#define HASH_FIELD(field) rehash(digest, cast->field);
+
+#define DELEGATE_FIELD_INT(id, field) HASH_FIELD(field)
+#define DELEGATE_FIELD_LITERAL(id, field) HASH_FIELD(field)
+#define DELEGATE_FIELD_SIGNATURE(id, field) HASH_FIELD(field)
+
+#define DELEGATE_FIELD_NAME(id, field) visitNonScopeName(cast->field)
+#define DELEGATE_FIELD_TYPE(id, field) visitType(cast->field);
+#define DELEGATE_FIELD_HEAPTYPE(id, field) visitHeapType(cast->field);
+#define DELEGATE_FIELD_ADDRESS(id, field) visitAddress(cast->field);
+
+// Note that we only note the scope name, but do not also visit it. That means
+// that (block $x) and (block) get the same hash. In other words, we only change
+// the hash based on uses of scope names, that is when there is a noticeable
+// difference in break targets.
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) noteScopeName(cast->field);
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) visitScopeName(cast->field);
+
+#include "wasm-delegations-fields.def"
+  }
+
+  void noteScopeName(Name curr) {
+    if (curr.is()) {
+      internalNames[curr] = internalCounter++;
+    }
+  }
+  void visitScopeName(Name curr) {
+    // We consider 3 cases here, and prefix a hash value of 0, 1, or 2 to
+    // maximally differentiate them.
+
+    // Try's delegate target can be null.
+    if (!curr.is()) {
+      rehash(digest, 0);
+      return;
+    }
+    // Names are relative, we give the same hash for
+    //   (block $x (br $x))
+    //   (block $y (br $y))
+    // But if the name is not known to us, hash the absolute one.
+    if (!internalNames.count(curr)) {
+      rehash(digest, 1);
+      // Perform the same hashing as a generic name.
+      visitNonScopeName(curr);
+      return;
+    }
+    rehash(digest, 2);
+    rehash(digest, internalNames[curr]);
+  }
+  void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
+  void visitType(Type curr) { rehash(digest, curr.getID()); }
+  void visitHeapType(HeapType curr) { rehash(digest, curr.getID()); }
+  void visitAddress(Address curr) { rehash(digest, curr.addr); }
+};
+
+} // anonymous namespace
+
+size_t ExpressionAnalyzer::hash(Expression* curr) {
+  return Hasher(curr, true).digest;
+}
+
+size_t ExpressionAnalyzer::shallowHash(Expression* curr) {
+  return Hasher(curr, false).digest;
 }
 
 } // namespace wasm

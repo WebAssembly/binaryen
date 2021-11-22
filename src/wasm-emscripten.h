@@ -23,6 +23,8 @@
 
 namespace wasm {
 
+Global* getStackPointerGlobal(Module& wasm);
+
 // Class which modifies a wasm module for use with emscripten. Generates
 // runtime functions and emits metadata.
 class EmscriptenGlueGenerator {
@@ -31,34 +33,15 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
-  void setStandalone(bool standalone_) { standalone = standalone_; }
-
-  void generateRuntimeFunctions();
-  Function* generateMemoryGrowthFunction();
-  Function* generateAssignGOTEntriesFunction();
-  void generatePostInstantiateFunction();
-
-  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-  // signature in the indirect function table.
-  void generateDynCallThunks();
-
-  // Convert stack pointer access from global.get/global.set to calling save
-  // and restore functions.
-  void replaceStackPointerGlobal();
-
-  // Remove the import of a mutable __stack_pointer and instead initialize the
-  // stack pointer from an immutable import.
-  void internalizeStackPointerGlobal();
-
-  std::string
-  generateEmscriptenMetadata(Address staticBump,
-                             std::vector<Name> const& initializerFunctions);
+  std::string generateEmscriptenMetadata();
 
   void fixInvokeFunctionNames();
 
-  void enforceStackLimit();
-
-  void exportWasiStart();
+  // clang uses name mangling to rename the argc/argv form of main to
+  // __main_argc_argv.  Emscripten in non-standalone mode expects that function
+  // to be exported as main.  This function renames __main_argc_argv to main
+  // as expected by emscripten.
+  void renameMainArgcArgv();
 
   // Emits the data segments to a file. The file contains data from address base
   // onwards (we must pass in base, as we can't tell it from the wasm - the
@@ -66,25 +49,17 @@ public:
   // the file).
   void separateDataSegments(Output* outfile, Address base);
 
+  bool standalone = false;
+  bool sideModule = false;
+  bool minimizeWasmChanges = false;
+  bool noDynCalls = false;
+  bool onlyI64DynCalls = false;
+
 private:
   Module& wasm;
   Builder builder;
   Address stackPointerOffset;
   bool useStackPointerGlobal;
-  bool standalone;
-  // Used by generateDynCallThunk to track all the dynCall functions created
-  // so far.
-  std::unordered_set<Signature> sigs;
-
-  Global* getStackPointerGlobal();
-  Expression* generateLoadStackPointer();
-  Expression* generateStoreStackPointer(Function* func, Expression* value);
-  void generateDynCallThunk(Signature sig);
-  void generateStackSaveFunction();
-  void generateStackAllocFunction();
-  void generateStackRestoreFunction();
-  void generateSetStackLimitFunction();
-  Name importStackOverflowHandler();
 };
 
 } // namespace wasm

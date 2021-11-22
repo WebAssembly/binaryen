@@ -1,8 +1,8 @@
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $2 (func (result i32)))
+ (type $1 (func))
  (memory $0 256 256)
- (func $b14 (; 0 ;) (result i32)
+ (func $b14 (result i32)
   (drop
    (select
     (block $block1 (result i32)
@@ -44,7 +44,7 @@
   )
   (i32.const 0)
  )
- (func $join-br_ifs (; 1 ;)
+ (func $join-br_ifs
   (block $out
    (br_if $out
     (i32.or

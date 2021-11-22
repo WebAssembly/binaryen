@@ -1,0 +1,20 @@
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (tag $tag$0 (param i32))
+ (func $0
+  (try $label$3
+   (do
+    (block $label$1
+     (br $label$1)
+    )
+   )
+   (catch $tag$0
+    (drop
+     (pop i32)
+    )
+   )
+  )
+ )
+)
+

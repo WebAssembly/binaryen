@@ -1,0 +1,14 @@
+;; RUN: wasm-dis --help | filecheck %s
+
+;; CHECK:      wasm-dis INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Un-assemble a .wasm (WebAssembly binary format) into a .wat (WebAssembly text
+;; CHECK-NEXT: format)
+;; CHECK-NEXT:
+
+;; Skip standard tool options
+
+;; CHECK:        --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --source-map,-sm                     Consume source map from the specified
+;; CHECK-NEXT:                                        file to add location information

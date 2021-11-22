@@ -1,6 +1,6 @@
 (module
  (memory 1 1)
- (data passive "Hello, datacount section!")
+ (data "Hello, datacount section!")
 
  (import "env" "js_func" (func $a_js_func))
 

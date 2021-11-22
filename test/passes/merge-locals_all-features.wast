@@ -377,8 +377,8 @@
  )
  (func $subtype-test
   (local $0 anyref)
-  (local $1 nullref)
-  (local $2 nullref)
+  (local $1 funcref)
+  (local $2 funcref)
   (local.set $0
    (local.get $1)
   )
@@ -388,4 +388,3 @@
   )
  )
 )
-

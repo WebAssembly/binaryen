@@ -1,0 +1,44 @@
+(module
+ (type $none_=>_none (func))
+ (tag $tag$0 (param))
+ (func $0
+  (try $label$6
+   (do
+    (block $label$1
+     (try $label$4
+      (do
+      )
+      (delegate $label$6)
+     )
+    )
+   )
+   (catch $tag$0
+   )
+  )
+ )
+ (func $1
+  (try $label$9
+   (do
+    (block $label$1
+     (try $label$7
+      (do
+      )
+      (catch $tag$0
+       (drop
+        (i32.const 0)
+       )
+       (try $label$6
+        (do
+        )
+        (delegate $label$9)
+       )
+      )
+     )
+    )
+   )
+   (catch $tag$0
+   )
+  )
+ )
+)
+

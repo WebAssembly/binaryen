@@ -20,7 +20,6 @@
 #include <ir/find_all.h>
 #include <ir/local-graph.h>
 #include <wasm-builder.h>
-#include <wasm-printing.h>
 
 namespace wasm {
 
@@ -228,7 +227,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func) {
+LocalGraph::LocalGraph(Function* func) : func(func) {
   LocalGraphInternal::Flower flower(getSetses, locations, func);
 
 #ifdef LOCAL_GRAPH_DEBUG
@@ -245,18 +244,61 @@ LocalGraph::LocalGraph(Function* func) {
 #endif
 }
 
-void LocalGraph::computeInfluences() {
+bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
+  auto& aSets = getSetses[a];
+  auto& bSets = getSetses[b];
+  // The simple case of one set dominating two gets easily proves that they must
+  // have the same value. (Note that we can infer dominance from the fact that
+  // there is a single set: if the set did not dominate one of the gets then
+  // there would definitely be another set for that get, the zero initialization
+  // at the function entry, if nothing else.)
+  if (aSets.size() != 1 || bSets.size() != 1) {
+    // TODO: use a LinearExecutionWalker to find trivially equal gets in basic
+    //       blocks. that plus the above should handle 80% of cases.
+    // TODO: handle chains, merges and other situations
+    return false;
+  }
+  auto* aSet = *aSets.begin();
+  auto* bSet = *bSets.begin();
+  if (aSet != bSet) {
+    return false;
+  }
+  if (!aSet) {
+    // They are both nullptr, indicating the implicit value for a parameter
+    // or the zero for a local.
+    if (func->isParam(a->index)) {
+      // For parameters to be equivalent they must have the exact same
+      // index.
+      return a->index == b->index;
+    } else {
+      // As locals, they are both of value zero, but must have the right
+      // type as well.
+      return func->getLocalType(a->index) == func->getLocalType(b->index);
+    }
+  } else {
+    // They are both the same actual set.
+    return true;
+  }
+}
+
+void LocalGraph::computeSetInfluences() {
+  for (auto& pair : locations) {
+    auto* curr = pair.first;
+    if (auto* get = curr->dynCast<LocalGet>()) {
+      for (auto* set : getSetses[get]) {
+        setInfluences[set].insert(get);
+      }
+    }
+  }
+}
+
+void LocalGraph::computeGetInfluences() {
   for (auto& pair : locations) {
     auto* curr = pair.first;
     if (auto* set = curr->dynCast<LocalSet>()) {
       FindAll<LocalGet> findAll(set->value);
       for (auto* get : findAll.list) {
         getInfluences[get].insert(set);
-      }
-    } else {
-      auto* get = curr->cast<LocalGet>();
-      for (auto* set : getSetses[get]) {
-        setInfluences[set].insert(get);
       }
     }
   }

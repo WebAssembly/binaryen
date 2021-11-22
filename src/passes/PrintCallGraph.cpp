@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <memory>
 
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -96,12 +97,10 @@ struct PrintCallGraph : public Pass {
     CallPrinter printer(module);
 
     // Indirect Targets
-    for (auto& segment : module->table.segments) {
-      for (auto& curr : segment.data) {
-        auto* func = module->getFunction(curr);
-        o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+      auto* func = module->getFunction(name);
+      o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
+    });
 
     o << "}\n";
   }

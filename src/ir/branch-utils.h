@@ -17,6 +17,7 @@
 #ifndef wasm_ir_branch_h
 #define wasm_ir_branch_h
 
+#include "ir/iteration.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -27,97 +28,188 @@ namespace BranchUtils {
 // Some branches are obviously not actually reachable (e.g. (br $out
 // (unreachable)))
 
-inline bool isBranchReachable(Break* br) {
-  return !(br->value && br->value->type == Type::unreachable) &&
-         !(br->condition && br->condition->type == Type::unreachable);
-}
-
-inline bool isBranchReachable(Switch* sw) {
-  return !(sw->value && sw->value->type == Type::unreachable) &&
-         sw->condition->type != Type::unreachable;
-}
-
-inline bool isBranchReachable(BrOnExn* br) {
-  return br->exnref->type != Type::unreachable;
-}
-
 inline bool isBranchReachable(Expression* expr) {
-  if (auto* br = expr->dynCast<Break>()) {
-    return isBranchReachable(br);
-  } else if (auto* sw = expr->dynCast<Switch>()) {
-    return isBranchReachable(sw);
-  } else if (auto* br = expr->dynCast<BrOnExn>()) {
-    return isBranchReachable(br);
+  // If any child is unreachable, the branch is not taken. Note that expr itself
+  // may be unreachable regardless (as in the case of a simple Break with no
+  // condition, which is still taken).
+  for (auto child : ChildIterator(expr)) {
+    if (child->type == Type::unreachable) {
+      return false;
+    }
   }
-  WASM_UNREACHABLE("unexpected expression type");
+  return true;
 }
 
-inline std::set<Name> getUniqueTargets(Break* br) { return {br->name}; }
+// Perform a generic operation on uses of scope names (branch + delegate
+// targets) in an expression. The provided function receives a Name& which it
+// can modify if it needs to.
+template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
+#define DELEGATE_ID expr->_id
 
-inline std::set<Name> getUniqueTargets(Switch* sw) {
-  std::set<Name> ret;
-  for (auto target : sw->targets) {
-    ret.insert(target);
-  }
-  ret.insert(sw->default_);
+#define DELEGATE_START(id)                                                     \
+  auto* cast = expr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) func(cast->field);
+
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SIGNATURE(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+
+#include "wasm-delegations-fields.def"
+}
+
+// Similar to operateOnScopeNameUses, but also passes in the type that is sent
+// if the branch is taken. The type is none if there is no value.
+template<typename T>
+void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value ? br->value->type : Type::none);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value ? sw->value->type : Type::none);
+    } else if (auto* br = expr->dynCast<BrOn>()) {
+      func(name, br->getSentType());
+    } else {
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
+    }
+  });
+}
+
+// Similar to operateOnScopeNameUses, but also passes in the expression that is
+// sent if the branch is taken. nullptr is given if there is no value.
+template<typename T>
+void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value);
+    } else if (auto* br = expr->dynCast<BrOn>()) {
+      func(name, br->ref);
+    } else {
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
+    }
+  });
+}
+
+// Perform a generic operation on definitions of scope names in an expression.
+// The provided function receives a Name& which it can modify if it needs to.
+template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
+#define DELEGATE_ID expr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = expr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field)
+
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SIGNATURE(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+
+#include "wasm-delegations-fields.def"
+}
+
+using NameSet = std::set<Name>;
+
+inline NameSet getUniqueTargets(Expression* expr) {
+  NameSet ret;
+  operateOnScopeNameUses(expr, [&](Name& name) { ret.insert(name); });
   return ret;
 }
-
-inline std::set<Name> getUniqueTargets(BrOnExn* br) { return {br->name}; }
 
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   bool worked = false;
-  if (auto* br = branch->dynCast<Break>()) {
-    if (br->name == from) {
-      br->name = to;
+  operateOnScopeNameUses(branch, [&](Name& name) {
+    if (name == from) {
+      name = to;
       worked = true;
     }
-  } else if (auto* sw = branch->dynCast<Switch>()) {
-    for (auto& target : sw->targets) {
-      if (target == from) {
-        target = to;
-        worked = true;
-      }
-    }
-    if (sw->default_ == from) {
-      sw->default_ = to;
-      worked = true;
-    }
-  } else if (auto* br = branch->dynCast<BrOnExn>()) {
-    if (br->name == from) {
-      br->name = to;
-      worked = true;
-    }
-  } else {
-    WASM_UNREACHABLE("unexpected expression type");
-  }
+  });
   return worked;
 }
 
-// returns the set of targets to which we branch that are
-// outside of a node
-inline std::set<Name> getExitingBranches(Expression* ast) {
-  struct Scanner : public PostWalker<Scanner> {
-    std::set<Name> targets;
+// Replace all delegate/rethrow targets within the given AST.
+inline void replaceExceptionTargets(Expression* ast, Name from, Name to) {
+  struct Replacer
+    : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
+    Name from, to;
+    Replacer(Name from, Name to) : from(from), to(to) {}
+    void visitExpression(Expression* curr) {
+      if (curr->is<Try>() || curr->is<Rethrow>()) {
+        operateOnScopeNameUses(curr, [&](Name& name) {
+          if (name == from) {
+            name = to;
+          }
+        });
+      }
+    }
+  };
+  Replacer replacer(from, to);
+  replacer.walk(ast);
+}
 
-    void visitBreak(Break* curr) { targets.insert(curr->name); }
-    void visitSwitch(Switch* curr) {
-      for (auto target : curr->targets) {
-        targets.insert(target);
+// Replace all branch targets within the given AST.
+inline void replaceBranchTargets(Expression* ast, Name from, Name to) {
+  struct Replacer
+    : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
+    Name from, to;
+    Replacer(Name from, Name to) : from(from), to(to) {}
+    void visitExpression(Expression* curr) {
+      if (Properties::isBranch(curr)) {
+        operateOnScopeNameUses(curr, [&](Name& name) {
+          if (name == from) {
+            name = to;
+          }
+        });
       }
-      targets.insert(curr->default_);
     }
-    void visitBrOnExn(BrOnExn* curr) { targets.insert(curr->name); }
-    void visitBlock(Block* curr) {
-      if (curr->name.is()) {
-        targets.erase(curr->name);
-      }
-    }
-    void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        targets.erase(curr->name);
-      }
+  };
+  Replacer replacer(from, to);
+  replacer.walk(ast);
+}
+
+// Returns the set of targets to which we branch that are
+// outside of an expression.
+inline NameSet getExitingBranches(Expression* ast) {
+  struct Scanner
+    : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    NameSet targets;
+
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name& name) {
+        if (name.is()) {
+          targets.erase(name);
+        }
+      });
+      operateOnScopeNameUses(curr, [&](Name& name) { targets.insert(name); });
     }
   };
   Scanner scanner;
@@ -128,19 +220,17 @@ inline std::set<Name> getExitingBranches(Expression* ast) {
 
 // returns the list of all branch targets in a node
 
-inline std::set<Name> getBranchTargets(Expression* ast) {
-  struct Scanner : public PostWalker<Scanner> {
-    std::set<Name> targets;
+inline NameSet getBranchTargets(Expression* ast) {
+  struct Scanner
+    : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    NameSet targets;
 
-    void visitBlock(Block* curr) {
-      if (curr->name.is()) {
-        targets.insert(curr->name);
-      }
-    }
-    void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        targets.insert(curr->name);
-      }
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name& name) {
+        if (name.is()) {
+          targets.insert(name);
+        }
+      });
     }
   };
   Scanner scanner;
@@ -148,55 +238,68 @@ inline std::set<Name> getBranchTargets(Expression* ast) {
   return scanner.targets;
 }
 
+// Check if an expression defines a particular name as a branch target anywhere
+// inside it.
+inline bool hasBranchTarget(Expression* ast, Name target) {
+  struct Scanner
+    : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    Name target;
+    bool has = false;
+
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name& name) {
+        if (name == target) {
+          has = true;
+        }
+      });
+    }
+  };
+  Scanner scanner;
+  scanner.target = target;
+  scanner.walk(ast);
+  return scanner.has;
+}
+
+// Get the name of the branch target that is defined in the expression, or an
+// empty name if there is none.
+inline Name getDefinedName(Expression* curr) {
+  Name ret;
+  operateOnScopeNameDefs(curr, [&](Name& name) { ret = name; });
+  return ret;
+}
+
+// Return the value sent by a branch instruction, or nullptr if there is none.
+inline Expression* getSentValue(Expression* curr) {
+  Expression* ret = nullptr;
+  operateOnScopeNameUsesAndSentValues(
+    curr, [&](Name name, Expression* value) { ret = value; });
+  return ret;
+}
+
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
-struct BranchSeeker : public PostWalker<BranchSeeker> {
+struct BranchSeeker
+  : public PostWalker<BranchSeeker, UnifiedExpressionVisitor<BranchSeeker>> {
   Name target;
 
   Index found = 0;
-  Type valueType;
+
+  std::unordered_set<Type> types;
 
   BranchSeeker(Name target) : target(target) {}
 
-  void noteFound(Expression* value) {
-    noteFound(value ? value->type : Type::none);
-  }
-
-  void noteFound(Type type) {
+  void noteFound(Type newType) {
     found++;
-    if (found == 1) {
-      valueType = Type::unreachable;
-    }
-    if (type != Type::unreachable) {
-      valueType = type;
-    }
+    types.insert(newType);
   }
 
-  void visitBreak(Break* curr) {
-    // check the break
-    if (curr->name == target) {
-      noteFound(curr->value);
-    }
-  }
-
-  void visitSwitch(Switch* curr) {
-    // check the switch
-    for (auto name : curr->targets) {
+  void visitExpression(Expression* curr) {
+    operateOnScopeNameUsesAndSentTypes(curr, [&](Name& name, Type type) {
       if (name == target) {
-        noteFound(curr->value);
+        noteFound(type);
       }
-    }
-    if (curr->default_ == target) {
-      noteFound(curr->value);
-    }
-  }
-
-  void visitBrOnExn(BrOnExn* curr) {
-    // check the br_on_exn
-    if (curr->name == target) {
-      noteFound(curr->sent);
-    }
+    });
   }
 
   static bool has(Expression* tree, Name target) {
@@ -216,6 +319,115 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     seeker.walk(tree);
     return seeker.found;
   }
+};
+
+// Accumulates all the branches in an entire tree.
+struct BranchAccumulator
+  : public PostWalker<BranchAccumulator,
+                      UnifiedExpressionVisitor<BranchAccumulator>> {
+  NameSet branches;
+
+  void visitExpression(Expression* curr) {
+    auto selfBranches = getUniqueTargets(curr);
+    branches.insert(selfBranches.begin(), selfBranches.end());
+  }
+};
+
+// A helper structure for the common case of post-walking some IR while querying
+// whether a branch is present. We can cache results for children in order to
+// avoid quadratic time searches.
+// We assume that a node will be scanned *once* here. That means that if we
+// scan a node, we can discard all information for its children. This avoids
+// linearly increasing memory usage over time.
+class BranchSeekerCache {
+  // Maps all the branches present in an expression and all its nested children.
+  std::unordered_map<Expression*, NameSet> branches;
+
+public:
+  const NameSet& getBranches(Expression* curr) {
+    auto iter = branches.find(curr);
+    if (iter != branches.end()) {
+      return iter->second;
+    }
+    NameSet currBranches;
+    auto add = [&](NameSet& moreBranches) {
+      // Make sure to do a fast swap for the first set of branches to arrive.
+      // This helps the case of the first child being a block with a very large
+      // set of names.
+      if (currBranches.empty()) {
+        currBranches.swap(moreBranches);
+      } else {
+        currBranches.insert(moreBranches.begin(), moreBranches.end());
+      }
+    };
+    // Add from the children, which are hopefully cached.
+    for (auto child : ChildIterator(curr)) {
+      auto iter = branches.find(child);
+      if (iter != branches.end()) {
+        add(iter->second);
+        // We are scanning the parent, which means we assume the child will
+        // never be visited again.
+        branches.erase(iter);
+      } else {
+        // The child was not cached. Scan it manually.
+        BranchAccumulator childBranches;
+        childBranches.walk(child);
+        add(childBranches.branches);
+        // Don't bother caching anything - we are scanning the parent, so the
+        // child will presumably not be scanned again.
+      }
+    }
+    // Finish with the parent's own branches.
+    auto selfBranches = getUniqueTargets(curr);
+    add(selfBranches);
+    return branches[curr] = std::move(currBranches);
+  }
+
+  bool hasBranch(Expression* curr, Name target) {
+    bool result = getBranches(curr).count(target);
+#ifdef BRANCH_UTILS_DEBUG
+    assert(bresult == BranchSeeker::has(curr, target));
+#endif
+    return result;
+  }
+};
+
+// Stores information about branch targets, specifically, finding them by their
+// name, and finding the branches to them.
+struct BranchTargets {
+  BranchTargets(Expression* expr) { inner.walk(expr); }
+
+  // Gets the expression that defines this branch target, i.e., where we branch
+  // to if we branch to that name.
+  Expression* getTarget(Name name) { return inner.targets[name]; }
+
+  // Gets the expressions branching to a target.
+  std::unordered_set<Expression*> getBranches(Name name) {
+    auto iter = inner.branches.find(name);
+    if (iter != inner.branches.end()) {
+      return iter->second;
+    }
+    return {};
+  }
+
+private:
+  struct Inner : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name name) {
+        if (name.is()) {
+          targets[name] = curr;
+        }
+      });
+      operateOnScopeNameUses(curr, [&](Name& name) {
+        if (name.is()) {
+          branches[name].insert(curr);
+        }
+      });
+    }
+
+    std::map<Name, Expression*> targets;
+    std::map<Name, std::unordered_set<Expression*>> branches;
+  } inner;
 };
 
 } // namespace BranchUtils

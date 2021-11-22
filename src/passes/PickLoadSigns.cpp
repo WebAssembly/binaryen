@@ -109,6 +109,10 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
              load->bytes * 8)) { // unsigned usages exist but the wrong size
         continue;
       }
+      // Atomic operations are always unsigned, never signed.
+      if (load->isAtomic) {
+        continue;
+      }
       // we can pick the optimal one. our hope is to remove 2 items per
       // signed use (two shifts), so we factor that in
       load->signed_ = usage.signedUsages * 2 >= usage.unsignedUsages;

@@ -1,7 +1,7 @@
 import { setTempRet0 } from 'env';
 
 
-  var scratchBuffer = new ArrayBuffer(8);
+  var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
@@ -23,34 +23,27 @@ import { setTempRet0 } from 'env';
   }
       
   function wasm2js_scratch_load_f32() {
-    return f32ScratchView[0];
+    return f32ScratchView[2];
   }
       
   function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[0] = value;
+    f32ScratchView[2] = value;
   }
       
-function asmFunc(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
@@ -240,7 +233,7 @@ function asmFunc(global, env, buffer) {
  
  function $21(x) {
   x = x | 0;
-  return Math_fround((wasm2js_scratch_store_i32(0, x), wasm2js_scratch_load_f32()));
+  return Math_fround((wasm2js_scratch_store_i32(2, x), wasm2js_scratch_load_f32()));
  }
  
  function $22(x, x$hi) {
@@ -255,7 +248,7 @@ function asmFunc(global, env, buffer) {
  
  function $23(x) {
   x = Math_fround(x);
-  return (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(0)) | 0;
+  return (wasm2js_scratch_store_f32(x), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $24(x) {
@@ -597,7 +590,6 @@ function asmFunc(global, env, buffer) {
   return $1_1 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "i64_extend_s_i32": legalstub$0, 
   "i64_extend_u_i32": legalstub$1, 
@@ -627,8 +619,9 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
+    setTempRet0
+  });
 export var i64_extend_s_i32 = retasmFunc.i64_extend_s_i32;
 export var i64_extend_u_i32 = retasmFunc.i64_extend_u_i32;
 export var i32_wrap_i64 = retasmFunc.i32_wrap_i64;

@@ -78,6 +78,10 @@ void DWARFYAML::EmitDebugStr(raw_ostream &OS, const DWARFYAML::Data &DI) {
 void DWARFYAML::EmitDebugAbbrev(raw_ostream &OS, const DWARFYAML::Data &DI) {
   for (auto AbbrevDecl : DI.AbbrevDecls) {
     encodeULEB128(AbbrevDecl.Code, OS);
+    // XXX BINARYEN This is a terminator.
+    if (!AbbrevDecl.Code) {
+      continue;
+    }
     encodeULEB128(AbbrevDecl.Tag, OS);
     OS.write(AbbrevDecl.Children);
     for (auto Attr : AbbrevDecl.Attributes) {
@@ -126,6 +130,26 @@ void DWARFYAML::EmitDebugRanges(raw_ostream &OS, const DWARFYAML::Data &DI) {
   }
 }
 
+// XXX BINARYEN
+void DWARFYAML::EmitDebugLoc(raw_ostream &OS, const DWARFYAML::Data &DI) {
+  for (auto Loc : DI.Locs) {
+    auto AddrSize = DI.CompileUnits[0].AddrSize;  // XXX BINARYEN
+    // FIXME: Loc.Start etc should probably not be 32-bit.
+    writeVariableSizedInteger((uint64_t)(int32_t)Loc.Start, AddrSize, OS, DI.IsLittleEndian);
+    writeVariableSizedInteger((uint64_t)(int32_t)Loc.End, AddrSize, OS, DI.IsLittleEndian);
+    if (Loc.Start == 0 && Loc.End == 0) {
+      // End of a list.
+      continue;
+    }
+    if (Loc.Start != -1) {
+      writeInteger((uint16_t)Loc.Location.size(), OS, DI.IsLittleEndian);
+      for (auto x : Loc.Location) {
+        writeInteger((uint8_t)x, OS, DI.IsLittleEndian);
+      }
+    }
+  }
+}
+
 void DWARFYAML::EmitPubSection(raw_ostream &OS,
                                const DWARFYAML::PubSection &Sect,
                                bool IsLittleEndian) {
@@ -148,9 +172,12 @@ namespace {
 class DumpVisitor : public DWARFYAML::ConstVisitor {
   raw_ostream &OS;
 
+  size_t StartPos; // XXX BINARYEN
+
 protected:
   void onStartCompileUnit(const DWARFYAML::Unit &CU) override {
     writeInitialLength(CU.Length, OS, DebugInfo.IsLittleEndian);
+    StartPos = OS.tell(); // XXX BINARYEN
     writeInteger((uint16_t)CU.Version, OS, DebugInfo.IsLittleEndian);
     if(CU.Version >= 5) {
       writeInteger((uint8_t)CU.Type, OS, DebugInfo.IsLittleEndian);
@@ -159,6 +186,18 @@ protected:
     }else {
       writeInteger((uint32_t)CU.AbbrOffset, OS, DebugInfo.IsLittleEndian);
       writeInteger((uint8_t)CU.AddrSize, OS, DebugInfo.IsLittleEndian);
+    }
+  }
+
+  // XXX BINARYEN Make sure we emit the right size. We should not change the
+  // size as we only modify relocatable fields like addresses, and such fields
+  // have a fixed size, so any change is a bug.
+  // We make an exception for AddrSizeChanged, which happens when we have run
+  // the Memory64Lowering pass to turn wasm64 into wasm32.
+  void onEndCompileUnit(const DWARFYAML::Unit &CU) {
+    size_t EndPos = OS.tell();
+    if (EndPos - StartPos != CU.Length.getLength() && !CU.AddrSizeChanged) {
+      llvm_unreachable("compile unit size was incorrect");
     }
   }
 
@@ -221,8 +260,12 @@ static void EmitFileEntry(raw_ostream &OS, const DWARFYAML::File &File) {
   encodeULEB128(File.Length, OS);
 }
 
-void DWARFYAML::EmitDebugLine(raw_ostream &RealOS, const DWARFYAML::Data &DI) {
-  for (const auto &LineTable : DI.DebugLines) {
+// XXX BINARYEN: Refactor to an *Internal method that allows us to optionally
+//               compute the new lengths.
+static void EmitDebugLineInternal(raw_ostream &RealOS,
+                                  const DWARFYAML::Data &DI,
+                                  std::vector<size_t>* computedLengths) {
+  for (auto &LineTable : DI.DebugLines) {
     // XXX BINARYEN We need to update each line table's length. Write to a
     // temp stream first, then get the size from that.
     std::string Buffer;
@@ -313,9 +356,25 @@ void DWARFYAML::EmitDebugLine(raw_ostream &RealOS, const DWARFYAML::Data &DI) {
     if (Size >= UINT32_MAX) {
       llvm_unreachable("Table is too big");
     }
+    if (computedLengths) {
+      computedLengths->push_back(Size);
+    }
     writeInteger((uint32_t)Size, RealOS, DI.IsLittleEndian);
     RealOS << OS.str();
   }
+}
+
+void DWARFYAML::EmitDebugLine(raw_ostream &RealOS, const DWARFYAML::Data &DI) {
+  EmitDebugLineInternal(RealOS, DI, nullptr);
+}
+
+void DWARFYAML::ComputeDebugLine(Data &DI,
+                                 std::vector<size_t>& computedLengths) {
+  // TODO: Avoid writing out the data, or at least cache it so we don't need to
+  //       do it again later.
+  std::string buffer;
+  llvm::raw_string_ostream tempStream(buffer);
+  EmitDebugLineInternal(tempStream, DI, &computedLengths);
 }
 
 using EmitFuncType = void (*)(raw_ostream &, const DWARFYAML::Data &);
@@ -425,6 +484,8 @@ EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups) {
   EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugAranges, "debug_aranges",
                        DebugSections);
   EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugRanges, "debug_ranges",
+                       DebugSections); // XXX BINARYEN
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugLoc, "debug_loc",
                        DebugSections); // XXX BINARYEN
   return std::move(DebugSections);
 }

@@ -17,11 +17,33 @@
 //
 // Flattens code into "Flat IR" form. See ir/flat.h.
 //
+// TODO: handle non-nullability. for example:
+//
+//      (module
+//       (type $none (func))
+//       (func $foo
+//        (drop
+//         (block (result funcref (ref $none))
+//          (tuple.make
+//           (ref.null func)
+//           (ref.func $foo)
+//          )
+//         )
+//        )
+//       )
+//      )
+//
+// The tuple has a non-nullable type, and so it cannot be set to a local. We
+// would need to split up the tuple and reconstruct it later, but that would
+// require allowing tuple operations in more nested places than Flat IR allows
+// today. For now, error on this; eventually changes in the spec regarding
+// null-nullability may make this easier.
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -49,6 +71,11 @@ struct Flatten
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }
 
+  // Flattening splits the original locals into a great many other ones, losing
+  // track of the originals that DWARF refers to.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new Flatten; }
 
   // For each expression, a bunch of expressions that should execute right
@@ -62,13 +89,12 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    // Nothing to do for constants, nop, and unreachable
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
-        curr->is<Unreachable>()) {
+    // Nothing to do for constants and nop.
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
 
-    if (Flat::isControlFlowStructure(curr)) {
+    if (Properties::isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
 
@@ -238,19 +264,20 @@ struct Flatten
             // not be the same with the innermost block's return type. For
             // example,
             // (block $any (result anyref)
-            //   (block (result nullref)
+            //   (block (result funcref)
             //     (local.tee $0
             //       (br_if $any
-            //         (ref.null)
+            //         (ref.null func)
             //         (i32.const 0)
             //       )
             //     )
             //   )
             // )
             // In this case we need two locals to store (ref.null); one with
-            // anyref type that's for the target block ($any) and one more with
-            // nullref type in case for flowing out. Here we create the second
-            // 'flowing out' local in case two block's types are different.
+            // funcref type that's for the target block ($label0) and one more
+            // with anyref type in case for flowing out. Here we create the
+            // second 'flowing out' local in case two block's types are
+            // different.
             if (type != blockType) {
               temp = builder.addVar(getFunction(), type);
               ourPreludes.push_back(builder.makeLocalSet(
@@ -319,7 +346,7 @@ struct Flatten
     // next, finish up: migrate our preludes if we can
     if (!ourPreludes.empty()) {
       auto* parent = getParent();
-      if (parent && !Flat::isControlFlowStructure(parent)) {
+      if (parent && !Properties::isControlFlowStructure(parent)) {
         auto& parentPreludes = preludes[parent];
         for (auto* prelude : ourPreludes) {
           parentPreludes.push_back(prelude);
@@ -339,6 +366,17 @@ struct Flatten
     }
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
+    // New locals we added may be non-nullable.
+    TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
+    // We cannot handle non-nullable tuples currently, see the comment at the
+    // top of the file.
+    for (auto type : curr->vars) {
+      if (!type.isDefaultable()) {
+        Fatal() << "Flatten was forced to add a local of a type it cannot "
+                   "handle yet: "
+                << type;
+      }
+    }
   }
 
 private:

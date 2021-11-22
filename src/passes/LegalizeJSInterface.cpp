@@ -24,14 +24,14 @@
 //
 // We can also legalize in a "minimal" way, that is, only JS-specific
 // components, that only JS will care about, such as dynCall methods
-// (wasm will never call them, as it can share the table directly). E.g.
+// (wasm will never call them, as it can share the tables directly). E.g.
 // is dynamic linking, where we can avoid legalizing wasm=>wasm calls
 // across modules, we still want to legalize dynCalls so JS can call into the
-// table even to a signature that is not legal.
+// tables even to a signature that is not legal.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
+#include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
@@ -54,7 +54,7 @@ struct LegalizeJSInterface : public Pass {
          .getArgumentOrDefault("legalize-js-interface-export-originals", "")
          .empty();
     // for each illegal export, we must export a legalized stub instead
-    std::vector<Export*> newExports;
+    std::vector<std::unique_ptr<Export>> newExports;
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
@@ -82,8 +82,8 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
-    for (auto* ex : newExports) {
-      module->addExport(ex);
+    for (auto& ex : newExports) {
+      module->addExport(std::move(ex));
     }
     // Avoid iterator invalidation later.
     std::vector<Function*> originalFunctions;
@@ -95,65 +95,28 @@ struct LegalizeJSInterface : public Pass {
       if (im->imported() && isIllegal(im) && shouldBeLegalized(im)) {
         auto funcName = makeLegalStubForCalledImport(im, module);
         illegalImportsToLegal[im->name] = funcName;
-        // we need to use the legalized version in the table, as the import from
-        // JS is legal for JS. Our stub makes it look like a native wasm
+        // we need to use the legalized version in the tables, as the import
+        // from JS is legal for JS. Our stub makes it look like a native wasm
         // function.
-        for (auto& segment : module->table.segments) {
-          for (auto& name : segment.data) {
-            if (name == im->name) {
-              name = funcName;
-            }
+        ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+          if (name == im->name) {
+            name = funcName;
           }
-        }
+        });
       }
     }
 
     if (!illegalImportsToLegal.empty()) {
-      // Gather functions used in 'ref.func'. They should not be removed.
-      std::unordered_map<Name, std::atomic<bool>> usedInRefFunc;
-
-      struct RefFuncScanner : public WalkerPass<PostWalker<RefFuncScanner>> {
-        Module& wasm;
-        std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc;
-
-        bool isFunctionParallel() override { return true; }
-
-        Pass* create() override {
-          return new RefFuncScanner(wasm, usedInRefFunc);
-        }
-
-        RefFuncScanner(
-          Module& wasm,
-          std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc)
-          : wasm(wasm), usedInRefFunc(usedInRefFunc) {
-          // Fill in unordered_map, as we operate on it in parallel
-          for (auto& func : wasm.functions) {
-            usedInRefFunc[func->name];
-          }
-        }
-
-        void visitRefFunc(RefFunc* curr) { usedInRefFunc[curr->func] = true; }
-      };
-
-      RefFuncScanner(*module, usedInRefFunc).run(runner, module);
-      for (auto& pair : illegalImportsToLegal) {
-        if (!usedInRefFunc[pair.first]) {
-          module->removeFunction(pair.first);
-        }
-      }
-
       // fix up imports: call_import of an illegal must be turned to a call of a
-      // legal
-      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
+      // legal. the same must be done with ref.funcs.
+      struct Fixer : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override {
-          return new FixImports(illegalImportsToLegal);
-        }
+        Pass* create() override { return new Fixer(illegalImportsToLegal); }
 
         std::map<Name, Name>* illegalImportsToLegal;
 
-        FixImports(std::map<Name, Name>* illegalImportsToLegal)
+        Fixer(std::map<Name, Name>* illegalImportsToLegal)
           : illegalImportsToLegal(illegalImportsToLegal) {}
 
         void visitCall(Call* curr) {
@@ -162,17 +125,30 @@ struct LegalizeJSInterface : public Pass {
             return;
           }
 
-          if (iter->second == getFunction()->name) {
-            // inside the stub function itself, is the one safe place to do the
-            // call
+          replaceCurrent(
+            Builder(*getModule())
+              .makeCall(
+                iter->second, curr->operands, curr->type, curr->isReturn));
+        }
+
+        void visitRefFunc(RefFunc* curr) {
+          auto iter = illegalImportsToLegal->find(curr->func);
+          if (iter == illegalImportsToLegal->end()) {
             return;
           }
-          replaceCurrent(Builder(*getModule())
-                           .makeCall(iter->second, curr->operands, curr->type));
+
+          curr->func = iter->second;
         }
       };
 
-      FixImports(&illegalImportsToLegal).run(runner, module);
+      Fixer fixer(&illegalImportsToLegal);
+      fixer.run(runner, module);
+      fixer.runOnModuleCode(runner, module);
+
+      // Finally we can remove all the now-unused illegal imports
+      for (const auto& pair : illegalImportsToLegal) {
+        module->removeFunction(pair.first);
+      }
     }
   }
 
@@ -181,12 +157,12 @@ private:
   std::map<Name, Name> illegalImportsToLegal;
 
   template<typename T> bool isIllegal(T* t) {
-    for (auto param : t->sig.params.expand()) {
+    for (const auto& param : t->getParams()) {
       if (param == Type::i64) {
         return true;
       }
     }
-    return t->sig.results == Type::i64;
+    return t->getResults() == Type::i64;
   }
 
   bool isDynCall(Name name) { return name.startsWith("dynCall_"); }
@@ -212,17 +188,23 @@ private:
   // JS calls the export, so it must call a legal stub that calls the actual
   // wasm function
   Name makeLegalStub(Function* func, Module* module) {
+    Name legalName(std::string("legalstub$") + func->name.str);
+
+    // a method may be exported multiple times
+    if (module->getFunctionOrNull(legalName)) {
+      return legalName;
+    }
+
     Builder builder(*module);
     auto* legal = new Function();
-    legal->name = Name(std::string("legalstub$") + func->name.str);
+    legal->name = legalName;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
-    call->type = func->sig.results;
+    call->type = func->getResults();
 
-    const std::vector<Type>& params = func->sig.params.expand();
     std::vector<Type> legalParams;
-    for (auto param : params) {
+    for (const auto& param : func->getParams()) {
       if (param == Type::i64) {
         call->operands.push_back(I64Utilities::recreateI64(
           builder, legalParams.size(), legalParams.size() + 1));
@@ -234,12 +216,12 @@ private:
         legalParams.push_back(param);
       }
     }
-    legal->sig.params = Type(legalParams);
-
-    if (func->sig.results == Type::i64) {
+    Type resultsType =
+      func->getResults() == Type::i64 ? Type::i32 : func->getResults();
+    legal->type = Signature(Type(legalParams), resultsType);
+    if (func->getResults() == Type::i64) {
       Function* f =
         getFunctionOrImport(module, SET_TEMP_RET0, Type::i32, Type::none);
-      legal->sig.results = Type::i32;
       auto index = Builder::addVar(legal, Name(), Type::i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeLocalSet(index, call));
@@ -249,15 +231,9 @@ private:
       block->finalize();
       legal->body = block;
     } else {
-      legal->sig.results = func->sig.results;
       legal->body = call;
     }
-
-    // a method may be exported multiple times
-    if (!module->getFunctionOrNull(legal->name)) {
-      module->addFunction(legal);
-    }
-    return legal->name;
+    return module->addFunction(legal)->name;
   }
 
   // wasm calls the import, so it must call a stub that calls the actual legal
@@ -270,36 +246,37 @@ private:
     legalIm->base = im->base;
     auto stub = make_unique<Function>();
     stub->name = Name(std::string("legalfunc$") + im->name.str);
-    stub->sig = im->sig;
+    stub->type = im->type;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = legalIm->name;
 
-    const std::vector<Type>& imParams = im->sig.params.expand();
     std::vector<Type> params;
-    for (size_t i = 0; i < imParams.size(); ++i) {
-      if (imParams[i] == Type::i64) {
+    Index i = 0;
+    for (const auto& param : im->getParams()) {
+      if (param == Type::i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, i));
         call->operands.push_back(I64Utilities::getI64High(builder, i));
         params.push_back(Type::i32);
         params.push_back(Type::i32);
       } else {
-        call->operands.push_back(builder.makeLocalGet(i, imParams[i]));
-        params.push_back(imParams[i]);
+        call->operands.push_back(builder.makeLocalGet(i, param));
+        params.push_back(param);
       }
+      ++i;
     }
 
-    if (im->sig.results == Type::i64) {
+    if (im->getResults() == Type::i64) {
       Function* f =
         getFunctionOrImport(module, GET_TEMP_RET0, Type::none, Type::i32);
       call->type = Type::i32;
       Expression* get = builder.makeCall(f->name, {}, call->type);
       stub->body = I64Utilities::recreateI64(builder, call, get);
     } else {
-      call->type = im->sig.results;
+      call->type = im->getResults();
       stub->body = call;
     }
-    legalIm->sig = Signature(Type(params), call->type);
+    legalIm->type = Signature(Type(params), call->type);
 
     const auto& stubName = stub->name;
     if (!module->getFunctionOrNull(stubName)) {
@@ -323,13 +300,12 @@ private:
       return f;
     }
     // Failing that create a new function import.
-    auto import = new Function;
-    import->name = name;
+    auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
-    import->sig = Signature(params, results);
-    module->addFunction(import);
-    return import;
+    auto* ret = import.get();
+    module->addFunction(std::move(import));
+    return ret;
   }
 };
 

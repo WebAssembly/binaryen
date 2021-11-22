@@ -1,6 +1,6 @@
 (module
   (memory 512 512
-   (data passive "hello!")
+   (data "hello!")
   )
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))
@@ -47,6 +47,22 @@
         )
         (i32.const 1)
       )
+    )
+    (drop
+     (tuple.make
+      (tuple.extract 0
+       (tuple.make
+        (i32.const 42)
+        (i32.const 0)
+       )
+      )
+      (tuple.extract 1
+       (tuple.make
+        (i64.const 0)
+        (i64.const 42)
+       )
+      )
+     )
     )
     (loop $in
       (br $in)
@@ -344,8 +360,105 @@
     (i32.const 12)
    )
   )
+  (func $tuple-precompute (result i32 i64)
+   (tuple.make
+    (tuple.extract 0
+     (tuple.make
+      (i32.const 42)
+      (i32.const 0)
+     )
+    )
+    (tuple.extract 1
+     (tuple.make
+      (i64.const 0)
+      (i64.const 42)
+     )
+    )
+   )
+  )
+  (func $loop-precompute (result i32)
+   (block $block (result i32)
+    (loop $loop
+     (br $block (i32.const 1))
+    )
+   )
+  )
+
   ;; Check if Precompute pass does not crash on reference types
-  (func $reftype-test (result nullref)
-    (ref.null)
+  (func $reftype-test (result externref)
+    (ref.null extern)
+  )
+
+  ;; Check if constant nodes (const, ref.null, and ref.func) are correctly
+  ;; reused. (We shouldn't reuse a const node for something like ref.null, which
+  ;; will incorrectly cause an expression like 'someref.const'.)
+  (func $dummy)
+  (func $br_reuse_node
+   (drop
+    (block $l0 (result f32)
+     (drop
+      (block $l1 (result i32)
+       (global.set $global-mut
+        (i32.const 1)
+       )
+       (br_if $l1
+        (i32.const 1)
+        (f32.lt
+         (br_if $l0
+          (f32.const 3.5)
+          (i32.const 1)
+         )
+         (f32.const 3)
+        )
+       )
+      )
+     )
+     (f32.const 0)
+    )
+   )
+
+   (drop
+    (block $l2 (result externref)
+     (drop
+      (block $l3 (result i32)
+       (global.set $global-mut
+        (i32.const 1)
+       )
+       (br_if $l3
+        (i32.const 1)
+        (ref.is_null
+         (br_if $l2
+          (ref.null extern)
+          (i32.const 3)
+         )
+        )
+       )
+      )
+     )
+     (ref.null extern)
+    )
+   )
+
+   (drop
+    (block $l4 (result funcref)
+     (drop
+      (block $l5 (result i32)
+       (global.set $global-mut
+        (i32.const 1)
+       )
+       (br_if $l5
+        (i32.const 1)
+        (ref.is_null
+         (br_if $l4
+          (ref.func $dummy)
+          (i32.const 3)
+         )
+        )
+       )
+      )
+     )
+     (ref.null func)
+    )
+   )
   )
 )

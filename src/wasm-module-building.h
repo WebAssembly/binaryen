@@ -17,6 +17,7 @@
 #ifndef wasm_wasm_module_building_h
 #define wasm_wasm_module_building_h
 
+#include "pass.h"
 #include <support/threads.h>
 #include <wasm.h>
 
@@ -120,15 +121,6 @@ public:
     if (!useWorkers()) {
       // if we shouldn't use threads, don't
       return;
-    }
-
-    // Before parallelism, create all passes on the main thread here, to ensure
-    // prepareToRun() is called for each pass before we start to optimize
-    // functions.
-    {
-      PassRunner passRunner(wasm, passOptions);
-      addPrePasses(passRunner);
-      passRunner.addDefaultFunctionOptimizationPasses();
     }
 
     // prepare work list

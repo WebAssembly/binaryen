@@ -1,0 +1,43 @@
+(module
+ (type $i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64) (result i64)))
+ (type $vijfd (func (param i32 i64 f32 f64)))
+ (table $0 10 10 funcref)
+ (elem (i32.const 0) $byn$fpcast-emu$a)
+ (func $a (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+  (drop
+   (call_indirect (type $i64_i64_i64_i64_i64_=>_i64)
+    (i64.extend_i32_u
+     (i32.const 1)
+    )
+    (i64.const 2)
+    (i64.extend_i32_u
+     (i32.reinterpret_f32
+      (f32.const 3)
+     )
+    )
+    (i64.reinterpret_f64
+     (f64.const 4)
+    )
+    (i64.const 0)
+    (i32.const 1337)
+   )
+  )
+ )
+ (func $byn$fpcast-emu$a (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (result i64)
+  (call $a
+   (i32.wrap_i64
+    (local.get $0)
+   )
+   (local.get $1)
+   (f32.reinterpret_i32
+    (i32.wrap_i64
+     (local.get $2)
+    )
+   )
+   (f64.reinterpret_i64
+    (local.get $3)
+   )
+  )
+  (i64.const 0)
+ )
+)

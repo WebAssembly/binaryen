@@ -1,8 +1,12 @@
+# Python 3.5 is the version shipped in Ubuntu Xenial
+find_package(PythonInterp 3.5 REQUIRED)
+
 add_custom_command(
   OUTPUT WasmIntrinsics.cpp
-  COMMAND python ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwat.py wasm-intrinsics.wat)
 
+FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
@@ -11,10 +15,13 @@ set(passes_SOURCES
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
+  ConstantFieldPropagation.cpp
   ConstHoisting.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  DeAlign.cpp
+  DeNaN.cpp
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
@@ -22,26 +29,36 @@ set(passes_SOURCES
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
+  GenerateDynCalls.cpp
+  GlobalRefining.cpp
+  GlobalTypeOptimization.cpp
+  Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
+  Intrinsics.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LocalCSE.cpp
+  LocalSubtyping.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeLocals.cpp
   Metrics.cpp
   MinifyImportsAndExports.cpp
   NameList.cpp
+  NameTypes.cpp
   NoExitRuntime.cpp
+  OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
+  OptimizeForJS.cpp
   PickLoadSigns.cpp
-  PostAssemblyScript.cpp
+  Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -49,11 +66,12 @@ set(passes_SOURCES
   PrintFeatures.cpp
   PrintFunctionMap.cpp
   RoundTrip.cpp
+  SetGlobals.cpp
   StackIR.cpp
+  SignatureRefining.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
-  RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
@@ -64,14 +82,16 @@ set(passes_SOURCES
   ReorderFunctions.cpp
   ReReloop.cpp
   TrapMode.cpp
+  TypeRefining.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
-  SpillPointers.cpp
+  StackCheck.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  ${passes_HEADERS}
 )
 add_library(passes OBJECT ${passes_SOURCES})

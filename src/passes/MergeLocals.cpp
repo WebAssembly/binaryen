@@ -58,6 +58,10 @@ struct MergeLocals
       PostWalker<MergeLocals, UnifiedExpressionVisitor<MergeLocals>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass merges locals, mapping the originals to new ones.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new MergeLocals(); }
 
   void doWalkFunction(Function* func) {
@@ -188,7 +192,7 @@ struct MergeLocals
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
       LocalGraph postGraph(func);
-      postGraph.computeInfluences();
+      postGraph.computeSetInfluences();
       for (auto& pair : optimizedToCopy) {
         auto* copy = pair.first;
         auto* trivial = pair.second;

@@ -43,13 +43,20 @@
 // making the AST have these properties:
 //
 //  1. Aside from a local.set, the operands of an instruction must be a
-//     local.get, a const, or an unreachable. Anything else is written
-//     to a local earlier.
-//  2. Disallow block, loop, and if return values, and do not allow the
-//     function body to have a concrete type, i.e., do not use
+//     local.get, a const, an unreachable, or a ref.as_non_null. Anything else
+//     is written to a local earlier.
+//  2. Disallow control flow (block, loop, if, and try) return values, and do
+//     not allow the function body to have a concrete type, i.e., do not use
 //     control flow to pass around values.
 //  3. Disallow local.tee, setting a local is always done in a local.set
 //     on a non-nested-expression location.
+//  4. local.set cannot have an operand that is control flow (control flow with
+//     values is prohibited already, but e.g. a block ending in unreachable,
+//     which can normally be nested, is also disallowed).
+//
+// Note: ref.as_non_null must be allowed in a nested position because we cannot
+// spill it to a local - the result is non-null, which is not allowable in a
+// local.
 //
 
 #ifndef wasm_ir_flat_h
@@ -64,25 +71,26 @@ namespace wasm {
 
 namespace Flat {
 
-inline bool isControlFlowStructure(Expression* curr) {
-  return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
-         curr->is<Try>();
-}
-
 inline void verifyFlatness(Function* func) {
   struct VerifyFlatness
     : public PostWalker<VerifyFlatness,
                         UnifiedExpressionVisitor<VerifyFlatness>> {
     void visitExpression(Expression* curr) {
-      if (isControlFlowStructure(curr)) {
+      if (Properties::isControlFlowStructure(curr)) {
         verify(!curr->type.isConcrete(),
                "control flow structures must not flow values");
-      } else if (curr->is<LocalSet>()) {
-        verify(!curr->type.isConcrete(), "tees are not allowed, only sets");
+      } else if (auto* set = curr->dynCast<LocalSet>()) {
+        verify(!set->isTee() || set->type == Type::unreachable,
+               "tees are not allowed, only sets");
+        verify(!Properties::isControlFlowStructure(set->value),
+               "set values cannot be control flow");
       } else {
         for (auto* child : ChildIterator(curr)) {
+          bool isRefAsNonNull =
+            child->is<RefAs>() && child->cast<RefAs>()->op == RefAsNonNull;
           verify(Properties::isConstantExpression(child) ||
-                   child->is<LocalGet>() || child->is<Unreachable>(),
+                   child->is<LocalGet>() || child->is<Unreachable>() ||
+                   isRefAsNonNull,
                  "instructions must only have constant expressions, local.get, "
                  "or unreachable as children");
         }

@@ -15,7 +15,7 @@
  */
 
 //
-// Removes all operations in a wasm module that aren't inherently implementable
+// RemoveNonJSOps removes operations that aren't inherently implementable
 // in JS. This includes things like 64-bit division, `f32.nearest`,
 // `f64.copysign`, etc. Most operations are lowered to a call to an injected
 // intrinsic implementation. Intrinsics don't use themselves to implement
@@ -26,6 +26,12 @@
 // needed intrinsics from this module into the module that we're optimizing
 // after walking the current module.
 //
+// StubUnsupportedJSOps stubs out operations that are not fully supported
+// even with RemoveNonJSOps. For example, i64->f32 conversions do not have
+// perfect rounding in all cases. StubUnsupportedJSOps removes those entirely
+// and replaces them with "stub" operations that do nothing. This is only
+// really useful for fuzzing as it changes the behavior of the program.
+//
 
 #include <pass.h>
 #include <wasm.h>
@@ -33,9 +39,11 @@
 #include "abi/js.h"
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
+#include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "passes/intrinsics-module.h"
+#include "support/insert_ordered.h"
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
 
@@ -44,7 +52,7 @@ namespace wasm {
 struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   std::unique_ptr<Builder> builder;
   std::unordered_set<Name> neededIntrinsics;
-  std::set<std::pair<Name, Type>> neededImportedGlobals;
+  InsertOrderedSet<std::pair<Name, Type>> neededImportedGlobals;
 
   bool isFunctionParallel() override { return false; }
 
@@ -52,7 +60,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
   void doWalkModule(Module* module) {
     // Intrinsics may use scratch memory, ensure it.
-    ABI::wasm2js::ensureScratchMemoryHelpers(module);
+    ABI::wasm2js::ensureHelpers(module);
 
     // Discover all of the intrinsics that we need to inject, lowering all
     // operations to intrinsic calls while we're at it.
@@ -72,7 +80,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     std::string input(IntrinsicsModuleWast);
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
-    SExpressionWasmBuilder builder(intrinsicsModule, *root[0]);
+    SExpressionWasmBuilder builder(
+      intrinsicsModule, *root[0], IRProfile::Normal);
 
     std::set<Name> neededFunctions;
 
@@ -105,6 +114,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         doWalkFunction(func);
       }
       neededFunctions.clear();
+    }
+
+    // Copy all the globals in the intrinsics module
+    for (auto& global : intrinsicsModule.globals) {
+      ModuleUtils::copyGlobal(global.get(), *module);
     }
 
     // Intrinsics may use memory, so ensure the module has one.
@@ -157,7 +171,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned loads of floats to unaligned loads of integers (which we
     // can actually implement) and then use reinterpretation to get the float
     // back out.
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::f32:
         curr->type = Type::i32;
         replaceCurrent(builder->makeUnary(ReinterpretInt32, curr));
@@ -179,7 +193,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Switch unaligned stores of floats to unaligned stores of integers (which
     // we can actually implement) and then use reinterpretation to store the
     // right value.
-    switch (curr->valueType.getSingle()) {
+    switch (curr->valueType.getBasic()) {
       case Type::f32:
         curr->valueType = Type::i32;
         curr->value = builder->makeUnary(ReinterpretFloat32, curr->value);
@@ -238,17 +252,29 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void rewriteCopysign(Binary* curr) {
+
+    // i32.copysign(x, y)   =>   f32.reinterpret(
+    //   (i32.reinterpret(x) & ~(1 << 31)) |
+    //   (i32.reinterpret(y) &  (1 << 31)
+    // )
+    //
+    // i64.copysign(x, y)   =>   f64.reinterpret(
+    //   (i64.reinterpret(x) & ~(1 << 63)) |
+    //   (i64.reinterpret(y) &  (1 << 63)
+    // )
+
     Literal signBit, otherBits;
     UnaryOp int2float, float2int;
     BinaryOp bitAnd, bitOr;
+
     switch (curr->op) {
       case CopySignFloat32:
         float2int = ReinterpretFloat32;
         int2float = ReinterpretInt32;
         bitAnd = AndInt32;
         bitOr = OrInt32;
-        signBit = Literal(uint32_t(1 << 31));
-        otherBits = Literal(uint32_t(1 << 31) - 1);
+        signBit = Literal(uint32_t(1U << 31));
+        otherBits = Literal(~uint32_t(1U << 31));
         break;
 
       case CopySignFloat64:
@@ -256,8 +282,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         int2float = ReinterpretInt64;
         bitAnd = AndInt64;
         bitOr = OrInt64;
-        signBit = Literal(uint64_t(1) << 63);
-        otherBits = Literal((uint64_t(1) << 63) - 1);
+        signBit = Literal(uint64_t(1ULL << 63));
+        otherBits = Literal(~uint64_t(1ULL << 63));
         break;
 
       default:
@@ -286,13 +312,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         functionCall = WASM_NEAREST_F64;
         break;
 
-      case TruncFloat32:
-        functionCall = WASM_TRUNC_F32;
-        break;
-      case TruncFloat64:
-        functionCall = WASM_TRUNC_F64;
-        break;
-
       case PopcntInt64:
         functionCall = WASM_POPCNT64;
         break;
@@ -319,6 +338,61 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 };
 
+struct StubUnsupportedJSOpsPass
+  : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new StubUnsupportedJSOpsPass; }
+
+  void visitUnary(Unary* curr) {
+    switch (curr->op) {
+      case ConvertUInt64ToFloat32:
+        // See detailed comment in lowerConvertIntToFloat in
+        // I64ToI32Lowering.cpp.
+        stubOut(curr->value, curr->type);
+        break;
+      default: {
+      }
+    }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    // Indirect calls of the wrong type trap in wasm, but not in wasm2js. Remove
+    // the indirect call, but leave the arguments.
+    Builder builder(*getModule());
+    std::vector<Expression*> items;
+    for (auto* operand : curr->operands) {
+      items.push_back(builder.makeDrop(operand));
+    }
+    items.push_back(builder.makeDrop(curr->target));
+    stubOut(builder.makeBlock(items), curr->type);
+  }
+
+  void stubOut(Expression* value, Type outputType) {
+    Builder builder(*getModule());
+    // In some cases we can just replace with the value.
+    auto* replacement = value;
+    if (outputType == Type::unreachable) {
+      // This is unreachable anyhow; just leave the value instead of the
+      // original node.
+      assert(value->type == Type::unreachable);
+    } else if (outputType != Type::none) {
+      // Drop the value if we need to.
+      if (value->type != Type::none) {
+        value = builder.makeDrop(value);
+      }
+      // Return something with the right output type.
+      replacement = builder.makeSequence(
+        value, LiteralUtils::makeZero(outputType, *getModule()));
+    }
+    replaceCurrent(replacement);
+  }
+};
+
 Pass* createRemoveNonJSOpsPass() { return new RemoveNonJSOpsPass(); }
+
+Pass* createStubUnsupportedJSOpsPass() {
+  return new StubUnsupportedJSOpsPass();
+}
 
 } // namespace wasm

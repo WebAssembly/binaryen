@@ -9,7 +9,7 @@ infer %0
 
 (module
  (type $none_=>_none (func))
- (func $if-loop-test (; 0 ;)
+ (func $if-loop-test
   (local $0 i32)
   (if
    (i32.const 0)

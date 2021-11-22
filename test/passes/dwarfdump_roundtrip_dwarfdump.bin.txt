@@ -103,7 +103,7 @@ DWARF debug info
 ================
 
 Contains section .debug_info (58 bytes)
-Contains section .debug_abbrev (38 bytes)
+Contains section .debug_abbrev (39 bytes)
 Contains section .debug_line (39 bytes)
 Contains section .debug_str (212 bytes)
 
@@ -137,12 +137,12 @@ Abbrev table for offset: 0x00000000
               DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000095] = "a.cpp")
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/usr/local/google/home/azakai/Dev/emscripten")
-              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-              DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+              DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
 
 0x00000026:   DW_TAG_subprogram [2]  
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
-                DW_AT_high_pc [DW_FORM_data4]	(0x00000002)
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "_Z3foov")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d0] = "foo")
                 DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/emscripten/a.cpp")
@@ -213,13 +213,13 @@ file_names[  1]:
  (export "stackAlloc" (func $fimport$5))
  (export "stackRestore" (func $fimport$6))
  (export "__growWasmMemory" (func $fimport$7))
- (func $0 (; 8 ;) (result i32)
+ (func $0 (result i32)
   (i32.const 1024)
  )
  ;; custom section "sourceMappingURL", size 15
  ;; custom section "sourceMappingURL", size 15
  ;; custom section ".debug_info", size 58
- ;; custom section ".debug_abbrev", size 38
+ ;; custom section ".debug_abbrev", size 39
  ;; custom section ".debug_line", size 39
  ;; custom section ".debug_str", size 212
 )

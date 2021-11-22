@@ -19,9 +19,12 @@
 // values, useful for fuzzing.
 //
 
+#include "wasm-type.h"
+#include "wasm.h"
+
 namespace wasm {
 
-static std::string generateSpecWrapper(Module& wasm) {
+inline std::string generateSpecWrapper(Module& wasm) {
   std::string ret;
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
@@ -30,9 +33,10 @@ static std::string generateSpecWrapper(Module& wasm) {
     }
     ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") +
            exp->name.str + "\" ";
-    for (Type param : func->sig.params.expand()) {
+    for (const auto& param : func->getParams()) {
       // zeros in arguments TODO more?
-      switch (param.getSingle()) {
+      TODO_SINGLE_COMPOUND(param);
+      switch (param.getBasic()) {
         case Type::i32:
           ret += "(i32.const 0)";
           break;
@@ -49,11 +53,21 @@ static std::string generateSpecWrapper(Module& wasm) {
           ret += "(v128.const i32x4 0 0 0 0)";
           break;
         case Type::funcref:
-        case Type::anyref:
-        case Type::nullref:
-        case Type::exnref:
-          ret += "(ref.null)";
+          ret += "(ref.null func)";
           break;
+        case Type::externref:
+          ret += "(ref.null extern)";
+          break;
+        case Type::anyref:
+          ret += "(ref.null any)";
+          break;
+        case Type::eqref:
+          ret += "(ref.null eq)";
+          break;
+        case Type::i31ref:
+          WASM_UNREACHABLE("TODO: i31ref");
+        case Type::dataref:
+          WASM_UNREACHABLE("TODO: dataref");
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

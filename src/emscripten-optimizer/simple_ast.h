@@ -256,7 +256,7 @@ struct Value {
   AssignName* asAssignName();
 
   int32_t getInteger() { // convenience function to get a known integer
-    assert(fmod(getNumber(), 1) == 0);
+    assert(wasm::isInteger(getNumber()));
     int32_t ret = getNumber();
     assert(double(ret) == getNumber()); // no loss in conversion
     return ret;
@@ -944,20 +944,22 @@ struct JSPrinter {
       d = -d;
     }
     // try to emit the fewest necessary characters
-    bool integer = fmod(d, 1) == 0;
+    bool integer = wasm::isInteger(d);
 #define BUFFERSIZE 1000
     // f is normal, e is scientific for float, x for integer
-    static char full_storage_f[BUFFERSIZE], full_storage_e[BUFFERSIZE];
+    // These need to be thread-local because they are returned.
+    thread_local char full_storage_f[BUFFERSIZE];
+    thread_local char full_storage_e[BUFFERSIZE];
     // full has one more char, for a possible '-'
-    static char *storage_f = full_storage_f + 1,
-                *storage_e = full_storage_e + 1;
+    char* storage_f = full_storage_f + 1;
+    char* storage_e = full_storage_e + 1;
     auto err_f = std::numeric_limits<double>::quiet_NaN();
     auto err_e = std::numeric_limits<double>::quiet_NaN();
     for (int e = 0; e <= 1; e++) {
       char* buffer = e ? storage_e : storage_f;
       double temp;
       if (!integer) {
-        static char format[6];
+        char format[6];
         for (int i = 0; i <= 18; i++) {
           format[0] = '%';
           format[1] = '.';

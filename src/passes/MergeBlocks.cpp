@@ -74,6 +74,7 @@
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/iteration.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -84,7 +85,9 @@ namespace wasm {
 // Looks for reasons we can't remove the values from breaks to an origin
 // For example, if there is a switch targeting us, we can't do it - we can't
 // remove the value from other targets
-struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
+struct ProblemFinder
+  : public ControlFlowWalker<ProblemFinder,
+                             UnifiedExpressionVisitor<ProblemFinder>> {
   Name origin;
   bool foundProblem = false;
   // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow
@@ -95,37 +98,36 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   ProblemFinder(PassOptions& passOptions) : passOptions(passOptions) {}
 
-  void visitBreak(Break* curr) {
-    if (curr->name == origin) {
-      if (curr->condition) {
-        brIfs++;
+  void visitExpression(Expression* curr) {
+    if (auto* drop = curr->dynCast<Drop>()) {
+      if (auto* br = drop->value->dynCast<Break>()) {
+        if (br->name == origin && br->condition) {
+          droppedBrIfs++;
+        }
       }
-      // if the value has side effects, we can't remove it
-      if (EffectAnalyzer(passOptions, curr->value).hasSideEffects()) {
-        foundProblem = true;
-      }
-    }
-  }
-
-  void visitDrop(Drop* curr) {
-    if (auto* br = curr->value->dynCast<Break>()) {
-      if (br->name == origin && br->condition) {
-        droppedBrIfs++;
-      }
-    }
-  }
-
-  void visitSwitch(Switch* curr) {
-    if (curr->default_ == origin) {
-      foundProblem = true;
       return;
     }
-    for (auto& target : curr->targets) {
-      if (target == origin) {
-        foundProblem = true;
-        return;
+
+    if (auto* br = curr->dynCast<Break>()) {
+      if (br->name == origin) {
+        if (br->condition) {
+          brIfs++;
+        }
+        // if the value has side effects, we can't remove it
+        if (EffectAnalyzer(passOptions, *getModule(), br->value)
+              .hasSideEffects()) {
+          foundProblem = true;
+        }
       }
+      return;
     }
+
+    // Any other branch type - switch, br_on, etc. - is not handled yet.
+    BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+      if (name == origin) {
+        foundProblem = true;
+      }
+    });
   }
 
   bool found() {
@@ -139,8 +141,11 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   Name origin;
   PassOptions& passOptions;
+  BranchUtils::BranchSeekerCache& branchInfo;
 
-  BreakValueDropper(PassOptions& passOptions) : passOptions(passOptions) {}
+  BreakValueDropper(PassOptions& passOptions,
+                    BranchUtils::BranchSeekerCache& branchInfo)
+    : passOptions(passOptions), branchInfo(branchInfo) {}
 
   void visitBlock(Block* curr);
 
@@ -192,8 +197,10 @@ static bool hasDeadCode(Block* block) {
 }
 
 // core block optimizer routine
-static void
-optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
+static void optimizeBlock(Block* curr,
+                          Module* module,
+                          PassOptions& passOptions,
+                          BranchUtils::BranchSeekerCache& branchInfo) {
   auto& list = curr->list;
   // Main merging loop.
   bool more = true;
@@ -224,13 +231,14 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
               Expression* expression = childBlock;
               // check if it's ok to remove the value from all breaks to us
               ProblemFinder finder(passOptions);
+              finder.setModule(module);
               finder.origin = childBlock->name;
               finder.walk(expression);
               if (finder.found()) {
                 childBlock = nullptr;
               } else {
                 // fix up breaks
-                BreakValueDropper fixer(passOptions);
+                BreakValueDropper fixer(passOptions, branchInfo);
                 fixer.origin = childBlock->name;
                 fixer.setModule(module);
                 fixer.walk(expression);
@@ -287,7 +295,7 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::has(item, childName)) {
+          if (branchInfo.hasBranch(item, childName)) {
             // We can't remove this from the child.
             keepStart = j;
             keepEnd = childSize;
@@ -353,6 +361,13 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
         if (loop) {
           loop->finalize();
         }
+        // Note that we modify the child block here, which invalidates info
+        // in branchInfo. However, as we have scanned the parent, we have
+        // already forgotten the child's info, so there is nothing to do here
+        // for the child.
+        // (We also don't need to do anything for the parent - we move code
+        // from a child into the parent, but that doesn't change the total
+        // branches in the parent.)
       }
       // Add the rest of the parent block after the child.
       for (size_t j = i + 1; j < list.size(); j++) {
@@ -380,16 +395,20 @@ optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
-  optimizeBlock(curr, getModule(), passOptions);
+  optimizeBlock(curr, getModule(), passOptions, branchInfo);
 }
 
-struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
+struct MergeBlocks
+  : public WalkerPass<
+      PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new MergeBlocks; }
 
+  BranchUtils::BranchSeekerCache branchInfo;
+
   void visitBlock(Block* curr) {
-    optimizeBlock(curr, getModule(), getPassOptions());
+    optimizeBlock(curr, getModule(), getPassOptions(), branchInfo);
   }
 
   // given
@@ -421,14 +440,14 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
       // there are dependencies, things we must be reordered through. make sure
       // no problems there
-      EffectAnalyzer childEffects(getPassOptions(), child);
+      EffectAnalyzer childEffects(getPassOptions(), *getModule(), child);
       if (dependency1 && *dependency1 &&
-          EffectAnalyzer(getPassOptions(), *dependency1)
+          EffectAnalyzer(getPassOptions(), *getModule(), *dependency1)
             .invalidates(childEffects)) {
         return outer;
       }
       if (dependency2 && *dependency2 &&
-          EffectAnalyzer(getPassOptions(), *dependency2)
+          EffectAnalyzer(getPassOptions(), *getModule(), *dependency2)
             .invalidates(childEffects)) {
         return outer;
       }
@@ -448,8 +467,14 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
           // fancy here
           return outer;
         }
-        // we are going to replace the block with the final element, so they
-        // should be identically typed
+        // We are going to replace the block with the final element, so they
+        // should be identically typed. Note that we could check for subtyping
+        // here, but it would not help in the general case: we know that this
+        // block has no breaks (as confirmed above), and so the local-subtyping
+        // pass will turn its type into that of its final element, if the final
+        // element has a more specialized type. (If we did want to handle that,
+        // we'd need to then run a ReFinalize after everything, which would add
+        // more complexity here.)
         if (block->type != back->type) {
           return outer;
         }
@@ -475,84 +500,174 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     return outer;
   }
 
-  void visitUnary(Unary* curr) { optimize(curr, curr->value); }
-  void visitLocalSet(LocalSet* curr) { optimize(curr, curr->value); }
-  void visitLoad(Load* curr) { optimize(curr, curr->ptr); }
-  void visitReturn(Return* curr) { optimize(curr, curr->value); }
-
-  void visitBinary(Binary* curr) {
-    optimize(curr, curr->right, optimize(curr, curr->left), &curr->left);
-  }
-  void visitStore(Store* curr) {
-    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    optimize(curr, curr->value, optimize(curr, curr->ptr), &curr->ptr);
-  }
-  void optimizeTernary(Expression* curr,
-                       Expression*& first,
-                       Expression*& second,
-                       Expression*& third) {
-    // TODO: for now, just stop when we see any side effect. instead, we could
-    //       check effects carefully for reordering
-    Block* outer = nullptr;
-    if (EffectAnalyzer(getPassOptions(), first).hasSideEffects()) {
+  // Default optimizations for simple cases. Complex things are overridden
+  // below.
+  void visitExpression(Expression* curr) {
+    // Control flow need special handling. Those we can optimize are handled
+    // below.
+    if (Properties::isControlFlowStructure(curr)) {
       return;
     }
-    outer = optimize(curr, first, outer);
-    if (EffectAnalyzer(getPassOptions(), second).hasSideEffects()) {
+
+    // As we go through the children, to move things to the outside means
+    // moving them past the children before them:
+    //
+    //  (parent
+    //   (child1
+    //    (A)
+    //    (B)
+    //   )
+    //   (child2
+    //
+    // If we move (A) out of parent, then that is fine (further things moved
+    // out would appear after it). But if we leave (B) in its current position
+    // then if we try to move anything from child2 out of parent then we must
+    // move those things past (B). We use a vector to track the effects of the
+    // children, where it contains the effects of what was left in the child
+    // after optimization.
+    std::vector<EffectAnalyzer> childEffects;
+
+    ChildIterator iterator(curr);
+    auto numChildren = iterator.getNumChildren();
+
+    // Find the last block among the children, as all we are trying to do here
+    // is move the contents of blocks outwards.
+    Index lastBlock = -1;
+    for (Index i = 0; i < numChildren; i++) {
+      if (iterator.getChild(i)->is<Block>()) {
+        lastBlock = i;
+      }
+    }
+    if (lastBlock == Index(-1)) {
+      // There are no blocks at all, so there is nothing to optimize.
       return;
     }
-    outer = optimize(curr, second, outer);
-    if (EffectAnalyzer(getPassOptions(), third).hasSideEffects()) {
-      return;
+
+    // We'll only compute effects up to the child before the last block, since
+    // we have nothing to optimize afterwards, which sets a maximum size on the
+    // vector.
+    if (lastBlock > 0) {
+      childEffects.reserve(lastBlock);
     }
-    optimize(curr, third, outer);
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    optimizeTernary(curr, curr->ptr, curr->expected, curr->replacement);
+
+    // The outer block that will replace us, containing the contents moved out
+    // and then ourselves, assuming we manage to optimize.
+    Block* outerBlock = nullptr;
+
+    for (Index i = 0; i <= lastBlock; i++) {
+      auto* child = iterator.getChild(i);
+      auto* block = child->dynCast<Block>();
+
+      auto continueEarly = [&]() {
+        // When we continue early, after failing to find anything to optimize,
+        // the effects we need to note for the child are simply those of the
+        // child in its original form.
+        childEffects.emplace_back(getPassOptions(), *getModule(), child);
+      };
+
+      // If there is no block, or it is one that might have branches, or it is
+      // too small for us to remove anything from (we cannot remove the last
+      // element), or if it has unreachable code (leave that for dce), then give
+      // up.
+      if (!block || block->name.is() || block->list.size() <= 1 ||
+          hasUnreachableChild(block)) {
+        continueEarly();
+        continue;
+      }
+
+      // Also give up if the block's last element has a different type than the
+      // block, as that would mean we would change the type received by the
+      // parent (which might cause its type to need to be updated, for example).
+      // Leave this alone, as other passes will simplify this anyhow (using
+      // refinalize).
+      auto* back = block->list.back();
+      if (block->type != back->type) {
+        continueEarly();
+        continue;
+      }
+
+      // The block seems to have the shape we want. Check for effects: we want
+      // to move all the items out but the last one, so they must all cross over
+      // anything we need to move past.
+      //
+      // In principle we could also handle the case where we can move out only
+      // some of the block items. However, that would be more complex (we'd need
+      // to allocate a new block sometimes), it is rare, and it may not always
+      // be helpful (we wouldn't actually be getting rid of the child block -
+      // although, in the binary format such blocks tend to vanish anyhow).
+      bool fail = false;
+      for (auto* blockChild : block->list) {
+        if (blockChild == back) {
+          break;
+        }
+        EffectAnalyzer blockChildEffects(
+          getPassOptions(), *getModule(), blockChild);
+        for (auto& effects : childEffects) {
+          if (blockChildEffects.invalidates(effects)) {
+            fail = true;
+            break;
+          }
+        }
+        if (fail) {
+          break;
+        }
+      }
+      if (fail) {
+        continueEarly();
+        continue;
+      }
+
+      // Wonderful, we can do this! Move our items to an outer block, reusing
+      // this one if there isn't one already.
+      if (!outerBlock) {
+        // Leave all the items there, just remove the last one which will remain
+        // where it was.
+        block->list.pop_back();
+        outerBlock = block;
+      } else {
+        // Move the items to the existing outer block.
+        for (auto* blockChild : block->list) {
+          if (blockChild == back) {
+            break;
+          }
+          outerBlock->list.push_back(blockChild);
+        }
+      }
+
+      // Set the back element as the new child, replacing the block that was
+      // there.
+      iterator.getChild(i) = back;
+
+      // If there are further elements, we need to know what effects the
+      // remaining code has, as if they move they'll move past it.
+      if (i < lastBlock) {
+        childEffects.emplace_back(getPassOptions(), *getModule(), back);
+      }
+    }
+
+    if (outerBlock) {
+      // We moved items outside, which means we must replace ourselves with the
+      // block.
+      outerBlock->list.push_back(curr);
+      outerBlock->finalize(curr->type);
+      replaceCurrent(outerBlock);
+    }
   }
 
-  void visitSelect(Select* curr) {
-    optimizeTernary(curr, curr->ifTrue, curr->ifFalse, curr->condition);
+  void visitIf(If* curr) {
+    // We can move code out of the condition, but not any of the other children.
+    optimize(curr, curr->condition);
   }
 
-  void visitDrop(Drop* curr) { optimize(curr, curr->value); }
-
-  void visitBreak(Break* curr) {
-    optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
-  }
-  void visitSwitch(Switch* curr) {
-    optimize(curr, curr->condition, optimize(curr, curr->value), &curr->value);
-  }
-
-  template<typename T> void handleCall(T* curr) {
+  void visitThrow(Throw* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
+      if (EffectAnalyzer(getPassOptions(), *getModule(), curr->operands[i])
             .hasSideEffects()) {
         return;
       }
       outer = optimize(curr, curr->operands[i], outer);
     }
-    return;
-  }
-
-  void visitCall(Call* curr) { handleCall(curr); }
-
-  void visitCallIndirect(CallIndirect* curr) {
-    Block* outer = nullptr;
-    for (Index i = 0; i < curr->operands.size(); i++) {
-      if (EffectAnalyzer(getPassOptions(), curr->operands[i])
-            .hasSideEffects()) {
-        return;
-      }
-      outer = optimize(curr, curr->operands[i], outer);
-    }
-    if (EffectAnalyzer(getPassOptions(), curr->target).hasSideEffects()) {
-      return;
-    }
-    optimize(curr, curr->target, outer);
   }
 };
 

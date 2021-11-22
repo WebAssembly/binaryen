@@ -155,15 +155,31 @@ struct OptimizationOptions : public ToolOptions {
       .add("--one-caller-inline-max-function-size",
            "-ocimfs",
            "Max size of functions that are inlined when there is only one "
-           "caller (default " +
-             std::to_string(InliningOptions().oneCallerInlineMaxSize) +
-             "). Reason this is not unbounded is that some "
-             "implementations may have a hard time optimizing really large "
-             "functions",
+           "caller (default -1, which means all such functions are inlined)",
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
+             static_assert(InliningOptions().oneCallerInlineMaxSize ==
+                             Index(-1),
+                           "the help text here is written to assume -1");
              passOptions.inlining.oneCallerInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
+           })
+      .add("--inline-functions-with-loops",
+           "-ifwl",
+           "Allow inlining functions with loops",
+           Options::Arguments::Zero,
+           [this](Options* o, const std::string&) {
+             passOptions.inlining.allowFunctionsWithLoops = true;
+           })
+      .add("--partial-inlining-ifs",
+           "-pii",
+           "Number of ifs allowed in partial inlining (zero means partial "
+           "inlining is disabled) (default: " +
+             std::to_string(InliningOptions().partialInliningIfs) + ')',
+           Options::Arguments::One,
+           [this](Options* o, const std::string& argument) {
+             passOptions.inlining.partialInliningIfs =
+               static_cast<Index>(std::stoi(argument));
            })
       .add("--ignore-implicit-traps",
            "-iit",
@@ -173,6 +189,14 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.ignoreImplicitTraps = true;
            })
+      .add("--traps-never-happen",
+           "-tnh",
+           "Optimize under the helpful assumption that no trap is reached at "
+           "runtime (from load, div/mod, etc.)",
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.trapsNeverHappen = true;
+           })
       .add("--low-memory-unused",
            "-lmu",
            "Optimize under the helpful assumption that the low 1K of memory is "
@@ -180,15 +204,44 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.lowMemoryUnused = true;
+           })
+      .add(
+        "--fast-math",
+        "-ffm",
+        "Optimize floats without handling corner cases of NaNs and rounding",
+        Options::Arguments::Zero,
+        [this](Options*, const std::string&) { passOptions.fastMath = true; })
+      .add("--zero-filled-memory",
+           "-uim",
+           "Assume that an imported memory will be zero-initialized",
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.zeroFilledMemory = true;
            });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
-      (*this).add(
-        std::string("--") + p,
-        "",
-        PassRegistry::get()->getPassDescription(p),
-        Options::Arguments::Zero,
-        [this, p](Options*, const std::string&) { passes.push_back(p); });
+      (*this).add(std::string("--") + p,
+                  "",
+                  PassRegistry::get()->getPassDescription(p),
+                  // Allow an optional parameter to a pass. If provided, it is
+                  // the same as if using --pass-arg, that is,
+                  //
+                  //   --foo=ARG
+                  //
+                  // is the same as
+                  //
+                  //   --foo --pass-arg=foo@ARG
+                  Options::Arguments::Optional,
+                  [this, p](Options*, const std::string& arg) {
+                    if (!arg.empty()) {
+                      if (passOptions.arguments.count(p)) {
+                        Fatal()
+                          << "Cannot pass multiple pass arguments to " << p;
+                      }
+                      passOptions.arguments[p] = arg;
+                    }
+                    passes.push_back(p);
+                  });
     }
   }
 

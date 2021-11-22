@@ -1,93 +1,411 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $i64_=>_none (func (param i64)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
  (type $anyref_=>_none (func (param anyref)))
- (type $exnref_=>_exnref (func (param exnref) (result exnref)))
- (event $event$0 (attr 0) (param i32))
- (event $event$1 (attr 0) (param anyref))
- (func $exnref_test (; 0 ;) (param $0 exnref) (result exnref)
-  (local.get $0)
- )
- (func $foo (; 1 ;)
+ (tag $tag$0 (param i32))
+ (tag $tag$1 (param i64))
+ (tag $tag$2 (param i32 i64))
+ (tag $tag$3 (param anyref))
+ (tag $tag$4 (param))
+ (func $foo
   (nop)
  )
- (func $bar (; 2 ;)
+ (func $bar
   (nop)
  )
- (func $eh_test (; 3 ;)
-  (local $0 exnref)
-  (try
-   (throw $event$0
-    (i32.const 0)
-   )
-   (catch
-    (local.set $0
-     (exnref.pop)
+ (func $eh_test
+  (local $x i32)
+  (local $1 i64)
+  (local $2 (i32 i64))
+  (local $3 i32)
+  (local $4 i32)
+  (try $label$3
+   (do
+    (throw $tag$0
+     (i32.const 0)
     )
+   )
+   (catch $tag$0
     (drop
-     (block $label$3 (result i32)
-      (rethrow
-       (br_on_exn $label$3 $event$0
-        (local.get $0)
+     (pop i32)
+    )
+   )
+  )
+  (try $label$6
+   (do
+    (throw $tag$2
+     (i32.const 0)
+     (i64.const 0)
+    )
+   )
+   (catch $tag$2
+    (local.set $2
+     (pop i32 i64)
+    )
+    (local.set $x
+     (block (result i32)
+      (local.set $3
+       (tuple.extract 0
+        (local.get $2)
        )
       )
+      (local.set $1
+       (tuple.extract 1
+        (local.get $2)
+       )
+      )
+      (local.get $3)
+     )
+    )
+    (drop
+     (block (result i32)
+      (local.set $4
+       (local.get $x)
+      )
+      (drop
+       (local.get $1)
+      )
+      (local.get $4)
      )
     )
    )
   )
-  (block $label$4
-   (try
-    (br $label$4)
-    (catch
+  (block $label$7
+   (try $label$10
+    (do
+     (br $label$7)
+    )
+    (catch $tag$0
      (drop
-      (exnref.pop)
+      (pop i32)
      )
+     (br $label$7)
+    )
+   )
+  )
+  (try $label$13
+   (do
+    (nop)
+   )
+   (catch $tag$0
+    (drop
+     (pop i32)
+    )
+   )
+  )
+  (try $label$16
+   (do
+    (call $foo)
+    (call $bar)
+   )
+   (catch $tag$0
+    (drop
+     (pop i32)
+    )
+    (call $foo)
+    (call $bar)
+   )
+  )
+  (try $label$19
+   (do
+    (throw $tag$0
+     (i32.const 0)
+    )
+   )
+   (catch $tag$0
+    (drop
+     (pop i32)
+    )
+   )
+   (catch $tag$1
+    (drop
+     (pop i64)
+    )
+   )
+  )
+  (try $label$22
+   (do
+    (throw $tag$0
+     (i32.const 0)
+    )
+   )
+   (catch_all
+    (nop)
+   )
+  )
+  (try $label$25
+   (do
+    (throw $tag$0
+     (i32.const 0)
+    )
+   )
+   (catch $tag$0
+    (drop
+     (pop i32)
+    )
+   )
+   (catch $tag$1
+    (drop
+     (pop i64)
+    )
+   )
+   (catch_all
+    (call $foo)
+    (call $bar)
+   )
+  )
+  (try $label$34
+   (do
+    (try $label$29
+     (do
+      (throw $tag$0
+       (i32.const 0)
+      )
+     )
+     (catch $tag$0
+      (drop
+       (pop i32)
+      )
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+   (catch $tag$0
+    (drop
+     (pop i32)
+    )
+   )
+   (catch_all
+    (try $label$33
+     (do
+      (throw $tag$0
+       (i32.const 0)
+      )
+     )
+     (catch $tag$0
+      (drop
+       (pop i32)
+      )
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+  (try
+   (do
+    (throw $tag$0
+     (i32.const 0)
+    )
+   )
+  )
+ )
+ (func $delegate-test
+  (try $label$9
+   (do
+    (block $label$1
+     (try $label$4
+      (do
+       (call $foo)
+      )
+      (delegate $label$9)
+     )
+     (try $label$7
+      (do
+       (call $foo)
+      )
+      (delegate $label$9)
+     )
+    )
+   )
+   (catch_all
+    (nop)
+   )
+  )
+  (block $label$10
+   (try $label$19
+    (do
+     (block $label$11
+      (try $label$14
+       (do
+        (br_if $label$10
+         (i32.const 1)
+        )
+       )
+       (delegate $label$19)
+      )
+      (try $label$17
+       (do
+        (br_if $label$10
+         (i32.const 1)
+        )
+       )
+       (delegate $label$19)
+      )
+     )
+    )
+    (catch_all
+     (nop)
+    )
+   )
+  )
+  (try $label$25
+   (do
+    (block $label$20
+     (try $label$23
+      (do
+       (call $foo)
+      )
+      (delegate $label$25)
+     )
+    )
+   )
+   (delegate 0)
+  )
+  (try $label$28
+   (do
+    (nop)
+   )
+   (catch $tag$4
+    (nop)
+   )
+  )
+ )
+ (func $rethrow-test
+  (try $label$3
+   (do
+    (call $foo)
+   )
+   (catch $tag$0
+    (drop
+     (pop i32)
+    )
+    (rethrow $label$3)
+   )
+   (catch_all
+    (rethrow $label$3)
+   )
+  )
+  (block $label$4
+   (try $label$7
+    (do
+     (call $foo)
+    )
+    (catch $tag$0
+     (drop
+      (pop i32)
+     )
+     (rethrow $label$7)
+    )
+    (catch_all
      (br $label$4)
     )
    )
   )
-  (try
-   (nop)
-   (catch
-    (drop
-     (exnref.pop)
-    )
-   )
-  )
-  (try
-   (block
+  (try $label$13
+   (do
     (call $foo)
-    (call $bar)
    )
-   (catch
-    (drop
-     (exnref.pop)
-    )
-    (call $foo)
-    (call $bar)
-   )
-  )
- )
- (func $subtype_test (; 4 ;)
-  (try
-   (nop)
-   (catch
-    (drop
-     (exnref.pop)
-    )
-    (drop
-     (block $label$3 (result i32)
-      (rethrow
-       (br_on_exn $label$3 $event$0
-        (ref.null)
-       )
+   (catch_all
+    (try $label$12
+     (do
+      (call $foo)
+     )
+     (catch $tag$0
+      (drop
+       (pop i32)
       )
+      (rethrow $label$13)
+     )
+     (catch_all
+      (rethrow $label$13)
      )
     )
    )
   )
-  (throw $event$1
-   (ref.null)
+  (try $label$20
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $label$19
+     (do
+      (call $foo)
+     )
+     (catch $tag$0
+      (drop
+       (pop i32)
+      )
+      (block $label$18
+       (rethrow $label$20)
+      )
+     )
+     (catch_all
+      (rethrow $label$20)
+     )
+    )
+   )
+  )
+  (try $label$26
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $label$25
+     (do
+      (rethrow $label$26)
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+  (try $label$32
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $label$31
+     (do
+      (rethrow $label$32)
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+ )
+ (func $pop_test
+  (try $label$5
+   (do
+    (nop)
+   )
+   (catch $tag$0
+    (throw $tag$0
+     (if (result i32)
+      (pop i32)
+      (i32.const 0)
+      (i32.const 3)
+     )
+    )
+   )
+  )
+  (try $label$8
+   (do
+    (nop)
+   )
+   (catch $tag$3
+    (drop
+     (pop anyref)
+    )
+   )
   )
  )
 )

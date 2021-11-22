@@ -55,15 +55,15 @@ struct Metrics
     }
     ModuleUtils::iterDefinedGlobals(*module,
                                     [&](Global* curr) { walkGlobal(curr); });
-    walkTable(&module->table);
     walkMemory(&module->memory);
 
-    // add imports / funcs / globals/ exports
+    // add imports / funcs / globals / exports / tables
     counts["[imports]"] = imports.getNumImports();
     counts["[funcs]"] = imports.getNumDefinedFunctions();
     counts["[globals]"] = imports.getNumDefinedGlobals();
-    counts["[events]"] = imports.getNumDefinedEvents();
+    counts["[tags]"] = imports.getNumDefinedTags();
     counts["[exports]"] = module->exports.size();
+    counts["[tables]"] = imports.getNumDefinedTables();
     // add memory and table
     if (module->memory.exists) {
       Index size = 0;
@@ -72,11 +72,17 @@ struct Metrics
       }
       counts["[memory-data]"] = size;
     }
-    if (module->table.exists) {
-      Index size = 0;
-      for (auto& segment : module->table.segments) {
-        size += segment.data.size();
-      }
+
+    Index size = 0;
+    ModuleUtils::iterActiveElementSegments(
+      *module, [&](ElementSegment* segment) { size += segment->data.size(); });
+    for (auto& table : module->tables) {
+      walkTable(table.get());
+    }
+    for (auto& segment : module->elementSegments) {
+      walkElementSegment(segment.get());
+    }
+    if (!module->tables.empty()) {
       counts["[table-data]"] = size;
     }
 
@@ -171,6 +177,13 @@ struct Metrics
     counts["[total]"] = total;
     // sort
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
+      // Sort the [..] ones first.
+      if (a[0] == '[' && b[0] != '[') {
+        return true;
+      }
+      if (a[0] != '[' && b[0] == '[') {
+        return false;
+      }
       return strcmp(b, a) > 0;
     });
     o << title << "\n";

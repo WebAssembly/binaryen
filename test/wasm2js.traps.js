@@ -30,27 +30,20 @@
        return (actual_lo | 0) == (expected_lo | 0) && (actual_hi | 0) == (expected_hi | 0);
     }
   
-function asmFunc0(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+function asmFunc0(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  function $0() {
   
  }
@@ -67,7 +60,6 @@ function asmFunc0(global, env, buffer) {
   return (x | 0) / (y | 0) | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "empty": $0, 
   "add": $1, 
@@ -75,22 +67,22 @@ function asmFunc0(global, env, buffer) {
  };
 }
 
-var memasmFunc0 = new ArrayBuffer(65536);
-var retasmFunc0 = asmFunc0({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc0);
+var retasmFunc0 = asmFunc0(  { abort: function() { throw new Error('abort'); }
+  });
 function check1() {
  retasmFunc0.empty();
  return 1 | 0;
 }
 
-if (!check1()) throw 'assertion failed: ( assert_return ( call empty ) )';
+if (!check1()) throw 'assertion failed: ( assert_return ( invoke empty ) )';
 function check2() {
  return (retasmFunc0.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0) | 0;
 }
 
-if (!check2()) throw 'assertion failed: ( assert_return ( call add ( i32.const 1 ) ( i32.const 1 ) ) ( i32.const 2 ) )';
+if (!check2()) throw 'assertion failed: ( assert_return ( invoke add ( i32.const 1 ) ( i32.const 1 ) ) ( i32.const 2 ) )';
 function check3() {
  function f() {
-  retasmFunc0.div_s(0 | 0, 0 | 0);
+  return retasmFunc0.div_s(0 | 0, 0 | 0) | 0 | 0;
  }
  
  try {
@@ -101,10 +93,10 @@ function check3() {
  return 0;
 }
 
-if (!check3()) throw 'assertion failed: ( assert_trap ( call div_s ( i32.const 0 ) ( i32.const 0 ) ) integer divide by zero )';
+if (!check3()) throw 'assertion failed: ( assert_trap ( invoke div_s ( i32.const 0 ) ( i32.const 0 ) ) integer divide by zero )';
 function check4() {
  function f() {
-  retasmFunc0.div_s(-2147483648 | 0, -1 | 0);
+  return retasmFunc0.div_s(-2147483648 | 0, -1 | 0) | 0 | 0;
  }
  
  try {
@@ -115,4 +107,4 @@ function check4() {
  return 0;
 }
 
-if (!check4()) throw 'assertion failed: ( assert_trap ( call div_s ( i32.const 0x80000000 ) ( i32.const -1 ) ) integer overflow )';
+if (!check4()) throw 'assertion failed: ( assert_trap ( invoke div_s ( i32.const 0x80000000 ) ( i32.const -1 ) ) integer overflow )';

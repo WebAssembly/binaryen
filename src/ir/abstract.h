@@ -27,7 +27,9 @@ namespace Abstract {
 
 enum Op {
   // Unary
+  Abs,
   Neg,
+  Popcnt,
   // Binary
   Add,
   Sub,
@@ -40,27 +42,68 @@ enum Op {
   Shl,
   ShrU,
   ShrS,
+  RotL,
+  RotR,
   And,
   Or,
   Xor,
   // Relational
+  EqZ,
   Eq,
   Ne,
+  LtS,
+  LtU,
+  LeS,
+  LeU,
+  GtS,
+  GtU,
+  GeS,
+  GeU
 };
+
+inline bool hasAnyShift(BinaryOp op) {
+  return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
+         op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
+         op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||
+         op == RotRInt64;
+}
+
+inline bool hasAnyReinterpret(UnaryOp op) {
+  return op == ReinterpretInt32 || op == ReinterpretInt64 ||
+         op == ReinterpretFloat32 || op == ReinterpretFloat64;
+}
 
 // Provide a wasm type and an abstract op and get the concrete one. For example,
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
 inline UnaryOp getUnary(Type type, Op op) {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32: {
-      return InvalidUnary;
+      switch (op) {
+        case EqZ:
+          return EqZInt32;
+        case Popcnt:
+          return PopcntInt32;
+        default:
+          return InvalidUnary;
+      }
+      break;
     }
     case Type::i64: {
-      return InvalidUnary;
+      switch (op) {
+        case EqZ:
+          return EqZInt64;
+        case Popcnt:
+          return PopcntInt64;
+        default:
+          return InvalidUnary;
+      }
+      break;
     }
     case Type::f32: {
       switch (op) {
+        case Abs:
+          return AbsFloat32;
         case Neg:
           return NegFloat32;
         default:
@@ -70,6 +113,8 @@ inline UnaryOp getUnary(Type type, Op op) {
     }
     case Type::f64: {
       switch (op) {
+        case Abs:
+          return AbsFloat64;
         case Neg:
           return NegFloat64;
         default:
@@ -77,13 +122,13 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    case Type::v128: {
-      WASM_UNREACHABLE("v128 not implemented yet");
-    }
+    case Type::v128:
     case Type::funcref:
+    case Type::externref:
     case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
+    case Type::eqref:
+    case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidUnary;
@@ -93,7 +138,7 @@ inline UnaryOp getUnary(Type type, Op op) {
 }
 
 inline BinaryOp getBinary(Type type, Op op) {
-  switch (type.getSingle()) {
+  switch (type.getBasic()) {
     case Type::i32: {
       switch (op) {
         case Add:
@@ -116,6 +161,10 @@ inline BinaryOp getBinary(Type type, Op op) {
           return ShrUInt32;
         case ShrS:
           return ShrSInt32;
+        case RotL:
+          return RotLInt32;
+        case RotR:
+          return RotRInt32;
         case And:
           return AndInt32;
         case Or:
@@ -126,6 +175,22 @@ inline BinaryOp getBinary(Type type, Op op) {
           return EqInt32;
         case Ne:
           return NeInt32;
+        case LtS:
+          return LtSInt32;
+        case LtU:
+          return LtUInt32;
+        case LeS:
+          return LeSInt32;
+        case LeU:
+          return LeUInt32;
+        case GtS:
+          return GtSInt32;
+        case GtU:
+          return GtUInt32;
+        case GeS:
+          return GeSInt32;
+        case GeU:
+          return GeUInt32;
         default:
           return InvalidBinary;
       }
@@ -153,6 +218,10 @@ inline BinaryOp getBinary(Type type, Op op) {
           return ShrUInt64;
         case ShrS:
           return ShrSInt64;
+        case RotL:
+          return RotLInt64;
+        case RotR:
+          return RotRInt64;
         case And:
           return AndInt64;
         case Or:
@@ -163,6 +232,22 @@ inline BinaryOp getBinary(Type type, Op op) {
           return EqInt64;
         case Ne:
           return NeInt64;
+        case LtS:
+          return LtSInt64;
+        case LtU:
+          return LtUInt64;
+        case LeS:
+          return LeSInt64;
+        case LeU:
+          return LeUInt64;
+        case GtS:
+          return GtSInt64;
+        case GtU:
+          return GtUInt64;
+        case GeS:
+          return GeSInt64;
+        case GeU:
+          return GeUInt64;
         default:
           return InvalidBinary;
       }
@@ -210,13 +295,13 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    case Type::v128: {
-      WASM_UNREACHABLE("v128 not implemented yet");
-    }
+    case Type::v128:
     case Type::funcref:
+    case Type::externref:
     case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
+    case Type::eqref:
+    case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidBinary;

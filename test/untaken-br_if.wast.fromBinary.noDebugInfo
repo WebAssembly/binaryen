@@ -1,6 +1,6 @@
 (module
  (type $none_=>_f32 (func (result f32)))
- (func $0 (; 0 ;) (result f32)
+ (func $0 (result f32)
   (if (result f32)
    (i32.const 1)
    (unreachable)

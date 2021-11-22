@@ -40,7 +40,7 @@ inline bool flatten(Memory& memory,
     if (ensuredSegmentSize > 0) {
       assert(module); // must provide a module if ensuring a size.
       Builder builder(*module);
-      memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+      memory.segments.emplace_back(builder.makeConst(int32_t(0)));
       memory.segments[0].data.resize(ensuredSegmentSize);
     }
     return true;

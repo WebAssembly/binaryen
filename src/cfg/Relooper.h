@@ -37,6 +37,7 @@ http://doi.acm.org/10.1145/2048147.2048224
 #include <memory>
 #include <set>
 
+#include "support/insert_ordered.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -79,6 +80,7 @@ public:
   }
 };
 
+struct Relooper;
 struct Block;
 struct Shape;
 
@@ -122,125 +124,14 @@ struct Branch {
   Render(RelooperBuilder& Builder, Block* Target, bool SetLabel);
 };
 
-// like std::set, except that begin() -> end() iterates in the
-// order that elements were added to the set (not in the order
-// of operator<(T, T))
-template<typename T> struct InsertOrderedSet {
-  std::map<T, typename std::list<T>::iterator> Map;
-  std::list<T> List;
-
-  typedef typename std::list<T>::iterator iterator;
-  iterator begin() { return List.begin(); }
-  iterator end() { return List.end(); }
-
-  void erase(const T& val) {
-    auto it = Map.find(val);
-    if (it != Map.end()) {
-      List.erase(it->second);
-      Map.erase(it);
-    }
-  }
-
-  void erase(iterator position) {
-    Map.erase(*position);
-    List.erase(position);
-  }
-
-  // cheating a bit, not returning the iterator
-  void insert(const T& val) {
-    auto it = Map.find(val);
-    if (it == Map.end()) {
-      List.push_back(val);
-      Map.insert(std::make_pair(val, --List.end()));
-    }
-  }
-
-  size_t size() const { return Map.size(); }
-  bool empty() const { return Map.empty(); }
-
-  void clear() {
-    Map.clear();
-    List.clear();
-  }
-
-  size_t count(const T& val) const { return Map.count(val); }
-
-  InsertOrderedSet() = default;
-  InsertOrderedSet(const InsertOrderedSet& other) { *this = other; }
-  InsertOrderedSet& operator=(const InsertOrderedSet& other) {
-    clear();
-    for (auto i : other.List) {
-      insert(i); // inserting manually creates proper iterators
-    }
-    return *this;
-  }
-};
-
-// like std::map, except that begin() -> end() iterates in the
-// order that elements were added to the map (not in the order
-// of operator<(Key, Key))
-template<typename Key, typename T> struct InsertOrderedMap {
-  std::map<Key, typename std::list<std::pair<Key, T>>::iterator> Map;
-  std::list<std::pair<Key, T>> List;
-
-  T& operator[](const Key& k) {
-    auto it = Map.find(k);
-    if (it == Map.end()) {
-      List.push_back(std::make_pair(k, T()));
-      auto e = --List.end();
-      Map.insert(std::make_pair(k, e));
-      return e->second;
-    }
-    return it->second->second;
-  }
-
-  typedef typename std::list<std::pair<Key, T>>::iterator iterator;
-  iterator begin() { return List.begin(); }
-  iterator end() { return List.end(); }
-
-  void erase(const Key& k) {
-    auto it = Map.find(k);
-    if (it != Map.end()) {
-      List.erase(it->second);
-      Map.erase(it);
-    }
-  }
-
-  void erase(iterator position) { erase(position->first); }
-
-  void clear() {
-    Map.clear();
-    List.clear();
-  }
-
-  void swap(InsertOrderedMap<Key, T>& Other) {
-    Map.swap(Other.Map);
-    List.swap(Other.List);
-  }
-
-  size_t size() const { return Map.size(); }
-  bool empty() const { return Map.empty(); }
-  size_t count(const Key& k) const { return Map.count(k); }
-
-  InsertOrderedMap() = default;
-  InsertOrderedMap(InsertOrderedMap& other) {
-    abort(); // TODO, watch out for iterators
-  }
-  InsertOrderedMap& operator=(const InsertOrderedMap& other) {
-    abort(); // TODO, watch out for iterators
-  }
-  bool operator==(const InsertOrderedMap& other) {
-    return Map == other.Map && List == other.List;
-  }
-  bool operator!=(const InsertOrderedMap& other) { return !(*this == other); }
-};
-
-typedef InsertOrderedSet<Block*> BlockSet;
-typedef InsertOrderedMap<Block*, Branch*> BlockBranchMap;
+typedef wasm::InsertOrderedSet<Block*> BlockSet;
+typedef wasm::InsertOrderedMap<Block*, Branch*> BlockBranchMap;
 
 // Represents a basic block of code - some instructions that end with a
 // control flow modifier (a branch, return or throw).
 struct Block {
+  // Reference to the relooper containing this block.
+  Relooper* relooper;
   // Branches become processed after we finish the shape relevant to them. For
   // example, when we recreate a loop, branches to the loop start become
   // continues and are now processed. When we calculate what shape to generate
@@ -262,9 +153,9 @@ struct Block {
   // variable
   bool IsCheckedMultipleEntry;
 
-  Block(wasm::Expression* CodeInit,
+  Block(Relooper* relooper,
+        wasm::Expression* CodeInit,
         wasm::Expression* SwitchConditionInit = nullptr);
-  ~Block();
 
   // Add a branch: if the condition holds we branch (or if null, we branch if
   // all others failed) Note that there can be only one branch from A to B (if
@@ -373,26 +264,44 @@ struct LoopShape : public Shape {
 //
 // Usage:
 //  1. Instantiate this struct.
-//  2. Call AddBlock with the blocks you have. Each should already
-//     have its branchings in specified (the branchings out will
+//  2. Create the blocks you have. Each should have its
+//     branchings in specified (the branchings out will
 //     be calculated by the relooper).
 //  3. Call Render().
 //
-// Implementation details: The Relooper instance has
-// ownership of the blocks and shapes, and frees them when done.
+// Implementation details: The Relooper instance takes ownership of the blocks,
+// branches and shapes when created using the `AddBlock` etc. methods, and frees
+// them when done.
 struct Relooper {
   wasm::Module* Module;
-  std::deque<Block*> Blocks;
-  std::deque<Shape*> Shapes;
+  std::deque<std::unique_ptr<Block>> Blocks;
+  std::deque<std::unique_ptr<Branch>> Branches;
+  std::deque<std::unique_ptr<Shape>> Shapes;
   Shape* Root;
   bool MinSize;
   int BlockIdCounter;
   int ShapeIdCounter;
 
   Relooper(wasm::Module* ModuleInit);
-  ~Relooper();
 
-  void AddBlock(Block* New, int Id = -1);
+  // Creates a new block associated with (and cleaned up along) this relooper.
+  Block* AddBlock(wasm::Expression* CodeInit,
+                  wasm::Expression* SwitchConditionInit = nullptr);
+  // Creates a new branch associated with (and cleaned up along) this relooper.
+  Branch* AddBranch(wasm::Expression* ConditionInit,
+                    wasm::Expression* CodeInit);
+  // Creates a new branch associated with (and cleaned up along) this relooper.
+  Branch* AddBranch(std::vector<wasm::Index>&& ValuesInit,
+                    wasm::Expression* CodeInit = nullptr);
+  // Creates a new simple shape associated with (and cleaned up along) this
+  // relooper.
+  SimpleShape* AddSimpleShape();
+  // Creates a new multiple shape associated with (and cleaned up along) this
+  // relooper.
+  MultipleShape* AddMultipleShape();
+  // Creates a new loop shape associated with (and cleaned up along) this
+  // relooper.
+  LoopShape* AddLoopShape();
 
   // Calculates the shapes
   void Calculate(Block* Entry);
@@ -404,7 +313,7 @@ struct Relooper {
   void SetMinSize(bool MinSize_) { MinSize = MinSize_; }
 };
 
-typedef InsertOrderedMap<Block*, BlockSet> BlockBlockSetMap;
+typedef wasm::InsertOrderedMap<Block*, BlockSet> BlockBlockSetMap;
 
 #ifdef RELOOPER_DEBUG
 struct Debugging {

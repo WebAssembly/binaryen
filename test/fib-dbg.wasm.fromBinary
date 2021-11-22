@@ -1,11 +1,11 @@
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
- (import "env" "memory" (memory $9 256 256))
- (import "env" "table" (table $timport$10 0 0 funcref))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (import "env" "memory" (memory $mimport$0 256 256))
+ (import "env" "table" (table $timport$0 0 0 funcref))
  (import "env" "DYNAMICTOP_PTR" (global $gimport$0 i32))
  (import "env" "tempDoublePtr" (global $gimport$1 i32))
  (import "env" "ABORT" (global $gimport$2 i32))
@@ -15,8 +15,8 @@
  (import "env" "fb" (global $gimport$6 i32))
  (import "global" "NaN" (global $gimport$7 f64))
  (import "global" "Infinity" (global $gimport$8 f64))
- (import "env" "memoryBase" (global $gimport$11 i32))
- (import "env" "tableBase" (global $gimport$12 i32))
+ (import "env" "memoryBase" (global $gimport$9 i32))
+ (import "env" "tableBase" (global $gimport$10 i32))
  (global $global$0 (mut i32) (global.get $gimport$0))
  (global $global$1 (mut i32) (global.get $gimport$1))
  (global $global$2 (mut i32) (global.get $gimport$2))
@@ -48,7 +48,7 @@
  (export "stackRestore" (func $stackRestore))
  (export "_fib" (func $_fib))
  (export "stackAlloc" (func $stackAlloc))
- (func $stackAlloc (; 0 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32)
   (local $1 i32)
   (block $label$1
    (local.set $1
@@ -74,17 +74,17 @@
    )
   )
  )
- (func $stackSave (; 1 ;) (result i32)
+ (func $stackSave (result i32)
   (return
    (global.get $global$3)
   )
  )
- (func $stackRestore (; 2 ;) (param $0 i32)
+ (func $stackRestore (param $0 i32)
   (global.set $global$3
    (local.get $0)
   )
  )
- (func $establishStackSpace (; 3 ;) (param $0 i32) (param $1 i32)
+ (func $establishStackSpace (param $0 i32) (param $1 i32)
   (block $label$1
    (global.set $global$3
     (local.get $0)
@@ -94,7 +94,7 @@
    )
   )
  )
- (func $setThrew (; 4 ;) (param $0 i32) (param $1 i32)
+ (func $setThrew (param $0 i32) (param $1 i32)
   (if
    (i32.eq
     (global.get $global$7)
@@ -110,7 +110,7 @@
    )
   )
  )
- (func $_fib (; 5 ;) (param $0 i32) (result i32)
+ (func $_fib (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -210,7 +210,7 @@
    )
   )
  )
- (func $runPostSets (; 6 ;)
+ (func $runPostSets
   (local $0 i32)
   (nop)
  )

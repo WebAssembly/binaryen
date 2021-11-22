@@ -1,3 +1,4 @@
+FILE(GLOB support_HEADERS *.h)
 set(support_SOURCES
   archive.cpp
   bits.cpp
@@ -9,5 +10,6 @@ set(support_SOURCES
   safe_integer.cpp
   threads.cpp
   utilities.cpp
+  ${support_HEADERS}
 )
 add_library(support OBJECT ${support_SOURCES})

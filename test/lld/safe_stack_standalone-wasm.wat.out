@@ -1,47 +1,48 @@
 (module
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func (param i32 i32) (result i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
- (memory $0 2)
- (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
- (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 587))
+ (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))
+ (memory $0 2)
+ (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
+ (table $0 1 1 funcref)
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "__set_stack_limit" (func $__set_stack_limit))
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
- (export "__growWasmMemory" (func $__growWasmMemory))
- (export "_start" (func $_start))
- (func $__wasm_call_ctors (; 1 ;)
+ (export "__set_stack_limits" (func $__set_stack_limits))
+ (func $__wasm_call_ctors
   (nop)
  )
- (func $foo (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $foo (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
   (block
    (if
-    (i32.lt_u
-     (local.tee $3
-      (local.tee $2
-       (i32.sub
-        (global.get $global$0)
-        (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $3
+       (local.tee $2
+        (i32.sub
+         (global.get $global$0)
+         (i32.const 16)
+        )
        )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $3)
+      (global.get $__stack_limit)
+     )
     )
     (unreachable)
    )
@@ -65,14 +66,20 @@
   )
   (block
    (if
-    (i32.lt_u
-     (local.tee $4
-      (i32.add
-       (local.get $2)
-       (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $4
+       (i32.add
+        (local.get $2)
+        (i32.const 16)
+       )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $4)
+      (global.get $__stack_limit)
+     )
     )
     (unreachable)
    )
@@ -85,22 +92,28 @@
    (local.get $0)
   )
  )
- (func $__original_main (; 3 ;) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
   (block
    (if
-    (i32.lt_u
-     (local.tee $1
-      (local.tee $0
-       (i32.sub
-        (global.get $global$0)
-        (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $1
+       (local.tee $0
+        (i32.sub
+         (global.get $global$0)
+         (i32.const 16)
+        )
        )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $1)
+      (global.get $__stack_limit)
+     )
     )
     (unreachable)
    )
@@ -123,14 +136,20 @@
   )
   (block
    (if
-    (i32.lt_u
-     (local.tee $2
-      (i32.add
-       (local.get $0)
-       (i32.const 16)
+    (i32.or
+     (i32.gt_u
+      (local.tee $2
+       (i32.add
+        (local.get $0)
+        (i32.const 16)
+       )
       )
+      (global.get $__stack_base)
      )
-     (global.get $__stack_limit)
+     (i32.lt_u
+      (local.get $2)
+      (global.get $__stack_limit)
+     )
     )
     (unreachable)
    )
@@ -140,105 +159,31 @@
   )
   (i32.const 0)
  )
- (func $main (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__set_stack_limit (; 5 ;) (param $0 i32)
-  (global.set $__stack_limit
+ (func $__set_stack_limits (param $0 i32) (param $1 i32)
+  (global.set $__stack_base
    (local.get $0)
   )
- )
- (func $stackSave (; 6 ;) (result i32)
-  (global.get $global$0)
- )
- (func $stackAlloc (; 7 ;) (param $0 i32) (result i32)
-  (local $1 i32)
-  (local $2 i32)
-  (block
-   (if
-    (i32.lt_u
-     (local.tee $2
-      (local.tee $1
-       (i32.and
-        (i32.sub
-         (global.get $global$0)
-         (local.get $0)
-        )
-        (i32.const -16)
-       )
-      )
-     )
-     (global.get $__stack_limit)
-    )
-    (unreachable)
-   )
-   (global.set $global$0
-    (local.get $2)
-   )
-  )
-  (local.get $1)
- )
- (func $stackRestore (; 8 ;) (param $0 i32)
-  (local $1 i32)
-  (if
-   (i32.lt_u
-    (local.tee $1
-     (local.get $0)
-    )
-    (global.get $__stack_limit)
-   )
-   (unreachable)
-  )
-  (global.set $global$0
+  (global.set $__stack_limit
    (local.get $1)
-  )
- )
- (func $__growWasmMemory (; 9 ;) (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
- (func $_start (; 10 ;)
-  (drop
-   (call $main
-    (i32.const 0)
-    (i32.const 0)
-   )
   )
  )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 19,
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "printf"
   ],
-  "externs": [
-  ],
-  "implementedFunctions": [
-    "___wasm_call_ctors",
-    "_main",
-    "___set_stack_limit",
-    "_stackSave",
-    "_stackAlloc",
-    "_stackRestore",
-    "___growWasmMemory",
-    "__start"
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "__set_stack_limit",
-    "stackSave",
-    "stackAlloc",
-    "stackRestore",
-    "__growWasmMemory",
-    "_start"
+    "__set_stack_limits"
   ],
   "namedGlobals": {
     "__heap_base" : "66128",
@@ -247,8 +192,7 @@
   "invokeFuncs": [
   ],
   "features": [
-  ],
-  "mainReadsParams": 0
+  ]
 }
 -- END METADATA --
 ;)

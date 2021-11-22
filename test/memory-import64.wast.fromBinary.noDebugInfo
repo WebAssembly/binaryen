@@ -1,0 +1,10 @@
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (import "env" "memory" (memory $mimport$0 i64 1 1))
+ (func $0 (result i32)
+  (i32.load offset=13
+   (i64.const 37)
+  )
+ )
+)
+

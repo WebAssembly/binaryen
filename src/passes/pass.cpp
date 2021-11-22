@@ -26,6 +26,7 @@
 #include "pass.h"
 #include "passes/passes.h"
 #include "support/colors.h"
+#include "wasm-debug.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
 
@@ -48,7 +49,7 @@ void PassRegistry::registerPass(const char* name,
 
 std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
   if (passInfos.find(name) == passInfos.end()) {
-    return nullptr;
+    Fatal() << "Could not find pass: " << name << "\n";
   }
   std::unique_ptr<Pass> ret;
   ret.reset(passInfos[name].create());
@@ -101,8 +102,17 @@ void PassRegistry::registerPasses() {
   registerPass("const-hoisting",
                "hoist repeated constants to a local",
                createConstHoistingPass);
+  registerPass("cfp",
+               "propagate constant struct field values",
+               createConstantFieldPropagationPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("dealign",
+               "forces all loads and stores to have alignment 1",
+               createDeAlignPass);
+  registerPass("denan",
+               "instrument the wasm to convert NaNs into 0 at runtime",
+               createDeNaNPass);
   registerPass(
     "directize", "turns indirect calls into direct ones", createDirectizePass);
   registerPass(
@@ -122,6 +132,9 @@ void PassRegistry::registerPasses() {
   registerPass("extract-function",
                "leaves just one function (useful for debugging)",
                createExtractFunctionPass);
+  registerPass("extract-function-index",
+               "leaves just one function selected by index",
+               createExtractFunctionIndexPass);
   registerPass(
     "flatten", "flattens out code, removing nesting", createFlattenPass);
   registerPass("fpcast-emu",
@@ -130,8 +143,26 @@ void PassRegistry::registerPasses() {
                createFuncCastEmulationPass);
   registerPass(
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
+  registerPass("generate-dyncalls",
+               "generate dynCall fuctions used by emscripten ABI",
+               createGenerateDynCallsPass);
+  registerPass(
+    "generate-i64-dyncalls",
+    "generate dynCall functions used by emscripten ABI, but only for "
+    "functions with i64 in their signature (which cannot be invoked "
+    "via the wasm table without JavaScript BigInt support).",
+    createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
+  registerPass(
+    "global-refining", "refine the types of globals", createGlobalRefiningPass);
+  registerPass(
+    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass("type-refining",
+               "apply more specific subtypes to type fields where possible",
+               createTypeRefiningPass);
+  registerPass(
+    "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
@@ -140,6 +171,9 @@ void PassRegistry::registerPasses() {
   registerPass("inlining-optimizing",
                "inline functions and optimizes where we inlined",
                createInliningOptimizingPass);
+  registerPass("intrinsic-lowering",
+               "lower away binaryen intrinsics",
+               createIntrinsicLoweringPass);
   registerPass("legalize-js-interface",
                "legalizes i64 types on the import/export boundary",
                createLegalizeJSInterfacePass);
@@ -150,6 +184,9 @@ void PassRegistry::registerPasses() {
   registerPass("local-cse",
                "common subexpression elimination inside basic blocks",
                createLocalCSEPass);
+  registerPass("local-subtyping",
+               "apply more specific subtypes to locals where possible",
+               createLocalSubtypingPass);
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
                createLogExecutionPass);
@@ -169,6 +206,10 @@ void PassRegistry::registerPasses() {
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
                createLimitSegmentsPass);
+  registerPass("memory64-lowering",
+               "lower loads and stores to a 64-bit memory to instead use a "
+               "32-bit one",
+               createMemory64LoweringPass);
   registerPass("memory-packing",
                "packs memory into separate segments, skipping zeros",
                createMemoryPackingPass);
@@ -185,6 +226,10 @@ void PassRegistry::registerPasses() {
                "minifies both import and export names, and emits a mapping to "
                "the minified ones",
                createMinifyImportsAndExportsPass);
+  registerPass("minify-imports-and-exports-and-modules",
+               "minifies both import and export names, and emits a mapping to "
+               "the minified ones, and minifies the modules as well",
+               createMinifyImportsAndExportsAndModulesPass);
   registerPass("mod-asyncify-always-and-only-unwind",
                "apply the assumption that asyncify imports always unwind, "
                "and we never rewind",
@@ -193,10 +238,14 @@ void PassRegistry::registerPasses() {
                "apply the assumption that asyncify never unwinds",
                createModAsyncifyNeverUnwindPass);
   registerPass("nm", "name list", createNameListPass);
+  registerPass("name-types", "(re)name all heap types", createNameTypesPass);
   registerPass("no-exit-runtime",
                "removes calls to atexit(), which is valid if the C runtime "
                "will never be exited",
                createNoExitRuntimePass);
+  registerPass("once-reduction",
+               "reduces calls to code that only runs once",
+               createOnceReductionPass);
   registerPass("optimize-added-constants",
                "optimizes added constants into load/store offsets",
                createOptimizeAddedConstantsPass);
@@ -212,15 +261,14 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
-  registerPass("post-assemblyscript",
-               "eliminates redundant ARC patterns in AssemblyScript output",
-               createPostAssemblyScriptPass);
-  registerPass("post-assemblyscript-finalize",
-               "eliminates collapsed ARC patterns after other optimizations",
-               createPostAssemblyScriptFinalizePass);
+  registerPass(
+    "poppify", "Tranform Binaryen IR into Poppy IR", createPoppifyPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
+  registerPass("optimize-for-js",
+               "early optimize of the instruction combinations for js",
+               createOptimizeForJSPass);
   registerPass("precompute",
                "computes compile-time evaluatable expressions",
                createPrecomputePass);
@@ -239,15 +287,21 @@ void PassRegistry::registerPasses() {
     "print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass(
     "print-call-graph", "print call graph", createPrintCallGraphPass);
+
+  // Register PrintFunctionMap using its normal name.
   registerPass("print-function-map",
                "print a map of function indexes to names",
                createPrintFunctionMapPass);
+  // Also register it as "symbolmap" so that  wasm-opt --symbolmap=foo  is the
+  // same as  wasm-as --symbolmap=foo  even though the latter is not a pass
+  // (wasm-as cannot run arbitrary passes).
+  // TODO: switch emscripten to this name, then remove the old one
+  registerPass(
+    "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
+
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);
-  registerPass("relooper-jump-threading",
-               "thread relooper jumps (fastcomp output only)",
-               createRelooperJumpThreadingPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
@@ -285,6 +339,12 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
+  registerPass("set-globals",
+               "sets specified globals to specified values",
+               createSetGlobalsPass);
+  registerPass("signature-refining",
+               "apply more specific subtypes to signature types where possible",
+               createSignatureRefiningPass);
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",
                createSimplifyGlobalsPass);
@@ -313,9 +373,9 @@ void PassRegistry::registerPasses() {
   registerPass("souperify-single-use",
                "emit Souper IR in text form (single-use nodes only)",
                createSouperifySingleUsePass);
-  registerPass("spill-pointers",
-               "spill pointers to the C stack (useful for Boehm-style GC)",
-               createSpillPointersPass);
+  registerPass("stub-unsupported-js",
+               "stub out unsupported JS operations",
+               createStubUnsupportedJSOpsPass);
   registerPass("ssa",
                "ssa-ify variables so that they have a single assignment",
                createSSAifyPass);
@@ -325,6 +385,9 @@ void PassRegistry::registerPasses() {
     createSSAifyNoMergePass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
+  registerPass("stack-check",
+               "enforce limits on llvm's __stack_pointer global",
+               createStackCheckPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
@@ -349,6 +412,13 @@ void PassRegistry::registerPasses() {
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
+void PassRunner::addIfNoDWARFIssues(std::string passName) {
+  auto pass = PassRegistry::get()->createPass(passName);
+  if (!pass->invalidatesDWARF() || !shouldPreserveDWARF()) {
+    doAdd(std::move(pass));
+  }
+}
+
 void PassRunner::addDefaultOptimizationPasses() {
   addDefaultGlobalOptimizationPrePasses();
   addDefaultFunctionOptimizationPasses();
@@ -356,106 +426,148 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  // All the additions here are optional if DWARF must be preserved. That is,
+  // when DWARF is relevant we run fewer optimizations.
+  // FIXME: support DWARF in all of them.
+
   // Untangling to semi-ssa form is helpful (but best to ignore merges
   // so as to not introduce new copies).
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    add("ssa-nomerge");
+    addIfNoDWARFIssues("ssa-nomerge");
   }
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
-    add("flatten");
-    add("local-cse");
+    addIfNoDWARFIssues("flatten");
+    // LocalCSE is particularly useful after flatten (see comment in the pass
+    // itself), but we must simplify locals a little first (as flatten adds many
+    // new and redundant ones, which make things seem different if we do not
+    // run some amount of simplify-locals first).
+    addIfNoDWARFIssues("simplify-locals-notee-nostructure");
+    addIfNoDWARFIssues("local-cse");
+    // TODO: add rereloop etc. here
   }
-  add("dce");
-  add("remove-unused-brs");
-  add("remove-unused-names");
-  add("optimize-instructions");
+  addIfNoDWARFIssues("dce");
+  addIfNoDWARFIssues("remove-unused-names");
+  addIfNoDWARFIssues("remove-unused-brs");
+  addIfNoDWARFIssues("remove-unused-names");
+  addIfNoDWARFIssues("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    add("pick-load-signs");
+    addIfNoDWARFIssues("pick-load-signs");
   }
   // early propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    add("precompute-propagate");
+    addIfNoDWARFIssues("precompute-propagate");
   } else {
-    add("precompute");
+    addIfNoDWARFIssues("precompute");
   }
   if (options.lowMemoryUnused) {
     if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-      add("optimize-added-constants-propagate");
+      addIfNoDWARFIssues("optimize-added-constants-propagate");
     } else {
-      add("optimize-added-constants");
+      addIfNoDWARFIssues("optimize-added-constants");
     }
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    add("code-pushing");
+    addIfNoDWARFIssues("code-pushing");
   }
   // don't create if/block return values yet, as coalesce can remove copies that
   // that could inhibit
-  add("simplify-locals-nostructure");
-  add("vacuum"); // previous pass creates garbage
-  add("reorder-locals");
+  addIfNoDWARFIssues("simplify-locals-nostructure");
+  addIfNoDWARFIssues("vacuum"); // previous pass creates garbage
+  addIfNoDWARFIssues("reorder-locals");
   // simplify-locals opens opportunities for optimizations
-  add("remove-unused-brs");
+  addIfNoDWARFIssues("remove-unused-brs");
+  if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    addIfNoDWARFIssues("heap2local");
+  }
   // if we are willing to work hard, also optimize copies before coalescing
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    add("merge-locals"); // very slow on e.g. sqlite
+    addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
   }
-  add("coalesce-locals");
-  add("simplify-locals");
-  add("vacuum");
-  add("reorder-locals");
-  add("coalesce-locals");
-  add("reorder-locals");
-  add("vacuum");
+  if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    // Coalescing may prevent subtyping (as a coalesced local must have the
+    // supertype of all those combined into it), so subtype first.
+    // TODO: when optimizing for size, maybe the order should reverse?
+    addIfNoDWARFIssues("local-subtyping");
+  }
+  addIfNoDWARFIssues("coalesce-locals");
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    add("code-folding");
+    addIfNoDWARFIssues("local-cse");
   }
-  add("merge-blocks");        // makes remove-unused-brs more effective
-  add("remove-unused-brs");   // coalesce-locals opens opportunities
-  add("remove-unused-names"); // remove-unused-brs opens opportunities
-  add("merge-blocks");        // clean up remove-unused-brs new blocks
+  addIfNoDWARFIssues("simplify-locals");
+  addIfNoDWARFIssues("vacuum");
+  addIfNoDWARFIssues("reorder-locals");
+  addIfNoDWARFIssues("coalesce-locals");
+  addIfNoDWARFIssues("reorder-locals");
+  addIfNoDWARFIssues("vacuum");
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("code-folding");
+  }
+  addIfNoDWARFIssues("merge-blocks"); // makes remove-unused-brs more effective
+  addIfNoDWARFIssues(
+    "remove-unused-brs"); // coalesce-locals opens opportunities
+  addIfNoDWARFIssues(
+    "remove-unused-names");           // remove-unused-brs opens opportunities
+  addIfNoDWARFIssues("merge-blocks"); // clean up remove-unused-brs new blocks
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    add("precompute-propagate");
+    addIfNoDWARFIssues("precompute-propagate");
   } else {
-    add("precompute");
+    addIfNoDWARFIssues("precompute");
   }
-  add("optimize-instructions");
+  addIfNoDWARFIssues("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("rse"); // after all coalesce-locals, and before a final vacuum
+    addIfNoDWARFIssues(
+      "rse"); // after all coalesce-locals, and before a final vacuum
   }
-  add("vacuum"); // just to be safe
+  addIfNoDWARFIssues("vacuum"); // just to be safe
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
-  add("duplicate-function-elimination");
+  addIfNoDWARFIssues("duplicate-function-elimination");
+  addIfNoDWARFIssues("memory-packing");
+  if (options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("once-reduction");
+  }
+  if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
+      options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("type-refining");
+    addIfNoDWARFIssues("signature-refining");
+    addIfNoDWARFIssues("global-refining");
+    // Global type optimization can remove fields that are not needed, which can
+    // remove ref.funcs that were once assigned to vtables but are no longer
+    // needed, which can allow more code to be removed globally. After those,
+    // constant field propagation can be more effective.
+    addIfNoDWARFIssues("gto");
+    addIfNoDWARFIssues("remove-unused-module-elements");
+    addIfNoDWARFIssues("cfp");
+  }
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("dae-optimizing");
+    addIfNoDWARFIssues("dae-optimizing");
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    add("inlining-optimizing");
+    addIfNoDWARFIssues("inlining-optimizing");
   }
-  // optimizations show more functions as duplicate
-  add("duplicate-function-elimination");
-  add("duplicate-import-elimination");
+  // Optimizations show more functions as duplicate, so run this here in Post.
+  addIfNoDWARFIssues("duplicate-function-elimination");
+  addIfNoDWARFIssues("duplicate-import-elimination");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    add("simplify-globals-optimizing");
+    addIfNoDWARFIssues("simplify-globals-optimizing");
   } else {
-    add("simplify-globals");
+    addIfNoDWARFIssues("simplify-globals");
   }
-  add("remove-unused-module-elements");
-  add("memory-packing");
+  addIfNoDWARFIssues("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
-  add("directize");
+  addIfNoDWARFIssues("directize");
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("generate-stack-ir");
-    add("optimize-stack-ir");
+    addIfNoDWARFIssues("generate-stack-ir");
+    addIfNoDWARFIssues("optimize-stack-ir");
   }
 }
 
@@ -479,29 +591,38 @@ static void dumpWast(Name name, Module* wasm) {
 }
 
 void PassRunner::run() {
+  assert(!ran);
+  ran = true;
+
   static const int passDebug = getPassDebug();
-  if (!isNested && (options.debug || passDebug)) {
+  // Emit logging information when asked for. At passDebug level 1+ we log
+  // the main passes, while in 2 we also log nested ones. Note that for
+  // nested ones we can only emit their name - we can't validate, or save the
+  // file, or print, as the wasm may be in an intermediate state that is not
+  // valid.
+  if (options.debug || (passDebug == 2 || (passDebug && !isNested))) {
     // for debug logging purposes, run each pass in full before running the
     // other
     auto totalTime = std::chrono::duration<double>(0);
-    size_t padding = 0;
     WasmValidator::Flags validationFlags = WasmValidator::Minimal;
     if (options.validateGlobally) {
       validationFlags = validationFlags | WasmValidator::Globally;
     }
-    std::cerr << "[PassRunner] running passes..." << std::endl;
+    auto what = isNested ? "nested passes" : "passes";
+    std::cerr << "[PassRunner] running " << what << std::endl;
+    size_t padding = 0;
     for (auto& pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
-    if (passDebug >= 3) {
+    if (passDebug >= 3 && !isNested) {
       dumpWast("before", wasm);
     }
     for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
       // pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
-      if (passDebug == 2) {
-        WasmPrinter::printModule(wasm, moduleBefore);
+      if (passDebug == 2 && !isNested) {
+        moduleBefore << *wasm << '\n';
       }
       // prepare to run
       std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
@@ -520,36 +641,34 @@ void PassRunner::run() {
       std::chrono::duration<double> diff = after - before;
       std::cerr << diff.count() << " seconds." << std::endl;
       totalTime += diff;
-      if (options.validate) {
+      if (options.validate && !isNested) {
         // validate, ignoring the time
         std::cerr << "[PassRunner]   (validating)\n";
         if (!WasmValidator().validate(*wasm, validationFlags)) {
-          WasmPrinter::printModule(wasm);
+          std::cout << *wasm << '\n';
           if (passDebug >= 2) {
-            std::cerr << "Last pass (" << pass->name
-                      << ") broke validation. Here is the module before: \n"
-                      << moduleBefore.str() << "\n";
+            Fatal() << "Last pass (" << pass->name
+                    << ") broke validation. Here is the module before: \n"
+                    << moduleBefore.str() << "\n";
           } else {
-            std::cerr << "Last pass (" << pass->name
-                      << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 "
-                         "in the env to see the earlier state, or 3 to dump "
-                         "byn-* files for each pass\n";
+            Fatal() << "Last pass (" << pass->name
+                    << ") broke validation. Run with BINARYEN_PASS_DEBUG=2 "
+                       "in the env to see the earlier state, or 3 to dump "
+                       "byn-* files for each pass\n";
           }
-          abort();
         }
       }
       if (passDebug >= 3) {
         dumpWast(pass->name, wasm);
       }
     }
-    std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds."
-              << std::endl;
-    if (options.validate) {
+    std::cerr << "[PassRunner] " << what << " took " << totalTime.count()
+              << " seconds." << std::endl;
+    if (options.validate && !isNested) {
       std::cerr << "[PassRunner] (final validation)\n";
       if (!WasmValidator().validate(*wasm, validationFlags)) {
-        WasmPrinter::printModule(wasm);
-        std::cerr << "final module does not validate\n";
-        abort();
+        std::cout << *wasm << '\n';
+        Fatal() << "final module does not validate\n";
       }
     }
   } else {
@@ -612,7 +731,13 @@ void PassRunner::runOnFunction(Function* func) {
 }
 
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
-  pass->prepareToRun(this, wasm);
+  if (pass->invalidatesDWARF() && shouldPreserveDWARF()) {
+    std::cerr << "warning: running pass '" << pass->name
+              << "' which is not fully compatible with DWARF\n";
+  }
+  if (passRemovesDebugInfo(pass->name)) {
+    addedPassesRemovedDWARF = true;
+  }
   passes.emplace_back(std::move(pass));
 }
 
@@ -626,7 +751,7 @@ struct AfterEffectFunctionChecker {
   // Check Stack IR state: if the main IR changes, there should be no
   // stack IR, as the stack IR would be wrong.
   bool beganWithStackIR;
-  HashType originalFunctionHash;
+  size_t originalFunctionHash;
 
   // In the creator we can scan the state of the module and function before the
   // pass runs.
@@ -757,6 +882,25 @@ int PassRunner::getPassDebug() {
   static const int passDebug =
     getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
   return passDebug;
+}
+
+bool PassRunner::passRemovesDebugInfo(const std::string& name) {
+  return name == "strip" || name == "strip-debug" || name == "strip-dwarf";
+}
+
+bool PassRunner::shouldPreserveDWARF() {
+  // Check if the debugging subsystem wants to preserve DWARF.
+  if (!Debug::shouldPreserveDWARF(options, *wasm)) {
+    return false;
+  }
+
+  // We may need DWARF. Check if one of our previous passes would remove it
+  // anyhow, in which case, there is nothing to preserve.
+  if (addedPassesRemovedDWARF) {
+    return false;
+  }
+
+  return true;
 }
 
 } // namespace wasm

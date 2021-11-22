@@ -1,0 +1,155 @@
+(module
+ (type $i31ref_dataref_=>_none (func (param i31ref dataref)))
+ (type $ref?|i31|_i31ref_ref?|data|_dataref_=>_none (func (param (ref null i31) i31ref (ref null data) dataref)))
+ (global $global$0 (mut anyref) (ref.null any))
+ (global $global$1 (mut eqref) (ref.null eq))
+ (global $global$2 (mut i31ref) (i31.new
+  (i32.const 0)
+ ))
+ (global $global$3 (mut anyref) (ref.null eq))
+ (global $global$4 (mut anyref) (i31.new
+  (i32.const 0)
+ ))
+ (global $global$5 (mut eqref) (i31.new
+  (i32.const 0)
+ ))
+ (func $0 (param $0 i31ref) (param $1 dataref)
+  (local $2 i32)
+  (local $3 anyref)
+  (local $4 eqref)
+  (local.set $3
+   (local.get $3)
+  )
+  (local.set $3
+   (global.get $global$0)
+  )
+  (local.set $3
+   (ref.null any)
+  )
+  (local.set $4
+   (local.get $4)
+  )
+  (local.set $4
+   (global.get $global$1)
+  )
+  (local.set $4
+   (ref.null eq)
+  )
+  (local.set $0
+   (local.get $0)
+  )
+  (local.set $0
+   (global.get $global$2)
+  )
+  (local.set $0
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (local.set $3
+   (local.get $4)
+  )
+  (local.set $3
+   (global.get $global$1)
+  )
+  (local.set $3
+   (ref.null eq)
+  )
+  (local.set $3
+   (local.get $0)
+  )
+  (local.set $3
+   (global.get $global$2)
+  )
+  (local.set $3
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (local.set $4
+   (local.get $0)
+  )
+  (local.set $4
+   (global.get $global$2)
+  )
+  (local.set $4
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (global.set $global$0
+   (local.get $3)
+  )
+  (global.set $global$0
+   (global.get $global$0)
+  )
+  (global.set $global$0
+   (ref.null any)
+  )
+  (global.set $global$1
+   (local.get $4)
+  )
+  (global.set $global$1
+   (global.get $global$1)
+  )
+  (global.set $global$1
+   (ref.null eq)
+  )
+  (global.set $global$2
+   (local.get $0)
+  )
+  (global.set $global$2
+   (global.get $global$2)
+  )
+  (global.set $global$2
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (global.set $global$0
+   (local.get $4)
+  )
+  (global.set $global$0
+   (global.get $global$1)
+  )
+  (global.set $global$0
+   (ref.null eq)
+  )
+  (global.set $global$0
+   (local.get $0)
+  )
+  (global.set $global$0
+   (global.get $global$2)
+  )
+  (global.set $global$0
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (global.set $global$1
+   (local.get $0)
+  )
+  (global.set $global$1
+   (global.get $global$2)
+  )
+  (global.set $global$1
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  (local.set $2
+   (i31.get_s
+    (local.get $0)
+   )
+  )
+  (local.set $2
+   (i31.get_u
+    (local.get $0)
+   )
+  )
+ )
+ (func $1 (param $0 (ref null i31)) (param $1 i31ref) (param $2 (ref null data)) (param $3 dataref)
+  (nop)
+ )
+)
+

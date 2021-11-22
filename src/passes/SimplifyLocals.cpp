@@ -50,6 +50,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/find_all.h>
+#include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
 #include <pass.h>
@@ -78,8 +79,8 @@ struct SimplifyLocals
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item, PassOptions& passOptions)
-      : item(item), effects(passOptions, *item) {}
+    SinkableInfo(Expression** item, PassOptions& passOptions, Module& module)
+      : item(item), effects(passOptions, module, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -124,8 +125,7 @@ struct SimplifyLocals
                   Expression** currp) {
     // Main processing.
     auto* curr = *currp;
-    if (curr->is<Break>()) {
-      auto* br = curr->cast<Break>();
+    if (auto* br = curr->dynCast<Break>()) {
       if (br->value) {
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
@@ -138,9 +138,11 @@ struct SimplifyLocals
     } else if (curr->is<If>()) {
       assert(!curr->cast<If>()
                 ->ifFalse); // if-elses are handled by doNoteIf* methods
-    } else if (curr->is<Switch>()) {
-      auto* sw = curr->cast<Switch>();
-      auto targets = BranchUtils::getUniqueTargets(sw);
+    } else {
+      // Not one of the recognized instructions, so do not optimize here: mark
+      // all the targets as unoptimizable.
+      // TODO optimize BrOn, Switch, etc.
+      auto targets = BranchUtils::getUniqueTargets(curr);
       for (auto target : targets) {
         self->unoptimizableBlocks.insert(target);
       }
@@ -160,10 +162,9 @@ struct SimplifyLocals
   static void
   doNoteIfTrue(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
                Expression** currp) {
-    auto* iff = (*currp)->dynCast<If>();
+    auto* iff = (*currp)->cast<If>();
     if (iff->ifFalse) {
       // We processed the ifTrue side of this if-else, save it on the stack.
-      assert((*currp)->cast<If>()->ifFalse);
       self->ifStack.push_back(std::move(self->sinkables));
     } else {
       // This is an if without an else.
@@ -298,7 +299,21 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    EffectAnalyzer effects(self->getPassOptions());
+    // Expressions that may throw cannot be sinked into 'try'. At the start of
+    // 'try', we drop all sinkables that may throw.
+    if (curr->is<Try>()) {
+      std::vector<Index> invalidated;
+      for (auto& sinkable : self->sinkables) {
+        if (sinkable.second.effects.throws) {
+          invalidated.push_back(sinkable.first);
+        }
+      }
+      for (auto index : invalidated) {
+        self->sinkables.erase(index);
+      }
+    }
+
+    EffectAnalyzer effects(self->getPassOptions(), *self->getModule());
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -384,7 +399,7 @@ struct SimplifyLocals
       }
     }
 
-    EffectAnalyzer effects(self->getPassOptions());
+    EffectAnalyzer effects(self->getPassOptions(), *self->getModule());
     if (effects.checkPost(original)) {
       self->checkInvalidations(effects);
     }
@@ -392,8 +407,9 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(
-        std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
+      self->sinkables.emplace(std::make_pair(
+        index,
+        SinkableInfo(currp, self->getPassOptions(), *self->getModule())));
     }
 
     if (!allowNesting) {
@@ -404,6 +420,14 @@ struct SimplifyLocals
   bool canSink(LocalSet* set) {
     // we can never move a tee
     if (set->isTee()) {
+      return false;
+    }
+    // We cannot move expressions containing pops that are not enclosed in
+    // 'catch', because 'pop' should follow right after 'catch'.
+    FeatureSet features = this->getModule()->features;
+    if (features.hasExceptionHandling() &&
+        EffectAnalyzer(this->getPassOptions(), *this->getModule(), set->value)
+          .danglingPop) {
       return false;
     }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1
@@ -520,8 +544,10 @@ struct SimplifyLocals
             // itself, there is any risk
             Nop nop;
             *breakLocalSetPointer = &nop;
-            EffectAnalyzer condition(this->getPassOptions(), br->condition);
-            EffectAnalyzer value(this->getPassOptions(), set);
+            EffectAnalyzer condition(
+              this->getPassOptions(), *this->getModule(), br->condition);
+            EffectAnalyzer value(
+              this->getPassOptions(), *this->getModule(), set);
             *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop
@@ -782,6 +808,9 @@ struct SimplifyLocals
   }
 
   void doWalkFunction(Function* func) {
+    if (func->getNumLocals() == 0) {
+      return; // nothing to do
+    }
     // scan local.gets
     getCounter.analyze(func);
     // multiple passes may be required per function, consider this:
@@ -932,16 +961,23 @@ struct SimplifyLocals
               }
               anotherCycle = true;
             }
+            // Nothing more to do, ignore the copy.
+            return;
           } else if (func->getLocalType(curr->index) ==
                      func->getLocalType(get->index)) {
-            // There is a new equivalence now.
+            // There is a new equivalence now. Remove all the old ones, and add
+            // the new one.
+            // Note that we ignore the case of subtyping here, to keep this
+            // optimization simple by assuming all equivalent indexes also have
+            // the same type. TODO: consider optimizing this.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);
+            return;
           }
-        } else {
-          // A new value is assigned here.
-          equivalences.reset(curr->index);
         }
+        // A new value of some kind is assigned here, and it's not something we
+        // could handle earlier, so remove all the old equivalent ones.
+        equivalences.reset(curr->index);
       }
 
       void visitLocalGet(LocalGet* curr) {
@@ -994,7 +1030,9 @@ struct SimplifyLocals
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
-    UnneededSetRemover setRemover(getCounter, func, this->getPassOptions());
+    UnneededSetRemover setRemover(
+      getCounter, func, this->getPassOptions(), *this->getModule());
+    setRemover.setModule(this->getModule());
 
     return eqOpter.anotherCycle || setRemover.removed;
   }

@@ -145,7 +145,13 @@ def split_wast(wastFile):
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):
             continue
-        elif chunk.startswith(('(assert', '(invoke')):
+        elif chunk.startswith(('(assert', '(invoke', '(register')):
+            # ret may be empty if there are some asserts before the first
+            # module. in that case these are asserts *without* a module, which
+            # are valid (they may check something that doesn't refer to a module
+            # in any way).
+            if not ret:
+                ret += [(None, [])]
             ret[-1][1].append(chunk)
     return ret
 
@@ -169,7 +175,7 @@ def run_command(cmd, expected_status=0, stderr=None,
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
     print('executing: ', ' '.join(cmd))
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True, encoding='UTF-8')
     out, err = proc.communicate()
     code = proc.returncode
     if expected_status is not None and code != expected_status:
@@ -189,10 +195,13 @@ def node_has_webassembly(cmd):
     return run_command(cmd) == 'object'
 
 
-def node_test_glue():
-    # running concatenated files (a.js) in node interferes with module loading
-    # because the concatenated file expects a 'var Binaryen' but binaryen.js
-    # assigned to module.exports. this is correct behavior but tests then need
-    # a workaround:
-    return ('if (typeof module === "object" && typeof exports === "object")\n'
-            '    Binaryen = module.exports;\n')
+def js_test_wrap():
+    # common wrapper code for JS tests, waiting for binaryen.js to become ready
+    # and providing common utility used by all tests:
+    return '''
+        (async function __in_test_code__() {
+            var binaryen = await Binaryen()
+            function assert(x) { if (!x) throw Error('Test assertion failed'); }
+            %TEST%
+        })();
+    '''

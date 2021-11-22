@@ -1,21 +1,21 @@
 (module
  (type $i32_i32_=>_i64 (func (param i32 i32) (result i64)))
- (type $i32_i32_i64_=>_none (func (param i32 i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i64_=>_none (func (param i32 i32 i64)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $i32_i32_v128_=>_none (func (param i32 i32 v128)))
  (type $i32_i32_=>_v128 (func (param i32 i32) (result v128)))
+ (type $i32_i32_v128_=>_none (func (param i32 i32 v128)))
  (type $none_=>_none (func))
- (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
- (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
+ (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
  (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
+ (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
  (type $none_=>_i32 (func (result i32)))
  (import "env" "emscripten_get_sbrk_ptr" (func $emscripten_get_sbrk_ptr (result i32)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 (shared 100 100))
- (func $loads (; 3 ;)
+ (func $loads
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_4
     (i32.const 1)
@@ -107,7 +107,7 @@
    )
   )
  )
- (func $stores (; 4 ;)
+ (func $stores
   (call $SAFE_HEAP_STORE_i32_4_4
    (i32.const 1)
    (i32.const 0)
@@ -184,7 +184,7 @@
    (v128.const i32x4 0x00000001 0x00000002 0x00000003 0x00000004)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_A (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -220,7 +220,7 @@
    (i32.const 24)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_1 (; 6 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -250,7 +250,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_U_A (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_U_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -280,7 +280,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_U_1 (; 8 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_U_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -310,7 +310,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_1 (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -340,7 +340,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_A (; 10 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -383,7 +383,7 @@
    (i32.const 16)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_2 (; 11 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -420,7 +420,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_1 (; 12 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -450,7 +450,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_A (; 13 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -487,7 +487,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_2 (; 14 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -524,7 +524,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_1 (; 15 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -554,7 +554,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_2 (; 16 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -591,7 +591,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_A (; 17 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -628,7 +628,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_4 (; 18 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_4 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -665,7 +665,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_A (; 19 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -701,7 +701,7 @@
    (i64.const 56)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_1 (; 20 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -731,7 +731,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_U_A (; 21 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_U_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -761,7 +761,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_U_1 (; 22 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -791,7 +791,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_1 (; 23 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -821,7 +821,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_A (; 24 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -864,7 +864,7 @@
    (i64.const 48)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_2 (; 25 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -901,7 +901,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_1 (; 26 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -931,7 +931,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_A (; 27 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -968,7 +968,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_2 (; 28 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1005,7 +1005,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_1 (; 29 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1035,7 +1035,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_2 (; 30 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1072,7 +1072,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_A (; 31 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1115,7 +1115,7 @@
    (i64.const 32)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_4 (; 32 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1152,7 +1152,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_1 (; 33 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1182,7 +1182,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_2 (; 34 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1219,7 +1219,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_A (; 35 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1256,7 +1256,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_4 (; 36 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1293,7 +1293,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_1 (; 37 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1323,7 +1323,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_2 (; 38 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1360,7 +1360,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_4 (; 39 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1397,7 +1397,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_A (; 40 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1434,7 +1434,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_8 (; 41 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_8 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1471,7 +1471,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_1 (; 42 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_1 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1501,7 +1501,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_2 (; 43 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_2 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1538,7 +1538,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_4 (; 44 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_4 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1575,7 +1575,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_1 (; 45 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_1 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1605,7 +1605,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_2 (; 46 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_2 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1642,7 +1642,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_4 (; 47 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_4 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1679,7 +1679,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_8 (; 48 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_8 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1716,7 +1716,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_1 (; 49 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_1 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1746,7 +1746,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_2 (; 50 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_2 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1783,7 +1783,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_4 (; 51 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_4 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1820,7 +1820,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_8 (; 52 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_8 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1857,7 +1857,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_16 (; 53 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_16 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -1894,7 +1894,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_1_A (; 54 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_1_A (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -1925,7 +1925,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_1_1 (; 55 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_1_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -1956,7 +1956,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_1 (; 56 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -1987,7 +1987,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_A (; 57 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_A (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2025,7 +2025,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_2 (; 58 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_2 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2063,7 +2063,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_1 (; 59 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2094,7 +2094,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_2 (; 60 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_2 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2132,7 +2132,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_A (; 61 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_A (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2170,7 +2170,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_4 (; 62 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_4 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2208,7 +2208,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_1_A (; 63 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_1_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2239,7 +2239,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_1_1 (; 64 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_1_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2270,7 +2270,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_1 (; 65 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2301,7 +2301,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_A (; 66 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2339,7 +2339,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_2 (; 67 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2377,7 +2377,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_1 (; 68 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2408,7 +2408,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_2 (; 69 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2446,7 +2446,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_A (; 70 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2484,7 +2484,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_4 (; 71 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_4 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2522,7 +2522,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_1 (; 72 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2553,7 +2553,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_2 (; 73 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2591,7 +2591,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_4 (; 74 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_4 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2629,7 +2629,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_A (; 75 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2667,7 +2667,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_8 (; 76 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_8 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2705,7 +2705,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_1 (; 77 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_1 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2736,7 +2736,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_2 (; 78 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_2 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2774,7 +2774,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_4 (; 79 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_4 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2812,7 +2812,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_1 (; 80 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_1 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2843,7 +2843,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_2 (; 81 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_2 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2881,7 +2881,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_4 (; 82 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_4 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2919,7 +2919,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_8 (; 83 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_8 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2957,7 +2957,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_1 (; 84 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_1 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -2988,7 +2988,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_2 (; 85 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_2 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -3026,7 +3026,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_4 (; 86 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_4 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -3064,7 +3064,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_8 (; 87 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_8 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -3102,7 +3102,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_16 (; 88 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_16 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -3146,19 +3146,19 @@
  (type $i32_i32_i64_=>_none (func (param i32 i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $i32_i32_v128_=>_none (func (param i32 i32 v128)))
  (type $i32_i32_=>_v128 (func (param i32 i32) (result v128)))
- (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
+ (type $i32_i32_v128_=>_none (func (param i32 i32 v128)))
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
+ (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
  (type $none_=>_none (func))
- (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
  (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
+ (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
  (type $none_=>_i32 (func (result i32)))
  (import "env" "emscripten_get_sbrk_ptr" (func $emscripten_get_sbrk_ptr (result i32)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 100 100)
- (func $loads (; 3 ;)
+ (func $loads
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_4
     (i32.const 1)
@@ -3166,7 +3166,7 @@
    )
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_1 (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3196,7 +3196,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_U_1 (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_U_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3226,7 +3226,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_1 (; 6 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3256,7 +3256,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_2 (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3293,7 +3293,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_1 (; 8 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3323,7 +3323,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_2 (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3360,7 +3360,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_1 (; 10 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3390,7 +3390,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_2 (; 11 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3427,7 +3427,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_4 (; 12 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_4 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3464,7 +3464,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_1 (; 13 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3494,7 +3494,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_U_1 (; 14 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3524,7 +3524,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_1 (; 15 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3554,7 +3554,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_2 (; 16 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3591,7 +3591,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_1 (; 17 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3621,7 +3621,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_2 (; 18 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3658,7 +3658,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_1 (; 19 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3688,7 +3688,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_2 (; 20 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3725,7 +3725,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_4 (; 21 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3762,7 +3762,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_1 (; 22 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3792,7 +3792,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_2 (; 23 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3829,7 +3829,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_4 (; 24 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3866,7 +3866,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_1 (; 25 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3896,7 +3896,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_2 (; 26 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3933,7 +3933,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_4 (; 27 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -3970,7 +3970,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_8 (; 28 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_8 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4007,7 +4007,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_1 (; 29 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_1 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4037,7 +4037,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_2 (; 30 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_2 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4074,7 +4074,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_4 (; 31 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_4 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4111,7 +4111,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_1 (; 32 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_1 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4141,7 +4141,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_2 (; 33 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_2 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4178,7 +4178,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_4 (; 34 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_4 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4215,7 +4215,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_8 (; 35 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_8 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4252,7 +4252,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_1 (; 36 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_1 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4282,7 +4282,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_2 (; 37 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_2 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4319,7 +4319,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_4 (; 38 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_4 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4356,7 +4356,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_8 (; 39 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_8 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4393,7 +4393,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_16 (; 40 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_16 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -4430,7 +4430,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_1_1 (; 41 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_1_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4461,7 +4461,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_1 (; 42 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4492,7 +4492,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_2 (; 43 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_2 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4530,7 +4530,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_1 (; 44 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4561,7 +4561,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_2 (; 45 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_2 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4599,7 +4599,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_4 (; 46 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_4 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4637,7 +4637,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_1_1 (; 47 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_1_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4668,7 +4668,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_1 (; 48 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4699,7 +4699,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_2 (; 49 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4737,7 +4737,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_1 (; 50 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4768,7 +4768,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_2 (; 51 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4806,7 +4806,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_4 (; 52 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_4 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4844,7 +4844,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_1 (; 53 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4875,7 +4875,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_2 (; 54 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4913,7 +4913,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_4 (; 55 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_4 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4951,7 +4951,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_8 (; 56 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_8 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -4989,7 +4989,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_1 (; 57 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_1 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5020,7 +5020,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_2 (; 58 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_2 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5058,7 +5058,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_4 (; 59 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_4 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5096,7 +5096,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_1 (; 60 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_1 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5127,7 +5127,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_2 (; 61 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_2 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5165,7 +5165,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_4 (; 62 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_4 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5203,7 +5203,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_8 (; 63 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_8 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5241,7 +5241,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_1 (; 64 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_1 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5272,7 +5272,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_2 (; 65 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_2 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5310,7 +5310,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_4 (; 66 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_4 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5348,7 +5348,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_8 (; 67 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_8 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5386,7 +5386,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_16 (; 68 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_16 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -5427,21 +5427,22 @@
 )
 (module
  (type $i32_i32_=>_i64 (func (param i32 i32) (result i64)))
- (type $i32_i32_i64_=>_none (func (param i32 i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i64_=>_none (func (param i32 i32 i64)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $i32_i32_v128_=>_none (func (param i32 i32 v128)))
  (type $i32_i32_=>_v128 (func (param i32 i32) (result v128)))
- (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
+ (type $i32_i32_v128_=>_none (func (param i32 i32 v128)))
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
- (type $none_=>_none (func))
- (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
+ (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
+ (type $FUNCSIG$v (func))
  (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
- (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
+ (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
+ (type $none_=>_i32 (func (result i32)))
+ (import "env" "emscripten_get_sbrk_ptr" (func $foo (result i32)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 (shared 100 100))
- (func $actions (; 2 ;)
+ (func $actions
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_4
     (i32.const 1)
@@ -5454,7 +5455,7 @@
    (i32.const 100)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_A (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5474,7 +5475,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5490,7 +5491,7 @@
    (i32.const 24)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_1 (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5510,7 +5511,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5520,7 +5521,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_U_A (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_U_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5540,7 +5541,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5550,7 +5551,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_1_U_1 (; 6 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_1_U_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5570,7 +5571,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5580,7 +5581,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_1 (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5600,7 +5601,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5610,7 +5611,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_A (; 8 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5630,7 +5631,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5653,7 +5654,7 @@
    (i32.const 16)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_2 (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5673,7 +5674,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5690,7 +5691,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_1 (; 10 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5710,7 +5711,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5720,7 +5721,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_A (; 11 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5740,7 +5741,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5757,7 +5758,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_2_U_2 (; 12 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_2_U_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5777,7 +5778,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5794,7 +5795,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_1 (; 13 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_1 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5814,7 +5815,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5824,7 +5825,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_2 (; 14 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_2 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5844,7 +5845,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5861,7 +5862,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_A (; 15 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_A (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5881,7 +5882,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5898,7 +5899,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i32_4_4 (; 16 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $SAFE_HEAP_LOAD_i32_4_4 (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5918,7 +5919,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5935,7 +5936,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_A (; 17 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5955,7 +5956,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5971,7 +5972,7 @@
    (i64.const 56)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_1 (; 18 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -5991,7 +5992,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6001,7 +6002,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_U_A (; 19 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_U_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6021,7 +6022,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6031,7 +6032,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_1_U_1 (; 20 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_1_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6051,7 +6052,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6061,7 +6062,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_1 (; 21 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6081,7 +6082,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6091,7 +6092,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_A (; 22 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6111,7 +6112,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6134,7 +6135,7 @@
    (i64.const 48)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_2 (; 23 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6154,7 +6155,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6171,7 +6172,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_1 (; 24 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6191,7 +6192,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6201,7 +6202,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_A (; 25 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6221,7 +6222,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6238,7 +6239,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_2_U_2 (; 26 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_2_U_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6258,7 +6259,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6275,7 +6276,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_1 (; 27 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6295,7 +6296,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6305,7 +6306,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_2 (; 28 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6325,7 +6326,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6342,7 +6343,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_A (; 29 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6362,7 +6363,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6385,7 +6386,7 @@
    (i64.const 32)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_4 (; 30 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6405,7 +6406,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6422,7 +6423,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_1 (; 31 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6442,7 +6443,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6452,7 +6453,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_2 (; 32 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6472,7 +6473,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6489,7 +6490,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_A (; 33 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6509,7 +6510,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6526,7 +6527,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_4_U_4 (; 34 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_4_U_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6546,7 +6547,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6563,7 +6564,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_1 (; 35 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_1 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6583,7 +6584,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6593,7 +6594,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_2 (; 36 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_2 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6613,7 +6614,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6630,7 +6631,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_4 (; 37 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_4 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6650,7 +6651,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6667,7 +6668,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_A (; 38 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_A (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6687,7 +6688,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6704,7 +6705,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_i64_8_8 (; 39 ;) (param $0 i32) (param $1 i32) (result i64)
+ (func $SAFE_HEAP_LOAD_i64_8_8 (param $0 i32) (param $1 i32) (result i64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6724,7 +6725,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6741,7 +6742,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_1 (; 40 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_1 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6761,7 +6762,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6771,7 +6772,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_2 (; 41 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_2 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6791,7 +6792,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6808,7 +6809,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f32_4_4 (; 42 ;) (param $0 i32) (param $1 i32) (result f32)
+ (func $SAFE_HEAP_LOAD_f32_4_4 (param $0 i32) (param $1 i32) (result f32)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6828,7 +6829,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6845,7 +6846,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_1 (; 43 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_1 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6865,7 +6866,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6875,7 +6876,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_2 (; 44 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_2 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6895,7 +6896,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6912,7 +6913,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_4 (; 45 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_4 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6932,7 +6933,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6949,7 +6950,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_f64_8_8 (; 46 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $SAFE_HEAP_LOAD_f64_8_8 (param $0 i32) (param $1 i32) (result f64)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -6969,7 +6970,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6986,7 +6987,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_1 (; 47 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_1 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -7006,7 +7007,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7016,7 +7017,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_2 (; 48 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_2 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -7036,7 +7037,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7053,7 +7054,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_4 (; 49 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_4 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -7073,7 +7074,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7090,7 +7091,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_8 (; 50 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_8 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -7110,7 +7111,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7127,7 +7128,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_LOAD_v128_16_16 (; 51 ;) (param $0 i32) (param $1 i32) (result v128)
+ (func $SAFE_HEAP_LOAD_v128_16_16 (param $0 i32) (param $1 i32) (result v128)
   (local $2 i32)
   (local.set $2
    (i32.add
@@ -7147,7 +7148,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7164,7 +7165,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_1_A (; 52 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_1_A (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7184,7 +7185,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7195,7 +7196,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_1_1 (; 53 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_1_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7215,7 +7216,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7226,7 +7227,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_1 (; 54 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7246,7 +7247,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7257,7 +7258,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_A (; 55 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_A (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7277,7 +7278,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7295,7 +7296,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_2_2 (; 56 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_2_2 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7315,7 +7316,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7333,7 +7334,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_1 (; 57 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_1 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7353,7 +7354,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7364,7 +7365,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_2 (; 58 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_2 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7384,7 +7385,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7402,7 +7403,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_A (; 59 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_A (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7422,7 +7423,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7440,7 +7441,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i32_4_4 (; 60 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $SAFE_HEAP_STORE_i32_4_4 (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7460,7 +7461,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7478,7 +7479,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_1_A (; 61 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_1_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7498,7 +7499,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7509,7 +7510,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_1_1 (; 62 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_1_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7529,7 +7530,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7540,7 +7541,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_1 (; 63 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7560,7 +7561,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7571,7 +7572,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_A (; 64 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7591,7 +7592,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7609,7 +7610,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_2_2 (; 65 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_2_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7629,7 +7630,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7647,7 +7648,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_1 (; 66 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7667,7 +7668,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7678,7 +7679,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_2 (; 67 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7698,7 +7699,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7716,7 +7717,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_A (; 68 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7736,7 +7737,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7754,7 +7755,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_4_4 (; 69 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_4_4 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7774,7 +7775,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7792,7 +7793,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_1 (; 70 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_1 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7812,7 +7813,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7823,7 +7824,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_2 (; 71 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_2 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7843,7 +7844,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7861,7 +7862,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_4 (; 72 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_4 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7881,7 +7882,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7899,7 +7900,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_A (; 73 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_A (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7919,7 +7920,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7937,7 +7938,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_i64_8_8 (; 74 ;) (param $0 i32) (param $1 i32) (param $2 i64)
+ (func $SAFE_HEAP_STORE_i64_8_8 (param $0 i32) (param $1 i32) (param $2 i64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7957,7 +7958,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7975,7 +7976,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_1 (; 75 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_1 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -7995,7 +7996,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8006,7 +8007,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_2 (; 76 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_2 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8026,7 +8027,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8044,7 +8045,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f32_4_4 (; 77 ;) (param $0 i32) (param $1 i32) (param $2 f32)
+ (func $SAFE_HEAP_STORE_f32_4_4 (param $0 i32) (param $1 i32) (param $2 f32)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8064,7 +8065,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8082,7 +8083,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_1 (; 78 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_1 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8102,7 +8103,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8113,7 +8114,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_2 (; 79 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_2 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8133,7 +8134,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8151,7 +8152,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_4 (; 80 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_4 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8171,7 +8172,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8189,7 +8190,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_f64_8_8 (; 81 ;) (param $0 i32) (param $1 i32) (param $2 f64)
+ (func $SAFE_HEAP_STORE_f64_8_8 (param $0 i32) (param $1 i32) (param $2 f64)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8209,7 +8210,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8227,7 +8228,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_1 (; 82 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_1 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8247,7 +8248,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8258,7 +8259,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_2 (; 83 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_2 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8278,7 +8279,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8296,7 +8297,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_4 (; 84 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_4 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8316,7 +8317,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8334,7 +8335,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_8 (; 85 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_8 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8354,7 +8355,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8372,7 +8373,7 @@
    (local.get $2)
   )
  )
- (func $SAFE_HEAP_STORE_v128_16_16 (; 86 ;) (param $0 i32) (param $1 i32) (param $2 v128)
+ (func $SAFE_HEAP_STORE_v128_16_16 (param $0 i32) (param $1 i32) (param $2 v128)
   (local $3 i32)
   (local.set $3
    (i32.add
@@ -8392,7 +8393,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )

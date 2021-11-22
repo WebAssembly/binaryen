@@ -1,7 +1,7 @@
 ;; Passive segment syntax
 (module
   (memory 1)
-  (data passive "foo"))
+  (data "foo"))
 
 ;; memory.fill
 (module
@@ -38,6 +38,10 @@
 
 ;; Writing 0 bytes outside of memory limit is NOT allowed.
 (assert_trap (invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
+
+;; Negative size
+(assert_trap (invoke "fill" (i32.const 15) (i32.const 14) (i32.const -2)))
+(assert_return (invoke "load8_u" (i32.const 15)) (i32.const 0))
 
 ;; memory.copy
 (module
@@ -108,7 +112,7 @@
 ;; memory.init
 (module
   (memory 1)
-  (data passive "\aa\bb\cc\dd")
+  (data "\aa\bb\cc\dd")
 
   (func (export "init") (param i32 i32 i32)
     (memory.init 0
@@ -148,7 +152,7 @@
 ;; data.drop
 (module
   (memory 1)
-  (data passive "")
+  (data "")
   (data (i32.const 0) "")
 
   (func (export "drop_passive") (data.drop 0))

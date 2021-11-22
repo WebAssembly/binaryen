@@ -104,7 +104,7 @@ struct MixedArena {
         if (!allocated) {
           allocated = new MixedArena(); // has our thread id
         }
-        if (curr->next.compare_exchange_weak(seen, allocated)) {
+        if (curr->next.compare_exchange_strong(seen, allocated)) {
           // we replaced it, so we are the next in the chain
           // we can forget about allocated, it is owned by the chain now
           allocated = nullptr;
@@ -363,6 +363,27 @@ public:
 
   void allocate(size_t size) {
     abort(); // must be implemented in children
+  }
+
+  // C-API
+
+  void insertAt(size_t index, T item) {
+    assert(index <= size()); // appending is ok
+    resize(size() + 1);
+    for (auto i = size() - 1; i > index; --i) {
+      data[i] = data[i - 1];
+    }
+    data[index] = item;
+  }
+
+  T removeAt(size_t index) {
+    assert(index < size());
+    auto item = data[index];
+    for (auto i = index; i < size() - 1; ++i) {
+      data[i] = data[i + 1];
+    }
+    resize(size() - 1);
+    return item;
   }
 };
 

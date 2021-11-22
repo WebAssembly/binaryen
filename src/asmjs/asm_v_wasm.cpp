@@ -15,51 +15,33 @@
  */
 
 #include "asm_v_wasm.h"
+#include "support/utilities.h"
 #include "wasm.h"
 
 namespace wasm {
 
-Type asmToWasmType(AsmType asmType) {
-  switch (asmType) {
-    case ASM_INT:
-      return Type::i32;
-    case ASM_DOUBLE:
-      return Type::f64;
-    case ASM_FLOAT:
-      return Type::f32;
-    case ASM_INT64:
-      return Type::i64;
-    case ASM_NONE:
-      return Type::none;
-    case ASM_FLOAT32X4:
-    case ASM_FLOAT64X2:
-    case ASM_INT8X16:
-    case ASM_INT16X8:
-    case ASM_INT32X4:
-      return Type::v128;
-  }
-  WASM_UNREACHABLE("invalid type");
-}
-
-AsmType wasmToAsmType(Type type) {
-  switch (type.getSingle()) {
+JsType wasmToJsType(Type type) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
-      return ASM_INT;
+      return JS_INT;
     case Type::f32:
-      return ASM_FLOAT;
+      return JS_FLOAT;
     case Type::f64:
-      return ASM_DOUBLE;
+      return JS_DOUBLE;
     case Type::i64:
-      return ASM_INT64;
+      return JS_INT64;
     case Type::v128:
-      assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE("v128 not implemented yet");
     case Type::funcref:
+    case Type::externref:
     case Type::anyref:
-    case Type::nullref:
-    case Type::exnref:
-      assert(false && "reference types are not supported by asm2wasm");
+    case Type::eqref:
+    case Type::i31ref:
+    case Type::dataref:
+      WASM_UNREACHABLE("reference types are not supported by wasm2js");
     case Type::none:
-      return ASM_NONE;
+      return JS_NONE;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -67,7 +49,8 @@ AsmType wasmToAsmType(Type type) {
 }
 
 char getSig(Type type) {
-  switch (type.getSingle()) {
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
     case Type::i32:
       return 'i';
     case Type::i64:
@@ -80,12 +63,16 @@ char getSig(Type type) {
       return 'V';
     case Type::funcref:
       return 'F';
+    case Type::externref:
+      return 'X';
     case Type::anyref:
       return 'A';
-    case Type::nullref:
-      return 'N';
-    case Type::exnref:
-      return 'E';
+    case Type::eqref:
+      return 'Q';
+    case Type::i31ref:
+      return 'I';
+    case Type::dataref:
+      return 'D';
     case Type::none:
       return 'v';
     case Type::unreachable:
@@ -94,30 +81,14 @@ char getSig(Type type) {
   WASM_UNREACHABLE("invalid type");
 }
 
-std::string getSig(Function* func) {
-  return getSig(func->sig.results, func->sig.params);
-}
-
 std::string getSig(Type results, Type params) {
-  assert(!results.isMulti());
+  assert(!results.isTuple());
   std::string sig;
   sig += getSig(results);
-  for (Type t : params.expand()) {
-    sig += getSig(t);
+  for (const auto& param : params) {
+    sig += getSig(param);
   }
   return sig;
-}
-
-Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
-  if (expr->type == Type::f32) {
-    auto conv = allocator.alloc<Unary>();
-    conv->op = PromoteFloat32;
-    conv->value = expr;
-    conv->type = Type::f64;
-    return conv;
-  }
-  assert(expr->type == Type::f64);
-  return expr;
 }
 
 } // namespace wasm

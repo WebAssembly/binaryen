@@ -1,0 +1,80 @@
+(module
+ (type $[mut:f64] (array (mut f64)))
+ (type $none_=>_none (func))
+ (func $0
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 (ref null $[mut:f64]))
+  (local $3 (ref null $[mut:f64]))
+  (local $4 (ref null $[mut:f64]))
+  (drop
+   (local.get $0)
+  )
+  (block
+   (local.set $2
+    (array.new_with_rtt $[mut:f64]
+     (f64.const 3.14159)
+     (i32.const 1)
+     (rtt.canon $[mut:f64])
+    )
+   )
+   (block
+    (drop
+     (ref.as_non_null
+      (local.get $2)
+     )
+    )
+    (drop
+     (local.get $0)
+    )
+    (block
+     (local.set $3
+      (array.new_with_rtt $[mut:f64]
+       (f64.const 1234)
+       (i32.const 2)
+       (rtt.canon $[mut:f64])
+      )
+     )
+     (block
+      (drop
+       (ref.as_non_null
+        (local.get $2)
+       )
+      )
+      (drop
+       (ref.as_non_null
+        (local.get $3)
+       )
+      )
+      (drop
+       (local.get $0)
+      )
+     )
+    )
+   )
+  )
+  (block
+   (local.set $4
+    (array.new_with_rtt $[mut:f64]
+     (f64.const 2.1828)
+     (i32.const 3)
+     (rtt.canon $[mut:f64])
+    )
+   )
+   (block
+    (drop
+     (ref.as_non_null
+      (local.get $4)
+     )
+    )
+    (drop
+     (local.get $0)
+    )
+   )
+  )
+  (drop
+   (local.get $0)
+  )
+ )
+)
+

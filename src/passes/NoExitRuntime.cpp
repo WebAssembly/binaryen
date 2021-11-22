@@ -34,7 +34,7 @@ struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
 
   Pass* create() override { return new NoExitRuntime; }
 
-  // Remove all possible manifestations of atexit, across asm2wasm and llvm wasm
+  // Remove all possible manifestations of atexit, across llvm wasm
   // backend.
   std::array<Name, 4> ATEXIT_NAMES = {
     {"___cxa_atexit", "__cxa_atexit", "_atexit", "atexit"}};
@@ -46,7 +46,17 @@ struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
     }
     for (auto name : ATEXIT_NAMES) {
       if (name == import->base) {
-        replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
+        // Remove the call, and drop the arguments (which may have side
+        // effects); let other passes clean that up more.
+        Builder builder(*getModule());
+        std::vector<Expression*> args;
+        for (auto* operand : curr->operands) {
+          args.push_back(builder.makeDrop(operand));
+        }
+        // Ensure the block has the right type using the last arg.
+        args.push_back(builder.replaceWithIdenticalType(curr));
+        replaceCurrent(builder.makeBlock(args));
+        break;
       }
     }
   }

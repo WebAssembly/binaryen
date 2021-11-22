@@ -193,7 +193,7 @@ struct Value {
   }
 
   int32_t getInteger() { // convenience function to get a known integer
-    assert(fmod(getNumber(), 1) == 0);
+    assert(wasm::isInteger(getNumber()));
     int32_t ret = getNumber();
     assert(double(ret) == getNumber()); // no loss in conversion
     return ret;

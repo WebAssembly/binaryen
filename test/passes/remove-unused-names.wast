@@ -93,4 +93,13 @@
     )
    )
   )
+  (func $loop-with-child-of-other-type
+   (drop
+    (loop (result i32) ;; the loop has no name, but can't be replaced by the child
+     (block $l         ;; as the type differs
+      (unreachable)
+     )
+    )
+   )
+  )
 )

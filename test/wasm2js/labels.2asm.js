@@ -1,25 +1,18 @@
 
-function asmFunc(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  function $0() {
   var $0_1 = 0;
   exit : {
@@ -123,7 +116,7 @@ function asmFunc(global, env, buffer) {
  function $7() {
   var i = 0;
   i = 0;
-  block_1 : {
+  block : {
    l : {
     break l;
    }
@@ -151,9 +144,9 @@ function asmFunc(global, env, buffer) {
  function $8() {
   var i = 0;
   i = 0;
-  block_1 : {
-   if_1 : {
-    break if_1;
+  block : {
+   if_ : {
+    break if_;
    }
    i = i + 1 | 0;
    if5 : {
@@ -181,7 +174,7 @@ function asmFunc(global, env, buffer) {
   var $2_1 = 0, $3_1 = 0;
   ret : {
    exit : {
-    $0_2 : {
+    $0 : {
      switch ($0_1 | 0) {
      case 1:
      case 2:
@@ -192,7 +185,7 @@ function asmFunc(global, env, buffer) {
       break ret;
      default:
      case 0:
-      break $0_2;
+      break $0;
      };
     }
     $2_1 = 5;
@@ -204,12 +197,12 @@ function asmFunc(global, env, buffer) {
  
  function $10($0_1) {
   $0_1 = $0_1 | 0;
-  $1_1 : {
+  $1 : {
    switch ($0_1 | 0) {
    case 0:
     return 0 | 0;
    default:
-    break $1_1;
+    break $1;
    };
   }
   return 2 | 0;
@@ -316,18 +309,17 @@ function asmFunc(global, env, buffer) {
  }
  
  function $17() {
-  var $1_2 = 0, $2_1 = 0;
+  var $1_1 = 0, $2_1 = 0;
   l1 : {
-   $1_2 = 2;
+   $1_1 = 2;
    l113 : {
     $2_1 = 3;
     break l113;
    }
   }
-  return $1_2 + $2_1 | 0 | 0;
+  return $1_1 + $2_1 | 0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "block": $0, 
   "loop1": $1, 
@@ -350,8 +342,8 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
 export var block = retasmFunc.block;
 export var loop1 = retasmFunc.loop1;
 export var loop2 = retasmFunc.loop2;

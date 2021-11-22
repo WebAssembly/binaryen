@@ -53,6 +53,7 @@
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "support/permutations.h"
 #include "wasm-builder.h"
@@ -68,6 +69,10 @@ static LocalSet IMPOSSIBLE_SET;
 
 struct SSAify : public Pass {
   bool isFunctionParallel() override { return true; }
+
+  // SSAify maps each original local to a number of new ones.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
 
   Pass* create() override { return new SSAify(allowMerges); }
 
@@ -85,7 +90,7 @@ struct SSAify : public Pass {
     module = module_;
     func = func_;
     LocalGraph graph(func);
-    graph.computeInfluences();
+    graph.computeSetInfluences();
     graph.computeSSAIndexes();
     // create new local indexes, one for each set
     createNewIndexes(graph);
@@ -94,6 +99,8 @@ struct SSAify : public Pass {
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
+    // Handle non-nullability in new locals we added.
+    TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
 
   void createNewIndexes(LocalGraph& graph) {

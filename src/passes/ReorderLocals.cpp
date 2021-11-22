@@ -34,15 +34,32 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
 
   Pass* create() override { return new ReorderLocals; }
 
-  std::map<Index, Index> counts; // local => times it is used
-  // local => index in the list of which local is first seen
-  std::map<Index, Index> firstUses;
+  // local index => times it is used
+  std::vector<Index> counts;
+  // local index => how many locals we saw before this one, before a use of
+  // this one appeared. that is, one local has 1, another has 2, and so forth,
+  // in the order in which we saw the first uses of them (we use "0" to mark
+  // locals we have not yet seen).
+  std::vector<Index> firstUses;
+  Index firstUseIndex = 1;
 
-  void visitFunction(Function* curr) {
+  enum { Unseen = 0 };
+
+  void doWalkFunction(Function* curr) {
+    if (curr->getNumVars() == 0) {
+      return; // nothing to do. All locals are parameters
+    }
     Index num = curr->getNumLocals();
-    std::vector<Index> newToOld;
+    counts.resize(num);
+    std::fill(counts.begin(), counts.end(), 0);
+    firstUses.resize(num);
+    std::fill(firstUses.begin(), firstUses.end(), Unseen);
+    // Gather information about local usages.
+    walk(curr->body);
+    // Use the information about local usages.
+    std::vector<Index> newToOld(num);
     for (size_t i = 0; i < num; i++) {
-      newToOld.push_back(i);
+      newToOld[i] = i;
     }
     // sort, keeping params in front (where they will not be moved)
     sort(
@@ -65,11 +82,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         return counts[a] > counts[b];
       });
     // sorting left params in front, perhaps slightly reordered. verify and fix.
-    size_t numParams = curr->sig.params.size();
+    size_t numParams = curr->getParams().size();
     for (size_t i = 0; i < numParams; i++) {
       assert(newToOld[i] < numParams);
-    }
-    for (size_t i = 0; i < numParams; i++) {
       newToOld[i] = i;
     }
     // sort vars, and drop unused ones
@@ -118,8 +133,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     curr->localNames.clear();
     curr->localIndices.clear();
     for (size_t i = 0; i < newToOld.size(); i++) {
-      if (newToOld[i] < oldLocalNames.size()) {
-        auto old = oldLocalNames[newToOld[i]];
+      auto iter = oldLocalNames.find(newToOld[i]);
+      if (iter != oldLocalNames.end()) {
+        auto old = iter->second;
         curr->localNames[i] = old;
         curr->localIndices[old] = i;
       }
@@ -128,15 +144,15 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
 
   void visitLocalGet(LocalGet* curr) {
     counts[curr->index]++;
-    if (firstUses.count(curr->index) == 0) {
-      firstUses[curr->index] = firstUses.size();
+    if (firstUses[curr->index] == Unseen) {
+      firstUses[curr->index] = firstUseIndex++;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
     counts[curr->index]++;
-    if (firstUses.count(curr->index) == 0) {
-      firstUses[curr->index] = firstUses.size();
+    if (firstUses[curr->index] == Unseen) {
+      firstUses[curr->index] = firstUseIndex++;
     }
   }
 };

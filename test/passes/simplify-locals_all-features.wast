@@ -1548,7 +1548,7 @@
 )
 (module
  (memory 256 256)
- (data passive "hello, there!")
+ (data "hello, there!")
  (func $memory-init-load
   (local $x i32)
   (local.set $x
@@ -1656,10 +1656,10 @@
  )
 )
 (module
- (func $subtype-test (result funcref)
-  (local $0 nullref)
-  (local $1 funcref)
-  (local $2 funcref)
+ (func $subtype-test (result anyref)
+  (local $0 externref)
+  (local $1 anyref)
+  (local $2 anyref)
   (block
    (local.set $1
     (local.get $0)
@@ -1669,5 +1669,43 @@
    (local.get $1)
   )
   (local.get $1)
+ )
+)
+;; data.drop has global side effects
+(module
+ (memory $0 (shared 1 1))
+ (data "data")
+ (func "foo" (result i32)
+  (local $0 i32)
+  (block (result i32)
+   (local.set $0
+    (i32.rem_u     ;; will trap, so cannot be reordered to the end
+     (i32.const 0)
+     (i32.const 0)
+    )
+   )
+   (data.drop 0)   ;; has global side effects that may be noticed later
+   (local.get $0)
+  )
+ )
+)
+;; do not be confused by subtyping: when an index is set, even to another type,
+;; it is no longer equivalent
+;; (see https://github.com/WebAssembly/binaryen/issues/3266)
+(module
+ (func "test" (param $0 eqref) (param $1 (ref null i31)) (result i32)
+  (local $2 eqref)
+  (local $3 (ref null i31))
+  (local.set $2
+   (local.get $0) ;; $0 and $2 are equivalent
+  )
+  (local.set $0   ;; set $0 to something with another type
+   (local.get $3)
+  )
+  ;; compares a null eqref and a zero (ref null i31) - should be false
+  (ref.eq
+   (local.get $2)
+   (local.get $1)
+  )
  )
 )

@@ -36,7 +36,7 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
-    StackIRGenerator stackIRGen(getModule()->allocator, func);
+    StackIRGenerator stackIRGen(*getModule(), func);
     stackIRGen.write();
     func->stackIR = make_unique<StackIR>();
     func->stackIR->swap(stackIRGen.getStackIR());
@@ -51,10 +51,14 @@ class StackIROptimizer {
   Function* func;
   PassOptions& passOptions;
   StackIR& insts;
+  FeatureSet features;
 
 public:
-  StackIROptimizer(Function* func, PassOptions& passOptions)
-    : func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
+  StackIROptimizer(Function* func,
+                   PassOptions& passOptions,
+                   FeatureSet features)
+    : func(func), passOptions(passOptions), insts(*func->stackIR.get()),
+      features(features) {
     assert(func->stackIR);
   }
 
@@ -65,7 +69,39 @@ public:
     if (passOptions.optimizeLevel >= 3 || passOptions.shrinkLevel >= 1) {
       local2Stack();
     }
-    removeUnneededBlocks();
+    // Removing unneeded blocks is dangerous with GC, as if we do this:
+    //
+    //   (call
+    //     (rtt)
+    //     (block
+    //       (nop)
+    //       (i32)
+    //     )
+    //   )
+    // === remove inner block ==>
+    //   (call
+    //     (rtt)
+    //     (nop)
+    //     (i32)
+    //   )
+    //
+    // Then we end up with a nop that forces us to emit this during load:
+    //
+    //   (call
+    //     (block
+    //       (local.set
+    //         (rtt)
+    //       )
+    //       (nop)
+    //       (local.get)
+    //     )
+    //     (i32)
+    //   )
+    //
+    // However, that is not valid as an rtt cannot be set to a local.
+    if (!features.hasGC()) {
+      removeUnneededBlocks();
+    }
     dce();
   }
 
@@ -112,7 +148,7 @@ private:
     // TODO: we can do this a lot faster, as we just care about linear
     //       control flow.
     LocalGraph localGraph(func);
-    localGraph.computeInfluences();
+    localGraph.computeSetInfluences();
     // We maintain a stack of relevant values. This contains:
     //  * a null for each actual value that the value stack would have
     //  * an index of each LocalSet that *could* be on the value
@@ -257,6 +293,8 @@ private:
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
       case StackInst::Catch:
+      case StackInst::CatchAll:
+      case StackInst::Delegate:
       case StackInst::TryEnd: {
         return true;
       }
@@ -283,7 +321,8 @@ private:
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
-      case StackInst::TryEnd: {
+      case StackInst::TryEnd:
+      case StackInst::Delegate: {
         return true;
       }
       default: { return false; }
@@ -337,7 +376,7 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
     if (!func->stackIR) {
       return;
     }
-    StackIROptimizer(func, getPassOptions()).run();
+    StackIROptimizer(func, getPassOptions(), getModule()->features).run();
   }
 };
 

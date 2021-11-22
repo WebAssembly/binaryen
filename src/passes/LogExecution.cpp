@@ -28,7 +28,6 @@
 // value.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include <pass.h>
@@ -58,12 +57,11 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
   void visitModule(Module* curr) {
     // Add the import
-    auto import = new Function;
-    import->name = LOGGER;
+    auto import =
+      Builder::makeFunction(LOGGER, Signature(Type::i32, Type::none), {});
     import->module = ENV;
     import->base = LOGGER;
-    import->sig = Signature(Type::i32, Type::none);
-    curr->addFunction(import);
+    curr->addFunction(std::move(import));
   }
 
 private:
@@ -71,8 +69,7 @@ private:
     static Index id = 0;
     Builder builder(*getModule());
     return builder.makeSequence(
-      builder.makeCall(
-        LOGGER, {builder.makeConst(Literal(int32_t(id++)))}, Type::none),
+      builder.makeCall(LOGGER, {builder.makeConst(int32_t(id++))}, Type::none),
       curr);
   }
 };

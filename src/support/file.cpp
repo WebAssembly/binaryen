@@ -34,8 +34,22 @@ std::vector<char> wasm::read_stdin() {
   return input;
 }
 
+template<typename T> struct do_read_stdin { T operator()(); };
+
+template<> std::vector<char> do_read_stdin<std::vector<char>>::operator()() {
+  return wasm::read_stdin();
+}
+
+template<> std::string do_read_stdin<std::string>::operator()() {
+  auto vec = wasm::read_stdin();
+  return std::string(vec.begin(), vec.end());
+}
+
 template<typename T>
 T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
+  if (filename == "-") {
+    return do_read_stdin<T>{}();
+  }
   BYN_TRACE("Loading '" << filename << "'...\n");
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
@@ -88,11 +102,12 @@ template std::vector<char> wasm::read_file<>(const std::string&,
 
 wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
   : outfile(), out([this, filename, binary]() {
-      if (filename == "-") {
-        return std::cout.rdbuf();
-      }
+      // Ensure a single return at the very end, to avoid clang-tidy warnings
+      // about the types of different returns here.
       std::streambuf* buffer;
-      if (filename.size()) {
+      if (filename == "-" || filename.empty()) {
+        buffer = std::cout.rdbuf();
+      } else {
         BYN_TRACE("Opening '" << filename << "'\n");
         auto flags = std::ofstream::out | std::ofstream::trunc;
         if (binary == Flags::Binary) {
@@ -104,8 +119,6 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
           exit(EXIT_FAILURE);
         }
         buffer = outfile.rdbuf();
-      } else {
-        buffer = std::cout.rdbuf();
       }
       return buffer;
     }()) {}

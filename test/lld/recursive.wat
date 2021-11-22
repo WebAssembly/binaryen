@@ -1,25 +1,23 @@
 (module
- (type $0 (func (param i32 i32) (result i32)))
- (type $1 (func))
- (type $2 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "iprintf" (func $iprintf (param i32 i32) (result i32)))
  (memory $0 2)
- (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
+ (data $.rodata (i32.const 568) "%d:%d\n\00Result: %d\n\00")
  (table $0 1 1 funcref)
- (global $global$0 (mut i32) (i32.const 66128))
- (global $global$1 i32 (i32.const 587))
+ (global $__stack_pointer (mut i32) (i32.const 66128))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
- (func $__wasm_call_ctors (; 1 ;) (type $1)
+ (func $__wasm_call_ctors
  )
- (func $foo (; 2 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $foo (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
-  (global.set $global$0
+  (global.set $__stack_pointer
    (local.tee $2
     (i32.sub
-     (global.get $global$0)
+     (global.get $__stack_pointer)
      (i32.const 16)
     )
    )
@@ -38,7 +36,7 @@
     (local.get $2)
    )
   )
-  (global.set $global$0
+  (global.set $__stack_pointer
    (i32.add
     (local.get $2)
     (i32.const 16)
@@ -49,12 +47,12 @@
    (local.get $0)
   )
  )
- (func $__original_main (; 3 ;) (type $2) (result i32)
+ (func $__original_main (result i32)
   (local $0 i32)
-  (global.set $global$0
+  (global.set $__stack_pointer
    (local.tee $0
     (i32.sub
-     (global.get $global$0)
+     (global.get $__stack_pointer)
      (i32.const 16)
     )
    )
@@ -72,7 +70,7 @@
     (local.get $0)
    )
   )
-  (global.set $global$0
+  (global.set $__stack_pointer
    (i32.add
     (local.get $0)
     (i32.const 16)
@@ -80,7 +78,7 @@
   )
   (i32.const 0)
  )
- (func $main (; 4 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
  ;; custom section "producers", size 112

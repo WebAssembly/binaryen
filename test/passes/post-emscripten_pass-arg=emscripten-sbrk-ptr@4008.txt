@@ -1,8 +1,0 @@
-(module
- (type $none_=>_i32 (func (result i32)))
- (func $internal (; 0 ;) (result i32)
-  (i32.const 4008)
- )
-)
-(module
-)

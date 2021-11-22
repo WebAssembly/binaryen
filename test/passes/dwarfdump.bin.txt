@@ -125,7 +125,7 @@ file_names[  1]:
  (export "stackAlloc" (func $fimport$5))
  (export "stackRestore" (func $fimport$6))
  (export "__growWasmMemory" (func $fimport$7))
- (func $0 (; 8 ;) (result i32)
+ (func $0 (result i32)
   (i32.const 1024)
  )
  ;; custom section "sourceMappingURL", size 15

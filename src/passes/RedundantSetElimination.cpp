@@ -35,6 +35,8 @@
 
 #include <cfg/cfg-traversal.h>
 #include <ir/literal-utils.h>
+#include <ir/numbering.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
@@ -43,11 +45,9 @@
 
 namespace wasm {
 
-// We do a very simple numbering of local values, just a unique
-// number for constants so far, enough to see
-// trivial duplication. LocalValues maps each local index to
-// its current value
-typedef std::vector<Index> LocalValues;
+// Map each local index to its current value number (which is computed in
+// ValueNumbering).
+using LocalValues = std::vector<Index>;
 
 namespace {
 
@@ -80,6 +80,13 @@ struct RedundantSetElimination
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
+    if (numLocals == 0) {
+      return; // nothing to do
+    }
+
+    // Create a unique value for use to mark unseen locations.
+    unseenValue = valueNumbering.getUniqueValue();
+
     // create the CFG by walking the IR
     CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>::
       doWalkFunction(func);
@@ -89,45 +96,30 @@ struct RedundantSetElimination
     optimize();
   }
 
-  // numbering
+  // Use a value numbering for the values of expressions.
+  ValueNumbering valueNumbering;
 
-  Index nextValue = 1; // 0 is reserved for the "unseen value"
-  std::unordered_map<Literal, Index> literalValues; // each constant has a value
-  std::unordered_map<Expression*, Index>
-    expressionValues; // each value can have a value
+  // In additon to valueNumbering, each block has values for each merge.
   std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>>
-    blockMergeValues; // each block has values for each merge
+    blockMergeValues;
 
-  Index getUnseenValue() { // we haven't seen this location yet
-    return 0;
-  }
+  // A value that indicates we haven't seen this location yet.
+  Index unseenValue;
+
   Index getUniqueValue() {
+    auto value = valueNumbering.getUniqueValue();
 #ifdef RSE_DEBUG
-    std::cout << "new unique value " << nextValue << '\n';
+    std::cout << "new unique value " << value << '\n';
 #endif
-    return nextValue++;
+    return value;
   }
 
-  Index getLiteralValue(Literal lit) {
-    auto iter = literalValues.find(lit);
-    if (iter != literalValues.end()) {
-      return iter->second;
-    }
+  Index getValue(Literals lit) {
+    auto value = valueNumbering.getValue(lit);
 #ifdef RSE_DEBUG
-    std::cout << "new literal value for " << lit << '\n';
+    std::cout << "lit value " << value << '\n';
 #endif
-    return literalValues[lit] = getUniqueValue();
-  }
-
-  Index getExpressionValue(Expression* expr) {
-    auto iter = expressionValues.find(expr);
-    if (iter != expressionValues.end()) {
-      return iter->second;
-    }
-#ifdef RSE_DEBUG
-    std::cout << "new expr value for " << expr << '\n';
-#endif
-    return expressionValues[expr] = getUniqueValue();
+    return value;
   }
 
   Index getBlockMergeValue(BasicBlock* block, Index index) {
@@ -156,17 +148,16 @@ struct RedundantSetElimination
     return value == iter2->second;
   }
 
-  Index getValue(Expression* value, LocalValues& currValues) {
-    if (auto* c = value->dynCast<Const>()) {
-      // a constant
-      return getLiteralValue(c->value);
-    } else if (auto* get = value->dynCast<LocalGet>()) {
+  Index getValue(Expression* expr, LocalValues& currValues) {
+    if (auto* get = expr->dynCast<LocalGet>()) {
       // a copy of whatever that was
       return currValues[get->index];
-    } else {
-      // get the value's own unique value
-      return getExpressionValue(value);
     }
+    auto value = valueNumbering.getValue(expr);
+#ifdef RSE_DEBUG
+    std::cout << "expr value " << value << '\n';
+#endif
+    return value;
   }
 
   // flowing
@@ -178,27 +169,32 @@ struct RedundantSetElimination
       if (block.get() == entry) {
         // params are complex values we can't optimize; vars are zeros
         for (Index i = 0; i < numLocals; i++) {
+          auto type = func->getLocalType(i);
           if (func->isParam(i)) {
 #ifdef RSE_DEBUG
             std::cout << "new param value for " << i << '\n';
 #endif
             start[i] = getUniqueValue();
+          } else if (type.isNonNullable()) {
+#ifdef RSE_DEBUG
+            std::cout << "new unique value for non-nullable " << i << '\n';
+#endif
+            start[i] = getUniqueValue();
           } else {
-            start[i] =
-              getLiteralValue(Literal::makeZero(func->getLocalType(i)));
+            start[i] = getValue(Literal::makeZeros(type));
           }
         }
       } else {
         // other blocks have all unseen values to begin with
         for (Index i = 0; i < numLocals; i++) {
-          start[i] = getUnseenValue();
+          start[i] = unseenValue;
         }
       }
       // the ends all begin unseen
       LocalValues& end = block->contents.end;
       end.resize(numLocals);
       for (Index i = 0; i < numLocals; i++) {
-        end[i] = getUnseenValue();
+        end[i] = unseenValue;
       }
     }
     // keep working while stuff is flowing. we use a unique deferred queue
@@ -269,9 +265,9 @@ struct RedundantSetElimination
             iter++;
             while (iter != in.end()) {
               auto otherValue = (*iter)->contents.end[i];
-              if (value == getUnseenValue()) {
+              if (value == unseenValue) {
                 value = otherValue;
-              } else if (otherValue == getUnseenValue()) {
+              } else if (otherValue == unseenValue) {
                 // nothing to do, other has no information
               } else if (value != otherValue) {
                 // 2 different values, this is a merged value

@@ -198,6 +198,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // Visiting.
 
   Node* visitExpression(Expression* curr) {
+    // TODO Exception handling instruction support
+
     // Control flow and get/set etc. are special. Aside from them, we just need
     // to do something very generic.
     if (auto* block = curr->dynCast<Block>()) {
@@ -226,6 +228,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       return doVisitUnreachable(unreachable);
     } else if (auto* drop = curr->dynCast<Drop>()) {
       return doVisitDrop(drop);
+    } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>()) {
+      Fatal() << "DataFlow does not support EH instructions yet";
     } else {
       return doVisitGeneric(curr);
     }

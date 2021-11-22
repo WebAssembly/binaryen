@@ -21,7 +21,7 @@ class TailCallTypeTest(utils.BinaryenTestCase):
                                input=module, check=False, capture_output=True)
         self.assertNotEqual(p.returncode, 0)
         self.assertIn(
-            'return_call callee return type must match caller return type',
+            'return_call* callee return type must match caller return type',
             p.stderr)
 
     def test_return_call_indirect(self):
@@ -41,5 +41,5 @@ class TailCallTypeTest(utils.BinaryenTestCase):
                                input=module, check=False, capture_output=True)
         self.assertNotEqual(p.returncode, 0)
         self.assertIn(
-            'return_call_indirect callee return type must match caller return type',
+            'return_call* callee return type must match caller return type',
             p.stderr)

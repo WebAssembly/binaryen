@@ -55,6 +55,16 @@ struct Abbrev {
   llvm::dwarf::Tag Tag;
   llvm::dwarf::Constants Children;
   std::vector<AttributeAbbrev> Attributes;
+  // XXX BINARYEN: Represent the binary offset in the abbreviation section for
+  // this abbreviation's list. The abbreviation section has multiple lists,
+  // each null-terminated, and those lists are what are referred to by compile
+  // units by offset. We need to match the offset in a compile unit to the
+  // abbreviation at that offset (which must be the beginning of an
+  // abbreviation list, that is, either the very first element, or after a null
+  // terminator). All abbreviations in the same list have the same offset
+  // (DWARFAbbreviationDeclarationSet does not track anything else, and we don't
+  // need it).
+  uint64_t ListOffset;
 };
 
 struct ARangeDescriptor {
@@ -76,6 +86,13 @@ struct Range {
   uint64_t Start;
   uint64_t End;
   uint64_t SectionIndex; // XXX ?
+};
+
+struct Loc {
+  uint32_t Start;
+  uint32_t End;
+  std::vector<uint8_t> Location;
+  uint64_t CompileUnitOffset;
 };
 // XXX BINARYEN -->
 
@@ -111,6 +128,7 @@ struct Unit {
   llvm::dwarf::UnitType Type; // Added in DWARF 5
   uint32_t AbbrOffset;
   uint8_t AddrSize;
+  bool AddrSizeChanged = false;  // XXX BINARYEN
   std::vector<Entry> Entries;
 };
 
@@ -133,6 +151,7 @@ struct LineTableOpcode {
 };
 
 struct LineTable {
+  uint64_t Position; // XXX BINARYEN: the binary location in .debug_line
   InitialLength Length;
   uint16_t Version;
   uint64_t PrologueLength;
@@ -154,6 +173,7 @@ struct Data {
   std::vector<StringRef> DebugStrings;
   std::vector<ARange> ARanges;
   std::vector<Range> Ranges; // XXX BINARYEN
+  std::vector<Loc> Locs; // XXX BINARYEN
   PubSection PubNames;
   PubSection PubTypes;
 
@@ -175,6 +195,7 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Abbrev)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARangeDescriptor)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARange)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Range) // XXX BINARYEN
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Loc) // XXX BINARYEN
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::PubEntry)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Unit)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::FormValue)
@@ -208,6 +229,10 @@ template <> struct MappingTraits<DWARFYAML::ARange> {
 
 template <> struct MappingTraits<DWARFYAML::Range> { // XXX BINARYEN
   static void mapping(IO &IO, DWARFYAML::Range &Range);
+};
+
+template <> struct MappingTraits<DWARFYAML::Loc> { // XXX BINARYEN
+  static void mapping(IO &IO, DWARFYAML::Loc &Loc);
 };
 
 template <> struct MappingTraits<DWARFYAML::PubEntry> {

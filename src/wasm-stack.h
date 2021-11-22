@@ -18,7 +18,9 @@
 #define wasm_stack_h
 
 #include "ir/branch-utils.h"
+#include "ir/properties.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -69,6 +71,8 @@ public:
     LoopEnd,    // the ending of a loop
     TryBegin,   // the beginning of a try
     Catch,      // the catch within a try
+    CatchAll,   // the catch_all within a try
+    Delegate,   // the delegate within a try
     TryEnd      // the ending of a try
   } op;
 
@@ -84,69 +88,38 @@ public:
   BinaryInstWriter(WasmBinaryWriter& parent,
                    BufferWithRandomAccess& o,
                    Function* func,
-                   bool sourceMap)
-    : parent(parent), o(o), func(func), sourceMap(sourceMap) {}
+                   bool sourceMap,
+                   bool DWARF)
+    : parent(parent), o(o), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
 
   void visit(Expression* curr) {
     if (func && !sourceMap) {
       parent.writeDebugLocation(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
+    if (func && !sourceMap) {
+      parent.writeDebugLocationEnd(curr, func);
+    }
   }
 
-  void visitBlock(Block* curr);
-  void visitIf(If* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallIndirect(CallIndirect* curr);
-  void visitLocalGet(LocalGet* curr);
-  void visitLocalSet(LocalSet* curr);
-  void visitGlobalGet(GlobalGet* curr);
-  void visitGlobalSet(GlobalSet* curr);
-  void visitLoad(Load* curr);
-  void visitStore(Store* curr);
-  void visitAtomicRMW(AtomicRMW* curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
-  void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicNotify(AtomicNotify* curr);
-  void visitAtomicFence(AtomicFence* curr);
-  void visitSIMDExtract(SIMDExtract* curr);
-  void visitSIMDReplace(SIMDReplace* curr);
-  void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDTernary(SIMDTernary* curr);
-  void visitSIMDShift(SIMDShift* curr);
-  void visitSIMDLoad(SIMDLoad* curr);
-  void visitMemoryInit(MemoryInit* curr);
-  void visitDataDrop(DataDrop* curr);
-  void visitMemoryCopy(MemoryCopy* curr);
-  void visitMemoryFill(MemoryFill* curr);
-  void visitConst(Const* curr);
-  void visitUnary(Unary* curr);
-  void visitBinary(Binary* curr);
-  void visitSelect(Select* curr);
-  void visitReturn(Return* curr);
-  void visitHost(Host* curr);
-  void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
-  void visitRefFunc(RefFunc* curr);
-  void visitTry(Try* curr);
-  void visitThrow(Throw* curr);
-  void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
-  void visitNop(Nop* curr);
-  void visitUnreachable(Unreachable* curr);
-  void visitDrop(Drop* curr);
-  void visitPush(Push* curr);
-  void visitPop(Pop* curr);
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
-  void emitIfElse();
-  void emitCatch();
-  void emitScopeEnd();    // emit an end at the end of a block/loop/if/try
-  void emitFunctionEnd(); // emit an end at the end of a function
+#include "wasm-delegations.def"
+
+  void emitResultType(Type type);
+  void emitIfElse(If* curr);
+  void emitCatch(Try* curr, Index i);
+  void emitCatchAll(Try* curr);
+  void emitDelegate(Try* curr);
+  // emit an end at the end of a block/loop/if/try
+  void emitScopeEnd(Expression* curr);
+  // emit an end at the end of a function
+  void emitFunctionEnd();
   void emitUnreachable();
   void mapLocalsAndEmitHeader();
+
+  MappedLocals mappedLocals;
 
 private:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
@@ -156,18 +129,27 @@ private:
   BufferWithRandomAccess& o;
   Function* func = nullptr;
   bool sourceMap;
+  bool DWARF;
 
   std::vector<Name> breakStack;
 
+  // The types of locals in the compact form, in order.
+  std::vector<Type> localTypes;
   // type => number of locals of that type in the compact form
-  std::map<Type, size_t> numLocalsByType;
-  // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<Index, size_t> mappedLocals;
+  std::unordered_map<Type, size_t> numLocalsByType;
+
+  void noteLocalType(Type type);
+
+  // Keeps track of the binary index of the scratch locals used to lower
+  // tuple.extract.
+  InsertOrderedMap<Type, Index> scratchLocals;
+  void countScratchLocals();
+  void setScratchLocals();
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
 template<typename SubType>
-class BinaryenIRWriter : public OverriddenVisitor<BinaryenIRWriter<SubType>> {
+class BinaryenIRWriter : public Visitor<BinaryenIRWriter<SubType>> {
 public:
   BinaryenIRWriter(Function* func) : func(func) {}
 
@@ -179,49 +161,7 @@ public:
   void visitBlock(Block* curr);
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallIndirect(CallIndirect* curr);
-  void visitLocalGet(LocalGet* curr);
-  void visitLocalSet(LocalSet* curr);
-  void visitGlobalGet(GlobalGet* curr);
-  void visitGlobalSet(GlobalSet* curr);
-  void visitLoad(Load* curr);
-  void visitStore(Store* curr);
-  void visitAtomicRMW(AtomicRMW* curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
-  void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicNotify(AtomicNotify* curr);
-  void visitAtomicFence(AtomicFence* curr);
-  void visitSIMDExtract(SIMDExtract* curr);
-  void visitSIMDReplace(SIMDReplace* curr);
-  void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDTernary(SIMDTernary* curr);
-  void visitSIMDShift(SIMDShift* curr);
-  void visitSIMDLoad(SIMDLoad* curr);
-  void visitMemoryInit(MemoryInit* curr);
-  void visitDataDrop(DataDrop* curr);
-  void visitMemoryCopy(MemoryCopy* curr);
-  void visitMemoryFill(MemoryFill* curr);
-  void visitConst(Const* curr);
-  void visitUnary(Unary* curr);
-  void visitBinary(Binary* curr);
-  void visitSelect(Select* curr);
-  void visitReturn(Return* curr);
-  void visitHost(Host* curr);
-  void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
-  void visitRefFunc(RefFunc* curr);
   void visitTry(Try* curr);
-  void visitThrow(Throw* curr);
-  void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
-  void visitNop(Nop* curr);
-  void visitUnreachable(Unreachable* curr);
-  void visitDrop(Drop* curr);
-  void visitPush(Push* curr);
-  void visitPop(Pop* curr);
 
 protected:
   Function* func = nullptr;
@@ -230,7 +170,15 @@ private:
   void emit(Expression* curr) { static_cast<SubType*>(this)->emit(curr); }
   void emitHeader() { static_cast<SubType*>(this)->emitHeader(); }
   void emitIfElse(If* curr) { static_cast<SubType*>(this)->emitIfElse(curr); }
-  void emitCatch(Try* curr) { static_cast<SubType*>(this)->emitCatch(curr); }
+  void emitCatch(Try* curr, Index i) {
+    static_cast<SubType*>(this)->emitCatch(curr, i);
+  }
+  void emitCatchAll(Try* curr) {
+    static_cast<SubType*>(this)->emitCatchAll(curr);
+  }
+  void emitDelegate(Try* curr) {
+    static_cast<SubType*>(this)->emitDelegate(curr);
+  }
   void emitScopeEnd(Expression* curr) {
     static_cast<SubType*>(this)->emitScopeEnd(curr);
   }
@@ -259,19 +207,44 @@ void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   }
   for (auto* child : block->list) {
     visit(child);
-  }
-  if (block->type == Type::unreachable &&
-      block->list.back()->type != Type::unreachable) {
-    // similar to in visitBlock, here we could skip emitting the block itself,
-    // but must still end the 'block' (the contents, really) with an unreachable
-    emitUnreachable();
+    // Since this child was unreachable, either this child or one of its
+    // descendants was a source of unreachability that was actually
+    // emitted. Subsequent children won't be reachable, so skip them.
+    if (child->type == Type::unreachable) {
+      break;
+    }
   }
 }
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   emitDebugLocation(curr);
-  OverriddenVisitor<BinaryenIRWriter>::visit(curr);
+  // We emit unreachable instructions that create unreachability, but not
+  // unreachable instructions that just inherit unreachability from their
+  // children, since the latter won't be reached. This (together with logic in
+  // the control flow visitors) also ensures that the final instruction in each
+  // unreachable block is a source of unreachability, which means we don't need
+  // to emit an extra `unreachable` before the end of the block to prevent type
+  // errors.
+  bool hasUnreachableChild = false;
+  for (auto* child : ValueChildIterator(curr)) {
+    visit(child);
+    if (child->type == Type::unreachable) {
+      hasUnreachableChild = true;
+      break;
+    }
+  }
+  if (hasUnreachableChild) {
+    // `curr` is not reachable, so don't emit it.
+    return;
+  }
+  // Control flow requires special handling, but most instructions can be
+  // emitted directly after their children.
+  if (Properties::isControlFlowStructure(curr)) {
+    Visitor<BinaryenIRWriter>::visit(curr);
+  } else {
+    emit(curr);
+  }
 }
 
 template<typename SubType>
@@ -279,22 +252,26 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
   auto visitChildren = [this](Block* curr, Index from) {
     auto& list = curr->list;
     while (from < list.size()) {
-      visit(list[from++]);
+      auto* child = list[from];
+      visit(child);
+      if (child->type == Type::unreachable) {
+        break;
+      }
+      ++from;
     }
   };
 
   auto afterChildren = [this](Block* curr) {
-    if (curr->type == Type::unreachable) {
-      // an unreachable block is one that cannot be exited. We cannot encode
-      // this directly in wasm, where blocks must be none,i32,i64,f32,f64. Since
-      // the block cannot be exited, we can emit an unreachable at the end, and
-      // that will always be valid, and then the block is ok as a none
-      emitUnreachable();
-    }
     emitScopeEnd(curr);
     if (curr->type == Type::unreachable) {
-      // and emit an unreachable *outside* the block too, so later things can
-      // pop anything
+      // Since this block is unreachable, no instructions will be emitted after
+      // it in its enclosing scope. That means that this block will be the last
+      // instruction before the end of its parent scope, so its type must match
+      // the type of its parent. But we don't have a concrete type for this
+      // block and we don't know what type its parent expects, so we can't
+      // ensure the types match. To work around this, we insert an `unreachable`
+      // instruction after every unreachable control flow structure and depend
+      // on its polymorphic behavior to paper over any type mismatches.
       emitUnreachable();
     }
   };
@@ -315,12 +292,16 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
     emit(curr);
     visitChildren(curr, 0);
     afterChildren(curr);
+    bool childUnreachable = curr->type == Type::unreachable;
     // Finish the later parts of all the parent blocks.
     while (!parents.empty()) {
       auto* parent = parents.back();
       parents.pop_back();
-      visitChildren(parent, 1);
+      if (!childUnreachable) {
+        visitChildren(parent, 1);
+      }
       afterChildren(parent);
+      childUnreachable = parent->type == Type::unreachable;
     }
     return;
   }
@@ -331,13 +312,6 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
 }
 
 template<typename SubType> void BinaryenIRWriter<SubType>::visitIf(If* curr) {
-  visit(curr->condition);
-  if (curr->condition->type == Type::unreachable) {
-    // this if-else is unreachable because of the condition, i.e., the condition
-    // does not exit. So don't emit the if (but do consume the condition)
-    emitUnreachable();
-    return;
-  }
   emit(curr);
   visitPossibleBlockContents(curr->ifTrue);
 
@@ -348,11 +322,10 @@ template<typename SubType> void BinaryenIRWriter<SubType>::visitIf(If* curr) {
 
   emitScopeEnd(curr);
   if (curr->type == Type::unreachable) {
-    // we already handled the case of the condition being unreachable.
-    // otherwise, we may still be unreachable, if we are an if-else with both
-    // sides unreachable. wasm does not allow this to be emitted directly, so we
-    // must do something more. we could do better, but for now we emit an extra
-    // unreachable instruction after the if, so it is not consumed itself,
+    // We already handled the case of the condition being unreachable in
+    // `visit`.  Otherwise, we may still be unreachable, if we are an if-else
+    // with both sides unreachable. Just like with blocks, we emit an extra
+    // `unreachable` to work around potential type mismatches.
     assert(curr->ifFalse);
     emitUnreachable();
   }
@@ -362,11 +335,6 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitLoop(Loop* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
-  if (curr->type == Type::unreachable) {
-    // we emitted a loop without a return type, and the body might be block
-    // contents, so ensure it is not consumed
-    emitUnreachable();
-  }
   emitScopeEnd(curr);
   if (curr->type == Type::unreachable) {
     // we emitted a loop without a return type, so it must not be consumed
@@ -374,418 +342,27 @@ void BinaryenIRWriter<SubType>::visitLoop(Loop* curr) {
   }
 }
 
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitBreak(Break* curr) {
-  if (curr->value) {
-    visit(curr->value);
-  }
-  if (curr->condition) {
-    visit(curr->condition);
-  }
-  emit(curr);
-  if (curr->condition && curr->type == Type::unreachable) {
-    // a br_if is normally none or emits a value. if it is unreachable, then
-    // either the condition or the value is unreachable, which is extremely
-    // rare, and may require us to make the stack polymorphic (if the block we
-    // branch to has a value, we may lack one as we are not a reachable branch;
-    // the wasm spec on the other hand does presume the br_if emits a value of
-    // the right type, even if it popped unreachable)
-    emitUnreachable();
-  }
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSwitch(Switch* curr) {
-  if (curr->value) {
-    visit(curr->value);
-  }
-  visit(curr->condition);
-  if (!BranchUtils::isBranchReachable(curr)) {
-    // if the branch is not reachable, then it's dangerous to emit it, as wasm
-    // type checking rules are different, especially in unreachable code. so
-    // just don't emit that unreachable code.
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitCall(Call* curr) {
-  for (auto* operand : curr->operands) {
-    visit(operand);
-  }
-
-  // For non-control-flow value-returning instructions, if the type of an
-  // expression is unreachable, we emit an unreachable and don't emit the
-  // instruction itself. If we don't emit an unreachable, instructions that
-  // follow can have a validation failure in wasm binary format. For example:
-  // [unreachable] (f32.add
-  // [unreachable]   (i32.eqz
-  // [unreachable]     (unreachable)
-  //                 )
-  //                 ...
-  //               )
-  // This is a valid prgram in binaryen IR, because the unreachable type
-  // propagates out of an expression, making both i32.eqz and f32.add
-  // unreachable. But in binary format, this becomes:
-  // unreachable
-  // i32.eqz
-  // f32.add       ;; validation failure; it takes an i32!
-  // And here f32.add causes validation failure in wasm validation. So in this
-  // case we add an unreachable to prevent following instructions to consume
-  // the current value (here i32.eqz).
-  //
-  // The same applies for other expressions.
-  if (curr->type == Type::unreachable && !curr->isReturn) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitCallIndirect(CallIndirect* curr) {
-  for (auto* operand : curr->operands) {
-    visit(operand);
-  }
-  visit(curr->target);
-  if (curr->type == Type::unreachable && !curr->isReturn) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitLocalGet(LocalGet* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitLocalSet(LocalSet* curr) {
-  visit(curr->value);
-  if (curr->isTee() && curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitGlobalGet(GlobalGet* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitGlobalSet(GlobalSet* curr) {
-  visit(curr->value);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitLoad(Load* curr) {
-  visit(curr->ptr);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitStore(Store* curr) {
-  visit(curr->ptr);
-  visit(curr->value);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitAtomicRMW(AtomicRMW* curr) {
-  visit(curr->ptr);
-  visit(curr->value);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-  visit(curr->ptr);
-  visit(curr->expected);
-  visit(curr->replacement);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitAtomicWait(AtomicWait* curr) {
-  visit(curr->ptr);
-  visit(curr->expected);
-  visit(curr->timeout);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitAtomicNotify(AtomicNotify* curr) {
-  visit(curr->ptr);
-  visit(curr->notifyCount);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitAtomicFence(AtomicFence* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSIMDExtract(SIMDExtract* curr) {
-  visit(curr->vec);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSIMDReplace(SIMDReplace* curr) {
-  visit(curr->vec);
-  visit(curr->value);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSIMDShuffle(SIMDShuffle* curr) {
-  visit(curr->left);
-  visit(curr->right);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSIMDTernary(SIMDTernary* curr) {
-  visit(curr->a);
-  visit(curr->b);
-  visit(curr->c);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSIMDShift(SIMDShift* curr) {
-  visit(curr->vec);
-  visit(curr->shift);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSIMDLoad(SIMDLoad* curr) {
-  visit(curr->ptr);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitMemoryInit(MemoryInit* curr) {
-  visit(curr->dest);
-  visit(curr->offset);
-  visit(curr->size);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitDataDrop(DataDrop* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitMemoryCopy(MemoryCopy* curr) {
-  visit(curr->dest);
-  visit(curr->source);
-  visit(curr->size);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitMemoryFill(MemoryFill* curr) {
-  visit(curr->dest);
-  visit(curr->value);
-  visit(curr->size);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitConst(Const* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitUnary(Unary* curr) {
-  visit(curr->value);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitBinary(Binary* curr) {
-  visit(curr->left);
-  visit(curr->right);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitSelect(Select* curr) {
-  visit(curr->ifTrue);
-  visit(curr->ifFalse);
-  visit(curr->condition);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitReturn(Return* curr) {
-  if (curr->value) {
-    visit(curr->value);
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitHost(Host* curr) {
-  switch (curr->op) {
-    case MemorySize: {
-      break;
-    }
-    case MemoryGrow: {
-      visit(curr->operands[0]);
-      break;
-    }
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitRefNull(RefNull* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitRefIsNull(RefIsNull* curr) {
-  visit(curr->value);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitRefFunc(RefFunc* curr) {
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-    return;
-  }
-  emit(curr);
-}
-
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
-  emitCatch(curr);
-  visitPossibleBlockContents(curr->catchBody);
-  emitScopeEnd(curr);
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    emitCatch(curr, i);
+    visitPossibleBlockContents(curr->catchBodies[i]);
+  }
+  if (curr->hasCatchAll()) {
+    emitCatchAll(curr);
+    visitPossibleBlockContents(curr->catchBodies.back());
+  }
+  if (curr->isDelegate()) {
+    emitDelegate(curr);
+    // Note that when we emit a delegate we do not need to also emit a scope
+    // ending, as the delegate ends the scope.
+  } else {
+    emitScopeEnd(curr);
+  }
   if (curr->type == Type::unreachable) {
     emitUnreachable();
   }
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitThrow(Throw* curr) {
-  for (auto* operand : curr->operands) {
-    visit(operand);
-  }
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitRethrow(Rethrow* curr) {
-  visit(curr->exnref);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitBrOnExn(BrOnExn* curr) {
-  visit(curr->exnref);
-  emit(curr);
-  if (curr->type == Type::unreachable) {
-    emitUnreachable();
-  }
-}
-
-template<typename SubType> void BinaryenIRWriter<SubType>::visitNop(Nop* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitUnreachable(Unreachable* curr) {
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitDrop(Drop* curr) {
-  visit(curr->value);
-  emit(curr);
-}
-
-template<typename SubType>
-void BinaryenIRWriter<SubType>::visitPush(Push* curr) {
-  visit(curr->value);
-  emit(curr);
-}
-
-template<typename SubType> void BinaryenIRWriter<SubType>::visitPop(Pop* curr) {
-  emit(curr);
 }
 
 // Binaryen IR to binary writer
@@ -795,9 +372,10 @@ public:
   BinaryenIRToBinaryWriter(WasmBinaryWriter& parent,
                            BufferWithRandomAccess& o,
                            Function* func = nullptr,
-                           bool sourceMap = false)
+                           bool sourceMap = false,
+                           bool DWARF = false)
     : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
-      writer(parent, o, func, sourceMap), sourceMap(sourceMap) {}
+      writer(parent, o, func, sourceMap, DWARF), sourceMap(sourceMap) {}
 
   void visit(Expression* curr) {
     BinaryenIRWriter<BinaryenIRToBinaryWriter>::visit(curr);
@@ -810,9 +388,11 @@ public:
     }
     writer.mapLocalsAndEmitHeader();
   }
-  void emitIfElse(If* curr) { writer.emitIfElse(); }
-  void emitCatch(Try* curr) { writer.emitCatch(); }
-  void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(); }
+  void emitIfElse(If* curr) { writer.emitIfElse(curr); }
+  void emitCatch(Try* curr, Index i) { writer.emitCatch(curr, i); }
+  void emitCatchAll(Try* curr) { writer.emitCatchAll(curr); }
+  void emitDelegate(Try* curr) { writer.emitDelegate(curr); }
+  void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
       parent.writeDebugLocation(*func->epilogLocation.begin());
@@ -826,18 +406,20 @@ public:
     }
   }
 
+  MappedLocals& getMappedLocals() { return writer.mappedLocals; }
+
 private:
   WasmBinaryWriter& parent;
   BinaryInstWriter writer;
-  bool sourceMap = false;
+  bool sourceMap;
 };
 
 // Binaryen IR to stack IR converter
 // Queues the expressions linearly in Stack IR (SIR)
 class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
 public:
-  StackIRGenerator(MixedArena& allocator, Function* func)
-    : BinaryenIRWriter<StackIRGenerator>(func), allocator(allocator) {}
+  StackIRGenerator(Module& module, Function* func)
+    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
 
   void emit(Expression* curr);
   void emitScopeEnd(Expression* curr);
@@ -845,12 +427,18 @@ public:
   void emitIfElse(If* curr) {
     stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
   }
-  void emitCatch(Try* curr) {
+  void emitCatch(Try* curr, Index i) {
     stackIR.push_back(makeStackInst(StackInst::Catch, curr));
+  }
+  void emitCatchAll(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
+  }
+  void emitDelegate(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::Delegate, curr));
   }
   void emitFunctionEnd() {}
   void emitUnreachable() {
-    stackIR.push_back(makeStackInst(Builder(allocator).makeUnreachable()));
+    stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
   }
   void emitDebugLocation(Expression* curr) {}
 
@@ -862,7 +450,7 @@ private:
     return makeStackInst(StackInst::Basic, origin);
   }
 
-  MixedArena& allocator;
+  Module& module;
   StackIR stackIR; // filled in write()
 };
 
@@ -872,9 +460,12 @@ public:
   StackIRToBinaryWriter(WasmBinaryWriter& parent,
                         BufferWithRandomAccess& o,
                         Function* func)
-    : writer(parent, o, func, false /* sourceMap */), func(func) {}
+    : writer(parent, o, func, false /* sourceMap */, false /* DWARF */),
+      func(func) {}
 
   void write();
+
+  MappedLocals& getMappedLocals() { return writer.mappedLocals; }
 
 private:
   BinaryInstWriter writer;

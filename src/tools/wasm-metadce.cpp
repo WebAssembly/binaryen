@@ -26,6 +26,8 @@
 
 #include <memory>
 
+#include "asmjs/shared-constants.h"
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/colors.h"
@@ -56,12 +58,12 @@ struct MetaDCEGraph {
   std::unordered_map<Name, Name> exportToDCENode;
   std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
   std::unordered_map<Name, Name> globalToDCENode;   // global name => DCE name
-  std::unordered_map<Name, Name> eventToDCENode;    // event name => DCE name
+  std::unordered_map<Name, Name> tagToDCENode;      // tag name => DCE name
 
   std::unordered_map<Name, Name> DCENodeToExport; // reverse maps
   std::unordered_map<Name, Name> DCENodeToFunction;
   std::unordered_map<Name, Name> DCENodeToGlobal;
-  std::unordered_map<Name, Name> DCENodeToEvent;
+  std::unordered_map<Name, Name> DCENodeToTag;
 
   // imports are not mapped 1:1 to DCE nodes in the wasm, since env.X might
   // be imported twice, for example. So we don't map a DCE node to an Import,
@@ -70,6 +72,16 @@ struct MetaDCEGraph {
   typedef Name ImportId;
 
   ImportId getImportId(Name module, Name base) {
+    if (module == "GOT.func" || module == "GOT.mem") {
+      // If a module imports a symbol from `GOT.func` of `GOT.mem` that
+      // corresponds to the address of a symbol in the `env` namespace.  The
+      // `GOT.func` and `GOT.mem` don't actually exist anywhere but reference
+      // other symbols.  For this reason we treat an import from one of these
+      // namespaces as an import from the `env` namespace.  (i.e.  any usage of
+      // a `GOT.mem` or `GOT.func` import requires the corresponding env import
+      // to be kept alive.
+      module = ENV;
+    }
     return std::string(module.str) + " (*) " + std::string(base.str);
   }
 
@@ -83,8 +95,8 @@ struct MetaDCEGraph {
     return getImportId(imp->module, imp->base);
   }
 
-  ImportId getEventImportId(Name name) {
-    auto* imp = wasm.getEvent(name);
+  ImportId getTagImportId(Name name) {
+    auto* imp = wasm.getTag(name);
     return getImportId(imp->module, imp->base);
   }
 
@@ -114,14 +126,14 @@ struct MetaDCEGraph {
       globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
-    ModuleUtils::iterDefinedEvents(wasm, [&](Event* event) {
-      auto dceName = getName("event", event->name.str);
-      DCENodeToEvent[dceName] = event->name;
-      eventToDCENode[event->name] = dceName;
+    ModuleUtils::iterDefinedTags(wasm, [&](Tag* tag) {
+      auto dceName = getName("tag", tag->name.str);
+      DCENodeToTag[dceName] = tag->name;
+      tagToDCENode[tag->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
-    // only process function, global, and event imports - the table and memory
-    // are always there
+    // only process function, global, and tag imports - the table and memory are
+    // always there
     ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
@@ -136,7 +148,7 @@ struct MetaDCEGraph {
         importIdToDCENode[id] = dceName;
       }
     });
-    ModuleUtils::iterImportedEvents(wasm, [&](Event* import) {
+    ModuleUtils::iterImportedTags(wasm, [&](Tag* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
         auto dceName = getName("importId", import->name.str);
@@ -166,12 +178,11 @@ struct MetaDCEGraph {
           node.reaches.push_back(
             importIdToDCENode[getGlobalImportId(exp->value)]);
         }
-      } else if (exp->kind == ExternalKind::Event) {
-        if (!wasm.getEvent(exp->value)->imported()) {
-          node.reaches.push_back(eventToDCENode[exp->value]);
+      } else if (exp->kind == ExternalKind::Tag) {
+        if (!wasm.getTag(exp->value)->imported()) {
+          node.reaches.push_back(tagToDCENode[exp->value]);
         } else {
-          node.reaches.push_back(
-            importIdToDCENode[getEventImportId(exp->value)]);
+          node.reaches.push_back(importIdToDCENode[getTagImportId(exp->value)]);
         }
       }
     }
@@ -198,9 +209,7 @@ struct MetaDCEGraph {
           // it's an import.
           dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
         }
-        if (parentDceName.isNull()) {
-          parent->roots.insert(parentDceName);
-        } else {
+        if (!parentDceName.isNull()) {
           parent->nodes[parentDceName].reaches.push_back(dceName);
         }
       }
@@ -213,18 +222,19 @@ struct MetaDCEGraph {
     // we can't remove segments, so root what they need
     InitScanner rooter(this, Name());
     rooter.setModule(&wasm);
-    for (auto& segment : wasm.table.segments) {
+    ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       // TODO: currently, all functions in the table are roots, but we
       //       should add an option to refine that
-      for (auto& name : segment.data) {
-        if (!wasm.getFunction(name)->imported()) {
-          roots.insert(functionToDCENode[name]);
-        } else {
-          roots.insert(importIdToDCENode[getFunctionImportId(name)]);
-        }
-      }
-      rooter.walk(segment.offset);
-    }
+      ElementUtils::iterElementSegmentFunctionNames(
+        segment, [&](Name name, Index) {
+          if (!wasm.getFunction(name)->imported()) {
+            roots.insert(functionToDCENode[name]);
+          } else {
+            roots.insert(importIdToDCENode[getFunctionImportId(name)]);
+          }
+        });
+      rooter.walk(segment->offset);
+    });
     for (auto& segment : wasm.memory.segments) {
       if (!segment.isPassive) {
         rooter.walk(segment.offset);
@@ -253,6 +263,12 @@ struct MetaDCEGraph {
       }
       void visitGlobalGet(GlobalGet* curr) { handleGlobal(curr->name); }
       void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
+      void visitThrow(Throw* curr) { handleTag(curr->tag); }
+      void visitTry(Try* curr) {
+        for (auto tag : curr->catchTags) {
+          handleTag(tag);
+        }
+      }
 
     private:
       MetaDCEGraph* parent;
@@ -268,6 +284,17 @@ struct MetaDCEGraph {
         } else {
           // it's an import.
           dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
+        }
+        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+          .reaches.push_back(dceName);
+      }
+
+      void handleTag(Name name) {
+        Name dceName;
+        if (!getModule()->getTag(name)->imported()) {
+          dceName = parent->tagToDCENode[name];
+        } else {
+          dceName = parent->importIdToDCENode[parent->getTagImportId(name)];
         }
         parent->nodes[parent->functionToDCENode[getFunction()->name]]
           .reaches.push_back(dceName);
@@ -356,7 +383,7 @@ public:
   void dump() {
     std::cout << "=== graph ===\n";
     for (auto root : roots) {
-      std::cout << "root: " << root.str << '\n';
+      std::cout << "root: " << root << '\n';
     }
     std::map<Name, ImportId> importMap;
     for (auto& pair : importIdToDCENode) {
@@ -367,12 +394,12 @@ public:
     for (auto& pair : nodes) {
       auto name = pair.first;
       auto& node = pair.second;
-      std::cout << "node: " << name.str << '\n';
+      std::cout << "node: " << name << '\n';
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';
       }
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
-        std::cout << "  is export " << DCENodeToExport[name].str << ", "
+        std::cout << "  is export " << DCENodeToExport[name] << ", "
                   << wasm.getExport(DCENodeToExport[name])->value << '\n';
       }
       if (DCENodeToFunction.find(name) != DCENodeToFunction.end()) {
@@ -381,11 +408,11 @@ public:
       if (DCENodeToGlobal.find(name) != DCENodeToGlobal.end()) {
         std::cout << "  is global " << DCENodeToGlobal[name] << '\n';
       }
-      if (DCENodeToEvent.find(name) != DCENodeToEvent.end()) {
-        std::cout << "  is event " << DCENodeToEvent[name] << '\n';
+      if (DCENodeToTag.find(name) != DCENodeToTag.end()) {
+        std::cout << "  is tag " << DCENodeToTag[name] << '\n';
       }
       for (auto target : node.reaches) {
-        std::cout << "  reaches: " << target.str << '\n';
+        std::cout << "  reaches: " << target << '\n';
       }
     }
     std::cout << "=============\n";
@@ -492,6 +519,7 @@ int main(int argc, const char* argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
+  options.applyFeatures(wasm);
 
   {
     if (options.debug) {
@@ -507,11 +535,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  options.applyFeatures(wasm);
-
   if (options.passOptions.validate) {
     if (!WasmValidator().validate(wasm)) {
-      WasmPrinter::printModule(&wasm);
+      std::cout << wasm << '\n';
       Fatal() << "error in validating input";
     }
   }

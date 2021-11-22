@@ -464,8 +464,7 @@ struct Printer {
       case Node::Type::Expr: {
         if (debug()) {
           std::cout << "; ";
-          WasmPrinter::printExpression(node->expr, std::cout, true);
-          std::cout << '\n';
+          std::cout << *node->expr << '\n';
         }
         std::cout << "%" << indexing[node] << " = ";
         printExpression(node);

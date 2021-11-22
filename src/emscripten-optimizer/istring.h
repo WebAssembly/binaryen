@@ -48,11 +48,11 @@ struct IString {
     return (size_t)hash;
   }
 
-  class CStringHash : public std::hash<const char*> {
+  class CStringHash {
   public:
     size_t operator()(const char* str) const { return IString::hash_c(str); }
   };
-  class CStringEqual : public std::equal_to<const char*> {
+  class CStringEqual {
   public:
     bool operator()(const char* x, const char* y) const {
       return strcmp(x, y) == 0;

@@ -70,12 +70,19 @@ public:
   List& list();
   Element* operator[](unsigned i);
   size_t size() { return list().size(); }
+  List::Iterator begin() { return list().begin(); }
+  List::Iterator end() { return list().end(); }
 
   // string methods
   cashew::IString str() const;
   const char* c_str() const;
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
+
+  // comparisons
+  bool operator==(Name name) { return isStr() && str() == name; }
+
+  template<typename T> bool operator!=(T t) { return !(*this == t); }
 
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
@@ -111,25 +118,40 @@ private:
 class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
-  std::vector<Signature> signatures;
-  std::unordered_map<std::string, size_t> signatureIndices;
+  IRProfile profile;
+
+  // The main list of types declared in the module
+  std::vector<HeapType> types;
+  std::unordered_map<std::string, size_t> typeIndices;
+
   std::vector<Name> functionNames;
+  std::vector<Name> tableNames;
   std::vector<Name> globalNames;
-  std::vector<Name> eventNames;
+  std::vector<Name> tagNames;
   int functionCounter = 0;
   int globalCounter = 0;
-  int eventCounter = 0;
+  int tagCounter = 0;
+  int tableCounter = 0;
+  int elemCounter = 0;
+  int memoryCounter = 0;
   // we need to know function return types before we parse their contents
-  std::map<Name, Type> functionTypes;
+  std::map<Name, HeapType> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
+
+  // Maps type indexes to a mapping of field index => name. This is not the same
+  // as the field names stored on the wasm object, as that maps types after
+  // their canonicalization. Canonicalization loses information, which means
+  // that structurally identical types cannot have different names. However,
+  // while parsing the text format we keep this mapping of type indexes to names
+  // which does allow reading such content.
+  std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionWasmBuilder(Module& wasm,
-                         Element& module,
-                         Name* moduleName = nullptr);
+  SExpressionWasmBuilder(Module& wasm, Element& module, IRProfile profile);
 
 private:
+  void preParseHeapTypes(Element& module);
   // pre-parse types and function definitions, so we know function return types
   // before parsing their contents
   void preParseFunctionType(Element& s);
@@ -143,10 +165,10 @@ private:
 
   UniqueNameMapper nameMapper;
 
-  Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
+  Name getTableName(Element& s);
   Name getGlobalName(Element& s);
-  Name getEventName(Element& s);
+  Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
 
   // returns the next index in s
@@ -160,16 +182,22 @@ private:
   }
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
+  HeapType stringToHeapType(cashew::IString str, bool prefix = false) {
+    return stringToHeapType(str.str, prefix);
+  }
+  HeapType stringToHeapType(const char* str, bool prefix = false);
+  Type elementToType(Element& s);
   Type stringToLaneType(const char* str);
   bool isType(cashew::IString str) {
     return stringToType(str, true) != Type::none;
   }
+  HeapType getFunctionType(Name name, Element& s);
 
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
   Expression* parseExpression(Element& s);
 
-  MixedArena& getAllocator() { return allocator; }
+  Module& getModule() { return wasm; }
 
 private:
   Expression* makeExpression(Element& s);
@@ -179,7 +207,8 @@ private:
   Expression* makeUnary(Element& s, UnaryOp op);
   Expression* makeSelect(Element& s);
   Expression* makeDrop(Element& s);
-  Expression* makeHost(Element& s, HostOp op);
+  Expression* makeMemorySize(Element& s);
+  Expression* makeMemoryGrow(Element& s);
   Index getLocalIndex(Element& s);
   Expression* makeLocalGet(Element& s);
   Expression* makeLocalTee(Element& s);
@@ -205,65 +234,117 @@ private:
   Expression* makeSIMDTernary(Element& s, SIMDTernaryOp op);
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
   Expression* makeSIMDLoad(Element& s, SIMDLoadOp op);
+  Expression* makeSIMDLoadStoreLane(Element& s, SIMDLoadStoreLaneOp op);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
   Expression* makePush(Element& s);
-  Expression* makePop(Type type);
+  Expression* makePop(Element& s);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);
   Expression* makeCall(Element& s, bool isReturn);
   Expression* makeCallIndirect(Element& s, bool isReturn);
-  template<class T>
-  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+  template<class T> void parseOperands(Element& s, Index i, Index j, T& list) {
     while (i < j) {
-      call->operands.push_back(parseExpression(s[i]));
+      list.push_back(parseExpression(s[i]));
       i++;
     }
   }
-  Name getLabel(Element& s);
+  template<class T>
+  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+    parseOperands(s, i, j, call->operands);
+  }
+  enum class LabelType { Break, Exception };
+  Name getLabel(Element& s, LabelType labelType = LabelType::Break);
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
   Expression* makeRefNull(Element& s);
-  Expression* makeRefIsNull(Element& s);
+  Expression* makeRefIs(Element& s, RefIsOp op);
   Expression* makeRefFunc(Element& s);
+  Expression* makeRefEq(Element& s);
+  Expression* makeTableGet(Element& s);
+  Expression* makeTableSet(Element& s);
+  Expression* makeTableSize(Element& s);
+  Expression* makeTableGrow(Element& s);
   Expression* makeTry(Element& s);
-  Expression* makeCatch(Element& s, Type type);
+  Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
-  Expression* makeBrOnExn(Element& s);
+  Expression* makeTupleMake(Element& s);
+  Expression* makeTupleExtract(Element& s);
+  Expression* makeCallRef(Element& s, bool isReturn);
+  Expression* makeI31New(Element& s);
+  Expression* makeI31Get(Element& s, bool signed_);
+  Expression* makeRefTest(Element& s);
+  Expression* makeRefTestStatic(Element& s);
+  Expression* makeRefCast(Element& s);
+  Expression* makeRefCastStatic(Element& s);
+  Expression* makeBrOn(Element& s, BrOnOp op);
+  Expression* makeBrOnStatic(Element& s, BrOnOp op);
+  Expression* makeRttCanon(Element& s);
+  Expression* makeRttSub(Element& s);
+  Expression* makeRttFreshSub(Element& s);
+  Expression* makeStructNew(Element& s, bool default_);
+  Expression* makeStructNewStatic(Element& s, bool default_);
+  Index getStructIndex(Element& type, Element& field);
+  Expression* makeStructGet(Element& s, bool signed_ = false);
+  Expression* makeStructSet(Element& s);
+  Expression* makeArrayNew(Element& s, bool default_);
+  Expression* makeArrayNewStatic(Element& s, bool default_);
+  Expression* makeArrayInit(Element& s);
+  Expression* makeArrayInitStatic(Element& s);
+  Expression* makeArrayGet(Element& s, bool signed_ = false);
+  Expression* makeArraySet(Element& s);
+  Expression* makeArrayLen(Element& s);
+  Expression* makeArrayCopy(Element& s);
+  Expression* makeRefAs(Element& s, RefAsOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
+  Index parseMemoryIndex(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
-  Type parseResults(Element& s);
-  Signature parseTypeRef(Element& s);
+  std::vector<Type> parseResults(Element& s);
+  HeapType parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,
-                      Signature& functionSignature,
+                      HeapType& functionType,
                       std::vector<NameType>& namedParams);
-  size_t
-  parseTypeUse(Element& s, size_t startPos, Signature& functionSignature);
+  size_t parseTypeUse(Element& s, size_t startPos, HeapType& functionType);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
   void parseData(Element& s);
-  void parseInnerData(Element& s, Index i, Expression* offset, bool isPassive);
+  void parseInnerData(
+    Element& s, Index i, Name name, Expression* offset, bool isPassive);
   void parseExport(Element& s);
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);
   void parseTable(Element& s, bool preParseImport = false);
-  void parseElem(Element& s);
-  void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
-  void parseType(Element& s);
-  void parseEvent(Element& s, bool preParseImport = false);
+  void parseElem(Element& s, Table* table = nullptr);
+  ElementSegment* parseElemFinish(Element& s,
+                                  std::unique_ptr<ElementSegment>& segment,
+                                  Index i = 1,
+                                  bool usesExpressions = false);
+
+  // Parses something like (func ..), (array ..), (struct)
+  HeapType parseHeapType(Element& s);
+
+  void parseTag(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
+
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void
+  validateHeapTypeUsingChild(Expression* child, HeapType heapType, Element& s);
 };
 
 } // namespace wasm

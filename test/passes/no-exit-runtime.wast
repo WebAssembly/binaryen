@@ -12,4 +12,36 @@
     (drop (call $fimport$4 (i32.const 0) (i32.const 1)))
     (drop (call $fimport$0 (unreachable) (i32.const 1)))
   )
+  (func $side-effects (result i32)
+    (local $x i32)
+    (drop (call $fimport$0
+      (local.tee $x (i32.const 1))
+      (i32.const 2)
+    ))
+    (drop (call $fimport$0
+      (i32.const 3)
+      (local.tee $x (i32.const 4))
+    ))
+    (drop (call $fimport$0
+      (local.tee $x (i32.const 5))
+      (local.tee $x (i32.const 6))
+    ))
+    (drop (call $fimport$0
+      (unreachable)
+      (local.tee $x (i32.const 7))
+    ))
+    (drop (call $fimport$0
+      (local.tee $x (i32.const 8))
+      (unreachable)
+    ))
+    (drop (call $fimport$0
+      (unreachable)
+      (i32.const 9)
+    ))
+    (drop (call $fimport$0
+      (i32.const 10)
+      (unreachable)
+    ))
+    (local.get $x)
+  )
 )

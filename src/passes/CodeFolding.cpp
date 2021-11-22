@@ -59,6 +59,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
+#include "ir/find_all.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -300,6 +301,27 @@ private:
       if (intersection.size() > 0) {
         // anything exiting that is in all targets is something bad
         return false;
+      }
+      if (getModule()->features.hasExceptionHandling()) {
+        EffectAnalyzer effects(getPassOptions(), *getModule(), item);
+        // Pop instructions are pseudoinstructions used only after 'catch' to
+        // simulate its behavior. We cannot move expressions containing pops if
+        // they are not enclosed in a 'catch' body, because a pop instruction
+        // should follow right after 'catch'.
+        if (effects.danglingPop) {
+          return false;
+        }
+        // When an expression can throw and it is within a try scope, taking it
+        // out of the try scope changes the program's behavior, because the
+        // expression that would otherwise have been caught by the try now
+        // throws up to the next try scope or even up to the caller. We restrict
+        // the move if 'outOf' contains a 'try' anywhere in it. This is a
+        // conservative approximation because there can be cases that 'try' is
+        // within the expression that may throw so it is safe to take the
+        // expression out.
+        if (effects.throws && !FindAll<Try>(outOf).list.empty()) {
+          return false;
+        }
       }
     }
     return true;
@@ -569,7 +591,8 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(getPassOptions(), newItem)
+                                if (EffectAnalyzer(
+                                      getPassOptions(), *getModule(), newItem)
                                       .hasExternalBreakTargets()) {
                                   return true;
                                 }
@@ -580,25 +603,25 @@ private:
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a
       // subset
-      std::map<Expression*, HashType> hashes; // expression => hash value
+      std::map<Expression*, size_t> hashes; // expression => hash value
       // hash value => expressions with that hash
-      std::map<HashType, std::vector<Expression*>> hashed;
+      std::map<size_t, std::vector<Expression*>> hashed;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto hash = hashes[item] = ExpressionAnalyzer::hash(item);
         hashed[hash].push_back(item);
       }
       // look at each hash value exactly once. we do this in a deterministic
-      // order.
-      std::set<HashType> seen;
+      // order by iterating over a vector retaining insertion order.
+      std::set<size_t> seen;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
-        auto hash = hashes[item];
-        if (seen.count(hash)) {
+        auto digest = hashes[item];
+        if (seen.count(digest)) {
           continue;
         }
-        seen.insert(hash);
-        auto& items = hashed[hash];
+        seen.insert(digest);
+        auto& items = hashed[digest];
         if (items.size() == 1) {
           continue;
         }
@@ -718,7 +741,7 @@ private:
       mergeable.pop_back();
     }
     // ensure the replacement has the same type, so the outside is not surprised
-    outer->finalize(getFunction()->sig.results);
+    outer->finalize(getFunction()->getResults());
     getFunction()->body = outer;
     return true;
   }

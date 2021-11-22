@@ -8,6 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <unordered_map>
+
 #include "DWARFVisitor.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 
@@ -44,18 +46,74 @@ static unsigned getRefSize(const DWARFYAML::Unit &Unit) {
 }
 
 template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
+  // XXX BINARYEN: Handle multiple linked compile units, each of which can
+  // refer to a different abbreviation list.
+  // TODO: This code appears to assume that abbreviation codes increment by 1
+  // so that lookups are linear. In LLVM output that is true, but it might not
+  // be in general.
+  // Create a map of [byte offset into the abbreviation section] => [index in
+  // DebugInfo.AbbrevDecls]. This avoids linear search for each CU.
+  std::unordered_map<size_t, size_t> abbrByteOffsetToDeclsIndex;
+  for (size_t i = 0; i < DebugInfo.AbbrevDecls.size(); i++) {
+    auto offset = DebugInfo.AbbrevDecls[i].ListOffset;
+    // The offset is the same for all entries for the same CU, so only note the
+    // first as that is where the list for the CU (that LLVM DeclSet) begins.
+    // That is, DebugInfo.AbbrevDecls looks like this:
+    //
+    //  i  CU   Abbrev  ListOffset
+    // ============================
+    //  0   X     X1      150
+    //  1   X     X2      150
+    //  2   X     X3      150
+    //           ..
+    //  6   Y     Y1      260
+    //  7   Y     Y2      260
+    //
+    // Note how multiple rows i have the same CU. All those abbrevs have the
+    // same ListOffset, which is the byte offset into the abbreviation section
+    // for that set of abbreviations.
+    if (abbrByteOffsetToDeclsIndex.count(offset)) {
+      continue;
+    }
+    abbrByteOffsetToDeclsIndex[offset] = i;
+  }
   for (auto &Unit : DebugInfo.CompileUnits) {
+    // AbbrOffset is the byte offset into the abbreviation section, which we
+    // need to find among the Abbrev's ListOffsets (which are the byte offsets
+    // of where that abbreviation list begins).
+    // TODO: Optimize this to not be O(#CUs * #abbrevs).
+    auto offset = Unit.AbbrOffset;
+    assert(abbrByteOffsetToDeclsIndex.count(offset));
+    size_t AbbrevStart = abbrByteOffsetToDeclsIndex[offset];
+    assert(DebugInfo.AbbrevDecls[AbbrevStart].ListOffset == offset);
+    // Find the last entry in this abbreviation list.
+    size_t AbbrevEnd = AbbrevStart;
+    while (AbbrevEnd < DebugInfo.AbbrevDecls.size() &&
+           DebugInfo.AbbrevDecls[AbbrevEnd].Code) {
+      AbbrevEnd++;
+    }
+    // XXX BINARYEN If there are no abbreviations, there is nothing to
+    //              do in this unit.
+    if (AbbrevStart == AbbrevEnd) {
+      continue;
+    }
     onStartCompileUnit(Unit);
     if (Unit.Entries.empty()) { // XXX BINARYEN
       continue;
     }
-    auto FirstAbbrevCode = Unit.Entries[0].AbbrCode;
-
     for (auto &Entry : Unit.Entries) {
       onStartDIE(Unit, Entry);
       if (Entry.AbbrCode == 0u)
         continue;
-      auto &Abbrev = DebugInfo.AbbrevDecls[Entry.AbbrCode - FirstAbbrevCode];
+      // XXX BINARYEN valid abbreviation codes start from 1, so subtract that,
+      //              and are relative to the start of the abbrev table
+      auto RelativeAbbrIndex = Entry.AbbrCode - 1 + AbbrevStart;
+      if (RelativeAbbrIndex >= AbbrevEnd) {
+        errs() << "warning: invalid abbreviation code " << Entry.AbbrCode
+               << " (range: " << AbbrevStart << ".." << AbbrevEnd << ")\n";
+        continue;
+      }
+      auto &Abbrev = DebugInfo.AbbrevDecls[RelativeAbbrIndex];
       auto FormVal = Entry.Values.begin();
       auto AbbrForm = Abbrev.Attributes.begin();
       for (;
@@ -77,7 +135,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
           case dwarf::DW_FORM_block:
             onValue((uint64_t)FormVal->BlockData.size(), true);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;
@@ -85,7 +143,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
             auto writeSize = FormVal->BlockData.size();
             onValue((uint8_t)writeSize);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;
@@ -94,7 +152,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
             auto writeSize = FormVal->BlockData.size();
             onValue((uint16_t)writeSize);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;
@@ -103,7 +161,7 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
             auto writeSize = FormVal->BlockData.size();
             onValue((uint32_t)writeSize);
             onValue(
-                MemoryBufferRef(StringRef((const char *)&FormVal->BlockData[0],
+                MemoryBufferRef(StringRef((const char *)FormVal->BlockData.data(),
                                           FormVal->BlockData.size()),
                                 ""));
             break;

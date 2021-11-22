@@ -55,10 +55,12 @@ var Asyncify = {
         if (typeof imports[module][i] === 'function') {
           (function(module, i) {
             ret[module][i] = function() {
+              refreshView();
               if (!Asyncify.sleeping) {
-                // Sleep if asyncify support is present, and at a certain
-                // probability.
-                if (exports.asyncify_start_unwind && 
+                // Sleep if asyncify support is present (which also requires
+                // that the memory be exported), and at a certain probability.
+                if (exports.asyncify_start_unwind &&
+                    view &&
                     detrand() < 0.5) {
                   // We are called in order to start a sleep/unwind.
                   console.log('asyncify: sleep in ' + i + '...');
@@ -178,8 +180,14 @@ var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), imports)
 // Handle the exports.
 var exports = instance.exports;
 exports = Asyncify.instrumentExports(exports);
-if (exports.memory) {
-  var view = new Int32Array(exports.memory.buffer);
+
+var view;
+
+// Recreate the view. This is important both initially and after a growth.
+function refreshView() {
+  if (exports.memory) {
+    view = new Int32Array(exports.memory.buffer);
+  }
 }
 
 // Run the wasm.
@@ -196,7 +204,7 @@ sortedExports.forEach(function(e) {
   Asyncify.check();
   if (typeof exports[e] !== 'function') return;
   try {
-    console.log('[fuzz-exec] calling $' + e);
+    console.log('[fuzz-exec] calling ' + e);
     var result = exports[e]();
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: $' + e + ' => ' + result);

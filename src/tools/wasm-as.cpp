@@ -54,9 +54,8 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            if (argument != "web" && argument != "none" && argument != "wasm") {
-             std::cerr << "Valid arguments for --validate flag are 'wasm', "
-                          "'web', and 'none'.\n";
-             exit(1);
+             Fatal() << "Valid arguments for --validate flag are 'wasm', "
+                        "'web', and 'none'.\n";
            }
            o->extra["validate"] = argument;
          })
@@ -100,6 +99,7 @@ int main(int argc, const char* argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
+  options.applyFeatures(wasm);
 
   try {
     if (options.debug) {
@@ -110,13 +110,11 @@ int main(int argc, const char* argv[]) {
     if (options.debug) {
       std::cerr << "w-parsing..." << std::endl;
     }
-    SExpressionWasmBuilder builder(wasm, *root[0]);
+    SExpressionWasmBuilder builder(wasm, *root[0], options.profile);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
   }
-
-  options.applyFeatures(wasm);
 
   if (options.extra["validate"] != "none") {
     if (options.debug) {
@@ -126,7 +124,6 @@ int main(int argc, const char* argv[]) {
           wasm,
           WasmValidator::Globally |
             (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
-      WasmPrinter::printModule(&wasm);
       Fatal() << "Error: input module is not valid.\n";
     }
   }

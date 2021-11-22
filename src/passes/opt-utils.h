@@ -20,6 +20,8 @@
 #include <functional>
 #include <unordered_set>
 
+#include <ir/element-utils.h>
+#include <ir/module-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -29,7 +31,7 @@ namespace OptUtils {
 
 // Run useful optimizations after inlining new code into a set
 // of functions.
-inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
+inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
   // save the full list of functions on the side
@@ -83,21 +85,20 @@ inline void replaceFunctions(PassRunner* runner,
       name = iter->second;
     }
   };
-  // replace direct calls
-  FunctionRefReplacer(maybeReplace).run(runner, &module);
-  // replace in table
-  for (auto& segment : module.table.segments) {
-    for (auto& name : segment.data) {
-      maybeReplace(name);
-    }
-  }
+  // replace direct calls in code both functions and module elements
+  FunctionRefReplacer replacer(maybeReplace);
+  replacer.run(runner, &module);
+  replacer.runOnModuleCode(runner, &module);
+
   // replace in start
   if (module.start.is()) {
     maybeReplace(module.start);
   }
   // replace in exports
   for (auto& exp : module.exports) {
-    maybeReplace(exp->value);
+    if (exp->kind == ExternalKind::Function) {
+      maybeReplace(exp->value);
+    }
   }
 }
 
