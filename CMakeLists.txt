@@ -239,10 +239,6 @@ else()
   endif()
   add_compile_flag("-Wextra")
   add_compile_flag("-Wno-unused-parameter")
-  # We can't disbale specific unused '_' var for structural binding so currently
-  # we disble this warning completely.
-  # TODO: Find out if it can be solved in another way.
-  add_compile_flag("-Wno-unused-variable")
   add_compile_flag("-fno-omit-frame-pointer")
   add_compile_flag("-fno-rtti")
   # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
