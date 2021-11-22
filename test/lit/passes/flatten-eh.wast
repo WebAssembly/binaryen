@@ -100,4 +100,79 @@
       )
     )
   )
+
+  ;; CHECK:      (func $try_catch_return_value (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (local.set $4
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $e-i32
+  ;; CHECK-NEXT:     (local.set $7
+  ;; CHECK-NEXT:      (pop i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (local.get $7)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (i32.const 5)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $l0)
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $6
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (local.get $6)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try_catch_return_value (result i32)
+    (block $l0 (result i32)
+      (try (result i32)
+        (do
+          (i32.const 0)
+        )
+        (catch $e-i32
+          (drop
+            (pop i32)
+          )
+          (br $l0
+            (i32.const 5)
+          )
+        )
+      )
+    )
+  )
 )

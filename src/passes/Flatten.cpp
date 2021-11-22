@@ -207,8 +207,10 @@ struct Flatten
             tryy->body = builder.makeLocalSet(temp, tryy->body);
           }
           for (Index i = 0; i < tryy->catchBodies.size(); i++) {
-            tryy->catchBodies[i] =
-              builder.makeLocalSet(temp, tryy->catchBodies[i]);
+            if (tryy->catchBodies[i]->type.isConcrete()) {
+              tryy->catchBodies[i] =
+                builder.makeLocalSet(temp, tryy->catchBodies[i]);
+            }
           }
           // the whole try is now a prelude
           prelude = tryy;
