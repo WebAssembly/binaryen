@@ -25,8 +25,6 @@
 #include "wasm-binary.h"
 #include "wasm.h"
 
-using namespace std;
-
 namespace wasm {
 
 struct RoundTrip : public Pass {

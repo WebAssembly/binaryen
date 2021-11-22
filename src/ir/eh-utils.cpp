@@ -16,54 +16,144 @@
 
 #include "ir/eh-utils.h"
 #include "ir/branch-utils.h"
+#include "ir/find_all.h"
+#include "ir/type-updating.h"
 
 namespace wasm {
 
 namespace EHUtils {
 
-bool isPopValid(Expression* catchBody) {
-  Expression* firstChild = nullptr;
-  auto* block = catchBody->dynCast<Block>();
-  if (!block) {
-    firstChild = catchBody;
-  } else {
-    // When there are multiple expressions within a catch body, an implicit
-    // block is created within it for convenience purposes, and if there are no
-    // branches that targets the block, it will be omitted when written back.
-    // But if there is a branch targetting this block, this block cannot be
-    // removed, and 'pop''s location will be like
-    // (catch $e
-    //   (block $l0
-    //     (pop i32) ;; within a block!
-    //     (br $l0)
-    //     ...
-    //   )
-    // )
-    // which is invalid.
-    if (BranchUtils::BranchSeeker::has(block, block->name)) {
-      return false;
-    }
-    // There should be a pop somewhere
-    if (block->list.empty()) {
-      return false;
-    }
-    firstChild = *block->list.begin();
-  }
+// This returns three values, some of them as output parameters:
+// - Return value: 'pop' expression (Expression*), when there is one in
+//   first-descendant line. If there's no such pop, it returns null.
+// - isPopNested: Whether the discovered 'pop' is nested within a block
+// - popPtr: 'pop' expression's pointer (Expression**), when there is one found
+//
+// When 'catchBody' itself is a 'pop', 'pop''s pointer is null, because there is
+// no way to get the given expression's address. But that's fine because pop's
+// pointer is only necessary (in handleBlockNestedPops) to fix it up when it is
+// nested, and if 'catchBody' itself is a pop, we don't need to fix it up.
+static Expression*
+getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
+  Expression* firstChild = catchBody;
+  isPopNested = false;
+  popPtr = nullptr;
+  // When there are multiple expressions within a catch body, an implicit
+  // block is created within it for convenience purposes.
+  auto* implicitBlock = catchBody->dynCast<Block>();
 
   // Go down the line for the first child until we reach a leaf. A pop should be
-  // in that first-decendent line.
+  // in that first-decendant line.
+  Expression** firstChildPtr = nullptr;
   while (true) {
     if (firstChild->is<Pop>()) {
-      return true;
+      popPtr = firstChildPtr;
+      return firstChild;
     }
-    // We use ValueChildIterator in order not to go into block/loop/try/if
-    // bodies, because a pop cannot be in those control flow expressions.
-    ValueChildIterator it(firstChild);
-    if (it.begin() == it.end()) {
-      return false;
+
+    if (Properties::isControlFlowStructure(firstChild)) {
+      if (auto* iff = firstChild->dynCast<If>()) {
+        // If's condition is a value child who comes before an 'if' instruction
+        // in binary, it is fine if a 'pop' is in there. We don't allow a 'pop'
+        // to be in an 'if''s then or else body because they are not first
+        // descendants.
+        firstChild = iff->condition;
+        firstChildPtr = &iff->condition;
+        continue;
+      } else if (firstChild->is<Loop>()) {
+        // We don't allow the pop to be included in a loop, because it cannot be
+        // run more than once
+        return nullptr;
+      }
+      if (firstChild->is<Block>()) {
+        // If there are no branches that targets the implicit block, it will be
+        // removed when written back. But if there are branches that target the
+        // implicit block,
+        // (catch $e
+        //   (block $l0
+        //     (pop i32) ;; within a block!
+        //     (br $l0)
+        //     ...
+        //   )
+        // This cannot be removed, so this is considered a nested pop (which we
+        // should fix).
+        if (firstChild == implicitBlock) {
+          if (BranchUtils::BranchSeeker::has(implicitBlock,
+                                             implicitBlock->name)) {
+            isPopNested = true;
+          }
+        } else {
+          isPopNested = true;
+        }
+      } else if (firstChild->is<Try>()) {
+        isPopNested = true;
+      } else {
+        WASM_UNREACHABLE("Unexpected control flow expression");
+      }
     }
-    firstChild = *it.begin();
+    ChildIterator it(firstChild);
+    if (it.getNumChildren() == 0) {
+      return nullptr;
+    }
+    firstChildPtr = &*it.begin();
+    firstChild = *firstChildPtr;
   }
+}
+
+bool isPopValid(Expression* catchBody) {
+  bool isPopNested = false;
+  Expression** popPtr = nullptr;
+  auto* pop = getFirstPop(catchBody, isPopNested, popPtr);
+  return pop != nullptr && !isPopNested;
+}
+
+void handleBlockNestedPops(Function* func, Module& wasm) {
+  Builder builder(wasm);
+  FindAll<Try> trys(func->body);
+  for (auto* try_ : trys.list) {
+    for (Index i = 0; i < try_->catchTags.size(); i++) {
+      Name tagName = try_->catchTags[i];
+      auto* tag = wasm.getTag(tagName);
+      if (tag->sig.params == Type::none) {
+        continue;
+      }
+
+      auto* catchBody = try_->catchBodies[i];
+      bool isPopNested = false;
+      Expression** popPtr = nullptr;
+      Expression* pop = getFirstPop(catchBody, isPopNested, popPtr);
+      assert(pop && "Pop has not been found in this catch");
+
+      // Change code like
+      // (catch $e
+      //   ...
+      //   (block
+      //     (pop i32)
+      //   )
+      // )
+      // into
+      // (catch $e
+      //   (local.set $new
+      //     (pop i32)
+      //   )
+      //   ...
+      //   (block
+      //     (local.get $new)
+      //   )
+      // )
+      if (isPopNested) {
+        assert(popPtr);
+        Index newLocal = builder.addVar(func, pop->type);
+        try_->catchBodies[i] =
+          builder.makeSequence(builder.makeLocalSet(newLocal, pop), catchBody);
+        *popPtr = builder.makeLocalGet(newLocal, pop->type);
+      }
+    }
+  }
+
+  // Pops we handled can be of non-defaultable types, so we may have created
+  // non-nullable type locals. Fix them.
+  TypeUpdating::handleNonDefaultableLocals(func, wasm);
 }
 
 } // namespace EHUtils
