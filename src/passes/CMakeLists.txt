@@ -30,6 +30,7 @@ set(passes_SOURCES
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
+  GlobalRefining.cpp
   GlobalTypeOptimization.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
@@ -67,6 +68,7 @@ set(passes_SOURCES
   RoundTrip.cpp
   SetGlobals.cpp
   StackIR.cpp
+  SignatureRefining.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
