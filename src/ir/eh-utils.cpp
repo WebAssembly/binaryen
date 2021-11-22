@@ -52,18 +52,17 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
     }
 
     if (Properties::isControlFlowStructure(firstChild)) {
-      // If's condition is a value child who comes before an 'if' instruction
-      // in binary, it is fine if a 'pop' is in there. We don't allow a 'pop' to
-      // be in an 'if''s then or else body because they are not
-      // first descendants.
       if (auto* iff = firstChild->dynCast<If>()) {
+        // If's condition is a value child who comes before an 'if' instruction
+        // in binary, it is fine if a 'pop' is in there. We don't allow a 'pop'
+        // to be in an 'if''s then or else body because they are not first
+        // descendants.
         firstChild = iff->condition;
         firstChildPtr = &iff->condition;
         continue;
-      }
-      // We don't allow the pop to be included in a loop, because it cannot be
-      // run more than once
-      if (firstChild->is<Loop>()) {
+      } else if (firstChild->is<Loop>()) {
+        // We don't allow the pop to be included in a loop, because it cannot be
+        // run more than once
         return nullptr;
       }
       if (firstChild->is<Block>()) {
@@ -86,9 +85,10 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         } else {
           isPopNested = true;
         }
-      }
-      if (firstChild->is<Try>()) {
+      } else if (firstChild->is<Try>()) {
         isPopNested = true;
+      } else {
+        WASM_UNREACHABLE("Unexpected control flow expression");
       }
     }
     ChildIterator it(firstChild);
