@@ -22,11 +22,9 @@
 #include <wasm-binary.h>
 #include <wasm.h>
 
-using namespace std;
-
 namespace wasm {
 
-typedef map<const char*, int> Counts;
+typedef std::map<const char*, int> Counts;
 
 static Counts lastCounts;
 
@@ -162,8 +160,14 @@ struct Metrics
   }
 
   void printCounts(std::string title) {
-    ostream& o = cout;
-    vector<const char*> keys;
+    using std::left;
+    using std::noshowpos;
+    using std::right;
+    using std::setw;
+    using std::showpos;
+
+    std::ostream& o = std::cout;
+    std::vector<const char*> keys;
     // add total
     int total = 0;
     for (auto i : counts) {
