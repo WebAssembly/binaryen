@@ -559,8 +559,10 @@ struct TypeBuilder {
   ~TypeBuilder();
 
   TypeBuilder(TypeBuilder& other) = delete;
-  TypeBuilder(TypeBuilder&& other) = delete;
   TypeBuilder& operator=(TypeBuilder&) = delete;
+
+  TypeBuilder(TypeBuilder&& other);
+  TypeBuilder& operator=(TypeBuilder&& other);
 
   // Append `n` new uninitialized HeapType slots to the end of the TypeBuilder.
   void grow(size_t n);
