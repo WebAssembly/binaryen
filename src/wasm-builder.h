@@ -837,7 +837,7 @@ public:
   }
   RttCanon* makeRttCanon(HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RttCanon>();
-    ret->type = Type(Rtt(0, heapType));
+    ret->type = Type(Rtt(heapType.getDepth(), heapType));
     ret->finalize();
     return ret;
   }

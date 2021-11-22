@@ -300,15 +300,15 @@
    )
   )
   (drop
-   (block (result i32)
-    (unreachable)
-    (drop
-     (i32.const 20)
-    )
-    (i32.add
+   (i32.const 20)
+  )
+  (drop
+   (i32.add
+    (block (result i32)
+     (unreachable)
      (i32.const 10)
-     (i32.const 30)
     )
+    (i32.const 30)
    )
   )
  )
@@ -417,19 +417,19 @@
    )
   )
   (drop
-   (block (result i32)
-    (unreachable)
-    (drop
-     (i32.const 30)
-    )
-    (drop
-     (i32.const 50)
-    )
-    (select
+   (i32.const 30)
+  )
+  (drop
+   (i32.const 50)
+  )
+  (drop
+   (select
+    (block (result i32)
+     (unreachable)
      (i32.const 20)
-     (i32.const 40)
-     (i32.const 60)
     )
+    (i32.const 40)
+    (i32.const 60)
    )
   )
   (drop
@@ -454,22 +454,23 @@
    (i32.const 10)
   )
   (drop
+   (i32.const 50)
+  )
+  (drop
    (select
     (i32.const 20)
     (block (result i32)
      (unreachable)
      (i32.const 40)
     )
-    (block (result i32)
-     (drop
-      (i32.const 50)
-     )
-     (i32.const 60)
-    )
+    (i32.const 60)
    )
   )
   (drop
    (i32.const 10)
+  )
+  (drop
+   (i32.const 50)
   )
   (drop
    (select
@@ -480,12 +481,7 @@
      )
      (unreachable)
     )
-    (block (result i32)
-     (drop
-      (i32.const 50)
-     )
-     (i32.const 60)
-    )
+    (i32.const 60)
    )
   )
   (drop
@@ -604,17 +600,18 @@
    (i32.const 20)
    (i32.const 40)
   )
+  (drop
+   (i32.const 20)
+  )
   (call $call-ii
    (block (result i32)
     (unreachable)
     (i32.const 10)
    )
-   (block (result i32)
-    (drop
-     (i32.const 20)
-    )
-    (i32.const 30)
-   )
+   (i32.const 30)
+  )
+  (drop
+   (i32.const 20)
   )
   (call $call-ii
    (block (result i32)
@@ -623,12 +620,7 @@
     )
     (unreachable)
    )
-   (block (result i32)
-    (drop
-     (i32.const 20)
-    )
-    (i32.const 30)
-   )
+   (i32.const 30)
   )
   (drop
    (i32.const 10)
@@ -690,34 +682,28 @@
    (i32.const 20)
    (i32.const 40)
    (i32.const 60)
+  )
+  (drop
+   (i32.const 30)
+  )
+  (drop
+   (i32.const 50)
   )
   (call_indirect $0 (type $ii)
    (unreachable)
-   (block (result i32)
-    (drop
-     (i32.const 30)
-    )
-    (i32.const 40)
-   )
-   (block (result i32)
-    (drop
-     (i32.const 50)
-    )
-    (i32.const 60)
-   )
+   (i32.const 40)
+   (i32.const 60)
   )
   (drop
    (i32.const 31)
   )
+  (drop
+   (i32.const 51)
+  )
   (call_indirect $0 (type $ii)
    (i32.const 41)
    (unreachable)
-   (block (result i32)
-    (drop
-     (i32.const 51)
-    )
-    (i32.const 61)
-   )
+   (i32.const 61)
   )
   (drop
    (i32.const 32)

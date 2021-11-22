@@ -114,6 +114,33 @@ void test_canonicalization() {
   assert(built[2] != built[3]);
 }
 
+// Check that defined basic HeapTypes are handled correctly.
+void test_basic() {
+  std::cout << ";; Test basic\n";
+
+  TypeBuilder builder(6);
+  makeNominal(builder);
+
+  Type anyref = builder.getTempRefType(builder[4], Nullable);
+  Type i31ref = builder.getTempRefType(builder[5], NonNullable);
+
+  builder[0] = Signature(Type::anyref, Type::i31ref);
+  builder[1] = Signature(anyref, Type::i31ref);
+  builder[2] = Signature(Type::anyref, i31ref);
+  builder[3] = Signature(anyref, i31ref);
+  builder[4] = HeapType::any;
+  builder[5] = HeapType::i31;
+
+  std::vector<HeapType> built = builder.build();
+
+  assert(built[0].getSignature() == Signature(Type::anyref, Type::i31ref));
+  assert(built[1].getSignature() == built[0].getSignature());
+  assert(built[2].getSignature() == built[1].getSignature());
+  assert(built[3].getSignature() == built[2].getSignature());
+  assert(built[4] == HeapType::any);
+  assert(built[5] == HeapType::i31);
+}
+
 void test_recursive() {
   std::cout << ";; Test recursive types\n";
 
@@ -429,6 +456,7 @@ int main() {
   for (size_t i = 0; i < 2; ++i) {
     test_builder();
     test_canonicalization();
+    test_basic();
     test_recursive();
     test_subtypes();
   }

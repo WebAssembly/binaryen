@@ -232,6 +232,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case TruncSatZeroUVecF64x2ToVecI32x4:
       case DemoteZeroVecF64x2ToVecF32x4:
       case PromoteLowVecF32x4ToVecF64x2:
+      case RelaxedTruncSVecF32x4ToVecI32x4:
+      case RelaxedTruncUVecF32x4ToVecI32x4:
+      case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroUVecF64x2ToVecI32x4:
         ret = 1;
         break;
       case InvalidUnary:
@@ -465,6 +469,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case MaxVecF32x4:
       case PMinVecF32x4:
       case PMaxVecF32x4:
+      case RelaxedMinVecF32x4:
+      case RelaxedMaxVecF32x4:
       case AddVecF64x2:
       case SubVecF64x2:
         ret = 1;
@@ -479,11 +485,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case MaxVecF64x2:
       case PMinVecF64x2:
       case PMaxVecF64x2:
+      case RelaxedMinVecF64x2:
+      case RelaxedMaxVecF64x2:
       case NarrowSVecI16x8ToVecI8x16:
       case NarrowUVecI16x8ToVecI8x16:
       case NarrowSVecI32x4ToVecI16x8:
       case NarrowUVecI32x4ToVecI16x8:
       case SwizzleVec8x16:
+      case RelaxedSwizzleVec8x16:
         ret = 1;
         break;
       case InvalidBinary:
@@ -523,6 +532,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     CostType ret = 0;
     switch (curr->op) {
       case Bitselect:
+      case LaneselectI8x16:
+      case LaneselectI16x8:
+      case LaneselectI32x4:
+      case LaneselectI64x2:
+      case RelaxedFmaVecF32x4:
+      case RelaxedFmsVecF32x4:
+      case RelaxedFmaVecF64x2:
+      case RelaxedFmsVecF64x2:
         ret = 1;
         break;
     }

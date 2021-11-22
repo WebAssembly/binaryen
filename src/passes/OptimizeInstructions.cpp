@@ -772,16 +772,21 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    // bitwise operations
-    // for and and or, we can potentially conditionalize
     if (curr->op == AndInt32 || curr->op == OrInt32) {
-      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
-        return replaceCurrent(ret);
+      if (curr->op == AndInt32) {
+        if (auto* ret = combineAnd(curr)) {
+          return replaceCurrent(ret);
+        }
       }
-    }
-    // for or, we can potentially combine
-    if (curr->op == OrInt32) {
-      if (auto* ret = combineOr(curr)) {
+      // for or, we can potentially combine
+      if (curr->op == OrInt32) {
+        if (auto* ret = combineOr(curr)) {
+          return replaceCurrent(ret);
+        }
+      }
+      // bitwise operations
+      // for and and or, we can potentially conditionalize
+      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
         return replaceCurrent(ret);
       }
     }
@@ -903,6 +908,46 @@ struct OptimizeInstructions
           inner->type = Type::i64;
           inner->value = x;
           return replaceCurrent(inner);
+        }
+      }
+    }
+
+    if (curr->op == ExtendUInt32 || curr->op == ExtendSInt32) {
+      if (auto* load = curr->value->dynCast<Load>()) {
+        // i64.extend_i32_s(i32.load(_8|_16)(_u|_s)(x))  =>
+        //    i64.load(_8|_16|_32)(_u|_s)(x)
+        //
+        // i64.extend_i32_u(i32.load(_8|_16)(_u|_s)(x))  =>
+        //    i64.load(_8|_16|_32)(_u|_s)(x)
+        //
+        // but we can't do this in following cases:
+        //
+        //    i64.extend_i32_u(i32.load8_s(x))
+        //    i64.extend_i32_u(i32.load16_s(x))
+        //
+        // this mixed sign/zero extensions can't represent in single
+        // signed or unsigned 64-bit load operation. For example if `load8_s(x)`
+        // return i8(-1) (0xFF) than sign extended result will be
+        // i32(-1) (0xFFFFFFFF) and with zero extension to i64 we got
+        // finally 0x00000000FFFFFFFF. However with `i64.load8_s` in this
+        // situation we got `i64(-1)` (all ones) and with `i64.load8_u` it
+        // will be 0x00000000000000FF.
+        //
+        // Another limitation is atomics which only have unsigned loads.
+        // So we also avoid this only case:
+        //
+        //   i64.extend_i32_s(i32.atomic.load(x))
+
+        // Special case for i32.load. In this case signedness depends on
+        // extend operation.
+        bool willBeSigned = curr->op == ExtendSInt32 && load->bytes == 4;
+        if (!(curr->op == ExtendUInt32 && load->bytes <= 2 && load->signed_) &&
+            !(willBeSigned && load->isAtomic)) {
+          if (willBeSigned) {
+            load->signed_ = true;
+          }
+          load->type = Type::i64;
+          return replaceCurrent(load);
         }
       }
     }
@@ -1608,20 +1653,34 @@ struct OptimizeInstructions
         auto childIntendedType = child->getIntendedType();
         if (HeapType::isSubType(intendedType, childIntendedType)) {
           // Skip the child.
-          curr->ref = child->ref;
-          return;
-        } else if (HeapType::isSubType(childIntendedType, intendedType)) {
-          // Skip the parent.
-          replaceCurrent(child);
-          return;
-        } else {
+          if (curr->ref == child) {
+            curr->ref = child->ref;
+            return;
+          } else {
+            // The child is not the direct child of the parent, but it is a
+            // fallthrough value, for example,
+            //
+            //  (ref.cast parent
+            //   (block
+            //    .. other code ..
+            //    (ref.cast child)))
+            //
+            // In this case it isn't obvious that we can remove the child, as
+            // doing so might require updating the types of the things in the
+            // middle - and in fact the sole purpose of the child may be to get
+            // a proper type for validation to work. Do nothing in this case,
+            // and hope that other opts will help here (for example,
+            // trapsNeverHappen will help if the code validates without the
+            // child).
+          }
+        } else if (!canBeCastTo(intendedType, childIntendedType)) {
           // The types are not compatible, so if the input is not null, this
           // will trap.
           if (!curr->type.isNullable()) {
             // Make sure to emit a block with the same type as us; leave
             // updating types for other passes.
             replaceCurrent(builder.makeBlock(
-              {builder.makeDrop(child->ref), builder.makeUnreachable()},
+              {builder.makeDrop(curr->ref), builder.makeUnreachable()},
               curr->type));
             return;
           }
@@ -2432,12 +2491,37 @@ private:
     }
   }
 
+  // We can combine `and` operations, e.g.
+  //   (x == 0) & (y == 0)   ==>    (x | y) == 0
+  Expression* combineAnd(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      // (i32(x) == 0) & (i32(y) == 0)   ==>   i32(x | y) == 0
+      // (i64(x) == 0) & (i64(y) == 0)   ==>   i64(x | y) == 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y)))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Unary>();
+        inner->value = Builder(*getModule())
+                         .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return inner;
+      }
+    }
+    return nullptr;
+  }
+
   // We can combine `or` operations, e.g.
-  //   (x > y) | (x == y)    ==>    x >= y
-  Expression* combineOr(Binary* binary) {
-    assert(binary->op == OrInt32);
-    if (auto* left = binary->left->dynCast<Binary>()) {
-      if (auto* right = binary->right->dynCast<Binary>()) {
+  //   (x > y)  | (x == y)    ==>    x >= y
+  //   (x != 0) | (y != 0)    ==>    (x | y) != 0
+  Expression* combineOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    assert(curr->op == OrInt32);
+    if (auto* left = curr->left->dynCast<Binary>()) {
+      if (auto* right = curr->right->dynCast<Binary>()) {
         if (left->op != right->op &&
             ExpressionAnalyzer::equal(left->left, right->left) &&
             ExpressionAnalyzer::equal(left->right, right->right) &&
@@ -2456,6 +2540,21 @@ private:
             }
           }
         }
+      }
+    }
+    {
+      // (i32(x) != 0) | (i32(y) != 0)   ==>   i32(x | y) != 0
+      // (i64(x) != 0) | (i64(y) != 0)   ==>   i64(x | y) != 0
+      Expression *x, *y;
+      if (matches(curr,
+                  binary(OrInt32,
+                         binary(Ne, any(&x), ival(0)),
+                         binary(Ne, any(&y), ival(0)))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left = Builder(*getModule())
+                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return inner;
       }
     }
     return nullptr;

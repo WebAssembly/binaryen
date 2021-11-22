@@ -79,7 +79,7 @@
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
 [fuzz-exec] calling static-br_on_cast
 [LoggingExternalInterface logging 3]
 [fuzz-exec] calling static-br_on_cast_fail
