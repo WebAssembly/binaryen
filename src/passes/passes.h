@@ -21,7 +21,7 @@ namespace wasm {
 
 class Pass;
 
-// All passes:
+// Normal passes:
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();
 Pass* createAvoidReinterpretsPass();
@@ -135,6 +135,9 @@ Pass* createTrapModeJS();
 Pass* createTypeRefiningPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
+
+// Test passes:
+Pass* createCatchPopFixupPass();
 
 } // namespace wasm
 
