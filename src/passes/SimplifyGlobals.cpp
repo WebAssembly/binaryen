@@ -61,9 +61,7 @@ struct GlobalInfo {
   std::atomic<Index> written{0};
   std::atomic<Index> read{0};
 
-  // How many times the global is written a value different from its initial
-  // value. If all writes end up to write the initial value, we may be able to
-  // remove all the writes.
+  // Whether the global is written a value different from its initial value.
   std::atomic<bool> nonInitWritten{false};
 
   // How many times the global is "read, but only to write", that is, is used in
@@ -417,7 +415,7 @@ struct SimplifyGlobals : public Pass {
     // Likewise, globals that only write their initial value later also do not
     // need those writes. And, globals that are only read from in order to write
     // to themselves as well. First, find such globals.
-    NameSet globalsToRemoveSets;
+    NameSet globalsNotNeedingSets;
     for (auto& global : module->globals) {
       auto& info = map[global->name];
 
@@ -452,14 +450,14 @@ struct SimplifyGlobals : public Pass {
       assert(info.written >= info.readOnlyToWrite);
 
       if (!info.read || !info.nonInitWritten || onlyReadOnlyToWrite) {
-        globalsToRemoveSets.insert(global->name);
+        globalsNotNeedingSets.insert(global->name);
 
         // We can now mark this global as immutable, and un-written, since we
-        // are about to remove all the operations on it.
+        // are about to remove all the sets on it.
         global->mutable_ = false;
         info.written = 0;
 
-        // Nested old-read-to-write expressions require another full iteration
+        // Nested only-read-to-write expressions require another full iteration
         // to optimize, as we have:
         //
         //   if (a) {
@@ -472,6 +470,10 @@ struct SimplifyGlobals : public Pass {
         // The first iteration can only optimize b, as the outer if's body has
         // more effects than we understand. After finishing the first iteration,
         // b will no longer exist, removing those effects.
+        //
+        // TODO: In principle other situations exist as well where more
+        //       iterations help, like if we remove a set that turns something
+        //       into a read-only-to-write.
         if (onlyReadOnlyToWrite) {
           more = true;
         }
@@ -482,7 +484,7 @@ struct SimplifyGlobals : public Pass {
     // then see that since the global has no writes, it is a constant, which
     // will lead to removal of gets, and after removing them, the global itself
     // will be removed as well.
-    GlobalSetRemover(&globalsToRemoveSets, optimize).run(runner, module);
+    GlobalSetRemover(&globalsNotNeedingSets, optimize).run(runner, module);
 
     return more;
   }
