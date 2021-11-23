@@ -170,7 +170,6 @@ struct Flatten
         }
         iff->finalize();
         if (prelude) {
-          ReFinalizeNode().visit(prelude);
           ourPreludes.push_back(prelude);
         }
         replaceCurrent(rep);
@@ -224,7 +223,6 @@ struct Flatten
         }
         tryy->finalize();
         if (prelude) {
-          ReFinalizeNode().visit(prelude);
           ourPreludes.push_back(prelude);
         }
         replaceCurrent(rep);
