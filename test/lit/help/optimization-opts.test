@@ -275,6 +275,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate Stack IR
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --global-refining                             refine the types of globals
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gto                                         globally optimize GC types
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
@@ -455,6 +457,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --set-globals                                 sets specified globals to
 ;; CHECK-NEXT:                                                 specified values
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --signature-refining                          apply more specific subtypes to
+;; CHECK-NEXT:                                                 signature types where possible
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --simplify-globals                            miscellaneous globals-related
 ;; CHECK-NEXT:                                                 optimizations

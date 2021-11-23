@@ -334,8 +334,7 @@ public:
       queue.pop_back();
       auto& node = nodes[name];
       for (auto target : node.reaches) {
-        if (reached.find(target) == reached.end()) {
-          reached.insert(target);
+        if (reached.emplace(target).second) {
           queue.push_back(target);
         }
       }
@@ -368,8 +367,7 @@ public:
   // removed, including on the outside
   void printAllUnused() {
     std::set<std::string> unused;
-    for (auto& pair : nodes) {
-      auto name = pair.first;
+    for (auto& [name, _] : nodes) {
       if (reached.find(name) == reached.end()) {
         unused.insert(name.str);
       }
@@ -386,14 +384,10 @@ public:
       std::cout << "root: " << root << '\n';
     }
     std::map<Name, ImportId> importMap;
-    for (auto& pair : importIdToDCENode) {
-      auto& id = pair.first;
-      auto dceName = pair.second;
+    for (auto& [id, dceName] : importIdToDCENode) {
       importMap[dceName] = id;
     }
-    for (auto& pair : nodes) {
-      auto name = pair.first;
-      auto& node = pair.second;
+    for (auto& [name, node] : nodes) {
       std::cout << "node: " << name << '\n';
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';

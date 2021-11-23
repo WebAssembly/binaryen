@@ -617,10 +617,10 @@ private:
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto digest = hashes[item];
-        if (seen.count(digest)) {
+        if (!seen.emplace(digest).second) {
           continue;
         }
-        seen.insert(digest);
+
         auto& items = hashed[digest];
         if (items.size() == 1) {
           continue;

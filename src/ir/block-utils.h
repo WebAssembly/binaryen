@@ -24,9 +24,8 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::BlockUtils {
 
-namespace BlockUtils {
 // if a block has just one element, it can often be replaced
 // with that content
 template<typename T>
@@ -68,8 +67,6 @@ inline Expression* simplifyToContentsWithPossibleTypeChange(Block* block,
                                                             T* parent) {
   return simplifyToContents(block, parent, true);
 }
-} // namespace BlockUtils
-
-} // namespace wasm
+} // namespace wasm::BlockUtils
 
 #endif // wasm_ir_block_h

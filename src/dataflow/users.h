@@ -27,9 +27,7 @@
 
 #include "dataflow/graph.h"
 
-namespace wasm {
-
-namespace DataFlow {
+namespace wasm::DataFlow {
 
 // Calculates the users of each node.
 //   users[x] = { y, z, .. }
@@ -95,8 +93,6 @@ public:
   void removeAllUsesOf(Node* node) { users.erase(node); }
 };
 
-} // namespace DataFlow
-
-} // namespace wasm
+} // namespace wasm::DataFlow
 
 #endif // wasm_dataflow_users

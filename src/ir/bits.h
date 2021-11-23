@@ -22,9 +22,7 @@
 #include "wasm-builder.h"
 #include <ir/load-utils.h>
 
-namespace wasm {
-
-namespace Bits {
+namespace wasm::Bits {
 
 // get a mask to keep only the low # of bits
 inline int32_t lowBitMask(int32_t bits) {
@@ -435,8 +433,6 @@ Index getMaxBits(Expression* curr,
   }
 }
 
-} // namespace Bits
-
-} // namespace wasm
+} // namespace wasm::Bits
 
 #endif // wasm_ir_bits_h

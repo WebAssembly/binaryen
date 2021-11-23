@@ -19,14 +19,27 @@
 
 #include "tools/fuzzing/random.h"
 #include "wasm-type.h"
+#include "wasm.h"
+#include <optional>
 #include <vector>
 
-namespace wasm::HeapTypeFuzzer {
+namespace wasm {
 
-// Generate a vector of `n` random HeapTypes with interesting subtyping.
-std::vector<HeapType>
-generateHeapTypes(Random& rand, FeatureSet features, size_t n);
+struct HeapTypeGenerator {
+  // The builder containing the randomly generated types.
+  TypeBuilder builder;
 
-} // namespace wasm::HeapTypeFuzzer
+  // The intended subtypes of each built type.
+  std::vector<std::vector<Index>> subtypeIndices;
+
+  // The intended supertype of each built type, if any.
+  std::vector<std::optional<Index>> supertypeIndices;
+
+  // Create a populated `HeapTypeGenerator` with `n` random HeapTypes with
+  // interesting subtyping.
+  static HeapTypeGenerator create(Random& rand, FeatureSet features, size_t n);
+};
+
+} // namespace wasm
 
 #endif // wasm_tools_fuzzing_heap_types_h

@@ -25,9 +25,8 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::MemoryUtils {
 
-namespace MemoryUtils {
 // Flattens memory into a single data segment, or no segment. If there is
 // a segment, it starts at 0.
 // If ensuredSegmentSize is provided, then a segment is always emitted,
@@ -198,8 +197,6 @@ inline bool ensureLimitedSegments(Module& module) {
   memory.segments.swap(mergedSegments);
   return true;
 }
-} // namespace MemoryUtils
-
-} // namespace wasm
+} // namespace wasm::MemoryUtils
 
 #endif // wasm_ir_memory_h
