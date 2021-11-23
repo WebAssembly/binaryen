@@ -1253,7 +1253,7 @@ struct OptimizeInstructions
                        .makeCallIndirect(get->table,
                                          get->index,
                                          curr->operands,
-                                         get->type.getHeapType().getSignature(),
+                                         get->type.getHeapType(),
                                          curr->isReturn));
       return;
     }

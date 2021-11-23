@@ -83,8 +83,7 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   Index tableIdx = parent.getTableIndex(curr->table);
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->getHeapType(parent.getModule())))
-    << U32LEB(tableIdx);
+  o << op << U32LEB(parent.getTypeIndex(curr->heapType)) << U32LEB(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {

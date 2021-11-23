@@ -255,10 +255,10 @@ struct Updater : public PostWalker<Updater> {
   // achieve this, make the call a non-return call and add a break. This does
   // not cause unbounded stack growth because inlining and return calling both
   // avoid creating a new stack frame.
-  template<typename T> void handleReturnCall(T* curr, Type targetType) {
+  template<typename T> void handleReturnCall(T* curr, HeapType targetType) {
     curr->isReturn = false;
-    curr->type = targetType;
-    if (targetType.isConcrete()) {
+    curr->type = targetType.getSignature().results;
+    if (curr->type.isConcrete()) {
       replaceCurrent(builder->makeBreak(returnName, curr));
     } else {
       replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
@@ -266,18 +266,17 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunction(curr->target)->getResults());
+      handleReturnCall(curr, module->getFunction(curr->target)->type);
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, curr->sig.results);
+      handleReturnCall(curr, curr->heapType);
     }
   }
   void visitCallRef(CallRef* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr,
-                       curr->target->type.getHeapType().getSignature().results);
+      handleReturnCall(curr, curr->target->type.getHeapType());
     }
   }
   void visitLocalGet(LocalGet* curr) {

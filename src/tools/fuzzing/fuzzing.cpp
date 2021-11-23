@@ -1260,7 +1260,7 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
   }
   // TODO: use a random table
   return builder.makeCallIndirect(
-    funcrefTableName, target, args, targetFn->getSig(), isReturn);
+    funcrefTableName, target, args, targetFn->type, isReturn);
 }
 
 Expression* TranslateToFuzzReader::makeCallRef(Type type) {

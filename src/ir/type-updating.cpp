@@ -147,8 +147,6 @@ void GlobalTypeRewriter::update() {
 
 #define DELEGATE_FIELD_HEAPTYPE(id, field) cast->field = getNew(cast->field);
 
-#define DELEGATE_FIELD_SIGNATURE(id, field) cast->field = getNew(cast->field);
-
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)

@@ -445,7 +445,12 @@ private:
   }
 
   template<typename T>
-  void validateCallParamsAndResult(T* curr, Signature sig) {
+  void validateCallParamsAndResult(T* curr, HeapType sigType) {
+    if (!shouldBeTrue(
+          sigType.isSignature(), curr, "Heap type must be a signature type")) {
+      return;
+    }
+    auto sig = sigType.getSignature();
     if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
                       curr,
                       "call* param number must match")) {
@@ -792,7 +797,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->getSig());
+  validateCallParamsAndResult(curr, target->type);
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -812,7 +817,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
     }
   }
 
-  validateCallParamsAndResult(curr, curr->sig);
+  validateCallParamsAndResult(curr, curr->heapType);
 }
 
 void FunctionValidator::visitConst(Const* curr) {
@@ -2322,8 +2327,7 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
     shouldBeTrue(curr->target->type.isFunction(),
                  curr,
                  "call_ref target must be a function reference");
-    validateCallParamsAndResult(
-      curr, curr->target->type.getHeapType().getSignature());
+    validateCallParamsAndResult(curr, curr->target->type.getHeapType());
   }
 }
 

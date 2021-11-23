@@ -2313,7 +2313,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   }
   HeapType callType;
   i = parseTypeUse(s, i, callType);
-  ret->sig = callType.getSignature();
+  ret->heapType = callType;
   parseCallOperands(s, i, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;
