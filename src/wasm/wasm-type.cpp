@@ -2270,6 +2270,9 @@ TypeBuilder::TypeBuilder(size_t n) {
 
 TypeBuilder::~TypeBuilder() = default;
 
+TypeBuilder::TypeBuilder(TypeBuilder&& other) = default;
+TypeBuilder& TypeBuilder::operator=(TypeBuilder&& other) = default;
+
 void TypeBuilder::grow(size_t n) {
   assert(size() + n > size());
   impl->entries.resize(size() + n);
@@ -2972,9 +2975,7 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
       canonicalHeapTypes[original] = canonical;
     }
   }
-  for (auto& pair : canonicalHeapTypes) {
-    HeapType original = pair.first;
-    HeapType canonical = pair.second;
+  for (auto& [original, canonical] : canonicalHeapTypes) {
     for (HeapType* use : locations.heapTypes.at(original)) {
       *use = canonical;
     }

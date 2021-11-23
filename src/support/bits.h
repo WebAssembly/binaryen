@@ -31,9 +31,7 @@
  * avoiding implementations with large lookup tables.
  */
 
-namespace wasm {
-
-namespace Bits {
+namespace wasm::Bits {
 
 int popCount(uint8_t);
 int popCount(uint16_t);
@@ -96,8 +94,6 @@ template<typename T, typename U> inline static T rotateRight(T val, U count) {
 uint32_t log2(uint32_t v);
 uint32_t pow2(uint32_t v);
 
-} // namespace Bits
-
-} // namespace wasm
+} // namespace wasm::Bits
 
 #endif // wasm_support_bits_h

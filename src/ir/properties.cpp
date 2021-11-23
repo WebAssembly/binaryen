@@ -17,9 +17,7 @@
 #include "ir/properties.h"
 #include "wasm-traversal.h"
 
-namespace wasm {
-
-namespace Properties {
+namespace wasm::Properties {
 
 bool isGenerative(Expression* curr, FeatureSet features) {
   // Practically no wasm instructions are generative. Exceptions occur only in
@@ -38,6 +36,4 @@ bool isGenerative(Expression* curr, FeatureSet features) {
   return scanner.generative;
 }
 
-} // namespace Properties
-
-} // namespace wasm
+} // namespace wasm::Properties

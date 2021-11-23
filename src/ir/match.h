@@ -27,9 +27,7 @@
 #include "ir/abstract.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Match {
+namespace wasm::Match {
 
 // The available matchers are:
 //
@@ -872,8 +870,6 @@ inline decltype(auto) select(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Internal::SelectMatcher(binder, s1, s2, s3);
 }
 
-} // namespace Match
-
-} // namespace wasm
+} // namespace wasm::Match
 
 #endif // wasm_ir_match_h

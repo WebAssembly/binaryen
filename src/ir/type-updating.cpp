@@ -147,8 +147,6 @@ void GlobalTypeRewriter::update() {
 
 #define DELEGATE_FIELD_HEAPTYPE(id, field) cast->field = getNew(cast->field);
 
-#define DELEGATE_FIELD_SIGNATURE(id, field) cast->field = getNew(cast->field);
-
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
@@ -191,9 +189,7 @@ void GlobalTypeRewriter::update() {
   }
 
   // Update type names.
-  for (auto& kv : oldToNewTypes) {
-    auto old = kv.first;
-    auto new_ = kv.second;
+  for (auto& [old, new_] : oldToNewTypes) {
     if (wasm.typeNames.count(old)) {
       wasm.typeNames[new_] = wasm.typeNames[old];
     }

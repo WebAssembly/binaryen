@@ -908,9 +908,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
 
   types = builder.build();
 
-  for (auto& pair : typeIndices) {
-    auto name = pair.first;
-    auto index = pair.second;
+  for (auto& [name, index] : typeIndices) {
     auto type = types[index];
     // A type may appear in the type section more than once, but we canonicalize
     // types internally, so there will be a single name chosen for that type. Do
@@ -2313,7 +2311,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   }
   HeapType callType;
   i = parseTypeUse(s, i, callType);
-  ret->sig = callType.getSignature();
+  ret->heapType = callType;
   parseCallOperands(s, i, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;

@@ -19,9 +19,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace GCTypeUtils {
+namespace wasm::GCTypeUtils {
 
 // Helper code to evaluate a reference at compile time and check if it is of a
 // certain kind. Various wasm instructions check if something is a function or
@@ -141,8 +139,6 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
   return success ? Success : Failure;
 }
 
-} // namespace GCTypeUtils
-
-} // namespace wasm
+} // namespace wasm::GCTypeUtils
 
 #endif // wasm_ir_gc_type_utils_h

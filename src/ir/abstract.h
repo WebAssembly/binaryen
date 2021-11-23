@@ -21,9 +21,7 @@
 
 #include <wasm.h>
 
-namespace wasm {
-
-namespace Abstract {
+namespace wasm::Abstract {
 
 enum Op {
   // Unary
@@ -310,8 +308,6 @@ inline BinaryOp getBinary(Type type, Op op) {
   WASM_UNREACHABLE("invalid type");
 }
 
-} // namespace Abstract
-
-} // namespace wasm
+} // namespace wasm::Abstract
 
 #endif // wasm_ir_abstract_h
