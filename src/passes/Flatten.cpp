@@ -170,6 +170,7 @@ struct Flatten
         }
         iff->finalize();
         if (prelude) {
+          ReFinalizeNode().visit(prelude);
           ourPreludes.push_back(prelude);
         }
         replaceCurrent(rep);
@@ -199,7 +200,6 @@ struct Flatten
         std::vector<Expression*> originalCatchBodies(tryy->catchBodies.begin(),
                                                      tryy->catchBodies.end());
         auto type = tryy->type;
-        Expression* prelude = nullptr;
         if (type.isConcrete()) {
           Index temp = builder.addVar(getFunction(), type);
           if (tryy->body->type.isConcrete()) {
@@ -211,10 +211,10 @@ struct Flatten
                 builder.makeLocalSet(temp, tryy->catchBodies[i]);
             }
           }
-          // the whole try is now a prelude
-          prelude = tryy;
           // and we leave just a get of the value
           rep = builder.makeLocalGet(temp, type);
+          // the whole try is now a prelude
+          ourPreludes.push_back(tryy);
         }
         tryy->body = getPreludesWithExpression(originalBody, tryy->body);
         for (Index i = 0; i < tryy->catchBodies.size(); i++) {
@@ -222,9 +222,6 @@ struct Flatten
             originalCatchBodies[i], tryy->catchBodies[i]);
         }
         tryy->finalize();
-        if (prelude) {
-          ourPreludes.push_back(prelude);
-        }
         replaceCurrent(rep);
 
       } else {
