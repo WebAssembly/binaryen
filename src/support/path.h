@@ -24,9 +24,7 @@
 #include <cstdlib>
 #include <string>
 
-namespace wasm {
-
-namespace Path {
+namespace wasm::Path {
 
 char getPathSeparator();
 std::string getDirName(const std::string& path);
@@ -44,8 +42,6 @@ void setBinaryenBinDir(const std::string& dir);
 // Gets the path to a binaryen binary tool, like wasm-opt.
 std::string getBinaryenBinaryTool(const std::string& name);
 
-} // namespace Path
-
-} // namespace wasm
+} // namespace wasm::Path
 
 #endif // wasm_support_path_h

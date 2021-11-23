@@ -493,8 +493,7 @@ void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) {
     return;
   }
-  bool inserted;
-  std::tie(std::ignore, inserted) = labelNames.insert(name);
+  auto [_, inserted] = labelNames.insert(name);
   shouldBeTrue(
     inserted,
     name,
@@ -2870,9 +2869,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       }
       // check if a node is a duplicate - expressions must not be seen more than
       // once
-      bool inserted;
-      std::tie(std::ignore, inserted) = seen.insert(curr);
-      if (!inserted) {
+      if (!seen.insert(curr).second) {
         std::ostringstream ss;
         ss << "expression seen more than once in the tree in " << scope
            << " on " << curr << '\n';

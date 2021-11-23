@@ -490,9 +490,7 @@ struct FunctionSplitter {
   std::vector<Name> finish() {
     std::vector<Name> ret;
     std::unordered_set<Name> inlineableNames;
-    for (auto& kv : splits) {
-      Name func = kv.first;
-      auto& split = kv.second;
+    for (auto& [func, split] : splits) {
       auto* inlineable = split.inlineable;
       if (inlineable) {
         inlineableNames.insert(inlineable->name);

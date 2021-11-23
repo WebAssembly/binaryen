@@ -21,9 +21,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace BranchUtils {
+namespace wasm::BranchUtils {
 
 // Some branches are obviously not actually reachable (e.g. (br $out
 // (unreachable)))
@@ -428,8 +426,6 @@ private:
   } inner;
 };
 
-} // namespace BranchUtils
-
-} // namespace wasm
+} // namespace wasm::BranchUtils
 
 #endif // wasm_ir_branch_h

@@ -76,9 +76,7 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace ModuleSplitting {
+namespace wasm::ModuleSplitting {
 
 namespace {
 
@@ -664,6 +662,4 @@ Results splitFunctions(Module& primary, const Config& config) {
   return {std::move(split.secondaryPtr), std::move(split.placeholderMap)};
 }
 
-} // namespace ModuleSplitting
-
-} // namespace wasm
+} // namespace wasm::ModuleSplitting

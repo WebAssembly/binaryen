@@ -189,9 +189,7 @@ void GlobalTypeRewriter::update() {
   }
 
   // Update type names.
-  for (auto& kv : oldToNewTypes) {
-    auto old = kv.first;
-    auto new_ = kv.second;
+  for (auto& [old, new_] : oldToNewTypes) {
     if (wasm.typeNames.count(old)) {
       wasm.typeNames[new_] = wasm.typeNames[old];
     }

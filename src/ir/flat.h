@@ -67,9 +67,7 @@
 #include "pass.h"
 #include "wasm-traversal.h"
 
-namespace wasm {
-
-namespace Flat {
+namespace wasm::Flat {
 
 inline void verifyFlatness(Function* func) {
   struct VerifyFlatness
@@ -127,8 +125,6 @@ inline void verifyFlatness(Module* module) {
   VerifyFlatness().run(&runner, module);
 }
 
-} // namespace Flat
-
-} // namespace wasm
+} // namespace wasm::Flat
 
 #endif // wasm_ir_flat_h

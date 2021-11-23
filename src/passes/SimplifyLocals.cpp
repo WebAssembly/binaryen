@@ -280,9 +280,9 @@ struct SimplifyLocals
   void checkInvalidations(EffectAnalyzer& effects) {
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
-    for (auto& sinkable : sinkables) {
-      if (effects.invalidates(sinkable.second.effects)) {
-        invalidated.push_back(sinkable.first);
+    for (auto& [index, info] : sinkables) {
+      if (effects.invalidates(info.effects)) {
+        invalidated.push_back(index);
       }
     }
     for (auto index : invalidated) {
@@ -303,9 +303,9 @@ struct SimplifyLocals
     // 'try', we drop all sinkables that may throw.
     if (curr->is<Try>()) {
       std::vector<Index> invalidated;
-      for (auto& sinkable : self->sinkables) {
-        if (sinkable.second.effects.throws) {
-          invalidated.push_back(sinkable.first);
+      for (auto& [index, info] : self->sinkables) {
+        if (info.effects.throws) {
+          invalidated.push_back(index);
         }
       }
       for (auto index : invalidated) {
@@ -407,9 +407,9 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(std::make_pair(
+      self->sinkables.emplace(std::pair{
         index,
-        SinkableInfo(currp, self->getPassOptions(), *self->getModule())));
+        SinkableInfo(currp, self->getPassOptions(), *self->getModule())});
     }
 
     if (!allowNesting) {
@@ -493,8 +493,7 @@ struct SimplifyLocals
     // look for a local.set that is present in them all
     bool found = false;
     Index sharedIndex = -1;
-    for (auto& sinkable : sinkables) {
-      Index index = sinkable.first;
+    for (auto& [index, _] : sinkables) {
       bool inAll = true;
       for (size_t j = 0; j < breaks.size(); j++) {
         if (breaks[j].sinkables.count(index) == 0) {
@@ -648,8 +647,7 @@ struct SimplifyLocals
       }
     } else {
       // Look for a shared index.
-      for (auto& sinkable : ifTrue) {
-        Index index = sinkable.first;
+      for (auto& [index, _] : ifTrue) {
         if (ifFalse.count(index) > 0) {
           goodIndex = index;
           found = true;

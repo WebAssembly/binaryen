@@ -506,10 +506,9 @@ struct Heap2LocalOptimizer {
       // look at something that another allocation reached, which would be in a
       // different call to this function and use a different queue (any overlap
       // between calls would prove non-exclusivity).
-      if (seen.count(parent)) {
+      if (!seen.emplace(parent).second) {
         return false;
       }
-      seen.insert(parent);
 
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {

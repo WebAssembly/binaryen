@@ -195,9 +195,7 @@ struct RequestInfo {
 // A map of expressions to their request info.
 struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
   void dump(std::ostream& o) {
-    for (auto& kv : *this) {
-      auto* curr = kv.first;
-      auto& info = kv.second;
+    for (auto& [curr, info] : *this) {
       o << *curr << " has " << info.requests << " reqs, orig: " << info.original
         << '\n';
     }

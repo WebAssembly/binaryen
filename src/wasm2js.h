@@ -1232,9 +1232,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
       // Emit any remaining groups by just emitting branches to their code,
       // which will appear outside the switch.
-      for (auto& pair : targetIndexes) {
-        auto target = pair.first;
-        auto& indexes = pair.second;
+      for (auto& [target, indexes] : targetIndexes) {
         if (emittedTargets.count(target)) {
           continue;
         }

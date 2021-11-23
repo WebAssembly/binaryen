@@ -165,17 +165,17 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // we are at the right absolute address.
     // We are relative to the section start.
     auto totalAdjustment = adjustmentForLEBShrinking + body;
-    for (auto& pair : binaryLocations.expressions) {
-      pair.second.start -= totalAdjustment;
-      pair.second.end -= totalAdjustment;
+    for (auto& [_, locations] : binaryLocations.expressions) {
+      locations.start -= totalAdjustment;
+      locations.end -= totalAdjustment;
     }
-    for (auto& pair : binaryLocations.functions) {
-      pair.second.start -= totalAdjustment;
-      pair.second.declarations -= totalAdjustment;
-      pair.second.end -= totalAdjustment;
+    for (auto& [_, locations] : binaryLocations.functions) {
+      locations.start -= totalAdjustment;
+      locations.declarations -= totalAdjustment;
+      locations.end -= totalAdjustment;
     }
-    for (auto& pair : binaryLocations.delimiters) {
-      for (auto& item : pair.second) {
+    for (auto& [_, locations] : binaryLocations.delimiters) {
+      for (auto& item : locations) {
         item -= totalAdjustment;
       }
     }
@@ -734,9 +734,7 @@ void WasmBinaryWriter::writeNames() {
         startSubsection(BinaryConsts::UserSections::Subsection::NameLocal);
       o << U32LEB(functionsWithLocalNames.size());
       Index emitted = 0;
-      for (auto& kv : functionsWithLocalNames) {
-        auto index = kv.first;
-        auto* func = kv.second;
+      for (auto& [index, func] : functionsWithLocalNames) {
         // Pairs of (local index in IR, name).
         std::vector<std::pair<Index, Name>> localsWithNames;
         auto numLocals = func->getNumLocals();
@@ -748,9 +746,7 @@ void WasmBinaryWriter::writeNames() {
         assert(localsWithNames.size());
         o << U32LEB(index);
         o << U32LEB(localsWithNames.size());
-        for (auto& indexedLocal : localsWithNames) {
-          auto indexInFunc = indexedLocal.first;
-          auto name = indexedLocal.second;
+        for (auto& [indexInFunc, name] : localsWithNames) {
           // TODO: handle multivalue
           auto indexInBinary =
             funcMappedLocals.at(func->name)[{indexInFunc, 0}];
@@ -767,8 +763,7 @@ void WasmBinaryWriter::writeNames() {
   // type names
   {
     std::vector<HeapType> namedTypes;
-    for (auto& kv : typeIndices) {
-      auto type = kv.first;
+    for (auto& [type, _] : typeIndices) {
       if (wasm->typeNames.count(type) && wasm->typeNames[type].name.is()) {
         namedTypes.push_back(type);
       }
@@ -804,9 +799,9 @@ void WasmBinaryWriter::writeNames() {
         startSubsection(BinaryConsts::UserSections::Subsection::NameTable);
       o << U32LEB(tablesWithNames.size());
 
-      for (auto& indexedTable : tablesWithNames) {
-        o << U32LEB(indexedTable.first);
-        writeEscapedName(indexedTable.second->name.str);
+      for (auto& [index, table] : tablesWithNames) {
+        o << U32LEB(index);
+        writeEscapedName(table->name.str);
       }
 
       finishSubsection(substart);
@@ -839,9 +834,9 @@ void WasmBinaryWriter::writeNames() {
       auto substart =
         startSubsection(BinaryConsts::UserSections::Subsection::NameGlobal);
       o << U32LEB(globalsWithNames.size());
-      for (auto& indexedGlobal : globalsWithNames) {
-        o << U32LEB(indexedGlobal.first);
-        writeEscapedName(indexedGlobal.second->name.str);
+      for (auto& [index, global] : globalsWithNames) {
+        o << U32LEB(index);
+        writeEscapedName(global->name.str);
       }
       finishSubsection(substart);
     }
@@ -864,9 +859,9 @@ void WasmBinaryWriter::writeNames() {
         startSubsection(BinaryConsts::UserSections::Subsection::NameElem);
       o << U32LEB(elemsWithNames.size());
 
-      for (auto& indexedElem : elemsWithNames) {
-        o << U32LEB(indexedElem.first);
-        writeEscapedName(indexedElem.second->name.str);
+      for (auto& [index, elem] : elemsWithNames) {
+        o << U32LEB(index);
+        writeEscapedName(elem->name.str);
       }
 
       finishSubsection(substart);
@@ -919,9 +914,9 @@ void WasmBinaryWriter::writeNames() {
         std::unordered_map<Index, Name>& fieldNames =
           wasm->typeNames.at(type).fieldNames;
         o << U32LEB(fieldNames.size());
-        for (auto& kv : fieldNames) {
-          o << U32LEB(kv.first);
-          writeEscapedName(kv.second.str);
+        for (auto& [index, name] : fieldNames) {
+          o << U32LEB(index);
+          writeEscapedName(name.str);
         }
       }
       finishSubsection(substart);
@@ -987,18 +982,16 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   // write source map entries
   size_t lastOffset = 0;
   Function::DebugLocation lastLoc = {0, /* lineNumber = */ 1, 0};
-  for (const auto& offsetAndlocPair : sourceMapLocations) {
+  for (const auto& [offset, loc] : sourceMapLocations) {
     if (lastOffset > 0) {
       *sourceMap << ",";
     }
-    size_t offset = offsetAndlocPair.first;
-    const Function::DebugLocation& loc = *offsetAndlocPair.second;
     writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
-    writeBase64VLQ(*sourceMap, int32_t(loc.fileIndex - lastLoc.fileIndex));
-    writeBase64VLQ(*sourceMap, int32_t(loc.lineNumber - lastLoc.lineNumber));
+    writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastLoc.fileIndex));
+    writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLoc.lineNumber));
     writeBase64VLQ(*sourceMap,
-                   int32_t(loc.columnNumber - lastLoc.columnNumber));
-    lastLoc = loc;
+                   int32_t(loc->columnNumber - lastLoc.columnNumber));
+    lastLoc = *loc;
     lastOffset = offset;
   }
   *sourceMap << "\"}";
@@ -2308,10 +2301,9 @@ void WasmBinaryBuilder::readExports() {
     BYN_TRACE("read one\n");
     auto curr = new Export;
     curr->name = getInlineString();
-    if (names.count(curr->name) > 0) {
+    if (!names.emplace(curr->name).second) {
       throwError("duplicate export name");
     }
-    names.insert(curr->name);
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
     exportIndices[curr] = index;
@@ -2771,9 +2763,7 @@ void WasmBinaryBuilder::processNames() {
     wasm.addExport(curr);
   }
 
-  for (auto& iter : functionRefs) {
-    size_t index = iter.first;
-    auto& refs = iter.second;
+  for (auto& [index, refs] : functionRefs) {
     for (auto* ref : refs) {
       if (auto* call = ref->dynCast<Call>()) {
         call->target = getFunctionName(index);
@@ -2785,9 +2775,7 @@ void WasmBinaryBuilder::processNames() {
     }
   }
 
-  for (auto& iter : tableRefs) {
-    size_t index = iter.first;
-    auto& refs = iter.second;
+  for (auto& [index, refs] : tableRefs) {
     for (auto* ref : refs) {
       if (auto* callIndirect = ref->dynCast<CallIndirect>()) {
         callIndirect->table = getTableName(index);
@@ -2805,9 +2793,7 @@ void WasmBinaryBuilder::processNames() {
     }
   }
 
-  for (auto& iter : globalRefs) {
-    size_t index = iter.first;
-    auto& refs = iter.second;
+  for (auto& [index, refs] : globalRefs) {
     for (auto* ref : refs) {
       if (auto* get = ref->dynCast<GlobalGet>()) {
         get->name = getGlobalName(index);
