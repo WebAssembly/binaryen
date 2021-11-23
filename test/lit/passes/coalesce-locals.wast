@@ -2922,6 +2922,28 @@
    (local.get $1)
   )
 
+  ;; CHECK:      (func $equal-constants-zeroinit
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $equal-constants-zeroinit
+    (local $x i32)
+    (local $y i32)
+    ;; $x and $y both have the zero init value, which is identical, and they do
+    ;; not interfere.
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+
   ;; CHECK:      (func $equal-constants
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
@@ -3000,6 +3022,39 @@
     )
     (local.set $y
       (i32.const 42)
+    )
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $different-constants-nonzero
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $different-constants-nonzero
+    (local $x i32)
+    (local $y i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (local.set $y
+      (i32.const 1337)
     )
     (drop
       (local.get $x)
