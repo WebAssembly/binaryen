@@ -2542,47 +2542,51 @@ private:
         }
       }
     }
-    if (auto* res = preserveOr(curr)) {
-      return res;
+    {
+      Binary *bx, *by;
+      Expression *x, *y;
+      Const *cx, *cy;
+      if (matches(curr,
+                  binary(OrInt32,
+                         binary(&bx, any(&x), ival(&cx)),
+                         binary(&by, any(&y), ival(&cy)))) &&
+          bx->op == by->op && x->type == y->type &&
+          cx->value == cy->value && preserveOr(bx)) {
+        bx->left = Builder(*getModule())
+                     .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return bx;
+      }
     }
     return nullptr;
   }
 
-  // Aggregate rules matched by following formula F(x) | F(y) => F(x | y)
-  Expression* preserveOr(Binary* curr) {
+  // Check whether an operation preserves the Or operation through it, that is,
+  //
+  //   F(x | y) = F(x) | F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the | operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool preserveOr(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
-    {
-      // (i32(x) != 0) | (i32(y) != 0)   ==>   i32(x | y) != 0
-      // (i64(x) != 0) | (i64(y) != 0)   ==>   i64(x | y) != 0
-      Expression *x, *y;
-      if (matches(curr,
-                  binary(OrInt32,
-                         binary(Ne, any(&x), ival(0)),
-                         binary(Ne, any(&y), ival(0)))) &&
-          x->type == y->type) {
-        auto* inner = curr->left->cast<Binary>();
-        inner->left = Builder(*getModule())
-                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
-        return inner;
-      }
+
+    // (x != 0) | (y != 0)    ==>    (x | y) != 0
+    // This effectively checks if any bits are set in x or y.
+    if (matches(curr, binary(Ne, any(), ival(0)))) {
+      return true;
     }
-    {
-      // (i32(x) < 0) | (i32(y) < 0)   ==>   i32(x | y) < 0
-      // (i64(x) < 0) | (i64(y) < 0)   ==>   i64(x | y) < 0
-      Expression *x, *y;
-      if (matches(curr,
-                  binary(OrInt32,
-                         binary(LtS, any(&x), ival(0)),
-                         binary(LtS, any(&y), ival(0)))) &&
-          x->type == y->type) {
-        auto* inner = curr->left->cast<Binary>();
-        inner->left = Builder(*getModule())
-                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
-        return inner;
-      }
+
+    // (x < 0) | (y < 0)    ==>    (x | y) < 0
+    // This effectively checks if x or y have the sign bit set.
+    if (matches(curr, binary(LtS, any(), ival(0)))) {
+      return true;
     }
-    return nullptr;
+
+    return false;
   }
 
   // fold constant factors into the offset
