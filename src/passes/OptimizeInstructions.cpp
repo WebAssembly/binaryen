@@ -2550,8 +2550,8 @@ private:
                   binary(OrInt32,
                          binary(&bx, any(&x), ival(&cx)),
                          binary(&by, any(&y), ival(&cy)))) &&
-          bx->op == by->op && x->type == y->type &&
-          cx->value == cy->value && preserveOr(bx)) {
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          preserveOr(bx)) {
         bx->left = Builder(*getModule())
                      .makeBinary(Abstract::getBinary(x->type, Or), x, y);
         return bx;
