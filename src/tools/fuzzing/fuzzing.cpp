@@ -581,14 +581,18 @@ void TranslateToFuzzReader::recombine(Function* func) {
   // First, scan and group all expressions by type.
   struct Scanner
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    TranslateToFuzzReader& parent;
     // A map of all expressions, categorized by type.
     InsertOrderedMap<Type, std::vector<Expression*>> exprsByType;
+    Scanner(TranslateToFuzzReader& parent) : parent(parent) {}
 
     void visitExpression(Expression* curr) {
-      exprsByType[curr->type].push_back(curr);
+      if (parent.canBeArbitrarilyReplaced(curr)) {
+        exprsByType[curr->type].push_back(curr);
+      }
     }
   };
-  Scanner scanner;
+  Scanner scanner(*this);
   scanner.walk(func->body);
   // Potentially trim the list of possible picks, so replacements are more
   // likely to collide.
