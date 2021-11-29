@@ -258,12 +258,7 @@ else()
   endif()
   add_debug_compile_flag("-O0")
   add_debug_compile_flag("-g3")
-  if(EMSCRIPTEN)
-    # really focus on minimizing output size when compiling sources
-    add_nondebug_compile_flag("-Oz")
-  else()
-    add_nondebug_compile_flag("-O2")
-  endif()
+  add_nondebug_compile_flag("-O2")
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
