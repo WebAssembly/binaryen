@@ -108,6 +108,10 @@ bool isPopValid(Expression* catchBody) {
 }
 
 void handleBlockNestedPops(Function* func, Module& wasm) {
+  if (!wasm.features.hasExceptionHandling()) {
+    return;
+  }
+
   Builder builder(wasm);
   FindAll<Try> trys(func->body);
   for (auto* try_ : trys.list) {
