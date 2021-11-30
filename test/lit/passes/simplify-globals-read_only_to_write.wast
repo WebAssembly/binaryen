@@ -110,41 +110,6 @@
     )
   )
 )
-;; Side effects in the condition prevent the read-only-to-write optimization.
-(module
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (global $global i32 (i32.const 0))
-  (global $global (mut i32) (i32.const 0))
-  ;; CHECK:      (global $other i32 (i32.const 0))
-  (global $other (mut i32) (i32.const 0))
-  ;; CHECK:      (func $side-effects-in-condition
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block $block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $side-effects-in-condition
-    (if
-      (block (result i32)
-        (global.set $other (i32.const 2))
-        (drop (global.get $other))
-        (global.get $global)
-      )
-      (global.set $global (i32.const 1))
-    )
-  )
-)
 ;; Side effects in the body prevent the read-only-to-write optimization.
 (module
   ;; CHECK:      (type $none_=>_none (func))
@@ -388,27 +353,64 @@
   )
 )
 
+;; Using the global's value in a way that can cause side effects prevents the
+;; read-only-to-write optimization.
 (module
-  (memory 1 1)
-
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (global $once i32 (i32.const 0))
-  (global $once (mut i32) (i32.const 0))
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (memory $0 1 1)
-
-  ;; CHECK:      (func $test
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK:      (global $global (mut i32) (i32.const 0))
+  (global $global (mut i32) (i32.const 0))
+  ;; CHECK:      (global $other i32 (i32.const 0))
+  (global $other (mut i32) (i32.const 0))
+  ;; CHECK:      (func $side-effects-in-condition
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (local.tee $x
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.load
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:    (call $foo)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.set $global
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $side-effects-in-condition
+    (if
+      (if (result i32)
+        (global.get $global) ;; the global's value may cause foo() to be called
+        (call $foo)
+        (i32.const 1)
+      )
+      (global.set $global (i32.const 1))
+    )
+  )
+
+  ;; CHECK:      (func $foo (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $foo (result i32)
+    (unreachable)
+  )
+)
+
+;; As above, but now the global's value is not the condition of the if, so there
+;; is no problem.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (global $global i32 (i32.const 0))
+  (global $global (mut i32) (i32.const 0))
+  ;; CHECK:      (global $other i32 (i32.const 0))
+  (global $other (mut i32) (i32.const 0))
+  ;; CHECK:      (func $side-effects-in-condition-2
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (call $foo)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -416,29 +418,59 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
-    (local $x i32)
-    (local $y i32)
+  (func $side-effects-in-condition-2
     (if
-      ;; The condition has various side effects, but they do not cause any
-      ;; problems: $once is read in a way that only affects whether we get to
-      ;; the set of $once - its value does not cause anything else observable.
-      (select
-        (local.tee $x
-          (i32.const 1)
-        )
-        (i32.load
-          (i32.const 2)
-        )
-        (global.get $once)
-      )
-      (global.set $once
+      (if (result i32)
+        (call $foo) ;; these side effects are not a problem, as the global's
+                    ;; value cannot reach them.
         (i32.const 1)
+        (global.get $global) ;; the global's value flows out through the if,
+                             ;; safely
       )
+      (global.set $global (i32.const 1))
+    )
+  )
+
+  ;; CHECK:      (func $foo (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $foo (result i32)
+    (unreachable)
+  )
+)
+
+;; As above, but now the global's value flows into a side effect.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $global (mut i32) (i32.const 0))
+  (global $global (mut i32) (i32.const 0))
+  ;; CHECK:      (global $other i32 (i32.const 0))
+  (global $other (mut i32) (i32.const 0))
+  ;; CHECK:      (func $side-effects-in-condition-3
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.set $global
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $side-effects-in-condition-3
+    (local $temp i32)
+    (if
+      (local.tee $temp
+        (global.get $global) ;; the global's value flows into a place that has
+      )                      ;; side effects, so it may be noticed.
+      (global.set $global (i32.const 1))
     )
   )
 )
 
+;; As above, but now the global's value flows through multiple layers of
+;; things that have no side effects and are safe.
 (module
   (memory 1 1)
 
@@ -449,7 +481,7 @@
 
   ;; CHECK:      (memory $0 1 1)
 
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $side-effects-in-condition-4
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (if
@@ -461,7 +493,10 @@
   ;; CHECK-NEXT:     (i32.load
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -469,11 +504,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $side-effects-in-condition-4
     (local $x i32)
     (local $y i32)
     (if
-      ;; As above, but with an extra eqz
       (i32.eqz
         (select
           (local.tee $x
@@ -482,7 +516,10 @@
           (i32.load
             (i32.const 2)
           )
-          (global.get $once)
+          (i32.add
+            (global.get $once)
+            (i32.const 1337)
+          )
         )
       )
       (global.set $once
@@ -491,4 +528,3 @@
     )
   )
 )
-
