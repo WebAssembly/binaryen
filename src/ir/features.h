@@ -22,9 +22,7 @@
 #include <wasm-traversal.h>
 #include <wasm.h>
 
-namespace wasm {
-
-namespace Features {
+namespace wasm::Features {
 
 inline FeatureSet get(UnaryOp op) {
   FeatureSet ret;
@@ -166,8 +164,6 @@ inline FeatureSet get(BinaryOp op) {
   return ret;
 }
 
-} // namespace Features
-
-} // namespace wasm
+} // namespace wasm::Features
 
 #endif // wasm_ir_features_h

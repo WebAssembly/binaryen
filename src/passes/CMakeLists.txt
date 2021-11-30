@@ -9,6 +9,7 @@ add_custom_command(
 FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   pass.cpp
+  test_passes.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
   AvoidReinterprets.cpp
@@ -68,6 +69,7 @@ set(passes_SOURCES
   RoundTrip.cpp
   SetGlobals.cpp
   StackIR.cpp
+  SignatureRefining.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp

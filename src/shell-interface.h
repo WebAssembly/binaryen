@@ -152,7 +152,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   Literals callTable(Name tableName,
                      Index index,
-                     Signature sig,
+                     HeapType sig,
                      LiteralList& arguments,
                      Type results,
                      ModuleInstance& instance) override {
@@ -173,8 +173,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (!func) {
       trap("uninitialized table element");
     }
-    if (sig != func->getSig()) {
-      trap("callIndirect: function signatures don't match");
+    if (sig != func->type) {
+      trap("callIndirect: function types don't match");
     }
     if (func->getParams().size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");

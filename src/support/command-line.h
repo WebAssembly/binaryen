@@ -57,7 +57,8 @@ public:
                const std::string& shortName,
                const std::string& description,
                Arguments arguments,
-               const Action& action);
+               const Action& action,
+               bool hidden = false);
   Options& add_positional(const std::string& name,
                           Arguments arguments,
                           const Action& action);
@@ -70,6 +71,7 @@ private:
     std::string description;
     Arguments arguments;
     Action action;
+    bool hidden;
     size_t seen;
   };
   std::vector<Option> options;

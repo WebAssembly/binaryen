@@ -31,9 +31,7 @@
 #include "ir/literal-utils.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace DataFlow {
+namespace wasm::DataFlow {
 
 // Main logic to generate IR for a function. This is implemented as a
 // visitor on the wasm, where visitors return a Node* that either
@@ -797,8 +795,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   const Name FAKE_CALL = "fake$dfo$call";
 };
 
-} // namespace DataFlow
-
-} // namespace wasm
+} // namespace wasm::DataFlow
 
 #endif // wasm_dataflow_graph_h

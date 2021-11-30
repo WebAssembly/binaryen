@@ -381,8 +381,7 @@ private:
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     UniqueDeferredQueue<Expression*> work;
-    for (auto& pair : localGraph.locations) {
-      auto* curr = pair.first;
+    for (auto& [curr, _] : localGraph.locations) {
       work.push(curr);
     }
     // the constant value, or none if not a constant

@@ -20,6 +20,7 @@
 #include <iosfwd>
 
 namespace Colors {
+
 void setEnabled(bool enabled);
 bool isEnabled();
 
@@ -58,6 +59,7 @@ inline void green(std::ostream& stream) {}
 inline void blue(std::ostream& stream) {}
 inline void bold(std::ostream& stream) {}
 #endif
+
 } // namespace Colors
 
 #endif // wasm_support_color_h

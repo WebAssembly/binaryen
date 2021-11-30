@@ -59,8 +59,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     std::vector<std::vector<LocalSet*>> setsForLocal(numLocals);
     std::vector<std::vector<LocalGet*>> getsForLocal(numLocals);
 
-    for (auto& kv : localGraph.locations) {
-      auto* curr = kv.first;
+    for (auto& [curr, _] : localGraph.locations) {
       if (auto* set = curr->dynCast<LocalSet>()) {
         setsForLocal[set->index].push_back(set);
       } else {
@@ -78,9 +77,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     std::unordered_set<Index> usesDefault;
 
     if (getModule()->features.hasGCNNLocals()) {
-      for (auto& kv : localGraph.getSetses) {
-        auto* get = kv.first;
-        auto& sets = kv.second;
+      for (auto& [get, sets] : localGraph.getSetses) {
         auto index = get->index;
         if (func->isVar(index) &&
             std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {

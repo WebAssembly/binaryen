@@ -165,7 +165,7 @@ if(MSVC)
       add_compile_flag("/arch:sse2")
     endif()
   endif()
-  add_compile_flag("/std:c++17") # VS2017 generates "error C2429: attribute 'fallthrough' requires compiler flag '/std:c++17'"
+  add_compile_flag("/std:c++${CXX_STANDARD}")
   add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
   # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
   add_compile_flag("/wd4267")
@@ -258,12 +258,7 @@ else()
   endif()
   add_debug_compile_flag("-O0")
   add_debug_compile_flag("-g3")
-  if(EMSCRIPTEN)
-    # really focus on minimizing output size when compiling sources
-    add_nondebug_compile_flag("-Oz")
-  else()
-    add_nondebug_compile_flag("-O2")
-  endif()
+  add_nondebug_compile_flag("-O2")
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:

@@ -152,7 +152,8 @@ void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
     table->module = ENV;
     table->base = "__indirect_function_table";
   }
-  f->body = builder.makeCallIndirect(wasm->tables[0]->name, fptr, args, sig);
+  f->body =
+    builder.makeCallIndirect(wasm->tables[0]->name, fptr, args, funcType);
 
   wasm->addFunction(std::move(f));
   exportFunction(*wasm, name, true);
