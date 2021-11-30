@@ -69,11 +69,11 @@ struct GlobalInfo {
   //
   //   if (global == X) { global = Y }
   //
-  // We don't allow any side effects aside from writing to |global| in the if
-  // body. But we do allow other things to happen in the if condition, so long
-  // as the global is read only in order to decide to write that same global.
-  // If all we have are such reads only to write then the global is really not
-  // necessary, even though there are both reads and writes of it.
+  // The if's condition only uses |global| in order to decide to write to that
+  // same global, so it is "read, but only to write." If all we have are such
+  // reads only to write then the global is really not necessary, even though
+  // there are both reads and writes of it, and regardless of what the written
+  // values are etc.
   //
   // This pattern can show up in global initialization code, where in the block
   // alongside "global = Y" there was some useful code, but the optimizer
@@ -127,22 +127,21 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     }
 
     auto global =
-      conditionReadsGlobalWhichIsOnlyWritten(curr->condition, curr->ifTrue);
+      readsGlobalOnlyToWriteIt(curr->condition, curr->ifTrue);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
     }
   }
 
-  // Checks if second only writes some global, and the first reads that global
-  // in order to decide if to write it. It doesn't matter how the first uses
-  // that read value from that global, so long as it is only used to determine
-  // the result of the first expression. This is a simple case:
+  // Given a condition and some code that is executed based on the condition,
+  // check if the condition reads from some global in order to make the decision
+  // whether to run that code, and that code only writes to that global, which
+  // means the global is "read, but only to be written."
   //
-  //      |  first  |    | second  |
-  //  if (global == 0) { global = 1; }
-  //
-  // But we also allow this:
+  // The condition may also do other things than read from that global - it may
+  // compare it to a value, or negate it, or anything else, so long as the value
+  // of the global is only used to decide to run the code, like this:
   //
   //  if (global % 17 < 4) { global = 1 }
   //
@@ -152,11 +151,12 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   //  if (global ? foo() : bar()) { .. }
   //
   // Here ? : is another nested if, and we end up running different code based
-  // on global, which is noticeable.
+  // on global, which is noticeable: the global is *not* only read in order to
+  // write that global, but also for other reasons.
   //
   // Returns the global name if things like up, or a null name otherwise.
-  Name conditionReadsGlobalWhichIsOnlyWritten(Expression* condition,
-                                              Expression* code) {
+  Name readsGlobalOnlyToWriteIt(Expression* condition,
+                                Expression* code) {
     // See if writing a global is the only effect the code has. (Note that we
     // don't need to care about the case where the code has no effects at
     // all - other passes would handle that trivial situation.)
@@ -176,55 +176,65 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       return Name();
     }
 
-    // See if the condition has any other effects that could be a problem. If it has
-    // no side effects at all, then there is nothing noticeable. (Or, if it has
-    // side effects the optimizer is allowed to remove, that is fine too - we
-    // can ignore them too.)
+    // If the condition has no other (non-removable) effects other than reading
+    // that global then we have found what we looked for.
     if (!conditionEffects.hasUnremovableSideEffects()) {
-      // No side effects means there is nothing noticeable.
       return writtenGlobal;
     }
 
-    // There are unremovable side effects of some form. Handle at least one more
-    // case that is fairly common in practice, where multiple ifs are fused
-    // together to form this:
+    // There are unremovable side effects of some form. However, they may not
+    // be related to the reading of the global, that is, the global's value may
+    // not flow to anything that uses it in a dangerous way. It *would* be
+    // dangerous for the global's value to flow into a nested if condition, as
+    // mentioned in the comment earlier, but if it flows into an if arm for
+    // example then that is safe, so long as the final place it flows out to is
+    // the condition.
     //
-    //  if (global ? .. : ..) { global = 1 }
-    //
-    // Here ? is a select inside the if, which combines some check on |global|
-    // with some other check. For example,
-    //
-    //  global ? 0 : x = 10
-    //
-    // That has the side effect of writing to x, but that is ok, all children of
-    // a select execute unconditionally anyhow, so |global|'s value is not used
-    // to cause anything noticeable. To check that, see if the get of the global
-    // is a child of condition, and that condition does not do anything dangerous with
-    // that value.
-    //
-    // Also, first look through a unary such as an EqZ.
-    if (auto* unary = condition->dynCast<Unary>()) {
-      condition = unary->value;
-    }
-    for (auto* conditionChild : ChildIterator(condition)) {
-      if (auto* get = conditionChild->dynCast<GlobalGet>()) {
-        if (get->name == writtenGlobal) {
-          // The get is indeed a child of condition. Verify that condition uses that
-          // value in a safe way.
-          EffectAnalyzer immediateConditionEffects(getPassOptions(), *getModule());
-          immediateConditionEffects.visit(condition);
-          if (!immediateConditionEffects.hasUnremovableSideEffects()) {
-            return writtenGlobal;
-          }
+    // To check this, find the get of the global in the condition, and look up
+    // through its parents to see how the global's value is used.
+    struct FlowScanner : public ExpressionStackWalker<FlowScanner, UnifiedExpressionVisitor<FlowScanner>> {
+      Name writtenGlobal;
+      PassOptions& passOptions;
+      Module& wasm;
 
-          // Otherwise, exit: there is no point scanning the other children, as
-          // we found the one we were looking for.
-          break;
+      bool ok = true;
+
+      void visitExpression(Expression* curr) {
+        if (auto* get = curr->dynCast<GlobalGet>()) {
+          if (get->name == writtenGlobal) {
+            // We found the get of the global. Check where its value flows to,
+            // and how it is used there.
+            assert(expressionStack.back() == get);
+            for (Index i = 0; i < expressionStack.size() - 1; i++) {
+              // Consider one pair of parent->child, and check if the parent
+              // causes any problems when the child's value reaches it.
+              auto* parent = expressionStack[i];
+              auto* child = expressionStack[i + 1];
+              EffectAnalyzer parentEffects(passOptions, wasm);
+              parentEffects.visit(parent);
+              if (parentEffects.hasUnremovableSideEffects()) {
+                // The parent has some side effect, and the child's value may
+                // be used to determine its manner, so this is dangerous.
+                ok = false;
+                break;
+              }
+
+              if (auto* iff = parent->dynCast<If>()) {
+                if (iff->condition == child) {
+                // The child is used to decide what code to run, which is
+                // dangerous.
+                ok = false;
+                break;
+              }
+            }
+          }
         }
       }
-    }
+    };
 
-    return Name();
+    FlowScanner scanner{writtenGlobal, getPassOptions(), *getModule()};
+    scanner.walk(condition);
+    return scanner.ok ? writtenGlobal : Name();
   }
 
   void visitFunction(Function* curr) {
@@ -258,7 +268,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     }
 
     auto global =
-      conditionReadsGlobalWhichIsOnlyWritten(iff->condition, list[1]);
+      readsGlobalOnlyToWriteIt(iff->condition, list[1]);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
