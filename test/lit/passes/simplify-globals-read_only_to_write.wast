@@ -323,26 +323,27 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (global $once i32 (i32.const 0))
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $clinit
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block $block (result i32)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   (call $foo
+  ;; CHECK-NEXT:    (global.get $once)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $clinit
-    ;; As above, but the optimization fails because the if body has effects.
+    ;; As above, but the optimization fails because the if condition has effects.
     (if
-      (block (result i32)
-        (unreachable)
+      (call $foo ;; This call may have side effects and it receives the global's
+                 ;; value, which is dangerous.
         (global.get $once)
       )
       (return)
@@ -350,6 +351,13 @@
     (global.set $once
       (i32.const 1)
     )
+  )
+
+  ;; CHECK:      (func $foo (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $foo (param $x i32) (result i32)
+    (unreachable)
   )
 )
 
