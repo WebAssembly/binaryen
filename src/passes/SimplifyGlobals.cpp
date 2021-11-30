@@ -197,6 +197,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       PassOptions& passOptions;
       Module& wasm;
 
+      FlowScanner(Name writtenGlobal, PassOptions& passOptions, Module& wasm) : writtenGlobal(writtenGlobal), passOptions(passOptions), wasm(wasm) {}
+
       bool ok = true;
 
       void visitExpression(Expression* curr) {
@@ -221,10 +223,11 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
               if (auto* iff = parent->dynCast<If>()) {
                 if (iff->condition == child) {
-                // The child is used to decide what code to run, which is
-                // dangerous.
-                ok = false;
-                break;
+                  // The child is used to decide what code to run, which is
+                  // dangerous.
+                  ok = false;
+                  break;
+                }
               }
             }
           }
@@ -232,7 +235,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       }
     };
 
-    FlowScanner scanner{writtenGlobal, getPassOptions(), *getModule()};
+    FlowScanner scanner(writtenGlobal, getPassOptions(), *getModule());
     scanner.walk(condition);
     return scanner.ok ? writtenGlobal : Name();
   }
