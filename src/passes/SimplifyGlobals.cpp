@@ -126,8 +126,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       return;
     }
 
-    auto global =
-      readsGlobalOnlyToWriteIt(curr->condition, curr->ifTrue);
+    auto global = readsGlobalOnlyToWriteIt(curr->condition, curr->ifTrue);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
@@ -155,8 +154,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
   // write that global, but also for other reasons.
   //
   // Returns the global name if things like up, or a null name otherwise.
-  Name readsGlobalOnlyToWriteIt(Expression* condition,
-                                Expression* code) {
+  Name readsGlobalOnlyToWriteIt(Expression* condition, Expression* code) {
     // See if writing a global is the only effect the code has. (Note that we
     // don't need to care about the case where the code has no effects at
     // all - other passes would handle that trivial situation.)
@@ -192,12 +190,15 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     //
     // To check this, find the get of the global in the condition, and look up
     // through its parents to see how the global's value is used.
-    struct FlowScanner : public ExpressionStackWalker<FlowScanner, UnifiedExpressionVisitor<FlowScanner>> {
+    struct FlowScanner
+      : public ExpressionStackWalker<FlowScanner,
+                                     UnifiedExpressionVisitor<FlowScanner>> {
       Name writtenGlobal;
       PassOptions& passOptions;
       Module& wasm;
 
-      FlowScanner(Name writtenGlobal, PassOptions& passOptions, Module& wasm) : writtenGlobal(writtenGlobal), passOptions(passOptions), wasm(wasm) {}
+      FlowScanner(Name writtenGlobal, PassOptions& passOptions, Module& wasm)
+        : writtenGlobal(writtenGlobal), passOptions(passOptions), wasm(wasm) {}
 
       bool ok = true;
 
@@ -270,8 +271,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       return;
     }
 
-    auto global =
-      readsGlobalOnlyToWriteIt(iff->condition, list[1]);
+    auto global = readsGlobalOnlyToWriteIt(iff->condition, list[1]);
     if (global.is()) {
       // This is exactly the pattern we sought!
       (*infos)[global].readOnlyToWrite++;
