@@ -1,10 +1,14 @@
-name: Build Release
+name: Create Release
 
-# Trigger whenever a release is created
+# Trigger whenever a tag is created/updated
+
 on:
-  release:
-    types:
-      - created
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -67,24 +71,12 @@ jobs:
         echo "::set-output name=shasum::$SHASUM"
 
     - name: upload tarball
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.tarball }}
-        asset_name: ${{ steps.archive.outputs.tarball }}
-        asset_content_type: application/gzip
-
-    - name: upload shasum
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.shasum }}
-        asset_name: ${{ steps.archive.outputs.shasum }}
-        asset_content_type: text/plain
+        draft: true
+        files: |
+          ${{ steps.archive.outputs.tarball }}
+          ${{ steps.archive.outputs.shasum }}
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
@@ -105,7 +97,7 @@ jobs:
     - name: install packages
       run: |
         ./alpine.sh apk update
-        ./alpine.sh apk add build-base cmake git python3 clang ninja
+        ./alpine.sh apk add build-base cmake git python3 clang ninja py3-pip
 
     - name: install python dev dependencies
       run: ./alpine.sh pip3 install -r requirements-dev.txt
@@ -136,21 +128,9 @@ jobs:
         echo "::set-output name=shasum::$SHASUM"
 
     - name: upload tarball
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.tarball }}
-        asset_name: ${{ steps.archive.outputs.tarball }}
-        asset_content_type: application/gzip
-
-    - name: upload shasum
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./${{ steps.archive.outputs.shasum }}
-        asset_name: ${{ steps.archive.outputs.shasum }}
-        asset_content_type: text/plain
+        draft: true
+        files: |
+          ${{ steps.archive.outputs.tarball }}
+          ${{ steps.archive.outputs.shasum }}
