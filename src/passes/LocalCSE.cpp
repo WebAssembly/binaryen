@@ -204,12 +204,12 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
 
 struct Scanner
   : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
-  PassOptions options;
+  PassOptions& options;
 
   // Request info for all expressions ever seen.
   RequestInfoMap& requestInfos;
 
-  Scanner(PassOptions options, RequestInfoMap& requestInfos)
+  Scanner(PassOptions& options, RequestInfoMap& requestInfos)
     : options(options), requestInfos(requestInfos) {}
 
   // Currently active hashed expressions in the current basic block. If we see
@@ -351,10 +351,10 @@ struct Scanner
 // make Applier ignore them.
 struct Checker
   : public LinearExecutionWalker<Checker, UnifiedExpressionVisitor<Checker>> {
-  PassOptions options;
+  PassOptions& options;
   RequestInfoMap& requestInfos;
 
-  Checker(PassOptions options, RequestInfoMap& requestInfos)
+  Checker(PassOptions& options, RequestInfoMap& requestInfos)
     : options(options), requestInfos(requestInfos) {}
 
   struct ActiveOriginalInfo {
@@ -529,7 +529,7 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
   Pass* create() override { return new LocalCSE(); }
 
   void doWalkFunction(Function* func) {
-    auto options = getPassOptions();
+    auto& options = getPassOptions();
 
     RequestInfoMap requestInfos;
 
