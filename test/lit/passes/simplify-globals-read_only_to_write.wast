@@ -602,6 +602,68 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $almost-nested-pattern
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (global.get $once)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.set $once
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (global.get $once)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.set $once
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $almost-nested-pattern
+    (local $x i32)
+    (local $y i32)
+    (if
+      (block (result i32)
+        ;; This is almost the nested pattern, but not quite, as it has an
+        ;; "else" arm.
+        (if
+          (i32.eqz
+            (global.get $once)
+          )
+          (global.set $once
+            (i32.const 1)
+          )
+          (nop) ;; This breaks the pattern we are looking for.
+        )
+        (i32.eq
+          (global.get $once)
+          (i32.const 0)
+        )
+      )
+      (global.set $once
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (global $once i32 (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
