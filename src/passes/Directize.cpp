@@ -153,7 +153,7 @@ private:
       return replaceWithUnreachable(operands);
     }
     auto* func = getModule()->getFunction(name);
-    if (original->sig != func->getSig()) {
+    if (original->heapType != func->type) {
       return replaceWithUnreachable(operands);
     }
 
@@ -196,8 +196,8 @@ struct Directize : public Pass {
       });
 
     TablesWithSet tablesWithSet;
-    for (auto& kv : analysis.map) {
-      for (auto name : kv.second) {
+    for (auto& [_, names] : analysis.map) {
+      for (auto name : names) {
         tablesWithSet.insert(name);
       }
     }

@@ -267,14 +267,14 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (curr->isReturn && curr->sig.results == Type::i64) {
+    if (curr->isReturn && curr->heapType.getSignature().results == Type::i64) {
       Fatal()
         << "i64 to i32 lowering of return_call values not yet implemented";
     }
     visitGenericCall<CallIndirect>(
       curr, [&](std::vector<Expression*>& args, Type results) {
         std::vector<Type> params;
-        for (const auto& param : curr->sig.params) {
+        for (const auto& param : curr->heapType.getSignature().params) {
           if (param == Type::i64) {
             params.push_back(Type::i32);
             params.push_back(Type::i32);

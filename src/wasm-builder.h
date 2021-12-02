@@ -273,12 +273,13 @@ public:
   CallIndirect* makeCallIndirect(const Name table,
                                  Expression* target,
                                  const T& args,
-                                 Signature sig,
+                                 HeapType heapType,
                                  bool isReturn = false) {
+    assert(heapType.isSignature());
     auto* call = wasm.allocator.alloc<CallIndirect>();
     call->table = table;
-    call->sig = sig;
-    call->type = sig.results;
+    call->heapType = heapType;
+    call->type = heapType.getSignature().results;
     call->target = target;
     call->operands.set(args);
     call->isReturn = isReturn;

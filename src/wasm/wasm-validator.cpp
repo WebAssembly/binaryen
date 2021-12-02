@@ -445,7 +445,12 @@ private:
   }
 
   template<typename T>
-  void validateCallParamsAndResult(T* curr, Signature sig) {
+  void validateCallParamsAndResult(T* curr, HeapType sigType) {
+    if (!shouldBeTrue(
+          sigType.isSignature(), curr, "Heap type must be a signature type")) {
+      return;
+    }
+    auto sig = sigType.getSignature();
     if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
                       curr,
                       "call* param number must match")) {
@@ -488,8 +493,7 @@ void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) {
     return;
   }
-  bool inserted;
-  std::tie(std::ignore, inserted) = labelNames.insert(name);
+  auto [_, inserted] = labelNames.insert(name);
   shouldBeTrue(
     inserted,
     name,
@@ -792,7 +796,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->getSig());
+  validateCallParamsAndResult(curr, target->type);
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -812,7 +816,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
     }
   }
 
-  validateCallParamsAndResult(curr, curr->sig);
+  validateCallParamsAndResult(curr, curr->heapType);
 }
 
 void FunctionValidator::visitConst(Const* curr) {
@@ -2322,8 +2326,7 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
     shouldBeTrue(curr->target->type.isFunction(),
                  curr,
                  "call_ref target must be a function reference");
-    validateCallParamsAndResult(
-      curr, curr->target->type.getHeapType().getSignature());
+    validateCallParamsAndResult(curr, curr->target->type.getHeapType());
   }
 }
 
@@ -2866,9 +2869,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       }
       // check if a node is a duplicate - expressions must not be seen more than
       // once
-      bool inserted;
-      std::tie(std::ignore, inserted) = seen.insert(curr);
-      if (!inserted) {
+      if (!seen.insert(curr).second) {
         std::ostringstream ss;
         ss << "expression seen more than once in the tree in " << scope
            << " on " << curr << '\n';

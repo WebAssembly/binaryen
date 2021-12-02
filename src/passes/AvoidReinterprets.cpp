@@ -54,13 +54,12 @@ static Load* getSingleLoad(LocalGraph* localGraph,
     }
     auto* value = Properties::getFallthrough(set->value, passOptions, module);
     if (auto* parentGet = value->dynCast<LocalGet>()) {
-      if (seen.count(parentGet)) {
-        // We are in a cycle of gets, in unreachable code.
-        return nullptr;
+      if (seen.emplace(parentGet).second) {
+        get = parentGet;
+        continue;
       }
-      get = parentGet;
-      seen.insert(get);
-      continue;
+      // We are in a cycle of gets, in unreachable code.
+      return nullptr;
     }
     if (auto* load = value->dynCast<Load>()) {
       return load;
@@ -117,9 +116,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
   void optimize(Function* func) {
     std::set<Load*> unoptimizables;
     auto indexType = getModule()->memory.indexType;
-    for (auto& pair : infos) {
-      auto* load = pair.first;
-      auto& info = pair.second;
+    for (auto& [load, info] : infos) {
       if (info.reinterpreted && canReplaceWithReinterpret(load)) {
         // We should use another load here, to avoid reinterprets.
         info.ptrLocal = Builder::addVar(func, indexType);

@@ -72,8 +72,6 @@
 //    and DELEGATE_GET_FIELD is, then DELEGATE_FIELD_SCOPE_NAME_USE is called on
 //    them.
 //
-// DELEGATE_FIELD_SIGNATURE(id, field) - called for a Signature.
-//
 // DELEGATE_FIELD_TYPE(id, field) - called for a Type.
 //
 // DELEGATE_FIELD_HEAPTYPE(id, field) - called for a HeapType.
@@ -160,10 +158,6 @@
 #endif
 #endif
 
-#ifndef DELEGATE_FIELD_SIGNATURE
-#error please define DELEGATE_FIELD_SIGNATURE(id, field)
-#endif
-
 #ifndef DELEGATE_FIELD_TYPE
 #error please define DELEGATE_FIELD_TYPE(id, field)
 #endif
@@ -233,7 +227,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(CallIndirect, target);
     DELEGATE_FIELD_NAME(CallIndirect, table);
     DELEGATE_FIELD_CHILD_VECTOR(CallIndirect, operands);
-    DELEGATE_FIELD_SIGNATURE(CallIndirect, sig);
+    DELEGATE_FIELD_HEAPTYPE(CallIndirect, heapType);
     DELEGATE_FIELD_INT(CallIndirect, isReturn);
     DELEGATE_END(CallIndirect);
     break;
@@ -733,7 +727,6 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_SCOPE_NAME_DEF
 #undef DELEGATE_FIELD_SCOPE_NAME_USE
 #undef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
-#undef DELEGATE_FIELD_SIGNATURE
 #undef DELEGATE_FIELD_TYPE
 #undef DELEGATE_FIELD_HEAPTYPE
 #undef DELEGATE_FIELD_ADDRESS
