@@ -227,7 +227,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
                 if (iff->condition == child) {
                   // The child is used to decide what code to run, which is
                   // dangerous: check what effects it causes. If it is a nested
-                  // appearance of the pattern, that is fine.
+                  // appearance of the pattern, that is one case that we know is
+                  // actually safe.
                   if (!iff->ifFalse &&
                     globalUseScanner.readsGlobalOnlyToWriteIt(iff->condition, iff->ifTrue) == writtenGlobal) {
                     // This is safe, and we can stop here: the value does not
@@ -522,7 +523,6 @@ struct SimplifyGlobals : public Pass {
       // There is at least one write in each read-only-to-write location, unless
       // our logic is wrong somewhere.
       assert(info.written >= info.readOnlyToWrite);
-std::cout << global->name << " : " << info.read << " : " << info.written << " : " << info.readOnlyToWrite << '\n';
 
       if (!info.read || !info.nonInitWritten || onlyReadOnlyToWrite) {
         globalsNotNeedingSets.insert(global->name);
@@ -550,7 +550,6 @@ std::cout << global->name << " : " << info.read << " : " << info.written << " : 
         //       iterations help, like if we remove a set that turns something
         //       into a read-only-to-write.
         if (onlyReadOnlyToWrite) {
-        std::cout << global->name << '\n';
           more = true;
         }
       }

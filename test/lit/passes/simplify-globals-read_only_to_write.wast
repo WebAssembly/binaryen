@@ -536,3 +536,138 @@
     )
   )
 )
+
+(module
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once i32 (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $nested-pattern
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-pattern
+    (local $x i32)
+    (local $y i32)
+    (if
+      (block (result i32)
+        ;; Another appearance of the pattern nested inside this one. This should
+        ;; not prevent us from optimizing.
+        (if
+          (i32.eqz
+            (global.get $once)
+          )
+          (global.set $once
+            (i32.const 1)
+          )
+        )
+        (i32.eq
+          (global.get $once)
+          (i32.const 0)
+        )
+      )
+      (global.set $once
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once i32 (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $nested-pattern-thrice
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (block $block1 (result i32)
+  ;; CHECK-NEXT:       (if
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-pattern-thrice
+    (local $x i32)
+    (local $y i32)
+    (if
+      (block (result i32)
+        (if
+          (i32.eqz
+            (block (result i32)
+              ;; A third nested appearance.
+              (if
+                (global.get $once)
+                (global.set $once
+                  (i32.const 1)
+                )
+              )
+              (global.get $once)
+            )
+          )
+          (global.set $once
+            (i32.const 1)
+          )
+        )
+        (i32.eq
+          (global.get $once)
+          (i32.const 0)
+        )
+      )
+      (global.set $once
+        (i32.const 1)
+      )
+    )
+  )
+)
