@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v103
+----
+
 - The EffectAnalyzer now takes advantage of immutability of globals. To achieve
   that it must have access to the module. That is already the case in the C++
   API, but the JS API allowed one to optionally not add a module when calling

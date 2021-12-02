@@ -1129,7 +1129,7 @@ struct OptimizeInstructions
         // Otherwise, if this is not a tee, then no value falls through. The
         // ref.as_non_null acts as a null check here, basically. If we are
         // ignoring such traps, we can remove it.
-        auto passOptions = getPassOptions();
+        auto& passOptions = getPassOptions();
         if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
           curr->value = as->value;
         }
@@ -1540,7 +1540,7 @@ struct OptimizeInstructions
     }
 
     Builder builder(*getModule());
-    auto passOptions = getPassOptions();
+    auto& passOptions = getPassOptions();
 
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
@@ -1869,7 +1869,7 @@ private:
     // assume things like local.get's of the same index being identical. (It is
     // also ok to have side effects here, if we can remove them, as we are also
     // checking if we can remove the two inputs anyhow.)
-    auto passOptions = getPassOptions();
+    auto& passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, *getModule(), left)
           .hasUnremovableSideEffects() ||
         EffectAnalyzer(passOptions, *getModule(), right)
@@ -3292,7 +3292,7 @@ private:
   }
 
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
-    PassOptions options = getPassOptions();
+    auto& options = getPassOptions();
 
     if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
@@ -3371,7 +3371,7 @@ private:
       return nullptr;
     }
 
-    PassOptions options = getPassOptions();
+    auto& options = getPassOptions();
     Builder builder(*getModule());
 
     auto* csize = memFill->size->cast<Const>();
