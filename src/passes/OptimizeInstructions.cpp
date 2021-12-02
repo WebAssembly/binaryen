@@ -2543,6 +2543,15 @@ private:
       }
     }
     {
+      // Binary operations that preserve a bitwise OR can be
+      // reordered. If F(x) = binary(x, c), and F(x) preserves OR,
+      // that is,
+      //
+      //   F(x) | F(y) == F(x | y)
+      //
+      // Then also
+      //
+      //   binary(x, c) | binary(y, c)  =>  binary(x | y, c)
       Binary *bx, *by;
       Expression *x, *y;
       Const *cx, *cy;
