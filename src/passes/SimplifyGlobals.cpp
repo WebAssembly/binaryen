@@ -193,12 +193,13 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     struct FlowScanner
       : public ExpressionStackWalker<FlowScanner,
                                      UnifiedExpressionVisitor<FlowScanner>> {
+      GlobalUseScanner& globalUseScanner;
       Name writtenGlobal;
       PassOptions& passOptions;
       Module& wasm;
 
-      FlowScanner(Name writtenGlobal, PassOptions& passOptions, Module& wasm)
-        : writtenGlobal(writtenGlobal), passOptions(passOptions), wasm(wasm) {}
+      FlowScanner(GlobalUseScanner& globalUseScanner, Name writtenGlobal, PassOptions& passOptions, Module& wasm)
+        : globalUseScanner(globalUseScanner), writtenGlobal(writtenGlobal), passOptions(passOptions), wasm(wasm) {}
 
       bool ok = true;
 
@@ -208,7 +209,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
             // We found the get of the global. Check where its value flows to,
             // and how it is used there.
             assert(expressionStack.back() == get);
-            for (Index i = 0; i < expressionStack.size() - 1; i++) {
+            for (int i = int(expressionStack.size()) - 2; i >= 0; i--) {
               // Consider one pair of parent->child, and check if the parent
               // causes any problems when the child's value reaches it.
               auto* parent = expressionStack[i];
@@ -225,7 +226,16 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
               if (auto* iff = parent->dynCast<If>()) {
                 if (iff->condition == child) {
                   // The child is used to decide what code to run, which is
-                  // dangerous.
+                  // dangerous: check what effects it causes. If it is a nested
+                  // appearance of the pattern, that is fine.
+                  if (!iff->ifFalse &&
+                    globalUseScanner.readsGlobalOnlyToWriteIt(iff->condition, iff->ifTrue) == writtenGlobal) {
+                    // This is safe, and we can stop here: the value does not
+                    // flow any further.
+                    break;
+                  }
+
+                  // Otherwise, we found a problem, and can stop.
                   ok = false;
                   break;
                 }
@@ -236,7 +246,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       }
     };
 
-    FlowScanner scanner(writtenGlobal, getPassOptions(), *getModule());
+    FlowScanner scanner(*this, writtenGlobal, getPassOptions(), *getModule());
     scanner.walk(condition);
     return scanner.ok ? writtenGlobal : Name();
   }
@@ -512,6 +522,7 @@ struct SimplifyGlobals : public Pass {
       // There is at least one write in each read-only-to-write location, unless
       // our logic is wrong somewhere.
       assert(info.written >= info.readOnlyToWrite);
+std::cout << global->name << " : " << info.read << " : " << info.written << " : " << info.readOnlyToWrite << '\n';
 
       if (!info.read || !info.nonInitWritten || onlyReadOnlyToWrite) {
         globalsNotNeedingSets.insert(global->name);
@@ -539,6 +550,7 @@ struct SimplifyGlobals : public Pass {
         //       iterations help, like if we remove a set that turns something
         //       into a read-only-to-write.
         if (onlyReadOnlyToWrite) {
+        std::cout << global->name << '\n';
           more = true;
         }
       }
