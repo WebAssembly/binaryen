@@ -671,3 +671,75 @@
     )
   )
 )
+
+(module
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $nested-pattern
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (global.get $once)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (global.get $once)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.set $once
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (global.get $once)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.set $once
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-pattern
+    (local $x i32)
+    (local $y i32)
+    (if
+      (block (result i32)
+
+        ;; As above, but adding a drop of another get. This is *not* the
+        ;; pattern we are looking for, and it will prevent us from
+        ;; optimizing as we will no longer see that the number of gets
+        ;; matches the number of read-only-to-write patterns. In the
+        ;; future we could do a more complex counting operation to handle
+        ;; this too.
+        (drop
+          (global.get $once)
+        )
+
+        (if
+          (i32.eqz
+            (global.get $once)
+          )
+          (global.set $once
+            (i32.const 1)
+          )
+        )
+        (i32.eq
+          (global.get $once)
+          (i32.const 0)
+        )
+      )
+      (global.set $once
+        (i32.const 1)
+      )
+    )
+  )
+)
