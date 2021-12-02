@@ -198,8 +198,12 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       PassOptions& passOptions;
       Module& wasm;
 
-      FlowScanner(GlobalUseScanner& globalUseScanner, Name writtenGlobal, PassOptions& passOptions, Module& wasm)
-        : globalUseScanner(globalUseScanner), writtenGlobal(writtenGlobal), passOptions(passOptions), wasm(wasm) {}
+      FlowScanner(GlobalUseScanner& globalUseScanner,
+                  Name writtenGlobal,
+                  PassOptions& passOptions,
+                  Module& wasm)
+        : globalUseScanner(globalUseScanner), writtenGlobal(writtenGlobal),
+          passOptions(passOptions), wasm(wasm) {}
 
       bool ok = true;
 
@@ -230,7 +234,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
                   // appearance of the pattern, that is one case that we know is
                   // actually safe.
                   if (!iff->ifFalse &&
-                    globalUseScanner.readsGlobalOnlyToWriteIt(iff->condition, iff->ifTrue) == writtenGlobal) {
+                      globalUseScanner.readsGlobalOnlyToWriteIt(
+                        iff->condition, iff->ifTrue) == writtenGlobal) {
                     // This is safe, and we can stop here: the value does not
                     // flow any further.
                     break;
