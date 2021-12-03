@@ -59,8 +59,8 @@ jobs:
       id: archive
       run: |
         OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
-        VERSION=${{ github.event.release.tag_name }}
-        PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
+        VERSION=$GITHUB_REF_NAME
+        PKGNAME="binaryen-$GITHUB_REF_NAME-x86_64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
         mv out/install binaryen-$VERSION
@@ -116,7 +116,7 @@ jobs:
     - name: archive
       id: archive
       run: |
-        VERSION=${{ github.event.release.tag_name }}
+        VERSION=$GITHUB_REF_NAME
         PKGNAME="binaryen-$VERSION-x86_64-linux"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
