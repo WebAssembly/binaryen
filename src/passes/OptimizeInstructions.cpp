@@ -2571,31 +2571,18 @@ private:
     using namespace Match;
     {
       // (x >>> z) op (y >>> z)    ==>   (x op y) >>> z,
+      // (x  >> z) op (y  >> z)    ==>   (x op y) >> z
       //    where op = `|`, `&`, `^`
-      BinaryOp op;
+      BinaryOp op1, op2, op3;
       Expression *x, *y, *z1, *z2;
       if (matches(curr,
-                  binary(&op,
-                         binary(ShrU, any(&x), any(&z1)),
-                         binary(ShrU, any(&y), any(&z2)))) &&
-          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z1, z2)) {
-        auto* lhs = curr->left->cast<Binary>();
-        lhs->right = y;
-        curr->right = z1;
-        std::swap(curr->op, lhs->op);
-        return curr;
-      }
-    }
-    {
-      // (x >> z) op (y >> z)    ==>   (x op y) >> z,
-      //    where op = `|`, `&`, `^`
-      BinaryOp op;
-      Expression *x, *y, *z1, *z2;
-      if (matches(curr,
-                  binary(&op,
-                         binary(ShrS, any(&x), any(&z1)),
-                         binary(ShrS, any(&y), any(&z2)))) &&
-          hasAnyBitwise(op) && areConsecutiveInputsEqualAndFoldable(z1, z2)) {
+                  binary(&op1,
+                         binary(&op2, any(&x), any(&z1)),
+                         binary(&op3, any(&y), any(&z2)))) &&
+          (op2 == op3) &&
+          (op2 == getBinary(curr->type, ShrU) ||
+           op2 == getBinary(curr->type, ShrS)) &&
+          hasAnyBitwise(op1) && areConsecutiveInputsEqualAndFoldable(z1, z2)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
         curr->right = z1;
