@@ -156,7 +156,7 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
         // normalize x + (-C)  ==>   x - C
         if (c->value.isNegative()) {
           c->value = c->value.neg();
-          curr->op = Abstract::getBinary(c->type, Sub);
+          curr->op = getBinary(c->type, Sub);
         }
         // Wasm binary encoding uses signed LEBs, which slightly favor negative
         // numbers: -64 is more efficient than +64 etc., as well as other powers
@@ -170,11 +170,8 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
             value == 0x20000000000LL || value == 0x1000000000000LL ||
             value == 0x80000000000000LL || value == 0x4000000000000000LL) {
           c->value = c->value.neg();
-          if (curr->op == Abstract::getBinary(c->type, Add)) {
-            curr->op = Abstract::getBinary(c->type, Sub);
-          } else {
-            curr->op = Abstract::getBinary(c->type, Add);
-          }
+          curr->op =
+            getBinary(c->type, curr->op == getBinary(c->type, Add) ? Sub : Add);
         }
         return curr;
       }
@@ -286,13 +283,13 @@ struct OptimizeInstructions
       canonicalize(curr);
     }
 
+    using namespace Match;
+    using namespace Abstract;
     {
       // TODO: It is an ongoing project to port more transformations to the
       // match API. Once most of the transformations have been ported, the
       // `using namespace Match` can be hoisted to function scope and this extra
       // block scope can be removed.
-      using namespace Match;
-      using namespace Abstract;
       Builder builder(*getModule());
       {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
@@ -377,8 +374,7 @@ struct OptimizeInstructions
         Expression *x, *y;
 
         // x <<>> C
-        if (matches(curr, binary(&op, any(&x), ival(&c))) &&
-            Abstract::hasAnyShift(op)) {
+        if (matches(curr, binary(&op, any(&x), ival(&c))) && hasAnyShift(op)) {
           // truncate RHS constant to effective size as:
           // i32(x) <<>> const(C & 31))
           // i64(x) <<>> const(C & 63))
@@ -391,7 +387,7 @@ struct OptimizeInstructions
         }
         if (matches(curr,
                     binary(&op, any(&x), binary(And, any(&y), ival(&c)))) &&
-            Abstract::hasAnyShift(op)) {
+            hasAnyShift(op)) {
           // i32(x) <<>> (y & 31)   ==>   x <<>> y
           // i64(x) <<>> (y & 63)   ==>   x <<>> y
           if ((c->type == Type::i32 && (c->value.geti32() & 31) == 31) ||
@@ -435,7 +431,7 @@ struct OptimizeInstructions
             !x->is<Const>() && !y->is<Const>()) {
           Builder builder(*getModule());
           return replaceCurrent(
-            builder.makeBinary(Abstract::getBinary(curr->type, Sub),
+            builder.makeBinary(getBinary(curr->type, Sub),
                                builder.makeConst(Literal::makeZero(curr->type)),
                                builder.makeBinary(curr->op, x, y)));
         }
@@ -610,7 +606,7 @@ struct OptimizeInstructions
                curr->op == DivFloat32 || curr->op == DivFloat64) {
       if (curr->left->type == curr->right->type) {
         if (auto* leftUnary = curr->left->dynCast<Unary>()) {
-          if (leftUnary->op == Abstract::getUnary(curr->type, Abstract::Abs)) {
+          if (leftUnary->op == getUnary(curr->type, Abs)) {
             if (auto* rightUnary = curr->right->dynCast<Unary>()) {
               if (leftUnary->op == rightUnary->op) { // both are abs ops
                 // abs(x) * abs(y)   ==>   abs(x * y)
@@ -816,15 +812,15 @@ struct OptimizeInstructions
       return;
     }
 
+    using namespace Match;
+    using namespace Abstract;
     {
-      using namespace Match;
-      using namespace Abstract;
       Builder builder(*getModule());
       {
         // eqz(x - y)  =>  x == y
         Binary* inner;
         if (matches(curr, unary(EqZ, binary(&inner, Sub, any(), any())))) {
-          inner->op = Abstract::getBinary(inner->left->type, Eq);
+          inner->op = getBinary(inner->left->type, Eq);
           inner->type = Type::i32;
           return replaceCurrent(inner);
         }
@@ -835,7 +831,7 @@ struct OptimizeInstructions
         Binary* inner;
         if (matches(curr, unary(EqZ, binary(&inner, Add, any(), ival(&c))))) {
           c->value = c->value.neg();
-          inner->op = Abstract::getBinary(c->type, Eq);
+          inner->op = getBinary(c->type, Eq);
           inner->type = Type::i32;
           return replaceCurrent(inner);
         }
@@ -847,7 +843,7 @@ struct OptimizeInstructions
         if (matches(curr, unary(EqZ, binary(&inner, RemS, any(), ival(&c)))) &&
             (c->value.isSignedMin() ||
              Bits::isPowerOf2(c->value.abs().getInteger()))) {
-          inner->op = Abstract::getBinary(c->type, And);
+          inner->op = getBinary(c->type, And);
           if (c->value.isSignedMin()) {
             c->value = Literal::makeSignedMax(c->type);
           } else {
@@ -952,13 +948,13 @@ struct OptimizeInstructions
       }
     }
 
-    if (Abstract::hasAnyReinterpret(curr->op)) {
+    if (hasAnyReinterpret(curr->op)) {
       // i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
       // i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
       // f32.reinterpret_i32(i32.reinterpret_f32(x))  =>  x
       // f64.reinterpret_i64(i64.reinterpret_f64(x))  =>  x
       if (auto* inner = curr->value->dynCast<Unary>()) {
-        if (Abstract::hasAnyReinterpret(inner->op)) {
+        if (hasAnyReinterpret(inner->op)) {
           if (inner->value->type == curr->type) {
             return replaceCurrent(inner->value);
           }
@@ -996,8 +992,7 @@ struct OptimizeInstructions
     } else if (curr->op == AbsFloat32 || curr->op == AbsFloat64) {
       // abs(-x)   ==>   abs(x)
       if (auto* unaryInner = curr->value->dynCast<Unary>()) {
-        if (unaryInner->op ==
-            Abstract::getUnary(unaryInner->type, Abstract::Neg)) {
+        if (unaryInner->op == getUnary(unaryInner->type, Neg)) {
           curr->value = unaryInner->value;
           return replaceCurrent(curr);
         }
@@ -1005,15 +1000,14 @@ struct OptimizeInstructions
       // abs(x * x)   ==>   x * x
       // abs(x / x)   ==>   x / x
       if (auto* binary = curr->value->dynCast<Binary>()) {
-        if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
-             binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) &&
+        if ((binary->op == getBinary(binary->type, Mul) ||
+             binary->op == getBinary(binary->type, DivS)) &&
             ExpressionAnalyzer::equal(binary->left, binary->right)) {
           return replaceCurrent(binary);
         }
         // abs(0 - x)   ==>   abs(x),
         // only for fast math
-        if (fastMath &&
-            binary->op == Abstract::getBinary(binary->type, Abstract::Sub)) {
+        if (fastMath && binary->op == getBinary(binary->type, Sub)) {
           if (auto* c = binary->left->dynCast<Const>()) {
             if (c->value.isZero()) {
               curr->value = binary->right;
@@ -1913,6 +1907,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
+    using namespace Abstract;
     assert(shouldCanonicalize(binary));
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
@@ -1931,54 +1926,49 @@ private:
       swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
+      auto type = c->type;
       // x - C   ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
-      if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
+      if (binary->op == getBinary(type, Sub)) {
         c->value = c->value.neg();
-        binary->op = Abstract::getBinary(c->type, Abstract::Add);
+        binary->op = getBinary(type, Add);
         return;
       }
       // Prefer to compare to 0 instead of to -1 or 1.
       // (signed)x > -1   ==>   x >= 0
-      if (binary->op == Abstract::getBinary(c->type, Abstract::GtS) &&
-          c->value.getInteger() == -1LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::GeS);
+      if (binary->op == getBinary(type, GtS) && c->value.getInteger() == -1LL) {
+        binary->op = getBinary(type, GeS);
         c->value = Literal::makeZero(c->type);
         return;
       }
       // (signed)x <= -1   ==>   x < 0
-      if (binary->op == Abstract::getBinary(c->type, Abstract::LeS) &&
-          c->value.getInteger() == -1LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::LtS);
-        c->value = Literal::makeZero(c->type);
+      if (binary->op == getBinary(type, LeS) && c->value.getInteger() == -1LL) {
+        binary->op = getBinary(type, LtS);
+        c->value = Literal::makeZero(type);
         return;
       }
       // (signed)x < 1   ==>   x <= 0
-      if (binary->op == Abstract::getBinary(c->type, Abstract::LtS) &&
-          c->value.getInteger() == 1LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::LeS);
-        c->value = Literal::makeZero(c->type);
+      if (binary->op == getBinary(type, LtS) && c->value.getInteger() == 1LL) {
+        binary->op = getBinary(type, LeS);
+        c->value = Literal::makeZero(type);
         return;
       }
       // (signed)x >= 1   ==>   x > 0
-      if (binary->op == Abstract::getBinary(c->type, Abstract::GeS) &&
-          c->value.getInteger() == 1LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::GtS);
-        c->value = Literal::makeZero(c->type);
+      if (binary->op == getBinary(type, GeS) && c->value.getInteger() == 1LL) {
+        binary->op = getBinary(type, GtS);
+        c->value = Literal::makeZero(type);
         return;
       }
       // (unsigned)x < 1   ==>   x == 0
-      if (binary->op == Abstract::getBinary(c->type, Abstract::LtU) &&
-          c->value.getInteger() == 1LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::Eq);
-        c->value = Literal::makeZero(c->type);
+      if (binary->op == getBinary(type, LtU) && c->value.getInteger() == 1LL) {
+        binary->op = getBinary(type, Eq);
+        c->value = Literal::makeZero(type);
         return;
       }
       // (unsigned)x >= 1   ==>   x != 0
-      if (binary->op == Abstract::getBinary(c->type, Abstract::GeU) &&
-          c->value.getInteger() == 1LL) {
-        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
-        c->value = Literal::makeZero(c->type);
+      if (binary->op == getBinary(type, GeU) && c->value.getInteger() == 1LL) {
+        binary->op = getBinary(type, Ne);
+        c->value = Literal::makeZero(type);
         return;
       }
       return;
@@ -2214,11 +2204,10 @@ private:
         auto type = curr->ifTrue->type;
         if (type == c->type) {
           bin->type = type;
-          bin->op = Abstract::getBinary(type, ShrS);
+          bin->op = getBinary(type, ShrS);
           c->value = Literal::makeFromInt32(type.getByteSize() * 8 - 1, type);
           curr->ifTrue->cast<Const>()->value = Literal::makeOne(type);
-          return builder.makeBinary(
-            Abstract::getBinary(type, Or), bin, curr->ifTrue);
+          return builder.makeBinary(getBinary(type, Or), bin, curr->ifTrue);
         }
       }
     }
@@ -2275,6 +2264,8 @@ private:
   // and combine them note that we ignore division/shift-right, as rounding
   // makes this nonlinear, so not a valid opt
   Expression* optimizeAddedConstants(Binary* binary) {
+    using namespace Abstract;
+
     assert(binary->type.isInteger());
 
     uint64_t constant = 0;
@@ -2300,12 +2291,11 @@ private:
         }
         continue;
       } else if (auto* binary = curr->dynCast<Binary>()) {
-        if (binary->op == Abstract::getBinary(binary->type, Abstract::Add)) {
+        if (binary->op == getBinary(binary->type, Add)) {
           seekStack.emplace_back(binary->right, mul);
           seekStack.emplace_back(binary->left, mul);
           continue;
-        } else if (binary->op ==
-                   Abstract::getBinary(binary->type, Abstract::Sub)) {
+        } else if (binary->op == getBinary(binary->type, Sub)) {
           // if the left is a zero, ignore it, it's how we negate ints
           auto* left = binary->left->dynCast<Const>();
           seekStack.emplace_back(binary->right, -mul);
@@ -2313,15 +2303,13 @@ private:
             seekStack.emplace_back(binary->left, mul);
           }
           continue;
-        } else if (binary->op ==
-                   Abstract::getBinary(binary->type, Abstract::Shl)) {
+        } else if (binary->op == getBinary(binary->type, Shl)) {
           if (auto* c = binary->right->dynCast<Const>()) {
             seekStack.emplace_back(binary->left,
                                    mul << Bits::getEffectiveShifts(c));
             continue;
           }
-        } else if (binary->op ==
-                   Abstract::getBinary(binary->type, Abstract::Mul)) {
+        } else if (binary->op == getBinary(binary->type, Mul)) {
           if (auto* c = binary->left->dynCast<Const>()) {
             seekStack.emplace_back(binary->right,
                                    mul * (uint64_t)c->value.getInteger());
@@ -2368,7 +2356,7 @@ private:
         // possible. That prevents a subtracted constant on the right,
         // as it would be added. And for a zero on the left, it can't be
         // removed (it is how we negate ints).
-        if (curr->op == Abstract::getBinary(type, Abstract::Add)) {
+        if (curr->op == getBinary(type, Add)) {
           if (left && left->value.isZero()) {
             replaceCurrent(curr->right);
             return;
@@ -2377,7 +2365,7 @@ private:
             replaceCurrent(curr->left);
             return;
           }
-        } else if (curr->op == Abstract::getBinary(type, Abstract::Shl)) {
+        } else if (curr->op == getBinary(type, Shl)) {
           // shifting a 0 is a 0, or anything by 0 has no effect, all unless the
           // shift has side effects
           if (((left && left->value.isZero()) ||
@@ -2387,7 +2375,7 @@ private:
             replaceCurrent(curr->left);
             return;
           }
-        } else if (curr->op == Abstract::getBinary(type, Abstract::Mul)) {
+        } else if (curr->op == getBinary(type, Mul)) {
           // multiplying by zero is a zero, unless the other side has side
           // effects
           if (left && left->value.isZero() &&
@@ -2422,7 +2410,7 @@ private:
     }
     Builder builder(*getModule());
     return builder.makeBinary(
-      Abstract::getBinary(walked->type, Abstract::Add),
+      getBinary(walked->type, Add),
       walked,
       builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
   }
@@ -2504,8 +2492,8 @@ private:
                   binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y)))) &&
           x->type == y->type) {
         auto* inner = curr->left->cast<Unary>();
-        inner->value = Builder(*getModule())
-                         .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        inner->value =
+          Builder(*getModule()).makeBinary(getBinary(x->type, Or), x, y);
         return inner;
       }
     }
@@ -2552,8 +2540,8 @@ private:
                          binary(Ne, any(&y), ival(0)))) &&
           x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
-        inner->left = Builder(*getModule())
-                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        inner->left =
+          Builder(*getModule()).makeBinary(getBinary(x->type, Or), x, y);
         return inner;
       }
     }
@@ -2729,7 +2717,7 @@ private:
     }
     // x == 0   ==>   eqz x
     if (matches(curr, binary(Eq, any(&left), ival(0)))) {
-      return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
+      return builder.makeUnary(getUnary(type, EqZ), left);
     }
     // Operations on one
     // (signed)x % 1   ==>   0
@@ -2745,7 +2733,7 @@ private:
                   binary(Ne, binary(&inner, RemS, any(), ival(&c)), ival(0))) &&
           (c->value.isSignedMin() ||
            Bits::isPowerOf2(c->value.abs().getInteger()))) {
-        inner->op = Abstract::getBinary(c->type, And);
+        inner->op = getBinary(c->type, And);
         if (c->value.isSignedMin()) {
           c->value = Literal::makeSignedMax(c->type);
         } else {
@@ -2774,12 +2762,12 @@ private:
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Ne, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
-      return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
+      return builder.makeUnary(getUnary(type, EqZ), left);
     }
     // bool(x)  ^ 1  ==>  !bool(x)
     if (matches(curr, binary(Xor, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
-      auto* result = builder.makeUnary(Abstract::getUnary(type, EqZ), left);
+      auto* result = builder.makeUnary(getUnary(type, EqZ), left);
       if (left->type == Type::i64) {
         // Xor's result is also an i64 in this case, but EqZ returns i32, so we
         // must expand it so that we keep returning the same value as before.
@@ -2855,22 +2843,22 @@ private:
     // Friendlier to JS emitting as we don't need to write an unsigned -1 value
     // which is large.
     if (matches(curr, binary(LtU, any(), ival(-1)))) {
-      curr->op = Abstract::getBinary(type, Ne);
+      curr->op = getBinary(type, Ne);
       return curr;
     }
     // (unsigned)x <= 0   ==>   x == 0
     if (matches(curr, binary(LeU, any(), ival(0)))) {
-      curr->op = Abstract::getBinary(type, Eq);
+      curr->op = getBinary(type, Eq);
       return curr;
     }
     // (unsigned)x > 0   ==>   x != 0
     if (matches(curr, binary(GtU, any(), ival(0)))) {
-      curr->op = Abstract::getBinary(type, Ne);
+      curr->op = getBinary(type, Ne);
       return curr;
     }
     // (unsigned)x >= -1  ==>   x == -1
     if (matches(curr, binary(GeU, any(), ival(-1)))) {
-      curr->op = Abstract::getBinary(type, Eq);
+      curr->op = getBinary(type, Eq);
       return curr;
     }
     {
@@ -2906,32 +2894,32 @@ private:
       // (signed)x < (i32|i64).max_s   ==>   x != (i32|i64).max_s
       if (matches(curr, binary(LtS, any(), ival(&c))) &&
           c->value.isSignedMax()) {
-        curr->op = Abstract::getBinary(type, Ne);
+        curr->op = getBinary(type, Ne);
         return curr;
       }
       // (signed)x <= (i32|i64).min_s   ==>   x == (i32|i64).min_s
       if (matches(curr, binary(LeS, any(), ival(&c))) &&
           c->value.isSignedMin()) {
-        curr->op = Abstract::getBinary(type, Eq);
+        curr->op = getBinary(type, Eq);
         return curr;
       }
       // (signed)x > (i32|i64).min_s   ==>   x != (i32|i64).min_s
       if (matches(curr, binary(GtS, any(), ival(&c))) &&
           c->value.isSignedMin()) {
-        curr->op = Abstract::getBinary(type, Ne);
+        curr->op = getBinary(type, Ne);
         return curr;
       }
       // (signed)x >= (i32|i64).max_s   ==>   x == (i32|i64).max_s
       if (matches(curr, binary(GeS, any(), ival(&c))) &&
           c->value.isSignedMax()) {
-        curr->op = Abstract::getBinary(type, Eq);
+        curr->op = getBinary(type, Eq);
         return curr;
       }
     }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Mul, any(&left), ival(-1)))) {
       right->value = Literal::makeZero(type);
-      curr->op = Abstract::getBinary(type, Sub);
+      curr->op = getBinary(type, Sub);
       curr->left = right;
       curr->right = left;
       return curr;
@@ -2940,7 +2928,7 @@ private:
       // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
       Expression* x;
       if (matches(curr, binary(Xor, binary(Shl, ival(1), any(&x)), ival(-1)))) {
-        curr->op = Abstract::getBinary(type, RotL);
+        curr->op = getBinary(type, RotL);
         right->value = Literal::makeFromInt32(-2, type);
         curr->left = right;
         curr->right = x;
@@ -2952,7 +2940,7 @@ private:
       if (matches(curr, binary(Sub, any(), fval(&value))) && value == 0.0) {
         // x - (-0.0)   ==>   x + 0.0
         if (std::signbit(value)) {
-          curr->op = Abstract::getBinary(type, Add);
+          curr->op = getBinary(type, Add);
           right->value = right->value.neg();
           return curr;
         } else if (fastMath) {
@@ -2969,7 +2957,7 @@ private:
       Expression* x;
       if (matches(curr, binary(Mul, any(&x), fval(2.0))) &&
           (x->is<LocalGet>() || x->is<GlobalGet>())) {
-        curr->op = Abstract::getBinary(type, Abstract::Add);
+        curr->op = getBinary(type, Add);
         curr->right = ExpressionManipulator::copy(x, *getModule());
         return curr;
       }
@@ -2995,10 +2983,10 @@ private:
     // -0.0 - x,  if fastMath == false
     if (matches(curr, binary(Mul, any(), fval(-1.0)))) {
       if (fastMath) {
-        return builder.makeUnary(Abstract::getUnary(type, Neg), left);
+        return builder.makeUnary(getUnary(type, Neg), left);
       }
       // x * -1.0   ==>  -0.0 - x
-      curr->op = Abstract::getBinary(type, Sub);
+      curr->op = getBinary(type, Sub);
       right->value = Literal::makeZero(type).neg();
       std::swap(curr->left, curr->right);
       return curr;
@@ -3024,16 +3012,16 @@ private:
     auto type = curr->left->type;
     auto* left = curr->left->cast<Const>();
     // 0 <<>> x   ==>   0
-    if (Abstract::hasAnyShift(curr->op) && left->value.isZero() &&
+    if (hasAnyShift(curr->op) && left->value.isZero() &&
         !effects(curr->right).hasSideEffects()) {
       return curr->left;
     }
     // (signed)-1 >> x   ==>   -1
     // rotl(-1, x)       ==>   -1
     // rotr(-1, x)       ==>   -1
-    if ((curr->op == Abstract::getBinary(type, ShrS) ||
-         curr->op == Abstract::getBinary(type, RotL) ||
-         curr->op == Abstract::getBinary(type, RotR)) &&
+    if ((curr->op == getBinary(type, ShrS) ||
+         curr->op == getBinary(type, RotL) ||
+         curr->op == getBinary(type, RotR)) &&
         left->value.getInteger() == -1LL &&
         !effects(curr->right).hasSideEffects()) {
       return curr->left;
@@ -3052,7 +3040,7 @@ private:
       if (matches(curr,
                   binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
         left->value = c1->value.sub(c2->value);
-        curr->op = Abstract::getBinary(type, Add);
+        curr->op = getBinary(type, Add);
         curr->right = x;
         std::swap(curr->left, curr->right);
         return curr;
@@ -3072,24 +3060,25 @@ private:
 
   // TODO: templatize on type?
   Expression* optimizeRelational(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
     auto type = curr->right->type;
     if (curr->left->type.isInteger()) {
-      if (curr->op == Abstract::getBinary(type, Abstract::Eq) ||
-          curr->op == Abstract::getBinary(type, Abstract::Ne)) {
+      if (curr->op == getBinary(type, Eq) || curr->op == getBinary(type, Ne)) {
         if (auto* left = curr->left->dynCast<Binary>()) {
           // TODO: inequalities can also work, if the constants do not overflow
           // integer math, even on 2s complement, allows stuff like
           // x + 5 == 7
           //   =>
           //     x == 2
-          if (left->op == Abstract::getBinary(type, Abstract::Add)) {
+          if (left->op == getBinary(type, Add)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
               if (auto* rightConst = curr->right->dynCast<Const>()) {
                 return combineRelationalConstants(
                   curr, left, leftConst, nullptr, rightConst);
               } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
-                if (rightBinary->op ==
-                    Abstract::getBinary(type, Abstract::Add)) {
+                if (rightBinary->op == getBinary(type, Add)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
                       curr, left, leftConst, rightBinary, rightConst);
@@ -3105,14 +3094,11 @@ private:
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
       {
-        using namespace Abstract;
-        using namespace Match;
-
         Binary* inner;
         // unsigned(x - y) > 0    =>   x != y
         if (matches(curr,
                     binary(GtU, binary(&inner, Sub, any(), any()), ival(0)))) {
-          curr->op = Abstract::getBinary(type, Ne);
+          curr->op = getBinary(type, Ne);
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
@@ -3120,7 +3106,7 @@ private:
         // unsigned(x - y) <= 0   =>   x == y
         if (matches(curr,
                     binary(LeU, binary(&inner, Sub, any(), any()), ival(0)))) {
-          curr->op = Abstract::getBinary(type, Eq);
+          curr->op = getBinary(type, Eq);
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
@@ -3185,6 +3171,8 @@ private:
   }
 
   Expression* deduplicateBinary(Binary* outer) {
+    using namespace Abstract;
+
     Type type = outer->type;
     if (type.isInteger()) {
       if (auto* inner = outer->right->dynCast<Binary>()) {
@@ -3194,14 +3182,14 @@ private:
             if (ExpressionAnalyzer::equal(inner->left, outer->left)) {
               // x - (x - y)  ==>   y
               // x ^ (x ^ y)  ==>   y
-              if (outer->op == Abstract::getBinary(type, Abstract::Sub) ||
-                  outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+              if (outer->op == getBinary(type, Sub) ||
+                  outer->op == getBinary(type, Xor)) {
                 return inner->right;
               }
               // x & (x & y)  ==>   x & y
               // x | (x | y)  ==>   x | y
-              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
-                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+              if (outer->op == getBinary(type, And) ||
+                  outer->op == getBinary(type, Or)) {
                 return inner;
               }
             }
@@ -3211,7 +3199,7 @@ private:
               // (note that we need the check for reordering here because if
               // e.g. y writes to a local that x reads, the second appearance
               // of x would be different from the first)
-              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+              if (outer->op == getBinary(type, Xor)) {
                 return inner->left;
               }
 
@@ -3221,8 +3209,8 @@ private:
               // reason that previously x appeared before y, and now y appears
               // first; or, if we tried to emit x [&|] y here, reversing the
               // order, we'd be in the same situation as the previous comment)
-              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
-                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+              if (outer->op == getBinary(type, And) ||
+                  outer->op == getBinary(type, Or)) {
                 return inner;
               }
             }
@@ -3235,16 +3223,16 @@ private:
                  .hasSideEffects()) {
             if (ExpressionAnalyzer::equal(inner->right, outer->right)) {
               // (x ^ y) ^ y  ==>   x
-              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+              if (outer->op == getBinary(type, Xor)) {
                 return inner->left;
               }
               // (x % y) % y  ==>   x % y
               // (x & y) & y  ==>   x & y
               // (x | y) | y  ==>   x | y
-              if (outer->op == Abstract::getBinary(type, Abstract::RemS) ||
-                  outer->op == Abstract::getBinary(type, Abstract::RemU) ||
-                  outer->op == Abstract::getBinary(type, Abstract::And) ||
-                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+              if (outer->op == getBinary(type, RemS) ||
+                  outer->op == getBinary(type, RemU) ||
+                  outer->op == getBinary(type, And) ||
+                  outer->op == getBinary(type, Or)) {
                 return inner;
               }
             }
@@ -3252,13 +3240,13 @@ private:
             if (ExpressionAnalyzer::equal(inner->left, outer->right) &&
                 canReorder(inner->left, inner->right)) {
               // (x ^ y) ^ x  ==>   y
-              if (outer->op == Abstract::getBinary(type, Abstract::Xor)) {
+              if (outer->op == getBinary(type, Xor)) {
                 return inner->right;
               }
               // (x & y) & x  ==>   x & y
               // (x | y) | x  ==>   x | y
-              if (outer->op == Abstract::getBinary(type, Abstract::And) ||
-                  outer->op == Abstract::getBinary(type, Abstract::Or)) {
+              if (outer->op == getBinary(type, And) ||
+                  outer->op == getBinary(type, Or)) {
                 return inner;
               }
             }
@@ -3272,23 +3260,25 @@ private:
   // given a relational binary with a const on both sides, combine the constants
   // left is also a binary, and has a constant; right may be just a constant, in
   // which case right is nullptr
-  Expression* combineRelationalConstants(Binary* binary,
+  Expression* combineRelationalConstants(Binary* curr,
                                          Binary* left,
                                          Const* leftConst,
                                          Binary* right,
                                          Const* rightConst) {
-    auto type = binary->right->type;
+    using namespace Abstract;
+
+    auto type = curr->right->type;
     // we fold constants to the right
     Literal extra = leftConst->value;
-    if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
+    if (left->op == getBinary(type, Sub)) {
       extra = extra.neg();
     }
-    if (right && right->op == Abstract::getBinary(type, Abstract::Sub)) {
+    if (right && right->op == getBinary(type, Sub)) {
       extra = extra.neg();
     }
     rightConst->value = rightConst->value.sub(extra);
-    binary->left = left->left;
-    return binary;
+    curr->left = left->left;
+    return curr;
   }
 
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
