@@ -23,9 +23,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace TableUtils {
+namespace wasm::TableUtils {
 
 struct FlatTable {
   std::vector<Name> names;
@@ -115,8 +113,6 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
 // do so, and some do not, depending on their type and use.)
 bool usesExpressions(ElementSegment* curr, Module* module);
 
-} // namespace TableUtils
-
-} // namespace wasm
+} // namespace wasm::TableUtils
 
 #endif // wasm_ir_table_h

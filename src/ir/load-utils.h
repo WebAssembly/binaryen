@@ -19,9 +19,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace LoadUtils {
+namespace wasm::LoadUtils {
 
 // checks if the sign of a load matters, which is when an integer
 // load is of fewer bytes than the size of the type (so we must
@@ -37,8 +35,6 @@ inline bool isSignRelevant(Load* load) {
 // check if a load can be signed (which some opts want to do)
 inline bool canBeSigned(Load* load) { return !load->isAtomic; }
 
-} // namespace LoadUtils
-
-} // namespace wasm
+} // namespace wasm::LoadUtils
 
 #endif // wasm_ir_load_h

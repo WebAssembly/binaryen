@@ -59,9 +59,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   }
 
   void combineInto(StructValuesMap<T>& combinedInfos) const {
-    for (auto& kv : *this) {
-      auto type = kv.first;
-      auto& info = kv.second;
+    for (auto& [type, info] : *this) {
       for (Index i = 0; i < info.size(); i++) {
         combinedInfos[type][i].combine(info[i]);
       }
@@ -70,9 +68,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
 
   void dump(std::ostream& o) {
     o << "dump " << this << '\n';
-    for (auto& kv : (*this)) {
-      auto type = kv.first;
-      auto& vec = kv.second;
+    for (auto& [type, vec] : (*this)) {
       o << "dump " << type << " " << &vec << ' ';
       for (auto x : vec) {
         x.dump(o);
@@ -235,8 +231,7 @@ public:
 private:
   void propagate(StructValuesMap<T>& combinedInfos, bool toSubTypes) {
     UniqueDeferredQueue<HeapType> work;
-    for (auto& kv : combinedInfos) {
-      auto type = kv.first;
+    for (auto& [type, _] : combinedInfos) {
       work.push(type);
     }
     while (!work.empty()) {

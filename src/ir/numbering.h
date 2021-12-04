@@ -17,6 +17,7 @@
 #ifndef wasm_ir_numberings_h
 #define wasm_ir_numberings_h
 
+#include "ir/properties.h"
 #include "wasm.h"
 
 namespace wasm {

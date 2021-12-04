@@ -2313,7 +2313,7 @@ public:
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
-                               Signature sig,
+                               HeapType sig,
                                LiteralList& arguments,
                                Type result,
                                SubType& instance) = 0;
@@ -2770,7 +2770,7 @@ private:
 
       auto info = instance.getTableInterfaceInfo(curr->table);
       Flow ret = info.interface->callTable(
-        info.name, index, curr->sig, arguments, type, *instance.self());
+        info.name, index, curr->heapType, arguments, type, *instance.self());
 
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {

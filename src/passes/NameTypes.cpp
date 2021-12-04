@@ -22,8 +22,6 @@
 // Ensures each type has a name. This can be useful for debugging.
 //
 
-using namespace std;
-
 namespace wasm {
 
 // An arbitrary limit, above which we rename types.

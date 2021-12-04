@@ -30,6 +30,7 @@
 #include <unordered_set>
 
 #include "cfg/liveness-traversal.h"
+#include "ir/numbering.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/learning.h"
@@ -155,6 +156,10 @@ void CoalesceLocals::calculateInterferences() {
   // loop.
   std::vector<Index> values(numLocals);
 
+  ValueNumbering valueNumbering;
+
+  auto* func = getFunction();
+
   for (auto& curr : basicBlocks) {
     if (liveBlocks.count(curr.get()) == 0) {
       continue; // ignore dead blocks
@@ -196,21 +201,22 @@ void CoalesceLocals::calculateInterferences() {
     // around through copies between sets we can see when sets are guaranteed to
     // be equal.
 
-    // Give all default values the same value ID, regardless of their type. This
-    // is valid since we only coalesce locals of the same type anyhow.
-    auto zeroInit = 0;
-    Index nextValue = 1;
-
     if (curr.get() == entry) {
       // Each parameter is assumed to have a different value on entry.
-      for (Index i = 0; i < getFunction()->getNumParams(); i++) {
-        values[i] = nextValue++;
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        values[i] = valueNumbering.getUniqueValue();
       }
 
-      for (Index i = getFunction()->getNumParams();
-           i < getFunction()->getNumLocals();
-           i++) {
-        values[i] = zeroInit;
+      for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
+        auto type = func->getLocalType(i);
+        if (type.isNonNullable()) {
+          // A non-nullable value cannot be used anyhow, but we must give it
+          // some value. A unique one seems least likely to result in surprise
+          // during debugging.
+          values[i] = valueNumbering.getUniqueValue();
+        } else {
+          values[i] = valueNumbering.getValue(Literal::makeZeros(type));
+        }
       }
     } else {
       // In any block but the entry, assume that each live local might have a
@@ -218,7 +224,7 @@ void CoalesceLocals::calculateInterferences() {
       // TODO: Propagating value IDs across blocks could identify more copies,
       //       however, it would also be nonlinear.
       for (auto index : curr->contents.start) {
-        values[index] = nextValue++;
+        values[index] = valueNumbering.getUniqueValue();
       }
     }
 
@@ -246,8 +252,8 @@ void CoalesceLocals::calculateInterferences() {
         assert(i > 0 && set->value == *actions[i - 1].origin);
         newValue = values[actions[i - 1].index];
       } else {
-        // This is not a copy; assign a new unique value.
-        newValue = nextValue++;
+        // This is not a copy.
+        newValue = valueNumbering.getValue(set->value);
       }
       values[index] = newValue;
 

@@ -21,9 +21,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace BranchUtils {
+namespace wasm::BranchUtils {
 
 // Some branches are obviously not actually reachable (e.g. (br $out
 // (unreachable)))
@@ -60,7 +58,6 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #define DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
-#define DELEGATE_FIELD_SIGNATURE(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -124,7 +121,6 @@ template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
-#define DELEGATE_FIELD_SIGNATURE(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -430,8 +426,6 @@ private:
   } inner;
 };
 
-} // namespace BranchUtils
-
-} // namespace wasm
+} // namespace wasm::BranchUtils
 
 #endif // wasm_ir_branch_h
