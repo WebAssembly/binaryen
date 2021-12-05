@@ -25,8 +25,6 @@
 #include <wasm-builder.h>
 #include <wasm.h>
 
-using namespace std;
-
 namespace wasm {
 
 struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {

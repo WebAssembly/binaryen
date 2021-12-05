@@ -59,8 +59,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     std::vector<std::vector<LocalSet*>> setsForLocal(numLocals);
     std::vector<std::vector<LocalGet*>> getsForLocal(numLocals);
 
-    for (auto& kv : localGraph.locations) {
-      auto* curr = kv.first;
+    for (auto& [curr, _] : localGraph.locations) {
       if (auto* set = curr->dynCast<LocalSet>()) {
         setsForLocal[set->index].push_back(set);
       } else {
@@ -78,9 +77,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     std::unordered_set<Index> usesDefault;
 
     if (getModule()->features.hasGCNNLocals()) {
-      for (auto& kv : localGraph.getSetses) {
-        auto* get = kv.first;
-        auto& sets = kv.second;
+      for (auto& [get, sets] : localGraph.getSetses) {
         auto index = get->index;
         if (func->isVar(index) &&
             std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
@@ -124,7 +121,8 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         // Find all the types assigned to the var, and compute the optimal LUB.
         LUBFinder lub;
         for (auto* set : setsForLocal[i]) {
-          if (lub.note(set->value) == oldType) {
+          lub.noteUpdatableExpression(set->value);
+          if (lub.getBestPossible() == oldType) {
             break;
           }
         }
@@ -133,7 +131,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           continue;
         }
 
-        auto newType = lub.get();
+        auto newType = lub.getBestPossible();
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
         // Remove non-nullability if we disallow that in locals.
@@ -157,6 +155,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           func->vars[i - varBase] = newType;
           more = true;
           optimized = true;
+          lub.updateNulls();
 
           // Update gets and tees.
           for (auto* get : getsForLocal[i]) {

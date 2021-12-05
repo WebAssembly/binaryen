@@ -17,9 +17,7 @@
 #include "ir/names.h"
 #include <sstream>
 
-namespace wasm {
-
-namespace Names {
+namespace wasm::Names {
 
 // Reserved words in JS that we will not emit up to size 4 - size 5 and above
 // would mean we use an astronomical number of symbols, which is not realistic
@@ -72,6 +70,4 @@ std::string MinifiedNameGenerator::getName() {
   return name;
 }
 
-} // namespace Names
-
-} // namespace wasm
+} // namespace wasm::Names

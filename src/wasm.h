@@ -579,9 +579,6 @@ enum BrOnOp {
   BrOnNonI31,
 };
 
-// Forward declaration for methods that receive a Module as a parameter.
-class Module;
-
 //
 // Expressions
 //
@@ -849,22 +846,13 @@ public:
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-  Signature sig;
+  HeapType heapType;
   ExpressionList operands;
   Expression* target;
   Name table;
   bool isReturn = false;
 
   void finalize();
-
-  // FIXME We should probably store a heap type here, and not a signature, see
-  //       https://github.com/WebAssembly/binaryen/issues/4220
-  //       For now, copy the heap type from the table if it matches - then a
-  //       nominal check will succeed too. If it does not match, then just
-  //       emit something for it like we always used to, using
-  //       HeapType(sig) (also do that if no module is provided).
-  // FIXME When we remove this, also remove the forward decl of Module, above.
-  HeapType getHeapType(Module* module = nullptr);
 };
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {

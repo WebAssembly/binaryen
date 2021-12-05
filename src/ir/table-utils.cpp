@@ -19,9 +19,7 @@
 #include "find_all.h"
 #include "module-utils.h"
 
-namespace wasm {
-
-namespace TableUtils {
+namespace wasm::TableUtils {
 
 std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   // Without reference types there are no ref.funcs or elem declare.
@@ -83,6 +81,4 @@ bool usesExpressions(ElementSegment* curr, Module* module) {
   return !allElementsRefFunc || hasTableOfSpecializedType;
 }
 
-} // namespace TableUtils
-
-} // namespace wasm
+} // namespace wasm::TableUtils

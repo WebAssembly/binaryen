@@ -1232,9 +1232,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
 
       // Emit any remaining groups by just emitting branches to their code,
       // which will appear outside the switch.
-      for (auto& pair : targetIndexes) {
-        auto target = pair.first;
-        auto& indexes = pair.second;
+      for (auto& [target, indexes] : targetIndexes) {
         if (emittedTargets.count(target)) {
           continue;
         }
@@ -2870,7 +2868,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::ATOMIC_RMW_I64) {
       out << R"(
   function wasm2js_atomic_rmw_i64(op, bytes, offset, ptr, valueLow, valueHigh) {
-    assert(bytes == 8); // TODO: support 1, 2, 4 as well
+    // TODO: support bytes=1, 2, 4 as well as 8.
     var view = new BigInt64Array(bufferView.buffer); // TODO cache
     ptr = (ptr + offset) >> 3;
     var value = BigInt(valueLow >>> 0) | (BigInt(valueHigh >>> 0) << BigInt(32));

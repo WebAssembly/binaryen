@@ -20,9 +20,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace LabelUtils {
+namespace wasm::LabelUtils {
 
 // Handles branch/loop labels in a function; makes it easy to add new
 // ones without duplicates
@@ -33,8 +31,7 @@ public:
   Name getUnique(std::string prefix) {
     while (1) {
       auto curr = Name(prefix + std::to_string(counter++));
-      if (labels.find(curr) == labels.end()) {
-        labels.insert(curr);
+      if (labels.emplace(curr).second) {
         return curr;
       }
     }
@@ -48,8 +45,6 @@ private:
   size_t counter = 0;
 };
 
-} // namespace LabelUtils
-
-} // namespace wasm
+} // namespace wasm::LabelUtils
 
 #endif // wasm_ir_label_h

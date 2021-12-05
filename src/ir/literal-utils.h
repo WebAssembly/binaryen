@@ -20,9 +20,7 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace LiteralUtils {
+namespace wasm::LiteralUtils {
 
 inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
   auto* ret = wasm.allocator.alloc<Const>();
@@ -64,8 +62,6 @@ inline Expression* makeZero(Type type, Module& wasm) {
   return builder.makeConstantExpression(Literal::makeZeros(type));
 }
 
-} // namespace LiteralUtils
-
-} // namespace wasm
+} // namespace wasm::LiteralUtils
 
 #endif // wasm_ir_literal_utils_h

@@ -387,9 +387,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   if (!emJsWalker.codeByName.empty()) {
     meta << "  \"emJsFuncs\": {";
     commaFirst = true;
-    for (auto& pair : emJsWalker.codeByName) {
-      auto& name = pair.first;
-      auto& code = pair.second;
+    for (auto& [name, code] : emJsWalker.codeByName) {
       meta << nextElement();
       meta << '"' << name << "\": \"" << escape(code) << '"';
     }

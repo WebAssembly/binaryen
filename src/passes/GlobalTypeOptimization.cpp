@@ -36,8 +36,6 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
-using namespace std;
-
 namespace wasm {
 
 namespace {

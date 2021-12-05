@@ -25,9 +25,8 @@
 #include "literal.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::GlobalUtils {
 
-namespace GlobalUtils {
 // find a global initialized to the value of an import, or null if no such
 // global
 inline Global*
@@ -76,8 +75,6 @@ inline bool canInitializeGlobal(Expression* curr) {
   return false;
 }
 
-} // namespace GlobalUtils
-
-} // namespace wasm
+} // namespace wasm::GlobalUtils
 
 #endif // wasm_ir_global_h

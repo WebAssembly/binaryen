@@ -12555,15 +12555,14 @@ function asmFunc(env) {
  
  function $60($0) {
   $0 = $0 | 0;
-  var $1 = 0, $2 = 0;
+  var $1 = 0;
   $1 = 16;
-  $2 = 16;
   block : {
    switch ($0 | 0) {
    case 0:
-    $2 = 18;
+    $1 = 18;
    case 1:
-    $1 = $2 + 1 | 0;
+    $1 = $1 + 1 | 0;
     break;
    default:
     break block;
@@ -12574,15 +12573,14 @@ function asmFunc(env) {
  
  function $61($0) {
   $0 = $0 | 0;
-  var $1 = 0, $2 = 0;
+  var $1 = 0;
   $1 = 8;
-  $2 = 8;
   block : {
    switch ($0 | 0) {
    default:
-    $2 = 16;
+    $1 = 16;
    case 1:
-    $1 = $2 + 1 | 0;
+    $1 = $1 + 1 | 0;
     break;
    case 0:
     break block;
@@ -12593,15 +12591,14 @@ function asmFunc(env) {
  
  function $62($0) {
   $0 = $0 | 0;
-  var $1 = 0, $2 = 0;
+  var $1 = 0;
   $1 = 8;
-  $2 = 8;
   block : {
    switch ($0 | 0) {
    case 0:
-    $2 = 16;
+    $1 = 16;
    case 1:
-    $1 = $2 + 1 | 0;
+    $1 = $1 + 1 | 0;
     break;
    default:
     break block;

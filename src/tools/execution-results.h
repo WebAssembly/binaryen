@@ -185,8 +185,7 @@ struct ExecutionResults {
       std::cout << "ignoring comparison of ExecutionResults!\n";
       return true;
     }
-    for (auto& iter : other.results) {
-      auto name = iter.first;
+    for (auto& [name, _] : other.results) {
       if (results.find(name) == results.end()) {
         std::cout << "[fuzz-exec] missing " << name << '\n';
         return false;
