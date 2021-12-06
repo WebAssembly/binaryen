@@ -197,7 +197,7 @@
     )
    )
   )
-  (try
+  (try $label$37
    (do
     (throw $tag$0
      (i32.const 0)
@@ -404,6 +404,22 @@
    (catch $tag$3
     (drop
      (pop anyref)
+    )
+   )
+  )
+ )
+ (func $6
+  (try $label$6
+   (do
+    (block $label$1
+     (try $label$4
+      (do
+       (throw $tag$0
+        (i32.const 0)
+       )
+      )
+      (delegate $label$6)
+     )
     )
    )
   )
