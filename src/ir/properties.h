@@ -283,7 +283,7 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, module, tryy->body).throws) {
+    if (!EffectAnalyzer(passOptions, module, tryy->body).throws()) {
       return tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
