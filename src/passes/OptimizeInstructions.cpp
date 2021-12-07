@@ -2543,21 +2543,59 @@ private:
       }
     }
     {
-      // (i32(x) != 0) | (i32(y) != 0)   ==>   i32(x | y) != 0
-      // (i64(x) != 0) | (i64(y) != 0)   ==>   i64(x | y) != 0
+      // Binary operations that preserve a bitwise OR can be
+      // reordered. If F(x) = binary(x, c), and F(x) preserves OR,
+      // that is,
+      //
+      //   F(x) | F(y) == F(x | y)
+      //
+      // Then also
+      //
+      //   binary(x, c) | binary(y, c)  =>  binary(x | y, c)
+      Binary *bx, *by;
       Expression *x, *y;
+      Const *cx, *cy;
       if (matches(curr,
                   binary(OrInt32,
-                         binary(Ne, any(&x), ival(0)),
-                         binary(Ne, any(&y), ival(0)))) &&
-          x->type == y->type) {
-        auto* inner = curr->left->cast<Binary>();
-        inner->left = Builder(*getModule())
-                        .makeBinary(Abstract::getBinary(x->type, Or), x, y);
-        return inner;
+                         binary(&bx, any(&x), ival(&cx)),
+                         binary(&by, any(&y), ival(&cy)))) &&
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          preserveOr(bx)) {
+        bx->left = Builder(*getModule())
+                     .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        return bx;
       }
     }
     return nullptr;
+  }
+
+  // Check whether an operation preserves the Or operation through it, that is,
+  //
+  //   F(x | y) = F(x) | F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the | operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool preserveOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x != 0) | (y != 0)    ==>    (x | y) != 0
+    // This effectively checks if any bits are set in x or y.
+    if (matches(curr, binary(Ne, any(), ival(0)))) {
+      return true;
+    }
+
+    // (x < 0) | (y < 0)    ==>    (x | y) < 0
+    // This effectively checks if x or y have the sign bit set.
+    if (matches(curr, binary(LtS, any(), ival(0)))) {
+      return true;
+    }
+
+    return false;
   }
 
   // fold constant factors into the offset

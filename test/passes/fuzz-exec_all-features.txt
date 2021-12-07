@@ -139,9 +139,11 @@
 [fuzz-exec] calling oob_notify
 [trap final > memory: 18446744073709551512 > 65514]
 [fuzz-exec] comparing aligned_for_size
+[fuzz-exec] comparing oob_notify
 [fuzz-exec] comparing unaligned_load
 [fuzz-exec] comparing unaligned_load_offset
 [fuzz-exec] comparing unaligned_notify
+[fuzz-exec] comparing wrap_cmpxchg
 [fuzz-exec] calling unsigned_2_bytes
 [fuzz-exec] note result: unsigned_2_bytes => 65535
 (module
@@ -183,6 +185,7 @@
 )
 [fuzz-exec] calling rmw-reads-modifies-and-writes
 [LoggingExternalInterface logging 0]
+[fuzz-exec] comparing rmw-reads-modifies-and-writes
 [fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
 (module
@@ -207,6 +210,7 @@
 )
 [fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
+[fuzz-exec] comparing rmw-reads-modifies-and-writes-asymmetrical
 [fuzz-exec] calling func
 [fuzz-exec] note result: func => funcref
 (module

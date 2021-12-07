@@ -8,7 +8,7 @@
   (func $foo)
   (func $bar)
 
-  (func $eh_test (local $x (i32 i64))
+  (func $eh-test (local $x (i32 i64))
     ;; Simple try-catch
     (try
       (do
@@ -313,7 +313,7 @@
     )
   )
 
-  (func $pop_test
+  (func $pop-test
     (try
       (do)
       (catch $e-i32
@@ -333,6 +333,21 @@
       (catch $e-anyref
         (drop
           (pop funcref) ;; pop can be subtype
+        )
+      )
+    )
+  )
+
+  (func $catchless-try-with-inner-delegate
+    (try $label$0
+      (do
+        (try
+          (do
+            (throw $e-i32
+              (i32.const 0)
+            )
+          )
+          (delegate $label$0)
         )
       )
     )

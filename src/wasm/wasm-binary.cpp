@@ -6345,13 +6345,6 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   curr->type = getType();
   curr->body = getBlockOrSingleton(curr->type);
 
-  // try without catch or delegate
-  if (lastSeparator == BinaryConsts::End) {
-    curr->finalize();
-    out = curr;
-    return;
-  }
-
   Builder builder(wasm);
   // A nameless label shared by all catch body blocks
   Name catchLabel = getNextLabel();
