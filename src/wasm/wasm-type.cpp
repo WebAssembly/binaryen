@@ -84,11 +84,11 @@ struct TypeInfo {
 
   bool isNullable() const { return kind == RefKind && ref.nullable; }
 
-  // If this TypeInfo represents a Type that can be represented more simply, set
-  // `out` to be that simpler Type and return true. For example, this handles
-  // canonicalizing the TypeInfo representing (ref null any) into the BasicType
-  // anyref. It also handles eliminating singleton tuple types.
-  bool getCanonical(Type& out) const;
+  // If this TypeInfo represents a Type that can be represented more simply,
+  // return that simpler Type. For example, this handles canonicalizing the
+  // TypeInfo representing (ref null any) into the BasicType anyref. It also
+  // handles eliminating singleton tuple types.
+  std::optional<Type> getCanonical() const;
 
   bool operator==(const TypeInfo& other) const;
   bool operator!=(const TypeInfo& other) const { return !(*this == other); }
@@ -135,9 +135,9 @@ struct HeapTypeInfo {
   constexpr bool isData() const { return isStruct() || isArray(); }
 
   // If this HeapTypeInfo represents a HeapType that can be represented more
-  // simply, set `out` to be that simpler HeapType and return true. This handles
-  // turning BasicKind HeapTypes into their corresponding BasicHeapTypes.
-  bool getCanonical(HeapType& out) const;
+  // simply, return that simpler HeapType. This handles turning BasicKind
+  // HeapTypes into their corresponding BasicHeapTypes.
+  std::optional<HeapType> getCanonical() const;
 
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
@@ -468,20 +468,26 @@ bool isTemp(HeapType type) {
 // representation, return the equivalent type that is definitely backed by the
 // simplest possible representation.
 Type asCanonical(Type type) {
-  if (!type.isBasic()) {
-    getTypeInfo(type)->getCanonical(type);
+  if (type.isBasic()) {
+    return type;
+  } else if (auto canon = getTypeInfo(type)->getCanonical()) {
+    return *canon;
+  } else {
+    return type;
   }
-  return type;
 }
 
 // Given a HeapType that may or may not be backed by the simplest possible
 // representation, return the equivalent type that is definitely backed by the
 // simplest possible representation.
 HeapType asCanonical(HeapType type) {
-  if (!type.isBasic()) {
-    getHeapTypeInfo(type)->getCanonical(type);
+  if (type.isBasic()) {
+    return type;
+  } else if (auto canon = getHeapTypeInfo(type)->getCanonical()) {
+    return *canon;
+  } else {
+    return type;
   }
-  return type;
 }
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
@@ -515,15 +521,13 @@ TypeInfo::~TypeInfo() {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool TypeInfo::getCanonical(Type& out) const {
+std::optional<Type> TypeInfo::getCanonical() const {
   if (isTuple()) {
     if (tuple.types.size() == 0) {
-      out = Type::none;
-      return true;
+      return Type::none;
     }
     if (tuple.types.size() == 1) {
-      out = tuple.types[0];
-      return true;
+      return tuple.types[0];
     }
   }
   if (isRef()) {
@@ -532,34 +536,28 @@ bool TypeInfo::getCanonical(Type& out) const {
       if (ref.nullable) {
         switch (basic.getBasic()) {
           case HeapType::func:
-            out = Type::funcref;
-            return true;
+            return Type::funcref;
           case HeapType::ext:
-            out = Type::externref;
-            return true;
+            return Type::externref;
           case HeapType::any:
-            out = Type::anyref;
-            return true;
+            return Type::anyref;
           case HeapType::eq:
-            out = Type::eqref;
-            return true;
+            return Type::eqref;
           case HeapType::i31:
           case HeapType::data:
             break;
         }
       } else {
         if (basic == HeapType::i31) {
-          out = Type::i31ref;
-          return true;
+          return Type::i31ref;
         }
         if (basic == HeapType::data) {
-          out = Type::dataref;
-          return true;
+          return Type::dataref;
         }
       }
     }
   }
-  return false;
+  return {};
 }
 
 bool TypeInfo::operator==(const TypeInfo& other) const {
@@ -616,12 +614,11 @@ HeapTypeInfo::~HeapTypeInfo() {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool HeapTypeInfo::getCanonical(HeapType& out) const {
+std::optional<HeapType> HeapTypeInfo::getCanonical() const {
   if (isFinalized && kind == BasicKind) {
-    out = basic;
-    return true;
+    return basic;
   }
-  return false;
+  return {};
 }
 
 HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
@@ -713,9 +710,8 @@ template<typename Info> bool Store<Info>::isGlobalStore() {
 
 template<typename Info>
 typename Info::type_t Store<Info>::insert(const Info& info) {
-  typename Info::type_t canonical;
-  if (info.getCanonical(canonical)) {
-    return canonical;
+  if (auto canon = info.getCanonical()) {
+    return *canon;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex);
   // Only HeapTypes in Nominal mode should be unconditionally added. In all
@@ -732,9 +728,8 @@ typename Info::type_t Store<Info>::insert(const Info& info) {
 
 template<typename Info>
 typename Info::type_t Store<Info>::insert(std::unique_ptr<Info>&& info) {
-  typename Info::type_t canonical;
-  if (info->getCanonical(canonical)) {
-    return canonical;
+  if (auto canon = info->getCanonical()) {
+    return *canon;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex);
   // Only HeapTypes in Nominal mode should be unconditionally added. In all
