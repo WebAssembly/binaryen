@@ -72,7 +72,6 @@ public:
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
   std::set<Name> mutableGlobalsRead;
-  std::set<Name> immutableGlobalsRead;
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
@@ -81,7 +80,6 @@ public:
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
   bool readsMutableStruct = false;
-  bool readsImmutableStruct = false;
   bool writesStruct = false;
   bool readsArray = false;
   bool writesArray = false;
@@ -132,16 +130,10 @@ public:
   bool accessesMutableGlobal() const {
     return globalsWritten.size() + mutableGlobalsRead.size() > 0;
   }
-  bool accessesGlobal() const {
-    return accessesMutableGlobal() + immutableGlobalsRead.size() > 0;
-  }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
   bool accessesTable() const { return calls || readsTable || writesTable; }
   bool accessesMutableStruct() const {
     return calls || readsMutableStruct || writesStruct;
-  }
-  bool accessesStruct() const {
-    return accessesMutableStruct() || readsImmutableStruct;
   }
   bool accessesArray() const { return calls || readsArray || writesArray; }
   bool throws() const { return throws_ || !delegateTargets.empty(); }
@@ -199,7 +191,7 @@ public:
 
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory || readsTable ||
-           accessesGlobal();
+           accessesMutableGlobal();
   }
 
   // check if we break to anything external from ourselves
@@ -280,7 +272,6 @@ public:
     readsTable = readsTable || other.readsTable;
     writesTable = writesTable || other.writesTable;
     readsMutableStruct = readsMutableStruct || other.readsMutableStruct;
-    readsImmutableStruct = readsImmutableStruct || other.readsImmutableStruct;
     writesStruct = writesStruct || other.writesStruct;
     readsArray = readsArray || other.readsArray;
     writesArray = writesArray || other.writesArray;
@@ -298,9 +289,6 @@ public:
     }
     for (auto i : other.mutableGlobalsRead) {
       mutableGlobalsRead.insert(i);
-    }
-    for (auto i : other.immutableGlobalsRead) {
-      immutableGlobalsRead.insert(i);
     }
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
@@ -470,8 +458,6 @@ private:
     void visitGlobalGet(GlobalGet* curr) {
       if (parent.module.getGlobal(curr->name)->mutable_ == Mutable) {
         parent.mutableGlobalsRead.insert(curr->name);
-      } else {
-        parent.immutableGlobalsRead.insert(curr->name);
       }
     }
     void visitGlobalSet(GlobalSet* curr) {
@@ -705,8 +691,6 @@ private:
             .fields[curr->index]
             .mutable_ == Mutable) {
         parent.readsMutableStruct = true;
-      } else {
-        parent.readsImmutableStruct = true;
       }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
@@ -805,7 +789,7 @@ public:
     if (localsWritten.size() > 0) {
       effects |= SideEffects::WritesLocal;
     }
-    if (mutableGlobalsRead.size() + immutableGlobalsRead.size() > 0) {
+    if (mutableGlobalsRead.size()) {
       effects |= SideEffects::ReadsGlobal;
     }
     if (globalsWritten.size() > 0) {
