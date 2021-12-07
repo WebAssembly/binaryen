@@ -11034,6 +11034,108 @@
       (i64.ne (local.get $b) (i64.const 0))
     ))
   )
+  ;; CHECK:      (func $optimize-combined-by-or-gt-or-eq-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ge_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (i32.ge_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.ge_s
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-or-gt-or-eq-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) >= 0) | (i32(y) >= 0)   ==>   i32(x & y) >= 0
+    (drop (i32.or
+      (i32.ge_s (local.get $x) (i32.const 0))
+      (i32.ge_s (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) >= 0) | (i64(y) >= 0)   ==>   i64(x & y) >= 0
+    (drop (i32.or
+      (i64.ge_s (local.get $a) (i64.const 0))
+      (i64.ge_s (local.get $b) (i64.const 0))
+    ))
+
+    ;; skips
+    ;; (i32(x) >= 0) | (i64(y) >= 0)   ==>   skip
+    (drop (i32.or
+      (i32.ge_s (local.get $x) (i32.const 0))
+      (i64.ge_s (local.get $a) (i64.const 0))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-or-ne-to-minus-one (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.ne
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i64.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-or-ne-to-minus-one (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) != -1) | (i32(y) != -1)   ==>   i32(x & y) != -1
+    (drop (i32.or
+      (i32.ne (local.get $x) (i32.const -1))
+      (i32.ne (local.get $y) (i32.const -1))
+    ))
+    ;; (i64(x) != -1) | (i64(y) == -1)   ==>   i64(x & y) != -1
+    (drop (i32.or
+      (i64.ne (local.get $a) (i64.const -1))
+      (i64.ne (local.get $b) (i64.const -1))
+    ))
+
+    ;; skips
+    ;; (i32(x) != -1) | (i64(y) != -1)   ==>   skip
+    (drop (i32.or
+      (i32.ne (local.get $x) (i32.const -1))
+      (i64.ne (local.get $a) (i64.const -1))
+    ))
+  )
   ;; CHECK:      (func $optimize-combined-by-or-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.lt_s

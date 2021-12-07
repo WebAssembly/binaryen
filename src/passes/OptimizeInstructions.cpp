@@ -2520,6 +2520,7 @@ private:
     using namespace Match;
 
     assert(curr->op == OrInt32);
+
     if (auto* left = curr->left->dynCast<Binary>()) {
       if (auto* right = curr->right->dynCast<Binary>()) {
         if (left->op != right->op &&
@@ -2543,6 +2544,30 @@ private:
       }
     }
     {
+      // (x >= 0) | (y >= 0)   ==>   (x & y) >= 0
+      Expression *x, *y;
+      if (matches(curr->left, binary(GeS, any(&x), ival(0))) &&
+          matches(curr->right, binary(GeS, any(&y), ival(0))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left =
+          Builder(*getModule()).makeBinary(getBinary(x->type, And), x, y);
+        return inner;
+      }
+    }
+    {
+      // (x !=-1) | (y !=-1)   ==>   (x & y) !=-1
+      Expression *x, *y;
+      if (matches(curr->left, binary(Ne, any(&x), ival(-1))) &&
+          matches(curr->right, binary(Ne, any(&y), ival(-1))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left =
+          Builder(*getModule()).makeBinary(getBinary(x->type, And), x, y);
+        return inner;
+      }
+    }
+    {
       // Binary operations that preserve a bitwise OR can be
       // reordered. If F(x) = binary(x, c), and F(x) preserves OR,
       // that is,
@@ -2555,10 +2580,8 @@ private:
       Binary *bx, *by;
       Expression *x, *y;
       Const *cx, *cy;
-      if (matches(curr,
-                  binary(OrInt32,
-                         binary(&bx, any(&x), ival(&cx)),
-                         binary(&by, any(&y), ival(&cy)))) &&
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
           bx->op == by->op && x->type == y->type && cx->value == cy->value &&
           preserveOr(bx)) {
         bx->left = Builder(*getModule())
