@@ -79,19 +79,19 @@ namespace {
 // LocalGraph.
 struct ComparingLocalGraph : public LocalGraph {
   PassOptions& passOptions;
-  FeatureSet features;
+  Module& wasm;
 
   ComparingLocalGraph(Function* func,
                       PassOptions& passOptions,
-                      FeatureSet features)
-    : LocalGraph(func), passOptions(passOptions), features(features) {}
+                      Module& wasm)
+    : LocalGraph(func), passOptions(passOptions), wasm(wasm) {}
 
   // Check whether the values of two expressions will definitely be equal at
   // runtime.
   // TODO: move to LocalGraph if we find more users?
   bool equalValues(Expression* a, Expression* b) {
-    a = Properties::getFallthrough(a, passOptions, features);
-    b = Properties::getFallthrough(b, passOptions, features);
+    a = Properties::getFallthrough(a, passOptions, wasm);
+    b = Properties::getFallthrough(b, passOptions, wasm);
     if (auto* aGet = a->dynCast<LocalGet>()) {
       if (auto* bGet = b->dynCast<LocalGet>()) {
         if (LocalGraph::equivalent(aGet, bGet)) {
@@ -114,7 +114,7 @@ struct ComparingLocalGraph : public LocalGraph {
 struct Logic {
   Function* func;
 
-  Logic(Function* func, PassOptions& passOptions, FeatureSet features)
+  Logic(Function* func, PassOptions& passOptions, Module& wasm)
     : func(func) {}
 
   //============================================================================
@@ -146,7 +146,7 @@ struct Logic {
     //       after a trap) then we could stop assuming any trap can lead to
     //       access of global data, likely greatly reducing the number of
     //       barriers.
-    return currEffects.calls || currEffects.throws || currEffects.trap ||
+    return currEffects.calls || currEffects.throws() || currEffects.trap ||
            currEffects.branchesOut;
   };
 
@@ -229,13 +229,12 @@ struct DeadStoreCFG
                      BasicBlockInfo> {
   Function* func;
   PassOptions& passOptions;
-  FeatureSet features;
   LogicType logic;
 
-  DeadStoreCFG(Module* wasm, Function* func, PassOptions& passOptions)
-    : func(func), passOptions(passOptions), features(wasm->features),
-      logic(func, passOptions, wasm->features) {
-    this->setModule(wasm);
+  DeadStoreCFG(Module& wasm, Function* func, PassOptions& passOptions)
+    : func(func), passOptions(passOptions),
+      logic(func, passOptions, wasm) {
+    this->setModule(&wasm);
   }
 
   ~DeadStoreCFG() {}
@@ -245,7 +244,7 @@ struct DeadStoreCFG
       return;
     }
 
-    ShallowEffectAnalyzer currEffects(passOptions, features, curr);
+    ShallowEffectAnalyzer currEffects(passOptions, *this->getModule(), curr);
 
     auto& exprs = this->currBasicBlock->contents.exprs;
 
@@ -332,7 +331,7 @@ struct DeadStoreCFG
               return;
             }
 
-            ShallowEffectAnalyzer currEffects(passOptions, features, curr);
+            ShallowEffectAnalyzer currEffects(passOptions, *this->getModule(), curr);
 
             if (logic.isLoadFrom(curr, currEffects, store)) {
               // We found a definite load of this store, note it.
@@ -423,15 +422,15 @@ struct DeadStoreCFG
 struct ComparingLogic : public Logic {
   ComparingLocalGraph localGraph;
 
-  ComparingLogic(Function* func, PassOptions& passOptions, FeatureSet features)
-    : Logic(func, passOptions, features),
-      localGraph(func, passOptions, features) {}
+  ComparingLogic(Function* func, PassOptions& passOptions, Module& wasm)
+    : Logic(func, passOptions, wasm),
+      localGraph(func, passOptions, wasm) {}
 };
 
 // Optimize module globals: GlobalSet/GlobalGet.
 struct GlobalLogic : public Logic {
-  GlobalLogic(Function* func, PassOptions& passOptions, FeatureSet features)
-    : Logic(func, passOptions, features) {}
+  GlobalLogic(Function* func, PassOptions& passOptions, Module& wasm)
+    : Logic(func, passOptions, wasm) {}
 
   bool isStore(Expression* curr) { return curr->is<GlobalSet>(); }
 
@@ -476,8 +475,8 @@ struct GlobalLogic : public Logic {
 
 // Optimize memory stores/loads.
 struct MemoryLogic : public ComparingLogic {
-  MemoryLogic(Function* func, PassOptions& passOptions, FeatureSet features)
-    : ComparingLogic(func, passOptions, features) {}
+  MemoryLogic(Function* func, PassOptions& passOptions, Module& wasm)
+    : ComparingLogic(func, passOptions, wasm) {}
 
   bool isStore(Expression* curr) { return curr->is<Store>(); }
 
@@ -556,15 +555,15 @@ struct MemoryLogic : public ComparingLogic {
 // Optimize GC data: StructGet/StructSet.
 // TODO: Arrays.
 struct GCLogic : public ComparingLogic {
-  GCLogic(Function* func, PassOptions& passOptions, FeatureSet features)
-    : ComparingLogic(func, passOptions, features) {}
+  GCLogic(Function* func, PassOptions& passOptions, Module& wasm)
+    : ComparingLogic(func, passOptions, wasm) {}
 
   bool isStore(Expression* curr) { return curr->is<StructSet>(); }
 
   bool isLoad(Expression* curr) { return curr->is<StructGet>(); }
 
   bool mayInteract(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
-    return currEffects.readsHeap || currEffects.writesHeap;
+    return currEffects.readsMutableStruct || currEffects.writesStruct;
   }
 
   bool isLoadFrom(Expression* curr,
@@ -638,7 +637,7 @@ struct GCLogic : public ComparingLogic {
 
     // This is not a load or a store that we recognize; check for generic heap
     // interactions.
-    return currEffects.readsHeap || currEffects.writesHeap;
+    return currEffects.readsMutableStruct || currEffects.writesStruct;
   }
 
   Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
@@ -664,14 +663,14 @@ struct LocalDeadStoreElimination
 
   void doWalkFunction(Function* func) {
     // Optimize globals.
-    DeadStoreCFG<GlobalLogic>(getModule(), func, getPassOptions()).optimize();
+    DeadStoreCFG<GlobalLogic>(*getModule(), func, getPassOptions()).optimize();
 
     // Optimize memory.
-    DeadStoreCFG<MemoryLogic>(getModule(), func, getPassOptions()).optimize();
+    DeadStoreCFG<MemoryLogic>(*getModule(), func, getPassOptions()).optimize();
 
     // Optimize GC heap.
     if (getModule()->features.hasGC()) {
-      DeadStoreCFG<GCLogic>(getModule(), func, getPassOptions()).optimize();
+      DeadStoreCFG<GCLogic>(*getModule(), func, getPassOptions()).optimize();
     }
   }
 };
