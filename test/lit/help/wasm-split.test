@@ -10,18 +10,7 @@
 
 ;; Skip standard tool options
 
-;; CHECK:        --no-validation,-n                   Disables validation, assumes inputs are
-;; CHECK-NEXT:                                        correct
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
-;; CHECK-NEXT:                                        passes being run. Must be in the form
-;; CHECK-NEXT:                                        KEY@VALUE
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --nominal                            Use the prototype nominal type system
-;; CHECK-NEXT:                                        instead of the normal equirecursive type
-;; CHECK-NEXT:                                        system.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --split                              Split an input module into two output
+;; CHECK:        --split                              Split an input module into two output
 ;; CHECK-NEXT:                                        modules. The default mode.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --instrument                         Instrument an input module to allow it to
@@ -35,14 +24,18 @@
 ;; CHECK-NEXT:                                        splitting.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
-;; CHECK-NEXT:                                        to keep in the primary module, regardless
-;; CHECK-NEXT:                                        of any profile.
+;; CHECK-NEXT:                                        to keep in the primary module. The rest
+;; CHECK-NEXT:                                        will be split out. Cannot be used with
+;; CHECK-NEXT:                                        --profile or --split-funcs. You can also
+;; CHECK-NEXT:                                        pass a file with one function per line by
+;; CHECK-NEXT:                                        passing @filename.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --split-funcs                        [split] Comma-separated list of functions
-;; CHECK-NEXT:                                        to split into the secondary module,
-;; CHECK-NEXT:                                        regardless of any profile. If there is no
-;; CHECK-NEXT:                                        profile, then this defaults to all
-;; CHECK-NEXT:                                        functions defined in the module.
+;; CHECK-NEXT:                                        to split out to the secondary module. The
+;; CHECK-NEXT:                                        rest will be kept. Cannot be used with
+;; CHECK-NEXT:                                        --profile or --keep-funcs. You can also
+;; CHECK-NEXT:                                        pass a file with one function per line by
+;; CHECK-NEXT:                                        passing @filename.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
 ;; CHECK-NEXT:                                        module.
@@ -72,6 +65,15 @@
 ;; CHECK-NEXT:                                        function the embedder calls to write the
 ;; CHECK-NEXT:                                        profile into memory. Defaults to
 ;; CHECK-NEXT:                                        `__write_profile`.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --in-memory                          [instrument] Store profile information in
+;; CHECK-NEXT:                                        memory (starting at address 0 and taking
+;; CHECK-NEXT:                                        one byte per function) rather than
+;; CHECK-NEXT:                                        globals (the default) so that it can be
+;; CHECK-NEXT:                                        shared between multiple threads. Users
+;; CHECK-NEXT:                                        are responsible for ensuring that the
+;; CHECK-NEXT:                                        module does not use the initial memory
+;; CHECK-NEXT:                                        region for anything else.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-module-names                  [split, instrument] Emit module names,
 ;; CHECK-NEXT:                                        even if not emitting the rest of the

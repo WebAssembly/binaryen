@@ -3,10 +3,12 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $anyref_=>_none (func (param anyref)))
  (tag $tag$0 (param i32))
  (tag $tag$1 (param i64))
  (tag $tag$2 (param i32 i64))
- (tag $tag$3 (param))
+ (tag $tag$3 (param anyref))
+ (tag $tag$4 (param))
  (func $0
   (nop)
  )
@@ -195,7 +197,7 @@
     )
    )
   )
-  (try
+  (try $label$37
    (do
     (throw $tag$0
      (i32.const 0)
@@ -269,7 +271,7 @@
    (do
     (nop)
    )
-   (catch $tag$3
+   (catch $tag$4
     (nop)
    )
   )
@@ -375,6 +377,48 @@
      )
      (catch_all
       (nop)
+     )
+    )
+   )
+  )
+ )
+ (func $5
+  (try $label$5
+   (do
+    (nop)
+   )
+   (catch $tag$0
+    (throw $tag$0
+     (if (result i32)
+      (pop i32)
+      (i32.const 0)
+      (i32.const 3)
+     )
+    )
+   )
+  )
+  (try $label$8
+   (do
+    (nop)
+   )
+   (catch $tag$3
+    (drop
+     (pop anyref)
+    )
+   )
+  )
+ )
+ (func $6
+  (try $label$6
+   (do
+    (block $label$1
+     (try $label$4
+      (do
+       (throw $tag$0
+        (i32.const 0)
+       )
+      )
+      (delegate $label$6)
      )
     )
    )

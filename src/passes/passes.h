@@ -21,7 +21,7 @@ namespace wasm {
 
 class Pass;
 
-// All passes:
+// Normal passes:
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();
 Pass* createAvoidReinterpretsPass();
@@ -30,6 +30,7 @@ Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();
 Pass* createCodePushingPass();
 Pass* createConstHoistingPass();
+Pass* createConstantFieldPropagationPass();
 Pass* createDAEPass();
 Pass* createDAEOptimizingPass();
 Pass* createDataFlowOptsPass();
@@ -50,6 +51,8 @@ Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateStackIRPass();
+Pass* createGlobalRefiningPass();
+Pass* createGlobalTypeOptimizationPass();
 Pass* createHeap2LocalPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();
@@ -59,7 +62,9 @@ Pass* createLegalizeJSInterfacePass();
 Pass* createLegalizeJSInterfaceMinimallyPass();
 Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
+Pass* createLocalSubtypingPass();
 Pass* createLogExecutionPass();
+Pass* createIntrinsicLoweringPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
 Pass* createLocalDeadStoreEliminationPass();
@@ -76,9 +81,11 @@ Pass* createMetricsPass();
 Pass* createNameListPass();
 Pass* createNameTypesPass();
 Pass* createNoExitRuntimePass();
+Pass* createOnceReductionPass();
 Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeAddedConstantsPropagatePass();
 Pass* createOptimizeInstructionsPass();
+Pass* createOptimizeForJSPass();
 Pass* createOptimizeStackIRPass();
 Pass* createPickLoadSignsPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
@@ -106,6 +113,7 @@ Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();
 Pass* createSafeHeapPass();
 Pass* createSetGlobalsPass();
+Pass* createSignatureRefiningPass();
 Pass* createSimplifyLocalsPass();
 Pass* createSimplifyGlobalsPass();
 Pass* createSimplifyGlobalsOptimizingPass();
@@ -125,8 +133,12 @@ Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
+Pass* createTypeRefiningPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
+
+// Test passes:
+Pass* createCatchPopFixupPass();
 
 } // namespace wasm
 

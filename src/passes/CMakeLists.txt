@@ -9,12 +9,14 @@ add_custom_command(
 FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   pass.cpp
+  test_passes.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
   AvoidReinterprets.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
+  ConstantFieldPropagation.cpp
   ConstHoisting.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
@@ -30,14 +32,18 @@ set(passes_SOURCES
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
+  GlobalRefining.cpp
+  GlobalTypeOptimization.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
+  Intrinsics.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LocalCSE.cpp
+  LocalSubtyping.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
   Memory64Lowering.cpp
@@ -49,8 +55,10 @@ set(passes_SOURCES
   NameList.cpp
   NameTypes.cpp
   NoExitRuntime.cpp
+  OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
+  OptimizeForJS.cpp
   PickLoadSigns.cpp
   Poppify.cpp
   PostEmscripten.cpp
@@ -62,6 +70,7 @@ set(passes_SOURCES
   RoundTrip.cpp
   SetGlobals.cpp
   StackIR.cpp
+  SignatureRefining.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
@@ -75,6 +84,7 @@ set(passes_SOURCES
   ReorderFunctions.cpp
   ReReloop.cpp
   TrapMode.cpp
+  TypeRefining.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp

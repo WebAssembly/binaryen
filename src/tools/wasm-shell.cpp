@@ -327,7 +327,7 @@ protected:
                                            Builder::Immutable));
     spectest->addGlobal(builder.makeGlobal(Name::fromInt(2),
                                            Type::f32,
-                                           builder.makeConst<float>(666.6),
+                                           builder.makeConst<float>(666.6f),
                                            Builder::Immutable));
     spectest->addGlobal(builder.makeGlobal(Name::fromInt(3),
                                            Type::f64,

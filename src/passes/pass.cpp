@@ -47,6 +47,13 @@ void PassRegistry::registerPass(const char* name,
   passInfos[name] = PassInfo(description, create);
 }
 
+void PassRegistry::registerTestPass(const char* name,
+                                    const char* description,
+                                    Creator create) {
+  assert(passInfos.find(name) == passInfos.end());
+  passInfos[name] = PassInfo(description, create, true);
+}
+
 std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
   if (passInfos.find(name) == passInfos.end()) {
     Fatal() << "Could not find pass: " << name << "\n";
@@ -59,8 +66,8 @@ std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
 
 std::vector<std::string> PassRegistry::getRegisteredNames() {
   std::vector<std::string> ret;
-  for (auto pair : passInfos) {
-    ret.push_back(pair.first);
+  for (auto& [name, _] : passInfos) {
+    ret.push_back(name);
   }
   return ret;
 }
@@ -68,6 +75,11 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
 std::string PassRegistry::getPassDescription(std::string name) {
   assert(passInfos.find(name) != passInfos.end());
   return passInfos[name].description;
+}
+
+bool PassRegistry::isPassHidden(std::string name) {
+  assert(passInfos.find(name) != passInfos.end());
+  return passInfos[name].hidden;
 }
 
 // PassRunner
@@ -102,6 +114,9 @@ void PassRegistry::registerPasses() {
   registerPass("const-hoisting",
                "hoist repeated constants to a local",
                createConstHoistingPass);
+  registerPass("cfp",
+               "propagate constant struct field values",
+               createConstantFieldPropagationPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("ldse",
@@ -155,6 +170,13 @@ void PassRegistry::registerPasses() {
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
+    "global-refining", "refine the types of globals", createGlobalRefiningPass);
+  registerPass(
+    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass("type-refining",
+               "apply more specific subtypes to type fields where possible",
+               createTypeRefiningPass);
+  registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
@@ -164,6 +186,9 @@ void PassRegistry::registerPasses() {
   registerPass("inlining-optimizing",
                "inline functions and optimizes where we inlined",
                createInliningOptimizingPass);
+  registerPass("intrinsic-lowering",
+               "lower away binaryen intrinsics",
+               createIntrinsicLoweringPass);
   registerPass("legalize-js-interface",
                "legalizes i64 types on the import/export boundary",
                createLegalizeJSInterfacePass);
@@ -174,6 +199,9 @@ void PassRegistry::registerPasses() {
   registerPass("local-cse",
                "common subexpression elimination inside basic blocks",
                createLocalCSEPass);
+  registerPass("local-subtyping",
+               "apply more specific subtypes to locals where possible",
+               createLocalSubtypingPass);
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
                createLogExecutionPass);
@@ -230,6 +258,9 @@ void PassRegistry::registerPasses() {
                "removes calls to atexit(), which is valid if the C runtime "
                "will never be exited",
                createNoExitRuntimePass);
+  registerPass("once-reduction",
+               "reduces calls to code that only runs once",
+               createOnceReductionPass);
   registerPass("optimize-added-constants",
                "optimizes added constants into load/store offsets",
                createOptimizeAddedConstantsPass);
@@ -250,6 +281,9 @@ void PassRegistry::registerPasses() {
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
+  registerPass("optimize-for-js",
+               "early optimize of the instruction combinations for js",
+               createOptimizeForJSPass);
   registerPass("precompute",
                "computes compile-time evaluatable expressions",
                createPrecomputePass);
@@ -323,6 +357,9 @@ void PassRegistry::registerPasses() {
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
+  registerPass("signature-refining",
+               "apply more specific subtypes to signature types where possible",
+               createSignatureRefiningPass);
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",
                createSimplifyGlobalsPass);
@@ -388,6 +425,11 @@ void PassRegistry::registerPasses() {
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
+
+  // Register passes used for internal testing. These don't show up in --help.
+  registerTestPass("catch-pop-fixup",
+                   "fixup nested pops within catches",
+                   createCatchPopFixupPass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
@@ -417,7 +459,13 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
     addIfNoDWARFIssues("flatten");
+    // LocalCSE is particularly useful after flatten (see comment in the pass
+    // itself), but we must simplify locals a little first (as flatten adds many
+    // new and redundant ones, which make things seem different if we do not
+    // run some amount of simplify-locals first).
+    addIfNoDWARFIssues("simplify-locals-notee-nostructure");
     addIfNoDWARFIssues("local-cse");
+    // TODO: add rereloop etc. here
   }
   addIfNoDWARFIssues("dce");
   addIfNoDWARFIssues("remove-unused-names");
@@ -457,7 +505,16 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
   }
+  if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    // Coalescing may prevent subtyping (as a coalesced local must have the
+    // supertype of all those combined into it), so subtype first.
+    // TODO: when optimizing for size, maybe the order should reverse?
+    addIfNoDWARFIssues("local-subtyping");
+  }
   addIfNoDWARFIssues("coalesce-locals");
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("local-cse");
+  }
   addIfNoDWARFIssues("simplify-locals");
   addIfNoDWARFIssues("vacuum");
   addIfNoDWARFIssues("reorder-locals");
@@ -490,6 +547,22 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   addIfNoDWARFIssues("duplicate-function-elimination");
   addIfNoDWARFIssues("memory-packing");
+  if (options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("once-reduction");
+  }
+  if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
+      options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("type-refining");
+    addIfNoDWARFIssues("signature-refining");
+    addIfNoDWARFIssues("global-refining");
+    // Global type optimization can remove fields that are not needed, which can
+    // remove ref.funcs that were once assigned to vtables but are no longer
+    // needed, which can allow more code to be removed globally. After those,
+    // constant field propagation can be more effective.
+    addIfNoDWARFIssues("gto");
+    addIfNoDWARFIssues("remove-unused-module-elements");
+    addIfNoDWARFIssues("cfp");
+  }
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {

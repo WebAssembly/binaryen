@@ -48,8 +48,8 @@ struct Address {
   typedef uint32_t address32_t;
   typedef uint64_t address64_t;
   address64_t addr;
-  Address() : addr(0) {}
-  Address(uint64_t a) : addr(a) {}
+  constexpr Address() : addr(0) {}
+  constexpr Address(uint64_t a) : addr(a) {}
   Address& operator=(uint64_t a) {
     addr = a;
     return *this;
@@ -218,6 +218,12 @@ enum UnaryOp {
   TruncSatZeroUVecF64x2ToVecI32x4,
   DemoteZeroVecF64x2ToVecF32x4,
   PromoteLowVecF32x4ToVecF64x2,
+
+  // Relaxed SIMD
+  RelaxedTruncSVecF32x4ToVecI32x4,
+  RelaxedTruncUVecF32x4ToVecI32x4,
+  RelaxedTruncZeroSVecF64x2ToVecI32x4,
+  RelaxedTruncZeroUVecF64x2ToVecI32x4,
 
   InvalidUnary
 };
@@ -459,6 +465,13 @@ enum BinaryOp {
   // SIMD Swizzle
   SwizzleVec8x16,
 
+  // Relaxed SIMD
+  RelaxedSwizzleVec8x16,
+  RelaxedMinVecF32x4,
+  RelaxedMaxVecF32x4,
+  RelaxedMinVecF64x2,
+  RelaxedMaxVecF64x2,
+
   InvalidBinary
 };
 
@@ -527,6 +540,16 @@ enum SIMDLoadStoreLaneOp {
 
 enum SIMDTernaryOp {
   Bitselect,
+
+  // Relaxed SIMD
+  RelaxedFmaVecF32x4,
+  RelaxedFmsVecF32x4,
+  RelaxedFmaVecF64x2,
+  RelaxedFmsVecF64x2,
+  LaneselectI8x16,
+  LaneselectI16x8,
+  LaneselectI32x4,
+  LaneselectI64x2,
 };
 
 enum RefIsOp {
@@ -560,10 +583,9 @@ enum BrOnOp {
 // Expressions
 //
 // Note that little is provided in terms of constructors for these. The
-// rationale is that writing  new Something(a, b, c, d, e)  is not the clearest,
-// and it would be better to write   new Something(name=a, leftOperand=b...
-// etc., but C++ lacks named operands, so in asm2wasm etc. you will see things
-// like
+// rationale is that writing `new Something(a, b, c, d, e)` is not the clearest,
+// and it would be better to write new `Something(name=a, leftOperand=b...`
+// etc., but C++ lacks named operands so you will see things like
 //   auto x = new Something();
 //   x->name = a;
 //   x->leftOperand = b;
@@ -625,6 +647,10 @@ public:
     RefIsId,
     RefFuncId,
     RefEqId,
+    TableGetId,
+    TableSetId,
+    TableSizeId,
+    TableGrowId,
     TryId,
     ThrowId,
     RethrowId,
@@ -642,6 +668,7 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
+    ArrayInitId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
@@ -799,8 +826,8 @@ public:
 
   ArenaVector<Name> targets;
   Name default_;
-  Expression* condition = nullptr;
   Expression* value = nullptr;
+  Expression* condition = nullptr;
 
   void finalize();
 };
@@ -819,7 +846,7 @@ public:
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-  Signature sig;
+  HeapType heapType;
   ExpressionList operands;
   Expression* target;
   Name table;
@@ -876,7 +903,7 @@ public:
   Load(MixedArena& allocator) {}
 
   uint8_t bytes;
-  bool signed_;
+  bool signed_ = false;
   Address offset;
   Address align;
   bool isAtomic;
@@ -1264,6 +1291,51 @@ public:
   void finalize();
 };
 
+class TableGet : public SpecificExpression<Expression::TableGetId> {
+public:
+  TableGet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+
+  void finalize();
+};
+
+class TableSet : public SpecificExpression<Expression::TableSetId> {
+public:
+  TableSet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+  Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
+
+  void finalize();
+};
+
+class TableGrow : public SpecificExpression<Expression::TableGrowId> {
+public:
+  TableGrow() { type = Type::i32; }
+  TableGrow(MixedArena& allocator) : TableGrow() {}
+
+  Name table;
+  Expression* value;
+  Expression* delta;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
@@ -1335,7 +1407,7 @@ public:
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
-  bool signed_;
+  bool signed_ = false;
 
   void finalize();
 };
@@ -1356,9 +1428,17 @@ public:
   RefTest(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // If rtt is provided then this is a dynamic test with an rtt. If nullptr then
+  // this is a static cast and intendedType is set, and it contains the type we
+  // intend to cast to.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1366,9 +1446,15 @@ public:
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  // See above with RefTest.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   void finalize();
+
+  // Returns the type we intend to cast to.
+  HeapType getIntendedType();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1379,8 +1465,10 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast* has an rtt that is used in the cast.
-  Expression* rtt;
+  // BrOnCast* has, like RefCast and RefTest, either an rtt or a static intended
+  // type.
+  Expression* rtt = nullptr;
+  HeapType intendedType;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do
   //       not support. See also the discussion on
@@ -1389,6 +1477,9 @@ public:
   //       Break or a new class of its own.
 
   void finalize();
+
+  // Returns the type we intend to cast to. Relevant only for the cast variants.
+  HeapType getIntendedType();
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();
@@ -1419,7 +1510,10 @@ class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
   StructNew(MixedArena& allocator) : operands(allocator) {}
 
-  Expression* rtt;
+  // A dynamic StructNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
+
   // A struct.new_with_default has empty operands. This does leave the case of a
   // struct with no fields ambiguous, but it doesn't make a difference in that
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
@@ -1462,9 +1556,25 @@ public:
   // used.
   Expression* init = nullptr;
   Expression* size;
-  Expression* rtt;
+
+  // A dynamic ArrayNew has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
 
   bool isWithDefault() { return !init; }
+
+  void finalize();
+};
+
+class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+public:
+  ArrayInit(MixedArena& allocator) : values(allocator) {}
+
+  ExpressionList values;
+
+  // A dynamic ArrayInit has an rtt, while a static one declares the type using
+  // the type field.
+  Expression* rtt = nullptr;
 
   void finalize();
 };
@@ -1823,8 +1933,10 @@ public:
 // The optional "dylink" section is used in dynamic linking.
 class DylinkSection {
 public:
+  bool isLegacy = false;
   Index memorySize, memoryAlignment, tableSize, tableAlignment;
   std::vector<Name> neededDynlibs;
+  std::vector<char> tail;
 };
 
 class Module {

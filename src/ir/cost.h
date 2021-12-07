@@ -24,82 +24,84 @@ namespace wasm {
 
 // Measure the execution cost of an AST. Very handwave-ey
 
-struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
+using CostType = uint32_t;
+
+struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostAnalyzer(Expression* ast) { cost = visit(ast); }
 
-  Index cost;
+  CostType cost;
 
-  Index maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
+  CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
 
-  Index visitBlock(Block* curr) {
-    Index ret = 0;
+  CostType visitBlock(Block* curr) {
+    CostType ret = 0;
     for (auto* child : curr->list) {
       ret += visit(child);
     }
     return ret;
   }
-  Index visitIf(If* curr) {
+  CostType visitIf(If* curr) {
     return 1 + visit(curr->condition) +
            std::max(visit(curr->ifTrue), maybeVisit(curr->ifFalse));
   }
-  Index visitLoop(Loop* curr) { return 5 * visit(curr->body); }
-  Index visitBreak(Break* curr) {
+  CostType visitLoop(Loop* curr) { return 5 * visit(curr->body); }
+  CostType visitBreak(Break* curr) {
     return 1 + maybeVisit(curr->value) + maybeVisit(curr->condition);
   }
-  Index visitSwitch(Switch* curr) {
+  CostType visitSwitch(Switch* curr) {
     return 2 + visit(curr->condition) + maybeVisit(curr->value);
   }
-  Index visitCall(Call* curr) {
+  CostType visitCall(Call* curr) {
     // XXX this does not take into account if the call is to an import, which
     //     may be costlier in general
-    Index ret = 4;
+    CostType ret = 4;
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  Index visitCallIndirect(CallIndirect* curr) {
-    Index ret = 6 + visit(curr->target);
+  CostType visitCallIndirect(CallIndirect* curr) {
+    CostType ret = 6 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  Index visitCallRef(CallRef* curr) {
-    Index ret = 5 + visit(curr->target);
+  CostType visitCallRef(CallRef* curr) {
+    CostType ret = 5 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  Index visitLocalGet(LocalGet* curr) { return 0; }
-  Index visitLocalSet(LocalSet* curr) { return 1 + visit(curr->value); }
-  Index visitGlobalGet(GlobalGet* curr) { return 1; }
-  Index visitGlobalSet(GlobalSet* curr) { return 2 + visit(curr->value); }
-  Index visitLoad(Load* curr) {
+  CostType visitLocalGet(LocalGet* curr) { return 0; }
+  CostType visitLocalSet(LocalSet* curr) { return 1 + visit(curr->value); }
+  CostType visitGlobalGet(GlobalGet* curr) { return 1; }
+  CostType visitGlobalSet(GlobalSet* curr) { return 2 + visit(curr->value); }
+  CostType visitLoad(Load* curr) {
     return 1 + visit(curr->ptr) + 10 * curr->isAtomic;
   }
-  Index visitStore(Store* curr) {
+  CostType visitStore(Store* curr) {
     return 2 + visit(curr->ptr) + visit(curr->value) + 10 * curr->isAtomic;
   }
-  Index visitAtomicRMW(AtomicRMW* curr) {
+  CostType visitAtomicRMW(AtomicRMW* curr) {
     return 100 + visit(curr->ptr) + visit(curr->value);
   }
-  Index visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+  CostType visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     return 100 + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->replacement);
   }
-  Index visitAtomicWait(AtomicWait* curr) {
+  CostType visitAtomicWait(AtomicWait* curr) {
     return 100 + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->timeout);
   }
-  Index visitAtomicNotify(AtomicNotify* curr) {
+  CostType visitAtomicNotify(AtomicNotify* curr) {
     return 100 + visit(curr->ptr) + visit(curr->notifyCount);
   }
-  Index visitAtomicFence(AtomicFence* curr) { return 100; }
-  Index visitConst(Const* curr) { return 1; }
-  Index visitUnary(Unary* curr) {
-    Index ret = 0;
+  CostType visitAtomicFence(AtomicFence* curr) { return 100; }
+  CostType visitConst(Const* curr) { return 1; }
+  CostType visitUnary(Unary* curr) {
+    CostType ret = 0;
     switch (curr->op) {
       case ClzInt32:
       case CtzInt32:
@@ -230,6 +232,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case TruncSatZeroUVecF64x2ToVecI32x4:
       case DemoteZeroVecF64x2ToVecF32x4:
       case PromoteLowVecF32x4ToVecF64x2:
+      case RelaxedTruncSVecF32x4ToVecI32x4:
+      case RelaxedTruncUVecF32x4ToVecI32x4:
+      case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroUVecF64x2ToVecI32x4:
         ret = 1;
         break;
       case InvalidUnary:
@@ -237,8 +243,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     }
     return ret + visit(curr->value);
   }
-  Index visitBinary(Binary* curr) {
-    Index ret = 0;
+  CostType visitBinary(Binary* curr) {
+    CostType ret = 0;
     switch (curr->op) {
       case AddInt32:
       case SubInt32:
@@ -251,7 +257,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case DivUInt32:
       case RemSInt32:
       case RemUInt32:
-        ret = 3;
+        ret = curr->right->is<Const>() ? 2 : 3;
         break;
       case AndInt32:
       case OrInt32:
@@ -272,7 +278,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case DivUInt64:
       case RemSInt64:
       case RemUInt64:
-        ret = 3;
+        ret = curr->right->is<Const>() ? 3 : 4;
         break;
       case AndInt64:
       case OrInt64:
@@ -463,6 +469,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case MaxVecF32x4:
       case PMinVecF32x4:
       case PMaxVecF32x4:
+      case RelaxedMinVecF32x4:
+      case RelaxedMaxVecF32x4:
       case AddVecF64x2:
       case SubVecF64x2:
         ret = 1;
@@ -477,11 +485,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case MaxVecF64x2:
       case PMinVecF64x2:
       case PMaxVecF64x2:
+      case RelaxedMinVecF64x2:
+      case RelaxedMaxVecF64x2:
       case NarrowSVecI16x8ToVecI8x16:
       case NarrowUVecI16x8ToVecI8x16:
       case NarrowSVecI32x4ToVecI16x8:
       case NarrowUVecI32x4ToVecI16x8:
       case SwizzleVec8x16:
+      case RelaxedSwizzleVec8x16:
         ret = 1;
         break;
       case InvalidBinary:
@@ -489,138 +500,166 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     }
     return ret + visit(curr->left) + visit(curr->right);
   }
-  Index visitSelect(Select* curr) {
+  CostType visitSelect(Select* curr) {
     return 1 + visit(curr->condition) + visit(curr->ifTrue) +
            visit(curr->ifFalse);
   }
-  Index visitDrop(Drop* curr) { return visit(curr->value); }
-  Index visitReturn(Return* curr) { return maybeVisit(curr->value); }
-  Index visitMemorySize(MemorySize* curr) { return 1; }
-  Index visitMemoryGrow(MemoryGrow* curr) { return 100 + visit(curr->delta); }
-  Index visitMemoryInit(MemoryInit* curr) {
+  CostType visitDrop(Drop* curr) { return visit(curr->value); }
+  CostType visitReturn(Return* curr) { return maybeVisit(curr->value); }
+  CostType visitMemorySize(MemorySize* curr) { return 1; }
+  CostType visitMemoryGrow(MemoryGrow* curr) {
+    return 100 + visit(curr->delta);
+  }
+  CostType visitMemoryInit(MemoryInit* curr) {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
-  Index visitMemoryCopy(MemoryCopy* curr) {
+  CostType visitMemoryCopy(MemoryCopy* curr) {
     // TODO when the size is a constant, estimate the time based on that
     return 6 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
   }
-  Index visitMemoryFill(MemoryFill* curr) {
+  CostType visitMemoryFill(MemoryFill* curr) {
     return 6 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
   }
-  Index visitSIMDLoad(SIMDLoad* curr) { return 1 + visit(curr->ptr); }
-  Index visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    return 1 + Index(curr->isStore()) + visit(curr->ptr) + visit(curr->vec);
+  CostType visitSIMDLoad(SIMDLoad* curr) { return 1 + visit(curr->ptr); }
+  CostType visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    return 1 + CostType(curr->isStore()) + visit(curr->ptr) + visit(curr->vec);
   }
-  Index visitSIMDReplace(SIMDReplace* curr) {
+  CostType visitSIMDReplace(SIMDReplace* curr) {
     return 2 + visit(curr->vec) + visit(curr->value);
   }
-  Index visitSIMDExtract(SIMDExtract* curr) { return 1 + visit(curr->vec); }
-  Index visitSIMDTernary(SIMDTernary* curr) {
-    Index ret = 0;
+  CostType visitSIMDExtract(SIMDExtract* curr) { return 1 + visit(curr->vec); }
+  CostType visitSIMDTernary(SIMDTernary* curr) {
+    CostType ret = 0;
     switch (curr->op) {
       case Bitselect:
+      case LaneselectI8x16:
+      case LaneselectI16x8:
+      case LaneselectI32x4:
+      case LaneselectI64x2:
+      case RelaxedFmaVecF32x4:
+      case RelaxedFmsVecF32x4:
+      case RelaxedFmaVecF64x2:
+      case RelaxedFmsVecF64x2:
         ret = 1;
         break;
     }
     return ret + visit(curr->a) + visit(curr->b) + visit(curr->c);
   }
-  Index visitSIMDShift(SIMDShift* curr) {
+  CostType visitSIMDShift(SIMDShift* curr) {
     return 1 + visit(curr->vec) + visit(curr->shift);
   }
-  Index visitSIMDShuffle(SIMDShuffle* curr) {
+  CostType visitSIMDShuffle(SIMDShuffle* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
   }
-  Index visitRefNull(RefNull* curr) { return 1; }
-  Index visitRefIs(RefIs* curr) { return 1 + visit(curr->value); }
-  Index visitRefFunc(RefFunc* curr) { return 1; }
-  Index visitRefEq(RefEq* curr) {
+  CostType visitRefNull(RefNull* curr) { return 1; }
+  CostType visitRefIs(RefIs* curr) { return 1 + visit(curr->value); }
+  CostType visitRefFunc(RefFunc* curr) { return 1; }
+  CostType visitRefEq(RefEq* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
   }
-  Index visitTry(Try* curr) {
+  CostType visitTableGet(TableGet* curr) { return 1 + visit(curr->index); }
+  CostType visitTableSet(TableSet* curr) {
+    return 2 + visit(curr->index) + visit(curr->value);
+  }
+  CostType visitTableSize(TableSize* curr) { return 1; }
+  CostType visitTableGrow(TableGrow* curr) {
+    return 100 + visit(curr->value) + visit(curr->delta);
+  }
+  CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
   }
-  Index visitThrow(Throw* curr) {
-    Index ret = 100;
+  CostType visitThrow(Throw* curr) {
+    CostType ret = 100;
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  Index visitRethrow(Rethrow* curr) { return 100; }
-  Index visitTupleMake(TupleMake* curr) {
-    Index ret = 0;
+  CostType visitRethrow(Rethrow* curr) { return 100; }
+  CostType visitTupleMake(TupleMake* curr) {
+    CostType ret = 0;
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  Index visitTupleExtract(TupleExtract* curr) { return visit(curr->tuple); }
-  Index visitPop(Pop* curr) { return 0; }
-  Index visitNop(Nop* curr) { return 0; }
-  Index visitUnreachable(Unreachable* curr) { return 0; }
-  Index visitDataDrop(DataDrop* curr) { return 5; }
-  Index visitI31New(I31New* curr) { return 3 + visit(curr->value); }
-  Index visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
-  Index visitRefTest(RefTest* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
-  }
-  Index visitRefCast(RefCast* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
-  }
-  Index visitBrOn(BrOn* curr) {
-    // BrOnCast has more work to do with the rtt, so add a little there.
-    Index base = curr->op == BrOnCast ? 3 : 2;
-    return base + nullCheckCost(curr->ref) + visit(curr->ref) +
+  CostType visitTupleExtract(TupleExtract* curr) { return visit(curr->tuple); }
+  CostType visitPop(Pop* curr) { return 0; }
+  CostType visitNop(Nop* curr) { return 0; }
+  CostType visitUnreachable(Unreachable* curr) { return 0; }
+  CostType visitDataDrop(DataDrop* curr) { return 5; }
+  CostType visitI31New(I31New* curr) { return 3 + visit(curr->value); }
+  CostType visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
+  CostType visitRefTest(RefTest* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
            maybeVisit(curr->rtt);
   }
-  Index visitRttCanon(RttCanon* curr) {
+  CostType visitRefCast(RefCast* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           maybeVisit(curr->rtt);
+  }
+  CostType visitBrOn(BrOn* curr) {
+    // BrOnCast has more work to do with the rtt, so add a little there.
+    CostType base = curr->op == BrOnCast ? 3 : 2;
+    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref) +
+           maybeVisit(curr->rtt);
+  }
+  CostType visitRttCanon(RttCanon* curr) {
     // TODO: investigate actual RTT costs in VMs
     return 1;
   }
-  Index visitRttSub(RttSub* curr) {
+  CostType visitRttSub(RttSub* curr) {
     // TODO: investigate actual RTT costs in VMs
     return 2 + visit(curr->parent);
   }
-  Index visitStructNew(StructNew* curr) {
+  CostType visitStructNew(StructNew* curr) {
     // While allocation itself is almost free with generational GC, there is
     // at least some baseline cost, plus writing the fields. (If we use default
     // values for the fields, then it is possible they are all 0 and if so, we
     // can get that almost for free as well, so don't add anything there.)
-    Index ret = 4 + visit(curr->rtt) + curr->operands.size();
+    CostType ret = 4 + maybeVisit(curr->rtt) + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  Index visitStructGet(StructGet* curr) {
+  CostType visitStructGet(StructGet* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
   }
-  Index visitStructSet(StructSet* curr) {
+  CostType visitStructSet(StructSet* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
   }
-  Index visitArrayNew(ArrayNew* curr) {
-    return 4 + visit(curr->rtt) + visit(curr->size) + maybeVisit(curr->init);
+  CostType visitArrayNew(ArrayNew* curr) {
+    return 4 + maybeVisit(curr->rtt) + visit(curr->size) +
+           maybeVisit(curr->init);
   }
-  Index visitArrayGet(ArrayGet* curr) {
+  CostType visitArrayInit(ArrayInit* curr) {
+    CostType ret = 4 + maybeVisit(curr->rtt);
+    for (auto* child : curr->values) {
+      ret += visit(child);
+    }
+    return ret;
+  }
+  CostType visitArrayGet(ArrayGet* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
   }
-  Index visitArraySet(ArraySet* curr) {
+  CostType visitArraySet(ArraySet* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
            visit(curr->index) + visit(curr->value);
   }
-  Index visitArrayLen(ArrayLen* curr) {
+  CostType visitArrayLen(ArrayLen* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
   }
-  Index visitArrayCopy(ArrayCopy* curr) {
+  CostType visitArrayCopy(ArrayCopy* curr) {
     // Similar to MemoryCopy.
     return 6 + visit(curr->destRef) + visit(curr->destIndex) +
            visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
   }
-  Index visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
+  CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
 
 private:
-  Index nullCheckCost(Expression* ref) {
+  CostType nullCheckCost(Expression* ref) {
     // A nullable type requires a bounds check in most VMs.
     return ref->type.isNullable();
   }

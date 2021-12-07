@@ -37,6 +37,7 @@
 #include "support/file.h"
 #include "support/path.h"
 #include "support/timing.h"
+#include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
@@ -256,13 +257,14 @@ struct Reducer
       "-O4",
       "--flatten -Os",
       "--flatten -O3",
-      "--flatten --local-cse -Os",
+      "--flatten --simplify-locals-notee-nostructure --local-cse -Os",
       "--coalesce-locals --vacuum",
       "--dce",
       "--duplicate-function-elimination",
       "--inlining",
       "--inlining-optimizing",
       "--optimize-level=3 --inlining-optimizing",
+      "--local-cse",
       "--memory-packing",
       "--remove-unused-names --merge-blocks --vacuum",
       "--optimize-instructions",
@@ -287,9 +289,6 @@ struct Reducer
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
         currCommand += working + " -o " + test + " " + pass + " " + extraFlags;
-        if (debugInfo) {
-          currCommand += " -g ";
-        }
         if (!binary) {
           currCommand += " -S ";
         }
@@ -784,7 +783,6 @@ struct Reducer
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool justShrank = false;
-    bool shrank = false;
 
     auto& data = segment->data;
     // when we succeed, try to shrink by more and more, similar to bisection
@@ -793,48 +791,52 @@ struct Reducer
       if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
-          if (!data.empty()) {
+          if (data.empty()) {
+            break;
+          } else {
             data.pop_back();
           }
         }
         justShrank = writeAndTestReduction();
         if (justShrank) {
-          std::cerr << "|      shrank segment (skip: " << skip << ")\n";
-          shrank = true;
+          std::cerr << "|      shrank segment from " << save.size() << " => "
+                    << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
           skip = std::min(size_t(factor), 2 * skip);
         } else {
-          data = save;
-          break;
+          data = std::move(save);
+          return false;
         }
       }
     }
 
-    return shrank;
+    return true;
   }
 
   void shrinkElementSegments() {
     std::cerr << "|    try to simplify elem segments\n";
-    Expression* first = nullptr;
+
+    // First, shrink segment elements.
+    bool shrank = false;
+    for (auto& segment : module->elementSegments) {
+      shrank = shrank || shrinkByReduction(segment.get(), 1);
+    }
+
+    // Second, try to replace elements with a "zero".
     auto it =
       std::find_if_not(module->elementSegments.begin(),
                        module->elementSegments.end(),
                        [&](auto& segment) { return segment->data.empty(); });
 
+    Expression* first = nullptr;
     if (it != module->elementSegments.end()) {
       first = it->get()->data[0];
     }
     if (first == nullptr) {
-      // The elements are all empty, nothing to shrink
+      // The elements are all empty, nothing left to do.
       return;
     }
 
-    // try to reduce to first function. first, shrink segment elements.
-    // while we are shrinking successfully, keep going exponentially.
-    bool shrank = false;
-    for (auto& segment : module->elementSegments) {
-      shrank = shrinkByReduction(segment.get(), 100);
-    }
     // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : module->elementSegments) {
       reduceByZeroing(
@@ -853,7 +855,7 @@ struct Reducer
             return f->func == e->func;
           }
         },
-        100,
+        1,
         shrank);
     }
   }
@@ -890,9 +892,10 @@ struct Reducer
       if (names.size() == 0) {
         continue;
       }
-      // Try to remove functions, and if that fails, try to at least empty out
-      // their bodies.
-      justReduced = tryToRemoveFunctions(names) || tryToEmptyFunctions(names);
+      // Try to remove functions and/or empty them. Note that
+      // tryToRemoveFunctions() will reload the module if it fails, which means
+      // function names may change - for that reason, run it second.
+      justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
         i += skip;
@@ -1075,7 +1078,7 @@ struct Reducer
     if (WasmValidator().validate(
           *module, WasmValidator::Globally | WasmValidator::Quiet) &&
         writeAndTestReduction()) {
-      std::cerr << "|      removed " << names.size() << " functions\n";
+      std::cerr << "|        removed " << names.size() << " functions\n";
       return true;
     } else {
       loadWorking(); // restore it from orbit
@@ -1170,9 +1173,9 @@ int main(int argc, const char* argv[]) {
   std::string binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
-  Options options("wasm-reduce",
-                  "Reduce a wasm file to a smaller one that has the same "
-                  "behavior on a given command");
+  ToolOptions options("wasm-reduce",
+                      "Reduce a wasm file to a smaller one that has the same "
+                      "behavior on a given command");
   options
     .add("--command",
          "-cmd",
@@ -1254,6 +1257,13 @@ int main(int argc, const char* argv[]) {
       [&](Options* o, const std::string& argument) { input = argument; });
   options.parse(argc, argv);
 
+  if (debugInfo) {
+    extraFlags += " -g ";
+  }
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    extraFlags += " --nominal";
+  }
+
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";
   }
@@ -1272,6 +1282,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|test: " << test << '\n';
   std::cerr << "|working: " << working << '\n';
   std::cerr << "|bin dir: " << binDir << '\n';
+  std::cerr << "|extra flags: " << extraFlags << '\n';
 
   // get the expected output
   copy_file(input, test);
@@ -1383,8 +1394,8 @@ int main(int argc, const char* argv[]) {
         // stop
         stopping = true;
       } else {
-        // just try to remove all we can and finish up
-        factor = 1;
+        // decrease the factor quickly
+        factor = (factor + 1) / 2; // stable on 1
       }
     }
     lastPostPassesSize = newSize;

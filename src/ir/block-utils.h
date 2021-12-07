@@ -24,9 +24,8 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::BlockUtils {
 
-namespace BlockUtils {
 // if a block has just one element, it can often be replaced
 // with that content
 template<typename T>
@@ -37,10 +36,9 @@ simplifyToContents(Block* block, T* parent, bool allowTypeChange = false) {
       !BranchUtils::BranchSeeker::has(list[0], block->name)) {
     // just one element. try to replace the block
     auto* singleton = list[0];
-    auto sideEffects = EffectAnalyzer(parent->getPassOptions(),
-                                      parent->getModule()->features,
-                                      singleton)
-                         .hasSideEffects();
+    auto sideEffects =
+      EffectAnalyzer(parent->getPassOptions(), *parent->getModule(), singleton)
+        .hasSideEffects();
     if (!sideEffects && !singleton->type.isConcrete()) {
       // no side effects, and singleton is not returning a value, so we can
       // throw away the block and its contents, basically
@@ -69,8 +67,6 @@ inline Expression* simplifyToContentsWithPossibleTypeChange(Block* block,
                                                             T* parent) {
   return simplifyToContents(block, parent, true);
 }
-} // namespace BlockUtils
-
-} // namespace wasm
+} // namespace wasm::BlockUtils
 
 #endif // wasm_ir_block_h

@@ -3,6 +3,9 @@
 ;; RUN:  | filecheck %s
 
 (module
+ ;; CHECK:      (type $struct (struct ))
+ (type $struct (struct ))
+
  ;; CHECK:      (func $br_on_non_data-1
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $any (result anyref)
@@ -51,4 +54,62 @@
    )
   )
  )
+
+ ;; CHECK:      (func $br_on-if (param $0 dataref)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (select (result dataref)
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on-if (param $0 (ref data))
+  (block $label
+   (drop
+    ;; This br is never taken, as the input is non-nullable, so we can remove
+    ;; it. When we do so, we replace it with the if. We should not rescan that
+    ;; if, which has already been walked, as that would hit an assertion.
+    ;;
+    (br_on_null $label
+     ;; This if can also be turned into a select, separately from the above
+     ;; (that is not specifically intended to be tested here).
+     (if (result (ref data))
+      (i32.const 0)
+      (local.get $0)
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nested_br_on (result dataref)
+ ;; CHECK-NEXT:  (block $label$1 (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $label$1
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $nested_br_on (result dataref)
+  (block $label$1 (result dataref)
+   (drop
+    ;; The inner br_on_data will become a direct br since the type proves it
+    ;; is in fact data. That then becomes unreachable, and the parent must
+    ;; handle that properly (do nothing without hitting an assertion).
+    (br_on_data $label$1
+     (br_on_data $label$1
+      (struct.new_default $struct)
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
 )
+

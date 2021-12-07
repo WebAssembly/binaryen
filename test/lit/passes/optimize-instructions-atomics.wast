@@ -31,4 +31,68 @@
    )
   )
  )
+
+ ;; CHECK:      (func $dont_simplify_reinterpret_atomic_load_store (param $x i32) (param $y f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (f64.reinterpret_i64
+ ;; CHECK-NEXT:    (i64.atomic.load
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.atomic.store
+ ;; CHECK-NEXT:   (i32.const 8)
+ ;; CHECK-NEXT:   (i32.reinterpret_f32
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $dont_simplify_reinterpret_atomic_load_store (param $x i32) (param $y f32)
+  (drop (f64.reinterpret_i64 (i64.atomic.load (local.get $x))))         ;; skip
+  (i32.atomic.store (i32.const 8) (i32.reinterpret_f32 (local.get $y))) ;; skip
+ )
+
+ ;; CHECK:      (func $combine_atomic_load_and_extends (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.atomic.load8_u
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.atomic.load16_u
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.atomic.load32_u
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.atomic.load8_u
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.atomic.load16_u
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.extend_i32_s
+ ;; CHECK-NEXT:    (i32.atomic.load
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $combine_atomic_load_and_extends (param $x i32)
+  (drop (i64.extend_i32_u (i32.atomic.load8_u (local.get $x))))
+  (drop (i64.extend_i32_u (i32.atomic.load16_u (local.get $x))))
+  (drop (i64.extend_i32_u (i32.atomic.load (local.get $x))))
+  (drop (i64.extend_i32_s (i32.atomic.load8_u (local.get $x))))
+  (drop (i64.extend_i32_s (i32.atomic.load16_u (local.get $x))))
+  ;; skips
+  (drop (i64.extend_i32_s (i32.atomic.load (local.get $x))))
+ )
 )

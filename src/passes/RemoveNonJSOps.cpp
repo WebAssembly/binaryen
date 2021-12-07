@@ -125,9 +125,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     MemoryUtils::ensureExists(module->memory);
 
     // Add missing globals
-    for (auto& pair : neededImportedGlobals) {
-      auto name = pair.first;
-      auto type = pair.second;
+    for (auto& [name, type] : neededImportedGlobals) {
       if (!getModule()->getGlobalOrNull(name)) {
         auto global = make_unique<Global>();
         global->name = name;
@@ -141,10 +139,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void addNeededFunctions(Module& m, Name name, std::set<Name>& needed) {
-    if (needed.count(name)) {
+    if (!needed.emplace(name).second) {
       return;
     }
-    needed.insert(name);
 
     auto function = m.getFunction(name);
     FindAll<Call> calls(function->body);
@@ -252,17 +249,29 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void rewriteCopysign(Binary* curr) {
+
+    // i32.copysign(x, y)   =>   f32.reinterpret(
+    //   (i32.reinterpret(x) & ~(1 << 31)) |
+    //   (i32.reinterpret(y) &  (1 << 31)
+    // )
+    //
+    // i64.copysign(x, y)   =>   f64.reinterpret(
+    //   (i64.reinterpret(x) & ~(1 << 63)) |
+    //   (i64.reinterpret(y) &  (1 << 63)
+    // )
+
     Literal signBit, otherBits;
     UnaryOp int2float, float2int;
     BinaryOp bitAnd, bitOr;
+
     switch (curr->op) {
       case CopySignFloat32:
         float2int = ReinterpretFloat32;
         int2float = ReinterpretInt32;
         bitAnd = AndInt32;
         bitOr = OrInt32;
-        signBit = Literal(uint32_t(1 << 31));
-        otherBits = Literal(uint32_t(1 << 31) - 1);
+        signBit = Literal(uint32_t(1U << 31));
+        otherBits = Literal(~uint32_t(1U << 31));
         break;
 
       case CopySignFloat64:
@@ -270,8 +279,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         int2float = ReinterpretInt64;
         bitAnd = AndInt64;
         bitOr = OrInt64;
-        signBit = Literal(uint64_t(1) << 63);
-        otherBits = Literal((uint64_t(1) << 63) - 1);
+        signBit = Literal(uint64_t(1ULL << 63));
+        otherBits = Literal(~uint64_t(1ULL << 63));
         break;
 
       default:
@@ -322,7 +331,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    neededImportedGlobals.insert(std::make_pair(curr->name, curr->type));
+    neededImportedGlobals.insert({curr->name, curr->type});
   }
 };
 

@@ -26,13 +26,14 @@
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::ModuleUtils {
 
-namespace ModuleUtils {
-
-inline Function* copyFunction(Function* func, Module& out) {
-  auto* ret = new Function();
-  ret->name = func->name;
+// Copies a function into a module. If newName is provided it is used as the
+// name of the function (otherwise the original name is copied).
+inline Function*
+copyFunction(Function* func, Module& out, Name newName = Name()) {
+  auto ret = std::make_unique<Function>();
+  ret->name = newName.is() ? newName : func->name;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
@@ -43,8 +44,7 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->base = func->base;
   // TODO: copy Stack IR
   assert(!func->stackIR);
-  out.addFunction(ret);
-  return ret;
+  return out.addFunction(std::move(ret));
 }
 
 inline Global* copyGlobal(Global* global, Module& out) {
@@ -153,10 +153,10 @@ inline void clearModule(Module& wasm) {
 // call this redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
-  for (auto& pair : map) {
-    if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      assert(!wasm.getFunctionOrNull(pair.second) || F->name == pair.second);
-      F->name = pair.second;
+  for (auto& [oldName, newName] : map) {
+    if (Function* F = wasm.getFunctionOrNull(oldName)) {
+      assert(!wasm.getFunctionOrNull(newName) || F->name == newName);
+      F->name = newName;
     }
   }
   wasm.updateMaps();
@@ -413,9 +413,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     map.swap(analysis.map);
 
     // Find what is called by what.
-    for (auto& pair : map) {
-      auto* func = pair.first;
-      auto& info = pair.second;
+    for (auto& [func, info] : map) {
       for (auto* target : info.callsTo) {
         map[target].calledBy.insert(func);
       }
@@ -486,15 +484,45 @@ inline void collectHeapTypes(Module& wasm,
     : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
     Counts& counts;
 
-    CodeScanner(Counts& counts) : counts(counts) {}
+    CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
+      setModule(&wasm);
+    }
 
     void visitExpression(Expression* curr) {
       if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->sig);
+        counts.note(call->heapType);
       } else if (curr->is<RefNull>()) {
         counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
         counts.note(curr->type.getRtt().heapType);
+      } else if (auto* make = curr->dynCast<StructNew>()) {
+        // Some operations emit a HeapType in the binary format, if they are
+        // static and not dynamic (if dynamic, the RTT provides the heap type).
+        if (!make->rtt && make->type != Type::unreachable) {
+          counts.note(make->type.getHeapType());
+        }
+      } else if (auto* make = curr->dynCast<ArrayNew>()) {
+        if (!make->rtt && make->type != Type::unreachable) {
+          counts.note(make->type.getHeapType());
+        }
+      } else if (auto* make = curr->dynCast<ArrayInit>()) {
+        if (!make->rtt && make->type != Type::unreachable) {
+          counts.note(make->type.getHeapType());
+        }
+      } else if (auto* cast = curr->dynCast<RefCast>()) {
+        if (!cast->rtt && cast->type != Type::unreachable) {
+          counts.note(cast->getIntendedType());
+        }
+      } else if (auto* cast = curr->dynCast<RefTest>()) {
+        if (!cast->rtt && cast->type != Type::unreachable) {
+          counts.note(cast->getIntendedType());
+        }
+      } else if (auto* cast = curr->dynCast<BrOn>()) {
+        if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
+          if (!cast->rtt && cast->type != Type::unreachable) {
+            counts.note(cast->getIntendedType());
+          }
+        }
       } else if (auto* get = curr->dynCast<StructGet>()) {
         counts.note(get->ref->type);
       } else if (auto* set = curr->dynCast<StructSet>()) {
@@ -512,7 +540,7 @@ inline void collectHeapTypes(Module& wasm,
 
   // Collect module-level info.
   Counts counts;
-  CodeScanner(counts).walkModuleCode(&wasm);
+  CodeScanner(wasm, counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.tags) {
     counts.note(curr->sig);
   }
@@ -531,15 +559,14 @@ inline void collectHeapTypes(Module& wasm,
         counts.note(type);
       }
       if (!func->imported()) {
-        CodeScanner(counts).walk(func->body);
+        CodeScanner(wasm, counts).walk(func->body);
       }
     });
 
   // Combine the function info with the module info.
-  for (const auto& pair : analysis.map) {
-    const Counts& functionCounts = pair.second;
-    for (const auto& innerPair : functionCounts) {
-      counts[innerPair.first] += innerPair.second;
+  for (auto& [_, functionCounts] : analysis.map) {
+    for (auto& [sig, count] : functionCounts) {
+      counts[sig] += count;
     }
   }
 
@@ -550,8 +577,8 @@ inline void collectHeapTypes(Module& wasm,
   // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
   InsertOrderedSet<HeapType> newTypes;
-  for (auto& pair : counts) {
-    newTypes.insert(pair.first);
+  for (auto& [type, _] : counts) {
+    newTypes.insert(type);
   }
   while (!newTypes.empty()) {
     auto iter = newTypes.begin();
@@ -565,12 +592,16 @@ inline void collectHeapTypes(Module& wasm,
         counts.note(child);
       }
     }
-    HeapType super;
-    if (ht.getSuperType(super)) {
-      if (!counts.count(super)) {
-        newTypes.insert(super);
+
+    if (auto super = ht.getSuperType()) {
+      if (!counts.count(*super)) {
+        newTypes.insert(*super);
+        // We should unconditionally count supertypes, but while the type system
+        // is in flux, skip counting them to keep the type orderings in nominal
+        // test outputs more similar to the orderings in the equirecursive
+        // outputs. FIXME
+        counts.note(*super);
       }
-      counts.note(super);
     }
   }
 
@@ -585,8 +616,6 @@ inline void collectHeapTypes(Module& wasm,
   }
 }
 
-} // namespace ModuleUtils
-
-} // namespace wasm
+} // namespace wasm::ModuleUtils
 
 #endif // wasm_ir_module_h

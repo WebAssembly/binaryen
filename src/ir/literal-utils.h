@@ -20,9 +20,7 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace LiteralUtils {
+namespace wasm::LiteralUtils {
 
 inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
   auto* ret = wasm.allocator.alloc<Const>();
@@ -33,6 +31,14 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
 
 inline bool canMakeZero(Type type) {
   if (type.isNonNullable()) {
+    return false;
+  }
+  if (type.isRtt() && type.getRtt().hasDepth()) {
+    // An rtt with depth cannot be constructed as a simple zero: we'd need to
+    // create not just a zero (an rtt.canon) but also some rtt.subs that add to
+    // the depth, so disallow that. Also, there is no practical way to create a
+    // zero Literal for such a type, as we'd need to supply the list of super
+    // types somehow, and creating a zero Literal is how makeZero works.
     return false;
   }
   if (type.isTuple()) {
@@ -46,6 +52,7 @@ inline bool canMakeZero(Type type) {
 }
 
 inline Expression* makeZero(Type type, Module& wasm) {
+  assert(canMakeZero(type));
   // TODO: Remove this function once V8 supports v128.const
   // (https://bugs.chromium.org/p/v8/issues/detail?id=8460)
   Builder builder(wasm);
@@ -55,8 +62,6 @@ inline Expression* makeZero(Type type, Module& wasm) {
   return builder.makeConstantExpression(Literal::makeZeros(type));
 }
 
-} // namespace LiteralUtils
-
-} // namespace wasm
+} // namespace wasm::LiteralUtils
 
 #endif // wasm_ir_literal_utils_h

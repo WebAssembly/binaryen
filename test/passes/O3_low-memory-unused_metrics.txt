@@ -2688,13 +2688,13 @@ total
       (i32.const 1)
      )
      (br_if $label$1
-      (i32.lt_s
+      (i32.le_s
        (local.tee $4
         (i32.load offset=24
          (local.get $2)
         )
        )
-       (i32.const 1)
+       (i32.const 0)
       )
      )
      (local.set $1
@@ -3106,13 +3106,13 @@ total
       )
      )
      (if
-      (i32.ge_s
+      (i32.gt_s
        (local.tee $0
         (i32.load offset=24
          (local.get $2)
         )
        )
-       (i32.const 1)
+       (i32.const 0)
       )
       (i32.store offset=24
        (local.get $2)

@@ -22,9 +22,7 @@
 #include "ir/match.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Properties {
+namespace wasm::Properties {
 
 inline bool emitsBoolean(Expression* curr) {
   if (auto* unary = curr->dynCast<Unary>()) {
@@ -84,11 +82,12 @@ inline bool isNamedControlFlow(Expression* curr) {
 
 // A constant expression is something like a Const: it has a fixed value known
 // at compile time, and passes that propagate constants can try to propagate it.
-// Constant expressions are also allowed in global initializers in wasm.
+// Constant expressions are also allowed in global initializers in wasm. Also
+// when two constant expressions compare equal at compile time, their values at
+// runtime will be equal as well.
 // TODO: look into adding more things here like RttCanon.
 inline bool isSingleConstantExpression(const Expression* curr) {
-  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
-         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
 }
 
 inline bool isConstantExpression(const Expression* curr) {
@@ -249,9 +248,11 @@ inline Index getZeroExtBits(Expression* curr) {
 // child of this expression. See getFallthrough for a method that looks all the
 // way to the final value falling through, potentially through multiple
 // intermediate expressions.
+//
+// TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
 inline Expression* getImmediateFallthrough(Expression* curr,
                                            const PassOptions& passOptions,
-                                           FeatureSet features) {
+                                           Module& module) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -282,7 +283,7 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
+    if (!EffectAnalyzer(passOptions, module, tryy->body).throws()) {
       return tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
@@ -299,14 +300,49 @@ inline Expression* getImmediateFallthrough(Expression* curr,
 // find the final value that falls through.
 inline Expression* getFallthrough(Expression* curr,
                                   const PassOptions& passOptions,
-                                  FeatureSet features) {
+                                  Module& module) {
   while (1) {
-    auto* next = getImmediateFallthrough(curr, passOptions, features);
+    auto* next = getImmediateFallthrough(curr, passOptions, module);
     if (next == curr) {
       return curr;
     }
     curr = next;
   }
+}
+
+inline Index getNumChildren(Expression* curr) {
+  Index ret = 0;
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_CHILD(id, field) ret++;
+
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  if (cast->field) {                                                           \
+    ret++;                                                                     \
+  }
+
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#include "wasm-delegations-fields.def"
+
+  return ret;
 }
 
 // Returns whether the resulting value here must fall through without being
@@ -328,8 +364,56 @@ inline bool isResultFallthrough(Expression* curr) {
          curr->is<Break>();
 }
 
-} // namespace Properties
+inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
+  // A select only allows a single value in its arms in the spec:
+  // https://webassembly.github.io/spec/core/valid/instructions.html#xref-syntax-instructions-syntax-instr-parametric-mathsf-select-t-ast
+  return ifTrue->type.isSingle() && ifFalse->type.isSingle();
+}
 
-} // namespace wasm
+// A "generative" expression is one that can generate different results for the
+// same inputs, and that difference is *not* explained by other expressions that
+// interact with this one. This is an intrinsic/internal property of the
+// expression.
+//
+// To see the issue more concretely, consider these:
+//
+//    x = load(100);
+//    ..
+//    y = load(100);
+//
+//  versus
+//
+//    x = struct.new();
+//    ..
+//    y = struct.new();
+//
+// Are x and y identical in both cases? For loads, we can look at the code
+// in ".." to see: if there are no possible stores to memory, then the
+// result is identical (and we have EffectAnalyzer for that). For the GC
+// allocations, though, it doesn't matter what is in "..": there is nothing
+// in the wasm that we can check to find out if the results are the same or
+// not. (In fact, in this case they are always not the same.) So the
+// generativity is "intrinsic" to the expression and it is because each call to
+// struct.new generates a new value.
+//
+// Thus, loads are nondeterministic but not generative, while GC allocations
+// are in fact generative. Note that "generative" need not mean "allocation" as
+// if wasm were to add "get current time" or "get a random number" instructions
+// then those would also be generative - generating a new current time value or
+// a new random number on each execution, respectively.
+//
+//  * Note that NaN nondeterminism is ignored here. It is a valid wasm
+//    implementation to have deterministic NaN behavior, and we optimize under
+//    that simplifying assumption.
+//  * Note that calls are ignored here. In theory this concept could be defined
+//    either way for them - that is, we could potentially define them as
+//    generative, as they might contain such an instruction, or we could define
+//    this property as only looking at code in the current function. We choose
+//    the latter because calls are already handled best in other manners (using
+//    EffectAnalyzer).
+//
+bool isGenerative(Expression* curr, FeatureSet features);
+
+} // namespace wasm::Properties
 
 #endif // wasm_ir_properties_h

@@ -22,9 +22,7 @@
 #include <intrin.h>
 #endif
 
-namespace wasm {
-
-namespace Bits {
+namespace wasm::Bits {
 
 int popCount(uint8_t v) {
   // Small table lookup.
@@ -198,6 +196,4 @@ uint32_t log2(uint32_t v) {
 
 uint32_t pow2(uint32_t v) { return v < 32 ? 1 << v : 0; }
 
-} // namespace Bits
-
-} // namespace wasm
+} // namespace wasm::Bits

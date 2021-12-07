@@ -21,14 +21,13 @@
 
 #include <wasm.h>
 
-namespace wasm {
-
-namespace Abstract {
+namespace wasm::Abstract {
 
 enum Op {
   // Unary
   Abs,
   Neg,
+  Popcnt,
   // Binary
   Add,
   Sub,
@@ -67,6 +66,11 @@ inline bool hasAnyShift(BinaryOp op) {
          op == RotRInt64;
 }
 
+inline bool hasAnyReinterpret(UnaryOp op) {
+  return op == ReinterpretInt32 || op == ReinterpretInt64 ||
+         op == ReinterpretFloat32 || op == ReinterpretFloat64;
+}
+
 // Provide a wasm type and an abstract op and get the concrete one. For example,
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
@@ -76,6 +80,8 @@ inline UnaryOp getUnary(Type type, Op op) {
       switch (op) {
         case EqZ:
           return EqZInt32;
+        case Popcnt:
+          return PopcntInt32;
         default:
           return InvalidUnary;
       }
@@ -85,6 +91,8 @@ inline UnaryOp getUnary(Type type, Op op) {
       switch (op) {
         case EqZ:
           return EqZInt64;
+        case Popcnt:
+          return PopcntInt64;
         default:
           return InvalidUnary;
       }
@@ -300,8 +308,6 @@ inline BinaryOp getBinary(Type type, Op op) {
   WASM_UNREACHABLE("invalid type");
 }
 
-} // namespace Abstract
-
-} // namespace wasm
+} // namespace wasm::Abstract
 
 #endif // wasm_ir_abstract_h

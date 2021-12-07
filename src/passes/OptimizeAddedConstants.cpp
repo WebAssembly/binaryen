@@ -329,8 +329,7 @@ private:
     // but if x has other uses, then avoid doing so - we'll be doing that add
     // anyhow, so the load/store offset trick won't actually help.
     Parents parents(getFunction()->body);
-    for (auto& pair : localGraph->locations) {
-      auto* location = pair.first;
+    for (auto& [location, _] : localGraph->locations) {
       if (auto* set = location->dynCast<LocalSet>()) {
         if (auto* add = set->value->dynCast<Binary>()) {
           if (add->op == AddInt32) {
@@ -360,8 +359,7 @@ private:
   void cleanUpAfterPropagation() {
     // Remove sets that no longer have uses. This allows further propagation by
     // letting us see the accurate amount of uses of each set.
-    UnneededSetRemover remover(
-      getFunction(), getPassOptions(), getModule()->features);
+    UnneededSetRemover remover(getFunction(), getPassOptions(), *getModule());
   }
 
   std::map<LocalSet*, Index> helperIndexes;

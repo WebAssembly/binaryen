@@ -68,7 +68,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   // internal details
 
-  std::vector<std::unique_ptr<BasicBlock>> basicBlocks; // all the blocks
+  // The list of basic blocks in the function.
+  //
+  // This is populated in reverse postorder, that is, a block appears after all
+  // those that dominate it. This is trivial to do given wasm's structured
+  // control flow: we simply create blocks only after the things that can reach
+  // them (the only nontrivial things are loops, but if the dominator was before
+  // the loop, then again, we would have created it before the loop body).
+  std::vector<std::unique_ptr<BasicBlock>> basicBlocks;
+
   // blocks that are the tops of loops, i.e., have backedges to them
   std::vector<BasicBlock*> loopTops;
 
@@ -88,11 +96,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   // stack of the last blocks of try bodies
   std::vector<BasicBlock*> tryStack;
-  // stack of the first blocks of catches that throwing instructions should
-  // unwind to at any moment. Because there can be multiple catch blocks for a
-  // try, we maintain a vector of first blocks of catches.
-  std::vector<std::vector<BasicBlock*>> unwindCatchStack;
-  // stack of 'Try' expressions corresponding to unwindCatchStack.
+  // Stack of the blocks that contain a throwing instruction, and therefore they
+  // can reach the first blocks of catches that throwing instructions should
+  // unwind to at any moment. That is, the topmost item in this vector relates
+  // to the current try-catch scope, and the vector there is a list of the items
+  // that can reach catch blocks (each item is assumed to be able to reach any
+  // of the catches, although that could be improved perhaps).
+  std::vector<std::vector<BasicBlock*>> throwingInstsStack;
+  // stack of 'Try' expressions corresponding to throwingInstsStack.
   std::vector<Expression*> unwindExprStack;
   // A stack for each try, where each entry is a list of blocks, one for each
   // catch, used during processing. We start by assigning the start blocks to
@@ -221,18 +232,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
-    // Even if the instruction can possibly throw, we don't end the current
-    // basic block unless the instruction is within a try-catch, because the CFG
-    // will have too many blocks that way, and if an exception is thrown, the
-    // function will be exited anyway.
-    if (self->unwindCatchStack.empty()) {
-      return;
-    }
-
-    // Exception thrown. Create a link to each catch within the innermost try.
-    for (auto* block : self->unwindCatchStack.back()) {
-      self->link(self->currBasicBlock, block);
-    }
     // If the innermost try does not have a catch_all clause, an exception
     // thrown can be caught by any of its outer catch block. And if that outer
     // try-catch also does not have a catch_all, this continues until we
@@ -258,19 +257,46 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // catch $e3
     //   ...
     // end
-    for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
-      if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
+    assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
+    for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
+      auto* tryy = self->unwindExprStack[i]->template cast<Try>();
+      if (tryy->isDelegate()) {
+        // If this delegates to the caller, there is no possibility that this
+        // instruction can throw to outer catches.
+        if (tryy->delegateTarget == DELEGATE_CALLER_TARGET) {
+          break;
+        }
+        // If this delegates to an outer try, we skip catches between this try
+        // and the target try.
+        bool found = false;
+        for (int j = i - 1; j >= 0; j--) {
+          if (self->unwindExprStack[j]->template cast<Try>()->name ==
+              tryy->delegateTarget) {
+            i = j;
+            found = true;
+            break;
+          }
+        }
+        assert(found);
+        continue;
+      }
+
+      // Exception thrown. Note outselves so that we will create a link to each
+      // catch within the try when we get there.
+      self->throwingInstsStack[i].push_back(self->currBasicBlock);
+
+      // If this try has catch_all, there is no possibility that this
+      // instruction can throw to outer catches. Stop here.
+      if (tryy->hasCatchAll()) {
         break;
       }
-      for (auto* block : self->unwindCatchStack[i - 1]) {
-        self->link(self->currBasicBlock, block);
-      }
+      i--;
     }
   }
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->unwindCatchStack.empty()) {
+    if (!self->throwingInstsStack.empty()) {
       // exception not thrown. link to the continuation BB
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock());
@@ -279,20 +305,33 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doStartTry(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
-    auto* last = self->currBasicBlock;
-    self->unwindCatchStack.emplace_back();
+    self->throwingInstsStack.emplace_back();
     self->unwindExprStack.push_back(curr);
-    for (Index i = 0; i < curr->catchBodies.size(); i++) {
-      // Create the catch body's first block
-      self->unwindCatchStack.back().push_back(self->startBasicBlock());
-    }
-    self->currBasicBlock = last; // reset to the current block
   }
 
   static void doStartCatches(SubType* self, Expression** currp) {
     self->tryStack.push_back(self->currBasicBlock); // last block of try body
-    self->processCatchStack.push_back(self->unwindCatchStack.back());
-    self->unwindCatchStack.pop_back();
+
+    // Now that we are starting the catches, create the basic blocks that they
+    // begin with.
+    auto* last = self->currBasicBlock;
+    auto* tryy = (*currp)->cast<Try>();
+    self->processCatchStack.emplace_back();
+    auto& entries = self->processCatchStack.back();
+    for (Index i = 0; i < tryy->catchBodies.size(); i++) {
+      entries.push_back(self->startBasicBlock());
+    }
+    self->currBasicBlock = last; // reset to the current block
+
+    // Create links from things that reach those new basic blocks.
+    auto& preds = self->throwingInstsStack.back();
+    for (auto* pred : preds) {
+      for (Index i = 0; i < entries.size(); i++) {
+        self->link(pred, entries[i]);
+      }
+    }
+
+    self->throwingInstsStack.pop_back();
     self->unwindExprStack.pop_back();
     self->catchIndexStack.push_back(0);
   }
@@ -408,7 +447,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     assert(ifStack.size() == 0);
     assert(loopStack.size() == 0);
     assert(tryStack.size() == 0);
-    assert(unwindCatchStack.size() == 0);
+    assert(throwingInstsStack.size() == 0);
     assert(unwindExprStack.size() == 0);
     assert(processCatchStack.size() == 0);
   }
@@ -497,8 +536,8 @@ private:
   void checkDuplicates(std::vector<BasicBlock*>& list) {
     std::unordered_set<BasicBlock*> seen;
     for (auto* curr : list) {
-      assert(seen.count(curr) == 0);
-      seen.insert(curr);
+      auto res = seen.emplace(curr);
+      assert(res.second);
     }
   }
 

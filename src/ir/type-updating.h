@@ -305,6 +305,44 @@ struct TypeUpdater
   }
 };
 
+// Rewrites global heap types across an entire module, allowing changes to be
+// made while doing so.
+class GlobalTypeRewriter {
+public:
+  Module& wasm;
+
+  GlobalTypeRewriter(Module& wasm);
+  virtual ~GlobalTypeRewriter() {}
+
+  // Main entry point. This performs the entire process of creating new heap
+  // types and calling the hooks below, then applies the new types throughout
+  // the module.
+  void update();
+
+  // Subclasses can implement these methods to modify the new set of types that
+  // we map to. By default, we simply copy over the types, and these functions
+  // are the hooks to apply changes through. The methods receive as input the
+  // old type, and a structure that they can modify. That structure is the one
+  // used to define the new type in the TypeBuilder.
+  virtual void modifyStruct(HeapType oldType, Struct& struct_) {}
+  virtual void modifyArray(HeapType oldType, Array& array) {}
+  virtual void modifySignature(HeapType oldType, Signature& sig) {}
+
+  // Map an old type to a temp type. This can be called from the above hooks,
+  // so that they can use a proper temp type of the TypeBuilder while modifying
+  // things.
+  Type getTempType(Type type);
+
+private:
+  TypeBuilder typeBuilder;
+
+  // The list of old types.
+  std::vector<HeapType> types;
+
+  // Type indices of the old types.
+  std::unordered_map<HeapType, Index> typeIndices;
+};
+
 namespace TypeUpdating {
 
 // Checks whether a type is valid as a local, or whether
@@ -316,6 +354,27 @@ bool canHandleAsLocal(Type type);
 // their uses (which keeps the type of the users identical).
 // This may also handle other types of nondefaultable locals in the future.
 void handleNonDefaultableLocals(Function* func, Module& wasm);
+
+// Returns the type that a local should be, after handling of non-
+// defaultability.
+Type getValidLocalType(Type type, FeatureSet features);
+
+// Given a local.get, returns a proper replacement for it, taking into account
+// the extra work we need to do to handle non-defaultable values (e.g., add a
+// ref.as_non_null around it, if the local should be non-nullable but is not).
+Expression* fixLocalGet(LocalGet* get, Module& wasm);
+
+// Applies new types of parameters to a function. This does all the necessary
+// changes aside from altering the function type, which the caller is expected
+// to do (the caller might simply change the type, but in other cases the caller
+// might be rewriting the types and need to preserve their identity in terms of
+// nominal typing, so we don't change the type here). The specific things this
+// function does are to update the types of local.get/tee operations,
+// refinalize, etc., basically all operations necessary to ensure validation
+// with the new types.
+void updateParamTypes(Function* func,
+                      const std::vector<Type>& newParamTypes,
+                      Module& wasm);
 
 } // namespace TypeUpdating
 

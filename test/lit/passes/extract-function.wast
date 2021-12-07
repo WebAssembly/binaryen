@@ -68,7 +68,9 @@
   ;; CHECK:      (elem $0 (i32.const 0) $other)
   (elem $0 (table $t) (i32.const 0) func $other)
 
+  ;; Test that an existing export does not cause us to crash.
   ;; CHECK:      (export "foo" (func $foo))
+  (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (call_indirect (type $none)

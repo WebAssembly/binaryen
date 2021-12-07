@@ -31,6 +31,7 @@ namespace UserSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
+const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
 const char* TargetFeatures = "target_features";
@@ -47,6 +48,7 @@ const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
 const char* TypedFunctionReferencesFeature = "typed-function-references";
+const char* RelaxedSIMDFeature = "relaxed-simd";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -288,7 +290,7 @@ void Call::finalize() {
 }
 
 void CallIndirect::finalize() {
-  type = sig.results;
+  type = heapType.getSignature().results;
   handleUnreachableOperands(this);
   if (isReturn) {
     type = Type::unreachable;
@@ -685,6 +687,10 @@ void Unary::finalize() {
     case TruncSatZeroUVecF64x2ToVecI32x4:
     case DemoteZeroVecF64x2ToVecF32x4:
     case PromoteLowVecF32x4ToVecF64x2:
+    case RelaxedTruncSVecF32x4ToVecI32x4:
+    case RelaxedTruncUVecF32x4ToVecI32x4:
+    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+    case RelaxedTruncZeroUVecF64x2ToVecI32x4:
       type = Type::v128;
       break;
     case AnyTrueVec128:
@@ -796,9 +802,9 @@ void RefNull::finalize() {}
 void RefIs::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
-    return;
+  } else {
+    type = Type::i32;
   }
-  type = Type::i32;
 }
 
 void RefFunc::finalize() {
@@ -816,10 +822,38 @@ void RefEq::finalize() {
   }
 }
 
+void TableGet::finalize() {
+  if (index->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+  // Otherwise, the type should have been set already.
+}
+
+void TableSet::finalize() {
+  if (index->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void TableSize::finalize() {
+  // Nothing to do - the type must have been set already during construction.
+}
+
+void TableGrow::finalize() {
+  if (delta->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume
   // the current type is already correct. TODO: Calculate a proper LUB.
   std::unordered_set<Type> types{body->type};
+  types.reserve(catchBodies.size());
   for (auto catchBody : catchBodies) {
     types.insert(catchBody->type);
   }
@@ -843,6 +877,7 @@ void Rethrow::finalize() { type = Type::unreachable; }
 
 void TupleMake::finalize() {
   std::vector<Type> types;
+  types.reserve(operands.size());
   for (auto* op : operands) {
     if (op->type == Type::unreachable) {
       type = Type::unreachable;
@@ -894,21 +929,31 @@ void CallRef::finalize(Type type_) {
 }
 
 void RefTest::finalize() {
-  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
   }
 }
 
+HeapType RefTest::getIntendedType() {
+  return rtt ? rtt->type.getHeapType() : intendedType;
+}
+
 void RefCast::finalize() {
-  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     // The output of ref.cast may be null if the input is null (in that case the
     // null is passed through).
-    type = Type(rtt->type.getHeapType(), ref->type.getNullability());
+    type = Type(getIntendedType(), ref->type.getNullability());
   }
+}
+
+HeapType RefCast::getIntendedType() {
+  return rtt ? rtt->type.getHeapType() : intendedType;
 }
 
 void BrOn::finalize() {
@@ -937,7 +982,7 @@ void BrOn::finalize() {
     case BrOnCastFail:
       // If we do not branch, the cast worked, and we have something of the cast
       // type.
-      type = Type(rtt->type.getHeapType(), NonNullable);
+      type = Type(getIntendedType(), NonNullable);
       break;
     case BrOnNonFunc:
       type = Type(HeapType::func, NonNullable);
@@ -951,6 +996,11 @@ void BrOn::finalize() {
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
+}
+
+HeapType BrOn::getIntendedType() {
+  assert(op == BrOnCast || op == BrOnCastFail);
+  return rtt ? rtt->type.getHeapType() : intendedType;
 }
 
 Type BrOn::getSentType() {
@@ -970,7 +1020,7 @@ Type BrOn::getSentType() {
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
-      return Type(rtt->type.getHeapType(), NonNullable);
+      return Type(getIntendedType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
     case BrOnData:
@@ -1000,14 +1050,18 @@ void RttSub::finalize() {
 }
 
 void StructNew::finalize() {
-  if (rtt->type == Type::unreachable) {
+  if (rtt && rtt->type == Type::unreachable) {
     type = Type::unreachable;
     return;
   }
   if (handleUnreachableOperands(this)) {
     return;
   }
-  type = Type(rtt->type.getHeapType(), NonNullable);
+  // A dynamic StructNew infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
 }
 
 void StructGet::finalize() {
@@ -1027,12 +1081,35 @@ void StructSet::finalize() {
 }
 
 void ArrayNew::finalize() {
-  if (rtt->type == Type::unreachable || size->type == Type::unreachable ||
+  if ((rtt && rtt->type == Type::unreachable) ||
+      size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
   }
-  type = Type(rtt->type.getHeapType(), NonNullable);
+  // A dynamic ArrayNew infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
+}
+
+void ArrayInit::finalize() {
+  if (rtt && rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  for (auto* value : values) {
+    if (value->type == Type::unreachable) {
+      type = Type::unreachable;
+      return;
+    }
+  }
+  // A dynamic ArrayInit infers the type from the rtt. A static one has the type
+  // already in the type field.
+  if (rtt) {
+    type = Type(rtt->type.getHeapType(), NonNullable);
+  }
 }
 
 void ArrayGet::finalize() {

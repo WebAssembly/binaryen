@@ -60,23 +60,23 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
     // main loop
     while (queue.size()) {
-      auto& curr = queue.back();
+      auto curr = queue.back();
       queue.pop_back();
-      if (reachable.count(curr) == 0) {
-        reachable.insert(curr);
-        if (curr.first == ModuleElementKind::Function) {
+      if (reachable.emplace(curr).second) {
+        auto& [kind, value] = curr;
+        if (kind == ModuleElementKind::Function) {
           // if not an import, walk it
-          auto* func = module->getFunction(curr.second);
+          auto* func = module->getFunction(value);
           if (!func->imported()) {
             walk(func->body);
           }
-        } else if (curr.first == ModuleElementKind::Global) {
+        } else if (kind == ModuleElementKind::Global) {
           // if not imported, it has an init expression we need to walk
-          auto* global = module->getGlobal(curr.second);
+          auto* global = module->getGlobal(value);
           if (!global->imported()) {
             walk(global->init);
           }
-        } else if (curr.first == ModuleElementKind::Table) {
+        } else if (kind == ModuleElementKind::Table) {
           ModuleUtils::iterTableSegments(
             *module, curr.second, [&](ElementSegment* segment) {
               walk(segment->offset);
@@ -92,18 +92,18 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
   }
 
+  // Add a reference to a table and all its segments and elements.
+  void maybeAddTable(Name name) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, name));
+    ModuleUtils::iterTableSegments(*module, name, [&](ElementSegment* segment) {
+      maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+    });
+  }
+
   void visitCall(Call* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
   }
-  void visitCallIndirect(CallIndirect* curr) {
-    assert(!module->tables.empty() && "call-indirect to undefined table.");
-    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
-    ModuleUtils::iterTableSegments(
-      *module, curr->table, [&](ElementSegment* segment) {
-        maybeAdd(
-          ModuleElement(ModuleElementKind::ElementSegment, segment->name));
-      });
-  }
+  void visitCallIndirect(CallIndirect* curr) { maybeAddTable(curr->table); }
 
   void visitGlobalGet(GlobalGet* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
@@ -128,6 +128,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitRefFunc(RefFunc* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
   }
+  void visitTableGet(TableGet* curr) { maybeAddTable(curr->table); }
+  void visitTableSet(TableSet* curr) { maybeAddTable(curr->table); }
+  void visitTableSize(TableSize* curr) { maybeAddTable(curr->table); }
+  void visitTableGrow(TableGrow* curr) { maybeAddTable(curr->table); }
   void visitThrow(Throw* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Tag, curr->tag));
   }

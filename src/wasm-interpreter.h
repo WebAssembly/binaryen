@@ -26,6 +26,7 @@
 #include <cmath>
 #include <limits.h>
 #include <sstream>
+#include <variant>
 
 #include "ir/module-utils.h"
 #include "support/bits.h"
@@ -399,7 +400,6 @@ public:
         return value.extendS16();
       case ExtendS32Int64:
         return value.extendS32();
-
       case NegFloat32:
       case NegFloat64:
         return value.neg();
@@ -530,48 +530,61 @@ public:
       case NearestVecF64x2:
         return value.nearestF64x2();
       case ExtAddPairwiseSVecI8x16ToI16x8:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToSI16x8();
       case ExtAddPairwiseUVecI8x16ToI16x8:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToUI16x8();
       case ExtAddPairwiseSVecI16x8ToI32x4:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToSI32x4();
       case ExtAddPairwiseUVecI16x8ToI32x4:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToUI32x4();
       case TruncSatSVecF32x4ToVecI32x4:
+      case RelaxedTruncSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
+      case RelaxedTruncUVecF32x4ToVecI32x4:
         return value.truncSatToUI32x4();
       case ConvertSVecI32x4ToVecF32x4:
         return value.convertSToF32x4();
       case ConvertUVecI32x4ToVecF32x4:
         return value.convertUToF32x4();
       case ExtendLowSVecI8x16ToVecI16x8:
-        return value.extendLowSToVecI16x8();
+        return value.extendLowSToI16x8();
       case ExtendHighSVecI8x16ToVecI16x8:
-        return value.extendHighSToVecI16x8();
+        return value.extendHighSToI16x8();
       case ExtendLowUVecI8x16ToVecI16x8:
-        return value.extendLowUToVecI16x8();
+        return value.extendLowUToI16x8();
       case ExtendHighUVecI8x16ToVecI16x8:
-        return value.extendHighUToVecI16x8();
+        return value.extendHighUToI16x8();
       case ExtendLowSVecI16x8ToVecI32x4:
-        return value.extendLowSToVecI32x4();
+        return value.extendLowSToI32x4();
       case ExtendHighSVecI16x8ToVecI32x4:
-        return value.extendHighSToVecI32x4();
+        return value.extendHighSToI32x4();
       case ExtendLowUVecI16x8ToVecI32x4:
-        return value.extendLowUToVecI32x4();
+        return value.extendLowUToI32x4();
       case ExtendHighUVecI16x8ToVecI32x4:
-        return value.extendHighUToVecI32x4();
+        return value.extendHighUToI32x4();
       case ExtendLowSVecI32x4ToVecI64x2:
+        return value.extendLowSToI64x2();
       case ExtendHighSVecI32x4ToVecI64x2:
+        return value.extendHighSToI64x2();
       case ExtendLowUVecI32x4ToVecI64x2:
+        return value.extendLowUToI64x2();
       case ExtendHighUVecI32x4ToVecI64x2:
+        return value.extendHighUToI64x2();
       case ConvertLowSVecI32x4ToVecF64x2:
+        return value.convertLowSToF64x2();
       case ConvertLowUVecI32x4ToVecF64x2:
+        return value.convertLowUToF64x2();
       case TruncSatZeroSVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+        return value.truncSatZeroSToI32x4();
       case TruncSatZeroUVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+        return value.truncSatZeroUToI32x4();
       case DemoteZeroVecF64x2ToVecF32x4:
+        return value.demoteZeroToF32x4();
       case PromoteLowVecF32x4ToVecF64x2:
-        WASM_UNREACHABLE("unimp");
+        return value.promoteLowToF64x2();
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }
@@ -967,8 +980,10 @@ public:
       case DivVecF32x4:
         return left.divF32x4(right);
       case MinVecF32x4:
+      case RelaxedMinVecF32x4:
         return left.minF32x4(right);
       case MaxVecF32x4:
+      case RelaxedMaxVecF32x4:
         return left.maxF32x4(right);
       case PMinVecF32x4:
         return left.pminF32x4(right);
@@ -983,8 +998,10 @@ public:
       case DivVecF64x2:
         return left.divF64x2(right);
       case MinVecF64x2:
+      case RelaxedMinVecF64x2:
         return left.minF64x2(right);
       case MaxVecF64x2:
+      case RelaxedMaxVecF64x2:
         return left.maxF64x2(right);
       case PMinVecF64x2:
         return left.pminF64x2(right);
@@ -992,16 +1009,17 @@ public:
         return left.pmaxF64x2(right);
 
       case NarrowSVecI16x8ToVecI8x16:
-        return left.narrowSToVecI8x16(right);
+        return left.narrowSToI8x16(right);
       case NarrowUVecI16x8ToVecI8x16:
-        return left.narrowUToVecI8x16(right);
+        return left.narrowUToI8x16(right);
       case NarrowSVecI32x4ToVecI16x8:
-        return left.narrowSToVecI16x8(right);
+        return left.narrowSToI16x8(right);
       case NarrowUVecI32x4ToVecI16x8:
-        return left.narrowUToVecI16x8(right);
+        return left.narrowUToI16x8(right);
 
       case SwizzleVec8x16:
-        return left.swizzleVec8x16(right);
+      case RelaxedSwizzleVec8x16:
+        return left.swizzleI8x16(right);
 
       case InvalidBinary:
         WASM_UNREACHABLE("invalid binary op");
@@ -1096,9 +1114,22 @@ public:
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
+      case LaneselectI8x16:
+      case LaneselectI16x8:
+      case LaneselectI32x4:
+      case LaneselectI64x2:
         return c.bitselectV128(a, b);
+
+      case RelaxedFmaVecF32x4:
+        return a.relaxedFmaF32x4(b, c);
+      case RelaxedFmsVecF32x4:
+        return a.relaxedFmsF32x4(b, c);
+      case RelaxedFmaVecF64x2:
+        return a.relaxedFmaF64x2(b, c);
+      case RelaxedFmsVecF64x2:
+        return a.relaxedFmsF64x2(b, c);
       default:
-        // TODO: implement qfma/qfms and signselect
+        // TODO: implement signselect
         WASM_UNREACHABLE("not implemented");
     }
   }
@@ -1350,6 +1381,10 @@ public:
     NOTE_EVAL2(left, right);
     return Literal(int32_t(left == right));
   }
+  Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSize(TableSize* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -1392,132 +1427,139 @@ public:
   // Helper for ref.test, ref.cast, and br_on_cast, which share almost all their
   // logic except for what they return.
   struct Cast {
-    enum Outcome {
-      // We took a break before doing anything.
-      Break,
-      // The input was null.
-      Null,
-      // The cast succeeded.
-      Success,
-      // The cast failed.
-      Failure
-    } outcome;
+    // The control flow that preempts the cast.
+    struct Breaking : Flow {
+      Breaking(Flow breaking) : Flow(breaking) {}
+    };
+    // The null input to the cast.
+    struct Null : Literal {
+      Null(Literal original) : Literal(original) {}
+    };
+    // The result of the successful cast.
+    struct Success : Literal {
+      Success(Literal result) : Literal(result) {}
+    };
+    // The input to a failed cast.
+    struct Failure : Literal {
+      Failure(Literal original) : Literal(original) {}
+    };
 
-    Flow breaking;
-    Literal originalRef;
-    Literal castRef;
+    std::variant<Breaking, Null, Success, Failure> state;
+
+    template<class T> Cast(T state) : state(state) {}
+    Flow* getBreaking() { return std::get_if<Breaking>(&state); }
+    Literal* getNull() { return std::get_if<Null>(&state); }
+    Literal* getSuccess() { return std::get_if<Success>(&state); }
+    Literal* getFailure() { return std::get_if<Failure>(&state); }
+    Literal* getNullOrFailure() {
+      if (auto* original = getNull()) {
+        return original;
+      } else {
+        return getFailure();
+      }
+    }
   };
 
   template<typename T> Cast doCast(T* curr) {
-    Cast cast;
     Flow ref = this->visit(curr->ref);
     if (ref.breaking()) {
-      cast.outcome = cast.Break;
-      cast.breaking = ref;
-      return cast;
+      return typename Cast::Breaking{ref};
     }
-    Flow rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      cast.outcome = cast.Break;
-      cast.breaking = rtt;
-      return cast;
+    // The RTT value for the type we are trying to cast to.
+    Literal intendedRtt;
+    if (curr->rtt) {
+      // This is a dynamic check with an RTT.
+      Flow rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return typename Cast::Breaking{rtt};
+      }
+      intendedRtt = rtt.getSingleValue();
+    } else {
+      // If there is no explicit RTT, use the canonical RTT for the static type.
+      intendedRtt = Literal::makeCanonicalRtt(curr->intendedType);
     }
-    cast.originalRef = ref.getSingleValue();
-    if (cast.originalRef.isNull()) {
-      cast.outcome = cast.Null;
-      return cast;
+    Literal original = ref.getSingleValue();
+    if (original.isNull()) {
+      return typename Cast::Null{original};
     }
     // The input may not be GC data or a function; for example it could be an
-    // anyref of null (already handled above) or anything else (handled here,
-    // but this is for future use as atm the binaryen interpreter cannot
-    // represent external references).
-    if (!cast.originalRef.isData() && !cast.originalRef.isFunction()) {
-      cast.outcome = cast.Failure;
-      return cast;
+    // externref or an i31. The cast definitely fails in these cases.
+    if (!original.isData() && !original.isFunction()) {
+      return typename Cast::Failure{original};
     }
-    Literal seenRtt;
-    Literal intendedRtt = rtt.getSingleValue();
-    if (cast.originalRef.isFunction()) {
-      // Function casts are simple in that they have no RTT hierarchies; instead
-      // each reference has the canonical RTT for the signature.
-      // We must have a module in order to perform the cast, to get the type. If
-      // we do not have one, or if the function is not present (which may happen
-      // if we are optimizing a function before the entire module is built),
-      // then this is something we cannot precompute.
-      auto* func = module
-                     ? module->getFunctionOrNull(cast.originalRef.getFunc())
-                     : nullptr;
+    Literal actualRtt;
+    if (original.isFunction()) {
+      // Function references always have the canonical RTTs of the functions
+      // they reference. We must have a module to look up the function's type to
+      // get that canonical RTT.
+      auto* func =
+        module ? module->getFunctionOrNull(original.getFunc()) : nullptr;
       if (!func) {
-        cast.outcome = cast.Break;
-        cast.breaking = NONCONSTANT_FLOW;
-        return cast;
+        return typename Cast::Breaking{NONCONSTANT_FLOW};
       }
-      seenRtt = Literal(Type(Rtt(0, func->type)));
-      if (!seenRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-        return cast;
-      }
-      cast.castRef =
-        Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
+      actualRtt = Literal::makeCanonicalRtt(func->type);
     } else {
-      // GC data store an RTT in each instance.
-      assert(cast.originalRef.isData());
-      auto gcData = cast.originalRef.getGCData();
-      seenRtt = gcData->rtt;
-      if (!seenRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-        return cast;
+      assert(original.isData());
+      actualRtt = original.getGCData()->rtt;
+    };
+    // We have the actual and intended RTTs, so perform the cast.
+    if (actualRtt.isSubRtt(intendedRtt)) {
+      Type resultType(intendedRtt.type.getHeapType(), NonNullable);
+      if (original.isFunction()) {
+        return typename Cast::Success{Literal{original.getFunc(), resultType}};
+      } else {
+        return
+          typename Cast::Success{Literal(original.getGCData(), resultType)};
       }
-      cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
+    } else {
+      return typename Cast::Failure{original};
     }
-    cast.outcome = cast.Success;
-    return cast;
   }
 
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
     auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
+    if (auto* breaking = cast.getBreaking()) {
+      return *breaking;
+    } else {
+      return Literal(int32_t(bool(cast.getSuccess())));
     }
-    return Literal(int32_t(cast.outcome == cast.Success));
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
     auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
-    }
-    if (cast.outcome == cast.Null) {
+    if (auto* breaking = cast.getBreaking()) {
+      return *breaking;
+    } else if (cast.getNull()) {
       return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
+    } else if (auto* result = cast.getSuccess()) {
+      return *result;
     }
-    if (cast.outcome == cast.Failure) {
-      trap("cast error");
-    }
-    assert(cast.outcome == cast.Success);
-    return cast.castRef;
+    assert(cast.getFailure());
+    trap("cast error");
+    WASM_UNREACHABLE("unreachable");
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
-    // BrOnCast* uses the casting infrastructure, so handle it first.
+    // BrOnCast* uses the casting infrastructure, so handle them first.
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       auto cast = doCast(curr);
-      if (cast.outcome == cast.Break) {
-        return cast.breaking;
-      }
-      if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+      if (auto* breaking = cast.getBreaking()) {
+        return *breaking;
+      } else if (auto* original = cast.getNullOrFailure()) {
         if (curr->op == BrOnCast) {
-          return cast.originalRef;
+          return *original;
         } else {
-          return Flow(curr->name, cast.originalRef);
+          return Flow(curr->name, *original);
         }
-      }
-      assert(cast.outcome == cast.Success);
-      if (curr->op == BrOnCast) {
-        return Flow(curr->name, cast.castRef);
       } else {
-        return cast.castRef;
+        auto* result = cast.getSuccess();
+        assert(result);
+        if (curr->op == BrOnCast) {
+          return Flow(curr->name, *result);
+        } else {
+          return *result;
+        }
       }
     }
     // The others do a simpler check for the type.
@@ -1585,7 +1627,9 @@ public:
     }
     return {value};
   }
-  Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
+  Flow visitRttCanon(RttCanon* curr) {
+    return Literal::makeCanonicalRtt(curr->type.getHeapType());
+  }
   Flow visitRttSub(RttSub* curr) {
     Flow parent = this->visit(curr->parent);
     if (parent.breaking()) {
@@ -1593,19 +1637,36 @@ public:
     }
     auto parentValue = parent.getSingleValue();
     auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
-    newSupers->push_back(parentValue.type);
+    newSupers->push_back(parentValue.type.getHeapType());
     if (curr->fresh) {
       newSupers->back().makeFresh();
     }
     return Literal(std::move(newSupers), curr->type);
   }
+
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Literal rttVal;
+    if (curr->rtt) {
+      Flow rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
+      rttVal = rtt.getSingleValue();
     }
-    const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // find why we are unreachable, and stop there.
+      for (auto* operand : curr->operands) {
+        auto value = this->visit(operand);
+        if (value.breaking()) {
+          return value;
+        }
+      }
+      WASM_UNREACHABLE("unreachable but no unreachable child");
+    }
+    auto heapType = curr->type.getHeapType();
+    const auto& fields = heapType.getStruct().fields;
     Literals data(fields.size());
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
@@ -1618,8 +1679,10 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
-                        curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1662,15 +1725,27 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    auto rtt = this->visit(curr->rtt);
-    if (rtt.breaking()) {
-      return rtt;
+    Literal rttVal;
+    if (curr->rtt) {
+      Flow rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
+      rttVal = rtt.getSingleValue();
     }
     auto size = this->visit(curr->size);
     if (size.breaking()) {
       return size;
     }
-    const auto& element = curr->rtt->type.getHeapType().getArray().element;
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // visit the unreachable child, and stop there.
+      auto init = this->visit(curr->init);
+      assert(init.breaking());
+      return init;
+    }
+    auto heapType = curr->type.getHeapType();
+    const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
@@ -1691,8 +1766,50 @@ public:
         data[i] = value;
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
-                        curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
+  }
+  Flow visitArrayInit(ArrayInit* curr) {
+    NOTE_ENTER("ArrayInit");
+    Literal rttVal;
+    if (curr->rtt) {
+      Flow rtt = this->visit(curr->rtt);
+      if (rtt.breaking()) {
+        return rtt;
+      }
+      rttVal = rtt.getSingleValue();
+    }
+    Index num = curr->values.size();
+    if (num >= ArrayLimit) {
+      hostLimit("allocation failure");
+    }
+    if (curr->type == Type::unreachable) {
+      // We cannot proceed to compute the heap type, as there isn't one. Just
+      // find why we are unreachable, and stop there.
+      for (auto* value : curr->values) {
+        auto result = this->visit(value);
+        if (result.breaking()) {
+          return result;
+        }
+      }
+      WASM_UNREACHABLE("unreachable but no unreachable child");
+    }
+    auto heapType = curr->type.getHeapType();
+    auto field = heapType.getArray().element;
+    Literals data(num);
+    for (Index i = 0; i < num; i++) {
+      auto value = this->visit(curr->values[i]);
+      if (value.breaking()) {
+        return value;
+      }
+      data[i] = truncateForPacking(value.getSingleValue(), field);
+    }
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1821,12 +1938,12 @@ public:
         // We've already checked for a null.
         break;
       case RefAsFunc:
-        if (value.type.isFunction()) {
+        if (!value.type.isFunction()) {
           trap("not a func");
         }
         break;
       case RefAsData:
-        if (value.isData()) {
+        if (!value.isData()) {
           trap("not a data");
         }
         break;
@@ -2051,6 +2168,22 @@ public:
     NOTE_ENTER("CallRef");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableGet(TableGet* curr) {
+    NOTE_ENTER("TableGet");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableSet(TableSet* curr) {
+    NOTE_ENTER("TableSet");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableSize(TableSize* curr) {
+    NOTE_ENTER("TableSize");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableGrow(TableGrow* curr) {
+    NOTE_ENTER("TableGrow");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2180,11 +2313,15 @@ public:
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
-                               Signature sig,
+                               HeapType sig,
                                LiteralList& arguments,
                                Type result,
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
+    virtual bool growTable(Name name,
+                           const Literal& value,
+                           Index oldSize,
+                           Index newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
@@ -2331,8 +2468,12 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void
-    tableStore(Name tableName, Address addr, const Literal& entry) {
+    virtual Index tableSize(Name tableName) = 0;
+
+    virtual void tableStore(Name tableName, Index index, const Literal& entry) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual Literal tableLoad(Name tableName, Index index) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2422,7 +2563,37 @@ private:
 
   std::unordered_set<size_t> droppedSegments;
 
+  struct TableInterfaceInfo {
+    // The external interface in which the table is defined.
+    ExternalInterface* interface;
+    // The name the table has in that interface.
+    Name name;
+  };
+
+  TableInterfaceInfo getTableInterfaceInfo(Name name) {
+    auto* table = wasm.getTable(name);
+    if (table->imported()) {
+      auto& importedInstance = linkedInstances.at(table->module);
+      auto* tableExport = importedInstance->wasm.getExport(table->base);
+      return TableInterfaceInfo{importedInstance->externalInterface,
+                                tableExport->value};
+    } else {
+      return TableInterfaceInfo{externalInterface, name};
+    }
+  }
+
   void initializeTableContents() {
+    for (auto& table : wasm.tables) {
+      if (table->type.isNullable()) {
+        // Initial with nulls in a nullable table.
+        auto info = getTableInterfaceInfo(table->name);
+        auto null = Literal::makeNull(table->type);
+        for (Address i = 0; i < table->initial; i++) {
+          info.interface->tableStore(info.name, i, null);
+        }
+      }
+    }
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Function dummyFunc;
       dummyFunc.type = Signature(Type::none, Type::none);
@@ -2440,6 +2611,7 @@ private:
         extInterface = inst->externalInterface;
         tableName = inst->wasm.getExport(table->base)->value;
       }
+
       for (Index i = 0; i < segment->data.size(); ++i) {
         Flow ret = runner.visit(segment->data[i]);
         extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
@@ -2580,6 +2752,7 @@ private:
       }
       return ret;
     }
+
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
       LiteralList arguments;
@@ -2595,21 +2768,9 @@ private:
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
-      Flow ret;
-      auto* table = instance.wasm.getTable(curr->table);
-      if (table->imported()) {
-        auto inst = instance.linkedInstances.at(table->module);
-        Export* tableExport = inst->wasm.getExport(table->base);
-        ret = inst->externalInterface->callTable(tableExport->value,
-                                                 index,
-                                                 curr->sig,
-                                                 arguments,
-                                                 type,
-                                                 *instance.self());
-      } else {
-        ret = instance.externalInterface->callTable(
-          curr->table, index, curr->sig, arguments, type, *instance.self());
-      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      Flow ret = info.interface->callTable(
+        info.name, index, curr->heapType, arguments, type, *instance.self());
 
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
@@ -2645,6 +2806,75 @@ private:
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         ret.breakTo = RETURN_FLOW;
+      }
+      return ret;
+    }
+
+    Flow visitTableGet(TableGet* curr) {
+      NOTE_ENTER("TableGet");
+      Flow index = this->visit(curr->index);
+      if (index.breaking()) {
+        return index;
+      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      return info.interface->tableLoad(info.name,
+                                       index.getSingleValue().geti32());
+    }
+    Flow visitTableSet(TableSet* curr) {
+      NOTE_ENTER("TableSet");
+      Flow indexFlow = this->visit(curr->index);
+      if (indexFlow.breaking()) {
+        return indexFlow;
+      }
+      Flow valueFlow = this->visit(curr->value);
+      if (valueFlow.breaking()) {
+        return valueFlow;
+      }
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      info.interface->tableStore(info.name,
+                                 indexFlow.getSingleValue().geti32(),
+                                 valueFlow.getSingleValue());
+      return Flow();
+    }
+
+    Flow visitTableSize(TableSize* curr) {
+      NOTE_ENTER("TableSize");
+      auto info = instance.getTableInterfaceInfo(curr->table);
+      Index tableSize = info.interface->tableSize(curr->table);
+      return Literal::makeFromInt32(tableSize, Type::i32);
+    }
+
+    Flow visitTableGrow(TableGrow* curr) {
+      NOTE_ENTER("TableGrow");
+      Flow valueFlow = this->visit(curr->value);
+      if (valueFlow.breaking()) {
+        return valueFlow;
+      }
+      Flow deltaFlow = this->visit(curr->delta);
+      if (deltaFlow.breaking()) {
+        return deltaFlow;
+      }
+      Name tableName = curr->table;
+      auto info = instance.getTableInterfaceInfo(tableName);
+
+      Index tableSize = info.interface->tableSize(tableName);
+      Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
+      Flow fail = Literal::makeFromInt32(-1, Type::i32);
+      Index delta = deltaFlow.getSingleValue().geti32();
+
+      if (tableSize >= uint32_t(-1) - delta) {
+        return fail;
+      }
+      auto maxTableSize = instance.self()->wasm.getTable(tableName)->max;
+      if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(maxTableSize)) {
+        return fail;
+      }
+      Index newSize = tableSize + delta;
+      if (!info.interface->growTable(
+            tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
+        // We failed to grow the table in practice, even though it was valid
+        // to try to do so.
+        return fail;
       }
       return ret;
     }
@@ -3369,7 +3599,6 @@ public:
 
 protected:
   Address memorySize; // in pages
-
   static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {

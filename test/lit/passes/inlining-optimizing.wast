@@ -4,7 +4,6 @@
 (module
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32 (func (result i32)))
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (nop)
@@ -15,10 +14,7 @@
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call_ref
- ;; CHECK-NEXT:    (ref.cast
- ;; CHECK-NEXT:     (ref.func $0)
- ;; CHECK-NEXT:     (rtt.canon $none_=>_i32)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -28,7 +24,9 @@
   ;; where it inlines, for efficiency). As part of the optimiziations, we will
   ;; try to precompute the cast here, which will try to look up $0. We should
   ;; not hit an assertion, rather we should skip precomputing it, the same as if
-  ;; we were optimizing $1 before $0 were added to the module.
+  ;; we were optimizing $1 before $0 were added to the module. (In fact, we will
+  ;; be able to see that the cast cannot succeed, and will optimize it into an
+  ;; unreachable.)
   (call $0)
   (drop
    (call_ref

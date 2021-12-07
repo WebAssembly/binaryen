@@ -99,6 +99,32 @@ void test_canonicalization() {
   assert(built[2] != built[3]);
 }
 
+// Check that defined basic HeapTypes are handled correctly.
+void test_basic() {
+  std::cout << ";; Test basic\n";
+
+  TypeBuilder builder(6);
+
+  Type anyref = builder.getTempRefType(builder[4], Nullable);
+  Type i31ref = builder.getTempRefType(builder[5], NonNullable);
+
+  builder[0] = Signature(Type::anyref, Type::i31ref);
+  builder[1] = Signature(anyref, Type::i31ref);
+  builder[2] = Signature(Type::anyref, i31ref);
+  builder[3] = Signature(anyref, i31ref);
+  builder[4] = HeapType::any;
+  builder[5] = HeapType::i31;
+
+  std::vector<HeapType> built = builder.build();
+
+  assert(built[0].getSignature() == Signature(Type::anyref, Type::i31ref));
+  assert(built[1].getSignature() == built[0].getSignature());
+  assert(built[2].getSignature() == built[1].getSignature());
+  assert(built[3].getSignature() == built[2].getSignature());
+  assert(built[4] == HeapType::any);
+  assert(built[5] == HeapType::i31);
+}
+
 // Check that signatures created with TypeBuilders are properly recorded as
 // canonical.
 void test_signatures(bool warm) {
@@ -106,14 +132,14 @@ void test_signatures(bool warm) {
 
   TypeBuilder builder(2);
   Type tempRef = builder.getTempRefType(builder[0], Nullable);
-  builder[0] = Signature(Type::anyref, Type::i31ref);
+  builder[0] = Signature(Type::i31ref, Type::anyref);
   builder[1] = Signature(tempRef, tempRef);
   std::vector<HeapType> built = builder.build();
 
-  HeapType small = Signature(Type::anyref, Type::i31ref);
+  HeapType small = Signature(Type::i31ref, Type::anyref);
   HeapType big =
-    Signature(Type(Signature(Type::anyref, Type::i31ref), Nullable),
-              Type(Signature(Type::anyref, Type::i31ref), Nullable));
+    Signature(Type(Signature(Type::i31ref, Type::anyref), Nullable),
+              Type(Signature(Type::i31ref, Type::anyref), Nullable));
   if (warm) {
     assert(built[0] != small);
     assert(built[1] != big);
@@ -323,6 +349,20 @@ void test_subtypes() {
   }
 
   {
+    // Subtype declarations, but still no subtypes
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(3);
+      builder[0].subTypeOf(builder[1]);
+      builder[0] = Struct{};
+      builder[1] = Struct{};
+      builder[2] = Struct{};
+      built = builder.build();
+    }
+    assert(LUB(built[0], built[2]) == HeapType::data);
+  }
+
+  {
     // Subtyping of identical types
     std::vector<HeapType> built;
     {
@@ -402,6 +442,7 @@ int main() {
   for (size_t i = 0; i < 2; ++i) {
     test_builder();
     test_canonicalization();
+    test_basic();
     test_signatures(i == 1);
     test_recursive();
     test_subtypes();

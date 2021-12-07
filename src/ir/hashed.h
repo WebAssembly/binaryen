@@ -23,23 +23,6 @@
 
 namespace wasm {
 
-// An expression with a cached hash value
-struct HashedExpression {
-  Expression* expr;
-  size_t digest;
-
-  HashedExpression(Expression* expr) : expr(expr) {
-    if (expr) {
-      digest = ExpressionAnalyzer::hash(expr);
-    } else {
-      digest = hash(0);
-    }
-  }
-
-  HashedExpression(const HashedExpression& other)
-    : expr(other.expr), digest(other.digest) {}
-};
-
 // A pass that hashes all functions
 
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {

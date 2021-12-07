@@ -1669,6 +1669,109 @@
   )
   (unreachable)
  )
+ (func $br-to-table-initial-tee (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (i32.sub
+        (local.tee $a
+         (i32.add
+          (i32.const 10)
+          (i32.const 1)
+         )
+        )
+        (i32.const 10)
+       )
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-initial-tee-wrong-index (param $a i32)
+  (local $b i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (local.tee $a
+        (i32.const 99)
+       )
+       (i32.const 10)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (local.get $b)
+       (i32.const 11)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (local.get $b)
+       (i32.const 12)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-eqz (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (local.get $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-tee-eqz (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (local.tee $a
+        (i32.add
+         (i32.const 0)
+         (i32.const 1)
+        )
+       )
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
  (func $tiny-switch
   (if
    (i32.const 0)
@@ -2252,18 +2355,18 @@
  )
  (func $selectify (param $x i32)
   (drop
-   (if (result i32)
+   (select
+    (i32.mul
+     (i32.const 2)
+     (i32.const 3)
+    )
+    (i32.mul
+     (i32.const 2)
+     (i32.const 3)
+    )
     (i32.eq
      (local.get $x)
      (i32.const 1)
-    )
-    (i32.mul
-     (i32.const 2)
-     (i32.const 3)
-    )
-    (i32.mul
-     (i32.const 2)
-     (i32.const 3)
     )
    )
   )

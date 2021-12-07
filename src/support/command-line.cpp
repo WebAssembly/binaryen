@@ -75,10 +75,16 @@ Options::Options(const std::string& command, const std::string& description)
         std::cout << "\n\nOptions:\n";
         size_t optionWidth = 0;
         for (const auto& o : options) {
+          if (o.hidden) {
+            continue;
+          }
           optionWidth =
             std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
         for (const auto& o : options) {
+          if (o.hidden) {
+            continue;
+          }
           std::cout << '\n';
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
@@ -106,8 +112,10 @@ Options& Options::add(const std::string& longName,
                       const std::string& shortName,
                       const std::string& description,
                       Arguments arguments,
-                      const Action& action) {
-  options.push_back({longName, shortName, description, arguments, action, 0});
+                      const Action& action,
+                      bool hidden) {
+  options.push_back(
+    {longName, shortName, description, arguments, action, hidden, 0});
   return *this;
 }
 
@@ -124,16 +132,18 @@ void Options::parse(int argc, const char* argv[]) {
   assert(argc > 0 && "expect at least program name as an argument");
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string& s) {
-    for (size_t i = 0;; ++i) {
+    for (size_t i = 0; i < s.size(); ++i) {
       if (s[i] != '-') {
         return i;
       }
     }
+    return s.size();
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
     std::string currentOption = argv[i];
 
-    if (dashes(currentOption) == 0) {
+    // "-" alone is a positional option
+    if (dashes(currentOption) == 0 || currentOption == "-") {
       // Positional.
       switch (positional) {
         case Arguments::Zero:

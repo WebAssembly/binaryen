@@ -46,6 +46,7 @@ static void extract(PassRunner* runner, Module* module, Name name) {
 
   // Leave just one export, for the thing we want.
   module->exports.clear();
+  module->updateMaps();
   module->addExport(Builder::makeExport(name, name, ExternalKind::Function));
 
   // Remove unneeded things.

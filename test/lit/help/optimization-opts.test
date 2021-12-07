@@ -87,6 +87,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-gc-nn-locals                        Disable GC non-null locals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                         Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd                        Disable relaxed SIMD
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct
 ;; CHECK-NEXT:
@@ -94,9 +98,13 @@
 ;; CHECK-NEXT:                                                 optimization passes being run.
 ;; CHECK-NEXT:                                                 Must be in the form KEY@VALUE
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --nominal                                     Use the prototype nominal type
-;; CHECK-NEXT:                                                 system instead of the normal
-;; CHECK-NEXT:                                                 equirecursive type system.
+;; CHECK-NEXT:   --nominal                                     Force all GC type definitions to
+;; CHECK-NEXT:                                                 be parsed as nominal.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --structural                                  Force all GC type definitions to
+;; CHECK-NEXT:                                                 be parsed as structural (i.e.
+;; CHECK-NEXT:                                                 equirecursive). This is the
+;; CHECK-NEXT:                                                 default.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:    -O                                           execute default optimization
 ;; CHECK-NEXT:                                                 passes
@@ -156,10 +164,20 @@
 ;; CHECK-NEXT:   --inline-functions-with-loops,-ifwl           Allow inlining functions with
 ;; CHECK-NEXT:                                                 loops
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --partial-inlining-ifs,-pii                   Number of ifs allowed in partial
+;; CHECK-NEXT:                                                 inlining (zero means partial
+;; CHECK-NEXT:                                                 inlining is disabled) (default:
+;; CHECK-NEXT:                                                 0)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --ignore-implicit-traps,-iit                  Optimize under the helpful
 ;; CHECK-NEXT:                                                 assumption that no surprising
 ;; CHECK-NEXT:                                                 traps occur (from load, div/mod,
 ;; CHECK-NEXT:                                                 etc.)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --traps-never-happen,-tnh                     Optimize under the helpful
+;; CHECK-NEXT:                                                 assumption that no trap is
+;; CHECK-NEXT:                                                 reached at runtime (from load,
+;; CHECK-NEXT:                                                 div/mod, etc.)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --low-memory-unused,-lmu                      Optimize under the helpful
 ;; CHECK-NEXT:                                                 assumption that the low 1K of
@@ -181,6 +199,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --avoid-reinterprets                          Tries to avoid reinterpret
 ;; CHECK-NEXT:                                                 operations via more loads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --cfp                                         propagate constant struct field
+;; CHECK-NEXT:                                                 values
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals                             reduce # of locals by coalescing
 ;; CHECK-NEXT:
@@ -254,6 +275,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate Stack IR
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --global-refining                             refine the types of globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --gto                                         globally optimize GC types
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-NEXT:
@@ -279,6 +304,8 @@
 ;; CHECK-NEXT:   --ldse                                        removes dead stores (only 
 ;; CHECK-NEXT:                                                 looking at local info) 
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
 ;; CHECK-NEXT:
@@ -294,6 +321,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --local-cse                                   common subexpression elimination
 ;; CHECK-NEXT:                                                 inside basic blocks
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --local-subtyping                             apply more specific subtypes to
+;; CHECK-NEXT:                                                 locals where possible
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --log-execution                               instrument the build with
 ;; CHECK-NEXT:                                                 logging of where execution goes
@@ -340,12 +370,18 @@
 ;; CHECK-NEXT:                                                 is valid if the C runtime will
 ;; CHECK-NEXT:                                                 never be exited
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --once-reduction                              reduces calls to code that only
+;; CHECK-NEXT:                                                 runs once
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-added-constants                    optimizes added constants into
 ;; CHECK-NEXT:                                                 load/store offsets
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-added-constants-propagate          optimizes added constants into
 ;; CHECK-NEXT:                                                 load/store offsets, propagating
 ;; CHECK-NEXT:                                                 them across locals too
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-for-js                             early optimize of the
+;; CHECK-NEXT:                                                 instruction combinations for js
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-instructions                       optimizes instruction
 ;; CHECK-NEXT:                                                 combinations
@@ -425,6 +461,9 @@
 ;; CHECK-NEXT:   --set-globals                                 sets specified globals to
 ;; CHECK-NEXT:                                                 specified values
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --signature-refining                          apply more specific subtypes to
+;; CHECK-NEXT:                                                 signature types where possible
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --simplify-globals                            miscellaneous globals-related
 ;; CHECK-NEXT:                                                 optimizations
 ;; CHECK-NEXT:
@@ -487,6 +526,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trap-mode-js                                replace trapping operations with
 ;; CHECK-NEXT:                                                 js semantics
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-refining                               apply more specific subtypes to
+;; CHECK-NEXT:                                                 type fields where possible
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --untee                                       removes local.tees, replacing
 ;; CHECK-NEXT:                                                 them with sets and gets

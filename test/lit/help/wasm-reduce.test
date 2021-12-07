@@ -5,43 +5,46 @@
 ;; CHECK-NEXT: Reduce a wasm file to a smaller one that has the same behavior on a given
 ;; CHECK-NEXT: command
 ;; CHECK-NEXT:
-;; CHECK-NEXT: Options:
+
+;; Skip standard tool options
+
+;; CHECK:        --command,-cmd                       The command to run on the test, that we
+;; CHECK-NEXT:                                        want to reduce while keeping the
+;; CHECK-NEXT:                                        command's output identical. We look at
+;; CHECK-NEXT:                                        the command's return code and stdout here
+;; CHECK-NEXT:                                        (TODO: stderr), and we reduce while
+;; CHECK-NEXT:                                        keeping those unchanged.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --version         Output version information and exit
+;; CHECK-NEXT:   --test,-t                            Test file (this will be written to to
+;; CHECK-NEXT:                                        test, the given command should read it
+;; CHECK-NEXT:                                        when we call it)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --help,-h         Show this help message and exit
+;; CHECK-NEXT:   --working,-w                         Working file (this will contain the
+;; CHECK-NEXT:                                        current good state while doing temporary
+;; CHECK-NEXT:                                        computations, and will contain the final
+;; CHECK-NEXT:                                        best result at the end)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --debug,-d        Print debug information to stderr
+;; CHECK-NEXT:   --binaries,-b                        binaryen binaries location (bin/
+;; CHECK-NEXT:                                        directory)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --command,-cmd    The command to run on the test, that we want to reduce while
-;; CHECK-NEXT:                     keeping the command's output identical. We look at the
-;; CHECK-NEXT:                     command's return code and stdout here (TODO: stderr), and we
-;; CHECK-NEXT:                     reduce while keeping those unchanged.
+;; CHECK-NEXT:   --text,-S                            Emit intermediate files as text, instead
+;; CHECK-NEXT:                                        of binary (also make sure the test and
+;; CHECK-NEXT:                                        working files have a .wat or .wast
+;; CHECK-NEXT:                                        suffix)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --test,-t         Test file (this will be written to to test, the given
-;; CHECK-NEXT:                     command should read it when we call it)
+;; CHECK-NEXT:   --denan                              Avoid nans when reducing
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --working,-w      Working file (this will contain the current good state while
-;; CHECK-NEXT:                     doing temporary computations, and will contain the final
-;; CHECK-NEXT:                     best result at the end)
+;; CHECK-NEXT:   --verbose,-v                         Verbose output mode
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --binaries,-b     binaryen binaries location (bin/ directory)
+;; CHECK-NEXT:   --debugInfo,-g                       Keep debug info in binaries
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --text,-S         Emit intermediate files as text, instead of binary (also
-;; CHECK-NEXT:                     make sure the test and working files have a .wat or .wast
-;; CHECK-NEXT:                     suffix)
+;; CHECK-NEXT:   --force,-f                           Force the reduction attempt, ignoring
+;; CHECK-NEXT:                                        problems that imply it is unlikely to
+;; CHECK-NEXT:                                        succeed
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --denan           Avoid nans when reducing
+;; CHECK-NEXT:   --timeout,-to                        A timeout to apply to each execution of
+;; CHECK-NEXT:                                        the command, in seconds (default: 2)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --verbose,-v      Verbose output mode
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --debugInfo,-g    Keep debug info in binaries
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --force,-f        Force the reduction attempt, ignoring problems that imply it
-;; CHECK-NEXT:                     is unlikely to succeed
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --timeout,-to     A timeout to apply to each execution of the command, in
-;; CHECK-NEXT:                     seconds (default: 2)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --extra-flags,-ef Extra commandline flags to pass to wasm-opt while reducing.
-;; CHECK-NEXT:                     (default: --enable-all)
+;; CHECK-NEXT:   --extra-flags,-ef                    Extra commandline flags to pass to
+;; CHECK-NEXT:                                        wasm-opt while reducing. (default:
+;; CHECK-NEXT:                                        --enable-all)

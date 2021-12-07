@@ -79,10 +79,8 @@ struct SimplifyLocals
     Expression** item;
     EffectAnalyzer effects;
 
-    SinkableInfo(Expression** item,
-                 PassOptions& passOptions,
-                 FeatureSet features)
-      : item(item), effects(passOptions, features, *item) {}
+    SinkableInfo(Expression** item, PassOptions& passOptions, Module& module)
+      : item(item), effects(passOptions, module, *item) {}
   };
 
   // a list of sinkables in a linear execution trace
@@ -282,9 +280,9 @@ struct SimplifyLocals
   void checkInvalidations(EffectAnalyzer& effects) {
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
-    for (auto& sinkable : sinkables) {
-      if (effects.invalidates(sinkable.second.effects)) {
-        invalidated.push_back(sinkable.first);
+    for (auto& [index, info] : sinkables) {
+      if (effects.invalidates(info.effects)) {
+        invalidated.push_back(index);
       }
     }
     for (auto index : invalidated) {
@@ -305,9 +303,9 @@ struct SimplifyLocals
     // 'try', we drop all sinkables that may throw.
     if (curr->is<Try>()) {
       std::vector<Index> invalidated;
-      for (auto& sinkable : self->sinkables) {
-        if (sinkable.second.effects.throws) {
-          invalidated.push_back(sinkable.first);
+      for (auto& [index, info] : self->sinkables) {
+        if (info.effects.throws()) {
+          invalidated.push_back(index);
         }
       }
       for (auto index : invalidated) {
@@ -315,7 +313,7 @@ struct SimplifyLocals
       }
     }
 
-    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
+    EffectAnalyzer effects(self->getPassOptions(), *self->getModule());
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
     }
@@ -401,8 +399,7 @@ struct SimplifyLocals
       }
     }
 
-    FeatureSet features = self->getModule()->features;
-    EffectAnalyzer effects(self->getPassOptions(), features);
+    EffectAnalyzer effects(self->getPassOptions(), *self->getModule());
     if (effects.checkPost(original)) {
       self->checkInvalidations(effects);
     }
@@ -410,8 +407,9 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(std::make_pair(
-        index, SinkableInfo(currp, self->getPassOptions(), features)));
+      self->sinkables.emplace(std::pair{
+        index,
+        SinkableInfo(currp, self->getPassOptions(), *self->getModule())});
     }
 
     if (!allowNesting) {
@@ -428,7 +426,7 @@ struct SimplifyLocals
     // 'catch', because 'pop' should follow right after 'catch'.
     FeatureSet features = this->getModule()->features;
     if (features.hasExceptionHandling() &&
-        EffectAnalyzer(this->getPassOptions(), features, set->value)
+        EffectAnalyzer(this->getPassOptions(), *this->getModule(), set->value)
           .danglingPop) {
       return false;
     }
@@ -495,8 +493,7 @@ struct SimplifyLocals
     // look for a local.set that is present in them all
     bool found = false;
     Index sharedIndex = -1;
-    for (auto& sinkable : sinkables) {
-      Index index = sinkable.first;
+    for (auto& [index, _] : sinkables) {
       bool inAll = true;
       for (size_t j = 0; j < breaks.size(); j++) {
         if (breaks[j].sinkables.count(index) == 0) {
@@ -530,7 +527,6 @@ struct SimplifyLocals
     //   )
     //  )
     // so we must check for that.
-    FeatureSet features = this->getModule()->features;
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
       auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
@@ -548,8 +544,9 @@ struct SimplifyLocals
             Nop nop;
             *breakLocalSetPointer = &nop;
             EffectAnalyzer condition(
-              this->getPassOptions(), features, br->condition);
-            EffectAnalyzer value(this->getPassOptions(), features, set);
+              this->getPassOptions(), *this->getModule(), br->condition);
+            EffectAnalyzer value(
+              this->getPassOptions(), *this->getModule(), set);
             *breakLocalSetPointer = set;
             if (condition.invalidates(value)) {
               // indeed, we can't do this, stop
@@ -650,8 +647,7 @@ struct SimplifyLocals
       }
     } else {
       // Look for a shared index.
-      for (auto& sinkable : ifTrue) {
-        Index index = sinkable.first;
+      for (auto& [index, _] : ifTrue) {
         if (ifFalse.count(index) > 0) {
           goodIndex = index;
           found = true;
@@ -1033,7 +1029,7 @@ struct SimplifyLocals
     // gotten there thanks to the EquivalentOptimizer. If there are such
     // locals, remove all their sets.
     UnneededSetRemover setRemover(
-      getCounter, func, this->getPassOptions(), this->getModule()->features);
+      getCounter, func, this->getPassOptions(), *this->getModule());
     setRemover.setModule(this->getModule());
 
     return eqOpter.anotherCycle || setRemover.removed;

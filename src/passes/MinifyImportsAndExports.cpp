@@ -76,7 +76,7 @@ private:
       // Minify all import base names if we are importing modules (which means
       // we will minify all modules names, so we are not being careful).
       // Otherwise, assume we just want to minify "normal" imports like env
-      // and wasi, but not special things like asm2wasm or custom user things.
+      // and wasi, but not custom user things.
       if (minifyModules || curr->module == ENV ||
           curr->module.startsWith("wasi_")) {
         process(curr->base);
@@ -91,8 +91,8 @@ private:
     }
     module->updateMaps();
     // Emit the mapping.
-    for (auto& pair : newToOld) {
-      std::cout << pair.second.str << " => " << pair.first.str << '\n';
+    for (auto& [new_, old] : newToOld) {
+      std::cout << old.str << " => " << new_.str << '\n';
     }
 
     if (minifyModules) {
@@ -111,8 +111,8 @@ private:
     ModuleUtils::iterImports(*module, [&](Importable* curr) {
       curr->module = SINGLETON_MODULE_NAME;
 #ifndef NDEBUG
-      assert(seenImports.count(curr->base) == 0);
-      seenImports.insert(curr->base);
+      auto res = seenImports.emplace(curr->base);
+      assert(res.second);
 #endif
     });
   }

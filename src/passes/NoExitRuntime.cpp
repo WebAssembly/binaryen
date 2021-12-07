@@ -25,8 +25,6 @@
 #include <wasm-builder.h>
 #include <wasm.h>
 
-using namespace std;
-
 namespace wasm {
 
 struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
@@ -34,7 +32,7 @@ struct NoExitRuntime : public WalkerPass<PostWalker<NoExitRuntime>> {
 
   Pass* create() override { return new NoExitRuntime; }
 
-  // Remove all possible manifestations of atexit, across asm2wasm and llvm wasm
+  // Remove all possible manifestations of atexit, across llvm wasm
   // backend.
   std::array<Name, 4> ATEXIT_NAMES = {
     {"___cxa_atexit", "__cxa_atexit", "_atexit", "atexit"}};

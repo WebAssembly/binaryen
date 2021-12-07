@@ -325,6 +325,40 @@
    )
   )
  )
+ (func "ref-as-data-of-func"
+  (drop
+   ;; This should trap.
+   (ref.as_data
+    (ref.func $0)
+   )
+  )
+ )
+ (func "ref-as-data-of-data"
+  (drop
+   (ref.as_data
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+ )
+ (func "ref-as-func-of-data"
+  (drop
+   ;; This should trap.
+   (ref.as_func
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+   )
+  )
+ )
+ (func "ref-as-func-of-func"
+  (drop
+   (ref.as_func
+    (ref.func $0)
+   )
+  )
+ )
  (func $a-void-func
   (call $log (i32.const 1337))
  )
@@ -474,6 +508,130 @@
     (global.get $rtt)
    )
   )
+ )
+ (func "array.init"
+  (local $x (ref null $bytes))
+  (local.set $x
+   (array.init $bytes
+    (i32.const 42) ;; first value
+    (i32.const 50) ;; second value
+    (rtt.canon $bytes)
+   )
+  )
+  ;; The length should be 2
+  (call $log
+   (array.len $bytes (local.get $x))
+  )
+  ;; The first value should be 42
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 0))
+  )
+  ;; The second value should be 50
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 1))
+  )
+ )
+ (func "array.init-packed"
+  (local $x (ref null $bytes))
+  (local.set $x
+   (array.init $bytes
+    (i32.const -11512)
+    (rtt.canon $bytes)
+   )
+  )
+  ;; The value should be be -11512 & 255 => 8
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 0))
+  )
+ )
+ (func "static-casts"
+  ;; Casting null returns null.
+  (call $log (ref.is_null
+   (ref.cast_static $struct (ref.null $struct))
+  ))
+  ;; Testing null returns 0.
+  (call $log
+   (ref.test_static $struct (ref.null $struct))
+  )
+  ;; Testing something completely wrong (struct vs array) returns 0.
+  (call $log
+   (ref.test_static $struct
+    (array.new $bytes
+     (i32.const 20)
+     (i32.const 10)
+    )
+   )
+  )
+  ;; Testing a thing with the same type returns 1.
+  (call $log
+   (ref.test_static $struct
+    (struct.new_default $struct)
+   )
+  )
+  ;; A bad downcast returns 0: we create a struct, which is not a extendedstruct.
+  (call $log
+   (ref.test_static $extendedstruct
+    (struct.new_default $struct)
+   )
+  )
+  ;; Casting to a supertype does not work because the canonical RTT for the
+  ;; subtype is not a sub-rtt of the canonical RTT of the supertype in
+  ;; structural mode.
+  (call $log
+   (ref.test_static $struct
+    (struct.new_default $extendedstruct)
+   )
+  )
+ )
+ (func "static-br_on_cast"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default $struct)
+  )
+  (drop
+   (block $block (result ($ref $struct))
+    (drop
+     (block $extendedblock (result (ref $extendedstruct))
+      (drop
+       ;; second, try to cast our simple $struct to what it is, which will work
+       (br_on_cast_static $block $struct
+        ;; first, try to cast our simple $struct to an extended, which will fail
+        (br_on_cast_static $extendedblock $extendedstruct
+         (local.get $any)
+        )
+       )
+      )
+      (call $log (i32.const -1)) ;; we should never get here
+      (return)
+     )
+    )
+    (call $log (i32.const -2)) ;; we should never get here either
+    (return)
+   )
+  )
+  (call $log (i32.const 3)) ;; we should get here
+ )
+ (func "static-br_on_cast_fail"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default $struct)
+  )
+  (drop
+   (block $failblock (result anyref)
+    (drop
+      ;; try to cast our simple $struct to an extended, which will fail
+     (br_on_cast_static_fail $failblock $extendedstruct
+      (local.get $any)
+     )
+    )
+    (call $log (i32.const -1)) ;; we should never get here
+    (return)
+   )
+  )
+  (call $log (i32.const -2)) ;; we should get here.
+  (return)
  )
 )
 (module

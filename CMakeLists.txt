@@ -1,12 +1,18 @@
 # Version set according the the cmake versions available in Ubuntu/Bionic:
 # https://packages.ubuntu.com/bionic/cmake
 cmake_minimum_required(VERSION 3.10.2)
-project(binaryen LANGUAGES C CXX VERSION 101)
+
+# Needed for C++17 (std::variant)
+# TODO(https://github.com/WebAssembly/binaryen/issues/4299): We need
+# to reduce this for compatability with emsdk.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
+
+project(binaryen LANGUAGES C CXX VERSION 103)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with scripts/test/shared.py cxx_standard
-set(CXX_STANDARD 14)
+set(CXX_STANDARD 17)
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type selected, default to Release")
@@ -145,14 +151,21 @@ if(BYN_ENABLE_LTO)
   if(NOT APPLE)
     add_link_flag("-fuse-ld=lld")
   endif()
+  set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=2)
+  set(CMAKE_JOB_POOL_LINK link_job_pool)
   add_compile_flag("-flto=thin")
 endif()
 
 if(MSVC)
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
-    add_compile_flag("/arch:sse2")
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # multi-core build.
+    add_compile_flag("/MP")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0")
+      # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
+      add_compile_flag("/arch:sse2")
+    endif()
   endif()
-  add_compile_flag("/std:c++17") # VS2017 generates "error C2429: attribute 'fallthrough' requires compiler flag '/std:c++17'"
+  add_compile_flag("/std:c++${CXX_STANDARD}")
   add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
   # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
   add_compile_flag("/wd4267")
@@ -166,14 +179,13 @@ if(MSVC)
   add_nondebug_compile_flag("/O2")
   add_compile_flag("/D_CRT_SECURE_NO_WARNINGS")
   add_compile_flag("/D_SCL_SECURE_NO_WARNINGS")
+  # workaround for https://github.com/WebAssembly/binaryen/issues/3661
+  add_compile_flag("/D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING")
   # Visual Studio 2018 15.8 implemented conformant support for std::aligned_storage, but the conformant support is only enabled when the following flag is passed, to avoid
   # breaking backwards compatibility with code that relied on the non-conformant behavior (the old nonconformant behavior is not used with Binaryen)
   add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
-
-  # multi-core build.
-  add_compile_flag("/MP")
 
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
@@ -246,12 +258,7 @@ else()
   endif()
   add_debug_compile_flag("-O0")
   add_debug_compile_flag("-g3")
-  if(EMSCRIPTEN)
-    # really focus on minimizing output size when compiling sources
-    add_nondebug_compile_flag("-Oz")
-  else()
-    add_nondebug_compile_flag("-O2")
-  endif()
+  add_nondebug_compile_flag("-O2")
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
@@ -284,7 +291,7 @@ endif()
 
 # Static libraries
 # Current (partial) dependency structure is as follows:
-# passes -> wasm -> asmjs -> support
+# tools -> passes -> wasm -> asmjs -> support
 # TODO: It's odd that wasm should depend on asmjs, maybe we should fix that.
 add_subdirectory(src/ir)
 add_subdirectory(src/asmjs)
@@ -293,6 +300,7 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
+add_subdirectory(src/tools)
 add_subdirectory(third_party)
 
 # Configure lit tests
@@ -337,28 +345,6 @@ if(NOT BYN_INSTALL_TOOLS_ONLY)
   install(FILES src/binaryen-c.h src/wasm-delegations.def DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-function(binaryen_add_executable name sources)
-  add_executable(${name} ${sources})
-  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
-  target_link_libraries(${name} binaryen)
-  set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
-  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
-  binaryen_setup_rpath(${name})
-  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
-endfunction()
-
-binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
-binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
-binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
-binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
-binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)
-binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
-binaryen_add_executable(wasm-dis src/tools/wasm-dis.cpp)
-binaryen_add_executable(wasm-ctor-eval src/tools/wasm-ctor-eval.cpp)
-binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
-binaryen_add_executable(wasm-split src/tools/wasm-split.cpp)
-
-
 # binaryen.js
 #
 # Note that we can't emit binaryen.js directly, as there is libbinaryen already
@@ -377,10 +363,10 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support wasm)
   target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
-  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_ES6=1")
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
-  target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "-flto")
@@ -401,10 +387,10 @@ if(EMSCRIPTEN)
   endif()
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
-  target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_ES6=1")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
-  target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_js optimized "-flto")

@@ -15,6 +15,36 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v103
+----
+
+- The EffectAnalyzer now takes advantage of immutability of globals. To achieve
+  that it must have access to the module. That is already the case in the C++
+  API, but the JS API allowed one to optionally not add a module when calling
+  `getSideEffects()`. It is now mandatory to pass in the module.
+- JS and Wasm builds now emit ECMAScript modules. New usage is:
+  ```js
+  import Binaryen from "path/to/binaryen.js";
+  const binaryen = await Binaryen();
+  ...
+  ```
+- CallIndirect changed from storing a Signature to storing a HeapType
+
+v102
+----
+
+- Add `BinaryenUpdateMaps` to the C API.
+
+- Adds a TrapsNeverHappen mode (#4059). This has many of the benefits of
+  IgnoreImplicitTraps, but can be used safely in more cases. IgnoreImplicitTraps
+  is now deprecated.
+
+- Adds type argument for BinaryenAddTable method (#4107). For the binaryen.js api
+  this parameter is optional and by default is set to funcref type.
+
+- Replace `BinaryenExpressionGetSideEffects`'s features parameter with a module
+  parameter.
+
 v101
 ----
 

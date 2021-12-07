@@ -41,7 +41,8 @@ struct FeatureSet {
     TypedFunctionReferences = 1 << 12,
     // TODO: Remove this feature when the wasm spec stabilizes.
     GCNNLocals = 1 << 13,
-    All = (1 << 14) - 1
+    RelaxedSIMD = 1 << 14,
+    All = (1 << 15) - 1
   };
 
   static std::string toString(Feature f) {
@@ -74,6 +75,8 @@ struct FeatureSet {
         return "typed-function-references";
       case GCNNLocals:
         return "gc-nn-locals";
+      case RelaxedSIMD:
+        return "relaxed-simd";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -118,6 +121,7 @@ struct FeatureSet {
     return (features & TypedFunctionReferences) != 0;
   }
   bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
+  bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -139,6 +143,7 @@ struct FeatureSet {
     set(TypedFunctionReferences, v);
   }
   void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
+  void setRelaxedSIMD(bool v = true) { set(RelaxedSIMD, v); }
   void setMVP() { features = MVP; }
   void setAll() {
     // Do not set GCNNLocals, which forces the user to opt in to that feature

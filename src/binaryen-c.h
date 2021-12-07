@@ -161,6 +161,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureMultivalue(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureGC(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMemory64(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedSIMD(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -850,6 +851,22 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);
+BINARYEN_API BinaryenExpressionRef BinaryenTableGet(BinaryenModuleRef module,
+                                                    const char* name,
+                                                    BinaryenExpressionRef index,
+                                                    BinaryenType type);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSet(BinaryenModuleRef module,
+                 const char* name,
+                 BinaryenExpressionRef index,
+                 BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenTableSize(BinaryenModuleRef module,
+                                                     const char* name);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGrow(BinaryenModuleRef module,
+                  const char* name,
+                  BinaryenExpressionRef value,
+                  BinaryenExpressionRef delta);
 // Try: name can be NULL. delegateTarget should be NULL in try-catch.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTry(BinaryenModuleRef module,
@@ -1194,6 +1211,67 @@ BinaryenGlobalSetGetValue(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
                                             BinaryenExpressionRef valueExpr);
 
+// TableGet
+
+// Gets the name of the table being accessed by a `table.get` expression.
+BINARYEN_API const char* BinaryenTableGetGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.get` expression.
+BINARYEN_API void BinaryenTableGetSetTable(BinaryenExpressionRef expr,
+                                           const char* table);
+// Gets the index expression of a `table.get` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGetGetIndex(BinaryenExpressionRef expr);
+// Sets the index expression of a `table.get` expression.
+BINARYEN_API void BinaryenTableGetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef indexExpr);
+
+// TableSet
+
+// Gets the name of the table being accessed by a `table.set` expression.
+BINARYEN_API const char* BinaryenTableSetGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetTable(BinaryenExpressionRef expr,
+                                           const char* table);
+// Gets the index expression of a `table.set` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSetGetIndex(BinaryenExpressionRef expr);
+// Sets the index expression of a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetIndex(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef indexExpr);
+// Gets the value expression of a `table.set` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableSetGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `table.set` expression.
+BINARYEN_API void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef valueExpr);
+
+// TableSize
+
+// Gets the name of the table being accessed by a `table.size` expression.
+BINARYEN_API const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.size` expression.
+BINARYEN_API void BinaryenTableSizeSetTable(BinaryenExpressionRef expr,
+                                            const char* table);
+
+// TableGrow
+
+// Gets the name of the table being accessed by a `table.grow` expression.
+BINARYEN_API const char* BinaryenTableGrowGetTable(BinaryenExpressionRef expr);
+// Sets the name of the table being accessed by a `table.grow` expression.
+BINARYEN_API void BinaryenTableGrowSetTable(BinaryenExpressionRef expr,
+                                            const char* table);
+// Gets the value expression of a `table.grow` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGrowGetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `table.grow` expression.
+BINARYEN_API void BinaryenTableGrowSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
+// Gets the delta of a `table.grow` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTableGrowGetDelta(BinaryenExpressionRef expr);
+// Sets the delta of a `table.grow` expression.
+BINARYEN_API void BinaryenTableGrowSetDelta(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef deltaExpr);
 // MemoryGrow
 
 // Gets the delta of a `memory.grow` expression.
@@ -1201,7 +1279,7 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryGrowGetDelta(BinaryenExpressionRef expr);
 // Sets the delta of a `memory.grow` expression.
 BINARYEN_API void BinaryenMemoryGrowSetDelta(BinaryenExpressionRef expr,
-                                             BinaryenExpressionRef delta);
+                                             BinaryenExpressionRef deltaExpr);
 
 // Load
 
@@ -2156,7 +2234,8 @@ BINARYEN_REF(Table);
 BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                                const char* table,
                                                BinaryenIndex initial,
-                                               BinaryenIndex maximum);
+                                               BinaryenIndex maximum,
+                                               BinaryenType tableType);
 BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
                                       const char* table);
 BINARYEN_API BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module);
@@ -2252,6 +2331,10 @@ BINARYEN_API bool BinaryenModuleValidate(BinaryenModuleRef module);
 // global optimize and shrink level.
 BINARYEN_API void BinaryenModuleOptimize(BinaryenModuleRef module);
 
+// Updates the internal name mapping logic in a module. This must be called
+// after renaming module elements.
+BINARYEN_API void BinaryenModuleUpdateMaps(BinaryenModuleRef module);
+
 // Gets the currently set optimize level. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
 BINARYEN_API int BinaryenGetOptimizeLevel(void);
@@ -2283,6 +2366,13 @@ BINARYEN_API bool BinaryenGetLowMemoryUnused(void);
 // Enables or disables whether the low 1K of memory can be considered unused
 // when optimizing. Applies to all modules, globally.
 BINARYEN_API void BinaryenSetLowMemoryUnused(bool on);
+
+// Gets whether to assume that an imported memory is zero-initialized.
+BINARYEN_API bool BinaryenGetZeroFilledMemory(void);
+
+// Enables or disables whether to assume that an imported memory is
+// zero-initialized.
+BINARYEN_API void BinaryenSetZeroFilledMemory(bool on);
 
 // Gets whether fast math optimizations are enabled, ignoring for example
 // corner cases of floating-point math like NaN changes.
@@ -2612,14 +2702,17 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsGlobal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesGlobal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsTable(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesTable(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectDanglingPop(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
 
 BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(
-  BinaryenExpressionRef expr, BinaryenFeatures features);
+  BinaryenExpressionRef expr, BinaryenModuleRef module);
 
 //
 // ========== CFG / Relooper ==========

@@ -19,6 +19,7 @@
 
 #include <array>
 #include <iostream>
+#include <variant>
 
 #include "compiler-support.h"
 #include "support/hash.h"
@@ -61,7 +62,6 @@ class Literal {
     // as the Literal class itself.
     // To support the experimental RttFreshSub instruction, we not only store
     // the type, but also a reference to an allocation.
-    // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -261,6 +261,10 @@ public:
     return lit;
   }
 
+  // Get the canonical RTT value for a given HeapType. For nominal types, the
+  // canonical RTT reflects the static supertype chain.
+  static Literal makeCanonicalRtt(HeapType type);
+
   Literal castToF32();
   Literal castToF64();
   Literal castToI32();
@@ -420,6 +424,11 @@ public:
   Literal pmin(const Literal& other) const;
   Literal pmax(const Literal& other) const;
   Literal copysign(const Literal& other) const;
+
+  // Fused multiply add and subtract.
+  // Computes this + (left * right) to infinite precision then round once.
+  Literal fma(const Literal& left, const Literal& right) const;
+  Literal fms(const Literal& left, const Literal& right) const;
 
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
@@ -612,23 +621,41 @@ public:
   Literal floorF64x2() const;
   Literal truncF64x2() const;
   Literal nearestF64x2() const;
+  Literal extAddPairwiseToSI16x8() const;
+  Literal extAddPairwiseToUI16x8() const;
+  Literal extAddPairwiseToSI32x4() const;
+  Literal extAddPairwiseToUI32x4() const;
   Literal truncSatToSI32x4() const;
   Literal truncSatToUI32x4() const;
   Literal convertSToF32x4() const;
   Literal convertUToF32x4() const;
-  Literal narrowSToVecI8x16(const Literal& other) const;
-  Literal narrowUToVecI8x16(const Literal& other) const;
-  Literal narrowSToVecI16x8(const Literal& other) const;
-  Literal narrowUToVecI16x8(const Literal& other) const;
-  Literal extendLowSToVecI16x8() const;
-  Literal extendHighSToVecI16x8() const;
-  Literal extendLowUToVecI16x8() const;
-  Literal extendHighUToVecI16x8() const;
-  Literal extendLowSToVecI32x4() const;
-  Literal extendHighSToVecI32x4() const;
-  Literal extendLowUToVecI32x4() const;
-  Literal extendHighUToVecI32x4() const;
-  Literal swizzleVec8x16(const Literal& other) const;
+  Literal narrowSToI8x16(const Literal& other) const;
+  Literal narrowUToI8x16(const Literal& other) const;
+  Literal narrowSToI16x8(const Literal& other) const;
+  Literal narrowUToI16x8(const Literal& other) const;
+  Literal extendLowSToI16x8() const;
+  Literal extendHighSToI16x8() const;
+  Literal extendLowUToI16x8() const;
+  Literal extendHighUToI16x8() const;
+  Literal extendLowSToI32x4() const;
+  Literal extendHighSToI32x4() const;
+  Literal extendLowUToI32x4() const;
+  Literal extendHighUToI32x4() const;
+  Literal extendLowSToI64x2() const;
+  Literal extendHighSToI64x2() const;
+  Literal extendLowUToI64x2() const;
+  Literal extendHighUToI64x2() const;
+  Literal convertLowSToF64x2() const;
+  Literal convertLowUToF64x2() const;
+  Literal truncSatZeroSToI32x4() const;
+  Literal truncSatZeroUToI32x4() const;
+  Literal demoteZeroToF32x4() const;
+  Literal promoteLowToF64x2() const;
+  Literal swizzleI8x16(const Literal& other) const;
+  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
   // with this object's RTT can be successfuly cast using the other RTT
@@ -680,16 +707,21 @@ std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
 // A GC Struct or Array is a set of values with a run-time type saying what it
-// is.
+// is. In the case of static (rtt-free) typing, the rtt is not present and
+// instead we have a static type.
 struct GCData {
+  // The runtime type info for this struct or array.
   Literal rtt;
+
+  // The element or field values.
   Literals values;
+
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 
 struct RttSuper {
   // The type of the super.
-  Type type;
+  HeapType type;
   // A shared allocation, used to implement rtt.fresh_sub. This is null for a
   // normal sub, and for a fresh one we allocate a value here, which can then be
   // used to differentiate rtts. (The allocation is shared so that when copying
@@ -697,7 +729,7 @@ struct RttSuper {
   // TODO: Remove or optimize this when the spec stabilizes.
   std::shared_ptr<size_t> freshPtr;
 
-  RttSuper(Type type) : type(type) {}
+  RttSuper(HeapType type) : type(type) {}
 
   void makeFresh() { freshPtr = std::make_shared<size_t>(); }
 

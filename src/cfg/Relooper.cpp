@@ -62,9 +62,7 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret,
     if (!Multiple) {
       break;
     }
-    for (auto& iter : Multiple->InnerMap) {
-      int Id = iter.first;
-      Shape* Body = iter.second;
+    for (auto& [Id, Body] : Multiple->InnerMap) {
       Curr->name = Builder.getBlockBreakName(Id);
       Curr->finalize(); // it may now be reachable, via a break
       auto* Outer = Builder.makeBlock(Curr);
@@ -222,13 +220,13 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   Block* DefaultTarget = nullptr;
 
   // Find the default target, the one without a condition
-  for (auto& iter : ProcessedBranchesOut) {
-    if ((!SwitchCondition && !iter.second->Condition) ||
-        (SwitchCondition && !iter.second->SwitchValues)) {
+  for (auto& [Target, Details] : ProcessedBranchesOut) {
+    if ((!SwitchCondition && !Details->Condition) ||
+        (SwitchCondition && !Details->SwitchValues)) {
       assert(!DefaultTarget &&
              "block has branches without a default (nullptr for the "
              "condition)"); // Must be exactly one default // nullptr
-      DefaultTarget = iter.first;
+      DefaultTarget = Target;
     }
   }
   // Since each Block* must* branch somewhere, this must be set
@@ -338,9 +336,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
     auto* Outer = Builder.makeBlock();
     auto* Inner = Outer;
     std::vector<wasm::Name> Table;
-    for (auto& iter : ProcessedBranchesOut) {
-      Block* Target = iter.first;
-      Branch* Details = iter.second;
+    for (auto& [Target, Details] : ProcessedBranchesOut) {
       wasm::Name CurrName;
       if (Details->SwitchValues) {
         CurrName = wasm::Name(Base + "$case$" + std::to_string(Target->Id));
@@ -435,9 +431,9 @@ wasm::Expression* MultipleShape::Render(RelooperBuilder& Builder, bool InLoop) {
   wasm::If* FirstIf = nullptr;
   wasm::If* CurrIf = nullptr;
   std::vector<wasm::If*> finalizeStack;
-  for (auto& iter : InnerMap) {
-    auto* Now = Builder.makeIf(Builder.makeCheckLabel(iter.first),
-                               iter.second->Render(Builder, InLoop));
+  for (auto& [Id, Body] : InnerMap) {
+    auto* Now =
+      Builder.makeIf(Builder.makeCheckLabel(Id), Body->Render(Builder, InLoop));
     finalizeStack.push_back(Now);
     if (!CurrIf) {
       FirstIf = CurrIf = Now;
@@ -610,8 +606,7 @@ struct Optimizer : public RelooperRecursor {
   void CanonicalizeCode() {
     for (auto& Block : Parent->Blocks) {
       Block->Code = Canonicalize(Block->Code);
-      for (auto& iter : Block->BranchesOut) {
-        auto* Branch = iter.second;
+      for (auto& [_, Branch] : Block->BranchesOut) {
         if (Branch->Code) {
           Branch->Code = Canonicalize(Branch->Code);
         }
@@ -647,7 +642,7 @@ struct Optimizer : public RelooperRecursor {
               Next = Replacement = NextNext;
               // If we've already seen this, stop - it's an infinite loop of
               // empty blocks we can skip through.
-              if (Seen.count(Replacement)) {
+              if (!Seen.emplace(Replacement).second) {
                 // Stop here. Note that if we started from X and ended up with X
                 // once more, then Replacement == First and so lower down we
                 // will not report that we did any work, avoiding an infinite
@@ -655,7 +650,6 @@ struct Optimizer : public RelooperRecursor {
                 break;
               } else {
                 // Otherwise, keep going.
-                Seen.insert(Replacement);
                 continue;
               }
             }
@@ -698,12 +692,10 @@ struct Optimizer : public RelooperRecursor {
       if (ParentBlock->BranchesOut.size() >= 2) {
         std::unordered_map<size_t, std::vector<BranchBlock>> HashedBranchesOut;
         std::vector<Block*> BlocksToErase;
-        for (auto& iter : ParentBlock->BranchesOut) {
-          Block* CurrBlock = iter.first;
+        for (auto& [CurrBlock, CurrBranch] : ParentBlock->BranchesOut) {
 #if RELOOPER_OPTIMIZER_DEBUG
           std::cout << "  consider child " << CurrBlock->Id << '\n';
 #endif
-          Branch* CurrBranch = iter.second;
           if (CurrBranch->Code) {
             // We can't merge code; ignore
             continue;
@@ -712,9 +704,7 @@ struct Optimizer : public RelooperRecursor {
           auto& HashedSiblings = HashedBranchesOut[HashValue];
           // Check if we are equivalent to any of them - if so, merge us.
           bool Merged = false;
-          for (auto& Pair : HashedSiblings) {
-            Branch* SiblingBranch = Pair.first;
-            Block* SiblingBlock = Pair.second;
+          for (auto& [SiblingBranch, SiblingBlock] : HashedSiblings) {
             if (HaveEquivalentContents(CurrBlock, SiblingBlock)) {
 #if RELOOPER_OPTIMIZER_DEBUG
               std::cout << "    equiv! to " << SiblingBlock->Id << '\n';
@@ -809,8 +799,8 @@ struct Optimizer : public RelooperRecursor {
       } else {
         // If the block has no switch, the branches must not as well.
 #ifndef NDEBUG
-        for (auto& iter : ParentBlock->BranchesOut) {
-          assert(!iter.second->SwitchValues);
+        for (auto& [_, CurrBranch] : ParentBlock->BranchesOut) {
+          assert(!CurrBranch->SwitchValues);
         }
 #endif
       }
@@ -923,9 +913,7 @@ private:
     if (A->BranchesOut.size() != B->BranchesOut.size()) {
       return false;
     }
-    for (auto& aiter : A->BranchesOut) {
-      Block* ABlock = aiter.first;
-      Branch* ABranch = aiter.second;
+    for (auto& [ABlock, ABranch] : A->BranchesOut) {
       if (B->BranchesOut.count(ABlock) == 0) {
         return false;
       }
@@ -1030,11 +1018,11 @@ private:
                          wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition));
     }
     wasm::rehash(digest, uint8_t(2));
-    for (auto& Pair : Curr->BranchesOut) {
+    for (auto& [CurrBlock, CurrBranch] : Curr->BranchesOut) {
       // Hash the Block* as a pointer TODO: full hash?
-      wasm::rehash(digest, reinterpret_cast<size_t>(Pair.first));
+      wasm::rehash(digest, reinterpret_cast<size_t>(CurrBlock));
       // Hash the Branch info properly
-      wasm::hash_combine(digest, Hash(Pair.second));
+      wasm::hash_combine(digest, Hash(CurrBranch));
     }
     return digest;
   }
@@ -1077,8 +1065,8 @@ void Relooper::Calculate(Block* Entry) {
     if (!contains(Live.Live, Curr)) {
       continue;
     }
-    for (auto& iter : Curr->BranchesOut) {
-      iter.first->BranchesIn.insert(Curr);
+    for (auto& [CurrBlock, _] : Curr->BranchesOut) {
+      CurrBlock->BranchesIn.insert(Curr);
     }
   }
 
@@ -1092,9 +1080,9 @@ void Relooper::Calculate(Block* Entry) {
     void GetBlocksOut(Block* Source,
                       BlockSet& Entries,
                       BlockSet* LimitTo = nullptr) {
-      for (auto& iter : Source->BranchesOut) {
-        if (!LimitTo || contains(*LimitTo, iter.first)) {
-          Entries.insert(iter.first);
+      for (auto& [CurrBlock, _] : Source->BranchesOut) {
+        if (!LimitTo || contains(*LimitTo, CurrBlock)) {
+          Entries.insert(CurrBlock);
         }
       }
     }
@@ -1174,8 +1162,7 @@ void Relooper::Calculate(Block* Entry) {
       assert(InnerBlocks.size() > 0);
 
       for (auto* Curr : InnerBlocks) {
-        for (auto& iter : Curr->BranchesOut) {
-          Block* Possible = iter.first;
+        for (auto& [Possible, _] : Curr->BranchesOut) {
           if (!contains(InnerBlocks, Possible)) {
             NextEntries.insert(Possible);
           }
@@ -1289,8 +1276,7 @@ void Relooper::Calculate(Block* Entry) {
             // may have been seen before and invalidated already
             if (Ownership[Invalidatee]) {
               Ownership[Invalidatee] = nullptr;
-              for (auto& iter : Invalidatee->BranchesOut) {
-                Block* Target = iter.first;
+              for (auto& [Target, _] : Invalidatee->BranchesOut) {
                 auto Known = Ownership.find(Target);
                 if (Known != Ownership.end()) {
                   Block* TargetOwner = Known->second;
@@ -1330,8 +1316,7 @@ void Relooper::Calculate(Block* Entry) {
           continue;
         }
         // Add all children
-        for (auto& iter : Curr->BranchesOut) {
-          Block* New = iter.first;
+        for (auto& [New, _] : Curr->BranchesOut) {
           auto Known = Helper.Ownership.find(New);
           if (Known == Helper.Ownership.end()) {
             // New node. Add it, and put it in the queue
@@ -1404,9 +1389,7 @@ void Relooper::Calculate(Block* Entry) {
                  IndependentGroups.size());
       MultipleShape* Multiple = Parent->AddMultipleShape();
       BlockSet CurrEntries;
-      for (auto& iter : IndependentGroups) {
-        Block* CurrEntry = iter.first;
-        BlockSet& CurrBlocks = iter.second;
+      for (auto& [CurrEntry, CurrBlocks] : IndependentGroups) {
         PrintDebug("  multiple group with entry %d:\n", CurrEntry->Id);
         DebugDump(CurrBlocks, "    ");
         // Create inner block
@@ -1563,8 +1546,7 @@ void Relooper::Calculate(Block* Entry) {
               bool DeadEnd = true;
               BlockSet& SmallGroup = IndependentGroups[SmallEntry];
               for (auto* Curr : SmallGroup) {
-                for (auto& iter : Curr->BranchesOut) {
-                  Block* Target = iter.first;
+                for (auto& [Target, _] : Curr->BranchesOut) {
                   if (!contains(SmallGroup, Target)) {
                     DeadEnd = false;
                     break;
@@ -1685,8 +1667,8 @@ void Debugging::Dump(Shape* S, const char* prefix) {
     printf("<< Simple with block %d\n", Simple->Inner->Id);
   } else if (MultipleShape* Multiple = Shape::IsMultiple(S)) {
     printf("<< Multiple\n");
-    for (auto& iter : Multiple->InnerMap) {
-      printf("     with entry %d\n", iter.first);
+    for (auto& [Entry, _] : Multiple->InnerMap) {
+      printf("     with entry %d\n", Entry);
     }
   } else if (Shape::IsLoop(S)) {
     printf("<< Loop\n");
