@@ -81,9 +81,7 @@ struct ComparingLocalGraph : public LocalGraph {
   PassOptions& passOptions;
   Module& wasm;
 
-  ComparingLocalGraph(Function* func,
-                      PassOptions& passOptions,
-                      Module& wasm)
+  ComparingLocalGraph(Function* func, PassOptions& passOptions, Module& wasm)
     : LocalGraph(func), passOptions(passOptions), wasm(wasm) {}
 
   // Check whether the values of two expressions will definitely be equal at
@@ -114,8 +112,7 @@ struct ComparingLocalGraph : public LocalGraph {
 struct Logic {
   Function* func;
 
-  Logic(Function* func, PassOptions& passOptions, Module& wasm)
-    : func(func) {}
+  Logic(Function* func, PassOptions& passOptions, Module& wasm) : func(func) {}
 
   //============================================================================
   // Hooks to identify relevant things to include in the analysis.
@@ -232,8 +229,7 @@ struct DeadStoreCFG
   LogicType logic;
 
   DeadStoreCFG(Module& wasm, Function* func, PassOptions& passOptions)
-    : func(func), passOptions(passOptions),
-      logic(func, passOptions, wasm) {
+    : func(func), passOptions(passOptions), logic(func, passOptions, wasm) {
     this->setModule(&wasm);
   }
 
@@ -331,7 +327,8 @@ struct DeadStoreCFG
               return;
             }
 
-            ShallowEffectAnalyzer currEffects(passOptions, *this->getModule(), curr);
+            ShallowEffectAnalyzer currEffects(
+              passOptions, *this->getModule(), curr);
 
             if (logic.isLoadFrom(curr, currEffects, store)) {
               // We found a definite load of this store, note it.
@@ -423,8 +420,7 @@ struct ComparingLogic : public Logic {
   ComparingLocalGraph localGraph;
 
   ComparingLogic(Function* func, PassOptions& passOptions, Module& wasm)
-    : Logic(func, passOptions, wasm),
-      localGraph(func, passOptions, wasm) {}
+    : Logic(func, passOptions, wasm), localGraph(func, passOptions, wasm) {}
 };
 
 // Optimize module globals: GlobalSet/GlobalGet.
