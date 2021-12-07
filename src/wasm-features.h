@@ -39,7 +39,9 @@ struct FeatureSet {
     GC = 1 << 10,
     Memory64 = 1 << 11,
     TypedFunctionReferences = 1 << 12,
-    All = (1 << 13) - 1
+    // TODO: Remove this feature when the wasm spec stabilizes.
+    GCNNLocals = 1 << 13,
+    All = (1 << 14) - 1
   };
 
   static std::string toString(Feature f) {
@@ -70,6 +72,8 @@ struct FeatureSet {
         return "memory64";
       case TypedFunctionReferences:
         return "typed-function-references";
+      case GCNNLocals:
+        return "gc-nn-locals";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -113,9 +117,9 @@ struct FeatureSet {
   bool hasTypedFunctionReferences() const {
     return (features & TypedFunctionReferences) != 0;
   }
+  bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
-  void makeMVP() { features = MVP; }
   void set(FeatureSet f, bool v = true) {
     features = v ? (features | f) : (features & ~f);
   }
@@ -134,7 +138,22 @@ struct FeatureSet {
   void setTypedFunctionReferences(bool v = true) {
     set(TypedFunctionReferences, v);
   }
-  void setAll(bool v = true) { features = v ? All : MVP; }
+  void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
+  void setMVP() { features = MVP; }
+  void setAll() {
+    // Do not set GCNNLocals, which forces the user to opt in to that feature
+    // explicitly. That is, wasm-opt -all will enable GC but *not* enable
+    // non-nullable locals. To get them, do wasm-opt -all --enable-gc-nn-locals
+    // FIXME: When the wasm spec stabilizes, this feature will go away, as the
+    //        non-nullable locals experiment will either become the standard,
+    //        or it will go away.
+    // Leave the old GCNNLocals value unmodified. This makes things like
+    // --enable-gc-nn-locals -all work (that is, if we enable the feature,
+    // then -all does not disable it; it simply does not enable it by itself).
+    auto oldGCNNLocals = hasGCNNLocals();
+    features = All;
+    setGCNNLocals(oldGCNNLocals);
+  }
 
   void enable(const FeatureSet& other) { features |= other.features; }
   void disable(const FeatureSet& other) {

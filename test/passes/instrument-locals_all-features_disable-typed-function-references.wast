@@ -1,6 +1,4 @@
 (module
-  (event $e (attr 0) (param i32))
-
   (func $test
     (local $x i32)
     (local $y i64)
@@ -37,14 +35,6 @@
     (local.set $w (f64.const 44.321))
     (local.set $F (local.get $F))
     (local.set $X (local.get $X))
-
-    ;; Pop instructions should not be instrumented
-    (try
-      (do)
-      (catch $e
-        (local.set $x (pop i32))
-      )
-    )
 
     ;; Add new instructions here so expected output doesn't change too much, it
     ;; depends on order of instructions in this file.

@@ -545,10 +545,15 @@ enum RefAsOp {
 
 enum BrOnOp {
   BrOnNull,
+  BrOnNonNull,
   BrOnCast,
+  BrOnCastFail,
   BrOnFunc,
+  BrOnNonFunc,
   BrOnData,
+  BrOnNonData,
   BrOnI31,
+  BrOnNonI31,
 };
 
 //
@@ -640,6 +645,7 @@ public:
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
+    ArrayCopyId,
     RefAsId,
     NumExpressionIds
   };
@@ -1260,16 +1266,16 @@ public:
 
 class Try : public SpecificExpression<Expression::TryId> {
 public:
-  Try(MixedArena& allocator) : catchEvents(allocator), catchBodies(allocator) {}
+  Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
 
   Name name; // label that can only be targeted by 'delegate's
   Expression* body;
-  ArenaVector<Name> catchEvents;
+  ArenaVector<Name> catchTags;
   ExpressionList catchBodies;
   Name delegateTarget; // target try's label
 
   bool hasCatchAll() const {
-    return catchBodies.size() - catchEvents.size() == 1;
+    return catchBodies.size() - catchTags.size() == 1;
   }
   bool isCatch() const { return !catchBodies.empty(); }
   bool isDelegate() const { return delegateTarget.is(); }
@@ -1281,7 +1287,7 @@ class Throw : public SpecificExpression<Expression::ThrowId> {
 public:
   Throw(MixedArena& allocator) : operands(allocator) {}
 
-  Name event;
+  Name tag;
   ExpressionList operands;
 
   void finalize();
@@ -1373,7 +1379,7 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast has an rtt that is used in the cast.
+  // BrOnCast* has an rtt that is used in the cast.
   Expression* rtt;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do
@@ -1384,7 +1390,8 @@ public:
 
   void finalize();
 
-  Type getCastType();
+  // Returns the type sent on the branch, if it is taken.
+  Type getSentType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
@@ -1399,6 +1406,11 @@ public:
   RttSub(MixedArena& allocator) {}
 
   Expression* parent;
+
+  // rtt.fresh_sub is like rtt.sub, but never caching or canonicalizing (i.e.,
+  // it always returns a fresh RTT, non-identical to any other RTT in the
+  // system).
+  bool fresh = false;
 
   void finalize();
 };
@@ -1445,12 +1457,12 @@ class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew(MixedArena& allocator) {}
 
-  Expression* rtt;
-  Expression* size;
   // If set, then the initial value is assigned to all entries in the array. If
   // not set, this is array.new_with_default and the default of the type is
   // used.
   Expression* init = nullptr;
+  Expression* size;
+  Expression* rtt;
 
   bool isWithDefault() { return !init; }
 
@@ -1485,6 +1497,19 @@ public:
   ArrayLen(MixedArena& allocator) {}
 
   Expression* ref;
+
+  void finalize();
+};
+
+class ArrayCopy : public SpecificExpression<Expression::ArrayCopyId> {
+public:
+  ArrayCopy(MixedArena& allocator) {}
+
+  Expression* destRef;
+  Expression* destIndex;
+  Expression* srcRef;
+  Expression* srcIndex;
+  Expression* length;
 
   void finalize();
 };
@@ -1584,7 +1609,7 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  Signature sig; // parameters and return value
+  HeapType type = HeapType(Signature()); // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
@@ -1633,6 +1658,12 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  Signature getSig() { return type.getSignature(); }
+  Type getParams() { return getSig().params; }
+  Type getResults() { return getSig().results; }
+  void setParams(Type params) { type = Signature(params, getResults()); }
+  void setResults(Type results) { type = Signature(getParams(), results); }
+
   size_t getNumParams();
   size_t getNumVars();
   size_t getNumLocals();
@@ -1661,7 +1692,7 @@ enum class ExternalKind {
   Table = 1,
   Memory = 2,
   Global = 3,
-  Event = 4,
+  Tag = 4,
   Invalid = -1
 };
 
@@ -1776,13 +1807,8 @@ public:
   bool mutable_ = false;
 };
 
-// Kinds of event attributes.
-enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
-
-class Event : public Importable {
+class Tag : public Importable {
 public:
-  // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
-  uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   Signature sig;
 };
 
@@ -1808,7 +1834,7 @@ public:
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
-  std::vector<std::unique_ptr<Event>> events;
+  std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
@@ -1854,7 +1880,7 @@ private:
   std::unordered_map<Name, Table*> tablesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
-  std::unordered_map<Name, Event*> eventsMap;
+  std::unordered_map<Name, Tag*> tagsMap;
 
 public:
   Module() = default;
@@ -1864,26 +1890,26 @@ public:
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
   Global* getGlobal(Name name);
-  Event* getEvent(Name name);
+  Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
-  Event* getEventOrNull(Name name);
+  Tag* getTagOrNull(Name name);
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
   Global* addGlobal(Global* curr);
-  Event* addEvent(Event* curr);
+  Tag* addTag(Tag* curr);
 
   Export* addExport(std::unique_ptr<Export>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
-  Event* addEvent(std::unique_ptr<Event>&& curr);
+  Tag* addTag(std::unique_ptr<Tag>&& curr);
 
   void addStart(const Name& s);
 
@@ -1892,14 +1918,14 @@ public:
   void removeTable(Name name);
   void removeElementSegment(Name name);
   void removeGlobal(Name name);
-  void removeEvent(Name name);
+  void removeTag(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
-  void removeEvents(std::function<bool(Event*)> pred);
+  void removeTags(std::function<bool(Tag*)> pred);
 
   void updateMaps();
 

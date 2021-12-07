@@ -12,6 +12,7 @@ int main() {
 
   {
     Function foo;
+    foo.type = Signature(Type::none, Type::none);
     foo.vars = {Type::i32};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
@@ -27,6 +28,7 @@ int main() {
 
   {
     Function foo;
+    foo.type = Signature(Type::none, Type::none);
     foo.vars = {Type::i32};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
@@ -42,7 +44,7 @@ int main() {
 
   {
     Function foo;
-    foo.sig = Signature({Type::i32}, Type::none);
+    foo.type = Signature({Type::i32}, Type::none);
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
     foo.body = builder.makeBlock({
@@ -56,7 +58,7 @@ int main() {
 
   {
     Function foo;
-    foo.sig = Signature({Type::i32}, Type::none);
+    foo.type = Signature({Type::i32}, Type::none);
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
     foo.body = builder.makeBlock({
@@ -71,7 +73,7 @@ int main() {
 
   {
     Function foo;
-    foo.sig = Signature({Type::i32, Type::i32}, Type::none);
+    foo.type = Signature({Type::i32, Type::i32}, Type::none);
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::i32);
     foo.body = builder.makeBlock({
@@ -85,6 +87,7 @@ int main() {
 
   {
     Function foo;
+    foo.type = Signature(Type::none, Type::none);
     foo.vars = {Type::i32, Type::i32};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::i32);
@@ -100,6 +103,7 @@ int main() {
 
   {
     Function foo;
+    foo.type = Signature(Type::none, Type::none);
     foo.vars = {Type::i32, Type::f64};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::f64);

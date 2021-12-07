@@ -1,0 +1,36 @@
+;; RUN: wasm2js --help | filecheck %s
+
+;; CHECK:      wasm2js INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Transform .wasm/.wat files to asm.js
+
+;; Skip standard tool options
+
+;; CHECK:        --output,-o                                   Output file (stdout if not
+;; CHECK-NEXT:                                                 specified)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --allow-asserts                               Allow compilation of .wast
+;; CHECK-NEXT:                                                 testing asserts
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pedantic                                    Emulate WebAssembly trapping
+;; CHECK-NEXT:                                                 behavior
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emscripten                                  Emulate the glue in
+;; CHECK-NEXT:                                                 emscripten-compatible form (and
+;; CHECK-NEXT:                                                 not ES6 module form)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --deterministic                               Replace WebAssembly trapping
+;; CHECK-NEXT:                                                 behavior deterministically (the
+;; CHECK-NEXT:                                                 default is to not care about
+;; CHECK-NEXT:                                                 what would trap in wasm, like a
+;; CHECK-NEXT:                                                 load out of bounds or integer
+;; CHECK-NEXT:                                                 divide by zero; with this flag,
+;; CHECK-NEXT:                                                 we try to be deterministic at
+;; CHECK-NEXT:                                                 least in what happens, which
+;; CHECK-NEXT:                                                 might or might not be to trap
+;; CHECK-NEXT:                                                 like wasm, but at least should
+;; CHECK-NEXT:                                                 not vary)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --symbols-file                                Emit a symbols file that maps
+;; CHECK-NEXT:                                                 function indexes to their
+;; CHECK-NEXT:                                                 original names

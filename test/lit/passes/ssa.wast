@@ -2,7 +2,11 @@
 ;; RUN: wasm-opt %s -all --ssa -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (func $foo
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
  (func $foo)
+
  ;; CHECK:      (func $bar (param $x (ref func))
  ;; CHECK-NEXT:  (local $1 funcref)
  ;; CHECK-NEXT:  (local $2 funcref)

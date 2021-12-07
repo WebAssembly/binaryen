@@ -174,19 +174,19 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (!func) {
       trap("uninitialized table element");
     }
-    if (sig != func->sig) {
+    if (sig != func->getSig()) {
       trap("callIndirect: function signatures don't match");
     }
-    if (func->sig.params.size() != arguments.size()) {
+    if (func->getParams().size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
     size_t i = 0;
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       if (!Type::isSubType(arguments[i++].type, param)) {
         trap("callIndirect: bad argument type");
       }
     }
-    if (func->sig.results != results) {
+    if (func->getResults() != results) {
       trap("callIndirect: bad result type");
     }
     if (func->imported()) {

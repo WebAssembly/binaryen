@@ -46,19 +46,33 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
   Kind expected;
   Expression* child;
 
+  // Some operations flip the condition.
+  bool flip = false;
+
   if (auto* br = curr->dynCast<BrOn>()) {
     switch (br->op) {
       // We don't check nullability here.
       case BrOnNull:
+      case BrOnNonNull:
       // Casts can only be known at runtime using RTTs.
       case BrOnCast:
+      case BrOnCastFail:
         return Unknown;
+      case BrOnNonFunc:
+        flip = true;
+        [[fallthrough]];
       case BrOnFunc:
         expected = Func;
         break;
+      case BrOnNonData:
+        flip = true;
+        [[fallthrough]];
       case BrOnData:
         expected = Data;
         break;
+      case BrOnNonI31:
+        flip = true;
+        [[fallthrough]];
       case BrOnI31:
         expected = I31;
         break;
@@ -120,7 +134,11 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
     return Unknown;
   }
 
-  return actual == expected ? Success : Failure;
+  auto success = actual == expected;
+  if (flip) {
+    success = !success;
+  }
+  return success ? Success : Failure;
 }
 
 } // namespace GCTypeUtils

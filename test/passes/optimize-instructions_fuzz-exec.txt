@@ -266,8 +266,8 @@
 (module
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "foo" (func $1))
  (export "do-shift" (func $3))

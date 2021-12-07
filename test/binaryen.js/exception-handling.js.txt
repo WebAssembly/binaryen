@@ -1,7 +1,7 @@
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (event $e (attr 0) (param i32))
+ (type $none_=>_none (func))
+ (tag $e (param i32))
  (func $test
   (try $l0
    (do
@@ -34,7 +34,7 @@
  )
 )
 
-getExpressionInfo(throw) = {"id":46,"type":1,"event":"e"}
+getExpressionInfo(throw) = {"id":46,"type":1,"tag":"e"}
 getExpressionInfo(rethrow) = {"id":47,"type":1,"target":"l0"}
 getExpressionInfo(try_catch) = {"id":45,"type":1,"name":"l0","hasCatchAll":0,"delegateTarget":"","isDelegate":0}
 getExpressionInfo(try_delegate) = {"id":45,"type":0,"name":"try_outer","hasCatchAll":1,"delegateTarget":"","isDelegate":0}

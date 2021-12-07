@@ -3,8 +3,8 @@
  (type $anyref_=>_none (func (param anyref)))
  (type $funcref_=>_none (func (param funcref)))
  (type $none_=>_funcref (func (result funcref)))
- (type $none_=>_none (func))
  (type $externref_=>_none (func (param externref)))
+ (type $none_=>_none (func))
  (type $none_=>_externref (func (result externref)))
  (type $i32_=>_none (func (param i32)))
  (type $externref_=>_funcref (func (param externref) (result funcref)))
@@ -20,7 +20,7 @@
  (table $0 3 3 funcref)
  (elem (i32.const 0) $0 $1 $2)
  (elem declare func $27 $3)
- (event $event$0 (attr 0) (param i32))
+ (tag $tag$0 (param i32))
  (export "export_func" (func $fimport$0))
  (export "export_global" (global $gimport$0))
  (func $0 (param $0 externref)
@@ -512,7 +512,7 @@
     (do
      (local.get $0)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )
@@ -525,7 +525,7 @@
     (do
      (ref.func $3)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )
@@ -538,7 +538,7 @@
     (do
      (local.get $0)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )
@@ -551,7 +551,7 @@
     (do
      (ref.func $3)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )

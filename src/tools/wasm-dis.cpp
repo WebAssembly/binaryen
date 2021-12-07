@@ -60,6 +60,7 @@ int main(int argc, const char* argv[]) {
     std::cerr << "parsing binary..." << std::endl;
   }
   Module wasm;
+  options.applyFeatures(wasm);
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
@@ -71,8 +72,6 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source mapping";
   }
-
-  options.applyFeatures(wasm);
 
   // TODO: Validation. However, validating would mean that users are forced to
   //       run with  wasm-dis -all  or such, to enable the features (unless the

@@ -16,7 +16,7 @@
 
 //
 // Removes module elements that are are never used: functions, globals, and
-// events, which may be imported or not, and function types (which we merge and
+// tags, which may be imported or not, and function types (which we merge and
 // remove if unneeded)
 //
 
@@ -30,7 +30,7 @@
 
 namespace wasm {
 
-enum class ModuleElementKind { Function, Global, Event, Table, ElementSegment };
+enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
@@ -129,11 +129,11 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
   }
   void visitThrow(Throw* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Event, curr->event));
+    maybeAdd(ModuleElement(ModuleElementKind::Tag, curr->tag));
   }
   void visitTry(Try* curr) {
-    for (auto event : curr->catchEvents) {
-      maybeAdd(ModuleElement(ModuleElementKind::Event, event));
+    for (auto tag : curr->catchTags) {
+      maybeAdd(ModuleElement(ModuleElementKind::Tag, tag));
     }
   }
 };
@@ -150,7 +150,7 @@ struct RemoveUnusedModuleElements : public Pass {
     if (module->start.is()) {
       auto startFunction = module->getFunction(module->start);
       // Can be skipped if the start function is empty.
-      if (startFunction->body->is<Nop>()) {
+      if (!startFunction->imported() && startFunction->body->is<Nop>()) {
         module->start.clear();
       } else {
         roots.emplace_back(ModuleElementKind::Function, module->start);
@@ -176,8 +176,8 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Function, curr->value);
       } else if (curr->kind == ExternalKind::Global) {
         roots.emplace_back(ModuleElementKind::Global, curr->value);
-      } else if (curr->kind == ExternalKind::Event) {
-        roots.emplace_back(ModuleElementKind::Event, curr->value);
+      } else if (curr->kind == ExternalKind::Tag) {
+        roots.emplace_back(ModuleElementKind::Tag, curr->value);
       } else if (curr->kind == ExternalKind::Table) {
         roots.emplace_back(ModuleElementKind::Table, curr->value);
         ModuleUtils::iterTableSegments(
@@ -209,9 +209,9 @@ struct RemoveUnusedModuleElements : public Pass {
       return analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
     });
-    module->removeEvents([&](Event* curr) {
+    module->removeTags([&](Tag* curr) {
       return analyzer.reachable.count(
-               ModuleElement(ModuleElementKind::Event, curr->name)) == 0;
+               ModuleElement(ModuleElementKind::Tag, curr->name)) == 0;
     });
     module->removeElementSegments([&](ElementSegment* curr) {
       return curr->data.empty() ||

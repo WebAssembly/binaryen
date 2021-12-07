@@ -21,10 +21,23 @@
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
 [trap unreachable]
+[fuzz-exec] calling br_on_failed_cast-1
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_failed_cast-2
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 999]
 [fuzz-exec] calling cast-null-anyref-to-gc
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-null
+[fuzz-exec] calling br_on_non_data-data
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-other
+[fuzz-exec] calling br-on_non_null
+[fuzz-exec] calling br-on_non_null-2
+[LoggingExternalInterface logging 1]
+[trap unreachable]
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
@@ -38,27 +51,47 @@
 [fuzz-exec] note result: init-array-packed => 213
 [fuzz-exec] calling cast-func-to-struct
 [trap cast error]
+[fuzz-exec] calling array-copy
+[LoggingExternalInterface logging 10]
+[LoggingExternalInterface logging 10]
+[LoggingExternalInterface logging 99]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 10]
+[fuzz-exec] calling rtt_Fresh
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
 (module
  (type $struct (struct (field (mut i32))))
- (type $void_func (func))
  (type $extendedstruct (struct (field (mut i32)) (field f64)))
+ (type $void_func (func))
  (type $bytes (array (mut i8)))
  (type $int_func (func (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
  (type $eqref_=>_none (func (param eqref)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (global $rtt (mut (rtt $extendedstruct)) (rtt.canon $extendedstruct))
  (elem declare func $a-void-func $call-target)
  (export "structs" (func $0))
  (export "arrays" (func $1))
  (export "rtts" (func $2))
  (export "br_on_cast" (func $3))
- (export "cast-null-anyref-to-gc" (func $4))
- (export "br_on_data" (func $6))
- (export "rtt-and-cast-on-func" (func $8))
+ (export "br_on_failed_cast-1" (func $4))
+ (export "br_on_failed_cast-2" (func $5))
+ (export "cast-null-anyref-to-gc" (func $6))
+ (export "br_on_data" (func $8))
+ (export "br_on_non_data-null" (func $9))
+ (export "br_on_non_data-data" (func $10))
+ (export "br_on_non_data-other" (func $9))
+ (export "br-on_non_null" (func $9))
+ (export "br-on_non_null-2" (func $13))
+ (export "rtt-and-cast-on-func" (func $15))
  (export "array-alloc-failure" (func $9))
- (export "init-array-packed" (func $10))
- (export "cast-func-to-struct" (func $12))
+ (export "init-array-packed" (func $17))
+ (export "cast-func-to-struct" (func $19))
+ (export "array-copy" (func $20))
+ (export "rtt_Fresh" (func $21))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -214,11 +247,61 @@
   (unreachable)
  )
  (func $4 (; has Stack IR ;)
+  (local $0 anyref)
+  (local.set $0
+   (struct.new_default_with_rtt $struct
+    (rtt.canon $struct)
+   )
+  )
+  (drop
+   (block $any (result anyref)
+    (call $log
+     (i32.const 1)
+    )
+    (drop
+     (br_on_cast_fail $any
+      (local.get $0)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log
+     (i32.const 999)
+    )
+    (ref.null any)
+   )
+  )
+ )
+ (func $5 (; has Stack IR ;)
+  (local $0 anyref)
+  (local.set $0
+   (struct.new_default_with_rtt $extendedstruct
+    (rtt.canon $extendedstruct)
+   )
+  )
+  (drop
+   (block $any (result anyref)
+    (call $log
+     (i32.const 1)
+    )
+    (drop
+     (br_on_cast_fail $any
+      (local.get $0)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log
+     (i32.const 999)
+    )
+    (ref.null any)
+   )
+  )
+ )
+ (func $6 (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
  )
- (func $6 (; has Stack IR ;) (param $0 anyref)
+ (func $8 (; has Stack IR ;) (param $0 anyref)
   (drop
    (block $data (result dataref)
     (drop
@@ -235,12 +318,30 @@
    )
   )
  )
+ (func $9 (; has Stack IR ;)
+  (nop)
+ )
+ (func $10 (; has Stack IR ;)
+  (call $log
+   (i32.const 1)
+  )
+ )
+ (func $13 (; has Stack IR ;)
+  (drop
+   (block
+    (call $log
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+  )
+ )
  (func $a-void-func (; has Stack IR ;)
   (call $log
    (i32.const 1337)
   )
  )
- (func $8 (; has Stack IR ;)
+ (func $15 (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
@@ -266,10 +367,7 @@
    (i32.const 4)
   )
  )
- (func $9 (; has Stack IR ;)
-  (nop)
- )
- (func $10 (; has Stack IR ;) (result i32)
+ (func $17 (; has Stack IR ;) (result i32)
   (array.get_u $bytes
    (array.new_with_rtt $bytes
     (i32.const -43)
@@ -282,11 +380,107 @@
  (func $call-target (; has Stack IR ;) (param $0 eqref)
   (nop)
  )
- (func $12 (; has Stack IR ;)
+ (func $19 (; has Stack IR ;)
   (drop
    (ref.cast
     (ref.func $call-target)
     (rtt.canon $struct)
+   )
+  )
+ )
+ (func $20 (; has Stack IR ;)
+  (local $0 (ref null $bytes))
+  (local $1 (ref null $bytes))
+  (array.set $bytes
+   (local.tee $1
+    (array.new_default_with_rtt $bytes
+     (i32.const 200)
+     (rtt.canon $bytes)
+    )
+   )
+   (i32.const 42)
+   (i32.const 99)
+  )
+  (call $log
+   (array.get_u $bytes
+    (local.tee $0
+     (array.new_with_rtt $bytes
+      (i32.const 10)
+      (i32.const 100)
+      (rtt.canon $bytes)
+     )
+    )
+    (i32.const 10)
+   )
+  )
+  (array.copy $bytes $bytes
+   (local.get $0)
+   (i32.const 10)
+   (local.get $1)
+   (i32.const 42)
+   (i32.const 2)
+  )
+  (call $log
+   (array.get_u $bytes
+    (local.get $0)
+    (i32.const 9)
+   )
+  )
+  (call $log
+   (array.get_u $bytes
+    (local.get $0)
+    (i32.const 10)
+   )
+  )
+  (call $log
+   (array.get_u $bytes
+    (local.get $0)
+    (i32.const 11)
+   )
+  )
+  (call $log
+   (array.get_u $bytes
+    (local.get $0)
+    (i32.const 12)
+   )
+  )
+ )
+ (func $21 (; has Stack IR ;)
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.sub $extendedstruct
+      (rtt.canon $struct)
+     )
+    )
+    (rtt.sub $extendedstruct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.sub $extendedstruct
+      (rtt.canon $struct)
+     )
+    )
+    (rtt.fresh_sub $extendedstruct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  (global.set $rtt
+   (rtt.fresh_sub $extendedstruct
+    (rtt.canon $struct)
+   )
+  )
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (global.get $rtt)
+    )
+    (global.get $rtt)
    )
   )
  )
@@ -314,10 +508,23 @@
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
 [trap unreachable]
+[fuzz-exec] calling br_on_failed_cast-1
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_failed_cast-2
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 999]
 [fuzz-exec] calling cast-null-anyref-to-gc
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-null
+[fuzz-exec] calling br_on_non_data-data
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-other
+[fuzz-exec] calling br-on_non_null
+[fuzz-exec] calling br-on_non_null-2
+[LoggingExternalInterface logging 1]
+[trap unreachable]
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
@@ -330,6 +537,16 @@
 [fuzz-exec] note result: init-array-packed => 213
 [fuzz-exec] calling cast-func-to-struct
 [trap cast error]
+[fuzz-exec] calling array-copy
+[LoggingExternalInterface logging 10]
+[LoggingExternalInterface logging 10]
+[LoggingExternalInterface logging 99]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 10]
+[fuzz-exec] calling rtt_Fresh
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
 ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]

@@ -106,14 +106,14 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        if (func->sig.results != Type::none) {
+        if (func->getResults() != Type::none) {
           // this has a result
           Literals ret = run(func, wasm, instance);
           results[exp->name] = ret;
           // ignore the result if we hit an unreachable and returned no value
           if (ret.size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-            auto resultType = func->sig.results;
+            auto resultType = func->getResults();
             if (resultType.isRef()) {
               // Don't print reference values, as funcref(N) contains an index
               // for example, which is not guaranteed to remain identical after
@@ -227,7 +227,7 @@ struct ExecutionResults {
         instance.callFunction(ex->value, arguments);
       }
       // call the method
-      for (const auto& param : func->sig.params) {
+      for (const auto& param : func->getParams()) {
         // zeros in arguments TODO: more?
         if (!param.isDefaultable()) {
           std::cout << "[trap fuzzer can only send defaultable parameters to "

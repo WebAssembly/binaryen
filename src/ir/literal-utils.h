@@ -32,7 +32,7 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
 }
 
 inline bool canMakeZero(Type type) {
-  if (type.isRef() && !type.isNullable()) {
+  if (type.isNonNullable()) {
     return false;
   }
   if (type.isTuple()) {

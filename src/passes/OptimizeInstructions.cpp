@@ -406,6 +406,31 @@ struct OptimizeInstructions
         }
       }
       {
+        if (getModule()->features.hasSignExt()) {
+          Const *c1, *c2;
+          Expression* x;
+          // i64(x) << 56 >> 56   ==>   i64.extend8_s(x)
+          // i64(x) << 48 >> 48   ==>   i64.extend16_s(x)
+          // i64(x) << 32 >> 32   ==>   i64.extend32_s(x)
+          if (matches(curr,
+                      binary(ShrSInt64,
+                             binary(ShlInt64, any(&x), i64(&c1)),
+                             i64(&c2))) &&
+              Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
+            switch (64 - Bits::getEffectiveShifts(c1)) {
+              case 8:
+                return replaceCurrent(builder.makeUnary(ExtendS8Int64, x));
+              case 16:
+                return replaceCurrent(builder.makeUnary(ExtendS16Int64, x));
+              case 32:
+                return replaceCurrent(builder.makeUnary(ExtendS32Int64, x));
+              default:
+                break;
+            }
+          }
+        }
+      }
+      {
         // unsigned(x) >= 0   =>   i32(1)
         Const* c;
         Expression* x;
@@ -792,6 +817,18 @@ struct OptimizeInstructions
         }
       }
       {
+        // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
+        // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
+        Unary* inner;
+        Expression* x;
+        if (matches(curr,
+                    unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
+            matches(curr,
+                    unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
+          return replaceCurrent(x);
+        }
+      }
+      {
         // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
         //   where maxBits(x) <= 32
         Unary* inner;
@@ -801,6 +838,20 @@ struct OptimizeInstructions
           inner->op = EqZInt64;
           inner->value = x;
           return replaceCurrent(inner);
+        }
+      }
+      {
+        Unary* inner;
+        Expression* x;
+        if (getModule()->features.hasSignExt()) {
+          // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
+          if (matches(curr,
+                      unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+            inner->op = ExtendS32Int64;
+            inner->type = Type::i64;
+            inner->value = x;
+            return replaceCurrent(inner);
+          }
         }
       }
     }
@@ -1063,6 +1114,11 @@ struct OptimizeInstructions
   }
 
   void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
+
+  void visitArrayCopy(ArrayCopy* curr) {
+    skipNonNullCast(curr->destRef);
+    skipNonNullCast(curr->srcRef);
+  }
 
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
@@ -1425,6 +1481,7 @@ private:
 
   Expression* optimizeSelect(Select* curr) {
     using namespace Match;
+    using namespace Abstract;
     Builder builder(*getModule());
     curr->condition = optimizeBoolean(curr->condition);
     {
@@ -1474,6 +1531,29 @@ private:
           c = builder.makeUnary(EqZInt32, builder.makeUnary(EqZInt32, c));
         }
         return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c) : c;
+      }
+    }
+    {
+      // Simplify x < 0 ? -1 : 1 or x >= 0 ? 1 : -1 to
+      // i32(x) >> 31 | 1
+      // i64(x) >> 63 | 1
+      Binary* bin;
+      if (matches(
+            curr,
+            select(ival(-1), ival(1), binary(&bin, LtS, any(), ival(0)))) ||
+          matches(
+            curr,
+            select(ival(1), ival(-1), binary(&bin, GeS, any(), ival(0))))) {
+        auto c = bin->right->cast<Const>();
+        auto type = curr->ifTrue->type;
+        if (type == c->type) {
+          bin->type = type;
+          bin->op = Abstract::getBinary(type, ShrS);
+          c->value = Literal::makeFromInt32(type.getByteSize() * 8 - 1, type);
+          curr->ifTrue->cast<Const>()->value = Literal::makeOne(type);
+          return builder.makeBinary(
+            Abstract::getBinary(type, Or), bin, curr->ifTrue);
+        }
       }
     }
     {

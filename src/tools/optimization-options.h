@@ -202,12 +202,28 @@ struct OptimizationOptions : public ToolOptions {
            });
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
-      (*this).add(
-        std::string("--") + p,
-        "",
-        PassRegistry::get()->getPassDescription(p),
-        Options::Arguments::Zero,
-        [this, p](Options*, const std::string&) { passes.push_back(p); });
+      (*this).add(std::string("--") + p,
+                  "",
+                  PassRegistry::get()->getPassDescription(p),
+                  // Allow an optional parameter to a pass. If provided, it is
+                  // the same as if using --pass-arg, that is,
+                  //
+                  //   --foo=ARG
+                  //
+                  // is the same as
+                  //
+                  //   --foo --pass-arg=foo@ARG
+                  Options::Arguments::Optional,
+                  [this, p](Options*, const std::string& arg) {
+                    if (!arg.empty()) {
+                      if (passOptions.arguments.count(p)) {
+                        Fatal()
+                          << "Cannot pass multiple pass arguments to " << p;
+                      }
+                      passOptions.arguments[p] = arg;
+                    }
+                    passes.push_back(p);
+                  });
     }
   }
 

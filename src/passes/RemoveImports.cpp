@@ -35,7 +35,7 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
     if (!func->imported()) {
       return;
     }
-    Type type = func->sig.results;
+    Type type = func->getResults();
     if (type == Type::none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());
     } else {

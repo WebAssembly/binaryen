@@ -11,6 +11,9 @@ switch (op[0]) {
     switch (op[1]) {
       case 'r': {
         switch (op[6]) {
+          case 'c':
+            if (strcmp(op, "array.copy") == 0) { return makeArrayCopy(s); }
+            goto parse_error;
           case 'g': {
             switch (op[9]) {
               case '\0':
@@ -73,9 +76,17 @@ switch (op[0]) {
                 goto parse_error;
               case 'o': {
                 switch (op[6]) {
-                  case 'c':
-                    if (strcmp(op, "br_on_cast") == 0) { return makeBrOn(s, BrOnCast); }
-                    goto parse_error;
+                  case 'c': {
+                    switch (op[10]) {
+                      case '\0':
+                        if (strcmp(op, "br_on_cast") == 0) { return makeBrOn(s, BrOnCast); }
+                        goto parse_error;
+                      case '_':
+                        if (strcmp(op, "br_on_cast_fail") == 0) { return makeBrOn(s, BrOnCastFail); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   case 'd':
                     if (strcmp(op, "br_on_data") == 0) { return makeBrOn(s, BrOnData); }
                     goto parse_error;
@@ -85,9 +96,31 @@ switch (op[0]) {
                   case 'i':
                     if (strcmp(op, "br_on_i31") == 0) { return makeBrOn(s, BrOnI31); }
                     goto parse_error;
-                  case 'n':
-                    if (strcmp(op, "br_on_null") == 0) { return makeBrOn(s, BrOnNull); }
-                    goto parse_error;
+                  case 'n': {
+                    switch (op[7]) {
+                      case 'o': {
+                        switch (op[10]) {
+                          case 'd':
+                            if (strcmp(op, "br_on_non_data") == 0) { return makeBrOn(s, BrOnNonData); }
+                            goto parse_error;
+                          case 'f':
+                            if (strcmp(op, "br_on_non_func") == 0) { return makeBrOn(s, BrOnNonFunc); }
+                            goto parse_error;
+                          case 'i':
+                            if (strcmp(op, "br_on_non_i31") == 0) { return makeBrOn(s, BrOnNonI31); }
+                            goto parse_error;
+                          case 'n':
+                            if (strcmp(op, "br_on_non_null") == 0) { return makeBrOn(s, BrOnNonNull); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'u':
+                        if (strcmp(op, "br_on_null") == 0) { return makeBrOn(s, BrOnNull); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
@@ -2872,6 +2905,9 @@ switch (op[0]) {
         switch (op[4]) {
           case 'c':
             if (strcmp(op, "rtt.canon") == 0) { return makeRttCanon(s); }
+            goto parse_error;
+          case 'f':
+            if (strcmp(op, "rtt.fresh_sub") == 0) { return makeRttFreshSub(s); }
             goto parse_error;
           case 's':
             if (strcmp(op, "rtt.sub") == 0) { return makeRttSub(s); }

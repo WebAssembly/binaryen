@@ -66,7 +66,7 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
 }
 
 // Similar to operateOnScopeNameUses, but also passes in the type that is sent
@@ -81,7 +81,7 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
     } else if (auto* sw = expr->dynCast<Switch>()) {
       func(name, sw->value ? sw->value->type : Type::none);
     } else if (auto* br = expr->dynCast<BrOn>()) {
-      func(name, br->getCastType());
+      func(name, br->getSentType());
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
@@ -131,7 +131,7 @@ template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
 }
 
 using NameSet = std::set<Name>;

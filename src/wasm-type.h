@@ -32,6 +32,15 @@
 
 namespace wasm {
 
+enum class TypeSystem {
+  Equirecursive,
+  Nominal,
+};
+
+// This should only ever be called before any Types or HeapTypes have been
+// created. The default system is equirecursive.
+void setTypeSystem(TypeSystem system);
+
 // The types defined in this file. All of them are small and typically passed by
 // value except for `Tuple` and `Struct`, which may own an unbounded amount of
 // data.
@@ -137,7 +146,15 @@ public:
   bool isRef() const;
   bool isFunction() const;
   bool isData() const;
+  // Checks whether a type is a reference and is nullable. This returns false
+  // for a value that is not a reference, that is, for which nullability is
+  // irrelevant.
   bool isNullable() const;
+  // Checks whether a type is a reference and is non-nullable. This returns
+  // false for a value that is not a reference, that is, for which nullability
+  // is irrelevant. (For that reason, this is only the negation of isNullable()
+  // on references, but both return false on non-references.)
+  bool isNonNullable() const;
   bool isRtt() const;
   bool isStruct() const;
   bool isArray() const;
@@ -172,9 +189,6 @@ public:
   bool operator==(const BasicType& other) const { return id == other; }
   bool operator!=(const Type& other) const { return id != other.id; }
   bool operator!=(const BasicType& other) const { return id != other; }
-
-  // Order types by some notion of simplicity.
-  bool operator<(const Type& other) const;
 
   // Returns the type size in bytes. Only single types are supported.
   unsigned getByteSize() const;
@@ -331,7 +345,16 @@ public:
   // Choose an arbitrary heap type as the default.
   constexpr HeapType() : HeapType(func) {}
 
+  // Construct a HeapType referring to the single canonical HeapType for the
+  // given signature. In nominal mode, this is the first HeapType created with
+  // this signature.
   HeapType(Signature signature);
+
+  // Create a HeapType with the given structure. In equirecursive mode, this may
+  // be the same as a previous HeapType created with the same contents. In
+  // nominal mode, this will be a fresh type distinct from all previously
+  // created HeapTypes.
+  // TODO: make these explicit to differentiate them.
   HeapType(const Struct& struct_);
   HeapType(Struct&& struct_);
   HeapType(Array array);
@@ -348,6 +371,8 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
+  bool getSuperType(HeapType& out) const;
+
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
     assert(isBasic() && "Basic heap type expected");
@@ -361,9 +386,6 @@ public:
   bool operator==(const BasicHeapType& other) const { return id == other; }
   bool operator!=(const HeapType& other) const { return id != other.id; }
   bool operator!=(const BasicHeapType& other) const { return id != other; }
-
-  // Order heap types by some notion of simplicity.
-  bool operator<(const HeapType& other) const;
 
   // Returns true if left is a subtype of right. Subtype includes itself.
   static bool isSubType(HeapType left, HeapType right);
@@ -414,7 +436,6 @@ struct Signature {
     return params == other.params && results == other.results;
   }
   bool operator!=(const Signature& other) const { return !(*this == other); }
-  bool operator<(const Signature& other) const;
   std::string toString() const;
 };
 
@@ -520,7 +541,8 @@ struct TypeBuilder {
   // The number of HeapType slots in the TypeBuilder.
   size_t size();
 
-  // Sets the heap type at index `i`. May only be called before `build`.
+  // Sets the heap type at index `i`. May only be called before `build`. The
+  // BasicHeapType overload may not be used in nominal mode.
   void setHeapType(size_t i, HeapType::BasicHeapType basic);
   void setHeapType(size_t i, Signature signature);
   void setHeapType(size_t i, const Struct& struct_);
@@ -538,8 +560,16 @@ struct TypeBuilder {
   Type getTempRefType(HeapType heapType, Nullability nullable);
   Type getTempRttType(Rtt rtt);
 
-  // Canonicalizes and returns all of the heap types. May only be called once
-  // all of the heap types have been initialized with `setHeapType`.
+  // In nominal mode, declare the HeapType being built at index `i` to be an
+  // immediate subtype of the HeapType being built at index `j`. Does nothing in
+  // equirecursive mode.
+  void setSubType(size_t i, size_t j);
+
+  // Returns all of the newly constructed heap types. May only be called once
+  // all of the heap types have been initialized with `setHeapType`. In nominal
+  // mode, all of the constructed HeapTypes will be fresh and distinct. In
+  // nominal mode, will also produce a fatal error if the declared subtype
+  // relationships are not valid.
   std::vector<HeapType> build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType
@@ -566,6 +596,11 @@ struct TypeBuilder {
     }
     Entry& operator=(Array array) {
       builder.setHeapType(index, array);
+      return *this;
+    }
+    Entry& subTypeOf(Entry other) {
+      assert(&builder == &other.builder);
+      builder.setSubType(index, other.index);
       return *this;
     }
   };

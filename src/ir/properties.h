@@ -146,6 +146,12 @@ inline Expression* getSignExtValue(Expression* curr) {
   if (curr->type != Type::i32) {
     return nullptr;
   }
+  if (auto* unary = curr->dynCast<Unary>()) {
+    if (unary->op == ExtendS8Int32 || unary->op == ExtendS16Int32) {
+      return unary->value;
+    }
+    return nullptr;
+  }
   using namespace Match;
   int32_t leftShift = 0, rightShift = 0;
   Expression* extended = nullptr;
@@ -162,8 +168,19 @@ inline Expression* getSignExtValue(Expression* curr) {
 // gets the size of the sign-extended value
 inline Index getSignExtBits(Expression* curr) {
   assert(curr->type == Type::i32);
-  auto* rightShift = curr->cast<Binary>()->right;
-  return 32 - Bits::getEffectiveShifts(rightShift);
+  if (auto* unary = curr->dynCast<Unary>()) {
+    switch (unary->op) {
+      case ExtendS8Int32:
+        return 8;
+      case ExtendS16Int32:
+        return 16;
+      default:
+        WASM_UNREACHABLE("invalid unary operation");
+    }
+  } else {
+    auto* rightShift = curr->cast<Binary>()->right;
+    return 32 - Bits::getEffectiveShifts(rightShift);
+  }
 }
 
 // Check if an expression is almost a sign-extend: perhaps the inner shift

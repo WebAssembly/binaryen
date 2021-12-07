@@ -1,8 +1,8 @@
 (module
+ (type $i64_i64_i64_=>_i32 (func (param i64 i64 i64) (result i32)))
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_i64_=>_i32 (func (param i32 i64) (result i32)))
- (type $i64_i64_i64_=>_i32 (func (param i64 i64 i64) (result i32)))
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i64 i64 i64) (result i32)))
  (global $__stack_pointer (mut i64) (i64.const 66208))
  (global $global$1 i32 (i32.const 574))

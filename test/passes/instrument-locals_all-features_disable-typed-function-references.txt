@@ -3,15 +3,14 @@
  (type $i32_i32_i64_=>_i64 (func (param i32 i32 i64) (result i64)))
  (type $i32_i32_f32_=>_f32 (func (param i32 i32 f32) (result f32)))
  (type $i32_i32_f64_=>_f64 (func (param i32 i32 f64) (result f64)))
- (type $i32_i32_v128_=>_v128 (func (param i32 i32 v128) (result v128)))
  (type $i32_i32_funcref_=>_funcref (func (param i32 i32 funcref) (result funcref)))
  (type $i32_i32_externref_=>_externref (func (param i32 i32 externref) (result externref)))
  (type $i32_i32_anyref_=>_anyref (func (param i32 i32 anyref) (result anyref)))
  (type $i32_i32_eqref_=>_eqref (func (param i32 i32 eqref) (result eqref)))
  (type $i32_i32_i31ref_=>_i31ref (func (param i32 i32 i31ref) (result i31ref)))
  (type $i32_i32_dataref_=>_dataref (func (param i32 i32 dataref) (result dataref)))
+ (type $i32_i32_v128_=>_v128 (func (param i32 i32 v128) (result v128)))
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (import "env" "get_i32" (func $get_i32 (param i32 i32 i32) (result i32)))
  (import "env" "get_i64" (func $get_i64 (param i32 i32 i64) (result i64)))
  (import "env" "get_f32" (func $get_f32 (param i32 i32 f32) (result f32)))
@@ -35,7 +34,6 @@
  (import "env" "get_v128" (func $get_v128 (param i32 i32 v128) (result v128)))
  (import "env" "set_v128" (func $set_v128 (param i32 i32 v128) (result v128)))
  (elem declare func $test)
- (event $e (attr 0) (param i32))
  (func $test
   (local $x i32)
   (local $y i64)
@@ -201,16 +199,6 @@
      (i32.const 20)
      (i32.const 5)
      (local.get $X)
-    )
-   )
-  )
-  (try $try
-   (do
-    (nop)
-   )
-   (catch $e
-    (local.set $x
-     (pop i32)
     )
    )
   )

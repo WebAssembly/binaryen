@@ -121,7 +121,7 @@ void test_basic() {
 
   std::vector<HeapType> built = builder.build();
 
-  assert(built[0] == HeapType(Signature(Type::anyref, Type::i31ref)));
+  assert(built[0] == Signature(Type::anyref, Type::i31ref));
   assert(built[1] == built[0]);
   assert(built[2] == built[1]);
   assert(built[3] == built[2]);

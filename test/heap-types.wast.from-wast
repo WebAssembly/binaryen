@@ -1,28 +1,35 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
+ (type $vector (array (mut f64)))
  (type $none_=>_none (func))
  (type $grandchild (struct (field i32) (field i64)))
  (type $struct.C (struct (field $named-mut (mut f32))))
- (type $vector (array (mut f64)))
  (type $matrix (array (mut (ref null $vector))))
- (type $anyref_=>_none (func (param anyref)))
  (type $parent (struct ))
  (type $child (struct (field i32)))
+ (type $anyref_=>_none (func (param anyref)))
  (type $nested-child-struct (struct (field (mut (ref $child)))))
- (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
- (type $rtt_$parent_=>_none (func (param (rtt $parent))))
  (type $ref|$struct.A|_=>_ref|$struct.B| (func (param (ref $struct.A)) (result (ref $struct.B))))
  (type $ref|$vector|_=>_ref|$matrix| (func (param (ref $vector)) (result (ref $matrix))))
- (type $words (array (mut i32)))
  (type $bytes (array (mut i8)))
+ (type $words (array (mut i32)))
  (type $nested-child-array (array (mut (ref $child))))
+ (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
+ (type $rtt_$parent_=>_none (func (param (rtt $parent))))
+ (type $ref|$vector|_ref?|$vector|_=>_none (func (param (ref $vector) (ref null $vector))))
  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
  (global $rttchild (rtt 1 $child) (rtt.sub $child
   (global.get $rttparent)
  ))
  (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild
   (global.get $rttchild)
+ ))
+ (global $rttfreshgrandchild (rtt 2 $grandchild) (rtt.fresh_sub $grandchild
+  (global.get $rttchild)
+ ))
+ (global $struct.new-in-global (ref $struct.A) (struct.new_default_with_rtt $struct.A
+  (rtt.canon $struct.A)
  ))
  (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
   (local $tA (ref null $struct.A))
@@ -194,6 +201,7 @@
  )
  (func $rtt-operations
   (local $temp.A (ref null $struct.A))
+  (local $temp.B (ref null $struct.B))
   (drop
    (ref.test
     (ref.null $struct.A)
@@ -221,6 +229,17 @@
      (unreachable)
     )
     (unreachable)
+   )
+  )
+  (drop
+   (block $out2 (result (ref null $struct.A))
+    (local.set $temp.B
+     (br_on_cast_fail $out2
+      (ref.null $struct.A)
+      (rtt.canon $struct.B)
+     )
+    )
+    (ref.null $struct.A)
    )
   )
  )
@@ -269,6 +288,9 @@
  (func $br_on_X (param $x anyref)
   (local $y anyref)
   (local $z anyref)
+  (local $temp-func funcref)
+  (local $temp-data (ref null data))
+  (local $temp-i31 (ref null i31))
   (block $null
    (local.set $z
     (br_on_null $null
@@ -306,6 +328,44 @@
     (ref.null i31)
    )
   )
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null
+     (local.get $x)
+    )
+    (unreachable)
+   )
+  )
+  (drop
+   (block $non-func (result anyref)
+    (local.set $temp-func
+     (br_on_non_func $non-func
+      (local.get $x)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $non-data (result anyref)
+    (local.set $temp-data
+     (br_on_non_data $non-data
+      (local.get $x)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $non-i31 (result anyref)
+    (local.set $temp-i31
+     (br_on_non_i31 $non-i31
+      (local.get $x)
+     )
+    )
+    (ref.null any)
+   )
+  )
  )
  (func $unreachables-1
   (drop
@@ -340,6 +400,58 @@
    (drop
     (f32.const 1)
    )
+  )
+ )
+ (func $unreachables-array-1
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (unreachable)
+   )
+   (drop
+    (i32.const 2)
+   )
+  )
+ )
+ (func $unreachables-array-2
+  (array.get $vector
+   (ref.null $vector)
+   (unreachable)
+  )
+ )
+ (func $unreachables-array-3
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (unreachable)
+   )
+   (drop
+    (i32.const 2)
+   )
+   (drop
+    (f64.const 2.18281828)
+   )
+  )
+ )
+ (func $unreachables-array-4
+  (array.set $vector
+   (ref.null $vector)
+   (unreachable)
+   (f64.const 2.18281828)
+  )
+ )
+ (func $unreachables-array-5
+  (array.set $vector
+   (ref.null $vector)
+   (i32.const 2)
+   (unreachable)
+  )
+ )
+ (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
+  (array.copy $vector $vector
+   (local.get $x)
+   (i32.const 11)
+   (local.get $y)
+   (i32.const 42)
+   (i32.const 1337)
   )
  )
 )

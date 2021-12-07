@@ -42,6 +42,7 @@
 #include <ir/effects.h>
 #include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
+#include <ir/linear-execution.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>

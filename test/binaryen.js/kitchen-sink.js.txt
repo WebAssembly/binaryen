@@ -42,7 +42,7 @@ Features.Multivalue: 512
 Features.GC: 1024
 Features.Memory64: 2048
 Features.TypedFunctionReferences: 4096
-Features.All: 8191
+Features.All: 16383
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -77,6 +77,7 @@ SIMDShuffleId: 31
 SIMDTernaryId: 32
 SIMDShiftId: 33
 SIMDLoadId: 34
+SIMDLoadStoreLaneId: 35
 MemoryInitId: 36
 DataDropId: 37
 MemoryCopyId: 38
@@ -122,22 +123,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
 (module
  (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
  (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
+ (type $none_=>_none (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
- (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
+ (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data "I am passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) "$kitchen()sinker")
- (event $a-event (attr 0) (param i32))
+ (tag $a-tag (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "a-global-exp" (global $a-global))
- (export "a-event-exp" (event $a-event))
+ (export "a-tag-exp" (tag $a-tag))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
@@ -2090,11 +2091,11 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (try
        (do
-        (throw $a-event
+        (throw $a-tag
          (i32.const 0)
         )
        )
-       (catch $a-event
+       (catch $a-tag
         (drop
          (pop i32)
         )
@@ -2214,22 +2215,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
 (module
  (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
  (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
+ (type $none_=>_none (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
- (import "module" "base" (event $a-event-imp (attr 0) (param i32)))
+ (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data "I am passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) "$kitchen()sinker")
- (event $a-event (attr 0) (param i32))
+ (tag $a-tag (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "a-global-exp" (global $a-global))
- (export "a-event-exp" (event $a-event))
+ (export "a-tag-exp" (tag $a-tag))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
@@ -4182,11 +4183,11 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (try
        (do
-        (throw $a-event
+        (throw $a-tag
          (i32.const 0)
         )
        )
-       (catch $a-event
+       (catch $a-tag
         (drop
          (pop i32)
         )
@@ -4778,7 +4779,7 @@ module loaded from binary form:
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
- (event $event$0 (attr 0) (param i32 i32))
+ (tag $tag$0 (param i32 i32))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -4788,8 +4789,8 @@ module loaded from binary form:
 )
 
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
  (func $starter
@@ -4820,7 +4821,7 @@ test_parsing text:
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
- (event $a-event (attr 0) (param i32))
+ (tag $a-tag (param i32))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -4834,7 +4835,7 @@ module loaded from text form:
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
- (event $a-event (attr 0) (param i32))
+ (tag $a-tag (param i32))
  (func $ADD_ER (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)

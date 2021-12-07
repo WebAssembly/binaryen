@@ -41,7 +41,7 @@
 namespace wasm {
 
 struct WasmException {
-  Name event;
+  Name tag;
   Literals values;
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
@@ -500,7 +500,7 @@ public:
       case AllTrueVecI64x2:
         return value.allTrueI64x2();
       case BitmaskVecI64x2:
-        WASM_UNREACHABLE("unimp");
+        return value.bitmaskI64x2();
       case AbsVecF32x4:
         return value.absF32x4();
       case NegVecF32x4:
@@ -1358,9 +1358,9 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    NOTE_EVAL1(curr->event);
+    NOTE_EVAL1(curr->tag);
     WasmException exn;
-    exn.event = curr->event;
+    exn.tag = curr->tag;
     for (auto item : arguments) {
       exn.values.push_back(item);
     }
@@ -1452,7 +1452,7 @@ public:
         cast.breaking = NONCONSTANT_FLOW;
         return cast;
       }
-      seenRtt = Literal(Type(Rtt(0, func->sig)));
+      seenRtt = Literal(Type(Rtt(0, func->type)));
       if (!seenRtt.isSubRtt(intendedRtt)) {
         cast.outcome = cast.Failure;
         return cast;
@@ -1500,17 +1500,25 @@ public:
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
-    // BrOnCast uses the casting infrastructure, so handle it first.
-    if (curr->op == BrOnCast) {
+    // BrOnCast* uses the casting infrastructure, so handle it first.
+    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       auto cast = doCast(curr);
       if (cast.outcome == cast.Break) {
         return cast.breaking;
       }
       if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
-        return cast.originalRef;
+        if (curr->op == BrOnCast) {
+          return cast.originalRef;
+        } else {
+          return Flow(curr->name, cast.originalRef);
+        }
       }
       assert(cast.outcome == cast.Success);
-      return Flow(curr->name, cast.castRef);
+      if (curr->op == BrOnCast) {
+        return Flow(curr->name, cast.castRef);
+      } else {
+        return cast.castRef;
+      }
     }
     // The others do a simpler check for the type.
     Flow flow = visit(curr->ref);
@@ -1528,30 +1536,54 @@ public:
       // If the branch is not taken, we return the non-null value.
       return {value};
     }
+    if (curr->op == BrOnNonNull) {
+      // Unlike the others, BrOnNonNull does not return a value if it does not
+      // take the branch.
+      if (value.isNull()) {
+        return Flow();
+      }
+      // If the branch is taken, we send the non-null value.
+      return Flow(curr->name, value);
+    }
+    // See if the input is the right kind (ignoring the flipping behavior of
+    // BrOn*).
+    bool isRightKind;
     if (value.isNull()) {
-      return {value};
+      // A null is never the right kind.
+      isRightKind = false;
+    } else {
+      switch (curr->op) {
+        case BrOnNonFunc:
+        case BrOnFunc:
+          isRightKind = value.type.isFunction();
+          break;
+        case BrOnNonData:
+        case BrOnData:
+          isRightKind = value.isData();
+          break;
+        case BrOnNonI31:
+        case BrOnI31:
+          isRightKind = value.type.getHeapType() == HeapType::i31;
+          break;
+        default:
+          WASM_UNREACHABLE("invalid br_on_*");
+      }
     }
+    // The Non* operations require us to flip the normal behavior.
     switch (curr->op) {
-      case BrOnFunc:
-        if (!value.type.isFunction()) {
-          return {value};
-        }
+      case BrOnNonFunc:
+      case BrOnNonData:
+      case BrOnNonI31:
+        isRightKind = !isRightKind;
         break;
-      case BrOnData:
-        if (!value.isData()) {
-          return {value};
-        }
-        break;
-      case BrOnI31:
-        if (value.type.getHeapType() != HeapType::i31) {
-          return {value};
-        }
-        break;
-      default:
-        WASM_UNREACHABLE("invalid br_on_*");
+      default: {
+      }
     }
-    // No problems: take the branch.
-    return Flow(curr->name, value);
+    if (isRightKind) {
+      // Take the branch.
+      return Flow(curr->name, value);
+    }
+    return {value};
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
@@ -1562,6 +1594,9 @@ public:
     auto parentValue = parent.getSingleValue();
     auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
     newSupers->push_back(parentValue.type);
+    if (curr->fresh) {
+      newSupers->back().makeFresh();
+    }
     return Literal(std::move(newSupers), curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
@@ -1618,6 +1653,13 @@ public:
       truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
+
+  // Arbitrary deterministic limit on size. If we need to allocate a Literals
+  // vector that takes around 1-2GB of memory then we are likely to hit memory
+  // limits on 32-bit machines, and in particular on wasm32 VMs that do not
+  // have 4GB support, so give up there.
+  static const Index ArrayLimit = (1 << 30) / sizeof(Literal);
+
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
     auto rtt = this->visit(curr->rtt);
@@ -1630,11 +1672,7 @@ public:
     }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
     Index num = size.getSingleValue().geti32();
-    // Arbitrary deterministic limit on size. If we need to allocate a Literals
-    // vector that takes around 1-2GB of memory then we are likely to hit memory
-    // limits on 32-bit machines, and in particular on wasm32 VMs that do not
-    // have 4GB support, so give up there.
-    if (num >= (1 << 30) / sizeof(Literal)) {
+    if (num >= ArrayLimit) {
       hostLimit("allocation failure");
     }
     Literals data(num);
@@ -1715,6 +1753,58 @@ public:
     }
     return Literal(int32_t(data->values.size()));
   }
+  Flow visitArrayCopy(ArrayCopy* curr) {
+    NOTE_ENTER("ArrayCopy");
+    Flow destRef = this->visit(curr->destRef);
+    if (destRef.breaking()) {
+      return destRef;
+    }
+    Flow destIndex = this->visit(curr->destIndex);
+    if (destIndex.breaking()) {
+      return destIndex;
+    }
+    Flow srcRef = this->visit(curr->srcRef);
+    if (srcRef.breaking()) {
+      return srcRef;
+    }
+    Flow srcIndex = this->visit(curr->srcIndex);
+    if (srcIndex.breaking()) {
+      return srcIndex;
+    }
+    Flow length = this->visit(curr->length);
+    if (length.breaking()) {
+      return length;
+    }
+    auto destData = destRef.getSingleValue().getGCData();
+    if (!destData) {
+      trap("null ref");
+    }
+    auto srcData = srcRef.getSingleValue().getGCData();
+    if (!srcData) {
+      trap("null ref");
+    }
+    size_t destVal = destIndex.getSingleValue().getUnsigned();
+    size_t srcVal = srcIndex.getSingleValue().getUnsigned();
+    size_t lengthVal = length.getSingleValue().getUnsigned();
+    if (lengthVal >= ArrayLimit) {
+      hostLimit("allocation failure");
+    }
+    std::vector<Literal> copied;
+    copied.resize(lengthVal);
+    for (size_t i = 0; i < lengthVal; i++) {
+      if (srcVal + i >= srcData->values.size()) {
+        trap("oob");
+      }
+      copied[i] = srcData->values[srcVal + i];
+    }
+    for (size_t i = 0; i < lengthVal; i++) {
+      if (destVal + i >= destData->values.size()) {
+        trap("oob");
+      }
+      destData->values[destVal + i] = copied[i];
+    }
+    return Flow();
+  }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
     Flow flow = visit(curr->value);
@@ -1746,7 +1836,7 @@ public:
         }
         break;
       default:
-        WASM_UNREACHABLE("unimplemented ref.is_*");
+        WASM_UNREACHABLE("unimplemented ref.as_*");
     }
     return value;
   }
@@ -1929,7 +2019,7 @@ public:
     if ((flags & FlagValues::TRAVERSE_CALLS) != 0 && this->module != nullptr) {
       auto* func = this->module->getFunction(curr->target);
       if (!func->imported()) {
-        if (func->sig.results.isConcrete()) {
+        if (func->getResults().isConcrete()) {
           auto numOperands = curr->operands.size();
           assert(numOperands == func->getNumParams());
           auto prevLocalValues = localValues;
@@ -2335,6 +2425,7 @@ private:
   void initializeTableContents() {
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Function dummyFunc;
+      dummyFunc.type = Signature(Type::none, Type::none);
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
 
@@ -2386,6 +2477,7 @@ private:
       // we don't actually have a function, but we need one in order to visit
       // the memory.init and data.drop instructions.
       Function dummyFunc;
+      dummyFunc.type = Signature(Type::none, Type::none);
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
       runner.visit(&init);
@@ -2400,19 +2492,20 @@ private:
 
     FunctionScope(Function* function, const LiteralList& arguments)
       : function(function) {
-      if (function->sig.params.size() != arguments.size()) {
+      if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
-                  << function->sig.params.size() << " parameters, got "
+                  << function->getParams().size() << " parameters, got "
                   << arguments.size() << " arguments." << std::endl;
         WASM_UNREACHABLE("invalid param count");
       }
       locals.resize(function->getNumLocals());
+      Type params = function->getParams();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
-          if (!Type::isSubType(arguments[i].type, function->sig.params[i])) {
+          if (!Type::isSubType(arguments[i].type, params[i])) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << function->sig.params[i] << " for parameter " << i
-                      << ", got " << arguments[i].type << "." << std::endl;
+                      << params[i] << " for parameter " << i << ", got "
+                      << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE("invalid param count");
           }
           locals[i] = {arguments[i]};
@@ -2500,7 +2593,7 @@ private:
       }
 
       Index index = target.getSingleValue().geti32();
-      Type type = curr->isReturn ? scope.function->sig.results : curr->type;
+      Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
       Flow ret;
       auto* table = instance.wasm.getTable(curr->table);
@@ -3137,8 +3230,8 @@ private:
           return ret;
         };
 
-        for (size_t i = 0; i < curr->catchEvents.size(); i++) {
-          if (curr->catchEvents[i] == e.event) {
+        for (size_t i = 0; i < curr->catchTags.size(); i++) {
+          if (curr->catchTags[i] == e.tag) {
             instance.multiValues.push_back(e.values);
             return processCatchBody(curr->catchBodies[i]);
           }
@@ -3255,9 +3348,9 @@ public:
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();
-    if (!Type::isSubType(type, function->sig.results)) {
+    if (!Type::isSubType(type, function->getResults())) {
       std::cerr << "calling " << function->name << " resulted in " << type
-                << " but the function type is " << function->sig.results
+                << " but the function type is " << function->getResults()
                 << '\n';
       WASM_UNREACHABLE("unexpected result type");
     }

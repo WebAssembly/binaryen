@@ -4,13 +4,19 @@
 ;; RUN: wasm-opt %s -all --remove-unused-names --ldse -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $A (struct (field (mut i32))))
  (type $A (struct (field (mut i32))))
+ ;; CHECK:      (type $C (struct (field (mut i32)) (field (mut i32))))
+
+ ;; CHECK:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
  (type $C (struct (field (mut i32)) (field (mut i32))))
 
  (memory shared 10)
 
+ ;; CHECK:      (global $global$0 (mut i32) (i32.const 0))
  (global $global$0 (mut i32) (i32.const 0))
+ ;; CHECK:      (global $global$1 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
 
  ;; CHECK:      (func $simple-param (param $x (ref $A))
@@ -129,14 +135,6 @@
  ;; CHECK-NEXT:  (block $func (result (ref $A))
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (i32.const 10)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br_on_cast $func
  ;; CHECK-NEXT:      (local.get $x)
  ;; CHECK-NEXT:      (rtt.canon $A)
@@ -157,19 +155,14 @@
   (local $x (ref null $A))
   (block $func (result (ref $A))
    (struct.set $A 0
-    (local.get $x)
-    (i32.const 10)
-   )
-   (struct.set $A 0
     ;; the reference can be seen to fall through this, proving the store is
-    ;; dead (due to the one after it) and kills the former one.
+    ;; dead (due to the one after it).
     (br_on_cast $func
      (local.get $x)
      (rtt.canon $A)
     )
     (i32.const 20)
    )
-   ;; the last store escapes to the outside, and cannot be modified
    (struct.set $A 0
     (local.get $x)
     (i32.const 30)
@@ -349,7 +342,7 @@
    (i32.const 10)
   )
   ;; the second store cannot alias the first because their types differ, and
-  ;; so the second store does not interfer in seeing that the first is trampled
+  ;; so the second store does not interfere in seeing that the first is trampled
   ;; (even though the index is identical, 0)
   (struct.set $B 0
    (local.get $y)
@@ -416,7 +409,8 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias
+  ;; C is a subtype of A, so we can have aliasing between this store and both
+  ;; the previous and the subsequent store, and nothing can be optimized.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
@@ -477,8 +471,11 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias. also the second ref is
-  ;; nullable, but we should not be affected by that.
+  ;; As in $compatible-types, C is a subtype of A, so we can have aliasing
+  ;; between this store and both the previous and the subsequent store, and
+  ;; nothing can be optimized. In addition, $y is nullable while $x is not,
+  ;; which should not confuse us - the heap types matter, that is, the
+  ;; nullability is irrelevant.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
@@ -507,8 +504,7 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias. also the first ref is
-  ;; nullable, but we should not be affected by that.
+  ;; As $compatible-types-nullability-1 , but nullability is reversed.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
@@ -537,8 +533,7 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias. also both refs are
-  ;; nullable, but we should not be affected by that.
+  ;; As $compatible-types-nullability-1 , but all refs are nullable.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
@@ -549,6 +544,9 @@
   )
  )
 
+ ;; CHECK:      (func $foo
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
  (func $foo)
 
  ;; CHECK:      (func $call (param $x (ref $A))
@@ -914,6 +912,7 @@
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $no-basic-blocks
+  ;; Check we don't crash on a function with no basic blocks at all.
   (unreachable)
  )
 
@@ -1022,7 +1021,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-wrong-const
+ ;; CHECK:      (func $memory-different-const
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1032,7 +1031,7 @@
  ;; CHECK-NEXT:   (i32.const 40)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-wrong-const
+ (func $memory-different-const
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1043,7 +1042,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-wrong-offset
+ ;; CHECK:      (func $memory-different-offset
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1053,7 +1052,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-wrong-offset
+ (func $memory-different-offset
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1064,7 +1063,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-wrong-size
+ ;; CHECK:      (func $memory-different-size
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1074,7 +1073,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-wrong-size
+ (func $memory-different-size
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1147,7 +1146,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-wrong-offset
+ ;; CHECK:      (func $memory-load-different-offset
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1162,7 +1161,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-load-wrong-offset
+ (func $memory-load-different-offset
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1178,7 +1177,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-wrong-ptr
+ ;; CHECK:      (func $memory-load-different-ptr
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1193,7 +1192,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-load-wrong-ptr
+ (func $memory-load-different-ptr
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1211,7 +1210,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-wrong-bytes
+ ;; CHECK:      (func $memory-load-different-bytes
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1226,7 +1225,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-load-wrong-bytes
+ (func $memory-load-different-bytes
   (i32.store
    (i32.const 10)
    (i32.const 20)

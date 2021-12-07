@@ -34,20 +34,33 @@ char getPathSeparator() {
 #endif
 }
 
+static std::string getAllPathSeparators() {
+  // The canonical separator on Windows is `\`, but it also accepts `/`.
+#if defined(WIN32) || defined(_WIN32)
+  return "\\/";
+#else
+  return "/";
+#endif
+}
+
 std::string getDirName(const std::string& path) {
-  auto sep = path.rfind(getPathSeparator());
-  if (sep == std::string::npos) {
-    return "";
+  for (char c : getAllPathSeparators()) {
+    auto sep = path.rfind(c);
+    if (sep != std::string::npos) {
+      return path.substr(0, sep);
+    }
   }
-  return path.substr(0, sep);
+  return "";
 }
 
 std::string getBaseName(const std::string& path) {
-  auto sep = path.rfind(getPathSeparator());
-  if (sep == std::string::npos) {
-    return path;
+  for (char c : getAllPathSeparators()) {
+    auto sep = path.rfind(c);
+    if (sep != std::string::npos) {
+      return path.substr(sep + 1);
+    }
   }
-  return path.substr(sep + 1);
+  return path;
 }
 
 std::string getBinaryenRoot() {

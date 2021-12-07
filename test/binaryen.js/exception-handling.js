@@ -2,7 +2,7 @@ function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
     // Filter out address pointers and only print meaningful info
-    if (x == 'id' || x == 'type' || x == 'name' || x == 'event' ||
+    if (x == 'id' || x == 'type' || x == 'name' || x == 'tag' ||
         x == 'target' || x == 'hasCatchAll' || x == 'delegateTarget' ||
         x == 'isDelegate') {
       ret[x] = info[x];
@@ -19,7 +19,7 @@ var module = new binaryen.Module();
 module.setFeatures(binaryen.Features.ReferenceTypes |
                    binaryen.Features.ExceptionHandling);
 
-var event_ = module.addEvent("e", 0, binaryen.i32, binaryen.none);
+module.addTag("e", binaryen.i32, binaryen.none);
 
 // (try $l0
 //   (do
@@ -52,7 +52,7 @@ var try_catch = module.try(
 //   (do
 //     (try
 //       (do
-//         (throw $a-event (i32.const 0))
+//         (throw $a-tag (i32.const 0))
 //       )
 //       (delegate $try_outer)
 //     )

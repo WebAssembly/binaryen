@@ -209,6 +209,7 @@ int main(int argc, const char* argv[]) {
   auto writeOutput = outfile.size() > 0 || !emitBinary;
 
   Module wasm;
+  options.applyFeatures(wasm);
   ModuleReader reader;
   // If we are not writing output then we definitely don't need to read debug
   // info, as it does not affect the metadata we will emit. (However, if we
@@ -238,8 +239,6 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source map";
   }
-
-  options.applyFeatures(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);

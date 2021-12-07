@@ -30,6 +30,7 @@
 #ifndef cfg_traversal_h
 #define cfg_traversal_h
 
+#include "ir/branch-utils.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -100,6 +101,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // connect the ends to the outside. In principle two vectors could be used,
   // but their usage does not overlap in time, and this is more efficient.
   std::vector<std::vector<BasicBlock*>> processCatchStack;
+
+  // Stack to store the catch indices within catch bodies. To be used in
+  // doStartCatch and doEndCatch.
+  std::vector<Index> catchIndexStack;
 
   BasicBlock* startBasicBlock() {
     currBasicBlock = ((SubType*)this)->makeBasicBlock();
@@ -199,34 +204,20 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->loopStack.pop_back();
   }
 
-  static void doEndBreak(SubType* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Break>();
-    self->branches[self->findBreakTarget(curr->name)].push_back(
-      self->currBasicBlock); // branch to the target
-    if (curr->condition) {
+  static void doEndBranch(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+    auto branchTargets = BranchUtils::getUniqueTargets(curr);
+    // Add branches to the targets.
+    for (auto target : branchTargets) {
+      self->branches[self->findBreakTarget(target)].push_back(
+        self->currBasicBlock);
+    }
+    if (curr->type != Type::unreachable) {
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock()); // we might fall through
     } else {
       self->startUnreachableBlock();
     }
-  }
-
-  static void doEndSwitch(SubType* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Switch>();
-    // we might see the same label more than once; do not spam branches
-    std::set<Name> seen;
-    for (Name target : curr->targets) {
-      if (!seen.count(target)) {
-        self->branches[self->findBreakTarget(target)].push_back(
-          self->currBasicBlock); // branch to the target
-        seen.insert(target);
-      }
-    }
-    if (!seen.count(curr->default_)) {
-      self->branches[self->findBreakTarget(curr->default_)].push_back(
-        self->currBasicBlock); // branch to the target
-    }
-    self->startUnreachableBlock();
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
@@ -247,13 +238,12 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // try-catch also does not have a catch_all, this continues until we
     // encounter a try-catch_all. Create a link to all those possible catch
     // unwind destinations.
-    // TODO This can be more precise for `throw`s if we compare event types
-    // and create links to outer catch BBs only when the exception is not
-    // caught.
+    // TODO This can be more precise for `throw`s if we compare tag types and
+    // create links to outer catch BBs only when the exception is not caught.
     // TODO This can also be more precise if we analyze the structure of nested
     // try-catches. For example, in the example below, 'call $foo' doesn't need
     // a link to the BB of outer 'catch $e1', because if the exception thrown by
-    // the call is of event $e1, it would've already been caught by the inner
+    // the call is of tag $e1, it would've already been caught by the inner
     // 'catch $e1'. Optimize these cases later.
     // try
     //   try
@@ -304,16 +294,20 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->processCatchStack.push_back(self->unwindCatchStack.back());
     self->unwindCatchStack.pop_back();
     self->unwindExprStack.pop_back();
+    self->catchIndexStack.push_back(0);
   }
 
-  static void doStartCatch(SubType* self, Expression** currp, Index i) {
+  static void doStartCatch(SubType* self, Expression** currp) {
     // Get the block that starts this catch
-    self->currBasicBlock = self->processCatchStack.back()[i];
+    self->currBasicBlock =
+      self->processCatchStack.back()[self->catchIndexStack.back()];
   }
 
-  static void doEndCatch(SubType* self, Expression** currp, Index i) {
+  static void doEndCatch(SubType* self, Expression** currp) {
     // We are done with this catch; set the block that ends it
-    self->processCatchStack.back()[i] = self->currBasicBlock;
+    self->processCatchStack.back()[self->catchIndexStack.back()] =
+      self->currBasicBlock;
+    self->catchIndexStack.back()++;
   }
 
   static void doEndTry(SubType* self, Expression** currp) {
@@ -326,6 +320,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->link(self->tryStack.back(), self->currBasicBlock);
     self->tryStack.pop_back();
     self->processCatchStack.pop_back();
+    self->catchIndexStack.pop_back();
   }
 
   static void doEndThrow(SubType* self, Expression** currp) {
@@ -357,22 +352,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doEndLoop, currp);
         break;
       }
-      case Expression::Id::BreakId: {
-        self->pushTask(SubType::doEndBreak, currp);
-        break;
-      }
-      case Expression::Id::SwitchId: {
-        self->pushTask(SubType::doEndSwitch, currp);
-        break;
-      }
-      case Expression::Id::ReturnId: {
-        self->pushTask(SubType::doStartUnreachableBlock, currp);
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        self->pushTask(SubType::doStartUnreachableBlock, currp);
-        break;
-      }
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId: {
         self->pushTask(SubType::doEndCall, currp);
@@ -381,17 +360,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       case Expression::Id::TryId: {
         self->pushTask(SubType::doEndTry, currp);
         auto& catchBodies = curr->cast<Try>()->catchBodies;
-        using namespace std::placeholders;
         for (Index i = 0; i < catchBodies.size(); i++) {
-          auto doEndCatchI = [i](SubType* self, Expression** currp) {
-            doEndCatch(self, currp, i);
-          };
-          self->pushTask(doEndCatchI, currp);
+          self->pushTask(doEndCatch, currp);
           self->pushTask(SubType::scan, &catchBodies[i]);
-          auto doStartCatchI = [i](SubType* self, Expression** currp) {
-            doStartCatch(self, currp, i);
-          };
-          self->pushTask(doStartCatchI, currp);
+          self->pushTask(doStartCatch, currp);
         }
         self->pushTask(SubType::doStartCatches, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);
@@ -403,7 +375,13 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doEndThrow, currp);
         break;
       }
-      default: {}
+      default: {
+        if (Properties::isBranch(curr)) {
+          self->pushTask(SubType::doEndBranch, currp);
+        } else if (curr->type == Type::unreachable) {
+          self->pushTask(SubType::doStartUnreachableBlock, currp);
+        }
+      }
     }
 
     ControlFlowWalker<SubType, VisitorType>::scan(self, currp);

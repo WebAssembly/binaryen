@@ -101,7 +101,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) COPY_ARRAY(name)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
 
     // The type can be simply copied.
     copy->type = original->type;

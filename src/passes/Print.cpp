@@ -1849,7 +1849,7 @@ struct PrintExpressionContents
   }
   void visitThrow(Throw* curr) {
     printMedium(o, "throw ");
-    printName(curr->event, o);
+    printName(curr->tag, o);
   }
   void visitRethrow(Rethrow* curr) {
     printMedium(o, "rethrow ");
@@ -1888,17 +1888,32 @@ struct PrintExpressionContents
       case BrOnNull:
         printMedium(o, "br_on_null ");
         break;
+      case BrOnNonNull:
+        printMedium(o, "br_on_non_null ");
+        break;
       case BrOnCast:
         printMedium(o, "br_on_cast ");
+        break;
+      case BrOnCastFail:
+        printMedium(o, "br_on_cast_fail ");
         break;
       case BrOnFunc:
         printMedium(o, "br_on_func ");
         break;
+      case BrOnNonFunc:
+        printMedium(o, "br_on_non_func ");
+        break;
       case BrOnData:
         printMedium(o, "br_on_data ");
         break;
+      case BrOnNonData:
+        printMedium(o, "br_on_non_data ");
+        break;
       case BrOnI31:
         printMedium(o, "br_on_i31 ");
+        break;
+      case BrOnNonI31:
+        printMedium(o, "br_on_non_i31 ");
         break;
       default:
         WASM_UNREACHABLE("invalid ref.is_*");
@@ -1910,7 +1925,11 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
   void visitRttSub(RttSub* curr) {
-    printMedium(o, "rtt.sub ");
+    if (curr->fresh) {
+      printMedium(o, "rtt.fresh_sub ");
+    } else {
+      printMedium(o, "rtt.sub ");
+    }
     TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
   void visitStructNew(StructNew* curr) {
@@ -1977,6 +1996,10 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
   void visitArrayGet(ArrayGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
     const auto& element = curr->ref->type.getHeapType().getArray().element;
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
@@ -1990,12 +2013,27 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
     printMedium(o, "array.set ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) {
     printMedium(o, "array.len ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+  }
+  void visitArrayCopy(ArrayCopy* curr) {
+    if (curr->srcRef->type == Type::unreachable ||
+        curr->destRef->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
+    printMedium(o, "array.copy ");
+    TypeNamePrinter(o, wasm).print(curr->destRef->type.getHeapType());
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
@@ -2307,12 +2345,12 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     maybePrintImplicitBlock(curr->body, true);
     decIndent();
     o << "\n";
-    for (size_t i = 0; i < curr->catchEvents.size(); i++) {
+    for (size_t i = 0; i < curr->catchTags.size(); i++) {
       doIndent(o, indent);
       printDebugDelimiterLocation(curr, i);
       o << '(';
       printMedium(o, "catch ");
-      printName(curr->catchEvents[i], o);
+      printName(curr->catchTags[i], o);
       incIndent();
       maybePrintImplicitBlock(curr->catchBodies[i], true);
       decIndent();
@@ -2320,7 +2358,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     if (curr->hasCatchAll()) {
       doIndent(o, indent);
-      printDebugDelimiterLocation(curr, curr->catchEvents.size());
+      printDebugDelimiterLocation(curr, curr->catchTags.size());
       o << '(';
       printMedium(o, "catch_all");
       incIndent();
@@ -2370,6 +2408,20 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     visitExpression(curr);
   }
   void visitStructGet(StructGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement(curr);
+      return;
+    }
+    visitExpression(curr);
+  }
+  void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement(curr);
+      return;
+    }
+    visitExpression(curr);
+  }
+  void visitArrayGet(ArrayGet* curr) {
     if (curr->ref->type == Type::unreachable) {
       printUnreachableReplacement(curr);
       return;
@@ -2448,7 +2500,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     o << ')';
   }
-  void handleHeapType(HeapType type) {
+  void handleHeapType(HeapType type, Module* module) {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
     } else if (type.isArray()) {
@@ -2457,6 +2509,12 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       handleStruct(type.getStruct());
     } else {
       o << type;
+    }
+    HeapType super;
+    if (type.getSuperType(super)) {
+      o << " (extends ";
+      TypeNamePrinter(o, module).print(super);
+      o << ')';
     }
   }
   void visitExport(Export* curr) {
@@ -2476,8 +2534,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       case ExternalKind::Global:
         o << "global";
         break;
-      case ExternalKind::Event:
-        o << "event";
+      case ExternalKind::Tag:
+        o << "tag";
         break;
       case ExternalKind::Invalid:
         WASM_UNREACHABLE("invalid ExternalKind");
@@ -2538,7 +2596,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     lastPrintedLocation = {0, 0, 0};
     o << '(';
     emitImportHeader(curr);
-    handleSignature(curr->sig, curr->name);
+    handleSignature(curr->getSig(), curr->name);
     o << ')';
     o << maybeNewLine;
   }
@@ -2555,9 +2613,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (!stackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
-    if (curr->sig.params.size() > 0) {
+    if (curr->getParams().size() > 0) {
       Index i = 0;
-      for (const auto& param : curr->sig.params) {
+      for (const auto& param : curr->getParams()) {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ");
@@ -2567,9 +2625,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         ++i;
       }
     }
-    if (curr->sig.results != Type::none) {
+    if (curr->getResults() != Type::none) {
       o << maybeSpace;
-      printResultType(o, curr->sig.results, currModule);
+      printResultType(o, curr->getResults(), currModule);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -2614,30 +2672,30 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     o << maybeNewLine;
   }
-  void visitEvent(Event* curr) {
+  void visitTag(Tag* curr) {
     if (curr->imported()) {
-      visitImportedEvent(curr);
+      visitImportedTag(curr);
     } else {
-      visitDefinedEvent(curr);
+      visitDefinedTag(curr);
     }
   }
-  void visitImportedEvent(Event* curr) {
+  void visitImportedTag(Tag* curr) {
     doIndent(o, indent);
     o << '(';
     emitImportHeader(curr);
-    o << "(event ";
+    o << "(tag ";
     printName(curr->name, o);
-    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
+    o << maybeSpace;
     printParamType(o, curr->sig.params, currModule);
     o << "))";
     o << maybeNewLine;
   }
-  void visitDefinedEvent(Event* curr) {
+  void visitDefinedTag(Tag* curr) {
     doIndent(o, indent);
     o << '(';
-    printMedium(o, "event ");
+    printMedium(o, "tag ");
     printName(curr->name, o);
-    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
+    o << maybeSpace;
     printParamType(o, curr->sig.params, currModule);
     o << ")" << maybeNewLine;
   }
@@ -2841,7 +2899,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printMedium(o, "type") << ' ';
       TypeNamePrinter(o, curr).print(type);
       o << ' ';
-      handleHeapType(type);
+      handleHeapType(type, curr);
       o << ")" << maybeNewLine;
     }
     ModuleUtils::iterImportedMemories(
@@ -2852,8 +2910,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterImportedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
-    ModuleUtils::iterImportedEvents(*curr,
-                                    [&](Event* event) { visitEvent(event); });
+    ModuleUtils::iterImportedTags(*curr, [&](Tag* tag) { visitTag(tag); });
     ModuleUtils::iterDefinedGlobals(
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterDefinedMemories(
@@ -2873,8 +2930,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')' << maybeNewLine;
     }
-    ModuleUtils::iterDefinedEvents(*curr,
-                                   [&](Event* event) { visitEvent(event); });
+    ModuleUtils::iterDefinedTags(*curr, [&](Tag* tag) { visitTag(tag); });
     for (auto& child : curr->exports) {
       doIndent(o, indent);
       visitExport(child.get());
@@ -3044,7 +3100,7 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     }
     case StackInst::Catch: {
       // Because StackInst does not have info on which catch within a try this
-      // is, we can't print the event name.
+      // is, we can't print the tag name.
       printMedium(o, "catch");
       break;
     }
@@ -3128,7 +3184,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         doIndent();
         printMedium(o, "catch ");
         Try* curr = inst->origin->cast<Try>();
-        printName(curr->catchEvents[catchIndexStack.back()++], o);
+        printName(curr->catchTags[catchIndexStack.back()++], o);
         indent++;
         break;
       }

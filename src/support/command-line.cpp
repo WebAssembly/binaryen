@@ -79,6 +79,7 @@ Options::Options(const std::string& command, const std::string& description)
             std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
         for (const auto& o : options) {
+          std::cout << '\n';
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
           std::cout << "  " << o.longName << (long_n_short ? ',' : ' ')
@@ -136,11 +137,13 @@ void Options::parse(int argc, const char* argv[]) {
       // Positional.
       switch (positional) {
         case Arguments::Zero:
+          // Optional arguments must use --flag=A format, and not separated by
+          // spaces (which would be ambiguous).
+        case Arguments::Optional:
           std::cerr << "Unexpected positional argument '" << currentOption
                     << "'\n";
           exit(EXIT_FAILURE);
         case Arguments::One:
-        case Arguments::Optional:
           if (positionalsSeen) {
             std::cerr << "Unexpected second positional argument '"
                       << currentOption << "' for " << positionalName << '\n';
@@ -198,11 +201,6 @@ void Options::parse(int argc, const char* argv[]) {
         }
         break;
       case Arguments::Optional:
-        if (!argument.size()) {
-          if (i + 1 != e) {
-            argument = argv[++i];
-          }
-        }
         break;
     }
     option->action(this, argument);

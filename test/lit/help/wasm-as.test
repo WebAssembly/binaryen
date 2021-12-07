@@ -1,0 +1,31 @@
+;; RUN: wasm-as --help | filecheck %s
+
+;; CHECK:      wasm-as INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Assemble a .wat (WebAssembly text format) into a .wasm (WebAssembly binary
+;; CHECK-NEXT: format)
+
+;; Skip standard tool options
+
+;; CHECK:        --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-NEXT:                                        correct
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
+;; CHECK-NEXT:                                        passes being run. Must be in the form
+;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --nominal                            Use the prototype nominal type system
+;; CHECK-NEXT:                                        instead of the normal equirecursive type
+;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --validate,-v                        Control validation of the output module
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debuginfo,-g                       Emit names section and debug info
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --source-map,-sm                     Emit source map to the specified file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --source-map-url,-su                 Use specified string as source map URL
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --symbolmap,-s                       Emit a symbol map (indexes => names)

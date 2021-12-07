@@ -127,15 +127,15 @@ class SExpressionWasmBuilder {
   std::vector<Name> functionNames;
   std::vector<Name> tableNames;
   std::vector<Name> globalNames;
-  std::vector<Name> eventNames;
+  std::vector<Name> tagNames;
   int functionCounter = 0;
   int globalCounter = 0;
-  int eventCounter = 0;
+  int tagCounter = 0;
   int tableCounter = 0;
   int elemCounter = 0;
   int memoryCounter = 0;
   // we need to know function return types before we parse their contents
-  std::map<Name, Signature> functionSignatures;
+  std::map<Name, HeapType> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
 
   // Maps type indexes to a mapping of field index => name. This is not the same
@@ -168,7 +168,7 @@ private:
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
   Name getGlobalName(Element& s);
-  Name getEventName(Element& s);
+  Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
 
   // returns the next index in s
@@ -278,6 +278,7 @@ private:
   Expression* makeBrOn(Element& s, BrOnOp op);
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
+  Expression* makeRttFreshSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);
@@ -286,6 +287,7 @@ private:
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
+  Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
 
   // Helper functions
@@ -295,13 +297,12 @@ private:
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);
-  Signature parseTypeRef(Element& s);
+  HeapType parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,
-                      Signature& functionSignature,
+                      HeapType& functionType,
                       std::vector<NameType>& namedParams);
-  size_t
-  parseTypeUse(Element& s, size_t startPos, Signature& functionSignature);
+  size_t parseTypeUse(Element& s, size_t startPos, HeapType& functionType);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
@@ -321,7 +322,7 @@ private:
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);
 
-  void parseEvent(Element& s, bool preParseImport = false);
+  void parseTag(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
 

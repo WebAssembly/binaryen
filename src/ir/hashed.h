@@ -64,8 +64,7 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   void doWalkFunction(Function* func) { output->at(func) = hashFunction(func); }
 
   static size_t hashFunction(Function* func) {
-    auto digest = hash(func->sig.params.getID());
-    rehash(digest, func->sig.results.getID());
+    auto digest = hash(func->type);
     for (auto type : func->vars) {
       rehash(digest, type.getID());
     }

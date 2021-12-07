@@ -6,6 +6,7 @@
 ;; RUN: wasm-opt -all --simplify-locals %s -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct
     (field (mut i32))
   ))

@@ -101,7 +101,7 @@ public:
 #define DELEGATE_FIELD_TYPE(id, name)
 #define DELEGATE_FIELD_ADDRESS(id, name)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
   }
 
   Iterator begin() const { return Iterator(*this, 0); }

@@ -245,12 +245,10 @@ private:
   Index id = 0;
 
   void addImport(Module* wasm, Name name, Type params, Type results) {
-    auto import = new Function;
-    import->name = name;
+    auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
-    import->sig = Signature(params, results);
-    wasm->addFunction(import);
+    wasm->addFunction(std::move(import));
   }
 };
 

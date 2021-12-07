@@ -152,7 +152,7 @@ void test_printing() {
     std::cout << HeapType(HeapType::i31) << "\n";
     std::cout << Type(HeapType::i31, Nullable) << "\n";
     std::cout << Type(HeapType::i31, NonNullable) << "\n";
-    std::cout << HeapType(Signature(Type::none, Type::none)) << "\n";
+    std::cout << Signature(Type::none, Type::none) << "\n";
     std::cout << HeapType(Struct{}) << "\n";
     std::cout << HeapType(Array({Type::i32, Immutable})) << "\n";
   }

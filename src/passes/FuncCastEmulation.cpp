@@ -199,11 +199,11 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
-    Type type = func->sig.results;
+    Type type = func->getResults();
     Builder builder(*module);
     std::vector<Expression*> callOperands;
     Index i = 0;
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       callOperands.push_back(
         fromABI(builder.makeLocalGet(i++, Type::i64), param, module));
     }

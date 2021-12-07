@@ -1,13 +1,13 @@
 (module
  (type $vector (array (mut i32)))
  (type $struct (struct (field (ref null $vector))))
- (type $i32_=>_none (func (param i32)))
  (type $ref|func|_=>_none (func (param (ref func))))
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_f64 (func (result f64)))
- (type $i32_=>_funcref (func (param i32) (result funcref)))
+ (type $i32_=>_none (func (param i32)))
  (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
+ (type $none_=>_f64 (func (result f64)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_funcref (func (param i32) (result funcref)))
+ (type $none_=>_none (func))
  (import "out" "log" (func $log (param i32)))
  (elem declare func $br_on-to-br $br_on-to-flow $i32_=>_none $none_=>_i32)
  (func $foo (result (ref null $struct))
@@ -121,6 +121,20 @@
     (i31.new
      (i32.const 1337)
     )
+   )
+  )
+  (call $log
+   (i32.const 8)
+  )
+  (drop
+   (block $non-null (result (ref $ref|func|_=>_none))
+    (br $non-null
+     (ref.func $br_on-to-br)
+    )
+    (call $log
+     (i32.const 9)
+    )
+    (ref.func $br_on-to-br)
    )
   )
  )

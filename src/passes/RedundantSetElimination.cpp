@@ -184,14 +184,19 @@ struct RedundantSetElimination
       if (block.get() == entry) {
         // params are complex values we can't optimize; vars are zeros
         for (Index i = 0; i < numLocals; i++) {
+          auto type = func->getLocalType(i);
           if (func->isParam(i)) {
 #ifdef RSE_DEBUG
             std::cout << "new param value for " << i << '\n';
 #endif
             start[i] = getUniqueValue();
+          } else if (type.isNonNullable()) {
+#ifdef RSE_DEBUG
+            std::cout << "new unique value for non-nullable " << i << '\n';
+#endif
+            start[i] = getUniqueValue();
           } else {
-            start[i] =
-              getLiteralValue(Literal::makeZeros(func->getLocalType(i)));
+            start[i] = getLiteralValue(Literal::makeZeros(type));
           }
         }
       } else {

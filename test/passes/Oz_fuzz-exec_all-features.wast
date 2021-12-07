@@ -8,6 +8,8 @@
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
+ (global $rtt (mut (rtt $extendedstruct)) (rtt.canon $extendedstruct))
+
  (func "structs"
   (local $x (ref null $struct))
   (local $y (ref null $struct))
@@ -180,6 +182,50 @@
    )
   )
  )
+ (func "br_on_failed_cast-1"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+  )
+  (drop
+   (block $any (result (ref null any))
+    (call $log (i32.const 1))
+    (drop
+     ;; try to cast our simple $struct to an extended, which will fail, and
+     ;; so we will branch, skipping the next logging.
+     (br_on_cast_fail $any
+      (local.get $any)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log (i32.const 999)) ;; we should skip this
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_failed_cast-2"
+  (local $any anyref)
+  ;; create an $extendedstruct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $extendedstruct (rtt.canon $extendedstruct))
+  )
+  (drop
+   (block $any (result (ref null any))
+    (call $log (i32.const 1))
+    (drop
+     ;; try to cast our simple $struct to an extended, which will succeed, and
+     ;; so we will continue to the next logging.
+     (br_on_cast_fail $any
+      (local.get $any)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log (i32.const 999))
+    (ref.null any)
+   )
+  )
+ )
  (func "cast-null-anyref-to-gc"
   ;; a null anyref is a literal which is not even of GC data, as it's not an
   ;; array or a struct, so our casting code should not assume it is. it is ok
@@ -205,6 +251,77 @@
     )
     (call $log (i32.const 1))
     (call $get_data)
+   )
+  )
+ )
+ (func "br_on_non_data-null"
+  (local $x anyref)
+  (drop
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
+    )
+    ;; $x is a null, and so it is not data, and the branch will be taken, and no
+    ;; logging will occur.
+    (call $log (i32.const 1))
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_non_data-data"
+  (local $x anyref)
+  ;; set x to valid data
+  (local.set $x
+   (struct.new_default_with_rtt $struct
+    (rtt.canon $struct)
+   )
+  )
+  (drop
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
+    )
+    ;; $x refers to valid data, and so we will not branch, and will log.
+    (call $log (i32.const 1))
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_non_data-other"
+  (local $x anyref)
+  ;; set x to something that is not null, but also not data
+  (local.set $x
+   (ref.func $a-void-func)
+  )
+  (drop
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
+    )
+    ;; $x refers to a function, so we will branch, and not log
+    (call $log (i32.const 1))
+    (ref.null any)
+   )
+  )
+ )
+ (func "br-on_non_null"
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null (ref.func $a-void-func))
+    ;; $x refers to a function, which is not null, so we will branch, and not
+    ;; log
+    (call $log (i32.const 1))
+    (unreachable)
+   )
+  )
+ )
+ (func "br-on_non_null-2"
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null (ref.null any))
+    ;; $x is null, and so we will not branch, and log and then trap
+    (call $log (i32.const 1))
+    (unreachable)
    )
   )
  )
@@ -265,6 +382,96 @@
    (ref.cast
     (ref.func $call-target)
     (rtt.canon $struct)
+   )
+  )
+ )
+ (func "array-copy"
+  (local $x (ref null $bytes))
+  (local $y (ref null $bytes))
+  ;; Create an array of 10's, of size 100.
+  (local.set $x
+   (array.new_with_rtt $bytes
+    (i32.const 10)
+    (i32.const 100)
+    (rtt.canon $bytes)
+   )
+  )
+  ;; Create an array of zeros of size 200, and also set one index there.
+  (local.set $y
+   (array.new_default_with_rtt $bytes
+    (i32.const 200)
+    (rtt.canon $bytes)
+   )
+  )
+  (array.set $bytes
+   (local.get $y)
+   (i32.const 42)
+   (i32.const 99)
+  )
+  ;; Log out a value from $x before.
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 10))
+  )
+  (array.copy $bytes $bytes
+   (local.get $x)
+   (i32.const 10)
+   (local.get $y)
+   (i32.const 42)
+   (i32.const 2)
+  )
+  ;; Log out some value from $x after. Indexes 10 and 11 should be modified.
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 9))
+  )
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 10))
+  )
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 11))
+  )
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 12))
+  )
+ )
+ (func "rtt_Fresh"
+  ;; Casting to the same sequence of rtt.subs works.
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.sub $extendedstruct
+      (rtt.canon $struct)
+     )
+    )
+    (rtt.sub $extendedstruct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  ;; But not with fresh!
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.sub $extendedstruct
+      (rtt.canon $struct)
+     )
+    )
+    (rtt.fresh_sub $extendedstruct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  ;; Casts with fresh succeed, if we use the same fresh rtt.
+  (global.set $rtt
+   (rtt.fresh_sub $extendedstruct
+    (rtt.canon $struct)
+   )
+  )
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (global.get $rtt)
+    )
+    (global.get $rtt)
    )
   )
  )

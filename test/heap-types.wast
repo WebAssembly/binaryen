@@ -36,9 +36,16 @@
   (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
   (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
   (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
+  (global $rttfreshgrandchild (rtt 2 $grandchild) (rtt.fresh_sub $grandchild (global.get $rttchild)))
 
   (type $nested-child-struct (struct (field (mut (ref $child)))))
   (type $nested-child-array (array (mut (ref $child))))
+
+  (global $struct.new-in-global (ref $struct.A)
+    (struct.new_default_with_rtt $struct.A
+      (rtt.canon $struct.A)
+    )
+  )
 
   (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
@@ -194,6 +201,7 @@
   (func $rtt-param-without-depth (param $rtt (rtt $parent)))
   (func $rtt-operations
     (local $temp.A (ref null $struct.A))
+    (local $temp.B (ref null $struct.B))
     (drop
       (ref.test (ref.null $struct.A) (rtt.canon $struct.B))
     )
@@ -213,6 +221,16 @@
         (unreachable)
       )
     )
+    (drop
+      (block $out2 (result (ref null $struct.A))
+        ;; set the value to a local with type $struct.A, showing that the value
+        ;; flowing out has the right type
+        (local.set $temp.B
+          (br_on_cast_fail $out2 (ref.null $struct.A) (rtt.canon $struct.B))
+        )
+        (ref.null $struct.A)
+      )
+    )
   )
   (func $ref.is_X (param $x anyref)
     (if (ref.is_func (local.get $x)) (unreachable))
@@ -228,6 +246,9 @@
   (func $br_on_X (param $x anyref)
     (local $y anyref)
     (local $z (ref null any))
+    (local $temp-func (ref null func))
+    (local $temp-data (ref null data))
+    (local $temp-i31 (ref null i31))
     (block $null
       (local.set $z
         (br_on_null $null (local.get $x))
@@ -257,6 +278,36 @@
         (ref.null i31)
       )
     )
+    (drop
+      (block $non-null (result (ref any))
+        (br_on_non_null $non-null (local.get $x))
+        (unreachable)
+      )
+    )
+    (drop
+      (block $non-func (result anyref)
+        (local.set $temp-func
+          (br_on_non_func $non-func (local.get $x))
+        )
+        (ref.null any)
+      )
+    )
+    (drop
+      (block $non-data (result anyref)
+        (local.set $temp-data
+          (br_on_non_data $non-data (local.get $x))
+        )
+        (ref.null any)
+      )
+    )
+    (drop
+      (block $non-i31 (result anyref)
+        (local.set $temp-i31
+          (br_on_non_i31 $non-i31 (local.get $x))
+        )
+        (ref.null any)
+      )
+    )
   )
   (func $unreachables-1
     (drop
@@ -271,5 +322,47 @@
   )
   (func $unreachables-4
     (struct.set $struct.C 0 (unreachable) (f32.const 1))
+  )
+  (func $unreachables-array-1
+    (array.get $vector
+      (unreachable)
+      (i32.const 2)
+    )
+  )
+  (func $unreachables-array-2
+    (array.get $vector
+      (ref.null $vector)
+      (unreachable)
+    )
+  )
+  (func $unreachables-array-3
+    (array.set $vector
+      (unreachable)
+      (i32.const 2)
+      (f64.const 2.18281828)
+    )
+  )
+  (func $unreachables-array-4
+    (array.set $vector
+      (ref.null $vector)
+      (unreachable)
+      (f64.const 2.18281828)
+    )
+  )
+  (func $unreachables-array-5
+    (array.set $vector
+      (ref.null $vector)
+      (i32.const 2)
+      (unreachable)
+    )
+  )
+  (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
+    (array.copy $vector $vector
+      (local.get $x)
+      (i32.const 11)
+      (local.get $y)
+      (i32.const 42)
+      (i32.const 1337)
+    )
   )
 )

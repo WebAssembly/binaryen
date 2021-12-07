@@ -61,7 +61,7 @@ static std::string runCommand(std::string command) {
 
 static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
   for (auto& pass : passes) {
-    if (pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf") {
+    if (PassRunner::passRemovesDebugInfo(pass)) {
       return true;
     }
   }
@@ -217,6 +217,7 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   Module wasm;
+  options.applyFeatures(wasm);
 
   BYN_TRACE("reading...\n");
 
@@ -259,8 +260,6 @@ int main(int argc, const char* argv[]) {
                  "request for silly amounts of memory)";
     }
 
-    options.applyFeatures(wasm);
-
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
         exitOnInvalidWasm("error validating input");
@@ -268,7 +267,6 @@ int main(int argc, const char* argv[]) {
     }
   }
   if (translateToFuzz) {
-    options.applyFeatures(wasm);
     TranslateToFuzzReader reader(wasm, options.extra["infile"]);
     if (fuzzPasses) {
       reader.pickPasses(options);
