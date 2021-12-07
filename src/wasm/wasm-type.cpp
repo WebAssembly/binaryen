@@ -707,7 +707,6 @@ private:
     };
 
     // Turn e.g. (ref null any) into anyref.
-    typename Info::type_t canonical;
     if (auto canonical = info.getCanonical()) {
       return *canonical;
     }
