@@ -69,7 +69,7 @@ struct SignatureRefining : public Pass {
       std::vector<CallRef*> callRefs;
 
       // The new refined type, or Type::none if no refinement was possible.
-      Type refinedType;
+      LUBFinder returnTypeLUB;
     };
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
@@ -79,7 +79,7 @@ struct SignatureRefining : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.refinedType = TypeUpdating::getRefinedReturnType(func, *module);
+        info.returnTypeLUB = LUB::getReturnTypeLUB(func, *module);
       });
 
     // A map of types to the calls and call_refs that use that type.
@@ -147,6 +147,7 @@ struct SignatureRefining : public Pass {
       } else {
         newParams = Type(newParamsTypes);
       }
+      auto newResults = func->getResults(); // TODO
       if (newParams != func->getParams() || newResults != func->getResults()) {
         // We found an improvement!
         newSignatures[type] = Signature(newParams, newResults);
