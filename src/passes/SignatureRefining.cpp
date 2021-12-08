@@ -69,7 +69,7 @@ struct SignatureRefining : public Pass {
       std::vector<CallRef*> callRefs;
 
       // The new refined type, or Type::none if no refinement was possible.
-      LUBFinder returnTypeLUB;
+      LUBFinder returnLUB;
     };
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
@@ -79,7 +79,7 @@ struct SignatureRefining : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.returnTypeLUB = LUB::getReturnTypeLUB(func, *module);
+        info.returnLUB = LUB::getreturnLUB(func, *module);
       });
 
     // A map of types to all the information combined over all the functions
@@ -105,7 +105,7 @@ struct SignatureRefining : public Pass {
 
       // Add the function's return LUB to the one for the heap type of that
       // function
-      allInfo[func->type].returnTypeLUB.combine(info.returnTypeLUB);
+      allInfo[func->type].returnLUB.combine(info.returnLUB);
     }
 
     // Compute optimal LUBs.
@@ -153,22 +153,32 @@ struct SignatureRefining : public Pass {
         newParams = Type(newParamsTypes);
       }
 
-      auto& returnTypeLUB = info.returnTypeLUB;
+      auto& returnLUB = info.returnLUB;
       Type newResults;
-      if (!returnTypeLUB.noted()) {
+      if (!returnLUB.noted()) {
         // We did not have type information to calculate a LUB (no returned
         // value, or it can return a value but traps instead etc.).
         newResults = func->getResults();
       } else {
-        newResults = returnTypeLUB.getBestPossible();;
+        newResults = returnLUB.getBestPossible();
       }
 
-      if (newParams != func->getParams() || newResults != func->getResults()) {
-        // We found an improvement!
-        newSignatures[type] = Signature(newParams, newResults);
+      if (newParams == func->getParams() && newResults == func->getResults()) {
+        continue;
+      }
+
+      // We found an improvement!
+      newSignatures[type] = Signature(newParams, newResults);
+      if (newParams != func->getParams()) {
         for (auto& lub : paramLUBs) {
           lub.updateNulls();
         }
+      }
+      if (newResults != func->getResults()) {
+        returnLUB.updateNulls();
+        // TODO do we need to update calls? no, the heap type change in place
+        //      does that.
+        // TODO do we need to refinalize?
       }
     }
 
@@ -219,6 +229,11 @@ struct SignatureRefining : public Pass {
     };
 
     TypeRewriter(*module, *this).update();
+
+    // After return types change we need to propagate.
+    // TODO: we could do this only in relevant functions perhaps, and only if
+    //       we improved return types and not just params
+    ReFinalize().run(runner, module);
   }
 };
 
