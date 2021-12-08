@@ -407,15 +407,14 @@ void updateParamTypes(Function* func,
   }
 }
 
-Type refineReturnTypes(const std::vector<Function*>& funcs,
+Type getRefinedReturnType(Function* func,
                        const std::vector<Call*>& calls,
                        Module& wasm) {
   if (!wasm.features.hasGC()) {
     return Type::none;
   }
 
-  assert(!funcs.empty());
-  Type originalType = funcs.front()->getResults();
+  Type originalType = func->getResults();
   if (!originalType.hasRef()) {
     // Nothing to refine.
     return Type::none;
@@ -428,27 +427,19 @@ Type refineReturnTypes(const std::vector<Function*>& funcs,
   //  (block (result X)
   //   (..content with more specific type Y..)
   //  )
-  //
-  // TODO: parallelize this, and the below loops
-  for (auto* func : funcs) {
-    ReFinalize().walkFunctionInModule(func, &wasm);
-  }
+  ReFinalize().walkFunctionInModule(func, &wasm);
 
   LUBFinder lub;
-  for (auto* func : funcs) {
-    lub.noteUpdatableExpression(func->body);
-    if (lub.getBestPossible() == originalType) {
-      return Type::none;
-    }
+  lub.noteUpdatableExpression(func->body);
+  if (lub.getBestPossible() == originalType) {
+    return Type::none;
   }
 
-  // Scan the bodies and look at the returns. First, return expressions.
-  for (auto* func : funcs) {
-    for (auto* ret : FindAll<Return>(func->body).list) {
-      lub.noteUpdatableExpression(ret->value);
-      if (lub.getBestPossible() == originalType) {
-        return Type::none;
-      }
+  // Scan the body and look at the returns. First, return expressions.
+  for (auto* ret : FindAll<Return>(func->body).list) {
+    lub.noteUpdatableExpression(ret->value);
+    if (lub.getBestPossible() == originalType) {
+      return Type::none;
     }
   }
 
@@ -461,29 +452,27 @@ Type refineReturnTypes(const std::vector<Function*>& funcs,
     return lub.getBestPossible() != originalType;
   };
 
-  for (auto* func : funcs) {
-    for (auto* call : FindAll<Call>(func->body).list) {
-      if (call->isReturn &&
-          !processReturnType(wasm.getFunction(call->target)->getResults())) {
-        return Type::none;
-      }
+  for (auto* call : FindAll<Call>(func->body).list) {
+    if (call->isReturn &&
+        !processReturnType(wasm.getFunction(call->target)->getResults())) {
+      return Type::none;
     }
-    for (auto* call : FindAll<CallIndirect>(func->body).list) {
-      if (call->isReturn &&
-          !processReturnType(call->heapType.getSignature().results)) {
-        return Type::none;
-      }
+  }
+  for (auto* call : FindAll<CallIndirect>(func->body).list) {
+    if (call->isReturn &&
+        !processReturnType(call->heapType.getSignature().results)) {
+      return Type::none;
     }
-    for (auto* call : FindAll<CallRef>(func->body).list) {
-      if (call->isReturn) {
-        auto targetType = call->target->type;
-        if (targetType == Type::unreachable) {
-          continue;
-        }
-        if (!processReturnType(
-              targetType.getHeapType().getSignature().results)) {
-          return Type::none;
-        }
+  }
+  for (auto* call : FindAll<CallRef>(func->body).list) {
+    if (call->isReturn) {
+      auto targetType = call->target->type;
+      if (targetType == Type::unreachable) {
+        continue;
+      }
+      if (!processReturnType(
+            targetType.getHeapType().getSignature().results)) {
+        return Type::none;
       }
     }
   }
@@ -500,10 +489,7 @@ Type refineReturnTypes(const std::vector<Function*>& funcs,
     return Type::none;
   }
 
-  // Success. Update the functions and the calls to them.
-  for (auto* func : funcs) {
-    func->setResults(newType);
-  }
+  // Success. Update the calls and the functions.
   for (auto* call : calls) {
     if (call->type != Type::unreachable) {
       call->type = newType;

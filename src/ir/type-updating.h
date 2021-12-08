@@ -389,9 +389,9 @@ void updateParamTypes(Function* func,
 // it does a refinalize in order to be able to compute the new types. We could
 // roll back that change, but it's not harmful and can help, so we keep it
 // regardless.
-Type refineReturnTypes(const std::vector<Function*>& funcs,
-                       const std::vector<Call*>& calls,
-                       Module& wasm);
+Type getRefinedReturnType(Function* func,
+                          const std::vector<Call*>& calls,
+                          Module& wasm);
 
 } // namespace TypeUpdating
 
