@@ -92,8 +92,7 @@ struct SignatureRefining : public Pass {
       // For direct calls, add each call to the type of the function being
       // called.
       for (auto* call : info.calls) {
-        allInfo[module->getFunction(call->target)->type].calls.push_back(
-          call);
+        allInfo[module->getFunction(call->target)->type].calls.push_back(call);
       }
 
       // For indirect calls, add each call_ref to the type the call_ref uses.
