@@ -611,7 +611,8 @@ private:
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
                          Module* module) {
-    return TypeUpdating::refineReturnTypes({func}, calls, *module) != Type::none;
+    return TypeUpdating::refineReturnTypes({func}, calls, *module) !=
+           Type::none;
   }
 };
 
