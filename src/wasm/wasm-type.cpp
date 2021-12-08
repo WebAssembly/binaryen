@@ -730,8 +730,8 @@ private:
 using TypeStore = Store<TypeInfo>;
 using HeapTypeStore = Store<HeapTypeInfo>;
 
-TypeStore globalTypeStore;
-HeapTypeStore globalHeapTypeStore;
+static TypeStore globalTypeStore;
+static HeapTypeStore globalHeapTypeStore;
 
 // Specialized to simplify programming generically over Types and HeapTypes.
 template<typename T> struct MetaTypeInfo {};
@@ -756,15 +756,31 @@ template<typename Info> bool Store<Info>::isGlobalStore() {
 }
 #endif
 
-template<typename Info>
-bool Store<Info>::hasCanonical(const Info& info, typename Info::type_t& out) {
-  auto indexIt = typeIDs.find(std::cref(info));
-  if (indexIt != typeIDs.end()) {
-    out = typename Info::type_t(indexIt->second);
-    return true;
+// Cache canonical nominal signature types. See comment in
+// `HeapType::HeapType(Signature)`.
+struct SignatureTypeCache {
+  std::unordered_map<Signature, HeapType> cache;
+  std::mutex mutex;
+
+  HeapType getType(Signature sig) {
+    std::lock_guard<std::mutex> lock(mutex);
+    // Try inserting a placeholder type, then replace it with a real type if we
+    // don't already have a canonical type for this signature.
+    auto [entry, inserted] = cache.insert({sig, {}});
+    auto& [_, type] = *entry;
+    if (inserted) {
+      type = globalHeapTypeStore.insert(sig);
+    }
+    return type;
   }
-  return false;
-}
+
+  void insertType(HeapType type) {
+    std::lock_guard<std::mutex> lock(mutex);
+    cache.insert({type.getSignature(), type});
+  }
+};
+
+static SignatureTypeCache nominalSignatureCache;
 
 } // anonymous namespace
 
@@ -1105,10 +1121,16 @@ const Type& Type::operator[](size_t index) const {
 HeapType::HeapType(Signature sig) {
   assert(!isTemp(sig.params) && "Leaking temporary type!");
   assert(!isTemp(sig.results) && "Leaking temporary type!");
-  HeapType canonical;
-  if (typeSystem == TypeSystem::Nominal &&
-      globalHeapTypeStore.hasCanonical(sig, canonical)) {
-    new (this) HeapType(canonical);
+  if (typeSystem == TypeSystem::Nominal) {
+    // Special case the creation of signature types in nominal mode to return a
+    // "canonical" type for the signature, which happens to be the first one
+    // created. We depend on being able to create new function signatures in
+    // many places, and historically they have always been structural, so
+    // creating a copy of an existing signature did not result in any code bloat
+    // or semantic changes. To avoid regressions or significant changes of
+    // behavior in nominal mode, we cache the canonical heap types for each
+    // signature to emulate structural behavior.
+    new (this) HeapType(nominalSignatureCache.getType(sig));
   } else {
     new (this) HeapType(globalHeapTypeStore.insert(sig));
   }
@@ -3241,15 +3263,24 @@ std::vector<HeapType> TypeBuilder::build() {
   }
 
   // Combine the basic types with the built types.
-  std::vector<HeapType> result(entryCount);
+  std::vector<HeapType> results(entryCount);
   for (size_t i = 0, builtIndex = 0; i < entryCount; ++i) {
     if (basicHeapTypes[i]) {
-      result[i] = *basicHeapTypes[i];
+      results[i] = *basicHeapTypes[i];
     } else {
-      result[i] = built[builtIndex++];
+      results[i] = built[builtIndex++];
     }
   }
-  return result;
+
+  // Note built signature types. See comment in `HeapType::HeapType(Signature)`.
+  for (auto type : results) {
+    if (type.isSignature() &&
+        (type.isNominal() || getTypeSystem() == TypeSystem::Nominal)) {
+      nominalSignatureCache.insertType(type);
+    }
+  }
+
+  return results;
 }
 
 } // namespace wasm
