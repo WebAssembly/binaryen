@@ -101,6 +101,10 @@ struct SignatureRefining : public Pass {
           allCallsTo[calledType.getHeapType()].callRefs.push_back(callRef);
         }
       }
+
+      // Add the function's return LUB to the one for the heap type of that
+      // function
+      allCallsTo[func->type].returnTypeLUB.combine(info.returnTypeLUB);
     }
 
     // Compute optimal LUBs.
@@ -147,7 +151,17 @@ struct SignatureRefining : public Pass {
       } else {
         newParams = Type(newParamsTypes);
       }
-      auto newResults = func->getResults(); // TODO
+
+      auto& returnTypeLUB = callsTo.returnTypeLUB;
+      Type newResults;
+      if (!returnTypeLUB.noted()) {
+        // We did not have type information to calculate a LUB (no returned
+        // value, or it can return a value but traps instead etc.).
+        newResults = func->getResults();
+      } else {
+        newResults = returnTypeLUB.getBestPossible();;
+      }
+
       if (newParams != func->getParams() || newResults != func->getResults()) {
         // We found an improvement!
         newSignatures[type] = Signature(newParams, newResults);
