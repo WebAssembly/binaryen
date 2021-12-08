@@ -23,7 +23,7 @@ namespace wasm {
 
 namespace LUB {
 
-LUBFinder getReturnTypeLUB(Function* func, Module& wasm) {
+LUBFinder getResultsLUB(Function* func, Module& wasm) {
   if (!wasm.features.hasGC()) {
     return LUBFinder();
   }

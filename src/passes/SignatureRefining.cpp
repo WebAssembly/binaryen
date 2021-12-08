@@ -32,6 +32,7 @@
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -69,7 +70,7 @@ struct SignatureRefining : public Pass {
       std::vector<CallRef*> callRefs;
 
       // The new refined type, or Type::none if no refinement was possible.
-      LUBFinder returnLUB;
+      LUBFinder resultsLUB;
     };
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
@@ -79,7 +80,7 @@ struct SignatureRefining : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.returnLUB = LUB::getreturnLUB(func, *module);
+        info.resultsLUB = LUB::getReturnTypeLUB(func, *module);
       });
 
     // A map of types to all the information combined over all the functions
@@ -105,7 +106,7 @@ struct SignatureRefining : public Pass {
 
       // Add the function's return LUB to the one for the heap type of that
       // function
-      allInfo[func->type].returnLUB.combine(info.returnLUB);
+      allInfo[func->type].resultsLUB.combine(info.resultsLUB);
     }
 
     // Compute optimal LUBs.
@@ -153,14 +154,14 @@ struct SignatureRefining : public Pass {
         newParams = Type(newParamsTypes);
       }
 
-      auto& returnLUB = info.returnLUB;
+      auto& resultsLUB = info.resultsLUB;
       Type newResults;
-      if (!returnLUB.noted()) {
+      if (!resultsLUB.noted()) {
         // We did not have type information to calculate a LUB (no returned
         // value, or it can return a value but traps instead etc.).
         newResults = func->getResults();
       } else {
-        newResults = returnLUB.getBestPossible();
+        newResults = resultsLUB.getBestPossible();
       }
 
       if (newParams == func->getParams() && newResults == func->getResults()) {
@@ -175,7 +176,7 @@ struct SignatureRefining : public Pass {
         }
       }
       if (newResults != func->getResults()) {
-        returnLUB.updateNulls();
+        resultsLUB.updateNulls();
         // TODO do we need to update calls? no, the heap type change in place
         //      does that.
         // TODO do we need to refinalize?

@@ -143,7 +143,7 @@ namespace LUB {
 // it does a refinalize in order to be able to compute the new types. We could
 // roll back that change, but it's not harmful and can help, so we keep it
 // regardless.
-LUBFinder getReturnTypeLUB(Function* func, Module& wasm);
+LUBFinder getResultsLUB(Function* func, Module& wasm);
 
 } // namespace LUB
 

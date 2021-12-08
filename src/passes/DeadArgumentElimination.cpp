@@ -611,7 +611,7 @@ private:
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
                          Module* module) {
-    auto lub = LUB::getReturnTypeLUB(func, *module);
+    auto lub = LUB::getResultsLUB(func, *module);
     if (!lub.noted()) {
       return false;
     }
