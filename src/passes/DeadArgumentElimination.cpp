@@ -612,6 +612,9 @@ private:
                          const std::vector<Call*>& calls,
                          Module* module) {
     auto lub = LUB::getReturnTypeLUB(func, *module);
+    if (!lub.noted()) {
+      return false;
+    }
     auto newType = lub.getBestPossible();
     if (newType != func->getResults()) {
       lub.updateNulls();
