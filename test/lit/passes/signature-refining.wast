@@ -490,3 +490,43 @@
     )
   )
 )
+
+(module
+  ;; This signature has a single function using it, which returns a more
+  ;; refined type.
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (type $sig-can-refine (func_subtype (result (ref $struct)) func))
+  (type $sig-can-refine (func_subtype (result anyref) func))
+
+  ;; Also a single function, but no refinement is possible.
+  ;; CHECK:      (type $sig-cannot-refine (func_subtype (result anyref) func))
+  (type $sig-cannot-refine (func_subtype (result anyref) func))
+
+  ;; The single function never returns.
+  ;; CHECK:      (type $sig-unreachable (func_subtype (result anyref) func))
+  (type $sig-unreachable (func_subtype (result anyref) func))
+
+  ;; CHECK:      (func $func-can-refine (type $sig-can-refine) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  (func $func-can-refine (type $sig-can-refine) (result anyref)
+    (struct.new $struct)
+  )
+
+  ;; CHECK:      (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
+  ;; CHECK-NEXT:  (ref.null any)
+  ;; CHECK-NEXT: )
+  (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
+    (ref.null any)
+  )
+
+  ;; CHECK:      (func $func-unreachable (type $sig-unreachable) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func-unreachable (type $sig-unreachable) (result anyref)
+    (unreachable)
+  )
+)
+

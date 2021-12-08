@@ -225,6 +225,7 @@ struct SignatureRefining : public Pass {
         auto iter = parent.newSignatures.find(oldSignatureType);
         if (iter != parent.newSignatures.end()) {
           sig.params = getTempType(iter->second.params);
+          sig.results = getTempType(iter->second.results);
         }
       }
     };
