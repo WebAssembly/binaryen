@@ -2494,15 +2494,17 @@ private:
   // We can combine `and` operations, e.g.
   //   (x == 0) & (y == 0)   ==>    (x | y) == 0
   Expression* combineAnd(Binary* curr) {
+    assert(curr->op == AndInt32);
+
     using namespace Abstract;
     using namespace Match;
+
     {
       // (i32(x) == 0) & (i32(y) == 0)   ==>   i32(x | y) == 0
       // (i64(x) == 0) & (i64(y) == 0)   ==>   i64(x | y) == 0
       Expression *x, *y;
-      if (matches(curr,
-                  binary(AndInt32, unary(EqZ, any(&x)), unary(EqZ, any(&y)))) &&
-          x->type == y->type) {
+      if (matches(curr->left, unary(EqZ, any(&x))) &&
+          matches(curr->right, unary(EqZ, any(&y))) && x->type == y->type) {
         auto* inner = curr->left->cast<Unary>();
         inner->value = Builder(*getModule())
                          .makeBinary(Abstract::getBinary(x->type, Or), x, y);
@@ -2513,10 +2515,8 @@ private:
       // (i32(x) < 0) & (i32(y) < 0)   ==>   i32(x & y) < 0
       // (i64(x) < 0) & (i64(y) < 0)   ==>   i64(x & y) < 0
       Expression *x, *y;
-      if (matches(curr,
-                  binary(AndInt32,
-                         binary(LtS, any(&x), ival(0)),
-                         binary(LtS, any(&y), ival(0)))) &&
+      if (matches(curr->left, binary(LtS, any(&x), ival(0))) &&
+          matches(curr->right, binary(LtS, any(&y), ival(0))) &&
           x->type == y->type) {
         auto* inner = curr->left->cast<Binary>();
         inner->left = Builder(*getModule())
@@ -2531,10 +2531,11 @@ private:
   //   (x > y)  | (x == y)    ==>    x >= y
   //   (x != 0) | (y != 0)    ==>    (x | y) != 0
   Expression* combineOr(Binary* curr) {
+    assert(curr->op == OrInt32);
+
     using namespace Abstract;
     using namespace Match;
 
-    assert(curr->op == OrInt32);
     if (auto* left = curr->left->dynCast<Binary>()) {
       if (auto* right = curr->right->dynCast<Binary>()) {
         if (left->op != right->op &&
