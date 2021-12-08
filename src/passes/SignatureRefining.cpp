@@ -64,22 +64,26 @@ struct SignatureRefining : public Pass {
 
     // First, find all the calls and call_refs.
 
-    struct CallInfo {
+    struct Info {
       std::vector<Call*> calls;
       std::vector<CallRef*> callRefs;
+
+      // The new refined type, or Type::none if no refinement was possible.
+      Type refinedType;
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<CallInfo> analysis(
-      *module, [&](Function* func, CallInfo& info) {
+    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+      *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           return;
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
+        info.refinedType = TypeUpdating::getRefinedReturnType(func, *module);
       });
 
     // A map of types to the calls and call_refs that use that type.
-    std::unordered_map<HeapType, CallInfo> allCallsTo;
+    std::unordered_map<HeapType, Info> allCallsTo;
 
     // Combine all the information we gathered into that map.
     for (auto& [func, info] : analysis.map) {

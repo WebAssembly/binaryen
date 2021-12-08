@@ -408,7 +408,6 @@ void updateParamTypes(Function* func,
 }
 
 Type getRefinedReturnType(Function* func,
-                       const std::vector<Call*>& calls,
                        Module& wasm) {
   if (!wasm.features.hasGC()) {
     return Type::none;
@@ -489,12 +488,7 @@ Type getRefinedReturnType(Function* func,
     return Type::none;
   }
 
-  // Success. Update the calls and the functions.
-  for (auto* call : calls) {
-    if (call->type != Type::unreachable) {
-      call->type = newType;
-    }
-  }
+  // Success!
   lub.updateNulls();
   return newType;
 }

@@ -390,7 +390,6 @@ void updateParamTypes(Function* func,
 // roll back that change, but it's not harmful and can help, so we keep it
 // regardless.
 Type getRefinedReturnType(Function* func,
-                          const std::vector<Call*>& calls,
                           Module& wasm);
 
 } // namespace TypeUpdating
