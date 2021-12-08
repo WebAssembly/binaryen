@@ -16,6 +16,7 @@
 
 #include "type-updating.h"
 #include "find_all.h"
+#include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "wasm-type.h"
@@ -404,6 +405,112 @@ void updateParamTypes(Function* func,
     // We have added locals, and must handle non-nullability of them.
     TypeUpdating::handleNonDefaultableLocals(func, wasm);
   }
+}
+
+Type refineReturnTypes(const std::vector<Function*>& funcs,
+                       const std::vector<Call*>& calls,
+                       Module& wasm) {
+  if (!wasm.features.hasGC()) {
+    return Type::none;
+  }
+
+  assert(!funcs.empty());
+  Type originalType = funcs.front()->getResults();
+  if (!originalType.hasRef()) {
+    // Nothing to refine.
+    return Type::none;
+  }
+
+  // Before we do anything, we must refinalize the function, because otherwise
+  // its body may contain a block with a forced type,
+  //
+  // (func (result X)
+  //  (block (result X)
+  //   (..content with more specific type Y..)
+  //  )
+  //
+  // TODO: parallelize this, and the below loops
+  for (auto* func : funcs) {
+    ReFinalize().walkFunctionInModule(func, &wasm);
+  }
+
+  LUBFinder lub;
+  for (auto* func : funcs) {
+    lub.noteUpdatableExpression(func->body);
+    if (lub.getBestPossible() == originalType) {
+      return Type::none;
+    }
+  }
+
+  // Scan the bodies and look at the returns. First, return expressions.
+  for (auto* func : funcs) {
+    for (auto* ret : FindAll<Return>(func->body).list) {
+      lub.noteUpdatableExpression(ret->value);
+      if (lub.getBestPossible() == originalType) {
+        return Type::none;
+      }
+    }
+  }
+
+  // Process return_calls and call_refs. Unlike return expressions which we
+  // just handled, these only get a type to update, not a value.
+  auto processReturnType = [&](Type type) {
+    // Return whether we still look ok to do the optimization. If this is
+    // false then we can stop here.
+    lub.note(type);
+    return lub.getBestPossible() != originalType;
+  };
+
+  for (auto* func : funcs) {
+    for (auto* call : FindAll<Call>(func->body).list) {
+      if (call->isReturn &&
+          !processReturnType(wasm.getFunction(call->target)->getResults())) {
+        return Type::none;
+      }
+    }
+    for (auto* call : FindAll<CallIndirect>(func->body).list) {
+      if (call->isReturn &&
+          !processReturnType(call->heapType.getSignature().results)) {
+        return Type::none;
+      }
+    }
+    for (auto* call : FindAll<CallRef>(func->body).list) {
+      if (call->isReturn) {
+        auto targetType = call->target->type;
+        if (targetType == Type::unreachable) {
+          continue;
+        }
+        if (!processReturnType(
+              targetType.getHeapType().getSignature().results)) {
+          return Type::none;
+        }
+      }
+    }
+  }
+
+  // If the refined type is unreachable then nothing actually returns from
+  // this function.
+  // TODO: We can propagate that to the outside, and not just for GC.
+  if (!lub.noted()) {
+    return Type::none;
+  }
+
+  auto newType = lub.getBestPossible();
+  if (newType == originalType) {
+    return Type::none;
+  }
+
+  // Success. Update the functions and the calls to them.
+  for (auto* func : funcs) {
+    func->setResults(newType);
+  }
+  for (auto* call : calls) {
+    if (call->type != Type::unreachable) {
+      call->type = newType;
+    }
+  }
+  lub.updateNulls();
+  return newType;
 }
 
 } // namespace TypeUpdating
