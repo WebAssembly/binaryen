@@ -72,7 +72,6 @@ public:
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
   std::set<Name> mutableGlobalsRead;
-  std::set<Name> immutableGlobalsRead;
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
@@ -81,7 +80,6 @@ public:
   // TODO: More specific type-based alias analysis, and not just at the
   //       struct/array level.
   bool readsMutableStruct = false;
-  bool readsImmutableStruct = false;
   bool writesStruct = false;
   bool readsArray = false;
   bool writesArray = false;
@@ -111,9 +109,9 @@ public:
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
-  bool throws = false;
+  bool throws_ = false;
   // The nested depth of try-catch_all. If an instruction that may throw is
-  // inside an inner try-catch_all, we don't mark it as 'throws', because it
+  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
   // will be caught by an inner catch_all. We only count 'try's with a
   // 'catch_all' because instructions within a 'try' without a 'catch_all' can
   // still throw outside of the try.
@@ -132,18 +130,13 @@ public:
   bool accessesMutableGlobal() const {
     return globalsWritten.size() + mutableGlobalsRead.size() > 0;
   }
-  bool accessesGlobal() const {
-    return accessesMutableGlobal() + immutableGlobalsRead.size() > 0;
-  }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
   bool accessesTable() const { return calls || readsTable || writesTable; }
   bool accessesMutableStruct() const {
     return calls || readsMutableStruct || writesStruct;
   }
-  bool accessesStruct() const {
-    return accessesMutableStruct() || readsImmutableStruct;
-  }
   bool accessesArray() const { return calls || readsArray || writesArray; }
+  bool throws() const { return throws_ || !delegateTargets.empty(); }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
   // or a throw (if the throw is not known to be caught inside this expression;
@@ -152,7 +145,7 @@ public:
   // caught in the function at all, which would mean control flow cannot be
   // transferred inside the function, but this expression does not know that).
   bool transfersControlFlow() const {
-    return branchesOut || throws || hasExternalBreakTargets();
+    return branchesOut || throws() || hasExternalBreakTargets();
   }
 
   // Changes something in globally-stored state.
@@ -167,7 +160,7 @@ public:
 
   bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
-           throws || transfersControlFlow();
+           throws() || transfersControlFlow();
   }
 
   bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
@@ -198,7 +191,7 @@ public:
 
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory || readsTable ||
-           accessesGlobal();
+           accessesMutableGlobal();
   }
 
   // check if we break to anything external from ourselves
@@ -261,7 +254,7 @@ public:
     // function, so transfersControlFlow would be true) - while we allow the
     // reordering of traps with each other, we do not reorder exceptions with
     // anything.
-    assert(!((trap && other.throws) || (throws && other.trap)));
+    assert(!((trap && other.throws()) || (throws() && other.trap)));
     // We can't reorder an implicit trap in a way that could alter what global
     // state is modified.
     if ((trap && other.writesGlobalState()) ||
@@ -279,7 +272,6 @@ public:
     readsTable = readsTable || other.readsTable;
     writesTable = writesTable || other.writesTable;
     readsMutableStruct = readsMutableStruct || other.readsMutableStruct;
-    readsImmutableStruct = readsImmutableStruct || other.readsImmutableStruct;
     writesStruct = writesStruct || other.writesStruct;
     readsArray = readsArray || other.readsArray;
     writesArray = writesArray || other.writesArray;
@@ -287,7 +279,7 @@ public:
     implicitTrap = implicitTrap || other.implicitTrap;
     trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
     isAtomic = isAtomic || other.isAtomic;
-    throws = throws || other.throws;
+    throws_ = throws_ || other.throws_;
     danglingPop = danglingPop || other.danglingPop;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
@@ -298,14 +290,14 @@ public:
     for (auto i : other.mutableGlobalsRead) {
       mutableGlobalsRead.insert(i);
     }
-    for (auto i : other.immutableGlobalsRead) {
-      immutableGlobalsRead.insert(i);
-    }
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
     }
     for (auto i : other.breakTargets) {
       breakTargets.insert(i);
+    }
+    for (auto i : other.delegateTargets) {
+      delegateTargets.insert(i);
     }
   }
 
@@ -329,6 +321,7 @@ public:
   }
 
   std::set<Name> breakTargets;
+  std::set<Name> delegateTargets;
 
 private:
   struct InternalAnalyzer
@@ -369,6 +362,18 @@ private:
 
     static void doStartCatch(InternalAnalyzer* self, Expression** currp) {
       Try* curr = (*currp)->cast<Try>();
+      // This is conservative. When an inner try-delegate targets the current
+      // expression, even if the try-delegate's body can't throw, we consider
+      // the current expression can throw for simplicity, unless the current
+      // expression is not inside a try-catch_all. It is hard to figure out
+      // whether the original try-delegate's body throws or not at this point.
+      if (curr->name.is()) {
+        if (self->parent.delegateTargets.count(curr->name) &&
+            self->parent.tryDepth == 0) {
+          self->parent.throws_ = true;
+        }
+        self->parent.delegateTargets.erase(curr->name);
+      }
       // We only count 'try's with a 'catch_all' because instructions within a
       // 'try' without a 'catch_all' can still throw outside of the try.
       if (curr->hasCatchAll()) {
@@ -423,7 +428,7 @@ private:
       parent.calls = true;
       // When EH is enabled, any call can throw.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws = true;
+        parent.throws_ = true;
       }
       if (curr->isReturn) {
         parent.branchesOut = true;
@@ -438,7 +443,7 @@ private:
     void visitCallIndirect(CallIndirect* curr) {
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws = true;
+        parent.throws_ = true;
       }
       if (curr->isReturn) {
         parent.branchesOut = true;
@@ -453,8 +458,6 @@ private:
     void visitGlobalGet(GlobalGet* curr) {
       if (parent.module.getGlobal(curr->name)->mutable_ == Mutable) {
         parent.mutableGlobalsRead.insert(curr->name);
-      } else {
-        parent.immutableGlobalsRead.insert(curr->name);
       }
     }
     void visitGlobalSet(GlobalSet* curr) {
@@ -631,15 +634,19 @@ private:
       parent.readsTable = true;
       parent.writesTable = true;
     }
-    void visitTry(Try* curr) {}
+    void visitTry(Try* curr) {
+      if (curr->delegateTarget.is()) {
+        parent.delegateTargets.insert(curr->delegateTarget);
+      }
+    }
     void visitThrow(Throw* curr) {
       if (parent.tryDepth == 0) {
-        parent.throws = true;
+        parent.throws_ = true;
       }
     }
     void visitRethrow(Rethrow* curr) {
       if (parent.tryDepth == 0) {
-        parent.throws = true;
+        parent.throws_ = true;
       }
       // traps when the arg is null
       parent.implicitTrap = true;
@@ -658,7 +665,7 @@ private:
     void visitCallRef(CallRef* curr) {
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws = true;
+        parent.throws_ = true;
       }
       if (curr->isReturn) {
         parent.branchesOut = true;
@@ -684,8 +691,6 @@ private:
             .fields[curr->index]
             .mutable_ == Mutable) {
         parent.readsMutableStruct = true;
-      } else {
-        parent.readsImmutableStruct = true;
       }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
@@ -784,7 +789,7 @@ public:
     if (localsWritten.size() > 0) {
       effects |= SideEffects::WritesLocal;
     }
-    if (mutableGlobalsRead.size() + immutableGlobalsRead.size() > 0) {
+    if (mutableGlobalsRead.size()) {
       effects |= SideEffects::ReadsGlobal;
     }
     if (globalsWritten.size() > 0) {
@@ -811,7 +816,7 @@ public:
     if (isAtomic) {
       effects |= SideEffects::IsAtomic;
     }
-    if (throws) {
+    if (throws_) {
       effects |= SideEffects::Throws;
     }
     if (danglingPop) {
@@ -826,7 +831,10 @@ public:
   }
 
 private:
-  void pre() { breakTargets.clear(); }
+  void pre() {
+    breakTargets.clear();
+    delegateTargets.clear();
+  }
 
   void post() {
     assert(tryDepth == 0);
