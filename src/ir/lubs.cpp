@@ -1,0 +1,110 @@
+/*
+ * Copyright 2021 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "ir/lubs.h"
+#include "wasm-type.h"
+#include "wasm.h"
+
+namespace wasm {
+
+namespace LUB {
+
+LUBFinder getReturnTypeLUB(Function* func, Module& wasm) {
+  if (!wasm.features.hasGC()) {
+    return LUBFinder();
+  }
+
+  Type originalType = func->getResults();
+  if (!originalType.hasRef()) {
+    // Nothing to refine.
+    return LUBFinder();
+  }
+
+  // Before we do anything, we must refinalize the function, because otherwise
+  // its body may contain a block with a forced type,
+  //
+  // (func (result X)
+  //  (block (result X)
+  //   (..content with more specific type Y..)
+  //  )
+  ReFinalize().walkFunctionInModule(func, &wasm);
+
+  LUBFinder lub;
+  lub.noteUpdatableExpression(func->body);
+  if (lub.getBestPossible() == originalType) {
+    return LUBFinder();
+  }
+
+  // Scan the body and look at the returns. First, return expressions.
+  for (auto* ret : FindAll<Return>(func->body).list) {
+    lub.noteUpdatableExpression(ret->value);
+    if (lub.getBestPossible() == originalType) {
+      return LUBFinder();
+    }
+  }
+
+  // Process return_calls and call_refs. Unlike return expressions which we
+  // just handled, these only get a type to update, not a value.
+  auto processReturnType = [&](Type type) {
+    // Return whether we still look ok to do the optimization. If this is
+    // false then we can stop here.
+    lub.note(type);
+    return lub.getBestPossible() != originalType;
+  };
+
+  for (auto* call : FindAll<Call>(func->body).list) {
+    if (call->isReturn &&
+        !processReturnType(wasm.getFunction(call->target)->getResults())) {
+      return LUBFinder();
+    }
+  }
+  for (auto* call : FindAll<CallIndirect>(func->body).list) {
+    if (call->isReturn &&
+        !processReturnType(call->heapType.getSignature().results)) {
+      return LUBFinder();
+    }
+  }
+  for (auto* call : FindAll<CallRef>(func->body).list) {
+    if (call->isReturn) {
+      auto targetType = call->target->type;
+      if (targetType == Type::unreachable) {
+        continue;
+      }
+      if (!processReturnType(
+            targetType.getHeapType().getSignature().results)) {
+        return LUBFinder();
+      }
+    }
+  }
+
+  // If the refined type is unreachable then nothing actually returns from
+  // this function.
+  // TODO: We can propagate that to the outside, and not just for GC.
+  if (!lub.noted()) {
+    return LUBFinder();
+  }
+
+  auto newType = lub.getBestPossible();
+  if (newType == originalType) {
+    return LUBFinder();
+  }
+
+  return lub;
+}
+
+} // namespace LUB
+
+} // namespace wasm

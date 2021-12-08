@@ -611,8 +611,10 @@ private:
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
                          Module* module) {
-    auto newType = TypeUpdating::getRefinedReturnType(func, *module);
-    if (newType != Type::none) {
+    auto lub = TypeUpdating::getRefinedReturnType(func, *module);
+    auto newType = lub.getBestPossible();
+    if (newType != func->getResults()) {
+      lub.updateNulls();
       func->setResults(newType);
       for (auto* call : calls) {
         if (call->type != Type::unreachable) {

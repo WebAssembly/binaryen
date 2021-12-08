@@ -138,16 +138,18 @@ struct SignatureRefining : public Pass {
         }
         newParamsTypes.push_back(lub.getBestPossible());
       }
+      Type newParams;
       if (newParamsTypes.size() < numParams) {
         // We did not have type information to calculate a LUB (no calls, or
         // some param is always unreachable), so there is nothing we can improve
         // here. Other passes might remove the type entirely.
-        continue;
+        newParams = func->getParams();
+      } else {
+        newParams = Type(newParamsTypes);
       }
-      auto newParams = Type(newParamsTypes);
-      if (newParams != func->getParams()) {
+      if (newParams != func->getParams() || newResults != func->getResults()) {
         // We found an improvement!
-        newSignatures[type] = Signature(newParams, Type::none);
+        newSignatures[type] = Signature(newParams, newResults);
         for (auto& lub : paramLUBs) {
           lub.updateNulls();
         }
