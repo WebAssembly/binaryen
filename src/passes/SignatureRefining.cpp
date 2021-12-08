@@ -80,7 +80,7 @@ struct SignatureRefining : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.resultsLUB = LUB::getReturnTypeLUB(func, *module);
+        info.resultsLUB = LUB::getResultsLUB(func, *module);
       });
 
     // A map of types to all the information combined over all the functions
