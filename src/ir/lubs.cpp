@@ -24,14 +24,16 @@ namespace wasm {
 namespace LUB {
 
 LUBFinder getResultsLUB(Function* func, Module& wasm) {
+  LUBFinder lub;
+
   if (!wasm.features.hasGC()) {
-    return LUBFinder();
+    return lub;
   }
 
   Type originalType = func->getResults();
   if (!originalType.hasRef()) {
     // Nothing to refine.
-    return LUBFinder();
+    return lub;
   }
 
   // Before we do anything, we must refinalize the function, because otherwise
@@ -43,17 +45,16 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
   //  )
   ReFinalize().walkFunctionInModule(func, &wasm);
 
-  LUBFinder lub;
   lub.noteUpdatableExpression(func->body);
   if (lub.getBestPossible() == originalType) {
-    return LUBFinder();
+    return lub;
   }
 
   // Scan the body and look at the returns. First, return expressions.
   for (auto* ret : FindAll<Return>(func->body).list) {
     lub.noteUpdatableExpression(ret->value);
     if (lub.getBestPossible() == originalType) {
-      return LUBFinder();
+      return lub;
     }
   }
 
@@ -69,13 +70,13 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
   for (auto* call : FindAll<Call>(func->body).list) {
     if (call->isReturn &&
         !processReturnType(wasm.getFunction(call->target)->getResults())) {
-      return LUBFinder();
+      return lub;
     }
   }
   for (auto* call : FindAll<CallIndirect>(func->body).list) {
     if (call->isReturn &&
         !processReturnType(call->heapType.getSignature().results)) {
-      return LUBFinder();
+      return lub;
     }
   }
   for (auto* call : FindAll<CallRef>(func->body).list) {
@@ -86,21 +87,9 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
       }
       if (!processReturnType(
             targetType.getHeapType().getSignature().results)) {
-        return LUBFinder();
+        return lub;
       }
     }
-  }
-
-  // If the refined type is unreachable then nothing actually returns from
-  // this function.
-  // TODO: We can propagate that to the outside, and not just for GC.
-  if (!lub.noted()) {
-    return LUBFinder();
-  }
-
-  auto newType = lub.getBestPossible();
-  if (newType == originalType) {
-    return LUBFinder();
   }
 
   return lub;
