@@ -82,15 +82,16 @@ struct SignatureRefining : public Pass {
         info.returnTypeLUB = LUB::getReturnTypeLUB(func, *module);
       });
 
-    // A map of types to the calls and call_refs that use that type.
-    std::unordered_map<HeapType, Info> allCallsTo;
+    // A map of types to all the information combined over all the functions
+    // with that type.
+    std::unordered_map<HeapType, Info> allInfo;
 
     // Combine all the information we gathered into that map.
     for (auto& [func, info] : analysis.map) {
       // For direct calls, add each call to the type of the function being
       // called.
       for (auto* call : info.calls) {
-        allCallsTo[module->getFunction(call->target)->type].calls.push_back(
+        allInfo[module->getFunction(call->target)->type].calls.push_back(
           call);
       }
 
@@ -98,13 +99,13 @@ struct SignatureRefining : public Pass {
       for (auto* callRef : info.callRefs) {
         auto calledType = callRef->target->type;
         if (calledType != Type::unreachable) {
-          allCallsTo[calledType.getHeapType()].callRefs.push_back(callRef);
+          allInfo[calledType.getHeapType()].callRefs.push_back(callRef);
         }
       }
 
       // Add the function's return LUB to the one for the heap type of that
       // function
-      allCallsTo[func->type].returnTypeLUB.combine(info.returnTypeLUB);
+      allInfo[func->type].returnTypeLUB.combine(info.returnTypeLUB);
     }
 
     // Compute optimal LUBs.
@@ -126,11 +127,11 @@ struct SignatureRefining : public Pass {
         }
       };
 
-      auto& callsTo = allCallsTo[type];
-      for (auto* call : callsTo.calls) {
+      auto& info = allInfo[type];
+      for (auto* call : info.calls) {
         updateLUBs(call->operands);
       }
-      for (auto* callRef : callsTo.callRefs) {
+      for (auto* callRef : info.callRefs) {
         updateLUBs(callRef->operands);
       }
 
@@ -152,7 +153,7 @@ struct SignatureRefining : public Pass {
         newParams = Type(newParamsTypes);
       }
 
-      auto& returnTypeLUB = callsTo.returnTypeLUB;
+      auto& returnTypeLUB = info.returnTypeLUB;
       Type newResults;
       if (!returnTypeLUB.noted()) {
         // We did not have type information to calculate a LUB (no returned
