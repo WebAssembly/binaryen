@@ -16,7 +16,6 @@
 
 #include "type-updating.h"
 #include "find_all.h"
-#include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "wasm-type.h"
