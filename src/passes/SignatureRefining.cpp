@@ -63,13 +63,15 @@ struct SignatureRefining : public Pass {
       return;
     }
 
-    // First, find all the calls and call_refs.
+    // First, find all the information we need. Start by collecting inside each
+    // function in parallel.
 
     struct Info {
+      // The calls and call_refs.
       std::vector<Call*> calls;
       std::vector<CallRef*> callRefs;
 
-      // The new refined type, or Type::none if no refinement was possible.
+      // A possibly improved LUB for the results.
       LUBFinder resultsLUB;
     };
 
@@ -104,7 +106,7 @@ struct SignatureRefining : public Pass {
       }
 
       // Add the function's return LUB to the one for the heap type of that
-      // function
+      // function.
       allInfo[func->type].resultsLUB.combine(info.resultsLUB);
     }
 
