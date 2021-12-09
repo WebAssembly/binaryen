@@ -496,7 +496,7 @@
   (type $struct (struct_subtype data))
 
   ;; This signature has a single function using it, which returns a more
-  ;; refined type.
+  ;; refined type, and we can refine to that.
   ;; CHECK:      (type $sig-can-refine (func_subtype (result (ref $struct)) func))
   (type $sig-can-refine (func_subtype (result anyref) func))
 
@@ -504,7 +504,7 @@
   ;; CHECK:      (type $sig-cannot-refine (func_subtype (result anyref) func))
   (type $sig-cannot-refine (func_subtype (result anyref) func))
 
-  ;; The single function never returns.
+  ;; The single function never returns, so no refinement is possible.
   ;; CHECK:      (type $sig-unreachable (func_subtype (result anyref) func))
   (type $sig-unreachable (func_subtype (result anyref) func))
 
