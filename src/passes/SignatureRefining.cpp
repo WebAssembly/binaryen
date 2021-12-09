@@ -110,6 +110,8 @@ struct SignatureRefining : public Pass {
       allInfo[func->type].resultsLUB.combine(info.resultsLUB);
     }
 
+    bool refinedResults = false;
+
     // Compute optimal LUBs.
     std::unordered_set<HeapType> seen;
     for (auto& func : module->functions) {
@@ -180,6 +182,7 @@ struct SignatureRefining : public Pass {
       }
       if (newResults != func->getResults()) {
         resultsLUB.updateNulls();
+        refinedResults = true;
 
         // Update the types of calls using the signature.
         for (auto* call : info.calls) {
@@ -244,10 +247,11 @@ struct SignatureRefining : public Pass {
 
     TypeRewriter(*module, *this).update();
 
-    // After return types change we need to propagate.
-    // TODO: we could do this only in relevant functions perhaps, and only if
-    //       we improved return types and not just params
-    ReFinalize().run(runner, module);
+    if (refinedResults) {
+      // After return types change we need to propagate.
+      // TODO: we could do this only in relevant functions perhaps
+      ReFinalize().run(runner, module);
+    }
   }
 };
 
