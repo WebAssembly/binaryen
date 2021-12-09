@@ -510,6 +510,8 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (elem declare func $func-can-refine)
+
   ;; CHECK:      (func $func-can-refine (type $sig-can-refine) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
@@ -539,6 +541,15 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref $struct))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (call_ref
+  ;; CHECK-NEXT:     (ref.func $func-can-refine)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
     ;; Add a call to see that we update call types properly.
@@ -548,6 +559,16 @@
       (if (result anyref)
         (i32.const 1)
         (call $func-can-refine)
+        (unreachable)
+      )
+    )
+    ;; The same with a call_ref.
+    (drop
+      (if (result anyref)
+        (i32.const 1)
+        (call_ref
+          (ref.func $func-can-refine)
+        )
         (unreachable)
       )
     )

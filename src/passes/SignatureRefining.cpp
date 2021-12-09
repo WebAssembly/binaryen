@@ -169,6 +169,8 @@ struct SignatureRefining : public Pass {
 
       // We found an improvement!
       newSignatures[type] = Signature(newParams, newResults);
+
+      // Update nulls as necessary, now that we are changing things.
       if (newParams != func->getParams()) {
         for (auto& lub : paramLUBs) {
           lub.updateNulls();
@@ -176,9 +178,16 @@ struct SignatureRefining : public Pass {
       }
       if (newResults != func->getResults()) {
         resultsLUB.updateNulls();
+
+        // Update the types of calls using the signature.
         for (auto* call : info.calls) {
           if (call->type != Type::unreachable) {
             call->type = newResults;
+          }
+        }
+        for (auto* callRef : info.callRefs) {
+          if (callRef->type != Type::unreachable) {
+            callRef->type = newResults;
           }
         }
       }
