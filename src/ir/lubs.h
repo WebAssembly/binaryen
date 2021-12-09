@@ -130,16 +130,10 @@ private:
 
 namespace LUB {
 
-// Given a list of functions and calls to them, find whether the return types of
-// the called functions can all be refined together. That is, we check if all
-// the called functions return a more specific type than they are declared as.
-// If so, this updates the functions to return that type, and returns that type.
-// If not, this returns Type::none.
+// Given a function, computes a LUB for its results. The caller can then decide
+// to apply a refined type if we found one.
 //
-// This assumes that the called functions have no other references to them, that
-// is, that it is safe to modify the function's signatures.
-//
-// This modifies the called functions even if it fails to find a refined type as
+// This modifies the called function even if it fails to find a refined type as
 // it does a refinalize in order to be able to compute the new types. We could
 // roll back that change, but it's not harmful and can help, so we keep it
 // regardless.
