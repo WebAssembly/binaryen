@@ -176,9 +176,11 @@ struct SignatureRefining : public Pass {
       }
       if (newResults != func->getResults()) {
         resultsLUB.updateNulls();
-        // TODO do we need to update calls? no, the heap type change in place
-        //      does that.
-        // TODO do we need to refinalize?
+        for (auto* call : info.calls) {
+          if (call->type != Type::unreachable) {
+            call->type = newResults;
+          }
+        }
       }
     }
 

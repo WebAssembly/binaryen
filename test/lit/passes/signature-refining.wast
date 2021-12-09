@@ -508,6 +508,8 @@
   ;; CHECK:      (type $sig-unreachable (func_subtype (result anyref) func))
   (type $sig-unreachable (func_subtype (result anyref) func))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (func $func-can-refine (type $sig-can-refine) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
@@ -527,6 +529,28 @@
   ;; CHECK-NEXT: )
   (func $func-unreachable (type $sig-unreachable) (result anyref)
     (unreachable)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref $struct))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (call $func-can-refine)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; Add a call to see that we update call types properly.
+    ;; Put the call in an if so the refinalize will update the if type and get
+    ;; printed out conveniently.
+    (drop
+      (if (result anyref)
+        (i32.const 1)
+        (call $func-can-refine)
+        (unreachable)
+      )
+    )
   )
 )
 
