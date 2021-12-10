@@ -463,6 +463,22 @@ struct OptimizeInstructions
                 break;
             }
           }
+          // i32(x) << 24 >> 24   ==>   i32.extend8_s(x)
+          // i32(x) << 16 >> 16   ==>   i32.extend16_s(x)
+          if (matches(curr,
+                      binary(ShrSInt32,
+                             binary(ShlInt32, any(&x), i32(&c1)),
+                             i32(&c2))) &&
+              Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
+            switch (32 - Bits::getEffectiveShifts(c1)) {
+              case 8:
+                return replaceCurrent(builder.makeUnary(ExtendS8Int32, x));
+              case 16:
+                return replaceCurrent(builder.makeUnary(ExtendS16Int32, x));
+              default:
+                break;
+            }
+          }
         }
       }
       {
