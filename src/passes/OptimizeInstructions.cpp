@@ -2512,16 +2512,27 @@ private:
       }
     }
     {
-      // (i32(x) < 0) & (i32(y) < 0)   ==>   i32(x & y) < 0
-      // (i64(x) < 0) & (i64(y) < 0)   ==>   i64(x & y) < 0
+      // Binary operations that preserve a bitwise AND can be
+      // reordered. If F(x) = binary(x, c), and F(x) preserves AND,
+      // that is,
+      //
+      //   F(x) & F(y) == F(x & y)
+      //
+      // Then also
+      //
+      //   binary(x, c) & binary(y, c)  =>  binary(x & y, c)
+      Binary *bx, *by;
       Expression *x, *y;
-      if (matches(curr->left, binary(LtS, any(&x), ival(0))) &&
-          matches(curr->right, binary(LtS, any(&y), ival(0))) &&
-          x->type == y->type) {
-        auto* inner = curr->left->cast<Binary>();
-        inner->left = Builder(*getModule())
-                        .makeBinary(Abstract::getBinary(x->type, And), x, y);
-        return inner;
+      Const *cx, *cy;
+      if (matches(curr,
+                  binary(AndInt32,
+                         binary(&bx, any(&x), ival(&cx)),
+                         binary(&by, any(&y), ival(&cy)))) &&
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          preserveAnd(bx)) {
+        bx->left = Builder(*getModule())
+                     .makeBinary(Abstract::getBinary(x->type, And), x, y);
+        return bx;
       }
     }
     return nullptr;
@@ -2607,6 +2618,28 @@ private:
 
     // (x < 0) | (y < 0)    ==>    (x | y) < 0
     // This effectively checks if x or y have the sign bit set.
+    if (matches(curr, binary(LtS, any(), ival(0)))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Check whether an operation preserves the And operation through it, that is,
+  //
+  //   F(x & y) = F(x) & F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the & operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool preserveAnd(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x < 0) & (y < 0)   ==>   (x & y) < 0
     if (matches(curr, binary(LtS, any(), ival(0)))) {
       return true;
     }
