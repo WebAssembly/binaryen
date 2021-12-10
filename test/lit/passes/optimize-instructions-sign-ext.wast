@@ -63,6 +63,9 @@
     (drop (i64.extend_i32_s (i32.wrap_i64 (local.get $x))))
   )
 
+  ;; i32(x) << 24 >> 24   ==>   i32.extend8_s(x)
+  ;; i32(x) << 16 >> 16   ==>   i32.extend16_s(x)
+
   ;; CHECK:      (func $i32-sign-extentions (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.extend8_s
