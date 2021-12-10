@@ -282,9 +282,6 @@ struct Precompute
     }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (flow.getType().hasVector()) {
-      return;
-    }
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
