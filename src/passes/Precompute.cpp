@@ -271,15 +271,6 @@ struct Precompute
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
-    // To optimise for size, we avoid expanding small constants into larger ones
-    // like i32x4.splat(1) -> v128.const i32x4 1 1 1 1
-    if (curr->type.isVector() && getPassOptions().shrinkLevel != 0) {
-      if (auto* unary = curr->dynCast<Unary>()) {
-        if (!unary->value->type.isVector()) {
-          return;
-        }
-      }
-    }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
     if (!canEmitConstantFor(flow.values)) {
