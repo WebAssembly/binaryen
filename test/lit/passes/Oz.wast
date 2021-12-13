@@ -9,9 +9,9 @@
 
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
-
   ;; CHECK:      (type $none_=>_v128 (func (result v128)))
+
+  ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
 
   ;; CHECK:      (memory $0 100 100)
 
@@ -36,6 +36,8 @@
   ;; CHECK:      (export "eliminate-redundant-checks-skip-2" (func $14))
 
   ;; CHECK:      (export "no-precompute-simd" (func $no-precompute-simd))
+
+  ;; CHECK:      (export "precompute-simd" (func $precompute-simd))
 
   ;; CHECK:      (func $basics (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
@@ -283,6 +285,17 @@
   (func $no-precompute-simd (export "no-precompute-simd") (result v128)
     (i32x4.splat
       (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $precompute-simd (; has Stack IR ;) (result v128)
+  ;; CHECK-NEXT:  (i64x2.splat
+  ;; CHECK-NEXT:   (i64.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-precompute-simd-nested (export "no-precompute-simd-nested") (result v128)
+    (i64x2.splat
+      (i64.add (i64.const 1) (i64.const 2))
     )
   )
 )
