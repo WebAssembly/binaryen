@@ -291,7 +291,7 @@ struct DAE : public Pass {
     // Scan all the functions.
     scanner.run(runner, module);
     // Combine all the info.
-    std::unordered_map<Name, std::vector<Call*>> allCalls;
+    std::map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
     for (auto& [_, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
