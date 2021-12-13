@@ -4,18 +4,27 @@
 ;; RUN: foreach %s %t wasm-opt -O3 --all-features -S -o - | filecheck %s
 
 (module
-  (memory $0 1 1)
   ;; CHECK:      (type $none_=>_v128 (func (result v128)))
 
   ;; CHECK:      (export "splat_i32x4" (func $splat_i32x4))
-  (export "splat_i32x4" (func $splat_i32x4))
+
+  ;; CHECK:      (export "splat_i64x2_nested" (func $splat_i64x2_nested))
 
   ;; CHECK:      (func $splat_i32x4 (; has Stack IR ;) (result v128)
   ;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   ;; CHECK-NEXT: )
-  (func $splat_i32x4 (result v128)
+  (func $splat_i32x4 (export "splat_i32x4") (result v128)
     (i32x4.splat
       (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $splat_i64x2_nested (; has Stack IR ;) (result v128)
+  ;; CHECK-NEXT:  (v128.const i32x4 0x00000003 0x00000000 0x00000003 0x00000000)
+  ;; CHECK-NEXT: )
+  (func $splat_i64x2_nested (export "splat_i64x2_nested") (result v128)
+    (i64x2.splat
+      (i64.add (i64.const 1) (i64.const 2))
     )
   )
 )
