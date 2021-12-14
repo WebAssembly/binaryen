@@ -2894,24 +2894,6 @@ struct Locations : TypeGraphWalker<Locations> {
   }
 };
 
-void globallyCanonicalizeTypes(Locations& locations) {
-  // Canonicalize non-tuple Types (which never directly refer to other Types)
-  // before tuple Types to avoid canonicalizing a tuple that still contains
-  // non-canonical Types.
-  auto canonicalizeTypes = [&](bool tuples) {
-    for (auto& [original, uses] : locations.types) {
-      if (original.isTuple() == tuples) {
-        Type canonical = globalTypeStore.insert(*getTypeInfo(original));
-        for (Type* use : uses) {
-          *use = canonical;
-        }
-      }
-    }
-  };
-  canonicalizeTypes(false);
-  canonicalizeTypes(true);
-}
-
 // Replaces temporary types and heap types in a type definition graph with their
 // globally canonical versions to prevent temporary types or heap type from
 // leaking into the global stores.
@@ -2974,7 +2956,21 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
     }
   }
 
-  globallyCanonicalizeTypes(locations);
+  // Canonicalize non-tuple Types (which never directly refer to other Types)
+  // before tuple Types to avoid canonicalizing a tuple that still contains
+  // non-canonical Types.
+  auto canonicalizeTypes = [&](bool tuples) {
+    for (auto& [original, uses] : locations.types) {
+      if (original.isTuple() == tuples) {
+        Type canonical = globalTypeStore.insert(*getTypeInfo(original));
+        for (Type* use : uses) {
+          *use = canonical;
+        }
+      }
+    }
+  };
+  canonicalizeTypes(false);
+  canonicalizeTypes(true);
 
 #if TRACE_CANONICALIZATION
   std::cerr << "Final Types:\n";
@@ -3110,23 +3106,8 @@ buildNominal(std::vector<std::unique_ptr<HeapTypeInfo>> infos) {
   auto start = std::chrono::steady_clock::now();
 #endif
 
-  // Move the HeapTypes and the Types they reach to the global stores. First
-  // copy reachable temporary types into the global type store and replace their
-  // uses in the HeapTypeInfos. Then move all the HeapTypeInfos into the global
-  // store. We have to copy types first because correctly hashing the
-  // HeapTypeInfos depends on them reaching only canonical types. That also
-  // means we can't reuse `globallyCanonicalize` here.
-  Locations locations;
-  for (auto& info : infos) {
-    HeapType root = asHeapType(info);
-    locations.walkRoot(&root);
-  }
-  globallyCanonicalizeTypes(locations);
-
-  std::vector<HeapType> heapTypes;
-  for (auto& info : infos) {
-    heapTypes.push_back(globalHeapTypeStore.insert(std::move(info)));
-  }
+  // Move the HeapTypes and the Types they reach to the global stores.
+  std::vector<HeapType> heapTypes = globallyCanonicalize(infos);
 
 #if TIME_CANONICALIZATION
   auto afterMove = std::chrono::steady_clock::now();
