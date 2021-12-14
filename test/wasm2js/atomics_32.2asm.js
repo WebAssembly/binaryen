@@ -34,7 +34,7 @@ memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29y
     if (timeoutHigh >= 0) {
       // Convert from nanoseconds to milliseconds
       // Taken from convertI32PairToI53 in emscripten's library_int53.js
-      timeout = ((timeoutLow / 1e6) >>> 0) + timeoutHigh * (4294967296 / 1e6);
+      timeout = ((timeoutLow >>> 0) / 1e6) + timeoutHigh * (4294967296 / 1e6);
     }
     var view = new Int32Array(bufferView.buffer); // TODO cache
     var result = Atomics.wait(view, ptr >> 2, expected, timeout);
