@@ -630,32 +630,7 @@ HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
-  if (isNominal != other.isNominal) {
-    return false;
-  }
-
-  // Structural HeapTypeInfos with the same shape are considered equivalent.
-  // This is important during global canonicalization, when newly created
-  // canonically-shaped graphs are checked against the existing globally
-  // canonical graphs.
-  if (!isNominal && typeSystem == TypeSystem::Equirecursive) {
-    return FiniteShapeEquator().eq(*this, other);
-  }
-
-  if (kind != other.kind) {
-    return false;
-  }
-  switch (kind) {
-    case wasm::HeapTypeInfo::BasicKind:
-      return basic == other.basic;
-    case wasm::HeapTypeInfo::SignatureKind:
-      return signature == other.signature;
-    case wasm::HeapTypeInfo::StructKind:
-      return struct_ == other.struct_;
-    case wasm::HeapTypeInfo::ArrayKind:
-      return array == other.array;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+  return FiniteShapeEquator().eq(*this, other);
 }
 
 template<typename Info> struct Store {
@@ -1976,7 +1951,7 @@ size_t FiniteShapeHasher::hash(const TypeInfo& info) {
 
 size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
   size_t digest = wasm::hash(info.isNominal);
-  if (info.isNominal) {
+  if (info.isNominal || getTypeSystem() == TypeSystem::Nominal) {
     rehash(digest, uintptr_t(&info));
     return digest;
   }
@@ -2100,7 +2075,7 @@ bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
 bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
   if (a.isNominal != b.isNominal) {
     return false;
-  } else if (a.isNominal) {
+  } else if (a.isNominal || getTypeSystem() == TypeSystem::Nominal) {
     return &a == &b;
   }
   if (a.isFinalized != b.isFinalized) {
@@ -3367,25 +3342,7 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
 
 size_t
 hash<wasm::HeapTypeInfo>::operator()(const wasm::HeapTypeInfo& info) const {
-  if (wasm::typeSystem == wasm::TypeSystem::Equirecursive) {
-    return wasm::FiniteShapeHasher().hash(info);
-  }
-
-  auto digest = wasm::hash(info.kind);
-  switch (info.kind) {
-    case wasm::HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
-    case wasm::HeapTypeInfo::SignatureKind:
-      wasm::rehash(digest, info.signature);
-      return digest;
-    case wasm::HeapTypeInfo::StructKind:
-      wasm::rehash(digest, info.struct_);
-      return digest;
-    case wasm::HeapTypeInfo::ArrayKind:
-      wasm::rehash(digest, info.array);
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+  return wasm::FiniteShapeHasher().hash(info);
 }
 
 } // namespace std
