@@ -25,8 +25,6 @@
 // so while considering all users of the type (across all functions sharing that
 // type, and all call_refs using it).
 //
-// TODO: optimize results too and not just params.
-//
 
 #include "ir/find_all.h"
 #include "ir/lubs.h"
