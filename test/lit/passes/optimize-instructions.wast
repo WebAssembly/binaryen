@@ -11119,6 +11119,38 @@
       (i32.lt_s (local.get $y) (i32.const 0))
     ))
   )
+  ;; CHECK:      (func $optimize-combined-by-and-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.lt_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-and-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) < 0) & (i32(y) < 0)   ==>   i32(x & y) < 0
+    (drop (i32.and
+      (i32.lt_s (local.get $x) (i32.const 0))
+      (i32.lt_s (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) < 0) & (i64(y) < 0)   ==>   i64(x & y) < 0
+    (drop (i32.and
+      (i64.lt_s (local.get $a) (i64.const 0))
+      (i64.lt_s (local.get $b) (i64.const 0))
+    ))
+  )
   ;; CHECK:      (func $optimize-relationals (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
