@@ -58,6 +58,7 @@ struct Fuzzer {
     }
 
     checkSubtypes(types, generator.subtypeIndices);
+    checkLUBs(types);
   }
 
   void printTypes(const std::vector<HeapType>& types) {
@@ -76,6 +77,58 @@ struct Fuzzer {
                   << super << " but is not!\n"
                   << sub << ": " << types[sub] << "\n"
                   << super << ": " << types[super] << "\n";
+        }
+      }
+    }
+  }
+
+  void checkLUBs(const std::vector<HeapType>& types) {
+    // For each unordered pair of types...
+    for (size_t i = 0; i < types.size(); ++i) {
+      for (size_t j = i; j < types.size(); ++j) {
+        HeapType a = types[i], b = types[j];
+        // Check that their LUB is stable when calculated multiple times and in
+        // reverse order.
+        HeapType lub = HeapType::getLeastUpperBound(a, b);
+        if (lub != HeapType::getLeastUpperBound(b, a) ||
+            lub != HeapType::getLeastUpperBound(a, b)) {
+          Fatal() << "Could not calculate a stable LUB of HeapTypes " << i
+                  << " and " << j << "!\n"
+                  << i << ": " << a << "\n"
+                  << j << ": " << b << "\n";
+        }
+        // Check that each type is a subtype of the LUB.
+        if (!HeapType::isSubType(a, lub)) {
+          Fatal() << "HeapType " << i
+                  << " is not a subtype of its LUB with HeapType " << j << "!\n"
+                  << i << ": " << a << "\n"
+                  << j << ": " << b << "\n"
+                  << "lub: " << lub << "\n";
+        }
+        if (!HeapType::isSubType(b, lub)) {
+          Fatal() << "HeapType " << j
+                  << " is not a subtype of its LUB with HeapType " << i << "!\n"
+                  << i << ": " << a << "\n"
+                  << j << ": " << b << "\n"
+                  << "lub: " << lub << "\n";
+        }
+        // Check that the LUB of each type and the original LUB is still the
+        // original LUB.
+        if (lub != HeapType::getLeastUpperBound(a, lub)) {
+          Fatal() << "The LUB of HeapType " << i << " and HeapType " << j
+                  << " should be the LUB of itself and HeapType " << i
+                  << ", but it is not!\n"
+                  << i << ": " << a << "\n"
+                  << j << ": " << b << "\n"
+                  << "lub: " << lub << "\n";
+        }
+        if (lub != HeapType::getLeastUpperBound(lub, b)) {
+          Fatal() << "The LUB of HeapType " << i << " and HeapType " << j
+                  << " should be the LUB of itself and HeapType " << j
+                  << ", but it is not!\n"
+                  << i << ": " << a << "\n"
+                  << j << ": " << b << "\n"
+                  << "lub: " << lub << "\n";
         }
       }
     }

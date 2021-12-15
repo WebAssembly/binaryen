@@ -169,23 +169,24 @@ struct TypeBounder {
 
   bool hasLeastUpperBound(Type a, Type b);
   Type getLeastUpperBound(Type a, Type b);
+  HeapType getLeastUpperBound(HeapType a, HeapType b);
 
 private:
-  // Return true and set `out` to be the LUB iff a LUB was found. The HeapType
-  // and Struct overloads are exceptional because they are infallible;
-  // HeapType::any is an upper bound of all HeapTypes and the empty struct is an
-  // upper bound of all struct types. Note that these methods can return
-  // temporary types, so they should never be used directly.
-  bool lub(Type a, Type b, Type& out);
+  // Return the LUB iff a LUB was found. The HeapType and Struct overloads are
+  // exceptional because they are infallible; HeapType::any is an upper bound of
+  // all HeapTypes and the empty struct is an upper bound of all struct types.
+  // Note that these methods can return temporary types, so they should never be
+  // used directly.
+  std::optional<Type> lub(Type a, Type b);
   HeapType lub(HeapType a, HeapType b);
   HeapType::BasicHeapType lub(HeapType::BasicHeapType a,
                               HeapType::BasicHeapType b);
-  bool lub(const Tuple& a, const Tuple& b, Tuple& out);
-  bool lub(const Field& a, const Field& b, Field& out);
-  bool lub(const Signature& a, const Signature& b, Signature& out);
+  std::optional<Tuple> lub(const Tuple& a, const Tuple& b);
+  std::optional<Field> lub(const Field& a, const Field& b);
+  std::optional<Signature> lub(const Signature& a, const Signature& b);
   Struct lub(const Struct& a, const Struct& b);
-  bool lub(const Array& a, const Array& b, Array& out);
-  bool lub(const Rtt& a, const Rtt& b, Rtt& out);
+  std::optional<Array> lub(const Array& a, const Array& b);
+  std::optional<Rtt> lub(const Rtt& a, const Rtt& b);
 };
 
 // Helper for printing types without infinitely recursing on recursive types.
@@ -1227,6 +1228,10 @@ std::vector<HeapType> HeapType::getHeapTypeChildren() {
   return collector.children;
 }
 
+HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
+  return TypeBounder().getLeastUpperBound(a, b);
+}
+
 template<typename T> static std::string genericToString(const T& t) {
   std::ostringstream ss;
   ss << t;
@@ -1415,66 +1420,71 @@ bool SubTyper::isSubType(const Rtt& a, const Rtt& b) {
   return a.heapType == b.heapType && a.hasDepth() && !b.hasDepth();
 }
 
-bool TypeBounder::hasLeastUpperBound(Type a, Type b) {
-  Type tempLUB;
-  return lub(a, b, tempLUB);
-}
+bool TypeBounder::hasLeastUpperBound(Type a, Type b) { return bool(lub(a, b)); }
 
 Type TypeBounder::getLeastUpperBound(Type a, Type b) {
-  Type tempLUB;
-  if (!lub(a, b, tempLUB)) {
+  auto tempLUB = lub(a, b);
+  if (!tempLUB) {
     return Type::none;
   }
-  if (!isTemp(tempLUB)) {
+  if (!isTemp(*tempLUB)) {
     // The LUB is already canonical, so we're done.
-    return tempLUB;
+    return *tempLUB;
   }
-  // `tempLUB` is a temporary type owned by `builder`. Since
-  // TypeBuilder::build returns HeapTypes rather than Types, create a new
-  // HeapType definition meant only to get `tempLUB` canonicalized in a known
-  // location. The use of an Array is arbitrary; it might as well have been a
-  // Struct.
+  // `tempLUB` is a temporary type owned by `builder`. Since TypeBuilder::build
+  // returns HeapTypes rather than Types, create a new HeapType definition meant
+  // only to get `tempLUB` canonicalized in a known location. The use of an
+  // Array is arbitrary; it might as well have been a Struct.
   builder.grow(1);
-  builder[builder.size() - 1] = Array(Field(tempLUB, Mutable));
+  builder[builder.size() - 1] = Array(Field(*tempLUB, Mutable));
   std::vector<HeapType> built = builder.build();
   return built.back().getArray().element.type;
 }
 
-bool TypeBounder::lub(Type a, Type b, Type& out) {
+HeapType TypeBounder::getLeastUpperBound(HeapType a, HeapType b) {
+  HeapType l = lub(a, b);
+  if (!isTemp(l)) {
+    // The LUB is already canonical, so we're done.
+    return l;
+  }
+  // Find the index corresponding to the LUB.
+  size_t index = 0;
+  while (l != builder[index]) {
+    ++index;
+  }
+  // Canonicalize and return the LUB.
+  return builder.build()[index];
+}
+
+std::optional<Type> TypeBounder::lub(Type a, Type b) {
   if (a == b) {
-    out = a;
-    return true;
+    return a;
   }
   if (a == Type::unreachable) {
-    out = b;
-    return true;
+    return b;
   }
   if (b == Type::unreachable) {
-    out = a;
-    return true;
+    return a;
   }
   if (a.isTuple() && b.isTuple()) {
-    Tuple tuple;
-    if (!lub(a.getTuple(), b.getTuple(), tuple)) {
-      return false;
+    auto tuple = lub(a.getTuple(), b.getTuple());
+    if (!tuple) {
+      return {};
     }
-    out = builder.getTempTupleType(tuple);
-    return true;
+    return builder.getTempTupleType(*tuple);
   } else if (a.isRef() && b.isRef()) {
     auto nullability =
       (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
     HeapType heapType = lub(a.getHeapType(), b.getHeapType());
-    out = builder.getTempRefType(heapType, nullability);
-    return true;
+    return builder.getTempRefType(heapType, nullability);
   } else if (a.isRtt() && b.isRtt()) {
-    Rtt rtt(HeapType::any);
-    if (!lub(a.getRtt(), b.getRtt(), rtt)) {
-      return false;
+    auto rtt = lub(a.getRtt(), b.getRtt());
+    if (!rtt) {
+      return {};
     }
-    out = builder.getTempRttType(rtt);
-    return true;
+    return builder.getTempRttType(*rtt);
   }
-  return false;
+  return {};
 }
 
 HeapType TypeBounder::lub(HeapType a, HeapType b) {
@@ -1566,9 +1576,8 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
     case HeapTypeInfo::BasicKind:
       WASM_UNREACHABLE("unexpected kind");
     case HeapTypeInfo::SignatureKind: {
-      Signature sig;
-      if (lub(infoA->signature, infoB->signature, sig)) {
-        return builder[index] = sig;
+      if (auto sig = lub(infoA->signature, infoB->signature)) {
+        return builder[index] = *sig;
       } else {
         return builder[index] = HeapType::func;
       }
@@ -1577,9 +1586,8 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
       return builder[index] = lub(infoA->struct_, infoB->struct_);
     }
     case HeapTypeInfo::ArrayKind: {
-      Array array;
-      if (lub(infoA->array, infoB->array, array)) {
-        return builder[index] = array;
+      if (auto array = lub(infoA->array, infoB->array)) {
+        return builder[index] = *array;
       } else {
         return builder[index] = HeapType::data;
       }
@@ -1618,81 +1626,85 @@ HeapType::BasicHeapType TypeBounder::lub(HeapType::BasicHeapType a,
   WASM_UNREACHABLE("unexpected basic type");
 }
 
-bool TypeBounder::lub(const Tuple& a, const Tuple& b, Tuple& out) {
+std::optional<Tuple> TypeBounder::lub(const Tuple& a, const Tuple& b) {
   if (a.types.size() != b.types.size()) {
-    return false;
+    return {};
   }
-  out.types.resize(a.types.size());
+  Tuple result;
+  result.types.resize(a.types.size());
   for (size_t i = 0; i < a.types.size(); ++i) {
-    if (!lub(a.types[i], b.types[i], out.types[i])) {
-      return false;
+    if (auto type = lub(a.types[i], b.types[i])) {
+      result.types[i] = *type;
+    } else {
+      return {};
     }
   }
-  return true;
+  return result;
 }
 
-bool TypeBounder::lub(const Field& a, const Field& b, Field& out) {
+std::optional<Field> TypeBounder::lub(const Field& a, const Field& b) {
   if (a == b) {
-    out = a;
-    return true;
+    return a;
   }
   // Mutable fields are invariant, so they would have had to be the same.
   if (a.mutable_ == Mutable || b.mutable_ == Mutable) {
-    return false;
+    return {};
   }
   // Packed types must match.
   if (a.isPacked() != b.isPacked() ||
       (a.isPacked() && a.packedType != b.packedType)) {
-    return false;
+    return {};
   }
   // Either the packed types match or the types aren't packed.
   Type type;
-  if (lub(a.type, b.type, type)) {
-    out = a;
-    out.type = type;
-    return true;
+  if (auto type = lub(a.type, b.type)) {
+    Field result = a;
+    result.type = *type;
+    return result;
   } else {
-    return false;
+    return {};
   }
 }
 
-bool TypeBounder::lub(const Signature& a, const Signature& b, Signature& out) {
+std::optional<Signature> TypeBounder::lub(const Signature& a,
+                                          const Signature& b) {
   // TODO: Implement proper signature subtyping, covariant in results and
   // contravariant in params, once V8 implements it.
   if (a != b) {
-    return false;
+    return {};
   } else {
-    out = a;
-    return true;
+    return a;
   }
 }
 
 Struct TypeBounder::lub(const Struct& a, const Struct& b) {
-  Struct out;
+  Struct result;
   size_t numFields = std::min(a.fields.size(), b.fields.size());
   for (size_t i = 0; i < numFields; ++i) {
-    Field field;
-    if (lub(a.fields[i], b.fields[i], field)) {
-      out.fields.push_back(field);
+    if (auto field = lub(a.fields[i], b.fields[i])) {
+      result.fields.push_back(*field);
     } else {
       // Stop at the common prefix and ignore the rest.
       break;
     }
   }
-  return out;
+  return result;
 }
 
-bool TypeBounder::lub(const Array& a, const Array& b, Array& out) {
-  return lub(a.element, b.element, out.element);
+std::optional<Array> TypeBounder::lub(const Array& a, const Array& b) {
+  if (auto elem = lub(a.element, b.element)) {
+    return Array{*elem};
+  } else {
+    return {};
+  }
 }
 
-bool TypeBounder::lub(const Rtt& a, const Rtt& b, Rtt& out) {
+std::optional<Rtt> TypeBounder::lub(const Rtt& a, const Rtt& b) {
   if (a.heapType != b.heapType) {
-    return false;
+    return {};
   }
   uint32_t depth = (a.depth == b.depth) ? a.depth : Rtt::NoDepth;
-  out = Rtt(depth, a.heapType);
-  return true;
+  return Rtt(depth, a.heapType);
 }
 
 template<typename T, typename F>
