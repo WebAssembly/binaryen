@@ -128,6 +128,19 @@ private:
   std::unordered_set<RefNull*> nulls;
 };
 
+namespace LUB {
+
+// Given a function, computes a LUB for its results. The caller can then decide
+// to apply a refined type if we found one.
+//
+// This modifies the called function even if it fails to find a refined type as
+// it does a refinalize in order to be able to compute the new types. We could
+// roll back that change, but it's not harmful and can help, so we keep it
+// regardless.
+LUBFinder getResultsLUB(Function* func, Module& wasm);
+
+} // namespace LUB
+
 } // namespace wasm
 
 #endif // wasm_ir_lubs_h

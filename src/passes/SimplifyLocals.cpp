@@ -304,7 +304,7 @@ struct SimplifyLocals
     if (curr->is<Try>()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
-        if (info.effects.throws) {
+        if (info.effects.throws()) {
           invalidated.push_back(index);
         }
       }

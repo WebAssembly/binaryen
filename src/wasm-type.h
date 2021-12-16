@@ -420,6 +420,9 @@ public:
   // Return the ordered HeapType children, looking through child Types.
   std::vector<HeapType> getHeapTypeChildren();
 
+  // Return the LUB of two HeapTypes. The LUB always exists.
+  static HeapType getLeastUpperBound(HeapType a, HeapType b);
+
   std::string toString() const;
 };
 

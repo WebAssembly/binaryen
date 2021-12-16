@@ -84,11 +84,11 @@ struct TypeInfo {
 
   bool isNullable() const { return kind == RefKind && ref.nullable; }
 
-  // If this TypeInfo represents a Type that can be represented more simply, set
-  // `out` to be that simpler Type and return true. For example, this handles
-  // canonicalizing the TypeInfo representing (ref null any) into the BasicType
-  // anyref. It also handles eliminating singleton tuple types.
-  bool getCanonical(Type& out) const;
+  // If this TypeInfo represents a Type that can be represented more simply,
+  // return that simpler Type. For example, this handles canonicalizing the
+  // TypeInfo representing (ref null any) into the BasicType anyref. It also
+  // handles eliminating singleton tuple types.
+  std::optional<Type> getCanonical() const;
 
   bool operator==(const TypeInfo& other) const;
   bool operator!=(const TypeInfo& other) const { return !(*this == other); }
@@ -135,9 +135,9 @@ struct HeapTypeInfo {
   constexpr bool isData() const { return isStruct() || isArray(); }
 
   // If this HeapTypeInfo represents a HeapType that can be represented more
-  // simply, set `out` to be that simpler HeapType and return true. This handles
-  // turning BasicKind HeapTypes into their corresponding BasicHeapTypes.
-  bool getCanonical(HeapType& out) const;
+  // simply, return that simpler HeapType. This handles turning BasicKind
+  // HeapTypes into their corresponding BasicHeapTypes.
+  std::optional<HeapType> getCanonical() const;
 
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
@@ -169,23 +169,24 @@ struct TypeBounder {
 
   bool hasLeastUpperBound(Type a, Type b);
   Type getLeastUpperBound(Type a, Type b);
+  HeapType getLeastUpperBound(HeapType a, HeapType b);
 
 private:
-  // Return true and set `out` to be the LUB iff a LUB was found. The HeapType
-  // and Struct overloads are exceptional because they are infallible;
-  // HeapType::any is an upper bound of all HeapTypes and the empty struct is an
-  // upper bound of all struct types. Note that these methods can return
-  // temporary types, so they should never be used directly.
-  bool lub(Type a, Type b, Type& out);
+  // Return the LUB iff a LUB was found. The HeapType and Struct overloads are
+  // exceptional because they are infallible; HeapType::any is an upper bound of
+  // all HeapTypes and the empty struct is an upper bound of all struct types.
+  // Note that these methods can return temporary types, so they should never be
+  // used directly.
+  std::optional<Type> lub(Type a, Type b);
   HeapType lub(HeapType a, HeapType b);
   HeapType::BasicHeapType lub(HeapType::BasicHeapType a,
                               HeapType::BasicHeapType b);
-  bool lub(const Tuple& a, const Tuple& b, Tuple& out);
-  bool lub(const Field& a, const Field& b, Field& out);
-  bool lub(const Signature& a, const Signature& b, Signature& out);
+  std::optional<Tuple> lub(const Tuple& a, const Tuple& b);
+  std::optional<Field> lub(const Field& a, const Field& b);
+  std::optional<Signature> lub(const Signature& a, const Signature& b);
   Struct lub(const Struct& a, const Struct& b);
-  bool lub(const Array& a, const Array& b, Array& out);
-  bool lub(const Rtt& a, const Rtt& b, Rtt& out);
+  std::optional<Array> lub(const Array& a, const Array& b);
+  std::optional<Rtt> lub(const Rtt& a, const Rtt& b);
 };
 
 // Helper for printing types without infinitely recursing on recursive types.
@@ -468,20 +469,26 @@ bool isTemp(HeapType type) {
 // representation, return the equivalent type that is definitely backed by the
 // simplest possible representation.
 Type asCanonical(Type type) {
-  if (!type.isBasic()) {
-    getTypeInfo(type)->getCanonical(type);
+  if (type.isBasic()) {
+    return type;
+  } else if (auto canon = getTypeInfo(type)->getCanonical()) {
+    return *canon;
+  } else {
+    return type;
   }
-  return type;
 }
 
 // Given a HeapType that may or may not be backed by the simplest possible
 // representation, return the equivalent type that is definitely backed by the
 // simplest possible representation.
 HeapType asCanonical(HeapType type) {
-  if (!type.isBasic()) {
-    getHeapTypeInfo(type)->getCanonical(type);
+  if (type.isBasic()) {
+    return type;
+  } else if (auto canon = getHeapTypeInfo(type)->getCanonical()) {
+    return *canon;
+  } else {
+    return type;
   }
-  return type;
 }
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
@@ -515,15 +522,13 @@ TypeInfo::~TypeInfo() {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool TypeInfo::getCanonical(Type& out) const {
+std::optional<Type> TypeInfo::getCanonical() const {
   if (isTuple()) {
     if (tuple.types.size() == 0) {
-      out = Type::none;
-      return true;
+      return Type::none;
     }
     if (tuple.types.size() == 1) {
-      out = tuple.types[0];
-      return true;
+      return tuple.types[0];
     }
   }
   if (isRef()) {
@@ -532,34 +537,28 @@ bool TypeInfo::getCanonical(Type& out) const {
       if (ref.nullable) {
         switch (basic.getBasic()) {
           case HeapType::func:
-            out = Type::funcref;
-            return true;
+            return Type::funcref;
           case HeapType::ext:
-            out = Type::externref;
-            return true;
+            return Type::externref;
           case HeapType::any:
-            out = Type::anyref;
-            return true;
+            return Type::anyref;
           case HeapType::eq:
-            out = Type::eqref;
-            return true;
+            return Type::eqref;
           case HeapType::i31:
           case HeapType::data:
             break;
         }
       } else {
         if (basic == HeapType::i31) {
-          out = Type::i31ref;
-          return true;
+          return Type::i31ref;
         }
         if (basic == HeapType::data) {
-          out = Type::dataref;
-          return true;
+          return Type::dataref;
         }
       }
     }
   }
-  return false;
+  return {};
 }
 
 bool TypeInfo::operator==(const TypeInfo& other) const {
@@ -616,12 +615,11 @@ HeapTypeInfo::~HeapTypeInfo() {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool HeapTypeInfo::getCanonical(HeapType& out) const {
+std::optional<HeapType> HeapTypeInfo::getCanonical() const {
   if (isFinalized && kind == BasicKind) {
-    out = basic;
-    return true;
+    return basic;
   }
-  return false;
+  return {};
 }
 
 HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
@@ -633,32 +631,7 @@ HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
-  if (isNominal != other.isNominal) {
-    return false;
-  }
-
-  // Structural HeapTypeInfos with the same shape are considered equivalent.
-  // This is important during global canonicalization, when newly created
-  // canonically-shaped graphs are checked against the existing globally
-  // canonical graphs.
-  if (!isNominal && typeSystem == TypeSystem::Equirecursive) {
-    return FiniteShapeEquator().eq(*this, other);
-  }
-
-  if (kind != other.kind) {
-    return false;
-  }
-  switch (kind) {
-    case wasm::HeapTypeInfo::BasicKind:
-      return basic == other.basic;
-    case wasm::HeapTypeInfo::SignatureKind:
-      return signature == other.signature;
-    case wasm::HeapTypeInfo::StructKind:
-      return struct_ == other.struct_;
-    case wasm::HeapTypeInfo::ArrayKind:
-      return array == other.array;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+  return FiniteShapeEquator().eq(*this, other);
 }
 
 template<typename Info> struct Store {
@@ -674,19 +647,67 @@ template<typename Info> struct Store {
   bool isGlobalStore();
 #endif
 
-  typename Info::type_t insert(const Info& info);
-  typename Info::type_t insert(std::unique_ptr<Info>&& info);
+  typename Info::type_t insert(const Info& info) { return doInsert(info); }
+  typename Info::type_t insert(std::unique_ptr<Info>&& info) {
+    return doInsert(info);
+  }
   bool hasCanonical(const Info& info, typename Info::type_t& canonical);
 
 private:
-  TypeID doInsert(std::unique_ptr<Info>&& info);
+  template<typename Ref> typename Info::type_t doInsert(Ref& infoRef) {
+    const Info& info = [&]() {
+      if constexpr (std::is_same_v<Ref, const Info>) {
+        return infoRef;
+      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<Info>>) {
+        infoRef->isTemp = false;
+        return *infoRef;
+      }
+    }();
+
+    auto getPtr = [&]() -> std::unique_ptr<Info> {
+      if constexpr (std::is_same_v<Ref, const Info>) {
+        return std::make_unique<Info>(infoRef);
+      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<Info>>) {
+        return std::move(infoRef);
+      }
+    };
+
+    auto insertNew = [&]() {
+      assert((!isGlobalStore() || !info.isTemp) && "Leaking temporary type!");
+      auto ptr = getPtr();
+      TypeID id = uintptr_t(ptr.get());
+      assert(id > Info::type_t::_last_basic_type);
+      typeIDs.insert({*ptr, id});
+      constructedTypes.emplace_back(std::move(ptr));
+      return typename Info::type_t(id);
+    };
+
+    // Turn e.g. (ref null any) into anyref.
+    if (auto canonical = info.getCanonical()) {
+      return *canonical;
+    }
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    // Nominal HeapTypes are always unique, so don't bother deduplicating them.
+    if constexpr (std::is_same_v<Info, HeapTypeInfo>) {
+      if (info.isNominal || typeSystem == TypeSystem::Nominal) {
+        return insertNew();
+      }
+    }
+    // Check whether we already have a type for this structural Info.
+    auto indexIt = typeIDs.find(std::cref(info));
+    if (indexIt != typeIDs.end()) {
+      return typename Info::type_t(indexIt->second);
+    }
+    // We do not have a type for this Info already. Create one.
+    return insertNew();
+  }
 };
 
 using TypeStore = Store<TypeInfo>;
 using HeapTypeStore = Store<HeapTypeInfo>;
 
-TypeStore globalTypeStore;
-HeapTypeStore globalHeapTypeStore;
+static TypeStore globalTypeStore;
+static HeapTypeStore globalHeapTypeStore;
 
 // Specialized to simplify programming generically over Types and HeapTypes.
 template<typename T> struct MetaTypeInfo {};
@@ -711,64 +732,31 @@ template<typename Info> bool Store<Info>::isGlobalStore() {
 }
 #endif
 
-template<typename Info>
-typename Info::type_t Store<Info>::insert(const Info& info) {
-  typename Info::type_t canonical;
-  if (info.getCanonical(canonical)) {
-    return canonical;
-  }
-  std::lock_guard<std::recursive_mutex> lock(mutex);
-  // Only HeapTypes in Nominal mode should be unconditionally added. In all
-  // other cases, deduplicate with existing types.
-  if (std::is_same<Info, TypeInfo>::value ||
-      typeSystem == TypeSystem::Equirecursive) {
-    auto indexIt = typeIDs.find(std::cref(info));
-    if (indexIt != typeIDs.end()) {
-      return typename Info::type_t(indexIt->second);
+// Cache canonical nominal signature types. See comment in
+// `HeapType::HeapType(Signature)`.
+struct SignatureTypeCache {
+  std::unordered_map<Signature, HeapType> cache;
+  std::mutex mutex;
+
+  HeapType getType(Signature sig) {
+    std::lock_guard<std::mutex> lock(mutex);
+    // Try inserting a placeholder type, then replace it with a real type if we
+    // don't already have a canonical type for this signature.
+    auto [entry, inserted] = cache.insert({sig, {}});
+    auto& [_, type] = *entry;
+    if (inserted) {
+      type = globalHeapTypeStore.insert(sig);
     }
+    return type;
   }
-  return typename Info::type_t(doInsert(std::make_unique<Info>(info)));
-}
 
-template<typename Info>
-typename Info::type_t Store<Info>::insert(std::unique_ptr<Info>&& info) {
-  typename Info::type_t canonical;
-  if (info->getCanonical(canonical)) {
-    return canonical;
+  void insertType(HeapType type) {
+    std::lock_guard<std::mutex> lock(mutex);
+    cache.insert({type.getSignature(), type});
   }
-  std::lock_guard<std::recursive_mutex> lock(mutex);
-  // Only HeapTypes in Nominal mode should be unconditionally added. In all
-  // other cases, deduplicate with existing types.
-  if (std::is_same<Info, TypeInfo>::value ||
-      typeSystem == TypeSystem::Equirecursive) {
-    auto indexIt = typeIDs.find(std::cref(*info));
-    if (indexIt != typeIDs.end()) {
-      return typename Info::type_t(indexIt->second);
-    }
-  }
-  info->isTemp = false;
-  return typename Info::type_t(doInsert(std::move(info)));
-}
+};
 
-template<typename Info>
-bool Store<Info>::hasCanonical(const Info& info, typename Info::type_t& out) {
-  auto indexIt = typeIDs.find(std::cref(info));
-  if (indexIt != typeIDs.end()) {
-    out = typename Info::type_t(indexIt->second);
-    return true;
-  }
-  return false;
-}
-
-template<typename Info>
-TypeID Store<Info>::doInsert(std::unique_ptr<Info>&& info) {
-  assert((!isGlobalStore() || !info->isTemp) && "Leaking temporary type!");
-  TypeID id = uintptr_t(info.get());
-  assert(id > Info::type_t::_last_basic_type);
-  typeIDs.insert({*info, id});
-  constructedTypes.emplace_back(std::move(info));
-  return id;
-}
+static SignatureTypeCache nominalSignatureCache;
 
 } // anonymous namespace
 
@@ -1109,10 +1097,16 @@ const Type& Type::operator[](size_t index) const {
 HeapType::HeapType(Signature sig) {
   assert(!isTemp(sig.params) && "Leaking temporary type!");
   assert(!isTemp(sig.results) && "Leaking temporary type!");
-  HeapType canonical;
-  if (typeSystem == TypeSystem::Nominal &&
-      globalHeapTypeStore.hasCanonical(sig, canonical)) {
-    new (this) HeapType(canonical);
+  if (typeSystem == TypeSystem::Nominal) {
+    // Special case the creation of signature types in nominal mode to return a
+    // "canonical" type for the signature, which happens to be the first one
+    // created. We depend on being able to create new function signatures in
+    // many places, and historically they have always been structural, so
+    // creating a copy of an existing signature did not result in any code bloat
+    // or semantic changes. To avoid regressions or significant changes of
+    // behavior in nominal mode, we cache the canonical heap types for each
+    // signature to emulate structural behavior.
+    new (this) HeapType(nominalSignatureCache.getType(sig));
   } else {
     new (this) HeapType(globalHeapTypeStore.insert(sig));
   }
@@ -1232,6 +1226,10 @@ std::vector<HeapType> HeapType::getHeapTypeChildren() {
   HeapTypeChildCollector collector;
   collector.walkRoot(this);
   return collector.children;
+}
+
+HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
+  return TypeBounder().getLeastUpperBound(a, b);
 }
 
 template<typename T> static std::string genericToString(const T& t) {
@@ -1422,66 +1420,71 @@ bool SubTyper::isSubType(const Rtt& a, const Rtt& b) {
   return a.heapType == b.heapType && a.hasDepth() && !b.hasDepth();
 }
 
-bool TypeBounder::hasLeastUpperBound(Type a, Type b) {
-  Type tempLUB;
-  return lub(a, b, tempLUB);
-}
+bool TypeBounder::hasLeastUpperBound(Type a, Type b) { return bool(lub(a, b)); }
 
 Type TypeBounder::getLeastUpperBound(Type a, Type b) {
-  Type tempLUB;
-  if (!lub(a, b, tempLUB)) {
+  auto tempLUB = lub(a, b);
+  if (!tempLUB) {
     return Type::none;
   }
-  if (!isTemp(tempLUB)) {
+  if (!isTemp(*tempLUB)) {
     // The LUB is already canonical, so we're done.
-    return tempLUB;
+    return *tempLUB;
   }
-  // `tempLUB` is a temporary type owned by `builder`. Since
-  // TypeBuilder::build returns HeapTypes rather than Types, create a new
-  // HeapType definition meant only to get `tempLUB` canonicalized in a known
-  // location. The use of an Array is arbitrary; it might as well have been a
-  // Struct.
+  // `tempLUB` is a temporary type owned by `builder`. Since TypeBuilder::build
+  // returns HeapTypes rather than Types, create a new HeapType definition meant
+  // only to get `tempLUB` canonicalized in a known location. The use of an
+  // Array is arbitrary; it might as well have been a Struct.
   builder.grow(1);
-  builder[builder.size() - 1] = Array(Field(tempLUB, Mutable));
+  builder[builder.size() - 1] = Array(Field(*tempLUB, Mutable));
   std::vector<HeapType> built = builder.build();
   return built.back().getArray().element.type;
 }
 
-bool TypeBounder::lub(Type a, Type b, Type& out) {
+HeapType TypeBounder::getLeastUpperBound(HeapType a, HeapType b) {
+  HeapType l = lub(a, b);
+  if (!isTemp(l)) {
+    // The LUB is already canonical, so we're done.
+    return l;
+  }
+  // Find the index corresponding to the LUB.
+  size_t index = 0;
+  while (l != builder[index]) {
+    ++index;
+  }
+  // Canonicalize and return the LUB.
+  return builder.build()[index];
+}
+
+std::optional<Type> TypeBounder::lub(Type a, Type b) {
   if (a == b) {
-    out = a;
-    return true;
+    return a;
   }
   if (a == Type::unreachable) {
-    out = b;
-    return true;
+    return b;
   }
   if (b == Type::unreachable) {
-    out = a;
-    return true;
+    return a;
   }
   if (a.isTuple() && b.isTuple()) {
-    Tuple tuple;
-    if (!lub(a.getTuple(), b.getTuple(), tuple)) {
-      return false;
+    auto tuple = lub(a.getTuple(), b.getTuple());
+    if (!tuple) {
+      return {};
     }
-    out = builder.getTempTupleType(tuple);
-    return true;
+    return builder.getTempTupleType(*tuple);
   } else if (a.isRef() && b.isRef()) {
     auto nullability =
       (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
     HeapType heapType = lub(a.getHeapType(), b.getHeapType());
-    out = builder.getTempRefType(heapType, nullability);
-    return true;
+    return builder.getTempRefType(heapType, nullability);
   } else if (a.isRtt() && b.isRtt()) {
-    Rtt rtt(HeapType::any);
-    if (!lub(a.getRtt(), b.getRtt(), rtt)) {
-      return false;
+    auto rtt = lub(a.getRtt(), b.getRtt());
+    if (!rtt) {
+      return {};
     }
-    out = builder.getTempRttType(rtt);
-    return true;
+    return builder.getTempRttType(*rtt);
   }
-  return false;
+  return {};
 }
 
 HeapType TypeBounder::lub(HeapType a, HeapType b) {
@@ -1573,9 +1576,8 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
     case HeapTypeInfo::BasicKind:
       WASM_UNREACHABLE("unexpected kind");
     case HeapTypeInfo::SignatureKind: {
-      Signature sig;
-      if (lub(infoA->signature, infoB->signature, sig)) {
-        return builder[index] = sig;
+      if (auto sig = lub(infoA->signature, infoB->signature)) {
+        return builder[index] = *sig;
       } else {
         return builder[index] = HeapType::func;
       }
@@ -1584,9 +1586,8 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
       return builder[index] = lub(infoA->struct_, infoB->struct_);
     }
     case HeapTypeInfo::ArrayKind: {
-      Array array;
-      if (lub(infoA->array, infoB->array, array)) {
-        return builder[index] = array;
+      if (auto array = lub(infoA->array, infoB->array)) {
+        return builder[index] = *array;
       } else {
         return builder[index] = HeapType::data;
       }
@@ -1625,81 +1626,85 @@ HeapType::BasicHeapType TypeBounder::lub(HeapType::BasicHeapType a,
   WASM_UNREACHABLE("unexpected basic type");
 }
 
-bool TypeBounder::lub(const Tuple& a, const Tuple& b, Tuple& out) {
+std::optional<Tuple> TypeBounder::lub(const Tuple& a, const Tuple& b) {
   if (a.types.size() != b.types.size()) {
-    return false;
+    return {};
   }
-  out.types.resize(a.types.size());
+  Tuple result;
+  result.types.resize(a.types.size());
   for (size_t i = 0; i < a.types.size(); ++i) {
-    if (!lub(a.types[i], b.types[i], out.types[i])) {
-      return false;
+    if (auto type = lub(a.types[i], b.types[i])) {
+      result.types[i] = *type;
+    } else {
+      return {};
     }
   }
-  return true;
+  return result;
 }
 
-bool TypeBounder::lub(const Field& a, const Field& b, Field& out) {
+std::optional<Field> TypeBounder::lub(const Field& a, const Field& b) {
   if (a == b) {
-    out = a;
-    return true;
+    return a;
   }
   // Mutable fields are invariant, so they would have had to be the same.
   if (a.mutable_ == Mutable || b.mutable_ == Mutable) {
-    return false;
+    return {};
   }
   // Packed types must match.
   if (a.isPacked() != b.isPacked() ||
       (a.isPacked() && a.packedType != b.packedType)) {
-    return false;
+    return {};
   }
   // Either the packed types match or the types aren't packed.
   Type type;
-  if (lub(a.type, b.type, type)) {
-    out = a;
-    out.type = type;
-    return true;
+  if (auto type = lub(a.type, b.type)) {
+    Field result = a;
+    result.type = *type;
+    return result;
   } else {
-    return false;
+    return {};
   }
 }
 
-bool TypeBounder::lub(const Signature& a, const Signature& b, Signature& out) {
+std::optional<Signature> TypeBounder::lub(const Signature& a,
+                                          const Signature& b) {
   // TODO: Implement proper signature subtyping, covariant in results and
   // contravariant in params, once V8 implements it.
   if (a != b) {
-    return false;
+    return {};
   } else {
-    out = a;
-    return true;
+    return a;
   }
 }
 
 Struct TypeBounder::lub(const Struct& a, const Struct& b) {
-  Struct out;
+  Struct result;
   size_t numFields = std::min(a.fields.size(), b.fields.size());
   for (size_t i = 0; i < numFields; ++i) {
-    Field field;
-    if (lub(a.fields[i], b.fields[i], field)) {
-      out.fields.push_back(field);
+    if (auto field = lub(a.fields[i], b.fields[i])) {
+      result.fields.push_back(*field);
     } else {
       // Stop at the common prefix and ignore the rest.
       break;
     }
   }
-  return out;
+  return result;
 }
 
-bool TypeBounder::lub(const Array& a, const Array& b, Array& out) {
-  return lub(a.element, b.element, out.element);
+std::optional<Array> TypeBounder::lub(const Array& a, const Array& b) {
+  if (auto elem = lub(a.element, b.element)) {
+    return Array{*elem};
+  } else {
+    return {};
+  }
 }
 
-bool TypeBounder::lub(const Rtt& a, const Rtt& b, Rtt& out) {
+std::optional<Rtt> TypeBounder::lub(const Rtt& a, const Rtt& b) {
   if (a.heapType != b.heapType) {
-    return false;
+    return {};
   }
   uint32_t depth = (a.depth == b.depth) ? a.depth : Rtt::NoDepth;
-  out = Rtt(depth, a.heapType);
-  return true;
+  return Rtt(depth, a.heapType);
 }
 
 template<typename T, typename F>
@@ -1958,7 +1963,7 @@ size_t FiniteShapeHasher::hash(const TypeInfo& info) {
 
 size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
   size_t digest = wasm::hash(info.isNominal);
-  if (info.isNominal) {
+  if (info.isNominal || getTypeSystem() == TypeSystem::Nominal) {
     rehash(digest, uintptr_t(&info));
     return digest;
   }
@@ -2082,7 +2087,7 @@ bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
 bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
   if (a.isNominal != b.isNominal) {
     return false;
-  } else if (a.isNominal) {
+  } else if (a.isNominal || getTypeSystem() == TypeSystem::Nominal) {
     return &a == &b;
   }
   if (a.isFinalized != b.isFinalized) {
@@ -2901,24 +2906,6 @@ struct Locations : TypeGraphWalker<Locations> {
   }
 };
 
-void globallyCanonicalizeTypes(Locations& locations) {
-  // Canonicalize non-tuple Types (which never directly refer to other Types)
-  // before tuple Types to avoid canonicalizing a tuple that still contains
-  // non-canonical Types.
-  auto canonicalizeTypes = [&](bool tuples) {
-    for (auto& [original, uses] : locations.types) {
-      if (original.isTuple() == tuples) {
-        Type canonical = globalTypeStore.insert(*getTypeInfo(original));
-        for (Type* use : uses) {
-          *use = canonical;
-        }
-      }
-    }
-  };
-  canonicalizeTypes(false);
-  canonicalizeTypes(true);
-}
-
 // Replaces temporary types and heap types in a type definition graph with their
 // globally canonical versions to prevent temporary types or heap type from
 // leaking into the global stores.
@@ -2981,7 +2968,21 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
     }
   }
 
-  globallyCanonicalizeTypes(locations);
+  // Canonicalize non-tuple Types (which never directly refer to other Types)
+  // before tuple Types to avoid canonicalizing a tuple that still contains
+  // non-canonical Types.
+  auto canonicalizeTypes = [&](bool tuples) {
+    for (auto& [original, uses] : locations.types) {
+      if (original.isTuple() == tuples) {
+        Type canonical = globalTypeStore.insert(*getTypeInfo(original));
+        for (Type* use : uses) {
+          *use = canonical;
+        }
+      }
+    }
+  };
+  canonicalizeTypes(false);
+  canonicalizeTypes(true);
 
 #if TRACE_CANONICALIZATION
   std::cerr << "Final Types:\n";
@@ -3117,23 +3118,8 @@ buildNominal(std::vector<std::unique_ptr<HeapTypeInfo>> infos) {
   auto start = std::chrono::steady_clock::now();
 #endif
 
-  // Move the HeapTypes and the Types they reach to the global stores. First
-  // copy reachable temporary types into the global type store and replace their
-  // uses in the HeapTypeInfos. Then move all the HeapTypeInfos into the global
-  // store. We have to copy types first because correctly hashing the
-  // HeapTypeInfos depends on them reaching only canonical types. That also
-  // means we can't reuse `globallyCanonicalize` here.
-  Locations locations;
-  for (auto& info : infos) {
-    HeapType root = asHeapType(info);
-    locations.walkRoot(&root);
-  }
-  globallyCanonicalizeTypes(locations);
-
-  std::vector<HeapType> heapTypes;
-  for (auto& info : infos) {
-    heapTypes.push_back(globalHeapTypeStore.insert(std::move(info)));
-  }
+  // Move the HeapTypes and the Types they reach to the global stores.
+  std::vector<HeapType> heapTypes = globallyCanonicalize(infos);
 
 #if TIME_CANONICALIZATION
   auto afterMove = std::chrono::steady_clock::now();
@@ -3245,15 +3231,24 @@ std::vector<HeapType> TypeBuilder::build() {
   }
 
   // Combine the basic types with the built types.
-  std::vector<HeapType> result(entryCount);
+  std::vector<HeapType> results(entryCount);
   for (size_t i = 0, builtIndex = 0; i < entryCount; ++i) {
     if (basicHeapTypes[i]) {
-      result[i] = *basicHeapTypes[i];
+      results[i] = *basicHeapTypes[i];
     } else {
-      result[i] = built[builtIndex++];
+      results[i] = built[builtIndex++];
     }
   }
-  return result;
+
+  // Note built signature types. See comment in `HeapType::HeapType(Signature)`.
+  for (auto type : results) {
+    if (type.isSignature() &&
+        (type.isNominal() || getTypeSystem() == TypeSystem::Nominal)) {
+      nominalSignatureCache.insertType(type);
+    }
+  }
+
+  return results;
 }
 
 } // namespace wasm
@@ -3340,25 +3335,7 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
 
 size_t
 hash<wasm::HeapTypeInfo>::operator()(const wasm::HeapTypeInfo& info) const {
-  if (wasm::typeSystem == wasm::TypeSystem::Equirecursive) {
-    return wasm::FiniteShapeHasher().hash(info);
-  }
-
-  auto digest = wasm::hash(info.kind);
-  switch (info.kind) {
-    case wasm::HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
-    case wasm::HeapTypeInfo::SignatureKind:
-      wasm::rehash(digest, info.signature);
-      return digest;
-    case wasm::HeapTypeInfo::StructKind:
-      wasm::rehash(digest, info.struct_);
-      return digest;
-    case wasm::HeapTypeInfo::ArrayKind:
-      wasm::rehash(digest, info.array);
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+  return wasm::FiniteShapeHasher().hash(info);
 }
 
 } // namespace std

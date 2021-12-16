@@ -2611,6 +2611,7 @@ void WasmBinaryBuilder::pushExpression(Expression* curr) {
       }
     }
     auto nullableType = Type(Tuple(finalTypes));
+    requireFunctionContext("pushExpression-tuple");
     Index tuple = builder.addVar(currFunction, nullableType);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
     for (Index i = 0; i < nullableType.size(); ++i) {
@@ -3740,6 +3741,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   }
   if (curr) {
     if (currDebugLocation.size()) {
+      requireFunctionContext("debugLocation");
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
     }
     if (DWARF && currFunction) {
@@ -3846,6 +3848,7 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
       startControlFlow(curr);
       pos++;
       if (debugLocation.size()) {
+        requireFunctionContext("block-debugLocation");
         currFunction->debugLocations[curr] = *debugLocation.begin();
       }
       continue;
@@ -6345,13 +6348,6 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   curr->type = getType();
   curr->body = getBlockOrSingleton(curr->type);
 
-  // try without catch or delegate
-  if (lastSeparator == BinaryConsts::End) {
-    curr->finalize();
-    out = curr;
-    return;
-  }
-
   Builder builder(wasm);
   // A nameless label shared by all catch body blocks
   Name catchLabel = getNextLabel();
@@ -6540,6 +6536,7 @@ void WasmBinaryBuilder::visitLet(Block* curr) {
   curr->type = getType();
   // Get the new local types. First, get the absolute index from which we will
   // start to allocate them.
+  requireFunctionContext("let");
   Index absoluteStart = currFunction->vars.size();
   readVars();
   Index numNewVars = currFunction->vars.size() - absoluteStart;
