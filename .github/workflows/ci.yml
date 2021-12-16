@@ -73,7 +73,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
 
     - name: cmake (macos)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=arm64;x86_64
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64'
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
