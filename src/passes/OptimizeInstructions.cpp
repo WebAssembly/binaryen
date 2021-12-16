@@ -2506,8 +2506,21 @@ private:
       if (matches(curr->left, unary(EqZ, any(&x))) &&
           matches(curr->right, unary(EqZ, any(&y))) && x->type == y->type) {
         auto* inner = curr->left->cast<Unary>();
-        inner->value = Builder(*getModule())
-                         .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        inner->value =
+          Builder(*getModule()).makeBinary(getBinary(x->type, Or), x, y);
+        return inner;
+      }
+    }
+    {
+      // (i32(x) >= 0) & (i32(y) >= 0)   ==>   i32(x | y) >= 0
+      // (i64(x) >= 0) & (i64(y) >= 0)   ==>   i64(x | y) >= 0
+      Expression *x, *y;
+      if (matches(curr->left, binary(GeS, any(&x), ival(0))) &&
+          matches(curr->right, binary(GeS, any(&y), ival(0))) &&
+          x->type == y->type) {
+        auto* inner = curr->left->cast<Binary>();
+        inner->left =
+          Builder(*getModule()).makeBinary(getBinary(x->type, Or), x, y);
         return inner;
       }
     }
@@ -2524,14 +2537,12 @@ private:
       Binary *bx, *by;
       Expression *x, *y;
       Const *cx, *cy;
-      if (matches(curr,
-                  binary(AndInt32,
-                         binary(&bx, any(&x), ival(&cx)),
-                         binary(&by, any(&y), ival(&cy)))) &&
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
           bx->op == by->op && x->type == y->type && cx->value == cy->value &&
           preserveAnd(bx)) {
-        bx->left = Builder(*getModule())
-                     .makeBinary(Abstract::getBinary(x->type, And), x, y);
+        bx->left =
+          Builder(*getModule()).makeBinary(getBinary(x->type, And), x, y);
         return bx;
       }
     }
@@ -2615,13 +2626,11 @@ private:
     if (matches(curr, binary(Ne, any(), ival(0)))) {
       return true;
     }
-
     // (x < 0) | (y < 0)    ==>    (x | y) < 0
     // This effectively checks if x or y have the sign bit set.
     if (matches(curr, binary(LtS, any(), ival(0)))) {
       return true;
     }
-
     return false;
   }
 
@@ -2643,7 +2652,10 @@ private:
     if (matches(curr, binary(LtS, any(), ival(0)))) {
       return true;
     }
-
+    // (x == -1) & (y == -1)   ==>   (x & y) == -1
+    if (matches(curr, binary(Eq, any(), ival(-1)))) {
+      return true;
+    }
     return false;
   }
 
