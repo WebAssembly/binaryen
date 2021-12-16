@@ -82,7 +82,7 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release
+      run: cmake --build out --config Release -v
 
     - name: install
       run: cmake --install out --config Release
