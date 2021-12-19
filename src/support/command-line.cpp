@@ -53,9 +53,12 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
 
 Options::Options(const std::string& command, const std::string& description)
   : debug(false), positional(Arguments::Zero) {
+  std::string GeneralOption = "General options";
+
   add("--version",
       "",
       "Output version information and exit",
+      GeneralOption,
       Arguments::Zero,
       [command](Options*, const std::string&) {
         std::cout << command << " version " << PROJECT_VERSION << "\n";
@@ -64,6 +67,7 @@ Options::Options(const std::string& command, const std::string& description)
   add("--help",
       "-h",
       "Show this help message and exit",
+      GeneralOption,
       Arguments::Zero,
       [this, command, description](Options* o, const std::string&) {
         std::cout << command;
@@ -72,7 +76,7 @@ Options::Options(const std::string& command, const std::string& description)
         }
         std::cout << "\n\n";
         printWrap(std::cout, 0, description);
-        std::cout << "\n\nOptions:\n";
+        std::cout << "\n";
         size_t optionWidth = 0;
         for (const auto& o : options) {
           if (o.hidden) {
@@ -81,17 +85,21 @@ Options::Options(const std::string& command, const std::string& description)
           optionWidth =
             std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
-        for (const auto& o : options) {
-          if (o.hidden) {
-            continue;
+        for (int i = int(categories.size()) - 1; i >= 0; i--) {
+          auto& category = categories[i];
+          std::cout << "\n" << category << ":\n";
+          for (const auto& o : options) {
+            if (o.hidden || o.category != category) {
+              continue;
+            }
+            std::cout << '\n';
+            bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
+            size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
+            std::cout << "  " << o.longName << (long_n_short ? ',' : ' ')
+                      << o.shortName << std::string(pad, ' ');
+            printWrap(std::cout, optionWidth + 4, o.description);
+            std::cout << '\n';
           }
-          std::cout << '\n';
-          bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
-          size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
-          std::cout << "  " << o.longName << (long_n_short ? ',' : ' ')
-                    << o.shortName << std::string(pad, ' ');
-          printWrap(std::cout, optionWidth + 4, o.description);
-          std::cout << '\n';
         }
         std::cout << '\n';
         exit(EXIT_SUCCESS);
@@ -99,6 +107,7 @@ Options::Options(const std::string& command, const std::string& description)
   add("--debug",
       "-d",
       "Print debug information to stderr",
+      GeneralOption,
       Arguments::Optional,
       [&](Options* o, const std::string& arguments) {
         debug = true;
@@ -111,11 +120,23 @@ Options::~Options() {}
 Options& Options::add(const std::string& longName,
                       const std::string& shortName,
                       const std::string& description,
+                      const std::string& category,
                       Arguments arguments,
                       const Action& action,
                       bool hidden) {
   options.push_back(
-    {longName, shortName, description, arguments, action, hidden, 0});
+    {longName, shortName, description, category, arguments, action, hidden, 0});
+
+  bool found = false;
+  for (auto& existingCategory : categories) {
+    if (category == existingCategory) {
+      found = true;
+    }
+  }
+  if (!found) {
+    categories.push_back(category);
+  }
+
   return *this;
 }
 
