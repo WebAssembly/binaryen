@@ -87,15 +87,22 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 // we can only get results when there are no imports. we then call each method
 // that has a result, with some values
 struct ExecutionResults {
+  enum FunctionResultKind { Normal, Trap, Exception };
   struct FunctionResult {
     Literals values;
-    bool exception; // Whether an exception is uncaught and the function crashes
+    FunctionResultKind kind;
   };
   std::map<Name, FunctionResult> results;
   Loggings loggings;
 
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
+  // If set, we don't compare whether a trap has occurred or not.
+  bool ignoreTrap = false;
+
+  ExecutionResults(const PassOptions& options)
+    : ignoreTrap(options.ignoreImplicitTraps || options.trapsNeverHappen) {}
+  ExecutionResults(bool ignoreTrap) : ignoreTrap(ignoreTrap) {}
 
   // get results of execution
   void get(Module& wasm) {
@@ -133,7 +140,7 @@ struct ExecutionResults {
 
   // get current results and check them against previous ones
   void check(Module& wasm) {
-    ExecutionResults optimizedResults;
+    ExecutionResults optimizedResults(ignoreTrap);
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
       std::cout << "[fuzz-exec] optimization passes changed results\n";
@@ -192,8 +199,16 @@ struct ExecutionResults {
       if (!areEqual(results[name].values, other.results[name].values)) {
         return false;
       }
-      if (results[name].exception != other.results[name].exception) {
-        return false;
+      if (results[name].kind != other.results[name].kind) {
+        if (ignoreTrap) {
+          // If traps are ignored, we only care about exceptions
+          if (results[name].kind == Exception ||
+              other.results[name].kind == Exception) {
+            return false;
+          }
+        } else {
+          return false;
+        }
       }
     }
     if (loggings.size() != other.loggings.size()) {
@@ -237,17 +252,17 @@ struct ExecutionResults {
         }
         arguments.push_back(Literal::makeZero(param));
       }
-      return {instance.callFunction(func->name, arguments), false};
+      return {instance.callFunction(func->name, arguments), Normal};
     } catch (const TrapException&) {
-      return {};
+      return {{}, Trap};
     } catch (const WasmException& e) {
       std::cout << "[exception thrown: " << e << "]" << std::endl;
-      return {{}, true};
+      return {{}, Exception};
     } catch (const HostLimitException&) {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
-      return {};
+      return {{}, Normal};
     }
   }
 };
