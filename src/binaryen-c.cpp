@@ -4348,8 +4348,8 @@ void BinaryenFunctionImportToFunction(BinaryenFunctionRef import) {
   auto* func = (Function*)import;
   if (func->imported()) {
     func->module = Name();
-    func->name = Name();
     func->base = Name();
+    func->setExplicitName(func->name);
   }
 }
 const char* BinaryenTableImportGetBase(BinaryenTableRef import) {
