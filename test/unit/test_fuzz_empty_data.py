@@ -1,5 +1,4 @@
 import os
-import subprocess
 import tempfile
 from scripts.test import shared
 from . import utils
@@ -7,6 +6,9 @@ from . import utils
 
 class EmptyDataFuzzTest(utils.BinaryenTestCase):
     def test_empty_data(self):
-        with tempfile.NamedTemporaryFile() as f:
-            shared.run_process(shared.WASM_OPT + ['-ttf', f.name],
+        try:
+            temp = tempfile.NamedTemporaryFile(delete=False).name
+            shared.run_process(shared.WASM_OPT + ['-ttf', temp],
                                capture_output=True)
+        finally:
+            os.unlink(temp)
