@@ -1,42 +1,46 @@
 total
- [exports]      : 8       
- [funcs]        : 9       
+ [exports]      : 13      
+ [funcs]        : 18      
  [globals]      : 6       
  [imports]      : 5       
  [memory-data]  : 22      
- [table-data]   : 4       
+ [table-data]   : 14      
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 465     
- [vars]         : 10      
- ArrayInit      : 1       
- AtomicCmpxchg  : 1       
+ [total]        : 728     
+ [vars]         : 41      
+ ArrayInit      : 6       
+ AtomicFence    : 1       
  AtomicNotify   : 1       
- Binary         : 64      
- Block          : 51      
- Break          : 6       
- Call           : 19      
- Const          : 121     
- DataDrop       : 1       
- Drop           : 6       
- GlobalGet      : 22      
- GlobalSet      : 12      
- If             : 20      
- Load           : 13      
- LocalGet       : 22      
- LocalSet       : 18      
- Loop           : 3       
+ AtomicRMW      : 1       
+ Binary         : 80      
+ Block          : 83      
+ Break          : 13      
+ Call           : 33      
+ CallIndirect   : 1       
+ CallRef        : 1       
+ Const          : 162     
+ Drop           : 10      
+ GlobalGet      : 50      
+ GlobalSet      : 27      
+ I31Get         : 3       
+ I31New         : 5       
+ If             : 32      
+ Load           : 20      
+ LocalGet       : 35      
+ LocalSet       : 21      
+ Loop           : 8       
  MemoryFill     : 1       
- Nop            : 20      
+ MemoryInit     : 1       
+ Nop            : 14      
  RefAs          : 1       
- RefFunc        : 5       
- RefIs          : 3       
- RefNull        : 3       
- Return         : 18      
- SIMDExtract    : 3       
- Select         : 1       
- Store          : 3       
- StructNew      : 3       
- TupleExtract   : 2       
- TupleMake      : 4       
- Unary          : 17      
+ RefFunc        : 16      
+ RefIs          : 2       
+ RefNull        : 6       
+ Return         : 27      
+ SIMDExtract    : 1       
+ Select         : 8       
+ Store          : 2       
+ StructNew      : 7       
+ TupleMake      : 5       
+ Unary          : 44      
