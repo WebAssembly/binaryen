@@ -3451,8 +3451,7 @@ private:
         if (currDelegateTarget.is()) {
           if (currDelegateTarget == curr->name) {
             currDelegateTarget.clear();
-          }
-          else {
+          } else {
             throw;
           }
         }
