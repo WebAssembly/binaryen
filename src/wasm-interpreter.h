@@ -2697,6 +2697,9 @@ private:
     FunctionScope& scope;
     // Stack of <caught exception, caught catch's try label>
     SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
+    // The current delegate target, if delegation of an exception is in
+    // progress. If no delegation is in progress, this will be an empty Name.
+    Name currDelegateTarget;
 
   protected:
     // Returns the instance that defines the memory used by this one.
@@ -3443,6 +3446,17 @@ private:
       try {
         return this->visit(curr->body);
       } catch (const WasmException& e) {
+        // If delegation is in progress and the current try is not the target of
+        // the delegation, don't handle it and just rethrow.
+        if (currDelegateTarget.is()) {
+          if (currDelegateTarget == curr->name) {
+            currDelegateTarget.clear();
+          }
+          else {
+            throw;
+          }
+        }
+
         auto processCatchBody = [&](Expression* catchBody) {
           // Push the current exception onto the exceptionStack in case
           // 'rethrow's use it
@@ -3468,6 +3482,9 @@ private:
         }
         if (curr->hasCatchAll()) {
           return processCatchBody(curr->catchBodies.back());
+        }
+        if (curr->isDelegate()) {
+          currDelegateTarget = curr->delegateTarget;
         }
         // This exception is not caught by this try-catch. Rethrow it.
         throw;
