@@ -184,9 +184,8 @@
 ;; CHECK-NEXT:                                                 memory is not used by the
 ;; CHECK-NEXT:                                                 application
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --fast-math,-ffm                              Optimize floats without handling
-;; CHECK-NEXT:                                                 corner cases of NaNs and
-;; CHECK-NEXT:                                                 rounding
+;; CHECK-NEXT:   --fast-math-ignore-nans,-fmin                 Optimize floats without handling
+;; CHECK-NEXT:                                                 corner cases of NaNs
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory
 ;; CHECK-NEXT:                                                 will be zero-initialized

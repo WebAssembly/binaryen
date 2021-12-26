@@ -95,6 +95,12 @@ struct InliningOptions {
   Index partialInliningIfs = 0;
 };
 
+struct FastMathOptions {
+  // Allow optimizing under the assumption that NaNs don't happen. This lets us
+  // ignore all the NaN-related corner cases.
+  bool ignoreNaNs = false;
+};
+
 struct PassOptions {
   // Run passes in debug mode, doing extra validation and timing checks.
   bool debug = false;
@@ -146,11 +152,9 @@ struct PassOptions {
   // many cases.
   bool lowMemoryUnused = false;
   enum { LowMemoryBound = 1024 };
-  // Whether to allow "loose" math semantics, ignoring corner cases with NaNs
-  // and assuming math follows the algebraic rules for associativity and so
-  // forth (which IEEE floats do not, strictly speaking). This is inspired by
-  // gcc/clang's -ffast-math flag.
-  bool fastMath = false;
+  // Whether to allow "loose" math semantics of various kinds. This is inspired
+  // by gcc/clang's -ffast-math flags.
+  FastMathOptions fastMath;
   // Whether to assume that an imported memory is zero-initialized. Without
   // this, we can do fewer optimizations on memory segments, because if memory
   // *was* modified then the wasm's segments may trample those previous

@@ -3936,9 +3936,11 @@ void BinaryenSetZeroFilledMemory(bool on) {
   globalPassOptions.zeroFilledMemory = on != 0;
 }
 
-bool BinaryenGetFastMath(void) { return globalPassOptions.fastMath; }
+bool BinaryenGetFastMath(void) { return globalPassOptions.fastMath.ignoreNaNs; }
 
-void BinaryenSetFastMath(bool value) { globalPassOptions.fastMath = value; }
+void BinaryenSetFastMath(bool value) {
+  globalPassOptions.fastMath.ignoreNaNs = value;
+}
 
 const char* BinaryenGetPassArgument(const char* key) {
   assert(key);
