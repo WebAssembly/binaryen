@@ -262,6 +262,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --func-metrics                                reports function metrics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gc-lowering                                 lower wasm GC to wasm MVP using
+;; CHECK-NEXT:                                                 linear memory
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall fuctions used
 ;; CHECK-NEXT:                                                 by emscripten ABI
 ;; CHECK-NEXT:

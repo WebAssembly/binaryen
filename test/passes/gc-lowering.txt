@@ -1,0 +1,1444 @@
+[fuzz-exec] calling structs
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 100]
+[LoggingExternalInterface logging 100]
+[fuzz-exec] calling arrays
+[LoggingExternalInterface logging 50]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 128]
+[LoggingExternalInterface logging -128]
+[LoggingExternalInterface logging 42]
+[fuzz-exec] calling rtts
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_cast
+[LoggingExternalInterface logging 3]
+[trap unreachable]
+[fuzz-exec] calling br_on_failed_cast-1
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_failed_cast-2
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 999]
+[fuzz-exec] calling cast-null-anyref-to-gc
+[LoggingExternalInterface logging 0]
+[fuzz-exec] calling br_on_data
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-null
+[fuzz-exec] calling br_on_non_data-data
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-other
+[fuzz-exec] calling br-on_non_null
+[fuzz-exec] calling br-on_non_null-2
+[LoggingExternalInterface logging 1]
+[trap unreachable]
+[fuzz-exec] calling rtt-and-cast-on-func
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 2]
+[LoggingExternalInterface logging 1337]
+[LoggingExternalInterface logging 3]
+[trap cast error]
+[fuzz-exec] calling init-array-packed
+[fuzz-exec] note result: init-array-packed => 213
+[fuzz-exec] calling cast-func-to-struct
+[trap cast error]
+[fuzz-exec] calling rtt-globals
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+(module
+ (type $void_func (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $type$0 (func (param i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $int_func (func (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_f64_=>_none (func (param i32 f64)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (global $rtt-0 i32 (i32.const 8))
+ (global $rtt-1 (mut i32) (i32.const 0))
+ (global $lowergc-next-malloc (mut i32) (i32.const 132))
+ (memory $0 16384 16384)
+ (table $lowergc-table 2 2 funcref)
+ (elem (i32.const 0) $a-void-func $call-target)
+ (export "structs" (func $0))
+ (export "arrays" (func $1))
+ (export "rtts" (func $2))
+ (export "br_on_cast" (func $3))
+ (export "br_on_failed_cast-1" (func $4))
+ (export "br_on_failed_cast-2" (func $5))
+ (export "cast-null-anyref-to-gc" (func $6))
+ (export "br_on_data" (func $8))
+ (export "br_on_non_data-null" (func $9))
+ (export "br_on_non_data-data" (func $10))
+ (export "br_on_non_data-other" (func $11))
+ (export "br-on_non_null" (func $12))
+ (export "br-on_non_null-2" (func $13))
+ (export "rtt-and-cast-on-func" (func $15))
+ (export "init-array-packed" (func $16))
+ (export "cast-func-to-struct" (func $18))
+ (export "rtt-globals" (func $19))
+ (start $lowergc-start)
+ (func $0
+  (local $x i32)
+  (local $y i32)
+  (local.set $x
+   (call $StructNewWithDefault$struct
+    (i32.const 8)
+   )
+  )
+  (call $log
+   (call $StructGet$struct$0
+    (local.get $x)
+    (i32.const 0)
+   )
+  )
+  (call $StructSet$struct$0
+   (local.get $x)
+   (i32.const 42)
+  )
+  (call $log
+   (call $StructGet$struct$0
+    (local.get $x)
+    (i32.const 0)
+   )
+  )
+  (local.set $y
+   (local.get $x)
+  )
+  (call $StructSet$struct$0
+   (local.get $y)
+   (i32.const 100)
+  )
+  (call $log
+   (call $StructGet$struct$0
+    (local.get $x)
+    (i32.const 0)
+   )
+  )
+  (call $log
+   (call $StructGet$struct$0
+    (local.get $y)
+    (i32.const 0)
+   )
+  )
+ )
+ (func $1
+  (local $x i32)
+  (local.set $x
+   (call $ArrayNew$bytes
+    (i32.const 42)
+    (i32.const 50)
+    (i32.const 44)
+   )
+  )
+  (call $log
+   (call $ArrayLen
+    (local.get $x)
+   )
+  )
+  (call $log
+   (call $ArrayGet$bytes
+    (local.get $x)
+    (i32.const 10)
+    (i32.const 0)
+   )
+  )
+  (call $ArraySet$bytes
+   (local.get $x)
+   (i32.const 10)
+   (i32.const 65408)
+  )
+  (call $log
+   (call $ArrayGet$bytes
+    (local.get $x)
+    (i32.const 10)
+    (i32.const 0)
+   )
+  )
+  (call $log
+   (call $ArrayGet$bytes
+    (local.get $x)
+    (i32.const 10)
+    (i32.const 1)
+   )
+  )
+  (call $log
+   (call $ArrayGet$bytes
+    (local.get $x)
+    (i32.const 20)
+    (i32.const 1)
+   )
+  )
+ )
+ (func $2
+  (local $any i32)
+  (call $log
+   (call $RefIsNull
+    (call $RefCast
+     (i32.const 0)
+     (i32.const 8)
+    )
+   )
+  )
+  (call $log
+   (call $RefTest
+    (i32.const 0)
+    (i32.const 8)
+   )
+  )
+  (call $log
+   (call $RefTest
+    (call $ArrayNew$bytes
+     (i32.const 20)
+     (i32.const 10)
+     (i32.const 44)
+    )
+    (i32.const 8)
+   )
+  )
+  (call $log
+   (call $RefTest
+    (call $StructNewWithDefault$struct
+     (i32.const 8)
+    )
+    (i32.const 8)
+   )
+  )
+  (call $log
+   (call $RefTest
+    (call $StructNewWithDefault$struct
+     (i32.const 8)
+    )
+    (i32.const 32)
+   )
+  )
+  (local.set $any
+   (call $StructNewWithDefault$extendedstruct
+    (call $RttSub
+     (i32.const 32)
+     (i32.const 8)
+    )
+   )
+  )
+  (call $log
+   (call $RefTest
+    (local.get $any)
+    (call $RttSub
+     (i32.const 32)
+     (i32.const 8)
+    )
+   )
+  )
+  (call $log
+   (call $RefTest
+    (local.get $any)
+    (i32.const 32)
+   )
+  )
+  (call $log
+   (call $RefTest
+    (local.get $any)
+    (i32.const 8)
+   )
+  )
+ )
+ (func $3
+  (local $any i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local.set $any
+   (call $StructNewWithDefault$struct
+    (i32.const 8)
+   )
+  )
+  (drop
+   (block $block (result i32)
+    (drop
+     (block $extendedblock (result i32)
+      (drop
+       (block (result i32)
+        (local.set $2
+         (block (result i32)
+          (local.set $1
+           (local.get $any)
+          )
+          (br_if $extendedblock
+           (local.get $1)
+           (call $RefTest
+            (local.get $1)
+            (i32.const 32)
+           )
+          )
+         )
+        )
+        (br_if $block
+         (local.get $2)
+         (call $RefTest
+          (local.get $2)
+          (i32.const 8)
+         )
+        )
+       )
+      )
+      (call $log
+       (i32.const -1)
+      )
+      (return)
+     )
+    )
+    (call $log
+     (i32.const -2)
+    )
+    (return)
+   )
+  )
+  (call $log
+   (i32.const 3)
+  )
+  (block $never
+   (block
+    (drop
+     (i32.const 0)
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $4
+  (local $any i32)
+  (local $1 i32)
+  (local.set $any
+   (call $StructNewWithDefault$struct
+    (i32.const 8)
+   )
+  )
+  (drop
+   (block $any (result i32)
+    (call $log
+     (i32.const 1)
+    )
+    (drop
+     (block (result i32)
+      (local.set $1
+       (local.get $any)
+      )
+      (br_if $any
+       (local.get $1)
+       (i32.eqz
+        (call $RefTest
+         (local.get $1)
+         (i32.const 32)
+        )
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 999)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $5
+  (local $any i32)
+  (local $1 i32)
+  (local.set $any
+   (call $StructNewWithDefault$extendedstruct
+    (i32.const 32)
+   )
+  )
+  (drop
+   (block $any (result i32)
+    (call $log
+     (i32.const 1)
+    )
+    (drop
+     (block (result i32)
+      (local.set $1
+       (local.get $any)
+      )
+      (br_if $any
+       (local.get $1)
+       (i32.eqz
+        (call $RefTest
+         (local.get $1)
+         (i32.const 32)
+        )
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 999)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $6
+  (call $log
+   (call $RefTest
+    (i32.const 0)
+    (i32.const 8)
+   )
+  )
+ )
+ (func $get_data (result i32)
+  (call $StructNewWithDefault$struct
+   (i32.const 8)
+  )
+ )
+ (func $8 (param $x i32)
+  (local $y i32)
+  (local $2 i32)
+  (drop
+   (block $data (result i32)
+    (local.set $y
+     (block (result i32)
+      (local.set $2
+       (local.get $x)
+      )
+      (br_if $data
+       (local.get $2)
+       (call $RefIsData
+        (local.get $2)
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 1)
+    )
+    (call $get_data)
+   )
+  )
+ )
+ (func $9
+  (local $x i32)
+  (local $1 i32)
+  (drop
+   (block $any (result i32)
+    (drop
+     (block (result i32)
+      (local.set $1
+       (local.get $x)
+      )
+      (br_if $any
+       (local.get $1)
+       (i32.eqz
+        (call $RefIsData
+         (local.get $1)
+        )
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $10
+  (local $x i32)
+  (local $1 i32)
+  (local.set $x
+   (call $StructNewWithDefault$struct
+    (i32.const 8)
+   )
+  )
+  (drop
+   (block $any (result i32)
+    (drop
+     (block (result i32)
+      (local.set $1
+       (local.get $x)
+      )
+      (br_if $any
+       (local.get $1)
+       (i32.eqz
+        (call $RefIsData
+         (local.get $1)
+        )
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $11
+  (local $x i32)
+  (local $1 i32)
+  (local.set $x
+   (i32.const 116)
+  )
+  (drop
+   (block $any (result i32)
+    (drop
+     (block (result i32)
+      (local.set $1
+       (local.get $x)
+      )
+      (br_if $any
+       (local.get $1)
+       (i32.eqz
+        (call $RefIsData
+         (local.get $1)
+        )
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $12
+  (local $0 i32)
+  (drop
+   (block $non-null (result i32)
+    (block
+     (local.set $0
+      (i32.const 116)
+     )
+     (drop
+      (br_if $non-null
+       (local.get $0)
+       (i32.eqz
+        (call $RefIsNull
+         (local.get $0)
+        )
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $13
+  (local $0 i32)
+  (drop
+   (block $non-null (result i32)
+    (block
+     (local.set $0
+      (i32.const 0)
+     )
+     (drop
+      (br_if $non-null
+       (local.get $0)
+       (i32.eqz
+        (call $RefIsNull
+         (local.get $0)
+        )
+       )
+      )
+     )
+    )
+    (call $log
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $a-void-func
+  (call $log
+   (i32.const 1337)
+  )
+ )
+ (func $15
+  (call $log
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 20)
+  )
+  (call $log
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 56)
+  )
+  (call $log
+   (i32.const 2)
+  )
+  (call $CallRef$void_func
+   (call $RefCast
+    (i32.const 116)
+    (i32.const 20)
+   )
+  )
+  (call $log
+   (i32.const 3)
+  )
+  (drop
+   (call $CallRef$int_func
+    (call $RefCast
+     (i32.const 116)
+     (i32.const 56)
+    )
+   )
+  )
+  (call $log
+   (i32.const 4)
+  )
+ )
+ (func $16 (result i32)
+  (local $x i32)
+  (local.set $x
+   (call $ArrayNew$bytes
+    (i32.const -43)
+    (i32.const 50)
+    (i32.const 44)
+   )
+  )
+  (call $ArrayGet$bytes
+   (local.get $x)
+   (i32.const 10)
+   (i32.const 0)
+  )
+ )
+ (func $call-target (param $0 i32)
+  (nop)
+ )
+ (func $18
+  (drop
+   (call $RefCast
+    (i32.const 124)
+    (i32.const 8)
+   )
+  )
+ )
+ (func $19
+  (call $log
+   (call $RefTest
+    (call $StructNewWithDefault$struct
+     (global.get $rtt-1)
+    )
+    (global.get $rtt-0)
+   )
+  )
+  (call $log
+   (call $RefTest
+    (call $StructNewWithDefault$struct
+     (global.get $rtt-0)
+    )
+    (global.get $rtt-1)
+   )
+  )
+ )
+ (func $lowergc-start
+  (i32.store
+   (i32.const 8)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 12)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 16)
+   (i32.const 8)
+  )
+  (i32.store
+   (i32.const 20)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 24)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 28)
+   (i32.const 20)
+  )
+  (i32.store
+   (i32.const 32)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 36)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 40)
+   (i32.const 32)
+  )
+  (i32.store
+   (i32.const 44)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 48)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 52)
+   (i32.const 44)
+  )
+  (i32.store
+   (i32.const 56)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 60)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 64)
+   (i32.const 56)
+  )
+  (i32.store
+   (i32.const 68)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 72)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 76)
+   (i32.const 68)
+  )
+  (i32.store
+   (i32.const 80)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 84)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 88)
+   (i32.const 80)
+  )
+  (i32.store
+   (i32.const 92)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 96)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 100)
+   (i32.const 92)
+  )
+  (i32.store
+   (i32.const 104)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 108)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 112)
+   (i32.const 104)
+  )
+  (i32.store
+   (i32.const 116)
+   (i32.const 20)
+  )
+  (i32.store
+   (i32.const 120)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 124)
+   (i32.const 104)
+  )
+  (i32.store
+   (i32.const 128)
+   (i32.const 1)
+  )
+  (global.set $rtt-1
+   (call $RttSub
+    (i32.const 8)
+    (global.get $rtt-0)
+   )
+  )
+ )
+ (func $StructNewWithDefault$struct (param $0 i32) (result i32)
+  (local $1 i32)
+  (local.set $1
+   (call $malloc
+    (i32.const 8)
+   )
+  )
+  (i32.store
+   (local.get $1)
+   (local.get $0)
+  )
+  (call $StructSet$struct$0
+   (local.get $1)
+   (i32.const 0)
+  )
+  (local.get $1)
+ )
+ (func $StructSet$struct$0 (param $0 i32) (param $1 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $StructGet$struct$0 (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
+  )
+ )
+ (func $CallRef$void_func (param $0 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (call_indirect $lowergc-table (type $void_func)
+    (i32.load offset=4
+     (local.get $0)
+    )
+   )
+  )
+ )
+ (func $StructNewWithDefault$extendedstruct (param $0 i32) (result i32)
+  (local $1 i32)
+  (local.set $1
+   (call $malloc
+    (i32.const 16)
+   )
+  )
+  (i32.store
+   (local.get $1)
+   (local.get $0)
+  )
+  (call $StructSet$extendedstruct$0
+   (local.get $1)
+   (i32.const 0)
+  )
+  (call $StructSet$extendedstruct$1
+   (local.get $1)
+   (f64.const 0)
+  )
+  (local.get $1)
+ )
+ (func $StructSet$extendedstruct$0 (param $0 i32) (param $1 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $StructSet$extendedstruct$1 (param $0 i32) (param $1 f64)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f64.store offset=8
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $ArrayNew$bytes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (local $3 i32)
+  (local.set $3
+   (call $malloc
+    (i32.add
+     (i32.const 8)
+     (i32.mul
+      (i32.const 1)
+      (local.get $1)
+     )
+    )
+   )
+  )
+  (i32.store offset=4
+   (local.get $3)
+   (local.get $1)
+  )
+  (i32.store
+   (local.get $3)
+   (local.get $2)
+  )
+  (loop $loop
+   (block $block
+    (br_if $block
+     (i32.eqz
+      (local.get $1)
+     )
+    )
+    (call $ArraySet$bytes
+     (local.get $3)
+     (i32.sub
+      (local.get $1)
+      (i32.const 1)
+     )
+     (local.get $0)
+    )
+    (local.set $1
+     (i32.sub
+      (local.get $1)
+      (i32.const 1)
+     )
+    )
+    (br $loop)
+   )
+  )
+  (local.get $3)
+ )
+ (func $ArraySet$bytes (param $0 i32) (param $1 i32) (param $2 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store8
+    (i32.add
+     (i32.add
+      (local.get $0)
+      (i32.const 8)
+     )
+     (i32.mul
+      (i32.const 1)
+      (local.get $1)
+     )
+    )
+    (local.get $2)
+   )
+  )
+ )
+ (func $ArrayGet$bytes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (if (result i32)
+    (i32.eqz
+     (local.get $2)
+    )
+    (i32.load8_u
+     (i32.add
+      (i32.add
+       (local.get $0)
+       (i32.const 8)
+      )
+      (i32.mul
+       (i32.const 1)
+       (local.get $1)
+      )
+     )
+    )
+    (i32.load8_s
+     (i32.add
+      (i32.add
+       (local.get $0)
+       (i32.const 8)
+      )
+      (i32.mul
+       (i32.const 1)
+       (local.get $1)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $CallRef$int_func (param $0 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (call_indirect $lowergc-table (type $int_func)
+    (i32.load offset=4
+     (local.get $0)
+    )
+   )
+  )
+ )
+ (func $RefIsNull (param $0 i32) (result i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (return
+    (i32.const 1)
+   )
+  )
+  (i32.const 0)
+ )
+ (func $RefIsData (param $0 i32) (result i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (if
+   (i32.ne
+    (i32.load
+     (i32.load
+      (local.get $0)
+     )
+    )
+    (i32.const 1)
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (i32.const 1)
+ )
+ (func $RefTest (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
+  (local $3 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (local.set $2
+   (i32.load
+    (local.get $0)
+   )
+  )
+  (if
+   (i32.ne
+    (i32.load
+     (local.get $1)
+    )
+    (i32.load
+     (local.get $2)
+    )
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (if
+   (i32.gt_u
+    (i32.load offset=4
+     (local.get $1)
+    )
+    (i32.load offset=4
+     (local.get $2)
+    )
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (local.set $3
+   (i32.load offset=4
+    (local.get $1)
+   )
+  )
+  (loop $loop
+   (if
+    (i32.ne
+     (i32.load offset=8
+      (local.get $1)
+     )
+     (i32.load offset=8
+      (local.get $2)
+     )
+    )
+    (return
+     (i32.const 0)
+    )
+   )
+   (local.set $1
+    (i32.add
+     (local.get $1)
+     (i32.const 4)
+    )
+   )
+   (local.set $2
+    (i32.add
+     (local.get $2)
+     (i32.const 4)
+    )
+   )
+   (local.set $3
+    (i32.sub
+     (local.get $3)
+     (i32.const 1)
+    )
+   )
+   (br_if $loop
+    (local.get $3)
+   )
+   (return
+    (i32.const 1)
+   )
+  )
+ )
+ (func $RefCast (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (if
+   (i32.eqz
+    (call $RefTest
+     (local.get $0)
+     (local.get $1)
+    )
+   )
+   (unreachable)
+  )
+  (return
+   (local.get $0)
+  )
+ )
+ (func $RttSub (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local.set $3
+   (i32.load offset=4
+    (local.get $1)
+   )
+  )
+  (local.set $2
+   (call $malloc
+    (i32.add
+     (i32.mul
+      (local.get $3)
+      (i32.const 4)
+     )
+     (i32.const 12)
+    )
+   )
+  )
+  (i32.store
+   (local.get $2)
+   (i32.load
+    (local.get $0)
+   )
+  )
+  (i32.store offset=4
+   (local.get $2)
+   (i32.add
+    (local.get $3)
+    (i32.const 1)
+   )
+  )
+  (local.set $4
+   (local.get $2)
+  )
+  (loop $loop
+   (i32.store offset=8
+    (local.get $4)
+    (i32.load offset=8
+     (local.get $1)
+    )
+   )
+   (local.set $4
+    (i32.add
+     (local.get $4)
+     (i32.const 4)
+    )
+   )
+   (local.set $1
+    (i32.add
+     (local.get $1)
+     (i32.const 4)
+    )
+   )
+   (local.set $3
+    (i32.sub
+     (local.get $3)
+     (i32.const 1)
+    )
+   )
+   (br_if $loop
+    (local.get $3)
+   )
+  )
+  (i32.store offset=8
+   (local.get $4)
+   (local.get $0)
+  )
+  (local.get $2)
+ )
+ (func $ArrayLen (param $0 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
+  )
+ )
+ (func $malloc (param $0 i32) (result i32)
+  (global.set $lowergc-next-malloc
+   (i32.add
+    (global.get $lowergc-next-malloc)
+    (local.get $0)
+   )
+  )
+  (if
+   (i32.ge_u
+    (global.get $lowergc-next-malloc)
+    (i32.mul
+     (memory.size)
+     (i32.const 65536)
+    )
+   )
+   (unreachable)
+  )
+  (i32.sub
+   (global.get $lowergc-next-malloc)
+   (local.get $0)
+  )
+ )
+)
+[fuzz-exec] calling structs
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 100]
+[LoggingExternalInterface logging 100]
+[fuzz-exec] calling arrays
+[LoggingExternalInterface logging 50]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 128]
+[LoggingExternalInterface logging -128]
+[LoggingExternalInterface logging 42]
+[fuzz-exec] calling rtts
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_cast
+[LoggingExternalInterface logging 3]
+[trap unreachable]
+[fuzz-exec] calling br_on_failed_cast-1
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_failed_cast-2
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 999]
+[fuzz-exec] calling cast-null-anyref-to-gc
+[LoggingExternalInterface logging 0]
+[fuzz-exec] calling br_on_data
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-null
+[fuzz-exec] calling br_on_non_data-data
+[LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_non_data-other
+[fuzz-exec] calling br-on_non_null
+[fuzz-exec] calling br-on_non_null-2
+[LoggingExternalInterface logging 1]
+[trap unreachable]
+[fuzz-exec] calling rtt-and-cast-on-func
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 2]
+[LoggingExternalInterface logging 1337]
+[LoggingExternalInterface logging 3]
+[trap unreachable]
+[fuzz-exec] calling init-array-packed
+[fuzz-exec] note result: init-array-packed => 213
+[fuzz-exec] calling cast-func-to-struct
+[trap unreachable]
+[fuzz-exec] calling rtt-globals
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[fuzz-exec] comparing init-array-packed
+[fuzz-exec] calling array-alloc-failure
+[host limit allocation failure]
+(module
+ (type $type$0 (func))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (global $lowergc-next-malloc (mut i32) (i32.const 32))
+ (memory $0 16384 16384)
+ (export "array-alloc-failure" (func $0))
+ (start $lowergc-start)
+ (func $0
+  (drop
+   (call $ArrayNewWithDefault$bytes
+    (i32.const -1)
+    (i32.const 20)
+   )
+  )
+ )
+ (func $lowergc-start
+  (i32.store
+   (i32.const 8)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 12)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 16)
+   (i32.const 8)
+  )
+  (i32.store
+   (i32.const 20)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 24)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 28)
+   (i32.const 20)
+  )
+ )
+ (func $ArrayNewWithDefault$bytes (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
+  (local.set $2
+   (call $malloc
+    (i32.add
+     (i32.const 8)
+     (i32.mul
+      (i32.const 1)
+      (local.get $0)
+     )
+    )
+   )
+  )
+  (i32.store offset=4
+   (local.get $2)
+   (local.get $0)
+  )
+  (i32.store
+   (local.get $2)
+   (local.get $1)
+  )
+  (loop $loop
+   (block $block
+    (br_if $block
+     (i32.eqz
+      (local.get $0)
+     )
+    )
+    (call $ArraySet$bytes
+     (local.get $2)
+     (i32.sub
+      (local.get $0)
+      (i32.const 1)
+     )
+     (i32.const 0)
+    )
+    (local.set $0
+     (i32.sub
+      (local.get $0)
+      (i32.const 1)
+     )
+    )
+    (br $loop)
+   )
+  )
+  (local.get $2)
+ )
+ (func $ArraySet$bytes (param $0 i32) (param $1 i32) (param $2 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store8
+    (i32.add
+     (i32.add
+      (local.get $0)
+      (i32.const 8)
+     )
+     (i32.mul
+      (i32.const 1)
+      (local.get $1)
+     )
+    )
+    (local.get $2)
+   )
+  )
+ )
+ (func $malloc (param $0 i32) (result i32)
+  (global.set $lowergc-next-malloc
+   (i32.add
+    (global.get $lowergc-next-malloc)
+    (local.get $0)
+   )
+  )
+  (if
+   (i32.ge_u
+    (global.get $lowergc-next-malloc)
+    (i32.mul
+     (memory.size)
+     (i32.const 65536)
+    )
+   )
+   (unreachable)
+  )
+  (i32.sub
+   (global.get $lowergc-next-malloc)
+   (local.get $0)
+  )
+ )
+)
+[fuzz-exec] calling array-alloc-failure
+[trap final > memory: 18446744073709551615 > 1073741824]
+ignoring comparison of ExecutionResults!

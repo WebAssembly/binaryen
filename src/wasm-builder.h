@@ -35,6 +35,7 @@ struct NameType {
 // General AST node builder
 
 class Builder {
+protected:
   Module& wasm;
 
 public:
@@ -176,6 +177,13 @@ public:
     return ret;
   }
   Block* makeBlock(Name name, const ExpressionList& items) {
+    auto* ret = wasm.allocator.alloc<Block>();
+    ret->name = name;
+    ret->list.set(items);
+    ret->finalize();
+    return ret;
+  }
+  Block* makeBlock(Name name, const std::vector<Expression*>& items) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
