@@ -12847,7 +12847,6 @@
     "initPthreadsJS": "(void)<::>{ PThread.initRuntime(); }",
     "world": "()<::>{ console.log(\"World.\"); }"
   },
-  "tableSize": 5,
   "declares": [
     "emscripten_asm_const_int",
     "__cxa_thread_atexit",

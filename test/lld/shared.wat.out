@@ -53,7 +53,6 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 0,
   "declares": [
     "puts"
   ],

@@ -121,7 +121,6 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 3,
   "declares": [
     "_Z4atoiPKc"
   ],

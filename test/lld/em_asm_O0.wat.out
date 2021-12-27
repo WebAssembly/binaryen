@@ -99,7 +99,6 @@
     "601": "{ return $0 + $1; }",
     "621": "{ Module.print(\"Got \" + $0); }"
   },
-  "tableSize": 0,
   "declares": [
     "emscripten_asm_const_int"
   ],

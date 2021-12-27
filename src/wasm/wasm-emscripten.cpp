@@ -394,12 +394,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     meta << "\n  },\n";
   }
 
-  if (!wasm.tables.empty()) {
-    meta << "  \"tableSize\": " << wasm.tables[0]->initial.addr << ",\n";
-  } else {
-    meta << "  \"tableSize\": 0,\n";
-  }
-
   // Avoid adding duplicate imports to `declares' or `invokeFuncs`.  Even
   // though we might import the same function multiple times (i.e. with
   // different sigs) we only need to list is in the metadata once.
