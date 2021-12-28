@@ -141,7 +141,6 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 2,
   "declares": [
     "malloc",
     "saveSetjmp",

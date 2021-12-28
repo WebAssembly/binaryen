@@ -74,7 +74,6 @@
     "607": "{ return $0 + $1; }",
     "627": "{ Module.print(\"Got \" + $0); }"
   },
-  "tableSize": 1,
   "declares": [
     "emscripten_asm_const_int"
   ],
