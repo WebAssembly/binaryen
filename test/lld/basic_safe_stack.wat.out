@@ -87,7 +87,6 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 0,
   "declares": [
     "__handle_stack_overflow"
   ],
