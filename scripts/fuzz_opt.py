@@ -791,7 +791,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['simd', 'exception-handling', 'multivalue'])
+        return all_disallowed(['simd', 'multivalue'])
 
 
 # Check for determinism - the same command must have the same output.
