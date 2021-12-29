@@ -87,11 +87,9 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 // we can only get results when there are no imports. we then call each method
 // that has a result, with some values
 struct ExecutionResults {
-  enum FunctionResultKind { Normal, Trap, Exception };
-  struct FunctionResult {
-    Literals values;
-    FunctionResultKind kind;
-  };
+  struct Trap {};
+  struct Exception {};
+  using FunctionResult = std::variant<Literals, Trap, Exception>;
   std::map<Name, FunctionResult> results;
   Loggings loggings;
 
@@ -120,16 +118,18 @@ struct ExecutionResults {
         FunctionResult ret = run(func, wasm, instance);
         results[exp->name] = ret;
         // ignore the result if we hit an unreachable and returned no value
-        if (ret.values.size() > 0) {
-          std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-          auto resultType = func->getResults();
-          if (resultType.isRef()) {
-            // Don't print reference values, as funcref(N) contains an index
-            // for example, which is not guaranteed to remain identical after
-            // optimizations.
-            std::cout << resultType << '\n';
-          } else {
-            std::cout << ret.values << '\n';
+        if (auto* values = std::get_if<Literals>(&ret)) {
+          if (values->size() > 0) {
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
+            auto resultType = func->getResults();
+            if (resultType.isRef()) {
+              // Don't print reference values, as funcref(N) contains an index
+              // for example, which is not guaranteed to remain identical after
+              // optimizations.
+              std::cout << resultType << '\n';
+            } else {
+              std::cout << *values << '\n';
+            }
           }
         }
       }
@@ -196,19 +196,21 @@ struct ExecutionResults {
         return false;
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
-      if (!areEqual(results[name].values, other.results[name].values)) {
-        return false;
-      }
-      if (results[name].kind != other.results[name].kind) {
+      if (results[name].index() != other.results[name].index()) {
         if (ignoreTrap) {
           // If traps are ignored, we only care about exceptions
-          if (results[name].kind == Exception ||
-              other.results[name].kind == Exception) {
+          if (std::holds_alternative<Exception>(results[name]) ||
+              std::holds_alternative<Exception>(other.results[name])) {
             return false;
           }
         } else {
           return false;
         }
+      }
+      auto* values = std::get_if<Literals>(&results[name]);
+      auto* otherValues = std::get_if<Literals>(&other.results[name]);
+      if (values && otherValues && !areEqual(*values, *otherValues)) {
+        return false;
       }
     }
     if (loggings.size() != other.loggings.size()) {
@@ -252,17 +254,17 @@ struct ExecutionResults {
         }
         arguments.push_back(Literal::makeZero(param));
       }
-      return {instance.callFunction(func->name, arguments), Normal};
+      return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
-      return {{}, Trap};
+      return Trap{};
     } catch (const WasmException& e) {
       std::cout << "[exception thrown: " << e << "]" << std::endl;
-      return {{}, Exception};
+      return Exception{};
     } catch (const HostLimitException&) {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
-      return {{}, Normal};
+      return {};
     }
   }
 };
