@@ -117,8 +117,8 @@ struct ExecutionResults {
         auto* func = wasm.getFunction(exp->value);
         FunctionResult ret = run(func, wasm, instance);
         results[exp->name] = ret;
-        // ignore the result if we hit an unreachable and returned no value
         if (auto* values = std::get_if<Literals>(&ret)) {
+          // ignore the result if we hit an unreachable and returned no value
           if (values->size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
             auto resultType = func->getResults();
