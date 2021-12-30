@@ -198,8 +198,8 @@ struct ExecutionResults {
       std::cout << "[fuzz-exec] comparing " << name << '\n';
       if (results[name].index() != other.results[name].index()) {
         if (ignoreTrap) {
-          if (!std::holds_alternative<Trap>(results[name]) &&
-              !std::holds_alternative<Trap>(other.results[name])) {
+          if (!std::get_if<Trap>(&results[name]) &&
+              !std::get_if<Trap>(&other.results[name])) {
             return false;
           }
         } else {
