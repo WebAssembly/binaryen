@@ -25,7 +25,8 @@ script_dir = os.path.dirname(__file__)
 root_dir = os.path.dirname(script_dir)
 test_dir = os.path.join(root_dir, 'test', 'lit', 'help')
 
-TOOLS = ['wasm-opt']
+TOOLS = ['wasm-opt', 'wasm-as', 'wasm-dis', 'wasm2js', 'wasm-ctor-eval',
+         'wasm-shell', 'wasm-reduce', 'wasm-metadce', 'wasm-split']
 
 
 def main():
