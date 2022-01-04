@@ -2358,6 +2358,8 @@ void TypeBuilder::setNominal(size_t i) {
 
 namespace {
 
+// Helper for TypeBuilder::build() that keeps track of temporary types and
+// provides logic for replacing them gradually with more canonical types.
 struct CanonicalizationState {
   // The list of types being built and canonicalized. Will eventually be
   // returned to the user TypeBuilder user.
