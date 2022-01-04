@@ -94,6 +94,7 @@ WasmSplitOptions::WasmSplitOptions()
       "",
       "Instrument an input module to allow it to generate a profile that can"
       " be used to guide splitting.",
+      WasmSplitOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { mode = Mode::Instrument; })
     .add("--merge-profiles",
