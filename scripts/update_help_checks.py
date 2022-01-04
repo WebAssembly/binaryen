@@ -38,8 +38,13 @@ def main():
         output = subprocess.check_output(command).decode('utf-8')
         with open(os.path.join(test_dir, tool + '.test'), 'w') as out:
             out.write(f';; RUN: {tool} --help | filecheck %s' + os.linesep)
+            first = True
             for line in output.splitlines():
-                out.write(f';; CHECK-NEXT: {line}'.strip() + os.linesep)
+                if first:
+                    out.write(f';; CHECK: {line}'.strip() + os.linesep)
+                    first = False
+                else:
+                    out.write(f';; CHECK-NEXT: {line}'.strip() + os.linesep)
 
 
 if __name__ == '__main__':

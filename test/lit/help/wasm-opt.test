@@ -1,5 +1,5 @@
 ;; RUN: wasm-opt --help | filecheck %s
-;; CHECK-NEXT: wasm-opt INFILE
+;; CHECK: wasm-opt INFILE
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Read, write, and optimize files
 ;; CHECK-NEXT:
