@@ -2362,7 +2362,7 @@ namespace {
 // provides logic for replacing them gradually with more canonical types.
 struct CanonicalizationState {
   // The list of types being built and canonicalized. Will eventually be
-  // returned to the user TypeBuilder user.
+  // returned to the TypeBuilder user.
   std::vector<HeapType> results;
   // The newly constructed, temporary HeapTypeInfos that still need to be
   // canonicalized.
