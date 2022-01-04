@@ -34,11 +34,10 @@ def main():
         command = [tool_path, '--help']
         print(command)
         output = subprocess.check_output(command).decode('utf-8')
-        print(output)
-        with fopen(os.path.join(test_dir, tool + '.test'), 'wb') as out:
-            out.write(f';; RUN: {tool} --help | filecheck %s')
+        with open(os.path.join(test_dir, tool + '.test'), 'w') as out:
+            out.write(f';; RUN: {tool} --help | filecheck %s' + os.linesep)
             for line in output.splitlines():
-                out.write(f';; CHECK-NEXT: {line}')
+                out.write(f';; CHECK-NEXT: {line}'.strip() + os.linesep)
 
 
 if __name__ == '__main__':
