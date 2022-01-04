@@ -32,6 +32,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/debug.h"
+#include "ir/eh-utils.h"
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
@@ -878,6 +879,10 @@ struct Inlining : public Pass {
 #ifdef INLINING_DEBUG
       std::cout << "  inlined into " << inlinedInto.size() << " funcs.\n";
 #endif
+
+      for (auto* func : inlinedInto) {
+        EHUtils::handleBlockNestedPops(func, *module);
+      }
 
       for (auto* func : inlinedInto) {
         if (++iterationCounts[func->name] >= MaxIterationsForFunc) {
