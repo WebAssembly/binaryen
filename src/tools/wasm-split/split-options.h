@@ -75,12 +75,14 @@ struct WasmSplitOptions : ToolOptions {
   WasmSplitOptions& add(const std::string& longName,
                         const std::string& shortName,
                         const std::string& description,
+                        const std::string& category,
                         std::vector<Mode>&& modes,
                         Arguments arguments,
                         const Action& action);
   WasmSplitOptions& add(const std::string& longName,
                         const std::string& shortName,
                         const std::string& description,
+                        const std::string& category,
                         Arguments arguments,
                         const Action& action);
   bool validate();
