@@ -526,12 +526,15 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   std::string ctorsString;
 
+  const std::string WasmCtorEvalOption = "wasm-ctor-eval options";
+
   ToolOptions options("wasm-ctor-eval",
                       "Execute C++ global constructors ahead of time");
   options
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
+         WasmCtorEvalOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
@@ -540,17 +543,20 @@ int main(int argc, const char* argv[]) {
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
+         WasmCtorEvalOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
     .add("--debuginfo",
          "-g",
          "Emit names section and debug info",
+         WasmCtorEvalOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; })
     .add(
       "--ctors",
       "-c",
       "Comma-separated list of global constructor functions to evaluate",
+         WasmCtorEvalOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { ctorsString = argument; })
     .add_positional("INFILE",
