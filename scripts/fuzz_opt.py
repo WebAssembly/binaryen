@@ -1143,6 +1143,7 @@ opt_choices = [
     ["--heap2local"],
     ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
+    ["--ldse"],
     ["--licm"],
     ["--memory-packing"],
     ["--merge-blocks"],

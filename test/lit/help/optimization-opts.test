@@ -301,6 +301,9 @@
 ;; CHECK-NEXT:                                                 to intercept all loads and
 ;; CHECK-NEXT:                                                 stores
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --ldse                                        removes dead stores (only 
+;; CHECK-NEXT:                                                 looking at local info) 
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the

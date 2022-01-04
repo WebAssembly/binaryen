@@ -21,6 +21,7 @@ set(passes_SOURCES
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  DeadStoreElimination.cpp
   DeAlign.cpp
   DeNaN.cpp
   Directize.cpp
