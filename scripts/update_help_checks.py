@@ -18,7 +18,6 @@
 
 import os
 import subprocess
-import sys
 
 import test.shared as shared
 
@@ -27,6 +26,7 @@ root_dir = os.path.dirname(script_dir)
 test_dir = os.path.join(root_dir, 'test', 'lit', 'help')
 
 TOOLS = ['wasm-opt']
+
 
 def main():
     for tool in TOOLS:
