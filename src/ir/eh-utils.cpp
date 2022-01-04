@@ -100,7 +100,7 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
   }
 }
 
-bool isPopValid(Expression* catchBody) {
+bool containsValidDanglingPop(Expression* catchBody) {
   bool isPopNested = false;
   Expression** popPtr = nullptr;
   auto* pop = getFirstPop(catchBody, isPopNested, popPtr);
