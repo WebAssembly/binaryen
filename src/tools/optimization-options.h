@@ -30,7 +30,8 @@ struct OptimizationOptions : public ToolOptions {
 
   std::vector<std::string> passes;
 
-  constexpr static const char* OptimizationOptionsCategory = "Optimization options";
+  constexpr static const char* OptimizationOptionsCategory =
+    "Optimization options";
 
   OptimizationOptions(const std::string& command,
                       const std::string& description)
@@ -69,7 +70,7 @@ struct OptimizationOptions : public ToolOptions {
         "",
         "-O2",
         "execute -O2 optimization passes (most opts, generally gets most perf)",
-           OptimizationOptionsCategory,
+        OptimizationOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) {
           passOptions.optimizeLevel = 2;
@@ -230,7 +231,7 @@ struct OptimizationOptions : public ToolOptions {
         "--fast-math",
         "-ffm",
         "Optimize floats without handling corner cases of NaNs and rounding",
-           OptimizationOptionsCategory,
+        OptimizationOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) { passOptions.fastMath = true; })
       .add("--zero-filled-memory",

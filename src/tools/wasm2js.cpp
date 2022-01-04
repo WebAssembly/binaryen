@@ -912,7 +912,7 @@ int main(int argc, const char* argv[]) {
       "--pedantic",
       "",
       "Emulate WebAssembly trapping behavior",
-         Wasm2JSOption,
+      Wasm2JSOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { flags.pedantic = true; })
     .add(
@@ -920,7 +920,7 @@ int main(int argc, const char* argv[]) {
       "",
       "Emulate the glue in emscripten-compatible form (and not ES6 module "
       "form)",
-         Wasm2JSOption,
+      Wasm2JSOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { flags.emscripten = true; })
     .add(
@@ -931,7 +931,7 @@ int main(int argc, const char* argv[]) {
       "out of bounds or integer divide by zero; with this flag, we try to be "
       "deterministic at least in what happens, which might or might not be "
       "to trap like wasm, but at least should not vary)",
-         Wasm2JSOption,
+      Wasm2JSOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) {
         flags.deterministic = true;
@@ -940,7 +940,7 @@ int main(int argc, const char* argv[]) {
       "--symbols-file",
       "",
       "Emit a symbols file that maps function indexes to their original names",
-         Wasm2JSOption,
+      Wasm2JSOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) {
         flags.symbolsFile = argument;

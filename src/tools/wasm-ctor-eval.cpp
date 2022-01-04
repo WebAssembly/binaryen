@@ -556,7 +556,7 @@ int main(int argc, const char* argv[]) {
       "--ctors",
       "-c",
       "Comma-separated list of global constructor functions to evaluate",
-         WasmCtorEvalOption,
+      WasmCtorEvalOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { ctorsString = argument; })
     .add_positional("INFILE",

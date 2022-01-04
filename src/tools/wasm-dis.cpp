@@ -49,7 +49,7 @@ int main(int argc, const char* argv[]) {
       "--source-map",
       "-sm",
       "Consume source map from the specified file to add location information",
-         WasmDisOption,
+      WasmDisOption,
       Options::Arguments::One,
       [&sourceMapFilename](Options* o, const std::string& argument) {
         sourceMapFilename = argument;

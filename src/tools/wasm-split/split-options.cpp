@@ -166,7 +166,7 @@ WasmSplitOptions::WasmSplitOptions()
       "--placeholdermap",
       "",
       "Write a file mapping placeholder indices to the function names.",
-         WasmSplitOption,
+      WasmSplitOption,
       {Mode::Split},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { placeholderMap = true; })
@@ -195,7 +195,7 @@ WasmSplitOptions::WasmSplitOptions()
       "",
       "An identifying prefix to prepend to new export names created "
       "by module splitting.",
-         WasmSplitOption,
+      WasmSplitOption,
       {Mode::Split},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { exportPrefix = argument; })
@@ -217,7 +217,7 @@ WasmSplitOptions::WasmSplitOptions()
       "it can be shared between multiple threads. Users are responsible for "
       "ensuring that the module does not use the initial memory region for "
       "anything else.",
-         WasmSplitOption,
+      WasmSplitOption,
       {Mode::Instrument},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) {
@@ -230,7 +230,7 @@ WasmSplitOptions::WasmSplitOptions()
       "Can help differentiate the modules in stack traces. This option will be "
       "removed once simpler ways of naming modules are widely available. See "
       "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
-         WasmSplitOption,
+      WasmSplitOption,
       {Mode::Split, Mode::Instrument},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
@@ -289,7 +289,7 @@ WasmSplitOptions::WasmSplitOptions()
 WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
                                         const std::string& shortName,
                                         const std::string& description,
-                        const std::string& category,
+                                        const std::string& category,
                                         std::vector<Mode>&& modes,
                                         Arguments arguments,
                                         const Action& action) {
@@ -322,7 +322,7 @@ WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
 WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
                                         const std::string& shortName,
                                         const std::string& description,
-                        const std::string& category,
+                                        const std::string& category,
                                         Arguments arguments,
                                         const Action& action) {
   // Add an option valid in all modes.

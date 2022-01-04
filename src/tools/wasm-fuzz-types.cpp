@@ -168,7 +168,7 @@ int main(int argc, const char* argv[]) {
     "--nominal",
     "",
     "Use the nominal type system (default)",
-              WasmFuzzTypesOption,
+    WasmFuzzTypesOption,
     Options::Arguments::Zero,
     [&](Options*, const std::string& arg) { system = TypeSystem::Nominal; });
   options.add("--structural",

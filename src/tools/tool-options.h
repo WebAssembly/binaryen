@@ -72,7 +72,7 @@ struct ToolOptions : public Options {
         "--experimental-poppy",
         "",
         "Parse wast files as Poppy IR for testing purposes.",
-           ToolOptionsCategory,
+        ToolOptionsCategory,
         Arguments::Zero,
         [this](Options*, const std::string&) { profile = IRProfile::Poppy; });
     (*this)

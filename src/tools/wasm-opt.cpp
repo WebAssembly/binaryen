@@ -120,7 +120,7 @@ int main(int argc, const char* argv[]) {
       "--fuzz-exec-before",
       "-feh",
       "Execute functions before optimization, helping fuzzing find bugs",
-         WasmOptOption,
+      WasmOptOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { fuzzExecBefore = true; })
     .add("--fuzz-exec",
@@ -147,7 +147,7 @@ int main(int argc, const char* argv[]) {
       "-ttf",
       "Translate the input into a valid wasm module *somehow*, useful for "
       "fuzzing",
-         WasmOptOption,
+      WasmOptOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { translateToFuzz = true; })
     .add("--initial-fuzz",

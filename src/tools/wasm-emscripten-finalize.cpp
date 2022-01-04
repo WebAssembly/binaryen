@@ -60,7 +60,8 @@ int main(int argc, const char* argv[]) {
   bool noDynCalls = false;
   bool onlyI64DynCalls = false;
 
-  const std::string WasmEmscriptenFinalizeOption = "wasm-emscripten-finalize options";
+  const std::string WasmEmscriptenFinalizeOption =
+    "wasm-emscripten-finalize options";
 
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
