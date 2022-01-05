@@ -141,13 +141,8 @@ Options& Options::add(const std::string& longName,
   options.push_back(
     {longName, shortName, description, category, arguments, action, hidden, 0});
 
-  bool found = false;
-  for (auto& existingCategory : categories) {
-    if (category == existingCategory) {
-      found = true;
-    }
-  }
-  if (!found) {
+  if (std::find(categories.begin(), categories.end(), category) ==
+      categories.end) {
     categories.push_back(category);
   }
 
