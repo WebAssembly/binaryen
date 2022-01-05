@@ -239,7 +239,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   EvallingModuleInstance* instance;
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
-  // A representation of the contents wasm memory as we work on it.
+  // A representation of the contents of wasm memory as we execute.
   std::vector<char> memory;
 
   CtorEvalExternalInterface(
@@ -251,6 +251,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
+    // If nothing was ever written to memory then there is nothing to update.
     if (!memory.empty()) {
       applyMemoryToModule();
     }
