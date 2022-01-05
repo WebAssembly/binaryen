@@ -2058,7 +2058,9 @@ void WasmBinaryBuilder::readImports() {
         functionTypes.push_back(getTypeByIndex(index));
         auto type = getTypeByIndex(index);
         if (!type.isSignature()) {
-          throwError(std::string("Imported function ") + module.str + '.' + base.str + "'s type must be a signature. Given: " + type.toString());
+          throwError(std::string("Imported function ") + module.str + '.' +
+                     base.str +
+                     "'s type must be a signature. Given: " + type.toString());
         }
         auto curr = builder.makeFunction(name, type, {});
         curr->module = module;
