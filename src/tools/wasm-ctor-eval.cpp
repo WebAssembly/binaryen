@@ -251,20 +251,9 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
-    // Memory must have already been flattened into the standard form: one
-    // segment at offset 0, or none.
-    if (wasm->memory.segments.empty()) {
-      Builder builder(*wasm);
-      std::vector<char> empty;
-      wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(int32_t(0)), empty));
+    if (!memory.empty()) {
+      applyMemoryToModule();
     }
-    auto& segment = wasm->memory.segments[0];
-    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
-
-    // Copy the current memory contents after execution into the Module's
-    // memory.
-    segment.data = memory;
   }
 
   void init(Module& wasm_, EvallingModuleInstance& instance_) override {
@@ -456,6 +445,23 @@ private:
     T ret;
     memcpy(&ret, getMemory<T>(address), sizeof(T));
     return ret;
+  }
+
+  void applyMemoryToModule() {
+    // Memory must have already been flattened into the standard form: one
+    // segment at offset 0, or none.
+    if (wasm->memory.segments.empty()) {
+      Builder builder(*wasm);
+      std::vector<char> empty;
+      wasm->memory.segments.push_back(
+        Memory::Segment(builder.makeConst(int32_t(0)), empty));
+    }
+    auto& segment = wasm->memory.segments[0];
+    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
+
+    // Copy the current memory contents after execution into the Module's
+    // memory.
+    segment.data = memory;
   }
 };
 
