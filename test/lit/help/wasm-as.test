@@ -1,10 +1,14 @@
 ;; RUN: wasm-as --help | filecheck %s
-;; CHECK: wasm-as INFILE
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-as INFILE
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Assemble a .wat (WebAssembly text format) into a .wasm (WebAssembly binary
 ;; CHECK-NEXT: format)
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: wasm-as options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
 ;; CHECK-NEXT:
@@ -18,7 +22,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --symbolmap,-s                       Emit a symbol map (indexes => names)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
 ;; CHECK-NEXT:
@@ -108,7 +114,9 @@
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --version                            Output version information and exit
 ;; CHECK-NEXT:

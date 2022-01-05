@@ -61,7 +61,7 @@ Options::Options(const std::string& command, const std::string& description)
       GeneralOption,
       Arguments::Zero,
       [command](Options*, const std::string&) {
-        std::cout << command << " version " << PROJECT_VERSION << "\n";
+        std::cout << command << " version " << PROJECT_VERSION << '\n';
         exit(0);
       });
   add("--help",
@@ -70,13 +70,21 @@ Options::Options(const std::string& command, const std::string& description)
       GeneralOption,
       Arguments::Zero,
       [this, command, description](Options* o, const std::string&) {
+        for (size_t i = 0; i < SCREEN_WIDTH; i++) {
+          std::cout << '=';
+        }
+        std::cout << '\n';
         std::cout << command;
         if (positional != Arguments::Zero) {
           std::cout << ' ' << positionalName;
         }
         std::cout << "\n\n";
         printWrap(std::cout, 0, description);
-        std::cout << "\n";
+        std::cout << '\n';
+        for (size_t i = 0; i < SCREEN_WIDTH; i++) {
+          std::cout << '=';
+        }
+        std::cout << '\n';
         size_t optionWidth = 0;
         for (const auto& o : options) {
           if (o.hidden) {
@@ -87,7 +95,11 @@ Options::Options(const std::string& command, const std::string& description)
         }
         for (int i = int(categories.size()) - 1; i >= 0; i--) {
           auto& category = categories[i];
-          std::cout << "\n" << category << ":\n";
+          std::cout << "\n\n" << category << ":\n";
+          for (size_t i = 0; i < category.size() + 1; i++) {
+            std::cout << '-';
+          }
+          std::cout << '\n';
           for (const auto& o : options) {
             if (o.hidden || o.category != category) {
               continue;

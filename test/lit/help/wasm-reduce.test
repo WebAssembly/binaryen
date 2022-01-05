@@ -1,10 +1,14 @@
 ;; RUN: wasm-reduce --help | filecheck %s
-;; CHECK: wasm-reduce INFILE
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-reduce INFILE
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Reduce a wasm file to a smaller one that has the same behavior on a given
 ;; CHECK-NEXT: command
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: wasm-reduce options:
+;; CHECK-NEXT: --------------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --command,-cmd                       The command to run on the test, that we
 ;; CHECK-NEXT:                                        want to reduce while keeping the
@@ -47,7 +51,9 @@
 ;; CHECK-NEXT:                                        wasm-opt while reducing. (default:
 ;; CHECK-NEXT:                                        --enable-all)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
 ;; CHECK-NEXT:
@@ -137,7 +143,9 @@
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --version                            Output version information and exit
 ;; CHECK-NEXT:

@@ -1,9 +1,13 @@
 ;; RUN: wasm2js --help | filecheck %s
-;; CHECK: wasm2js INFILE
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm2js INFILE
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Transform .wasm/.wat files to asm.js
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: wasm2js options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                                   Output file (stdout if not
 ;; CHECK-NEXT:                                                 specified)
@@ -34,7 +38,9 @@
 ;; CHECK-NEXT:                                                 function indexes to their
 ;; CHECK-NEXT:                                                 original names
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Optimization passes:
+;; CHECK-NEXT: --------------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --alignment-lowering                          lower unaligned loads and stores
 ;; CHECK-NEXT:                                                 to smaller aligned ones
@@ -377,7 +383,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --vacuum                                      removes obviously unneeded code
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Optimization options:
+;; CHECK-NEXT: ---------------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:    -O                                           execute default optimization
 ;; CHECK-NEXT:                                                 passes
@@ -464,7 +472,9 @@
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory
 ;; CHECK-NEXT:                                                 will be zero-initialized
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mvp-features,-mvp                           Disable all non-MVP features
 ;; CHECK-NEXT:
@@ -561,7 +571,9 @@
 ;; CHECK-NEXT:                                                 equirecursive). This is the
 ;; CHECK-NEXT:                                                 default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --version                                     Output version information and
 ;; CHECK-NEXT:                                                 exit

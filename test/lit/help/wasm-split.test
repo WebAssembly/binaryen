@@ -1,12 +1,16 @@
 ;; RUN: wasm-split --help | filecheck %s
-;; CHECK: wasm-split INFILES
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-split INFILES
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Split a module into a primary module and a secondary module, or instrument a
 ;; CHECK-NEXT: module to gather a profile that can inform future splitting, or manage such
 ;; CHECK-NEXT: profiles. Options that are only accepted in particular modes are marked with the
 ;; CHECK-NEXT: accepted "[<modes>]" in their descriptions.
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: wasm-split options:
+;; CHECK-NEXT: -------------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --split                              Split an input module into two output
 ;; CHECK-NEXT:                                        modules. The default mode.
@@ -100,7 +104,9 @@
 ;; CHECK-NEXT:                                        that will be kept and split out when
 ;; CHECK-NEXT:                                        splitting a module.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
 ;; CHECK-NEXT:
@@ -190,7 +196,9 @@
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --version                            Output version information and exit
 ;; CHECK-NEXT:

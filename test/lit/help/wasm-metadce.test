@@ -1,5 +1,6 @@
 ;; RUN: wasm-metadce --help | filecheck %s
-;; CHECK: wasm-metadce INFILE
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-metadce INFILE
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: This tool performs dead code elimination (DCE) on a larger space that the wasm
 ;; CHECK-NEXT: module is just a part of. For example, if you have JS and wasm that are
@@ -44,8 +45,11 @@
 ;; CHECK-NEXT: can also be marked as a root, export (with the export string), or import (with
 ;; CHECK-NEXT: the module and import strings). DCE then computes what is reachable from the
 ;; CHECK-NEXT: roots.
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: wasm-opt options:
+;; CHECK-NEXT: -----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
 ;; CHECK-NEXT:
@@ -59,7 +63,9 @@
 ;; CHECK-NEXT:   --dump,-d                            Dump the combined graph file (useful for
 ;; CHECK-NEXT:                                        debugging)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
 ;; CHECK-NEXT:
@@ -149,7 +155,9 @@
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --version                            Output version information and exit
 ;; CHECK-NEXT:

@@ -1,9 +1,13 @@
 ;; RUN: wasm-ctor-eval --help | filecheck %s
-;; CHECK: wasm-ctor-eval INFILE
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-ctor-eval INFILE
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Execute C++ global constructors ahead of time
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: wasm-ctor-eval options:
+;; CHECK-NEXT: -----------------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
 ;; CHECK-NEXT:
@@ -15,7 +19,9 @@
 ;; CHECK-NEXT:   --ctors,-c                           Comma-separated list of global
 ;; CHECK-NEXT:                                        constructor functions to evaluate
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
 ;; CHECK-NEXT:
@@ -105,7 +111,9 @@
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --version                            Output version information and exit
 ;; CHECK-NEXT:

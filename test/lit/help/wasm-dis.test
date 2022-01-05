@@ -1,17 +1,23 @@
 ;; RUN: wasm-dis --help | filecheck %s
-;; CHECK: wasm-dis INFILE
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-dis INFILE
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Un-assemble a .wasm (WebAssembly binary format) into a .wat (WebAssembly text
 ;; CHECK-NEXT: format)
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: wasm-dis options:
+;; CHECK-NEXT: -----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --source-map,-sm                     Consume source map from the specified
 ;; CHECK-NEXT:                                        file to add location information
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
 ;; CHECK-NEXT:
@@ -101,7 +107,9 @@
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --version                            Output version information and exit
 ;; CHECK-NEXT:
