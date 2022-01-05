@@ -260,8 +260,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
         Memory::Segment(builder.makeConst(int32_t(0)), empty));
     }
     auto& segment = wasm->memory.segments[0];
-    assert(segment.offset->cast<Const>()->value.getInteger() ==
-           0);
+    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
 
     // Copy the current memory contents after execution into the Module's
     // memory.
