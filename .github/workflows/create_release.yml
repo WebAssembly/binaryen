@@ -40,7 +40,8 @@ jobs:
       run: mkdir -p out
 
     - name: cmake (macos)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64'
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=x86_64
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=arm64      
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
@@ -70,6 +71,22 @@ jobs:
         echo "::set-output name=tarball::$TARBALL"
         echo "::set-output name=shasum::$SHASUM"
 
+    - name: archive-arm64
+      id: archive-arm64
+      run: |
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
+        VERSION=$GITHUB_REF_NAME
+        PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
+        TARBALL=$PKGNAME.tar.gz
+        SHASUM=$PKGNAME.tar.gz.sha256
+        mv out/install binaryen-$VERSION
+        tar -czf $TARBALL binaryen-$VERSION
+        # on Windows, MSYS2 will strip the carriage return from CMake output
+        cmake -E sha256sum $TARBALL > $SHASUM
+        echo "::set-output name=tarball::$TARBALL"
+        echo "::set-output name=shasum::$SHASUM"
+      if: matrix.os == 'macos-latest'
+
     - name: upload tarball
       uses: softprops/action-gh-release@v1
       with:
@@ -77,6 +94,8 @@ jobs:
         files: |
           ${{ steps.archive.outputs.tarball }}
           ${{ steps.archive.outputs.shasum }}
+          ${{ steps.archive-arm64.outputs.tarball }}
+          ${{ steps.archive-arm64.outputs.shasum }}
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
