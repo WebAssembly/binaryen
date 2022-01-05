@@ -51,10 +51,10 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release --target install
+      run: cmake --build out -v --config Release --target install
 
     - name: build-arm64
-      run: cmake --build out-arm64 --config Release --target install
+      run: cmake --build out-arm64 -v --config Release --target install
       if: matrix.os == 'macos-latest'
 
     - name: strip
@@ -69,6 +69,7 @@ jobs:
         PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
+        rm -rf binaryen-$VERSION
         mv out/install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
@@ -84,6 +85,7 @@ jobs:
         PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
+        rm -rf binaryen-$VERSION
         mv out-arm64/install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
