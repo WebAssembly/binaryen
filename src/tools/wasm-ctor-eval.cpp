@@ -154,7 +154,11 @@ public:
     });
   }
 
+  // Special storage for the C stack. TODO: is this still needed?
   std::vector<char> stack;
+
+  // A representation of wasm memory as we work on it.
+  std::vector<char> memory;
 
   // create C stack space for us to use. We do *NOT* care about their contents,
   // assuming the stack top was unwound. the memory may have been modified,
@@ -165,6 +169,21 @@ public:
     // tell the module to accept writes up to the stack end
     auto total = STACK_START + STACK_SIZE;
     memorySize = total / Memory::kPageSize;
+  }
+
+  // Called when we want to apply the current state of execution to the Module.
+  // Until this is called the Module is never changed.
+  void applyToModule() {
+    // Memory must have already been flattened into the standard form: one
+    // segment, at offset 0.
+    assert(wasm.memory.segments.size() == 1);
+    auto& segment = wasm.memory.segments[0];
+    assert(segment.offset->cast<Const>()->value.getInteger() ==
+           0);
+
+    // Copy the current memory contents after execution into the Module's
+    // memory.
+    segment.data = memory;
   }
 };
 
@@ -415,22 +434,13 @@ private:
       return (T*)(&instance->stack[relative]);
     }
 
-    // otherwise, this must be in the singleton segment. resize as needed
-    if (wasm->memory.segments.size() == 0) {
-      std::vector<char> temp;
-      Builder builder(*wasm);
-      wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(int32_t(0)), temp));
-    }
-    // memory should already have been flattened
-    assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() ==
-           0);
+    // otherwise, this must be in normal memory. resize it as needed.
     auto max = address + sizeof(T);
-    auto& data = wasm->memory.segments[0].data;
-    if (max > data.size()) {
-      data.resize(max);
+    if (max > instance->memory.size()) {
+      instance->memory.resize(max);
     }
-    return (T*)(&data[address]);
+
+    return (T*)(&instance->memory[address]);
   }
 
   template<typename T> void doStore(Address address, T value) {
