@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <fstream>
 
+#include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
@@ -6419,6 +6420,10 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     }
     exceptionTargetNames.erase(catchLabel);
   }
+
+  // If catch bodies contained stacky code, 'pop's can be nested within a block.
+  // Fix that up.
+  EHUtils::handleBlockNestedPop(curr, currFunction, wasm);
   curr->finalize(curr->type);
 
   // For simplicity, we create an inner block within the catch body too, but the
