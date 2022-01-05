@@ -42,7 +42,7 @@ jobs:
     - name: cmake (macos)
       run: |
         cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=x86_64
-        cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=arm64
+        cmake -S . -B out-arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out-arm64/install -DCMAKE_OSX_ARCHITECTURES=arm64
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
@@ -53,8 +53,12 @@ jobs:
     - name: build
       run: cmake --build out --config Release --target install
 
+    - name: build-arm64
+      run: cmake --build out-arm64 --config Release --target install
+      if: matrix.os == 'macos-latest'
+
     - name: strip
-      run: find out/install/ -type f -perm -u=x -exec strip -x {} +
+      run: find out*/install/ -type f -perm -u=x -exec strip -x {} +
       if: matrix.os != 'windows-latest'
 
     - name: archive
@@ -80,7 +84,7 @@ jobs:
         PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
-        mv out/install binaryen-$VERSION
+        mv out-arm64/install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
