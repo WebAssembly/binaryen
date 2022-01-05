@@ -154,11 +154,7 @@ public:
     });
   }
 
-  // Special storage for the C stack. TODO: is this still needed?
   std::vector<char> stack;
-
-  // A representation of wasm memory as we work on it.
-  std::vector<char> memory;
 
   // create C stack space for us to use. We do *NOT* care about their contents,
   // assuming the stack top was unwound. the memory may have been modified,
@@ -169,21 +165,6 @@ public:
     // tell the module to accept writes up to the stack end
     auto total = STACK_START + STACK_SIZE;
     memorySize = total / Memory::kPageSize;
-  }
-
-  // Called when we want to apply the current state of execution to the Module.
-  // Until this is called the Module is never changed.
-  void applyToModule() {
-    // Memory must have already been flattened into the standard form: one
-    // segment, at offset 0.
-    assert(wasm.memory.segments.size() == 1);
-    auto& segment = wasm.memory.segments[0];
-    assert(segment.offset->cast<Const>()->value.getInteger() ==
-           0);
-
-    // Copy the current memory contents after execution into the Module's
-    // memory.
-    segment.data = memory;
   }
 };
 
@@ -258,10 +239,28 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   EvallingModuleInstance* instance;
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
+  // A representation of the contents wasm memory as we work on it.
+  std::vector<char> memory;
+
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances_ =
       {}) {
     linkedInstances.swap(linkedInstances_);
+  }
+
+  // Called when we want to apply the current state of execution to the Module.
+  // Until this is called the Module is never changed.
+  void applyToModule() {
+    // Memory must have already been flattened into the standard form: one
+    // segment, at offset 0.
+    assert(wasm->memory.segments.size() == 1);
+    auto& segment = wasm->memory.segments[0];
+    assert(segment.offset->cast<Const>()->value.getInteger() ==
+           0);
+
+    // Copy the current memory contents after execution into the Module's
+    // memory.
+    segment.data = memory;
   }
 
   void init(Module& wasm_, EvallingModuleInstance& instance_) override {
@@ -436,11 +435,11 @@ private:
 
     // otherwise, this must be in normal memory. resize it as needed.
     auto max = address + sizeof(T);
-    if (max > instance->memory.size()) {
-      instance->memory.resize(max);
+    if (max > memory.size()) {
+      memory.resize(max);
     }
 
-    return (T*)(&instance->memory[address]);
+    return (T*)(&memory[address]);
   }
 
   template<typename T> void doStore(Address address, T value) {
@@ -485,8 +484,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
       std::cerr << "trying to eval " << ctor << '\n';
-      // snapshot memory, as either the entire function is done, or none
-      auto memoryBefore = wasm.memory;
       // snapshot globals (note that STACKTOP might be modified, but should
       // be returned, so that works out)
       auto globalsBefore = instance.globals;
@@ -500,16 +497,18 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
         // that's it, we failed, so stop here, cleaning up partial
         // memory changes first
         std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
-        wasm.memory = memoryBefore;
         return;
       }
       if (instance.globals != globalsBefore) {
         std::cerr << "  ...stopping since globals modified\n";
-        wasm.memory = memoryBefore;
         return;
       }
       std::cerr << "  ...success on " << ctor << ".\n";
-      // success, the entire function was evalled!
+
+      // Success, the entire function was evalled! Apply the results of
+      // execution to the module.
+      interface.applyToModule();
+
       // we can nop the function (which may be used elsewhere)
       // and remove the export
       auto* exp = wasm.getExport(ctor);
