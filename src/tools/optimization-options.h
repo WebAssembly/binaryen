@@ -30,6 +30,9 @@ struct OptimizationOptions : public ToolOptions {
 
   std::vector<std::string> passes;
 
+  constexpr static const char* OptimizationOptionsCategory =
+    "Optimization options";
+
   OptimizationOptions(const std::string& command,
                       const std::string& description)
     : ToolOptions(command, description) {
@@ -37,6 +40,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("",
            "-O",
            "execute default optimization passes",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.setDefaultOptimizationOptions();
@@ -45,6 +49,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("",
            "-O0",
            "execute no optimization passes",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 0;
@@ -54,6 +59,7 @@ struct OptimizationOptions : public ToolOptions {
            "-O1",
            "execute -O1 optimization passes (quick&useful opts, useful for "
            "iteration builds)",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 1;
@@ -64,6 +70,7 @@ struct OptimizationOptions : public ToolOptions {
         "",
         "-O2",
         "execute -O2 optimization passes (most opts, generally gets most perf)",
+        OptimizationOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) {
           passOptions.optimizeLevel = 2;
@@ -74,6 +81,7 @@ struct OptimizationOptions : public ToolOptions {
            "-O3",
            "execute -O3 optimization passes (spends potentially a lot of time "
            "optimizing)",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 3;
@@ -85,6 +93,7 @@ struct OptimizationOptions : public ToolOptions {
            "execute -O4 optimization passes (also flatten the IR, which can "
            "take a lot more time and memory, but is useful on more nested / "
            "complex / less-optimized input)",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 4;
@@ -94,6 +103,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("",
            "-Os",
            "execute default optimization passes, focusing on code size",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 2;
@@ -103,6 +113,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("",
            "-Oz",
            "execute default optimization passes, super-focusing on code size",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 2;
@@ -112,6 +123,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("--optimize-level",
            "-ol",
            "How much to focus on optimizing code",
+           OptimizationOptionsCategory,
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.optimizeLevel = atoi(argument.c_str());
@@ -119,6 +131,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("--shrink-level",
            "-s",
            "How much to focus on shrinking code size",
+           OptimizationOptionsCategory,
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.shrinkLevel = atoi(argument.c_str());
@@ -126,6 +139,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("--debuginfo",
            "-g",
            "Emit names section in wasm binary (or full debuginfo in wast)",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [&](Options* o, const std::string& arguments) {
              passOptions.debugInfo = true;
@@ -136,6 +150,7 @@ struct OptimizationOptions : public ToolOptions {
              std::to_string(InliningOptions().alwaysInlineMaxSize) +
              ", which "
              "is safe for use with -Os builds)",
+           OptimizationOptionsCategory,
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.inlining.alwaysInlineMaxSize =
@@ -147,6 +162,7 @@ struct OptimizationOptions : public ToolOptions {
            "or function calls) when optimizing aggressively for speed (-O3). "
            "Default: " +
              std::to_string(InliningOptions().flexibleInlineMaxSize),
+           OptimizationOptionsCategory,
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.inlining.flexibleInlineMaxSize =
@@ -156,6 +172,7 @@ struct OptimizationOptions : public ToolOptions {
            "-ocimfs",
            "Max size of functions that are inlined when there is only one "
            "caller (default -1, which means all such functions are inlined)",
+           OptimizationOptionsCategory,
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              static_assert(InliningOptions().oneCallerInlineMaxSize ==
@@ -167,6 +184,7 @@ struct OptimizationOptions : public ToolOptions {
       .add("--inline-functions-with-loops",
            "-ifwl",
            "Allow inlining functions with loops",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options* o, const std::string&) {
              passOptions.inlining.allowFunctionsWithLoops = true;
@@ -176,6 +194,7 @@ struct OptimizationOptions : public ToolOptions {
            "Number of ifs allowed in partial inlining (zero means partial "
            "inlining is disabled) (default: " +
              std::to_string(InliningOptions().partialInliningIfs) + ')',
+           OptimizationOptionsCategory,
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
              passOptions.inlining.partialInliningIfs =
@@ -185,6 +204,7 @@ struct OptimizationOptions : public ToolOptions {
            "-iit",
            "Optimize under the helpful assumption that no surprising traps "
            "occur (from load, div/mod, etc.)",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.ignoreImplicitTraps = true;
@@ -193,6 +213,7 @@ struct OptimizationOptions : public ToolOptions {
            "-tnh",
            "Optimize under the helpful assumption that no trap is reached at "
            "runtime (from load, div/mod, etc.)",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.trapsNeverHappen = true;
@@ -201,6 +222,7 @@ struct OptimizationOptions : public ToolOptions {
            "-lmu",
            "Optimize under the helpful assumption that the low 1K of memory is "
            "not used by the application",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.lowMemoryUnused = true;
@@ -209,21 +231,25 @@ struct OptimizationOptions : public ToolOptions {
         "--fast-math",
         "-ffm",
         "Optimize floats without handling corner cases of NaNs and rounding",
+        OptimizationOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) { passOptions.fastMath = true; })
       .add("--zero-filled-memory",
            "-uim",
            "Assume that an imported memory will be zero-initialized",
+           OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.zeroFilledMemory = true;
            });
+
     // add passes in registry
     for (const auto& p : PassRegistry::get()->getRegisteredNames()) {
       (*this).add(
         std::string("--") + p,
         "",
         PassRegistry::get()->getPassDescription(p),
+        "Optimization passes",
         // Allow an optional parameter to a pass. If provided, it is
         // the same as if using --pass-arg, that is,
         //

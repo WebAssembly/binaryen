@@ -47,17 +47,21 @@ struct ShellOptions : public Options {
   Name entry;
   std::set<size_t> skipped;
 
+  const std::string WasmShellOption = "wasm-shell options";
+
   ShellOptions(const std::string& command, const std::string& description)
     : Options(command, description) {
     (*this)
       .add("--entry",
            "-e",
            "Call the entry point after parsing the module",
+           WasmShellOption,
            Options::Arguments::One,
            [this](Options*, const std::string& argument) { entry = argument; })
       .add("--skip",
            "-s",
            "Skip input on certain lines (comma-separated-list)",
+           WasmShellOption,
            Options::Arguments::One,
            [this](Options*, const std::string& argument) {
              size_t i = 0;
