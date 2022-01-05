@@ -142,7 +142,7 @@ Options& Options::add(const std::string& longName,
     {longName, shortName, description, category, arguments, action, hidden, 0});
 
   if (std::find(categories.begin(), categories.end(), category) ==
-      categories.end) {
+      categories.end()) {
     categories.push_back(category);
   }
 
