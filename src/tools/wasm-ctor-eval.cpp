@@ -252,8 +252,13 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   // Until this is called the Module is never changed.
   void applyToModule() {
     // Memory must have already been flattened into the standard form: one
-    // segment, at offset 0.
-    assert(wasm->memory.segments.size() == 1);
+    // segment at offset 0, or none.
+    if (wasm->memory.segments.empty()) {
+      Builder builder(*wasm);
+      std::vector<char> empty;
+      wasm->memory.segments.push_back(
+        Memory::Segment(builder.makeConst(int32_t(0)), empty));
+    }
     auto& segment = wasm->memory.segments[0];
     assert(segment.offset->cast<Const>()->value.getInteger() ==
            0);
