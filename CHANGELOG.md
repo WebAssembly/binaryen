@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v104
+----
+- Bugfixes only, release created due to incorrect github release artifacts in
+  v103 release (#4398).
+
 v103
 ----
 

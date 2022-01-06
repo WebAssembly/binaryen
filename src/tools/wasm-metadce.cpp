@@ -425,6 +425,8 @@ int main(int argc, const char* argv[]) {
   std::string graphFile;
   bool dump = false;
 
+  const std::string WasmMetaDCEOption = "wasm-opt options";
+
   ToolOptions options(
     "wasm-metadce",
     "This tool performs dead code elimination (DCE) on a larger space "
@@ -474,6 +476,7 @@ int main(int argc, const char* argv[]) {
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
+         WasmMetaDCEOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
@@ -482,21 +485,25 @@ int main(int argc, const char* argv[]) {
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
+         WasmMetaDCEOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
     .add("--debuginfo",
          "-g",
          "Emit names section and debug info",
+         WasmMetaDCEOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; })
     .add("--graph-file",
          "-f",
          "Filename of the graph description file",
+         WasmMetaDCEOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { graphFile = argument; })
     .add("--dump",
          "-d",
          "Dump the combined graph file (useful for debugging)",
+         WasmMetaDCEOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { dump = true; })
     .add_positional("INFILE",

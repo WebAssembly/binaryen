@@ -2202,7 +2202,8 @@ void FunctionValidator::visitTry(Try* curr) {
             << "catch's tag (" << tagName
             << ")'s pop doesn't have the same type as the tag's params";
         }
-        if (!shouldBeTrue(EHUtils::isPopValid(catchBody), curr, "")) {
+        if (!shouldBeTrue(
+              EHUtils::containsValidDanglingPop(catchBody), curr, "")) {
           getStream() << "catch's body (" << tagName
                       << ")'s pop's location is not valid";
         }

@@ -100,61 +100,63 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
   }
 }
 
-bool isPopValid(Expression* catchBody) {
+bool containsValidDanglingPop(Expression* catchBody) {
   bool isPopNested = false;
   Expression** popPtr = nullptr;
   auto* pop = getFirstPop(catchBody, isPopNested, popPtr);
   return pop != nullptr && !isPopNested;
 }
 
+void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
+  Builder builder(wasm);
+  for (Index i = 0; i < try_->catchTags.size(); i++) {
+    Name tagName = try_->catchTags[i];
+    auto* tag = wasm.getTag(tagName);
+    if (tag->sig.params == Type::none) {
+      continue;
+    }
+
+    auto* catchBody = try_->catchBodies[i];
+    bool isPopNested = false;
+    Expression** popPtr = nullptr;
+    Expression* pop = getFirstPop(catchBody, isPopNested, popPtr);
+    assert(pop && "Pop has not been found in this catch");
+
+    // Change code like
+    // (catch $e
+    //   ...
+    //   (block
+    //     (pop i32)
+    //   )
+    // )
+    // into
+    // (catch $e
+    //   (local.set $new
+    //     (pop i32)
+    //   )
+    //   ...
+    //   (block
+    //     (local.get $new)
+    //   )
+    // )
+    if (isPopNested) {
+      assert(popPtr);
+      Index newLocal = builder.addVar(func, pop->type);
+      try_->catchBodies[i] =
+        builder.makeSequence(builder.makeLocalSet(newLocal, pop), catchBody);
+      *popPtr = builder.makeLocalGet(newLocal, pop->type);
+    }
+  }
+}
+
 void handleBlockNestedPops(Function* func, Module& wasm) {
   if (!wasm.features.hasExceptionHandling()) {
     return;
   }
-
-  Builder builder(wasm);
   FindAll<Try> trys(func->body);
   for (auto* try_ : trys.list) {
-    for (Index i = 0; i < try_->catchTags.size(); i++) {
-      Name tagName = try_->catchTags[i];
-      auto* tag = wasm.getTag(tagName);
-      if (tag->sig.params == Type::none) {
-        continue;
-      }
-
-      auto* catchBody = try_->catchBodies[i];
-      bool isPopNested = false;
-      Expression** popPtr = nullptr;
-      Expression* pop = getFirstPop(catchBody, isPopNested, popPtr);
-      assert(pop && "Pop has not been found in this catch");
-
-      // Change code like
-      // (catch $e
-      //   ...
-      //   (block
-      //     (pop i32)
-      //   )
-      // )
-      // into
-      // (catch $e
-      //   (local.set $new
-      //     (pop i32)
-      //   )
-      //   ...
-      //   (block
-      //     (local.get $new)
-      //   )
-      // )
-      if (isPopNested) {
-        assert(popPtr);
-        Index newLocal = builder.addVar(func, pop->type);
-        try_->catchBodies[i] =
-          builder.makeSequence(builder.makeLocalSet(newLocal, pop), catchBody);
-        *popPtr = builder.makeLocalGet(newLocal, pop->type);
-      }
-    }
+    handleBlockNestedPop(try_, func, wasm);
   }
-
   // Pops we handled can be of non-defaultable types, so we may have created
   // non-nullable type locals. Fix them.
   TypeUpdating::handleNonDefaultableLocals(func, wasm);

@@ -31,6 +31,7 @@ high chance for set at start of loop
 #include "ir/memory-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"
+#include <ir/eh-utils.h>
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
@@ -182,8 +183,12 @@ private:
   // type, but should not do so for certain types that are dangerous. For
   // example, it would be bad to add an RTT in a tuple, as that would force us
   // to use temporary locals for the tuple, but RTTs are not defaultable.
+  // Also, 'pop' pseudo instruction for EH is supposed to exist only at the
+  // beginning of a 'catch' block, so it shouldn't be moved around or deleted
+  // freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
-    return curr->type.isDefaultable();
+    return curr->type.isDefaultable() &&
+           !EHUtils::containsValidDanglingPop(curr);
   }
   void recombine(Function* func);
   void mutate(Function* func);
