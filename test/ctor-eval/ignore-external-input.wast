@@ -39,10 +39,7 @@
   (func "test3"
     ;; This is *not* ok to call, and we will not reach the final store.
     (drop
-      (call $wasi_args_sizes_get
-        (i32.const 8) ;; argc will be written to address 8
-        (i32.const 12)
-      )
+      (call $wasi_something_else)
     )
     (i32.store8
       (i32.const 16)

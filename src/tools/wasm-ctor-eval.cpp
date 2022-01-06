@@ -278,23 +278,26 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     Name WASI("wasi_snapshot_preview1");
 
     if (ignoreExternalInput) {
-std::cout << "ignore wasi\n";
       if (import->module == WASI) {
         if (import->base == "environ_sizes_get") {
+          if (import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi environ_sizes_get has wrong sig");
+          }
           // Return __WASI_ERRNO_NOSYS (52) to indicate that the operation is not
           // supported. This will simply cause the environment to not be read. (In
           // particular, environ_get() will not be called, so we don't need to
           // implement it.)
-          return int32_t(52);
+          return {Literal(int32_t(52))};
         } else if (import->base == "args_sizes_get") {
-          if (arguments.size() != 2 || arguments[0].type != Type::i32) {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
             throw FailToEvalException("wasi args_sizes_get has wrong sig");
           }
 
           // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
           // (Note: With argc == 0 we don't need to implement args_get.)
           store32(arguments[0].geti32(), 0);
-          return int32_t(0);
+          return {Literal(int32_t(0))};
         }
 
         // Otherwise, we don't recognize this import; continue normally to
