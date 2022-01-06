@@ -112,18 +112,6 @@ public:
   Iterator end() { return Iterator(); }
 };
 
-// Use a ridiculously large stack size.
-static Index STACK_SIZE = 32 * 1024 * 1024;
-
-// Start the stack at a ridiculously large location, and do so in
-// a way that works regardless if the stack goes up or down.
-static Index STACK_START = 1024 * 1024 * 1024 + STACK_SIZE;
-
-// Bound the stack location in both directions, so we have bounds
-// that do not depend on the direction it grows.
-static Index STACK_LOWER_LIMIT = STACK_START - STACK_SIZE;
-static Index STACK_UPPER_LIMIT = STACK_START + STACK_SIZE;
-
 class EvallingModuleInstance
   : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
@@ -136,35 +124,11 @@ public:
     // global import, which we don't have, and is illegal to use
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       if (!global->init->is<Const>()) {
-        // some constants are ok to use
-        if (auto* get = global->init->dynCast<GlobalGet>()) {
-          auto name = get->name;
-          auto* import = wasm.getGlobal(name);
-          if (import->module == Name(ENV) &&
-              (import->base ==
-                 STACKTOP || // stack constants are special, we handle them
-               import->base == STACK_MAX)) {
-            return; // this is fine
-          }
-        }
         // this global is dangerously initialized by an import, so if it is
         // used, we must fail
         globals.addDangerous(global->name);
       }
     });
-  }
-
-  std::vector<char> stack;
-
-  // create C stack space for us to use. We do *NOT* care about their contents,
-  // assuming the stack top was unwound. the memory may have been modified,
-  // but it should not be read afterwards, doing so would be undefined behavior
-  void setupEnvironment() {
-    // prepare scratch memory
-    stack.resize(2 * STACK_SIZE);
-    // tell the module to accept writes up to the stack end
-    auto total = STACK_START + STACK_SIZE;
-    memorySize = total / Memory::kPageSize;
   }
 };
 
@@ -207,11 +171,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
       copied->base = Name();
 
       Builder builder(*env);
-      if (global->base == STACKTOP || global->base == STACK_MAX) {
-        copied->init = builder.makeConst(STACK_START);
-      } else {
-        copied->init = builder.makeConst(Literal::makeZero(global->type));
-      }
+      copied->init = builder.makeConst(Literal::makeZero(global->type));
       env->addExport(
         builder.makeExport(global->base, copied->name, ExternalKind::Global));
     }
@@ -417,22 +377,11 @@ private:
   // TODO: handle unaligned too, see shell-interface
 
   template<typename T> T* getMemory(Address address) {
-    // if memory is on the stack, use the stack
-    if (address >= STACK_LOWER_LIMIT) {
-      if (address >= STACK_UPPER_LIMIT) {
-        throw FailToEvalException("stack usage too high");
-      }
-      Address relative = address - STACK_LOWER_LIMIT;
-      // in range, all is good, use the stack
-      return (T*)(&instance->stack[relative]);
-    }
-
-    // otherwise, this must be in normal memory. resize it as needed.
+    // resize the memory buffer as needed.
     auto max = address + sizeof(T);
     if (max > memory.size()) {
       memory.resize(max);
     }
-
     return (T*)(&memory[address]);
   }
 
@@ -472,7 +421,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface envInterface;
   auto envInstance =
     std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
-  envInstance->setupEnvironment();
 
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
   linkedInstances["env"] = envInstance;
@@ -486,8 +434,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
 
     // create an instance for evalling
     EvallingModuleInstance instance(wasm, &interface, linkedInstances);
-    // set up the stack area and other environment details
-    instance.setupEnvironment();
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new
     instance.globals.seal();
