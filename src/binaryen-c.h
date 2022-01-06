@@ -110,7 +110,7 @@ BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // the API figure out the type instead of providing one.
 BINARYEN_API BinaryenType BinaryenTypeAuto(void);
 BINARYEN_API BinaryenType BinaryenTypeCreate(BinaryenType* valueTypes,
-                                             uint32_t numTypes);
+                                             BinaryenIndex numTypes);
 BINARYEN_API uint32_t BinaryenTypeArity(BinaryenType t);
 BINARYEN_API void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf);
 

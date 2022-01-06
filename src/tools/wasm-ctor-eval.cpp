@@ -112,18 +112,6 @@ public:
   Iterator end() { return Iterator(); }
 };
 
-// Use a ridiculously large stack size.
-static Index STACK_SIZE = 32 * 1024 * 1024;
-
-// Start the stack at a ridiculously large location, and do so in
-// a way that works regardless if the stack goes up or down.
-static Index STACK_START = 1024 * 1024 * 1024 + STACK_SIZE;
-
-// Bound the stack location in both directions, so we have bounds
-// that do not depend on the direction it grows.
-static Index STACK_LOWER_LIMIT = STACK_START - STACK_SIZE;
-static Index STACK_UPPER_LIMIT = STACK_START + STACK_SIZE;
-
 class EvallingModuleInstance
   : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
@@ -136,35 +124,11 @@ public:
     // global import, which we don't have, and is illegal to use
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       if (!global->init->is<Const>()) {
-        // some constants are ok to use
-        if (auto* get = global->init->dynCast<GlobalGet>()) {
-          auto name = get->name;
-          auto* import = wasm.getGlobal(name);
-          if (import->module == Name(ENV) &&
-              (import->base ==
-                 STACKTOP || // stack constants are special, we handle them
-               import->base == STACK_MAX)) {
-            return; // this is fine
-          }
-        }
         // this global is dangerously initialized by an import, so if it is
         // used, we must fail
         globals.addDangerous(global->name);
       }
     });
-  }
-
-  std::vector<char> stack;
-
-  // create C stack space for us to use. We do *NOT* care about their contents,
-  // assuming the stack top was unwound. the memory may have been modified,
-  // but it should not be read afterwards, doing so would be undefined behavior
-  void setupEnvironment() {
-    // prepare scratch memory
-    stack.resize(2 * STACK_SIZE);
-    // tell the module to accept writes up to the stack end
-    auto total = STACK_START + STACK_SIZE;
-    memorySize = total / Memory::kPageSize;
   }
 };
 
@@ -207,11 +171,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
       copied->base = Name();
 
       Builder builder(*env);
-      if (global->base == STACKTOP || global->base == STACK_MAX) {
-        copied->init = builder.makeConst(STACK_START);
-      } else {
-        copied->init = builder.makeConst(Literal::makeZero(global->type));
-      }
+      copied->init = builder.makeConst(Literal::makeZero(global->type));
       env->addExport(
         builder.makeExport(global->base, copied->name, ExternalKind::Global));
     }
@@ -244,10 +204,22 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   EvallingModuleInstance* instance;
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
+  // A representation of the contents of wasm memory as we execute.
+  std::vector<char> memory;
+
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances_ =
       {}) {
     linkedInstances.swap(linkedInstances_);
+  }
+
+  // Called when we want to apply the current state of execution to the Module.
+  // Until this is called the Module is never changed.
+  void applyToModule() {
+    // If nothing was ever written to memory then there is nothing to update.
+    if (!memory.empty()) {
+      applyMemoryToModule();
+    }
   }
 
   void init(Module& wasm_, EvallingModuleInstance& instance_) override {
@@ -463,32 +435,12 @@ private:
   // TODO: handle unaligned too, see shell-interface
 
   template<typename T> T* getMemory(Address address) {
-    // if memory is on the stack, use the stack
-    if (address >= STACK_LOWER_LIMIT) {
-      if (address >= STACK_UPPER_LIMIT) {
-        throw FailToEvalException("stack usage too high");
-      }
-      Address relative = address - STACK_LOWER_LIMIT;
-      // in range, all is good, use the stack
-      return (T*)(&instance->stack[relative]);
-    }
-
-    // otherwise, this must be in the singleton segment. resize as needed
-    if (wasm->memory.segments.size() == 0) {
-      std::vector<char> temp;
-      Builder builder(*wasm);
-      wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(int32_t(0)), temp));
-    }
-    // memory should already have been flattened
-    assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() ==
-           0);
+    // resize the memory buffer as needed.
     auto max = address + sizeof(T);
-    auto& data = wasm->memory.segments[0].data;
-    if (max > data.size()) {
-      data.resize(max);
+    if (max > memory.size()) {
+      memory.resize(max);
     }
-    return (T*)(&data[address]);
+    return (T*)(&memory[address]);
   }
 
   template<typename T> void doStore(Address address, T value) {
@@ -502,6 +454,23 @@ private:
     memcpy(&ret, getMemory<T>(address), sizeof(T));
     return ret;
   }
+
+  void applyMemoryToModule() {
+    // Memory must have already been flattened into the standard form: one
+    // segment at offset 0, or none.
+    if (wasm->memory.segments.empty()) {
+      Builder builder(*wasm);
+      std::vector<char> empty;
+      wasm->memory.segments.push_back(
+        Memory::Segment(builder.makeConst(int32_t(0)), empty));
+    }
+    auto& segment = wasm->memory.segments[0];
+    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
+
+    // Copy the current memory contents after execution into the Module's
+    // memory.
+    segment.data = memory;
+  }
 };
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
@@ -512,7 +481,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   CtorEvalExternalInterface envInterface;
   auto envInstance =
     std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
-  envInstance->setupEnvironment();
   linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
@@ -524,8 +492,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
 
     // create an instance for evalling
     EvallingModuleInstance instance(wasm, &interface, linkedInstances);
-    // set up the stack area and other environment details
-    instance.setupEnvironment();
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new
     instance.globals.seal();
@@ -533,8 +499,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
       std::cerr << "trying to eval " << ctor << '\n';
-      // snapshot memory, as either the entire function is done, or none
-      auto memoryBefore = wasm.memory;
       // snapshot globals (note that STACKTOP might be modified, but should
       // be returned, so that works out)
       auto globalsBefore = instance.globals;
@@ -548,16 +512,18 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
         // that's it, we failed, so stop here, cleaning up partial
         // memory changes first
         std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
-        wasm.memory = memoryBefore;
         return;
       }
       if (instance.globals != globalsBefore) {
         std::cerr << "  ...stopping since globals modified\n";
-        wasm.memory = memoryBefore;
         return;
       }
       std::cerr << "  ...success on " << ctor << ".\n";
-      // success, the entire function was evalled!
+
+      // Success, the entire function was evalled! Apply the results of
+      // execution to the module.
+      interface.applyToModule();
+
       // we can nop the function (which may be used elsewhere)
       // and remove the export
       auto* exp = wasm.getExport(ctor);
