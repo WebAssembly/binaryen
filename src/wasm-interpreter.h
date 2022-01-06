@@ -1,3 +1,4 @@
+#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -34,10 +35,6 @@
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
-
-#ifdef WASM_INTERPRETER_DEBUG
-#include "wasm-printing.h"
-#endif
 
 namespace wasm {
 

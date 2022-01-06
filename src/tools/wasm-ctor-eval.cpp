@@ -240,24 +240,29 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 static bool ignoreExternalInput = false;
 
 // Build an artificial WASI module that ignores external inputs.
+// TODO: make stdin appear to be empty too.
 std::unique_ptr<Module> buildIgnoringWASIModule(Module& wasm) {
-  auto env = std::make_unique<Module>();
-  env->name = "wasi_snapshot_preview1";
+std::cout << "ignore wasi\n";
+  auto wasi = std::make_unique<Module>();
+  wasi->name = "wasi_snapshot_preview1";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
+std::cout << "a " << func->name << "\n";
     // Check for the right module.
-    if (func->module != env->name) {
+    if (func->module != wasi->name) {
       return;
     }
+std::cout << "a2\n";
 
     // Check for the functions we want to implement.
     if (func->base != "environ_sizes_get" &&
         func->base != "args_sizes_get") {
       return;
     }
+std::cout << "a3\n";
 
-    Builder builder(*env);
-    auto* copied = ModuleUtils::copyFunction(func, *env);
+    Builder builder(*wasi);
+    auto* copied = ModuleUtils::copyFunction(func, *wasi);
     copied->module = Name();
     copied->base = Name();
 
@@ -282,11 +287,11 @@ std::unique_ptr<Module> buildIgnoringWASIModule(Module& wasm) {
       WASM_UNREACHABLE("bad function");
     }
 
-    env->addExport(
+    wasi->addExport(
       builder.makeExport(func->base, copied->name, ExternalKind::Function));
   });
 
-  return env;
+  return wasi;
 }
 
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
@@ -512,9 +517,9 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   envInstance->setupEnvironment();
   linkedInstances[envModule->name] = envInstance;
 
+  CtorEvalExternalInterface wasiInterface; // TODO: share one such interface?
   if (ignoreExternalInput) {
     auto wasiModule = buildIgnoringWASIModule(wasm);
-    CtorEvalExternalInterface wasiInterface;
     auto wasiInstance =
       std::make_shared<EvallingModuleInstance>(*wasiModule, &wasiInterface);
     wasiInstance->setupEnvironment();
