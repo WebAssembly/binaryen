@@ -280,23 +280,44 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     if (ignoreExternalInput) {
       if (import->module == WASI) {
         if (import->base == "environ_sizes_get") {
-          if (import->getResults() != Type::i32) {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
             throw FailToEvalException("wasi environ_sizes_get has wrong sig");
           }
-          // Return __WASI_ERRNO_NOSYS (52) to indicate that the operation is
-          // not supported. This will simply cause the environment to not be
-          // read. (In particular, environ_get() will not be called, so we don't
-          // need to implement it.)
-          return {Literal(int32_t(52))};
-        } else if (import->base == "args_sizes_get") {
+
+          // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS (0).
+          store32(arguments[0].geti32(), 0);
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "environ_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi environ_get has wrong sig");
+          }
+
+          // Just return __WASI_ERRNO_SUCCESS (0).
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "args_sizes_get") {
           if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
               import->getResults() != Type::i32) {
             throw FailToEvalException("wasi args_sizes_get has wrong sig");
           }
 
           // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
-          // (Note: With argc == 0 we don't need to implement args_get.)
           store32(arguments[0].geti32(), 0);
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "args_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi args_get has wrong sig");
+          }
+
+          // Just return __WASI_ERRNO_SUCCESS (0).
           return {Literal(int32_t(0))};
         }
 
