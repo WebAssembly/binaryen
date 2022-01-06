@@ -1454,6 +1454,8 @@ struct Asyncify : public Pass {
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
     auto verbose =
       runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
+    auto sideModule =
+      runner->options.getArgumentOrDefault("asyncify-side-module", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1488,7 +1490,11 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module);
+    if (sideModule) {
+      addImportedGlobals(module);  
+    } else {
+      addGlobals(module);
+    }
 
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
@@ -1553,6 +1559,28 @@ private:
                                          Type::i32,
                                          builder.makeConst(int32_t(0)),
                                          Builder::Mutable));
+  }
+
+  void addImportedGlobals(Module* module) {
+    Builder builder(*module);
+    {
+      auto asyncify_state = builder.makeGlobal(ASYNCIFY_STATE,
+                                               Type::i32,
+                                               builder.makeConst(int32_t(0)),
+                                               Builder::Mutable);
+      asyncify_state->module = "env";                                         
+      asyncify_state->base = ASYNCIFY_STATE;                                         
+      module->addGlobal(std::move(asyncify_state)); 
+    }
+    {
+      auto asyncify_data = builder.makeGlobal(ASYNCIFY_DATA,
+                                               Type::i32,
+                                               builder.makeConst(int32_t(0)),
+                                               Builder::Mutable);
+      asyncify_data->module = "env";                                         
+      asyncify_data->base = ASYNCIFY_DATA;                                         
+      module->addGlobal(std::move(asyncify_data)); 
+    }
   }
 
   void addFunctions(Module* module) {
