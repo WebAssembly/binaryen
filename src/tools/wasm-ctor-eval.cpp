@@ -199,10 +199,22 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   EvallingModuleInstance* instance;
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
+  // A representation of the contents of wasm memory as we execute.
+  std::vector<char> memory;
+
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances_ =
       {}) {
     linkedInstances.swap(linkedInstances_);
+  }
+
+  // Called when we want to apply the current state of execution to the Module.
+  // Until this is called the Module is never changed.
+  void applyToModule() {
+    // If nothing was ever written to memory then there is nothing to update.
+    if (!memory.empty()) {
+      applyMemoryToModule();
+    }
   }
 
   void init(Module& wasm_, EvallingModuleInstance& instance_) override {
@@ -365,22 +377,12 @@ private:
   // TODO: handle unaligned too, see shell-interface
 
   template<typename T> T* getMemory(Address address) {
-    // this must be in the singleton segment. resize as needed
-    if (wasm->memory.segments.size() == 0) {
-      std::vector<char> temp;
-      Builder builder(*wasm);
-      wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(int32_t(0)), temp));
-    }
-    // memory should already have been flattened
-    assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() ==
-           0);
+    // resize the memory buffer as needed.
     auto max = address + sizeof(T);
-    auto& data = wasm->memory.segments[0].data;
-    if (max > data.size()) {
-      data.resize(max);
+    if (max > memory.size()) {
+      memory.resize(max);
     }
-    return (T*)(&data[address]);
+    return (T*)(&memory[address]);
   }
 
   template<typename T> void doStore(Address address, T value) {
@@ -393,6 +395,23 @@ private:
     T ret;
     memcpy(&ret, getMemory<T>(address), sizeof(T));
     return ret;
+  }
+
+  void applyMemoryToModule() {
+    // Memory must have already been flattened into the standard form: one
+    // segment at offset 0, or none.
+    if (wasm->memory.segments.empty()) {
+      Builder builder(*wasm);
+      std::vector<char> empty;
+      wasm->memory.segments.push_back(
+        Memory::Segment(builder.makeConst(int32_t(0)), empty));
+    }
+    auto& segment = wasm->memory.segments[0];
+    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
+
+    // Copy the current memory contents after execution into the Module's
+    // memory.
+    segment.data = memory;
   }
 };
 
@@ -422,8 +441,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
       std::cerr << "trying to eval " << ctor << '\n';
-      // snapshot memory, as either the entire function is done, or none
-      auto memoryBefore = wasm.memory;
       // snapshot globals (note that STACKTOP might be modified, but should
       // be returned, so that works out)
       auto globalsBefore = instance.globals;
@@ -437,16 +454,18 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
         // that's it, we failed, so stop here, cleaning up partial
         // memory changes first
         std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
-        wasm.memory = memoryBefore;
         return;
       }
       if (instance.globals != globalsBefore) {
         std::cerr << "  ...stopping since globals modified\n";
-        wasm.memory = memoryBefore;
         return;
       }
       std::cerr << "  ...success on " << ctor << ".\n";
-      // success, the entire function was evalled!
+
+      // Success, the entire function was evalled! Apply the results of
+      // execution to the module.
+      interface.applyToModule();
+
       // we can nop the function (which may be used elsewhere)
       // and remove the export
       auto* exp = wasm.getExport(ctor);
