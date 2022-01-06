@@ -239,61 +239,6 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 // that there are not arguments passed to main, etc.
 static bool ignoreExternalInput = false;
 
-// Build an artificial WASI module that ignores external inputs.
-// TODO: make stdin appear to be empty too.
-std::unique_ptr<Module> buildIgnoringWASIModule(Module& wasm) {
-std::cout << "ignore wasi\n";
-  auto wasi = std::make_unique<Module>();
-  wasi->name = "wasi_snapshot_preview1";
-
-  ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-std::cout << "a " << func->name << "\n";
-    // Check for the right module.
-    if (func->module != wasi->name) {
-      return;
-    }
-std::cout << "a2\n";
-
-    // Check for the functions we want to implement.
-    if (func->base != "environ_sizes_get" &&
-        func->base != "args_sizes_get") {
-      return;
-    }
-std::cout << "a3\n";
-
-    Builder builder(*wasi);
-    auto* copied = ModuleUtils::copyFunction(func, *wasi);
-    copied->module = Name();
-    copied->base = Name();
-
-    if (func->base == "environ_sizes_get") {
-      // Return __WASI_ERRNO_NOSYS (52) to indicate that the operation is not
-      // supported. This will simply cause the environment to not be read. (In
-      // particular, environ_get() will not be called, so we don't need to
-      // implement it.)
-      copied->body = builder.makeConst(int32_t(52));
-    } else if (func->base == "args_sizes_get") {
-      // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
-      // (Note: With argc == 0 we don't need to implement args_get.)
-      copied->body = builder.makeSequence(
-        builder.makeStore(4, 0, 4,
-          builder.makeLocalGet(0, Type::i32),
-          builder.makeConst(int32_t(0)),
-          Type::i32
-        ),
-        builder.makeConst(int32_t(0))
-      );
-    } else {
-      WASM_UNREACHABLE("bad function");
-    }
-
-    wasi->addExport(
-      builder.makeExport(func->base, copied->name, ExternalKind::Function));
-  });
-
-  return wasi;
-}
-
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Module* wasm;
   EvallingModuleInstance* instance;
@@ -330,10 +275,39 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   Literals callImport(Function* import, LiteralList& arguments) override {
+    Name WASI("wasi_snapshot_preview1");
+
+    if (ignoreExternalInput) {
+std::cout << "ignore wasi\n";
+      if (import->module == WASI) {
+        if (import->base == "environ_sizes_get") {
+          // Return __WASI_ERRNO_NOSYS (52) to indicate that the operation is not
+          // supported. This will simply cause the environment to not be read. (In
+          // particular, environ_get() will not be called, so we don't need to
+          // implement it.)
+          return int32_t(52);
+        } else if (import->base == "args_sizes_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32) {
+            throw FailToEvalException("wasi args_sizes_get has wrong sig");
+          }
+
+          // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
+          // (Note: With argc == 0 we don't need to implement args_get.)
+          store32(arguments[0].geti32(), 0);
+          return int32_t(0);
+        }
+
+        // Otherwise, we don't recognize this import; continue normally to
+        // error.
+      }
+    }
+
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls "
               "to atexit are not emitted";
+    } else if (import->module == WASI && !ignoreExternalInput) {
+      extra = "\nrecommendation: consider --ignore-external-input";
     }
     throw FailToEvalException(std::string("call import: ") +
                               import->module.str + "." + import->base.str +
@@ -516,15 +490,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
   envInstance->setupEnvironment();
   linkedInstances[envModule->name] = envInstance;
-
-  CtorEvalExternalInterface wasiInterface; // TODO: share one such interface?
-  if (ignoreExternalInput) {
-    auto wasiModule = buildIgnoringWASIModule(wasm);
-    auto wasiInstance =
-      std::make_shared<EvallingModuleInstance>(*wasiModule, &wasiInterface);
-    wasiInstance->setupEnvironment();
-    linkedInstances[wasiModule->name] = wasiInstance;
-  }
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {
