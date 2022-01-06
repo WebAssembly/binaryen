@@ -23,4 +23,13 @@
   (func $test3
     (i32.store8 (i32.const 14) (i32.const 115))
   )
+  (func $keepalive (export "keepalive") (result i32)
+    ;; Keep things alive so we can see the results.
+    (i32.add
+      (i32.load
+        (i32.const 12)
+      )
+      (global.get $mine)
+    )
+  )
 )
