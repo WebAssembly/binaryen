@@ -41,6 +41,8 @@
 
 using namespace wasm;
 
+namespace {
+
 struct FailToEvalException {
   std::string why;
   FailToEvalException(std::string why) : why(why) {}
@@ -475,6 +477,12 @@ private:
   }
 };
 
+// Eval a single ctor function. Throws FailToEvalException on failure.
+void evalCtor(EvallingModuleInstance& instance, Name funcName) {
+  instance.callFunction(funcName, LiteralList());
+}
+
+// Eval all ctors in a module.
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
@@ -505,8 +513,9 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
       if (!ex) {
         Fatal() << "export not found: " << ctor;
       }
+      auto funcName = ex->value;
       try {
-        instance.callFunction(ex->value, LiteralList());
+        evalCtor(instance, funcName);
       } catch (FailToEvalException& fail) {
         // that's it, we failed, so stop here, cleaning up partial
         // memory changes first
@@ -533,6 +542,8 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     return;
   }
 }
+
+} // anonymous namespace
 
 //
 // main
