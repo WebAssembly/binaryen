@@ -178,7 +178,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create empty functions with similar signature
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-    if (func->module == "env") {
+    if (func->module == env->name) {
       Builder builder(*env);
       auto* copied = ModuleUtils::copyFunction(func, *env);
       copied->module = Name();
@@ -191,7 +191,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create tables with similar initial and max values
   ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    if (table->module == "env") {
+    if (table->module == env->name) {
       auto* copied = ModuleUtils::copyTable(table, *env);
       copied->module = Name();
       copied->base = Name();
@@ -201,7 +201,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   });
 
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-    if (global->module == "env") {
+    if (global->module == env->name) {
       auto* copied = ModuleUtils::copyGlobal(global, *env);
       copied->module = Name();
       copied->base = Name();
@@ -219,7 +219,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
-    if (memory->module == "env") {
+    if (memory->module == env->name) {
       env->memory.name = wasm.memory.name;
       env->memory.exists = true;
       env->memory.initial = memory->initial;
@@ -229,6 +229,61 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
       env->addExport(Builder(*env).makeExport(
         wasm.memory.base, wasm.memory.name, ExternalKind::Memory));
     }
+  });
+
+  return env;
+}
+
+// Whether to ignore external input to the program as it runs. If set, we will
+// assume that stdin is empty, that any env vars we try to read are not set,
+// that there are not arguments passed to main, etc.
+static bool ignoreExternalInput = false;
+
+// Build an artificial WASI module that ignores external inputs.
+std::unique_ptr<Module> buildIgnoringWASIModule(Module& wasm) {
+  auto env = std::make_unique<Module>();
+  env->name = "wasi_snapshot_preview1";
+
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
+    // Check for the right module.
+    if (func->module != env->name) {
+      return;
+    }
+
+    // Check for the functions we want to implement.
+    if (func->base != "environ_sizes_get" &&
+        func->base != "args_sizes_get") {
+      return;
+    }
+
+    Builder builder(*env);
+    auto* copied = ModuleUtils::copyFunction(func, *env);
+    copied->module = Name();
+    copied->base = Name();
+
+    if (func->base == "environ_sizes_get") {
+      // Return __WASI_ERRNO_NOSYS (52) to indicate that the operation is not
+      // supported. This will simply cause the environment to not be read. (In
+      // particular, environ_get() will not be called, so we don't need to
+      // implement it.)
+      copied->body = builder.makeConst(int32_t(52));
+    } else if (func->base == "args_sizes_get") {
+      // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
+      // (Note: With argc == 0 we don't need to implement args_get.)
+      copied->body = builder.makeSequence(
+        builder.makeStore(4, 0, 4,
+          builder.makeLocalGet(0, Type::i32),
+          builder.makeConst(int32_t(0)),
+          Type::i32
+        ),
+        builder.makeConst(int32_t(0))
+      );
+    } else {
+      WASM_UNREACHABLE("bad function");
+    }
+
+    env->addExport(
+      builder.makeExport(func->base, copied->name, ExternalKind::Function));
   });
 
   return env;
@@ -447,15 +502,24 @@ private:
 };
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
+  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+
   // build and link the env module
   auto envModule = buildEnvModule(wasm);
   CtorEvalExternalInterface envInterface;
   auto envInstance =
     std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
   envInstance->setupEnvironment();
+  linkedInstances[envModule->name] = envInstance;
 
-  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
-  linkedInstances["env"] = envInstance;
+  if (ignoreExternalInput) {
+    auto wasiModule = buildIgnoringWASIModule(wasm);
+    CtorEvalExternalInterface wasiInterface;
+    auto wasiInstance =
+      std::make_shared<EvallingModuleInstance>(*wasiModule, &wasiInterface);
+    wasiInstance->setupEnvironment();
+    linkedInstances[wasiModule->name] = wasiInstance;
+  }
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {
@@ -559,6 +623,13 @@ int main(int argc, const char* argv[]) {
       WasmCtorEvalOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { ctorsString = argument; })
+    .add(
+      "--ignore-external-input",
+      "-ipi",
+      "Assumes no env vars are to be read, stdin is empty, etc.",
+      WasmCtorEvalOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { ignoreExternalInput = true; })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
