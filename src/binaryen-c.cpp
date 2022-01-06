@@ -148,10 +148,10 @@ BinaryenType BinaryenTypeDataref(void) { return Type::dataref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
-BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
+BinaryenType BinaryenTypeCreate(BinaryenType* types, BinaryenIndex numTypes) {
   std::vector<Type> typeVec;
   typeVec.reserve(numTypes);
-  for (size_t i = 0; i < numTypes; ++i) {
+  for (BinaryenIndex i = 0; i < numTypes; ++i) {
     typeVec.push_back(Type(types[i]));
   }
   return Type(typeVec).getID();
