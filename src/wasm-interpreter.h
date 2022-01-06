@@ -35,10 +35,6 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#ifdef WASM_INTERPRETER_DEBUG
-#include "wasm-printing.h"
-#endif
-
 namespace wasm {
 
 struct WasmException {

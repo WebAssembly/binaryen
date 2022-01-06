@@ -19,6 +19,9 @@
 ;; CHECK-NEXT:   --ctors,-c                           Comma-separated list of global
 ;; CHECK-NEXT:                                        constructor functions to evaluate
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --ignore-external-input,-ipi         Assumes no env vars are to be read, stdin
+;; CHECK-NEXT:                                        is empty, etc.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------

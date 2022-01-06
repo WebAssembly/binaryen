@@ -142,7 +142,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create empty functions with similar signature
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-    if (func->module == "env") {
+    if (func->module == env->name) {
       Builder builder(*env);
       auto* copied = ModuleUtils::copyFunction(func, *env);
       copied->module = Name();
@@ -155,7 +155,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create tables with similar initial and max values
   ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    if (table->module == "env") {
+    if (table->module == env->name) {
       auto* copied = ModuleUtils::copyTable(table, *env);
       copied->module = Name();
       copied->base = Name();
@@ -165,7 +165,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   });
 
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-    if (global->module == "env") {
+    if (global->module == env->name) {
       auto* copied = ModuleUtils::copyGlobal(global, *env);
       copied->module = Name();
       copied->base = Name();
@@ -179,7 +179,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
-    if (memory->module == "env") {
+    if (memory->module == env->name) {
       env->memory.name = wasm.memory.name;
       env->memory.exists = true;
       env->memory.initial = memory->initial;
@@ -193,6 +193,11 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   return env;
 }
+
+// Whether to ignore external input to the program as it runs. If set, we will
+// assume that stdin is empty, that any env vars we try to read are not set,
+// that there are not arguments passed to main, etc.
+static bool ignoreExternalInput = false;
 
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Module* wasm;
@@ -242,10 +247,63 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   Literals callImport(Function* import, LiteralList& arguments) override {
+    Name WASI("wasi_snapshot_preview1");
+
+    if (ignoreExternalInput) {
+      if (import->module == WASI) {
+        if (import->base == "environ_sizes_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi environ_sizes_get has wrong sig");
+          }
+
+          // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS (0).
+          store32(arguments[0].geti32(), 0);
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "environ_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi environ_get has wrong sig");
+          }
+
+          // Just return __WASI_ERRNO_SUCCESS (0).
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "args_sizes_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi args_sizes_get has wrong sig");
+          }
+
+          // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
+          store32(arguments[0].geti32(), 0);
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "args_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi args_get has wrong sig");
+          }
+
+          // Just return __WASI_ERRNO_SUCCESS (0).
+          return {Literal(int32_t(0))};
+        }
+
+        // Otherwise, we don't recognize this import; continue normally to
+        // error.
+      }
+    }
+
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls "
               "to atexit are not emitted";
+    } else if (import->module == WASI && !ignoreExternalInput) {
+      extra = "\nrecommendation: consider --ignore-external-input";
     }
     throw FailToEvalException(std::string("call import: ") +
                               import->module.str + "." + import->base.str +
@@ -416,14 +474,14 @@ private:
 };
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
+  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+
   // build and link the env module
   auto envModule = buildEnvModule(wasm);
   CtorEvalExternalInterface envInterface;
   auto envInstance =
     std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
-
-  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
-  linkedInstances["env"] = envInstance;
+  linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {
@@ -525,6 +583,14 @@ int main(int argc, const char* argv[]) {
       WasmCtorEvalOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { ctorsString = argument; })
+    .add("--ignore-external-input",
+         "-ipi",
+         "Assumes no env vars are to be read, stdin is empty, etc.",
+         WasmCtorEvalOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           ignoreExternalInput = true;
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
