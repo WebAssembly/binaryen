@@ -283,10 +283,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
           if (import->getResults() != Type::i32) {
             throw FailToEvalException("wasi environ_sizes_get has wrong sig");
           }
-          // Return __WASI_ERRNO_NOSYS (52) to indicate that the operation is not
-          // supported. This will simply cause the environment to not be read. (In
-          // particular, environ_get() will not be called, so we don't need to
-          // implement it.)
+          // Return __WASI_ERRNO_NOSYS (52) to indicate that the operation is
+          // not supported. This will simply cause the environment to not be
+          // read. (In particular, environ_get() will not be called, so we don't
+          // need to implement it.)
           return {Literal(int32_t(52))};
         } else if (import->base == "args_sizes_get") {
           if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
@@ -596,13 +596,14 @@ int main(int argc, const char* argv[]) {
       WasmCtorEvalOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { ctorsString = argument; })
-    .add(
-      "--ignore-external-input",
-      "-ipi",
-      "Assumes no env vars are to be read, stdin is empty, etc.",
-      WasmCtorEvalOption,
-      Options::Arguments::Zero,
-      [&](Options* o, const std::string& argument) { ignoreExternalInput = true; })
+    .add("--ignore-external-input",
+         "-ipi",
+         "Assumes no env vars are to be read, stdin is empty, etc.",
+         WasmCtorEvalOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           ignoreExternalInput = true;
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
