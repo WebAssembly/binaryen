@@ -62,15 +62,6 @@ public:
 
   void seal() { sealed = true; }
 
-  // for equality purposes, we just care about the globals
-  // and whether they have changed
-  bool operator==(const EvallingGlobalManager& other) {
-    return globals == other.globals;
-  }
-  bool operator!=(const EvallingGlobalManager& other) {
-    return !(*this == other);
-  }
-
   Literals& operator[](Name name) {
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
@@ -110,6 +101,15 @@ public:
   }
 
   Iterator end() { return Iterator(); }
+
+  // Receives a module and applies the state of globals here into the globals
+  // in that module.
+  void applyToModule(Module& wasm) {
+    Builder builder(wasm);
+    for (const auto& [name, value] : globals) {
+      wasm.getGlobal(name)->init = builder.makeConstantExpression(value);
+    }
+  }
 };
 
 class EvallingModuleInstance
@@ -220,6 +220,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     if (!memory.empty()) {
       applyMemoryToModule();
     }
+
+    instance->globals.applyToModule(*wasm);
   }
 
   void init(Module& wasm_, EvallingModuleInstance& instance_) override {
@@ -499,9 +501,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
       std::cerr << "trying to eval " << ctor << '\n';
-      // snapshot globals (note that STACKTOP might be modified, but should
-      // be returned, so that works out)
-      auto globalsBefore = instance.globals;
       Export* ex = wasm.getExportOrNull(ctor);
       if (!ex) {
         Fatal() << "export not found: " << ctor;
@@ -512,10 +511,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
         // that's it, we failed, so stop here, cleaning up partial
         // memory changes first
         std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
-        return;
-      }
-      if (instance.globals != globalsBefore) {
-        std::cerr << "  ...stopping since globals modified\n";
         return;
       }
       std::cerr << "  ...success on " << ctor << ".\n";
