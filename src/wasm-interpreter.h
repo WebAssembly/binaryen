@@ -2653,6 +2653,7 @@ private:
     }
   }
 
+public:
   class FunctionScope {
   public:
     std::vector<Literals> locals;
@@ -2685,7 +2686,6 @@ private:
     }
   };
 
-public:
   // Executes expressions with concrete runtime info, the function and module at
   // runtime
   class RuntimeExpressionRunner

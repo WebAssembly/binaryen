@@ -29,7 +29,7 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
-#include "ir/module-utils.h"
+#include "ir/names.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
@@ -480,7 +480,10 @@ private:
 // Eval a single ctor function. Returns whether we succeeded to completely
 // evaluate the ctor, which means that the caller can proceed to try to eval
 // further ctors if there are any.
-bool evalCtor(EvallingModuleInstance& instance, Name funcName, Name exportName) {
+bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& interface, Name funcName, Name exportName) {
+  auto& wasm = instance.wasm;
+  auto* func = wasm.getFunction(funcName);
+
   // We don't know the values of parameters, so give up if there are any.
   // TODO: Maybe use ignoreExternalInput?
   if (func->getNumParams() == 0) {
@@ -509,19 +512,16 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName, Name exportName) 
   // We may be possible to eval some of those functions but not all, so go
   // through them one by one.
 
-  auto* func = instance.wasm.getFunction(funcName);
-
   // TODO: Support complete partial evalling, that is, evaluate parts of an
   //       arbitrary function, and not just a sequence in a single toplevel
   //       block.
   if (auto* block = func->body->dynCast<Block>()) {
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
-    FunctionScope scope(func, LiteralList());
+    EvallingModuleInstance::FunctionScope scope(func, LiteralList());
     EvallingModuleInstance::RuntimeExpressionRunner
-        expressionRunner(instance, scope, MaxDepth);
+        expressionRunner(instance, scope, 100); // TODO MaxDepth default in .h
     Index successes = 0;
-    const Index MaxDepth = 100;
     for (auto* curr : block->list) {
       Flow flow;
       try {
@@ -548,8 +548,8 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName, Name exportName) 
       // We managed to eval some but not all. We want to apply what we've
       // managed to do. Create a copy of the function with those contents and
       // make the export use that (as the function may be used by others).
-      auto copyName = Names::getValidFunctionName(instance.wasm, funcName);
-      auto* copyFunc = ModuleUtils::copyFunction(func, instance.wasm, copyName);
+      auto copyName = Names::getValidFunctionName(wasm, funcName);
+      auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
       wasm.getExport(exportName)->value = copyName;
 
       // Remove the items we've evalled.
@@ -577,7 +577,7 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName, Name exportName) 
 
       // Interesting optimizations may be possible both due to removing some but
       // not all of the code, and due to the locals we just added.
-      PassRunner passRunner(&instance.wasm,
+      PassRunner passRunner(&wasm,
                             PassOptions::getWithDefaultOptimizationOptions());
       passRunner.addDefaultFunctionOptimizationPasses();
       passRunner.runOnFunction(copyFunc);
@@ -594,6 +594,7 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName, Name exportName) 
   try {
     instance.callFunction(funcName, LiteralList());
   } catch (FailToEvalException& fail) {
+    std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
     return false;
   }
 
@@ -634,8 +635,8 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
         Fatal() << "export not found: " << ctor;
       }
       auto funcName = ex->value;
-      if (!evalCtor(instance, funcName, ctor)) {
-        std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
+      if (!evalCtor(instance, interface, funcName, ctor)) {
+        std::cerr << "  ...stopping\n";
         return;
       }
 
