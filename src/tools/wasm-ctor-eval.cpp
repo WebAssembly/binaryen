@@ -48,6 +48,10 @@ struct FailToEvalException {
   FailToEvalException(std::string why) : why(why) {}
 };
 
+// The prefix for a recommendation, so it is aligned properly with the rest of
+// the output.
+#define RECOMMENDATION "\n       recommendation: "
+
 // We do not have access to imported globals
 class EvallingGlobalManager {
   // values of globals
@@ -68,7 +72,7 @@ public:
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
-        extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that "
+        extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that "
                 "calls to atexit that use ___dso_handle are not emitted";
       }
       throw FailToEvalException(
@@ -304,10 +308,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
-      extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls "
+      extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that calls "
               "to atexit are not emitted";
     } else if (import->module == WASI && !ignoreExternalInput) {
-      extra = "\nrecommendation: consider --ignore-external-input";
+      extra = RECOMMENDATION "consider --ignore-external-input";
     }
     throw FailToEvalException(std::string("call import: ") +
                               import->module.str + "." + import->base.str +
@@ -550,6 +554,7 @@ bool evalCtor(EvallingModuleInstance& instance,
         // We are returning out of the function (either via a return, or via a
         // break to |block|, which has the same outcome. That means we don't
         // need to execute any more lines, and can consider them to be executed.
+        std::cerr << "  ...stopping in block due to break\n";
         successes = block->list.size();
         break;
       }
