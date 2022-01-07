@@ -1550,27 +1550,27 @@ private:
     Builder builder(*module);
     {
       auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
-                                               Type::i32,
-                                               builder.makeConst(int32_t(0)),
-                                               Builder::Mutable);
+                                              Type::i32,
+                                              builder.makeConst(int32_t(0)),
+                                              Builder::Mutable);
       if (imported) {
-        asyncifyState->module = ENV;                                         
-        asyncifyState->base = ASYNCIFY_STATE;  
-      }                                         
+        asyncifyState->module = ENV;
+        asyncifyState->base = ASYNCIFY_STATE;
+      }
 
-      module->addGlobal(std::move(asyncifyState)); 
+      module->addGlobal(std::move(asyncifyState));
     }
     {
       auto asyncifyData = builder.makeGlobal(ASYNCIFY_DATA,
-                                               Type::i32,
-                                               builder.makeConst(int32_t(0)),
-                                               Builder::Mutable);
+                                             Type::i32,
+                                             builder.makeConst(int32_t(0)),
+                                             Builder::Mutable);
       if (imported) {
-        asyncifyData->module = ENV;                                         
-        asyncifyData->base = ASYNCIFY_DATA;  
-      }                                           
+        asyncifyData->module = ENV;
+        asyncifyData->base = ASYNCIFY_DATA;
+      }
 
-      module->addGlobal(std::move(asyncifyData)); 
+      module->addGlobal(std::move(asyncifyData));
     }
   }
 
