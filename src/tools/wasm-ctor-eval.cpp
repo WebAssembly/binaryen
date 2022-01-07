@@ -556,18 +556,31 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName, Name exportName) 
       Builder builder(wasm);
       auto* copyBlock = copyFunc->body->cast<Block>();
       for (Index i = 0; i < successes; i++) {
-        block->list[i] = builder.makeNop();
+        copyBlock->list[i] = builder.makeNop();
       }
 
       // Apply the locals.
-      ..
+      std::vector<Expression*> localSets;
+      for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
+        auto value = scope.locals[i];
+        localSets.push_back(
+          builder.makeLocalSet(
+            i,
+            builder.makeConstantExpression(value)
+          )
+        );
+      }
+
+      // Put the local sets at the front of the block. We know there must be a
+      // nop in that position, so we can overwrite it.
+      copyBlock->list[0] = builder.makeBlock(localSets);
 
       // Interesting optimizations may be possible both due to removing some but
       // not all of the code, and due to the locals we just added.
       PassRunner passRunner(&instance.wasm,
                             PassOptions::getWithDefaultOptimizationOptions());
       passRunner.addDefaultFunctionOptimizationPasses();
-      passRunner.runOnFunction(func);
+      passRunner.runOnFunction(copyFunc);
     }
 
     // Return true if we evalled the entire block. Otherwise, even if we evalled
