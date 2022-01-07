@@ -480,7 +480,10 @@ private:
 // Eval a single ctor function. Returns whether we succeeded to completely
 // evaluate the ctor, which means that the caller can proceed to try to eval
 // further ctors if there are any.
-bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& interface, Name funcName, Name exportName) {
+bool evalCtor(EvallingModuleInstance& instance,
+              CtorEvalExternalInterface& interface,
+              Name funcName,
+              Name exportName) {
   auto& wasm = instance.wasm;
   auto* func = wasm.getFunction(funcName);
 
@@ -520,8 +523,8 @@ bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& inter
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
     EvallingModuleInstance::FunctionScope scope(func, LiteralList());
-    EvallingModuleInstance::RuntimeExpressionRunner
-        expressionRunner(instance, scope, 100); // TODO MaxDepth default in .h
+    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
+      instance, scope, 100); // TODO MaxDepth default in .h
     Index successes = 0;
     for (auto* curr : block->list) {
       Flow flow;
@@ -529,9 +532,12 @@ bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& inter
         flow = expressionRunner.visit(curr);
       } catch (FailToEvalException& fail) {
         if (successes == 0) {
-          std::cerr << "  ...stopping (in block) since could not eval: " << fail.why << "\n";
+          std::cerr << "  ...stopping (in block) since could not eval: "
+                    << fail.why << "\n";
         } else {
-          std::cerr << "  ...partial evalling successful, but stopping since could not eval: " << fail.why << "\n";
+          std::cerr << "  ...partial evalling successful, but stopping since "
+                       "could not eval: "
+                    << fail.why << "\n";
         }
         break;
       }
@@ -569,11 +575,7 @@ bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& inter
       for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
         auto value = scope.locals[i];
         localSets.push_back(
-          builder.makeLocalSet(
-            i,
-            builder.makeConstantExpression(value)
-          )
-        );
+          builder.makeLocalSet(i, builder.makeConstantExpression(value)));
       }
 
       // Put the local sets at the front of the block. We know there must be a
