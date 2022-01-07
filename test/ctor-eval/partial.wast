@@ -2,7 +2,7 @@
   (import "import" "import" (func $import))
 
   (memory 256 256)
-  (data (i32.const 10) "waka waka waka waka waka")
+  (data (i32.const 10) "_________________")
 
   (export "test1" $test1)
 
@@ -15,6 +15,7 @@
     ;; A safe store, should alter memory
     (i32.store8 (i32.const 12) (i32.const 115))
 
+    ;; A call to an import, which prevents evalling.
     (call $import)
 
     ;; Another safe store, but the import call before us will stop our evalling.

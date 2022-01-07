@@ -486,6 +486,7 @@ bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& inter
 
   // We don't know the values of parameters, so give up if there are any.
   // TODO: Maybe use ignoreExternalInput?
+  // TODO test this and other corner cases
   if (func->getNumParams() > 0) {
     std::cerr << "  ...stopping due to params\n";
     return false;
@@ -527,7 +528,11 @@ bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& inter
       try {
         flow = expressionRunner.visit(curr);
       } catch (FailToEvalException& fail) {
-        std::cerr << "  ...stopping in block since could not eval: " << fail.why << "\n";
+        if (successes == 0) {
+          std::cerr << "  ...stopping (in block) since could not eval: " << fail.why << "\n";
+        } else {
+          std::cerr << "  ...partial evalling successful, but stopping since could not eval: " << fail.why << "\n";
+        }
         break;
       }
 
