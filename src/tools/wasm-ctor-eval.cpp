@@ -479,6 +479,68 @@ private:
 
 // Eval a single ctor function. Throws FailToEvalException on failure.
 void evalCtor(EvallingModuleInstance& instance, Name funcName) {
+  // Special case the form of the global constructor function in LLVM. That
+  // looks like this:
+  //
+  //    (func $__wasm_call_ctors
+  //      (call $ctor.1)
+  //      (call $ctor.2)
+  //      (call $ctor.3)
+  //    )
+  //
+  // We may be possible to eval some of those functions but not all, so go
+  // through them one by one.
+  //
+  // TODO: Support complete partial evalling, that is, evaluate parts of an
+  //       arbitrary function. That requires handling of locals etc.
+
+  auto* func = instance.wasm.getFunction(funcName);
+
+  // Not having any locals in the function, which is the case in
+  // $__wasm_call_ctors, makes things much easier: then we have a guarantee of
+  // being able to eval the entire function <==> being able to eval it line by
+  // line in order. (That is not true in general, as a line that does a
+  // local.set cannot be evalled by itself, but the entire function still might
+  // be since the local state is thrown out at the end anyhow.)
+  if (func->getNumLocals() == 0) {
+    if (auto* block = func->body->dynCast<Block>()) {
+      // Create a temporary function that contains the code we want to execute
+      // at each point in time. We'll fill it with the right contents and then
+      // execute it.
+      auto& wasm = instance.wasm;
+      auto tempName = Name::getValidFunctionName(wasm, "ctor-eval-temp");
+      Builder builder(wasm);
+      auto tempFunction = wasm.addFunction(builder.makeFunction(tempName, Type::none, {}));
+
+      // Execute all the items in the block, stopping if we fail at one of them.
+      Index successes = 0;
+      for (auto* curr : block->list) {
+        tempFunction->body = ExpressionManipulator::copy(curr, wasm);
+        try {
+          instance.callFunction(tempName, LiteralList());
+        } catch (FailToEvalException& fail) {
+          std::cerr << "  ...stopping in block since could not eval: " << fail.why << "\n";
+          break;
+        }
+        successes++;
+      }
+
+      wasm.removeFunction(tempName);
+
+      if (successes > 0 && successes < block->list.size()) {
+        // We managed to eval some but not all. We want to apply what we've
+        // managed to do
+      }
+
+      if (successes < block->list.size()) {
+        // Propagate the error so the outside stops.
+        throw FailToEvalException("(propagated failure from block)");
+      }
+    }
+  }
+
+  // Otherwise, simply call the entire function at once and see if we can
+  // optimize that.
   instance.callFunction(funcName, LiteralList());
 }
 
@@ -526,7 +588,7 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
 
       // Success, the entire function was evalled! Apply the results of
       // execution to the module.
-      interface.applyToModule();
+      interface.applyToModule(); // TODO move this inside evalCtor()?
 
       // we can nop the function (which may be used elsewhere)
       // and remove the export
