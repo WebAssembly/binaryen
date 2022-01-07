@@ -495,13 +495,13 @@ bool evalCtor(EvallingModuleInstance& instance,
   // TODO: Maybe use ignoreExternalInput?
   // TODO test this and other corner cases
   if (func->getNumParams() > 0) {
-    std::cerr << "  ...stopping due to params\n";
+    std::cout << "  ...stopping due to params\n";
     return false;
   }
 
   // TODO: Handle a return value by emitting a proper constant.
   if (func->getResults() != Type::none) {
-    std::cerr << "  ...stopping due to results\n";
+    std::cout << "  ...stopping due to results\n";
     return false;
   }
 
@@ -536,10 +536,10 @@ bool evalCtor(EvallingModuleInstance& instance,
         flow = expressionRunner.visit(curr);
       } catch (FailToEvalException& fail) {
         if (successes == 0) {
-          std::cerr << "  ...stopping (in block) since could not eval: "
+          std::cout << "  ...stopping (in block) since could not eval: "
                     << fail.why << "\n";
         } else {
-          std::cerr << "  ...partial evalling successful, but stopping since "
+          std::cout << "  ...partial evalling successful, but stopping since "
                        "could not eval: "
                     << fail.why << "\n";
         }
@@ -554,7 +554,7 @@ bool evalCtor(EvallingModuleInstance& instance,
         // We are returning out of the function (either via a return, or via a
         // break to |block|, which has the same outcome. That means we don't
         // need to execute any more lines, and can consider them to be executed.
-        std::cerr << "  ...stopping in block due to break\n";
+        std::cout << "  ...stopping in block due to break\n";
         successes = block->list.size();
         break;
       }
@@ -606,7 +606,7 @@ bool evalCtor(EvallingModuleInstance& instance,
   try {
     instance.callFunction(funcName, LiteralList());
   } catch (FailToEvalException& fail) {
-    std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
+    std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
     return false;
   }
 
@@ -641,24 +641,24 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
-      std::cerr << "trying to eval " << ctor << '\n';
+      std::cout << "trying to eval " << ctor << '\n';
       Export* ex = wasm.getExportOrNull(ctor);
       if (!ex) {
         Fatal() << "export not found: " << ctor;
       }
       auto funcName = ex->value;
       if (!evalCtor(instance, interface, funcName, ctor)) {
-        std::cerr << "  ...stopping\n";
+        std::cout << "  ...stopping\n";
         return;
       }
 
       // Success! Remove the export, and continue.
-      std::cerr << "  ...success on " << ctor << ".\n";
+      std::cout << "  ...success on " << ctor << ".\n";
       wasm.removeExport(ctor);
     }
   } catch (FailToEvalException& fail) {
     // that's it, we failed to even create the instance
-    std::cerr << "  ...stopping since could not create module instance: "
+    std::cout << "  ...stopping since could not create module instance: "
               << fail.why << "\n";
     return;
   }
@@ -732,13 +732,13 @@ int main(int argc, const char* argv[]) {
 
   {
     if (options.debug) {
-      std::cerr << "reading...\n";
+      std::cout << "reading...\n";
     }
     ModuleReader reader;
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
-      p.dump(std::cerr);
+      p.dump(std::cout);
       Fatal() << "error in parsing input";
     }
   }
@@ -761,17 +761,20 @@ int main(int argc, const char* argv[]) {
   {
     PassRunner passRunner(&wasm);
     passRunner.add("memory-packing"); // we flattened it, so re-optimize
+/*
+// TODO: just do -Os for the one function
     passRunner.add("remove-unused-names");
     passRunner.add("dce");
     passRunner.add("merge-blocks");
     passRunner.add("vacuum");
+*/
     passRunner.add("remove-unused-module-elements");
     passRunner.run();
   }
 
   if (options.extra.count("output") > 0) {
     if (options.debug) {
-      std::cerr << "writing..." << std::endl;
+      std::cout << "writing..." << std::endl;
     }
     ModuleWriter writer;
     writer.setBinary(emitBinary);
