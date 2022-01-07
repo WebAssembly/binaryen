@@ -486,7 +486,7 @@ bool evalCtor(EvallingModuleInstance& instance, CtorEvalExternalInterface& inter
 
   // We don't know the values of parameters, so give up if there are any.
   // TODO: Maybe use ignoreExternalInput?
-  if (func->getNumParams() == 0) {
+  if (func->getNumParams() > 0) {
     std::cerr << "  ...stopping due to params\n";
     return false;
   }
