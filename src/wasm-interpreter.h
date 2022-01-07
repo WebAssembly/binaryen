@@ -2685,6 +2685,7 @@ private:
     }
   };
 
+public:
   // Executes expressions with concrete runtime info, the function and module at
   // runtime
   class RuntimeExpressionRunner
@@ -3553,7 +3554,6 @@ private:
     }
   };
 
-public:
   // Call a function, starting an invocation.
   Literals callFunction(Name name, const LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff

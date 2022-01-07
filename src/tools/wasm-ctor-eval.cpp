@@ -480,7 +480,7 @@ private:
 // Eval a single ctor function. Returns whether we succeeded to completely
 // evaluate the ctor, which means that the caller can proceed to try to eval
 // further ctors if there are any.
-bool evalCtor(EvallingModuleInstance& instance, Name funcName) {
+bool evalCtor(EvallingModuleInstance& instance, Name funcName, Name exportName) {
   // We don't know the values of parameters, so give up if there are any.
   // TODO: Maybe use ignoreExternalInput?
   if (func->getNumParams() == 0) {
@@ -515,11 +515,17 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName) {
   //       arbitrary function, and not just a sequence in a single toplevel
   //       block.
   if (auto* block = func->body->dynCast<Block>()) {
-    // Go through the items in the block and try to execute them.
+    // Go through the items in the block and try to execute them. We do all this
+    // in a single function scope for all the executions.
+    FunctionScope scope(func, LiteralList());
+    EvallingModuleInstance::RuntimeExpressionRunner
+        expressionRunner(instance, scope, MaxDepth);
     Index successes = 0;
+    const Index MaxDepth = 100;
     for (auto* curr : block->list) {
+      Flow flow;
       try {
-        ...
+        flow = expressionRunner.visit(curr);
       } catch (FailToEvalException& fail) {
         std::cerr << "  ...stopping in block since could not eval: " << fail.why << "\n";
         break;
@@ -528,13 +534,30 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName) {
       // So far so good!
       interface.applyToModule();
       successes++;
+
+      if (flow.breaking()) {
+        // We are returning out of the function (either via a return, or via a
+        // break to |block|, which has the same outcome. That means we don't
+        // need to execute any more lines, and can consider them to be executed.
+        successes = block->list.size();
+        break;
+      }
     }
 
     if (successes > 0 && successes < block->list.size()) {
       // We managed to eval some but not all. We want to apply what we've
-      // managed to do. Create a copy of the function with those contents (as
-      // the export may be used by others).
-      ..
+      // managed to do. Create a copy of the function with those contents and
+      // make the export use that (as the function may be used by others).
+      auto copyName = Names::getValidFunctionName(instance.wasm, funcName);
+      auto* copyFunc = ModuleUtils::copyFunction(func, instance.wasm, copyName);
+      wasm.getExport(exportName)->value = copyName;
+
+      // Remove the items we've evalled.
+      Builder builder(wasm);
+      auto* copyBlock = copyFunc->body->cast<Block>();
+      for (Index i = 0; i < successes; i++) {
+        block->list[i] = builder.makeNop();
+      }
 
       // Apply the locals.
       ..
@@ -547,6 +570,8 @@ bool evalCtor(EvallingModuleInstance& instance, Name funcName) {
       passRunner.runOnFunction(func);
     }
 
+    // Return true if we evalled the entire block. Otherwise, even if we evalled
+    // some of it, the caller must stop trying to eval further things.
     return successes == block->list.size();
   }
 
@@ -596,7 +621,7 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
         Fatal() << "export not found: " << ctor;
       }
       auto funcName = ex->value;
-      if (!evalCtor(instance, funcName)) {
+      if (!evalCtor(instance, funcName, ctor)) {
         std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
         return;
       }
