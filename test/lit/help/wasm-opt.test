@@ -252,10 +252,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --nm                                          name list
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-exit-runtime                             removes calls to atexit(), which
-;; CHECK-NEXT:                                                 is valid if the C runtime will
-;; CHECK-NEXT:                                                 never be exited
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --once-reduction                              reduces calls to code that only
 ;; CHECK-NEXT:                                                 runs once
 ;; CHECK-NEXT:

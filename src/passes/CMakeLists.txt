@@ -58,7 +58,6 @@ set(passes_SOURCES
   MinifyImportsAndExports.cpp
   NameList.cpp
   NameTypes.cpp
-  NoExitRuntime.cpp
   OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
