@@ -761,13 +761,11 @@ int main(int argc, const char* argv[]) {
   {
     PassRunner passRunner(&wasm);
     passRunner.add("memory-packing"); // we flattened it, so re-optimize
-/*
-// TODO: just do -Os for the one function
+    // TODO: just do -Os for the one function
     passRunner.add("remove-unused-names");
     passRunner.add("dce");
     passRunner.add("merge-blocks");
     passRunner.add("vacuum");
-*/
     passRunner.add("remove-unused-module-elements");
     passRunner.run();
   }
