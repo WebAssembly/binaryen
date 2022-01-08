@@ -301,6 +301,10 @@ struct MergeFunctions : public Pass {
     Stats stats;
     std::vector<EquivalentClass> classes;
     collectEquivalentClasses(classes, module);
+    std::sort(
+      classes.begin(), classes.end(), [](const auto& left, const auto& right) {
+        return left.primaryFunction->name < right.primaryFunction->name;
+      });
     for (auto& clazz : classes) {
       if (!clazz.isEligibleToMerge()) {
         continue;
