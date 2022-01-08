@@ -1548,30 +1548,26 @@ struct Asyncify : public Pass {
 private:
   void addGlobals(Module* module, bool imported) {
     Builder builder(*module);
-    {
-      auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
-                                              Type::i32,
-                                              builder.makeConst(int32_t(0)),
-                                              Builder::Mutable);
-      if (imported) {
-        asyncifyState->module = ENV;
-        asyncifyState->base = ASYNCIFY_STATE;
-      }
 
-      module->addGlobal(std::move(asyncifyState));
+    auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
+                                            Type::i32,
+                                            builder.makeConst(int32_t(0)),
+                                            Builder::Mutable);
+    if (imported) {
+      asyncifyState->module = ENV;
+      asyncifyState->base = ASYNCIFY_STATE;
     }
-    {
-      auto asyncifyData = builder.makeGlobal(ASYNCIFY_DATA,
-                                             Type::i32,
-                                             builder.makeConst(int32_t(0)),
-                                             Builder::Mutable);
-      if (imported) {
-        asyncifyData->module = ENV;
-        asyncifyData->base = ASYNCIFY_DATA;
-      }
+    module->addGlobal(std::move(asyncifyState));
 
-      module->addGlobal(std::move(asyncifyData));
+    auto asyncifyData = builder.makeGlobal(ASYNCIFY_DATA,
+                                           Type::i32,
+                                           builder.makeConst(int32_t(0)),
+                                           Builder::Mutable);
+    if (imported) {
+      asyncifyData->module = ENV;
+      asyncifyData->base = ASYNCIFY_DATA;
     }
+    module->addGlobal(std::move(asyncifyData));
   }
 
   void addFunctions(Module* module) {
