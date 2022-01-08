@@ -749,8 +749,18 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(localsWithNames.size());
         for (auto& [indexInFunc, name] : localsWithNames) {
           // TODO: handle multivalue
-          auto indexInBinary =
-            funcMappedLocals.at(func->name)[{indexInFunc, 0}];
+          Index indexInBinary;
+          auto iter = funcMappedLocals.find(func->name);
+          if (iter != funcMappedLocals.end()) {
+            indexInBinary = iter->second[{indexInFunc, 0}];
+          } else {
+            // No data on funcMappedLocals. That is only possible if we are an
+            // imported function, where there are no locals to map, and in that
+            // case the index is unchanged anyhow: parameters always have the
+            // same index, they are not mapped in any way.
+            assert(func->imported());
+            indexInBinary = indexInFunc;
+          }
           o << U32LEB(indexInBinary);
           writeEscapedName(name.str);
         }
@@ -3092,7 +3102,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
             continue; // read and discard in case of prior error
           }
           auto localName = processor.process(rawLocalName);
-          if (localIndex < func->getNumLocals()) {
+          if (localName.size() == 0) {
+            std::cerr << "warning: empty local name at index "
+                      << std::to_string(localIndex) << " in function "
+                      << std::string(func->name.str) << std::endl;
+          } else if (localIndex < func->getNumLocals()) {
             func->localNames[localIndex] = localName;
           } else {
             std::cerr << "warning: local index out of bounds in name "
