@@ -72,8 +72,9 @@ public:
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
-        extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that "
-                "calls to atexit that use ___dso_handle are not emitted";
+        extra = RECOMMENDATION
+          "build with -s NO_EXIT_RUNTIME=1 so that "
+          "calls to atexit that use ___dso_handle are not emitted";
       }
       throw FailToEvalException(
         std::string(
@@ -309,7 +310,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
       extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that calls "
-              "to atexit are not emitted";
+                             "to atexit are not emitted";
     } else if (import->module == WASI && !ignoreExternalInput) {
       extra = RECOMMENDATION "consider --ignore-external-input";
     }
