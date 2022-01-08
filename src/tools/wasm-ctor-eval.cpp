@@ -494,7 +494,6 @@ bool evalCtor(EvallingModuleInstance& instance,
 
   // We don't know the values of parameters, so give up if there are any.
   // TODO: Maybe use ignoreExternalInput?
-  // TODO test this and other corner cases
   if (func->getNumParams() > 0) {
     std::cout << "  ...stopping due to params\n";
     return false;
@@ -517,19 +516,23 @@ bool evalCtor(EvallingModuleInstance& instance,
   //
   // Some of those ctors may be inlined, however, which would mean that the
   // function could have locals, control flow, etc. However, we assume for now
-  // that it does not have parameters at least (whose values we can't tell).
-  // We may be possible to eval some of those functions but not all, so go
-  // through them one by one.
-
+  // that it does not have parameters at least (whose values we can't tell),
+  // or results. And for now we look for a toplevel block and process its
+  // children one at a time. This allows us to eval some of the $ctor.*
+  // functions even if not all.
+  //
   // TODO: Support complete partial evalling, that is, evaluate parts of an
   //       arbitrary function, and not just a sequence in a single toplevel
   //       block.
+
   if (auto* block = func->body->dynCast<Block>()) {
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
     EvallingModuleInstance::FunctionScope scope(func, LiteralList());
+
     EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
-      instance, scope, 100); // TODO MaxDepth default in .h
+      instance, scope, instance.maxDepth);
+
     Index successes = 0;
     for (auto* curr : block->list) {
       Flow flow;

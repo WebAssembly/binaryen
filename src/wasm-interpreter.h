@@ -3609,9 +3609,11 @@ public:
     return flow.values;
   }
 
+  // The maximum call stack depth to evaluate into.
+  static const Index maxDepth = 250;
+
 protected:
   Address memorySize; // in pages
-  static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {
