@@ -500,7 +500,7 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
-      std::cerr << "trying to eval " << ctor << '\n';
+      std::cout << "trying to eval " << ctor << '\n';
       Export* ex = wasm.getExportOrNull(ctor);
       if (!ex) {
         Fatal() << "export not found: " << ctor;
@@ -510,10 +510,10 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
       } catch (FailToEvalException& fail) {
         // that's it, we failed, so stop here, cleaning up partial
         // memory changes first
-        std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
+        std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
         return;
       }
-      std::cerr << "  ...success on " << ctor << ".\n";
+      std::cout << "  ...success on " << ctor << ".\n";
 
       // Success, the entire function was evalled! Apply the results of
       // execution to the module.
@@ -528,7 +528,7 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     }
   } catch (FailToEvalException& fail) {
     // that's it, we failed to even create the instance
-    std::cerr << "  ...stopping since could not create module instance: "
+    std::cout << "  ...stopping since could not create module instance: "
               << fail.why << "\n";
     return;
   }
@@ -600,13 +600,13 @@ int main(int argc, const char* argv[]) {
 
   {
     if (options.debug) {
-      std::cerr << "reading...\n";
+      std::cout << "reading...\n";
     }
     ModuleReader reader;
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
-      p.dump(std::cerr);
+      p.dump(std::cout);
       Fatal() << "error in parsing input";
     }
   }
@@ -639,7 +639,7 @@ int main(int argc, const char* argv[]) {
 
   if (options.extra.count("output") > 0) {
     if (options.debug) {
-      std::cerr << "writing..." << std::endl;
+      std::cout << "writing..." << std::endl;
     }
     ModuleWriter writer;
     writer.setBinary(emitBinary);
