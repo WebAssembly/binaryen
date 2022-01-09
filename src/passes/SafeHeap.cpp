@@ -63,30 +63,28 @@ static Name getStoreName(Store* curr) {
 }
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
-  // If the getSbrkPtr function is implemented in the wasm, we must not
-  // instrument that, as it would lead to infinite recursion of it calling
-  // SAFE_HEAP_LOAD that calls it and so forth.
-  // As well as the getSbrkPtr function we also avoid instrumenting the
-  // module start function.  This is because this function is used in
-  // shared memory builds to load the passive memory segments, which in
-  // turn means that value of sbrk() is not available.
-  Name getSbrkPtr;
+  // A set of function that we should ignore (not instrument).
+  // For example if `emscripten_get_sbrk_ptr` is implemented in the wasm, we
+  // must not instrument that, as it would lead to infinite recursion of it
+  // calling SAFE_HEAP_LOAD that calls it and so forth. As well as the
+  // `emscripten_get_sbrk_ptr` function we also avoid instrumenting
+  // (__wasm_init_memory) which is normally the module start function.  This is
+  // because this function is used in shared memory builds to load the passive
+  // memory segments, which in turn means that value of sbrk() is not available.
+  std::set<Name> ignoreFunctions;
 
   bool isFunctionParallel() override { return true; }
 
   AccessInstrumenter* create() override {
-    return new AccessInstrumenter(getSbrkPtr);
+    return new AccessInstrumenter(ignoreFunctions);
   }
 
-  AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
+  AccessInstrumenter(std::set<Name> ignoreFunctions)
+    : ignoreFunctions(ignoreFunctions) {}
 
   void visitLoad(Load* curr) {
-    // As well as the getSbrkPtr function we also avoid insturmenting the
-    // module start function.  This is because this function is used in
-    // shared memory builds to load the passive memory segments, which in
-    // turn means that value of sbrk() is not available.
-    if (getFunction()->name == getModule()->start ||
-        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    if (ignoreFunctions.count(getFunction()->name) != 0 ||
+        curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -97,8 +95,8 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (getFunction()->name == getModule()->start ||
-        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    if (ignoreFunctions.count(getFunction()->name) != 0 ||
+        curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -109,6 +107,13 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 };
 
+struct FindCalledFunctions
+  : public WalkerPass<PostWalker<FindCalledFunctions>> {
+public:
+  void visitCall(Call* curr) { called.insert(curr->target); }
+  std::set<Name> called;
+};
+
 struct SafeHeap : public Pass {
   PassOptions options;
 
@@ -117,12 +122,21 @@ struct SafeHeap : public Pass {
     // add imports
     addImports(module);
     // instrument loads and stores
-    AccessInstrumenter(getSbrkPtr).run(runner, module);
+    std::set<Name> ignoreFunctions;
+    if (module->start.is()) {
+      FindCalledFunctions findCalledFunctions;
+      findCalledFunctions.walkFunctionInModule(
+        module->getFunction(module->start), module);
+      ignoreFunctions = findCalledFunctions.called;
+      ignoreFunctions.insert(module->start);
+    }
+    ignoreFunctions.insert(getSbrkPtr);
+    AccessInstrumenter(ignoreFunctions).run(runner, module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
 
-  Name dynamicTopPtr, getSbrkPtr, sbrk, segfault, alignfault;
+  Name getSbrkPtr, dynamicTopPtr, sbrk, segfault, alignfault;
 
   void addImports(Module* module) {
     ImportInfo info(*module);
