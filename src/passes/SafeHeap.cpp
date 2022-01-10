@@ -64,13 +64,6 @@ static Name getStoreName(Store* curr) {
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   // A set of function that we should ignore (not instrument).
-  // For example if `emscripten_get_sbrk_ptr` is implemented in the wasm, we
-  // must not instrument that, as it would lead to infinite recursion of it
-  // calling SAFE_HEAP_LOAD that calls it and so forth. As well as the
-  // `emscripten_get_sbrk_ptr` function we also avoid instrumenting
-  // (__wasm_init_memory) which is normally the module start function.  This is
-  // because this function is used in shared memory builds to load the passive
-  // memory segments, which in turn means that value of sbrk() is not available.
   std::set<Name> ignoreFunctions;
 
   bool isFunctionParallel() override { return true; }
@@ -122,6 +115,12 @@ struct SafeHeap : public Pass {
     // add imports
     addImports(module);
     // instrument loads and stores
+    // We avoid instrumenting the module start function of any function
+    // that it directly calls.  This is because in some cases the linker
+    // generates `__wasm_init_memory` (either as the start function or
+    // a function directly called from it) and this function is used in shared
+    // memory builds to load the passive memory segments, which in turn means
+    // that value of sbrk() is not available until after it has run.
     std::set<Name> ignoreFunctions;
     if (module->start.is()) {
       FindCalledFunctions findCalledFunctions;
