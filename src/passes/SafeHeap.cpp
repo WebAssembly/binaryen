@@ -100,11 +100,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 };
 
-struct FindCalledFunctions
-  : public WalkerPass<PostWalker<FindCalledFunctions>> {
+struct FindDirectCallees : public WalkerPass<PostWalker<FindDirectCallees>> {
 public:
-  void visitCall(Call* curr) { called.insert(curr->target); }
-  std::set<Name> called;
+  void visitCall(Call* curr) { callees.insert(curr->target); }
+  std::set<Name> callees;
 };
 
 struct SafeHeap : public Pass {
@@ -123,10 +122,14 @@ struct SafeHeap : public Pass {
     // that value of sbrk() is not available until after it has run.
     std::set<Name> ignoreFunctions;
     if (module->start.is()) {
-      FindCalledFunctions findCalledFunctions;
-      findCalledFunctions.walkFunctionInModule(
-        module->getFunction(module->start), module);
-      ignoreFunctions = findCalledFunctions.called;
+      // Note that this only finds directly called functions, not transitively
+      // called ones.  That is enough given the current LLVM output as start
+      // will only contain very specific, linker-generated code
+      // (__wasm_init_memory etc. as mentioned above).
+      FindDirectCallees findDirectCallees;
+      findDirectCallees.walkFunctionInModule(module->getFunction(module->start),
+                                             module);
+      ignoreFunctions = findDirectCallees.callees;
       ignoreFunctions.insert(module->start);
     }
     ignoreFunctions.insert(getSbrkPtr);
