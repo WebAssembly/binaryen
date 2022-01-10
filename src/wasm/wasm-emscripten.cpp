@@ -79,6 +79,11 @@ std::string escape(std::string code) {
     code = code.replace(curr, 2, "\\\\n");
     curr += 3; // skip this one
   }
+  curr = 0;
+  while ((curr = code.find("\\t", curr)) != std::string::npos) {
+    code = code.replace(curr, 2, "\\\\t");
+    curr += 3; // skip this one
+  }
   // replace double quotes with escaped single quotes
   curr = 0;
   while ((curr = code.find('"', curr)) != std::string::npos) {
