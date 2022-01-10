@@ -550,7 +550,7 @@ bool evalCtor(EvallingModuleInstance& instance,
         break;
       }
 
-      // So far so good!
+      // So far so good! Apply the results.
       interface.applyToModule();
       successes++;
 
@@ -559,15 +559,23 @@ bool evalCtor(EvallingModuleInstance& instance,
         // break to |block|, which has the same outcome. That means we don't
         // need to execute any more lines, and can consider them to be executed.
         std::cout << "  ...stopping in block due to break\n";
+
+        // Mark us as having succeeded on the entire block, since we have: we
+        // are skipping the rest, which means there is no problem there. We must
+        // set this here so that lower down we realize that we've evalled
+        // everything.
         successes = block->list.size();
         break;
       }
     }
 
     if (successes > 0 && successes < block->list.size()) {
-      // We managed to eval some but not all. We want to apply what we've
-      // managed to do. Create a copy of the function with those contents and
-      // make the export use that (as the function may be used by others).
+      // We managed to eval some but not all. That means we can't just remove
+      // the entire function, but need to keep parts of it - the parts we have
+      // not evalled - around. To do so, we create a copy of the function with
+      // the partially-evalled contents and make the export use that (as the
+      // function may be used in other places than the export, which we do not
+      // want to affect).
       auto copyName = Names::getValidFunctionName(wasm, funcName);
       auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
       wasm.getExport(exportName)->value = copyName;
@@ -579,7 +587,10 @@ bool evalCtor(EvallingModuleInstance& instance,
         copyBlock->list[i] = builder.makeNop();
       }
 
-      // Apply the locals.
+      // Write out the values of locals, that is the local state after evalling
+      // the things we've just nopped. For simplicity we just write out all of
+      // locals, and leave it to the optimizer to remove redundant or
+      // unnecessary operations.
       std::vector<Expression*> localSets;
       for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
         auto value = scope.locals[i];
@@ -588,7 +599,8 @@ bool evalCtor(EvallingModuleInstance& instance,
       }
 
       // Put the local sets at the front of the block. We know there must be a
-      // nop in that position, so we can overwrite it.
+      // nop in that position (since we've evalled at least one item in the
+      // block, and replaced it with a nop), so we can overwrite it.
       copyBlock->list[0] = builder.makeBlock(localSets);
 
       // Interesting optimizations may be possible both due to removing some but
