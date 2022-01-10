@@ -505,7 +505,7 @@ bool evalCtor(EvallingModuleInstance& instance,
     return false;
   }
 
-  // Special case the form of the global constructor function in LLVM. That
+  // We want to handle the form of the global constructor function in LLVM. That
   // looks like this:
   //
   //    (func $__wasm_call_ctors
@@ -519,7 +519,7 @@ bool evalCtor(EvallingModuleInstance& instance,
   // that it does not have parameters at least (whose values we can't tell),
   // or results. And for now we look for a toplevel block and process its
   // children one at a time. This allows us to eval some of the $ctor.*
-  // functions even if not all.
+  // functions (or their inlined contents) even if not all.
   //
   // TODO: Support complete partial evalling, that is, evaluate parts of an
   //       arbitrary function, and not just a sequence in a single toplevel
