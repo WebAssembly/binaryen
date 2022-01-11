@@ -500,9 +500,7 @@ struct EvalCtorOutcome {
 
   static EvalCtorOutcome incomplete() { return {false, Literals()}; }
 
-  static EvalCtorOutcome complete(Literals results) {
-    return {true, results};
-  }
+  static EvalCtorOutcome complete(Literals results) { return {true, results}; }
 };
 
 // Eval a single ctor function. Returns whether we succeeded to completely
