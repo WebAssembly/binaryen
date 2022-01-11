@@ -22,11 +22,11 @@
 
     ;; A call to an import, which prevents evalling. We will stop here. The
     ;; 'tee' instruction should *not* have any effect, that is, we should not
-    ;; partially even this line in the block - we should eval none of it.
+    ;; partially eval this line in the block - we should eval none of it.
     ;; TODO: We should support such partial line evalling, with more careful
     ;;       management of locals.
     (call $import
-      (local.get $temp)
+      (local.get $temp) ;; The value sent here should be '1'.
       (local.tee $temp
         (i32.const 50)
       )
