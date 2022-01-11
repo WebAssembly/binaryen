@@ -1,0 +1,10 @@
+(module
+ (type $ref|any|_=>_none (func (param (ref any))))
+ (global $global1 (mut i32) (i32.const 11))
+ (export "test2" (func $1))
+ (func $1 (param $any (ref any))
+  (global.set $global1
+   (i32.const 22)
+  )
+ )
+)
