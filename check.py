@@ -118,6 +118,8 @@ def run_ctor_eval_tests():
         cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wat', '-S', '--ctors', ctors]
         if 'ignore-external-input' in t:
             cmd += ['--ignore-external-input']
+        if 'results' in t:
+            cmd += ['--kept-exports', 'test1,test3']
         support.run_command(cmd)
         actual = open('a.wat').read()
         out = t + '.out'
