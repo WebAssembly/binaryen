@@ -19,8 +19,17 @@
     (drop
       (local.get $any)
     )
-    (global.set $global1
+    (global.set $global2
       (i32.const 22)
+    )
+  )
+
+  (func "keepalive"
+    (drop
+      (global.get $global1)
+    )
+    (drop
+      (global.get $global2)
     )
   )
 )
