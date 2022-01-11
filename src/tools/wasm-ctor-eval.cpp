@@ -514,11 +514,24 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   auto& wasm = instance.wasm;
   auto* func = wasm.getFunction(funcName);
 
-  // We don't know the values of parameters, so give up if there are any.
-  // TODO: Maybe use ignoreExternalInput?
-  if (func->getNumParams() > 0) {
+  // We don't know the values of parameters, so give up if there are any, unless
+  // we are ignoring them.
+  if (func->getNumParams() > 0 && !ignoreExternalInput) {
     std::cout << "  ...stopping due to params\n";
+    std::cout << RECOMMENDATION "consider --ignore-external-input";
     return EvalCtorOutcome::incomplete();
+  }
+
+  // If there are params, we are ignoring them (or we would have quit earlier);
+  // set those up with zeros.
+  LiteralList params;
+  for (Index i = 0; i < func->getNumParams(); i++) {
+    auto type = func->getLocalType(i);
+    if (!LiteralUtils::canMakeZero(type)) {
+      std::cout << "  ...stopping due to non-zeroable param\n";
+      return EvalCtorOutcome::incomplete();
+    }
+    params.push_back(Literal::makeZero(type));
   }
 
   // We want to handle the form of the global constructor function in LLVM. That
@@ -544,7 +557,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   if (auto* block = func->body->dynCast<Block>()) {
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
-    EvallingModuleInstance::FunctionScope scope(func, LiteralList());
+    EvallingModuleInstance::FunctionScope scope(func, params);
 
     EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
       instance, scope, instance.maxDepth);
@@ -651,9 +664,10 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   // Otherwise, we don't recognize a pattern that allows us to do partial
   // evalling. So simply call the entire function at once and see if we can
   // optimize that.
+
   Literals results;
   try {
-    results = instance.callFunction(funcName, LiteralList());
+    results = instance.callFunction(funcName, params);
   } catch (FailToEvalException& fail) {
     std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
     return EvalCtorOutcome::incomplete();
