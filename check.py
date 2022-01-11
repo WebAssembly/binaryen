@@ -119,7 +119,7 @@ def run_ctor_eval_tests():
         if 'ignore-external-input' in t:
             cmd += ['--ignore-external-input']
         if 'results' in t:
-            cmd += ['--remove-exports', '0']
+            cmd += ['--kept-exports', 'test1,test3']
         support.run_command(cmd)
         actual = open('a.wat').read()
         out = t + '.out'
