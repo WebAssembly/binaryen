@@ -500,7 +500,7 @@ struct EvalCtorOutcome {
 
   static EvalCtorOutcome incomplete() { return {false, Literals()}; }
 
-  static EvalCtorOutcome complete(Literals results = Literals()) {
+  static EvalCtorOutcome complete(Literals results) {
     return {true, results};
   }
 };
