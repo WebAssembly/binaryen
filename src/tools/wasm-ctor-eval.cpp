@@ -650,6 +650,7 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   // we assume memory is simple and flat. TODO
   if (!MemoryUtils::flatten(wasm)) {
     std::cout << "  ...stopping since could not flatten memory\n";
+    return;
   }
 
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
