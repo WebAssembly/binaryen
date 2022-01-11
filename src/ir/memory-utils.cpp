@@ -20,9 +20,9 @@
 namespace wasm::MemoryUtils {
 
 bool flatten(Module& wasm) {
-  // The presence of any MemoryInit instructions/ is a problem because they care
-  // segment identity, which flattening gets rid of when it merges them all into
-  // one big segment.
+  // The presence of any MemoryInit instructions is a problem because they care
+  // about segment identity, which flattening gets rid of ( when it merges them
+  // all into one big segment).
   ModuleUtils::ParallelFunctionAnalysis<bool> analysis(
     wasm, [&](Function* func, bool& hasMemoryInit) {
       if (func->imported()) {
