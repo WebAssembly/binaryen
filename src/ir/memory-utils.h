@@ -29,46 +29,8 @@ namespace wasm::MemoryUtils {
 
 // Flattens memory into a single data segment, or no segment. If there is
 // a segment, it starts at 0.
-// If ensuredSegmentSize is provided, then a segment is always emitted,
-// and of at least that size.
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
-inline bool flatten(Memory& memory,
-                    Index ensuredSegmentSize = 0,
-                    Module* module = nullptr) {
-  if (memory.segments.size() == 0) {
-    if (ensuredSegmentSize > 0) {
-      assert(module); // must provide a module if ensuring a size.
-      Builder builder(*module);
-      memory.segments.emplace_back(builder.makeConst(int32_t(0)));
-      memory.segments[0].data.resize(ensuredSegmentSize);
-    }
-    return true;
-  }
-  std::vector<char> data;
-  data.resize(ensuredSegmentSize);
-  for (auto& segment : memory.segments) {
-    if (segment.isPassive) {
-      return false;
-    }
-    auto* offset = segment.offset->dynCast<Const>();
-    if (!offset) {
-      return false;
-    }
-  }
-  for (auto& segment : memory.segments) {
-    auto* offset = segment.offset->dynCast<Const>();
-    Index start = offset->value.getInteger();
-    Index end = start + segment.data.size();
-    if (end > data.size()) {
-      data.resize(end);
-    }
-    std::copy(segment.data.begin(), segment.data.end(), data.begin() + start);
-  }
-  memory.segments.resize(1);
-  memory.segments[0].offset->cast<Const>()->value = Literal(int32_t(0));
-  memory.segments[0].data.swap(data);
-  return true;
-}
+bool flatten(Module& wasm);
 
 // Ensures that the memory exists (of minimal size).
 inline void ensureExists(Memory& memory) {

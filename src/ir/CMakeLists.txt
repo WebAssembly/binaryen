@@ -5,6 +5,7 @@ set(ir_SOURCES
   eh-utils.cpp
   intrinsics.cpp
   lubs.cpp
+  memory-utils.cpp
   names.cpp
   properties.cpp
   LocalGraph.cpp
