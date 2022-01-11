@@ -704,7 +704,7 @@ void evalCtors(Module& wasm,
         return;
       }
 
-      // Success! Any we can continue to try more.
+      // Success! And we can continue to try more.
       std::cout << "  ...success on " << ctor << ".\n";
 
       // Remove the export if we should.
