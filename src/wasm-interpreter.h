@@ -2684,8 +2684,9 @@ public:
 
   // Executes expressions with concrete runtime info, the function and module at
   // runtime
-  class RuntimeExpressionRunner
-    : public ExpressionRunner<RuntimeExpressionRunner> {
+  template<typename RERSubType>
+  class RuntimeExpressionRunnerBase
+    : public ExpressionRunner<RERSubType> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
     // Stack of <caught exception, caught catch's try label>
@@ -2718,10 +2719,10 @@ public:
     }
 
   public:
-    RuntimeExpressionRunner(ModuleInstanceBase& instance,
+    RuntimeExpressionRunnerBase(ModuleInstanceBase& instance,
                             FunctionScope& scope,
                             Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(&instance.wasm, maxDepth),
+      : ExpressionRunner<RERSubType>(&instance.wasm, maxDepth),
         instance(instance), scope(scope) {}
 
     Flow visitCall(Call* curr) {
@@ -3548,6 +3549,14 @@ public:
       }
       return value;
     }
+  };
+
+  class RuntimeExpressionRunner : public RuntimeExpressionRunnerBase<RuntimeExpressionRunner> {
+  public:
+    RuntimeExpressionRunner(ModuleInstanceBase& instance,
+                            FunctionScope& scope,
+                            Index maxDepth)
+      : RuntimeExpressionRunnerBase<RuntimeExpressionRunner>(instance, scope, maxDepth) {}
   };
 
   // Call a function, starting an invocation.
