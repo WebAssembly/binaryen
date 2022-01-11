@@ -2551,7 +2551,7 @@ public:
 
 private:
   // Keep a record of call depth, to guard against excessive recursion.
-  size_t callDepth;
+  size_t callDepth = 0;
 
   // Function name stack. We maintain this explicitly to allow printing of
   // stack traces.
@@ -2653,6 +2653,7 @@ private:
     }
   }
 
+public:
   class FunctionScope {
   public:
     std::vector<Literals> locals;
@@ -3553,7 +3554,6 @@ private:
     }
   };
 
-public:
   // Call a function, starting an invocation.
   Literals callFunction(Name name, const LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff
@@ -3609,9 +3609,11 @@ public:
     return flow.values;
   }
 
+  // The maximum call stack depth to evaluate into.
+  static const Index maxDepth = 250;
+
 protected:
   Address memorySize; // in pages
-  static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {

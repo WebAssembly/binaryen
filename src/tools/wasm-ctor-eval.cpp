@@ -29,7 +29,7 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
-#include "ir/module-utils.h"
+#include "ir/names.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
@@ -41,10 +41,16 @@
 
 using namespace wasm;
 
+namespace {
+
 struct FailToEvalException {
   std::string why;
   FailToEvalException(std::string why) : why(why) {}
 };
+
+// The prefix for a recommendation, so it is aligned properly with the rest of
+// the output.
+#define RECOMMENDATION "\n       recommendation: "
 
 // We do not have access to imported globals
 class EvallingGlobalManager {
@@ -66,8 +72,9 @@ public:
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
-        extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that "
-                "calls to atexit that use ___dso_handle are not emitted";
+        extra = RECOMMENDATION
+          "build with -s NO_EXIT_RUNTIME=1 so that "
+          "calls to atexit that use ___dso_handle are not emitted";
       }
       throw FailToEvalException(
         std::string(
@@ -302,10 +309,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
-      extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls "
-              "to atexit are not emitted";
+      extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that calls "
+                             "to atexit are not emitted";
     } else if (import->module == WASI && !ignoreExternalInput) {
-      extra = "\nrecommendation: consider --ignore-external-input";
+      extra = RECOMMENDATION "consider --ignore-external-input";
     }
     throw FailToEvalException(std::string("call import: ") +
                               import->module.str + "." + import->base.str +
@@ -475,6 +482,163 @@ private:
   }
 };
 
+// Eval a single ctor function. Returns whether we succeeded to completely
+// evaluate the ctor, which means that the caller can proceed to try to eval
+// further ctors if there are any.
+bool evalCtor(EvallingModuleInstance& instance,
+              CtorEvalExternalInterface& interface,
+              Name funcName,
+              Name exportName) {
+  auto& wasm = instance.wasm;
+  auto* func = wasm.getFunction(funcName);
+
+  // We don't know the values of parameters, so give up if there are any.
+  // TODO: Maybe use ignoreExternalInput?
+  if (func->getNumParams() > 0) {
+    std::cout << "  ...stopping due to params\n";
+    return false;
+  }
+
+  // TODO: Handle a return value by emitting a proper constant.
+  if (func->getResults() != Type::none) {
+    std::cout << "  ...stopping due to results\n";
+    return false;
+  }
+
+  // We want to handle the form of the global constructor function in LLVM. That
+  // looks like this:
+  //
+  //    (func $__wasm_call_ctors
+  //      (call $ctor.1)
+  //      (call $ctor.2)
+  //      (call $ctor.3)
+  //    )
+  //
+  // Some of those ctors may be inlined, however, which would mean that the
+  // function could have locals, control flow, etc. However, we assume for now
+  // that it does not have parameters at least (whose values we can't tell),
+  // or results. And for now we look for a toplevel block and process its
+  // children one at a time. This allows us to eval some of the $ctor.*
+  // functions (or their inlined contents) even if not all.
+  //
+  // TODO: Support complete partial evalling, that is, evaluate parts of an
+  //       arbitrary function, and not just a sequence in a single toplevel
+  //       block.
+
+  if (auto* block = func->body->dynCast<Block>()) {
+    // Go through the items in the block and try to execute them. We do all this
+    // in a single function scope for all the executions.
+    EvallingModuleInstance::FunctionScope scope(func, LiteralList());
+
+    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
+      instance, scope, instance.maxDepth);
+
+    // After we successfully eval a line we will apply the changes here. This is
+    // the same idea as applyToModule() - we must only do it after an entire
+    // atomic "chunk" has been processed, we do not want partial updates from
+    // an item in the block that we only partially evalled.
+    EvallingModuleInstance::FunctionScope appliedScope(func, LiteralList());
+
+    Index successes = 0;
+    for (auto* curr : block->list) {
+      Flow flow;
+      try {
+        flow = expressionRunner.visit(curr);
+      } catch (FailToEvalException& fail) {
+        if (successes == 0) {
+          std::cout << "  ...stopping (in block) since could not eval: "
+                    << fail.why << "\n";
+        } else {
+          std::cout << "  ...partial evalling successful, but stopping since "
+                       "could not eval: "
+                    << fail.why << "\n";
+        }
+        break;
+      }
+
+      // So far so good! Apply the results.
+      interface.applyToModule();
+      appliedScope = scope;
+      successes++;
+
+      if (flow.breaking()) {
+        // We are returning out of the function (either via a return, or via a
+        // break to |block|, which has the same outcome. That means we don't
+        // need to execute any more lines, and can consider them to be executed.
+        std::cout << "  ...stopping in block due to break\n";
+
+        // Mark us as having succeeded on the entire block, since we have: we
+        // are skipping the rest, which means there is no problem there. We must
+        // set this here so that lower down we realize that we've evalled
+        // everything.
+        successes = block->list.size();
+        break;
+      }
+    }
+
+    if (successes > 0 && successes < block->list.size()) {
+      // We managed to eval some but not all. That means we can't just remove
+      // the entire function, but need to keep parts of it - the parts we have
+      // not evalled - around. To do so, we create a copy of the function with
+      // the partially-evalled contents and make the export use that (as the
+      // function may be used in other places than the export, which we do not
+      // want to affect).
+      auto copyName = Names::getValidFunctionName(wasm, funcName);
+      auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
+      wasm.getExport(exportName)->value = copyName;
+
+      // Remove the items we've evalled.
+      Builder builder(wasm);
+      auto* copyBlock = copyFunc->body->cast<Block>();
+      for (Index i = 0; i < successes; i++) {
+        copyBlock->list[i] = builder.makeNop();
+      }
+
+      // Write out the values of locals, that is the local state after evalling
+      // the things we've just nopped. For simplicity we just write out all of
+      // locals, and leave it to the optimizer to remove redundant or
+      // unnecessary operations.
+      std::vector<Expression*> localSets;
+      for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
+        auto value = appliedScope.locals[i];
+        localSets.push_back(
+          builder.makeLocalSet(i, builder.makeConstantExpression(value)));
+      }
+
+      // Put the local sets at the front of the block. We know there must be a
+      // nop in that position (since we've evalled at least one item in the
+      // block, and replaced it with a nop), so we can overwrite it.
+      copyBlock->list[0] = builder.makeBlock(localSets);
+
+      // Interesting optimizations may be possible both due to removing some but
+      // not all of the code, and due to the locals we just added.
+      PassRunner passRunner(&wasm,
+                            PassOptions::getWithDefaultOptimizationOptions());
+      passRunner.addDefaultFunctionOptimizationPasses();
+      passRunner.runOnFunction(copyFunc);
+    }
+
+    // Return true if we evalled the entire block. Otherwise, even if we evalled
+    // some of it, the caller must stop trying to eval further things.
+    return successes == block->list.size();
+  }
+
+  // Otherwise, we don't recognize a pattern that allows us to do partial
+  // evalling. So simply call the entire function at once and see if we can
+  // optimize that.
+  try {
+    instance.callFunction(funcName, LiteralList());
+  } catch (FailToEvalException& fail) {
+    std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
+    return false;
+  }
+
+  // Success! Apply the results.
+  interface.applyToModule();
+  return true;
+}
+
+// Eval all ctors in a module.
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
@@ -505,26 +669,15 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
       if (!ex) {
         Fatal() << "export not found: " << ctor;
       }
-      try {
-        instance.callFunction(ex->value, LiteralList());
-      } catch (FailToEvalException& fail) {
-        // that's it, we failed, so stop here, cleaning up partial
-        // memory changes first
-        std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
+      auto funcName = ex->value;
+      if (!evalCtor(instance, interface, funcName, ctor)) {
+        std::cout << "  ...stopping\n";
         return;
       }
+
+      // Success! Remove the export, and continue.
       std::cout << "  ...success on " << ctor << ".\n";
-
-      // Success, the entire function was evalled! Apply the results of
-      // execution to the module.
-      interface.applyToModule();
-
-      // we can nop the function (which may be used elsewhere)
-      // and remove the export
-      auto* exp = wasm.getExport(ctor);
-      auto* func = wasm.getFunction(exp->value);
-      func->body = wasm.allocator.alloc<Nop>();
-      wasm.removeExport(exp->name);
+      wasm.removeExport(ctor);
     }
   } catch (FailToEvalException& fail) {
     // that's it, we failed to even create the instance
@@ -533,6 +686,8 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
     return;
   }
 }
+
+} // anonymous namespace
 
 //
 // main
@@ -629,6 +784,7 @@ int main(int argc, const char* argv[]) {
   {
     PassRunner passRunner(&wasm);
     passRunner.add("memory-packing"); // we flattened it, so re-optimize
+    // TODO: just do -Os for the one function
     passRunner.add("remove-unused-names");
     passRunner.add("dce");
     passRunner.add("merge-blocks");
