@@ -1,7 +1,7 @@
 (module
   (memory $0 1)
-  (data (i32.const 0) "_________")
-  (data (i32.const 100) "_________")
+  (data (i32.const 0) "__________")
+  (data (i32.const 20) "__________")
   (export "hashMemory" (func $0))
   (func "test1"
     ;; A store that can be evalled.

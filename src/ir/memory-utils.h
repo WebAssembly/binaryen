@@ -29,12 +29,8 @@ namespace wasm::MemoryUtils {
 
 // Flattens memory into a single data segment, or no segment. If there is
 // a segment, it starts at 0.
-// If ensuredSegmentSize is provided, then a segment is always emitted,
-// and of at least that size.
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
-bool flatten(Memory& memory,
-             Index ensuredSegmentSize = 0,
-             Module* module = nullptr);
+bool flatten(Module& wasm);
 
 // Ensures that the memory exists (of minimal size).
 inline void ensureExists(Memory& memory) {

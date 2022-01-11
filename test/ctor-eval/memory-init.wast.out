@@ -1,8 +1,8 @@
 (module
  (type $none_=>_none (func))
  (memory $0 1)
- (data (i32.const 0) "____d____")
- (data (i32.const 100) "_________")
+ (data (i32.const 0) "____d_____\00\00\00\00\00\00\00\00\00\00__________")
+ (data (i32.const 20) "__________")
  (export "hashMemory" (func $0))
  (export "test1" (func $0_0))
  (func $0
@@ -10,9 +10,17 @@
    (i32.const 4)
    (i32.const 100)
   )
-  (unreachable)
+  (memory.init 1
+   (i32.const 0)
+   (i32.const 1)
+   (i32.const 2)
+  )
  )
  (func $0_0
-  (unreachable)
+  (memory.init 1
+   (i32.const 0)
+   (i32.const 1)
+   (i32.const 2)
+  )
  )
 )

@@ -648,7 +648,7 @@ bool evalCtor(EvallingModuleInstance& instance,
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
   // Check if we can flatten memory. We need to do so currently because of how
   // we assume memory is simple and flat. TODO
-  if (!MemoryUtils::flatten(wasm.memory)) {
+  if (!MemoryUtils::flatten(wasm)) {
     std::cout << "  ...stopping since could not flatten memory\n";
   }
 

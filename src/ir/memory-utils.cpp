@@ -19,19 +19,12 @@
 
 namespace wasm::MemoryUtils {
 
-// Flattens memory into a single data segment, or no segment. If there is
-// a segment, it starts at 0.
-// If ensuredSegmentSize is provided, then a segment is always emitted,
-// and of at least that size.
-// Returns true if successful (e.g. relocatable segments cannot be flattened).
-bool flatten(Memory& memory,
-                    Index ensuredSegmentSize,
-                    Module* module) {
+bool flatten(Module& wasm) {
   // The presence of any MemoryInit instructions/ is a problem because they care
   // segment identity, which flattening gets rid of when it merges them all into
   // one big segment.
   ModuleUtils::ParallelFunctionAnalysis<bool> analysis(
-    *module, [&](Function* func, bool& hasMemoryInit) {
+    wasm, [&](Function* func, bool& hasMemoryInit) {
       if (func->imported()) {
         return;
       }
@@ -44,17 +37,13 @@ bool flatten(Memory& memory,
     }
   }
 
+  auto& memory = wasm.memory;
+
   if (memory.segments.size() == 0) {
-    if (ensuredSegmentSize > 0) {
-      assert(module); // must provide a module if ensuring a size.
-      Builder builder(*module);
-      memory.segments.emplace_back(builder.makeConst(int32_t(0)));
-      memory.segments[0].data.resize(ensuredSegmentSize);
-    }
     return true;
   }
+
   std::vector<char> data;
-  data.resize(ensuredSegmentSize);
   for (auto& segment : memory.segments) {
     if (segment.isPassive) {
       return false;
@@ -76,6 +65,7 @@ bool flatten(Memory& memory,
   memory.segments.resize(1);
   memory.segments[0].offset->cast<Const>()->value = Literal(int32_t(0));
   memory.segments[0].data.swap(data);
+
   return true;
 }
 
