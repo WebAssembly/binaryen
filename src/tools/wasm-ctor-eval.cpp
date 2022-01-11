@@ -566,7 +566,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
     // the same idea as applyToModule() - we must only do it after an entire
     // atomic "chunk" has been processed, we do not want partial updates from
     // an item in the block that we only partially evalled.
-    EvallingModuleInstance::FunctionScope appliedScope(func, LiteralList());
+    EvallingModuleInstance::FunctionScope appliedScope(func, params);
 
     Literals results;
     Index successes = 0;
