@@ -640,8 +640,11 @@ bool evalCtor(EvallingModuleInstance& instance,
 }
 
 // Eval all ctors in a module.
-void evalCtors(Module& wasm, std::vector<std::string>& ctors, std::vector<std::string>& keptExports) {
-  std::unordered_set<std::string> keptExportsSet(keptExports.begin(), keptExports.end());
+void evalCtors(Module& wasm,
+               std::vector<std::string>& ctors,
+               std::vector<std::string>& keptExports) {
+  std::unordered_set<std::string> keptExportsSet(keptExports.begin(),
+                                                 keptExports.end());
 
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
@@ -743,13 +746,14 @@ int main(int argc, const char* argv[]) {
          WasmCtorEvalOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; })
-    .add(
-      "--ctors",
-      "-c",
-      "Comma-separated list of global constructor functions to evaluate",
-      WasmCtorEvalOption,
-      Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { ctors =  String::Split(argument, ","); })
+    .add("--ctors",
+         "-c",
+         "Comma-separated list of global constructor functions to evaluate",
+         WasmCtorEvalOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           ctors = String::Split(argument, ",");
+         })
     .add(
       "--kept-exports",
       "-ke",
@@ -757,7 +761,9 @@ int main(int argc, const char* argv[]) {
       "eval those ctors",
       WasmCtorEvalOption,
       Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { keptExports = String::Split(argument, ","); })
+      [&](Options* o, const std::string& argument) {
+        keptExports = String::Split(argument, ",");
+      })
     .add("--ignore-external-input",
          "-ipi",
          "Assumes no env vars are to be read, stdin is empty, etc.",
