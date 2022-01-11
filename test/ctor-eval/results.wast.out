@@ -1,21 +1,36 @@
 (module
- (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
  (global $global1 (mut i32) (i32.const 2))
  (global $global2 (mut i32) (i32.const 3))
- (export "test1" (func $0_0))
- (export "test3" (func $2))
+ (export "test1" (func $test1_0))
+ (export "test3" (func $test3))
  (export "keepalive" (func $3))
- (func $2 (result i32)
+ (func $test1
+  (global.set $global1
+   (i32.const 2)
+  )
+ )
+ (func $test2
+  (global.set $global2
+   (i32.const 3)
+  )
+ )
+ (func $test3 (result i32)
   (i32.const 42)
  )
  (func $3 (result i32)
+  (call $test1)
+  (call $test2)
+  (drop
+   (call $test3)
+  )
   (i32.add
    (global.get $global1)
    (global.get $global2)
   )
  )
- (func $0_0
+ (func $test1_0
   (nop)
  )
 )

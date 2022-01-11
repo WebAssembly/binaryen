@@ -2,7 +2,7 @@
   (global $global1 (mut i32) (i32.const 0))
   (global $global2 (mut i32) (i32.const 1))
 
-  (func "test1"
+  (func $test1 (export "test1")
     ;; This function can be evalled. But in this test we keep this export,
     ;; so we should still see an export, but the export should do nothing since
     ;; the code has already run.
@@ -15,20 +15,33 @@
     )
   )
 
-  (func "test2"
+  (func $test2 (export "test2")
     ;; As the above function, but the export is *not* kept.
     (global.set $global2
       (i32.const 3)
     )
   )
 
-  (func "test3" (result i32)
+  (func $test3 (export "test3") (result i32)
     ;; The presence of a result stops us from evalling this function (at least
     ;; for now).
     (i32.const 42)
   )
 
   (func "keepalive" (result i32)
+    ;; Keep everything alive to see the changes.
+
+    ;; These should call the original $test1, not the one that is nopped out
+    ;; after evalling.
+    (call $test1)
+    (call $test2)
+
+    (drop
+      (call $test3)
+    )
+
+    ;; Keeping these alive should show the changes to the globals (that should
+    ;; contain 2 and 3).
     (i32.add
       (global.get $global1)
       (global.get $global2)
