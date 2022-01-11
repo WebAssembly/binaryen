@@ -8,7 +8,7 @@
   (import "wasi_snapshot_preview1" "something_else" (func $wasi_something_else (result i32)))
 
   (memory 256 256)
-  (data (i32.const 0) "aaaaaaaaaaaaaaaaaaaaaaaaaaaa") ;; the final 4 'a's will remain
+  (data (i32.const 0) "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") ;; the final 4 'a's will remain
 
   (func "test1"
     ;; This is ok to call: when ignoring external input we assume there is no
@@ -48,6 +48,15 @@
     )
   )
 
+  (func "test2b" (param $x i32)
+    ;; This is also ok to call: when ignoring external input we assume the
+    ;; args are zeros.
+    (i32.store
+      (i32.const 24) ;; the result (0) will be written to address 24
+      (local.get $x)
+    )
+  )
+
   (func "test3"
     ;; This is *not* ok to call, and we will *not* reach the final store after
     ;; this call. This function will not be evalled and will remain in the
@@ -56,7 +65,7 @@
       (call $wasi_something_else)
     )
     (i32.store
-      (i32.const 24)
+      (i32.const 28)
       (i32.const 100)
     )
   )
