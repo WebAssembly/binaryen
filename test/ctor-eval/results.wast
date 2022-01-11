@@ -1,6 +1,7 @@
 (module
-  (global $global1 (mut i32) (i32.const 0))
-  (global $global2 (mut i32) (i32.const 1))
+  (global $global1 (mut i32) (i32.const 1))
+  (global $global2 (mut i32) (i32.const 2))
+  (global $global3 (mut i32) (i32.const 3))
 
   (func $test1 (export "test1")
     ;; This function can be evalled. But in this test we keep this export,
@@ -11,20 +12,23 @@
     ;; (constant) result in the remaining export once we can handle results.
 
     (global.set $global1
-      (i32.const 2)
+      (i32.const 11)
     )
   )
 
   (func $test2 (export "test2")
     ;; As the above function, but the export is *not* kept.
     (global.set $global2
-      (i32.const 3)
+      (i32.const 12)
     )
   )
 
   (func $test3 (export "test3") (result i32)
     ;; The presence of a result stops us from evalling this function (at least
-    ;; for now).
+    ;; for now). Not even the global set will be evalled.
+    (global.set $global3
+      (i32.const 13)
+    )
     (i32.const 42)
   )
 
@@ -41,7 +45,7 @@
     )
 
     ;; Keeping these alive should show the changes to the globals (that should
-    ;; contain 2 and 3).
+    ;; contain 11, 12, and 3).
     (i32.add
       (global.get $global1)
       (global.get $global2)
