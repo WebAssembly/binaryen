@@ -488,6 +488,17 @@ private:
   }
 };
 
+class CtorEvalExpressionRunner : public EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalExpressionRunner> {
+public:
+  CtorEvalExpressionRunner(EvallingModuleInstance& instance, EvallingModuleInstance::FunctionScope scope, Function* func) :
+     EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalExpressionRunner>(instance, scope, instance.maxDepth) {}
+
+  Flow visitMemoryInit(MemoryInit* curr) {
+    throw FailToEvalException("cannot eval memory.init because memory segments"
+      " are flattened in the current implementation");
+  }
+};
+
 // Eval a single ctor function. Returns whether we succeeded to completely
 // evaluate the ctor, which means that the caller can proceed to try to eval
 // further ctors if there are any.
@@ -511,6 +522,10 @@ bool evalCtor(EvallingModuleInstance& instance,
     return false;
   }
 
+  EvallingModuleInstance::FunctionScope scope(func, LiteralList());
+
+  CtorEvalExpressionRunner expressionRunner(instance, scope, func);
+
   // We want to handle the form of the global constructor function in LLVM. That
   // looks like this:
   //
@@ -532,19 +547,14 @@ bool evalCtor(EvallingModuleInstance& instance,
   //       block.
 
   if (auto* block = func->body->dynCast<Block>()) {
-    // Go through the items in the block and try to execute them. We do all this
-    // in a single function scope for all the executions.
-    EvallingModuleInstance::FunctionScope scope(func, LiteralList());
-
-    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
-      instance, scope, instance.maxDepth);
-
     // After we successfully eval a line we will apply the changes here. This is
     // the same idea as applyToModule() - we must only do it after an entire
     // atomic "chunk" has been processed, we do not want partial updates from
     // an item in the block that we only partially evalled.
     EvallingModuleInstance::FunctionScope appliedScope(func, LiteralList());
 
+    // Go through the items in the block and try to execute them. We do all this
+    // in a single function scope for all the executions.
     Index successes = 0;
     for (auto* curr : block->list) {
       Flow flow;
@@ -632,8 +642,12 @@ bool evalCtor(EvallingModuleInstance& instance,
   // Otherwise, we don't recognize a pattern that allows us to do partial
   // evalling. So simply call the entire function at once and see if we can
   // optimize that.
+
+  // In this code path we assume there are no results.
+  assert(func->getResults() == Type::none);
+
   try {
-    instance.callFunction(funcName, LiteralList());
+    expressionRunner.visit(func->body);
   } catch (FailToEvalException& fail) {
     std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
     return false;
