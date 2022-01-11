@@ -19,6 +19,10 @@
 ;; CHECK-NEXT:   --ctors,-c                           Comma-separated list of global
 ;; CHECK-NEXT:                                        constructor functions to evaluate
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --kept-exports,-ke                   Comma-separated list of ctors whose
+;; CHECK-NEXT:                                        exports we keep around even if we eval
+;; CHECK-NEXT:                                        those ctors
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --ignore-external-input,-ipi         Assumes no env vars are to be read, stdin
 ;; CHECK-NEXT:                                        is empty, etc.
 ;; CHECK-NEXT:
