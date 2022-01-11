@@ -490,7 +490,7 @@ private:
 
 class CtorEvalExpressionRunner : public EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalExpressionRunner> {
 public:
-  CtorEvalExpressionRunner(EvallingModuleInstance& instance, EvallingModuleInstance::FunctionScope scope, Function* func) :
+  CtorEvalExpressionRunner(EvallingModuleInstance& instance, EvallingModuleInstance::FunctionScope& scope, Function* func) :
      EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalExpressionRunner>(instance, scope, instance.maxDepth) {}
 
   Flow visitMemoryInit(MemoryInit* curr) {
