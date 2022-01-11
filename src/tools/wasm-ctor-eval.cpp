@@ -489,9 +489,6 @@ private:
   }
 };
 
-// Whether to remove exports that we manage to completely eval.
-static bool removeExports = true;
-
 struct EvalCtorOutcome {
   // Whether we completely evalled the function (that is, we did not fail, and
   // we did not only partially eval it).
