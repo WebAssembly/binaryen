@@ -1,5 +1,5 @@
 (module
-  (import "import" "import" (func $import (param i32)))
+  (import "import" "import" (func $import (param i32 i32)))
 
   (memory 256 256)
   (data (i32.const 10) "_________________")
@@ -26,6 +26,7 @@
     ;; TODO: We should support such partial line evalling, with more careful
     ;;       management of locals.
     (call $import
+      (local.get $temp)
       (local.tee $temp
         (i32.const 50)
       )
