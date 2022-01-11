@@ -2,7 +2,6 @@
   (memory $0 1)
   (data (i32.const 0) "__________")
   (data (i32.const 20) "__________")
-  (export "hashMemory" (func $0))
   (func "test1"
     ;; A store that can be evalled.
     (i32.store8
@@ -15,8 +14,8 @@
     ;; into a single big segment. We could fix that eventually.
     (memory.init 1
       (i32.const 0)
+      (i32.const 0)
       (i32.const 1)
-      (i32.const 2)
     )
   )
 )

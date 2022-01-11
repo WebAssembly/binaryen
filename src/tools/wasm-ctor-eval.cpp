@@ -646,13 +646,6 @@ bool evalCtor(EvallingModuleInstance& instance,
 
 // Eval all ctors in a module.
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
-  // Check if we can flatten memory. We need to do so currently because of how
-  // we assume memory is simple and flat. TODO
-  if (!MemoryUtils::flatten(wasm)) {
-    std::cout << "  ...stopping since could not flatten memory\n";
-    return;
-  }
-
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
   // build and link the env module
@@ -777,6 +770,13 @@ int main(int argc, const char* argv[]) {
   if (!WasmValidator().validate(wasm)) {
     std::cout << wasm << '\n';
     Fatal() << "error in validating input";
+  }
+
+  // Check if we can flatten memory. We need to do so currently because of how
+  // we assume memory is simple and flat. TODO
+  if (!MemoryUtils::flatten(wasm)) {
+    std::cout << "  ...stopping since could not flatten memory\n";
+    return 0;
   }
 
   // get list of ctors, and eval them
