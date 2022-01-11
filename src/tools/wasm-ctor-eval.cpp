@@ -319,6 +319,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                               extra);
   }
 
+  // We assume the table is not modified FIXME
   Literals callTable(Name tableName,
                      Index index,
                      HeapType sig,
@@ -333,8 +334,9 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       throw FailToEvalException("callTable on non-existing table");
     }
 
-    // we assume the table is not modified (hmm)
-    // look through the segments, try to find the function
+    // Look through the segments and find the function. Segments can overlap,
+    // so we want the last one.
+    Name targetFunc;
     for (auto& segment : wasm->elementSegments) {
       if (segment->table != tableName) {
         continue;
@@ -357,29 +359,33 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       if (start <= index && index < end) {
         auto entry = segment->data[index - start];
         if (auto* get = entry->dynCast<RefFunc>()) {
-          auto name = get->func;
-          // if this is one of our functions, we can call it; if it was
-          // imported, fail
-          auto* func = wasm->getFunction(name);
-          if (func->type != sig) {
-            throw FailToEvalException(
-              std::string("callTable signature mismatch: ") + name.str);
-          }
-          if (!func->imported()) {
-            return instance.callFunctionInternal(name, arguments);
-          } else {
-            throw FailToEvalException(
-              std::string("callTable on imported function: ") + name.str);
-          }
+          targetFunc = get->func;
         } else {
           throw FailToEvalException(
             std::string("callTable on uninitialized entry"));
         }
       }
     }
-    throw FailToEvalException(
-      std::string("callTable on index not found in static segments: ") +
-      std::to_string(index));
+
+    if (!targetFunc.is()) {
+      throw FailToEvalException(
+        std::string("callTable on index not found in static segments: ") +
+        std::to_string(index));
+    }
+
+    // If this is one of our functions, we can call it; if it was
+    // imported, fail.
+    auto* func = wasm->getFunction(targetFunc);
+    if (func->type != sig) {
+      throw FailToEvalException(std::string("callTable signature mismatch: ") +
+                                targetFunc.str);
+    }
+    if (!func->imported()) {
+      return instance.callFunctionInternal(targetFunc, arguments);
+    } else {
+      throw FailToEvalException(
+        std::string("callTable on imported function: ") + targetFunc.str);
+    }
   }
 
   Index tableSize(Name tableName) override {
