@@ -89,6 +89,8 @@ def update_ctor_eval_tests():
         cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wast', '-S', '--ctors', ctors]
         if 'ignore-external-input' in t:
             cmd += ['--ignore-external-input']
+        if 'results' in t:
+            cmd += ['--remove-exports', '0']
         support.run_command(cmd)
         actual = open('a.wast').read()
         out = t + '.out'

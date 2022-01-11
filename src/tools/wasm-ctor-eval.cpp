@@ -482,13 +482,33 @@ private:
   }
 };
 
+// Whether to remove exports that we manage to completely eval.
+static bool removeExports = true;
+
+struct EvalCtorOutcome {
+  // Whether we completely evalled the function (that is, we did not fail, and
+  // we did not only partially eval it).
+  bool evalledCompletely;
+
+  // If the function was evalled completely, and it returns something, that
+  // value is given here.
+  Literals results;
+
+  static EvalCtorOutcome incomplete() { return {false, Literals()}; }
+
+  static EvalCtorOutcome complete(Literals results = Literals()) {
+    return {true, results};
+  }
+};
+
 // Eval a single ctor function. Returns whether we succeeded to completely
-// evaluate the ctor, which means that the caller can proceed to try to eval
-// further ctors if there are any.
-bool evalCtor(EvallingModuleInstance& instance,
-              CtorEvalExternalInterface& interface,
-              Name funcName,
-              Name exportName) {
+// evaluate the ctor (which means that the caller can proceed to try to eval
+// further ctors if there are any), and if we did, the results if the function
+// returns any.
+EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
+                         CtorEvalExternalInterface& interface,
+                         Name funcName,
+                         Name exportName) {
   auto& wasm = instance.wasm;
   auto* func = wasm.getFunction(funcName);
 
@@ -496,13 +516,7 @@ bool evalCtor(EvallingModuleInstance& instance,
   // TODO: Maybe use ignoreExternalInput?
   if (func->getNumParams() > 0) {
     std::cout << "  ...stopping due to params\n";
-    return false;
-  }
-
-  // TODO: Handle a return value by emitting a proper constant.
-  if (func->getResults() != Type::none) {
-    std::cout << "  ...stopping due to results\n";
-    return false;
+    return EvalCtorOutcome::incomplete();
   }
 
   // We want to handle the form of the global constructor function in LLVM. That
@@ -516,10 +530,10 @@ bool evalCtor(EvallingModuleInstance& instance,
   //
   // Some of those ctors may be inlined, however, which would mean that the
   // function could have locals, control flow, etc. However, we assume for now
-  // that it does not have parameters at least (whose values we can't tell),
-  // or results. And for now we look for a toplevel block and process its
-  // children one at a time. This allows us to eval some of the $ctor.*
-  // functions (or their inlined contents) even if not all.
+  // that it does not have parameters at least (whose values we can't tell).
+  // And for now we look for a toplevel block and process its children one at a
+  // time. This allows us to eval some of the $ctor.* functions (or their
+  // inlined contents) even if not all.
   //
   // TODO: Support complete partial evalling, that is, evaluate parts of an
   //       arbitrary function, and not just a sequence in a single toplevel
@@ -539,6 +553,7 @@ bool evalCtor(EvallingModuleInstance& instance,
     // an item in the block that we only partially evalled.
     EvallingModuleInstance::FunctionScope appliedScope(func, LiteralList());
 
+    Literals results;
     Index successes = 0;
     for (auto* curr : block->list) {
       Flow flow;
@@ -560,6 +575,10 @@ bool evalCtor(EvallingModuleInstance& instance,
       interface.applyToModule();
       appliedScope = scope;
       successes++;
+
+      // Note the values here, if any. If we are exiting the function now then
+      // these will be returned.
+      results = flow.values;
 
       if (flow.breaking()) {
         // We are returning out of the function (either via a return, or via a
@@ -620,22 +639,27 @@ bool evalCtor(EvallingModuleInstance& instance,
 
     // Return true if we evalled the entire block. Otherwise, even if we evalled
     // some of it, the caller must stop trying to eval further things.
-    return successes == block->list.size();
+    if (successes == block->list.size()) {
+      return EvalCtorOutcome::complete(results);
+    } else {
+      return EvalCtorOutcome::incomplete();
+    }
   }
 
   // Otherwise, we don't recognize a pattern that allows us to do partial
   // evalling. So simply call the entire function at once and see if we can
   // optimize that.
+  Literals results;
   try {
-    instance.callFunction(funcName, LiteralList());
+    results = instance.callFunction(funcName, LiteralList());
   } catch (FailToEvalException& fail) {
     std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
-    return false;
+    return EvalCtorOutcome::incomplete();
   }
 
   // Success! Apply the results.
   interface.applyToModule();
-  return true;
+  return EvalCtorOutcome::complete(results);
 }
 
 // Eval all ctors in a module.
@@ -670,14 +694,33 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
         Fatal() << "export not found: " << ctor;
       }
       auto funcName = ex->value;
-      if (!evalCtor(instance, interface, funcName, ctor)) {
+      auto outcome = evalCtor(instance, interface, funcName, ctor);
+      if (!outcome.evalledCompletely) {
         std::cout << "  ...stopping\n";
         return;
       }
 
-      // Success! Remove the export, and continue.
+      // Success! Any we can continue to try more.
       std::cout << "  ...success on " << ctor << ".\n";
-      wasm.removeExport(ctor);
+
+      // Remove the export if we should.
+      auto* exp = wasm.getExport(ctor);
+      auto* func = wasm.getFunction(exp->value);
+      if (removeExports) {
+        wasm.removeExport(exp->name);
+      } else {
+        // We are keeping around the export, which should now refer to an
+        // empty function since it doesn't do anything.
+        auto copyName = Names::getValidFunctionName(wasm, func->name);
+        auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
+        if (func->getResults() == Type::none) {
+          copyFunc->body = Builder(wasm).makeNop();
+        } else {
+          copyFunc->body =
+            Builder(wasm).makeConstantExpression(outcome.results);
+        }
+        wasm.getExport(exp->name)->value = copyName;
+      }
     }
   } catch (FailToEvalException& fail) {
     // that's it, we failed to even create the instance
@@ -733,6 +776,14 @@ int main(int argc, const char* argv[]) {
       WasmCtorEvalOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { ctorsString = argument; })
+    .add("--remove-exports",
+         "-re",
+         "Whether to remove exports we manage to completely eval (default: 1)",
+         WasmCtorEvalOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           removeExports = atoi(argument.c_str());
+         })
     .add("--ignore-external-input",
          "-ipi",
          "Assumes no env vars are to be read, stdin is empty, etc.",
