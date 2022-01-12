@@ -489,19 +489,15 @@ private:
   }
 };
 
-struct EvalCtorOutcome {
-  // Whether we completely evalled the function (that is, we did not fail, and
-  // we did not only partially eval it).
-  bool evalledCompletely;
-
-  // If the function was evalled completely, and it returns something, that
-  // value is given here.
-  Literals results;
-
-  static EvalCtorOutcome incomplete() { return {false, Literals()}; }
-
-  static EvalCtorOutcome complete(Literals results) { return {true, results}; }
-};
+// The outcome of evalling a ctor is one of three states:
+//
+// 1. We failed to eval it completely (but perhaps we succeeded partially). In
+//    that case the std::optional here contains nothing.
+// 2. We evalled it completely, and it is a function with no return value, so
+//    it contains an empty Literals.
+// 3. We evalled it completely, and it is a function with a return value, so
+//    it contains Literals with those results.
+using EvalCtorOutcome = std::optional<Literals>;
 
 // Eval a single ctor function. Returns whether we succeeded to completely
 // evaluate the ctor (which means that the caller can proceed to try to eval
@@ -518,7 +514,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   // TODO: Maybe use ignoreExternalInput?
   if (func->getNumParams() > 0) {
     std::cout << "  ...stopping due to params\n";
-    return EvalCtorOutcome::incomplete();
+    return EvalCtorOutcome();
   }
 
   // We want to handle the form of the global constructor function in LLVM. That
@@ -642,9 +638,9 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
     // Return true if we evalled the entire block. Otherwise, even if we evalled
     // some of it, the caller must stop trying to eval further things.
     if (successes == block->list.size()) {
-      return EvalCtorOutcome::complete(results);
+      return EvalCtorOutcome(results);
     } else {
-      return EvalCtorOutcome::incomplete();
+      return EvalCtorOutcome();
     }
   }
 
@@ -656,12 +652,12 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
     results = instance.callFunction(funcName, LiteralList());
   } catch (FailToEvalException& fail) {
     std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
-    return EvalCtorOutcome::incomplete();
+    return EvalCtorOutcome();
   }
 
   // Success! Apply the results.
   interface.applyToModule();
-  return EvalCtorOutcome::complete(results);
+  return EvalCtorOutcome(results);
 }
 
 // Eval all ctors in a module.
@@ -697,7 +693,7 @@ void evalCtors(Module& wasm,
       }
       auto funcName = ex->value;
       auto outcome = evalCtor(instance, interface, funcName, ctor);
-      if (!outcome.evalledCompletely) {
+      if (!outcome) {
         std::cout << "  ...stopping\n";
         return;
       }
@@ -718,8 +714,7 @@ void evalCtors(Module& wasm,
         if (func->getResults() == Type::none) {
           copyFunc->body = Builder(wasm).makeNop();
         } else {
-          copyFunc->body =
-            Builder(wasm).makeConstantExpression(outcome.results);
+          copyFunc->body = Builder(wasm).makeConstantExpression(*outcome);
         }
         wasm.getExport(exp->name)->value = copyName;
       }
