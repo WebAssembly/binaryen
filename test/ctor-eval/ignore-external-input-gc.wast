@@ -24,11 +24,9 @@
     )
   )
 
-  (func "keepalive"
-    (drop
+  (func "keepalive" (result i32)
+    (i32.add
       (global.get $global1)
-    )
-    (drop
       (global.get $global2)
     )
   )
