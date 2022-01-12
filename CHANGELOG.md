@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v105
+---
+- This release contains binaries for ARM64 MacOS devices (#4397)
+- Otherwise, mostly bug fixes and incremental optimization improvements.
+
 v104
 ----
 - Bugfixes only, release created due to incorrect github release artifacts in
