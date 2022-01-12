@@ -520,6 +520,10 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
 
   // If there are params, we are ignoring them (or we would have quit earlier);
   // set those up with zeros.
+  // TODO: Have a safer option here, either
+  //        1. Statically or dynamically stop evalling when a param is actually
+  //           used, or
+  //        2. Split out --ignore-external-input into separate flags.
   LiteralList params;
   for (Index i = 0; i < func->getNumParams(); i++) {
     auto type = func->getLocalType(i);
