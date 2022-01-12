@@ -3406,6 +3406,16 @@ private:
             // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
             return builder.makeBlock({builder.makeDrop(memCopy->dest),
                                       builder.makeDrop(memCopy->source)});
+          } else {
+            // memory.copy(dst, src, 0)  ==>  {
+            //   drop(i32.load8_u(dst)),
+            //   drop(i32.load8_u(src))
+            // }
+            return builder.makeBlock(
+              {builder.makeDrop(
+                 builder.makeLoad(1, false, 0, 1, memCopy->dest, Type::i32)),
+               builder.makeDrop(builder.makeLoad(
+                 1, false, 0, 1, memCopy->source, Type::i32))});
           }
           break;
         }
@@ -3468,11 +3478,17 @@ private:
     auto* csize = memFill->size->cast<Const>();
     auto bytes = csize->value.getInteger();
 
-    if (bytes == 0LL &&
-        (options.ignoreImplicitTraps || options.trapsNeverHappen)) {
-      // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
-      return builder.makeBlock(
-        {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
+    if (bytes == 0LL) {
+      if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
+        // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
+        return builder.makeBlock(
+          {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
+      } else {
+        // memory.fill(d, v, 0)  ==>  { drop(i32.load8_u(d)), drop(v) }
+        return builder.makeBlock({builder.makeDrop(builder.makeLoad(
+                                    1, false, 0, 1, memFill->dest, Type::i32)),
+                                  builder.makeDrop(memFill->value)});
+      }
     }
 
     const uint32_t offset = 0, align = 1;
