@@ -125,9 +125,7 @@ public:
     }
   }
 
-  void capacity() const {
-    return N + flexible.capacity();
-  }
+  void capacity() const { return N + flexible.capacity(); }
 
   bool operator==(const SmallVector<T, N>& other) const {
     if (usedFixed != other.usedFixed) {

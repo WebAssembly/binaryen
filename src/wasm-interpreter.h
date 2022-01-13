@@ -162,8 +162,7 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
-  Flow generateArguments(const ExpressionList& operands,
-                         Literals& arguments) {
+  Flow generateArguments(const ExpressionList& operands, Literals& arguments) {
     NOTE_ENTER_("generateArguments");
     arguments.reserve(operands.size());
     for (auto expression : operands) {
