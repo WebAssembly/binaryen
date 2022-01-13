@@ -179,7 +179,7 @@ protected:
     Name base = s[i++]->str();
 
     if (s[0]->str() == INVOKE) {
-      LiteralList args;
+      Literals args;
       while (i < s.size()) {
         Expression* argument = builders[moduleName]->parseExpression(*s[i++]);
         args.push_back(getLiteralFromConstExpression(argument));
