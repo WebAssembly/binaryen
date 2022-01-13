@@ -26,8 +26,7 @@ namespace wasm {
 // them.
 struct SubTypes {
   SubTypes(Module& wasm) {
-    std::unordered_map<HeapType, Index> typeIndices;
-    ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
+    types = ModuleUtils::collectHeapTypes(wasm);
     for (auto type : types) {
       note(type);
     }

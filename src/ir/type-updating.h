@@ -18,6 +18,7 @@
 #define wasm_ir_type_updating_h
 
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -336,11 +337,8 @@ public:
 private:
   TypeBuilder typeBuilder;
 
-  // The list of old types.
-  std::vector<HeapType> types;
-
-  // Type indices of the old types.
-  std::unordered_map<HeapType, Index> typeIndices;
+  // The old types and their indices.
+  ModuleUtils::IndexedHeapTypes indexedTypes;
 };
 
 namespace TypeUpdating {

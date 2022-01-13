@@ -26,15 +26,15 @@ namespace wasm {
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeRewriter::update() {
-  ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-  if (types.empty()) {
+  indexedTypes = ModuleUtils::getIndexedHeapTypes(wasm);
+  if (indexedTypes.types.empty()) {
     return;
   }
-  typeBuilder.grow(types.size());
+  typeBuilder.grow(indexedTypes.types.size());
 
   // Create the temporary heap types.
-  for (Index i = 0; i < types.size(); i++) {
-    auto type = types[i];
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    auto type = indexedTypes.types[i];
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;
@@ -46,7 +46,7 @@ void GlobalTypeRewriter::update() {
       }
       Signature newSig(typeBuilder.getTempTupleType(newParams),
                        typeBuilder.getTempTupleType(newResults));
-      modifySignature(types[i], newSig);
+      modifySignature(indexedTypes.types[i], newSig);
       typeBuilder.setHeapType(i, newSig);
     } else if (type.isStruct()) {
       auto struct_ = type.getStruct();
@@ -55,14 +55,14 @@ void GlobalTypeRewriter::update() {
       for (auto& field : newStruct.fields) {
         field.type = getTempType(field.type);
       }
-      modifyStruct(types[i], newStruct);
+      modifyStruct(indexedTypes.types[i], newStruct);
       typeBuilder.setHeapType(i, newStruct);
     } else if (type.isArray()) {
       auto array = type.getArray();
       // Start with a copy to get mutability/packing/etc.
       auto newArray = array;
       newArray.element.type = getTempType(newArray.element.type);
-      modifyArray(types[i], newArray);
+      modifyArray(indexedTypes.types[i], newArray);
       typeBuilder.setHeapType(i, newArray);
     } else {
       WASM_UNREACHABLE("bad type");
@@ -70,7 +70,7 @@ void GlobalTypeRewriter::update() {
 
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
-      typeBuilder.setSubType(i, typeIndices[*super]);
+      typeBuilder.setSubType(i, indexedTypes.indices[*super]);
     }
   }
 
@@ -81,8 +81,8 @@ void GlobalTypeRewriter::update() {
   // removed types, just modified them.
   using OldToNewTypes = std::unordered_map<HeapType, HeapType>;
   OldToNewTypes oldToNewTypes;
-  for (Index i = 0; i < types.size(); i++) {
-    oldToNewTypes[types[i]] = newTypes[i];
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    oldToNewTypes[indexedTypes.types[i]] = newTypes[i];
   }
 
   // Replace all the old types in the module with the new ones.
@@ -202,24 +202,25 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (!typeIndices.count(heapType)) {
+    if (!indexedTypes.indices.count(heapType)) {
       // This type was not present in the module, but is now being used when
       // defining new types. That is fine; just use it.
       return type;
     }
     return typeBuilder.getTempRefType(
-      typeBuilder.getTempHeapType(typeIndices[heapType]),
+      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]),
       type.getNullability());
   }
   if (type.isRtt()) {
     auto rtt = type.getRtt();
     auto newRtt = rtt;
     auto heapType = type.getHeapType();
-    if (!typeIndices.count(heapType)) {
+    if (!indexedTypes.indices.count(heapType)) {
       // See above with references.
       return type;
     }
-    newRtt.heapType = typeBuilder.getTempHeapType(typeIndices[heapType]);
+    newRtt.heapType =
+      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]);
     return typeBuilder.getTempRttType(newRtt);
   }
   if (type.isTuple()) {

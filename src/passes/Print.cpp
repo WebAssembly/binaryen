@@ -3064,10 +3064,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printName(curr->name, o);
     }
     incIndent();
-    std::vector<HeapType> types;
-    std::unordered_map<HeapType, Index> indices;
-    ModuleUtils::collectHeapTypes(*curr, types, indices);
-    for (auto type : types) {
+    // Use the same type order as the binary output would even though there is
+    // no code size benefit in the text format.
+    auto indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*curr);
+    for (auto type : indexedTypes.types) {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
