@@ -2582,7 +2582,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    if (!name.is() && getTypeSystem() == TypeSystem::Nominal) {
+    bool nominal = !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
+                                  getTypeSystem() == TypeSystem::Isorecursive);
+    if (nominal) {
       o << "(func_subtype";
     } else {
       o << "(func";
@@ -2612,7 +2614,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')';
     }
-    if (!name.is() && getTypeSystem() == TypeSystem::Nominal) {
+    if (nominal) {
       o << ' ';
       printSupertypeOr(curr, "func");
     }
@@ -2638,21 +2640,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    bool nominal = getTypeSystem() == TypeSystem::Nominal ||
+                   getTypeSystem() == TypeSystem::Isorecursive;
+    if (nominal) {
       o << "(array_subtype ";
     } else {
       o << "(array ";
     }
     handleFieldBody(curr.getArray().element);
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (nominal) {
       o << ' ';
       printSupertypeOr(curr, "data");
     }
     o << ')';
   }
   void handleStruct(HeapType curr) {
+    bool nominal = getTypeSystem() == TypeSystem::Nominal ||
+                   getTypeSystem() == TypeSystem::Isorecursive;
     const auto& fields = curr.getStruct().fields;
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (nominal) {
       o << "(struct_subtype ";
     } else {
       o << "(struct ";
@@ -2669,7 +2675,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
       sep = " ";
     }
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (nominal) {
       o << ' ';
       printSupertypeOr(curr, "data");
     }
@@ -2779,7 +2785,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (getTypeSystem() == TypeSystem::Nominal ||
+        getTypeSystem() == TypeSystem::Isorecursive) {
       o << " (type ";
       printHeapType(o, curr->type, currModule) << ')';
     }
@@ -3064,10 +3071,32 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printName(curr->name, o);
     }
     incIndent();
+
     // Use the same type order as the binary output would even though there is
     // no code size benefit in the text format.
     auto indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*curr);
+    std::optional<RecGroup> currGroup;
+    bool nontrivialGroup = false;
+    auto finishGroup = [&]() {
+      if (nontrivialGroup) {
+        decIndent();
+        o << maybeNewLine;
+      }
+    };
     for (auto type : indexedTypes.types) {
+      RecGroup newGroup = type.getRecGroup();
+      if (!currGroup || *currGroup != newGroup) {
+        if (currGroup) {
+          finishGroup();
+        }
+        currGroup = newGroup;
+        nontrivialGroup = currGroup->size() > 1;
+        if (nontrivialGroup) {
+          doIndent(o, indent);
+          o << "(rec ";
+          incIndent();
+        }
+      }
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
@@ -3076,6 +3105,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       handleHeapType(type);
       o << ")" << maybeNewLine;
     }
+    finishGroup();
+
     ModuleUtils::iterImportedMemories(
       *curr, [&](Memory* memory) { visitMemory(memory); });
     ModuleUtils::iterImportedTables(*curr,

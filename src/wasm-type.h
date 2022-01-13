@@ -50,6 +50,7 @@ TypeSystem getTypeSystem();
 // data.
 class Type;
 class HeapType;
+class RecGroup;
 struct Tuple;
 struct Signature;
 struct Field;
@@ -401,6 +402,9 @@ public:
   // specifically constructed as a Milestone 4 nominal type.
   bool isNominal() const;
 
+  // Get the recursion group for this non-basic type.
+  RecGroup getRecGroup() const;
+
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
     assert(isBasic() && "Basic heap type expected");
@@ -425,6 +429,18 @@ public:
   static HeapType getLeastUpperBound(HeapType a, HeapType b);
 
   std::string toString() const;
+};
+
+// A recursion group consisting of one or more HeapTypes.
+class RecGroup {
+  uintptr_t id;
+
+public:
+  explicit RecGroup(uintptr_t id) : id(id) {}
+  bool operator==(const RecGroup& other) { return id == other.id; }
+  bool operator!=(const RecGroup& other) { return id != other.id; }
+  std::vector<HeapType> getHeapTypes() const;
+  size_t size() const;
 };
 
 typedef std::vector<Type> TypeList;
@@ -608,6 +624,10 @@ struct TypeBuilder {
   // Make this type nominal in the sense of the Milestone 4 GC spec, independent
   // of the current TypeSystem configuration.
   void setNominal(size_t i);
+
+  // Create a new recursion group covering slots [i, i + length). Groups must
+  // not overlap or go out of bounds.
+  void createRecGroup(size_t i, size_t length);
 
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal
