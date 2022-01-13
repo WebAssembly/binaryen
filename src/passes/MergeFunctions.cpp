@@ -103,8 +103,8 @@ struct CheapHasher : public WalkerPass<PostWalker<CheapHasher>> {
   static Map createMap(Module* module) {
     Map hashes;
     for (auto& func : module->functions) {
-      // ensure an entry for each function - we must not modify the map shape in
-      // parallel, just the values
+      // Ensure an entry for each function - we must not modify the map shape in
+      // parallel, just the values.
       hashes[func.get()] = hash(0);
     }
     return hashes;
@@ -126,7 +126,7 @@ struct CheapHasher : public WalkerPass<PostWalker<CheapHasher>> {
     stack.push_back(func->body);
     size_t visited = 0;
 
-    // only consider the first few instructions to reduce the cost of hashing.
+    // Only consider the first few instructions to reduce the cost of hashing.
     // FIXME?: 20 is enough number to exceed the prologue sequence, but it's
     // enough to characterize a function behavior?
     while (!stack.empty() && visited < 20) {
@@ -144,7 +144,7 @@ struct CheapHasher : public WalkerPass<PostWalker<CheapHasher>> {
   }
 
   static size_t hashExpression(const Expression* curr, ExpressionStack& stack) {
-// Visit an expr to collect children
+// Visit an expr to collect children.
 #define DELEGATE_ID curr->_id
 
 #define DELEGATE_START(id)                                                     \
@@ -178,15 +178,16 @@ using ConstDiff =
 
 // Describes a parameter which we create to parameterize the merged function.
 struct ParamInfo {
-  // Actual values of the parameter ordered by the EquivalentClass's `functions`
+  // Actual values of the parameter ordered by the EquivalentClass's
+  // `functions`.
   ConstDiff values;
-  // All uses of the parameter in the primary function
+  // All uses of the parameter in the primary function.
   std::vector<Expression**> uses;
 
   ParamInfo(ConstDiff values, std::vector<Expression**> uses)
     : values(std::move(values)), uses(uses) {}
 
-  // Returns the type of the parameter value
+  // Returns the type of the parameter value.
   Type getValueType(Module* module) const {
     if (const auto literals = std::get_if<Literals>(&values)) {
       return (*literals)[0].type;
@@ -234,7 +235,7 @@ struct EquivalentClass {
   // Primary function in the `functions`, which will be the base for the merged
   // function.
   Function* primaryFunction;
-  // List of functions belonging to a same class
+  // List of functions belonging to a same class.
   std::vector<Function*> functions;
 
   EquivalentClass(Function* primaryFunction, std::vector<Function*> functions)
@@ -291,7 +292,7 @@ struct MergeFunctions : public Pass {
 
   void run(PassRunner* runner, Module* module) override {
     {
-      // Canonicalize locals indices to make comparison easier
+      // Canonicalize locals indices to make comparison easier.
       PassRunner runner(module);
       runner.setIsNested(true);
       runner.add("reorder-locals");
@@ -342,7 +343,7 @@ struct MergeFunctions : public Pass {
     MERGEFUNC_DEBUG(stats.dump());
   }
 
-  // Parameterize direct calls if the module support func ref values
+  // Parameterize direct calls if the module support func ref values.
   bool isCallIndirectionEnabled(Module* module) const {
     return module->features.hasTypedFunctionReferences() &&
            module->features.hasReferenceTypes();
@@ -352,7 +353,7 @@ struct MergeFunctions : public Pass {
                                 Module* module);
 };
 
-// Determine if two functions are equivalent ignoring constants
+// Determine if two functions are equivalent ignoring constants.
 bool MergeFunctions::areInEquvalentClass(Function* lhs,
                                          Function* rhs,
                                          Module* module) {
@@ -392,7 +393,7 @@ bool MergeFunctions::areInEquvalentClass(Function* lhs,
         return false;
       }
 
-      // arguments operands should be also equivalent ignoring constants
+      // Arguments operands should be also equivalent ignoring constants.
       for (Index i = 0; i < lhsCast->operands.size(); i++) {
         if (!ExpressionAnalyzer::flexibleEqual(
               lhsCast->operands[i], rhsCast->operands[i], comparer)) {
@@ -405,7 +406,7 @@ bool MergeFunctions::areInEquvalentClass(Function* lhs,
     if (lhsExpr->is<Const>()) {
       auto lhsCast = lhsExpr->dynCast<Const>();
       auto rhsCast = rhsExpr->dynCast<Const>();
-      // types should be the same at least
+      // Types should be the same at least.
       if (lhsCast->value.type != rhsCast->value.type) {
         return false;
       }
@@ -421,14 +422,14 @@ bool MergeFunctions::areInEquvalentClass(Function* lhs,
   return true;
 }
 
-// Collect all equivalent classes to be merged
+// Collect all equivalent classes to be merged.
 void MergeFunctions::collectEquivalentClasses(
   std::vector<EquivalentClass>& classes, Module* module) {
   auto hashes = CheapHasher::createMap(module);
   PassRunner runner(module);
   CheapHasher(&hashes).run(&runner, module);
 
-  // Find hash-equal groups
+  // Find hash-equal groups.
   std::map<size_t, std::vector<Function*>> hashGroups;
   ModuleUtils::iterDefinedFunctions(
     *module, [&](Function* func) { hashGroups[hashes[func]].push_back(func); });
@@ -454,8 +455,8 @@ void MergeFunctions::collectEquivalentClasses(
       }
 
       if (!found) {
-        // same hash but different instruction pattern.
-        // functions having the same pattern may be in the same hash group.
+        // Same hash but different instruction pattern.
+        // Functions having the same pattern may be in the same hash group.
         classesInGroup.push_back(EquivalentClass(func, {func}));
       }
     }
@@ -466,7 +467,7 @@ void MergeFunctions::collectEquivalentClasses(
 }
 
 // Find the set of parameters which are required to merge the functions in the
-// class Returns false if unable to derive parameters
+// class Returns false if unable to derive parameters.
 bool EquivalentClass::deriveParams(Module* module,
                                    std::vector<ParamInfo>& params,
                                    bool isCallIndirectionEnabled) {
@@ -492,7 +493,7 @@ bool EquivalentClass::deriveParams(Module* module,
   }
   DeepValueIterator primaryIt(&primaryFunction->body);
   std::vector<DeepValueIterator> siblingIterators;
-  // skip the first function, as it is the primary function
+  // Skip the first function, as it is the primary function.
   for (auto func = functions.begin() + 1; func != functions.end(); ++func) {
     siblingIterators.emplace_back(&(*func)->body);
   }
@@ -534,19 +535,20 @@ bool EquivalentClass::deriveParams(Module* module,
       }
       diff = names;
     } else {
-      // skip non-constant expressions, which are ensured to be the exactly same
+      // Skip non-constant expressions, which are ensured to be the exactly
+      // same.
       for (auto& it : siblingIterators) {
-        // sibling functions in a class should have the same instruction type
+        // Sibling functions in a class should have the same instruction type.
         assert((*it)->_id == primary->_id);
         ++it;
       }
       continue;
     }
-    // is all values the same, skip to parameterize it
+    // If all values are the same, skip to parameterize it.
     if (isAllSame) {
       continue;
     }
-    // if the derived param is already in the params, reuse it
+    // If the derived param is already in the params, reuse it.
     bool paramReused = false;
     for (auto& param : params) {
       if (param.values == diff) {
@@ -588,8 +590,8 @@ bool EquivalentClass::hasMergeBenefit(Module* module,
   size_t thunkCount = funcCount;
   // -1 for cloned primary func
   size_t removedInstrs = (funcCount - 1) * exprSize;
-  // each thunks will add local.get and call instructions to forward the params
-  // and pass extra parameterized values
+  // Each thunks will add local.get and call instructions to forward the params
+  // and pass extra parameterized values.
   size_t addedInstrsPerThunk =
     thunkCount * (
                    // call
@@ -602,16 +604,16 @@ bool EquivalentClass::hasMergeBenefit(Module* module,
   constexpr size_t CODE_SEC_ENTRY_WEIGHT = 2;
   constexpr size_t FUNC_SEC_ENTRY_WEIGHT = 2;
 
-  // glue instrs for thunks and a merged function entry will be added by the
-  // merge
+  // Glue instrs for thunks and a merged function entry will be added by the
+  // merge.
   size_t negativeScore =
     addedInstrsPerThunk * INSTR_WEIGHT +
     thunkCount * (
-                   // locals entries in merged function in code section
+                   // Locals entries in merged function in code section.
                    (params.size() * CODE_SEC_LOCALS_WEIGHT) +
-                   // code size field in merged function entry
+                   // Code size field in merged function entry.
                    CODE_SEC_ENTRY_WEIGHT) +
-    // thunk function entries in function section
+    // Thunk function entries in function section.
     (thunkCount * FUNC_SEC_ENTRY_WEIGHT);
   size_t positiveScore = INSTR_WEIGHT * removedInstrs;
   if (negativeScore >= positiveScore) {
