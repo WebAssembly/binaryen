@@ -54,6 +54,7 @@
 //      )
 //    )
 
+#include "ir/hashed.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -85,90 +86,6 @@
 #endif
 
 namespace wasm {
-
-// A function hash is calculated by considering only the order of instruction
-// types, the number of locals, and signatures Used by early classification of
-// functions to be merged.
-struct CheapHasher : public WalkerPass<PostWalker<CheapHasher>> {
-
-  bool isFunctionParallel() override { return true; }
-
-  using Map = std::map<Function*, size_t>;
-  Map* output;
-
-  CheapHasher(Map* output) : output(output) {}
-
-  CheapHasher* create() override { return new CheapHasher(output); }
-
-  static Map createMap(Module* module) {
-    Map hashes;
-    for (auto& func : module->functions) {
-      // Ensure an entry for each function - we must not modify the map shape in
-      // parallel, just the values.
-      hashes[func.get()] = hash(0);
-    }
-    return hashes;
-  }
-
-  void doWalkFunction(Function* func) { output->at(func) = hashFunction(func); }
-
-  static size_t hashFunction(Function* func) {
-    size_t digest = 0;
-    for (Type param : func->getParams()) {
-      rehash(digest, param);
-    }
-    for (Type result : func->getResults()) {
-      rehash(digest, result);
-    }
-    rehash(digest, func->getNumVars());
-
-    ExpressionStack stack;
-    stack.push_back(func->body);
-    size_t visited = 0;
-
-    // Only consider the first few instructions to reduce the cost of hashing.
-    // FIXME?: 20 is enough number to exceed the prologue sequence, but it's
-    // enough to characterize a function behavior?
-    while (!stack.empty() && visited < 20) {
-      visited++;
-      const Expression* curr = stack.back();
-      if (!curr) {
-        // This was an optional child that was not present. Hash a 0 to
-        // represent that.
-        rehash(digest, 0);
-        continue;
-      }
-      hash_combine(digest, hashExpression(curr, stack));
-    }
-    return digest;
-  }
-
-  static size_t hashExpression(const Expression* curr, ExpressionStack& stack) {
-// Visit an expr to collect children.
-#define DELEGATE_ID curr->_id
-
-#define DELEGATE_START(id)                                                     \
-  auto* cast = curr->cast<id>();                                               \
-  WASM_UNUSED(cast);
-
-#define DELEGATE_GET_FIELD(id, field) cast->field
-
-#define DELEGATE_FIELD_CHILD(id, field) stack.push_back(cast->field);
-
-#define DELEGATE_FIELD_INT(id, field)            // noop
-#define DELEGATE_FIELD_LITERAL(id, field)        // noop
-#define DELEGATE_FIELD_NAME(id, field)           // noop
-#define DELEGATE_FIELD_TYPE(id, field)           // noop
-#define DELEGATE_FIELD_HEAPTYPE(id, field)       // noop
-#define DELEGATE_FIELD_ADDRESS(id, field)        // noop
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) // noop
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) // noop
-
-#include "wasm-delegations-fields.def"
-
-    return hash(curr->_id);
-  }
-};
 
 struct ConstValueDiff : public std::monostate {};
 struct ConstCalleeDiff : public std::monostate {};
@@ -425,9 +342,27 @@ bool MergeFunctions::areInEquvalentClass(Function* lhs,
 // Collect all equivalent classes to be merged.
 void MergeFunctions::collectEquivalentClasses(
   std::vector<EquivalentClass>& classes, Module* module) {
-  auto hashes = CheapHasher::createMap(module);
+  auto hashes = FunctionHasher::createMap(module);
   PassRunner runner(module);
-  CheapHasher(&hashes).run(&runner, module);
+
+  std::function<bool(Expression*, size_t&)> ignoringConsts =
+    [&](Expression* expr, size_t& digest) {
+      // Ignore const's immediate operands.
+      if (expr->is<Const>()) {
+        return true;
+      }
+      // Ignore callee operands.
+      if (auto* call = expr->dynCast<Call>()) {
+        for (auto operand : call->operands) {
+          rehash(digest,
+                 ExpressionAnalyzer::flexibleHash(operand, ignoringConsts));
+        }
+        rehash(digest, call->isReturn);
+        return true;
+      }
+      return false;
+    };
+  FunctionHasher(&hashes, ignoringConsts).run(&runner, module);
 
   // Find hash-equal groups.
   std::map<size_t, std::vector<Function*>> hashGroups;
