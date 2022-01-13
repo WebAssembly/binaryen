@@ -133,7 +133,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -153,7 +153,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   Literals callTable(Name tableName,
                      Index index,
                      HeapType sig,
-                     LiteralList& arguments,
+                     Literals& arguments,
                      Type results,
                      ModuleInstance& instance) override {
 

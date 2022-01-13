@@ -39,7 +39,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == "fuzzing-support") {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls
@@ -239,7 +239,7 @@ struct ExecutionResults {
 
   FunctionResult run(Function* func, Module& wasm, ModuleInstance& instance) {
     try {
-      LiteralList arguments;
+      Literals arguments;
       // init hang support, if present
       if (auto* ex = wasm.getExportOrNull("hangLimitInitializer")) {
         instance.callFunction(ex->value, arguments);
