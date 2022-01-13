@@ -569,14 +569,15 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("inlining-optimizing");
   }
 
+  // Optimizations show more functions as duplicate, so run this here in Post.
+  addIfNoDWARFIssues("duplicate-function-elimination");
+  addIfNoDWARFIssues("duplicate-import-elimination");
+
   // perform after the number of functions is reduced by inlining-optimizing
   if (options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("merge-functions");
   }
 
-  // Optimizations show more functions as duplicate, so run this here in Post.
-  addIfNoDWARFIssues("duplicate-function-elimination");
-  addIfNoDWARFIssues("duplicate-import-elimination");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("simplify-globals-optimizing");
   } else {
