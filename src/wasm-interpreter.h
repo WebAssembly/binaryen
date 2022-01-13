@@ -98,9 +98,6 @@ public:
   }
 };
 
-// A list of literals, for function calls
-typedef std::vector<Literal> LiteralList;
-
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
 class Indenter {
@@ -166,7 +163,7 @@ protected:
   Index maxLoopIterations;
 
   Flow generateArguments(const ExpressionList& operands,
-                         LiteralList& arguments) {
+                         Literals& arguments) {
     NOTE_ENTER_("generateArguments");
     arguments.reserve(operands.size());
     for (auto expression : operands) {
@@ -1284,7 +1281,7 @@ public:
   }
   Flow visitTupleMake(TupleMake* curr) {
     NOTE_ENTER("tuple.make");
-    LiteralList arguments;
+    Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
@@ -1384,7 +1381,7 @@ public:
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
-    LiteralList arguments;
+    Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
@@ -2306,11 +2303,11 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
-    virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
+    virtual Literals callImport(Function* import, Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
                                HeapType sig,
-                               LiteralList& arguments,
+                               Literals& arguments,
                                Type result,
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
@@ -2510,13 +2507,13 @@ public:
 
     // run start, if present
     if (wasm.start.is()) {
-      LiteralList arguments;
+      Literals arguments;
       callFunction(wasm.start, arguments);
     }
   }
 
   // call an exported function
-  Literals callExport(Name name, const LiteralList& arguments) {
+  Literals callExport(Name name, const Literals& arguments) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_) {
       externalInterface->trap("callExport not found");
@@ -2524,7 +2521,7 @@ public:
     return callFunction(export_->value, arguments);
   }
 
-  Literals callExport(Name name) { return callExport(name, LiteralList()); }
+  Literals callExport(Name name) { return callExport(name, Literals()); }
 
   // get an exported global
   Literals getExport(Name name) {
@@ -2659,7 +2656,7 @@ public:
     std::vector<Literals> locals;
     Function* function;
 
-    FunctionScope(Function* function, const LiteralList& arguments)
+    FunctionScope(Function* function, const Literals& arguments)
       : function(function) {
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -2731,7 +2728,7 @@ public:
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
       NOTE_NAME(curr->target);
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -2755,7 +2752,7 @@ public:
 
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -2780,7 +2777,7 @@ public:
     }
     Flow visitCallRef(CallRef* curr) {
       NOTE_ENTER("CallRef");
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -3555,7 +3552,7 @@ public:
   };
 
   // Call a function, starting an invocation.
-  Literals callFunction(Name name, const LiteralList& arguments) {
+  Literals callFunction(Name name, const Literals& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
     callDepth = 0;
@@ -3565,7 +3562,7 @@ public:
 
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
-  Literals callFunctionInternal(Name name, const LiteralList& arguments) {
+  Literals callFunctionInternal(Name name, const Literals& arguments) {
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }

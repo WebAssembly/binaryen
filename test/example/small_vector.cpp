@@ -5,7 +5,7 @@
 
 using namespace wasm;
 
-template<typename T> void test() {
+template<typename T> void test(size_t N) {
   {
     T t;
     // build up
@@ -55,12 +55,23 @@ template<typename T> void test() {
     u.push_back(2);
     assert(t != u);
   }
+  {
+    // Test reserve/capacity.
+    T t;
+
+    // Capacity begins at the size of the fixed storage.
+    assert(t.capacity() == N);
+
+    // Reserving more increases the capacity (but how much is impl-defined).
+    t.reserve(t.capacity() + 100);
+    assert(t.capacity() >= N + 100);
+  }
 }
 
 int main() {
-  test<SmallVector<int, 0>>();
-  test<SmallVector<int, 1>>();
-  test<SmallVector<int, 2>>();
-  test<SmallVector<int, 10>>();
+  test<SmallVector<int, 0>>(0);
+  test<SmallVector<int, 1>>(1);
+  test<SmallVector<int, 2>>(2);
+  test<SmallVector<int, 10>>(10);
   std::cout << "ok.\n";
 }

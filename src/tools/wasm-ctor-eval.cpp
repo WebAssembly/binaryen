@@ -256,7 +256,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     Name WASI("wasi_snapshot_preview1");
 
     if (ignoreExternalInput) {
@@ -324,7 +324,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Literals callTable(Name tableName,
                      Index index,
                      HeapType sig,
-                     LiteralList& arguments,
+                     Literals& arguments,
                      Type result,
                      EvallingModuleInstance& instance) override {
 
@@ -524,7 +524,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   //        1. Statically or dynamically stop evalling when a param is actually
   //           used, or
   //        2. Split out --ignore-external-input into separate flags.
-  LiteralList params;
+  Literals params;
   for (Index i = 0; i < func->getNumParams(); i++) {
     auto type = func->getLocalType(i);
     if (!LiteralUtils::canMakeZero(type)) {
