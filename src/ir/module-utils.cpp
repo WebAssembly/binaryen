@@ -19,22 +19,23 @@
 
 namespace wasm::ModuleUtils {
 
-void collectHeapTypes(Module& wasm,
-                      std::vector<HeapType>& types,
-                      std::unordered_map<HeapType, Index>& typeIndices) {
-  struct Counts : public InsertOrderedMap<HeapType, size_t> {
-    void note(HeapType type) {
-      if (!type.isBasic()) {
-        (*this)[type]++;
-      }
-    }
-    void note(Type type) {
-      for (HeapType ht : type.getHeapTypeChildren()) {
-        note(ht);
-      }
-    }
-  };
+namespace {
 
+// Helper for collecting HeapTypes and their frequencies.
+struct Counts : public InsertOrderedMap<HeapType, size_t> {
+  void note(HeapType type) {
+    if (!type.isBasic()) {
+      (*this)[type]++;
+    }
+  }
+  void note(Type type) {
+    for (HeapType ht : type.getHeapTypeChildren()) {
+      note(ht);
+    }
+  }
+};
+
+Counts getHeapTypeCounts(Module& wasm) {
   struct CodeScanner
     : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
     Counts& counts;
@@ -160,15 +161,49 @@ void collectHeapTypes(Module& wasm,
     }
   }
 
+  return counts;
+}
+
+} // anonymous namespace
+
+std::vector<HeapType> collectHeapTypes(Module& wasm) {
+  Counts counts = getHeapTypeCounts(wasm);
+  std::vector<HeapType> types;
+  types.reserve(counts.size());
+  for (auto& [type, _] : counts) {
+    types.push_back(type);
+  }
+  return types;
+}
+
+IndexedHeapTypes getIndexedHeapTypes(Module& wasm) {
+  Counts counts = getHeapTypeCounts(wasm);
+  IndexedHeapTypes indexedTypes;
+  Index i = 0;
+  for (auto& [type, _] : counts) {
+    indexedTypes.types.push_back(type);
+    indexedTypes.indices[type] = i++;
+  }
+  return indexedTypes;
+}
+
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
+  Counts counts = getHeapTypeCounts(wasm);
+
   // Sort by frequency and then original insertion order.
   std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
   std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
     return a.second > b.second;
   });
+
+  // Collect the results.
+  IndexedHeapTypes indexedTypes;
   for (Index i = 0; i < sorted.size(); ++i) {
-    typeIndices[sorted[i].first] = i;
-    types.push_back(sorted[i].first);
+    HeapType type = sorted[i].first;
+    indexedTypes.types.push_back(type);
+    indexedTypes.indices[type] = i;
   }
+  return indexedTypes;
 }
 
 } // namespace wasm::ModuleUtils

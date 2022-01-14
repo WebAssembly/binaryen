@@ -455,17 +455,22 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
-// Helper function for collecting all the types that are declared in a module,
-// which means the HeapTypes (that are non-basic, that is, not eqref etc., which
-// do not need to be defined).
-//
-// Used when emitting or printing a module to give HeapTypes canonical
-// indices. HeapTypes are sorted in order of decreasing frequency to minize the
-// size of their collective encoding. Both a vector mapping indices to
-// HeapTypes and a map mapping HeapTypes to indices are produced.
-void collectHeapTypes(Module& wasm,
-                      std::vector<HeapType>& types,
-                      std::unordered_map<HeapType, Index>& typeIndices);
+// Helper function for collecting all the non-basic heap types used in the
+// module, i.e. the types that would appear in the type section.
+std::vector<HeapType> collectHeapTypes(Module& wasm);
+
+struct IndexedHeapTypes {
+  std::vector<HeapType> types;
+  std::unordered_map<HeapType, Index> indices;
+};
+
+// Similar to `collectHeapTypes`, but provides fast lookup of the index for each
+// type as well.
+IndexedHeapTypes getIndexedHeapTypes(Module& wasm);
+
+// The same as `getIndexedHeapTypes`, but also sorts the types by frequency of
+// use to minimize code size.
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
 
 } // namespace wasm::ModuleUtils
 
