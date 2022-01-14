@@ -693,6 +693,12 @@ public:
   Literals(size_t initialSize) : SmallVector(initialSize) {}
 
   Type getType() {
+    if (empty()) {
+      return Type::none;
+    }
+    if (size() == 1) {
+      return (*this)[0].type;
+    }
     std::vector<Type> types;
     for (auto& val : *this) {
       types.push_back(val.type);
