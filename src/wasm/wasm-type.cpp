@@ -1049,6 +1049,10 @@ Type Type::get(unsigned byteSize, bool float_) {
 }
 
 bool Type::isSubType(Type left, Type right) {
+  // As an optimization, in the common case do not even construct a SubTyper.
+  if (left == right) {
+    return true;
+  }
   return SubTyper().isSubType(left, right);
 }
 
@@ -1220,6 +1224,10 @@ bool HeapType::isNominal() const {
 }
 
 bool HeapType::isSubType(HeapType left, HeapType right) {
+  // As an optimization, in the common case do not even construct a SubTyper.
+  if (left == right) {
+    return true;
+  }
   return SubTyper().isSubType(left, right);
 }
 
