@@ -74,17 +74,6 @@
 #include <variant>
 #include <vector>
 
-#if 0
-#define MERGEFUNC_DEBUG(X)                                                     \
-  do {                                                                         \
-    X;                                                                         \
-  } while (0)
-#else
-#define MERGEFUNC_DEBUG(X)                                                     \
-  do {                                                                         \
-  } while (0)
-#endif
-
 namespace wasm {
 
 struct ConstValueDiff : public std::monostate {};
@@ -130,20 +119,6 @@ struct ParamInfo {
       WASM_UNREACHABLE("unexpected const value type");
     }
   }
-
-  friend std::ostream& operator<<(std::ostream& o, const ParamInfo& info) {
-    o << "ParamInfo(";
-    if (auto literals = std::get_if<Literals>(&info.values)) {
-      o << "literals = " << *literals;
-    } else if (auto callees = std::get_if<std::vector<Name>>(&info.values)) {
-      o << "callees = ";
-      for (auto& callee : *callees) {
-        o << callee << " ";
-      }
-    }
-    o << ")";
-    return o;
-  }
 };
 
 // Describes the set of functions which are considered as "equivalent" (i.e.
@@ -176,32 +151,6 @@ struct EquivalentClass {
   bool deriveParams(Module* module,
                     std::vector<ParamInfo>& params,
                     bool isIndirectionEnabled);
-
-  friend std::ostream& operator<<(std::ostream& o, EquivalentClass& self) {
-    o << "EquivalentClass [";
-    o << "primary=" << self.primaryFunction->name << ", ";
-    o << "functions=" << self.functions.size() << ", ";
-    for (auto* func : self.functions) {
-      o << " - " << func->name << "\n";
-    }
-    return o;
-  }
-  void dump() { std::cout << *this << std::endl; }
-};
-
-struct Stats {
-  size_t allFunctions = 0;
-  size_t mergedFunctions = 0;
-  size_t skip = 0;
-  size_t duplicates = 0;
-  size_t equivalentClasses = 0;
-  void dump() {
-    std::cout << "allFunctions: " << allFunctions << "\n";
-    std::cout << "mergedCounter: " << mergedFunctions << "\n";
-    std::cout << "skip: " << skip << "\n";
-    std::cout << "duplicates: " << duplicates << "\n";
-    std::cout << "equivalentClasses: " << equivalentClasses << "\n";
-  }
 };
 
 struct MergeFunctions : public Pass {
@@ -216,7 +165,6 @@ struct MergeFunctions : public Pass {
       runner.run();
     }
 
-    Stats stats;
     std::vector<EquivalentClass> classes;
     collectEquivalentClasses(classes, module);
     std::sort(
@@ -228,36 +176,18 @@ struct MergeFunctions : public Pass {
         continue;
       }
 
-      stats.equivalentClasses += 1;
-      MERGEFUNC_DEBUG(std::cout << "[merge-funcs] trying to merge: " << clazz
-                                << std::endl);
-
       std::vector<ParamInfo> params;
       if (!clazz.deriveParams(
             module, params, isCallIndirectionEnabled(module))) {
-        MERGEFUNC_DEBUG(std::cerr
-                        << "[merge-funcs] Failed to derive params for "
-                        << clazz.primaryFunction->name << std::endl);
         continue;
       }
 
-      MERGEFUNC_DEBUG(for (Index i = 0; i < params.size(); i++) {
-        std::cerr << "[merge-funcs] param[" << i << "] " << params[i]
-                  << std::endl;
-      });
-
       if (!clazz.hasMergeBenefit(module, params)) {
-        stats.skip += clazz.functions.size();
         continue;
       }
 
       clazz.merge(module, params);
-      MERGEFUNC_DEBUG(std::cout << "[merge-funcs] succeed to merge"
-                                << std::endl);
-      stats.mergedFunctions += clazz.functions.size();
     }
-    stats.allFunctions = module->functions.size();
-    MERGEFUNC_DEBUG(stats.dump());
   }
 
   // Parameterize direct calls if the module support func ref values.
@@ -551,13 +481,6 @@ bool EquivalentClass::hasMergeBenefit(Module* module,
     // Thunk function entries in function section.
     (thunkCount * FUNC_SEC_ENTRY_WEIGHT);
   size_t positiveScore = INSTR_WEIGHT * removedInstrs;
-  if (negativeScore >= positiveScore) {
-    MERGEFUNC_DEBUG(std::cerr
-                    << "[merge-funcs] negative score: " << negativeScore
-                    << " is greater than positive score: " << positiveScore
-                    << " exprSize: " << exprSize << std::endl);
-    MERGEFUNC_DEBUG(std::cerr << *primaryFunction->body << std::endl);
-  }
   return negativeScore < positiveScore;
 }
 
