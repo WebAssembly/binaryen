@@ -31,8 +31,8 @@ public:
                  Module& module,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
-      module(module), features(module.features) {
+      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
+      features(module.features) {
     if (ast) {
       walk(ast);
     }
