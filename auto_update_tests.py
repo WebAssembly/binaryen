@@ -154,6 +154,14 @@ def update_lit_tests():
                              os.path.join(lit_dir, '**', '*.wast'),
                              os.path.join(lit_dir, '**', '*.wat')])
 
+    # Update the help lit tests
+    script = os.path.join(shared.options.binaryen_root,
+                          'scripts',
+                          'update_help_checks.py')
+    subprocess.check_output([sys.executable,
+                             script,
+                             '--binaryen-bin=' + shared.options.binaryen_bin])
+
 
 TEST_SUITES = OrderedDict([
     ('wasm-opt', wasm_opt.update_wasm_opt_tests),
