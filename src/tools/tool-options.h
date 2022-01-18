@@ -135,6 +135,15 @@ struct ToolOptions : public Options {
            Options::Arguments::Zero,
            [](Options* o, const std::string& argument) {
              setTypeSystem(TypeSystem::Equirecursive);
+           })
+      .add("--hybrid",
+           "",
+           "Force all GC type definitions to be parsed using the isorecursive "
+           "hybrid type system.",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             setTypeSystem(TypeSystem::Isorecursive);
            });
   }
 
