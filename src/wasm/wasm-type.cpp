@@ -3197,6 +3197,9 @@ std::vector<HeapType> TypeBuilder::build() {
     case TypeSystem::Nominal:
       canonicalizeNominal(state);
       break;
+    case TypeSystem::Isorecursive:
+      Fatal() << "Isorecursive types not yet implemented";
+      break;
   }
 
 #if TIME_CANONICALIZATION
