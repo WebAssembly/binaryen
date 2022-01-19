@@ -2590,8 +2590,11 @@ private:
           matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
           bx->op == by->op && x->type == y->type && cx->value == cy->value &&
           inversesOr(bx)) {
-        bx->left = Builder(*getModule())
-                     .makeBinary(Abstract::getBinary(x->type, And), x, y);
+        by->op = Abstract::getBinary(x->type, And);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
         return bx;
       }
     }
@@ -2612,8 +2615,11 @@ private:
           matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
           bx->op == by->op && x->type == y->type && cx->value == cy->value &&
           preserveOr(bx)) {
-        bx->left = Builder(*getModule())
-                     .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        by->op = Abstract::getBinary(x->type, Or);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
         return bx;
       }
     }
