@@ -22,6 +22,7 @@
 
 #include "asmjs/shared-constants.h"
 #include "ir/bits.h"
+#include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "pass.h"
@@ -100,11 +101,30 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 };
 
-struct FindDirectCallees : public WalkerPass<PostWalker<FindDirectCallees>> {
-public:
-  void visitCall(Call* curr) { callees.insert(curr->target); }
-  std::set<Name> callees;
-};
+static std::set<Name> findCalledFunctions(Module* module, Name startFunc) {
+  std::set<Name> called;
+  std::vector<Name> toVisit;
+
+  auto addFunction = [&](Name name) {
+    if (called.insert(name).second) {
+      toVisit.push_back(name);
+    }
+  };
+
+  if (startFunc.is()) {
+    addFunction(startFunc);
+    while (!toVisit.empty()) {
+      auto next = toVisit.back();
+      toVisit.pop_back();
+      auto* func = module->getFunction(next);
+      for (auto* call : FindAll<Call>(func->body).list) {
+        addFunction(call->target);
+      }
+    }
+  }
+
+  return called;
+}
 
 struct SafeHeap : public Pass {
   PassOptions options;
@@ -114,24 +134,13 @@ struct SafeHeap : public Pass {
     // add imports
     addImports(module);
     // instrument loads and stores
-    // We avoid instrumenting the module start function of any function
-    // that it directly calls.  This is because in some cases the linker
-    // generates `__wasm_init_memory` (either as the start function or
-    // a function directly called from it) and this function is used in shared
-    // memory builds to load the passive memory segments, which in turn means
-    // that value of sbrk() is not available until after it has run.
-    std::set<Name> ignoreFunctions;
-    if (module->start.is()) {
-      // Note that this only finds directly called functions, not transitively
-      // called ones.  That is enough given the current LLVM output as start
-      // will only contain very specific, linker-generated code
-      // (__wasm_init_memory etc. as mentioned above).
-      FindDirectCallees findDirectCallees;
-      findDirectCallees.walkFunctionInModule(module->getFunction(module->start),
-                                             module);
-      ignoreFunctions = findDirectCallees.callees;
-      ignoreFunctions.insert(module->start);
-    }
+    // We avoid instrumenting the module start function of any function that it
+    // directly calls.  This is because in some cases the linker generates
+    // `__wasm_init_memory` (either as the start function or a function directly
+    // called from it) and this function is used in shared memory builds to load
+    // the passive memory segments, which in turn means that value of sbrk() is
+    // not available until after it has run.
+    std::set<Name> ignoreFunctions = findCalledFunctions(module, module->start);
     ignoreFunctions.insert(getSbrkPtr);
     AccessInstrumenter(ignoreFunctions).run(runner, module);
     // add helper checking funcs and imports
