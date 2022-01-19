@@ -13,7 +13,16 @@
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 1 1)
- (start $foo)
+ (start $mystart)
+ (func $mystart
+  (i32.store
+   (i32.load
+    (i32.const 42)
+   )
+   (i32.const 43)
+  )
+  (call $foo)
+ )
  (func $foo
   (i32.store
    (i32.load

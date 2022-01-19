@@ -20,6 +20,9 @@
 ;; CHECK-NEXT:                                        output file. In this mode if no output
 ;; CHECK-NEXT:                                        file is specified, we write to stdout.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-emit-metadata,-n                Skip the writing to emscripten metadata
+;; CHECK-NEXT:                                        JSON to stdout.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-base                        The address at which static globals were
 ;; CHECK-NEXT:                                        placed
 ;; CHECK-NEXT:
@@ -158,6 +161,10 @@
 ;; CHECK-NEXT:   --structural                         Force all GC type definitions to be
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --hybrid                             Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed using the isorecursive hybrid type
+;; CHECK-NEXT:                                        system.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:

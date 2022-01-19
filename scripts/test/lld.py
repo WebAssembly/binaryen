@@ -26,6 +26,8 @@ def args_for_finalize(filename):
         ret += ['--side-module']
     if 'standalone-wasm' in filename:
         ret += ['--standalone-wasm']
+    if 'no-emit-metadata' in filename:
+        ret += ['--no-emit-metadata']
     return ret
 
 
@@ -57,7 +59,7 @@ def run_test(input_path):
         actual = support.run_command(cmd)
 
         shared.fail_if_not_identical_to_file(actual, expected_file)
-        if ext == '.out':
+        if ext == '.out' and '--no-emit-metadata' not in cmd:
             start = actual.find('--BEGIN METADATA --\n')
             end = actual.find('-- END METADATA --\n')
             if start == -1 or end == -1:

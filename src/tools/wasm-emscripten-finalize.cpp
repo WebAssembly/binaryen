@@ -47,6 +47,7 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapUrl;
   std::string dataSegmentFile;
   bool emitBinary = true;
+  bool emitMetadata = true;
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
@@ -94,6 +95,13 @@ int main(int argc, const char* argv[]) {
          WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&emitBinary](Options*, const std::string&) { emitBinary = false; })
+    .add(
+      "--no-emit-metadata",
+      "-n",
+      "Skip the writing to emscripten metadata JSON to stdout.",
+      WasmEmscriptenFinalizeOption,
+      Options::Arguments::Zero,
+      [&emitMetadata](Options*, const std::string&) { emitMetadata = false; })
     .add("--global-base",
          "",
          "The address at which static globals were placed",
@@ -321,7 +329,10 @@ int main(int argc, const char* argv[]) {
 
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata = generator.generateEmscriptenMetadata();
+  std::string metadata;
+  if (emitMetadata) {
+    metadata = generator.generateEmscriptenMetadata();
+  }
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
@@ -347,7 +358,7 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
     writer.write(wasm, output);
-    if (!emitBinary) {
+    if (emitMetadata && !emitBinary) {
       output << "(;\n";
       output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
       output << ";)\n";
@@ -355,7 +366,7 @@ int main(int argc, const char* argv[]) {
   }
   // If we emit text then we emitted the metadata together with that text
   // earlier. Otherwise emit it to stdout.
-  if (emitBinary) {
+  if (emitMetadata && emitBinary) {
     std::cout << metadata;
   }
   return 0;

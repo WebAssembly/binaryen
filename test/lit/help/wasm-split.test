@@ -196,6 +196,10 @@
 ;; CHECK-NEXT:                                        parsed as structural (i.e.
 ;; CHECK-NEXT:                                        equirecursive). This is the default.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --hybrid                             Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed using the isorecursive hybrid type
+;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------
