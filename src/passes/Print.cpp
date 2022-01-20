@@ -2582,9 +2582,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    bool nominal = !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
-                                  getTypeSystem() == TypeSystem::Isorecursive);
-    if (nominal) {
+    bool hasSupertype =
+      !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
+                     getTypeSystem() == TypeSystem::Isorecursive);
+    if (hasSupertype) {
       o << "(func_subtype";
     } else {
       o << "(func";
@@ -2614,7 +2615,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')';
     }
-    if (nominal) {
+    if (hasSupertype) {
       o << ' ';
       printSupertypeOr(curr, "func");
     }
@@ -2640,25 +2641,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    bool nominal = getTypeSystem() == TypeSystem::Nominal ||
-                   getTypeSystem() == TypeSystem::Isorecursive;
-    if (nominal) {
+    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
+                        getTypeSystem() == TypeSystem::Isorecursive;
+    if (hasSupertype) {
       o << "(array_subtype ";
     } else {
       o << "(array ";
     }
     handleFieldBody(curr.getArray().element);
-    if (nominal) {
+    if (hasSupertype) {
       o << ' ';
       printSupertypeOr(curr, "data");
     }
     o << ')';
   }
   void handleStruct(HeapType curr) {
-    bool nominal = getTypeSystem() == TypeSystem::Nominal ||
-                   getTypeSystem() == TypeSystem::Isorecursive;
+    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
+                        getTypeSystem() == TypeSystem::Isorecursive;
     const auto& fields = curr.getStruct().fields;
-    if (nominal) {
+    if (hasSupertype) {
       o << "(struct_subtype ";
     } else {
       o << "(struct ";
@@ -2675,7 +2676,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
       sep = " ";
     }
-    if (nominal) {
+    if (hasSupertype) {
       o << ' ';
       printSupertypeOr(curr, "data");
     }

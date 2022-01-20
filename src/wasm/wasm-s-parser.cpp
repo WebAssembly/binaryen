@@ -893,19 +893,19 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   forEachType([&](Element& elem, size_t) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
-    bool nominal =
+    bool hasSupertype =
       kind == FUNC_SUBTYPE || kind == STRUCT_SUBTYPE || kind == ARRAY_SUBTYPE;
     if (kind == FUNC || kind == FUNC_SUBTYPE) {
-      builder[index] = parseSignatureDef(def, nominal);
+      builder[index] = parseSignatureDef(def, hasSupertype);
     } else if (kind == STRUCT || kind == STRUCT_SUBTYPE) {
-      builder[index] = parseStructDef(def, index, nominal);
+      builder[index] = parseStructDef(def, index, hasSupertype);
     } else if (kind == ARRAY || kind == ARRAY_SUBTYPE) {
       builder[index] = parseArrayDef(def);
     } else {
       throw ParseException("unknown heaptype kind", kind.line, kind.col);
     }
     Element* super = nullptr;
-    if (nominal) {
+    if (hasSupertype) {
       // TODO: Let the new nominal types coexist with equirecursive types
       // builder[index].setNominal();
       super = def[def.size() - 1];
