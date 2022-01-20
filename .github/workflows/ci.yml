@@ -47,6 +47,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
 
     - name: install Python dev dependencies
       run: pip3 install -r requirements-dev.txt
@@ -113,6 +115,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -140,6 +144,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -164,6 +170,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: start docker
       run: |
         docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
@@ -202,6 +210,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -227,6 +237,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -249,6 +261,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: emsdk install
@@ -274,6 +288,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: cmake
       run: |
         mkdir -p out
