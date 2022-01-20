@@ -42,9 +42,12 @@ def get_changelog_version():
 def run_version_tests():
     print('[ checking --version ... ]\n')
 
-    not_executable_suffix = ['.DS_Store', '.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest', 'binaryen-lit', 'binaryen-unittests']
+    not_executable_suffix = ['.DS_Store', '.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest']
+    not_executable_prefix = ['binaryen-lit', 'binaryen-unittests']
     bin_files = [os.path.join(shared.options.binaryen_bin, f) for f in os.listdir(shared.options.binaryen_bin)]
-    executables = [f for f in bin_files if os.path.isfile(f) and not any(f.endswith(s) for s in not_executable_suffix)]
+    executables = [f for f in bin_files if os.path.isfile(f) and
+                   not any(f.endswith(s) for s in not_executable_suffix) and
+                   not any(os.path.basename(f).startswith(s) for s in not_executable_prefix)]
     executables = sorted(executables)
     assert len(executables)
 
