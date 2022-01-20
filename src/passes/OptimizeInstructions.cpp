@@ -2574,6 +2574,31 @@ private:
       }
     }
     {
+      // Binary operations that inverses a bitwise OR to AND.
+      // If F(x) = binary(x, c), and F(x) inverses OR,
+      // that is,
+      //
+      //   F(x) | F(y) == F(x & y)
+      //
+      // Then also
+      //
+      //   binary(x, c) | binary(y, c)  =>  binary(x & y, c)
+      Binary *bx, *by;
+      Expression *x, *y;
+      Const *cx, *cy;
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          inversesOr(bx)) {
+        by->op = Abstract::getBinary(x->type, And);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
+        return bx;
+      }
+    }
+    {
       // Binary operations that preserve a bitwise OR can be
       // reordered. If F(x) = binary(x, c), and F(x) preserves OR,
       // that is,
@@ -2586,14 +2611,15 @@ private:
       Binary *bx, *by;
       Expression *x, *y;
       Const *cx, *cy;
-      if (matches(curr,
-                  binary(OrInt32,
-                         binary(&bx, any(&x), ival(&cx)),
-                         binary(&by, any(&y), ival(&cy)))) &&
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
           bx->op == by->op && x->type == y->type && cx->value == cy->value &&
           preserveOr(bx)) {
-        bx->left = Builder(*getModule())
-                     .makeBinary(Abstract::getBinary(x->type, Or), x, y);
+        by->op = Abstract::getBinary(x->type, Or);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
         return bx;
       }
     }
@@ -2623,6 +2649,33 @@ private:
     // (x < 0) | (y < 0)    ==>    (x | y) < 0
     // This effectively checks if x or y have the sign bit set.
     if (matches(curr, binary(LtS, any(), ival(0)))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Check whether an operation inverses the Or operation to And, that is,
+  //
+  //   F(x | y) = F(x) & F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the | operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool inversesOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x >= 0) | (y >= 0)   ==>   (x & y) >= 0
+    if (matches(curr, binary(GeS, any(), ival(0)))) {
+      return true;
+    }
+
+    // (x !=-1) | (y !=-1)   ==>   (x & y) !=-1
+    if (matches(curr, binary(Ne, any(), ival(-1)))) {
       return true;
     }
 
