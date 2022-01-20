@@ -42,12 +42,8 @@ struct HeapTypeGeneratorImpl {
   // allows us to choose HeapTypes that we know will be subtypes of data or func
   // before we actually generate the types.
   using BasicKind = HeapType::BasicHeapType;
-  struct SignatureKind {
-    SignatureKind() = default;
-  };
-  struct DataKind {
-    DataKind() = default;
-  };
+  struct SignatureKind {};
+  struct DataKind {};
   using HeapTypeKind = std::variant<BasicKind, SignatureKind, DataKind>;
   std::vector<HeapTypeKind> typeKinds;
 
@@ -437,9 +433,9 @@ struct HeapTypeGeneratorImpl {
   HeapTypeKind generateHeapTypeKind() {
     switch (rand.upTo(3)) {
       case 0:
-        return SignatureKind();
+        return SignatureKind{};
       case 1:
-        return DataKind();
+        return DataKind{};
       case 2:
         return BasicKind{generateBasicHeapType()};
     }
@@ -453,7 +449,7 @@ struct HeapTypeGeneratorImpl {
       }
       switch (*basic) {
         case HeapType::func:
-          return SignatureKind();
+          return SignatureKind{};
         case HeapType::ext:
         case HeapType::i31:
           return super;
@@ -466,7 +462,7 @@ struct HeapTypeGeneratorImpl {
             return DataKind{};
           }
         case HeapType::data:
-          return DataKind();
+          return DataKind{};
       }
       WASM_UNREACHABLE("unexpected kind");
     } else {
