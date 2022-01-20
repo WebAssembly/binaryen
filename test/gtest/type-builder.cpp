@@ -3,6 +3,25 @@
 
 using namespace wasm;
 
+// Helper test fixture for managing the global type system state.
+template<TypeSystem system> class TypeSystemTest : public ::testing::Test {
+  TypeSystem originalSystem;
+
+protected:
+  void SetUp() override {
+    destroyAllTypes();
+    originalSystem = getTypeSystem();
+    setTypeSystem(system);
+  }
+  void TearDown() override {
+    destroyAllTypes();
+    setTypeSystem(originalSystem);
+  }
+};
+using EquirecursiveTest = TypeSystemTest<TypeSystem::Equirecursive>;
+using NominalTest = TypeSystemTest<TypeSystem::Nominal>;
+using IsorecursiveTest = TypeSystemTest<TypeSystem::Isorecursive>;
+
 TEST(TypeBuilder, Growth) {
   TypeBuilder builder;
   EXPECT_EQ(builder.size(), size_t{0});
@@ -10,11 +29,10 @@ TEST(TypeBuilder, Growth) {
   EXPECT_EQ(builder.size(), size_t{3});
 }
 
-TEST(TypeBuilder, Basics) {
+TEST_F(EquirecursiveTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
   // (type $array (array (mut externref)))
-
   TypeBuilder builder(3);
   ASSERT_EQ(builder.size(), size_t{3});
 
