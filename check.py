@@ -337,6 +337,18 @@ def run_lit():
     shared.with_pass_debug(run)
 
 
+def run_gtest():
+    def run():
+        gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
+        result = subprocess.run(gtest)
+        if result.returncode != 0:
+            shared.num_failures += 1
+        if shared.options.abort_on_first_failure and shared.num_failures:
+            raise Exception("gtest test failed")
+
+    shared.with_pass_debug(run)
+
+
 TEST_SUITES = OrderedDict([
     ('version', run_version_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
@@ -355,6 +367,7 @@ TEST_SUITES = OrderedDict([
     ('binaryenjs', binaryenjs.test_binaryen_js),
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
     ('lit', run_lit),
+    ('gtest', run_gtest),
 ])
 
 
