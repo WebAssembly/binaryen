@@ -1252,6 +1252,12 @@ HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
   return TypeBounder().getLeastUpperBound(a, b);
 }
 
+// Recursion groups with single elements are encoded as that single element's
+// type ID with the low bit set and other recursion groups are encoded with the
+// address of the vector containing their members. These encodings are disjoint
+// because the alignment of the vectors is greater than 1.
+static_assert(alignof(std::vector<HeapType>) > 1);
+
 RecGroup HeapType::getRecGroup() const {
   assert(!isBasic());
   if (auto* info = getHeapTypeInfo(*this)->recGroup) {

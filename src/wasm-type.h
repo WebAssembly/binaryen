@@ -431,7 +431,10 @@ public:
   std::string toString() const;
 };
 
-// A recursion group consisting of one or more HeapTypes.
+// A recursion group consisting of one or more HeapTypes. HeapTypes with single
+// members are encoded without using any additional memory, which is why
+// `getHeapTypes` has to return a vector by value; it might have to create one
+// on the fly.
 class RecGroup {
   uintptr_t id;
 
