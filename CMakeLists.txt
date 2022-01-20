@@ -105,6 +105,16 @@ function(binaryen_setup_rpath name)
                         ${_install_name_dir})
 endfunction()
 
+function(binaryen_add_executable name sources)
+  add_executable(${name} ${sources})
+  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} binaryen)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+  binaryen_setup_rpath(${name})
+  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+endfunction()
+
 # Options
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
@@ -305,6 +315,9 @@ add_subdirectory(third_party)
 
 # Configure lit tests
 add_subdirectory(test/lit)
+
+# Configure GTest unit tests
+add_subdirectory(test/gtest)
 
 # Object files
 set(binaryen_objs

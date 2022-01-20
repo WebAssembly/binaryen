@@ -386,21 +386,12 @@ public:
   Array getArray() const;
 
   // If there is a nontrivial (i.e. non-basic) nominal supertype, return it,
-  // else an empty optional. Nominal types (in the sense of isNominal,
-  // i.e. Milestone 4 nominal types) may always have supertypes and other types
-  // may have supertypes in `TypeSystem::Nominal` mode but not in
-  // `TypeSystem::Equirecursive` mode.
+  // else an empty optional.
   std::optional<HeapType> getSuperType() const;
 
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
   // number of supertypes in its supertype chain.
   size_t getDepth() const;
-
-  // Whether this is a nominal type in the sense of being a GC Milestone 4
-  // nominal type. Although all non-basic HeapTypes are nominal in
-  // `TypeSystem::Nominal` mode, this will still return false unless the type is
-  // specifically constructed as a Milestone 4 nominal type.
-  bool isNominal() const;
 
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
@@ -624,10 +615,6 @@ struct TypeBuilder {
   // `j`. Does nothing for equirecursive types.
   void setSubType(size_t i, size_t j);
 
-  // Make this type nominal in the sense of the Milestone 4 GC spec, independent
-  // of the current TypeSystem configuration.
-  void setNominal(size_t i);
-
   // Create a new recursion group covering slots [i, i + length). Groups must
   // not overlap or go out of bounds.
   void createRecGroup(size_t i, size_t length);
@@ -668,10 +655,6 @@ struct TypeBuilder {
     Entry& subTypeOf(Entry other) {
       assert(&builder == &other.builder);
       builder.setSubType(index, other.index);
-      return *this;
-    }
-    Entry& setNominal() {
-      builder.setNominal(index);
       return *this;
     }
   };
