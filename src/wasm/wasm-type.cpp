@@ -768,7 +768,7 @@ static SignatureTypeCache nominalSignatureCache;
 
 } // anonymous namespace
 
-void destroyAllTypes() {
+void destroyAllTypesForTestingPurposesOnly() {
   globalTypeStore.clear();
   globalHeapTypeStore.clear();
   nominalSignatureCache.clear();

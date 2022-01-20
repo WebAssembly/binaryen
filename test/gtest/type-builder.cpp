@@ -9,12 +9,11 @@ template<TypeSystem system> class TypeSystemTest : public ::testing::Test {
 
 protected:
   void SetUp() override {
-    destroyAllTypes();
     originalSystem = getTypeSystem();
     setTypeSystem(system);
   }
   void TearDown() override {
-    destroyAllTypes();
+    destroyAllTypesForTestingPurposesOnly();
     setTypeSystem(originalSystem);
   }
 };
