@@ -653,6 +653,11 @@ template<typename Info> struct Store {
   }
   bool hasCanonical(const Info& info, typename Info::type_t& canonical);
 
+  void clear() {
+    typeIDs.clear();
+    constructedTypes.clear();
+  }
+
 private:
   template<typename Ref> typename Info::type_t doInsert(Ref& infoRef) {
     const Info& info = [&]() {
@@ -754,11 +759,19 @@ struct SignatureTypeCache {
     std::lock_guard<std::mutex> lock(mutex);
     cache.insert({type.getSignature(), type});
   }
+
+  void clear() { cache.clear(); }
 };
 
 static SignatureTypeCache nominalSignatureCache;
 
 } // anonymous namespace
+
+void destroyAllTypesForTestingPurposesOnly() {
+  globalTypeStore.clear();
+  globalHeapTypeStore.clear();
+  nominalSignatureCache.clear();
+}
 
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 

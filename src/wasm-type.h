@@ -45,6 +45,11 @@ void setTypeSystem(TypeSystem system);
 
 TypeSystem getTypeSystem();
 
+// Dangerous! Frees all types and heap types that have ever been created and
+// resets the type system's internal state. This is only really meant to be used
+// for tests.
+void destroyAllTypesForTestingPurposesOnly();
+
 // The types defined in this file. All of them are small and typically passed by
 // value except for `Tuple` and `Struct`, which may own an unbounded amount of
 // data.
