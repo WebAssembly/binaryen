@@ -1263,13 +1263,13 @@ RecGroup HeapType::getRecGroup() const {
   }
 }
 
-std::vector<HeapType> RecGroup::getHeapTypes() const {
-  if (id & 1) {
+HeapType RecGroup::Iterator::operator*() const {
+  if (parent->id & 1) {
     // This is a trivial recursion group. Mask off the low bit to recover the
     // single HeapType.
-    return {HeapType(id & ~(uintptr_t)1)};
+    return {HeapType(parent->id & ~(uintptr_t)1)};
   } else {
-    return *(std::vector<HeapType>*)id;
+    return (*(std::vector<HeapType>*)parent->id)[index];
   }
 }
 

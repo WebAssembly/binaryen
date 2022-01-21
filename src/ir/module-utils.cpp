@@ -162,7 +162,7 @@ Counts getHeapTypeCounts(Module& wasm) {
 
     // Make sure we've noted the complete recursion group of each type as well.
     auto recGroup = ht.getRecGroup();
-    for (auto type : recGroup.getHeapTypes()) {
+    for (auto type : recGroup) {
       if (!counts.count(type)) {
         newTypes.insert(type);
         counts.note(type);
@@ -188,9 +188,7 @@ void coalesceRecGroups(IndexedHeapTypes& indexedTypes) {
   grouped.reserve(indexedTypes.types.size());
   for (auto type : indexedTypes.types) {
     if (seen.insert(type).second) {
-      auto g = type.getRecGroup().getHeapTypes();
-      assert(g.size() > 0);
-      for (auto member : g) {
+      for (auto member : type.getRecGroup()) {
         grouped.push_back(member);
         seen.insert(member);
       }

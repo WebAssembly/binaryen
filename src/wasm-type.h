@@ -393,8 +393,17 @@ public:
   explicit RecGroup(uintptr_t id) : id(id) {}
   bool operator==(const RecGroup& other) { return id == other.id; }
   bool operator!=(const RecGroup& other) { return id != other.id; }
-  std::vector<HeapType> getHeapTypes() const;
   size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const RecGroup*, Iterator> {
+    using value_type = HeapType;
+    using pointer = const HeapType*;
+    using reference = const HeapType&;
+    value_type operator*() const;
+  };
+
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
 };
 
 typedef std::vector<Type> TypeList;
