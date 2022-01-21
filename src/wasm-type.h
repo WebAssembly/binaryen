@@ -18,6 +18,7 @@
 #define wasm_wasm_type_h
 
 #include "support/name.h"
+#include "support/parent_index_iterator.h"
 #include "wasm-features.h"
 #include <optional>
 #include <ostream>
@@ -270,70 +271,24 @@ public:
 
   std::string toString() const;
 
-  struct Iterator {
-    // Iterator traits
-    using iterator_category = std::random_access_iterator_tag;
+  size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const Type*, Iterator> {
     using value_type = Type;
-    using difference_type = std::ptrdiff_t;
     using pointer = const Type*;
     using reference = const Type&;
-
-    const Type* parent;
-    size_t index;
-    Iterator(const Type* parent, size_t index) : parent(parent), index(index) {}
-    bool operator==(const Iterator& other) const {
-      return index == other.index && parent == other.parent;
-    }
-    bool operator!=(const Iterator& other) const { return !(*this == other); }
-    Iterator& operator++() {
-      ++index;
-      return *this;
-    }
-    Iterator& operator--() {
-      --index;
-      return *this;
-    }
-    Iterator operator++(int) {
-      auto it = *this;
-      index++;
-      return it;
-    }
-    Iterator operator--(int) {
-      auto it = *this;
-      index--;
-      return it;
-    }
-    Iterator& operator+=(difference_type off) {
-      index += off;
-      return *this;
-    }
-    Iterator operator+(difference_type off) const {
-      return Iterator(*this) += off;
-    }
-    Iterator& operator-=(difference_type off) {
-      index -= off;
-      return *this;
-    }
-    Iterator operator-(difference_type off) const {
-      return Iterator(*this) -= off;
-    }
-    difference_type operator-(const Iterator& other) const {
-      assert(parent == other.parent);
-      return index - other.index;
-    }
-    const value_type& operator*() const;
+    reference operator*() const;
   };
 
-  Iterator begin() const { return Iterator(this, 0); }
-  Iterator end() const;
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
   std::reverse_iterator<Iterator> rbegin() const {
     return std::make_reverse_iterator(end());
   }
   std::reverse_iterator<Iterator> rend() const {
     return std::make_reverse_iterator(begin());
   }
-  size_t size() const { return end() - begin(); }
-  const Type& operator[](size_t i) const;
+  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 class HeapType {
