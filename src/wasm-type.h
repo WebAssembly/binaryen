@@ -273,22 +273,22 @@ public:
 
   size_t size() const;
 
-  struct Iterator : ParentIndexIterator<const Type&, Iterator> {
+  struct Iterator : ParentIndexIterator<const Type*, Iterator> {
     using value_type = Type;
     using pointer = const Type*;
     using reference = const Type&;
     reference operator*() const;
   };
 
-  Iterator begin() const { return Iterator{{*this, 0}}; }
-  Iterator end() const { return Iterator{{*this, size()}}; }
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
   std::reverse_iterator<Iterator> rbegin() const {
     return std::make_reverse_iterator(end());
   }
   std::reverse_iterator<Iterator> rend() const {
     return std::make_reverse_iterator(begin());
   }
-  const Type& operator[](size_t i) const { return *Iterator{{*this, i}}; }
+  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 class HeapType {

@@ -1093,12 +1093,12 @@ size_t Type::size() const {
 }
 
 const Type& Type::Iterator::operator*() const {
-  if (parent.isTuple()) {
-    return getTypeInfo(parent)->tuple.types[index];
+  if (parent->isTuple()) {
+    return getTypeInfo(*parent)->tuple.types[index];
   } else {
-    // TODO: see comment in Type::end()
-    assert(index == 0 && parent.id != Type::none && "Index out of bounds");
-    return parent;
+    // TODO: see comment in Type::size()
+    assert(index == 0 && parent->id != Type::none && "Index out of bounds");
+    return *parent;
   }
 }
 
