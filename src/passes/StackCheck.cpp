@@ -35,11 +35,12 @@ namespace wasm {
 // Exported function to set the base and the limit.
 static Name SET_STACK_LIMITS("__set_stack_limits");
 
-static void importStackOverflowHandler(Module& module, Name name) {
+static void
+importStackOverflowHandler(Module& module, Name name, Signature sig) {
   ImportInfo info(module);
 
   if (!info.getImportedFunction(ENV, name)) {
-    auto import = Builder::makeFunction(name, Signature(), {});
+    auto import = Builder::makeFunction(name, sig, {});
     import->module = ENV;
     import->base = name;
     module.addFunction(std::move(import));
@@ -79,7 +80,10 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
     // Otherwise, just trap.
     Expression* handlerExpr;
     if (handler.is()) {
-      handlerExpr = builder.makeCall(handler, {}, Type::none);
+      handlerExpr =
+        builder.makeCall(handler,
+                         {builder.makeLocalGet(newSP, stackPointer->type)},
+                         stackPointer->type);
     } else {
       handlerExpr = builder.makeUnreachable();
     }
@@ -133,7 +137,8 @@ struct StackCheck : public Pass {
       runner->options.getArgumentOrDefault("stack-check-handler", "");
     if (handlerName != "") {
       handler = handlerName;
-      importStackOverflowHandler(*module, handler);
+      importStackOverflowHandler(
+        *module, handler, Signature({stackPointer->type}, Type::none));
     }
 
     Builder builder(*module);
