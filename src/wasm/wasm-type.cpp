@@ -1082,32 +1082,23 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   return TypeBounder().getLeastUpperBound(a, b);
 }
 
-Type::Iterator Type::end() const {
+size_t Type::size() const {
   if (isTuple()) {
-    return Iterator(this, getTypeInfo(*this)->tuple.types.size());
+    return getTypeInfo(*this)->tuple.types.size();
   } else {
     // TODO: unreachable is special and expands to {unreachable} currently.
     // see also: https://github.com/WebAssembly/binaryen/issues/3062
-    return Iterator(this, size_t(id != Type::none));
+    return size_t(id != Type::none);
   }
 }
 
 const Type& Type::Iterator::operator*() const {
-  if (parent->isTuple()) {
-    return getTypeInfo(*parent)->tuple.types[index];
+  if (parent.isTuple()) {
+    return getTypeInfo(parent)->tuple.types[index];
   } else {
     // TODO: see comment in Type::end()
-    assert(index == 0 && parent->id != Type::none && "Index out of bounds");
-    return *parent;
-  }
-}
-
-const Type& Type::operator[](size_t index) const {
-  if (isTuple()) {
-    return getTypeInfo(*this)->tuple.types[index];
-  } else {
-    assert(index == 0 && "Index out of bounds");
-    return *begin();
+    assert(index == 0 && parent.id != Type::none && "Index out of bounds");
+    return parent;
   }
 }
 
