@@ -3120,8 +3120,6 @@ void canonicalizeNominal(CanonicalizationState& state) {
   auto start = std::chrono::steady_clock::now();
 #endif
 
-  // assert(typeSystem == TypeSystem::Nominal);
-
   // Ensure there are no cycles in the subtype graph. This is the classic DFA
   // algorithm for detecting cycles, but in the form of a simple loop because
   // each node (type) has at most one child (supertype).
