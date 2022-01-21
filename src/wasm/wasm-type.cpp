@@ -659,6 +659,11 @@ template<typename Info> struct Store {
   }
   bool hasCanonical(const Info& info, typename Info::type_t& canonical);
 
+  void clear() {
+    typeIDs.clear();
+    constructedTypes.clear();
+  }
+
 private:
   template<typename Ref> typename Info::type_t doInsert(Ref& infoRef) {
     const Info& info = [&]() {
@@ -760,6 +765,8 @@ struct SignatureTypeCache {
     std::lock_guard<std::mutex> lock(mutex);
     cache.insert({type.getSignature(), type});
   }
+
+  void clear() { cache.clear(); }
 };
 
 static SignatureTypeCache nominalSignatureCache;
@@ -769,6 +776,12 @@ static std::mutex recGroupsMutex;
 static std::vector<std::unique_ptr<RecGroupInfo>> recGroups;
 
 } // anonymous namespace
+
+void destroyAllTypesForTestingPurposesOnly() {
+  globalTypeStore.clear();
+  globalHeapTypeStore.clear();
+  nominalSignatureCache.clear();
+}
 
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
@@ -1079,13 +1092,13 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   return TypeBounder().getLeastUpperBound(a, b);
 }
 
-Type::Iterator Type::end() const {
+size_t Type::size() const {
   if (isTuple()) {
-    return Iterator(this, getTypeInfo(*this)->tuple.types.size());
+    return getTypeInfo(*this)->tuple.types.size();
   } else {
     // TODO: unreachable is special and expands to {unreachable} currently.
     // see also: https://github.com/WebAssembly/binaryen/issues/3062
-    return Iterator(this, size_t(id != Type::none));
+    return size_t(id != Type::none);
   }
 }
 
@@ -1093,18 +1106,9 @@ const Type& Type::Iterator::operator*() const {
   if (parent->isTuple()) {
     return getTypeInfo(*parent)->tuple.types[index];
   } else {
-    // TODO: see comment in Type::end()
+    // TODO: see comment in Type::size()
     assert(index == 0 && parent->id != Type::none && "Index out of bounds");
     return *parent;
-  }
-}
-
-const Type& Type::operator[](size_t index) const {
-  if (isTuple()) {
-    return getTypeInfo(*this)->tuple.types[index];
-  } else {
-    assert(index == 0 && "Index out of bounds");
-    return *begin();
   }
 }
 
