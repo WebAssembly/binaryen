@@ -472,6 +472,10 @@
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory
 ;; CHECK-NEXT:                                                 will be zero-initialized
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --closed-world,-cw                            Assume that we can optimize
+;; CHECK-NEXT:                                                 without thinking of anything
+;; CHECK-NEXT:                                                 outside
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------

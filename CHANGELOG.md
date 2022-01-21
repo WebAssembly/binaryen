@@ -14,6 +14,7 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+- Add `--closed-world` option, that currently affects GlobalTypeOptimization.
 
 v105
 ---

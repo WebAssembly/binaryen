@@ -556,7 +556,9 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,
     // constant field propagation can be more effective.
-    addIfNoDWARFIssues("gto");
+    if (options.closedWorld) {
+      addIfNoDWARFIssues("gto");
+    }
     addIfNoDWARFIssues("remove-unused-module-elements");
     addIfNoDWARFIssues("cfp");
   }

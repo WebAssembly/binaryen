@@ -241,6 +241,14 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.zeroFilledMemory = true;
+           })
+      .add("--closed-world",
+           "-cw",
+           "Assume that we can optimize without thinking of anything outside",
+           OptimizationOptionsCategory,
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.closedWorld = true;
            });
 
     // add passes in registry

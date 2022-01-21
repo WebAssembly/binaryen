@@ -160,6 +160,11 @@ struct PassOptions {
   // creates it and we know it is all zeros right before the active segments are
   // applied.)
   bool zeroFilledMemory = false;
+  // Whether to assume that we can optimize this module regardless of anything
+  // outside - we can consider it as a closed world. When this is enabled the
+  // optimizer will do things like change the shape of Struct types, which can
+  // be observable if a GC object escapes to the outside and is inspected.
+  bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
   // Arbitrary string arguments from the commandline, which we forward to
