@@ -159,9 +159,49 @@ Counts getHeapTypeCounts(Module& wasm) {
         counts.note(*super);
       }
     }
+
+    // Make sure we've noted the complete recursion group of each type as well.
+    auto recGroup = ht.getRecGroup();
+    for (auto type : recGroup) {
+      if (!counts.count(type)) {
+        newTypes.insert(type);
+        counts.note(type);
+      }
+    }
   }
 
   return counts;
+}
+
+void coalesceRecGroups(IndexedHeapTypes& indexedTypes) {
+  if (getTypeSystem() != TypeSystem::Isorecursive) {
+    // No rec groups to coalesce.
+    return;
+  }
+
+  // TODO: Perform a topological sort of the recursion groups to create a valid
+  // ordering rather than this hack that just gets all the types in a group to
+  // be adjacent.
+  assert(indexedTypes.indices.empty());
+  std::unordered_set<HeapType> seen;
+  std::vector<HeapType> grouped;
+  grouped.reserve(indexedTypes.types.size());
+  for (auto type : indexedTypes.types) {
+    if (seen.insert(type).second) {
+      for (auto member : type.getRecGroup()) {
+        grouped.push_back(member);
+        seen.insert(member);
+      }
+    }
+  }
+  assert(grouped.size() == indexedTypes.types.size());
+  indexedTypes.types = grouped;
+}
+
+void setIndices(IndexedHeapTypes& indexedTypes) {
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    indexedTypes.indices[indexedTypes.types[i]] = i;
+  }
 }
 
 } // anonymous namespace
@@ -179,11 +219,12 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
 IndexedHeapTypes getIndexedHeapTypes(Module& wasm) {
   Counts counts = getHeapTypeCounts(wasm);
   IndexedHeapTypes indexedTypes;
-  Index i = 0;
   for (auto& [type, _] : counts) {
     indexedTypes.types.push_back(type);
-    indexedTypes.indices[type] = i++;
   }
+
+  coalesceRecGroups(indexedTypes);
+  setIndices(indexedTypes);
   return indexedTypes;
 }
 
@@ -199,10 +240,14 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   // Collect the results.
   IndexedHeapTypes indexedTypes;
   for (Index i = 0; i < sorted.size(); ++i) {
-    HeapType type = sorted[i].first;
-    indexedTypes.types.push_back(type);
-    indexedTypes.indices[type] = i;
+    indexedTypes.types.push_back(sorted[i].first);
   }
+
+  // TODO: Explicitly construct a linear extension of the partial order of
+  // recursion groups by adding edges between unrelated groups according to
+  // their use counts.
+  coalesceRecGroups(indexedTypes);
+  setIndices(indexedTypes);
   return indexedTypes;
 }
 

@@ -53,8 +53,8 @@ namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
   FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
-  ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), I8("i8"), I16("i16"),
-  RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
+  ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
+  I16("i16"), RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -458,6 +458,9 @@ void SExpressionWasmBuilder::parseModuleElement(Element& curr) {
   if (id == TYPE) {
     return; // already done
   }
+  if (id == REC) {
+    return; // already done
+  }
   if (id == TAG) {
     return parseTag(curr);
   }
@@ -680,18 +683,29 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
 }
 
 void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
+  // Iterate through each individual type definition, calling `f` with the
+  // definition and its recursion group number.
   auto forEachType = [&](auto f) {
+    size_t groupNumber = 0;
     for (auto* elemPtr : module) {
       auto& elem = *elemPtr;
       if (elementStartsWith(elem, TYPE)) {
-        f(elem);
+        f(elem, groupNumber++);
+      } else if (elementStartsWith(elem, REC)) {
+        for (auto* innerPtr : elem) {
+          auto& inner = *innerPtr;
+          if (elementStartsWith(inner, TYPE)) {
+            f(inner, groupNumber);
+          }
+        }
+        ++groupNumber;
       }
     }
   };
 
+  // Map type names to indices
   size_t numTypes = 0;
-  forEachType([&](Element& elem) {
-    // Map type names to indices
+  forEachType([&](Element& elem, size_t) {
     if (elem[1]->dollared()) {
       std::string name = elem[1]->c_str();
       if (!typeIndices.insert({name, numTypes}).second) {
@@ -702,6 +716,22 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   });
 
   TypeBuilder builder(numTypes);
+
+  // Create recursion groups
+  size_t currGroup = 0, groupStart = 0, groupLength = 0;
+  auto finishGroup = [&]() {
+    builder.createRecGroup(groupStart, groupLength);
+    groupStart = groupStart + groupLength;
+    groupLength = 0;
+  };
+  forEachType([&](Element&, size_t group) {
+    if (group != currGroup) {
+      finishGroup();
+      currGroup = group;
+    }
+    ++groupLength;
+  });
+  finishGroup();
 
   auto parseRefType = [&](Element& elem) -> Type {
     // '(' 'ref' 'null'? ht ')'
@@ -860,22 +890,22 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   };
 
   size_t index = 0;
-  forEachType([&](Element& elem) {
+  forEachType([&](Element& elem, size_t) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
-    bool nominal =
+    bool hasSupertype =
       kind == FUNC_SUBTYPE || kind == STRUCT_SUBTYPE || kind == ARRAY_SUBTYPE;
     if (kind == FUNC || kind == FUNC_SUBTYPE) {
-      builder[index] = parseSignatureDef(def, nominal);
+      builder[index] = parseSignatureDef(def, hasSupertype);
     } else if (kind == STRUCT || kind == STRUCT_SUBTYPE) {
-      builder[index] = parseStructDef(def, index, nominal);
+      builder[index] = parseStructDef(def, index, hasSupertype);
     } else if (kind == ARRAY || kind == ARRAY_SUBTYPE) {
       builder[index] = parseArrayDef(def);
     } else {
       throw ParseException("unknown heaptype kind", kind.line, kind.col);
     }
     Element* super = nullptr;
-    if (nominal) {
+    if (hasSupertype) {
       super = def[def.size() - 1];
       if (super->dollared()) {
         // OK

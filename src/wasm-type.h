@@ -56,6 +56,7 @@ void destroyAllTypesForTestingPurposesOnly();
 // data.
 class Type;
 class HeapType;
+class RecGroup;
 struct Tuple;
 struct Signature;
 struct Field;
@@ -352,6 +353,9 @@ public:
   // number of supertypes in its supertype chain.
   size_t getDepth() const;
 
+  // Get the recursion group for this non-basic type.
+  RecGroup getRecGroup() const;
+
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
     assert(isBasic() && "Basic heap type expected");
@@ -376,6 +380,30 @@ public:
   static HeapType getLeastUpperBound(HeapType a, HeapType b);
 
   std::string toString() const;
+};
+
+// A recursion group consisting of one or more HeapTypes. HeapTypes with single
+// members are encoded without using any additional memory, which is why
+// `getHeapTypes` has to return a vector by value; it might have to create one
+// on the fly.
+class RecGroup {
+  uintptr_t id;
+
+public:
+  explicit RecGroup(uintptr_t id) : id(id) {}
+  bool operator==(const RecGroup& other) { return id == other.id; }
+  bool operator!=(const RecGroup& other) { return id != other.id; }
+  size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const RecGroup*, Iterator> {
+    using value_type = HeapType;
+    using pointer = const HeapType*;
+    using reference = const HeapType&;
+    value_type operator*() const;
+  };
+
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
 };
 
 typedef std::vector<Type> TypeList;
@@ -555,6 +583,10 @@ struct TypeBuilder {
   // index `i` to be an immediate subtype of the HeapType being built at index
   // `j`. Does nothing for equirecursive types.
   void setSubType(size_t i, size_t j);
+
+  // Create a new recursion group covering slots [i, i + length). Groups must
+  // not overlap or go out of bounds.
+  void createRecGroup(size_t i, size_t length);
 
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal

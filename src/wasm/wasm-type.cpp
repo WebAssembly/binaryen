@@ -95,6 +95,8 @@ struct TypeInfo {
   bool operator!=(const TypeInfo& other) const { return !(*this == other); }
 };
 
+using RecGroupInfo = std::vector<HeapType>;
+
 struct HeapTypeInfo {
   using type_t = HeapType;
   // Used in assertions to ensure that temporary types don't leak into the
@@ -108,6 +110,9 @@ struct HeapTypeInfo {
   // In nominal or isorecursive mode, the supertype of this HeapType, if it
   // exists.
   HeapTypeInfo* supertype = nullptr;
+  // In isorecursive mode, the recursion group of this type or null if the
+  // recursion group is trivial (i.e. contains only this type).
+  RecGroupInfo* recGroup = nullptr;
   enum Kind {
     BasicKind,
     SignatureKind,
@@ -581,6 +586,7 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
   supertype = other.supertype;
+  recGroup = other.recGroup;
   switch (kind) {
     case BasicKind:
       new (&basic) auto(other.basic);
@@ -764,6 +770,10 @@ struct SignatureTypeCache {
 };
 
 static SignatureTypeCache nominalSignatureCache;
+
+// Keep track of the constructed recursion groups.
+static std::mutex recGroupsMutex;
+static std::vector<std::unique_ptr<RecGroupInfo>> recGroups;
 
 } // anonymous namespace
 
@@ -1234,6 +1244,41 @@ std::vector<HeapType> HeapType::getHeapTypeChildren() {
 
 HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
   return TypeBounder().getLeastUpperBound(a, b);
+}
+
+// Recursion groups with single elements are encoded as that single element's
+// type ID with the low bit set and other recursion groups are encoded with the
+// address of the vector containing their members. These encodings are disjoint
+// because the alignment of the vectors is greater than 1.
+static_assert(alignof(std::vector<HeapType>) > 1);
+
+RecGroup HeapType::getRecGroup() const {
+  assert(!isBasic());
+  if (auto* info = getHeapTypeInfo(*this)->recGroup) {
+    return RecGroup(uintptr_t(info));
+  } else {
+    // Mark the low bit to signify that this is a trivial recursion group and
+    // points to a heap type info rather than a vector of heap types.
+    return RecGroup(id | 1);
+  }
+}
+
+HeapType RecGroup::Iterator::operator*() const {
+  if (parent->id & 1) {
+    // This is a trivial recursion group. Mask off the low bit to recover the
+    // single HeapType.
+    return {HeapType(parent->id & ~(uintptr_t)1)};
+  } else {
+    return (*(std::vector<HeapType>*)parent->id)[index];
+  }
+}
+
+size_t RecGroup::size() const {
+  if (id & 1) {
+    return 1;
+  } else {
+    return ((std::vector<HeapType>*)id)->size();
+  }
 }
 
 template<typename T> static std::string genericToString(const T& t) {
@@ -1959,7 +2004,8 @@ size_t FiniteShapeHasher::hash(const TypeInfo& info) {
 }
 
 size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
-  if (getTypeSystem() == TypeSystem::Nominal) {
+  if (getTypeSystem() == TypeSystem::Nominal ||
+      getTypeSystem() == TypeSystem::Isorecursive) {
     return wasm::hash(uintptr_t(&info));
   }
   // If the HeapTypeInfo is not finalized, then it is mutable and its shape
@@ -2080,7 +2126,8 @@ bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
 }
 
 bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
-  if (getTypeSystem() == TypeSystem::Nominal) {
+  if (getTypeSystem() == TypeSystem::Nominal ||
+      getTypeSystem() == TypeSystem::Isorecursive) {
     return &a == &b;
   }
   if (a.isFinalized != b.isFinalized) {
@@ -2233,7 +2280,13 @@ void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
 } // anonymous namespace
 
 struct TypeBuilder::Impl {
+  // Store of temporary Types. Types that need to be canonicalized will be
+  // copied into the global TypeStore.
   TypeStore typeStore;
+
+  // Store of temporary recursion groups, which will be moved to the global
+  // collection of recursion groups as part of building.
+  std::vector<std::unique_ptr<RecGroupInfo>> recGroups;
 
   struct Entry {
     std::unique_ptr<HeapTypeInfo> info;
@@ -2248,6 +2301,7 @@ struct TypeBuilder::Impl {
     }
     void set(HeapTypeInfo&& hti) {
       hti.supertype = info->supertype;
+      hti.recGroup = info->recGroup;
       *info = std::move(hti);
       info->isTemp = true;
       info->isFinalized = false;
@@ -2340,6 +2394,20 @@ void TypeBuilder::setSubType(size_t i, size_t j) {
   HeapTypeInfo* sub = impl->entries[i].info.get();
   HeapTypeInfo* super = impl->entries[j].info.get();
   sub->supertype = super;
+}
+
+void TypeBuilder::createRecGroup(size_t i, size_t length) {
+  assert(i <= size() && i + length <= size() && "group out of bounds");
+  // Only materialize nontrivial recursion groups.
+  if (length < 2) {
+    return;
+  }
+  recGroups.emplace_back(std::make_unique<RecGroupInfo>());
+  for (; length > 0; --length) {
+    auto& info = impl->entries[i + length - 1].info;
+    assert(info->recGroup == nullptr && "group already assigned");
+    info->recGroup = recGroups.back().get();
+  }
 }
 
 namespace {
@@ -3012,8 +3080,9 @@ void globallyCanonicalize(CanonicalizationState& state) {
 }
 
 void canonicalizeEquirecursive(CanonicalizationState& state) {
-  // Equirecursive types always have null supertypes.
+  // Equirecursive types always have null supertypes and recursion groups.
   for (auto& info : state.newInfos) {
+    info->recGroup = nullptr;
     info->supertype = nullptr;
   }
 
@@ -3036,14 +3105,20 @@ void canonicalizeEquirecursive(CanonicalizationState& state) {
 }
 
 void canonicalizeNominal(CanonicalizationState& state) {
+  // TODO: clear recursion groups once we are no longer piggybacking the
+  // isorecursive system on the nominal system.
+  // if (typeSystem != TypeSystem::Isorecursive) {
+  //   for (auto& info : state.newInfos) {
+  //     assert(info->recGroup == nullptr && "unexpected recursion group");
+  //   }
+  // }
+
   // Nominal types do not require separate canonicalization, so just validate
   // that their subtyping is correct.
 
 #if TIME_CANONICALIZATION
   auto start = std::chrono::steady_clock::now();
 #endif
-
-  assert(typeSystem == TypeSystem::Nominal);
 
   // Ensure there are no cycles in the subtype graph. This is the classic DFA
   // algorithm for detecting cycles, but in the form of a simple loop because
@@ -3115,6 +3190,29 @@ void canonicalizeNominal(CanonicalizationState& state) {
 #endif
 }
 
+void canonicalizeIsorecursive(
+  CanonicalizationState& state,
+  std::vector<std::unique_ptr<RecGroupInfo>>& recGroupInfos) {
+  // Fill out the recursion groups.
+  for (auto& info : state.newInfos) {
+    if (info->recGroup != nullptr) {
+      info->recGroup->push_back(asHeapType(info));
+    }
+  }
+
+  // TODO: proper isorecursive validation and canonicalization. For now just
+  // piggyback on the nominal system.
+  canonicalizeNominal(state);
+
+  // Move the recursion groups into the global store. TODO: after proper
+  // isorecursive canonicalization, some groups may no longer be used, so they
+  // will need to be filtered out.
+  std::lock_guard<std::mutex> lock(recGroupsMutex);
+  for (auto& info : recGroupInfos) {
+    recGroups.emplace_back(std::move(info));
+  }
+}
+
 void canonicalizeBasicHeapTypes(CanonicalizationState& state) {
   // Replace heap types backed by BasicKind HeapTypeInfos with their
   // corresponding BasicHeapTypes. The heap types backed by BasicKind
@@ -3174,7 +3272,7 @@ std::vector<HeapType> TypeBuilder::build() {
       canonicalizeNominal(state);
       break;
     case TypeSystem::Isorecursive:
-      Fatal() << "Isorecursive types not yet implemented";
+      canonicalizeIsorecursive(state, impl->recGroups);
       break;
   }
 
