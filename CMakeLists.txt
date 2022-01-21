@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.10.2)
 # to reduce this for compatability with emsdk.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 103)
+project(binaryen LANGUAGES C CXX VERSION 105)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -103,6 +103,16 @@ function(binaryen_setup_rpath name)
                         BUILD_WITH_INSTALL_RPATH On
                         INSTALL_RPATH "${_install_rpath}"
                         ${_install_name_dir})
+endfunction()
+
+function(binaryen_add_executable name sources)
+  add_executable(${name} ${sources})
+  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} binaryen)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+  binaryen_setup_rpath(${name})
+  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endfunction()
 
 # Options
@@ -305,6 +315,9 @@ add_subdirectory(third_party)
 
 # Configure lit tests
 add_subdirectory(test/lit)
+
+# Configure GTest unit tests
+add_subdirectory(test/gtest)
 
 # Object files
 set(binaryen_objs

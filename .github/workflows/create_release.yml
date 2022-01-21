@@ -21,9 +21,6 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.x'
     - uses: actions/checkout@v1
       with:
         submodules: true
@@ -40,7 +37,9 @@ jobs:
       run: mkdir -p out
 
     - name: cmake (macos)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install
+      run: |
+        cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=x86_64
+        cmake -S . -B out-arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out-arm64/install -DCMAKE_OSX_ARCHITECTURES=arm64
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
@@ -49,10 +48,14 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release --target install
+      run: cmake --build out -v --config Release --target install
+
+    - name: build-arm64
+      run: cmake --build out-arm64 -v --config Release --target install
+      if: matrix.os == 'macos-latest'
 
     - name: strip
-      run: find out/install/ -type f -perm -u=x -exec strip -x {} +
+      run: find out*/install/ -type f -perm -u=x -exec strip -x {} +
       if: matrix.os != 'windows-latest'
 
     - name: archive
@@ -63,12 +66,30 @@ jobs:
         PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
+        rm -rf binaryen-$VERSION
         mv out/install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
         echo "::set-output name=tarball::$TARBALL"
         echo "::set-output name=shasum::$SHASUM"
+
+    - name: archive-arm64
+      id: archive-arm64
+      run: |
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
+        VERSION=$GITHUB_REF_NAME
+        PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
+        TARBALL=$PKGNAME.tar.gz
+        SHASUM=$PKGNAME.tar.gz.sha256
+        rm -rf binaryen-$VERSION
+        mv out-arm64/install binaryen-$VERSION
+        tar -czf $TARBALL binaryen-$VERSION
+        # on Windows, MSYS2 will strip the carriage return from CMake output
+        cmake -E sha256sum $TARBALL > $SHASUM
+        echo "::set-output name=tarball::$TARBALL"
+        echo "::set-output name=shasum::$SHASUM"
+      if: matrix.os == 'macos-latest'
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
@@ -77,6 +98,8 @@ jobs:
         files: |
           ${{ steps.archive.outputs.tarball }}
           ${{ steps.archive.outputs.shasum }}
+          ${{ steps.archive-arm64.outputs.tarball }}
+          ${{ steps.archive-arm64.outputs.shasum }}
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.

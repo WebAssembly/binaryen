@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <fstream>
 
+#include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
@@ -33,7 +34,7 @@ namespace wasm {
 void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
-  ModuleUtils::collectHeapTypes(*wasm, types, typeIndices);
+  indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*wasm);
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
@@ -215,15 +216,15 @@ void WasmBinaryWriter::writeMemory() {
 }
 
 void WasmBinaryWriter::writeTypes() {
-  if (types.size() == 0) {
+  if (indexedTypes.types.size() == 0) {
     return;
   }
   BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
-  o << U32LEB(types.size());
-  for (Index i = 0; i < types.size(); ++i) {
-    auto type = types[i];
-    bool nominal = type.isNominal() || getTypeSystem() == TypeSystem::Nominal;
+  o << U32LEB(indexedTypes.types.size());
+  for (Index i = 0; i < indexedTypes.types.size(); ++i) {
+    auto type = indexedTypes.types[i];
+    bool nominal = getTypeSystem() == TypeSystem::Nominal;
     BYN_TRACE("write " << type << std::endl);
     if (type.isSignature()) {
       o << S32LEB(nominal ? BinaryConsts::EncodedType::FuncExtending
@@ -538,9 +539,9 @@ uint32_t WasmBinaryWriter::getTagIndex(Name name) const {
 }
 
 uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
-  auto it = typeIndices.find(type);
+  auto it = indexedTypes.indices.find(type);
 #ifndef NDEBUG
-  if (it == typeIndices.end()) {
+  if (it == indexedTypes.indices.end()) {
     std::cout << "Missing type: " << type << '\n';
     assert(0);
   }
@@ -748,8 +749,18 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(localsWithNames.size());
         for (auto& [indexInFunc, name] : localsWithNames) {
           // TODO: handle multivalue
-          auto indexInBinary =
-            funcMappedLocals.at(func->name)[{indexInFunc, 0}];
+          Index indexInBinary;
+          auto iter = funcMappedLocals.find(func->name);
+          if (iter != funcMappedLocals.end()) {
+            indexInBinary = iter->second[{indexInFunc, 0}];
+          } else {
+            // No data on funcMappedLocals. That is only possible if we are an
+            // imported function, where there are no locals to map, and in that
+            // case the index is unchanged anyhow: parameters always have the
+            // same index, they are not mapped in any way.
+            assert(func->imported());
+            indexInBinary = indexInFunc;
+          }
           o << U32LEB(indexInBinary);
           writeEscapedName(name.str);
         }
@@ -763,7 +774,7 @@ void WasmBinaryWriter::writeNames() {
   // type names
   {
     std::vector<HeapType> namedTypes;
-    for (auto& [type, _] : typeIndices) {
+    for (auto& [type, _] : indexedTypes.indices) {
       if (wasm->typeNames.count(type) && wasm->typeNames[type].name.is()) {
         namedTypes.push_back(type);
       }
@@ -773,7 +784,7 @@ void WasmBinaryWriter::writeNames() {
         startSubsection(BinaryConsts::UserSections::Subsection::NameType);
       o << U32LEB(namedTypes.size());
       for (auto type : namedTypes) {
-        o << U32LEB(typeIndices[type]);
+        o << U32LEB(indexedTypes.indices[type]);
         writeEscapedName(wasm->typeNames[type].name.str);
       }
       finishSubsection(substart);
@@ -898,7 +909,7 @@ void WasmBinaryWriter::writeNames() {
   // GC field names
   if (wasm->features.hasGC()) {
     std::vector<HeapType> relevantTypes;
-    for (auto& type : types) {
+    for (auto& type : indexedTypes.types) {
       if (type.isStruct() && wasm->typeNames.count(type) &&
           !wasm->typeNames[type].fieldNames.empty()) {
         relevantTypes.push_back(type);
@@ -910,7 +921,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(relevantTypes.size());
       for (Index i = 0; i < relevantTypes.size(); i++) {
         auto type = relevantTypes[i];
-        o << U32LEB(typeIndices[type]);
+        o << U32LEB(indexedTypes.indices[type]);
         std::unordered_map<Index, Name>& fieldNames =
           wasm->typeNames.at(type).fieldNames;
         o << U32LEB(fieldNames.size());
@@ -1951,8 +1962,6 @@ void WasmBinaryBuilder::readTypes() {
     if (form == BinaryConsts::EncodedType::FuncExtending ||
         form == BinaryConsts::EncodedType::StructExtending ||
         form == BinaryConsts::EncodedType::ArrayExtending) {
-      // TODO: Let the new nominal types coexist with equirecursive types
-      // builder[i].setNominal();
       auto superIndex = getS64LEB(); // TODO: Actually s33
       if (superIndex >= 0) {
         if (size_t(superIndex) >= numTypes) {
@@ -2056,7 +2065,13 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
         functionTypes.push_back(getTypeByIndex(index));
-        auto curr = builder.makeFunction(name, getTypeByIndex(index), {});
+        auto type = getTypeByIndex(index);
+        if (!type.isSignature()) {
+          throwError(std::string("Imported function ") + module.str + '.' +
+                     base.str +
+                     "'s type must be a signature. Given: " + type.toString());
+        }
+        auto curr = builder.makeFunction(name, type, {});
         curr->module = module;
         curr->base = base;
         functionImports.push_back(curr.get());
@@ -3085,7 +3100,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
             continue; // read and discard in case of prior error
           }
           auto localName = processor.process(rawLocalName);
-          if (localIndex < func->getNumLocals()) {
+          if (localName.size() == 0) {
+            std::cerr << "warning: empty local name at index "
+                      << std::to_string(localIndex) << " in function "
+                      << std::string(func->name.str) << std::endl;
+          } else if (localIndex < func->getNumLocals()) {
             func->localNames[localIndex] = localName;
           } else {
             std::cerr << "warning: local index out of bounds in name "
@@ -6419,6 +6438,10 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     }
     exceptionTargetNames.erase(catchLabel);
   }
+
+  // If catch bodies contained stacky code, 'pop's can be nested within a block.
+  // Fix that up.
+  EHUtils::handleBlockNestedPop(curr, currFunction, wasm);
   curr->finalize(curr->type);
 
   // For simplicity, we create an inner block within the catch body too, but the
@@ -6497,7 +6520,10 @@ void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   BYN_TRACE("zz node: Rethrow\n");
   curr->target = getExceptionTargetName(getU32LEB());
   // This special target is valid only for delegates
-  assert(curr->target != DELEGATE_CALLER_TARGET);
+  if (curr->target == DELEGATE_CALLER_TARGET) {
+    throwError(std::string("rethrow target cannot use internal name ") +
+               DELEGATE_CALLER_TARGET.str);
+  }
   curr->finalize();
 }
 
@@ -6898,6 +6924,9 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
       WASM_UNREACHABLE("invalid code for ref.as_*");
   }
   curr->value = popNonVoidExpression();
+  if (!curr->value->type.isRef() && curr->value->type != Type::unreachable) {
+    throwError("bad input type for ref.as: " + curr->value->type.toString());
+  }
   curr->finalize();
 }
 

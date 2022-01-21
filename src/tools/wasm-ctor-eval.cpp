@@ -29,10 +29,11 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
-#include "ir/module-utils.h"
+#include "ir/names.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/string.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -41,10 +42,16 @@
 
 using namespace wasm;
 
+namespace {
+
 struct FailToEvalException {
   std::string why;
   FailToEvalException(std::string why) : why(why) {}
 };
+
+// The prefix for a recommendation, so it is aligned properly with the rest of
+// the output.
+#define RECOMMENDATION "\n       recommendation: "
 
 // We do not have access to imported globals
 class EvallingGlobalManager {
@@ -62,21 +69,13 @@ public:
 
   void seal() { sealed = true; }
 
-  // for equality purposes, we just care about the globals
-  // and whether they have changed
-  bool operator==(const EvallingGlobalManager& other) {
-    return globals == other.globals;
-  }
-  bool operator!=(const EvallingGlobalManager& other) {
-    return !(*this == other);
-  }
-
   Literals& operator[](Name name) {
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
-        extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that "
-                "calls to atexit that use ___dso_handle are not emitted";
+        extra = RECOMMENDATION
+          "build with -s NO_EXIT_RUNTIME=1 so that "
+          "calls to atexit that use ___dso_handle are not emitted";
       }
       throw FailToEvalException(
         std::string(
@@ -110,19 +109,16 @@ public:
   }
 
   Iterator end() { return Iterator(); }
+
+  // Receives a module and applies the state of globals here into the globals
+  // in that module.
+  void applyToModule(Module& wasm) {
+    Builder builder(wasm);
+    for (const auto& [name, value] : globals) {
+      wasm.getGlobal(name)->init = builder.makeConstantExpression(value);
+    }
+  }
 };
-
-// Use a ridiculously large stack size.
-static Index STACK_SIZE = 32 * 1024 * 1024;
-
-// Start the stack at a ridiculously large location, and do so in
-// a way that works regardless if the stack goes up or down.
-static Index STACK_START = 1024 * 1024 * 1024 + STACK_SIZE;
-
-// Bound the stack location in both directions, so we have bounds
-// that do not depend on the direction it grows.
-static Index STACK_LOWER_LIMIT = STACK_START - STACK_SIZE;
-static Index STACK_UPPER_LIMIT = STACK_START + STACK_SIZE;
 
 class EvallingModuleInstance
   : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
@@ -136,35 +132,11 @@ public:
     // global import, which we don't have, and is illegal to use
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       if (!global->init->is<Const>()) {
-        // some constants are ok to use
-        if (auto* get = global->init->dynCast<GlobalGet>()) {
-          auto name = get->name;
-          auto* import = wasm.getGlobal(name);
-          if (import->module == Name(ENV) &&
-              (import->base ==
-                 STACKTOP || // stack constants are special, we handle them
-               import->base == STACK_MAX)) {
-            return; // this is fine
-          }
-        }
         // this global is dangerously initialized by an import, so if it is
         // used, we must fail
         globals.addDangerous(global->name);
       }
     });
-  }
-
-  std::vector<char> stack;
-
-  // create C stack space for us to use. We do *NOT* care about their contents,
-  // assuming the stack top was unwound. the memory may have been modified,
-  // but it should not be read afterwards, doing so would be undefined behavior
-  void setupEnvironment() {
-    // prepare scratch memory
-    stack.resize(2 * STACK_SIZE);
-    // tell the module to accept writes up to the stack end
-    auto total = STACK_START + STACK_SIZE;
-    memorySize = total / Memory::kPageSize;
   }
 };
 
@@ -178,7 +150,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create empty functions with similar signature
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-    if (func->module == "env") {
+    if (func->module == env->name) {
       Builder builder(*env);
       auto* copied = ModuleUtils::copyFunction(func, *env);
       copied->module = Name();
@@ -191,7 +163,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create tables with similar initial and max values
   ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    if (table->module == "env") {
+    if (table->module == env->name) {
       auto* copied = ModuleUtils::copyTable(table, *env);
       copied->module = Name();
       copied->base = Name();
@@ -201,17 +173,13 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   });
 
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-    if (global->module == "env") {
+    if (global->module == env->name) {
       auto* copied = ModuleUtils::copyGlobal(global, *env);
       copied->module = Name();
       copied->base = Name();
 
       Builder builder(*env);
-      if (global->base == STACKTOP || global->base == STACK_MAX) {
-        copied->init = builder.makeConst(STACK_START);
-      } else {
-        copied->init = builder.makeConst(Literal::makeZero(global->type));
-      }
+      copied->init = builder.makeConst(Literal::makeZero(global->type));
       env->addExport(
         builder.makeExport(global->base, copied->name, ExternalKind::Global));
     }
@@ -219,7 +187,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
-    if (memory->module == "env") {
+    if (memory->module == env->name) {
       env->memory.name = wasm.memory.name;
       env->memory.exists = true;
       env->memory.initial = memory->initial;
@@ -234,15 +202,34 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   return env;
 }
 
+// Whether to ignore external input to the program as it runs. If set, we will
+// assume that stdin is empty, that any env vars we try to read are not set,
+// that there are not arguments passed to main, etc.
+static bool ignoreExternalInput = false;
+
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Module* wasm;
   EvallingModuleInstance* instance;
   std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
+  // A representation of the contents of wasm memory as we execute.
+  std::vector<char> memory;
+
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances_ =
       {}) {
     linkedInstances.swap(linkedInstances_);
+  }
+
+  // Called when we want to apply the current state of execution to the Module.
+  // Until this is called the Module is never changed.
+  void applyToModule() {
+    // If nothing was ever written to memory then there is nothing to update.
+    if (!memory.empty()) {
+      applyMemoryToModule();
+    }
+
+    instance->globals.applyToModule(*wasm);
   }
 
   void init(Module& wasm_, EvallingModuleInstance& instance_) override {
@@ -269,21 +256,75 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
+    Name WASI("wasi_snapshot_preview1");
+
+    if (ignoreExternalInput) {
+      if (import->module == WASI) {
+        if (import->base == "environ_sizes_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi environ_sizes_get has wrong sig");
+          }
+
+          // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS (0).
+          store32(arguments[0].geti32(), 0);
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "environ_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi environ_get has wrong sig");
+          }
+
+          // Just return __WASI_ERRNO_SUCCESS (0).
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "args_sizes_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi args_sizes_get has wrong sig");
+          }
+
+          // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
+          store32(arguments[0].geti32(), 0);
+          return {Literal(int32_t(0))};
+        }
+
+        if (import->base == "args_get") {
+          if (arguments.size() != 2 || arguments[0].type != Type::i32 ||
+              import->getResults() != Type::i32) {
+            throw FailToEvalException("wasi args_get has wrong sig");
+          }
+
+          // Just return __WASI_ERRNO_SUCCESS (0).
+          return {Literal(int32_t(0))};
+        }
+
+        // Otherwise, we don't recognize this import; continue normally to
+        // error.
+      }
+    }
+
     std::string extra;
     if (import->module == ENV && import->base == "___cxa_atexit") {
-      extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls "
-              "to atexit are not emitted";
+      extra = RECOMMENDATION "build with -s NO_EXIT_RUNTIME=1 so that calls "
+                             "to atexit are not emitted";
+    } else if (import->module == WASI && !ignoreExternalInput) {
+      extra = RECOMMENDATION "consider --ignore-external-input";
     }
     throw FailToEvalException(std::string("call import: ") +
                               import->module.str + "." + import->base.str +
                               extra);
   }
 
+  // We assume the table is not modified FIXME
   Literals callTable(Name tableName,
                      Index index,
                      HeapType sig,
-                     LiteralList& arguments,
+                     Literals& arguments,
                      Type result,
                      EvallingModuleInstance& instance) override {
 
@@ -294,8 +335,9 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       throw FailToEvalException("callTable on non-existing table");
     }
 
-    // we assume the table is not modified (hmm)
-    // look through the segments, try to find the function
+    // Look through the segments and find the function. Segments can overlap,
+    // so we want the last one.
+    Name targetFunc;
     for (auto& segment : wasm->elementSegments) {
       if (segment->table != tableName) {
         continue;
@@ -318,29 +360,33 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       if (start <= index && index < end) {
         auto entry = segment->data[index - start];
         if (auto* get = entry->dynCast<RefFunc>()) {
-          auto name = get->func;
-          // if this is one of our functions, we can call it; if it was
-          // imported, fail
-          auto* func = wasm->getFunction(name);
-          if (func->type != sig) {
-            throw FailToEvalException(
-              std::string("callTable signature mismatch: ") + name.str);
-          }
-          if (!func->imported()) {
-            return instance.callFunctionInternal(name, arguments);
-          } else {
-            throw FailToEvalException(
-              std::string("callTable on imported function: ") + name.str);
-          }
+          targetFunc = get->func;
         } else {
           throw FailToEvalException(
             std::string("callTable on uninitialized entry"));
         }
       }
     }
-    throw FailToEvalException(
-      std::string("callTable on index not found in static segments: ") +
-      std::to_string(index));
+
+    if (!targetFunc.is()) {
+      throw FailToEvalException(
+        std::string("callTable on index not found in static segments: ") +
+        std::to_string(index));
+    }
+
+    // If this is one of our functions, we can call it; if it was
+    // imported, fail.
+    auto* func = wasm->getFunction(targetFunc);
+    if (func->type != sig) {
+      throw FailToEvalException(std::string("callTable signature mismatch: ") +
+                                targetFunc.str);
+    }
+    if (!func->imported()) {
+      return instance.callFunctionInternal(targetFunc, arguments);
+    } else {
+      throw FailToEvalException(
+        std::string("callTable on imported function: ") + targetFunc.str);
+    }
   }
 
   Index tableSize(Name tableName) override {
@@ -405,32 +451,12 @@ private:
   // TODO: handle unaligned too, see shell-interface
 
   template<typename T> T* getMemory(Address address) {
-    // if memory is on the stack, use the stack
-    if (address >= STACK_LOWER_LIMIT) {
-      if (address >= STACK_UPPER_LIMIT) {
-        throw FailToEvalException("stack usage too high");
-      }
-      Address relative = address - STACK_LOWER_LIMIT;
-      // in range, all is good, use the stack
-      return (T*)(&instance->stack[relative]);
-    }
-
-    // otherwise, this must be in the singleton segment. resize as needed
-    if (wasm->memory.segments.size() == 0) {
-      std::vector<char> temp;
-      Builder builder(*wasm);
-      wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(int32_t(0)), temp));
-    }
-    // memory should already have been flattened
-    assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() ==
-           0);
+    // resize the memory buffer as needed.
     auto max = address + sizeof(T);
-    auto& data = wasm->memory.segments[0].data;
-    if (max > data.size()) {
-      data.resize(max);
+    if (max > memory.size()) {
+      memory.resize(max);
     }
-    return (T*)(&data[address]);
+    return (T*)(&memory[address]);
   }
 
   template<typename T> void doStore(Address address, T value) {
@@ -444,76 +470,292 @@ private:
     memcpy(&ret, getMemory<T>(address), sizeof(T));
     return ret;
   }
+
+  void applyMemoryToModule() {
+    // Memory must have already been flattened into the standard form: one
+    // segment at offset 0, or none.
+    if (wasm->memory.segments.empty()) {
+      Builder builder(*wasm);
+      std::vector<char> empty;
+      wasm->memory.segments.push_back(
+        Memory::Segment(builder.makeConst(int32_t(0)), empty));
+    }
+    auto& segment = wasm->memory.segments[0];
+    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
+
+    // Copy the current memory contents after execution into the Module's
+    // memory.
+    segment.data = memory;
+  }
 };
 
-void evalCtors(Module& wasm, std::vector<std::string> ctors) {
+// The outcome of evalling a ctor is one of three states:
+//
+// 1. We failed to eval it completely (but perhaps we succeeded partially). In
+//    that case the std::optional here contains nothing.
+// 2. We evalled it completely, and it is a function with no return value, so
+//    it contains an empty Literals.
+// 3. We evalled it completely, and it is a function with a return value, so
+//    it contains Literals with those results.
+using EvalCtorOutcome = std::optional<Literals>;
+
+// Eval a single ctor function. Returns whether we succeeded to completely
+// evaluate the ctor (which means that the caller can proceed to try to eval
+// further ctors if there are any), and if we did, the results if the function
+// returns any.
+EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
+                         CtorEvalExternalInterface& interface,
+                         Name funcName,
+                         Name exportName) {
+  auto& wasm = instance.wasm;
+  auto* func = wasm.getFunction(funcName);
+
+  // We don't know the values of parameters, so give up if there are any, unless
+  // we are ignoring them.
+  if (func->getNumParams() > 0 && !ignoreExternalInput) {
+    std::cout << "  ...stopping due to params\n";
+    std::cout << RECOMMENDATION "consider --ignore-external-input";
+    return EvalCtorOutcome();
+  }
+
+  // If there are params, we are ignoring them (or we would have quit earlier);
+  // set those up with zeros.
+  // TODO: Have a safer option here, either
+  //        1. Statically or dynamically stop evalling when a param is actually
+  //           used, or
+  //        2. Split out --ignore-external-input into separate flags.
+  Literals params;
+  for (Index i = 0; i < func->getNumParams(); i++) {
+    auto type = func->getLocalType(i);
+    if (!LiteralUtils::canMakeZero(type)) {
+      std::cout << "  ...stopping due to non-zeroable param\n";
+      return EvalCtorOutcome();
+    }
+    params.push_back(Literal::makeZero(type));
+  }
+
+  // We want to handle the form of the global constructor function in LLVM. That
+  // looks like this:
+  //
+  //    (func $__wasm_call_ctors
+  //      (call $ctor.1)
+  //      (call $ctor.2)
+  //      (call $ctor.3)
+  //    )
+  //
+  // Some of those ctors may be inlined, however, which would mean that the
+  // function could have locals, control flow, etc. However, we assume for now
+  // that it does not have parameters at least (whose values we can't tell).
+  // And for now we look for a toplevel block and process its children one at a
+  // time. This allows us to eval some of the $ctor.* functions (or their
+  // inlined contents) even if not all.
+  //
+  // TODO: Support complete partial evalling, that is, evaluate parts of an
+  //       arbitrary function, and not just a sequence in a single toplevel
+  //       block.
+
+  if (auto* block = func->body->dynCast<Block>()) {
+    // Go through the items in the block and try to execute them. We do all this
+    // in a single function scope for all the executions.
+    EvallingModuleInstance::FunctionScope scope(func, params);
+
+    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
+      instance, scope, instance.maxDepth);
+
+    // After we successfully eval a line we will apply the changes here. This is
+    // the same idea as applyToModule() - we must only do it after an entire
+    // atomic "chunk" has been processed, we do not want partial updates from
+    // an item in the block that we only partially evalled.
+    EvallingModuleInstance::FunctionScope appliedScope(func, params);
+
+    Literals results;
+    Index successes = 0;
+    for (auto* curr : block->list) {
+      Flow flow;
+      try {
+        flow = expressionRunner.visit(curr);
+      } catch (FailToEvalException& fail) {
+        if (successes == 0) {
+          std::cout << "  ...stopping (in block) since could not eval: "
+                    << fail.why << "\n";
+        } else {
+          std::cout << "  ...partial evalling successful, but stopping since "
+                       "could not eval: "
+                    << fail.why << "\n";
+        }
+        break;
+      }
+
+      // So far so good! Apply the results.
+      interface.applyToModule();
+      appliedScope = scope;
+      successes++;
+
+      // Note the values here, if any. If we are exiting the function now then
+      // these will be returned.
+      results = flow.values;
+
+      if (flow.breaking()) {
+        // We are returning out of the function (either via a return, or via a
+        // break to |block|, which has the same outcome. That means we don't
+        // need to execute any more lines, and can consider them to be executed.
+        std::cout << "  ...stopping in block due to break\n";
+
+        // Mark us as having succeeded on the entire block, since we have: we
+        // are skipping the rest, which means there is no problem there. We must
+        // set this here so that lower down we realize that we've evalled
+        // everything.
+        successes = block->list.size();
+        break;
+      }
+    }
+
+    if (successes > 0 && successes < block->list.size()) {
+      // We managed to eval some but not all. That means we can't just remove
+      // the entire function, but need to keep parts of it - the parts we have
+      // not evalled - around. To do so, we create a copy of the function with
+      // the partially-evalled contents and make the export use that (as the
+      // function may be used in other places than the export, which we do not
+      // want to affect).
+      auto copyName = Names::getValidFunctionName(wasm, funcName);
+      auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
+      wasm.getExport(exportName)->value = copyName;
+
+      // Remove the items we've evalled.
+      Builder builder(wasm);
+      auto* copyBlock = copyFunc->body->cast<Block>();
+      for (Index i = 0; i < successes; i++) {
+        copyBlock->list[i] = builder.makeNop();
+      }
+
+      // Write out the values of locals, that is the local state after evalling
+      // the things we've just nopped. For simplicity we just write out all of
+      // locals, and leave it to the optimizer to remove redundant or
+      // unnecessary operations.
+      std::vector<Expression*> localSets;
+      for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
+        auto value = appliedScope.locals[i];
+        localSets.push_back(
+          builder.makeLocalSet(i, builder.makeConstantExpression(value)));
+      }
+
+      // Put the local sets at the front of the block. We know there must be a
+      // nop in that position (since we've evalled at least one item in the
+      // block, and replaced it with a nop), so we can overwrite it.
+      copyBlock->list[0] = builder.makeBlock(localSets);
+
+      // Interesting optimizations may be possible both due to removing some but
+      // not all of the code, and due to the locals we just added.
+      PassRunner passRunner(&wasm,
+                            PassOptions::getWithDefaultOptimizationOptions());
+      passRunner.addDefaultFunctionOptimizationPasses();
+      passRunner.runOnFunction(copyFunc);
+    }
+
+    // Return true if we evalled the entire block. Otherwise, even if we evalled
+    // some of it, the caller must stop trying to eval further things.
+    if (successes == block->list.size()) {
+      return EvalCtorOutcome(results);
+    } else {
+      return EvalCtorOutcome();
+    }
+  }
+
+  // Otherwise, we don't recognize a pattern that allows us to do partial
+  // evalling. So simply call the entire function at once and see if we can
+  // optimize that.
+
+  Literals results;
+  try {
+    results = instance.callFunction(funcName, params);
+  } catch (FailToEvalException& fail) {
+    std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
+    return EvalCtorOutcome();
+  }
+
+  // Success! Apply the results.
+  interface.applyToModule();
+  return EvalCtorOutcome(results);
+}
+
+// Eval all ctors in a module.
+void evalCtors(Module& wasm,
+               std::vector<std::string>& ctors,
+               std::vector<std::string>& keptExports) {
+  std::unordered_set<std::string> keptExportsSet(keptExports.begin(),
+                                                 keptExports.end());
+
+  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+
   // build and link the env module
   auto envModule = buildEnvModule(wasm);
   CtorEvalExternalInterface envInterface;
   auto envInstance =
     std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
-  envInstance->setupEnvironment();
-
-  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
-  linkedInstances["env"] = envInstance;
+  linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {
-    // flatten memory, so we do not depend on the layout of data segments
-    if (!MemoryUtils::flatten(wasm.memory)) {
-      Fatal() << "  ...stopping since could not flatten memory\n";
-    }
-
     // create an instance for evalling
     EvallingModuleInstance instance(wasm, &interface, linkedInstances);
-    // set up the stack area and other environment details
-    instance.setupEnvironment();
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new
     instance.globals.seal();
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
-      std::cerr << "trying to eval " << ctor << '\n';
-      // snapshot memory, as either the entire function is done, or none
-      auto memoryBefore = wasm.memory;
-      // snapshot globals (note that STACKTOP might be modified, but should
-      // be returned, so that works out)
-      auto globalsBefore = instance.globals;
+      std::cout << "trying to eval " << ctor << '\n';
       Export* ex = wasm.getExportOrNull(ctor);
       if (!ex) {
         Fatal() << "export not found: " << ctor;
       }
-      try {
-        instance.callFunction(ex->value, LiteralList());
-      } catch (FailToEvalException& fail) {
-        // that's it, we failed, so stop here, cleaning up partial
-        // memory changes first
-        std::cerr << "  ...stopping since could not eval: " << fail.why << "\n";
-        wasm.memory = memoryBefore;
+      auto funcName = ex->value;
+      auto outcome = evalCtor(instance, interface, funcName, ctor);
+      if (!outcome) {
+        std::cout << "  ...stopping\n";
         return;
       }
-      if (instance.globals != globalsBefore) {
-        std::cerr << "  ...stopping since globals modified\n";
-        wasm.memory = memoryBefore;
-        return;
-      }
-      std::cerr << "  ...success on " << ctor << ".\n";
-      // success, the entire function was evalled!
-      // we can nop the function (which may be used elsewhere)
-      // and remove the export
+
+      // Success! And we can continue to try more.
+      std::cout << "  ...success on " << ctor << ".\n";
+
+      // Remove the export if we should.
       auto* exp = wasm.getExport(ctor);
-      auto* func = wasm.getFunction(exp->value);
-      func->body = wasm.allocator.alloc<Nop>();
-      wasm.removeExport(exp->name);
+      if (!keptExportsSet.count(ctor)) {
+        wasm.removeExport(exp->name);
+      } else {
+        // We are keeping around the export, which should now refer to an
+        // empty function since calling the export should do nothing.
+        auto* func = wasm.getFunction(exp->value);
+        auto copyName = Names::getValidFunctionName(wasm, func->name);
+        auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
+        if (func->getResults() == Type::none) {
+          copyFunc->body = Builder(wasm).makeNop();
+        } else {
+          copyFunc->body = Builder(wasm).makeConstantExpression(*outcome);
+        }
+        wasm.getExport(exp->name)->value = copyName;
+      }
     }
   } catch (FailToEvalException& fail) {
     // that's it, we failed to even create the instance
-    std::cerr << "  ...stopping since could not create module instance: "
+    std::cout << "  ...stopping since could not create module instance: "
               << fail.why << "\n";
     return;
   }
 }
+
+static bool canEval(Module& wasm) {
+  // Check if we can flatten memory. We need to do so currently because of how
+  // we assume memory is simple and flat. TODO
+  if (!MemoryUtils::flatten(wasm)) {
+    std::cout << "  ...stopping since could not flatten memory\n";
+    return false;
+  }
+  return true;
+}
+
+} // anonymous namespace
 
 //
 // main
@@ -524,7 +766,10 @@ int main(int argc, const char* argv[]) {
   std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
-  std::string ctorsString;
+  String::Split ctors;
+  String::Split keptExports;
+
+  const std::string WasmCtorEvalOption = "wasm-ctor-eval options";
 
   ToolOptions options("wasm-ctor-eval",
                       "Execute C++ global constructors ahead of time");
@@ -532,6 +777,7 @@ int main(int argc, const char* argv[]) {
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
+         WasmCtorEvalOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
@@ -540,19 +786,41 @@ int main(int argc, const char* argv[]) {
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
+         WasmCtorEvalOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
     .add("--debuginfo",
          "-g",
          "Emit names section and debug info",
+         WasmCtorEvalOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; })
+    .add("--ctors",
+         "-c",
+         "Comma-separated list of global constructor functions to evaluate",
+         WasmCtorEvalOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           ctors = String::Split(argument, ",");
+         })
     .add(
-      "--ctors",
-      "-c",
-      "Comma-separated list of global constructor functions to evaluate",
+      "--kept-exports",
+      "-ke",
+      "Comma-separated list of ctors whose exports we keep around even if we "
+      "eval those ctors",
+      WasmCtorEvalOption,
       Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { ctorsString = argument; })
+      [&](Options* o, const std::string& argument) {
+        keptExports = String::Split(argument, ",");
+      })
+    .add("--ignore-external-input",
+         "-ipi",
+         "Assumes no env vars are to be read, stdin is empty, etc.",
+         WasmCtorEvalOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           ignoreExternalInput = true;
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
@@ -567,13 +835,13 @@ int main(int argc, const char* argv[]) {
 
   {
     if (options.debug) {
-      std::cerr << "reading...\n";
+      std::cout << "reading...\n";
     }
     ModuleReader reader;
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
-      p.dump(std::cerr);
+      p.dump(std::cout);
       Fatal() << "error in parsing input";
     }
   }
@@ -583,30 +851,26 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in validating input";
   }
 
-  // get list of ctors, and eval them
-  std::vector<std::string> ctors;
-  std::istringstream stream(ctorsString);
-  std::string temp;
-  while (std::getline(stream, temp, ',')) {
-    ctors.push_back(temp);
-  }
-  evalCtors(wasm, ctors);
+  if (canEval(wasm)) {
+    evalCtors(wasm, ctors, keptExports);
 
-  // Do some useful optimizations after the evalling
-  {
-    PassRunner passRunner(&wasm);
-    passRunner.add("memory-packing"); // we flattened it, so re-optimize
-    passRunner.add("remove-unused-names");
-    passRunner.add("dce");
-    passRunner.add("merge-blocks");
-    passRunner.add("vacuum");
-    passRunner.add("remove-unused-module-elements");
-    passRunner.run();
+    // Do some useful optimizations after the evalling
+    {
+      PassRunner passRunner(&wasm);
+      passRunner.add("memory-packing"); // we flattened it, so re-optimize
+      // TODO: just do -Os for the one function
+      passRunner.add("remove-unused-names");
+      passRunner.add("dce");
+      passRunner.add("merge-blocks");
+      passRunner.add("vacuum");
+      passRunner.add("remove-unused-module-elements");
+      passRunner.run();
+    }
   }
 
   if (options.extra.count("output") > 0) {
     if (options.debug) {
-      std::cerr << "writing..." << std::endl;
+      std::cout << "writing..." << std::endl;
     }
     ModuleWriter writer;
     writer.setBinary(emitBinary);

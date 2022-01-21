@@ -876,8 +876,6 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     }
     Element* super = nullptr;
     if (nominal) {
-      // TODO: Let the new nominal types coexist with equirecursive types
-      // builder[index].setNominal();
       super = def[def.size() - 1];
       if (super->dollared()) {
         // OK

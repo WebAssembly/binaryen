@@ -1,10 +1,15 @@
-# Python 3.5 is the version shipped in Ubuntu Xenial
-find_package(PythonInterp 3.5 REQUIRED)
+file(READ wasm-intrinsics.wat WASM_INTRINSICS_WAT HEX)
 
-add_custom_command(
-  OUTPUT WasmIntrinsics.cpp
-  COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
-  DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwat.py wasm-intrinsics.wat)
+string(REGEX MATCHALL "([A-Fa-f0-9][A-Fa-f0-9])" SEPARATED_HEX ${WASM_INTRINSICS_WAT})
+
+set(WASM_INTRINSICS_SIZE 1)
+foreach (hex IN LISTS SEPARATED_HEX)
+  string(APPEND WASM_INTRINSICS_EMBED "0x${hex},")
+  math(EXPR WASM_INTRINSICS_SIZE "${WASM_INTRINSICS_SIZE}+1")
+endforeach ()
+string(APPEND WASM_INTRINSICS_EMBED "0x00")
+
+configure_file(WasmIntrinsics.cpp.in WasmIntrinsics.cpp @ONLY)
 
 FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES

@@ -1310,8 +1310,7 @@ private:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
-  std::unordered_map<HeapType, Index> typeIndices;
-  std::vector<HeapType> types;
+  ModuleUtils::IndexedHeapTypes indexedTypes;
 
   bool debugInfo = true;
 

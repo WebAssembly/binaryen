@@ -35,10 +35,6 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#ifdef WASM_INTERPRETER_DEBUG
-#include "wasm-printing.h"
-#endif
-
 namespace wasm {
 
 struct WasmException {
@@ -101,9 +97,6 @@ public:
     return o;
   }
 };
-
-// A list of literals, for function calls
-typedef std::vector<Literal> LiteralList;
 
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
@@ -169,8 +162,7 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
-  Flow generateArguments(const ExpressionList& operands,
-                         LiteralList& arguments) {
+  Flow generateArguments(const ExpressionList& operands, Literals& arguments) {
     NOTE_ENTER_("generateArguments");
     arguments.reserve(operands.size());
     for (auto expression : operands) {
@@ -1288,7 +1280,7 @@ public:
   }
   Flow visitTupleMake(TupleMake* curr) {
     NOTE_ENTER("tuple.make");
-    LiteralList arguments;
+    Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
@@ -1388,7 +1380,7 @@ public:
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
-    LiteralList arguments;
+    Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
@@ -2310,11 +2302,11 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
-    virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
+    virtual Literals callImport(Function* import, Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
                                HeapType sig,
-                               LiteralList& arguments,
+                               Literals& arguments,
                                Type result,
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
@@ -2514,13 +2506,13 @@ public:
 
     // run start, if present
     if (wasm.start.is()) {
-      LiteralList arguments;
+      Literals arguments;
       callFunction(wasm.start, arguments);
     }
   }
 
   // call an exported function
-  Literals callExport(Name name, const LiteralList& arguments) {
+  Literals callExport(Name name, const Literals& arguments) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_) {
       externalInterface->trap("callExport not found");
@@ -2528,7 +2520,7 @@ public:
     return callFunction(export_->value, arguments);
   }
 
-  Literals callExport(Name name) { return callExport(name, LiteralList()); }
+  Literals callExport(Name name) { return callExport(name, Literals()); }
 
   // get an exported global
   Literals getExport(Name name) {
@@ -2555,7 +2547,7 @@ public:
 
 private:
   // Keep a record of call depth, to guard against excessive recursion.
-  size_t callDepth;
+  size_t callDepth = 0;
 
   // Function name stack. We maintain this explicitly to allow printing of
   // stack traces.
@@ -2657,12 +2649,13 @@ private:
     }
   }
 
+public:
   class FunctionScope {
   public:
     std::vector<Literals> locals;
     Function* function;
 
-    FunctionScope(Function* function, const LiteralList& arguments)
+    FunctionScope(Function* function, const Literals& arguments)
       : function(function) {
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -2697,6 +2690,9 @@ private:
     FunctionScope& scope;
     // Stack of <caught exception, caught catch's try label>
     SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
+    // The current delegate target, if delegation of an exception is in
+    // progress. If no delegation is in progress, this will be an empty Name.
+    Name currDelegateTarget;
 
   protected:
     // Returns the instance that defines the memory used by this one.
@@ -2731,7 +2727,7 @@ private:
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
       NOTE_NAME(curr->target);
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -2755,7 +2751,7 @@ private:
 
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -2780,7 +2776,7 @@ private:
     }
     Flow visitCallRef(CallRef* curr) {
       NOTE_ENTER("CallRef");
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -3443,6 +3439,16 @@ private:
       try {
         return this->visit(curr->body);
       } catch (const WasmException& e) {
+        // If delegation is in progress and the current try is not the target of
+        // the delegation, don't handle it and just rethrow.
+        if (currDelegateTarget.is()) {
+          if (currDelegateTarget == curr->name) {
+            currDelegateTarget.clear();
+          } else {
+            throw;
+          }
+        }
+
         auto processCatchBody = [&](Expression* catchBody) {
           // Push the current exception onto the exceptionStack in case
           // 'rethrow's use it
@@ -3468,6 +3474,9 @@ private:
         }
         if (curr->hasCatchAll()) {
           return processCatchBody(curr->catchBodies.back());
+        }
+        if (curr->isDelegate()) {
+          currDelegateTarget = curr->delegateTarget;
         }
         // This exception is not caught by this try-catch. Rethrow it.
         throw;
@@ -3541,9 +3550,8 @@ private:
     }
   };
 
-public:
   // Call a function, starting an invocation.
-  Literals callFunction(Name name, const LiteralList& arguments) {
+  Literals callFunction(Name name, const Literals& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
     callDepth = 0;
@@ -3553,7 +3561,7 @@ public:
 
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
-  Literals callFunctionInternal(Name name, const LiteralList& arguments) {
+  Literals callFunctionInternal(Name name, const Literals& arguments) {
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }
@@ -3597,9 +3605,11 @@ public:
     return flow.values;
   }
 
+  // The maximum call stack depth to evaluate into.
+  static const Index maxDepth = 250;
+
 protected:
   Address memorySize; // in pages
-  static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {

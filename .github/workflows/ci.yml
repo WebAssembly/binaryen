@@ -20,6 +20,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install tools
       run: |
         sudo pip3 install -r requirements-dev.txt
@@ -45,6 +47,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
 
     - name: install Python dev dependencies
       run: pip3 install -r requirements-dev.txt
@@ -73,7 +77,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
 
     - name: cmake (macos)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_OSX_ARCHITECTURES=x86_64
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
@@ -82,7 +86,7 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release
+      run: cmake --build out --config Release -v
 
     - name: install
       run: cmake --install out --config Release
@@ -111,6 +115,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -138,6 +144,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -162,6 +170,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: start docker
       run: |
         docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
@@ -200,6 +210,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -225,6 +237,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -247,6 +261,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: emsdk install
@@ -272,6 +288,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: cmake
       run: |
         mkdir -p out

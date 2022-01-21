@@ -296,6 +296,7 @@
 //      of their original range.
 //
 
+#include "asmjs/shared-constants.h"
 #include "cfg/liveness-traversal.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
@@ -1454,6 +1455,8 @@ struct Asyncify : public Pass {
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
     auto verbose =
       runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
+    auto sideModule =
+      runner->options.getArgumentOrDefault("asyncify-side-module", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1488,7 +1491,7 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module);
+    addGlobals(module, sideModule);
 
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
@@ -1543,16 +1546,28 @@ struct Asyncify : public Pass {
   }
 
 private:
-  void addGlobals(Module* module) {
+  void addGlobals(Module* module, bool imported) {
     Builder builder(*module);
-    module->addGlobal(builder.makeGlobal(ASYNCIFY_STATE,
-                                         Type::i32,
-                                         builder.makeConst(int32_t(0)),
-                                         Builder::Mutable));
-    module->addGlobal(builder.makeGlobal(ASYNCIFY_DATA,
-                                         Type::i32,
-                                         builder.makeConst(int32_t(0)),
-                                         Builder::Mutable));
+
+    auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
+                                            Type::i32,
+                                            builder.makeConst(int32_t(0)),
+                                            Builder::Mutable);
+    if (imported) {
+      asyncifyState->module = ENV;
+      asyncifyState->base = ASYNCIFY_STATE;
+    }
+    module->addGlobal(std::move(asyncifyState));
+
+    auto asyncifyData = builder.makeGlobal(ASYNCIFY_DATA,
+                                           Type::i32,
+                                           builder.makeConst(int32_t(0)),
+                                           Builder::Mutable);
+    if (imported) {
+      asyncifyData->module = ENV;
+      asyncifyData->base = ASYNCIFY_DATA;
+    }
+    module->addGlobal(std::move(asyncifyData));
   }
 
   void addFunctions(Module* module) {

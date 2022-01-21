@@ -86,7 +86,6 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 1,
   "declares": [
     "iprintf"
   ],

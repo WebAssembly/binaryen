@@ -29,12 +29,15 @@ namespace EHUtils {
 //   whose tag type is void or a catch_all's body, this returns false.
 // - This returns true even if there are more pops after the first one within a
 //   catch body, which is invalid. That will be taken care of in validation.
-bool isPopValid(Expression* catchBody);
+bool containsValidDanglingPop(Expression* catchBody);
 
-// Fixes up 'pop's nested in blocks, which are currently not supported without
-// block param types, by creating a new local, putting a (local.set $new (pop
-// type)) right after 'catch', and putting a '(local.get $new)' where the 'pop'
-// used to be.
+// Given a 'Try' expression, fixes up 'pop's nested in blocks, which are
+// currently not supported without block param types, by creating a new local,
+// putting a (local.set $new (pop type)) right after 'catch', and putting a
+// '(local.get $new)' where the 'pop' used to be.
+void handleBlockNestedPop(Try* try_, Function* func, Module& wasm);
+
+// Calls handleBlockNestedPop for each 'Try's in a given function.
 void handleBlockNestedPops(Function* func, Module& wasm);
 
 } // namespace EHUtils

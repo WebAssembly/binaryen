@@ -55,15 +55,16 @@ bool isExported(Module& wasm, Name name) {
 
 Global* getStackPointerGlobal(Module& wasm) {
   // Assumption: The stack pointer is either imported as __stack_pointer or
-  // its the first non-imported and non-exported global.
+  // we just assume it's the first non-imported global.
   // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
   // linker could export it by name?
   for (auto& g : wasm.globals) {
-    if (g->imported()) {
-      if (g->base == STACK_POINTER) {
-        return g.get();
-      }
-    } else if (!isExported(wasm, g->name)) {
+    if (g->imported() && g->base == STACK_POINTER) {
+      return g.get();
+    }
+  }
+  for (auto& g : wasm.globals) {
+    if (!g->imported()) {
       return g.get();
     }
   }
@@ -77,6 +78,11 @@ std::string escape(std::string code) {
   size_t curr = 0;
   while ((curr = code.find("\\n", curr)) != std::string::npos) {
     code = code.replace(curr, 2, "\\\\n");
+    curr += 3; // skip this one
+  }
+  curr = 0;
+  while ((curr = code.find("\\t", curr)) != std::string::npos) {
+    code = code.replace(curr, 2, "\\\\t");
     curr += 3; // skip this one
   }
   // replace double quotes with escaped single quotes
@@ -392,12 +398,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
       meta << '"' << name << "\": \"" << escape(code) << '"';
     }
     meta << "\n  },\n";
-  }
-
-  if (!wasm.tables.empty()) {
-    meta << "  \"tableSize\": " << wasm.tables[0]->initial.addr << ",\n";
-  } else {
-    meta << "  \"tableSize\": 0,\n";
   }
 
   // Avoid adding duplicate imports to `declares' or `invokeFuncs`.  Even
