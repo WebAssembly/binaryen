@@ -21,3 +21,44 @@
   )
 )
 
+(module
+  ;; An imported global prevents optimization.
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (struct_subtype (field (mut funcref)) data))
+
+  ;; CHECK:      (import "import" "import" (global $glob (mut anyref)))
+  (import "import" "import" (global $glob (mut anyref)))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+  )
+)
+
+(module
+  ;; An imported global of a type that cannot be a struct does *not* prevent
+  ;; this optimization. Also, if the global is immutable, that is ok as well.
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype (field (mut funcref)) data))
+
+  ;; CHECK:      (import "import" "import" (global $glob-1 externref))
+  (import "import" "import" (global $glob-1 externref))
+  ;; CHECK:      (import "import" "import" (global $glob-2 i32))
+  (import "import" "import" (global $glob-2 i32))
+  ;; CHECK:      (import "import" "import" (global $glob-3 anyref))
+  (import "import" "import" (global $glob-3 anyref))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+  )
+)
+
