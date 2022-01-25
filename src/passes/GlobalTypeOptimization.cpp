@@ -143,7 +143,7 @@ struct GlobalTypeOptimization : public Pass {
 
     ModuleUtils::iterImportedGlobals(*module, [&](Global* global) {
       if (mightBeStruct(global->type) && global->mutable_) {
-        // A struct might be written here by the module
+        // A struct might be written here by the module.
         structCanEscape = true;
       }
     });
