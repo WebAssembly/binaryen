@@ -3238,13 +3238,11 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     for (size_t index = groupStart; index < groupEnd; ++index) {
       HeapType type = state.results[index];
       for (HeapType child : type.getHeapTypeChildren()) {
-        // Basic children, globally canonical children, and children defined in
-        // this or previous recursion groups are allowed.
-        if (!isTemp(child) || indexOfType.count(child)) {
-          continue;
+        // Only basic children, globally canonical children, and children
+        // defined in this or previous recursion groups are allowed.
+        if (isTemp(child) && !indexOfType.count(child)) {
+          return {{index, TypeBuilder::ErrorReason::ForwardChildReference}};
         }
-        // Unrecognized child must be defined later.
-        return {{index, TypeBuilder::ErrorReason::ForwardChildReference}};
       }
     }
     groupStart = groupEnd;
