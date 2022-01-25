@@ -26,6 +26,7 @@
 
 #include "ir/effects.h"
 #include "ir/localize.h"
+#include "ir/module-utils.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -114,9 +115,71 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
-  void run(PassRunner* runner, Module* module) override {
+  bool canRun(Module* module) {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalTypeOptimization requires nominal typing";
+    }
+
+    // Removing fields or even changing their mutability can be noticeable, if
+    // struct types escape to the outside.
+    auto mightBeStruct = [](Type type) {
+      if (!type.isRef()) {
+        return false;
+      }
+
+      auto heapType = type.getHeapType();
+      return heapType == HeapType::any || heapType == HeapType::ext ||
+             type.isStruct();
+    };
+
+    bool structCanEscape = false;
+
+    ModuleUtils::iterImportedTables(*module, [&](Table* table) {
+      // Assume that any imported table is a problem, as we might write a
+      // function to it at runtime. A more complex static analysis might do
+      // better here.
+      structCanEscape = true;
+    });
+
+    ModuleUtils::iterImportedGlobals(*module, [&](Global* global) {
+      if (mightBeStruct(global->type) && global->mutable_) {
+        // A struct might be written here by the module
+        structCanEscape = true;
+      }
+    });
+
+    ModuleUtils::iterImportedFunctions(*module, [&](Function* func) {
+      for (auto param : func->getParams()) {
+        if (mightBeStruct(param)) {
+          structCanEscape = true;
+        }
+      }
+    });
+
+    for (auto& exp : module->exports) {
+      if (exp->kind == ExternalKind::Table) {
+        structCanEscape = true;
+      } else if (exp->kind == ExternalKind::Global) {
+        for (auto result : module->getGlobal(exp->value)->type) {
+          if (mightBeStruct(result)) {
+            structCanEscape = true;
+          }
+        }
+      } else if (exp->kind == ExternalKind::Function) {
+        for (auto result : module->getFunction(exp->value)->getResults()) {
+          if (mightBeStruct(result)) {
+            structCanEscape = true;
+          }
+        }
+      }
+    }
+
+    return !structCanEscape;
+  }
+
+  void run(PassRunner* runner, Module* module) override {
+    if (!canRun(module)) {
+      return;
     }
 
     // Find and analyze struct operations inside each function.
