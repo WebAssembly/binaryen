@@ -81,6 +81,29 @@
 )
 
 (module
+  ;; An exported global prevents the optimization.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (struct_subtype (field (mut funcref)) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (global $glob anyref (struct.new $struct
+  ;; CHECK-NEXT:  (ref.null func)
+  ;; CHECK-NEXT: ))
+  (global $glob anyref (struct.new $struct (ref.null func)))
+
+  ;; CHECK:      (export "glob" (global $glob))
+  (export "glob" (global $glob))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+  )
+)
+
+(module
   ;; CHECK:      (type $none_=>_anyref (func_subtype (result anyref) func))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
