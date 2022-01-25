@@ -127,9 +127,8 @@ struct GlobalTypeOptimization : public Pass {
         return false;
       }
 
-      auto heapType = type.getHeapType();
-      return heapType == HeapType::any || heapType == HeapType::ext ||
-             type.isStruct();
+      return type.isStruct() ||
+             HeapType::isSubType(HeapType::data, type.getHeapType());
     };
 
     bool structCanEscape = false;

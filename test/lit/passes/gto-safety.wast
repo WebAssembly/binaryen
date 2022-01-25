@@ -131,7 +131,7 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_anyref (func_subtype (result anyref) func))
+  ;; CHECK:      (type $externref_=>_anyref (func_subtype (param externref) (result anyref) func))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
@@ -149,8 +149,9 @@
   (import "import" "import" (global $glob-3 anyref))
 
   ;; An imported function's result is not a problem.
-  ;; CHECK:      (import "import" "import" (func $func-1 (result anyref)))
-  (import "import" "import" (func $func-1 (result anyref)))
+  ;; Also, a param of externref is ok because it cannot contain a struct.
+  ;; CHECK:      (import "import" "import" (func $func-1 (param externref) (result anyref)))
+  (import "import" "import" (func $func-1 (param externref) (result anyref)))
 
   ;; An exported function's param is not a problem.
   ;; CHECK:      (export "func-1" (func $func))
