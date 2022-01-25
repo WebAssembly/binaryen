@@ -152,6 +152,10 @@
   ;; CHECK:      (import "import" "import" (func $func-1 (result anyref)))
   (import "import" "import" (func $func-1 (result anyref)))
 
+  ;; An exported function's param is not a problem.
+  ;; CHECK:      (export "func-1" (func $func))
+  (export "func-1" (func $func))
+
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
