@@ -60,6 +60,27 @@
 )
 
 (module
+  ;; An exported table prevents the optimization (this could be improved).
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (struct_subtype (field (mut funcref)) data))
+
+  ;; CHECK:      (table $table 0 funcref)
+  (table $table 0 funcref)
+
+  ;; CHECK:      (export "table" (table $table))
+  (export "table" (table $table))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+  )
+)
+
+(module
   ;; CHECK:      (type $none_=>_anyref (func_subtype (result anyref) func))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
