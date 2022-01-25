@@ -104,6 +104,33 @@
 )
 
 (module
+  ;; An exported func result prevents optimization.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (struct_subtype (field (mut funcref)) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
+  ;; CHECK:      (export "func-1" (func $func-1))
+  (export "func-1" (func $func-1))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+  )
+
+  ;; CHECK:      (func $func-1 (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func-1 (result (ref $struct))
+    (unreachable)
+  )
+)
+
+(module
   ;; CHECK:      (type $none_=>_anyref (func_subtype (result anyref) func))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
