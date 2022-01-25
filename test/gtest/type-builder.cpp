@@ -155,7 +155,12 @@ static void testDirectSelfSupertype() {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
+  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
+    EXPECT_EQ(error->reason,
+              TypeBuilder::ErrorReason::ForwardSupertypeReference);
+  }
   EXPECT_EQ(error->index, 0u);
 }
 
@@ -176,7 +181,14 @@ static void testIndirectSelfSupertype() {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
+  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
+    EXPECT_EQ(error->reason,
+              TypeBuilder::ErrorReason::ForwardSupertypeReference);
+  } else {
+    WASM_UNREACHABLE("unexpected type system");
+  }
   EXPECT_EQ(error->index, 0u);
 }
 
@@ -186,9 +198,9 @@ TEST_F(IsorecursiveTest, IndirectSelfSupertype) { testIndirectSelfSupertype(); }
 static void testInvalidSupertype() {
   TypeBuilder builder(2);
   builder.createRecGroup(0, 2);
-  builder[0] = Struct{};
-  builder[1] = Struct({Field(Type::i32, Immutable)});
-  builder[0].subTypeOf(builder[1]);
+  builder[0] = Struct({Field(Type::i32, Immutable)});
+  builder[1] = Struct{};
+  builder[1].subTypeOf(builder[0]);
 
   auto result = builder.build();
   EXPECT_FALSE(result);
@@ -196,8 +208,37 @@ static void testInvalidSupertype() {
   const auto* error = result.getError();
   ASSERT_TRUE(error);
   EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
-  EXPECT_EQ(error->index, 0u);
+  EXPECT_EQ(error->index, 1u);
 }
 
 TEST_F(NominalTest, InvalidSupertype) { testInvalidSupertype(); }
 TEST_F(IsorecursiveTest, InvalidSupertype) { testInvalidSupertype(); }
+
+TEST_F(IsorecursiveTest, SelfReferencedChild) {
+  // A self-referential type should be ok even without an explicit rec group.
+  TypeBuilder builder(1);
+  Type selfRef = builder.getTempRefType(builder[0], Nullable);
+  builder[0] = Struct({Field(selfRef, Immutable)});
+  auto result = builder.build();
+  EXPECT_TRUE(result);
+}
+
+TEST_F(IsorecursiveTest, ForwardReferencedChild) {
+  TypeBuilder builder(3);
+  builder.createRecGroup(0, 2);
+  Type refA1 = builder.getTempRefType(builder[1], Nullable);
+  Type refB0 = builder.getTempRefType(builder[2], Nullable);
+  // Forward reference to same group is ok.
+  builder[0] = Struct({Field(refA1, Mutable)});
+  // Forward reference to different group is not ok.
+  builder[1] = Struct({Field(refB0, Mutable)});
+  builder[2] = Struct{};
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardChildReference);
+  EXPECT_EQ(error->index, 1u);
+}
