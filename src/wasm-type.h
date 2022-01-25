@@ -22,6 +22,7 @@
 #include "wasm-features.h"
 #include <optional>
 #include <ostream>
+#include <variant>
 #include <vector>
 
 // TODO: At various code locations we were assuming that single types are basic
@@ -588,12 +589,35 @@ struct TypeBuilder {
   // not overlap or go out of bounds.
   void createRecGroup(size_t i, size_t length);
 
+  enum class ErrorReason {
+    // There is a cycle in the supertype relation.
+    SelfSupertype,
+    // The declared supertype of a type is invalid.
+    InvalidSupertype,
+  };
+
+  struct Error {
+    // The index of the type causing the failure.
+    size_t index;
+    ErrorReason reason;
+  };
+
+  struct BuildResult : std::variant<std::vector<HeapType>, Error> {
+    operator bool() const {
+      return bool(std::get_if<std::vector<HeapType>>(this));
+    }
+    const std::vector<HeapType>& operator*() const {
+      return std::get<std::vector<HeapType>>(*this);
+    }
+    const Error* getError() const { return std::get_if<Error>(this); }
+  };
+
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal
   // mode, all of the constructed HeapTypes will be fresh and distinct. In
   // nominal mode, will also produce a fatal error if the declared subtype
   // relationships are not valid.
-  std::vector<HeapType> build();
+  BuildResult build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType
   // and getTempHeapType methods.
@@ -639,6 +663,7 @@ std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
 std::ostream& operator<<(std::ostream&, Rtt);
+std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
 
 } // namespace wasm
 

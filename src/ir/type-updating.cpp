@@ -74,7 +74,9 @@ void GlobalTypeRewriter::update() {
     }
   }
 
-  auto newTypes = typeBuilder.build();
+  auto buildResults = typeBuilder.build();
+  assert(std::get_if<std::vector<HeapType>>(&buildResults));
+  auto newTypes = *std::get_if<std::vector<HeapType>>(&buildResults);
 
   // Map the old types to the new ones. This uses the fact that type indices
   // are the same in the old and new types, that is, we have not added or

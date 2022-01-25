@@ -112,7 +112,9 @@ TEST_F(EquirecursiveTest, Basics) {
   builder[1] = struct_;
   builder[2] = array;
 
-  std::vector<HeapType> built = builder.build();
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  std::vector<HeapType> built = *result;
   ASSERT_EQ(built.size(), size_t{3});
 
   // The built types should have the correct kinds.
@@ -141,3 +143,61 @@ TEST_F(EquirecursiveTest, Basics) {
   EXPECT_NE(newRefNullArray, refNullArray);
   EXPECT_NE(newRttArray, rttArray);
 }
+
+static void testDirectSelfSupertype() {
+  // Type is directly a supertype of itself.
+  TypeBuilder builder(1);
+  builder[0] = Struct{};
+  builder[0].subTypeOf(builder[0]);
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
+  EXPECT_EQ(error->index, 0u);
+}
+
+TEST_F(NominalTest, DirectSelfSupertype) { testDirectSelfSupertype(); }
+TEST_F(IsorecursiveTest, DirectSelfSupertype) { testDirectSelfSupertype(); }
+
+static void testIndirectSelfSupertype() {
+  // Type is indirectly a supertype of itself.
+  TypeBuilder builder(2);
+  builder.createRecGroup(0, 2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].subTypeOf(builder[1]);
+  builder[1].subTypeOf(builder[0]);
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
+  EXPECT_EQ(error->index, 0u);
+}
+
+TEST_F(NominalTest, IndirectSelfSupertype) { testIndirectSelfSupertype(); }
+TEST_F(IsorecursiveTest, IndirectSelfSupertype) { testIndirectSelfSupertype(); }
+
+static void testInvalidSupertype() {
+  TypeBuilder builder(2);
+  builder.createRecGroup(0, 2);
+  builder[0] = Struct{};
+  builder[1] = Struct({Field(Type::i32, Immutable)});
+  builder[0].subTypeOf(builder[1]);
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->index, 0u);
+}
+
+TEST_F(NominalTest, InvalidSupertype) { testInvalidSupertype(); }
+TEST_F(IsorecursiveTest, InvalidSupertype) { testInvalidSupertype(); }
