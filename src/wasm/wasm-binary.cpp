@@ -1989,7 +1989,11 @@ void WasmBinaryBuilder::readTypes() {
     }
   }
 
-  types = builder.build();
+  auto result = builder.build();
+  if (auto* err = result.getError()) {
+    Fatal() << "Invalid type: " << err->reason << " at index " << err->index;
+  }
+  types = *result;
 }
 
 Name WasmBinaryBuilder::getFunctionName(Index index) {

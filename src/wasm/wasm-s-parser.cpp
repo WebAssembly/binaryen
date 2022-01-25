@@ -934,7 +934,11 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     ++index;
   });
 
-  types = builder.build();
+  auto result = builder.build();
+  if (auto* err = result.getError()) {
+    Fatal() << "Invalid type: " << err->reason << " at index " << err->index;
+  }
+  types = *result;
 
   for (auto& [name, index] : typeIndices) {
     auto type = types[index];

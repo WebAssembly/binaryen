@@ -1317,6 +1317,15 @@ std::ostream& operator<<(std::ostream& os, Array array) {
 std::ostream& operator<<(std::ostream& os, Rtt rtt) {
   return TypePrinter(os).print(rtt);
 }
+std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
+  switch (reason) {
+    case TypeBuilder::ErrorReason::SelfSupertype:
+      return os << "Heap type is a supertype of itself";
+    case TypeBuilder::ErrorReason::InvalidSupertype:
+      return os << "Heap type has an invalid supertype";
+  }
+  WASM_UNREACHABLE("Unexpected error reason");
+}
 
 unsigned Field::getByteSize() const {
   if (type != Type::i32) {
@@ -1482,7 +1491,7 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   // Array is arbitrary; it might as well have been a Struct.
   builder.grow(1);
   builder[builder.size() - 1] = Array(Field(*tempLUB, Mutable));
-  std::vector<HeapType> built = builder.build();
+  std::vector<HeapType> built = *builder.build();
   return built.back().getArray().element.type;
 }
 
@@ -1498,7 +1507,7 @@ HeapType TypeBounder::getLeastUpperBound(HeapType a, HeapType b) {
     ++index;
   }
   // Canonicalize and return the LUB.
-  return builder.build()[index];
+  return (*builder.build())[index];
 }
 
 std::optional<Type> TypeBounder::lub(Type a, Type b) {
@@ -1847,7 +1856,6 @@ std::ostream& TypePrinter::print(HeapType heapType) {
     }
 #if TRACE_CANONICALIZATION
     os << "[" << ((heapType.getID() >> 4) % 1000) << "]";
-    HeapType super;
     if (auto super = heapType.getSuperType()) {
       os << "[super " << ((super->getID() >> 4) % 1000) << "]";
     }
@@ -3104,7 +3112,8 @@ void canonicalizeEquirecursive(CanonicalizationState& state) {
 #endif
 }
 
-void canonicalizeNominal(CanonicalizationState& state) {
+std::optional<TypeBuilder::Error>
+canonicalizeNominal(CanonicalizationState& state) {
   // TODO: clear recursion groups once we are no longer piggybacking the
   // isorecursive system on the nominal system.
   // if (typeSystem != TypeSystem::Isorecursive) {
@@ -3123,24 +3132,27 @@ void canonicalizeNominal(CanonicalizationState& state) {
   // Ensure there are no cycles in the subtype graph. This is the classic DFA
   // algorithm for detecting cycles, but in the form of a simple loop because
   // each node (type) has at most one child (supertype).
-  std::unordered_set<HeapTypeInfo*> seen;
-  for (auto type : state.results) {
+  std::unordered_set<HeapTypeInfo*> checked;
+  for (size_t i = 0; i < state.results.size(); ++i) {
+    HeapType type = state.results[i];
     if (type.isBasic()) {
       continue;
     }
     std::unordered_set<HeapTypeInfo*> path;
     for (auto* curr = getHeapTypeInfo(type);
-         seen.insert(curr).second && curr->supertype != nullptr;
+         curr != nullptr && !checked.count(curr);
          curr = curr->supertype) {
       if (!path.insert(curr).second) {
-        Fatal() << HeapType(uintptr_t(curr))
-                << " cannot be a subtype of itself";
+        return TypeBuilder::Error{i, TypeBuilder::ErrorReason::SelfSupertype};
       }
     }
+    // None of the types in `path` reach themselves.
+    checked.insert(path.begin(), path.end());
   }
 
   // Ensure that all the subtype relations are valid.
-  for (HeapType type : state.results) {
+  for (size_t i = 0; i < state.results.size(); ++i) {
+    HeapType type = state.results[i];
     if (type.isBasic()) {
       continue;
     }
@@ -3151,12 +3163,11 @@ void canonicalizeNominal(CanonicalizationState& state) {
     }
 
     auto fail = [&]() {
-      Fatal() << type << " cannot be a subtype of "
-              << HeapType(uintptr_t(super));
+      return TypeBuilder::Error{i, TypeBuilder::ErrorReason::InvalidSupertype};
     };
 
     if (sub->kind != super->kind) {
-      fail();
+      return fail();
     }
     SubTyper typer;
     switch (sub->kind) {
@@ -3164,17 +3175,17 @@ void canonicalizeNominal(CanonicalizationState& state) {
         WASM_UNREACHABLE("unexpected kind");
       case HeapTypeInfo::SignatureKind:
         if (!typer.isSubType(sub->signature, super->signature)) {
-          fail();
+          return fail();
         }
         break;
       case HeapTypeInfo::StructKind:
         if (!typer.isSubType(sub->struct_, super->struct_)) {
-          fail();
+          return fail();
         }
         break;
       case HeapTypeInfo::ArrayKind:
         if (!typer.isSubType(sub->array, super->array)) {
-          fail();
+          return fail();
         }
         break;
     }
@@ -3188,9 +3199,10 @@ void canonicalizeNominal(CanonicalizationState& state) {
                  .count()
             << " ms\n";
 #endif
+  return {};
 }
 
-void canonicalizeIsorecursive(
+std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   CanonicalizationState& state,
   std::vector<std::unique_ptr<RecGroupInfo>>& recGroupInfos) {
   // Fill out the recursion groups.
@@ -3202,7 +3214,9 @@ void canonicalizeIsorecursive(
 
   // TODO: proper isorecursive validation and canonicalization. For now just
   // piggyback on the nominal system.
-  canonicalizeNominal(state);
+  if (auto err = canonicalizeNominal(state)) {
+    return err;
+  }
 
   // Move the recursion groups into the global store. TODO: after proper
   // isorecursive canonicalization, some groups may no longer be used, so they
@@ -3211,6 +3225,7 @@ void canonicalizeIsorecursive(
   for (auto& info : recGroupInfos) {
     recGroups.emplace_back(std::move(info));
   }
+  return {};
 }
 
 void canonicalizeBasicHeapTypes(CanonicalizationState& state) {
@@ -3233,7 +3248,7 @@ void canonicalizeBasicHeapTypes(CanonicalizationState& state) {
 
 } // anonymous namespace
 
-std::vector<HeapType> TypeBuilder::build() {
+TypeBuilder::BuildResult TypeBuilder::build() {
   size_t entryCount = impl->entries.size();
 
   // Initialize the canonicalization state using the HeapTypeInfos from the
@@ -3269,10 +3284,14 @@ std::vector<HeapType> TypeBuilder::build() {
       canonicalizeEquirecursive(state);
       break;
     case TypeSystem::Nominal:
-      canonicalizeNominal(state);
+      if (auto error = canonicalizeNominal(state)) {
+        return {*error};
+      }
       break;
     case TypeSystem::Isorecursive:
-      canonicalizeIsorecursive(state, impl->recGroups);
+      if (auto error = canonicalizeIsorecursive(state, impl->recGroups)) {
+        return {*error};
+      }
       break;
   }
 
@@ -3298,7 +3317,7 @@ std::vector<HeapType> TypeBuilder::build() {
     }
   }
 
-  return state.results;
+  return {state.results};
 }
 
 } // namespace wasm

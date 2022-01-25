@@ -31,7 +31,7 @@ void test_canonicalization() {
   builder[2] = Signature(Type::none, Type::none);
   builder[3] = Signature(Type::none, Type::none);
 
-  std::vector<HeapType> built = builder.build();
+  std::vector<HeapType> built = *builder.build();
 
   assert(built[0] == struct_);
   assert(built[1] == struct_);
@@ -55,7 +55,7 @@ void test_basic() {
   builder[4] = HeapType::any;
   builder[5] = HeapType::i31;
 
-  std::vector<HeapType> built = builder.build();
+  std::vector<HeapType> built = *builder.build();
 
   assert(built[0] == Signature(Type::anyref, Type::i31ref));
   assert(built[1] == built[0]);
@@ -75,7 +75,7 @@ void test_recursive() {
       TypeBuilder builder(1);
       Type temp = builder.getTempRefType(builder[0], Nullable);
       builder[0] = Signature(Type::none, temp);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n\n";
     assert(built[0] == built[0].getSignature().results.getHeapType());
@@ -91,7 +91,7 @@ void test_recursive() {
       Type temp1 = builder.getTempRefType(builder[1], Nullable);
       builder[0] = Signature(Type::none, temp1);
       builder[1] = Signature(Type::none, temp0);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n\n";
@@ -115,7 +115,7 @@ void test_recursive() {
       builder[2] = Signature(Type::none, temp3);
       builder[3] = Signature(Type::none, temp4);
       builder[4] = Signature(Type::none, temp0);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n";
@@ -151,7 +151,7 @@ void test_recursive() {
       builder[3] = Signature();
       builder[4] = Signature(Type::none, temp0);
       builder[5] = Signature(Type::none, temp1);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n";
@@ -178,7 +178,7 @@ void test_recursive() {
       Type temp0 = builder.getTempRefType(builder[0], Nullable);
       builder[0] = Signature(Type::none, temp0);
       builder[1] = Signature(Type::none, temp0);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n\n";
@@ -197,7 +197,7 @@ void test_recursive() {
       builder[0] = Signature(anyref, temp0);
       builder[1] = Signature(anyref, temp0);
       builder[2] = HeapType::any;
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n\n";
@@ -379,7 +379,7 @@ void test_lub() {
       Struct({Field(tempB, Immutable), Field(Type::eqref, Immutable)});
     builder[1] =
       Struct({Field(tempA, Immutable), Field(Type::funcref, Immutable)});
-    auto built = builder.build();
+    auto built = *builder.build();
     Type a(built[0], Nullable);
     Type b(built[1], Nullable);
 
@@ -387,7 +387,7 @@ void test_lub() {
     Type tempLub = builder.getTempRefType(lubBuilder[0], Nullable);
     lubBuilder[0] =
       Struct({Field(tempLub, Immutable), Field(Type::anyref, Immutable)});
-    built = lubBuilder.build();
+    built = *lubBuilder.build();
     Type lub(built[0], Nullable);
 
     assert(LUB(a, b) == lub);

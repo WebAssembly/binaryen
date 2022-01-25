@@ -51,7 +51,12 @@ struct Fuzzer {
     // TODO: Options to control the size or set it randomly.
     HeapTypeGenerator generator =
       HeapTypeGenerator::create(rand, FeatureSet::All, 20);
-    std::vector<HeapType> types = generator.builder.build();
+    auto result = generator.builder.build();
+    if (auto* err = result.getError()) {
+      Fatal() << "Failed to build types: " << err->reason << " at index "
+              << err->index;
+    }
+    auto types = *result;
 
     if (verbose) {
       printTypes(types);

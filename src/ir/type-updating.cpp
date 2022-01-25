@@ -74,7 +74,8 @@ void GlobalTypeRewriter::update() {
     }
   }
 
-  auto newTypes = typeBuilder.build();
+  auto buildResults = typeBuilder.build();
+  auto& newTypes = *buildResults;
 
   // Map the old types to the new ones. This uses the fact that type indices
   // are the same in the old and new types, that is, we have not added or
