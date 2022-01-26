@@ -2289,7 +2289,8 @@ public:
 // To call into the interpreter, use callExport.
 //
 
-template<typename GlobalManager, typename SubType> class ModuleInstanceBase : public ExpressionRunner<RERSubType> {
+template<typename GlobalManager, typename SubType>
+class ModuleInstanceBase : public ExpressionRunner<SubType> {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -2872,8 +2873,7 @@ public:
     }
     NOTE_EVAL1(index);
     NOTE_EVAL1(flow.getSingleValue());
-    assert(curr->isTee() ? Type::isSubType(flow.getType(), curr->type)
-                         : true);
+    assert(curr->isTee() ? Type::isSubType(flow.getType(), curr->type) : true);
     scope.locals[index] = flow.values;
     return curr->isTee() ? flow : Flow();
   }
@@ -2993,8 +2993,7 @@ public:
     }
     auto* inst = getMemoryInstance();
     auto addr = inst->getFinalAddress(curr, ptr.getSingleValue());
-    expected =
-      Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
+    expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
     NOTE_EVAL1(addr);
     NOTE_EVAL1(expected);
     NOTE_EVAL1(replacement);
@@ -3213,8 +3212,7 @@ public:
       case Store16LaneVec128: {
         std::array<Literal, 8> lanes = vec.getLanesUI16x8();
         if (curr->isLoad()) {
-          lanes[curr->index] =
-            Literal(inst->externalInterface->load16u(addr));
+          lanes[curr->index] = Literal(inst->externalInterface->load16u(addr));
           return Literal(lanes);
         } else {
           inst->externalInterface->store16(addr, lanes[curr->index].geti32());
@@ -3225,8 +3223,7 @@ public:
       case Store32LaneVec128: {
         std::array<Literal, 4> lanes = vec.getLanesI32x4();
         if (curr->isLoad()) {
-          lanes[curr->index] =
-            Literal(inst->externalInterface->load32u(addr));
+          lanes[curr->index] = Literal(inst->externalInterface->load32u(addr));
           return Literal(lanes);
         } else {
           inst->externalInterface->store32(addr, lanes[curr->index].geti32());
@@ -3237,8 +3234,7 @@ public:
       case Load64LaneVec128: {
         std::array<Literal, 2> lanes = vec.getLanesI64x2();
         if (curr->isLoad()) {
-          lanes[curr->index] =
-            Literal(inst->externalInterface->load64u(addr));
+          lanes[curr->index] = Literal(inst->externalInterface->load64u(addr));
           return Literal(lanes);
         } else {
           inst->externalInterface->store64(addr, lanes[curr->index].geti64());
@@ -3275,9 +3271,8 @@ public:
     if (newSize > inst->wasm.memory.max) {
       return fail;
     }
-    if (!inst->externalInterface->growMemory(inst->memorySize *
-                                               Memory::kPageSize,
-                                             newSize * Memory::kPageSize)) {
+    if (!inst->externalInterface->growMemory(
+          inst->memorySize * Memory::kPageSize, newSize * Memory::kPageSize)) {
       // We failed to grow the memory in practice, even though it was valid
       // to try to do so.
       return fail;
@@ -3480,9 +3475,7 @@ public:
     return ret;
   }
 
-  void trap(const char* why) override {
-    instance.externalInterface->trap(why);
-  }
+  void trap(const char* why) override { instance.externalInterface->trap(why); }
 
   void hostLimit(const char* why) override {
     instance.externalInterface->hostLimit(why);
