@@ -499,14 +499,30 @@ private:
 //    it contains Literals with those results.
 using EvalCtorOutcome = std::optional<Literals>;
 
+// An expression runner with the addition integration we need to eval ctors. In
+// particular, this adds GC support for "serializing" out GC allocations. To do
+// that, we track each allocation, and then we can write them out in the wasm
+// module by creating new globals.
 class CtorEvalRunner
   : public EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalRunner> {
+
+  using Parent =
+      EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalRunner>;
+
 public:
   CtorEvalRunner(EvallingModuleInstance& instance,
                  EvallingModuleInstance::FunctionScope& scope,
                  Index maxDepth)
-    : EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalRunner>(
+    : Parent(
         instance, scope, maxDepth) {}
+
+  Flow visitStructNew(StructNew* curr) {
+    auto flow = Parent::visitStructNew(curr);
+    if (!flow.breaking()) {
+      std::cout << "allocation!\n";
+    }
+    return flow;
+  }
 };
 
 // Eval a single ctor function. Returns whether we succeeded to completely
