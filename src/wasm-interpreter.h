@@ -2480,6 +2480,7 @@ public:
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
 
+  // This needs to use a custom runner as well...
   ModuleInstanceBase(
     Module& wasm,
     ExternalInterface* externalInterface,
