@@ -3593,7 +3593,7 @@ public:
     }
 #endif
 
-    Flow flow = Runner(*this, scope, maxDepth).visit(function->body);
+    Flow flow = Runner(*self(), scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();

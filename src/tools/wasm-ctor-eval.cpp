@@ -499,6 +499,16 @@ private:
 //    it contains Literals with those results.
 using EvalCtorOutcome = std::optional<Literals>;
 
+class CtorEvalRunner
+  : public EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalRunner> {
+public:
+  CtorEvalRunner(EvallingModuleInstance& instance,
+                 EvallingModuleInstance::FunctionScope& scope,
+                 Index maxDepth)
+    : EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalRunner>(
+        instance, scope, maxDepth) {}
+};
+
 // Eval a single ctor function. Returns whether we succeeded to completely
 // evaluate the ctor (which means that the caller can proceed to try to eval
 // further ctors if there are any), and if we did, the results if the function
@@ -559,8 +569,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
     // in a single function scope for all the executions.
     EvallingModuleInstance::FunctionScope scope(func, params);
 
-    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
-      instance, scope, instance.maxDepth);
+    CtorEvalRunner expressionRunner(instance, scope, instance.maxDepth);
 
     // After we successfully eval a line we will apply the changes here. This is
     // the same idea as applyToModule() - we must only do it after an entire
@@ -667,7 +676,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
 
   Literals results;
   try {
-    results = instance.callFunction(funcName, params);
+    results = instance.callFunction<CtorEvalRunner>(funcName, params);
   } catch (FailToEvalException& fail) {
     std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
     return EvalCtorOutcome();
