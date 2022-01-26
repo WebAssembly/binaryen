@@ -2589,7 +2589,7 @@ private:
 
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Address offset =
-        (uint32_t)visit(segment->offset).getSingleValue().geti32();
+        (uint32_t)self()->visit(segment->offset).getSingleValue().geti32();
 
       Table* table = wasm.getTable(segment->table);
       ExternalInterface* extInterface = externalInterface;
@@ -2601,7 +2601,7 @@ private:
       }
 
       for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = runner.visit(segment->data[i]);
+        Flow ret = self()->visit(segment->data[i]);
         extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
       }
     });
@@ -2634,8 +2634,8 @@ private:
       drop.segment = i;
       drop.finalize();
 
-      runner.visit(&init);
-      runner.visit(&drop);
+      self()->visit(&init);
+      self()->visit(&drop);
     }
   }
 
@@ -2685,7 +2685,7 @@ private:
 protected:
   // Returns the instance that defines the memory used by this one.
   SubType* getMemoryInstance() {
-    auto* inst = instance.self();
+    auto* inst = self();
     while (inst->wasm.memory.imported()) {
       inst = inst->linkedInstances.at(inst->wasm.memory.module).get();
     }
@@ -2694,7 +2694,7 @@ protected:
 
   // Returns a reference to the current value of a potentially imported global
   Literals& getGlobal(Name name) {
-    auto* inst = instance.self();
+    auto* inst = self();
     auto* global = inst->wasm.getGlobal(name);
     while (global->imported()) {
       inst = inst->linkedInstances.at(global->module).get();
@@ -2714,12 +2714,12 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    auto* func = instance.wasm.getFunction(curr->target);
+    auto* func = wasm.getFunction(curr->target);
     Flow ret;
     if (func->imported()) {
-      ret.values = instance.externalInterface->callImport(func, arguments);
+      ret.values = externalInterface->callImport(func, arguments);
     } else {
-      ret.values = instance.callFunctionInternal(curr->target, arguments);
+      ret.values = callFunctionInternal(curr->target, arguments);
     }
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope.function->name << ")\n";
@@ -2746,9 +2746,9 @@ public:
     Index index = target.getSingleValue().geti32();
     Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
-    auto info = instance.getTableInterfaceInfo(curr->table);
+    auto info = getTableInterfaceInfo(curr->table);
     Flow ret = info.interface->callTable(
-      info.name, index, curr->heapType, arguments, type, *instance.self());
+      info.name, index, curr->heapType, arguments, type, *self());
 
     // TODO: make this a proper tail call (return first)
     if (curr->isReturn) {
@@ -2771,12 +2771,12 @@ public:
       trap("null target in call_ref");
     }
     Name funcName = target.getSingleValue().getFunc();
-    auto* func = instance.wasm.getFunction(funcName);
+    auto* func = wasm.getFunction(funcName);
     Flow ret;
     if (func->imported()) {
-      ret.values = instance.externalInterface->callImport(func, arguments);
+      ret.values = externalInterface->callImport(func, arguments);
     } else {
-      ret.values = instance.callFunctionInternal(funcName, arguments);
+      ret.values = callFunctionInternal(funcName, arguments);
     }
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope.function->name << ")\n";
@@ -2794,7 +2794,7 @@ public:
     if (index.breaking()) {
       return index;
     }
-    auto info = instance.getTableInterfaceInfo(curr->table);
+    auto info = getTableInterfaceInfo(curr->table);
     return info.interface->tableLoad(info.name,
                                      index.getSingleValue().geti32());
   }
@@ -2808,7 +2808,7 @@ public:
     if (valueFlow.breaking()) {
       return valueFlow;
     }
-    auto info = instance.getTableInterfaceInfo(curr->table);
+    auto info = getTableInterfaceInfo(curr->table);
     info.interface->tableStore(info.name,
                                indexFlow.getSingleValue().geti32(),
                                valueFlow.getSingleValue());
@@ -2817,7 +2817,7 @@ public:
 
   Flow visitTableSize(TableSize* curr) {
     NOTE_ENTER("TableSize");
-    auto info = instance.getTableInterfaceInfo(curr->table);
+    auto info = getTableInterfaceInfo(curr->table);
     Index tableSize = info.interface->tableSize(curr->table);
     return Literal::makeFromInt32(tableSize, Type::i32);
   }
@@ -2833,7 +2833,7 @@ public:
       return deltaFlow;
     }
     Name tableName = curr->table;
-    auto info = instance.getTableInterfaceInfo(tableName);
+    auto info = getTableInterfaceInfo(tableName);
 
     Index tableSize = info.interface->tableSize(tableName);
     Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
@@ -2843,7 +2843,7 @@ public:
     if (tableSize >= uint32_t(-1) - delta) {
       return fail;
     }
-    auto maxTableSize = instance.self()->wasm.getTable(tableName)->max;
+    auto maxTableSize = self()->wasm.getTable(tableName)->max;
     if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(maxTableSize)) {
       return fail;
     }
@@ -3298,15 +3298,15 @@ public:
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
 
-    assert(curr->segment < instance.wasm.memory.segments.size());
-    Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
+    assert(curr->segment < wasm.memory.segments.size());
+    Memory::Segment& segment = wasm.memory.segments[curr->segment];
 
     Address destVal(dest.getSingleValue().getUnsigned());
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
     Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
     if (offsetVal + sizeVal > 0 &&
-        instance.droppedSegments.count(curr->segment)) {
+        droppedSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
     if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
@@ -3326,7 +3326,7 @@ public:
   }
   Flow visitDataDrop(DataDrop* curr) {
     NOTE_ENTER("DataDrop");
-    instance.droppedSegments.insert(curr->segment);
+    droppedSegments.insert(curr->segment);
     return {};
   }
   Flow visitMemoryCopy(MemoryCopy* curr) {
@@ -3444,7 +3444,7 @@ public:
 
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         if (curr->catchTags[i] == e.tag) {
-          instance.multiValues.push_back(e.values);
+          multiValues.push_back(e.values);
           return processCatchBody(curr->catchBodies[i]);
         }
       }
@@ -3468,21 +3468,21 @@ public:
   }
   Flow visitPop(Pop* curr) {
     NOTE_ENTER("Pop");
-    assert(!instance.multiValues.empty());
-    auto ret = instance.multiValues.back();
+    assert(!multiValues.empty());
+    auto ret = multiValues.back();
     assert(curr->type == ret.getType());
-    instance.multiValues.pop_back();
+    multiValues.pop_back();
     return ret;
   }
 
-  void trap(const char* why) override { instance.externalInterface->trap(why); }
+  void trap(const char* why) override { externalInterface->trap(why); }
 
   void hostLimit(const char* why) override {
-    instance.externalInterface->hostLimit(why);
+    externalInterface->hostLimit(why);
   }
 
   void throwException(const WasmException& exn) override {
-    instance.externalInterface->throwException(exn);
+    externalInterface->throwException(exn);
   }
 
   // Given a value, wrap it to a smaller given number of bytes.
