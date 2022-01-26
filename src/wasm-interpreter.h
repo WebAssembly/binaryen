@@ -2648,7 +2648,9 @@ public:
 
     FunctionScope* oldScope;
 
-    FunctionScope(Function* function, const Literals& arguments, SubType& parent)
+    FunctionScope(Function* function,
+                  const Literals& arguments,
+                  SubType& parent)
       : function(function), parent(parent) {
       oldScope = parent.scope;
       parent.scope = this;
@@ -2677,9 +2679,7 @@ public:
       }
     }
 
-    ~FunctionScope() {
-      parent.scope = oldScope;
-    }
+    ~FunctionScope() { parent.scope = oldScope; }
   };
 
 private:
@@ -3315,8 +3315,7 @@ public:
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
     Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
-    if (offsetVal + sizeVal > 0 &&
-        droppedSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
     if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
