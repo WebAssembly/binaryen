@@ -2454,6 +2454,14 @@ struct CanonicalizationState {
   };
 
   using ReplacementMap = std::unordered_map<HeapType, Replacement>;
+
+  // Updates the `results` and `newInfo` lists, but does not modify any of the
+  // infos to update HeapType use sites.
+  void updateShallow(ReplacementMap& replacements);
+  // Updates the HeapType use sites within `info`.
+  void updateUses(ReplacementMap& replacements,
+                  std::unique_ptr<HeapTypeInfo>& info);
+  // Updates lists and uses.
   void update(ReplacementMap& replacements);
 
 #if TRACE_CANONICALIZATION
@@ -2472,6 +2480,16 @@ struct CanonicalizationState {
 };
 
 void CanonicalizationState::update(ReplacementMap& replacements) {
+  if (replacements.empty()) {
+    return;
+  }
+  updateShallow(replacements);
+  for (auto& info : newInfos) {
+    updateUses(replacements, info);
+  }
+}
+
+void CanonicalizationState::updateShallow(ReplacementMap& replacements) {
   if (replacements.empty()) {
     return;
   }
@@ -2509,27 +2527,31 @@ void CanonicalizationState::update(ReplacementMap& replacements) {
     newInfos.erase(std::remove(newInfos.begin(), newInfos.end(), nullptr),
                    newInfos.end());
   }
+}
 
-  // Replace all old types reachable from the new set of temporary types.
-  for (auto& info : newInfos) {
-    struct ChildUpdater : HeapTypeChildWalker<ChildUpdater> {
-      ReplacementMap& replacements;
-      ChildUpdater(ReplacementMap& replacements) : replacements(replacements) {}
-      void noteChild(HeapType* child) {
-        if (auto it = replacements.find(*child); it != replacements.end()) {
-          *child = it->second.getAsHeapType();
-        }
+void CanonicalizationState::updateUses(ReplacementMap& replacements,
+                                       std::unique_ptr<HeapTypeInfo>& info) {
+  if (replacements.empty()) {
+    return;
+  }
+  // Replace all old types reachable from `info`.
+  struct ChildUpdater : HeapTypeChildWalker<ChildUpdater> {
+    ReplacementMap& replacements;
+    ChildUpdater(ReplacementMap& replacements) : replacements(replacements) {}
+    void noteChild(HeapType* child) {
+      if (auto it = replacements.find(*child); it != replacements.end()) {
+        *child = it->second.getAsHeapType();
       }
-    };
-    HeapType root = asHeapType(info);
-    ChildUpdater(replacements).walkRoot(&root);
+    }
+  };
+  HeapType root = asHeapType(info);
+  ChildUpdater(replacements).walkRoot(&root);
 
-    // If this is a nominal type, we may need to update its supertype as well.
-    if (info->supertype) {
-      HeapType super(uintptr_t(info->supertype));
-      if (auto it = replacements.find(super); it != replacements.end()) {
-        info->supertype = getHeapTypeInfo(it->second.getAsHeapType());
-      }
+  // We may need to update its supertype as well.
+  if (info->supertype) {
+    HeapType super(uintptr_t(info->supertype));
+    if (auto it = replacements.find(super); it != replacements.end()) {
+      info->supertype = getHeapTypeInfo(it->second.getAsHeapType());
     }
   }
 }
