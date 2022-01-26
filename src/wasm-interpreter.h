@@ -2639,9 +2639,6 @@ private:
     }
   }
 
-  // This is managed in an RAII manner by the FunctionScope class.
-  FunctionScope* scope = nullptr;
-
 public:
   class FunctionScope {
   public:
@@ -2686,6 +2683,9 @@ public:
   };
 
 private:
+  // This is managed in an RAII manner by the FunctionScope class.
+  FunctionScope* scope = nullptr;
+
   // Stack of <caught exception, caught catch's try label>
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
   // The current delegate target, if delegation of an exception is in

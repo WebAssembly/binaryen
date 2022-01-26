@@ -557,10 +557,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   if (auto* block = func->body->dynCast<Block>()) {
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
-    EvallingModuleInstance::FunctionScope scope(func, params);
-
-    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
-      instance, scope, instance.maxDepth);
+    EvallingModuleInstance::FunctionScope scope(func, params, instance);
 
     // After we successfully eval a line we will apply the changes here. This is
     // the same idea as applyToModule() - we must only do it after an entire
@@ -573,7 +570,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
     for (auto* curr : block->list) {
       Flow flow;
       try {
-        flow = expressionRunner.visit(curr);
+        flow = instance.visit(curr);
       } catch (FailToEvalException& fail) {
         if (successes == 0) {
           std::cout << "  ...stopping (in block) since could not eval: "
