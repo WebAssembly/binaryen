@@ -2684,8 +2684,8 @@ public:
 
   // Executes expressions with concrete runtime info, the function and module at
   // runtime
-  class RuntimeExpressionRunner
-    : public ExpressionRunner<RuntimeExpressionRunner> {
+  template<typename RERSubType>
+  class RuntimeExpressionRunnerBase : public ExpressionRunner<RERSubType> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
     // Stack of <caught exception, caught catch's try label>
@@ -2718,10 +2718,10 @@ public:
     }
 
   public:
-    RuntimeExpressionRunner(ModuleInstanceBase& instance,
-                            FunctionScope& scope,
-                            Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(&instance.wasm, maxDepth),
+    RuntimeExpressionRunnerBase(ModuleInstanceBase& instance,
+                                FunctionScope& scope,
+                                Index maxDepth)
+      : ExpressionRunner<RERSubType>(&instance.wasm, maxDepth),
         instance(instance), scope(scope) {}
 
     Flow visitCall(Call* curr) {
@@ -3550,17 +3550,29 @@ public:
     }
   };
 
+  class RuntimeExpressionRunner
+    : public RuntimeExpressionRunnerBase<RuntimeExpressionRunner> {
+  public:
+    RuntimeExpressionRunner(ModuleInstanceBase& instance,
+                            FunctionScope& scope,
+                            Index maxDepth)
+      : RuntimeExpressionRunnerBase<RuntimeExpressionRunner>(
+          instance, scope, maxDepth) {}
+  };
+
   // Call a function, starting an invocation.
+  template<typename Runner = RuntimeExpressionRunner>
   Literals callFunction(Name name, const Literals& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
     callDepth = 0;
     functionStack.clear();
-    return callFunctionInternal(name, arguments);
+    return callFunctionInternal<Runner>(name, arguments);
   }
 
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
+  template<typename Runner = RuntimeExpressionRunner>
   Literals callFunctionInternal(Name name, const Literals& arguments) {
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
@@ -3581,8 +3593,7 @@ public:
     }
 #endif
 
-    Flow flow =
-      RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
+    Flow flow = Runner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();
