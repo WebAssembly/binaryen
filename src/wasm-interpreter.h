@@ -2685,8 +2685,7 @@ public:
   // Executes expressions with concrete runtime info, the function and module at
   // runtime
   template<typename RERSubType>
-  class RuntimeExpressionRunnerBase
-    : public ExpressionRunner<RERSubType> {
+  class RuntimeExpressionRunnerBase : public ExpressionRunner<RERSubType> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
     // Stack of <caught exception, caught catch's try label>
@@ -2720,8 +2719,8 @@ public:
 
   public:
     RuntimeExpressionRunnerBase(ModuleInstanceBase& instance,
-                            FunctionScope& scope,
-                            Index maxDepth)
+                                FunctionScope& scope,
+                                Index maxDepth)
       : ExpressionRunner<RERSubType>(&instance.wasm, maxDepth),
         instance(instance), scope(scope) {}
 
@@ -3551,16 +3550,18 @@ public:
     }
   };
 
-  class RuntimeExpressionRunner : public RuntimeExpressionRunnerBase<RuntimeExpressionRunner> {
+  class RuntimeExpressionRunner
+    : public RuntimeExpressionRunnerBase<RuntimeExpressionRunner> {
   public:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
                             FunctionScope& scope,
                             Index maxDepth)
-      : RuntimeExpressionRunnerBase<RuntimeExpressionRunner>(instance, scope, maxDepth) {}
+      : RuntimeExpressionRunnerBase<RuntimeExpressionRunner>(
+          instance, scope, maxDepth) {}
   };
 
   // Call a function, starting an invocation.
-  template<typename Runner=RuntimeExpressionRunner>
+  template<typename Runner = RuntimeExpressionRunner>
   Literals callFunction(Name name, const Literals& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
@@ -3571,7 +3572,7 @@ public:
 
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
-  template<typename Runner=RuntimeExpressionRunner>
+  template<typename Runner = RuntimeExpressionRunner>
   Literals callFunctionInternal(Name name, const Literals& arguments) {
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
