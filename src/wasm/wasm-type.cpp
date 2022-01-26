@@ -1323,6 +1323,10 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type is a supertype of itself";
     case TypeBuilder::ErrorReason::InvalidSupertype:
       return os << "Heap type has an invalid supertype";
+    case TypeBuilder::ErrorReason::ForwardSupertypeReference:
+      return os << "Heap type has an undeclared supertype";
+    case TypeBuilder::ErrorReason::ForwardChildReference:
+      return os << "Heap type has an undeclared child";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -3113,46 +3117,9 @@ void canonicalizeEquirecursive(CanonicalizationState& state) {
 }
 
 std::optional<TypeBuilder::Error>
-canonicalizeNominal(CanonicalizationState& state) {
-  // TODO: clear recursion groups once we are no longer piggybacking the
-  // isorecursive system on the nominal system.
-  // if (typeSystem != TypeSystem::Isorecursive) {
-  //   for (auto& info : state.newInfos) {
-  //     assert(info->recGroup == nullptr && "unexpected recursion group");
-  //   }
-  // }
-
-  // Nominal types do not require separate canonicalization, so just validate
-  // that their subtyping is correct.
-
-#if TIME_CANONICALIZATION
-  auto start = std::chrono::steady_clock::now();
-#endif
-
-  // Ensure there are no cycles in the subtype graph. This is the classic DFA
-  // algorithm for detecting cycles, but in the form of a simple loop because
-  // each node (type) has at most one child (supertype).
-  std::unordered_set<HeapTypeInfo*> checked;
-  for (size_t i = 0; i < state.results.size(); ++i) {
-    HeapType type = state.results[i];
-    if (type.isBasic()) {
-      continue;
-    }
-    std::unordered_set<HeapTypeInfo*> path;
-    for (auto* curr = getHeapTypeInfo(type);
-         curr != nullptr && !checked.count(curr);
-         curr = curr->supertype) {
-      if (!path.insert(curr).second) {
-        return TypeBuilder::Error{i, TypeBuilder::ErrorReason::SelfSupertype};
-      }
-    }
-    // None of the types in `path` reach themselves.
-    checked.insert(path.begin(), path.end());
-  }
-
-  // Ensure that all the subtype relations are valid.
-  for (size_t i = 0; i < state.results.size(); ++i) {
-    HeapType type = state.results[i];
+validateStructuralSubtyping(const std::vector<HeapType>& types) {
+  for (size_t i = 0; i < types.size(); ++i) {
+    HeapType type = types[i];
     if (type.isBasic()) {
       continue;
     }
@@ -3190,6 +3157,51 @@ canonicalizeNominal(CanonicalizationState& state) {
         break;
     }
   }
+  return {};
+}
+
+std::optional<TypeBuilder::Error>
+canonicalizeNominal(CanonicalizationState& state) {
+  // TODO: clear recursion groups once we are no longer piggybacking the
+  // isorecursive system on the nominal system.
+  // if (typeSystem != TypeSystem::Isorecursive) {
+  //   for (auto& info : state.newInfos) {
+  //     assert(info->recGroup == nullptr && "unexpected recursion group");
+  //   }
+  // }
+
+  // Nominal types do not require separate canonicalization, so just validate
+  // that their subtyping is correct.
+
+#if TIME_CANONICALIZATION
+  auto start = std::chrono::steady_clock::now();
+#endif
+
+  // Ensure there are no cycles in the subtype graph. This is the classic DFA
+  // algorithm for detecting cycles, but in the form of a simple loop because
+  // each node (type) has at most one child (supertype).
+  std::unordered_set<HeapTypeInfo*> checked;
+  for (size_t i = 0; i < state.results.size(); ++i) {
+    HeapType type = state.results[i];
+    if (type.isBasic()) {
+      continue;
+    }
+    std::unordered_set<HeapTypeInfo*> path;
+    for (auto* curr = getHeapTypeInfo(type);
+         curr != nullptr && !checked.count(curr);
+         curr = curr->supertype) {
+      if (!path.insert(curr).second) {
+        return TypeBuilder::Error{i, TypeBuilder::ErrorReason::SelfSupertype};
+      }
+    }
+    // None of the types in `path` reach themselves.
+    checked.insert(path.begin(), path.end());
+  }
+
+  // Check that the declared supertypes are valid.
+  if (auto error = validateStructuralSubtyping(state.results)) {
+    return {*error};
+  }
 
 #if TIME_CANONICALIZATION
   auto end = std::chrono::steady_clock::now();
@@ -3212,10 +3224,57 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     }
   }
 
-  // TODO: proper isorecursive validation and canonicalization. For now just
-  // piggyback on the nominal system.
-  if (auto err = canonicalizeNominal(state)) {
-    return err;
+  // Check that supertypes precede their subtypes and that other child types
+  // either precede their parents or appear later in the same recursion group.
+  // `indexOfType` both maps types to their indices and keeps track of which
+  // types we have seen so far.
+  std::unordered_map<HeapType, size_t> indexOfType;
+  std::optional<RecGroup> currGroup;
+  size_t groupStart = 0;
+
+  // Validate the children of all types in a recursion group after all the types
+  // have been registered in `indexOfType`.
+  auto finishGroup = [&](size_t groupEnd) -> std::optional<TypeBuilder::Error> {
+    for (size_t index = groupStart; index < groupEnd; ++index) {
+      HeapType type = state.results[index];
+      for (HeapType child : type.getHeapTypeChildren()) {
+        // Only basic children, globally canonical children, and children
+        // defined in this or previous recursion groups are allowed.
+        if (isTemp(child) && !indexOfType.count(child)) {
+          return {{index, TypeBuilder::ErrorReason::ForwardChildReference}};
+        }
+      }
+    }
+    groupStart = groupEnd;
+    return {};
+  };
+
+  for (size_t index = 0; index < state.results.size(); ++index) {
+    HeapType type = state.results[index];
+    // Validate the supertype. Supertypes must precede their subtypes.
+    if (auto super = type.getSuperType()) {
+      if (!indexOfType.count(*super)) {
+        return {{index, TypeBuilder::ErrorReason::ForwardSupertypeReference}};
+      }
+    }
+    // Check whether we have finished a rec group.
+    auto newGroup = type.getRecGroup();
+    if (currGroup && *currGroup != newGroup) {
+      if (auto error = finishGroup(index)) {
+        return *error;
+      }
+    }
+    currGroup = newGroup;
+    // Register this type as seen.
+    indexOfType.insert({type, index});
+  }
+  if (auto error = finishGroup(state.results.size())) {
+    return *error;
+  }
+
+  // Check that the declared supertypes are structurally valid.
+  if (auto error = validateStructuralSubtyping(state.results)) {
+    return {*error};
   }
 
   // Move the recursion groups into the global store. TODO: after proper

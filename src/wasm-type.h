@@ -594,6 +594,10 @@ struct TypeBuilder {
     SelfSupertype,
     // The declared supertype of a type is invalid.
     InvalidSupertype,
+    // The declared supertype is an invalid forward reference.
+    ForwardSupertypeReference,
+    // A child of the type is an invalid forward reference.
+    ForwardChildReference,
   };
 
   struct Error {
