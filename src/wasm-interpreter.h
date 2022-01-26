@@ -2639,14 +2639,23 @@ private:
     }
   }
 
+  // This is managed in an RAII manner by the FunctionScope class.
+  FunctionScope* scope = nullptr;
+
 public:
   class FunctionScope {
   public:
     std::vector<Literals> locals;
     Function* function;
+    SubType& parent;
 
-    FunctionScope(Function* function, const Literals& arguments)
-      : function(function) {
+    FunctionScope* oldScope;
+
+    FunctionScope(Function* function, const Literals& arguments, SubType& parent)
+      : function(function), parent(parent) {
+      oldScope = parent.scope;
+      parent.scope = this;
+
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
                   << function->getParams().size() << " parameters, got "
@@ -2670,12 +2679,13 @@ public:
         }
       }
     }
+
+    ~FunctionScope() {
+      parent.scope = oldScope;
+    }
   };
 
 private:
-  // The current function scope.
-  FunctionScope& scope;
-
   // Stack of <caught exception, caught catch's try label>
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
   // The current delegate target, if delegation of an exception is in
@@ -2722,7 +2732,7 @@ public:
       ret.values = callFunctionInternal(curr->target, arguments);
     }
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "(returned to " << scope.function->name << ")\n";
+    std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
     // TODO: make this a proper tail call (return first)
     if (curr->isReturn) {
@@ -2744,7 +2754,7 @@ public:
     }
 
     Index index = target.getSingleValue().geti32();
-    Type type = curr->isReturn ? scope.function->getResults() : curr->type;
+    Type type = curr->isReturn ? scope->function->getResults() : curr->type;
 
     auto info = getTableInterfaceInfo(curr->table);
     Flow ret = info.interface->callTable(
@@ -2779,7 +2789,7 @@ public:
       ret.values = callFunctionInternal(funcName, arguments);
     }
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "(returned to " << scope.function->name << ")\n";
+    std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
     // TODO: make this a proper tail call (return first)
     if (curr->isReturn) {
@@ -2861,8 +2871,8 @@ public:
     NOTE_ENTER("LocalGet");
     auto index = curr->index;
     NOTE_EVAL1(index);
-    NOTE_EVAL1(scope.locals[index]);
-    return scope.locals[index];
+    NOTE_EVAL1(scope->locals[index]);
+    return scope->locals[index];
   }
   Flow visitLocalSet(LocalSet* curr) {
     NOTE_ENTER("LocalSet");
@@ -2874,7 +2884,7 @@ public:
     NOTE_EVAL1(index);
     NOTE_EVAL1(flow.getSingleValue());
     assert(curr->isTee() ? Type::isSubType(flow.getType(), curr->type) : true);
-    scope.locals[index] = flow.values;
+    scope->locals[index] = flow.values;
     return curr->isTee() ? flow : Flow();
   }
 
@@ -3529,7 +3539,7 @@ public:
     // for us to clean up here
     callDepth = 0;
     functionStack.clear();
-    return callFunctionInternal<Runner>(name, arguments);
+    return callFunctionInternal(name, arguments);
   }
 
   // Internal function call. Must be public so that callTable implementations
@@ -3545,7 +3555,7 @@ public:
 
     Function* function = wasm.getFunction(name);
     assert(function);
-    FunctionScope scope(function, arguments);
+    FunctionScope scope(function, arguments, *self());
 
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "entering " << function->name << "\n  with arguments:\n";
@@ -3554,7 +3564,7 @@ public:
     }
 #endif
 
-    Flow flow = Runner(*this, scope, maxDepth).visit(function->body);
+    Flow flow = self()->visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();
@@ -3567,6 +3577,7 @@ public:
     // may decrease more than one, if we jumped up the stack
     callDepth = previousCallDepth;
     // if we jumped up the stack, we also need to pop higher frames
+    // TODO can FunctionScope handle this automatically?
     while (functionStack.size() > previousFunctionStackSize) {
       functionStack.pop_back();
     }
