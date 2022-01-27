@@ -2281,8 +2281,11 @@ public:
 };
 
 //
-// An instance of a WebAssembly module, which can execute it via AST
-// interpretation.
+// A runner for a module. Each runner contains the information to execute the
+// module, such as the state of globals, and so forth, so it basically
+// encapsulates an instantiation of the wasm, and implements all the interpreter
+// instructions that use that info (like global.set etc.) that are not declared
+// in ExpressionRunner, which just looks at a single instruction.
 //
 // To embed this interpreter, you need to provide an ExternalInterface instance
 // (see below) which provides the embedding-specific details, that is, how to
@@ -2292,7 +2295,7 @@ public:
 //
 
 template<typename GlobalManager, typename SubType>
-class ModuleInstanceBase : public ExpressionRunner<SubType> {
+class ModuleRunnerBase : public ExpressionRunner<SubType> {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -2484,7 +2487,7 @@ public:
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
 
-  ModuleInstanceBase(
+  ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
@@ -2683,6 +2686,13 @@ public:
     }
 
     ~FunctionScope() { parent.scope = oldScope; }
+
+    // The current delegate target, if delegation of an exception is in
+    // progress. If no delegation is in progress, this will be an empty Name.
+    // This is on a function scope because it cannot "escape" to the outside,
+    // that is, a delegate target is like a branch target, it operates within
+    // a function.
+    Name currDelegateTarget;
   };
 
 private:
@@ -2691,9 +2701,6 @@ private:
 
   // Stack of <caught exception, caught catch's try label>
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
-  // The current delegate target, if delegation of an exception is in
-  // progress. If no delegation is in progress, this will be an empty Name.
-  Name currDelegateTarget;
 
 protected:
   // Returns the instance that defines the memory used by this one.
@@ -3429,9 +3436,9 @@ public:
     } catch (const WasmException& e) {
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
-      if (currDelegateTarget.is()) {
-        if (currDelegateTarget == curr->name) {
-          currDelegateTarget.clear();
+      if (scope->currDelegateTarget.is()) {
+        if (scope->currDelegateTarget == curr->name) {
+          scope->currDelegateTarget.clear();
         } else {
           throw;
         }
@@ -3464,7 +3471,7 @@ public:
         return processCatchBody(curr->catchBodies.back());
       }
       if (curr->isDelegate()) {
-        currDelegateTarget = curr->delegateTarget;
+        scope->currDelegateTarget = curr->delegateTarget;
       }
       // This exception is not caught by this try-catch. Rethrow it.
       throw;
@@ -3680,16 +3687,16 @@ protected:
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
 };
 
-// The default ModuleInstance uses a trivial global manager
+// The default ModuleRunner uses a trivial global manager
 using TrivialGlobalManager = std::map<Name, Literals>;
-class ModuleInstance
-  : public ModuleInstanceBase<TrivialGlobalManager, ModuleInstance> {
+class ModuleRunner
+  : public ModuleRunnerBase<TrivialGlobalManager, ModuleRunner> {
 public:
-  ModuleInstance(
+  ModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
-    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances = {})
-    : ModuleInstanceBase(wasm, externalInterface, linkedInstances) {}
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
+    : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
 };
 
 } // namespace wasm
