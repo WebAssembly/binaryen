@@ -832,13 +832,32 @@ struct RecGroupStore {
   std::unordered_set<RecGroupStructure> canonicalGroups;
   std::vector<std::unique_ptr<RecGroupInfo>> builtGroups;
 
+  RecGroup insert(RecGroup group) {
+    RecGroupStructure structure{group};
+    auto [it, inserted] = canonicalGroups.insert(structure);
+    if (inserted) {
+      return group;
+    } else {
+      return it->group;
+    }
+  }
+
+  RecGroup insert(std::unique_ptr<RecGroupInfo>&& info) {
+    RecGroup group{uintptr_t(info.get())};
+    auto canonical = insert(group);
+    if (canonical == group) {
+      builtGroups.emplace_back(std::move(info));
+    }
+    return canonical;
+  }
+
   void clear() {
     canonicalGroups.clear();
     builtGroups.clear();
   }
 };
 
-static RecGroupStore recGroupStore;
+static RecGroupStore globalRecGroupStore;
 
 } // anonymous namespace
 
@@ -846,7 +865,7 @@ void destroyAllTypesForTestingPurposesOnly() {
   globalTypeStore.clear();
   globalHeapTypeStore.clear();
   nominalSignatureCache.clear();
-  recGroupStore.clear();
+  globalRecGroupStore.clear();
 }
 
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
@@ -3635,7 +3654,7 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   // replacements accordingly.
   CanonicalizationState::ReplacementMap replacements;
   {
-    std::lock_guard<std::mutex> lock(recGroupStore.mutex);
+    std::lock_guard<std::mutex> lock(globalRecGroupStore.mutex);
     groupStart = 0;
     for (auto group : groups) {
       size_t size = group.size();
@@ -3643,19 +3662,18 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
         state.updateUses(replacements, state.newInfos[groupStart + i]);
       }
       groupStart += size;
-      RecGroupStructure structure{group};
-      auto [it, inserted] = recGroupStore.canonicalGroups.insert(structure);
-      if (inserted) {
-        // Move ownership of the canonical group to the global store.
-        if (auto infoIt = groupInfoMap.find(group);
-            infoIt != groupInfoMap.end()) {
-          recGroupStore.builtGroups.emplace_back(std::move(infoIt->second));
-        }
+      RecGroup canonical(0);
+      if (auto it = groupInfoMap.find(group); it != groupInfoMap.end()) {
+        // Move ownership to the global store if this group is canonical.
+        canonical = globalRecGroupStore.insert(std::move(it->second));
       } else {
+        canonical = globalRecGroupStore.insert(group);
+      }
+      if (group != canonical) {
         // Replace the non-canonical types with their canonical equivalents.
-        assert(it->group.size() == size);
+        assert(canonical.size() == size);
         for (size_t i = 0; i < size; ++i) {
-          replacements.insert({group[i], it->group[i]});
+          replacements.insert({group[i], canonical[i]});
         }
       }
     }
