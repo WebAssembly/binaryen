@@ -2281,8 +2281,11 @@ public:
 };
 
 //
-// An instance of a WebAssembly module, which can execute it via AST
-// interpretation.
+// A runner for a module. Each runner contains the information to execute the
+// module, such as the state of globals, and so forth, so it basically
+// encapsulates an instantiation of the wasm, and implements all the interpreter
+// instructions that use that info (like global.set etc.) that are not declared
+// in ExpressionRunner, which just looks at a single instruction.
 //
 // To embed this interpreter, you need to provide an ExternalInterface instance
 // (see below) which provides the embedding-specific details, that is, how to
@@ -2292,7 +2295,7 @@ public:
 //
 
 template<typename GlobalManager, typename SubType>
-class ModuleInstanceBase : public ExpressionRunner<SubType> {
+class ModuleRunnerBase : public ExpressionRunner<SubType> {
 public:
   //
   // You need to implement one of these to create a concrete interpreter. The
@@ -2484,7 +2487,7 @@ public:
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
 
-  ModuleInstanceBase(
+  ModuleRunnerBase(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
@@ -3684,16 +3687,16 @@ protected:
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
 };
 
-// The default ModuleInstance uses a trivial global manager
+// The default ModuleRunner uses a trivial global manager
 using TrivialGlobalManager = std::map<Name, Literals>;
-class ModuleInstance
-  : public ModuleInstanceBase<TrivialGlobalManager, ModuleInstance> {
+class ModuleRunner
+  : public ModuleRunnerBase<TrivialGlobalManager, ModuleRunner> {
 public:
-  ModuleInstance(
+  ModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
-    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances = {})
-    : ModuleInstanceBase(wasm, externalInterface, linkedInstances) {}
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
+    : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
 };
 
 } // namespace wasm
