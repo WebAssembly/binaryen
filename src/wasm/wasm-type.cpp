@@ -829,7 +829,11 @@ static SignatureTypeCache nominalSignatureCache;
 // Keep track of the constructed recursion groups.
 struct RecGroupStore {
   std::mutex mutex;
+  // Store the structures of all rec groups created so far so we can avoid
+  // creating duplicates.
   std::unordered_set<RecGroupStructure> canonicalGroups;
+  // Keep the `RecGroupInfos` for the nontrivial groups stored in
+  // `canonicalGroups` alive.
   std::vector<std::unique_ptr<RecGroupInfo>> builtGroups;
 
   RecGroup insert(RecGroup group) {
