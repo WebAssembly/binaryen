@@ -16,6 +16,17 @@ protected:
     destroyAllTypesForTestingPurposesOnly();
     setTypeSystem(originalSystem);
   }
+
+  // Utilities
+  Struct makeStruct(TypeBuilder& builder,
+                    std::initializer_list<size_t> indices) {
+    FieldList fields;
+    for (auto index : indices) {
+      Type ref = builder.getTempRefType(builder[index], Nullable);
+      fields.emplace_back(ref, Mutable);
+    }
+    return Struct(std::move(fields));
+  }
 };
 
 using TypeTest = TypeSystemTest<TypeSystem::Equirecursive>;
@@ -214,15 +225,6 @@ static void testInvalidSupertype() {
 TEST_F(NominalTest, InvalidSupertype) { testInvalidSupertype(); }
 TEST_F(IsorecursiveTest, InvalidSupertype) { testInvalidSupertype(); }
 
-TEST_F(IsorecursiveTest, SelfReferencedChild) {
-  // A self-referential type should be ok even without an explicit rec group.
-  TypeBuilder builder(1);
-  Type selfRef = builder.getTempRefType(builder[0], Nullable);
-  builder[0] = Struct({Field(selfRef, Immutable)});
-  auto result = builder.build();
-  EXPECT_TRUE(result);
-}
-
 TEST_F(IsorecursiveTest, ForwardReferencedChild) {
   TypeBuilder builder(3);
   builder.createRecGroup(0, 2);
@@ -268,4 +270,135 @@ TEST_F(IsorecursiveTest, RecGroupIndices) {
   EXPECT_EQ(built[2].getRecGroupIndex(), 0u);
   EXPECT_EQ(built[3].getRecGroupIndex(), 1u);
   EXPECT_EQ(built[4].getRecGroupIndex(), 2u);
+}
+
+TEST_F(IsorecursiveTest, CanonicalizeGroups) {
+  // Trivial types in the same group are not equivalent.
+  TypeBuilder builderA(2);
+  builderA.createRecGroup(0, 2);
+  builderA[0] = Struct{};
+  builderA[1] = Struct{};
+  auto resultA = builderA.build();
+  ASSERT_TRUE(resultA);
+  auto builtA = *resultA;
+
+  EXPECT_NE(builtA[0], builtA[1]);
+
+  // But if they are in their own separate groups, they are equivalent.
+  TypeBuilder builderB(2);
+  builderB[0] = Struct{};
+  builderB[1] = Struct{};
+  auto resultB = builderB.build();
+  ASSERT_TRUE(resultB);
+  auto builtB = *resultB;
+
+  EXPECT_EQ(builtB[0], builtB[1]);
+  EXPECT_NE(builtB[0], builtA[0]);
+  EXPECT_NE(builtB[0], builtA[1]);
+
+  // If we build the same groups again, we should get the same results.
+  TypeBuilder builderA2(4);
+  builderA2.createRecGroup(0, 2);
+  builderA2.createRecGroup(2, 2);
+  builderA2[0] = Struct{};
+  builderA2[1] = Struct{};
+  builderA2[2] = Struct{};
+  builderA2[3] = Struct{};
+  auto resultA2 = builderA2.build();
+  ASSERT_TRUE(resultA2);
+  auto builtA2 = *resultA2;
+
+  EXPECT_EQ(builtA2[0], builtA[0]);
+  EXPECT_EQ(builtA2[1], builtA[1]);
+  EXPECT_EQ(builtA2[2], builtA[0]);
+  EXPECT_EQ(builtA2[3], builtA[1]);
+
+  TypeBuilder builderB2(1);
+  builderB2[0] = Struct{};
+  auto resultB2 = builderB2.build();
+  ASSERT_TRUE(resultB2);
+  auto builtB2 = *resultB2;
+
+  EXPECT_EQ(builtB2[0], builtB[0]);
+}
+
+TEST_F(IsorecursiveTest, CanonicalizeUses) {
+  TypeBuilder builder(8);
+  builder[0] = makeStruct(builder, {});
+  builder[1] = makeStruct(builder, {});
+  builder[2] = makeStruct(builder, {0});
+  builder[3] = makeStruct(builder, {1});
+  builder[4] = makeStruct(builder, {0, 2});
+  builder[5] = makeStruct(builder, {1, 3});
+  builder[6] = makeStruct(builder, {2, 4});
+  builder[7] = makeStruct(builder, {3, 5});
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[0], built[1]);
+  EXPECT_EQ(built[2], built[3]);
+  EXPECT_EQ(built[4], built[5]);
+  EXPECT_EQ(built[6], built[7]);
+
+  EXPECT_NE(built[0], built[2]);
+  EXPECT_NE(built[0], built[4]);
+  EXPECT_NE(built[0], built[6]);
+  EXPECT_NE(built[2], built[4]);
+  EXPECT_NE(built[2], built[6]);
+  EXPECT_NE(built[4], built[6]);
+}
+
+TEST_F(IsorecursiveTest, CanonicalizeSelfReferences) {
+  TypeBuilder builder(5);
+  // Single self-reference
+  builder[0] = makeStruct(builder, {0});
+  builder[1] = makeStruct(builder, {1});
+  // Single other reference
+  builder[2] = makeStruct(builder, {0});
+  // Other reference followed by self-reference
+  builder[3] = makeStruct(builder, {2, 3});
+  // Self-reference followed by other reference
+  builder[4] = makeStruct(builder, {4, 2});
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[0], built[1]);
+
+  EXPECT_NE(built[0], built[2]);
+  EXPECT_NE(built[0], built[3]);
+  EXPECT_NE(built[0], built[4]);
+  EXPECT_NE(built[2], built[3]);
+  EXPECT_NE(built[2], built[4]);
+  EXPECT_NE(built[3], built[4]);
+}
+
+TEST_F(IsorecursiveTest, CanonicalizeSupertypes) {
+  TypeBuilder builder(6);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  // Type with a supertype
+  builder[2] = Struct{};
+  builder[2].subTypeOf(builder[0]);
+  // Type with the same supertype after canonicalization.
+  builder[3] = Struct{};
+  builder[3].subTypeOf(builder[1]);
+  // Type with a different supertype
+  builder[4] = Struct{};
+  builder[4].subTypeOf(builder[2]);
+  // Type with no supertype
+  builder[5] = Struct{};
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[2], built[3]);
+
+  EXPECT_NE(built[3], built[4]);
+  EXPECT_NE(built[3], built[5]);
+  EXPECT_NE(built[4], built[5]);
 }
