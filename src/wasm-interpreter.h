@@ -150,6 +150,8 @@ public:
 // Execute an expression
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
+  SubType* self() { return static_cast<SubType*>(this); }
+
 protected:
   // Optional module context to search for globals and called functions. NULL if
   // we are not interested in any context.
@@ -166,7 +168,7 @@ protected:
     NOTE_ENTER_("generateArguments");
     arguments.reserve(operands.size());
     for (auto expression : operands) {
-      Flow flow = this->visit(expression);
+      Flow flow = self()->visit(expression);
       if (flow.breaking()) {
         return flow;
       }
@@ -1020,7 +1022,7 @@ public:
   }
   Flow visitSIMDExtract(SIMDExtract* curr) {
     NOTE_ENTER("SIMDExtract");
-    Flow flow = this->visit(curr->vec);
+    Flow flow = self()->visit(curr->vec);
     if (flow.breaking()) {
       return flow;
     }
@@ -1047,12 +1049,12 @@ public:
   }
   Flow visitSIMDReplace(SIMDReplace* curr) {
     NOTE_ENTER("SIMDReplace");
-    Flow flow = this->visit(curr->vec);
+    Flow flow = self()->visit(curr->vec);
     if (flow.breaking()) {
       return flow;
     }
     Literal vec = flow.getSingleValue();
-    flow = this->visit(curr->value);
+    flow = self()->visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
@@ -1075,12 +1077,12 @@ public:
   }
   Flow visitSIMDShuffle(SIMDShuffle* curr) {
     NOTE_ENTER("SIMDShuffle");
-    Flow flow = this->visit(curr->left);
+    Flow flow = self()->visit(curr->left);
     if (flow.breaking()) {
       return flow;
     }
     Literal left = flow.getSingleValue();
-    flow = this->visit(curr->right);
+    flow = self()->visit(curr->right);
     if (flow.breaking()) {
       return flow;
     }
@@ -1089,17 +1091,17 @@ public:
   }
   Flow visitSIMDTernary(SIMDTernary* curr) {
     NOTE_ENTER("SIMDBitselect");
-    Flow flow = this->visit(curr->a);
+    Flow flow = self()->visit(curr->a);
     if (flow.breaking()) {
       return flow;
     }
     Literal a = flow.getSingleValue();
-    flow = this->visit(curr->b);
+    flow = self()->visit(curr->b);
     if (flow.breaking()) {
       return flow;
     }
     Literal b = flow.getSingleValue();
-    flow = this->visit(curr->c);
+    flow = self()->visit(curr->c);
     if (flow.breaking()) {
       return flow;
     }
@@ -1127,12 +1129,12 @@ public:
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");
-    Flow flow = this->visit(curr->vec);
+    Flow flow = self()->visit(curr->vec);
     if (flow.breaking()) {
       return flow;
     }
     Literal vec = flow.getSingleValue();
-    flow = this->visit(curr->shift);
+    flow = self()->visit(curr->shift);
     if (flow.breaking()) {
       return flow;
     }
@@ -1453,7 +1455,7 @@ public:
   };
 
   template<typename T> Cast doCast(T* curr) {
-    Flow ref = this->visit(curr->ref);
+    Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
       return typename Cast::Breaking{ref};
     }
@@ -1461,7 +1463,7 @@ public:
     Literal intendedRtt;
     if (curr->rtt) {
       // This is a dynamic check with an RTT.
-      Flow rtt = this->visit(curr->rtt);
+      Flow rtt = self()->visit(curr->rtt);
       if (rtt.breaking()) {
         return typename Cast::Breaking{rtt};
       }
@@ -1623,7 +1625,7 @@ public:
     return Literal::makeCanonicalRtt(curr->type.getHeapType());
   }
   Flow visitRttSub(RttSub* curr) {
-    Flow parent = this->visit(curr->parent);
+    Flow parent = self()->visit(curr->parent);
     if (parent.breaking()) {
       return parent;
     }
@@ -1640,7 +1642,7 @@ public:
     NOTE_ENTER("StructNew");
     Literal rttVal;
     if (curr->rtt) {
-      Flow rtt = this->visit(curr->rtt);
+      Flow rtt = self()->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
@@ -1650,7 +1652,7 @@ public:
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // find why we are unreachable, and stop there.
       for (auto* operand : curr->operands) {
-        auto value = this->visit(operand);
+        auto value = self()->visit(operand);
         if (value.breaking()) {
           return value;
         }
@@ -1664,7 +1666,7 @@ public:
       if (curr->isWithDefault()) {
         data[i] = Literal::makeZero(fields[i].type);
       } else {
-        auto value = this->visit(curr->operands[i]);
+        auto value = self()->visit(curr->operands[i]);
         if (value.breaking()) {
           return value;
         }
@@ -1678,7 +1680,7 @@ public:
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
-    Flow ref = this->visit(curr->ref);
+    Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
       return ref;
     }
@@ -1691,11 +1693,11 @@ public:
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
-    Flow ref = this->visit(curr->ref);
+    Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
       return ref;
     }
-    Flow value = this->visit(curr->value);
+    Flow value = self()->visit(curr->value);
     if (value.breaking()) {
       return value;
     }
@@ -1719,20 +1721,20 @@ public:
     NOTE_ENTER("ArrayNew");
     Literal rttVal;
     if (curr->rtt) {
-      Flow rtt = this->visit(curr->rtt);
+      Flow rtt = self()->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
       rttVal = rtt.getSingleValue();
     }
-    auto size = this->visit(curr->size);
+    auto size = self()->visit(curr->size);
     if (size.breaking()) {
       return size;
     }
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // visit the unreachable child, and stop there.
-      auto init = this->visit(curr->init);
+      auto init = self()->visit(curr->init);
       assert(init.breaking());
       return init;
     }
@@ -1748,7 +1750,7 @@ public:
         data[i] = Literal::makeZero(element.type);
       }
     } else {
-      auto init = this->visit(curr->init);
+      auto init = self()->visit(curr->init);
       if (init.breaking()) {
         return init;
       }
@@ -1767,7 +1769,7 @@ public:
     NOTE_ENTER("ArrayInit");
     Literal rttVal;
     if (curr->rtt) {
-      Flow rtt = this->visit(curr->rtt);
+      Flow rtt = self()->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
@@ -1781,7 +1783,7 @@ public:
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // find why we are unreachable, and stop there.
       for (auto* value : curr->values) {
-        auto result = this->visit(value);
+        auto result = self()->visit(value);
         if (result.breaking()) {
           return result;
         }
@@ -1792,7 +1794,7 @@ public:
     auto field = heapType.getArray().element;
     Literals data(num);
     for (Index i = 0; i < num; i++) {
-      auto value = this->visit(curr->values[i]);
+      auto value = self()->visit(curr->values[i]);
       if (value.breaking()) {
         return value;
       }
@@ -1805,11 +1807,11 @@ public:
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
-    Flow ref = this->visit(curr->ref);
+    Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
       return ref;
     }
-    Flow index = this->visit(curr->index);
+    Flow index = self()->visit(curr->index);
     if (index.breaking()) {
       return index;
     }
@@ -1826,15 +1828,15 @@ public:
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
-    Flow ref = this->visit(curr->ref);
+    Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
       return ref;
     }
-    Flow index = this->visit(curr->index);
+    Flow index = self()->visit(curr->index);
     if (index.breaking()) {
       return index;
     }
-    Flow value = this->visit(curr->value);
+    Flow value = self()->visit(curr->value);
     if (value.breaking()) {
       return value;
     }
@@ -1852,7 +1854,7 @@ public:
   }
   Flow visitArrayLen(ArrayLen* curr) {
     NOTE_ENTER("ArrayLen");
-    Flow ref = this->visit(curr->ref);
+    Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
       return ref;
     }
@@ -1864,23 +1866,23 @@ public:
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
     NOTE_ENTER("ArrayCopy");
-    Flow destRef = this->visit(curr->destRef);
+    Flow destRef = self()->visit(curr->destRef);
     if (destRef.breaking()) {
       return destRef;
     }
-    Flow destIndex = this->visit(curr->destIndex);
+    Flow destIndex = self()->visit(curr->destIndex);
     if (destIndex.breaking()) {
       return destIndex;
     }
-    Flow srcRef = this->visit(curr->srcRef);
+    Flow srcRef = self()->visit(curr->srcRef);
     if (srcRef.breaking()) {
       return srcRef;
     }
-    Flow srcIndex = this->visit(curr->srcIndex);
+    Flow srcIndex = self()->visit(curr->srcIndex);
     if (srcIndex.breaking()) {
       return srcIndex;
     }
-    Flow length = this->visit(curr->length);
+    Flow length = self()->visit(curr->length);
     if (length.breaking()) {
       return length;
     }
@@ -2473,6 +2475,7 @@ public:
 
   SubType* self() { return static_cast<SubType*>(this); }
 
+  // TODO: this duplicates module in ExpressionRunner, and can be removed
   Module& wasm;
 
   // Values of globals
@@ -2485,7 +2488,7 @@ public:
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
-    : wasm(wasm), externalInterface(externalInterface),
+    : ExpressionRunner<SubType>(&wasm), wasm(wasm), externalInterface(externalInterface),
       linkedInstances(linkedInstances_) {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
@@ -2720,7 +2723,7 @@ public:
     NOTE_ENTER("Call");
     NOTE_NAME(curr->target);
     Literals arguments;
-    Flow flow = this->generateArguments(curr->operands, arguments);
+    Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
@@ -2744,11 +2747,11 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) {
     NOTE_ENTER("CallIndirect");
     Literals arguments;
-    Flow flow = this->generateArguments(curr->operands, arguments);
+    Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
-    Flow target = this->visit(curr->target);
+    Flow target = self()->visit(curr->target);
     if (target.breaking()) {
       return target;
     }
@@ -2769,11 +2772,11 @@ public:
   Flow visitCallRef(CallRef* curr) {
     NOTE_ENTER("CallRef");
     Literals arguments;
-    Flow flow = this->generateArguments(curr->operands, arguments);
+    Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
-    Flow target = this->visit(curr->target);
+    Flow target = self()->visit(curr->target);
     if (target.breaking()) {
       return target;
     }
@@ -2800,7 +2803,7 @@ public:
 
   Flow visitTableGet(TableGet* curr) {
     NOTE_ENTER("TableGet");
-    Flow index = this->visit(curr->index);
+    Flow index = self()->visit(curr->index);
     if (index.breaking()) {
       return index;
     }
@@ -2810,11 +2813,11 @@ public:
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
-    Flow indexFlow = this->visit(curr->index);
+    Flow indexFlow = self()->visit(curr->index);
     if (indexFlow.breaking()) {
       return indexFlow;
     }
-    Flow valueFlow = this->visit(curr->value);
+    Flow valueFlow = self()->visit(curr->value);
     if (valueFlow.breaking()) {
       return valueFlow;
     }
@@ -2834,11 +2837,11 @@ public:
 
   Flow visitTableGrow(TableGrow* curr) {
     NOTE_ENTER("TableGrow");
-    Flow valueFlow = this->visit(curr->value);
+    Flow valueFlow = self()->visit(curr->value);
     if (valueFlow.breaking()) {
       return valueFlow;
     }
-    Flow deltaFlow = this->visit(curr->delta);
+    Flow deltaFlow = self()->visit(curr->delta);
     if (deltaFlow.breaking()) {
       return deltaFlow;
     }
@@ -2877,7 +2880,7 @@ public:
   Flow visitLocalSet(LocalSet* curr) {
     NOTE_ENTER("LocalSet");
     auto index = curr->index;
-    Flow flow = this->visit(curr->value);
+    Flow flow = self()->visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
@@ -2897,7 +2900,7 @@ public:
   Flow visitGlobalSet(GlobalSet* curr) {
     NOTE_ENTER("GlobalSet");
     auto name = curr->name;
-    Flow flow = this->visit(curr->value);
+    Flow flow = self()->visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
@@ -2910,7 +2913,7 @@ public:
 
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
-    Flow flow = this->visit(curr->ptr);
+    Flow flow = self()->visit(curr->ptr);
     if (flow.breaking()) {
       return flow;
     }
@@ -2927,11 +2930,11 @@ public:
   }
   Flow visitStore(Store* curr) {
     NOTE_ENTER("Store");
-    Flow ptr = this->visit(curr->ptr);
+    Flow ptr = self()->visit(curr->ptr);
     if (ptr.breaking()) {
       return ptr;
     }
-    Flow value = this->visit(curr->value);
+    Flow value = self()->visit(curr->value);
     if (value.breaking()) {
       return value;
     }
@@ -2948,11 +2951,11 @@ public:
 
   Flow visitAtomicRMW(AtomicRMW* curr) {
     NOTE_ENTER("AtomicRMW");
-    Flow ptr = this->visit(curr->ptr);
+    Flow ptr = self()->visit(curr->ptr);
     if (ptr.breaking()) {
       return ptr;
     }
-    auto value = this->visit(curr->value);
+    auto value = self()->visit(curr->value);
     if (value.breaking()) {
       return value;
     }
@@ -2988,16 +2991,16 @@ public:
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     NOTE_ENTER("AtomicCmpxchg");
-    Flow ptr = this->visit(curr->ptr);
+    Flow ptr = self()->visit(curr->ptr);
     if (ptr.breaking()) {
       return ptr;
     }
     NOTE_EVAL1(ptr);
-    auto expected = this->visit(curr->expected);
+    auto expected = self()->visit(curr->expected);
     if (expected.breaking()) {
       return expected;
     }
-    auto replacement = this->visit(curr->replacement);
+    auto replacement = self()->visit(curr->replacement);
     if (replacement.breaking()) {
       return replacement;
     }
@@ -3016,17 +3019,17 @@ public:
   }
   Flow visitAtomicWait(AtomicWait* curr) {
     NOTE_ENTER("AtomicWait");
-    Flow ptr = this->visit(curr->ptr);
+    Flow ptr = self()->visit(curr->ptr);
     if (ptr.breaking()) {
       return ptr;
     }
     NOTE_EVAL1(ptr);
-    auto expected = this->visit(curr->expected);
+    auto expected = self()->visit(curr->expected);
     NOTE_EVAL1(expected);
     if (expected.breaking()) {
       return expected;
     }
-    auto timeout = this->visit(curr->timeout);
+    auto timeout = self()->visit(curr->timeout);
     NOTE_EVAL1(timeout);
     if (timeout.breaking()) {
       return timeout;
@@ -3045,12 +3048,12 @@ public:
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
-    Flow ptr = this->visit(curr->ptr);
+    Flow ptr = self()->visit(curr->ptr);
     if (ptr.breaking()) {
       return ptr;
     }
     NOTE_EVAL1(ptr);
-    auto count = this->visit(curr->notifyCount);
+    auto count = self()->visit(curr->notifyCount);
     NOTE_EVAL1(count);
     if (count.breaking()) {
       return count;
@@ -3110,14 +3113,14 @@ public:
         WASM_UNREACHABLE("invalid op");
     }
     load.finalize();
-    Flow flow = this->visit(&load);
+    Flow flow = self()->visit(&load);
     if (flow.breaking()) {
       return flow;
     }
     return (flow.getSingleValue().*splat)();
   }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
-    Flow flow = this->visit(curr->ptr);
+    Flow flow = self()->visit(curr->ptr);
     if (flow.breaking()) {
       return flow;
     }
@@ -3173,7 +3176,7 @@ public:
     WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDLoadZero(SIMDLoad* curr) {
-    Flow flow = this->visit(curr->ptr);
+    Flow flow = self()->visit(curr->ptr);
     if (flow.breaking()) {
       return flow;
     }
@@ -3193,7 +3196,7 @@ public:
   }
   Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     NOTE_ENTER("SIMDLoadStoreLane");
-    Flow flow = this->visit(curr->ptr);
+    Flow flow = self()->visit(curr->ptr);
     if (flow.breaking()) {
       return flow;
     }
@@ -3201,7 +3204,7 @@ public:
     auto* inst = getMemoryInstance();
     Address addr =
       inst->getFinalAddress(curr, flow.getSingleValue(), curr->getMemBytes());
-    flow = this->visit(curr->vec);
+    flow = self()->visit(curr->vec);
     if (flow.breaking()) {
       return flow;
     }
@@ -3265,7 +3268,7 @@ public:
     auto* inst = getMemoryInstance();
     auto indexType = inst->wasm.memory.indexType;
     auto fail = Literal::makeFromInt64(-1, indexType);
-    Flow flow = this->visit(curr->delta);
+    Flow flow = self()->visit(curr->delta);
     if (flow.breaking()) {
       return flow;
     }
@@ -3292,15 +3295,15 @@ public:
   }
   Flow visitMemoryInit(MemoryInit* curr) {
     NOTE_ENTER("MemoryInit");
-    Flow dest = this->visit(curr->dest);
+    Flow dest = self()->visit(curr->dest);
     if (dest.breaking()) {
       return dest;
     }
-    Flow offset = this->visit(curr->offset);
+    Flow offset = self()->visit(curr->offset);
     if (offset.breaking()) {
       return offset;
     }
-    Flow size = this->visit(curr->size);
+    Flow size = self()->visit(curr->size);
     if (size.breaking()) {
       return size;
     }
@@ -3340,15 +3343,15 @@ public:
   }
   Flow visitMemoryCopy(MemoryCopy* curr) {
     NOTE_ENTER("MemoryCopy");
-    Flow dest = this->visit(curr->dest);
+    Flow dest = self()->visit(curr->dest);
     if (dest.breaking()) {
       return dest;
     }
-    Flow source = this->visit(curr->source);
+    Flow source = self()->visit(curr->source);
     if (source.breaking()) {
       return source;
     }
-    Flow size = this->visit(curr->size);
+    Flow size = self()->visit(curr->size);
     if (size.breaking()) {
       return size;
     }
@@ -3387,15 +3390,15 @@ public:
   }
   Flow visitMemoryFill(MemoryFill* curr) {
     NOTE_ENTER("MemoryFill");
-    Flow dest = this->visit(curr->dest);
+    Flow dest = self()->visit(curr->dest);
     if (dest.breaking()) {
       return dest;
     }
-    Flow value = this->visit(curr->value);
+    Flow value = self()->visit(curr->value);
     if (value.breaking()) {
       return value;
     }
-    Flow size = this->visit(curr->size);
+    Flow size = self()->visit(curr->size);
     if (size.breaking()) {
       return size;
     }
@@ -3422,7 +3425,7 @@ public:
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
     try {
-      return this->visit(curr->body);
+      return self()->visit(curr->body);
     } catch (const WasmException& e) {
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
@@ -3442,7 +3445,7 @@ public:
         // exits normally or when a new exception is thrown
         Flow ret;
         try {
-          ret = this->visit(catchBody);
+          ret = self()->visit(catchBody);
         } catch (const WasmException&) {
           exceptionStack.pop_back();
           throw;
