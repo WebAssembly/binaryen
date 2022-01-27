@@ -2683,6 +2683,13 @@ public:
     }
 
     ~FunctionScope() { parent.scope = oldScope; }
+
+    // The current delegate target, if delegation of an exception is in
+    // progress. If no delegation is in progress, this will be an empty Name.
+    // This is on a function scope because it cannot "escape" to the outside,
+    // that is, a delegate target is like a branch target, it operates within
+    // a function.
+    Name currDelegateTarget;
   };
 
 private:
@@ -2691,9 +2698,6 @@ private:
 
   // Stack of <caught exception, caught catch's try label>
   SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
-  // The current delegate target, if delegation of an exception is in
-  // progress. If no delegation is in progress, this will be an empty Name.
-  Name currDelegateTarget;
 
 protected:
   // Returns the instance that defines the memory used by this one.
@@ -3429,9 +3433,9 @@ public:
     } catch (const WasmException& e) {
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
-      if (currDelegateTarget.is()) {
-        if (currDelegateTarget == curr->name) {
-          currDelegateTarget.clear();
+      if (scope->currDelegateTarget.is()) {
+        if (scope->currDelegateTarget == curr->name) {
+          scope->currDelegateTarget.clear();
         } else {
           throw;
         }
@@ -3464,7 +3468,7 @@ public:
         return processCatchBody(curr->catchBodies.back());
       }
       if (curr->isDelegate()) {
-        currDelegateTarget = curr->delegateTarget;
+        scope->currDelegateTarget = curr->delegateTarget;
       }
       // This exception is not caught by this try-catch. Rethrow it.
       throw;
