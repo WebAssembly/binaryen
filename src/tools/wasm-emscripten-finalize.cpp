@@ -126,12 +126,6 @@ int main(int argc, const char* argv[]) {
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
          })
-    .add("--new-pic-abi",
-         "",
-         "Use new/llvm PIC abi",
-         WasmEmscriptenFinalizeOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) {})
     .add("--input-source-map",
          "-ism",
          "Consume source map from the specified file",
