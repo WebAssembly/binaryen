@@ -250,7 +250,7 @@ struct ExecutionResults {
         if (!param.isDefaultable()) {
           std::cout << "[trap fuzzer can only send defaultable parameters to "
                        "exports]\n";
-         return Trap{};
+          return Trap{};
         }
         arguments.push_back(Literal::makeZero(param));
       }
