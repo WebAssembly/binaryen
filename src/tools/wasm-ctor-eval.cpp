@@ -127,7 +127,7 @@ public:
                          ExternalInterface* externalInterface,
                          std::map<Name, std::shared_ptr<EvallingModuleInstance>>
                            linkedInstances_ = {})
-    : ModuleInstanceBase(wasm, externalInterface, linkedInstances_) {
+    : ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance>(wasm, externalInterface, linkedInstances_) {
     // if any global in the module has a non-const constructor, it is using a
     // global import, which we don't have, and is illegal to use
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
@@ -137,6 +137,20 @@ public:
         globals.addDangerous(global->name);
       }
     });
+  }
+
+  using Parent = ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance>;
+
+// An expression runner with the addition integration we need to eval ctors. In
+// particular, this adds GC support for "serializing" out GC allocations. To do
+// that, we track each allocation, and then we can write them out in the wasm
+// module by creating new globals.
+  Flow visitStructNew(StructNew* curr) {
+    auto flow = Parent::visitStructNew(curr);
+    if (!flow.breaking()) {
+      std::cout << "allocation!\n";
+    }
+    return flow;
   }
 };
 
@@ -499,32 +513,6 @@ private:
 //    it contains Literals with those results.
 using EvalCtorOutcome = std::optional<Literals>;
 
-// An expression runner with the addition integration we need to eval ctors. In
-// particular, this adds GC support for "serializing" out GC allocations. To do
-// that, we track each allocation, and then we can write them out in the wasm
-// module by creating new globals.
-class CtorEvalRunner
-  : public EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalRunner> {
-
-  using Parent =
-      EvallingModuleInstance::RuntimeExpressionRunnerBase<CtorEvalRunner>;
-
-public:
-  CtorEvalRunner(EvallingModuleInstance& instance,
-                 EvallingModuleInstance::FunctionScope& scope,
-                 Index maxDepth)
-    : Parent(
-        instance, scope, maxDepth) {}
-
-  Flow visitStructNew(StructNew* curr) {
-    auto flow = Parent::visitStructNew(curr);
-    if (!flow.breaking()) {
-      std::cout << "allocation!\n";
-    }
-    return flow;
-  }
-};
-
 // Eval a single ctor function. Returns whether we succeeded to completely
 // evaluate the ctor (which means that the caller can proceed to try to eval
 // further ctors if there are any), and if we did, the results if the function
@@ -583,9 +571,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   if (auto* block = func->body->dynCast<Block>()) {
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
-    EvallingModuleInstance::FunctionScope scope(func, params);
-
-    CtorEvalRunner expressionRunner(instance, scope, instance.maxDepth);
+    EvallingModuleInstance::FunctionScope scope(func, params, instance);
 
     // After we successfully eval a line we will apply the changes here. This is
     // the same idea as applyToModule() - we must only do it after an entire
@@ -692,7 +678,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
 
   Literals results;
   try {
-    results = instance.callFunction<CtorEvalRunner>(funcName, params);
+    results = instance.callFunction(funcName, params);
   } catch (FailToEvalException& fail) {
     std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
     return EvalCtorOutcome();
