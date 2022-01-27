@@ -26,6 +26,7 @@
 #include <cmath>
 #include <limits.h>
 #include <sstream>
+#include <variant>
 
 #include "ir/module-utils.h"
 #include "support/bits.h"
@@ -33,10 +34,6 @@
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
-
-#ifdef WASM_INTERPRETER_DEBUG
-#include "wasm-printing.h"
-#endif
 
 namespace wasm {
 
@@ -100,9 +97,6 @@ public:
     return o;
   }
 };
-
-// A list of literals, for function calls
-typedef std::vector<Literal> LiteralList;
 
 // Debugging helpers
 #ifdef WASM_INTERPRETER_DEBUG
@@ -168,8 +162,7 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
-  Flow generateArguments(const ExpressionList& operands,
-                         LiteralList& arguments) {
+  Flow generateArguments(const ExpressionList& operands, Literals& arguments) {
     NOTE_ENTER_("generateArguments");
     arguments.reserve(operands.size());
     for (auto expression : operands) {
@@ -537,8 +530,10 @@ public:
       case ExtAddPairwiseUVecI16x8ToI32x4:
         return value.extAddPairwiseToUI32x4();
       case TruncSatSVecF32x4ToVecI32x4:
+      case RelaxedTruncSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
+      case RelaxedTruncUVecF32x4ToVecI32x4:
         return value.truncSatToUI32x4();
       case ConvertSVecI32x4ToVecF32x4:
         return value.convertSToF32x4();
@@ -573,8 +568,10 @@ public:
       case ConvertLowUVecI32x4ToVecF64x2:
         return value.convertLowUToF64x2();
       case TruncSatZeroSVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroSVecF64x2ToVecI32x4:
         return value.truncSatZeroSToI32x4();
       case TruncSatZeroUVecF64x2ToVecI32x4:
+      case RelaxedTruncZeroUVecF64x2ToVecI32x4:
         return value.truncSatZeroUToI32x4();
       case DemoteZeroVecF64x2ToVecF32x4:
         return value.demoteZeroToF32x4();
@@ -975,8 +972,10 @@ public:
       case DivVecF32x4:
         return left.divF32x4(right);
       case MinVecF32x4:
+      case RelaxedMinVecF32x4:
         return left.minF32x4(right);
       case MaxVecF32x4:
+      case RelaxedMaxVecF32x4:
         return left.maxF32x4(right);
       case PMinVecF32x4:
         return left.pminF32x4(right);
@@ -991,8 +990,10 @@ public:
       case DivVecF64x2:
         return left.divF64x2(right);
       case MinVecF64x2:
+      case RelaxedMinVecF64x2:
         return left.minF64x2(right);
       case MaxVecF64x2:
+      case RelaxedMaxVecF64x2:
         return left.maxF64x2(right);
       case PMinVecF64x2:
         return left.pminF64x2(right);
@@ -1009,6 +1010,7 @@ public:
         return left.narrowUToI16x8(right);
 
       case SwizzleVec8x16:
+      case RelaxedSwizzleVec8x16:
         return left.swizzleI8x16(right);
 
       case InvalidBinary:
@@ -1104,9 +1106,22 @@ public:
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
+      case LaneselectI8x16:
+      case LaneselectI16x8:
+      case LaneselectI32x4:
+      case LaneselectI64x2:
         return c.bitselectV128(a, b);
+
+      case RelaxedFmaVecF32x4:
+        return a.relaxedFmaF32x4(b, c);
+      case RelaxedFmsVecF32x4:
+        return a.relaxedFmsF32x4(b, c);
+      case RelaxedFmaVecF64x2:
+        return a.relaxedFmaF64x2(b, c);
+      case RelaxedFmsVecF64x2:
+        return a.relaxedFmsF64x2(b, c);
       default:
-        // TODO: implement qfma/qfms and signselect
+        // TODO: implement signselect
         WASM_UNREACHABLE("not implemented");
     }
   }
@@ -1265,7 +1280,7 @@ public:
   }
   Flow visitTupleMake(TupleMake* curr) {
     NOTE_ENTER("tuple.make");
-    LiteralList arguments;
+    Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
@@ -1365,7 +1380,7 @@ public:
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
-    LiteralList arguments;
+    Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
@@ -1404,153 +1419,139 @@ public:
   // Helper for ref.test, ref.cast, and br_on_cast, which share almost all their
   // logic except for what they return.
   struct Cast {
-    enum Outcome {
-      // We took a break before doing anything.
-      Break,
-      // The input was null.
-      Null,
-      // The cast succeeded.
-      Success,
-      // The cast failed.
-      Failure
-    } outcome;
+    // The control flow that preempts the cast.
+    struct Breaking : Flow {
+      Breaking(Flow breaking) : Flow(breaking) {}
+    };
+    // The null input to the cast.
+    struct Null : Literal {
+      Null(Literal original) : Literal(original) {}
+    };
+    // The result of the successful cast.
+    struct Success : Literal {
+      Success(Literal result) : Literal(result) {}
+    };
+    // The input to a failed cast.
+    struct Failure : Literal {
+      Failure(Literal original) : Literal(original) {}
+    };
 
-    Flow breaking;
-    Literal originalRef;
-    Literal castRef;
+    std::variant<Breaking, Null, Success, Failure> state;
+
+    template<class T> Cast(T state) : state(state) {}
+    Flow* getBreaking() { return std::get_if<Breaking>(&state); }
+    Literal* getNull() { return std::get_if<Null>(&state); }
+    Literal* getSuccess() { return std::get_if<Success>(&state); }
+    Literal* getFailure() { return std::get_if<Failure>(&state); }
+    Literal* getNullOrFailure() {
+      if (auto* original = getNull()) {
+        return original;
+      } else {
+        return getFailure();
+      }
+    }
   };
 
   template<typename T> Cast doCast(T* curr) {
-    Cast cast;
     Flow ref = this->visit(curr->ref);
     if (ref.breaking()) {
-      cast.outcome = cast.Break;
-      cast.breaking = ref;
-      return cast;
+      return typename Cast::Breaking{ref};
     }
+    // The RTT value for the type we are trying to cast to.
     Literal intendedRtt;
     if (curr->rtt) {
-      // This is a dynamic check with an rtt.
+      // This is a dynamic check with an RTT.
       Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
-        cast.outcome = cast.Break;
-        cast.breaking = rtt;
-        return cast;
+        return typename Cast::Breaking{rtt};
       }
       intendedRtt = rtt.getSingleValue();
+    } else {
+      // If there is no explicit RTT, use the canonical RTT for the static type.
+      intendedRtt = Literal::makeCanonicalRtt(curr->intendedType);
     }
-    cast.originalRef = ref.getSingleValue();
-    if (cast.originalRef.isNull()) {
-      cast.outcome = cast.Null;
-      return cast;
+    Literal original = ref.getSingleValue();
+    if (original.isNull()) {
+      return typename Cast::Null{original};
     }
     // The input may not be GC data or a function; for example it could be an
-    // anyref of null (already handled above) or anything else (handled here,
-    // but this is for future use as atm the binaryen interpreter cannot
-    // represent external references).
-    if (!cast.originalRef.isData() && !cast.originalRef.isFunction()) {
-      cast.outcome = cast.Failure;
-      return cast;
+    // externref or an i31. The cast definitely fails in these cases.
+    if (!original.isData() && !original.isFunction()) {
+      return typename Cast::Failure{original};
     }
-    if (cast.originalRef.isFunction()) {
-      // Function casts are simple in that they have no RTT hierarchies; instead
-      // each reference has the canonical RTT for the signature.
-      // We must have a module in order to perform the cast, to get the type. If
-      // we do not have one, or if the function is not present (which may happen
-      // if we are optimizing a function before the entire module is built),
-      // then this is something we cannot precompute.
-      auto* func = module
-                     ? module->getFunctionOrNull(cast.originalRef.getFunc())
-                     : nullptr;
+    Literal actualRtt;
+    if (original.isFunction()) {
+      // Function references always have the canonical RTTs of the functions
+      // they reference. We must have a module to look up the function's type to
+      // get that canonical RTT.
+      auto* func =
+        module ? module->getFunctionOrNull(original.getFunc()) : nullptr;
       if (!func) {
-        cast.outcome = cast.Break;
-        cast.breaking = NONCONSTANT_FLOW;
-        return cast;
+        return typename Cast::Breaking{NONCONSTANT_FLOW};
       }
-      if (curr->rtt) {
-        Literal seenRtt = Literal(Type(Rtt(0, func->type)));
-        if (!seenRtt.isSubRtt(intendedRtt)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef = Literal(
-          func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
+      actualRtt = Literal::makeCanonicalRtt(func->type);
+    } else {
+      assert(original.isData());
+      actualRtt = original.getGCData()->rtt;
+    };
+    // We have the actual and intended RTTs, so perform the cast.
+    if (actualRtt.isSubRtt(intendedRtt)) {
+      Type resultType(intendedRtt.type.getHeapType(), NonNullable);
+      if (original.isFunction()) {
+        return typename Cast::Success{Literal{original.getFunc(), resultType}};
       } else {
-        if (!HeapType::isSubType(func->type, curr->intendedType)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef =
-          Literal(func->name, Type(curr->intendedType, NonNullable));
+        return
+          typename Cast::Success{Literal(original.getGCData(), resultType)};
       }
     } else {
-      // GC data store an RTT in each instance.
-      assert(cast.originalRef.isData());
-      auto gcData = cast.originalRef.getGCData();
-      if (curr->rtt) {
-        Literal seenRtt = gcData->rtt;
-        if (!seenRtt.isSubRtt(intendedRtt)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef =
-          Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
-      } else {
-        auto seenType = gcData->type;
-        if (!HeapType::isSubType(seenType, curr->intendedType)) {
-          cast.outcome = cast.Failure;
-          return cast;
-        }
-        cast.castRef = Literal(gcData, Type(seenType, NonNullable));
-      }
+      return typename Cast::Failure{original};
     }
-    cast.outcome = cast.Success;
-    return cast;
   }
 
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
     auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
+    if (auto* breaking = cast.getBreaking()) {
+      return *breaking;
+    } else {
+      return Literal(int32_t(bool(cast.getSuccess())));
     }
-    return Literal(int32_t(cast.outcome == cast.Success));
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
     auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
-    }
-    if (cast.outcome == cast.Null) {
+    if (auto* breaking = cast.getBreaking()) {
+      return *breaking;
+    } else if (cast.getNull()) {
       return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
+    } else if (auto* result = cast.getSuccess()) {
+      return *result;
     }
-    if (cast.outcome == cast.Failure) {
-      trap("cast error");
-    }
-    assert(cast.outcome == cast.Success);
-    return cast.castRef;
+    assert(cast.getFailure());
+    trap("cast error");
+    WASM_UNREACHABLE("unreachable");
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
-    // BrOnCast* uses the casting infrastructure, so handle it first.
+    // BrOnCast* uses the casting infrastructure, so handle them first.
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       auto cast = doCast(curr);
-      if (cast.outcome == cast.Break) {
-        return cast.breaking;
-      }
-      if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+      if (auto* breaking = cast.getBreaking()) {
+        return *breaking;
+      } else if (auto* original = cast.getNullOrFailure()) {
         if (curr->op == BrOnCast) {
-          return cast.originalRef;
+          return *original;
         } else {
-          return Flow(curr->name, cast.originalRef);
+          return Flow(curr->name, *original);
         }
-      }
-      assert(cast.outcome == cast.Success);
-      if (curr->op == BrOnCast) {
-        return Flow(curr->name, cast.castRef);
       } else {
-        return cast.castRef;
+        auto* result = cast.getSuccess();
+        assert(result);
+        if (curr->op == BrOnCast) {
+          return Flow(curr->name, *result);
+        } else {
+          return *result;
+        }
       }
     }
     // The others do a simpler check for the type.
@@ -1618,7 +1619,9 @@ public:
     }
     return {value};
   }
-  Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
+  Flow visitRttCanon(RttCanon* curr) {
+    return Literal::makeCanonicalRtt(curr->type.getHeapType());
+  }
   Flow visitRttSub(RttSub* curr) {
     Flow parent = this->visit(curr->parent);
     if (parent.breaking()) {
@@ -1626,34 +1629,22 @@ public:
     }
     auto parentValue = parent.getSingleValue();
     auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
-    newSupers->push_back(parentValue.type);
+    newSupers->push_back(parentValue.type.getHeapType());
     if (curr->fresh) {
       newSupers->back().makeFresh();
     }
     return Literal(std::move(newSupers), curr->type);
   }
 
-  // Generates GC data for either dynamic (with an RTT) or static (with a type)
-  // typing. Dynamic typing will provide an rtt expression and an rtt flow with
-  // the value, while static typing only provides a heap type directly.
-  template<typename T>
-  std::shared_ptr<GCData>
-  makeGCData(Expression* rttExpr, Flow& rttFlow, HeapType type, T& data) {
-    if (rttExpr) {
-      return std::make_shared<GCData>(rttFlow.getSingleValue(), data);
-    } else {
-      return std::make_shared<GCData>(type, data);
-    }
-  }
-
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    Flow rtt;
+    Literal rttVal;
     if (curr->rtt) {
-      rtt = this->visit(curr->rtt);
+      Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
+      rttVal = rtt.getSingleValue();
     }
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
@@ -1680,8 +1671,10 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(
-      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1724,12 +1717,13 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    Flow rtt;
+    Literal rttVal;
     if (curr->rtt) {
-      rtt = this->visit(curr->rtt);
+      Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
+      rttVal = rtt.getSingleValue();
     }
     auto size = this->visit(curr->size);
     if (size.breaking()) {
@@ -1764,17 +1758,20 @@ public:
         data[i] = value;
       }
     }
-    return Flow(
-      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
-    Flow rtt;
+    Literal rttVal;
     if (curr->rtt) {
-      rtt = this->visit(curr->rtt);
+      Flow rtt = this->visit(curr->rtt);
       if (rtt.breaking()) {
         return rtt;
       }
+      rttVal = rtt.getSingleValue();
     }
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
@@ -1801,8 +1798,10 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return Flow(
-      Literal(makeGCData(curr->rtt, rtt, heapType, data), curr->type));
+    if (!curr->rtt) {
+      rttVal = Literal::makeCanonicalRtt(heapType);
+    }
+    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -2303,11 +2302,11 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
-    virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
+    virtual Literals callImport(Function* import, Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
-                               Signature sig,
-                               LiteralList& arguments,
+                               HeapType sig,
+                               Literals& arguments,
                                Type result,
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
@@ -2507,13 +2506,13 @@ public:
 
     // run start, if present
     if (wasm.start.is()) {
-      LiteralList arguments;
+      Literals arguments;
       callFunction(wasm.start, arguments);
     }
   }
 
   // call an exported function
-  Literals callExport(Name name, const LiteralList& arguments) {
+  Literals callExport(Name name, const Literals& arguments) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_) {
       externalInterface->trap("callExport not found");
@@ -2521,7 +2520,7 @@ public:
     return callFunction(export_->value, arguments);
   }
 
-  Literals callExport(Name name) { return callExport(name, LiteralList()); }
+  Literals callExport(Name name) { return callExport(name, Literals()); }
 
   // get an exported global
   Literals getExport(Name name) {
@@ -2548,7 +2547,7 @@ public:
 
 private:
   // Keep a record of call depth, to guard against excessive recursion.
-  size_t callDepth;
+  size_t callDepth = 0;
 
   // Function name stack. We maintain this explicitly to allow printing of
   // stack traces.
@@ -2650,12 +2649,13 @@ private:
     }
   }
 
+public:
   class FunctionScope {
   public:
     std::vector<Literals> locals;
     Function* function;
 
-    FunctionScope(Function* function, const LiteralList& arguments)
+    FunctionScope(Function* function, const Literals& arguments)
       : function(function) {
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -2684,12 +2684,15 @@ private:
 
   // Executes expressions with concrete runtime info, the function and module at
   // runtime
-  class RuntimeExpressionRunner
-    : public ExpressionRunner<RuntimeExpressionRunner> {
+  template<typename RERSubType>
+  class RuntimeExpressionRunnerBase : public ExpressionRunner<RERSubType> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
     // Stack of <caught exception, caught catch's try label>
     SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
+    // The current delegate target, if delegation of an exception is in
+    // progress. If no delegation is in progress, this will be an empty Name.
+    Name currDelegateTarget;
 
   protected:
     // Returns the instance that defines the memory used by this one.
@@ -2715,16 +2718,16 @@ private:
     }
 
   public:
-    RuntimeExpressionRunner(ModuleInstanceBase& instance,
-                            FunctionScope& scope,
-                            Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(&instance.wasm, maxDepth),
+    RuntimeExpressionRunnerBase(ModuleInstanceBase& instance,
+                                FunctionScope& scope,
+                                Index maxDepth)
+      : ExpressionRunner<RERSubType>(&instance.wasm, maxDepth),
         instance(instance), scope(scope) {}
 
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
       NOTE_NAME(curr->target);
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -2748,7 +2751,7 @@ private:
 
     Flow visitCallIndirect(CallIndirect* curr) {
       NOTE_ENTER("CallIndirect");
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -2763,7 +2766,7 @@ private:
 
       auto info = instance.getTableInterfaceInfo(curr->table);
       Flow ret = info.interface->callTable(
-        info.name, index, curr->sig, arguments, type, *instance.self());
+        info.name, index, curr->heapType, arguments, type, *instance.self());
 
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
@@ -2773,7 +2776,7 @@ private:
     }
     Flow visitCallRef(CallRef* curr) {
       NOTE_ENTER("CallRef");
-      LiteralList arguments;
+      Literals arguments;
       Flow flow = this->generateArguments(curr->operands, arguments);
       if (flow.breaking()) {
         return flow;
@@ -3436,6 +3439,16 @@ private:
       try {
         return this->visit(curr->body);
       } catch (const WasmException& e) {
+        // If delegation is in progress and the current try is not the target of
+        // the delegation, don't handle it and just rethrow.
+        if (currDelegateTarget.is()) {
+          if (currDelegateTarget == curr->name) {
+            currDelegateTarget.clear();
+          } else {
+            throw;
+          }
+        }
+
         auto processCatchBody = [&](Expression* catchBody) {
           // Push the current exception onto the exceptionStack in case
           // 'rethrow's use it
@@ -3461,6 +3474,9 @@ private:
         }
         if (curr->hasCatchAll()) {
           return processCatchBody(curr->catchBodies.back());
+        }
+        if (curr->isDelegate()) {
+          currDelegateTarget = curr->delegateTarget;
         }
         // This exception is not caught by this try-catch. Rethrow it.
         throw;
@@ -3534,19 +3550,30 @@ private:
     }
   };
 
-public:
+  class RuntimeExpressionRunner
+    : public RuntimeExpressionRunnerBase<RuntimeExpressionRunner> {
+  public:
+    RuntimeExpressionRunner(ModuleInstanceBase& instance,
+                            FunctionScope& scope,
+                            Index maxDepth)
+      : RuntimeExpressionRunnerBase<RuntimeExpressionRunner>(
+          instance, scope, maxDepth) {}
+  };
+
   // Call a function, starting an invocation.
-  Literals callFunction(Name name, const LiteralList& arguments) {
+  template<typename Runner = RuntimeExpressionRunner>
+  Literals callFunction(Name name, const Literals& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
     callDepth = 0;
     functionStack.clear();
-    return callFunctionInternal(name, arguments);
+    return callFunctionInternal<Runner>(name, arguments);
   }
 
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
-  Literals callFunctionInternal(Name name, const LiteralList& arguments) {
+  template<typename Runner = RuntimeExpressionRunner>
+  Literals callFunctionInternal(Name name, const Literals& arguments) {
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }
@@ -3566,8 +3593,7 @@ public:
     }
 #endif
 
-    Flow flow =
-      RuntimeExpressionRunner(*this, scope, maxDepth).visit(function->body);
+    Flow flow = Runner(*this, scope, maxDepth).visit(function->body);
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();
@@ -3590,9 +3616,11 @@ public:
     return flow.values;
   }
 
+  // The maximum call stack depth to evaluate into.
+  static const Index maxDepth = 250;
+
 protected:
   Address memorySize; // in pages
-  static const Index maxDepth = 250;
 
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
     if (lhs > rhs) {

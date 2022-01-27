@@ -1,7 +1,13 @@
 # Version set according the the cmake versions available in Ubuntu/Bionic:
 # https://packages.ubuntu.com/bionic/cmake
 cmake_minimum_required(VERSION 3.10.2)
-project(binaryen LANGUAGES C CXX VERSION 102)
+
+# Needed for C++17 (std::variant)
+# TODO(https://github.com/WebAssembly/binaryen/issues/4299): We need
+# to reduce this for compatability with emsdk.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
+
+project(binaryen LANGUAGES C CXX VERSION 105)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -99,6 +105,16 @@ function(binaryen_setup_rpath name)
                         ${_install_name_dir})
 endfunction()
 
+function(binaryen_add_executable name sources)
+  add_executable(${name} ${sources})
+  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} binaryen)
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STANDARD})
+  set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
+  binaryen_setup_rpath(${name})
+  install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+endfunction()
+
 # Options
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
@@ -159,7 +175,7 @@ if(MSVC)
       add_compile_flag("/arch:sse2")
     endif()
   endif()
-  add_compile_flag("/std:c++17") # VS2017 generates "error C2429: attribute 'fallthrough' requires compiler flag '/std:c++17'"
+  add_compile_flag("/std:c++${CXX_STANDARD}")
   add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
   # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
   add_compile_flag("/wd4267")
@@ -252,12 +268,7 @@ else()
   endif()
   add_debug_compile_flag("-O0")
   add_debug_compile_flag("-g3")
-  if(EMSCRIPTEN)
-    # really focus on minimizing output size when compiling sources
-    add_nondebug_compile_flag("-Oz")
-  else()
-    add_nondebug_compile_flag("-O2")
-  endif()
+  add_nondebug_compile_flag("-O2")
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
@@ -304,6 +315,9 @@ add_subdirectory(third_party)
 
 # Configure lit tests
 add_subdirectory(test/lit)
+
+# Configure GTest unit tests
+add_subdirectory(test/gtest)
 
 # Object files
 set(binaryen_objs
@@ -362,10 +376,10 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support wasm)
   target_link_libraries(binaryen_wasm "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_wasm "-s NODERAWFS=0")
-  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm "-s EXPORT_ES6=1")
   target_link_libraries(binaryen_wasm "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
-  target_link_libraries(binaryen_wasm "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_wasm optimized "--closure 1")
   target_link_libraries(binaryen_wasm optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "-flto")
@@ -386,10 +400,10 @@ if(EMSCRIPTEN)
   endif()
   target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
-  target_link_libraries(binaryen_js "-s EXPORT_NAME=binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_js "-s EXPORT_ES6=1")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
-  target_link_libraries(binaryen_js "--extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-post.js")
   target_link_libraries(binaryen_js optimized "--closure 1")
   target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_js optimized "-flto")

@@ -26,6 +26,7 @@
 #include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/eh-utils.h>
 #include <ir/find_all.h>
 #include <ir/gc-type-utils.h>
 #include <ir/iteration.h>
@@ -229,6 +230,9 @@ struct OptimizeInstructions
     // Some patterns create locals (like when we use getResultOfFirst), which we
     // may need to fix up.
     TypeUpdating::handleNonDefaultableLocals(func, *getModule());
+    // Some patterns create blocks that can interfere 'catch' and 'pop', nesting
+    // the 'pop' into a block making it invalid.
+    EHUtils::handleBlockNestedPops(func, *getModule());
   }
 
   // Set to true when one of the visitors makes a change (either replacing the
@@ -772,16 +776,21 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    // bitwise operations
-    // for and and or, we can potentially conditionalize
     if (curr->op == AndInt32 || curr->op == OrInt32) {
-      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
-        return replaceCurrent(ret);
+      if (curr->op == AndInt32) {
+        if (auto* ret = combineAnd(curr)) {
+          return replaceCurrent(ret);
+        }
       }
-    }
-    // for or, we can potentially combine
-    if (curr->op == OrInt32) {
-      if (auto* ret = combineOr(curr)) {
+      // for or, we can potentially combine
+      if (curr->op == OrInt32) {
+        if (auto* ret = combineOr(curr)) {
+          return replaceCurrent(ret);
+        }
+      }
+      // bitwise operations
+      // for and and or, we can potentially conditionalize
+      if (auto* ret = conditionalizeExpensiveOnBitwise(curr)) {
         return replaceCurrent(ret);
       }
     }
@@ -903,6 +912,46 @@ struct OptimizeInstructions
           inner->type = Type::i64;
           inner->value = x;
           return replaceCurrent(inner);
+        }
+      }
+    }
+
+    if (curr->op == ExtendUInt32 || curr->op == ExtendSInt32) {
+      if (auto* load = curr->value->dynCast<Load>()) {
+        // i64.extend_i32_s(i32.load(_8|_16)(_u|_s)(x))  =>
+        //    i64.load(_8|_16|_32)(_u|_s)(x)
+        //
+        // i64.extend_i32_u(i32.load(_8|_16)(_u|_s)(x))  =>
+        //    i64.load(_8|_16|_32)(_u|_s)(x)
+        //
+        // but we can't do this in following cases:
+        //
+        //    i64.extend_i32_u(i32.load8_s(x))
+        //    i64.extend_i32_u(i32.load16_s(x))
+        //
+        // this mixed sign/zero extensions can't represent in single
+        // signed or unsigned 64-bit load operation. For example if `load8_s(x)`
+        // return i8(-1) (0xFF) than sign extended result will be
+        // i32(-1) (0xFFFFFFFF) and with zero extension to i64 we got
+        // finally 0x00000000FFFFFFFF. However with `i64.load8_s` in this
+        // situation we got `i64(-1)` (all ones) and with `i64.load8_u` it
+        // will be 0x00000000000000FF.
+        //
+        // Another limitation is atomics which only have unsigned loads.
+        // So we also avoid this only case:
+        //
+        //   i64.extend_i32_s(i32.atomic.load(x))
+
+        // Special case for i32.load. In this case signedness depends on
+        // extend operation.
+        bool willBeSigned = curr->op == ExtendSInt32 && load->bytes == 4;
+        if (!(curr->op == ExtendUInt32 && load->bytes <= 2 && load->signed_) &&
+            !(willBeSigned && load->isAtomic)) {
+          if (willBeSigned) {
+            load->signed_ = true;
+          }
+          load->type = Type::i64;
+          return replaceCurrent(load);
         }
       }
     }
@@ -1084,7 +1133,7 @@ struct OptimizeInstructions
         // Otherwise, if this is not a tee, then no value falls through. The
         // ref.as_non_null acts as a null check here, basically. If we are
         // ignoring such traps, we can remove it.
-        auto passOptions = getPassOptions();
+        auto& passOptions = getPassOptions();
         if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
           curr->value = as->value;
         }
@@ -1208,7 +1257,7 @@ struct OptimizeInstructions
                        .makeCallIndirect(get->table,
                                          get->index,
                                          curr->operands,
-                                         get->type.getHeapType().getSignature(),
+                                         get->type.getHeapType(),
                                          curr->isReturn));
       return;
     }
@@ -1495,7 +1544,7 @@ struct OptimizeInstructions
     }
 
     Builder builder(*getModule());
-    auto passOptions = getPassOptions();
+    auto& passOptions = getPassOptions();
 
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
@@ -1608,20 +1657,34 @@ struct OptimizeInstructions
         auto childIntendedType = child->getIntendedType();
         if (HeapType::isSubType(intendedType, childIntendedType)) {
           // Skip the child.
-          curr->ref = child->ref;
-          return;
-        } else if (HeapType::isSubType(childIntendedType, intendedType)) {
-          // Skip the parent.
-          replaceCurrent(child);
-          return;
-        } else {
+          if (curr->ref == child) {
+            curr->ref = child->ref;
+            return;
+          } else {
+            // The child is not the direct child of the parent, but it is a
+            // fallthrough value, for example,
+            //
+            //  (ref.cast parent
+            //   (block
+            //    .. other code ..
+            //    (ref.cast child)))
+            //
+            // In this case it isn't obvious that we can remove the child, as
+            // doing so might require updating the types of the things in the
+            // middle - and in fact the sole purpose of the child may be to get
+            // a proper type for validation to work. Do nothing in this case,
+            // and hope that other opts will help here (for example,
+            // trapsNeverHappen will help if the code validates without the
+            // child).
+          }
+        } else if (!canBeCastTo(intendedType, childIntendedType)) {
           // The types are not compatible, so if the input is not null, this
           // will trap.
           if (!curr->type.isNullable()) {
             // Make sure to emit a block with the same type as us; leave
             // updating types for other passes.
             replaceCurrent(builder.makeBlock(
-              {builder.makeDrop(child->ref), builder.makeUnreachable()},
+              {builder.makeDrop(curr->ref), builder.makeUnreachable()},
               curr->type));
             return;
           }
@@ -1810,7 +1873,7 @@ private:
     // assume things like local.get's of the same index being identical. (It is
     // also ok to have side effects here, if we can remove them, as we are also
     // checking if we can remove the two inputs anyhow.)
-    auto passOptions = getPassOptions();
+    auto& passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, *getModule(), left)
           .hasUnremovableSideEffects() ||
         EffectAnalyzer(passOptions, *getModule(), right)
@@ -2497,12 +2560,90 @@ private:
     }
   }
 
+  // We can combine `and` operations, e.g.
+  //   (x == 0) & (y == 0)   ==>    (x | y) == 0
+  Expression* combineAnd(Binary* curr) {
+    assert(curr->op == AndInt32);
+
+    using namespace Abstract;
+    using namespace Match;
+
+    {
+      // (i32(x) == 0) & (i32(y) == 0)   ==>   i32(x | y) == 0
+      // (i64(x) == 0) & (i64(y) == 0)   ==>   i64(x | y) == 0
+      Expression *x, *y;
+      if (matches(curr->left, unary(EqZ, any(&x))) &&
+          matches(curr->right, unary(EqZ, any(&y))) && x->type == y->type) {
+        auto* inner = curr->left->cast<Unary>();
+        inner->value =
+          Builder(*getModule()).makeBinary(getBinary(x->type, Or), x, y);
+        return inner;
+      }
+    }
+    {
+      // Binary operations that inverse a bitwise AND can be
+      // reordered. If F(x) = binary(x, c), and F(x) preserves AND,
+      // that is,
+      //
+      //   F(x) & F(y) == F(x | y)
+      //
+      // Then also
+      //
+      //   binary(x, c) & binary(y, c)  =>  binary(x | y, c)
+      Binary *bx, *by;
+      Expression *x, *y;
+      Const *cx, *cy;
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          inversesAnd(bx)) {
+        by->op = getBinary(x->type, Or);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
+        return bx;
+      }
+    }
+    {
+      // Binary operations that preserve a bitwise AND can be
+      // reordered. If F(x) = binary(x, c), and F(x) preserves AND,
+      // that is,
+      //
+      //   F(x) & F(y) == F(x & y)
+      //
+      // Then also
+      //
+      //   binary(x, c) & binary(y, c)  =>  binary(x & y, c)
+      Binary *bx, *by;
+      Expression *x, *y;
+      Const *cx, *cy;
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          preserveAnd(bx)) {
+        by->op = getBinary(x->type, And);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
+        return bx;
+      }
+    }
+    return nullptr;
+  }
+
   // We can combine `or` operations, e.g.
-  //   (x > y) | (x == y)    ==>    x >= y
-  Expression* combineOr(Binary* binary) {
-    assert(binary->op == OrInt32);
-    if (auto* left = binary->left->dynCast<Binary>()) {
-      if (auto* right = binary->right->dynCast<Binary>()) {
+  //   (x > y)  | (x == y)    ==>    x >= y
+  //   (x != 0) | (y != 0)    ==>    (x | y) != 0
+  Expression* combineOr(Binary* curr) {
+    assert(curr->op == OrInt32);
+
+    using namespace Abstract;
+    using namespace Match;
+
+    if (auto* left = curr->left->dynCast<Binary>()) {
+      if (auto* right = curr->right->dynCast<Binary>()) {
         if (left->op != right->op &&
             ExpressionAnalyzer::equal(left->left, right->left) &&
             ExpressionAnalyzer::equal(left->right, right->right) &&
@@ -2523,7 +2664,160 @@ private:
         }
       }
     }
+    {
+      // Binary operations that inverses a bitwise OR to AND.
+      // If F(x) = binary(x, c), and F(x) inverses OR,
+      // that is,
+      //
+      //   F(x) | F(y) == F(x & y)
+      //
+      // Then also
+      //
+      //   binary(x, c) | binary(y, c)  =>  binary(x & y, c)
+      Binary *bx, *by;
+      Expression *x, *y;
+      Const *cx, *cy;
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          inversesOr(bx)) {
+        by->op = getBinary(x->type, And);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
+        return bx;
+      }
+    }
+    {
+      // Binary operations that preserve a bitwise OR can be
+      // reordered. If F(x) = binary(x, c), and F(x) preserves OR,
+      // that is,
+      //
+      //   F(x) | F(y) == F(x | y)
+      //
+      // Then also
+      //
+      //   binary(x, c) | binary(y, c)  =>  binary(x | y, c)
+      Binary *bx, *by;
+      Expression *x, *y;
+      Const *cx, *cy;
+      if (matches(curr->left, binary(&bx, any(&x), ival(&cx))) &&
+          matches(curr->right, binary(&by, any(&y), ival(&cy))) &&
+          bx->op == by->op && x->type == y->type && cx->value == cy->value &&
+          preserveOr(bx)) {
+        by->op = getBinary(x->type, Or);
+        by->type = x->type;
+        by->left = x;
+        by->right = y;
+        bx->left = by;
+        return bx;
+      }
+    }
     return nullptr;
+  }
+
+  // Check whether an operation preserves the Or operation through it, that is,
+  //
+  //   F(x | y) = F(x) | F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the | operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool preserveOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x != 0) | (y != 0)    ==>    (x | y) != 0
+    // This effectively checks if any bits are set in x or y.
+    if (matches(curr, binary(Ne, any(), ival(0)))) {
+      return true;
+    }
+    // (x < 0) | (y < 0)    ==>    (x | y) < 0
+    // This effectively checks if x or y have the sign bit set.
+    if (matches(curr, binary(LtS, any(), ival(0)))) {
+      return true;
+    }
+    return false;
+  }
+
+  // Check whether an operation inverses the Or operation to And, that is,
+  //
+  //   F(x | y) = F(x) & F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the | operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool inversesOr(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x >= 0) | (y >= 0)   ==>   (x & y) >= 0
+    if (matches(curr, binary(GeS, any(), ival(0)))) {
+      return true;
+    }
+
+    // (x !=-1) | (y !=-1)   ==>   (x & y) !=-1
+    if (matches(curr, binary(Ne, any(), ival(-1)))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Check whether an operation preserves the And operation through it, that is,
+  //
+  //   F(x & y) = F(x) & F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the & operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool preserveAnd(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x < 0) & (y < 0)   ==>   (x & y) < 0
+    if (matches(curr, binary(LtS, any(), ival(0)))) {
+      return true;
+    }
+
+    // (x == -1) & (y == -1)   ==>   (x & y) == -1
+    if (matches(curr, binary(Eq, any(), ival(-1)))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Check whether an operation inverses the And operation to Or, that is,
+  //
+  //   F(x & y) = F(x) | F(y)
+  //
+  // Mathematically that means F is homomorphic with respect to the & operation.
+  //
+  // F(x) is seen as taking a single parameter of its first child. That is, the
+  // first child is |x|, and the rest is constant. For example, if we are given
+  // a binary with operation != and the right child is a constant 0, then
+  // F(x) = (x != 0).
+  bool inversesAnd(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x >= 0) & (y >= 0)   ==>   (x | y) >= 0
+    if (matches(curr, binary(GeS, any(), ival(0)))) {
+      return true;
+    }
+
+    return false;
   }
 
   // fold constant factors into the offset
@@ -3258,7 +3552,7 @@ private:
   }
 
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
-    PassOptions options = getPassOptions();
+    auto& options = getPassOptions();
 
     if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
@@ -3337,7 +3631,7 @@ private:
       return nullptr;
     }
 
-    PassOptions options = getPassOptions();
+    auto& options = getPassOptions();
     Builder builder(*getModule());
 
     auto* csize = memFill->size->cast<Const>();

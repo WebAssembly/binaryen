@@ -24,10 +24,10 @@
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $foo
+  ;; NOMNL:      (func $foo (type $none_=>_none)
   ;; NOMNL-NEXT:  (nop)
   ;; NOMNL-NEXT: )
-  ;; NOMNL-TNH:      (func $foo
+  ;; NOMNL-TNH:      (func $foo (type $none_=>_none)
   ;; NOMNL-TNH-NEXT:  (nop)
   ;; NOMNL-TNH-NEXT: )
   (func $foo)
@@ -68,7 +68,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-iit (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
+  ;; NOMNL:      (func $ref-cast-iit (type $ref|$parent|_ref|$child|_ref|$other|_rtt_$parent_rtt_$child_rtt_$other_=>_none) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $parent))
   ;; NOMNL-NEXT:    (drop
@@ -103,7 +103,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  ;; NOMNL-TNH:      (func $ref-cast-iit (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
+  ;; NOMNL-TNH:      (func $ref-cast-iit (type $ref|$parent|_ref|$child|_ref|$other|_rtt_$parent_rtt_$child_rtt_$other_=>_none) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
   ;; NOMNL-TNH-NEXT:  (drop
   ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
   ;; NOMNL-TNH-NEXT:    (drop
@@ -214,7 +214,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
+  ;; NOMNL:      (func $ref-cast-iit-bad (type $ref|$parent|_rtt_$parent_=>_none) (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
   ;; NOMNL-NEXT:  (local $2 (ref null $parent))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $parent))
@@ -248,7 +248,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  ;; NOMNL-TNH:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
+  ;; NOMNL-TNH:      (func $ref-cast-iit-bad (type $ref|$parent|_rtt_$parent_=>_none) (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
   ;; NOMNL-TNH-NEXT:  (local $2 (ref null $parent))
   ;; NOMNL-TNH-NEXT:  (drop
   ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
@@ -320,12 +320,12 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; NOMNL:      (func $ref-eq-ref-cast (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (i32.const 1)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  ;; NOMNL-TNH:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; NOMNL-TNH:      (func $ref-eq-ref-cast (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-TNH-NEXT:  (drop
   ;; NOMNL-TNH-NEXT:   (i32.const 1)
   ;; NOMNL-TNH-NEXT:  )
@@ -348,12 +348,12 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $set-of-as-non-null (param $x anyref)
+  ;; NOMNL:      (func $set-of-as-non-null (type $anyref_=>_none) (param $x anyref)
   ;; NOMNL-NEXT:  (local.set $x
   ;; NOMNL-NEXT:   (local.get $x)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  ;; NOMNL-TNH:      (func $set-of-as-non-null (param $x anyref)
+  ;; NOMNL-TNH:      (func $set-of-as-non-null (type $anyref_=>_none) (param $x anyref)
   ;; NOMNL-TNH-NEXT:  (local.set $x
   ;; NOMNL-TNH-NEXT:   (local.get $x)
   ;; NOMNL-TNH-NEXT:  )

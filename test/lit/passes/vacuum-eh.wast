@@ -125,4 +125,55 @@
       )
     )
   )
+
+  ;; CHECK:      (func $try-delegate-outer-target
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (try $label$0
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (try $try2
+  ;; CHECK-NEXT:       (do
+  ;; CHECK-NEXT:        (throw $e
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (delegate $label$0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch_all
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-delegate-outer-target
+    (local $0 i32)
+    (try $label$0  ;; outer try
+      (do
+        ;; If it were not for the inner (delegate $label0), this middle try
+        ;; cannot throw even if there is a throw in the inner try, because this
+        ;; try has a catch_all. And Vacuum can replace the outer try-catch with
+        ;; the try's body if the body doesn't throw.
+        ;;
+        ;; But because the inner try has a delegate that targets the outer try,
+        ;; this middle try can throw, and we can't do the optimization for
+        ;; the outer try.
+        (try  ;; middle try
+          (do
+            (try  ;; inner try
+              (do
+                (throw $e
+                  (i32.const 0)
+                )
+              )
+              (delegate $label$0)
+            )
+          )
+          (catch_all)
+        )
+      )
+    )
+  )
 )

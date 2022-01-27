@@ -30,6 +30,8 @@ high chance for set at start of loop
 #include "ir/branch-utils.h"
 #include "ir/memory-utils.h"
 #include "support/insert_ordered.h"
+#include "tools/fuzzing/random.h"
+#include <ir/eh-utils.h>
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
@@ -65,7 +67,7 @@ struct BinaryArgs {
 
 class TranslateToFuzzReader {
 public:
-  TranslateToFuzzReader(Module& wasm, std::vector<char> input);
+  TranslateToFuzzReader(Module& wasm, std::vector<char>&& input);
   TranslateToFuzzReader(Module& wasm, std::string& filename);
 
   void pickPasses(OptimizationOptions& options);
@@ -77,11 +79,7 @@ public:
 private:
   Module& wasm;
   Builder builder;
-  std::vector<char> bytes; // the input bytes
-  size_t pos;              // the position in the input
-  // whether we already cycled through all the input (if so, we should try to
-  // finish things off)
-  bool finishedInput = false;
+  Random random;
 
   // Whether to emit memory operations like loads and stores.
   bool allowMemory = true;
@@ -92,10 +90,6 @@ private:
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
-
-  // After we finish the input, we start going through it again, but xoring
-  // so it's not identical
-  int xorFactor = 0;
 
   // The chance to emit a logging operation for a none expression. We
   // randomize this in each function.
@@ -137,25 +131,34 @@ private:
 
   int nesting = 0;
 
-  // Methods for getting random data.
-  int8_t get();
-  int16_t get16();
-  int32_t get32();
-  int64_t get64();
-  float getFloat() { return Literal(get32()).reinterpretf32(); }
-  double getDouble() { return Literal(get64()).reinterpretf64(); }
+  // Generating random data is common enough that it's worth having helpers that
+  // forward to `random`.
+  int8_t get() { return random.get(); }
+  int16_t get16() { return random.get16(); }
+  int32_t get32() { return random.get32(); }
+  int64_t get64() { return random.get64(); }
+  float getFloat() { return random.getFloat(); }
+  double getDouble() { return random.getDouble(); }
+  Index upTo(Index x) { return random.upTo(x); }
+  bool oneIn(Index x) { return random.oneIn(x); }
+  Index upToSquared(Index x) { return random.upToSquared(x); }
 
-  // Choose an integer value in [0, x). This doesn't use a perfectly uniform
-  // distribution, but it's fast and reasonable.
-  Index upTo(Index x);
-  bool oneIn(Index x) { return upTo(x) == 0; }
-
-  // Apply upTo twice, generating a skewed distribution towards
-  // low values.
-  Index upToSquared(Index x) { return upTo(upTo(x)); }
+  // Pick from a vector-like container or a fixed list.
+  template<typename T> const typename T::value_type& pick(const T& vec) {
+    return random.pick(vec);
+  }
+  template<typename T, typename... Args> T pick(T first, Args... args) {
+    return random.pick(first, args...);
+  }
+  // Pick from options associated with features.
+  template<typename T> using FeatureOptions = Random::FeatureOptions<T>;
+  template<typename T> const T pick(FeatureOptions<T>& picker) {
+    return random.pick(picker);
+  }
 
   // Setup methods
   void setupMemory();
+  void setupHeapTypes();
   void setupTables();
   void setupGlobals();
   void setupTags();
@@ -180,8 +183,12 @@ private:
   // type, but should not do so for certain types that are dangerous. For
   // example, it would be bad to add an RTT in a tuple, as that would force us
   // to use temporary locals for the tuple, but RTTs are not defaultable.
+  // Also, 'pop' pseudo instruction for EH is supposed to exist only at the
+  // beginning of a 'catch' block, so it shouldn't be moved around or deleted
+  // freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
-    return curr->type.isDefaultable();
+    return curr->type.isDefaultable() &&
+           !EHUtils::containsValidDanglingPop(curr);
   }
   void recombine(Function* func);
   void mutate(Function* func);
@@ -249,6 +256,7 @@ private:
   // Makes a small change to a constant value.
   Literal tweak(Literal value);
   Literal makeLiteral(Type type);
+  Expression* makeRefFuncConst(Type type);
   Expression* makeConst(Type type);
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
@@ -291,6 +299,9 @@ private:
   Type getStorableType();
   Type getLoggableType();
   bool isLoggableType(Type type);
+  Nullability getSubType(Nullability nullability);
+  HeapType getSubType(HeapType type);
+  Rtt getSubType(Rtt rtt);
   Type getSubType(Type type);
 
   // Utilities
@@ -302,87 +313,6 @@ private:
   // 0 to the limit, logarithmic scale
   Index logify(Index x) {
     return std::floor(std::log(std::max(Index(1) + x, Index(1))));
-  }
-
-  // Pick from a vector-like container
-  template<typename T> const typename T::value_type& pick(const T& vec) {
-    assert(!vec.empty());
-    auto index = upTo(vec.size());
-    return vec[index];
-  }
-
-  // pick from a fixed list
-  template<typename T, typename... Args> T pick(T first, Args... args) {
-    auto num = sizeof...(Args) + 1;
-    auto temp = upTo(num);
-    return pickGivenNum<T>(temp, first, args...);
-  }
-
-  template<typename T> T pickGivenNum(size_t num, T first) {
-    assert(num == 0);
-    return first;
-  }
-
-// Trick to avoid a bug in GCC 7.x.
-// Upstream bug report: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82800
-#define GCC_VERSION                                                            \
-  (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION > 70000 && GCC_VERSION < 70300
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-
-  template<typename T, typename... Args>
-  T pickGivenNum(size_t num, T first, Args... args) {
-    if (num == 0) {
-      return first;
-    }
-    return pickGivenNum<T>(num - 1, args...);
-  }
-
-#if GCC_VERSION > 70000 && GCC_VERSION < 70300
-#pragma GCC diagnostic pop
-#endif
-
-  template<typename T> struct FeatureOptions {
-    template<typename... Ts>
-    FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
-      options[feature].push_back(option);
-      return add(feature, rest...);
-    }
-
-    struct WeightedOption {
-      T option;
-      size_t weight;
-    };
-
-    template<typename... Ts>
-    FeatureOptions<T>&
-    add(FeatureSet feature, WeightedOption weightedOption, Ts... rest) {
-      for (size_t i = 0; i < weightedOption.weight; i++) {
-        options[feature].push_back(weightedOption.option);
-      }
-      return add(feature, rest...);
-    }
-
-    FeatureOptions<T>& add(FeatureSet feature) { return *this; }
-
-    std::map<FeatureSet, std::vector<T>> options;
-  };
-
-  template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {
-    std::vector<T> matches;
-    for (const auto& item : picker.options) {
-      if (wasm.features.has(item.first)) {
-        matches.reserve(matches.size() + item.second.size());
-        matches.insert(matches.end(), item.second.begin(), item.second.end());
-      }
-    }
-    return matches;
-  }
-
-  template<typename T> const T pick(FeatureOptions<T>& picker) {
-    return pick(items(picker));
   }
 };
 

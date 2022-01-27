@@ -49,11 +49,7 @@
    (global.get $external_var)
   )
  )
- ;; dylink section
- ;;   memorysize: 24
- ;;   memoryalignment: 2
- ;;   tablesize: 0
- ;;   tablealignment: 0
+ ;; custom section "dylink.0", size 6
  ;; custom section "producers", size 112
  ;; features section: mutable-globals
 )

@@ -5,70 +5,6 @@
 
 using namespace wasm;
 
-// Construct Signature, Struct, and Array heap types using undefined types.
-void test_builder() {
-  std::cout << ";; Test TypeBuilder\n";
-
-  // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
-  // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
-  // (type $array (array (mut externref)))
-
-  TypeBuilder builder;
-  assert(builder.size() == 0);
-  builder.grow(3);
-  assert(builder.size() == 3);
-
-  Type refSig = builder.getTempRefType(builder[0], NonNullable);
-  Type refStruct = builder.getTempRefType(builder[1], NonNullable);
-  Type refArray = builder.getTempRefType(builder[2], NonNullable);
-  Type refNullArray = builder.getTempRefType(builder[2], Nullable);
-  Type rttArray = builder.getTempRttType(Rtt(0, builder[2]));
-  Type refNullExt(HeapType::ext, Nullable);
-
-  Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
-  Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
-  Array array(Field(refNullExt, Mutable));
-
-  std::cout << "Before setting heap types:\n";
-  std::cout << "(ref $sig) => " << refSig << "\n";
-  std::cout << "(ref $struct) => " << refStruct << "\n";
-  std::cout << "(ref $array) => " << refArray << "\n";
-  std::cout << "(ref null $array) => " << refNullArray << "\n";
-  std::cout << "(rtt 0 $array) => " << rttArray << "\n\n";
-
-  builder[0] = sig;
-  builder[1] = struct_;
-  builder[2] = array;
-
-  std::cout << "After setting heap types:\n";
-  std::cout << "(ref $sig) => " << refSig << "\n";
-  std::cout << "(ref $struct) => " << refStruct << "\n";
-  std::cout << "(ref $array) => " << refArray << "\n";
-  std::cout << "(ref null $array) => " << refNullArray << "\n";
-  std::cout << "(rtt 0 $array) => " << rttArray << "\n\n";
-
-  std::vector<HeapType> built = builder.build();
-
-  Type newRefSig = Type(built[0], NonNullable);
-  Type newRefStruct = Type(built[1], NonNullable);
-  Type newRefArray = Type(built[2], NonNullable);
-  Type newRefNullArray = Type(built[2], Nullable);
-  Type newRttArray = Type(Rtt(0, built[2]));
-
-  assert(refSig != newRefSig);
-  assert(refStruct != newRefStruct);
-  assert(refArray != newRefArray);
-  assert(refNullArray != newRefNullArray);
-  assert(rttArray != newRttArray);
-
-  std::cout << "After building types:\n";
-  std::cout << "(ref $sig) => " << newRefSig << "\n";
-  std::cout << "(ref $struct) => " << newRefStruct << "\n";
-  std::cout << "(ref $array) => " << newRefArray << "\n";
-  std::cout << "(ref null $array) => " << newRefNullArray << "\n";
-  std::cout << "(rtt 0 $array) => " << newRttArray << "\n\n";
-}
-
 // Check that the builder works when there are duplicate definitions
 void test_canonicalization() {
   std::cout << ";; Test canonicalization\n";
@@ -95,7 +31,7 @@ void test_canonicalization() {
   builder[2] = Signature(Type::none, Type::none);
   builder[3] = Signature(Type::none, Type::none);
 
-  std::vector<HeapType> built = builder.build();
+  std::vector<HeapType> built = *builder.build();
 
   assert(built[0] == struct_);
   assert(built[1] == struct_);
@@ -119,7 +55,7 @@ void test_basic() {
   builder[4] = HeapType::any;
   builder[5] = HeapType::i31;
 
-  std::vector<HeapType> built = builder.build();
+  std::vector<HeapType> built = *builder.build();
 
   assert(built[0] == Signature(Type::anyref, Type::i31ref));
   assert(built[1] == built[0]);
@@ -139,7 +75,7 @@ void test_recursive() {
       TypeBuilder builder(1);
       Type temp = builder.getTempRefType(builder[0], Nullable);
       builder[0] = Signature(Type::none, temp);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n\n";
     assert(built[0] == built[0].getSignature().results.getHeapType());
@@ -155,7 +91,7 @@ void test_recursive() {
       Type temp1 = builder.getTempRefType(builder[1], Nullable);
       builder[0] = Signature(Type::none, temp1);
       builder[1] = Signature(Type::none, temp0);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n\n";
@@ -179,7 +115,7 @@ void test_recursive() {
       builder[2] = Signature(Type::none, temp3);
       builder[3] = Signature(Type::none, temp4);
       builder[4] = Signature(Type::none, temp0);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n";
@@ -215,7 +151,7 @@ void test_recursive() {
       builder[3] = Signature();
       builder[4] = Signature(Type::none, temp0);
       builder[5] = Signature(Type::none, temp1);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n";
@@ -242,7 +178,7 @@ void test_recursive() {
       Type temp0 = builder.getTempRefType(builder[0], Nullable);
       builder[0] = Signature(Type::none, temp0);
       builder[1] = Signature(Type::none, temp0);
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n\n";
@@ -261,7 +197,7 @@ void test_recursive() {
       builder[0] = Signature(anyref, temp0);
       builder[1] = Signature(anyref, temp0);
       builder[2] = HeapType::any;
-      built = builder.build();
+      built = *builder.build();
     }
     std::cout << built[0] << "\n";
     std::cout << built[1] << "\n\n";
@@ -443,7 +379,7 @@ void test_lub() {
       Struct({Field(tempB, Immutable), Field(Type::eqref, Immutable)});
     builder[1] =
       Struct({Field(tempA, Immutable), Field(Type::funcref, Immutable)});
-    auto built = builder.build();
+    auto built = *builder.build();
     Type a(built[0], Nullable);
     Type b(built[1], Nullable);
 
@@ -451,7 +387,7 @@ void test_lub() {
     Type tempLub = builder.getTempRefType(lubBuilder[0], Nullable);
     lubBuilder[0] =
       Struct({Field(tempLub, Immutable), Field(Type::anyref, Immutable)});
-    built = lubBuilder.build();
+    built = *lubBuilder.build();
     Type lub(built[0], Nullable);
 
     assert(LUB(a, b) == lub);
@@ -496,7 +432,6 @@ int main() {
   // Run the tests twice to ensure things still work when the global stores are
   // already populated.
   for (size_t i = 0; i < 2; ++i) {
-    test_builder();
     test_canonicalization();
     test_basic();
     test_recursive();

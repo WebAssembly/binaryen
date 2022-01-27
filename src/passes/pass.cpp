@@ -47,6 +47,13 @@ void PassRegistry::registerPass(const char* name,
   passInfos[name] = PassInfo(description, create);
 }
 
+void PassRegistry::registerTestPass(const char* name,
+                                    const char* description,
+                                    Creator create) {
+  assert(passInfos.find(name) == passInfos.end());
+  passInfos[name] = PassInfo(description, create, true);
+}
+
 std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
   if (passInfos.find(name) == passInfos.end()) {
     Fatal() << "Could not find pass: " << name << "\n";
@@ -59,8 +66,8 @@ std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
 
 std::vector<std::string> PassRegistry::getRegisteredNames() {
   std::vector<std::string> ret;
-  for (auto pair : passInfos) {
-    ret.push_back(pair.first);
+  for (auto& [name, _] : passInfos) {
+    ret.push_back(name);
   }
   return ret;
 }
@@ -68,6 +75,11 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
 std::string PassRegistry::getPassDescription(std::string name) {
   assert(passInfos.find(name) != passInfos.end());
   return passInfos[name].description;
+}
+
+bool PassRegistry::isPassHidden(std::string name) {
+  assert(passInfos.find(name) != passInfos.end());
+  return passInfos[name].hidden;
 }
 
 // PassRunner
@@ -155,7 +167,12 @@ void PassRegistry::registerPasses() {
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
+    "global-refining", "refine the types of globals", createGlobalRefiningPass);
+  registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass("type-refining",
+               "apply more specific subtypes to type fields where possible",
+               createTypeRefiningPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
@@ -234,10 +251,6 @@ void PassRegistry::registerPasses() {
                createModAsyncifyNeverUnwindPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
-  registerPass("no-exit-runtime",
-               "removes calls to atexit(), which is valid if the C runtime "
-               "will never be exited",
-               createNoExitRuntimePass);
   registerPass("once-reduction",
                "reduces calls to code that only runs once",
                createOnceReductionPass);
@@ -337,6 +350,9 @@ void PassRegistry::registerPasses() {
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
+  registerPass("signature-refining",
+               "apply more specific subtypes to signature types where possible",
+               createSignatureRefiningPass);
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",
                createSimplifyGlobalsPass);
@@ -402,6 +418,11 @@ void PassRegistry::registerPasses() {
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
+
+  // Register passes used for internal testing. These don't show up in --help.
+  registerTestPass("catch-pop-fixup",
+                   "fixup nested pops within catches",
+                   createCatchPopFixupPass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
@@ -524,7 +545,15 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   }
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
-    // TODO: investigate enabling --gto and --remove-module-elements before cfp
+    addIfNoDWARFIssues("type-refining");
+    addIfNoDWARFIssues("signature-refining");
+    addIfNoDWARFIssues("global-refining");
+    // Global type optimization can remove fields that are not needed, which can
+    // remove ref.funcs that were once assigned to vtables but are no longer
+    // needed, which can allow more code to be removed globally. After those,
+    // constant field propagation can be more effective.
+    addIfNoDWARFIssues("gto");
+    addIfNoDWARFIssues("remove-unused-module-elements");
     addIfNoDWARFIssues("cfp");
   }
 }

@@ -18,6 +18,7 @@
 #define wasm_ir_type_updating_h
 
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -336,11 +337,8 @@ public:
 private:
   TypeBuilder typeBuilder;
 
-  // The list of old types.
-  std::vector<HeapType> types;
-
-  // Type indices of the old types.
-  std::unordered_map<HeapType, Index> typeIndices;
+  // The old types and their indices.
+  ModuleUtils::IndexedHeapTypes indexedTypes;
 };
 
 namespace TypeUpdating {
@@ -363,6 +361,18 @@ Type getValidLocalType(Type type, FeatureSet features);
 // the extra work we need to do to handle non-defaultable values (e.g., add a
 // ref.as_non_null around it, if the local should be non-nullable but is not).
 Expression* fixLocalGet(LocalGet* get, Module& wasm);
+
+// Applies new types of parameters to a function. This does all the necessary
+// changes aside from altering the function type, which the caller is expected
+// to do (the caller might simply change the type, but in other cases the caller
+// might be rewriting the types and need to preserve their identity in terms of
+// nominal typing, so we don't change the type here). The specific things this
+// function does are to update the types of local.get/tee operations,
+// refinalize, etc., basically all operations necessary to ensure validation
+// with the new types.
+void updateParamTypes(Function* func,
+                      const std::vector<Type>& newParamTypes,
+                      Module& wasm);
 
 } // namespace TypeUpdating
 

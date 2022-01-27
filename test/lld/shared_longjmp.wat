@@ -8,47 +8,47 @@
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 1))
- (data (global.get $gimport$0) "\00\00\00\00\00\00\00\00")
+ (data $.bss (global.get $__memory_base) "\00\00\00\00\00\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
- (import "env" "__memory_base" (global $gimport$0 i32))
- (import "env" "__table_base" (global $gimport$1 i32))
- (import "GOT.mem" "__THREW__" (global $gimport$2 (mut i32)))
- (import "GOT.func" "emscripten_longjmp" (global $gimport$3 (mut i32)))
- (import "GOT.mem" "__threwValue" (global $gimport$4 (mut i32)))
- (import "env" "malloc" (func $fimport$0 (param i32) (result i32)))
- (import "env" "saveSetjmp" (func $fimport$1 (param i32 i32 i32 i32) (result i32)))
- (import "env" "getTempRet0" (func $fimport$2 (result i32)))
- (import "env" "emscripten_longjmp" (func $fimport$3 (param i32 i32)))
- (import "env" "invoke_vii" (func $fimport$4 (param i32 i32 i32)))
- (import "env" "testSetjmp" (func $fimport$5 (param i32 i32 i32) (result i32)))
- (import "env" "setTempRet0" (func $fimport$6 (param i32)))
- (import "env" "free" (func $fimport$7 (param i32)))
+ (import "env" "__memory_base" (global $__memory_base i32))
+ (import "env" "__table_base" (global $__table_base i32))
+ (import "GOT.mem" "__THREW__" (global $__THREW__ (mut i32)))
+ (import "GOT.func" "emscripten_longjmp" (global $emscripten_longjmp (mut i32)))
+ (import "GOT.mem" "__threwValue" (global $__threwValue (mut i32)))
+ (import "env" "malloc" (func $malloc (param i32) (result i32)))
+ (import "env" "saveSetjmp" (func $saveSetjmp (param i32 i32 i32 i32) (result i32)))
+ (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
+ (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
+ (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ (import "env" "testSetjmp" (func $testSetjmp (param i32 i32 i32) (result i32)))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "free" (func $free (param i32)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 4))
- (export "__wasm_call_ctors" (func $0))
- (export "_start" (func $2))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "_start" (func $_start))
  (export "__THREW__" (global $global$0))
  (export "__threwValue" (global $global$1))
- (func $0
-  (call $1)
+ (func $__wasm_call_ctors
+  (call $__wasm_apply_data_relocs)
  )
- (func $1
+ (func $__wasm_apply_data_relocs
  )
- (func $2
+ (func $_start
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (i32.store
    (local.tee $0
-    (call $fimport$0
+    (call $malloc
      (i32.const 40)
     )
    )
    (i32.const 0)
   )
   (local.set $1
-   (call $fimport$1
+   (call $saveSetjmp
     (local.get $0)
     (i32.const 1)
     (local.get $0)
@@ -56,7 +56,7 @@
    )
   )
   (local.set $2
-   (call $fimport$2)
+   (call $getTempRet0)
   )
   (local.set $0
    (i32.const 0)
@@ -69,12 +69,12 @@
      )
      (i32.store
       (local.tee $0
-       (global.get $gimport$2)
+       (global.get $__THREW__)
       )
       (i32.const 0)
      )
-     (call $fimport$4
-      (global.get $gimport$3)
+     (call $invoke_vii
+      (global.get $emscripten_longjmp)
       (local.get $0)
       (i32.const 1)
      )
@@ -88,7 +88,7 @@
       (i32.const 0)
      )
      (local.set $0
-      (global.get $gimport$4)
+      (global.get $__threwValue)
      )
      (block $label$4
       (br_if $label$4
@@ -107,7 +107,7 @@
       )
       (br_if $label$1
        (i32.eqz
-        (call $fimport$5
+        (call $testSetjmp
          (i32.load
           (local.get $3)
          )
@@ -116,32 +116,31 @@
         )
        )
       )
-      (call $fimport$6
+      (call $setTempRet0
        (local.get $0)
       )
      )
      (local.set $0
-      (call $fimport$2)
+      (call $getTempRet0)
      )
      (br $label$3)
     )
    )
-   (call $fimport$7
+   (call $free
     (local.get $1)
    )
    (return)
   )
-  (call $fimport$3
+  (call $free
+   (local.get $1)
+  )
+  (call $emscripten_longjmp
    (local.get $3)
    (local.get $0)
   )
   (unreachable)
  )
- ;; dylink section
- ;;   memorysize: 8
- ;;   memoryalignment: 2
- ;;   tablesize: 0
- ;;   tablealignment: 0
+ ;; custom section "dylink.0", size 6
  ;; custom section "producers", size 112
  ;; features section: mutable-globals
 )

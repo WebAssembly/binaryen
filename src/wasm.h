@@ -219,6 +219,12 @@ enum UnaryOp {
   DemoteZeroVecF64x2ToVecF32x4,
   PromoteLowVecF32x4ToVecF64x2,
 
+  // Relaxed SIMD
+  RelaxedTruncSVecF32x4ToVecI32x4,
+  RelaxedTruncUVecF32x4ToVecI32x4,
+  RelaxedTruncZeroSVecF64x2ToVecI32x4,
+  RelaxedTruncZeroUVecF64x2ToVecI32x4,
+
   InvalidUnary
 };
 
@@ -459,6 +465,13 @@ enum BinaryOp {
   // SIMD Swizzle
   SwizzleVec8x16,
 
+  // Relaxed SIMD
+  RelaxedSwizzleVec8x16,
+  RelaxedMinVecF32x4,
+  RelaxedMaxVecF32x4,
+  RelaxedMinVecF64x2,
+  RelaxedMaxVecF64x2,
+
   InvalidBinary
 };
 
@@ -527,6 +540,16 @@ enum SIMDLoadStoreLaneOp {
 
 enum SIMDTernaryOp {
   Bitselect,
+
+  // Relaxed SIMD
+  RelaxedFmaVecF32x4,
+  RelaxedFmsVecF32x4,
+  RelaxedFmaVecF64x2,
+  RelaxedFmsVecF64x2,
+  LaneselectI8x16,
+  LaneselectI16x8,
+  LaneselectI32x4,
+  LaneselectI64x2,
 };
 
 enum RefIsOp {
@@ -555,9 +578,6 @@ enum BrOnOp {
   BrOnI31,
   BrOnNonI31,
 };
-
-// Forward declaration for methods that receive a Module as a parameter.
-class Module;
 
 //
 // Expressions
@@ -826,22 +846,13 @@ public:
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-  Signature sig;
+  HeapType heapType;
   ExpressionList operands;
   Expression* target;
   Name table;
   bool isReturn = false;
 
   void finalize();
-
-  // FIXME We should probably store a heap type here, and not a signature, see
-  //       https://github.com/WebAssembly/binaryen/issues/4220
-  //       For now, copy the heap type from the table if it matches - then a
-  //       nominal check will succeed too. If it does not match, then just
-  //       emit something for it like we always used to, using
-  //       HeapType(sig) (also do that if no module is provided).
-  // FIXME When we remove this, also remove the forward decl of Module, above.
-  HeapType getHeapType(Module* module = nullptr);
 };
 
 class LocalGet : public SpecificExpression<Expression::LocalGetId> {

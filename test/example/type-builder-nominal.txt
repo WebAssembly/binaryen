@@ -1,17 +1,17 @@
 ;; Test TypeBuilder
 Before setting heap types:
-(ref $sig) => (ref [T](func))
-(ref $struct) => (ref [T](func))
-(ref $array) => (ref [T](func))
-(ref null $array) => (ref null [T](func))
-(rtt 0 $array) => (rtt 0 [T](func))
+(ref $sig) => [T](ref [T](func))
+(ref $struct) => [T](ref [T](func))
+(ref $array) => [T](ref [T](func))
+(ref null $array) => [T](ref null [T](func))
+(rtt 0 $array) => [T](rtt 0 [T](func))
 
 After setting heap types:
-(ref $sig) => (ref [T](func (param (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))) (result (ref [T](array (mut externref))) i32)))
-(ref $struct) => (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))
-(ref $array) => (ref [T](array (mut externref)))
-(ref null $array) => (ref null [T](array (mut externref)))
-(rtt 0 $array) => (rtt 0 [T](array (mut externref)))
+(ref $sig) => [T](ref [T](func (param [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))) (result [T](ref [T](array (mut externref))) i32)))
+(ref $struct) => [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))
+(ref $array) => [T](ref [T](array (mut externref)))
+(ref null $array) => [T](ref null [T](array (mut externref)))
+(rtt 0 $array) => [T](rtt 0 [T](array (mut externref)))
 
 After building types:
 (ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
@@ -21,6 +21,7 @@ After building types:
 (rtt 0 $array) => (rtt 0 (array (mut externref)))
 
 ;; Test canonicalization
+;; Test basic
 ;; Test canonical signatures
 ;; Test recursive types
 (func (result (ref null ...1)))
@@ -47,18 +48,18 @@ After building types:
 ;; Test subtyping
 ;; Test TypeBuilder
 Before setting heap types:
-(ref $sig) => (ref [T](func))
-(ref $struct) => (ref [T](func))
-(ref $array) => (ref [T](func))
-(ref null $array) => (ref null [T](func))
-(rtt 0 $array) => (rtt 0 [T](func))
+(ref $sig) => [T](ref [T](func))
+(ref $struct) => [T](ref [T](func))
+(ref $array) => [T](ref [T](func))
+(ref null $array) => [T](ref null [T](func))
+(rtt 0 $array) => [T](rtt 0 [T](func))
 
 After setting heap types:
-(ref $sig) => (ref [T](func (param (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))) (result (ref [T](array (mut externref))) i32)))
-(ref $struct) => (ref [T](struct (field (ref null [T](array (mut externref))) (mut (rtt 0 [T](array (mut externref)))))))
-(ref $array) => (ref [T](array (mut externref)))
-(ref null $array) => (ref null [T](array (mut externref)))
-(rtt 0 $array) => (rtt 0 [T](array (mut externref)))
+(ref $sig) => [T](ref [T](func (param [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))) (result [T](ref [T](array (mut externref))) i32)))
+(ref $struct) => [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))
+(ref $array) => [T](ref [T](array (mut externref)))
+(ref null $array) => [T](ref null [T](array (mut externref)))
+(rtt 0 $array) => [T](rtt 0 [T](array (mut externref)))
 
 After building types:
 (ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
@@ -68,6 +69,7 @@ After building types:
 (rtt 0 $array) => (rtt 0 (array (mut externref)))
 
 ;; Test canonicalization
+;; Test basic
 ;; Test canonical signatures
 ;; Test recursive types
 (func (result (ref null ...1)))

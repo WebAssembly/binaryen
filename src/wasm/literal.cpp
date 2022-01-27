@@ -30,19 +30,40 @@ namespace wasm {
 template<int N> using LaneArray = std::array<Literal, N>;
 
 Literal::Literal(Type type) : type(type) {
-  if (type == Type::i31ref) {
-    // i31ref is special in that it is non-nullable, so we construct with zero
-    i32 = 0;
-  } else {
-    assert(type != Type::unreachable && !type.isNonNullable());
-    if (isData()) {
-      new (&gcData) std::shared_ptr<GCData>();
-    } else if (type.isRtt()) {
-      // Allocate a new RttSupers (with no data).
-      new (&rttSupers) auto(std::make_unique<RttSupers>());
-    } else {
-      memset(&v128, 0, 16);
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = 0;
+        return;
+      case Type::i64:
+      case Type::f64:
+        i64 = 0;
+        return;
+      case Type::v128:
+        memset(&v128, 0, 16);
+        return;
+      case Type::none:
+        return;
+      case Type::unreachable:
+      case Type::funcref:
+      case Type::externref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
+      case Type::dataref:
+        break;
     }
+  }
+
+  if (isData()) {
+    assert(!type.isNonNullable());
+    new (&gcData) std::shared_ptr<GCData>();
+  } else if (type.isRtt()) {
+    new (this) Literal(Literal::makeCanonicalRtt(type.getHeapType()));
+  } else {
+    // For anything else, zero out all the union data.
+    memset(&v128, 0, 16);
   }
 }
 
@@ -64,6 +85,31 @@ Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = other.i32;
+        return;
+      case Type::i64:
+      case Type::f64:
+        i64 = other.i64;
+        return;
+      case Type::v128:
+        memcpy(&v128, other.v128, 16);
+        return;
+      case Type::none:
+        return;
+      case Type::unreachable:
+      case Type::funcref:
+      case Type::externref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
+      case Type::dataref:
+        break;
+    }
+  }
   if (other.isData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
@@ -94,49 +140,18 @@ Literal::Literal(const Literal& other) : type(other.type) {
       }
     }
   }
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    case Type::i32:
-    case Type::f32:
-      i32 = other.i32;
-      break;
-    case Type::i64:
-    case Type::f64:
-      i64 = other.i64;
-      break;
-    case Type::v128:
-      memcpy(&v128, other.v128, 16);
-      break;
-    case Type::none:
-      break;
-    case Type::unreachable:
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
-      WASM_UNREACHABLE("invalid type");
-  }
 }
 
 Literal::~Literal() {
+  // Early exit for the common case; basic types need no special handling.
+  if (type.isBasic()) {
+    return;
+  }
+
   if (isData()) {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
     rttSupers.~unique_ptr();
-  } else if (type.isFunction() || type.isRef()) {
-    // Nothing special to do for a function or a non-GC reference (GC data was
-    // handled earlier). For references, this handles the case of (ref ? i31)
-    // for example, which may or may not be basic.
-  } else {
-    // Basic types need no special handling.
-    // TODO: change this to an assert after we figure out the underlying issue
-    //       on the release builder
-    //       https://github.com/WebAssembly/binaryen/issues/3459
-    if (!type.isBasic()) {
-      Fatal() << "~Literal on unhandled type: " << type << '\n';
-    }
   }
 }
 
@@ -146,6 +161,18 @@ Literal& Literal::operator=(const Literal& other) {
     new (this) auto(other);
   }
   return *this;
+}
+
+Literal Literal::makeCanonicalRtt(HeapType type) {
+  auto supers = std::make_unique<RttSupers>();
+  std::optional<HeapType> supertype;
+  for (auto curr = type; (supertype = curr.getSuperType()); curr = *supertype) {
+    supers->emplace_back(*supertype);
+  }
+  // We want the highest types to be first.
+  std::reverse(supers->begin(), supers->end());
+  size_t depth = supers->size();
+  return Literal(std::move(supers), Type(Rtt(depth, type)));
 }
 
 template<typename LaneT, int Lanes>
@@ -1599,6 +1626,32 @@ Literal Literal::copysign(const Literal& other) const {
   }
 }
 
+Literal Literal::fma(const Literal& left, const Literal& right) const {
+  switch (type.getBasic()) {
+    case Type::f32:
+      return Literal(::fmaf(left.getf32(), right.getf32(), getf32()));
+      break;
+    case Type::f64:
+      return Literal(::fma(left.getf64(), right.getf64(), getf64()));
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
+Literal Literal::fms(const Literal& left, const Literal& right) const {
+  switch (type.getBasic()) {
+    case Type::f32:
+      return Literal(::fmaf(-left.getf32(), right.getf32(), getf32()));
+      break;
+    case Type::f64:
+      return Literal(::fma(-left.getf64(), right.getf64(), getf64()));
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
 template<typename LaneT, int Lanes>
 static LaneArray<Lanes> getLanes(const Literal& val) {
   assert(val.type == Type::v128);
@@ -2537,6 +2590,42 @@ Literal Literal::swizzleI8x16(const Literal& other) const {
   return Literal(result);
 }
 
+namespace {
+template<int Lanes,
+         LaneArray<Lanes> (Literal::*IntoLanes)() const,
+         Literal (Literal::*TernaryOp)(const Literal&, const Literal&) const>
+static Literal ternary(const Literal& a, const Literal& b, const Literal& c) {
+  LaneArray<Lanes> x = (a.*IntoLanes)();
+  LaneArray<Lanes> y = (b.*IntoLanes)();
+  LaneArray<Lanes> z = (c.*IntoLanes)();
+  LaneArray<Lanes> r;
+  for (size_t i = 0; i < Lanes; ++i) {
+    r[i] = (x[i].*TernaryOp)(y[i], z[i]);
+  }
+  return Literal(r);
+}
+} // namespace
+
+Literal Literal::relaxedFmaF32x4(const Literal& left,
+                                 const Literal& right) const {
+  return ternary<4, &Literal::getLanesF32x4, &Literal::fma>(*this, left, right);
+}
+
+Literal Literal::relaxedFmsF32x4(const Literal& left,
+                                 const Literal& right) const {
+  return ternary<4, &Literal::getLanesF32x4, &Literal::fms>(*this, left, right);
+}
+
+Literal Literal::relaxedFmaF64x2(const Literal& left,
+                                 const Literal& right) const {
+  return ternary<2, &Literal::getLanesF64x2, &Literal::fma>(*this, left, right);
+}
+
+Literal Literal::relaxedFmsF64x2(const Literal& left,
+                                 const Literal& right) const {
+  return ternary<2, &Literal::getLanesF64x2, &Literal::fms>(*this, left, right);
+}
+
 bool Literal::isSubRtt(const Literal& other) const {
   assert(type.isRtt() && other.type.isRtt());
   // For this literal to be a sub-rtt of the other rtt, the supers must be a
@@ -2558,7 +2647,7 @@ bool Literal::isSubRtt(const Literal& other) const {
   // we have the same amount of supers, and must be completely identical to
   // other.
   if (otherSupers.size() < supers.size()) {
-    return other.type == supers[otherSupers.size()].type;
+    return other.type.getHeapType() == supers[otherSupers.size()].type;
   } else {
     return other.type == type;
   }

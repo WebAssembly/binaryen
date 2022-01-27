@@ -22,9 +22,7 @@
 #include "ir/match.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Properties {
+namespace wasm::Properties {
 
 inline bool emitsBoolean(Expression* curr) {
   if (auto* unary = curr->dynCast<Unary>()) {
@@ -285,7 +283,7 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, module, tryy->body).throws) {
+    if (!EffectAnalyzer(passOptions, module, tryy->body).throws()) {
       return tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
@@ -338,7 +336,6 @@ inline Index getNumChildren(Expression* curr) {
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
-#define DELEGATE_FIELD_SIGNATURE(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -417,8 +414,6 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //
 bool isGenerative(Expression* curr, FeatureSet features);
 
-} // namespace Properties
-
-} // namespace wasm
+} // namespace wasm::Properties
 
 #endif // wasm_ir_properties_h

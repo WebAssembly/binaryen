@@ -200,7 +200,6 @@
     "601": "{ return $0 + $1; }",
     "621": "{ Module.print(\"Got \" + $0); }"
   },
-  "tableSize": 1,
   "declares": [
     "emscripten_asm_const_int_sync_on_main_thread"
   ],

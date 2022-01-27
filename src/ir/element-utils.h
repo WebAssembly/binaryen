@@ -20,9 +20,7 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace ElementUtils {
+namespace wasm::ElementUtils {
 
 // iterate over functions referenced in an element segment
 template<typename T>
@@ -48,8 +46,6 @@ inline void iterAllElementFunctionNames(const Module* wasm, T visitor) {
   }
 }
 
-} // namespace ElementUtils
-
-} // namespace wasm
+} // namespace wasm::ElementUtils
 
 #endif // wasm_ir_element_h

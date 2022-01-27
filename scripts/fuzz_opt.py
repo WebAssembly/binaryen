@@ -270,6 +270,12 @@ def pick_initial_contents():
     else:
         test_name = random.choice(all_tests)
     print('initial contents:', test_name)
+    if shared.options.auto_initial_contents:
+        # when using auto initial contents, we look through the git history to
+        # find test files. if a test file was renamed or removed then it may
+        # no longer exist, and we should just skip it.
+        if not os.path.exists(test_name):
+            return
     assert os.path.exists(test_name)
     # tests that check validation errors are not helpful for us
     if '.fail.' in test_name:
@@ -306,8 +312,6 @@ def pick_initial_contents():
 
     global FEATURE_OPTS
     FEATURE_OPTS += [
-        # has not been enabled in the fuzzer yet
-        '--disable-exception-handling',
         # has not been fuzzed in general yet
         '--disable-memory64',
         # avoid multivalue for now due to bad interactions with gc rtts in
@@ -787,7 +791,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['simd', 'exception-handling', 'multivalue'])
+        return all_disallowed(['simd', 'multivalue'])
 
 
 # Check for determinism - the same command must have the same output.
@@ -1178,9 +1182,6 @@ def randomize_opt_flags():
             if has_flatten:
                 print('avoiding multiple --flatten in a single command, due to exponential overhead')
                 continue
-            if '--enable-exception-handling' in FEATURE_OPTS:
-                print('avoiding --flatten due to exception catching which does not support it yet')
-                continue
             if '--enable-multivalue' in FEATURE_OPTS and '--enable-reference-types' in FEATURE_OPTS:
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
                 continue
@@ -1192,6 +1193,10 @@ def randomize_opt_flags():
                 continue
             else:
                 has_flatten = True
+        if ('--rereloop' in choice or '--dfo' in choice) and \
+           '--enable-exception-handling' in FEATURE_OPTS:
+            print('avoiding --rereloop or --dfo due to exception-handling not supporting it')
+            continue
         flag_groups.append(choice)
         if len(flag_groups) > 20 or random.random() < 0.3:
             break
@@ -1232,7 +1237,7 @@ print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 # some features depend on other features, so if a required feature is
 # disabled, its dependent features need to be disabled as well.
 IMPLIED_FEATURE_OPTS = {
-    '--disable-reference-types': ['--disable-exception-handling', '--disable-gc']
+    '--disable-reference-types': ['--disable-gc']
 }
 
 if __name__ == '__main__':

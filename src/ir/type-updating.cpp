@@ -17,6 +17,7 @@
 #include "type-updating.h"
 #include "find_all.h"
 #include "ir/module-utils.h"
+#include "ir/utils.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -25,12 +26,15 @@ namespace wasm {
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeRewriter::update() {
-  ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-  typeBuilder.grow(types.size());
+  indexedTypes = ModuleUtils::getIndexedHeapTypes(wasm);
+  if (indexedTypes.types.empty()) {
+    return;
+  }
+  typeBuilder.grow(indexedTypes.types.size());
 
   // Create the temporary heap types.
-  for (Index i = 0; i < types.size(); i++) {
-    auto type = types[i];
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    auto type = indexedTypes.types[i];
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;
@@ -42,7 +46,7 @@ void GlobalTypeRewriter::update() {
       }
       Signature newSig(typeBuilder.getTempTupleType(newParams),
                        typeBuilder.getTempTupleType(newResults));
-      modifySignature(types[i], newSig);
+      modifySignature(indexedTypes.types[i], newSig);
       typeBuilder.setHeapType(i, newSig);
     } else if (type.isStruct()) {
       auto struct_ = type.getStruct();
@@ -51,14 +55,14 @@ void GlobalTypeRewriter::update() {
       for (auto& field : newStruct.fields) {
         field.type = getTempType(field.type);
       }
-      modifyStruct(types[i], newStruct);
+      modifyStruct(indexedTypes.types[i], newStruct);
       typeBuilder.setHeapType(i, newStruct);
     } else if (type.isArray()) {
       auto array = type.getArray();
       // Start with a copy to get mutability/packing/etc.
       auto newArray = array;
       newArray.element.type = getTempType(newArray.element.type);
-      modifyArray(types[i], newArray);
+      modifyArray(indexedTypes.types[i], newArray);
       typeBuilder.setHeapType(i, newArray);
     } else {
       WASM_UNREACHABLE("bad type");
@@ -66,19 +70,20 @@ void GlobalTypeRewriter::update() {
 
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
-      typeBuilder.setSubType(i, typeIndices[*super]);
+      typeBuilder.setSubType(i, indexedTypes.indices[*super]);
     }
   }
 
-  auto newTypes = typeBuilder.build();
+  auto buildResults = typeBuilder.build();
+  auto& newTypes = *buildResults;
 
   // Map the old types to the new ones. This uses the fact that type indices
   // are the same in the old and new types, that is, we have not added or
   // removed types, just modified them.
   using OldToNewTypes = std::unordered_map<HeapType, HeapType>;
   OldToNewTypes oldToNewTypes;
-  for (Index i = 0; i < types.size(); i++) {
-    oldToNewTypes[types[i]] = newTypes[i];
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    oldToNewTypes[indexedTypes.types[i]] = newTypes[i];
   }
 
   // Replace all the old types in the module with the new ones.
@@ -143,8 +148,6 @@ void GlobalTypeRewriter::update() {
 
 #define DELEGATE_FIELD_HEAPTYPE(id, field) cast->field = getNew(cast->field);
 
-#define DELEGATE_FIELD_SIGNATURE(id, field) cast->field = getNew(cast->field);
-
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
@@ -187,9 +190,7 @@ void GlobalTypeRewriter::update() {
   }
 
   // Update type names.
-  for (auto& kv : oldToNewTypes) {
-    auto old = kv.first;
-    auto new_ = kv.second;
+  for (auto& [old, new_] : oldToNewTypes) {
     if (wasm.typeNames.count(old)) {
       wasm.typeNames[new_] = wasm.typeNames[old];
     }
@@ -202,24 +203,25 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (!typeIndices.count(heapType)) {
+    if (!indexedTypes.indices.count(heapType)) {
       // This type was not present in the module, but is now being used when
       // defining new types. That is fine; just use it.
       return type;
     }
     return typeBuilder.getTempRefType(
-      typeBuilder.getTempHeapType(typeIndices[heapType]),
+      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]),
       type.getNullability());
   }
   if (type.isRtt()) {
     auto rtt = type.getRtt();
     auto newRtt = rtt;
     auto heapType = type.getHeapType();
-    if (!typeIndices.count(heapType)) {
+    if (!indexedTypes.indices.count(heapType)) {
       // See above with references.
       return type;
     }
-    newRtt.heapType = typeBuilder.getTempHeapType(typeIndices[heapType]);
+    newRtt.heapType =
+      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]);
     return typeBuilder.getTempRttType(newRtt);
   }
   if (type.isTuple()) {
@@ -311,6 +313,99 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
     return Builder(wasm).makeRefAs(RefAsNonNull, get);
   }
   return get;
+}
+
+void updateParamTypes(Function* func,
+                      const std::vector<Type>& newParamTypes,
+                      Module& wasm) {
+  // Before making this update, we must be careful if the param was "reused",
+  // specifically, if it is assigned a less-specific type in the body then
+  // we'd get a validation error when we refine it. To handle that, if a less-
+  // specific type is assigned simply switch to a new local, that is, we can
+  // do a fixup like this:
+  //
+  // function foo(x : oldType) {
+  //   ..
+  //   x = (oldType)val;
+  //
+  // =>
+  //
+  // function foo(x : newType) {
+  //   var x_oldType = x; // assign the param immediately to a fixup var
+  //   ..
+  //   x_oldType = (oldType)val; // fixup var is used throughout the body
+  //
+  // Later optimization passes may be able to remove the extra var, and can
+  // take advantage of the refined argument type while doing so.
+
+  // A map of params that need a fixup to the new fixup var used for it.
+  std::unordered_map<Index, Index> paramFixups;
+
+  FindAll<LocalSet> sets(func->body);
+
+  for (auto* set : sets.list) {
+    auto index = set->index;
+    if (func->isParam(index) && !paramFixups.count(index) &&
+        !Type::isSubType(set->value->type, newParamTypes[index])) {
+      paramFixups[index] = Builder::addVar(func, func->getLocalType(index));
+    }
+  }
+
+  FindAll<LocalGet> gets(func->body);
+
+  // Apply the fixups we identified that we need.
+  if (!paramFixups.empty()) {
+    // Write the params immediately to the fixups.
+    Builder builder(wasm);
+    std::vector<Expression*> contents;
+    for (Index index = 0; index < func->getNumParams(); index++) {
+      auto iter = paramFixups.find(index);
+      if (iter != paramFixups.end()) {
+        auto fixup = iter->second;
+        contents.push_back(builder.makeLocalSet(
+          fixup, builder.makeLocalGet(index, newParamTypes[index])));
+      }
+    }
+    contents.push_back(func->body);
+    func->body = builder.makeBlock(contents);
+
+    // Update gets and sets using the param to use the fixup.
+    for (auto* get : gets.list) {
+      auto iter = paramFixups.find(get->index);
+      if (iter != paramFixups.end()) {
+        get->index = iter->second;
+      }
+    }
+    for (auto* set : sets.list) {
+      auto iter = paramFixups.find(set->index);
+      if (iter != paramFixups.end()) {
+        set->index = iter->second;
+      }
+    }
+  }
+
+  // Update local.get/local.tee operations that use the modified param type.
+  for (auto* get : gets.list) {
+    auto index = get->index;
+    if (func->isParam(index)) {
+      get->type = newParamTypes[index];
+    }
+  }
+  for (auto* set : sets.list) {
+    auto index = set->index;
+    if (func->isParam(index) && set->isTee()) {
+      set->type = newParamTypes[index];
+      set->finalize();
+    }
+  }
+
+  // Propagate the new get and set types outwards.
+  ReFinalize().walkFunctionInModule(func, &wasm);
+
+  if (!paramFixups.empty()) {
+    // We have added locals, and must handle non-nullability of them.
+    TypeUpdating::handleNonDefaultableLocals(func, wasm);
+  }
 }
 
 } // namespace TypeUpdating

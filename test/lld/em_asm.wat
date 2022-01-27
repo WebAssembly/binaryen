@@ -6,11 +6,11 @@
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i32 i32 i32) (result i32)))
  (memory $0 2)
  (data $.rodata (i32.const 568) "\00ii\00i\00")
- (data $em_asm (i32.const 574) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
+ (data $em_asm (i32.const 574) "{ Module.print(\"Hello \\\\ world\\t\\n\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (table $0 1 1 funcref)
  (global $__stack_pointer (mut i32) (i32.const 66208))
  (global $global$1 i32 (i32.const 574))
- (global $global$2 i32 (i32.const 658))
+ (global $global$2 i32 (i32.const 665))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
@@ -42,7 +42,7 @@
   (i32.store
    (local.get $0)
    (call $emscripten_asm_const_int
-    (i32.const 607)
+    (i32.const 614)
     (i32.const 569)
     (i32.add
      (local.get $0)
@@ -52,7 +52,7 @@
   )
   (drop
    (call $emscripten_asm_const_int
-    (i32.const 627)
+    (i32.const 634)
     (i32.const 572)
     (local.get $0)
    )

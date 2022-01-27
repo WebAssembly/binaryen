@@ -25,6 +25,7 @@
 #include <ir/find_all.h>
 #include <ir/linear-execution.h>
 #include <ir/local-graph.h>
+#include <ir/lubs.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -58,8 +59,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     std::vector<std::vector<LocalSet*>> setsForLocal(numLocals);
     std::vector<std::vector<LocalGet*>> getsForLocal(numLocals);
 
-    for (auto& kv : localGraph.locations) {
-      auto* curr = kv.first;
+    for (auto& [curr, _] : localGraph.locations) {
       if (auto* set = curr->dynCast<LocalSet>()) {
         setsForLocal[set->index].push_back(set);
       } else {
@@ -77,9 +77,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     std::unordered_set<Index> usesDefault;
 
     if (getModule()->features.hasGCNNLocals()) {
-      for (auto& kv : localGraph.getSetses) {
-        auto* get = kv.first;
-        auto& sets = kv.second;
+      for (auto& [get, sets] : localGraph.getSetses) {
         auto index = get->index;
         if (func->isVar(index) &&
             std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
@@ -118,18 +116,22 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // type.
 
       for (Index i = varBase; i < numLocals; i++) {
+        auto oldType = func->getLocalType(i);
+
         // Find all the types assigned to the var, and compute the optimal LUB.
-        std::unordered_set<Type> types;
+        LUBFinder lub;
         for (auto* set : setsForLocal[i]) {
-          types.insert(set->value->type);
+          lub.noteUpdatableExpression(set->value);
+          if (lub.getBestPossible() == oldType) {
+            break;
+          }
         }
-        if (types.empty()) {
+        if (!lub.noted()) {
           // Nothing is assigned to this local (other opts will remove it).
           continue;
         }
 
-        auto oldType = func->getLocalType(i);
-        auto newType = Type::getLeastUpperBound(types);
+        auto newType = lub.getBestPossible();
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
         // Remove non-nullability if we disallow that in locals.
@@ -153,6 +155,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           func->vars[i - varBase] = newType;
           more = true;
           optimized = true;
+          lub.updateNulls();
 
           // Update gets and tees.
           for (auto* get : getsForLocal[i]) {

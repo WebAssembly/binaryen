@@ -22,13 +22,10 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "pass.h"
-#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace ModuleUtils {
+namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied).
@@ -155,10 +152,10 @@ inline void clearModule(Module& wasm) {
 // call this redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
-  for (auto& pair : map) {
-    if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      assert(!wasm.getFunctionOrNull(pair.second) || F->name == pair.second);
-      F->name = pair.second;
+  for (auto& [oldName, newName] : map) {
+    if (Function* F = wasm.getFunctionOrNull(oldName)) {
+      assert(!wasm.getFunctionOrNull(newName) || F->name == newName);
+      F->name = newName;
     }
   }
   wasm.updateMaps();
@@ -415,9 +412,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     map.swap(analysis.map);
 
     // Find what is called by what.
-    for (auto& pair : map) {
-      auto* func = pair.first;
-      auto& info = pair.second;
+    for (auto& [func, info] : map) {
       for (auto* target : info.callsTo) {
         map[target].calledBy.insert(func);
       }
@@ -460,169 +455,23 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
-// Helper function for collecting all the types that are declared in a module,
-// which means the HeapTypes (that are non-basic, that is, not eqref etc., which
-// do not need to be defined).
-//
-// Used when emitting or printing a module to give HeapTypes canonical
-// indices. HeapTypes are sorted in order of decreasing frequency to minize the
-// size of their collective encoding. Both a vector mapping indices to
-// HeapTypes and a map mapping HeapTypes to indices are produced.
-inline void collectHeapTypes(Module& wasm,
-                             std::vector<HeapType>& types,
-                             std::unordered_map<HeapType, Index>& typeIndices) {
-  struct Counts : public InsertOrderedMap<HeapType, size_t> {
-    void note(HeapType type) {
-      if (!type.isBasic()) {
-        (*this)[type]++;
-      }
-    }
-    void note(Type type) {
-      for (HeapType ht : type.getHeapTypeChildren()) {
-        note(ht);
-      }
-    }
-  };
+// Helper function for collecting all the non-basic heap types used in the
+// module, i.e. the types that would appear in the type section.
+std::vector<HeapType> collectHeapTypes(Module& wasm);
 
-  struct CodeScanner
-    : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
-    Counts& counts;
+struct IndexedHeapTypes {
+  std::vector<HeapType> types;
+  std::unordered_map<HeapType, Index> indices;
+};
 
-    CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
-      setModule(&wasm);
-    }
+// Similar to `collectHeapTypes`, but provides fast lookup of the index for each
+// type as well.
+IndexedHeapTypes getIndexedHeapTypes(Module& wasm);
 
-    void visitExpression(Expression* curr) {
-      if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->getHeapType(getModule()));
-      } else if (curr->is<RefNull>()) {
-        counts.note(curr->type);
-      } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-        counts.note(curr->type.getRtt().heapType);
-      } else if (auto* make = curr->dynCast<StructNew>()) {
-        // Some operations emit a HeapType in the binary format, if they are
-        // static and not dynamic (if dynamic, the RTT provides the heap type).
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayNew>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayInit>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* cast = curr->dynCast<RefCast>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<RefTest>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<BrOn>()) {
-        if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-          if (!cast->rtt && cast->type != Type::unreachable) {
-            counts.note(cast->getIntendedType());
-          }
-        }
-      } else if (auto* get = curr->dynCast<StructGet>()) {
-        counts.note(get->ref->type);
-      } else if (auto* set = curr->dynCast<StructSet>()) {
-        counts.note(set->ref->type);
-      } else if (Properties::isControlFlowStructure(curr)) {
-        if (curr->type.isTuple()) {
-          // TODO: Allow control flow to have input types as well
-          counts.note(Signature(Type::none, curr->type));
-        } else {
-          counts.note(curr->type);
-        }
-      }
-    }
-  };
+// The same as `getIndexedHeapTypes`, but also sorts the types by frequency of
+// use to minimize code size.
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
 
-  // Collect module-level info.
-  Counts counts;
-  CodeScanner(wasm, counts).walkModuleCode(&wasm);
-  for (auto& curr : wasm.tags) {
-    counts.note(curr->sig);
-  }
-  for (auto& curr : wasm.tables) {
-    counts.note(curr->type);
-  }
-  for (auto& curr : wasm.elementSegments) {
-    counts.note(curr->type);
-  }
-
-  // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
-    wasm, [&](Function* func, Counts& counts) {
-      counts.note(func->type);
-      for (auto type : func->vars) {
-        counts.note(type);
-      }
-      if (!func->imported()) {
-        CodeScanner(wasm, counts).walk(func->body);
-      }
-    });
-
-  // Combine the function info with the module info.
-  for (const auto& pair : analysis.map) {
-    const Counts& functionCounts = pair.second;
-    for (const auto& innerPair : functionCounts) {
-      counts[innerPair.first] += innerPair.second;
-    }
-  }
-
-  // Recursively traverse each reference type, which may have a child type that
-  // is itself a reference type. This reflects an appearance in the binary
-  // format that is in the type section itself.
-  // As we do this we may find more and more types, as nested children of
-  // previous ones. Each such type will appear in the type section once, so
-  // we just need to visit it once.
-  InsertOrderedSet<HeapType> newTypes;
-  for (auto& pair : counts) {
-    newTypes.insert(pair.first);
-  }
-  while (!newTypes.empty()) {
-    auto iter = newTypes.begin();
-    auto ht = *iter;
-    newTypes.erase(iter);
-    for (HeapType child : ht.getHeapTypeChildren()) {
-      if (!child.isBasic()) {
-        if (!counts.count(child)) {
-          newTypes.insert(child);
-        }
-        counts.note(child);
-      }
-    }
-
-    if (auto super = ht.getSuperType()) {
-      if (!counts.count(*super)) {
-        newTypes.insert(*super);
-        // We should unconditionally count supertypes, but while the type system
-        // is in flux, skip counting them to keep the type orderings in nominal
-        // test outputs more similar to the orderings in the equirecursive
-        // outputs. FIXME
-        counts.note(*super);
-      }
-    }
-  }
-
-  // Sort by frequency and then original insertion order.
-  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
-  std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    return a.second > b.second;
-  });
-  for (Index i = 0; i < sorted.size(); ++i) {
-    typeIndices[sorted[i].first] = i;
-    types.push_back(sorted[i].first);
-  }
-}
-
-} // namespace ModuleUtils
-
-} // namespace wasm
+} // namespace wasm::ModuleUtils
 
 #endif // wasm_ir_module_h

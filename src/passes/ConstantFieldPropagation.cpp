@@ -53,20 +53,23 @@ struct Many : public std::monostate {};
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
-// anything.
+// anything. The values can either be literal values (Literal) or the names of
+// immutable globals (Name).
 //
 // Currently this just looks for a single constant value, and even two constant
 // values are treated as unknown. It may be worth optimizing more than that TODO
 struct PossibleConstantValues {
 private:
-  std::variant<None, Literal, Many> value;
+  using Variant = std::variant<None, Literal, Name, Many>;
+  Variant value;
 
 public:
   PossibleConstantValues() : value(None()) {}
 
   // Note a written value as we see it, and update our internal knowledge based
-  // on it and all previous values noted.
-  void note(Literal curr) {
+  // on it and all previous values noted. This can be called using either a
+  // Literal or a Name, so it uses a template.
+  template<typename T> void note(T curr) {
     if (std::get_if<None>(&value)) {
       // This is the first value.
       value = curr;
@@ -79,9 +82,9 @@ public:
     }
 
     // This is a subsequent value. Check if it is different from all previous
-    // ones, and if so, we now represent many possible values.
-    if (curr != std::get<Literal>(value)) {
-      value = Many();
+    // ones.
+    if (Variant(curr) != value) {
+      noteUnknown();
     }
   }
 
@@ -117,12 +120,23 @@ public:
   }
 
   // Check if all the values are identical and constant.
-  bool isConstant() const { return std::get_if<Literal>(&value); }
+  bool isConstant() const {
+    return !std::get_if<None>(&value) && !std::get_if<Many>(&value);
+  }
+
+  bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
+
+  bool isConstantGlobal() const { return std::get_if<Name>(&value); }
 
   // Returns the single constant value.
-  Literal getConstantValue() const {
+  Literal getConstantLiteral() const {
     assert(isConstant());
     return std::get<Literal>(value);
+  }
+
+  Name getConstantGlobal() const {
+    assert(isConstant());
+    return std::get<Name>(value);
   }
 
   // Returns whether we have ever noted a value.
@@ -134,16 +148,18 @@ public:
       o << "unwritten";
     } else if (!isConstant()) {
       o << "unknown";
-    } else {
-      o << getConstantValue();
+    } else if (isConstantLiteral()) {
+      o << getConstantLiteral();
+    } else if (isConstantGlobal()) {
+      o << '$' << getConstantGlobal();
     }
     o << ']';
   }
 };
 
-using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
+using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
-  FunctionStructValuesMap<PossibleConstantValues>;
+  StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -200,9 +216,14 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
+    Expression* value;
+    if (info.isConstantLiteral()) {
+      value = builder.makeConstantExpression(info.getConstantLiteral());
+    } else {
+      value = builder.makeGlobalGet(info.getConstantGlobal(), curr->type);
+    }
     replaceCurrent(builder.makeSequence(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-      builder.makeConstantExpression(info.getConstantValue())));
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
   }
 
@@ -222,26 +243,40 @@ private:
   bool changed = false;
 };
 
-struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
+struct PCVScanner
+  : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
     return new PCVScanner(functionNewInfos, functionSetGetInfos);
   }
 
-  PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
-             FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
-    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos,
-                                                  functionSetInfos) {}
+  PCVScanner(StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
+               functionNewInfos,
+             StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
+               functionSetInfos)
+    : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
+        functionNewInfos, functionSetInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
                       Index index,
                       PossibleConstantValues& info) {
-
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
+    // If this is a constant literal value, note that.
+    if (Properties::isConstantExpression(expr)) {
       info.note(Properties::getLiteral(expr));
+      return;
     }
+
+    // If this is an immutable global that we get, note that.
+    if (auto* get = expr->dynCast<GlobalGet>()) {
+      auto* global = getModule()->getGlobal(get->name);
+      if (global->mutable_ == Immutable) {
+        info.note(get->name);
+        return;
+      }
+    }
+
+    // Otherwise, this is not something we can reason about.
+    info.noteUnknown();
   }
 
   void noteDefault(Type fieldType,
@@ -327,7 +362,8 @@ struct ConstantFieldPropagation : public Pass {
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
 
-    TypeHierarchyPropagator<PossibleConstantValues> propagator(*module);
+    StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
+      *module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 

@@ -42,9 +42,12 @@ def get_changelog_version():
 def run_version_tests():
     print('[ checking --version ... ]\n')
 
-    not_executable_suffix = ['.DS_Store', '.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest', 'binaryen-lit']
+    not_executable_suffix = ['.DS_Store', '.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest']
+    not_executable_prefix = ['binaryen-lit', 'binaryen-unittests']
     bin_files = [os.path.join(shared.options.binaryen_bin, f) for f in os.listdir(shared.options.binaryen_bin)]
-    executables = [f for f in bin_files if os.path.isfile(f) and not any(f.endswith(s) for s in not_executable_suffix)]
+    executables = [f for f in bin_files if os.path.isfile(f) and
+                   not any(f.endswith(s) for s in not_executable_suffix) and
+                   not any(os.path.basename(f).startswith(s) for s in not_executable_prefix)]
     executables = sorted(executables)
     assert len(executables)
 
@@ -116,6 +119,10 @@ def run_ctor_eval_tests():
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
         cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wat', '-S', '--ctors', ctors]
+        if 'ignore-external-input' in t:
+            cmd += ['--ignore-external-input']
+        if 'results' in t:
+            cmd += ['--kept-exports', 'test1,test3']
         support.run_command(cmd)
         actual = open('a.wat').read()
         out = t + '.out'
@@ -333,6 +340,18 @@ def run_lit():
     shared.with_pass_debug(run)
 
 
+def run_gtest():
+    def run():
+        gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
+        result = subprocess.run(gtest)
+        if result.returncode != 0:
+            shared.num_failures += 1
+        if shared.options.abort_on_first_failure and shared.num_failures:
+            raise Exception("gtest test failed")
+
+    shared.with_pass_debug(run)
+
+
 TEST_SUITES = OrderedDict([
     ('version', run_version_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
@@ -351,6 +370,7 @@ TEST_SUITES = OrderedDict([
     ('binaryenjs', binaryenjs.test_binaryen_js),
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
     ('lit', run_lit),
+    ('gtest', run_gtest),
 ])
 
 

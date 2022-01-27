@@ -3,6 +3,12 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type ${} (struct ))
+  (type ${} (struct_subtype data))
+
+  ;; CHECK:      (type ${i32} (struct (field i32)))
+  (type ${i32} (struct_subtype (field i32) data))
+
   ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
   ;; CHECK:      (import "out" "i64" (func $i64 (result i64)))
@@ -332,5 +338,48 @@
       (ref.null func)
     )
     (unreachable)
+  )
+
+  ;; CHECK:      (func $update-nulls
+  ;; CHECK-NEXT:  (local $x (ref null ${}))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new_default ${})
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null ${i32})
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update-nulls
+    (local $x anyref)
+    (local.set $x (ref.null any))
+    (local.set $x (ref.null eq))
+    ;; All the nulls can be changed into other nulls here, for the new LUB,
+    ;; which will be ${}
+    (local.set $x (struct.new ${}))
+    (local.set $x (ref.null data))
+    ;; Note that this func null is even of a type that is incompatible with the
+    ;; new lub (func vs data). Still, we can just update it along with the
+    ;; others.
+    (local.set $x (ref.null func))
+    ;; This null is equal to the LUB we'll find, and will not change.
+    (local.set $x (ref.null ${}))
+    ;; This null is more specific than the LUB we'll find, and will not change,
+    ;; as there is no point to making something less specific in type.
+    (local.set $x (ref.null ${i32}))
   )
 )

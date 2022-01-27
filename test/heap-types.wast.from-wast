@@ -456,8 +456,10 @@
  )
  (func $unreachables-7
   (drop
-   (block
-    (unreachable)
+   (block ;; (replaces something unreachable we can't emit)
+    (drop
+     (unreachable)
+    )
    )
   )
  )

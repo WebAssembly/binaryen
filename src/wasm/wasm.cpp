@@ -91,8 +91,8 @@ Name NEG_NAN("-nan");
 Name CASE("case");
 Name BR("br");
 Name FUNCREF("funcref");
-Name FAKE_RETURN("fake_return_waka123");
-Name DELEGATE_CALLER_TARGET("delegate_caller_target_waka123");
+Name FAKE_RETURN("__binaryen_fake_return");
+Name DELEGATE_CALLER_TARGET("__binaryen_delegate_caller_target");
 Name MUT("mut");
 Name SPECTEST("spectest");
 Name PRINT("print");
@@ -290,7 +290,7 @@ void Call::finalize() {
 }
 
 void CallIndirect::finalize() {
-  type = sig.results;
+  type = heapType.getSignature().results;
   handleUnreachableOperands(this);
   if (isReturn) {
     type = Type::unreachable;
@@ -298,30 +298,6 @@ void CallIndirect::finalize() {
   if (target->type == Type::unreachable) {
     type = Type::unreachable;
   }
-}
-
-HeapType CallIndirect::getHeapType(Module* module) {
-  auto heapType = HeapType(sig);
-  // See comment in wasm.h
-  if (module) {
-    // The table may not yet exist if the wasm module is still being
-    // constructed. This should perhaps be an error, but as this is a hack for
-    // the time being, handle this the same as the case where module is null.
-    // Note: table_ (with underscore) is needed as |table| is a field on |this|.
-    if (auto* table_ = module->getTableOrNull(table)) {
-      // The wasm spec may allow more things eventually, and if so we'd need to
-      // add more checking here.
-      assert(table_->type.isRef());
-      auto tableHeapType = table_->type.getHeapType();
-      if (tableHeapType.isSignature()) {
-        auto tableSig = tableHeapType.getSignature();
-        if (sig == tableSig) {
-          heapType = tableHeapType;
-        }
-      }
-    }
-  }
-  return heapType;
 }
 
 bool LocalSet::isTee() const { return type != Type::none; }
@@ -711,6 +687,10 @@ void Unary::finalize() {
     case TruncSatZeroUVecF64x2ToVecI32x4:
     case DemoteZeroVecF64x2ToVecF32x4:
     case PromoteLowVecF32x4ToVecF64x2:
+    case RelaxedTruncSVecF32x4ToVecI32x4:
+    case RelaxedTruncUVecF32x4ToVecI32x4:
+    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+    case RelaxedTruncZeroUVecF64x2ToVecI32x4:
       type = Type::v128;
       break;
     case AnyTrueVec128:

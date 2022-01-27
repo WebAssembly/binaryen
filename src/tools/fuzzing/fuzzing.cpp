@@ -1,57 +1,35 @@
+/*
+ * Copyright 2021 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "tools/fuzzing.h"
+#include "tools/fuzzing/heap-types.h"
+#include "tools/fuzzing/parameters.h"
 
 namespace wasm {
 
-// Constants that control fuzzing.
 namespace {
-// The maximum amount of params to each function.
-constexpr int MAX_PARAMS = 10;
-
-// The maximum amount of vars in each function.
-constexpr int MAX_VARS = 20;
-
-// The maximum number of globals in a module.
-constexpr int MAX_GLOBALS = 20;
-
-// The maximum number of tuple elements.
-constexpr int MAX_TUPLE_SIZE = 6;
-
-// some things require luck, try them a few times
-constexpr int TRIES = 10;
-
-// beyond a nesting limit, greatly decrease the chance to continue to nest
-constexpr int NESTING_LIMIT = 11;
-
-// the maximum size of a block
-constexpr int BLOCK_FACTOR = 5;
-
-// the memory that we use, a small portion so that we have a good chance of
-// looking at writes (we also look outside of this region with small
-// probability) this should be a power of 2
-constexpr Address USABLE_MEMORY = 16;
-
-// the number of runtime iterations (function calls, loop backbranches) we
-// allow before we stop execution with a trap, to prevent hangs. 0 means
-// no hang protection.
-constexpr int HANG_LIMIT = 10;
 
 // Weighting for the core make* methods. Some nodes are important enough that
 // we should do them quite often.
-constexpr size_t VeryImportant = 4;
-constexpr size_t Important = 2;
 
 } // anonymous namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::vector<char> input)
-  : wasm(wasm), builder(wasm) {
-  bytes.swap(input);
-  pos = 0;
-  finishedInput = false;
-  // ensure *some* input to be read
-  if (bytes.size() == 0) {
-    bytes.push_back(0);
-  }
+                                             std::vector<char>&& input)
+  : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
   // - there's no point in logging externref or anyref because these are opaque
@@ -67,51 +45,8 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   : TranslateToFuzzReader(
       wasm, read_file<std::vector<char>>(filename, Flags::Binary)) {}
 
-int8_t TranslateToFuzzReader::get() {
-  if (pos == bytes.size()) {
-    // we ran out of input, go to the start for more stuff
-    finishedInput = true;
-    pos = 0;
-    xorFactor++;
-  }
-  return bytes[pos++] ^ xorFactor;
-}
-
-int16_t TranslateToFuzzReader::get16() {
-  auto temp = uint16_t(get()) << 8;
-  return temp | uint16_t(get());
-}
-
-int32_t TranslateToFuzzReader::get32() {
-  auto temp = uint32_t(get16()) << 16;
-  return temp | uint32_t(get16());
-}
-
-int64_t TranslateToFuzzReader::get64() {
-  auto temp = uint64_t(get32()) << 32;
-  return temp | uint64_t(get32());
-}
-
-Index TranslateToFuzzReader::upTo(Index x) {
-  if (x == 0) {
-    return 0;
-  }
-  Index raw;
-  if (x <= 255) {
-    raw = get();
-  } else if (x <= 65535) {
-    raw = get16();
-  } else {
-    raw = get32();
-  }
-  auto ret = raw % x;
-  // use extra bits as "noise" for later
-  xorFactor += raw / x;
-  return ret;
-}
-
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
-  while (options.passes.size() < 20 && !finishedInput && !oneIn(3)) {
+  while (options.passes.size() < 20 && !random.finished() && !oneIn(3)) {
     switch (upTo(32)) {
       case 0:
       case 1:
@@ -235,7 +170,7 @@ void TranslateToFuzzReader::build() {
   modifyInitialFunctions();
   addImportLoggingSupport();
   // keep adding functions until we run out of input
-  while (!finishedInput) {
+  while (!random.finished()) {
     auto* func = addFunction();
     addInvocations(func);
   }
@@ -553,7 +488,8 @@ Function* TranslateToFuzzReader::addFunction() {
     funcContext->typeLocals[type].push_back(params.size());
     params.push_back(type);
   }
-  func->type = Signature(Type(params), getControlFlowType());
+  auto paramType = Type(params);
+  func->type = Signature(paramType, getControlFlowType());
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
@@ -593,9 +529,15 @@ Function* TranslateToFuzzReader::addFunction() {
   }
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
-  // export some, but not all (to allow inlining etc.). make sure to
-  // export at least one, though, to keep each testcase interesting
-  if ((numAddedFunctions == 0 || oneIn(2)) &&
+  // Export some functions, but not all (to allow inlining etc.). Try to export
+  // at least one, though, to keep each testcase interesting. Only functions
+  // with defaultable params can be exported because the trap fuzzer depends on
+  // that (TODO: fix this).
+  bool defaultableParams =
+    std::all_of(paramType.begin(), paramType.end(), [](Type t) {
+      return t.isDefaultable();
+    });
+  if (defaultableParams && (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
     export_->name = func->name;
@@ -604,7 +546,7 @@ Function* TranslateToFuzzReader::addFunction() {
     wasm.addExport(export_);
   }
   // add some to an elem segment
-  while (oneIn(3) && !finishedInput) {
+  while (oneIn(3) && !random.finished()) {
     auto type = Type(func->type, NonNullable);
     std::vector<ElementSegment*> compatibleSegments;
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
@@ -639,14 +581,18 @@ void TranslateToFuzzReader::recombine(Function* func) {
   // First, scan and group all expressions by type.
   struct Scanner
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    TranslateToFuzzReader& parent;
     // A map of all expressions, categorized by type.
     InsertOrderedMap<Type, std::vector<Expression*>> exprsByType;
+    Scanner(TranslateToFuzzReader& parent) : parent(parent) {}
 
     void visitExpression(Expression* curr) {
-      exprsByType[curr->type].push_back(curr);
+      if (parent.canBeArbitrarilyReplaced(curr)) {
+        exprsByType[curr->type].push_back(curr);
+      }
     }
   };
-  Scanner scanner;
+  Scanner scanner(*this);
   scanner.walk(func->body);
   // Potentially trim the list of possible picks, so replacements are more
   // likely to collide.
@@ -873,8 +819,12 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return;
   }
+  auto invoker = builder.makeFunction(name, Signature(), {});
+  Block* body = builder.makeBlock();
+  invoker->body = body;
+  FunctionCreationContext context(*this, invoker.get());
   std::vector<Expression*> invocations;
-  while (oneIn(2) && !finishedInput) {
+  while (oneIn(2) && !random.finished()) {
     std::vector<Expression*> args;
     for (const auto& type : func->getParams()) {
       args.push_back(makeConst(type));
@@ -892,27 +842,21 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   if (invocations.empty()) {
     return;
   }
-  auto* invoker = new Function;
-  invoker->name = name;
-  invoker->type = Signature(Type::none, Type::none);
-  invoker->body = builder.makeBlock(invocations);
-  wasm.addFunction(invoker);
-  auto* export_ = new Export;
-  export_->name = name;
-  export_->value = name;
-  export_->kind = ExternalKind::Function;
-  wasm.addExport(export_);
+  body->list.set(invocations);
+  wasm.addFunction(std::move(invoker));
+  wasm.addExport(builder.makeExport(name, name, ExternalKind::Function));
 }
 
 Expression* TranslateToFuzzReader::make(Type type) {
+  auto subtype = getSubType(type);
   // When we should stop, emit something small (but not necessarily trivial).
-  if (finishedInput || nesting >= 5 * NESTING_LIMIT || // hard limit
+  if (random.finished() || nesting >= 5 * NESTING_LIMIT || // hard limit
       (nesting >= NESTING_LIMIT && !oneIn(3))) {
     if (type.isConcrete()) {
       if (oneIn(2)) {
-        return makeConst(type);
+        return makeConst(subtype);
       } else {
-        return makeLocalGet(type);
+        return makeLocalGet(subtype);
       }
     } else if (type == Type::none) {
       if (oneIn(2)) {
@@ -927,14 +871,14 @@ Expression* TranslateToFuzzReader::make(Type type) {
   nesting++;
   Expression* ret = nullptr;
   if (type.isConcrete()) {
-    ret = _makeConcrete(type);
+    ret = _makeConcrete(subtype);
   } else if (type == Type::none) {
     ret = _makenone();
   } else {
     assert(type == Type::unreachable);
     ret = _makeunreachable();
   }
-  // we should create the right type of thing
+  // We should create the right type of thing.
   assert(Type::isSubType(ret->type, type));
   nesting--;
   return ret;
@@ -979,8 +923,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   }
   if (type == Type::i32) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeRefEq);
-    //  TODO: makeI31Get
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                &Self::makeRefEq,
+                &Self::makeI31Get);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -1086,13 +1031,13 @@ Expression* TranslateToFuzzReader::makeBlock(Type type) {
   if (num == 0 && !oneIn(10)) {
     num++;
   }
-  while (num > 0 && !finishedInput) {
+  while (num > 0 && !random.finished()) {
     ret->list.push_back(make(Type::none));
     num--;
   }
   // give a chance to make the final element an unreachable break, instead
   // of concrete - a common pattern (branch to the top of a loop etc.)
-  if (!finishedInput && type.isConcrete() && oneIn(2)) {
+  if (!random.finished() && type.isConcrete() && oneIn(2)) {
     ret->list.push_back(makeBreak(Type::unreachable));
   } else {
     ret->list.push_back(make(type));
@@ -1319,7 +1264,7 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
   }
   // TODO: use a random table
   return builder.makeCallIndirect(
-    funcrefTableName, target, args, targetFn->getSig(), isReturn);
+    funcrefTableName, target, args, targetFn->type, isReturn);
 }
 
 Expression* TranslateToFuzzReader::makeCallRef(Type type) {
@@ -1916,55 +1861,44 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
   WASM_UNREACHABLE("invalid value");
 }
 
-Expression* TranslateToFuzzReader::makeConst(Type type) {
-  if (type.isRef()) {
-    assert(wasm.features.hasReferenceTypes());
-    // Check if we can use ref.func.
-    // 'funcContext->func' is the pointer to the last created function and can
-    // be null when we set up globals (before we create any functions), in
-    // which case we can't use ref.func.
-    if (type == Type::funcref && funcContext && oneIn(2)) {
-      // First set to target to the last created function, and try to select
-      // among other existing function if possible
-      Function* target = funcContext->func;
-      if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
-        target = pick(wasm.functions).get();
+Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
+  // ref.as_non_null is allowed in globals and we don't yet support func.ref in
+  // globals because we create globals before we create functions. As a result,
+  // we can only create non-nullable function references if we are in a function
+  // context for now.
+  // TODO: Generate trivial functions to support ref.func in globals.
+  assert(type.isNullable() || funcContext);
+  if (!funcContext || (type.isNullable() && oneIn(8))) {
+    return builder.makeRefNull(type);
+  }
+
+  auto heapType = type.getHeapType();
+  if (heapType == HeapType::func) {
+    // First set to target to the last created function, and try to select
+    // among other existing function if possible.
+    Function* target = funcContext->func;
+    if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
+      target = pick(wasm.functions).get();
+    }
+    return builder.makeRefFunc(target->name, target->type);
+  } else {
+    // TODO: randomize the order
+    for (auto& func : wasm.functions) {
+      if (Type::isSubType(type, Type(func->type, NonNullable))) {
+        return builder.makeRefFunc(func->name, func->type);
       }
-      return builder.makeRefFunc(target->name, target->type);
     }
-    if (type == Type::i31ref) {
-      return builder.makeI31New(makeConst(Type::i32));
-    }
-    if (oneIn(2) && type.isNullable()) {
-      return builder.makeRefNull(type);
-    }
-    if (!type.isFunction()) {
-      // We don't know how to create an externref or GC data yet TODO
-      // For now, create a null, and if it must be non-null, cast it to such
-      // even though that traps at runtime.
-      auto nullable = Type(type.getHeapType(), Nullable);
-      Expression* ret = builder.makeRefNull(nullable);
+    // We don't have a matching function, so create a null with high probability
+    // if the type is nullable or otherwise create and cast a null with low
+    // probability.
+    if ((type.isNullable() && !oneIn(8)) || oneIn(8)) {
+      Expression* ret = builder.makeRefNull(Type(heapType, Nullable));
       if (!type.isNullable()) {
         ret = builder.makeRefAs(RefAsNonNull, ret);
       }
       return ret;
     }
-    // TODO: randomize the order
-    for (auto& func : wasm.functions) {
-      if (type == Type(func->type, NonNullable)) {
-        return builder.makeRefFunc(func->name, func->type);
-      }
-    }
-    // We failed to find a function, so create a null reference if we can.
-    if (type.isNullable()) {
-      return builder.makeRefNull(type);
-    }
-    // Last resort: create a function.
-    auto heapType = type.getHeapType();
-    if (heapType == HeapType::func) {
-      // The specific signature does not matter.
-      heapType = Signature(Type::none, Type::none);
-    }
+    // As a final option, create a new function with the correct signature.
     auto* func = wasm.addFunction(
       builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
                            heapType,
@@ -1972,20 +1906,101 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
                            builder.makeUnreachable()));
     return builder.makeRefFunc(func->name, heapType);
   }
-  if (type.isRtt()) {
+}
+
+Expression* TranslateToFuzzReader::makeConst(Type type) {
+  if (type.isRef()) {
+    assert(wasm.features.hasReferenceTypes());
+    if (type.isNullable() && oneIn(8)) {
+      return builder.makeRefNull(type);
+    }
+    auto heapType = type.getHeapType();
+    if (heapType.isBasic()) {
+      switch (heapType.getBasic()) {
+        case HeapType::func:
+          return makeRefFuncConst(type);
+        case HeapType::ext:
+          // No trivial way to create an externref.
+          break;
+        case HeapType::any: {
+          // Choose a subtype we can materialize a constant for. We cannot
+          // materialize non-nullable refs to func or i31 in global contexts.
+          Nullability nullability = getSubType(type.getNullability());
+          HeapType subtype;
+          if (funcContext || nullability == Nullable) {
+            subtype = pick(HeapType::func, HeapType::i31, HeapType::data);
+          } else {
+            subtype = HeapType::data;
+          }
+          return makeConst(Type(subtype, nullability));
+        }
+        case HeapType::eq: {
+          auto nullability = getSubType(type.getNullability());
+          // i31.new is not allowed in initializer expressions.
+          HeapType subtype;
+          if (funcContext) {
+            subtype = pick(HeapType::i31, HeapType::data);
+          } else {
+            subtype = HeapType::data;
+          }
+          return makeConst(Type(subtype, nullability));
+        }
+        case HeapType::i31:
+          // i31.new is not allowed in initializer expressions.
+          if (funcContext) {
+            return builder.makeI31New(makeConst(Type::i32));
+          } else {
+            assert(type.isNullable());
+            return builder.makeRefNull(type);
+          }
+        case HeapType::data:
+          // TODO: Construct nontrivial types. For now just create a hard coded
+          // struct or array.
+          if (oneIn(2)) {
+            // Use a local static to avoid creating a fresh nominal types in
+            // --nominal mode.
+            static HeapType trivialStruct = HeapType(Struct());
+            return builder.makeStructNew(trivialStruct,
+                                         std::vector<Expression*>{});
+          } else {
+            // Use a local static to avoid creating a fresh nominal types in
+            // --nominal mode.
+            static HeapType trivialArray =
+              HeapType(Array(Field(Field::PackedType::i8, Immutable)));
+            return builder.makeArrayInit(trivialArray, {});
+          }
+      }
+    } else if (heapType.isSignature()) {
+      return makeRefFuncConst(type);
+    } else {
+      // TODO: Handle nontrivial array and struct types.
+    }
+    // We weren't able to directly materialize a non-null constant. Try again to
+    // create a null.
+    if (type.isNullable()) {
+      return builder.makeRefNull(type);
+    }
+    // We have to produce a non-null value. Possibly create a null and cast it
+    // to non-null even though that will trap at runtime. We must have a
+    // function context because the cast is not allowed in globals.
+    if (!funcContext) {
+      std::cerr << type << "\n";
+    }
+    assert(funcContext);
+    return builder.makeRefAs(RefAsNonNull,
+                             builder.makeRefNull(Type(heapType, Nullable)));
+  } else if (type.isRtt()) {
     return builder.makeRtt(type);
-  }
-  if (type.isTuple()) {
+  } else if (type.isTuple()) {
     std::vector<Expression*> operands;
     for (const auto& t : type) {
       operands.push_back(makeConst(t));
     }
     return builder.makeTupleMake(std::move(operands));
+  } else {
+    assert(type.isBasic());
+    return builder.makeConst(makeLiteral(type));
   }
-  auto* ret = wasm.allocator.alloc<Const>();
-  ret->value = makeLiteral(type);
-  ret->type = type;
-  return ret;
 }
 
 Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
@@ -2008,7 +2023,10 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
   switch (type.getBasic()) {
     case Type::i32: {
       auto singleConcreteType = getSingleConcreteType();
-      TODO_SINGLE_COMPOUND(singleConcreteType);
+      if (singleConcreteType.isRef() || singleConcreteType.isRtt()) {
+        // TODO: Do something more interesting here.
+        return makeTrivial(type);
+      }
       switch (singleConcreteType.getBasic()) {
         case Type::i32: {
           auto op = pick(
@@ -2054,7 +2072,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case Type::eqref:
         case Type::i31ref:
         case Type::dataref:
-          return makeTrivial(type);
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2885,31 +2902,56 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
-  // TODO: emit typed function references types
-  // TODO: i31ref, dataref
-  return pick(
-    FeatureOptions<Type>()
-      .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-      .add(FeatureSet::SIMD, Type::v128)
-      .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-      .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-           Type::anyref,
-           Type::eqref));
+  // TODO: Nontrivial reference types.
+  // Skip (ref func), (ref extern), and (ref i31) for now
+  // because there is no way to create them in globals. TODO.
+  using WeightedOption = FeatureOptions<Type>::WeightedOption;
+  return pick(FeatureOptions<Type>()
+                .add(FeatureSet::MVP,
+                     WeightedOption{Type::i32, VeryImportant},
+                     WeightedOption{Type::i64, VeryImportant},
+                     WeightedOption{Type::f32, VeryImportant},
+                     WeightedOption{Type::f64, VeryImportant})
+                .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
+                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+                .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                     // Type(HeapType::func, NonNullable),
+                     // Type(HeapType::ext, NonNullable),
+                     Type(HeapType::any, Nullable),
+                     Type(HeapType::any, NonNullable),
+                     Type(HeapType::eq, Nullable),
+                     Type(HeapType::eq, NonNullable),
+                     Type(HeapType::i31, Nullable),
+                     // Type(HeapType::i31, NonNullable),
+                     Type(HeapType::data, Nullable),
+                     Type(HeapType::data, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
-  // TODO: i31ref, dataref
   return pick(FeatureOptions<Type>()
                 .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                     Type::anyref,
-                     Type::eqref));
+                     Type(HeapType::func, NonNullable),
+                     Type(HeapType::ext, NonNullable),
+                     Type(HeapType::any, Nullable),
+                     Type(HeapType::any, NonNullable),
+                     Type(HeapType::eq, Nullable),
+                     Type(HeapType::eq, NonNullable),
+                     Type(HeapType::i31, Nullable),
+                     Type(HeapType::i31, NonNullable),
+                     Type(HeapType::data, Nullable),
+                     Type(HeapType::data, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
-  // TODO: i31ref, dataref
-  return pick(FeatureOptions<Type>().add(
-    FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref));
+  return pick(
+    FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                               Type(HeapType::eq, Nullable),
+                               Type(HeapType::eq, NonNullable),
+                               Type(HeapType::i31, Nullable),
+                               Type(HeapType::i31, NonNullable),
+                               Type(HeapType::data, Nullable),
+                               Type(HeapType::data, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getMVPType() {
@@ -2963,6 +3005,48 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
          loggableTypes.end();
 }
 
+Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
+  return nullability == NonNullable ? NonNullable
+                                    : oneIn(2) ? Nullable : NonNullable;
+}
+
+HeapType TranslateToFuzzReader::getSubType(HeapType type) {
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case HeapType::func:
+        // TODO: Typed function references.
+        return HeapType::func;
+      case HeapType::ext:
+        return HeapType::ext;
+      case HeapType::any:
+        // TODO: nontrivial types as well.
+        return pick(HeapType::func,
+                    HeapType::ext,
+                    HeapType::any,
+                    HeapType::eq,
+                    HeapType::i31,
+                    HeapType::data);
+      case HeapType::eq:
+        // TODO: nontrivial types as well.
+        return pick(HeapType::eq, HeapType::i31, HeapType::data);
+      case HeapType::i31:
+        return HeapType::i31;
+      case HeapType::data:
+        // TODO: nontrivial types as well.
+        return HeapType::data;
+    }
+  }
+  // TODO: nontrivial types as well.
+  return type;
+}
+
+Rtt TranslateToFuzzReader::getSubType(Rtt rtt) {
+  uint32_t depth = rtt.depth != Rtt::NoDepth
+                     ? rtt.depth
+                     : oneIn(2) ? Rtt::NoDepth : upTo(MAX_RTT_DEPTH + 1);
+  return Rtt(depth, rtt.heapType);
+}
+
 Type TranslateToFuzzReader::getSubType(Type type) {
   if (type.isTuple()) {
     std::vector<Type> types;
@@ -2970,37 +3054,17 @@ Type TranslateToFuzzReader::getSubType(Type type) {
       types.push_back(getSubType(t));
     }
     return Type(types);
-  }
-  if (type.isFunction() && type != Type::funcref) {
-    // TODO: specific typed function references types.
+  } else if (type.isRef()) {
+    auto heapType = getSubType(type.getHeapType());
+    auto nullability = getSubType(type.getNullability());
+    return Type(heapType, nullability);
+  } else if (type.isRtt()) {
+    return Type(getSubType(type.getRtt()));
+  } else {
+    // This is an MVP type without subtypes.
+    assert(type.isBasic());
     return type;
   }
-  SmallVector<Type, 2> options;
-  options.push_back(type); // includes itself
-  // TODO: interesting uses of typed function types
-  // TODO: interesting subtypes of compound types
-  if (type.isBasic()) {
-    switch (type.getBasic()) {
-      case Type::anyref:
-        if (wasm.features.hasReferenceTypes()) {
-          options.push_back(Type::funcref);
-          options.push_back(Type::externref);
-          if (wasm.features.hasGC()) {
-            options.push_back(Type::eqref);
-            // TODO: i31ref, dataref, etc.
-          }
-        }
-        break;
-      case Type::eqref:
-        if (wasm.features.hasGC()) {
-          // TODO: i31ref, dataref, etc.
-        }
-        break;
-      default:
-        break;
-    }
-  }
-  return pick(options);
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {

@@ -273,12 +273,13 @@ public:
   CallIndirect* makeCallIndirect(const Name table,
                                  Expression* target,
                                  const T& args,
-                                 Signature sig,
+                                 HeapType heapType,
                                  bool isReturn = false) {
+    assert(heapType.isSignature());
     auto* call = wasm.allocator.alloc<CallIndirect>();
     call->table = table;
-    call->sig = sig;
-    call->type = sig.results;
+    call->heapType = heapType;
+    call->type = heapType.getSignature().results;
     call->target = target;
     call->operands.set(args);
     call->isReturn = isReturn;
@@ -837,7 +838,7 @@ public:
   }
   RttCanon* makeRttCanon(HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RttCanon>();
-    ret->type = Type(Rtt(0, heapType));
+    ret->type = Type(Rtt(heapType.getDepth(), heapType));
     ret->finalize();
     return ret;
   }

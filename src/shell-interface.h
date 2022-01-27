@@ -133,7 +133,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -152,8 +152,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   Literals callTable(Name tableName,
                      Index index,
-                     Signature sig,
-                     LiteralList& arguments,
+                     HeapType sig,
+                     Literals& arguments,
                      Type results,
                      ModuleInstance& instance) override {
 
@@ -173,8 +173,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (!func) {
       trap("uninitialized table element");
     }
-    if (sig != func->getSig()) {
-      trap("callIndirect: function signatures don't match");
+    if (sig != func->type) {
+      trap("callIndirect: function types don't match");
     }
     if (func->getParams().size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");

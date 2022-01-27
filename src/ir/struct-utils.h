@@ -22,6 +22,8 @@
 
 namespace wasm {
 
+namespace StructUtils {
+
 // A vector of a template type's values. One such vector will be used per struct
 // type, where each element in the vector represents a field. We always assume
 // that the vectors are pre-initialized to the right length before accessing any
@@ -57,9 +59,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   }
 
   void combineInto(StructValuesMap<T>& combinedInfos) const {
-    for (auto& kv : *this) {
-      auto type = kv.first;
-      auto& info = kv.second;
+    for (auto& [type, info] : *this) {
       for (Index i = 0; i < info.size(); i++) {
         combinedInfos[type][i].combine(info[i]);
       }
@@ -68,9 +68,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
 
   void dump(std::ostream& o) {
     o << "dump " << this << '\n';
-    for (auto& kv : (*this)) {
-      auto type = kv.first;
-      auto& vec = kv.second;
+    for (auto& [type, vec] : (*this)) {
       o << "dump " << type << " " << &vec << ' ';
       for (auto x : vec) {
         x.dump(o);
@@ -128,11 +126,12 @@ struct FunctionStructValuesMap
 // type being written to, and not just that it is of a subtype of the
 // instruction's type, which helps later.
 template<typename T, typename SubType>
-struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
+struct StructScanner
+  : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
-  Scanner(FunctionStructValuesMap<T>& functionNewInfos,
-          FunctionStructValuesMap<T>& functionSetGetInfos)
+  StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
+                FunctionStructValuesMap<T>& functionSetGetInfos)
     : functionNewInfos(functionNewInfos),
       functionSetGetInfos(functionSetGetInfos) {}
 
@@ -232,8 +231,7 @@ public:
 private:
   void propagate(StructValuesMap<T>& combinedInfos, bool toSubTypes) {
     UniqueDeferredQueue<HeapType> work;
-    for (auto& kv : combinedInfos) {
-      auto type = kv.first;
+    for (auto& [type, _] : combinedInfos) {
       work.push(type);
     }
     while (!work.empty()) {
@@ -266,6 +264,8 @@ private:
     }
   }
 };
+
+} // namespace StructUtils
 
 } // namespace wasm
 

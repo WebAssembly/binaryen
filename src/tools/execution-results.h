@@ -39,7 +39,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == "fuzzing-support") {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls
@@ -87,11 +87,20 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 // we can only get results when there are no imports. we then call each method
 // that has a result, with some values
 struct ExecutionResults {
-  std::map<Name, Literals> results;
+  struct Trap {};
+  struct Exception {};
+  using FunctionResult = std::variant<Literals, Trap, Exception>;
+  std::map<Name, FunctionResult> results;
   Loggings loggings;
 
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
+  // If set, we don't compare whether a trap has occurred or not.
+  bool ignoreTrap = false;
+
+  ExecutionResults(const PassOptions& options)
+    : ignoreTrap(options.ignoreImplicitTraps || options.trapsNeverHappen) {}
+  ExecutionResults(bool ignoreTrap) : ignoreTrap(ignoreTrap) {}
 
   // get results of execution
   void get(Module& wasm) {
@@ -106,12 +115,11 @@ struct ExecutionResults {
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
         auto* func = wasm.getFunction(exp->value);
-        if (func->getResults() != Type::none) {
-          // this has a result
-          Literals ret = run(func, wasm, instance);
-          results[exp->name] = ret;
+        FunctionResult ret = run(func, wasm, instance);
+        results[exp->name] = ret;
+        if (auto* values = std::get_if<Literals>(&ret)) {
           // ignore the result if we hit an unreachable and returned no value
-          if (ret.size() > 0) {
+          if (values->size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
             auto resultType = func->getResults();
             if (resultType.isRef()) {
@@ -120,12 +128,9 @@ struct ExecutionResults {
               // optimizations.
               std::cout << resultType << '\n';
             } else {
-              std::cout << ret << '\n';
+              std::cout << *values << '\n';
             }
           }
-        } else {
-          // no result, run it anyhow (it might modify memory etc.)
-          run(func, wasm, instance);
         }
       }
     } catch (const TrapException&) {
@@ -135,7 +140,7 @@ struct ExecutionResults {
 
   // get current results and check them against previous ones
   void check(Module& wasm) {
-    ExecutionResults optimizedResults;
+    ExecutionResults optimizedResults(ignoreTrap);
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
       std::cout << "[fuzz-exec] optimization passes changed results\n";
@@ -185,14 +190,25 @@ struct ExecutionResults {
       std::cout << "ignoring comparison of ExecutionResults!\n";
       return true;
     }
-    for (auto& iter : other.results) {
-      auto name = iter.first;
+    for (auto& [name, _] : other.results) {
       if (results.find(name) == results.end()) {
         std::cout << "[fuzz-exec] missing " << name << '\n';
         return false;
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
-      if (!areEqual(results[name], other.results[name])) {
+      if (results[name].index() != other.results[name].index()) {
+        if (ignoreTrap) {
+          if (!std::get_if<Trap>(&results[name]) &&
+              !std::get_if<Trap>(&other.results[name])) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+      auto* values = std::get_if<Literals>(&results[name]);
+      auto* otherValues = std::get_if<Literals>(&other.results[name]);
+      if (values && otherValues && !areEqual(*values, *otherValues)) {
         return false;
       }
     }
@@ -210,7 +226,7 @@ struct ExecutionResults {
 
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
-  Literals run(Function* func, Module& wasm) {
+  FunctionResult run(Function* func, Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
       ModuleInstance instance(wasm, &interface);
@@ -221,9 +237,9 @@ struct ExecutionResults {
     }
   }
 
-  Literals run(Function* func, Module& wasm, ModuleInstance& instance) {
+  FunctionResult run(Function* func, Module& wasm, ModuleInstance& instance) {
     try {
-      LiteralList arguments;
+      Literals arguments;
       // init hang support, if present
       if (auto* ex = wasm.getExportOrNull("hangLimitInitializer")) {
         instance.callFunction(ex->value, arguments);
@@ -239,7 +255,10 @@ struct ExecutionResults {
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
-      return {};
+      return Trap{};
+    } catch (const WasmException& e) {
+      std::cout << "[exception thrown: " << e << "]" << std::endl;
+      return Exception{};
     } catch (const HostLimitException&) {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.

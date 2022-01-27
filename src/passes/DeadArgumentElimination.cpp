@@ -41,6 +41,7 @@
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
+#include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -209,10 +210,8 @@ struct DAEScanner
     std::vector<Item> work;
     work.emplace_back(entry, initial);
     while (!work.empty()) {
-      auto item = std::move(work.back());
+      auto [block, indexes] = std::move(work.back());
       work.pop_back();
-      auto* block = item.first;
-      auto& indexes = item.second;
       // Ignore things we've already seen, or we've already seen to be used.
       auto& seenIndexes = seenBlockIndexes[block];
       indexes.filter([&](const Index i) {
@@ -292,21 +291,18 @@ struct DAE : public Pass {
     // Scan all the functions.
     scanner.run(runner, module);
     // Combine all the info.
-    std::unordered_map<Name, std::vector<Call*>> allCalls;
+    std::map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
-    for (auto& pair : infoMap) {
-      auto& info = pair.second;
-      for (auto& pair : info.calls) {
-        auto name = pair.first;
-        auto& calls = pair.second;
+    for (auto& [_, info] : infoMap) {
+      for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[name];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
       }
       for (auto& callee : info.tailCallees) {
         tailCallees.insert(callee);
       }
-      for (auto& pair : info.droppedCalls) {
-        allDroppedCalls[pair.first] = pair.second;
+      for (auto& [name, calls] : info.droppedCalls) {
+        allDroppedCalls[name] = calls;
       }
     }
     // If we refine return types then we will need to do more type updating
@@ -314,19 +310,17 @@ struct DAE : public Pass {
     bool refinedReturnTypes = false;
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
-    for (auto& pair : allCalls) {
-      auto name = pair.first;
+    for (auto& [name, calls] : allCalls) {
       // We can only optimize if we see all the calls and can modify them.
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }
-      auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
-      refineArgumentTypes(func, calls, module);
+      refineArgumentTypes(func, calls, module, infoMap[name]);
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
@@ -338,6 +332,7 @@ struct DAE : public Pass {
           assert(call->target == name);
           assert(call->operands.size() == numParams);
           auto* operand = call->operands[i];
+          // TODO: refnull etc.
           if (auto* c = operand->dynCast<Const>()) {
             if (value.type == Type::none) {
               // This is the first value seen.
@@ -374,9 +369,7 @@ struct DAE : public Pass {
     // Track which functions we changed, and optimize them later if necessary.
     std::unordered_set<Function*> changed;
     // We now know which parameters are unused, and can potentially remove them.
-    for (auto& pair : allCalls) {
-      auto name = pair.first;
-      auto& calls = pair.second;
+    for (auto& [name, calls] : allCalls) {
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }
@@ -543,78 +536,61 @@ private:
   // is not exported or called from the table or by reference.
   void refineArgumentTypes(Function* func,
                            const std::vector<Call*>& calls,
-                           Module* module) {
+                           Module* module,
+                           const DAEFunctionInfo& info) {
     if (!module->features.hasGC()) {
       return;
     }
     auto numParams = func->getNumParams();
     std::vector<Type> newParamTypes;
     newParamTypes.reserve(numParams);
+    std::vector<LUBFinder> lubs(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto originalType = func->getLocalType(i);
-      if (!originalType.isRef()) {
+      // If the parameter type is not a reference, there is nothing to refine.
+      // And if it is unused, also do nothing, as we can leave it to the other
+      // parts of this pass to optimize it properly, which avoids having to
+      // think about corner cases involving refining the type of an unused
+      // param (in particular, unused params are turned into locals, which means
+      // we'd need to think about defaultability etc.).
+      if (!originalType.isRef() || info.unusedParams.has(i)) {
         newParamTypes.push_back(originalType);
         continue;
       }
-      Type refinedType = Type::unreachable;
+      auto& lub = lubs[i];
       for (auto* call : calls) {
         auto* operand = call->operands[i];
-        refinedType = Type::getLeastUpperBound(refinedType, operand->type);
-        if (refinedType == originalType) {
+        lub.noteUpdatableExpression(operand);
+        if (lub.getBestPossible() == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;
         }
       }
 
       // Nothing is sent here at all; leave such optimizations to DCE.
-      if (refinedType == Type::unreachable) {
+      if (!lub.noted()) {
         return;
       }
-      newParamTypes.push_back(refinedType);
+      newParamTypes.push_back(lub.getBestPossible());
     }
 
     // Check if we are able to optimize here before we do the work to scan the
     // function body.
-    if (Type(newParamTypes) == func->getParams()) {
-      return;
-    }
-
-    // In terms of parameters, we can do this. However, we must also check
-    // local operations in the body, as if the parameter is reused and written
-    // to, then those types must be taken into account as well.
-    FindAll<LocalSet> sets(func->body);
-    for (auto* set : sets.list) {
-      auto index = set->index;
-      if (func->isParam(index) &&
-          !Type::isSubType(set->value->type, newParamTypes[index])) {
-        // TODO: we could still optimize here, by creating a new local.
-        newParamTypes[index] = func->getLocalType(index);
-      }
-    }
-
     auto newParams = Type(newParamTypes);
     if (newParams == func->getParams()) {
       return;
     }
 
-    // We can do this! Update the types, including the types of gets and tees.
-    func->setParams(newParams);
-    for (auto* get : FindAll<LocalGet>(func->body).list) {
-      auto index = get->index;
-      if (func->isParam(index)) {
-        get->type = func->getLocalType(index);
-      }
-    }
-    for (auto* set : sets.list) {
-      auto index = set->index;
-      if (func->isParam(index) && set->isTee()) {
-        set->type = func->getLocalType(index);
-        set->finalize();
-      }
+    // We can do this!
+    TypeUpdating::updateParamTypes(func, newParamTypes, *module);
+
+    // Update anything the lubs need to update.
+    for (auto& lub : lubs) {
+      lub.updateNulls();
     }
 
-    // Propagate the new get and set types outwards.
-    ReFinalize().walkFunctionInModule(func, module);
+    // Also update the function's type.
+    func->setParams(newParams);
   }
 
   // See if the types returned from a function allow us to define a more refined
@@ -635,82 +611,22 @@ private:
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
                          Module* module) {
-    if (!module->features.hasGC()) {
+    auto lub = LUB::getResultsLUB(func, *module);
+    if (!lub.noted()) {
       return false;
     }
-
-    Type originalType = func->getResults();
-    if (!originalType.hasRef()) {
-      // Nothing to refine.
-      return false;
-    }
-
-    // Before we do anything, we must refinalize the function, because otherwise
-    // its body may contain a block with a forced type,
-    //
-    // (func (result X)
-    //  (block (result X)
-    //   (..content with more specific type Y..)
-    //  )
-    ReFinalize().walkFunctionInModule(func, module);
-
-    Type refinedType = func->body->type;
-    if (refinedType == originalType) {
-      return false;
-    }
-
-    // Scan the body and look at the returns.
-    auto processReturnType = [&](Type type) {
-      refinedType = Type::getLeastUpperBound(refinedType, type);
-      // Return whether we still look ok to do the optimization. If this is
-      // false then we can stop here.
-      return refinedType != originalType;
-    };
-    for (auto* ret : FindAll<Return>(func->body).list) {
-      if (!processReturnType(ret->value->type)) {
-        return false;
-      }
-    }
-    for (auto* call : FindAll<Call>(func->body).list) {
-      if (call->isReturn &&
-          !processReturnType(module->getFunction(call->target)->getResults())) {
-        return false;
-      }
-    }
-    for (auto* call : FindAll<CallIndirect>(func->body).list) {
-      if (call->isReturn && !processReturnType(call->sig.results)) {
-        return false;
-      }
-    }
-    for (auto* call : FindAll<CallRef>(func->body).list) {
-      if (call->isReturn) {
-        auto targetType = call->target->type;
-        if (targetType == Type::unreachable) {
-          continue;
-        }
-        if (!processReturnType(
-              targetType.getHeapType().getSignature().results)) {
-          return false;
+    auto newType = lub.getBestPossible();
+    if (newType != func->getResults()) {
+      lub.updateNulls();
+      func->setResults(newType);
+      for (auto* call : calls) {
+        if (call->type != Type::unreachable) {
+          call->type = newType;
         }
       }
+      return true;
     }
-    assert(refinedType != originalType);
-
-    // If the refined type is unreachable then nothing actually returns from
-    // this function.
-    // TODO: We can propagate that to the outside, and not just for GC.
-    if (refinedType == Type::unreachable) {
-      return false;
-    }
-
-    // Success. Update the type, and the calls.
-    func->setResults(refinedType);
-    for (auto* call : calls) {
-      if (call->type != Type::unreachable) {
-        call->type = refinedType;
-      }
-    }
-    return true;
+    return false;
   }
 };
 

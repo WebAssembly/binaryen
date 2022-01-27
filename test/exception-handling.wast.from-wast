@@ -3,9 +3,11 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $anyref_=>_none (func (param anyref)))
  (tag $e-i32 (param i32))
  (tag $e-i64 (param i64))
  (tag $e-i32-i64 (param i32 i64))
+ (tag $e-anyref (param anyref))
  (tag $e-empty (param))
  (func $foo
   (nop)
@@ -13,7 +15,7 @@
  (func $bar
   (nop)
  )
- (func $eh_test
+ (func $eh-test
   (local $x (i32 i64))
   (try $try
    (do
@@ -347,6 +349,46 @@
      (catch_all
       (nop)
      )
+    )
+   )
+  )
+ )
+ (func $pop-test
+  (try $try
+   (do
+    (nop)
+   )
+   (catch $e-i32
+    (throw $e-i32
+     (if (result i32)
+      (pop i32)
+      (i32.const 0)
+      (i32.const 3)
+     )
+    )
+   )
+  )
+  (try $try28
+   (do
+    (nop)
+   )
+   (catch $e-anyref
+    (drop
+     (pop funcref)
+    )
+   )
+  )
+ )
+ (func $catchless-try-with-inner-delegate
+  (try $label$0
+   (do
+    (try $try
+     (do
+      (throw $e-i32
+       (i32.const 0)
+      )
+     )
+     (delegate $label$0)
     )
    )
   )

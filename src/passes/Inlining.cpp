@@ -32,6 +32,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/debug.h"
+#include "ir/eh-utils.h"
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
@@ -255,10 +256,10 @@ struct Updater : public PostWalker<Updater> {
   // achieve this, make the call a non-return call and add a break. This does
   // not cause unbounded stack growth because inlining and return calling both
   // avoid creating a new stack frame.
-  template<typename T> void handleReturnCall(T* curr, Type targetType) {
+  template<typename T> void handleReturnCall(T* curr, HeapType targetType) {
     curr->isReturn = false;
-    curr->type = targetType;
-    if (targetType.isConcrete()) {
+    curr->type = targetType.getSignature().results;
+    if (curr->type.isConcrete()) {
       replaceCurrent(builder->makeBreak(returnName, curr));
     } else {
       replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
@@ -266,18 +267,17 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunction(curr->target)->getResults());
+      handleReturnCall(curr, module->getFunction(curr->target)->type);
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, curr->sig.results);
+      handleReturnCall(curr, curr->heapType);
     }
   }
   void visitCallRef(CallRef* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr,
-                       curr->target->type.getHeapType().getSignature().results);
+      handleReturnCall(curr, curr->target->type.getHeapType());
     }
   }
   void visitLocalGet(LocalGet* curr) {
@@ -491,9 +491,7 @@ struct FunctionSplitter {
   std::vector<Name> finish() {
     std::vector<Name> ret;
     std::unordered_set<Name> inlineableNames;
-    for (auto& kv : splits) {
-      Name func = kv.first;
-      auto& split = kv.second;
+    for (auto& [func, split] : splits) {
       auto* inlineable = split.inlineable;
       if (inlineable) {
         inlineableNames.insert(inlineable->name);
@@ -881,6 +879,10 @@ struct Inlining : public Pass {
 #ifdef INLINING_DEBUG
       std::cout << "  inlined into " << inlinedInto.size() << " funcs.\n";
 #endif
+
+      for (auto* func : inlinedInto) {
+        EHUtils::handleBlockNestedPops(func, *module);
+      }
 
       for (auto* func : inlinedInto) {
         if (++iterationCounts[func->name] >= MaxIterationsForFunc) {

@@ -148,10 +148,10 @@ BinaryenType BinaryenTypeDataref(void) { return Type::dataref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
-BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
+BinaryenType BinaryenTypeCreate(BinaryenType* types, BinaryenIndex numTypes) {
   std::vector<Type> typeVec;
   typeVec.reserve(numTypes);
-  for (size_t i = 0; i < numTypes; ++i) {
+  for (BinaryenIndex i = 0; i < numTypes; ++i) {
     typeVec.push_back(Type(types[i]));
   }
   return Type(typeVec).getID();
@@ -870,7 +870,7 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
-  ret->sig = Signature(Type(params), Type(results));
+  ret->heapType = Signature(Type(params), Type(results));
   ret->type = Type(results);
   ret->isReturn = isReturn;
   ret->finalize();
@@ -1787,24 +1787,28 @@ void BinaryenCallIndirectSetReturn(BinaryenExpressionRef expr, bool isReturn) {
 BinaryenType BinaryenCallIndirectGetParams(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
-  return static_cast<CallIndirect*>(expression)->sig.params.getID();
+  return static_cast<CallIndirect*>(expression)
+    ->heapType.getSignature()
+    .params.getID();
 }
 void BinaryenCallIndirectSetParams(BinaryenExpressionRef expr,
                                    BinaryenType params) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<CallIndirect>());
-  static_cast<CallIndirect*>(expression)->sig.params = Type(params);
+  auto* call = ((Expression*)expr)->cast<CallIndirect>();
+  call->heapType =
+    Signature(Type(params), call->heapType.getSignature().results);
 }
 BinaryenType BinaryenCallIndirectGetResults(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
-  return static_cast<CallIndirect*>(expression)->sig.results.getID();
+  return static_cast<CallIndirect*>(expression)
+    ->heapType.getSignature()
+    .results.getID();
 }
 void BinaryenCallIndirectSetResults(BinaryenExpressionRef expr,
                                     BinaryenType results) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<CallIndirect>());
-  static_cast<CallIndirect*>(expression)->sig.results = Type(results);
+  auto* call = ((Expression*)expr)->cast<CallIndirect>();
+  call->heapType =
+    Signature(call->heapType.getSignature().params, Type(results));
 }
 // LocalGet
 BinaryenIndex BinaryenLocalGetGetIndex(BinaryenExpressionRef expr) {
@@ -4613,10 +4617,6 @@ void BinaryenSetColorsEnabled(bool enabled) { Colors::setEnabled(enabled); }
 bool BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
 
 #ifdef __EMSCRIPTEN__
-// Override atexit - we don't need any global ctors to actually run, and
-// otherwise we get clutter in the output in debug builds
-int atexit(void (*function)(void)) { return 0; }
-
 // Internal binaryen.js APIs
 
 // Returns the size of a Literal object.

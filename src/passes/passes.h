@@ -21,7 +21,7 @@ namespace wasm {
 
 class Pass;
 
-// All passes:
+// Normal passes:
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();
 Pass* createAvoidReinterpretsPass();
@@ -51,6 +51,8 @@ Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateStackIRPass();
+Pass* createGlobalRefiningPass();
+Pass* createGlobalTypeOptimizationPass();
 Pass* createHeap2LocalPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();
@@ -77,7 +79,6 @@ Pass* createMinifyImportsAndExportsAndModulesPass();
 Pass* createMetricsPass();
 Pass* createNameListPass();
 Pass* createNameTypesPass();
-Pass* createNoExitRuntimePass();
 Pass* createOnceReductionPass();
 Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeAddedConstantsPropagatePass();
@@ -110,6 +111,7 @@ Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();
 Pass* createSafeHeapPass();
 Pass* createSetGlobalsPass();
+Pass* createSignatureRefiningPass();
 Pass* createSimplifyLocalsPass();
 Pass* createSimplifyGlobalsPass();
 Pass* createSimplifyGlobalsOptimizingPass();
@@ -129,9 +131,12 @@ Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
+Pass* createTypeRefiningPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
-Pass* createGlobalTypeOptimizationPass();
+
+// Test passes:
+Pass* createCatchPopFixupPass();
 
 } // namespace wasm
 

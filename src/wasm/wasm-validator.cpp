@@ -19,6 +19,7 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "ir/eh-utils.h"
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
@@ -444,7 +445,12 @@ private:
   }
 
   template<typename T>
-  void validateCallParamsAndResult(T* curr, Signature sig) {
+  void validateCallParamsAndResult(T* curr, HeapType sigType) {
+    if (!shouldBeTrue(
+          sigType.isSignature(), curr, "Heap type must be a signature type")) {
+      return;
+    }
+    auto sig = sigType.getSignature();
     if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
                       curr,
                       "call* param number must match")) {
@@ -487,8 +493,7 @@ void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) {
     return;
   }
-  bool inserted;
-  std::tie(std::ignore, inserted) = labelNames.insert(name);
+  auto [_, inserted] = labelNames.insert(name);
   shouldBeTrue(
     inserted,
     name,
@@ -791,7 +796,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->getSig());
+  validateCallParamsAndResult(curr, target->type);
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -811,7 +816,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
     }
   }
 
-  validateCallParamsAndResult(curr, curr->sig);
+  validateCallParamsAndResult(curr, curr->heapType);
 }
 
 void FunctionValidator::visitConst(Const* curr) {
@@ -1612,6 +1617,8 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MaxVecF32x4:
     case PMinVecF32x4:
     case PMaxVecF32x4:
+    case RelaxedMinVecF32x4:
+    case RelaxedMaxVecF32x4:
     case AddVecF64x2:
     case SubVecF64x2:
     case MulVecF64x2:
@@ -1620,11 +1627,14 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MaxVecF64x2:
     case PMinVecF64x2:
     case PMaxVecF64x2:
+    case RelaxedMinVecF64x2:
+    case RelaxedMaxVecF64x2:
     case NarrowSVecI16x8ToVecI8x16:
     case NarrowUVecI16x8ToVecI8x16:
     case NarrowSVecI32x4ToVecI16x8:
     case NarrowUVecI32x4ToVecI16x8:
-    case SwizzleVec8x16: {
+    case SwizzleVec8x16:
+    case RelaxedSwizzleVec8x16: {
       shouldBeEqualOrFirstIsUnreachable(
         curr->left->type, Type(Type::v128), curr, "v128 op");
       shouldBeEqualOrFirstIsUnreachable(
@@ -1897,6 +1907,10 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncSatZeroUVecF64x2ToVecI32x4:
     case DemoteZeroVecF64x2ToVecF32x4:
     case PromoteLowVecF32x4ToVecF64x2:
+    case RelaxedTruncSVecF32x4ToVecI32x4:
+    case RelaxedTruncUVecF32x4ToVecI32x4:
+    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+    case RelaxedTruncZeroUVecF64x2ToVecI32x4:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
@@ -2143,6 +2157,71 @@ void FunctionValidator::visitTry(Try* curr) {
                 curr,
                 "try cannot have both catch and delegate at the same time");
 
+  // Given a catch body, find pops corresponding to the catch
+  auto findPops = [](Expression* expr) {
+    SmallVector<Pop*, 1> pops;
+    SmallVector<Expression*, 8> work;
+    work.push_back(expr);
+    while (!work.empty()) {
+      auto* curr = work.back();
+      work.pop_back();
+      if (auto* pop = curr->dynCast<Pop>()) {
+        pops.push_back(pop);
+      } else if (auto* try_ = curr->dynCast<Try>()) {
+        // We don't go into inner catch bodies; pops in inner catch bodies
+        // belong to the inner catches
+        work.push_back(try_->body);
+      } else {
+        for (auto* child : ChildIterator(curr)) {
+          work.push_back(child);
+        }
+      }
+    }
+    return pops;
+  };
+
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    Name tagName = curr->catchTags[i];
+    auto* tag = getModule()->getTagOrNull(tagName);
+    if (!shouldBeTrue(tag != nullptr, curr, "")) {
+      getStream() << "tag name is invalid: " << tagName << "\n";
+    }
+
+    auto* catchBody = curr->catchBodies[i];
+    SmallVector<Pop*, 1> pops = findPops(catchBody);
+    if (tag->sig.params == Type::none) {
+      if (!shouldBeTrue(pops.empty(), curr, "")) {
+        getStream() << "catch's tag (" << tagName
+                    << ") doesn't have any params, but there are pops";
+      }
+    } else {
+      if (shouldBeTrue(pops.size() == 1, curr, "")) {
+        auto* pop = *pops.begin();
+        if (!shouldBeSubType(pop->type, tag->sig.params, curr, "")) {
+          getStream()
+            << "catch's tag (" << tagName
+            << ")'s pop doesn't have the same type as the tag's params";
+        }
+        if (!shouldBeTrue(
+              EHUtils::containsValidDanglingPop(catchBody), curr, "")) {
+          getStream() << "catch's body (" << tagName
+                      << ")'s pop's location is not valid";
+        }
+      } else {
+        getStream() << "catch's tag (" << tagName
+                    << ") has params, so there should be a single pop within "
+                       "the catch body";
+      }
+    }
+  }
+
+  if (curr->hasCatchAll()) {
+    auto* catchAllBody = curr->catchBodies.back();
+    shouldBeTrue(findPops(catchAllBody).empty(),
+                 curr,
+                 "catch_all's body should not have pops");
+  }
+
   if (curr->isDelegate()) {
     noteDelegate(curr->delegateTarget, curr);
   }
@@ -2248,8 +2327,7 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
     shouldBeTrue(curr->target->type.isFunction(),
                  curr,
                  "call_ref target must be a function reference");
-    validateCallParamsAndResult(
-      curr, curr->target->type.getHeapType().getSignature());
+    validateCallParamsAndResult(curr, curr->target->type.getHeapType());
   }
 }
 
@@ -2361,7 +2439,10 @@ void FunctionValidator::visitRttCanon(RttCanon* curr) {
     getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
   shouldBeTrue(curr->type.isRtt(), curr, "rtt.canon must have RTT type");
   auto rtt = curr->type.getRtt();
-  shouldBeEqual(rtt.depth, Index(0), curr, "rtt.canon has a depth of 0");
+  shouldBeEqual(rtt.depth,
+                Index(curr->type.getHeapType().getDepth()),
+                curr,
+                "rtt.canon must have the depth of its heap type");
 }
 
 void FunctionValidator::visitRttSub(RttSub* curr) {
@@ -2789,9 +2870,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       }
       // check if a node is a duplicate - expressions must not be seen more than
       // once
-      bool inserted;
-      std::tie(std::ignore, inserted) = seen.insert(curr);
-      if (!inserted) {
+      if (!seen.insert(curr).second) {
         std::ostringstream ss;
         ss << "expression seen more than once in the tree in " << scope
            << " on " << curr << '\n';

@@ -44,13 +44,20 @@ struct Localizer {
   }
 };
 
-// Replaces all children with gets of locals, if they have any effects. After
-// this, the original input has only local.gets as inputs, or other things that
-// have no interacting effects, and so those children can be reordered.
+// Replaces all children with gets of locals, if they have any effects that
+// interact with any of the others, or if they have side effects which cannot be
+// removed.
+//
+// After this, the original input has only local.gets as inputs, or other things
+// that have no interacting effects, and so those children can be reordered
+// and/or removed as needed.
+//
 // The sets of the locals are emitted on a |sets| property on the class. Those
 // must be emitted right before the input.
+//
 // This stops at the first unreachable child, as there is no code executing
 // after that point anyhow.
+//
 // TODO: use in more places
 struct ChildLocalizer {
   std::vector<LocalSet*> sets;
@@ -62,18 +69,37 @@ struct ChildLocalizer {
     Builder builder(*wasm);
     ChildIterator iterator(input);
     auto& children = iterator.children;
-    // The children are in reverse order, so allocate the output first and
-    // apply items as we go.
     auto num = children.size();
+
+    // Compute the effects of all children.
+    std::vector<EffectAnalyzer> effects;
+    for (Index i = 0; i < num; i++) {
+      // The children are in reverse order in ChildIterator, but we want to
+      // process them in the normal order.
+      auto* child = *children[num - 1 - i];
+      effects.emplace_back(options, *wasm, child);
+    }
+
+    // Go through the children and move to locals those that we need to.
     for (Index i = 0; i < num; i++) {
       auto** childp = children[num - 1 - i];
       auto* child = *childp;
       if (child->type == Type::unreachable) {
         break;
       }
-      // If there are effects, use a local for this.
-      // TODO: Compare interactions between their side effects.
-      if (EffectAnalyzer(options, *wasm, child).hasAnything()) {
+
+      // Use a local if we need to. That is the case either if this has side
+      // effects we can't remove, or if it interacts with other children.
+      bool needLocal = effects[i].hasUnremovableSideEffects();
+      if (!needLocal) {
+        for (Index j = 0; j < num; j++) {
+          if (j != i && effects[i].invalidates(effects[j])) {
+            needLocal = true;
+            break;
+          }
+        }
+      }
+      if (needLocal) {
         auto local = builder.addVar(func, child->type);
         sets.push_back(builder.makeLocalSet(local, child));
         *childp = builder.makeLocalGet(local, child->type);

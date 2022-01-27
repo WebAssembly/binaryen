@@ -18,9 +18,11 @@
 #define wasm_wasm_type_h
 
 #include "support/name.h"
+#include "support/parent_index_iterator.h"
 #include "wasm-features.h"
 #include <optional>
 #include <ostream>
+#include <variant>
 #include <vector>
 
 // TODO: At various code locations we were assuming that single types are basic
@@ -36,6 +38,7 @@ namespace wasm {
 enum class TypeSystem {
   Equirecursive,
   Nominal,
+  Isorecursive,
 };
 
 // This should only ever be called before any Types or HeapTypes have been
@@ -44,11 +47,17 @@ void setTypeSystem(TypeSystem system);
 
 TypeSystem getTypeSystem();
 
+// Dangerous! Frees all types and heap types that have ever been created and
+// resets the type system's internal state. This is only really meant to be used
+// for tests.
+void destroyAllTypesForTestingPurposesOnly();
+
 // The types defined in this file. All of them are small and typically passed by
 // value except for `Tuple` and `Struct`, which may own an unbounded amount of
 // data.
 class Type;
 class HeapType;
+class RecGroup;
 struct Tuple;
 struct Signature;
 struct Field;
@@ -264,70 +273,24 @@ public:
 
   std::string toString() const;
 
-  struct Iterator {
-    // Iterator traits
-    using iterator_category = std::random_access_iterator_tag;
+  size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const Type*, Iterator> {
     using value_type = Type;
-    using difference_type = std::ptrdiff_t;
     using pointer = const Type*;
     using reference = const Type&;
-
-    const Type* parent;
-    size_t index;
-    Iterator(const Type* parent, size_t index) : parent(parent), index(index) {}
-    bool operator==(const Iterator& other) const {
-      return index == other.index && parent == other.parent;
-    }
-    bool operator!=(const Iterator& other) const { return !(*this == other); }
-    Iterator& operator++() {
-      ++index;
-      return *this;
-    }
-    Iterator& operator--() {
-      --index;
-      return *this;
-    }
-    Iterator operator++(int) {
-      auto it = *this;
-      index++;
-      return it;
-    }
-    Iterator operator--(int) {
-      auto it = *this;
-      index--;
-      return it;
-    }
-    Iterator& operator+=(difference_type off) {
-      index += off;
-      return *this;
-    }
-    Iterator operator+(difference_type off) const {
-      return Iterator(*this) += off;
-    }
-    Iterator& operator-=(difference_type off) {
-      index -= off;
-      return *this;
-    }
-    Iterator operator-(difference_type off) const {
-      return Iterator(*this) -= off;
-    }
-    difference_type operator-(const Iterator& other) const {
-      assert(parent == other.parent);
-      return index - other.index;
-    }
-    const value_type& operator*() const;
+    reference operator*() const;
   };
 
-  Iterator begin() const { return Iterator(this, 0); }
-  Iterator end() const;
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
   std::reverse_iterator<Iterator> rbegin() const {
     return std::make_reverse_iterator(end());
   }
   std::reverse_iterator<Iterator> rend() const {
     return std::make_reverse_iterator(begin());
   }
-  size_t size() const { return end() - begin(); }
-  const Type& operator[](size_t i) const;
+  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 class HeapType {
@@ -384,17 +347,16 @@ public:
   Array getArray() const;
 
   // If there is a nontrivial (i.e. non-basic) nominal supertype, return it,
-  // else an empty optional. Nominal types (in the sense of isNominal,
-  // i.e. Milestone 4 nominal types) may always have supertypes and other types
-  // may have supertypes in `TypeSystem::Nominal` mode but not in
-  // `TypeSystem::Equirecursive` mode.
+  // else an empty optional.
   std::optional<HeapType> getSuperType() const;
 
-  // Whether this is a nominal type in the sense of being a GC Milestone 4
-  // nominal type. Although all non-basic HeapTypes are nominal in
-  // `TypeSystem::Nominal` mode, this will still return false unless the type is
-  // specifically constructed as a Milestone 4 nominal type.
-  bool isNominal() const;
+  // Return the depth of this heap type in the nominal type hierarchy, i.e. the
+  // number of supertypes in its supertype chain.
+  size_t getDepth() const;
+
+  // Get the recursion group for this non-basic type.
+  RecGroup getRecGroup() const;
+  size_t getRecGroupIndex() const;
 
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
@@ -416,7 +378,34 @@ public:
   // Return the ordered HeapType children, looking through child Types.
   std::vector<HeapType> getHeapTypeChildren();
 
+  // Return the LUB of two HeapTypes. The LUB always exists.
+  static HeapType getLeastUpperBound(HeapType a, HeapType b);
+
   std::string toString() const;
+};
+
+// A recursion group consisting of one or more HeapTypes. HeapTypes with single
+// members are encoded without using any additional memory, which is why
+// `getHeapTypes` has to return a vector by value; it might have to create one
+// on the fly.
+class RecGroup {
+  uintptr_t id;
+
+public:
+  explicit RecGroup(uintptr_t id) : id(id) {}
+  bool operator==(const RecGroup& other) const { return id == other.id; }
+  bool operator!=(const RecGroup& other) const { return id != other.id; }
+  size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const RecGroup*, Iterator> {
+    using value_type = HeapType;
+    using pointer = const HeapType*;
+    using reference = const HeapType&;
+    value_type operator*() const;
+  };
+
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
 };
 
 typedef std::vector<Type> TypeList;
@@ -555,8 +544,10 @@ struct TypeBuilder {
   ~TypeBuilder();
 
   TypeBuilder(TypeBuilder& other) = delete;
-  TypeBuilder(TypeBuilder&& other) = delete;
   TypeBuilder& operator=(TypeBuilder&) = delete;
+
+  TypeBuilder(TypeBuilder&& other);
+  TypeBuilder& operator=(TypeBuilder&& other);
 
   // Append `n` new uninitialized HeapType slots to the end of the TypeBuilder.
   void grow(size_t n);
@@ -571,6 +562,13 @@ struct TypeBuilder {
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
+
+  // This is an ugly hack around the fact that temp heap types initialized with
+  // BasicHeapTypes are not themselves considered basic, so `HeapType::isBasic`
+  // and `HeapType::getBasic` do not work as expected with them. Call these
+  // methods instead.
+  bool isBasic(size_t i);
+  HeapType::BasicHeapType getBasic(size_t i);
 
   // Gets the temporary HeapType at index `i`. This HeapType should only be used
   // to construct temporary Types using the methods below.
@@ -588,16 +586,43 @@ struct TypeBuilder {
   // `j`. Does nothing for equirecursive types.
   void setSubType(size_t i, size_t j);
 
-  // Make this type nominal in the sense of the Milestone 4 GC spec, independent
-  // of the current TypeSystem configuration.
-  void setNominal(size_t i);
+  // Create a new recursion group covering slots [i, i + length). Groups must
+  // not overlap or go out of bounds.
+  void createRecGroup(size_t i, size_t length);
+
+  enum class ErrorReason {
+    // There is a cycle in the supertype relation.
+    SelfSupertype,
+    // The declared supertype of a type is invalid.
+    InvalidSupertype,
+    // The declared supertype is an invalid forward reference.
+    ForwardSupertypeReference,
+    // A child of the type is an invalid forward reference.
+    ForwardChildReference,
+  };
+
+  struct Error {
+    // The index of the type causing the failure.
+    size_t index;
+    ErrorReason reason;
+  };
+
+  struct BuildResult : std::variant<std::vector<HeapType>, Error> {
+    operator bool() const {
+      return bool(std::get_if<std::vector<HeapType>>(this));
+    }
+    const std::vector<HeapType>& operator*() const {
+      return std::get<std::vector<HeapType>>(*this);
+    }
+    const Error* getError() const { return std::get_if<Error>(this); }
+  };
 
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal
   // mode, all of the constructed HeapTypes will be fresh and distinct. In
   // nominal mode, will also produce a fatal error if the declared subtype
   // relationships are not valid.
-  std::vector<HeapType> build();
+  BuildResult build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType
   // and getTempHeapType methods.
@@ -630,10 +655,6 @@ struct TypeBuilder {
       builder.setSubType(index, other.index);
       return *this;
     }
-    Entry& setNominal() {
-      builder.setNominal(index);
-      return *this;
-    }
   };
 
   Entry operator[](size_t i) { return Entry{*this, i}; }
@@ -647,6 +668,7 @@ std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
 std::ostream& operator<<(std::ostream&, Rtt);
+std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
 
 } // namespace wasm
 

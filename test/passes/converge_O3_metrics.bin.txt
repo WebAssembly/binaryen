@@ -7,7 +7,7 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 552     
+ [total]        : 551     
  [vars]         : 2       
  Binary         : 12      
  Block          : 6       
@@ -20,7 +20,7 @@ total
  If             : 2       
  Load           : 16      
  LocalGet       : 16      
- LocalSet       : 7       
+ LocalSet       : 6       
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
@@ -54,21 +54,6 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local.set $1
-   (i32.load offset=24
-    (i32.add
-     (i32.load
-      (i32.sub
-       (i32.load
-        (i32.const 18100)
-       )
-       (i32.const 12)
-      )
-     )
-     (i32.const 18100)
-    )
-   )
-  )
   (local.set $0
    (i32.const 10888)
   )
@@ -81,6 +66,21 @@ total
        (i32.const 1)
       )
      )
+    )
+   )
+  )
+  (local.set $1
+   (i32.load offset=24
+    (i32.add
+     (i32.load
+      (i32.sub
+       (i32.load
+        (i32.const 18100)
+       )
+       (i32.const 12)
+      )
+     )
+     (i32.const 18100)
     )
    )
   )
@@ -114,20 +114,18 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (local.tee $1
-        (local.tee $0
-         (i32.load
-          (i32.add
-           (i32.load
-            (i32.sub
-             (i32.load
-              (i32.const 18100)
-             )
-             (i32.const 12)
+       (local.tee $0
+        (i32.load
+         (i32.add
+          (i32.load
+           (i32.sub
+            (i32.load
+             (i32.const 18100)
             )
+            (i32.const 12)
            )
-           (i32.const 18124)
           )
+          (i32.const 18124)
          )
         )
        )
@@ -136,7 +134,7 @@ total
      )
      (i32.const 0)
      (call_indirect (type $i32_i32_=>_i32)
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
       (i32.add
        (i32.load offset=52
@@ -235,7 +233,7 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 548           -4
+ [total]        : 547           -4
  [vars]         : 2       
  Binary         : 12      
  Block          : 6       
@@ -247,7 +245,7 @@ total
  If             : 2       
  Load           : 16      
  LocalGet       : 14            -2
- LocalSet       : 6             -1
+ LocalSet       : 5             -1
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
@@ -280,21 +278,6 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local.set $1
-   (i32.load offset=24
-    (i32.add
-     (i32.load
-      (i32.sub
-       (i32.load
-        (i32.const 18100)
-       )
-       (i32.const 12)
-      )
-     )
-     (i32.const 18100)
-    )
-   )
-  )
   (local.set $0
    (i32.const 10888)
   )
@@ -307,6 +290,21 @@ total
        (i32.const 1)
       )
      )
+    )
+   )
+  )
+  (local.set $1
+   (i32.load offset=24
+    (i32.add
+     (i32.load
+      (i32.sub
+       (i32.load
+        (i32.const 18100)
+       )
+       (i32.const 12)
+      )
+     )
+     (i32.const 18100)
     )
    )
   )
@@ -340,20 +338,18 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (local.tee $1
-        (local.tee $0
-         (i32.load
-          (i32.add
-           (i32.load
-            (i32.sub
-             (i32.load
-              (i32.const 18100)
-             )
-             (i32.const 12)
+       (local.tee $0
+        (i32.load
+         (i32.add
+          (i32.load
+           (i32.sub
+            (i32.load
+             (i32.const 18100)
             )
+            (i32.const 12)
            )
-           (i32.const 18124)
           )
+          (i32.const 18124)
          )
         )
        )
@@ -362,7 +358,7 @@ total
      )
      (i32.const 0)
      (call_indirect (type $i32_i32_=>_i32)
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
       (i32.add
        (i32.load offset=52
@@ -456,7 +452,7 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 548     
+ [total]        : 547     
  [vars]         : 2       
  Binary         : 12      
  Block          : 6       
@@ -468,7 +464,7 @@ total
  If             : 2       
  Load           : 16      
  LocalGet       : 14      
- LocalSet       : 6       
+ LocalSet       : 5       
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
@@ -501,21 +497,6 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local.set $1
-   (i32.load offset=24
-    (i32.add
-     (i32.load
-      (i32.sub
-       (i32.load
-        (i32.const 18100)
-       )
-       (i32.const 12)
-      )
-     )
-     (i32.const 18100)
-    )
-   )
-  )
   (local.set $0
    (i32.const 10888)
   )
@@ -528,6 +509,21 @@ total
        (i32.const 1)
       )
      )
+    )
+   )
+  )
+  (local.set $1
+   (i32.load offset=24
+    (i32.add
+     (i32.load
+      (i32.sub
+       (i32.load
+        (i32.const 18100)
+       )
+       (i32.const 12)
+      )
+     )
+     (i32.const 18100)
     )
    )
   )
@@ -561,20 +557,18 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (local.tee $1
-        (local.tee $0
-         (i32.load
-          (i32.add
-           (i32.load
-            (i32.sub
-             (i32.load
-              (i32.const 18100)
-             )
-             (i32.const 12)
+       (local.tee $0
+        (i32.load
+         (i32.add
+          (i32.load
+           (i32.sub
+            (i32.load
+             (i32.const 18100)
             )
+            (i32.const 12)
            )
-           (i32.const 18124)
           )
+          (i32.const 18124)
          )
         )
        )
@@ -583,7 +577,7 @@ total
      )
      (i32.const 0)
      (call_indirect (type $i32_i32_=>_i32)
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
       (i32.add
        (i32.load offset=52

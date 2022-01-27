@@ -83,8 +83,7 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   Index tableIdx = parent.getTableIndex(curr->table);
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->getHeapType(parent.getModule())))
-    << U32LEB(tableIdx);
+  o << op << U32LEB(parent.getTypeIndex(curr->heapType)) << U32LEB(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
@@ -545,6 +544,30 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
   switch (curr->op) {
     case Bitselect:
       o << U32LEB(BinaryConsts::V128Bitselect);
+      break;
+    case LaneselectI8x16:
+      o << U32LEB(BinaryConsts::I8x16Laneselect);
+      break;
+    case LaneselectI16x8:
+      o << U32LEB(BinaryConsts::I16x8Laneselect);
+      break;
+    case LaneselectI32x4:
+      o << U32LEB(BinaryConsts::I32x4Laneselect);
+      break;
+    case LaneselectI64x2:
+      o << U32LEB(BinaryConsts::I64x2Laneselect);
+      break;
+    case RelaxedFmaVecF32x4:
+      o << U32LEB(BinaryConsts::F32x4RelaxedFma);
+      break;
+    case RelaxedFmsVecF32x4:
+      o << U32LEB(BinaryConsts::F32x4RelaxedFms);
+      break;
+    case RelaxedFmaVecF64x2:
+      o << U32LEB(BinaryConsts::F64x2RelaxedFma);
+      break;
+    case RelaxedFmsVecF64x2:
+      o << U32LEB(BinaryConsts::F64x2RelaxedFms);
       break;
   }
 }
@@ -1152,6 +1175,22 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case PromoteLowVecF32x4ToVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F64x2PromoteLowF32x4);
+      break;
+    case RelaxedTruncSVecF32x4ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF32x4S);
+      break;
+    case RelaxedTruncUVecF32x4ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF32x4U);
+      break;
+    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF64x2SZero);
+      break;
+    case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF64x2UZero);
       break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
@@ -1783,6 +1822,27 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
         << U32LEB(BinaryConsts::I8x16Swizzle);
       break;
 
+    case RelaxedSwizzleVec8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I8x16RelaxedSwizzle);
+      break;
+    case RelaxedMinVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4RelaxedMin);
+      break;
+    case RelaxedMaxVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4RelaxedMax);
+      break;
+    case RelaxedMinVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2RelaxedMin);
+      break;
+    case RelaxedMaxVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2RelaxedMax);
+      break;
+
     case InvalidBinary:
       WASM_UNREACHABLE("invalid binary op");
   }
@@ -2248,8 +2308,8 @@ void BinaryInstWriter::countScratchLocals() {
       scratchLocals[extract->type] = 0;
     }
   }
-  for (auto t : scratchLocals) {
-    noteLocalType(t.first);
+  for (auto& [type, _] : scratchLocals) {
+    noteLocalType(type);
   }
 }
 

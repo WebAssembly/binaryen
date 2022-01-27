@@ -19,6 +19,7 @@
 
 #include <array>
 #include <iostream>
+#include <variant>
 
 #include "compiler-support.h"
 #include "support/hash.h"
@@ -61,9 +62,6 @@ class Literal {
     // as the Literal class itself.
     // To support the experimental RttFreshSub instruction, we not only store
     // the type, but also a reference to an allocation.
-    // The above describes dynamic data, that is with an actual RTT. The static
-    // case just has a static type in its GCData.
-    // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -263,6 +261,10 @@ public:
     return lit;
   }
 
+  // Get the canonical RTT value for a given HeapType. For nominal types, the
+  // canonical RTT reflects the static supertype chain.
+  static Literal makeCanonicalRtt(HeapType type);
+
   Literal castToF32();
   Literal castToF64();
   Literal castToI32();
@@ -422,6 +424,11 @@ public:
   Literal pmin(const Literal& other) const;
   Literal pmax(const Literal& other) const;
   Literal copysign(const Literal& other) const;
+
+  // Fused multiply add and subtract.
+  // Computes this + (left * right) to infinite precision then round once.
+  Literal fma(const Literal& left, const Literal& right) const;
+  Literal fms(const Literal& left, const Literal& right) const;
 
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
@@ -645,6 +652,10 @@ public:
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
   Literal swizzleI8x16(const Literal& other) const;
+  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
   // with this object's RTT can be successfuly cast using the other RTT
@@ -682,6 +693,12 @@ public:
   Literals(size_t initialSize) : SmallVector(initialSize) {}
 
   Type getType() {
+    if (empty()) {
+      return Type::none;
+    }
+    if (size() == 1) {
+      return (*this)[0].type;
+    }
     std::vector<Type> types;
     for (auto& val : *this) {
       types.push_back(val.type);
@@ -699,19 +716,18 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // is. In the case of static (rtt-free) typing, the rtt is not present and
 // instead we have a static type.
 struct GCData {
-  // Either the RTT or the type must be present, but not both.
+  // The runtime type info for this struct or array.
   Literal rtt;
-  HeapType type;
 
+  // The element or field values.
   Literals values;
 
-  GCData(HeapType type, Literals values) : type(type), values(values) {}
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 
 struct RttSuper {
   // The type of the super.
-  Type type;
+  HeapType type;
   // A shared allocation, used to implement rtt.fresh_sub. This is null for a
   // normal sub, and for a fresh one we allocate a value here, which can then be
   // used to differentiate rtts. (The allocation is shared so that when copying
@@ -719,7 +735,7 @@ struct RttSuper {
   // TODO: Remove or optimize this when the spec stabilizes.
   std::shared_ptr<size_t> freshPtr;
 
-  RttSuper(Type type) : type(type) {}
+  RttSuper(HeapType type) : type(type) {}
 
   void makeFresh() { freshPtr = std::make_shared<size_t>(); }
 

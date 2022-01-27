@@ -3,7 +3,7 @@
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
- (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow))
+ (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow (param i32)))
  (global $__stack_pointer (mut i32) (i32.const 66112))
  (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))
@@ -32,7 +32,9 @@
      (global.get $__stack_limit)
     )
    )
-   (call $__handle_stack_overflow)
+   (call $__handle_stack_overflow
+    (local.get $1)
+   )
   )
   (global.set $__stack_pointer
    (local.get $1)
@@ -64,7 +66,9 @@
       (global.get $__stack_limit)
      )
     )
-    (call $__handle_stack_overflow)
+    (call $__handle_stack_overflow
+     (local.get $3)
+    )
    )
    (global.set $__stack_pointer
     (local.get $3)
@@ -87,7 +91,6 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 0,
   "declares": [
     "__handle_stack_overflow"
   ],
