@@ -61,13 +61,8 @@ class EvallingGlobalManager {
   // globals that are dangerous to modify in the module
   std::set<Name> dangerousGlobals;
 
-  // whether we are done adding new globals
-  bool sealed = false;
-
 public:
   void addDangerous(Name name) { dangerousGlobals.insert(name); }
-
-  void seal() { sealed = true; }
 
   Literals& operator[](Name name) {
     if (dangerousGlobals.count(name) > 0) {
