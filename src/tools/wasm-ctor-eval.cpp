@@ -60,6 +60,18 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
+
+  Flow visitGlobalGet(GlobalGet* curr) {
+    // Error on reads of imported globals.
+    auto* global = wasm.getGlobal(curr->name);
+    if (global->imported()) {
+      throw FailToEvalException(std::string("read from imported global ") +
+                                global->module.str + "." +
+                                global->base.str);
+    }
+
+    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
+  }
 };
 
 // Build an artificial `env` module based on a module's imports, so that the
