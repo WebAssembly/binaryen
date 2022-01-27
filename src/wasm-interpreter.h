@@ -2488,8 +2488,8 @@ public:
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
-    : ExpressionRunner<SubType>(&wasm), wasm(wasm), externalInterface(externalInterface),
-      linkedInstances(linkedInstances_) {
+    : ExpressionRunner<SubType>(&wasm), wasm(wasm),
+      externalInterface(externalInterface), linkedInstances(linkedInstances_) {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // prepare memory
