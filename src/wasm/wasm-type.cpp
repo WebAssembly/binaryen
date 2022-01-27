@@ -113,6 +113,7 @@ struct HeapTypeInfo {
   // In isorecursive mode, the recursion group of this type or null if the
   // recursion group is trivial (i.e. contains only this type).
   RecGroupInfo* recGroup = nullptr;
+  size_t recGroupIndex = 0;
   enum Kind {
     BasicKind,
     SignatureKind,
@@ -1261,6 +1262,11 @@ RecGroup HeapType::getRecGroup() const {
     // points to a heap type info rather than a vector of heap types.
     return RecGroup(id | 1);
   }
+}
+
+size_t HeapType::getRecGroupIndex() const {
+  assert(!isBasic());
+  return getHeapTypeInfo(*this)->recGroupIndex;
 }
 
 HeapType RecGroup::Iterator::operator*() const {
@@ -3242,6 +3248,7 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   // Fill out the recursion groups.
   for (auto& info : state.newInfos) {
     if (info->recGroup != nullptr) {
+      info->recGroupIndex = info->recGroup->size();
       info->recGroup->push_back(asHeapType(info));
     }
   }

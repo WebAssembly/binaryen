@@ -242,3 +242,30 @@ TEST_F(IsorecursiveTest, ForwardReferencedChild) {
   EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardChildReference);
   EXPECT_EQ(error->index, 1u);
 }
+
+TEST_F(IsorecursiveTest, RecGroupIndices) {
+  TypeBuilder builder(5);
+
+  builder.createRecGroup(0, 2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+
+  builder.createRecGroup(2, 3);
+  builder[2] = Struct{};
+  builder[3] = Struct{};
+  builder[4] = Struct{};
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[0].getRecGroup(), built[1].getRecGroup());
+  EXPECT_EQ(built[0].getRecGroupIndex(), 0u);
+  EXPECT_EQ(built[1].getRecGroupIndex(), 1u);
+
+  EXPECT_EQ(built[2].getRecGroup(), built[3].getRecGroup());
+  EXPECT_EQ(built[3].getRecGroup(), built[4].getRecGroup());
+  EXPECT_EQ(built[2].getRecGroupIndex(), 0u);
+  EXPECT_EQ(built[3].getRecGroupIndex(), 1u);
+  EXPECT_EQ(built[4].getRecGroupIndex(), 2u);
+}
