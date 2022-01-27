@@ -123,10 +123,10 @@ public:
 class EvallingModuleRunner
   : public ModuleRunnerBase<EvallingGlobalManager, EvallingModuleRunner> {
 public:
-  EvallingModuleRunner(Module& wasm,
-                         ExternalInterface* externalInterface,
-                         std::map<Name, std::shared_ptr<EvallingModuleRunner>>
-                           linkedInstances_ = {})
+  EvallingModuleRunner(
+    Module& wasm,
+    ExternalInterface* externalInterface,
+    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {
     // if any global in the module has a non-const constructor, it is using a
     // global import, which we don't have, and is illegal to use
