@@ -141,10 +141,10 @@ public:
 
   using Parent = ModuleRunnerBase<EvallingGlobalManager, EvallingModuleRunner>;
 
-// An expression runner with the addition integration we need to eval ctors. In
-// particular, this adds GC support for "serializing" out GC allocations. To do
-// that, we track each allocation, and then we can write them out in the wasm
-// module by creating new globals.
+  // An expression runner with the addition integration we need to eval ctors.
+  // In particular, this adds GC support for "serializing" out GC allocations.
+  // To do that, we track each allocation, and then we can write them out in the
+  // wasm module by creating new globals.
   Flow visitStructNew(StructNew* curr) {
     auto flow = Parent::visitStructNew(curr);
     if (!flow.breaking()) {
