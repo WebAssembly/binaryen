@@ -3670,8 +3670,7 @@ protected:
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
 };
 
-class ModuleRunner
-  : public ModuleRunnerBase<ModuleRunner> {
+class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
 public:
   ModuleRunner(
     Module& wasm,
