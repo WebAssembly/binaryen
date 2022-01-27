@@ -591,14 +591,14 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
     // the same idea as applyToModule() - we must only do it after an entire
     // atomic "chunk" has been processed, we do not want partial updates from
     // an item in the block that we only partially evalled.
-    EvallingModuleInstance::FunctionScope appliedScope(func, params);
+    std::vector<Literals> appliedLocals;
 
     Literals results;
     Index successes = 0;
     for (auto* curr : block->list) {
       Flow flow;
       try {
-        flow = expressionRunner.visit(curr);
+        flow = instance.visit(curr);
       } catch (FailToEvalException& fail) {
         if (successes == 0) {
           std::cout << "  ...stopping (in block) since could not eval: "
@@ -613,7 +613,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
 
       // So far so good! Apply the results.
       interface.applyToModule();
-      appliedScope = scope;
+      appliedLocals = scope.locals;
       successes++;
 
       // Note the values here, if any. If we are exiting the function now then
@@ -659,7 +659,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
       // unnecessary operations.
       std::vector<Expression*> localSets;
       for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
-        auto value = appliedScope.locals[i];
+        auto value = appliedLocals[i];
         localSets.push_back(
           builder.makeLocalSet(i, builder.makeConstantExpression(value)));
       }
