@@ -2264,22 +2264,6 @@ public:
   }
 };
 
-// Execute an initializer expression of a global, data or element segment.
-// see: https://webassembly.org/docs/modules/#initializer-expression
-template<typename GlobalManager>
-class InitializerExpressionRunner
-  : public ExpressionRunner<InitializerExpressionRunner<GlobalManager>> {
-  GlobalManager& globals;
-
-public:
-  InitializerExpressionRunner(GlobalManager& globals, Index maxDepth)
-    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(nullptr,
-                                                                   maxDepth),
-      globals(globals) {}
-
-  Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
-};
-
 //
 // A runner for a module. Each runner contains the information to execute the
 // module, such as the state of globals, and so forth, so it basically
@@ -2499,10 +2483,7 @@ public:
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] =
-        InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
-          .visit(global->init)
-          .values;
+      globals[global->name] = self()->visit(global->init).values;
     });
 
     // initialize the rest of the external interface

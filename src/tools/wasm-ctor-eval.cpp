@@ -139,7 +139,7 @@ public:
     });
   }
 
-  using Parent = ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance>;
+  using Parent = ModuleRunnerBase<EvallingGlobalManager, EvallingModuleRunner>;
 
 // An expression runner with the addition integration we need to eval ctors. In
 // particular, this adds GC support for "serializing" out GC allocations. To do
