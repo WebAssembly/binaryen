@@ -1,0 +1,13 @@
+(module
+ (type $none_=>_none (func))
+ (memory $0 256 256)
+ (data (i32.const 13) "s")
+ (export "keepalive" (func $1))
+ (func $1
+  (drop
+   (i32.load
+    (i32.const 13)
+   )
+  )
+ )
+)
