@@ -402,3 +402,32 @@ TEST_F(IsorecursiveTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[3], built[5]);
   EXPECT_NE(built[4], built[5]);
 }
+
+TEST_F(IsorecursiveTest, HeapTypeConstructors) {
+  HeapType sig(Signature(Type::i32, Type::i32));
+  HeapType struct_(Struct({Field(Type(sig, Nullable), Mutable)}));
+  HeapType array(Field(Type(struct_, Nullable), Mutable));
+
+  TypeBuilder builder(3);
+  builder[0] = Signature(Type::i32, Type::i32);
+  Type sigRef = builder.getTempRefType(builder[0], Nullable);
+  builder[1] = Struct({Field(sigRef, Mutable)});
+  Type structRef = builder.getTempRefType(builder[1], Nullable);
+  builder[2] = Array(Field(structRef, Mutable));
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[0], sig);
+  EXPECT_EQ(built[1], struct_);
+  EXPECT_EQ(built[2], array);
+
+  HeapType sig2(Signature(Type::i32, Type::i32));
+  HeapType struct2(Struct({Field(Type(sig, Nullable), Mutable)}));
+  HeapType array2(Field(Type(struct_, Nullable), Mutable));
+
+  EXPECT_EQ(sig, sig2);
+  EXPECT_EQ(struct_, struct2);
+  EXPECT_EQ(array, array2);
+}

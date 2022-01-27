@@ -883,6 +883,18 @@ struct RecGroupStore {
     return canonical;
   }
 
+  // Utility for canonicalizing HeapTypes with trivial recursion groups.
+  HeapType insert(std::unique_ptr<HeapTypeInfo>&& info) {
+    std::lock_guard<std::mutex> lock(mutex);
+    assert(!info->recGroup && "Unexpected nontrivial rec group");
+    auto group = asHeapType(info).getRecGroup();
+    auto canonical = insert(group);
+    if (group == canonical) {
+      globalHeapTypeStore.insert(std::move(info));
+    }
+    return canonical[0];
+  }
+
   void clear() {
     canonicalGroups.clear();
     builtGroups.clear();
@@ -1232,19 +1244,27 @@ const Type& Type::Iterator::operator*() const {
 HeapType::HeapType(Signature sig) {
   assert(!isTemp(sig.params) && "Leaking temporary type!");
   assert(!isTemp(sig.results) && "Leaking temporary type!");
-  if (typeSystem == TypeSystem::Nominal) {
-    // Special case the creation of signature types in nominal mode to return a
-    // "canonical" type for the signature, which happens to be the first one
-    // created. We depend on being able to create new function signatures in
-    // many places, and historically they have always been structural, so
-    // creating a copy of an existing signature did not result in any code bloat
-    // or semantic changes. To avoid regressions or significant changes of
-    // behavior in nominal mode, we cache the canonical heap types for each
-    // signature to emulate structural behavior.
-    new (this) HeapType(nominalSignatureCache.getType(sig));
-  } else {
-    new (this) HeapType(globalHeapTypeStore.insert(sig));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+      // Special case the creation of signature types in nominal mode to return
+      // a "canonical" type for the signature, which happens to be the first one
+      // created. We depend on being able to create new function signatures in
+      // many places, and historically they have always been structural, so
+      // creating a copy of an existing signature did not result in any code
+      // bloat or semantic changes. To avoid regressions or significant changes
+      // of behavior in nominal mode, we cache the canonical heap types for each
+      // signature to emulate structural behavior.
+      new (this) HeapType(nominalSignatureCache.getType(sig));
+      return;
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(sig));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(
+        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(sig)));
+      return;
   }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 HeapType::HeapType(const Struct& struct_) {
@@ -1253,7 +1273,17 @@ HeapType::HeapType(const Struct& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(globalHeapTypeStore.insert(struct_));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(struct_));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(
+        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(struct_)));
+      return;
+  }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 HeapType::HeapType(Struct&& struct_) {
@@ -1262,12 +1292,32 @@ HeapType::HeapType(Struct&& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(globalHeapTypeStore.insert(std::move(struct_)));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(std::move(struct_)));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(globalRecGroupStore.insert(
+        std::make_unique<HeapTypeInfo>(std::move(struct_))));
+      return;
+  }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 HeapType::HeapType(Array array) {
   assert(!isTemp(array.element.type) && "Leaking temporary type!");
-  new (this) HeapType(globalHeapTypeStore.insert(array));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(array));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(
+        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
+      return;
+  }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 bool HeapType::isFunction() const {
