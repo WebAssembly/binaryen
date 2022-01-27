@@ -20,5 +20,8 @@
         (i32.const 13)
       )
     )
+    (drop
+      (global.get $imported)
+    )
   )
 )
