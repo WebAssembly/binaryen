@@ -2264,22 +2264,6 @@ public:
   }
 };
 
-// Execute an initializer expression of a global, data or element segment.
-// see: https://webassembly.org/docs/modules/#initializer-expression
-template<typename GlobalManager>
-class InitializerExpressionRunner
-  : public ExpressionRunner<InitializerExpressionRunner<GlobalManager>> {
-  GlobalManager& globals;
-
-public:
-  InitializerExpressionRunner(GlobalManager& globals, Index maxDepth)
-    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(nullptr,
-                                                                   maxDepth),
-      globals(globals) {}
-
-  Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
-};
-
 using GlobalValueSet = std::map<Name, Literals>;
 
 //
@@ -2501,10 +2485,7 @@ public:
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] =
-        InitializerExpressionRunner<GlobalValueSet>(globals, maxDepth)
-          .visit(global->init)
-          .values;
+      globals[global->name] = self()->visit(global->init).values;
     });
 
     // initialize the rest of the external interface
