@@ -2264,6 +2264,8 @@ public:
   }
 };
 
+using GlobalValueSet = std::map<Name, Literals>;
+
 //
 // A runner for a module. Each runner contains the information to execute the
 // module, such as the state of globals, and so forth, so it basically
@@ -2278,7 +2280,7 @@ public:
 // To call into the interpreter, use callExport.
 //
 
-template<typename GlobalManager, typename SubType>
+template<typename SubType>
 class ModuleRunnerBase : public ExpressionRunner<SubType> {
 public:
   //
@@ -2291,7 +2293,7 @@ public:
       std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
-    virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
+    virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
@@ -2466,7 +2468,7 @@ public:
   Module& wasm;
 
   // Values of globals
-  GlobalManager globals;
+  GlobalValueSet globals;
 
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
@@ -3668,10 +3670,7 @@ protected:
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
 };
 
-// The default ModuleRunner uses a trivial global manager
-using TrivialGlobalManager = std::map<Name, Literals>;
-class ModuleRunner
-  : public ModuleRunnerBase<TrivialGlobalManager, ModuleRunner> {
+class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
 public:
   ModuleRunner(
     Module& wasm,

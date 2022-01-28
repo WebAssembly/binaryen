@@ -356,6 +356,7 @@ public:
 
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
+  size_t getRecGroupIndex() const;
 
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
@@ -392,8 +393,8 @@ class RecGroup {
 
 public:
   explicit RecGroup(uintptr_t id) : id(id) {}
-  bool operator==(const RecGroup& other) { return id == other.id; }
-  bool operator!=(const RecGroup& other) { return id != other.id; }
+  bool operator==(const RecGroup& other) const { return id == other.id; }
+  bool operator!=(const RecGroup& other) const { return id != other.id; }
   size_t size() const;
 
   struct Iterator : ParentIndexIterator<const RecGroup*, Iterator> {

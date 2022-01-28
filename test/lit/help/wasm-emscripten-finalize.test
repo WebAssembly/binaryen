@@ -31,8 +31,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --side-module                        Input is an emscripten side module
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --new-pic-abi                        Use new/llvm PIC abi
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
 ;; CHECK-NEXT:                                        file
 ;; CHECK-NEXT:
