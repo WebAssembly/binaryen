@@ -294,6 +294,9 @@ struct RecGroupHasher {
   // Perform the hash.
   size_t operator()() const;
 
+  // `topLevelHash` is applied to the top-level group members and observes their
+  // structure, while `hash(HeapType)` is applied to the children of group
+  // members and does not observe their structure.
   size_t topLevelHash(HeapType type) const;
   size_t hash(Type type) const;
   size_t hash(HeapType type) const;
@@ -318,6 +321,9 @@ struct RecGroupEquator {
   // Perform the comparison.
   bool operator()() const;
 
+  // `topLevelEq` is applied to the top-level group members and observes their
+  // structure, while `eq(HeapType)` is applied to the children of group members
+  // and does not observe their structure.
   bool topLevelEq(HeapType a, HeapType b) const;
   bool eq(Type a, Type b) const;
   bool eq(HeapType a, HeapType b) const;
