@@ -66,7 +66,8 @@ public:
     auto* global = wasm.getGlobal(curr->name);
     if (global->imported()) {
       throw FailToEvalException(std::string("read from imported global ") +
-                                global->module.str + "." + global->base.str);
+                                global->module.str + "." +
+                                global->base.str);
     }
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
