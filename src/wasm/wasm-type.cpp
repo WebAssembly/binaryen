@@ -295,8 +295,8 @@ struct RecGroupHasher {
   size_t operator()() const;
 
   size_t topLevelHash(HeapType type) const;
-  size_t innerHash(HeapType type) const;
   size_t hash(Type type) const;
+  size_t hash(HeapType type) const;
   size_t hash(const TypeInfo& info) const;
   size_t hash(const HeapTypeInfo& info) const;
   size_t hash(const Tuple& tuple) const;
@@ -319,8 +319,8 @@ struct RecGroupEquator {
   bool operator()() const;
 
   bool topLevelEq(HeapType a, HeapType b) const;
-  bool innerEq(HeapType a, HeapType b) const;
   bool eq(Type a, Type b) const;
+  bool eq(HeapType a, HeapType b) const;
   bool eq(const TypeInfo& a, const TypeInfo& b) const;
   bool eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const;
   bool eq(const Tuple& a, const Tuple& b) const;
@@ -2331,7 +2331,17 @@ size_t RecGroupHasher::topLevelHash(HeapType type) const {
   return digest;
 }
 
-size_t RecGroupHasher::innerHash(HeapType type) const {
+size_t RecGroupHasher::hash(Type type) const {
+  size_t digest = wasm::hash(type.isBasic());
+  if (type.isBasic()) {
+    wasm::rehash(digest, type.getID());
+  } else {
+    hash_combine(digest, hash(*getTypeInfo(type)));
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::hash(HeapType type) const {
   // Do not recurse into the structure of this child type, but rather hash it as
   // an index into a rec group. Only take the rec group identity into account if
   // the child is not a member of the top-level group because in that case the
@@ -2344,16 +2354,6 @@ size_t RecGroupHasher::innerHash(HeapType type) const {
   return digest;
 }
 
-size_t RecGroupHasher::hash(Type type) const {
-  size_t digest = wasm::hash(type.isBasic());
-  if (type.isBasic()) {
-    wasm::rehash(digest, type.getID());
-  } else {
-    hash_combine(digest, hash(*getTypeInfo(type)));
-  }
-  return digest;
-}
-
 size_t RecGroupHasher::hash(const TypeInfo& info) const {
   size_t digest = wasm::hash(info.kind);
   switch (info.kind) {
@@ -2362,7 +2362,7 @@ size_t RecGroupHasher::hash(const TypeInfo& info) const {
       return digest;
     case TypeInfo::RefKind:
       rehash(digest, info.ref.nullable);
-      hash_combine(digest, innerHash(info.ref.heapType));
+      hash_combine(digest, hash(info.ref.heapType));
       return digest;
     case TypeInfo::RttKind:
       hash_combine(digest, hash(info.rtt));
@@ -2426,7 +2426,7 @@ size_t RecGroupHasher::hash(const Array& array) const {
 
 size_t RecGroupHasher::hash(const Rtt& rtt) const {
   size_t digest = wasm::hash(rtt.depth);
-  hash_combine(digest, innerHash(rtt.heapType));
+  hash_combine(digest, hash(rtt.heapType));
   return digest;
 }
 
@@ -2453,7 +2453,17 @@ bool RecGroupEquator::topLevelEq(HeapType a, HeapType b) const {
   return eq(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
 }
 
-bool RecGroupEquator::innerEq(HeapType a, HeapType b) const {
+bool RecGroupEquator::eq(Type a, Type b) const {
+  if (a == b) {
+    return true;
+  }
+  if (a.isBasic() || b.isBasic()) {
+    return false;
+  }
+  return eq(*getTypeInfo(a), *getTypeInfo(b));
+}
+
+bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   // Do not recurse into the structure of children `a` and `b`, but check
   // whether their recursion groups and indices match. Since `newGroup` may not
   // be canonicalized, explicitly check whether `a` and `b` are in the
@@ -2467,16 +2477,6 @@ bool RecGroupEquator::innerEq(HeapType a, HeapType b) const {
   return groupA == groupB || (groupA == newGroup && groupB == otherGroup);
 }
 
-bool RecGroupEquator::eq(Type a, Type b) const {
-  if (a == b) {
-    return true;
-  }
-  if (a.isBasic() || b.isBasic()) {
-    return false;
-  }
-  return eq(*getTypeInfo(a), *getTypeInfo(b));
-}
-
 bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
   if (a.kind != b.kind) {
     return false;
@@ -2486,7 +2486,7 @@ bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
       return eq(a.tuple, b.tuple);
     case TypeInfo::RefKind:
       return a.ref.nullable == b.ref.nullable &&
-             innerEq(a.ref.heapType, b.ref.heapType);
+             eq(a.ref.heapType, b.ref.heapType);
     case TypeInfo::RttKind:
       return eq(a.rtt, b.rtt);
   }
@@ -2543,7 +2543,7 @@ bool RecGroupEquator::eq(const Array& a, const Array& b) const {
 }
 
 bool RecGroupEquator::eq(const Rtt& a, const Rtt& b) const {
-  return a.depth == b.depth && innerEq(a.heapType, b.heapType);
+  return a.depth == b.depth && eq(a.heapType, b.heapType);
 }
 
 template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(Type* type) {
