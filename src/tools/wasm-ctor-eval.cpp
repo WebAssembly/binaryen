@@ -489,12 +489,13 @@ private:
 
   void applyGlobalsToModule() {
     Builder builder(*wasm);
-    for (const auto& [name, value] : instance->globals) {
+    for (const auto& [name, values] : instance->globals) {
       // TODO: remove all globals, then add them back one by one.
       //       getSerialization() will then add global right before them as
       //       needed. We could try to avoid some of these creations, btw, but
       //       we can depend on later opts to help us out.
-      wasm->getGlobal(name)->init = getSerialization(value);
+      assert(values.size() == 1);
+      wasm->getGlobal(name)->init = getSerialization(values[0]);
     }
   }
 
@@ -513,22 +514,23 @@ private:
       }
 
       // This is the first usage of this allocation. Add a new global.
-      auto& values = value.getGCData().values;
+      auto& values = value.getGCData()->values;
       auto name = Names::getValidGlobalName(*wasm, "ctor-eval-global");
       std::vector<Expression*> args;
       for (auto& value : values) {
         args.push_back(getSerialization(value));
       }
       Expression* init;
-      if (auto* originStructNew = allocation.origin->dynCast<StructNew>()) {
-        init = builder.makeStructNew(type.getHeapType(), args);
-      } else if (auto* arrayNew = allocation.origin->dynCast<ArrayNew>()) {
+      auto heapType = type.getHeapType();
+      if (heapType.isStruct()) {
+        init = builder.makeStructNew(heapType, args);
+      } else if (heapType.isArray()) {
         // TODO: for repeated values, can use ArrayNew
-        init = builder.makeArrayInit(type.getHeapType(), args);
+        init = builder.makeArrayInit(heapType, args);
       } else {
         WASM_UNREACHABLE("bad gc type"); // TODO test nulls of various types
       }
-      wasm->addGlobal(builder.makeGlobal(name, type, init, Immutable);
+      wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
     }
 
     // Everything else can be handled normally.
