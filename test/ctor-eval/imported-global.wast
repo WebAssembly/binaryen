@@ -6,7 +6,6 @@
   (export "test1" $test1)
   (global $mine (mut i32) (global.get $tempDoublePtr)) ;; BAD, if used
   (func $test1
-    (drop (global.get $mine))
     (i32.store8 (i32.const 13) (i32.const 115)) ;; we never get here.
   )
 )
