@@ -120,14 +120,14 @@ public:
   }
 };
 
-class EvallingModuleInstance
-  : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
+class EvallingModuleRunner
+  : public ModuleRunnerBase<EvallingGlobalManager, EvallingModuleRunner> {
 public:
-  EvallingModuleInstance(Module& wasm,
-                         ExternalInterface* externalInterface,
-                         std::map<Name, std::shared_ptr<EvallingModuleInstance>>
-                           linkedInstances_ = {})
-    : ModuleInstanceBase(wasm, externalInterface, linkedInstances_) {
+  EvallingModuleRunner(
+    Module& wasm,
+    ExternalInterface* externalInterface,
+    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
+    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {
     // if any global in the module has a non-const constructor, it is using a
     // global import, which we don't have, and is illegal to use
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
@@ -207,16 +207,16 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 // that there are not arguments passed to main, etc.
 static bool ignoreExternalInput = false;
 
-struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
+struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   Module* wasm;
-  EvallingModuleInstance* instance;
-  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+  EvallingModuleRunner* instance;
+  std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
   // A representation of the contents of wasm memory as we execute.
   std::vector<char> memory;
 
   CtorEvalExternalInterface(
-    std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances_ =
+    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
       {}) {
     linkedInstances.swap(linkedInstances_);
   }
@@ -232,7 +232,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     instance->globals.applyToModule(*wasm);
   }
 
-  void init(Module& wasm_, EvallingModuleInstance& instance_) override {
+  void init(Module& wasm_, EvallingModuleRunner& instance_) override {
     wasm = &wasm_;
     instance = &instance_;
   }
@@ -326,7 +326,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                      HeapType sig,
                      Literals& arguments,
                      Type result,
-                     EvallingModuleInstance& instance) override {
+                     EvallingModuleRunner& instance) override {
 
     std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
 
@@ -503,7 +503,7 @@ using EvalCtorOutcome = std::optional<Literals>;
 // evaluate the ctor (which means that the caller can proceed to try to eval
 // further ctors if there are any), and if we did, the results if the function
 // returns any.
-EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
+EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
                          CtorEvalExternalInterface& interface,
                          Name funcName,
                          Name exportName) {
@@ -557,23 +557,20 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   if (auto* block = func->body->dynCast<Block>()) {
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
-    EvallingModuleInstance::FunctionScope scope(func, params);
-
-    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
-      instance, scope, instance.maxDepth);
+    EvallingModuleRunner::FunctionScope scope(func, params, instance);
 
     // After we successfully eval a line we will apply the changes here. This is
     // the same idea as applyToModule() - we must only do it after an entire
     // atomic "chunk" has been processed, we do not want partial updates from
     // an item in the block that we only partially evalled.
-    EvallingModuleInstance::FunctionScope appliedScope(func, params);
+    std::vector<Literals> appliedLocals;
 
     Literals results;
     Index successes = 0;
     for (auto* curr : block->list) {
       Flow flow;
       try {
-        flow = expressionRunner.visit(curr);
+        flow = instance.visit(curr);
       } catch (FailToEvalException& fail) {
         if (successes == 0) {
           std::cout << "  ...stopping (in block) since could not eval: "
@@ -588,7 +585,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
 
       // So far so good! Apply the results.
       interface.applyToModule();
-      appliedScope = scope;
+      appliedLocals = scope.locals;
       successes++;
 
       // Note the values here, if any. If we are exiting the function now then
@@ -634,7 +631,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
       // unnecessary operations.
       std::vector<Expression*> localSets;
       for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
-        auto value = appliedScope.locals[i];
+        auto value = appliedLocals[i];
         localSets.push_back(
           builder.makeLocalSet(i, builder.makeConstantExpression(value)));
       }
@@ -685,19 +682,19 @@ void evalCtors(Module& wasm,
   std::unordered_set<std::string> keptExportsSet(keptExports.begin(),
                                                  keptExports.end());
 
-  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+  std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
   // build and link the env module
   auto envModule = buildEnvModule(wasm);
   CtorEvalExternalInterface envInterface;
   auto envInstance =
-    std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
+    std::make_shared<EvallingModuleRunner>(*envModule, &envInterface);
   linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {
     // create an instance for evalling
-    EvallingModuleInstance instance(wasm, &interface, linkedInstances);
+    EvallingModuleRunner instance(wasm, &interface, linkedInstances);
     // we should not add new globals from here on; as a result, using
     // an imported global will fail, as it is missing and so looks new
     instance.globals.seal();
