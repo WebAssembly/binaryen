@@ -72,7 +72,7 @@ public:
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
 
-  using Parent = ModuleRunnerBase<EvallingGlobalManager, EvallingModuleRunner>;
+  using Parent = ModuleRunnerBase<EvallingModuleRunner>;
 
   // An expression runner with the addition integration we need to eval ctors.
   // In particular, this adds GC support for "serializing" out GC allocations.
