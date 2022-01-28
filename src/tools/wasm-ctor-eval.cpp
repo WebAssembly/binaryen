@@ -74,14 +74,57 @@ public:
 
   using Parent = ModuleRunnerBase<EvallingModuleRunner>;
 
-  // An expression runner with the addition integration we need to eval ctors.
-  // In particular, this adds GC support for "serializing" out GC allocations.
-  // To do that, we track each allocation, and then we can write them out in the
-  // wasm module by creating new globals.
+  // Serializing GC data requires more work than linear memory, because
+  // allocations have an identity, and they are created using struct.new /
+  // array.new, which we must emit in a proper location in the wasm. To handle
+  // this, we track information for each GC allocation that happens.
+  //
+  // The basic idea can be illustrated by an example:
+  //
+  //  1. We allocate some struct somewhere.
+  //  2. It remains alive at the end, perhaps by being written to a global.
+  //     Imagine that the global was originally null.
+  //  3. When we want to serialize that global, we check if the allocation
+  //     already has a global. If it does not, then we create a new global, and
+  //     then simply do a global.get from all places that refer to that
+  //     allocation. That way they will all refer to the same thing at runtime.
+  //
+  // Complicating this is that objects can be allocated in globals and can have
+  // references to other objects, so we will need to handle ordering in a proper
+  // way, but the basic idea is in 1-3.
+  //
+  struct GCAllocation {
+    // The expression that created this data (a StructNew or ArrayNew).
+    Expression* origin;
+
+    // The global that contains this allocation after serialization.
+    Name global;
+  };
+
+  // Note that we have a raw pointer here to GCData. The data may actually end
+  // up unreferenced, and deallocated. In that case, we will have an unnecessary
+  // entry in this map, but it causes no harm: we will never read it, since we
+  // only read live data in order to serialize it into the module.
+  // TODO: as an optimization, use a struct with a weak ref here, and "clean up"
+  //       unnecessary entries? We will still be orders of magnitude slower than
+  //       a proper generational GC, so it may not matter.
+  // And, if the data is deallocated and that address reused, then we will
+  // trample the entry here, which is exactly what we want - we will only have
+  // info for the new data that replaced the old.
+  std::unordered_map<GCData*, Expression*> gcDataOrigins;
+
   Flow visitStructNew(StructNew* curr) {
     auto flow = Parent::visitStructNew(curr);
     if (!flow.breaking()) {
-      std::cout << "allocation!\n";
+      gcDataOrigins[flow.getSingleValue().getGCData().get()] = curr;
+    }
+    return flow;
+  }
+
+  Flow visitArrayNew(ArrayNew* curr) {
+    auto flow = Parent::visitArrayNew(curr);
+    if (!flow.breaking()) {
+      gcDataOrigins[flow.getSingleValue().getGCData().get()] = curr;
     }
     return flow;
   }
