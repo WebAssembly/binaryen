@@ -296,6 +296,9 @@ struct RecGroupStructure {
   size_t hash() const;
 
 private:
+  // The `other` parameters here are used to propagate the rec group we are
+  // comparing against, which is also where the `b` parameters come from. We
+  // need to propagate it to detect self-references in that other rec group.
   bool topLevelEq(HeapType a, HeapType b, RecGroup other) const;
   bool eq(Type a, Type b, RecGroup other) const;
   bool eq(HeapType a, HeapType b, RecGroup other) const;
