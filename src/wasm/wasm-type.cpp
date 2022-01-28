@@ -2455,8 +2455,8 @@ bool RecGroupEquator::topLevelEq(HeapType a, HeapType b) const {
 
 bool RecGroupEquator::innerEq(HeapType a, HeapType b) const {
   // Do not recurse into the structure of children `a` and `b`, but check
-  // whether their recursion groups and indices match. Since the wrapped group
-  // may not be canonicalized, explicitly check whether `a` and `b` are in the
+  // whether their recursion groups and indices match. Since `newGroup` may not
+  // be canonicalized, explicitly check whether `a` and `b` are in the
   // respective recursion groups of the respective top-level groups we are
   // comparing, in which case the structure is still equivalent.
   if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
