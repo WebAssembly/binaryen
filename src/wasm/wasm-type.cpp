@@ -284,36 +284,19 @@ struct FiniteShapeEquator {
   bool eq(const Rtt& a, const Rtt& b);
 };
 
-// A wrapper around a RecGroup that provides equality and hashing based on the
-// structure of the group such that isorecursively equivalent recursion groups
-// will compare equal and will have the same hash. Assumes that all recursion
-// groups reachable from this one have been canonicalized, except for the
-// wrapped group itself.
-struct RecGroupStructure {
+struct RecGroupHasher {
+  // `group` may or may not be canonical, but any other recursion group it
+  // reaches must be canonical.
   RecGroup group;
 
-  bool operator==(const RecGroupStructure& other) const;
-  size_t hash() const;
+  RecGroupHasher(RecGroup group) : group(group) {}
 
-private:
-  // The `other` parameters here are used to propagate the rec group we are
-  // comparing against, which is also where the `b` parameters come from. We
-  // need to propagate it to detect self-references in that other rec group.
-  bool topLevelEq(HeapType a, HeapType b, RecGroup other) const;
-  bool eq(Type a, Type b, RecGroup other) const;
-  bool eq(HeapType a, HeapType b, RecGroup other) const;
-  bool eq(const TypeInfo& a, const TypeInfo& b, RecGroup other) const;
-  bool eq(const HeapTypeInfo& a, const HeapTypeInfo& b, RecGroup other) const;
-  bool eq(const Tuple& a, const Tuple& b, RecGroup other) const;
-  bool eq(const Field& a, const Field& b, RecGroup other) const;
-  bool eq(const Signature& a, const Signature& b, RecGroup other) const;
-  bool eq(const Struct& a, const Struct& b, RecGroup other) const;
-  bool eq(const Array& a, const Array& b, RecGroup other) const;
-  bool eq(const Rtt& a, const Rtt& b, RecGroup other) const;
+  // Perform the hash.
+  size_t operator()() const;
 
   size_t topLevelHash(HeapType type) const;
+  size_t innerHash(HeapType type) const;
   size_t hash(Type type) const;
-  size_t hash(HeapType type) const;
   size_t hash(const TypeInfo& info) const;
   size_t hash(const HeapTypeInfo& info) const;
   size_t hash(const Tuple& tuple) const;
@@ -324,6 +307,42 @@ private:
   size_t hash(const Rtt& rtt) const;
 };
 
+struct RecGroupEquator {
+  // `newGroup` may or may not be canonical, but `otherGroup` and any other
+  // recursion group reachable by either of them must be canonical.
+  RecGroup newGroup, otherGroup;
+
+  RecGroupEquator(RecGroup newGroup, RecGroup otherGroup)
+    : newGroup(newGroup), otherGroup(otherGroup) {}
+
+  // Perform the comparison.
+  bool operator()() const;
+
+  bool topLevelEq(HeapType a, HeapType b) const;
+  bool innerEq(HeapType a, HeapType b) const;
+  bool eq(Type a, Type b) const;
+  bool eq(const TypeInfo& a, const TypeInfo& b) const;
+  bool eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const;
+  bool eq(const Tuple& a, const Tuple& b) const;
+  bool eq(const Field& a, const Field& b) const;
+  bool eq(const Signature& a, const Signature& b) const;
+  bool eq(const Struct& a, const Struct& b) const;
+  bool eq(const Array& a, const Array& b) const;
+  bool eq(const Rtt& a, const Rtt& b) const;
+};
+
+// A wrapper around a RecGroup that provides equality and hashing based on the
+// structure of the group such that isorecursively equivalent recursion groups
+// will compare equal and will have the same hash. Assumes that all recursion
+// groups reachable from this one have been canonicalized, except for the
+// wrapped group itself.
+struct RecGroupStructure {
+  RecGroup group;
+  bool operator==(const RecGroupStructure& other) const {
+    return RecGroupEquator{group, other.group}();
+  }
+};
+
 } // anonymous namespace
 } // namespace wasm
 
@@ -332,7 +351,7 @@ namespace std {
 template<> class hash<wasm::RecGroupStructure> {
 public:
   size_t operator()(const wasm::RecGroupStructure& structure) const {
-    return structure.hash();
+    return wasm::RecGroupHasher{structure.group}();
   }
 };
 
@@ -2294,142 +2313,7 @@ bool FiniteShapeEquator::eq(const Rtt& a, const Rtt& b) {
   return a.depth == b.depth && eq(a.heapType, b.heapType);
 }
 
-bool RecGroupStructure::operator==(const RecGroupStructure& other) const {
-  if (group == other.group) {
-    return true;
-  }
-  // The rec groups are equivalent if they are piecewise equivalent.
-  return std::equal(group.begin(),
-                    group.end(),
-                    other.group.begin(),
-                    other.group.end(),
-                    [&](const HeapType& a, const HeapType& b) {
-                      return topLevelEq(a, b, other.group);
-                    });
-}
-
-bool RecGroupStructure::topLevelEq(HeapType a,
-                                   HeapType b,
-                                   RecGroup other) const {
-  if (a == b) {
-    return true;
-  }
-  if (a.isBasic() || b.isBasic()) {
-    return false;
-  }
-  return eq(*getHeapTypeInfo(a), *getHeapTypeInfo(b), other);
-}
-
-bool RecGroupStructure::eq(Type a, Type b, RecGroup other) const {
-  if (a == b) {
-    return true;
-  }
-  if (a.isBasic() || b.isBasic()) {
-    return false;
-  }
-  return eq(*getTypeInfo(a), *getTypeInfo(b), other);
-}
-
-bool RecGroupStructure::eq(HeapType a, HeapType b, RecGroup other) const {
-  // Do not recurse into the structure of children `a` and `b`, but check
-  // whether their recursion groups and indices match. Since the wrapped group
-  // may not be canonicalized, explicitly check whether `a` and `b` are in the
-  // respective recursion groups of the respective top-level groups we are
-  // comparing, in which case the structure is still equivalent.
-  if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
-    return false;
-  }
-  auto groupA = a.getRecGroup();
-  auto groupB = b.getRecGroup();
-  return groupA == groupB || (groupA == group && groupB == other);
-}
-
-bool RecGroupStructure::eq(const TypeInfo& a,
-                           const TypeInfo& b,
-                           RecGroup other) const {
-  if (a.kind != b.kind) {
-    return false;
-  }
-  switch (a.kind) {
-    case TypeInfo::TupleKind:
-      return eq(a.tuple, b.tuple, other);
-    case TypeInfo::RefKind:
-      return a.ref.nullable == b.ref.nullable &&
-             eq(a.ref.heapType, b.ref.heapType, other);
-    case TypeInfo::RttKind:
-      return eq(a.rtt, b.rtt, other);
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-bool RecGroupStructure::eq(const HeapTypeInfo& a,
-                           const HeapTypeInfo& b,
-                           RecGroup other) const {
-  if (a.supertype != b.supertype) {
-    return false;
-  }
-  if (a.kind != b.kind) {
-    return false;
-  }
-  switch (a.kind) {
-    case HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
-    case HeapTypeInfo::SignatureKind:
-      return eq(a.signature, b.signature, other);
-    case HeapTypeInfo::StructKind:
-      return eq(a.struct_, b.struct_, other);
-    case HeapTypeInfo::ArrayKind:
-      return eq(a.array, b.array, other);
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-bool RecGroupStructure::eq(const Tuple& a,
-                           const Tuple& b,
-                           RecGroup other) const {
-  return std::equal(
-    a.types.begin(),
-    a.types.end(),
-    b.types.begin(),
-    b.types.end(),
-    [&](const Type& x, const Type& y) { return eq(x, y, other); });
-}
-
-bool RecGroupStructure::eq(const Field& a,
-                           const Field& b,
-                           RecGroup other) const {
-  return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
-         eq(a.type, b.type, other);
-}
-
-bool RecGroupStructure::eq(const Signature& a,
-                           const Signature& b,
-                           RecGroup other) const {
-  return eq(a.params, b.params, other) && eq(a.results, b.results, other);
-}
-
-bool RecGroupStructure::eq(const Struct& a,
-                           const Struct& b,
-                           RecGroup other) const {
-  return std::equal(
-    a.fields.begin(),
-    a.fields.end(),
-    b.fields.begin(),
-    b.fields.end(),
-    [&](const Field& x, const Field& y) { return eq(x, y, other); });
-}
-
-bool RecGroupStructure::eq(const Array& a,
-                           const Array& b,
-                           RecGroup other) const {
-  return eq(a.element, b.element, other);
-}
-
-bool RecGroupStructure::eq(const Rtt& a, const Rtt& b, RecGroup other) const {
-  return a.depth == b.depth && eq(a.heapType, b.heapType, other);
-}
-
-size_t RecGroupStructure::hash() const {
+size_t RecGroupHasher::operator()() const {
   size_t digest = wasm::hash(group.size());
   for (auto type : group) {
     hash_combine(digest, topLevelHash(type));
@@ -2437,7 +2321,7 @@ size_t RecGroupStructure::hash() const {
   return digest;
 }
 
-size_t RecGroupStructure::topLevelHash(HeapType type) const {
+size_t RecGroupHasher::topLevelHash(HeapType type) const {
   size_t digest = wasm::hash(type.isBasic());
   if (type.isBasic()) {
     wasm::rehash(digest, type.getID());
@@ -2447,17 +2331,7 @@ size_t RecGroupStructure::topLevelHash(HeapType type) const {
   return digest;
 }
 
-size_t RecGroupStructure::hash(Type type) const {
-  size_t digest = wasm::hash(type.isBasic());
-  if (type.isBasic()) {
-    wasm::rehash(digest, type.getID());
-  } else {
-    hash_combine(digest, hash(*getTypeInfo(type)));
-  }
-  return digest;
-}
-
-size_t RecGroupStructure::hash(HeapType type) const {
+size_t RecGroupHasher::innerHash(HeapType type) const {
   // Do not recurse into the structure of this child type, but rather hash it as
   // an index into a rec group. Only take the rec group identity into account if
   // the child is not a member of the top-level group because in that case the
@@ -2470,7 +2344,17 @@ size_t RecGroupStructure::hash(HeapType type) const {
   return digest;
 }
 
-size_t RecGroupStructure::hash(const TypeInfo& info) const {
+size_t RecGroupHasher::hash(Type type) const {
+  size_t digest = wasm::hash(type.isBasic());
+  if (type.isBasic()) {
+    wasm::rehash(digest, type.getID());
+  } else {
+    hash_combine(digest, hash(*getTypeInfo(type)));
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::hash(const TypeInfo& info) const {
   size_t digest = wasm::hash(info.kind);
   switch (info.kind) {
     case TypeInfo::TupleKind:
@@ -2478,7 +2362,7 @@ size_t RecGroupStructure::hash(const TypeInfo& info) const {
       return digest;
     case TypeInfo::RefKind:
       rehash(digest, info.ref.nullable);
-      hash_combine(digest, hash(info.ref.heapType));
+      hash_combine(digest, innerHash(info.ref.heapType));
       return digest;
     case TypeInfo::RttKind:
       hash_combine(digest, hash(info.rtt));
@@ -2487,7 +2371,7 @@ size_t RecGroupStructure::hash(const TypeInfo& info) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-size_t RecGroupStructure::hash(const HeapTypeInfo& info) const {
+size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   assert(info.isFinalized);
   size_t digest = wasm::hash(uintptr_t(info.supertype));
   wasm::rehash(digest, info.kind);
@@ -2507,7 +2391,7 @@ size_t RecGroupStructure::hash(const HeapTypeInfo& info) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-size_t RecGroupStructure::hash(const Tuple& tuple) const {
+size_t RecGroupHasher::hash(const Tuple& tuple) const {
   size_t digest = wasm::hash(tuple.types.size());
   for (auto type : tuple.types) {
     hash_combine(digest, hash(type));
@@ -2515,20 +2399,20 @@ size_t RecGroupStructure::hash(const Tuple& tuple) const {
   return digest;
 }
 
-size_t RecGroupStructure::hash(const Field& field) const {
+size_t RecGroupHasher::hash(const Field& field) const {
   size_t digest = wasm::hash(field.packedType);
   rehash(digest, field.mutable_);
   hash_combine(digest, hash(field.type));
   return digest;
 }
 
-size_t RecGroupStructure::hash(const Signature& sig) const {
+size_t RecGroupHasher::hash(const Signature& sig) const {
   size_t digest = hash(sig.params);
   hash_combine(digest, hash(sig.results));
   return digest;
 }
 
-size_t RecGroupStructure::hash(const Struct& struct_) const {
+size_t RecGroupHasher::hash(const Struct& struct_) const {
   size_t digest = wasm::hash(struct_.fields.size());
   for (const auto& field : struct_.fields) {
     hash_combine(digest, hash(field));
@@ -2536,14 +2420,130 @@ size_t RecGroupStructure::hash(const Struct& struct_) const {
   return digest;
 }
 
-size_t RecGroupStructure::hash(const Array& array) const {
+size_t RecGroupHasher::hash(const Array& array) const {
   return hash(array.element);
 }
 
-size_t RecGroupStructure::hash(const Rtt& rtt) const {
+size_t RecGroupHasher::hash(const Rtt& rtt) const {
   size_t digest = wasm::hash(rtt.depth);
   hash_combine(digest, hash(rtt.heapType));
   return digest;
+}
+
+bool RecGroupEquator::operator()() const {
+  if (newGroup == otherGroup) {
+    return true;
+  }
+  // The rec groups are equivalent if they are piecewise equivalent.
+  return std::equal(
+    newGroup.begin(),
+    newGroup.end(),
+    otherGroup.begin(),
+    otherGroup.end(),
+    [&](const HeapType& a, const HeapType& b) { return topLevelEq(a, b); });
+}
+
+bool RecGroupEquator::topLevelEq(HeapType a, HeapType b) const {
+  if (a == b) {
+    return true;
+  }
+  if (a.isBasic() || b.isBasic()) {
+    return false;
+  }
+  return eq(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
+}
+
+bool RecGroupEquator::innerEq(HeapType a, HeapType b) const {
+  // Do not recurse into the structure of children `a` and `b`, but check
+  // whether their recursion groups and indices match. Since the wrapped group
+  // may not be canonicalized, explicitly check whether `a` and `b` are in the
+  // respective recursion groups of the respective top-level groups we are
+  // comparing, in which case the structure is still equivalent.
+  if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
+    return false;
+  }
+  auto groupA = a.getRecGroup();
+  auto groupB = b.getRecGroup();
+  return groupA == groupB || (groupA == newGroup && groupB == otherGroup);
+}
+
+bool RecGroupEquator::eq(Type a, Type b) const {
+  if (a == b) {
+    return true;
+  }
+  if (a.isBasic() || b.isBasic()) {
+    return false;
+  }
+  return eq(*getTypeInfo(a), *getTypeInfo(b));
+}
+
+bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
+  if (a.kind != b.kind) {
+    return false;
+  }
+  switch (a.kind) {
+    case TypeInfo::TupleKind:
+      return eq(a.tuple, b.tuple);
+    case TypeInfo::RefKind:
+      return a.ref.nullable == b.ref.nullable &&
+             innerEq(a.ref.heapType, b.ref.heapType);
+    case TypeInfo::RttKind:
+      return eq(a.rtt, b.rtt);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
+  if (a.supertype != b.supertype) {
+    return false;
+  }
+  if (a.kind != b.kind) {
+    return false;
+  }
+  switch (a.kind) {
+    case HeapTypeInfo::BasicKind:
+      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
+    case HeapTypeInfo::SignatureKind:
+      return eq(a.signature, b.signature);
+    case HeapTypeInfo::StructKind:
+      return eq(a.struct_, b.struct_);
+    case HeapTypeInfo::ArrayKind:
+      return eq(a.array, b.array);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool RecGroupEquator::eq(const Tuple& a, const Tuple& b) const {
+  return std::equal(a.types.begin(),
+                    a.types.end(),
+                    b.types.begin(),
+                    b.types.end(),
+                    [&](const Type& x, const Type& y) { return eq(x, y); });
+}
+
+bool RecGroupEquator::eq(const Field& a, const Field& b) const {
+  return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
+         eq(a.type, b.type);
+}
+
+bool RecGroupEquator::eq(const Signature& a, const Signature& b) const {
+  return eq(a.params, b.params) && eq(a.results, b.results);
+}
+
+bool RecGroupEquator::eq(const Struct& a, const Struct& b) const {
+  return std::equal(a.fields.begin(),
+                    a.fields.end(),
+                    b.fields.begin(),
+                    b.fields.end(),
+                    [&](const Field& x, const Field& y) { return eq(x, y); });
+}
+
+bool RecGroupEquator::eq(const Array& a, const Array& b) const {
+  return eq(a.element, b.element);
+}
+
+bool RecGroupEquator::eq(const Rtt& a, const Rtt& b) const {
+  return a.depth == b.depth && eq(a.heapType, b.heapType);
 }
 
 template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(Type* type) {
