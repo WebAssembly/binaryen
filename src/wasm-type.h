@@ -520,7 +520,7 @@ struct Rtt {
   static constexpr uint32_t NoDepth = -1;
   uint32_t depth;
   HeapType heapType;
-  Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}
+  explicit Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}
   Rtt(uint32_t depth, HeapType heapType) : depth(depth), heapType(heapType) {}
   bool operator==(const Rtt& other) const {
     return depth == other.depth && heapType == other.heapType;

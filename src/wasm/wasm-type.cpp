@@ -2426,7 +2426,7 @@ size_t RecGroupHasher::hash(const Array& array) const {
 
 size_t RecGroupHasher::hash(const Rtt& rtt) const {
   size_t digest = wasm::hash(rtt.depth);
-  hash_combine(digest, hash(rtt.heapType));
+  hash_combine(digest, innerHash(rtt.heapType));
   return digest;
 }
 
@@ -2543,7 +2543,7 @@ bool RecGroupEquator::eq(const Array& a, const Array& b) const {
 }
 
 bool RecGroupEquator::eq(const Rtt& a, const Rtt& b) const {
-  return a.depth == b.depth && eq(a.heapType, b.heapType);
+  return a.depth == b.depth && innerEq(a.heapType, b.heapType);
 }
 
 template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(Type* type) {
