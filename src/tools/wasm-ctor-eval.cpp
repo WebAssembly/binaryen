@@ -99,6 +99,13 @@ public:
 
     // The global that contains this allocation after serialization.
     Name global;
+
+    GCAllocation() : origin(nullptr) {}
+
+    // GCAllocations are constructed with an origin. We add global info later,
+    // if we actually need it. (That is, if it is live, it will be allocated a
+    // global, and that will be stored here at that later time.)
+    GCAllocation(Expression* origin) : origin(origin) {}
   };
 
   // Note that we have a raw pointer here to GCData. The data may actually end
@@ -111,12 +118,12 @@ public:
   // And, if the data is deallocated and that address reused, then we will
   // trample the entry here, which is exactly what we want - we will only have
   // info for the new data that replaced the old.
-  std::unordered_map<GCData*, Expression*> gcDataOrigins;
+  std::unordered_map<GCData*, GCAllocation> gcAllocations;
 
   Flow visitStructNew(StructNew* curr) {
     auto flow = Parent::visitStructNew(curr);
     if (!flow.breaking()) {
-      gcDataOrigins[flow.getSingleValue().getGCData().get()] = curr;
+      gcAllocations[flow.getSingleValue().getGCData().get()] = GCAllocation(curr);
     }
     return flow;
   }
@@ -124,7 +131,7 @@ public:
   Flow visitArrayNew(ArrayNew* curr) {
     auto flow = Parent::visitArrayNew(curr);
     if (!flow.breaking()) {
-      gcDataOrigins[flow.getSingleValue().getGCData().get()] = curr;
+      gcAllocations[flow.getSingleValue().getGCData().get()] = GCAllocation(curr);
     }
     return flow;
   }
