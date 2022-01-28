@@ -123,7 +123,8 @@ public:
   Flow visitStructNew(StructNew* curr) {
     auto flow = Parent::visitStructNew(curr);
     if (!flow.breaking()) {
-      gcAllocations[flow.getSingleValue().getGCData().get()] = GCAllocation(curr);
+      gcAllocations[flow.getSingleValue().getGCData().get()] =
+        GCAllocation(curr);
     }
     return flow;
   }
@@ -131,7 +132,8 @@ public:
   Flow visitArrayNew(ArrayNew* curr) {
     auto flow = Parent::visitArrayNew(curr);
     if (!flow.breaking()) {
-      gcAllocations[flow.getSingleValue().getGCData().get()] = GCAllocation(curr);
+      gcAllocations[flow.getSingleValue().getGCData().get()] =
+        GCAllocation(curr);
     }
     return flow;
   }
@@ -506,7 +508,8 @@ private:
       if (allocation.global.is()) {
         // There is already a global that this allocation is created in, and we
         // can simply get the value.
-        return builder.makeGlobalGet(allocation.global, wasm->getGlobal(allocation.global)->type);
+        return builder.makeGlobalGet(allocation.global,
+                                     wasm->getGlobal(allocation.global)->type);
       }
 
       // This is the first usage of this allocation. Add a new global.
