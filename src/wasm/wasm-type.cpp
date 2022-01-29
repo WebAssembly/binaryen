@@ -3678,9 +3678,12 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
       }
       groupStart += size;
       RecGroup canonical(0);
+      // There may or may not be a `RecGroupInfo` for this group depending on
+      // whether it is a singleton group or not. If there is one, it is in the
+      // `groupInfoMap`. Make the info available for the global store to take
+      // ownership of it in case this group is made the canonical group for its
+      // structure.
       if (auto it = groupInfoMap.find(group); it != groupInfoMap.end()) {
-        // Moves ownership to the global store only if there is not already a
-        // canonical group with this structure.
         canonical = globalRecGroupStore.insert(std::move(it->second));
       } else {
         canonical = globalRecGroupStore.insert(group);
