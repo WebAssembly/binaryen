@@ -393,6 +393,7 @@ class RecGroup {
 
 public:
   explicit RecGroup(uintptr_t id) : id(id) {}
+  constexpr TypeID getID() const { return id; }
   bool operator==(const RecGroup& other) const { return id == other.id; }
   bool operator!=(const RecGroup& other) const { return id != other.id; }
   size_t size() const;
@@ -406,6 +407,7 @@ public:
 
   Iterator begin() const { return Iterator{{this, 0}}; }
   Iterator end() const { return Iterator{{this, size()}}; }
+  HeapType operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 typedef std::vector<Type> TypeList;
@@ -518,7 +520,7 @@ struct Rtt {
   static constexpr uint32_t NoDepth = -1;
   uint32_t depth;
   HeapType heapType;
-  Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}
+  explicit Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}
   Rtt(uint32_t depth, HeapType heapType) : depth(depth), heapType(heapType) {}
   bool operator==(const Rtt& other) const {
     return depth == other.depth && heapType == other.heapType;
@@ -705,6 +707,10 @@ public:
 template<> class hash<wasm::Rtt> {
 public:
   size_t operator()(const wasm::Rtt&) const;
+};
+template<> class hash<wasm::RecGroup> {
+public:
+  size_t operator()(const wasm::RecGroup&) const;
 };
 
 } // namespace std
