@@ -3679,7 +3679,8 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
       groupStart += size;
       RecGroup canonical(0);
       if (auto it = groupInfoMap.find(group); it != groupInfoMap.end()) {
-        // Move ownership to the global store if this group is canonical.
+        // Moves ownership to the global store only if there is not already a
+        // canonical group with this structure.
         canonical = globalRecGroupStore.insert(std::move(it->second));
       } else {
         canonical = globalRecGroupStore.insert(group);
