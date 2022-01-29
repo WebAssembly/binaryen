@@ -3663,8 +3663,8 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   // groups. Before canonicalizing each group, update all the HeapType use sites
   // within it to make sure it only refers to other canonical groups or to
   // itself (since other groups it refers to may have been duplicates of
-  // previously canonicalized groups and therefore would not be canonical).
-  // To canonicalize the group, try to insert it into the global store. If that
+  // previously canonicalized groups and therefore would not be canonical). To
+  // canonicalize the group, try to insert it into the global store. If that
   // fails, we already have an isorecursively equivalent group, so update the
   // replacements accordingly.
   CanonicalizationState::ReplacementMap replacements;
