@@ -505,20 +505,36 @@ private:
 
   void applyGlobalsToModule() {
     Builder builder(*wasm);
-    for (const auto& [name, values] : instance->globals) {
-      // TODO: remove all globals, then add them back one by one.
-      //       getSerialization() will then add global right before them as
-      //       needed. We could try to avoid some of these creations, btw, but
-      //       we can depend on later opts to help us out.
-      // * As an opt, if we can just reuse this global, do not add a new one
-      // * Test: write a global to an early location that has a reference to
+
+    if (!wasm->features.hasGC()) {
+      // Without GC, we can simply serialize the globals in place as they are.
+      for (const auto& [name, values] : instance->globals) {
+        wasm->getGlobal(name)->init = getSerialization(values);
+      }
+    }
+
+    // GC makes things more complicated, as GC allocations will be emitted as
+    // globals. We designate a global for each such allocation, and every
+    // reference to that value will then be done using a global.get. For this to
+    // work, we must allocate these special globals first, before any normal
+    // globals. For example, if a normal global refers to an allocation that
+    // appears after it, that won't work - the special global containing that
+    // value must appear before it. To handle that, start from scratch and then
+    // add the globals and their dependencies as we go.
+    auto oldGlobals = std::move(wasm->globals);
+    wasm->updateMaps();
+    for (auto& oldGlobal : oldGlobals) {
+      // TODO As an opt, if we can just reuse this global, do not add a new one
+      // TODO Test: write a global to an early location that has a reference to
       //   a late location. Reordering with a new global is necessary.
-      wasm->getGlobal(name)->init = getSerialization(values);
+      oldGlobal->init = getSerialization(instance->globals[oldGlobal->name]);
+      wasm->addGlobal(std::move(oldGlobal));
     }
   }
 
 public:
   Expression* getSerialization(const Literals& values) {
+std::cout << "get ser " << values << '\n';
     assert(values.size() == 1);
     return getSerialization(values[0]);
   }
@@ -539,7 +555,7 @@ public:
       if (!allocation.global.is()) {
         // This is the first usage of this allocation. Add a new global.
         auto& values = value.getGCData()->values;
-        auto name = Names::getValidGlobalName(*wasm, "ctor-eval-global");
+        auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
         std::vector<Expression*> args;
 
         // The initial values for this allocation may themselves be GC
