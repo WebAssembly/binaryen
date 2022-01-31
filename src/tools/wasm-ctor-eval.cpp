@@ -529,34 +529,40 @@ public:
     if (value.isData()) {
       auto& allocation = recorder.getGCAllocation(value.getGCData().get());
       auto type = allocation.origin->type;
-      if (allocation.global.is()) {
-        // There is already a global that this allocation is created in, and we
-        // can simply get the value.
-        return builder.makeGlobalGet(allocation.global,
-                                     wasm->getGlobal(allocation.global)->type);
+      if (!allocation.global.is()) {
+        // This is the first usage of this allocation. Add a new global.
+        auto& values = value.getGCData()->values;
+        auto name = Names::getValidGlobalName(*wasm, "ctor-eval-global");
+        std::vector<Expression*> args;
+
+        // The initial values for this allocation may themselves be GC
+        // allocations. Recurse and add globals as necessary.
+        // TODO: handle loops
+        for (auto& value : values) {
+          args.push_back(getSerialization(value));
+        }
+        Expression* init;
+        auto heapType = type.getHeapType();
+        if (heapType.isStruct()) {
+          init = builder.makeStructNew(heapType, args);
+        } else if (heapType.isArray()) {
+          // TODO: for repeated values, can use ArrayNew
+          init = builder.makeArrayInit(heapType, args);
+        } else {
+          WASM_UNREACHABLE("bad gc type"); // TODO test nulls of various types
+        }
+        wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
+        allocation.global = name;
       }
 
-      // This is the first usage of this allocation. Add a new global.
-      auto& values = value.getGCData()->values;
-      auto name = Names::getValidGlobalName(*wasm, "ctor-eval-global");
-      std::vector<Expression*> args;
-      for (auto& value : values) {
-        args.push_back(getSerialization(value));
-      }
-      Expression* init;
-      auto heapType = type.getHeapType();
-      if (heapType.isStruct()) {
-        init = builder.makeStructNew(heapType, args);
-      } else if (heapType.isArray()) {
-        // TODO: for repeated values, can use ArrayNew
-        init = builder.makeArrayInit(heapType, args);
-      } else {
-        WASM_UNREACHABLE("bad gc type"); // TODO test nulls of various types
-      }
-      wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
+      // Refer to this GC allocation by reading from the global that is
+      // designated to contain it.
+      return builder.makeGlobalGet(allocation.global,
+                                   wasm->getGlobal(allocation.global)->type);
     }
 
     // Everything else can be handled normally.
+std::cout << "maek " << value << '\n';
     return builder.makeConstantExpression(value);
   }
 };

@@ -1,2 +1,7 @@
-waka
-
+(module
+ (type $none_=>_none (func))
+ (export "keepalive" (func $1))
+ (func $1
+  (nop)
+ )
+)
