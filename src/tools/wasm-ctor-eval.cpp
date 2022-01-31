@@ -495,7 +495,12 @@ public:
     return getSerialization(values[0]);
   }
 
-  Expression* getSerialization(const Literal& value) {
+  // Calls to getSerialization() need to know if we are at the top level of a
+  // global declaration. If we are, then we can just write the global out rather
+  // than create a second global to read from. To notice that, |globalDef| is
+  // set to the name of the global when we process its value. Nested calls to
+  // this method will have an empty name there.
+  Expression* getSerialization(const Literal& value, Name globalDef = Name()) {
     Builder builder(*wasm);
 
     if (value.isData()) {
@@ -509,9 +514,9 @@ public:
       auto type = value.type;
       auto& gcDataGlobal = gcDataGlobals[data];
       if (!gcDataGlobal.is()) {
-        // This is the first usage of this allocation. Add a new global.
+        // This is the first usage of this allocation. Generate a struct.new /
+        // array.new for it.
         auto& values = value.getGCData()->values;
-        auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
         std::vector<Expression*> args;
 
         // The initial values for this allocation may themselves be GC
@@ -530,6 +535,15 @@ public:
         } else {
           WASM_UNREACHABLE("bad gc type"); // TODO test nulls of various types
         }
+
+        if (globalDef.is()) {
+          // No need to allocate a new global, as we are in the definition of
+          // one. Just return the initialization expression, which will be
+          // placed in that global's |init| field, and set the name properly.
+          gcDataGlobal = globalDef;
+          return init;
+        }
+        auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
         wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
         gcDataGlobal = name;
 std::cout << "  add new glbal " << name << '\n';
