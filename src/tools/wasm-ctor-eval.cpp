@@ -494,6 +494,9 @@ private:
       //       getSerialization() will then add global right before them as
       //       needed. We could try to avoid some of these creations, btw, but
       //       we can depend on later opts to help us out.
+      // * As an opt, if we can just reuse this global, do not add a new one
+      // * Test: write a global to an early location that has a reference to
+      //   a late location. Reordering with a new global is necessary.
       assert(values.size() == 1);
       wasm->getGlobal(name)->init = getSerialization(values[0]);
     }
