@@ -53,29 +53,7 @@ struct FailToEvalException {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-// TODO: Move serialization out. accessed during EMR constructor
-
-class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
-public:
-  EvallingModuleRunner(
-    Module& wasm,
-    ExternalInterface* externalInterface,
-    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
-    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
-
-  Flow visitGlobalGet(GlobalGet* curr) {
-    // Error on reads of imported globals.
-    auto* global = wasm.getGlobal(curr->name);
-    if (global->imported()) {
-      throw FailToEvalException(std::string("read from imported global ") +
-                                global->module.str + "." + global->base.str);
-    }
-
-    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
-  }
-
-  using Parent = ModuleRunnerBase<EvallingModuleRunner>;
-
+class ExecutionSerializer {
   // Serializing GC data requires more work than linear memory, because
   // allocations have an identity, and they are created using struct.new /
   // array.new, which we must emit in a proper location in the wasm. To handle
@@ -122,11 +100,50 @@ public:
   // info for the new data that replaced the old.
   std::unordered_map<GCData*, GCAllocation> gcAllocations;
 
+public:
+  void noteGCAllocation(GCData* data, Expression* origin) {
+    gcAllocations[data] = GCAllocation(origin);
+  }
+
+  GCAllocation& getGCAllocation(GCData* data) {
+    return gcAllocations.at(data);
+  }
+};
+
+// Use a singleton serializer object. This is simpler than threading it around
+// in the various classes here, and also avoids issues with constructor order
+// in EvallingModuleRunner (the base constructor there initializes globals,
+// which means it needs access to the serializer even before the
+// EvallingModuleRunner constructor runs).
+ExecutionSerializer serializer;
+
+// TODO: Move serialization out. accessed during EMR constructor
+
+class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
+public:
+  EvallingModuleRunner(
+    Module& wasm,
+    ExternalInterface* externalInterface,
+    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
+    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
+
+  Flow visitGlobalGet(GlobalGet* curr) {
+    // Error on reads of imported globals.
+    auto* global = wasm.getGlobal(curr->name);
+    if (global->imported()) {
+      throw FailToEvalException(std::string("read from imported global ") +
+                                global->module.str + "." + global->base.str);
+    }
+
+    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
+  }
+
+  using Parent = ModuleRunnerBase<EvallingModuleRunner>;
+
   Flow visitStructNew(StructNew* curr) {
     auto flow = Parent::visitStructNew(curr);
     if (!flow.breaking()) {
-      gcAllocations[flow.getSingleValue().getGCData().get()] =
-        GCAllocation(curr);
+      serializer.noteGCAllocation(flow.getSingleValue().getGCData().get(), curr);
     }
     return flow;
   }
@@ -134,8 +151,7 @@ public:
   Flow visitArrayNew(ArrayNew* curr) {
     auto flow = Parent::visitArrayNew(curr);
     if (!flow.breaking()) {
-      gcAllocations[flow.getSingleValue().getGCData().get()] =
-        GCAllocation(curr);
+      serializer.noteGCAllocation(flow.getSingleValue().getGCData().get(), curr);
     }
     return flow;
   }
@@ -509,7 +525,7 @@ private:
     Builder builder(*wasm);
 
     if (value.isData()) {
-      auto& allocation = instance->gcAllocations.at(value.getGCData().get());
+      auto& allocation = serializer.getGCAllocation(value.getGCData().get());
       auto type = allocation.origin->type;
       if (allocation.global.is()) {
         // There is already a global that this allocation is created in, and we
