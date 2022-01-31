@@ -105,9 +105,7 @@ public:
     gcAllocations[data] = GCAllocation(origin);
   }
 
-  GCAllocation& getGCAllocation(GCData* data) {
-    return gcAllocations.at(data);
-  }
+  GCAllocation& getGCAllocation(GCData* data) { return gcAllocations.at(data); }
 };
 
 // Use a singleton recorder object. This is simpler than threading it around
