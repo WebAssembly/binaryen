@@ -476,11 +476,12 @@ std::cout << "clear globals\n";
         // global will be handled by getSerialization; skip it.
         continue;
       }
-      auto value = iter->second;
-      // TODO As an opt, if we can just reuse this global, do not add a new one
+
+      // Serialize the global. While doing so pass in the name of this global,
+      // as it may be used as the definition location for it.
       // TODO Test: write a global to an early location that has a reference to
       //   a late location. Reordering with a new global is necessary.
-      oldGlobal->init = getSerialization(value);
+      oldGlobal->init = getSerialization(iter->second, oldGlobal->name);
 std::cout << "  add glbal " << oldGlobal->name << " : " << *oldGlobal->init << '\n';
       wasm->addGlobal(std::move(oldGlobal));
     }
@@ -489,11 +490,6 @@ std::cout << "globals fully set up once mre\n";
 
 public:
   std::unordered_map<GCData*, Name> gcDataGlobals;
-
-  Expression* getSerialization(const Literals& values) {
-    assert(values.size() == 1);
-    return getSerialization(values[0]);
-  }
 
   // Calls to getSerialization() need to know if we are at the top level of a
   // global declaration. If we are, then we can just write the global out rather
@@ -556,6 +552,11 @@ std::cout << "  add new glbal " << name << '\n';
 
     // Everything else can be handled normally.
     return builder.makeConstantExpression(value);
+  }
+
+  Expression* getSerialization(const Literals& values, Name globalDef = Name()) {
+    assert(values.size() == 1);
+    return getSerialization(values[0], globalDef);
   }
 };
 
