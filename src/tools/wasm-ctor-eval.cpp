@@ -511,6 +511,7 @@ private:
       for (const auto& [name, values] : instance->globals) {
         wasm->getGlobal(name)->init = getSerialization(values);
       }
+      return;
     }
 
     // GC makes things more complicated, as GC allocations will be emitted as
@@ -524,10 +525,20 @@ private:
     auto oldGlobals = std::move(wasm->globals);
     wasm->updateMaps();
     for (auto& oldGlobal : oldGlobals) {
+      auto iter = instance->globals.find(oldGlobal->name);
+      if (iter == instance->globals.end()) {
+        // There is no value in this global. That means the interpreter never
+        // executed it, which is the case for the new special globals as we add
+        // them to the module. There is no work necessary here, as the special
+        // global will be handled by getSerialization; skip it.
+        continue;
+      }
+      auto value = iter->second;
       // TODO As an opt, if we can just reuse this global, do not add a new one
       // TODO Test: write a global to an early location that has a reference to
       //   a late location. Reordering with a new global is necessary.
-      oldGlobal->init = getSerialization(instance->globals[oldGlobal->name]);
+std::cout << oldGlobal->name << " : " << value << " : " << *oldGlobal->init << '\n';
+      oldGlobal->init = getSerialization(value);
       wasm->addGlobal(std::move(oldGlobal));
     }
   }
