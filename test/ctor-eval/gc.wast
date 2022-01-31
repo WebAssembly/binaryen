@@ -7,17 +7,29 @@
     )
   )
 
+  (global $global2 (mut (ref null $struct)) (ref.null $struct))
+
   (func "test1"
-    (drop
+    (global.set $global2
+      (struct.new $struct
+        (i32.const 41)
+      )
+    )
+    (global.set $global2
       (struct.new $struct
         (i32.const 42)
       )
     )
   )
 
-  (func "keepalive"
-    (drop
-      (global.get $global1)
+  (func "keepalive" (result i32)
+    (i32.add
+      (struct.get $struct 0
+        (global.get $global1)
+      )
+      (struct.get $struct 0
+        (global.get $global2)
+      )
     )
   )
 )
