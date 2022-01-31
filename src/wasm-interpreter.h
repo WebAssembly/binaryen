@@ -2264,21 +2264,7 @@ public:
   }
 };
 
-// Execute an initializer expression of a global, data or element segment.
-// see: https://webassembly.org/docs/modules/#initializer-expression
-template<typename GlobalManager>
-class InitializerExpressionRunner
-  : public ExpressionRunner<InitializerExpressionRunner<GlobalManager>> {
-  GlobalManager& globals;
-
-public:
-  InitializerExpressionRunner(GlobalManager& globals, Index maxDepth)
-    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(nullptr,
-                                                                   maxDepth),
-      globals(globals) {}
-
-  Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
-};
+using GlobalValueSet = std::map<Name, Literals>;
 
 //
 // A runner for a module. Each runner contains the information to execute the
@@ -2294,7 +2280,7 @@ public:
 // To call into the interpreter, use callExport.
 //
 
-template<typename GlobalManager, typename SubType>
+template<typename SubType>
 class ModuleRunnerBase : public ExpressionRunner<SubType> {
 public:
   //
@@ -2307,7 +2293,7 @@ public:
       std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
-    virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
+    virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
@@ -2482,7 +2468,7 @@ public:
   Module& wasm;
 
   // Values of globals
-  GlobalManager globals;
+  GlobalValueSet globals;
 
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
@@ -2499,10 +2485,7 @@ public:
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      globals[global->name] =
-        InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
-          .visit(global->init)
-          .values;
+      globals[global->name] = self()->visit(global->init).values;
     });
 
     // initialize the rest of the external interface
@@ -3687,10 +3670,7 @@ protected:
   std::map<Name, std::shared_ptr<SubType>> linkedInstances;
 };
 
-// The default ModuleRunner uses a trivial global manager
-using TrivialGlobalManager = std::map<Name, Literals>;
-class ModuleRunner
-  : public ModuleRunnerBase<TrivialGlobalManager, ModuleRunner> {
+class ModuleRunner : public ModuleRunnerBase<ModuleRunner> {
 public:
   ModuleRunner(
     Module& wasm,

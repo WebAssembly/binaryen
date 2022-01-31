@@ -53,90 +53,23 @@ struct FailToEvalException {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-// We do not have access to imported globals
-class EvallingGlobalManager {
-  // values of globals
-  std::map<Name, Literals> globals;
-
-  // globals that are dangerous to modify in the module
-  std::set<Name> dangerousGlobals;
-
-  // whether we are done adding new globals
-  bool sealed = false;
-
-public:
-  void addDangerous(Name name) { dangerousGlobals.insert(name); }
-
-  void seal() { sealed = true; }
-
-  Literals& operator[](Name name) {
-    if (dangerousGlobals.count(name) > 0) {
-      std::string extra;
-      if (name == "___dso_handle") {
-        extra = RECOMMENDATION
-          "build with -s NO_EXIT_RUNTIME=1 so that "
-          "calls to atexit that use ___dso_handle are not emitted";
-      }
-      throw FailToEvalException(
-        std::string(
-          "tried to access a dangerous (import-initialized) global: ") +
-        name.str + extra);
-    }
-    return globals[name];
-  }
-
-  struct Iterator {
-    Name first;
-    Literals second;
-    bool found;
-
-    Iterator() : found(false) {}
-    Iterator(Name name, Literals value)
-      : first(name), second(value), found(true) {}
-
-    bool operator==(const Iterator& other) {
-      return first == other.first && second == other.second &&
-             found == other.found;
-    }
-    bool operator!=(const Iterator& other) { return !(*this == other); }
-  };
-
-  Iterator find(Name name) {
-    if (globals.find(name) == globals.end()) {
-      return end();
-    }
-    return Iterator(name, globals[name]);
-  }
-
-  Iterator end() { return Iterator(); }
-
-  // Receives a module and applies the state of globals here into the globals
-  // in that module.
-  void applyToModule(Module& wasm) {
-    Builder builder(wasm);
-    for (const auto& [name, value] : globals) {
-      wasm.getGlobal(name)->init = builder.makeConstantExpression(value);
-    }
-  }
-};
-
-class EvallingModuleRunner
-  : public ModuleRunnerBase<EvallingGlobalManager, EvallingModuleRunner> {
+class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
 public:
   EvallingModuleRunner(
     Module& wasm,
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
-    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {
-    // if any global in the module has a non-const constructor, it is using a
-    // global import, which we don't have, and is illegal to use
-    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      if (!global->init->is<Const>()) {
-        // this global is dangerously initialized by an import, so if it is
-        // used, we must fail
-        globals.addDangerous(global->name);
-      }
-    });
+    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
+
+  Flow visitGlobalGet(GlobalGet* curr) {
+    // Error on reads of imported globals.
+    auto* global = wasm.getGlobal(curr->name);
+    if (global->imported()) {
+      throw FailToEvalException(std::string("read from imported global ") +
+                                global->module.str + "." + global->base.str);
+    }
+
+    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
 };
 
@@ -229,7 +162,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       applyMemoryToModule();
     }
 
-    instance->globals.applyToModule(*wasm);
+    applyGlobalsToModule();
   }
 
   void init(Module& wasm_, EvallingModuleRunner& instance_) override {
@@ -237,7 +170,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     instance = &instance_;
   }
 
-  void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
+  void importGlobals(GlobalValueSet& globals, Module& wasm_) override {
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
       auto it = linkedInstances.find(global->module);
       if (it != linkedInstances.end()) {
@@ -487,6 +420,13 @@ private:
     // memory.
     segment.data = memory;
   }
+
+  void applyGlobalsToModule() {
+    Builder builder(*wasm);
+    for (const auto& [name, value] : instance->globals) {
+      wasm->getGlobal(name)->init = builder.makeConstantExpression(value);
+    }
+  }
 };
 
 // The outcome of evalling a ctor is one of three states:
@@ -695,9 +635,6 @@ void evalCtors(Module& wasm,
   try {
     // create an instance for evalling
     EvallingModuleRunner instance(wasm, &interface, linkedInstances);
-    // we should not add new globals from here on; as a result, using
-    // an imported global will fail, as it is missing and so looks new
-    instance.globals.seal();
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
