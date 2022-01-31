@@ -127,7 +127,6 @@ public:
 
   Flow visitGlobalGet(GlobalGet* curr) {
     // Error on reads of imported globals.
-std::cout << "visitGG\n";
     auto* global = wasm.getGlobal(curr->name);
     if (global->imported()) {
       throw FailToEvalException(std::string("read from imported global ") +
@@ -509,7 +508,6 @@ private:
 
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
-std::cout << "wakaGG\n";
       for (const auto& [name, values] : instance->globals) {
         wasm->getGlobal(name)->init = getSerialization(values);
       }
@@ -524,8 +522,12 @@ std::cout << "wakaGG\n";
     // appears after it, that won't work - the special global containing that
     // value must appear before it. To handle that, start from scratch and then
     // add the globals and their dependencies as we go.
+std::cout << "clear globals\n";
     auto oldGlobals = std::move(wasm->globals);
     wasm->updateMaps();
+
+    gcDataGlobals.clear();
+
     for (auto& oldGlobal : oldGlobals) {
       auto iter = instance->globals.find(oldGlobal->name);
       if (iter == instance->globals.end()) {
@@ -539,15 +541,17 @@ std::cout << "wakaGG\n";
       // TODO As an opt, if we can just reuse this global, do not add a new one
       // TODO Test: write a global to an early location that has a reference to
       //   a late location. Reordering with a new global is necessary.
-std::cout << oldGlobal->name << " : " << value << " : " << *oldGlobal->init << '\n';
       oldGlobal->init = getSerialization(value);
+std::cout << "  add glbal " << oldGlobal->name << " : " << *oldGlobal->init << '\n';
       wasm->addGlobal(std::move(oldGlobal));
     }
+std::cout << "globals fully set up once mre\n";
   }
 
 public:
+  std::unordered_map<GCData*, Name> gcDataGlobals;
+
   Expression* getSerialization(const Literals& values) {
-std::cout << "get ser " << values << '\n';
     assert(values.size() == 1);
     return getSerialization(values[0]);
   }
@@ -563,9 +567,10 @@ std::cout << "get ser " << values << '\n';
       }
 
       // There was actual GC data allocated here.
-      auto& allocation = recorder.getGCAllocation(data);
-      auto type = value.type; // XXX do we neet .origin?
-      if (!allocation.global.is()) {
+      // TODO: Do we need the recorder at all..? .origin? .allocation XXX?
+      auto type = value.type;
+      auto& gcDataGlobal = gcDataGlobals[data];
+      if (!gcDataGlobal.is()) {
         // This is the first usage of this allocation. Add a new global.
         auto& values = value.getGCData()->values;
         auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
@@ -588,16 +593,16 @@ std::cout << "get ser " << values << '\n';
           WASM_UNREACHABLE("bad gc type"); // TODO test nulls of various types
         }
         wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
-        allocation.global = name;
+        gcDataGlobal = name;
+std::cout << "  add new glbal " << name << '\n';
       }
 
       // Refer to this GC allocation by reading from the global that is
       // designated to contain it.
-      return builder.makeGlobalGet(allocation.global, value.type);
+      return builder.makeGlobalGet(gcDataGlobal, value.type);
     }
 
     // Everything else can be handled normally.
-std::cout << "maek " << value << '\n';
     return builder.makeConstantExpression(value);
   }
 };
