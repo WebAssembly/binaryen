@@ -53,7 +53,7 @@ struct FailToEvalException {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-class ExecutionSerializer {
+class Recorder {
   // Serializing GC data requires more work than linear memory, because
   // allocations have an identity, and they are created using struct.new /
   // array.new, which we must emit in a proper location in the wasm. To handle
@@ -110,12 +110,12 @@ public:
   }
 };
 
-// Use a singleton serializer object. This is simpler than threading it around
+// Use a singleton recorder object. This is simpler than threading it around
 // in the various classes here, and also avoids issues with constructor order
 // in EvallingModuleRunner (the base constructor there initializes globals,
-// which means it needs access to the serializer even before the
+// which means it needs access to the recorder even before the
 // EvallingModuleRunner constructor runs).
-ExecutionSerializer serializer;
+Recorder recorder;
 
 // TODO: Move serialization out. accessed during EMR constructor
 
@@ -143,7 +143,7 @@ public:
   Flow visitStructNew(StructNew* curr) {
     auto flow = Parent::visitStructNew(curr);
     if (!flow.breaking()) {
-      serializer.noteGCAllocation(flow.getSingleValue().getGCData().get(), curr);
+      recorder.noteGCAllocation(flow.getSingleValue().getGCData().get(), curr);
     }
     return flow;
   }
@@ -151,7 +151,7 @@ public:
   Flow visitArrayNew(ArrayNew* curr) {
     auto flow = Parent::visitArrayNew(curr);
     if (!flow.breaking()) {
-      serializer.noteGCAllocation(flow.getSingleValue().getGCData().get(), curr);
+      recorder.noteGCAllocation(flow.getSingleValue().getGCData().get(), curr);
     }
     return flow;
   }
@@ -515,17 +515,21 @@ private:
       // * As an opt, if we can just reuse this global, do not add a new one
       // * Test: write a global to an early location that has a reference to
       //   a late location. Reordering with a new global is necessary.
-      assert(values.size() == 1);
-      wasm->getGlobal(name)->init = getSerialization(values[0]);
+      wasm->getGlobal(name)->init = getSerialization(values);
     }
   }
 
-private:
-  Expression* getSerialization(Literal value) {
+public:
+  Expression* getSerialization(const Literals& values) {
+    assert(values.size() == 1);
+    return getSerialization(values[0]);
+  }
+
+  Expression* getSerialization(const Literal& value) {
     Builder builder(*wasm);
 
     if (value.isData()) {
-      auto& allocation = serializer.getGCAllocation(value.getGCData().get());
+      auto& allocation = recorder.getGCAllocation(value.getGCData().get());
       auto type = allocation.origin->type;
       if (allocation.global.is()) {
         // There is already a global that this allocation is created in, and we
@@ -703,7 +707,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
         auto value = appliedLocals[i];
         localSets.push_back(
-          builder.makeLocalSet(i, builder.makeConstantExpression(value)));
+          builder.makeLocalSet(i, interface.getSerialization(value)));
       }
 
       // Put the local sets at the front of the block. We know there must be a
@@ -796,7 +800,7 @@ void evalCtors(Module& wasm,
         if (func->getResults() == Type::none) {
           copyFunc->body = Builder(wasm).makeNop();
         } else {
-          copyFunc->body = Builder(wasm).makeConstantExpression(*outcome);
+          copyFunc->body = interface.getSerialization(*outcome);
         }
         wasm.getExport(exp->name)->value = copyName;
       }
