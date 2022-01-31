@@ -527,8 +527,15 @@ public:
     Builder builder(*wasm);
 
     if (value.isData()) {
-      auto& allocation = recorder.getGCAllocation(value.getGCData().get());
-      auto type = allocation.origin->type;
+      auto* data = value.getGCData().get();
+      if (!data) {
+        // This is a null, so simply emit one.
+        return builder.makeRefNull(value.type);
+      }
+
+      // There was actual GC data allocated here.
+      auto& allocation = recorder.getGCAllocation(data);
+      auto type = value.type; // XXX do we neet .origin?
       if (!allocation.global.is()) {
         // This is the first usage of this allocation. Add a new global.
         auto& values = value.getGCData()->values;
