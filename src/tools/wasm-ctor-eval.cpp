@@ -127,6 +127,7 @@ public:
 
   Flow visitGlobalGet(GlobalGet* curr) {
     // Error on reads of imported globals.
+std::cout << "visitGG\n";
     auto* global = wasm.getGlobal(curr->name);
     if (global->imported()) {
       throw FailToEvalException(std::string("read from imported global ") +
@@ -508,6 +509,7 @@ private:
 
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
+std::cout << "wakaGG\n";
       for (const auto& [name, values] : instance->globals) {
         wasm->getGlobal(name)->init = getSerialization(values);
       }
@@ -591,8 +593,7 @@ std::cout << "get ser " << values << '\n';
 
       // Refer to this GC allocation by reading from the global that is
       // designated to contain it.
-      return builder.makeGlobalGet(allocation.global,
-                                   wasm->getGlobal(allocation.global)->type);
+      return builder.makeGlobalGet(allocation.global, value.type);
     }
 
     // Everything else can be handled normally.
