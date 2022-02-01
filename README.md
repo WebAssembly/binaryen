@@ -305,6 +305,15 @@ etc.
 
 ## Building
 
+Binaryen uses git submodules (at time of writing just for gtest), so before you build you will have to initialize the submodules:
+
+```
+git submodule init
+git submodule update
+```
+
+After that you can build with CMake:
+
 ```
 cmake . && make
 ```
