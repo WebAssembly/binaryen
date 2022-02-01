@@ -473,8 +473,18 @@ private:
         name = oldGlobal->name;
       }
 
-      auto value = instance->globals[oldGlobal->name];
-      oldGlobal->init = getSerialization(value, oldGlobal->name);
+      // If there is no interpreter value for this global, that means the
+      // interpreter never executed code to create it. That happens when this is
+      // a new global that we have added after running the interpreter, which
+      // means this is one of the new defining globals, which we can simply
+      // skip here - if such a global is still needed, it will show up as a
+      // dependency of something, and be emitted at the right time and place.
+      auto values = instance->globals[oldGlobal->name];
+      if (values.empty()) {
+        continue;
+      }
+
+      oldGlobal->init = getSerialization(values, name);
       wasm->addGlobal(std::move(oldGlobal));
 
       // TODO Test: write a global to an early location that has a reference to

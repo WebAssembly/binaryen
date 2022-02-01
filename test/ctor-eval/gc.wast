@@ -15,6 +15,10 @@
   ;; After evalling we should see this refer to a struct with contents 42, and
   ;; not 41, which is overridden, see "test1". We also should not see any code
   ;; that creates an object with 41, as that is no longer live.
+  ;;
+  ;; Note that we will not simply do a struct.new in this global, as it is
+  ;; mutable, and we only use immutable globals as defining globals for values,
+  ;; so a new (immutable) global will appear, and we will read from it.
   (global $global2 (mut (ref null $struct)) (ref.null $struct))
 
   (func "test1" (result anyref)
