@@ -1,7 +1,7 @@
 (module
   (type $struct (struct_subtype (field i32) data))
 
-  (import "import" "import" (func $import))
+  (import "import" "import" (func $import (param anyref)))
 
   ;; Create a GC object in a global. We can keep the struct.new here even after
   ;; evalling (we should not create an extra, unneeded global, and read from
@@ -21,7 +21,9 @@
   ;; so a new (immutable) global will appear, and we will read from it.
   (global $global2 (mut (ref null $struct)) (ref.null $struct))
 
-  (func "test1" (result anyref)
+  (func "test1"
+    ;; Leave the first local as null, which we should handle properly (we will
+    ;; end up emitting nothing and still using the default null value).
     (local $temp1 (ref null $struct))
     (local $temp2 (ref null $struct))
 
@@ -36,9 +38,8 @@
       )
     )
 
-    ;; Leave one local as null, and write a value to the other. A struct with
-    ;; value 99 will be created in a global, and referred to here after
-    ;; evalling.
+    ;; Write a value to this local. A struct with value 99 will be created in a
+    ;; global, and referred to here.
     (local.set $temp2
       (struct.new $struct
         (i32.const 99)
@@ -46,9 +47,8 @@
     )
 
     ;; Stop evalling here at the import.
-    (call $import)
-
-    (local.get $temp2)
+    (call $import (local.get $temp1))
+    (call $import (local.get $temp2))
   )
 
   (func "keepalive" (result i32)

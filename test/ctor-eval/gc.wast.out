@@ -1,9 +1,9 @@
 (module
  (type $struct (struct (field i32)))
- (type $none_=>_none (func))
+ (type $anyref_=>_none (func (param anyref)))
  (type $none_=>_i32 (func (result i32)))
- (type $none_=>_anyref (func (result anyref)))
- (import "import" "import" (func $import))
+ (type $none_=>_none (func))
+ (import "import" "import" (func $import (param anyref)))
  (global $global1 (ref $struct) (struct.new $struct
   (i32.const 1337)
  ))
@@ -26,12 +26,16 @@
    )
   )
  )
- (func $0_0 (result anyref)
+ (func $0_0
   (local $0 (ref null $struct))
   (local.set $0
    (global.get $ctor-eval$global_0)
   )
-  (call $import)
-  (local.get $0)
+  (call $import
+   (ref.null $struct)
+  )
+  (call $import
+   (local.get $0)
+  )
  )
 )
