@@ -486,10 +486,6 @@ private:
 
       oldGlobal->init = getSerialization(values, name);
       wasm->addGlobal(std::move(oldGlobal));
-
-      // TODO Test: write a global to an early location that has a reference to
-      //   a late location. Reordering with a new global is necessary.
-      // TODO: test defining global reuiqrements of immunt and type
     }
   }
 
