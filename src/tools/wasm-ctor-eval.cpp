@@ -487,10 +487,11 @@ public:
   // that.
   std::unordered_map<GCData*, Name> definingGlobals;
 
-  // If |possibleDefiningGlobal| is provided, it is the name of a global that we are in
-  // the init expression of, and which can be reused as defining global, if the
-  // other conditions are suitable.
-  Expression* getSerialization(const Literal& value, Name possibleDefiningGlobal = Name()) {
+  // If |possibleDefiningGlobal| is provided, it is the name of a global that we
+  // are in the init expression of, and which can be reused as defining global,
+  // if the other conditions are suitable.
+  Expression* getSerialization(const Literal& value,
+                               Name possibleDefiningGlobal = Name()) {
     Builder builder(*wasm);
 
     if (value.isData()) {
