@@ -480,7 +480,7 @@ private:
       // as it may be used as the definition location for it. We can only do so
       // if the global is immutable and has the exact right type, that is if it
       // looks exactly like a definition location. TODO test
-      auto name;
+      Name name;
       if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
         name = oldGlobal->name;
       }
