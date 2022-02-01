@@ -462,20 +462,14 @@ private:
     definingGlobals.clear();
 
     for (auto& oldGlobal : oldGlobals) {
-      auto iter = instance->globals.find(oldGlobal->name);
-      if (iter == instance->globals.end()) {
-        // There is no interpreter value in this global. That means the
-        // interpreter never executed it, in which case there is nothing to do
-        // for it.
-        continue;
-      }
-
       // Serialize the global. While doing so pass in the name of this global,
-      // as it may be used as the definition location for it. We can only do so
-      // if the global is immutable and has the exact right type, that is if it
-      // looks exactly like a definition location. TODO test
+      // as it may be used as the defining global for it, if one does not
+      // already exist (this optimization prevents allocating an extra global
+      // just to global.get its value right after it).
       Name name;
       if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
+        // This has the properties we need of a defining global - immutable and
+        // of the precise type - so use it.
         name = oldGlobal->name;
       }
       oldGlobal->init = getSerialization(iter->second, oldGlobal->name);
@@ -483,18 +477,20 @@ private:
 
       // TODO Test: write a global to an early location that has a reference to
       //   a late location. Reordering with a new global is necessary.
+      // TODO: test defining global reuiqrements of immunt and type
     }
   }
 
 public:
+  // Maps each GC data in the interpreter to its defining global: the global in
+  // which it is created, and then all other users of it can just global.get
+  // that.
   std::unordered_map<GCData*, Name> definingGlobals;
 
-  // Calls to getSerialization() need to know if we are at the top level of a
-  // global declaration. If we are, then we can just write the global out rather
-  // than create a second global to read from. To notice that, |globalDef| is
-  // set to the name of the global when we process its value. Nested calls to
-  // this method will have an empty name there.
-  Expression* getSerialization(const Literal& value, Name globalDef = Name()) {
+  // If |possibleDefiningGlobal| is provided, it is the name of a global that we are in
+  // the init expression of, and which can be reused as defining global, if the
+  // other conditions are suitable.
+  Expression* getSerialization(const Literal& value, Name possibleDefiningGlobal = Name()) {
     Builder builder(*wasm);
 
     if (value.isData()) {
@@ -506,8 +502,8 @@ public:
 
       // There was actual GC data allocated here.
       auto type = value.type;
-      auto& gcDataGlobal = definingGlobals[data];
-      if (!gcDataGlobal.is()) {
+      auto& definingGlobal = definingGlobals[data];
+      if (!definingGlobal.is()) {
         // This is the first usage of this allocation. Generate a struct.new /
         // array.new for it.
         auto& values = value.getGCData()->values;
@@ -515,7 +511,7 @@ public:
 
         // The initial values for this allocation may themselves be GC
         // allocations. Recurse and add globals as necessary.
-        // TODO: handle loops
+        // TODO: Handle cycles. That will require code in the start function.
         for (auto& value : values) {
           args.push_back(getSerialization(value));
         }
@@ -524,28 +520,31 @@ public:
         if (heapType.isStruct()) {
           init = builder.makeStructNew(heapType, args);
         } else if (heapType.isArray()) {
-          // TODO: for repeated values, can use ArrayNew
+          // TODO: for repeated identical values, can use ArrayNew
           init = builder.makeArrayInit(heapType, args);
         } else {
           WASM_UNREACHABLE("bad gc type"); // TODO test nulls of various types
         }
 
-        if (globalDef.is()) {
+        if (possibleDefiningGlobal.is()) {
           // No need to allocate a new global, as we are in the definition of
           // one. Just return the initialization expression, which will be
-          // placed in that global's |init| field, and set the name properly.
-          gcDataGlobal = globalDef;
+          // placed in that global's |init| field, and first note this as the
+          // defining global.
+          definingGlobal = possibleDefiningGlobal;
           return init;
         }
+
+        // Allocate a new defining global.
         auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
         wasm->addGlobal(
           builder.makeGlobal(name, type, init, Builder::Immutable));
-        gcDataGlobal = name;
+        definingGlobal = name;
       }
 
       // Refer to this GC allocation by reading from the global that is
       // designated to contain it.
-      return builder.makeGlobalGet(gcDataGlobal, value.type);
+      return builder.makeGlobalGet(definingGlobal, value.type);
     }
 
     // Everything else can be handled normally.
@@ -553,9 +552,9 @@ public:
   }
 
   Expression* getSerialization(const Literals& values,
-                               Name globalDef = Name()) {
+                               Name possibleDefiningGlobal = Name()) {
     assert(values.size() == 1);
-    return getSerialization(values[0], globalDef);
+    return getSerialization(values[0], possibleDefiningGlobal);
   }
 };
 
