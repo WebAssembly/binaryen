@@ -461,7 +461,6 @@ private:
     // appears after it, that won't work - the special global containing that
     // value must appear before it. To handle that, start from scratch and then
     // add the globals and their dependencies as we go.
-std::cout << "clear globals\n";
     auto oldGlobals = std::move(wasm->globals);
     wasm->updateMaps();
 
@@ -478,14 +477,19 @@ std::cout << "clear globals\n";
       }
 
       // Serialize the global. While doing so pass in the name of this global,
-      // as it may be used as the definition location for it.
+      // as it may be used as the definition location for it. We can only do so
+      // if the global is immutable and has the exact right type, that is if it
+      // looks exactly like a definition location. TODO test
+      auto name;
+      if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
+        name = oldGlobal->name;
+      }
+      oldGlobal->init = getSerialization(iter->second, oldGlobal->name);
+      wasm->addGlobal(std::move(oldGlobal));
+
       // TODO Test: write a global to an early location that has a reference to
       //   a late location. Reordering with a new global is necessary.
-      oldGlobal->init = getSerialization(iter->second, oldGlobal->name);
-std::cout << "  add glbal " << oldGlobal->name << " : " << *oldGlobal->init << '\n';
-      wasm->addGlobal(std::move(oldGlobal));
     }
-std::cout << "globals fully set up once mre\n";
   }
 
 public:
@@ -542,7 +546,6 @@ public:
         auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
         wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
         gcDataGlobal = name;
-std::cout << "  add new glbal " << name << '\n';
       }
 
       // Refer to this GC allocation by reading from the global that is
