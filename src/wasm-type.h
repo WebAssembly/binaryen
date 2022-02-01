@@ -376,7 +376,11 @@ public:
   static bool isSubType(HeapType left, HeapType right);
 
   // Return the ordered HeapType children, looking through child Types.
-  std::vector<HeapType> getHeapTypeChildren();
+  std::vector<HeapType> getHeapTypeChildren() const;
+
+  // Similar to `getHeapTypeChildren`, but also includes the supertype if it
+  // exists.
+  std::vector<HeapType> getReferencedHeapTypes() const;
 
   // Return the LUB of two HeapTypes. The LUB always exists.
   static HeapType getLeastUpperBound(HeapType a, HeapType b);

@@ -1403,10 +1403,18 @@ bool HeapType::isSubType(HeapType left, HeapType right) {
   return SubTyper().isSubType(left, right);
 }
 
-std::vector<HeapType> HeapType::getHeapTypeChildren() {
+std::vector<HeapType> HeapType::getHeapTypeChildren() const {
   HeapTypeChildCollector collector;
-  collector.walkRoot(this);
+  collector.walkRoot(const_cast<HeapType*>(this));
   return collector.children;
+}
+
+std::vector<HeapType> HeapType::getReferencedHeapTypes() const {
+  auto types = getHeapTypeChildren();
+  if (auto super = getSuperType()) {
+    types.push_back(*super);
+  }
+  return types;
 }
 
 HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
@@ -1567,7 +1575,8 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     // Basic HeapTypes are never subtypes of compound HeapTypes.
     return false;
   }
-  if (typeSystem == TypeSystem::Nominal) {
+  if (typeSystem == TypeSystem::Nominal ||
+      typeSystem == TypeSystem::Isorecursive) {
     // Subtyping must be declared in a nominal system, not derived from
     // structure, so we will not recurse. TODO: optimize this search with some
     // form of caching.
