@@ -47,6 +47,11 @@
  ;; CHECK-NEXT: )
 
  ;; CHECK-NEXT: (rec
+ ;; CHECK-NEXT:  (type $used-a-ton (struct_subtype  data))
+ ;; CHECK-NEXT:  (type $shrub (struct_subtype  $leaf))
+ ;; CHECK-NEXT: )
+
+ ;; CHECK-NEXT: (rec
  ;; CHECK-NEXT:  (type $used-a-bit (struct_subtype (field (ref $leaf)) data))
  ;; CHECK-NEXT:  (type $twig (struct_subtype  data))
  ;; CHECK-NEXT: )
@@ -67,11 +72,17 @@
  )
 
  (rec
+  (type $shrub (struct_subtype $leaf))
+  (type $used-a-ton (struct_subtype data))
+ )
+
+ (rec
   (type $root (struct_subtype data))
   (type $used-a-lot (struct_subtype $twig))
  )
 
  (func $use (param (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
+  (local (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton))
   (unreachable)
  )
 )

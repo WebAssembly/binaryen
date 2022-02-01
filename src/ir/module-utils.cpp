@@ -33,6 +33,7 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
       note(ht);
     }
   }
+  // Ensure a type is included without increasing its count.
   void include(HeapType type) {
     if (!type.isBasic()) {
       (*this)[type];
@@ -260,7 +261,9 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
 
-  // Fix up the cumulative counts to be an average instead.
+  // Fix up the cumulative counts to be an average instead. Use the average to
+  // prioritize groups that have large reference counts and also do not take up
+  // too much of the address space.
   for (auto& [group, info] : groupInfos) {
     info.count /= group.size();
   }
