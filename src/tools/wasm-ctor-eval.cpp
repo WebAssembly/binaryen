@@ -472,7 +472,9 @@ private:
         // of the precise type - so use it.
         name = oldGlobal->name;
       }
-      oldGlobal->init = getSerialization(iter->second, oldGlobal->name);
+
+      auto value = instance->globals[oldGlobal->name];
+      oldGlobal->init = getSerialization(value, oldGlobal->name);
       wasm->addGlobal(std::move(oldGlobal));
 
       // TODO Test: write a global to an early location that has a reference to
