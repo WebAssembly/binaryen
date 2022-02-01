@@ -95,3 +95,15 @@
   (unreachable)
  )
 )
+
+(module
+ ;; Test that basic heap type children do not trigger assertions.
+
+ (rec
+  (type $contains-basic (struct_subtype (ref any) data))
+ )
+
+ (func $use (param (ref $contains-basic))
+   (unreachable)
+ )
+)

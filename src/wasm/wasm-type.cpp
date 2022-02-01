@@ -2411,7 +2411,12 @@ size_t RecGroupHasher::hash(HeapType type) const {
   // an index into a rec group. Only take the rec group identity into account if
   // the child is not a member of the top-level group because in that case the
   // group may not be canonicalized yet.
-  size_t digest = wasm::hash(type.getRecGroupIndex());
+  size_t digest = wasm::hash(type.isBasic());
+  if (type.isBasic()) {
+    wasm::rehash(digest, type.getID());
+    return digest;
+  }
+  wasm::rehash(digest, type.getRecGroupIndex());
   auto currGroup = type.getRecGroup();
   if (currGroup != group) {
     wasm::rehash(digest, currGroup.getID());
@@ -2534,6 +2539,9 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   // be canonicalized, explicitly check whether `a` and `b` are in the
   // respective recursion groups of the respective top-level groups we are
   // comparing, in which case the structure is still equivalent.
+  if (a.isBasic() || b.isBasic()) {
+    return a == b;
+  }
   if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
     return false;
   }

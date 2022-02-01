@@ -250,6 +250,9 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     info.count += counts.at(type);
     // Collect predecessor groups.
     for (auto child : type.getReferencedHeapTypes()) {
+      if (child.isBasic()) {
+        continue;
+      }
       RecGroup otherGroup = child.getRecGroup();
       if (otherGroup != group) {
         info.predecessors.insert(otherGroup);
