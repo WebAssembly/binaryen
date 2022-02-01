@@ -53,25 +53,6 @@ struct FailToEvalException {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-// Serializing GC data requires more work than linear memory, because
-// allocations have an identity, and they are created using struct.new /
-// array.new, which we must emit in a proper location in the wasm. To handle
-// this, we track information for each GC allocation that happens.
-//
-// The basic idea can be illustrated by an example:
-//
-//  1. We allocate some struct somewhere.
-//  2. It remains alive at the end, perhaps by being written to a global.
-//     Imagine that the global was originally null.
-//  3. When we want to serialize that global, we check if the allocation
-//     already has a global. If it does not, then we create a new global, and
-//     then simply do a global.get from all places that refer to that
-//     allocation. That way they will all refer to the same thing at runtime.
-//
-// Complicating this is that objects can be allocated in globals and can have
-// references to other objects, so we will need to handle ordering in a proper
-// way, but the basic idea is in 1-3.
-
 class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
 public:
   EvallingModuleRunner(
@@ -90,8 +71,6 @@ public:
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
-
-  using Parent = ModuleRunnerBase<EvallingModuleRunner>;
 };
 
 // Build an artificial `env` module based on a module's imports, so that the
@@ -442,6 +421,21 @@ private:
     segment.data = memory;
   }
 
+  // Serializing GC data requires more work than linear memory, because
+  // allocations have an identity, and they are created using struct.new /
+  // array.new, which we must emit in a proper location in the wasm. This
+  // affects how we serialize globals, which can contain GC data, and also, we
+  // use globals to store GC data, so overall the process of computing the
+  // globals is where most of the GC logic ends up.
+  //
+  // The general idea for handling GC data is as follows: After evaluating the
+  // code, we end up with some live allocations in the interpreter, which we
+  // need to somehow serialize into the wasm module. We will put each such live
+  // GC data item into its own "defining global", a global whose purpose is to
+  // create and store that data. Each such global is immutable, and has the
+  // exact type of the data, for simplicity. Every other reference to that GC
+  // data in the interpreter's memory can then be serialized by simply emitting
+  // a global.get of that defining global.
   void applyGlobalsToModule() {
     Builder builder(*wasm);
 
@@ -453,26 +447,26 @@ private:
       return;
     }
 
-    // GC makes things more complicated, as GC allocations will be emitted as
-    // globals. We designate a global for each such allocation, and every
-    // reference to that value will then be done using a global.get. For this to
-    // work, we must allocate these special globals first, before any normal
-    // globals. For example, if a normal global refers to an allocation that
-    // appears after it, that won't work - the special global containing that
-    // value must appear before it. To handle that, start from scratch and then
-    // add the globals and their dependencies as we go.
+    // We need to emit the "defining globals" of GC data before the existing
+    // globals, as the normal ones may refer to them. We do this by removing all
+    // the existing globals, and then adding them one by one, during which time
+    // we call getSerialization() for their init expressions. If their init
+    // refes to GC data, then we will allocate a defining global for that data,
+    // and refer to it. Put another way, we place the existing globals back into
+    // the module one at a time, adding their dependencies as we go.
     auto oldGlobals = std::move(wasm->globals);
     wasm->updateMaps();
 
-    gcDataGlobals.clear();
+    // The process of allocating "defining globals" begins here. Clear any
+    // previous state.
+    definingGlobals.clear();
 
     for (auto& oldGlobal : oldGlobals) {
       auto iter = instance->globals.find(oldGlobal->name);
       if (iter == instance->globals.end()) {
-        // There is no value in this global. That means the interpreter never
-        // executed it, which is the case for the new special globals as we add
-        // them to the module. There is no work necessary here, as the special
-        // global will be handled by getSerialization; skip it.
+        // There is no interpreter value in this global. That means the
+        // interpreter never executed it, in which case there is nothing to do
+        // for it.
         continue;
       }
 
@@ -493,7 +487,7 @@ private:
   }
 
 public:
-  std::unordered_map<GCData*, Name> gcDataGlobals;
+  std::unordered_map<GCData*, Name> definingGlobals;
 
   // Calls to getSerialization() need to know if we are at the top level of a
   // global declaration. If we are, then we can just write the global out rather
@@ -512,7 +506,7 @@ public:
 
       // There was actual GC data allocated here.
       auto type = value.type;
-      auto& gcDataGlobal = gcDataGlobals[data];
+      auto& gcDataGlobal = definingGlobals[data];
       if (!gcDataGlobal.is()) {
         // This is the first usage of this allocation. Generate a struct.new /
         // array.new for it.
