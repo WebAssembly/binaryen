@@ -532,7 +532,7 @@ public:
           // TODO: for repeated identical values, can use ArrayNew
           init = builder.makeArrayInit(heapType, args);
         } else {
-          WASM_UNREACHABLE("bad gc type"); // TODO test nulls of various types
+          WASM_UNREACHABLE("bad gc type");
         }
 
         if (possibleDefiningGlobal.is()) {
