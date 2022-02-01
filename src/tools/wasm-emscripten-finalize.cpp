@@ -110,14 +110,6 @@ int main(int argc, const char* argv[]) {
          [&globalBase](Options*, const std::string& argument) {
            globalBase = std::stoull(argument);
          })
-    // TODO(sbc): Remove this one this argument is no longer passed by
-    // emscripten. See https://github.com/emscripten-core/emscripten/issues/8905
-    .add("--initial-stack-pointer",
-         "",
-         "ignored - will be removed in a future release",
-         WasmEmscriptenFinalizeOption,
-         Options::Arguments::One,
-         [](Options*, const std::string& argument) {})
     .add("--side-module",
          "",
          "Input is an emscripten side module",
