@@ -544,7 +544,8 @@ public:
           return init;
         }
         auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
-        wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
+        wasm->addGlobal(
+          builder.makeGlobal(name, type, init, Builder::Immutable));
         gcDataGlobal = name;
       }
 
@@ -557,7 +558,8 @@ public:
     return builder.makeConstantExpression(value);
   }
 
-  Expression* getSerialization(const Literals& values, Name globalDef = Name()) {
+  Expression* getSerialization(const Literals& values,
+                               Name globalDef = Name()) {
     assert(values.size() == 1);
     return getSerialization(values[0], globalDef);
   }
