@@ -552,8 +552,7 @@ public:
 
       // Allocate a new defining global.
       auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
-      wasm->addGlobal(
-        builder.makeGlobal(name, type, init, Builder::Immutable));
+      wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
       definingGlobal = name;
     }
 
