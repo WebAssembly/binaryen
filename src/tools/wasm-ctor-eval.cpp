@@ -705,8 +705,7 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmCtorEvalOption = "wasm-ctor-eval options";
 
-  ToolOptions options("wasm-ctor-eval",
-                      "Execute code at compile time");
+  ToolOptions options("wasm-ctor-eval", "Execute code at compile time");
   options
     .add("--output",
          "-o",
