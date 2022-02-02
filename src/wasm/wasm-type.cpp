@@ -1403,10 +1403,18 @@ bool HeapType::isSubType(HeapType left, HeapType right) {
   return SubTyper().isSubType(left, right);
 }
 
-std::vector<HeapType> HeapType::getHeapTypeChildren() {
+std::vector<HeapType> HeapType::getHeapTypeChildren() const {
   HeapTypeChildCollector collector;
-  collector.walkRoot(this);
+  collector.walkRoot(const_cast<HeapType*>(this));
   return collector.children;
+}
+
+std::vector<HeapType> HeapType::getReferencedHeapTypes() const {
+  auto types = getHeapTypeChildren();
+  if (auto super = getSuperType()) {
+    types.push_back(*super);
+  }
+  return types;
 }
 
 HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
@@ -1567,7 +1575,8 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     // Basic HeapTypes are never subtypes of compound HeapTypes.
     return false;
   }
-  if (typeSystem == TypeSystem::Nominal) {
+  if (typeSystem == TypeSystem::Nominal ||
+      typeSystem == TypeSystem::Isorecursive) {
     // Subtyping must be declared in a nominal system, not derived from
     // structure, so we will not recurse. TODO: optimize this search with some
     // form of caching.
@@ -2402,7 +2411,12 @@ size_t RecGroupHasher::hash(HeapType type) const {
   // an index into a rec group. Only take the rec group identity into account if
   // the child is not a member of the top-level group because in that case the
   // group may not be canonicalized yet.
-  size_t digest = wasm::hash(type.getRecGroupIndex());
+  size_t digest = wasm::hash(type.isBasic());
+  if (type.isBasic()) {
+    wasm::rehash(digest, type.getID());
+    return digest;
+  }
+  wasm::rehash(digest, type.getRecGroupIndex());
   auto currGroup = type.getRecGroup();
   if (currGroup != group) {
     wasm::rehash(digest, currGroup.getID());
@@ -2525,6 +2539,9 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   // be canonicalized, explicitly check whether `a` and `b` are in the
   // respective recursion groups of the respective top-level groups we are
   // comparing, in which case the structure is still equivalent.
+  if (a.isBasic() || b.isBasic()) {
+    return a == b;
+  }
   if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
     return false;
   }
@@ -3526,22 +3543,9 @@ void canonicalizeEquirecursive(CanonicalizationState& state) {
     info->supertype = nullptr;
   }
 
-#if TIME_CANONICALIZATION
-  auto start = std::chrono::steady_clock::now();
-#endif
-
   // Canonicalize the shape of the type definition graph.
   ShapeCanonicalizer minimized(state.results);
   state.update(minimized.replacements);
-
-#if TIME_CANONICALIZATION
-  auto end = std::chrono::steady_clock::now();
-  std::cerr << "Shape canonicalization: "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                     start)
-                 .count()
-            << " ms\n";
-#endif
 }
 
 std::optional<TypeBuilder::Error>
@@ -3597,10 +3601,6 @@ canonicalizeNominal(CanonicalizationState& state) {
   // Nominal types do not require separate canonicalization, so just validate
   // that their subtyping is correct.
 
-#if TIME_CANONICALIZATION
-  auto start = std::chrono::steady_clock::now();
-#endif
-
   // Ensure there are no cycles in the subtype graph. This is the classic DFA
   // algorithm for detecting cycles, but in the form of a simple loop because
   // each node (type) has at most one child (supertype).
@@ -3627,14 +3627,6 @@ canonicalizeNominal(CanonicalizationState& state) {
     return {*error};
   }
 
-#if TIME_CANONICALIZATION
-  auto end = std::chrono::steady_clock::now();
-  std::cerr << "Validating subtyping took "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                     start)
-                 .count()
-            << " ms\n";
-#endif
   return {};
 }
 
@@ -3802,6 +3794,15 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   state.dump();
 #endif
 
+#if TIME_CANONICALIZATION
+  using instant_t = std::chrono::time_point<std::chrono::steady_clock>;
+  auto getMillis = [&](instant_t start, instant_t end) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+      .count();
+  };
+  auto start = std::chrono::steady_clock::now();
+#endif
+
   switch (typeSystem) {
     case TypeSystem::Equirecursive:
       canonicalizeEquirecursive(state);
@@ -3819,18 +3820,19 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   }
 
 #if TIME_CANONICALIZATION
-  auto start = std::chrono::steady_clock::now();
+  auto afterStructureCanonicalization = std::chrono::steady_clock::now();
 #endif
 
   globallyCanonicalize(state);
 
 #if TIME_CANONICALIZATION
   auto end = std::chrono::steady_clock::now();
-  std::cerr << "Global canonicalization took "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                     start)
-                 .count()
+  std::cerr << "Total canonicalization time was " << getMillis(start, end)
             << " ms\n";
+  std::cerr << "Structure canonicalization took "
+            << getMillis(start, afterStructureCanonicalization) << " ms\n";
+  std::cerr << "Global canonicalization took "
+            << getMillis(afterStructureCanonicalization, end) << " ms\n";
 #endif
 
   // Note built signature types. See comment in `HeapType::HeapType(Signature)`.

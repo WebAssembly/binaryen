@@ -1847,6 +1847,7 @@ void WasmBinaryBuilder::readTypes() {
   size_t numTypes = getU32LEB();
   BYN_TRACE("num: " << numTypes << std::endl);
   TypeBuilder builder(numTypes);
+  builder.createRecGroup(0, numTypes);
 
   auto makeType = [&](int32_t typeCode) {
     Type type;
