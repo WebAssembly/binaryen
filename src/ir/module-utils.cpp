@@ -197,7 +197,10 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
 // finished as well and should be popped.
 template<typename T> struct TopologicalSortStack {
   std::list<T> workStack;
+  // Map items to their locations in the work stack so that we can make sure
+  // each appears and is finished only once.
   std::unordered_map<T, typename std::list<T>::iterator> locations;
+  // Remember which items we have finished so we don't visit them again.
   std::unordered_set<T> finished;
 
   bool empty() const { return workStack.empty(); }
