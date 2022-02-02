@@ -202,8 +202,11 @@ This repository contains code that builds the following tools in `bin/`:
    also run the spec test suite.
  * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
    performs emscripten-specific passes over it.
- * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
-   time. Used by Emscripten.
+ * **wasm-ctor-eval**: A tool that can execute functions (or parts of functions)
+   at compile time. After doing so it serializes the runtime state into the
+   wasm, which is like taking a "snapshot". When the wasm is loaded and run in a
+   VM, it will continue execution from that point, without doing the work that
+   was already executed.
  * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
