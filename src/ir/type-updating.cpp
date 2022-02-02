@@ -26,7 +26,7 @@ namespace wasm {
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeRewriter::update() {
-  indexedTypes = ModuleUtils::getIndexedHeapTypes(wasm);
+  indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(wasm);
   if (indexedTypes.types.empty()) {
     return;
   }

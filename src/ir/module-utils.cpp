@@ -33,6 +33,12 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
       note(ht);
     }
   }
+  // Ensure a type is included without increasing its count.
+  void include(HeapType type) {
+    if (!type.isBasic()) {
+      (*this)[type];
+    }
+  }
 };
 
 Counts getHeapTypeCounts(Module& wasm) {
@@ -128,14 +134,16 @@ Counts getHeapTypeCounts(Module& wasm) {
 
   // Recursively traverse each reference type, which may have a child type that
   // is itself a reference type. This reflects an appearance in the binary
-  // format that is in the type section itself.
-  // As we do this we may find more and more types, as nested children of
-  // previous ones. Each such type will appear in the type section once, so
-  // we just need to visit it once.
+  // format that is in the type section itself. As we do this we may find more
+  // and more types, as nested children of previous ones. Each such type will
+  // appear in the type section once, so we just need to visit it once. Also
+  // track which recursion groups we've already processed to avoid quadratic
+  // behavior when there is a single large group.
   InsertOrderedSet<HeapType> newTypes;
   for (auto& [type, _] : counts) {
     newTypes.insert(type);
   }
+  std::unordered_set<RecGroup> includedGroups;
   while (!newTypes.empty()) {
     auto iter = newTypes.begin();
     auto ht = *iter;
@@ -156,16 +164,18 @@ Counts getHeapTypeCounts(Module& wasm) {
         // is in flux, skip counting them to keep the type orderings in nominal
         // test outputs more similar to the orderings in the equirecursive
         // outputs. FIXME
-        counts.note(*super);
+        counts.include(*super);
       }
     }
 
     // Make sure we've noted the complete recursion group of each type as well.
     auto recGroup = ht.getRecGroup();
-    for (auto type : recGroup) {
-      if (!counts.count(type)) {
-        newTypes.insert(type);
-        counts.note(type);
+    if (includedGroups.insert(recGroup).second) {
+      for (auto type : recGroup) {
+        if (!counts.count(type)) {
+          newTypes.insert(type);
+          counts.include(type);
+        }
       }
     }
   }
@@ -173,36 +183,51 @@ Counts getHeapTypeCounts(Module& wasm) {
   return counts;
 }
 
-void coalesceRecGroups(IndexedHeapTypes& indexedTypes) {
-  if (getTypeSystem() != TypeSystem::Isorecursive) {
-    // No rec groups to coalesce.
-    return;
-  }
-
-  // TODO: Perform a topological sort of the recursion groups to create a valid
-  // ordering rather than this hack that just gets all the types in a group to
-  // be adjacent.
-  assert(indexedTypes.indices.empty());
-  std::unordered_set<HeapType> seen;
-  std::vector<HeapType> grouped;
-  grouped.reserve(indexedTypes.types.size());
-  for (auto type : indexedTypes.types) {
-    if (seen.insert(type).second) {
-      for (auto member : type.getRecGroup()) {
-        grouped.push_back(member);
-        seen.insert(member);
-      }
-    }
-  }
-  assert(grouped.size() == indexedTypes.types.size());
-  indexedTypes.types = grouped;
-}
-
 void setIndices(IndexedHeapTypes& indexedTypes) {
   for (Index i = 0; i < indexedTypes.types.size(); i++) {
     indexedTypes.indices[indexedTypes.types[i]] = i;
   }
 }
+
+// A utility data structure for performing topological sorts. The elements to be
+// sorted should all be `push`ed to the stack, then while the stack is not
+// empty, predecessors of the top element should be pushed. On each iteration,
+// if the top of the stack is unchanged after pushing all the predecessors, that
+// means the predecessors have all been finished so the current element is
+// finished as well and should be popped.
+template<typename T> struct TopologicalSortStack {
+  std::list<T> workStack;
+  // Map items to their locations in the work stack so that we can make sure
+  // each appears and is finished only once.
+  std::unordered_map<T, typename std::list<T>::iterator> locations;
+  // Remember which items we have finished so we don't visit them again.
+  std::unordered_set<T> finished;
+
+  bool empty() const { return workStack.empty(); }
+
+  void push(T item) {
+    if (finished.count(item)) {
+      return;
+    }
+    workStack.push_back(item);
+    auto newLocation = std::prev(workStack.end());
+    auto [it, inserted] = locations.insert({item, newLocation});
+    if (!inserted) {
+      // Remove the previous iteration of the pushed item and update its
+      // location.
+      workStack.erase(it->second);
+      it->second = newLocation;
+    }
+  }
+
+  T& peek() { return workStack.back(); }
+
+  void pop() {
+    finished.insert(workStack.back());
+    locations.erase(workStack.back());
+    workStack.pop_back();
+  }
+};
 
 } // anonymous namespace
 
@@ -216,37 +241,117 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-IndexedHeapTypes getIndexedHeapTypes(Module& wasm) {
-  Counts counts = getHeapTypeCounts(wasm);
-  IndexedHeapTypes indexedTypes;
-  for (auto& [type, _] : counts) {
-    indexedTypes.types.push_back(type);
-  }
-
-  coalesceRecGroups(indexedTypes);
-  setIndices(indexedTypes);
-  return indexedTypes;
-}
-
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   Counts counts = getHeapTypeCounts(wasm);
 
-  // Sort by frequency and then original insertion order.
-  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
-  std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    return a.second > b.second;
-  });
+  if (getTypeSystem() != TypeSystem::Isorecursive) {
+    // Sort by frequency and then original insertion order.
+    std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(),
+                                                    counts.end());
+    std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
+      return a.second > b.second;
+    });
 
-  // Collect the results.
-  IndexedHeapTypes indexedTypes;
-  for (Index i = 0; i < sorted.size(); ++i) {
-    indexedTypes.types.push_back(sorted[i].first);
+    // Collect the results.
+    IndexedHeapTypes indexedTypes;
+    for (Index i = 0; i < sorted.size(); ++i) {
+      indexedTypes.types.push_back(sorted[i].first);
+    }
+
+    setIndices(indexedTypes);
+    return indexedTypes;
   }
 
-  // TODO: Explicitly construct a linear extension of the partial order of
-  // recursion groups by adding edges between unrelated groups according to
-  // their use counts.
-  coalesceRecGroups(indexedTypes);
+  // Isorecursive types have to be arranged into topologically ordered recursion
+  // groups. Sort the groups by average use count among their members so that
+  // the topological sort will place frequently used types first.
+  struct GroupInfo {
+    size_t index;
+    double useCount = 0;
+    std::unordered_set<RecGroup> preds;
+    std::vector<RecGroup> sortedPreds;
+    GroupInfo(size_t index) : index(index) {}
+    bool operator<(const GroupInfo& other) const {
+      if (useCount != other.useCount) {
+        return useCount < other.useCount;
+      }
+      return index < other.index;
+    }
+  };
+
+  std::unordered_map<RecGroup, GroupInfo> groupInfos;
+  for (auto& [type, _] : counts) {
+    RecGroup group = type.getRecGroup();
+    // Try to initialize a new info or get the existing info.
+    auto& info = groupInfos.insert({group, {groupInfos.size()}}).first->second;
+    // Update the reference count.
+    info.useCount += counts.at(type);
+    // Collect predecessor groups.
+    for (auto child : type.getReferencedHeapTypes()) {
+      if (!child.isBasic()) {
+        RecGroup otherGroup = child.getRecGroup();
+        if (otherGroup != group) {
+          info.preds.insert(otherGroup);
+        }
+      }
+    }
+  }
+
+  // Fix up the use counts to be averages to ensure groups are used comensurate
+  // with the amount of index space they occupy.
+  for (auto& [group, info] : groupInfos) {
+    info.useCount /= group.size();
+  }
+
+  // Sort the preds of each group by increasing use count so the topological
+  // sort visits the most used first. Break ties with the group's appearance
+  // index to ensure determinism.
+  auto sortGroups = [&](std::vector<RecGroup>& groups) {
+    std::sort(groups.begin(), groups.end(), [&](auto& a, auto& b) {
+      return groupInfos.at(a) < groupInfos.at(b);
+    });
+  };
+  for (auto& [group, info] : groupInfos) {
+    info.sortedPreds.insert(
+      info.sortedPreds.end(), info.preds.begin(), info.preds.end());
+    sortGroups(info.sortedPreds);
+    info.preds.clear();
+  }
+
+  // Sort all the groups so the topological sort visits the most used first.
+  std::vector<RecGroup> sortedGroups;
+  sortedGroups.reserve(groupInfos.size());
+  for (auto& [group, _] : groupInfos) {
+    sortedGroups.push_back(group);
+  }
+  sortGroups(sortedGroups);
+
+  // Perform the topological sort.
+  TopologicalSortStack<RecGroup> workStack;
+  for (auto group : sortedGroups) {
+    workStack.push(group);
+  }
+  sortedGroups.clear();
+  while (!workStack.empty()) {
+    auto group = workStack.peek();
+    for (auto pred : groupInfos.at(group).sortedPreds) {
+      workStack.push(pred);
+    }
+    if (workStack.peek() == group) {
+      // All the predecessors are finished, so `group` is too.
+      workStack.pop();
+      sortedGroups.push_back(group);
+    }
+  }
+
+  // Collect and return the grouped types.
+  IndexedHeapTypes indexedTypes;
+  indexedTypes.types.reserve(counts.size());
+  for (auto group : sortedGroups) {
+    for (auto member : group) {
+      indexedTypes.types.push_back(member);
+    }
+  }
   setIndices(indexedTypes);
   return indexedTypes;
 }

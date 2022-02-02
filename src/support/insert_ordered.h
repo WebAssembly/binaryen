@@ -112,6 +112,8 @@ template<typename Key, typename T> struct InsertOrderedMap {
     return insert(kv).first->second;
   }
 
+  T& at(const Key& k) { return Map.at(k)->second; }
+
   iterator find(const Key& k) {
     auto it = Map.find(k);
     if (it == Map.end()) {
