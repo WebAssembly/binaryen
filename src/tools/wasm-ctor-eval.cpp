@@ -472,19 +472,16 @@ private:
         name = oldGlobal->name;
       }
 
-      // If there is no interpreter value for this global, that means the
-      // interpreter never executed code to create it. That happens when this is
-      // a new global that we have added after running the interpreter, which
-      // means this is one of the new defining globals, which we can simply
-      // skip here - if such a global is still needed, it will show up as a
-      // dependency of something, and be emitted at the right time and place.
+      // If there is a value here to serialize, do so. (If there is no value,
+      // then this global was added after the interpreter initialized the
+      // module, which means it is a new global we've added since; we don't need
+      // to do anything for such a global - if it is needed it will show up as a
+      // dependency of something, and be emitted at the right time and place.)
       auto iter = instance->globals.find(oldGlobal->name);
-      if (iter == instance->globals.end()) {
-        continue;
+      if (iter != instance->globals.end()) {
+        oldGlobal->init = getSerialization(iter->second, name);
+        wasm->addGlobal(std::move(oldGlobal));
       }
-
-      oldGlobal->init = getSerialization(iter->second, name);
-      wasm->addGlobal(std::move(oldGlobal));
     }
   }
 
