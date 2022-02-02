@@ -463,10 +463,8 @@ private:
 
     for (auto& oldGlobal : oldGlobals) {
       // Serialize the global's value. While doing so, pass in the name of this
-      // global, as the global may be used as the defining global for the value,
-      // if there is not already a defining global for that value (this
-      // optimization prevents allocating an extra global just to global.get its
-      // value right after it). See getSerialization() for more details.
+      // global, as we may be able to reuse the global as the defining global
+      // for the value. See getSerialization() for more details.
       Name name;
       if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
         // This has the properties we need of a defining global - immutable and
