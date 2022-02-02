@@ -480,12 +480,12 @@ private:
       // means this is one of the new defining globals, which we can simply
       // skip here - if such a global is still needed, it will show up as a
       // dependency of something, and be emitted at the right time and place.
-      auto values = instance->globals[oldGlobal->name];
-      if (values.empty()) {
+      auto iter = instance->globals.find(oldGlobal->name);
+      if (iter == instance->globals.end()) {
         continue;
       }
 
-      oldGlobal->init = getSerialization(values, name);
+      oldGlobal->init = getSerialization(iter->second, name);
       wasm->addGlobal(std::move(oldGlobal));
     }
   }
