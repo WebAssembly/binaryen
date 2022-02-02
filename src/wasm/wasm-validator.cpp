@@ -2324,10 +2324,11 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
                curr,
                "call_ref requires typed-function-references to be enabled");
   if (curr->target->type != Type::unreachable) {
-    shouldBeTrue(curr->target->type.isFunction(),
-                 curr,
-                 "call_ref target must be a function reference");
-    validateCallParamsAndResult(curr, curr->target->type.getHeapType());
+    if (shouldBeTrue(curr->target->type.isFunction(),
+                     curr,
+                     "call_ref target must be a function reference");
+      validateCallParamsAndResult(curr, curr->target->type.getHeapType());
+    }
   }
 }
 
