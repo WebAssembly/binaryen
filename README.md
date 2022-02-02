@@ -495,7 +495,7 @@ For example, consider this small program:
 We can evaluate part of it at compile time like this:
 
 ```
-wasm-ctor-eval input.wat --ctors=main -S -o /dev/stdout
+wasm-ctor-eval input.wat --ctors=main -S -o -
 ```
 
 This tells it that there is a single function that we want to execute ("ctor"
