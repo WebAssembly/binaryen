@@ -503,62 +503,63 @@ public:
                                Name possibleDefiningGlobal = Name()) {
     Builder builder(*wasm);
 
-    if (value.isData()) {
-      auto* data = value.getGCData().get();
-      if (!data) {
-        // This is a null, so simply emit one.
-        return builder.makeRefNull(value.type);
-      }
-
-      // There was actual GC data allocated here.
-      auto type = value.type;
-      auto& definingGlobal = definingGlobals[data];
-      if (!definingGlobal.is()) {
-        // This is the first usage of this allocation. Generate a struct.new /
-        // array.new for it.
-        auto& values = value.getGCData()->values;
-        std::vector<Expression*> args;
-
-        // The initial values for this allocation may themselves be GC
-        // allocations. Recurse and add globals as necessary.
-        // TODO: Handle cycles. That will require code in the start function.
-        for (auto& value : values) {
-          args.push_back(getSerialization(value));
-        }
-        Expression* init;
-        auto heapType = type.getHeapType();
-        if (heapType.isStruct()) {
-          init = builder.makeStructNew(heapType, args);
-        } else if (heapType.isArray()) {
-          // TODO: for repeated identical values, can use ArrayNew
-          init = builder.makeArrayInit(heapType, args);
-        } else {
-          WASM_UNREACHABLE("bad gc type");
-        }
-
-        if (possibleDefiningGlobal.is()) {
-          // No need to allocate a new global, as we are in the definition of
-          // one. Just return the initialization expression, which will be
-          // placed in that global's |init| field, and first note this as the
-          // defining global.
-          definingGlobal = possibleDefiningGlobal;
-          return init;
-        }
-
-        // Allocate a new defining global.
-        auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
-        wasm->addGlobal(
-          builder.makeGlobal(name, type, init, Builder::Immutable));
-        definingGlobal = name;
-      }
-
-      // Refer to this GC allocation by reading from the global that is
-      // designated to contain it.
-      return builder.makeGlobalGet(definingGlobal, value.type);
+    if (!value.isData()) {
+      // This can be handled normally.
+      return builder.makeConstantExpression(value);
     }
 
-    // Everything else can be handled normally.
-    return builder.makeConstantExpression(value);
+    // This is GC data, which we must handle in a more careful way.
+    auto* data = value.getGCData().get();
+    if (!data) {
+      // This is a null, so simply emit one.
+      return builder.makeRefNull(value.type);
+    }
+
+    // There was actual GC data allocated here.
+    auto type = value.type;
+    auto& definingGlobal = definingGlobals[data];
+    if (!definingGlobal.is()) {
+      // This is the first usage of this allocation. Generate a struct.new /
+      // array.new for it.
+      auto& values = value.getGCData()->values;
+      std::vector<Expression*> args;
+
+      // The initial values for this allocation may themselves be GC
+      // allocations. Recurse and add globals as necessary.
+      // TODO: Handle cycles. That will require code in the start function.
+      for (auto& value : values) {
+        args.push_back(getSerialization(value));
+      }
+      Expression* init;
+      auto heapType = type.getHeapType();
+      if (heapType.isStruct()) {
+        init = builder.makeStructNew(heapType, args);
+      } else if (heapType.isArray()) {
+        // TODO: for repeated identical values, can use ArrayNew
+        init = builder.makeArrayInit(heapType, args);
+      } else {
+        WASM_UNREACHABLE("bad gc type");
+      }
+
+      if (possibleDefiningGlobal.is()) {
+        // No need to allocate a new global, as we are in the definition of
+        // one. Just return the initialization expression, which will be
+        // placed in that global's |init| field, and first note this as the
+        // defining global.
+        definingGlobal = possibleDefiningGlobal;
+        return init;
+      }
+
+      // Allocate a new defining global.
+      auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
+      wasm->addGlobal(
+        builder.makeGlobal(name, type, init, Builder::Immutable));
+      definingGlobal = name;
+    }
+
+    // Refer to this GC allocation by reading from the global that is
+    // designated to contain it.
+    return builder.makeGlobalGet(definingGlobal, value.type);
   }
 
   Expression* getSerialization(const Literals& values,
