@@ -1,9 +1,8 @@
 ;; TODO: Autogenerate these checks! The current script cannot handle `rec`.
 
 ;; RUN: wasm-opt %s -all --hybrid -S -o - | filecheck %s --check-prefix HYBRID
+;; RUN: wasm-opt %s -all --hybrid --roundtrip -S -o - | filecheck %s --check-prefix HYBRID
 ;; RUN: wasm-opt %s -all --nominal -S -o - | filecheck %s --check-prefix NOMINAL
-
-;; TDOO: test with --roundtrip as well
 
 (module
 

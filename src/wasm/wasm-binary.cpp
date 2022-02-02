@@ -219,16 +219,33 @@ void WasmBinaryWriter::writeTypes() {
   if (indexedTypes.types.size() == 0) {
     return;
   }
+  // Count the number of recursion groups
+  std::optional<RecGroup> lastGroup;
+  size_t numGroups = 0;
+  for (auto type : indexedTypes.types) {
+    auto currGroup = type.getRecGroup();
+    numGroups += lastGroup != currGroup;
+    lastGroup = currGroup;
+  }
   BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
-  o << U32LEB(indexedTypes.types.size());
+  o << U32LEB(numGroups);
+  lastGroup = {};
   for (Index i = 0; i < indexedTypes.types.size(); ++i) {
     auto type = indexedTypes.types[i];
-    bool nominal = getTypeSystem() == TypeSystem::Nominal;
+    // Check whether we need to start a new recursion group.
+    auto currGroup = type.getRecGroup();
+    if (lastGroup != currGroup && currGroup.size() > 1) {
+      o << S32LEB(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
+    }
+    lastGroup = currGroup;
+    // Emit the type definition.
+    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
+                        getTypeSystem() == TypeSystem::Isorecursive;
     BYN_TRACE("write " << type << std::endl);
     if (type.isSignature()) {
-      o << S32LEB(nominal ? BinaryConsts::EncodedType::FuncExtending
-                          : BinaryConsts::EncodedType::Func);
+      o << S32LEB(hasSupertype ? BinaryConsts::EncodedType::FuncExtending
+                               : BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
       for (auto& sigType : {sig.params, sig.results}) {
         o << U32LEB(sigType.size());
@@ -237,21 +254,21 @@ void WasmBinaryWriter::writeTypes() {
         }
       }
     } else if (type.isStruct()) {
-      o << S32LEB(nominal ? BinaryConsts::EncodedType::StructExtending
-                          : BinaryConsts::EncodedType::Struct);
+      o << S32LEB(hasSupertype ? BinaryConsts::EncodedType::StructExtending
+                               : BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
       o << U32LEB(fields.size());
       for (const auto& field : fields) {
         writeField(field);
       }
     } else if (type.isArray()) {
-      o << S32LEB(nominal ? BinaryConsts::EncodedType::ArrayExtending
-                          : BinaryConsts::EncodedType::Array);
+      o << S32LEB(hasSupertype ? BinaryConsts::EncodedType::ArrayExtending
+                               : BinaryConsts::EncodedType::Array);
       writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");
     }
-    if (nominal) {
+    if (hasSupertype) {
       auto super = type.getSuperType();
       if (!super) {
         super = type.isFunction() ? HeapType::func : HeapType::data;
@@ -1844,9 +1861,8 @@ void WasmBinaryBuilder::readMemory() {
 
 void WasmBinaryBuilder::readTypes() {
   BYN_TRACE("== readTypes\n");
-  size_t numTypes = getU32LEB();
-  BYN_TRACE("num: " << numTypes << std::endl);
-  TypeBuilder builder(numTypes);
+  TypeBuilder builder(getU32LEB());
+  BYN_TRACE("num: " << builder.size() << std::endl);
 
   auto makeType = [&](int32_t typeCode) {
     Type type;
@@ -1865,7 +1881,7 @@ void WasmBinaryBuilder::readTypes() {
         if (getBasicHeapType(htCode, ht)) {
           return Type(ht, nullability);
         }
-        if (size_t(htCode) >= numTypes) {
+        if (size_t(htCode) >= builder.size()) {
           throwError("invalid type index: " + std::to_string(htCode));
         }
         return builder.getTempRefType(builder[size_t(htCode)], nullability);
@@ -1875,7 +1891,7 @@ void WasmBinaryBuilder::readTypes() {
         auto depth = typeCode == BinaryConsts::EncodedType::rtt ? Rtt::NoDepth
                                                                 : getU32LEB();
         auto htCode = getU32LEB();
-        if (size_t(htCode) >= numTypes) {
+        if (size_t(htCode) >= builder.size()) {
           throwError("invalid type index: " + std::to_string(htCode));
         }
         return builder.getTempRttType(Rtt(depth, builder[htCode]));
@@ -1944,9 +1960,23 @@ void WasmBinaryBuilder::readTypes() {
     return Struct(std::move(fields));
   };
 
-  for (size_t i = 0; i < numTypes; i++) {
+  for (size_t i = 0; i < builder.size(); i++) {
     BYN_TRACE("read one\n");
     auto form = getS32LEB();
+    if (form == BinaryConsts::EncodedType::Rec) {
+      if (getTypeSystem() != TypeSystem::Isorecursive) {
+        Fatal() << "Binary recursion groups only supported in --hybrid mode";
+      }
+      uint32_t groupSize = getU32LEB();
+      if (groupSize == 0u) {
+        Fatal() << "Invalid recursion group of size zero";
+      }
+      // The group counts as one element in the type section, so we have to
+      // allocate space for the extra types.
+      builder.grow(groupSize - 1);
+      builder.createRecGroup(i, groupSize);
+      form = getS32LEB();
+    }
     if (form == BinaryConsts::EncodedType::Func ||
         form == BinaryConsts::EncodedType::FuncExtending) {
       builder[i] = readSignatureDef();
@@ -1964,7 +1994,7 @@ void WasmBinaryBuilder::readTypes() {
         form == BinaryConsts::EncodedType::ArrayExtending) {
       auto superIndex = getS64LEB(); // TODO: Actually s33
       if (superIndex >= 0) {
-        if (size_t(superIndex) >= numTypes) {
+        if (size_t(superIndex) >= builder.size()) {
           throwError("bad supertype index " + std::to_string(superIndex));
         }
         builder[i].subTypeOf(builder[superIndex]);
