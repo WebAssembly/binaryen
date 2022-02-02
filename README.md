@@ -535,7 +535,7 @@ leave calls to imports to as late as possible.)
 
 Note that `wasm-ctor-eval`'s name is related to global constructor functions,
 as mentioned earlier, but there is no limitation on what you can execute here.
-Any export from the wasm can be executed, if it's contents are suitable. For
+Any export from the wasm can be executed, if its contents are suitable. For
 example, in Emscripten `wasm-ctor-eval` is even run on `main()` when possible.
 
 ## Testing
