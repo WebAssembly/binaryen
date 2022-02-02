@@ -527,6 +527,7 @@ public:
       }
       Expression* init;
       auto heapType = type.getHeapType();
+      // TODO: handle rtts if we need them
       if (heapType.isStruct()) {
         init = builder.makeStructNew(heapType, args);
       } else if (heapType.isArray()) {
