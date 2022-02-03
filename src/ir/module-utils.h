@@ -465,11 +465,8 @@ struct IndexedHeapTypes {
 };
 
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
-// type as well.
-IndexedHeapTypes getIndexedHeapTypes(Module& wasm);
-
-// The same as `getIndexedHeapTypes`, but also sorts the types by frequency of
-// use to minimize code size.
+// type as well. Also orders the types to be valid and sorts the types by
+// frequency of use to minimize code size.
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
 
 } // namespace wasm::ModuleUtils

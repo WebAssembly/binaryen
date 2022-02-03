@@ -26,9 +26,6 @@
 ;; CHECK-NEXT:   --global-base                        The address at which static globals were
 ;; CHECK-NEXT:                                        placed
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --initial-stack-pointer              ignored - will be removed in a future
-;; CHECK-NEXT:                                        release
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --side-module                        Input is an emscripten side module
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
