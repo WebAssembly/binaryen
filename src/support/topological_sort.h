@@ -17,6 +17,11 @@
 #ifndef wasm_support_topological_sort_h
 #define wasm_support_topological_sort_h
 
+#include <cstddef>
+#include <iterator>
+#include <unordered_set>
+#include <vector>
+
 namespace wasm {
 
 // CRTP utility that provides an iterator through arbitrary directed acyclic
