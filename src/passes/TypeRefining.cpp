@@ -226,9 +226,9 @@ struct TypeRefining : public Pass {
           return;
         }
 
-        auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-        if (curr->index >= fields.size() ||
-            !Type::isSubType(fields[curr->index].type, curr->type)) {
+        auto oldType = curr->ref->type.getHeapType();
+        auto newFieldType = parent.finalInfos[oldType][curr->index].getBestPossible();
+        if (!Type::isSubType(newFieldType, curr->type)) {
           // This instruction is invalid, so it must be the result of the
           // situation described above: we ignored the read during our
           // inference, and optimized accordingly, and so now we must remove it
