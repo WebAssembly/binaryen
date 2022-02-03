@@ -240,12 +240,8 @@ struct TypeRefining : public Pass {
           // so we should refinalize. However, we will be refinalizing later
           // anyhow in updateTypes, so there is no need.
           Builder builder(*getModule());
-          replaceCurrent(
-            builder.makeSequence(
-              builder.makeDrop(curr->ref),
-              builder.makeUnreachable()
-            )
-          );
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
         }
       }
     };
