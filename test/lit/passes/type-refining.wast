@@ -22,9 +22,7 @@
   ;; CHECK-NEXT:   (ref.func $work)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 2
-  ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
@@ -415,9 +413,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
@@ -771,6 +767,15 @@
 
 (module
   (type $B (struct_subtype  $D))
+  ;; CHECK:      (type $G (struct_subtype  $D))
+
+  ;; CHECK:      (type $F (func_subtype func))
+
+  ;; CHECK:      (type $E (struct_subtype (field (ref $G)) $C))
+
+  ;; CHECK:      (type $D (struct_subtype  data))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref $G)) data))
   (type $C (struct_subtype (field (ref $D)) data))
   (type $D (struct_subtype  data))
   (type $E (struct_subtype (field (ref $G)) $C))
@@ -778,6 +783,20 @@
   (type $G (struct_subtype  $D))
   (type $H (struct_subtype (field (ref $F)) $B))
   (type $I (struct_subtype (field (ref $H)) $C))
+  ;; CHECK:      (func $func (type $F)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $E
+  ;; CHECK-NEXT:    (struct.new_default $G)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func
     (drop
       (struct.get $H 0

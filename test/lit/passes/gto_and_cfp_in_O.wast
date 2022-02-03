@@ -31,7 +31,7 @@
   ;; CHECK:      (export "main" (func $main))
 
   ;; CHECK:      (func $main (type $none_=>_i32) (; has Stack IR ;) (result i32)
-  ;; CHECK-NEXT:  (i32.const 100)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $main (export "main") (result i32)
     ;; After all the above optimizations, we can infer that $main should simply
