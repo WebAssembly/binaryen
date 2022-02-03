@@ -16,6 +16,7 @@
 
 #include "module-utils.h"
 #include "support/insert_ordered.h"
+#include "support/topological_sort.h"
 
 namespace wasm::ModuleUtils {
 
@@ -189,38 +190,6 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
   }
 }
 
-// A utility data structure for performing topological sorts. The elements to be
-// sorted should all be `push`ed to the stack, then while the stack is not
-// empty, predecessors of the top element should be pushed. On each iteration,
-// if the top of the stack is unchanged after pushing all the predecessors, that
-// means the predecessors have all been finished so the current element is
-// finished as well and should be popped.
-template<typename T> struct TopologicalSortStack {
-  std::vector<T> workStack;
-  // Remember which items we have finished so we don't visit them again.
-  std::unordered_set<T> finished;
-
-  bool empty() const { return workStack.empty(); }
-
-  void push(T item) {
-    if (finished.count(item)) {
-      return;
-    }
-    workStack.push_back(item);
-  }
-
-  T& peek() { return workStack.back(); }
-
-  void pop() {
-    // Pop until the stack is empty or it has an unfinished item on top.
-    finished.insert(workStack.back());
-    workStack.pop_back();
-    while (!workStack.empty() && finished.count(workStack.back())) {
-      workStack.pop_back();
-    }
-  }
-};
-
 } // anonymous namespace
 
 std::vector<HeapType> collectHeapTypes(Module& wasm) {
@@ -271,7 +240,16 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   };
 
-  std::unordered_map<RecGroup, GroupInfo> groupInfos;
+  struct GroupInfoMap : std::unordered_map<RecGroup, GroupInfo> {
+    void sort(std::vector<RecGroup>& groups) {
+      std::sort(groups.begin(), groups.end(), [&](auto& a, auto& b) {
+        return this->at(a) < this->at(b);
+      });
+    }
+  };
+
+  // Collect the information that will be used to sort the recursion groups.
+  GroupInfoMap groupInfos;
   for (auto& [type, _] : counts) {
     RecGroup group = type.getRecGroup();
     // Try to initialize a new info or get the existing info.
@@ -295,51 +273,40 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     info.useCount /= group.size();
   }
 
-  // Sort the preds of each group by increasing use count so the topological
-  // sort visits the most used first. Break ties with the group's appearance
-  // index to ensure determinism.
-  auto sortGroups = [&](std::vector<RecGroup>& groups) {
-    std::sort(groups.begin(), groups.end(), [&](auto& a, auto& b) {
-      return groupInfos.at(a) < groupInfos.at(b);
-    });
-  };
+  // Sort the predecessors so the most used will be visited first.
   for (auto& [group, info] : groupInfos) {
     info.sortedPreds.insert(
       info.sortedPreds.end(), info.preds.begin(), info.preds.end());
-    sortGroups(info.sortedPreds);
+    groupInfos.sort(info.sortedPreds);
     info.preds.clear();
   }
 
-  // Sort all the groups so the topological sort visits the most used first.
-  std::vector<RecGroup> sortedGroups;
-  sortedGroups.reserve(groupInfos.size());
-  for (auto& [group, _] : groupInfos) {
-    sortedGroups.push_back(group);
-  }
-  sortGroups(sortedGroups);
-
-  // Perform the topological sort.
-  TopologicalSortStack<RecGroup> workStack;
-  for (auto group : sortedGroups) {
-    workStack.push(group);
-  }
-  sortedGroups.clear();
-  while (!workStack.empty()) {
-    auto group = workStack.peek();
-    for (auto pred : groupInfos.at(group).sortedPreds) {
-      workStack.push(pred);
+  struct RecGroupSort : TopologicalSort<RecGroup, RecGroupSort> {
+    GroupInfoMap& groupInfos;
+    RecGroupSort(GroupInfoMap& groupInfos) : groupInfos(groupInfos) {
+      // Sort all the groups so the topological sort visits the most used first.
+      std::vector<RecGroup> sortedGroups;
+      sortedGroups.reserve(groupInfos.size());
+      for (auto& [group, _] : groupInfos) {
+        sortedGroups.push_back(group);
+      }
+      groupInfos.sort(sortedGroups);
+      for (auto group : sortedGroups) {
+        push(group);
+      }
     }
-    if (workStack.peek() == group) {
-      // All the predecessors are finished, so `group` is too.
-      workStack.pop();
-      sortedGroups.push_back(group);
-    }
-  }
 
-  // Collect and return the grouped types.
+    void pushPredecessors(RecGroup group) {
+      for (auto pred : groupInfos.at(group).sortedPreds) {
+        push(pred);
+      }
+    }
+  };
+
+  // Perform the topological sort and collect the types.
   IndexedHeapTypes indexedTypes;
   indexedTypes.types.reserve(counts.size());
-  for (auto group : sortedGroups) {
+  for (auto group : RecGroupSort(groupInfos)) {
     for (auto member : group) {
       indexedTypes.types.push_back(member);
     }
