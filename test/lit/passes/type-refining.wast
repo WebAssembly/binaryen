@@ -771,7 +771,7 @@
 
 (module
   ;; There are two parallel type hierarchies here: "Outer", which are objects
-  ;; that have fields that contain the "Inner" objects.
+  ;; that have fields, that contain the "Inner" objects.
   ;;
   ;; Root-Outer -> Leaf1-Outer
   ;;            -> Leaf2-Outer
@@ -787,8 +787,7 @@
   ;; CHECK:      (type $Leaf2-Inner (struct_subtype  $Root-Inner))
   (type $Leaf2-Inner (struct_subtype  $Root-Inner))
 
-  ;; CHECK:      (type $Other (func_subtype func))
-  (type $Other (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $Leaf1-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
   (type $Leaf1-Outer (struct_subtype (field (ref $Leaf1-Inner)) $Root-Outer))
@@ -802,9 +801,9 @@
   ;; CHECK:      (type $Root-Inner (struct_subtype  data))
   (type $Root-Inner (struct_subtype  data))
 
-  (type $Leaf1-Inner (struct_subtype (field (ref $Other)) $Root-Inner))
+  (type $Leaf1-Inner (struct_subtype (field i32) $Root-Inner))
 
-  ;; CHECK:      (func $func (type $Other)
+  ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
