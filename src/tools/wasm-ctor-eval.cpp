@@ -34,6 +34,7 @@
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/string.h"
+#include "support/small_set.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -406,10 +407,20 @@ private:
     return ret;
   }
 
+  // Clear the state of the operation of applying the interpreter's runtime
+  // information into the module.
+  //
+  // This happens each time we apply contents to the module, which is basically
+  // once per ctor function, but can be more fine-grained also if we execute a
+  // line at a time.
   void clearApplyState() {
     // The process of allocating "defining globals" begins here. Clear any
     // previous state.
     definingGlobals.clear();
+
+    // When we start to apply the state there should be no previous state left
+    // over.
+    assert(seenDataStack.empty());
   }
 
   void applyMemoryToModule() {
@@ -495,6 +506,14 @@ public:
   // that.
   std::unordered_map<GCData*, Name> definingGlobals;
 
+  // The data we have seen so far on the stack. This is used to guard against
+  // infinite recursion, which would otherwise happen if there is a cycle among
+  // the live objects, which we don't handle yet.
+  //
+  // Pick a constant of 2 here to handle the common case of an object with a
+  // reference to another object that is already in a defining global.
+  SmallSet<GCData*, 2> seenDataStack;
+
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
   // if the other conditions are suitable.
@@ -525,10 +544,17 @@ public:
 
       // The initial values for this allocation may themselves be GC
       // allocations. Recurse and add globals as necessary.
-      // TODO: Handle cycles. That will require code in the start function.
+      // TODO: Handle cycles. That will require code in the start function. For
+      //       now, just error if we detect an infinite recursion.
+      if (seenDataStack.count(data)) {
+        Fatal() << "Cycle in live GC data, which we cannot serialize yet.";
+      }
+      seenDataStack.insert(data);
       for (auto& value : values) {
         args.push_back(getSerialization(value));
       }
+      seenDataStack.erase(data);
+
       Expression* init;
       auto heapType = type.getHeapType();
       // TODO: handle rtts if we need them
