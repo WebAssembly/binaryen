@@ -73,6 +73,7 @@ struct FieldInfoScanner
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     // Nothing to do for a read, we just care about written values.
+//    info.note(type.getStruct().fields[index].type); // fixes it but worse results
   }
 };
 
@@ -131,6 +132,8 @@ struct TypeRefining : public Pass {
     while (!work.empty()) {
       auto type = work.pop();
 
+std::cout << "\nat type " << type << "  " << module->typeNames[type].name << '\n';
+
       // First, find fields that have nothing written to them at all, and set
       // their value to their old type. We must pick some type for the field,
       // and we have nothing better to go on. (If we have a super, and it does
@@ -141,18 +144,22 @@ struct TypeRefining : public Pass {
         auto oldType = fields[i].type;
         auto& info = finalInfos[type][i];
         if (!info.noted()) {
+std::cout << "  use old type " << oldType << "  " << module->typeNames[oldType.getHeapType()].name << '\n';
           info = LUBFinder(oldType);
         }
       }
 
       // Next ensure proper subtyping of this struct's fields versus its super.
       if (auto super = type.getSuperType()) {
+std::cout << "  super type " << *super << "  " << module->typeNames[*super].name << '\n';
         auto& superFields = super->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
           auto newSuperType = finalInfos[*super][i].getBestPossible();
+std::cout << "    new super type " << newSuperType << "  " << module->typeNames[newSuperType.getHeapType()].name << '\n';
           auto& info = finalInfos[type][i];
           auto newType = info.getBestPossible();
           if (!Type::isSubType(newType, newSuperType)) {
+std::cout << "      AAA\n";
             // To ensure we are a subtype of the super's field, simply copy that
             // value, which is more specific than us.
             //
@@ -171,6 +178,7 @@ struct TypeRefining : public Pass {
             // to be identical to its super so that validation works.
             info = LUBFinder(newSuperType);
           } else if (fields[i].mutable_ == Mutable) {
+std::cout << "      BBB\n";
             // Mutable fields must have identical types, so we cannot
             // specialize.
             // TODO: Perhaps we should be using a new Field::isSubType() method
@@ -188,6 +196,8 @@ struct TypeRefining : public Pass {
         auto& lub = finalInfos[type][i];
         auto newType = lub.getBestPossible();
         if (newType != oldType) {
+std::cout << "we found something to opt! " << oldType << " => " << newType << '\n' << module->typeNames[oldType.getHeapType()].name << " => " << module->typeNames[newType.getHeapType()].name  << '\n';
+//          assert(Type::isSubType(newType, oldType));
           canOptimize = true;
           lub.updateNulls();
         }
@@ -199,8 +209,39 @@ struct TypeRefining : public Pass {
     }
 
     if (canOptimize) {
+      updateReads(*module, runner);
       updateTypes(*module, runner);
     }
+  }
+
+  void updateReads(Module& wasm, PassRunner* runner) {
+    struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      TypeRefining& parent;
+
+      ReadUpdater(TypeRefining& parent) : parent(parent) {}
+
+      ReadUpdater* create() override { return new ReadUpdater(parent); }
+
+      void visitStructGet(StructGet* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+        if (curr->index < fields.size() ||
+            !Type::isSubType(fields[curr->index].type, curr->type)) {
+          replaceCurrent(
+            Builder(*getModule()).makeUnreachable() // params
+          );
+        }
+      }
+    };
+
+    ReadUpdater updater(*this);
+    updater.run(runner, &wasm);
+    updater.runOnModuleCode(runner, &wasm);
   }
 
   void updateTypes(Module& wasm, PassRunner* runner) {
