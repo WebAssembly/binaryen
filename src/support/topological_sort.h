@@ -19,6 +19,17 @@
 
 namespace wasm {
 
+// CRTP utility that provides an iterator through arbitrary directed acyclic
+// graphs of data that will visit the data in a topologically sorted order
+// (https://en.wikipedia.org/wiki/Topological_sorting). In other words, the
+// iterator will produce each item only after all that items predecessors have
+// been produced.
+//
+// Subclasses should call `push` on all the root items in their constructors and
+// implement a `void pushPredecessors(T item)` method that calls `push` on all
+// the immediate predecessors of `item`.
+//
+// Cycles in the graph are not detected and will result in an infinite loop.
 template<typename T, typename Subtype> struct TopologicalSort {
 private:
   // The DFS work list.
@@ -32,11 +43,10 @@ private:
     static_assert(&TopologicalSort<T, Subtype>::pushPredecessors !=
                     &Subtype::pushPredecessors,
                   "TopologicalSort subclass must implement `pushPredecessors`");
-    WASM_UNREACHABLE("Derived class must implement pushPredecessors");
   }
 
   // Pop until the stack is empty or it has an unfinished item on top.
-  void pop() {
+  void finishCurr() {
     finished.insert(workStack.back());
     workStack.pop_back();
     while (!workStack.empty() && finished.count(workStack.back())) {
@@ -46,7 +56,7 @@ private:
 
   // Advance until the next item to be finished is on top of the stack or the
   // stack is empty.
-  void step() {
+  void stepToNext() {
     while (!workStack.empty()) {
       T item = workStack.back();
       static_cast<Subtype*>(this)->pushPredecessors(item);
@@ -68,7 +78,7 @@ protected:
   }
 
 public:
-  struct iterator {
+  struct Iterator {
     using value_type = T;
     using difference_type = std::ptrdiff_t;
     using reference = T&;
@@ -78,24 +88,24 @@ public:
     TopologicalSort<T, Subtype>* parent;
 
     bool isEnd() const { return !parent || parent->workStack.empty(); }
-    bool operator==(iterator& other) const { return isEnd() == other.isEnd(); }
-    bool operator!=(iterator& other) const { return !(*this == other); }
+    bool operator==(Iterator& other) const { return isEnd() == other.isEnd(); }
+    bool operator!=(Iterator& other) const { return !(*this == other); }
     T operator*() { return parent->workStack.back(); }
     void operator++(int) {
-      parent->pop();
-      parent->step();
+      parent->finishCurr();
+      parent->stepToNext();
     }
-    iterator& operator++() {
+    Iterator& operator++() {
       (*this)++;
       return *this;
     }
   };
 
-  iterator begin() {
-    step();
+  Iterator begin() {
+    stepToNext();
     return {this};
   }
-  iterator end() { return {nullptr}; }
+  Iterator end() { return {nullptr}; }
 };
 
 } // namespace wasm
