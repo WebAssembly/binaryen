@@ -48,7 +48,8 @@ struct HeapTypeGeneratorImpl {
   std::vector<HeapTypeKind> typeKinds;
 
   // For each type, the index one past the end of its recursion group, used to
-  // determine what types could be valid children.
+  // determine what types could be valid children. Alternatively, the cumulative
+  // size of the current and prior rec groups at each type index.
   std::vector<Index> recGroupEnds;
 
   // The index of the type we are currently generating.
@@ -101,7 +102,7 @@ struct HeapTypeGeneratorImpl {
       size_t expectedSize = 1 + rand.upTo(builder.size());
       Index groupStart = 0;
       for (Index i = 0; i < builder.size(); ++i) {
-        if (rand.oneIn(expectedSize)) {
+        if (i == builder.size() - 1 || rand.oneIn(expectedSize)) {
           // End the old group and create a new group.
           Index newGroupStart = i + 1;
           builder.createRecGroup(groupStart, newGroupStart - groupStart);
@@ -110,11 +111,6 @@ struct HeapTypeGeneratorImpl {
           }
           groupStart = newGroupStart;
         }
-      }
-      // Finish the last group.
-      builder.createRecGroup(groupStart, builder.size() - groupStart);
-      for (Index j = groupStart; j < builder.size(); ++j) {
-        recGroupEnds.push_back(builder.size());
       }
       assert(recGroupEnds.size() == builder.size());
     }
