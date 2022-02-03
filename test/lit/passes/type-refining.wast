@@ -22,11 +22,8 @@
   ;; CHECK-NEXT:   (ref.func $work)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 2
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -418,11 +415,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

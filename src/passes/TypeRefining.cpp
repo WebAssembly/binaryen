@@ -227,7 +227,7 @@ struct TypeRefining : public Pass {
         }
 
         auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-        if (curr->index < fields.size() ||
+        if (curr->index >= fields.size() ||
             !Type::isSubType(fields[curr->index].type, curr->type)) {
           // This instruction is invalid, so it must be the result of the
           // situation described above: we ignored the read during our
