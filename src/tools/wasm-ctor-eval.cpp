@@ -157,6 +157,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
+    clearApplyState();
+
     // If nothing was ever written to memory then there is nothing to update.
     if (!memory.empty()) {
       applyMemoryToModule();
@@ -404,6 +406,12 @@ private:
     return ret;
   }
 
+  void clearApplyState() {
+    // The process of allocating "defining globals" begins here. Clear any
+    // previous state.
+    definingGlobals.clear();
+  }
+
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
@@ -456,10 +464,6 @@ private:
     // the module one at a time, adding their dependencies as we go.
     auto oldGlobals = std::move(wasm->globals);
     wasm->updateMaps();
-
-    // The process of allocating "defining globals" begins here. Clear any
-    // previous state.
-    definingGlobals.clear();
 
     for (auto& oldGlobal : oldGlobals) {
       // Serialize the global's value. While doing so, pass in the name of this
