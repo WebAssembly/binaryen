@@ -829,6 +829,7 @@
       ;; We then have to pick some type, so we pick the one used by our
       ;; supertype - and the supertype might have picked up a type from another
       ;; branch of the type tree, which is not a subtype of ours.
+      ;;
       ;; In more detail, we never create an instance of $Leaf1-Outer, and we
       ;; only have a get of its field. This optimization ignores the get (to not
       ;; be limited by it). It will then optimize $Leaf1-Outer's field of
