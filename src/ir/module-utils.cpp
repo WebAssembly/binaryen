@@ -196,10 +196,7 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
 // means the predecessors have all been finished so the current element is
 // finished as well and should be popped.
 template<typename T> struct TopologicalSortStack {
-  std::list<T> workStack;
-  // Map items to their locations in the work stack so that we can make sure
-  // each appears and is finished only once.
-  std::unordered_map<T, typename std::list<T>::iterator> locations;
+  std::vector<T> workStack;
   // Remember which items we have finished so we don't visit them again.
   std::unordered_set<T> finished;
 
@@ -210,22 +207,17 @@ template<typename T> struct TopologicalSortStack {
       return;
     }
     workStack.push_back(item);
-    auto newLocation = std::prev(workStack.end());
-    auto [it, inserted] = locations.insert({item, newLocation});
-    if (!inserted) {
-      // Remove the previous iteration of the pushed item and update its
-      // location.
-      workStack.erase(it->second);
-      it->second = newLocation;
-    }
   }
 
   T& peek() { return workStack.back(); }
 
   void pop() {
+    // Pop until the stack is empty or it has an unfinished item on top.
     finished.insert(workStack.back());
-    locations.erase(workStack.back());
     workStack.pop_back();
+    while (!workStack.empty() && finished.count(workStack.back())) {
+      workStack.pop_back();
+    }
   }
 };
 
