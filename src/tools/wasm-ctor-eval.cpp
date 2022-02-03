@@ -33,6 +33,7 @@
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/small_set.h"
 #include "support/string.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
@@ -157,6 +158,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
+    clearApplyState();
+
     // If nothing was ever written to memory then there is nothing to update.
     if (!memory.empty()) {
       applyMemoryToModule();
@@ -404,6 +407,22 @@ private:
     return ret;
   }
 
+  // Clear the state of the operation of applying the interpreter's runtime
+  // information into the module.
+  //
+  // This happens each time we apply contents to the module, which is basically
+  // once per ctor function, but can be more fine-grained also if we execute a
+  // line at a time.
+  void clearApplyState() {
+    // The process of allocating "defining globals" begins here, from scratch
+    // each time (things live before may no longer be).
+    definingGlobals.clear();
+
+    // When we start to apply the state there should be no previous state left
+    // over.
+    assert(seenDataStack.empty());
+  }
+
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
@@ -421,11 +440,157 @@ private:
     segment.data = memory;
   }
 
+  // Serializing GC data requires more work than linear memory, because
+  // allocations have an identity, and they are created using struct.new /
+  // array.new, which we must emit in a proper location in the wasm. This
+  // affects how we serialize globals, which can contain GC data, and also, we
+  // use globals to store GC data, so overall the process of computing the
+  // globals is where most of the GC logic ends up.
+  //
+  // The general idea for handling GC data is as follows: After evaluating the
+  // code, we end up with some live allocations in the interpreter, which we
+  // need to somehow serialize into the wasm module. We will put each such live
+  // GC data item into its own "defining global", a global whose purpose is to
+  // create and store that data. Each such global is immutable, and has the
+  // exact type of the data, for simplicity. Every other reference to that GC
+  // data in the interpreter's memory can then be serialized by simply emitting
+  // a global.get of that defining global.
   void applyGlobalsToModule() {
     Builder builder(*wasm);
-    for (const auto& [name, value] : instance->globals) {
-      wasm->getGlobal(name)->init = builder.makeConstantExpression(value);
+
+    if (!wasm->features.hasGC()) {
+      // Without GC, we can simply serialize the globals in place as they are.
+      for (const auto& [name, values] : instance->globals) {
+        wasm->getGlobal(name)->init = getSerialization(values);
+      }
+      return;
     }
+
+    // We need to emit the "defining globals" of GC data before the existing
+    // globals, as the normal ones may refer to them. We do this by removing all
+    // the existing globals, and then adding them one by one, during which time
+    // we call getSerialization() for their init expressions. If their init
+    // refes to GC data, then we will allocate a defining global for that data,
+    // and refer to it. Put another way, we place the existing globals back into
+    // the module one at a time, adding their dependencies as we go.
+    auto oldGlobals = std::move(wasm->globals);
+    wasm->updateMaps();
+
+    for (auto& oldGlobal : oldGlobals) {
+      // Serialize the global's value. While doing so, pass in the name of this
+      // global, as we may be able to reuse the global as the defining global
+      // for the value. See getSerialization() for more details.
+      Name name;
+      if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
+        // This has the properties we need of a defining global - immutable and
+        // of the precise type - so use it.
+        name = oldGlobal->name;
+      }
+
+      // If there is a value here to serialize, do so. (If there is no value,
+      // then this global was added after the interpreter initialized the
+      // module, which means it is a new global we've added since; we don't need
+      // to do anything for such a global - if it is needed it will show up as a
+      // dependency of something, and be emitted at the right time and place.)
+      auto iter = instance->globals.find(oldGlobal->name);
+      if (iter != instance->globals.end()) {
+        oldGlobal->init = getSerialization(iter->second, name);
+        wasm->addGlobal(std::move(oldGlobal));
+      }
+    }
+  }
+
+public:
+  // Maps each GC data in the interpreter to its defining global: the global in
+  // which it is created, and then all other users of it can just global.get
+  // that.
+  std::unordered_map<GCData*, Name> definingGlobals;
+
+  // The data we have seen so far on the stack. This is used to guard against
+  // infinite recursion, which would otherwise happen if there is a cycle among
+  // the live objects, which we don't handle yet.
+  //
+  // Pick a constant of 2 here to handle the common case of an object with a
+  // reference to another object that is already in a defining global.
+  SmallSet<GCData*, 2> seenDataStack;
+
+  // If |possibleDefiningGlobal| is provided, it is the name of a global that we
+  // are in the init expression of, and which can be reused as defining global,
+  // if the other conditions are suitable.
+  Expression* getSerialization(const Literal& value,
+                               Name possibleDefiningGlobal = Name()) {
+    Builder builder(*wasm);
+
+    if (!value.isData()) {
+      // This can be handled normally.
+      return builder.makeConstantExpression(value);
+    }
+
+    // This is GC data, which we must handle in a more careful way.
+    auto* data = value.getGCData().get();
+    if (!data) {
+      // This is a null, so simply emit one.
+      return builder.makeRefNull(value.type);
+    }
+
+    // There was actual GC data allocated here.
+    auto type = value.type;
+    auto& definingGlobal = definingGlobals[data];
+    if (!definingGlobal.is()) {
+      // This is the first usage of this allocation. Generate a struct.new /
+      // array.new for it.
+      auto& values = value.getGCData()->values;
+      std::vector<Expression*> args;
+
+      // The initial values for this allocation may themselves be GC
+      // allocations. Recurse and add globals as necessary.
+      // TODO: Handle cycles. That will require code in the start function. For
+      //       now, just error if we detect an infinite recursion.
+      if (seenDataStack.count(data)) {
+        Fatal() << "Cycle in live GC data, which we cannot serialize yet.";
+      }
+      seenDataStack.insert(data);
+      for (auto& value : values) {
+        args.push_back(getSerialization(value));
+      }
+      seenDataStack.erase(data);
+
+      Expression* init;
+      auto heapType = type.getHeapType();
+      // TODO: handle rtts if we need them
+      if (heapType.isStruct()) {
+        init = builder.makeStructNew(heapType, args);
+      } else if (heapType.isArray()) {
+        // TODO: for repeated identical values, can use ArrayNew
+        init = builder.makeArrayInit(heapType, args);
+      } else {
+        WASM_UNREACHABLE("bad gc type");
+      }
+
+      if (possibleDefiningGlobal.is()) {
+        // No need to allocate a new global, as we are in the definition of
+        // one. Just return the initialization expression, which will be
+        // placed in that global's |init| field, and first note this as the
+        // defining global.
+        definingGlobal = possibleDefiningGlobal;
+        return init;
+      }
+
+      // Allocate a new defining global.
+      auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
+      wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
+      definingGlobal = name;
+    }
+
+    // Refer to this GC allocation by reading from the global that is
+    // designated to contain it.
+    return builder.makeGlobalGet(definingGlobal, value.type);
+  }
+
+  Expression* getSerialization(const Literals& values,
+                               Name possibleDefiningGlobal = Name()) {
+    assert(values.size() == 1);
+    return getSerialization(values[0], possibleDefiningGlobal);
   }
 };
 
@@ -573,7 +738,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
         auto value = appliedLocals[i];
         localSets.push_back(
-          builder.makeLocalSet(i, builder.makeConstantExpression(value)));
+          builder.makeLocalSet(i, interface.getSerialization(value)));
       }
 
       // Put the local sets at the front of the block. We know there must be a
@@ -666,7 +831,7 @@ void evalCtors(Module& wasm,
         if (func->getResults() == Type::none) {
           copyFunc->body = Builder(wasm).makeNop();
         } else {
-          copyFunc->body = Builder(wasm).makeConstantExpression(*outcome);
+          copyFunc->body = interface.getSerialization(*outcome);
         }
         wasm.getExport(exp->name)->value = copyName;
       }

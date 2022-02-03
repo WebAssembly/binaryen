@@ -1,0 +1,41 @@
+(module
+ (type $struct (struct (field i32)))
+ (type $anyref_=>_none (func (param anyref)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (import "import" "import" (func $import (param anyref)))
+ (global $global1 (ref $struct) (struct.new $struct
+  (i32.const 1337)
+ ))
+ (global $ctor-eval$global (ref $struct) (struct.new $struct
+  (i32.const 42)
+ ))
+ (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global))
+ (global $ctor-eval$global_0 (ref $struct) (struct.new $struct
+  (i32.const 99)
+ ))
+ (export "test1" (func $0_0))
+ (export "keepalive" (func $1))
+ (func $1 (result i32)
+  (i32.add
+   (struct.get $struct 0
+    (global.get $global1)
+   )
+   (struct.get $struct 0
+    (global.get $global2)
+   )
+  )
+ )
+ (func $0_0
+  (local $0 (ref null $struct))
+  (local.set $0
+   (global.get $ctor-eval$global_0)
+  )
+  (call $import
+   (ref.null $struct)
+  )
+  (call $import
+   (local.get $0)
+  )
+ )
+)
