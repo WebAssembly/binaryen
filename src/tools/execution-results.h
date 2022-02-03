@@ -106,7 +106,7 @@ struct ExecutionResults {
   void get(Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
-      ModuleInstance instance(wasm, &interface);
+      ModuleRunner instance(wasm, &interface);
       // execute all exported methods (that are therefore preserved through
       // opts)
       for (auto& exp : wasm.exports) {
@@ -229,7 +229,7 @@ struct ExecutionResults {
   FunctionResult run(Function* func, Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
-      ModuleInstance instance(wasm, &interface);
+      ModuleRunner instance(wasm, &interface);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
@@ -237,7 +237,7 @@ struct ExecutionResults {
     }
   }
 
-  FunctionResult run(Function* func, Module& wasm, ModuleInstance& instance) {
+  FunctionResult run(Function* func, Module& wasm, ModuleRunner& instance) {
     try {
       Literals arguments;
       // init hang support, if present
@@ -250,6 +250,7 @@ struct ExecutionResults {
         if (!param.isDefaultable()) {
           std::cout << "[trap fuzzer can only send defaultable parameters to "
                        "exports]\n";
+          return Trap{};
         }
         arguments.push_back(Literal::makeZero(param));
       }

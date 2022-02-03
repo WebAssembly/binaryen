@@ -284,6 +284,88 @@ struct FiniteShapeEquator {
   bool eq(const Rtt& a, const Rtt& b);
 };
 
+struct RecGroupHasher {
+  // `group` may or may not be canonical, but any other recursion group it
+  // reaches must be canonical.
+  RecGroup group;
+
+  RecGroupHasher(RecGroup group) : group(group) {}
+
+  // Perform the hash.
+  size_t operator()() const;
+
+  // `topLevelHash` is applied to the top-level group members and observes their
+  // structure, while `hash(HeapType)` is applied to the children of group
+  // members and does not observe their structure.
+  size_t topLevelHash(HeapType type) const;
+  size_t hash(Type type) const;
+  size_t hash(HeapType type) const;
+  size_t hash(const TypeInfo& info) const;
+  size_t hash(const HeapTypeInfo& info) const;
+  size_t hash(const Tuple& tuple) const;
+  size_t hash(const Field& field) const;
+  size_t hash(const Signature& sig) const;
+  size_t hash(const Struct& struct_) const;
+  size_t hash(const Array& array) const;
+  size_t hash(const Rtt& rtt) const;
+};
+
+struct RecGroupEquator {
+  // `newGroup` may or may not be canonical, but `otherGroup` and any other
+  // recursion group reachable by either of them must be canonical.
+  RecGroup newGroup, otherGroup;
+
+  RecGroupEquator(RecGroup newGroup, RecGroup otherGroup)
+    : newGroup(newGroup), otherGroup(otherGroup) {}
+
+  // Perform the comparison.
+  bool operator()() const;
+
+  // `topLevelEq` is applied to the top-level group members and observes their
+  // structure, while `eq(HeapType)` is applied to the children of group members
+  // and does not observe their structure.
+  bool topLevelEq(HeapType a, HeapType b) const;
+  bool eq(Type a, Type b) const;
+  bool eq(HeapType a, HeapType b) const;
+  bool eq(const TypeInfo& a, const TypeInfo& b) const;
+  bool eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const;
+  bool eq(const Tuple& a, const Tuple& b) const;
+  bool eq(const Field& a, const Field& b) const;
+  bool eq(const Signature& a, const Signature& b) const;
+  bool eq(const Struct& a, const Struct& b) const;
+  bool eq(const Array& a, const Array& b) const;
+  bool eq(const Rtt& a, const Rtt& b) const;
+};
+
+// A wrapper around a RecGroup that provides equality and hashing based on the
+// structure of the group such that isorecursively equivalent recursion groups
+// will compare equal and will have the same hash. Assumes that all recursion
+// groups reachable from this one have been canonicalized, except for the
+// wrapped group itself.
+struct RecGroupStructure {
+  RecGroup group;
+  bool operator==(const RecGroupStructure& other) const {
+    return RecGroupEquator{group, other.group}();
+  }
+};
+
+} // anonymous namespace
+} // namespace wasm
+
+namespace std {
+
+template<> class hash<wasm::RecGroupStructure> {
+public:
+  size_t operator()(const wasm::RecGroupStructure& structure) const {
+    return wasm::RecGroupHasher{structure.group}();
+  }
+};
+
+} // namespace std
+
+namespace wasm {
+namespace {
+
 // Generic utility for traversing type graphs. The inserted roots must live as
 // long as the Walker because they are referenced by address. This base class
 // only has logic for traversing type graphs; figuring out when to stop
@@ -773,8 +855,53 @@ struct SignatureTypeCache {
 static SignatureTypeCache nominalSignatureCache;
 
 // Keep track of the constructed recursion groups.
-static std::mutex recGroupsMutex;
-static std::vector<std::unique_ptr<RecGroupInfo>> recGroups;
+struct RecGroupStore {
+  std::mutex mutex;
+  // Store the structures of all rec groups created so far so we can avoid
+  // creating duplicates.
+  std::unordered_set<RecGroupStructure> canonicalGroups;
+  // Keep the `RecGroupInfos` for the nontrivial groups stored in
+  // `canonicalGroups` alive.
+  std::vector<std::unique_ptr<RecGroupInfo>> builtGroups;
+
+  RecGroup insert(RecGroup group) {
+    RecGroupStructure structure{group};
+    auto [it, inserted] = canonicalGroups.insert(structure);
+    if (inserted) {
+      return group;
+    } else {
+      return it->group;
+    }
+  }
+
+  RecGroup insert(std::unique_ptr<RecGroupInfo>&& info) {
+    RecGroup group{uintptr_t(info.get())};
+    auto canonical = insert(group);
+    if (canonical == group) {
+      builtGroups.emplace_back(std::move(info));
+    }
+    return canonical;
+  }
+
+  // Utility for canonicalizing HeapTypes with trivial recursion groups.
+  HeapType insert(std::unique_ptr<HeapTypeInfo>&& info) {
+    std::lock_guard<std::mutex> lock(mutex);
+    assert(!info->recGroup && "Unexpected nontrivial rec group");
+    auto group = asHeapType(info).getRecGroup();
+    auto canonical = insert(group);
+    if (group == canonical) {
+      globalHeapTypeStore.insert(std::move(info));
+    }
+    return canonical[0];
+  }
+
+  void clear() {
+    canonicalGroups.clear();
+    builtGroups.clear();
+  }
+};
+
+static RecGroupStore globalRecGroupStore;
 
 } // anonymous namespace
 
@@ -782,6 +909,7 @@ void destroyAllTypesForTestingPurposesOnly() {
   globalTypeStore.clear();
   globalHeapTypeStore.clear();
   nominalSignatureCache.clear();
+  globalRecGroupStore.clear();
 }
 
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
@@ -1116,19 +1244,27 @@ const Type& Type::Iterator::operator*() const {
 HeapType::HeapType(Signature sig) {
   assert(!isTemp(sig.params) && "Leaking temporary type!");
   assert(!isTemp(sig.results) && "Leaking temporary type!");
-  if (typeSystem == TypeSystem::Nominal) {
-    // Special case the creation of signature types in nominal mode to return a
-    // "canonical" type for the signature, which happens to be the first one
-    // created. We depend on being able to create new function signatures in
-    // many places, and historically they have always been structural, so
-    // creating a copy of an existing signature did not result in any code bloat
-    // or semantic changes. To avoid regressions or significant changes of
-    // behavior in nominal mode, we cache the canonical heap types for each
-    // signature to emulate structural behavior.
-    new (this) HeapType(nominalSignatureCache.getType(sig));
-  } else {
-    new (this) HeapType(globalHeapTypeStore.insert(sig));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+      // Special case the creation of signature types in nominal mode to return
+      // a "canonical" type for the signature, which happens to be the first one
+      // created. We depend on being able to create new function signatures in
+      // many places, and historically they have always been structural, so
+      // creating a copy of an existing signature did not result in any code
+      // bloat or semantic changes. To avoid regressions or significant changes
+      // of behavior in nominal mode, we cache the canonical heap types for each
+      // signature to emulate structural behavior.
+      new (this) HeapType(nominalSignatureCache.getType(sig));
+      return;
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(sig));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(
+        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(sig)));
+      return;
   }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 HeapType::HeapType(const Struct& struct_) {
@@ -1137,7 +1273,17 @@ HeapType::HeapType(const Struct& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(globalHeapTypeStore.insert(struct_));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(struct_));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(
+        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(struct_)));
+      return;
+  }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 HeapType::HeapType(Struct&& struct_) {
@@ -1146,12 +1292,32 @@ HeapType::HeapType(Struct&& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(globalHeapTypeStore.insert(std::move(struct_)));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(std::move(struct_)));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(globalRecGroupStore.insert(
+        std::make_unique<HeapTypeInfo>(std::move(struct_))));
+      return;
+  }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 HeapType::HeapType(Array array) {
   assert(!isTemp(array.element.type) && "Leaking temporary type!");
-  new (this) HeapType(globalHeapTypeStore.insert(array));
+  switch (getTypeSystem()) {
+    case TypeSystem::Nominal:
+    case TypeSystem::Equirecursive:
+      new (this) HeapType(globalHeapTypeStore.insert(array));
+      return;
+    case TypeSystem::Isorecursive:
+      new (this) HeapType(
+        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
+      return;
+  }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 bool HeapType::isFunction() const {
@@ -2203,6 +2369,239 @@ bool FiniteShapeEquator::eq(const Rtt& a, const Rtt& b) {
   return a.depth == b.depth && eq(a.heapType, b.heapType);
 }
 
+size_t RecGroupHasher::operator()() const {
+  size_t digest = wasm::hash(group.size());
+  for (auto type : group) {
+    hash_combine(digest, topLevelHash(type));
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::topLevelHash(HeapType type) const {
+  size_t digest = wasm::hash(type.isBasic());
+  if (type.isBasic()) {
+    wasm::rehash(digest, type.getID());
+  } else {
+    hash_combine(digest, hash(*getHeapTypeInfo(type)));
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::hash(Type type) const {
+  size_t digest = wasm::hash(type.isBasic());
+  if (type.isBasic()) {
+    wasm::rehash(digest, type.getID());
+  } else {
+    hash_combine(digest, hash(*getTypeInfo(type)));
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::hash(HeapType type) const {
+  // Do not recurse into the structure of this child type, but rather hash it as
+  // an index into a rec group. Only take the rec group identity into account if
+  // the child is not a member of the top-level group because in that case the
+  // group may not be canonicalized yet.
+  size_t digest = wasm::hash(type.getRecGroupIndex());
+  auto currGroup = type.getRecGroup();
+  if (currGroup != group) {
+    wasm::rehash(digest, currGroup.getID());
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::hash(const TypeInfo& info) const {
+  size_t digest = wasm::hash(info.kind);
+  switch (info.kind) {
+    case TypeInfo::TupleKind:
+      hash_combine(digest, hash(info.tuple));
+      return digest;
+    case TypeInfo::RefKind:
+      rehash(digest, info.ref.nullable);
+      hash_combine(digest, hash(info.ref.heapType));
+      return digest;
+    case TypeInfo::RttKind:
+      hash_combine(digest, hash(info.rtt));
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
+  assert(info.isFinalized);
+  size_t digest = wasm::hash(uintptr_t(info.supertype));
+  wasm::rehash(digest, info.kind);
+  switch (info.kind) {
+    case HeapTypeInfo::BasicKind:
+      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
+    case HeapTypeInfo::SignatureKind:
+      hash_combine(digest, hash(info.signature));
+      return digest;
+    case HeapTypeInfo::StructKind:
+      hash_combine(digest, hash(info.struct_));
+      return digest;
+    case HeapTypeInfo::ArrayKind:
+      hash_combine(digest, hash(info.array));
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+size_t RecGroupHasher::hash(const Tuple& tuple) const {
+  size_t digest = wasm::hash(tuple.types.size());
+  for (auto type : tuple.types) {
+    hash_combine(digest, hash(type));
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::hash(const Field& field) const {
+  size_t digest = wasm::hash(field.packedType);
+  rehash(digest, field.mutable_);
+  hash_combine(digest, hash(field.type));
+  return digest;
+}
+
+size_t RecGroupHasher::hash(const Signature& sig) const {
+  size_t digest = hash(sig.params);
+  hash_combine(digest, hash(sig.results));
+  return digest;
+}
+
+size_t RecGroupHasher::hash(const Struct& struct_) const {
+  size_t digest = wasm::hash(struct_.fields.size());
+  for (const auto& field : struct_.fields) {
+    hash_combine(digest, hash(field));
+  }
+  return digest;
+}
+
+size_t RecGroupHasher::hash(const Array& array) const {
+  return hash(array.element);
+}
+
+size_t RecGroupHasher::hash(const Rtt& rtt) const {
+  size_t digest = wasm::hash(rtt.depth);
+  hash_combine(digest, hash(rtt.heapType));
+  return digest;
+}
+
+bool RecGroupEquator::operator()() const {
+  if (newGroup == otherGroup) {
+    return true;
+  }
+  // The rec groups are equivalent if they are piecewise equivalent.
+  return std::equal(
+    newGroup.begin(),
+    newGroup.end(),
+    otherGroup.begin(),
+    otherGroup.end(),
+    [&](const HeapType& a, const HeapType& b) { return topLevelEq(a, b); });
+}
+
+bool RecGroupEquator::topLevelEq(HeapType a, HeapType b) const {
+  if (a == b) {
+    return true;
+  }
+  if (a.isBasic() || b.isBasic()) {
+    return false;
+  }
+  return eq(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
+}
+
+bool RecGroupEquator::eq(Type a, Type b) const {
+  if (a == b) {
+    return true;
+  }
+  if (a.isBasic() || b.isBasic()) {
+    return false;
+  }
+  return eq(*getTypeInfo(a), *getTypeInfo(b));
+}
+
+bool RecGroupEquator::eq(HeapType a, HeapType b) const {
+  // Do not recurse into the structure of children `a` and `b`, but check
+  // whether their recursion groups and indices match. Since `newGroup` may not
+  // be canonicalized, explicitly check whether `a` and `b` are in the
+  // respective recursion groups of the respective top-level groups we are
+  // comparing, in which case the structure is still equivalent.
+  if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
+    return false;
+  }
+  auto groupA = a.getRecGroup();
+  auto groupB = b.getRecGroup();
+  return groupA == groupB || (groupA == newGroup && groupB == otherGroup);
+}
+
+bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
+  if (a.kind != b.kind) {
+    return false;
+  }
+  switch (a.kind) {
+    case TypeInfo::TupleKind:
+      return eq(a.tuple, b.tuple);
+    case TypeInfo::RefKind:
+      return a.ref.nullable == b.ref.nullable &&
+             eq(a.ref.heapType, b.ref.heapType);
+    case TypeInfo::RttKind:
+      return eq(a.rtt, b.rtt);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
+  if (a.supertype != b.supertype) {
+    return false;
+  }
+  if (a.kind != b.kind) {
+    return false;
+  }
+  switch (a.kind) {
+    case HeapTypeInfo::BasicKind:
+      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
+    case HeapTypeInfo::SignatureKind:
+      return eq(a.signature, b.signature);
+    case HeapTypeInfo::StructKind:
+      return eq(a.struct_, b.struct_);
+    case HeapTypeInfo::ArrayKind:
+      return eq(a.array, b.array);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool RecGroupEquator::eq(const Tuple& a, const Tuple& b) const {
+  return std::equal(a.types.begin(),
+                    a.types.end(),
+                    b.types.begin(),
+                    b.types.end(),
+                    [&](const Type& x, const Type& y) { return eq(x, y); });
+}
+
+bool RecGroupEquator::eq(const Field& a, const Field& b) const {
+  return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
+         eq(a.type, b.type);
+}
+
+bool RecGroupEquator::eq(const Signature& a, const Signature& b) const {
+  return eq(a.params, b.params) && eq(a.results, b.results);
+}
+
+bool RecGroupEquator::eq(const Struct& a, const Struct& b) const {
+  return std::equal(a.fields.begin(),
+                    a.fields.end(),
+                    b.fields.begin(),
+                    b.fields.end(),
+                    [&](const Field& x, const Field& y) { return eq(x, y); });
+}
+
+bool RecGroupEquator::eq(const Array& a, const Array& b) const {
+  return eq(a.element, b.element);
+}
+
+bool RecGroupEquator::eq(const Rtt& a, const Rtt& b) const {
+  return a.depth == b.depth && eq(a.heapType, b.heapType);
+}
+
 template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(Type* type) {
   assert(taskList.empty());
   taskList.push_back(Task::scan(type));
@@ -2420,11 +2819,12 @@ void TypeBuilder::createRecGroup(size_t i, size_t length) {
   if (length < 2) {
     return;
   }
-  recGroups.emplace_back(std::make_unique<RecGroupInfo>());
+  auto& groups = impl->recGroups;
+  groups.emplace_back(std::make_unique<RecGroupInfo>());
   for (; length > 0; --length) {
     auto& info = impl->entries[i + length - 1].info;
     assert(info->recGroup == nullptr && "group already assigned");
-    info->recGroup = recGroups.back().get();
+    info->recGroup = groups.back().get();
   }
 }
 
@@ -3190,13 +3590,9 @@ validateStructuralSubtyping(const std::vector<HeapType>& types) {
 
 std::optional<TypeBuilder::Error>
 canonicalizeNominal(CanonicalizationState& state) {
-  // TODO: clear recursion groups once we are no longer piggybacking the
-  // isorecursive system on the nominal system.
-  // if (typeSystem != TypeSystem::Isorecursive) {
-  //   for (auto& info : state.newInfos) {
-  //     assert(info->recGroup == nullptr && "unexpected recursion group");
-  //   }
-  // }
+  for (auto& info : state.newInfos) {
+    info->recGroup = nullptr;
+  }
 
   // Nominal types do not require separate canonicalization, so just validate
   // that their subtyping is correct.
@@ -3253,12 +3649,19 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     }
   }
 
+  // Map rec groups to the unique pointers to their infos.
+  std::unordered_map<RecGroup, std::unique_ptr<RecGroupInfo>> groupInfoMap;
+  for (auto& info : recGroupInfos) {
+    RecGroup group{uintptr_t(info.get())};
+    groupInfoMap[group] = std::move(info);
+  }
+
   // Check that supertypes precede their subtypes and that other child types
   // either precede their parents or appear later in the same recursion group.
   // `indexOfType` both maps types to their indices and keeps track of which
   // types we have seen so far.
   std::unordered_map<HeapType, size_t> indexOfType;
-  std::optional<RecGroup> currGroup;
+  std::vector<RecGroup> groups;
   size_t groupStart = 0;
 
   // Validate the children of all types in a recursion group after all the types
@@ -3288,12 +3691,12 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     }
     // Check whether we have finished a rec group.
     auto newGroup = type.getRecGroup();
-    if (currGroup && *currGroup != newGroup) {
+    if (groups.empty() || groups.back() != newGroup) {
       if (auto error = finishGroup(index)) {
         return *error;
       }
+      groups.push_back(newGroup);
     }
-    currGroup = newGroup;
     // Register this type as seen.
     indexOfType.insert({type, index});
   }
@@ -3306,13 +3709,45 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     return {*error};
   }
 
-  // Move the recursion groups into the global store. TODO: after proper
-  // isorecursive canonicalization, some groups may no longer be used, so they
-  // will need to be filtered out.
-  std::lock_guard<std::mutex> lock(recGroupsMutex);
-  for (auto& info : recGroupInfos) {
-    recGroups.emplace_back(std::move(info));
+  // Now that we know everything is valid, start canonicalizing recursion
+  // groups. Before canonicalizing each group, update all the HeapType use sites
+  // within it to make sure it only refers to other canonical groups or to
+  // itself (since other groups it refers to may have been duplicates of
+  // previously canonicalized groups and therefore would not be canonical). To
+  // canonicalize the group, try to insert it into the global store. If that
+  // fails, we already have an isorecursively equivalent group, so update the
+  // replacements accordingly.
+  CanonicalizationState::ReplacementMap replacements;
+  {
+    std::lock_guard<std::mutex> lock(globalRecGroupStore.mutex);
+    groupStart = 0;
+    for (auto group : groups) {
+      size_t size = group.size();
+      for (size_t i = 0; i < size; ++i) {
+        state.updateUses(replacements, state.newInfos[groupStart + i]);
+      }
+      groupStart += size;
+      RecGroup canonical(0);
+      // There may or may not be a `RecGroupInfo` for this group depending on
+      // whether it is a singleton group or not. If there is one, it is in the
+      // `groupInfoMap`. Make the info available for the global store to take
+      // ownership of it in case this group is made the canonical group for its
+      // structure.
+      if (auto it = groupInfoMap.find(group); it != groupInfoMap.end()) {
+        canonical = globalRecGroupStore.insert(std::move(it->second));
+      } else {
+        canonical = globalRecGroupStore.insert(group);
+      }
+      if (group != canonical) {
+        // Replace the non-canonical types with their canonical equivalents.
+        assert(canonical.size() == size);
+        for (size_t i = 0; i < size; ++i) {
+          replacements.insert({group[i], canonical[i]});
+        }
+      }
+    }
   }
+  state.updateShallow(replacements);
   return {};
 }
 
@@ -3465,6 +3900,10 @@ size_t hash<wasm::Array>::operator()(const wasm::Array& array) const {
 
 size_t hash<wasm::HeapType>::operator()(const wasm::HeapType& heapType) const {
   return wasm::hash(heapType.getID());
+}
+
+size_t hash<wasm::RecGroup>::operator()(const wasm::RecGroup& group) const {
+  return wasm::hash(group.getID());
 }
 
 size_t hash<wasm::Rtt>::operator()(const wasm::Rtt& rtt) const {
