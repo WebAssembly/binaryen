@@ -768,3 +768,90 @@
     )
   )
 )
+
+(module
+  ;; There are two parallel type hierarchies here: "Outer", which are objects
+  ;; that have fields, that contain the "Inner" objects.
+  ;;
+  ;; Root-Outer -> Leaf1-Outer
+  ;;            -> Leaf2-Outer
+  ;;
+  ;; Root-Inner -> Leaf1-Inner
+  ;;            -> Leaf2-Inner
+  ;;
+  ;; Adding their contents, where X[Y] means X has a field of type Y:
+  ;;
+  ;; Root-Outer[Root-Inner] -> Leaf1-Outer[Leaf1-Inner]
+  ;;                        -> Leaf2-Outer[Leaf2-Inner]
+
+  ;; CHECK:      (type $Leaf2-Inner (struct_subtype  $Root-Inner))
+  (type $Leaf2-Inner (struct_subtype  $Root-Inner))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $Leaf1-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
+  (type $Leaf1-Outer (struct_subtype (field (ref $Leaf1-Inner)) $Root-Outer))
+
+ ;; CHECK:      (type $Leaf2-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
+ (type $Leaf2-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
+
+  ;; CHECK:      (type $Root-Outer (struct_subtype (field (ref $Leaf2-Inner)) data))
+  (type $Root-Outer (struct_subtype (field (ref $Root-Inner)) data))
+
+  ;; CHECK:      (type $Root-Inner (struct_subtype  data))
+  (type $Root-Inner (struct_subtype  data))
+
+  (type $Leaf1-Inner (struct_subtype (field i32) $Root-Inner))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null $Leaf1-Outer)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $Leaf2-Outer
+  ;; CHECK-NEXT:    (struct.new_default $Leaf2-Inner)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (drop
+      ;; The situation here is that we have only a get for some types, and no
+      ;; other constraints. As we ignore gets, we work under no constraints at
+      ;; We then have to pick some type, so we pick the one used by our
+      ;; supertype - and the supertype might have picked up a type from another
+      ;; branch of the type tree, which is not a subtype of ours.
+      ;;
+      ;; In more detail, we never create an instance of $Leaf1-Outer, and we
+      ;; only have a get of its field. This optimization ignores the get (to not
+      ;; be limited by it). It will then optimize $Leaf1-Outer's field of
+      ;; $Leaf1-Inner (another struct for which we have no creation, and only a
+      ;; get) into $Leaf2-Inner, which is driven by the fact that we do have a
+      ;; creation of $Leaf2-Inner. But then this struct.get $Leaf1-Inner on field
+      ;; 0 is no longer valid, as we turn $Leaf1-Inner => $Leaf2-Inner, and
+      ;; $Leaf2-Inner has no field 0. To keep the module validating, we must not
+      ;; emit that. Instead, since there can be no instance of $Leaf1-Inner (as
+      ;; mentioned before, it is never created, nor anything that can be cast to
+      ;; it), we know this code is logically unreachable, and can emit an
+      ;; unreachable here.
+      (struct.get $Leaf1-Inner 0
+        (struct.get $Leaf1-Outer 0
+          (ref.null $Leaf1-Outer)
+        )
+      )
+    )
+    (drop
+      (struct.new $Leaf2-Outer
+        (struct.new_default $Leaf2-Inner)
+      )
+    )
+  )
+)

@@ -199,8 +199,57 @@ struct TypeRefining : public Pass {
     }
 
     if (canOptimize) {
+      updateInstructions(*module, runner);
       updateTypes(*module, runner);
     }
+  }
+
+  // If we change types then some instructions may need to be modified.
+  // Specifically, we assume that reads from structs impose no constraints on
+  // us, so that we can optimize maximally. If a struct is never created nor
+  // written to, but only read from, then we have literally no constraints on it
+  // at all, and we can end up with a situation where we alter the type to
+  // something that is invalid for that read. To ensure the code still
+  // validates, simply remove such reads.
+  void updateInstructions(Module& wasm, PassRunner* runner) {
+    struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      TypeRefining& parent;
+
+      ReadUpdater(TypeRefining& parent) : parent(parent) {}
+
+      ReadUpdater* create() override { return new ReadUpdater(parent); }
+
+      void visitStructGet(StructGet* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        auto oldType = curr->ref->type.getHeapType();
+        auto newFieldType =
+          parent.finalInfos[oldType][curr->index].getBestPossible();
+        if (!Type::isSubType(newFieldType, curr->type)) {
+          // This instruction is invalid, so it must be the result of the
+          // situation described above: we ignored the read during our
+          // inference, and optimized accordingly, and so now we must remove it
+          // to keep the module validating. It doesn't matter what we emit here,
+          // since there are no struct.new or struct.sets for this type, so this
+          // code is logically unreachable.
+          //
+          // Note that we emit an unreachable here, which changes the type, and
+          // so we should refinalize. However, we will be refinalizing later
+          // anyhow in updateTypes, so there is no need.
+          Builder builder(*getModule());
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
+        }
+      }
+    };
+
+    ReadUpdater updater(*this);
+    updater.run(runner, &wasm);
+    updater.runOnModuleCode(runner, &wasm);
   }
 
   void updateTypes(Module& wasm, PassRunner* runner) {
