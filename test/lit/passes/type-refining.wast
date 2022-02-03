@@ -776,13 +776,13 @@
 
   ;; CHECK:      (type $F (func_subtype func))
   (type $F (func_subtype func))
- 
+
   ;; CHECK:      (type $I (struct_subtype (field (ref $G)) $C))
   (type $I (struct_subtype (field (ref $H)) $C))
 
-  ;; CHECK:      (type $E (struct_subtype (field (ref $G)) $C))
+ ;; CHECK:      (type $E (struct_subtype (field (ref $G)) $C))
  (type $E (struct_subtype (field (ref $G)) $C))
- 
+
   ;; CHECK:      (type $C (struct_subtype (field (ref $G)) data))
   (type $C (struct_subtype (field (ref $D)) data))
 
