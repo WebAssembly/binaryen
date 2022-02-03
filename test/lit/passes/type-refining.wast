@@ -768,3 +768,28 @@
     )
   )
 )
+
+(module
+  (type $B (struct_subtype  $D))
+  (type $C (struct_subtype (field (ref $D)) data))
+  (type $D (struct_subtype  data))
+  (type $E (struct_subtype (field (ref $G)) $C))
+  (type $F (func_subtype func))
+  (type $G (struct_subtype  $D))
+  (type $H (struct_subtype (field (ref $F)) $B))
+  (type $I (struct_subtype (field (ref $H)) $C))
+  (func $func
+    (drop
+      (struct.get $H 0
+        (struct.get $I 0
+          (ref.null $I)
+        )
+      )
+    )
+    (drop
+      (struct.new $E
+        (struct.new_default $G)
+      )
+    )
+  )
+)
