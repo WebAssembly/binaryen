@@ -414,8 +414,8 @@ private:
   // once per ctor function, but can be more fine-grained also if we execute a
   // line at a time.
   void clearApplyState() {
-    // The process of allocating "defining globals" begins here. Clear any
-    // previous state.
+    // The process of allocating "defining globals" begins here, from scratch
+    // each time (things live before may no longer be).
     definingGlobals.clear();
 
     // When we start to apply the state there should be no previous state left
