@@ -776,15 +776,13 @@
   ;; Root-Outer -> Leaf1-Outer
   ;;            -> Leaf2-Outer
   ;;
-  ;; Root-Inner -> Mid-Inner   -> Leaf1-Inner
+  ;; Root-Inner -> Leaf1-Inner
   ;;            -> Leaf2-Inner
   ;;
   ;; Adding their contents, where X[Y] means X has a field of type Y:
   ;;
   ;; Root-Outer[Root-Inner] -> Leaf1-Outer[Leaf1-Inner]
   ;;                        -> Leaf2-Outer[Leaf2-Inner]
-  
-  (type $Mid-Inner (struct_subtype  $Root-Inner))
 
   ;; CHECK:      (type $Leaf2-Inner (struct_subtype  $Root-Inner))
   (type $Leaf2-Inner (struct_subtype  $Root-Inner))
@@ -804,7 +802,7 @@
   ;; CHECK:      (type $Root-Inner (struct_subtype  data))
   (type $Root-Inner (struct_subtype  data))
 
-  (type $Leaf1-Inner (struct_subtype (field (ref $Other)) $Mid-Inner))
+  (type $Leaf1-Inner (struct_subtype (field (ref $Other)) $Root-Inner))
 
   ;; CHECK:      (func $func (type $Other)
   ;; CHECK-NEXT:  (drop
