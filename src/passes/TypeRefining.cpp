@@ -227,7 +227,8 @@ struct TypeRefining : public Pass {
         }
 
         auto oldType = curr->ref->type.getHeapType();
-        auto newFieldType = parent.finalInfos[oldType][curr->index].getBestPossible();
+        auto newFieldType =
+          parent.finalInfos[oldType][curr->index].getBestPossible();
         if (!Type::isSubType(newFieldType, curr->type)) {
           // This instruction is invalid, so it must be the result of the
           // situation described above: we ignored the read during our
