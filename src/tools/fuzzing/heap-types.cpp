@@ -328,7 +328,7 @@ struct HeapTypeGeneratorImpl {
     if (candidateIndices.size()) {
       return builder[rand.pick(candidateIndices)];
     } else {
-      return {};
+      return std::nullopt;
     }
   }
 
