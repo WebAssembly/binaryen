@@ -1,0 +1,24 @@
+;; RUN: wasm-fuzz-types --hybrid -v --seed=0 | filecheck %s
+
+;; CHECK:      Running with seed 0
+;; CHECK-NEXT: Built 20 types:
+;; CHECK-NEXT: 0: (array i16)
+;; CHECK-NEXT: 1: (func (result (rtt extern) (ref ...1) i32 (rtt 0 (array (rtt 2 (array (rtt ...1))))) (ref null (array (rtt ...1))) (rtt (array i16))))
+;; CHECK-NEXT: 2: (array (rtt (array ...1)))
+;; CHECK-NEXT: 3: (array (rtt 2 (array (rtt ...1))))
+;; CHECK-NEXT: 4: (array (rtt (array ...1)))
+;; CHECK-NEXT: 5: (array (rtt 2 (array (rtt ...1))))
+;; CHECK-NEXT: 6: (array (rtt 2 (array (rtt ...1))))
+;; CHECK-NEXT: 7: (array i16)
+;; CHECK-NEXT: 8: (array i16)
+;; CHECK-NEXT: 9: (array (rtt 2 (array (rtt ...1))))
+;; CHECK-NEXT: 10: (array i16)
+;; CHECK-NEXT: 11: (array (rtt ...1))
+;; CHECK-NEXT: 12: (array i16)
+;; CHECK-NEXT: 13: (array (rtt 2 (array (rtt ...1))))
+;; CHECK-NEXT: 14: (array i16)
+;; CHECK-NEXT: 15: (func (result (rtt extern) (ref (func (result (rtt extern) ...1 i32 (rtt 0 (array (rtt 2 (array (rtt ...1))))) (ref null (array (rtt ...1))) (rtt (array i16))))) i32 (rtt 0 (array (rtt 2 (array (rtt ...1))))) (ref null (array (rtt ...1))) (rtt (array i16))))
+;; CHECK-NEXT: 16: (array (rtt (array ...1)))
+;; CHECK-NEXT: 17: (array i16)
+;; CHECK-NEXT: 18: (array i16)
+;; CHECK-NEXT: 19: (func (result (rtt extern) (ref (func (result (rtt extern) ...1 i32 (rtt 0 (array (rtt 2 (array (rtt ...1))))) (ref null (array (rtt ...1))) (rtt (array i16))))) i32 (rtt 0 (array (rtt 2 (array (rtt ...1))))) (ref null (array (rtt ...1))) (rtt (array i16))))

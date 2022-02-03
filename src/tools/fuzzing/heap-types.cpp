@@ -47,6 +47,13 @@ struct HeapTypeGeneratorImpl {
   using HeapTypeKind = std::variant<BasicKind, SignatureKind, DataKind>;
   std::vector<HeapTypeKind> typeKinds;
 
+  // For each type, the index one past the end of its recursion group, used to
+  // determine what types could be valid children.
+  std::vector<Index> recGroupEnds;
+
+  // The index of the type we are currently generating.
+  Index index = 0;
+
   HeapTypeGeneratorImpl(Random& rand, FeatureSet features, size_t n)
     : result{TypeBuilder(n),
              std::vector<std::vector<Index>>(n),
@@ -56,9 +63,8 @@ struct HeapTypeGeneratorImpl {
     // Set up the subtype relationships. Start with some number of root types,
     // then after that start creating subtypes of existing types. Determine the
     // top-level kind of each type in advance so that we can appropriately use
-    // types we haven't constructed yet.
-    // TODO: Determine individually whether each HeapType is nominal once
-    // mixing type systems is expected to work.
+    // types we haven't constructed yet. For simplicity, always choose a
+    // supertype to bea previous type, which is valid in all type systems.
     typeKinds.reserve(builder.size());
     supertypeIndices.reserve(builder.size());
     Index numRoots = 1 + rand.upTo(builder.size());
@@ -80,35 +86,68 @@ struct HeapTypeGeneratorImpl {
       }
     }
 
+    // Initialize the recursion groups.
+    recGroupEnds.reserve(builder.size());
+    if (getTypeSystem() != TypeSystem::Isorecursive) {
+      // Recursion groups don't matter and we can choose children as though we
+      // had a single large recursion group.
+      for (Index i = 0; i < builder.size(); ++i) {
+        recGroupEnds.push_back(builder.size());
+      }
+    } else {
+      // We are using isorecursive types, so create groups. Choose an expected
+      // group size uniformly at random, then create groups with random sizes on
+      // a geometric distribution based on that expected size.
+      size_t expectedSize = 1 + rand.upTo(builder.size());
+      Index groupStart = 0;
+      for (Index i = 0; i < builder.size(); ++i) {
+        if (rand.oneIn(expectedSize)) {
+          // End the old group and create a new group.
+          Index newGroupStart = i + 1;
+          builder.createRecGroup(groupStart, newGroupStart - groupStart);
+          for (Index j = groupStart; j < newGroupStart; ++j) {
+            recGroupEnds.push_back(newGroupStart);
+          }
+          groupStart = newGroupStart;
+        }
+      }
+      // Finish the last group.
+      builder.createRecGroup(groupStart, builder.size() - groupStart);
+      for (Index j = groupStart; j < builder.size(); ++j) {
+        recGroupEnds.push_back(builder.size());
+      }
+      assert(recGroupEnds.size() == builder.size());
+    }
+
     // Create the heap types.
-    for (Index i = 0; i < builder.size(); ++i) {
-      auto kind = typeKinds[i];
+    for (; index < builder.size(); ++index) {
+      auto kind = typeKinds[index];
       if (auto* basic = std::get_if<BasicKind>(&kind)) {
         // The type is already determined.
-        builder[i] = *basic;
-      } else if (!supertypeIndices[i] ||
-                 builder.isBasic(*supertypeIndices[i])) {
+        builder[index] = *basic;
+      } else if (!supertypeIndices[index] ||
+                 builder.isBasic(*supertypeIndices[index])) {
         // No nontrivial supertype, so create a root type.
         if (std::get_if<SignatureKind>(&kind)) {
-          builder[i] = generateSignature();
+          builder[index] = generateSignature();
         } else if (std::get_if<DataKind>(&kind)) {
           if (rand.oneIn(2)) {
-            builder[i] = generateStruct();
+            builder[index] = generateStruct();
           } else {
-            builder[i] = generateArray();
+            builder[index] = generateArray();
           }
         } else {
           WASM_UNREACHABLE("unexpected kind");
         }
       } else {
         // We have a supertype, so create a subtype.
-        HeapType supertype = builder[*supertypeIndices[i]];
+        HeapType supertype = builder[*supertypeIndices[index]];
         if (supertype.isSignature()) {
-          builder[i] = generateSubSignature(supertype.getSignature());
+          builder[index] = generateSubSignature(supertype.getSignature());
         } else if (supertype.isStruct()) {
-          builder[i] = generateSubStruct(supertype.getStruct());
+          builder[index] = generateSubStruct(supertype.getStruct());
         } else if (supertype.isArray()) {
-          builder[i] = generateSubArray(supertype.getArray());
+          builder[index] = generateSubArray(supertype.getArray());
         } else {
           WASM_UNREACHABLE("unexpected kind");
         }
@@ -143,7 +182,8 @@ struct HeapTypeGeneratorImpl {
     if (rand.oneIn(4)) {
       return generateBasicHeapType();
     } else {
-      return builder[rand.upTo(builder.size())];
+      Index i = rand.upTo(recGroupEnds[index]);
+      return builder[i];
     }
   }
 
@@ -276,15 +316,17 @@ struct HeapTypeGeneratorImpl {
   }
 
   template<typename Kind> std::optional<HeapType> pickKind() {
-    std::vector<HeapType> candidates;
-    // Iterate through the top level kinds, finding matches for `Kind`.
-    for (Index i = 0; i < typeKinds.size(); ++i) {
+    std::vector<Index> candidateIndices;
+    // Iterate through the top level kinds, finding matches for `Kind`. Since we
+    // are constructing a child, we can only look through the end of the current
+    // recursion group.
+    for (Index i = 0, end = recGroupEnds[index]; i < end; ++i) {
       if (std::get_if<Kind>(&typeKinds[i])) {
-        candidates.push_back(builder[i]);
+        candidateIndices.push_back(i);
       }
     }
-    if (candidates.size()) {
-      return rand.pick(candidates);
+    if (candidateIndices.size()) {
+      return builder[rand.pick(candidateIndices)];
     } else {
       return {};
     }
@@ -331,8 +373,16 @@ struct HeapTypeGeneratorImpl {
   HeapType pickSubHeapType(HeapType type) {
     auto it = typeIndices.find(type);
     if (it != typeIndices.end()) {
-      // This is a constructed type, so we know where its subtypes are.
-      return builder[rand.pick(subtypeIndices[typeIndices[type]])];
+      // This is a constructed type, so we know where its subtypes are, but we
+      // can only choose those defined before the end of the current recursion
+      // group.
+      std::vector<Index> candidateIndices;
+      for (auto i : subtypeIndices[typeIndices[type]]) {
+        if (i < recGroupEnds[index]) {
+          candidateIndices.push_back(i);
+        }
+      }
+      return builder[rand.pick(candidateIndices)];
     } else {
       // This is not a constructed type, so it must be a basic type.
       assert(type.isBasic());

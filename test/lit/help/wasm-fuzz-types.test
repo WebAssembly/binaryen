@@ -17,6 +17,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --structural  Use the equirecursive type system
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --hybrid      Use the isorecursive hybrid type system
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------
