@@ -202,8 +202,8 @@ This repository contains code that builds the following tools in `bin/`:
    also run the spec test suite.
  * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
    performs emscripten-specific passes over it.
- * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
-   time. Used by Emscripten.
+ * **wasm-ctor-eval**: A tool that can execute functions (or parts of functions)
+   at compile time.
  * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
@@ -457,6 +457,86 @@ Things keep to in mind with wasm2js's output:
    large and slow. Instead, wasm2js assumes loads and stores do not trap, that
    int/float conversions do not trap, and so forth. There may also be slight
    differences in corner cases of conversions, like non-trapping float to int.
+
+### wasm-ctor-eval
+
+`wasm-ctor-eval` executes functions, or parts of them, at compile time.
+After doing so it serializes the runtime state into the wasm, which is like
+taking a "snapshot". When the wasm is later loaded and run in a VM, it will
+continue execution from that point, without re-doing the work that was already
+executed.
+
+For example, consider this small program:
+
+```wat
+(module
+ ;; A global variable that begins at 0.
+ (global $global (mut i32) (i32.const 0))
+
+ (import "import" "import" (func $import))
+
+ (func "main"
+  ;; Set the global to 1.
+  (global.set $global
+   (i32.const 1))
+
+  ;; Call the imported function. This *cannot* be executed at
+  ;; compile time.
+  (call $import)
+
+  ;; We will never get to this point, since we stop at the
+  ;; import.
+  (global.set $global
+   (i32.const 2))
+ )
+)
+```
+
+We can evaluate part of it at compile time like this:
+
+```
+wasm-ctor-eval input.wat --ctors=main -S -o -
+```
+
+This tells it that there is a single function that we want to execute ("ctor"
+is short for "global constructor", a name that comes from code that is executed
+before a program's entry point) and then to print it as text to `stdout`. The
+result is this:
+
+```wat
+trying to eval main
+  ...partial evalling successful, but stopping since could not eval: call import: import.import
+  ...stopping
+(module
+ (type $none_=>_none (func))
+ (import "import" "import" (func $import))
+ (global $global (mut i32) (i32.const 1))
+ (export "main" (func $0_0))
+ (func $0_0
+  (call $import)
+  (global.set $global
+   (i32.const 2)
+  )
+ )
+)
+```
+
+The logging shows us managing to eval part of `main()`, but not all of it, as
+expected: We can eval the first `global.get`, but then we stop at the call to
+the imported function (because we don't know what that function will be when the
+wasm is actually run in a VM later). Note how in the output wasm the global's
+value has been updated from 0 to 1, and that the first `global.get` has been
+removed: the wasm is now in a state that, when we run it in a VM, will seamlessly
+continue to run from the point at which `wasm-ctor-eval` stopped.
+
+In this tiny example we just saved a small amount of work. How much work can be
+saved depends on your program. (It can help to do pure computation up front, and
+leave calls to imports to as late as possible.)
+
+Note that `wasm-ctor-eval`'s name is related to global constructor functions,
+as mentioned earlier, but there is no limitation on what you can execute here.
+Any export from the wasm can be executed, if its contents are suitable. For
+example, in Emscripten `wasm-ctor-eval` is even run on `main()` when possible.
 
 ## Testing
 

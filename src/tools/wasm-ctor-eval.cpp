@@ -17,7 +17,7 @@
 //
 // Loads wasm plus a list of functions that are global ctors, i.e.,
 // are to be executed. It then executes as many of them as it can,
-// applying their changes to memory as needed, then writes it. In
+// applying their changes to memory etc as needed, then writes it. In
 // other words, this executes code at compile time to speed up
 // startup later.
 //
@@ -705,8 +705,7 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmCtorEvalOption = "wasm-ctor-eval options";
 
-  ToolOptions options("wasm-ctor-eval",
-                      "Execute C++ global constructors ahead of time");
+  ToolOptions options("wasm-ctor-eval", "Execute code at compile time");
   options
     .add("--output",
          "-o",
