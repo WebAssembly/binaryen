@@ -386,6 +386,8 @@ enum EncodedType {
   FuncExtending = -0x23,   // 0x5d
   StructExtending = -0x24, // 0x5c
   ArrayExtending = -0x25,  // 0x5b
+  // isorecursive recursion groups
+  Rec = -0x31, // 0x4f
   // block_type
   Empty = -0x40 // 0x40
 };

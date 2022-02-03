@@ -1,6 +1,7 @@
 ;; TODO: Autogenerate these checks! The current script cannot handle `rec`.
 
 ;; RUN: foreach %s %t wasm-opt -all --hybrid -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt -all --hybrid --roundtrip -S -o - | filecheck %s
 
 (module
  ;; Test that we order groups by average uses.
