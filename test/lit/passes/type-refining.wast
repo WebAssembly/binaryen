@@ -770,7 +770,16 @@
 )
 
 (module
-  (type $Mid1-Inner (struct_subtype  $Root-Inner))
+  ;; There are two parallel type hierarchies here: "Outer", which are objects
+  ;; that have fields that contain the "Inner" objects.
+  ;;
+  ;; Root-Outer -> Leaf1-Outer
+  ;;            -> Leaf2-Outer
+  ;;
+  ;; Root-Inner -> Mid-Inner   -> Leaf1-Inner
+  ;;            -> Leaf2-Inner
+
+  (type $Mid-Inner (struct_subtype  $Root-Inner))
 
   ;; CHECK:      (type $Leaf2-Inner (struct_subtype  $Root-Inner))
   (type $Leaf2-Inner (struct_subtype  $Root-Inner))
@@ -790,7 +799,7 @@
   ;; CHECK:      (type $Root-Inner (struct_subtype  data))
   (type $Root-Inner (struct_subtype  data))
 
-  (type $Leaf1-Inner (struct_subtype (field (ref $Other)) $Mid1-Inner))
+  (type $Leaf1-Inner (struct_subtype (field (ref $Other)) $Mid-Inner))
 
   ;; CHECK:      (func $func (type $Other)
   ;; CHECK-NEXT:  (drop
@@ -813,17 +822,23 @@
   ;; CHECK-NEXT: )
   (func $func
     (drop
-      ;; The situation here is that we have only a get for some types, and no other constraints. As we ignore gets, we work under no constraints at all. We then have to pick some type, so we pick the one used by our supertype - and the supertype might have picked up a type from another branch of the type tree, which is not a subtype of ours.
-      ;; We never create an instance of $Leaf1-Outer, and we only have a get of its
-      ;; field. This optimization ignores the get (to not be limited by it).
-      ;; It will then optimize $Leaf1-Outer's field of $Leaf1-Inner (another struct for which we
-      ;; have no creation, and only a get) into $Leaf2-Inner, which is driven by the fact
-      ;; that we do have a creation of $Leaf2-Inner. But then this struct.get $Leaf1-Inner on field
-      ;; 0 is no longer valid, as we turn $Leaf1-Inner => $Leaf2-Inner, and $Leaf2-Inner has no field 0. To
-      ;; keep the module validating, we must not emit that. Instead, since there
-      ;; can be no instance of $Leaf1-Inner (as mentioned before, it is never created,
-      ;; nor anything that can be cast to it), we know this code is logically
-      ;; unreachable, and can emit an unreachable here.
+      ;; The situation here is that we have only a get for some types, and no
+      ;; other constraints. As we ignore gets, we work under no constraints at
+      ;; We then have to pick some type, so we pick the one used by our
+      ;; supertype - and the supertype might have picked up a type from another
+      ;; branch of the type tree, which is not a subtype of ours.
+      ;; In more detail, we never create an instance of $Leaf1-Outer, and we
+      ;; only have a get of its field. This optimization ignores the get (to not
+      ;; be limited by it). It will then optimize $Leaf1-Outer's field of
+      ;; $Leaf1-Inner (another struct for which we have no creation, and only a
+      ;; get) into $Leaf2-Inner, which is driven by the fact that we do have a
+      ;; creation of $Leaf2-Inner. But then this struct.get $Leaf1-Inner on field
+      ;; 0 is no longer valid, as we turn $Leaf1-Inner => $Leaf2-Inner, and
+      ;; $Leaf2-Inner has no field 0. To keep the module validating, we must not
+      ;; emit that. Instead, since there can be no instance of $Leaf1-Inner (as
+      ;; mentioned before, it is never created, nor anything that can be cast to
+      ;; it), we know this code is logically unreachable, and can emit an
+      ;; unreachable here.
       (struct.get $Leaf1-Inner 0
         (struct.get $Leaf1-Outer 0
           (ref.null $Leaf1-Outer)
