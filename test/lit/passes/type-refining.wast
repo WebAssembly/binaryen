@@ -812,6 +812,16 @@
   ;; CHECK-NEXT: )
   (func $func
     (drop
+      ;; We never create an instance of $I, and we only have a get of its
+      ;; field. This optimization ignores the get (to not be limited by it).
+      ;; It will then optimize $I's field of $H (another struct for which we
+      ;; have no creation, and only a get) into $G, which is driven by the fact
+      ;; that we do have a creation of $G. But then this struct.get $H on field
+      ;; 0 is no longer valid, as we turn $H => $G, and $G has no field 0. To
+      ;; keep the module validating, we must not emit that. Instead, since there
+      ;; can be no instance of $H (as mentioned before, it is never created,
+      ;; nor anything that can be cast to it), we know this code is logically
+      ;; unreachable, and can emit an unreachable here.
       (struct.get $H 0
         (struct.get $I 0
           (ref.null $I)
