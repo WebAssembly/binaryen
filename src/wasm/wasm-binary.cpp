@@ -219,7 +219,9 @@ void WasmBinaryWriter::writeTypes() {
   if (indexedTypes.types.size() == 0) {
     return;
   }
-  // Count the number of recursion groups
+  // Count the number of recursion groups, which is always the number of
+  // elements in the type section. In non-isorecursive type systems, it is also
+  // equivalent to the number of types.
   std::optional<RecGroup> lastGroup;
   size_t numGroups = 0;
   for (auto type : indexedTypes.types) {
@@ -233,7 +235,10 @@ void WasmBinaryWriter::writeTypes() {
   lastGroup = {};
   for (Index i = 0; i < indexedTypes.types.size(); ++i) {
     auto type = indexedTypes.types[i];
-    // Check whether we need to start a new recursion group.
+    // Check whether we need to start a new recursion group. Recursion groups of
+    // size 1 are implicit, so only emit a group header for larger groups. This
+    // gracefully handles non-isorecursive type systems, which only have groups
+    // of size 1.
     auto currGroup = type.getRecGroup();
     if (lastGroup != currGroup && currGroup.size() > 1) {
       o << S32LEB(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
