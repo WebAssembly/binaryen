@@ -73,7 +73,6 @@ struct FieldInfoScanner
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     // Nothing to do for a read, we just care about written values.
-//    info.note(type.getStruct().fields[index].type); // fixes it but worse results
   }
 };
 
@@ -200,12 +199,19 @@ struct TypeRefining : public Pass {
     }
 
     if (canOptimize) {
-      updateReads(*module, runner);
+      updateInstructions(*module, runner);
       updateTypes(*module, runner);
     }
   }
 
-  void updateReads(Module& wasm, PassRunner* runner) {
+  // If we change types then some instructions may need to be modified.
+  // Specifically, we assume that reads from structs impose no constraints on
+  // us, so that we can optimize maximally. If a struct is never created nor
+  // written to, but only read from, then we have literally no constraints on it
+  // at all, and we can end up with a situation where we alter the type to
+  // something that is invalid for that read. To ensure the code still
+  // validates, simply remove such reads.
+  void updateInstructions(Module& wasm, PassRunner* runner) {
     struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
       bool isFunctionParallel() override { return true; }
 
@@ -223,8 +229,22 @@ struct TypeRefining : public Pass {
         auto& fields = curr->ref->type.getHeapType().getStruct().fields;
         if (curr->index < fields.size() ||
             !Type::isSubType(fields[curr->index].type, curr->type)) {
+          // This instruction is invalid, so it must be the result of the
+          // situation described above: we ignored the read during our
+          // inference, and optimized accordingly, and so now we must remove it
+          // to keep the module validating. It doesn't matter what we emit here,
+          // since there are no struct.new or struct.sets for this type, so this
+          // code is logically unreachable.
+          //
+          // Note that we emit an unreachable here, which changes the type, and
+          // so we should refinalize. However, we will be refinalizing later
+          // anyhow in updateTypes, so there is no need.
+          Builder builder(*getModule());
           replaceCurrent(
-            Builder(*getModule()).makeUnreachable() // params
+            builder.makeSequence(
+              builder.makeDrop(curr->ref),
+              builder.makeUnreachable()
+            )
           );
         }
       }
