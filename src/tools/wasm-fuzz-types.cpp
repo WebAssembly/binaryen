@@ -21,6 +21,7 @@
 #include "support/command-line.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/random.h"
+#include "wasm-type-printing.h"
 
 namespace wasm {
 
@@ -68,24 +69,26 @@ struct Fuzzer {
 
   void printTypes(const std::vector<HeapType>& types) {
     std::cout << "Built " << types.size() << " types:\n";
-    // Record indices to use as names.
-    std::unordered_map<HeapType, size_t> typeIndices;
-    for (size_t i = 0; i < types.size(); ++i) {
-      typeIndices.insert({types[i], i});
-    }
+    struct FatalTypeNameGenerator
+      : TypeNameGeneratorBase<FatalTypeNameGenerator> {
+      TypeNames getNames(HeapType type) {
+        Fatal() << "trying to print unknown heap type";
+      }
+    };
+    IndexedTypeNameGenerator<FatalTypeNameGenerator> print(types);
+    std::unordered_map<HeapType, size_t> seen;
     for (size_t i = 0; i < types.size(); ++i) {
       auto type = types[i];
       std::cout << "(type $" << i << ' ';
-      if (auto prev = typeIndices[type]; !type.isBasic() && prev != i) {
-        std::cout << "identical to $" << prev;
+      if (!type.isBasic()) {
+        std::cout << print(type) << ")\n";
+        continue;
+      }
+      auto [it, inserted] = seen.insert({type, i});
+      if (inserted) {
+        std::cout << print(type);
       } else {
-        std::cout << type.print([&](std::ostream& os, HeapType t) {
-          if (auto it = typeIndices.find(t); it != typeIndices.end()) {
-            os << it->second;
-          } else {
-            Fatal() << "trying to print unknown heap type";
-          }
-        });
+        std::cout << "identical to $" << it->second;
       }
       std::cout << ")\n";
     }

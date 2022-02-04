@@ -20,6 +20,7 @@
 #include <functional>
 #include <optional>
 #include <ostream>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -70,8 +71,16 @@ struct Rtt;
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
 
-// Used to generate HeapType names
-using HeapTypeNameGenerator = std::function<void(std::ostream&, HeapType)>;
+// HeapType name information used for printing.
+struct TypeNames {
+  // The name of the type.
+  Name name;
+  // For a Struct, names of fields.
+  std::unordered_map<size_t, Name> fieldNames;
+};
+
+// Used to generate HeapType names.
+using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
 
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
@@ -276,17 +285,20 @@ public:
     return lub;
   }
 
-  // Helper allowing the value of `print(...)` to be sent to an ostream.
+  // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
+  // a `TypeID` because `Type` is incomplete at this point and using a reference
+  // makes it less convenient to use.
   struct Printed {
-    Type& type;
+    TypeID typeID;
     HeapTypeNameGenerator generateName;
   };
 
-  // Given a function for generating HeapType names, print the definition of
-  // this HeapType to `os`.`generateName` will only be called once per HeapType
-  // seen, so it should return a different value each time it is called.
+  // Given a function for generating non-basic HeapType names, print this Type
+  // to `os`.`generateName` should return the same name each time it is called
+  // with the same HeapType and it should return different names for different
+  // types.
   Printed print(HeapTypeNameGenerator generateName) {
-    return Printed{*this, generateName};
+    return Printed{getID(), generateName};
   }
 
   std::string toString() const;
@@ -403,17 +415,20 @@ public:
   // Return the LUB of two HeapTypes. The LUB always exists.
   static HeapType getLeastUpperBound(HeapType a, HeapType b);
 
-  // Helper allowing the value of `print(...)` to be sent to an ostream.
+  // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
+  // a `TypeID` because `Type` is incomplete at this point and using a reference
+  // makes it less convenient to use.
   struct Printed {
-    HeapType& type;
+    TypeID typeID;
     HeapTypeNameGenerator generateName;
   };
 
   // Given a function for generating HeapType names, print the definition of
-  // this HeapType to `os`. `generateName` will only be called once per HeapType
-  // seen, so it should return a different value each time it is called.
+  // this HeapType to `os`. `generateName` should return the same
+  // name each time it is called with the same HeapType and it should return
+  // different names for different types.
   Printed print(HeapTypeNameGenerator generateName) {
-    return Printed{*this, generateName};
+    return Printed{getID(), generateName};
   }
 
   std::string toString() const;

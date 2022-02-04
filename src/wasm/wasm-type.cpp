@@ -28,6 +28,7 @@
 #include "support/hash.h"
 #include "support/insert_ordered.h"
 #include "wasm-features.h"
+#include "wasm-type-printing.h"
 #include "wasm-type.h"
 
 #define TRACE_CANONICALIZATION 0
@@ -196,16 +197,6 @@ private:
   std::optional<Rtt> lub(const Rtt& a, const Rtt& b);
 };
 
-// Helper for generating names for HeapTypes when an alternative generator is
-// not available.
-struct DefaultHeapTypeNameGenerator {
-  size_t funcCount = 0;
-  size_t structCount = 0;
-  size_t arrayCount = 0;
-
-  void getName(std::ostream& os, HeapType type);
-};
-
 // Helper for printing types.
 struct TypePrinter {
   // Whether to print explicit supertypes.
@@ -215,22 +206,18 @@ struct TypePrinter {
   std::ostream& os;
 
   // The default generator state if no other generator is provided.
-  std::optional<DefaultHeapTypeNameGenerator> defaultGenerator;
+  std::optional<DefaultTypeNameGenerator> defaultGenerator;
 
   // The function we call to get HeapType names.
   HeapTypeNameGenerator generator;
-
-  // Cache names that have already been generated.
-  std::unordered_map<HeapType, std::string> nameCache;
 
   TypePrinter(std::ostream& os, HeapTypeNameGenerator generator)
     : printSupertypes(getTypeSystem() != TypeSystem::Equirecursive), os(os),
       defaultGenerator(), generator(generator) {}
   TypePrinter(std::ostream& os)
-    : TypePrinter(os, [&](std::ostream& os, HeapType type) {
-        defaultGenerator->getName(os, type);
-      }) {
-    defaultGenerator = DefaultHeapTypeNameGenerator{};
+    : TypePrinter(
+        os, [&](HeapType type) { return defaultGenerator->getNames(type); }) {
+    defaultGenerator = DefaultTypeNameGenerator{};
   }
 
   void printHeapTypeName(HeapType type);
@@ -1476,6 +1463,25 @@ size_t RecGroup::size() const {
   }
 }
 
+TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
+  auto [it, inserted] = nameCache.insert({type, {}});
+  if (inserted) {
+    // Generate a new name for this type we have not previously seen.
+    std::stringstream stream;
+    if (type.isSignature()) {
+      stream << "func." << funcCount++;
+    } else if (type.isStruct()) {
+      stream << "struct." << structCount++;
+    } else if (type.isArray()) {
+      stream << "array." << arrayCount++;
+    } else {
+      WASM_UNREACHABLE("unexpected kind");
+    }
+    it->second = {stream.str(), {}};
+  }
+  return it->second;
+}
+
 template<typename T> static std::string genericToString(const T& t) {
   std::ostringstream ss;
   ss << t;
@@ -1493,13 +1499,13 @@ std::ostream& operator<<(std::ostream& os, Type type) {
   return TypePrinter(os).print(type);
 }
 std::ostream& operator<<(std::ostream& os, Type::Printed printed) {
-  return TypePrinter(os, printed.generateName).print(printed.type);
+  return TypePrinter(os, printed.generateName).print(Type(printed.typeID));
 }
 std::ostream& operator<<(std::ostream& os, HeapType type) {
   return TypePrinter(os).print(type);
 }
 std::ostream& operator<<(std::ostream& os, HeapType::Printed printed) {
-  return TypePrinter(os, printed.generateName).print(printed.type);
+  return TypePrinter(os, printed.generateName).print(HeapType(printed.typeID));
 }
 std::ostream& operator<<(std::ostream& os, Tuple tuple) {
   return TypePrinter(os).print(tuple);
@@ -1966,32 +1972,12 @@ std::optional<Rtt> TypeBounder::lub(const Rtt& a, const Rtt& b) {
   return Rtt(depth, a.heapType);
 }
 
-void DefaultHeapTypeNameGenerator::getName(std::ostream& os, HeapType type) {
-  if (type.isSignature()) {
-    os << "func." << funcCount++;
-  } else if (type.isStruct()) {
-    os << "struct." << structCount++;
-  } else if (type.isArray()) {
-    os << "array." << arrayCount++;
-  } else {
-    WASM_UNREACHABLE("unexpected kind");
-  }
-}
-
 void TypePrinter::printHeapTypeName(HeapType type) {
   if (type.isBasic()) {
     print(type);
     return;
   }
-  os << '$';
-  auto [it, inserted] = nameCache.insert({type, ""});
-  if (inserted) {
-    // We haven't seen this type before; generate a new name for it.
-    std::stringstream stream;
-    generator(stream, type);
-    it->second = stream.str();
-  }
-  os << it->second;
+  os << '$' << generator(type).name;
 }
 
 void TypePrinter::printSupertypeOr(std::optional<HeapType> super,

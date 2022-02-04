@@ -317,7 +317,6 @@ void test_printing() {
     std::cout << tuple << "\n";
     std::cout << Type(tuple) << "\n";
   }
-  // TODO: Think about recursive types. Currently impossible to construct.
   {
     std::cout << "\n;; Recursive (not really)\n";
     Signature signatureSignature(Type::none, Type::none);
