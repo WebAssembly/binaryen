@@ -214,7 +214,7 @@ struct TypePrinter {
   // The stream we are printing to.
   std::ostream& os;
 
-  // The default generator state if no other generated is provided.
+  // The default generator state if no other generator is provided.
   std::optional<DefaultHeapTypeNameGenerator> defaultGenerator;
 
   // The function we call to get HeapType names.
