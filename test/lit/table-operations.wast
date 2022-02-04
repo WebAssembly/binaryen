@@ -10,18 +10,18 @@
 ;; RUN: cat %t.text.wast | filecheck %s --check-prefix=CHECK-TEXT
 
 (module
-  ;; CHECK-BINARY:      (type $none_=>_none (func))
+  ;; CHECK-BINARY:      (type $func.0 (func))
 
-  ;; CHECK-BINARY:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK-BINARY:      (type $func.1 (func (result i32)))
 
-  ;; CHECK-BINARY:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK-BINARY:      (type $func.2 (func (param i32) (result i32)))
 
   ;; CHECK-BINARY:      (table $table-1 1 1 funcref)
-  ;; CHECK-TEXT:      (type $none_=>_none (func))
+  ;; CHECK-TEXT:      (type $func.0 (func))
 
-  ;; CHECK-TEXT:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK-TEXT:      (type $func.1 (func (result i32)))
 
-  ;; CHECK-TEXT:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK-TEXT:      (type $func.2 (func (param i32) (result i32)))
 
   ;; CHECK-TEXT:      (table $table-1 1 1 funcref)
   (table $table-1 funcref
@@ -148,11 +148,11 @@
     (table.grow $table-1 (ref.null func) (local.get $sz))
   )
 )
-;; CHECK-NODEBUG:      (type $none_=>_none (func))
+;; CHECK-NODEBUG:      (type $func.0 (func))
 
-;; CHECK-NODEBUG:      (type $none_=>_i32 (func (result i32)))
+;; CHECK-NODEBUG:      (type $func.1 (func (result i32)))
 
-;; CHECK-NODEBUG:      (type $i32_=>_i32 (func (param i32) (result i32)))
+;; CHECK-NODEBUG:      (type $func.2 (func (param i32) (result i32)))
 
 ;; CHECK-NODEBUG:      (table $0 1 1 funcref)
 

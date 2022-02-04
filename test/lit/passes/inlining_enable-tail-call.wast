@@ -6,7 +6,7 @@
 (module
   (table 1 1 funcref)
   (elem (i32.const 0) $tabled)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (table $0 1 1 funcref)
 
@@ -238,9 +238,9 @@
   )
 )
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
   ;; CHECK:      (func $child (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 1234)
@@ -260,9 +260,9 @@
   )
 )
 (module
- ;; CHECK:      (type $f32_i32_=>_i32 (func (param f32 i32) (result i32)))
+ ;; CHECK:      (type $func.0 (func (param f32 i32) (result i32)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.1 (func))
 
  ;; CHECK:      (global $hangLimit (mut i32) (i32.const 25))
  (global $hangLimit (mut i32) (i32.const 25))
@@ -384,7 +384,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (type $T (func (param i32)))
  (type $T (func (param i32)))
@@ -425,7 +425,7 @@
    )
   )
  )
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (block $__inlined_func$0
@@ -441,7 +441,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
  ;; CHECK:      (func $0 (result i32)
  ;; CHECK-NEXT:  (return
@@ -458,7 +458,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (local $0 i32)
@@ -486,7 +486,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
  ;; CHECK:      (func $0 (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
@@ -509,7 +509,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (drop
@@ -541,7 +541,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (local $0 i32)
@@ -579,7 +579,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (type $T (func (param i32) (result i32)))
  (type $T (func (param i32) (result i32)))
@@ -613,7 +613,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (type $T (func (param i32)))
  (type $T (func (param i32)))

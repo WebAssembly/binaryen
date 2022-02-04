@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt --generate-i64-dyncalls -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $i32_=>_i64 (func (param i32) (result i64)))
+ ;; CHECK:      (type $func.0 (func (param i32) (result i64)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.1 (func (result i32)))
 
- ;; CHECK:      (type $i32_i32_=>_i64 (func (param i32 i32) (result i64)))
+ ;; CHECK:      (type $func.2 (func (param i32 i32) (result i64)))
 
  ;; CHECK:      (table $0 2 2 funcref)
 
@@ -32,7 +32,7 @@
  (elem (i32.const 0) $f1 $f2)
 )
 ;; CHECK:      (func $dynCall_ji (param $fptr i32) (param $0 i32) (result i64)
-;; CHECK-NEXT:  (call_indirect (type $i32_=>_i64)
+;; CHECK-NEXT:  (call_indirect (type $func.0)
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:   (local.get $fptr)
 ;; CHECK-NEXT:  )

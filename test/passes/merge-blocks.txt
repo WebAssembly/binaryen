@@ -1,8 +1,8 @@
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_f32 (func (result f32)))
+ (type $func.0 (func))
+ (type $func.1 (func (result i32)))
+ (type $func.2 (func (param i32)))
+ (type $func.3 (func (result f32)))
  (global $global$0 (mut i32) (i32.const 10))
  (func $drop-block
   (block $block

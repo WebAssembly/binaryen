@@ -37,7 +37,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $y)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $ref?|$A|_=>_i32) (param $x (ref null $A)) (result i32)
+  ;; NOMNL:      (func $test (type $func.0) (param $x (ref null $A)) (result i32)
   ;; NOMNL-NEXT:  (local $y i32)
   ;; NOMNL-NEXT:  (local.set $y
   ;; NOMNL-NEXT:   (struct.get $A 0

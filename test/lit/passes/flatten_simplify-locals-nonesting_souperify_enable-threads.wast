@@ -4,31 +4,31 @@
 ;; RUN: foreach %s %t wasm-opt --flatten --simplify-locals-nonesting --souperify --enable-threads -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.2 (func (param i32)))
 
-  ;; CHECK:      (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $func.3 (func (param i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.4 (func (result i32)))
 
-  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+  ;; CHECK:      (type $func.5 (func (param i32 i32)))
 
-  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
+  ;; CHECK:      (type $func.6 (func (result f64)))
 
-  ;; CHECK:      (type $i64_i64_i64_=>_i32 (func (param i64 i64 i64) (result i32)))
+  ;; CHECK:      (type $func.7 (func (param i64 i64 i64) (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.8 (func))
 
-  ;; CHECK:      (type $i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32)))
+  ;; CHECK:      (type $func.9 (func (param i32 i32 i32 i32)))
 
-  ;; CHECK:      (type $i64_i64_i64_=>_i64 (func (param i64 i64 i64) (result i64)))
+  ;; CHECK:      (type $func.10 (func (param i64 i64 i64) (result i64)))
 
-  ;; CHECK:      (type $i64_i64_i32_f32_=>_none (func (param i64 i64 i32 f32)))
+  ;; CHECK:      (type $func.11 (func (param i64 i64 i32 f32)))
 
-  ;; CHECK:      (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $func.12 (func (param i32 i32 i32 i32 i32) (result i32)))
 
   ;; CHECK:      (memory $0 (shared 1 1))
   (memory $0 (shared 1 1))

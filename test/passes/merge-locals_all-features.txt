@@ -1,9 +1,9 @@
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_f32_f32_=>_i64 (func (param i32 f32 f32) (result i64)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param i32 i32)))
+ (type $func.1 (func (param i32 i32) (result i32)))
+ (type $func.2 (func (param i32 f32 f32) (result i64)))
+ (type $func.3 (func (param i32 i32 i32)))
+ (type $func.4 (func))
  (global $global$0 (mut i32) (i32.const 10))
  (func $test (param $x i32) (param $y i32) (result i32)
   (drop

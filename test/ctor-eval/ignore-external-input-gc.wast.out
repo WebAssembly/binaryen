@@ -1,6 +1,6 @@
 (module
- (type $ref|any|_=>_none (func (param (ref any))))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (param (ref any))))
+ (type $func.1 (func (result i32)))
  (global $global1 (mut i32) (i32.const 11))
  (global $global2 (mut i32) (i32.const 20))
  (export "test2" (func $1))

@@ -1,6 +1,6 @@
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (result i32)))
+ (type $func.1 (func))
  (import "import" "import" (func $import))
  (global $global1 (mut i32) (i32.const 11))
  (global $global2 (mut i32) (i32.const 12))

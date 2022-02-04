@@ -12,7 +12,7 @@
  (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (memory $0 1 1)
  (data (i32.const 1024) "waka this CAN be optimized")
  (data (i32.const 1107) "we DO know where it will go")
@@ -66,7 +66,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (global $__mem_segment_drop_state (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
@@ -365,7 +365,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "param" (global $param i32))
  (global $__mem_segment_drop_state (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
@@ -825,7 +825,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (global $__mem_segment_drop_state (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
  (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
@@ -933,7 +933,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (memory $0 2048 2048)
  (data "a")
  (data "a")
@@ -1540,7 +1540,7 @@
  (data (global.get $memoryBase) "x")
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (global $__mem_segment_drop_state (mut i32) (i32.const 0))
  (memory $0 1 1)
  (data "skipped")

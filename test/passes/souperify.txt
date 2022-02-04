@@ -8,7 +8,7 @@ pc %1 1:i1
 infer %0
 
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (func $if-loop-test
   (local $0 i32)
   (if

@@ -5,7 +5,7 @@
 
 ;; A global that is only read in order to be written is not needed.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $global i32 (i32.const 0))
   (global $global (mut i32) (i32.const 0))
@@ -62,7 +62,7 @@
 )
 ;; An additional read prevents the read-only-to-write optimization.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
@@ -89,7 +89,7 @@
 )
 ;; We do not optimize if-elses in the read-only-to-write optimization.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
@@ -112,7 +112,7 @@
 )
 ;; Side effects in the body prevent the read-only-to-write optimization.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
@@ -147,7 +147,7 @@
 )
 ;; Nested patterns work as well, in a single run of the pass.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $a i32 (i32.const 0))
   (global $a (mut i32) (i32.const 0))
@@ -205,7 +205,7 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once i32 (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -234,7 +234,7 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -264,7 +264,7 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -293,7 +293,7 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -321,9 +321,9 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.1 (func (param i32) (result i32)))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -364,9 +364,9 @@
 ;; Using the global's value in a way that can cause side effects prevents the
 ;; read-only-to-write optimization.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
@@ -406,9 +406,9 @@
 ;; As above, but now the global's value is not the condition of the if, so there
 ;; is no problem.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
   ;; CHECK:      (global $global i32 (i32.const 0))
   (global $global (mut i32) (i32.const 0))
@@ -449,7 +449,7 @@
 
 ;; As above, but now the global's value flows into a side effect.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
@@ -482,7 +482,7 @@
 (module
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once i32 (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -540,7 +540,7 @@
 (module
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once i32 (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -600,7 +600,7 @@
 (module
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -662,7 +662,7 @@
 (module
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once i32 (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -737,7 +737,7 @@
 (module
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))

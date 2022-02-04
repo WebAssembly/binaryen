@@ -7,15 +7,15 @@
   (memory i64 256 256)
   ;; CHECK:      (type $1 (func))
   (type $1 (func))
-  ;; CHECK:      (type $i32_i32_i64_i64_=>_i64 (func (param i32 i32 i64 i64) (result i64)))
+  ;; CHECK:      (type $func.0 (func (param i32 i32 i64 i64) (result i64)))
 
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $func.1 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i64_=>_i64 (func (param i32 i64) (result i64)))
+  ;; CHECK:      (type $func.2 (func (param i32 i64) (result i64)))
 
-  ;; CHECK:      (type $i32_f32_=>_f32 (func (param i32 f32) (result f32)))
+  ;; CHECK:      (type $func.3 (func (param i32 f32) (result f32)))
 
-  ;; CHECK:      (type $i32_f64_=>_f64 (func (param i32 f64) (result f64)))
+  ;; CHECK:      (type $func.4 (func (param i32 f64) (result f64)))
 
   ;; CHECK:      (import "env" "load_ptr" (func $load_ptr (param i32 i32 i64 i64) (result i64)))
 

@@ -116,15 +116,15 @@
  )
 )
 
-;; CHECK:      (type $none_=>_none (func))
+;; CHECK:      (type $func.0 (func))
 
-;; CHECK:      (type $none_=>_f64 (func (result f64)))
+;; CHECK:      (type $func.1 (func (result f64)))
 
-;; CHECK:      (type $i32_f64_f64_=>_i32 (func (param i32 f64 f64) (result i32)))
+;; CHECK:      (type $func.2 (func (param i32 f64 f64) (result i32)))
 
-;; CHECK:      (type $i64_=>_none (func (param i64)))
+;; CHECK:      (type $func.3 (func (param i64)))
 
-;; CHECK:      (type $f64_=>_i32 (func (param f64) (result i32)))
+;; CHECK:      (type $func.4 (func (param f64) (result i32)))
 
 ;; CHECK:      (export "if-select" (func $0))
 

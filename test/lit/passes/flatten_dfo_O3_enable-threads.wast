@@ -4,15 +4,15 @@
 ;; RUN: foreach %s %t wasm-opt --flatten --dfo -O3 --enable-threads -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (type $func.1 (func (param i32 i32) (result i32)))
 
- ;; CHECK:      (type $i64_i32_=>_f64 (func (param i64 i32) (result f64)))
+ ;; CHECK:      (type $func.2 (func (param i64 i32) (result f64)))
 
- ;; CHECK:      (type $f64_=>_f64 (func (param f64) (result f64)))
+ ;; CHECK:      (type $func.3 (func (param f64) (result f64)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.4 (func (result i32)))
 
  ;; CHECK:      (memory $0 (shared 1 1))
  (memory $0 (shared 1 1))

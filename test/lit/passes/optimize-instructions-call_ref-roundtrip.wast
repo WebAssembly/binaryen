@@ -19,7 +19,7 @@
  ;; CHECK:      (type $v3 (func_subtype func))
  (type $v3 (func))
 
- ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+ ;; CHECK:      (type $func.0 (func_subtype (param i32) func))
 
  ;; CHECK:      (table $table-1 10 (ref null $v1))
  (table $table-1 10 (ref null $v1))
@@ -55,7 +55,7 @@
  ;; CHECK-NEXT: )
  (func $helper-3 (type $v3))
 
- ;; CHECK:      (func $call-table-get (type $i32_=>_none) (param $x i32)
+ ;; CHECK:      (func $call-table-get (type $func.0) (param $x i32)
  ;; CHECK-NEXT:  (call_indirect $table-1 (type $v1)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )

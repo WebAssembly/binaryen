@@ -3,7 +3,7 @@
 ;; RUN:  | filecheck %s
 
 (module
- ;; CHECK:      (type $struct (struct ))
+ ;; CHECK:      (type $struct (struct))
  (type $struct (struct ))
 
  ;; CHECK:      (func $br_on_non_data-1

@@ -28,17 +28,100 @@
 
 namespace wasm {
 
+struct TypePrintingContext {
+  // Stream we're printing to.
+  std::ostream& o;
+
+  // Optional module that will be the primary source of names.
+  Module*& wasm;
+
+  // State for generating new HeapType names.
+  size_t funcCount = 0;
+  size_t structCount = 0;
+  size_t arrayCount = 0;
+  std::unordered_map<HeapType, TypeNames> cachedNames;
+
+  TypePrintingContext(std::ostream& o, Module*& wasm) : o(o), wasm(wasm) {}
+
+  TypeNames& getTypeNames(HeapType type) {
+    if (wasm) {
+      // Try to find names stored on the module before generating names.
+      if (auto it = wasm->typeNames.find(type); it != wasm->typeNames.end()) {
+        return it->second;
+      }
+    }
+    // No module names, so either generate new names or use previously generated
+    // names.
+    auto [it, inserted] = cachedNames.insert({type, TypeNames{}});
+    if (inserted) {
+      // We did not already have names for this type; generate a new name.
+      // TODO: avoid repeating names already used by the module for other types.
+      std::stringstream stream;
+      if (type.isSignature()) {
+        stream << "func." << funcCount++;
+      } else if (type.isStruct()) {
+        stream << "struct." << structCount++;
+      } else if (type.isArray()) {
+        stream << "array." << arrayCount++;
+      } else {
+        WASM_UNREACHABLE("unexpected kind");
+      }
+      it->second = {stream.str(), {}};
+    }
+    return it->second;
+  }
+
+  std::ostream& printType(Type type) {
+    return o << type.print([&](HeapType ht) { return getTypeNames(ht); });
+  }
+
+  std::ostream& printHeapType(HeapType type) {
+    if (type.isBasic()) {
+      return o << type;
+    }
+    return o << '$' << getTypeNames(type).name;
+  }
+
+  std::ostream& printParamType(Type type) {
+    o << "(param";
+    for (auto t : type) {
+      o << ' ';
+      printType(t);
+    }
+    return o << ')';
+  }
+
+  std::ostream& printResultType(Type type) {
+    o << "(result";
+    for (auto t : type) {
+      o << ' ';
+      printType(t);
+    }
+    return o << ')';
+  }
+
+  void printFieldName(HeapType type, Index index) {
+    auto& fieldNames = getTypeNames(type).fieldNames;
+    if (auto it = fieldNames.find(index); it != fieldNames.end()) {
+      o << '$' << it->second;
+    } else {
+      o << index;
+    }
+  }
+};
+
 static std::ostream& printExpression(Expression* expression,
                                      std::ostream& o,
                                      bool minify = false,
                                      bool full = false,
                                      Module* wasm = nullptr);
 
-static std::ostream&
-printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
+static std::ostream& printStackInst(TypePrintingContext& typeContext,
+                                    StackInst* inst,
+                                    Function* func = nullptr);
 
 static std::ostream&
-printStackIR(StackIR* ir, std::ostream& o, Function* func = nullptr);
+printStackIR(TypePrintingContext&, StackIR* ir, Function* func = nullptr);
 
 namespace {
 
@@ -59,7 +142,7 @@ std::ostream& printName(Name name, std::ostream& o) {
   return o;
 }
 
-static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
+std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   Name name;
   if (func) {
     name = func->getLocalNameOrDefault(index);
@@ -70,302 +153,27 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
-namespace {
-
-// Helper for printing the name of a type. This output is guaranteed to not
-// contain spaces.
-struct TypeNamePrinter {
-  // Optional. If present, the module's HeapType names will be used.
-  Module* wasm;
-
-  // Keep track of the first depth at which we see each HeapType so if we see it
-  // again, we can unambiguously refer to it without infinitely recursing.
-  size_t currHeapTypeDepth = 0;
-  std::unordered_map<HeapType, size_t> heapTypeDepths;
-
-  // The stream we are printing to.
-  std::ostream& os;
-
-  TypeNamePrinter(std::ostream& os, Module* wasm = nullptr)
-    : wasm(wasm), os(os) {}
-
-  void print(Type type);
-  void print(HeapType heapType);
-  void print(const Tuple& tuple);
-  void print(const Field& field);
-  void print(const Signature& sig);
-  void print(const Struct& struct_);
-  void print(const Array& array);
-  void print(const Rtt& rtt);
-
-  // FIXME: This hard limit on how many times we call print() avoids extremely
-  //        large outputs, which can be inconveniently large in some cases, but
-  //        we should have a better mechanism for this.
-  static const size_t MaxPrints = 100;
-
-  size_t prints = 0;
-
-  bool exceededLimit() {
-    if (prints >= MaxPrints) {
-      os << "?";
-      return true;
-    }
-    prints++;
-    return false;
-  }
-};
-
-void TypeNamePrinter::print(Type type) {
-  if (exceededLimit()) {
-    return;
-  }
-  if (type.isBasic()) {
-    os << type;
-  } else if (type.isTuple()) {
-    print(type.getTuple());
-  } else if (type.isRtt()) {
-    print(type.getRtt());
-  } else if (type.isRef()) {
-    os << "ref";
-    if (type.isNullable()) {
-      os << "?";
-    }
-    os << '|';
-    print(type.getHeapType());
-    os << '|';
-  } else {
-    WASM_UNREACHABLE("unexpected type");
-  }
-}
-
-void TypeNamePrinter::print(HeapType type) {
-  if (exceededLimit()) {
-    return;
-  }
-  if (type.isBasic()) {
-    os << type;
-    return;
-  }
-  // If there is a name for this type in this module, use it.
-  // FIXME: in theory there could be two types, one with a name, and one
-  // without, and the one without gets an automatic name that matches the
-  // other's. To check for that, if (first) we could assert at the very end of
-  // this function that the automatic name is not present in the given names.
-  if (wasm && wasm->typeNames.count(type)) {
-    os << '$' << wasm->typeNames[type].name;
-    return;
-  }
-  // If we have seen this HeapType before, just print its relative depth instead
-  // of infinitely recursing.
-  auto it = heapTypeDepths.find(type);
-  if (it != heapTypeDepths.end()) {
-    assert(it->second <= currHeapTypeDepth);
-    size_t relativeDepth = currHeapTypeDepth - it->second;
-    os << "..." << relativeDepth;
-    return;
-  }
-
-  // If this is the top-level heap type, add a $
-  if (currHeapTypeDepth == 0) {
-    os << "$";
-  }
-
-  // Update the context for the current HeapType before recursing.
-  heapTypeDepths[type] = ++currHeapTypeDepth;
-
-  if (type.isSignature()) {
-    print(type.getSignature());
-  } else if (type.isStruct()) {
-    print(type.getStruct());
-  } else if (type.isArray()) {
-    print(type.getArray());
-  } else {
-    WASM_UNREACHABLE("unexpected type");
-  }
-
-  // Restore the previous context after the recursion.
-  heapTypeDepths.erase(type);
-  --currHeapTypeDepth;
-}
-
-void TypeNamePrinter::print(const Tuple& tuple) {
-  auto sep = "";
-  for (auto type : tuple.types) {
-    os << sep;
-    sep = "_";
-    print(type);
-  }
-}
-
-void TypeNamePrinter::print(const Field& field) {
-  if (field.mutable_) {
-    os << "mut:";
-  }
-  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
-    if (field.packedType == Field::i8) {
-      os << "i8";
-    } else if (field.packedType == Field::i16) {
-      os << "i16";
-    } else {
-      WASM_UNREACHABLE("invalid packed type");
-    }
-  } else {
-    print(field.type);
-  }
-}
-
-void TypeNamePrinter::print(const Signature& sig) {
-  // TODO: Switch to using an unambiguous delimiter rather than differentiating
-  // only the top level with a different arrow.
-  print(sig.params);
-  if (currHeapTypeDepth == 1) {
-    os << "_=>_";
-  } else {
-    os << "_->_";
-  }
-  print(sig.results);
-}
-
-void TypeNamePrinter::print(const Struct& struct_) {
-  os << '{';
-  auto sep = "";
-  for (const auto& field : struct_.fields) {
-    os << sep;
-    sep = "_";
-    print(field);
-  }
-  os << '}';
-}
-
-void TypeNamePrinter::print(const Array& array) {
-  os << '[';
-  print(array.element);
-  os << ']';
-}
-
-void TypeNamePrinter::print(const Rtt& rtt) {
-  os << "rtt_";
-  if (rtt.hasDepth()) {
-    os << rtt.depth << '_';
-  }
-  print(rtt.heapType);
-}
-
-} // anonymous namespace
-
-static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
-  if (type.isBasic()) {
-    o << type;
-  } else if (type.isTuple()) {
-    o << '(';
-    auto sep = "";
-    for (const auto& t : type) {
-      o << sep;
-      printType(o, t, wasm);
-      sep = " ";
-    }
-    o << ')';
-  } else if (type.isRtt()) {
-    auto rtt = type.getRtt();
-    o << "(rtt ";
-    if (rtt.hasDepth()) {
-      o << rtt.depth << ' ';
-    }
-    TypeNamePrinter(o, wasm).print(rtt.heapType);
-    o << ')';
-  } else if (type.isRef() && !type.isBasic()) {
-    o << "(ref ";
-    if (type.isNullable()) {
-      o << "null ";
-    }
-    TypeNamePrinter(o, wasm).print(type.getHeapType());
-    o << ')';
-  } else {
-    WASM_UNREACHABLE("unexpected type");
-  }
-  return o;
-}
-
-static std::ostream&
-printHeapType(std::ostream& o, HeapType type, Module* wasm) {
-  TypeNamePrinter(o, wasm).print(type);
-  return o;
-}
-
-static std::ostream& printPrefixedTypes(std::ostream& o,
-                                        const char* prefix,
-                                        Type type,
-                                        Module* wasm) {
-  o << '(' << prefix;
-  if (type == Type::none) {
-    return o << ')';
-  }
-  if (type.isTuple()) {
-    // Tuple types are not printed in parens, we can just emit them one after
-    // the other in the same list as the "result".
-    for (auto t : type) {
-      o << ' ';
-      printType(o, t, wasm);
-    }
-  } else {
-    o << ' ';
-    printType(o, type, wasm);
-  }
-  o << ')';
-  return o;
-}
-
-static std::ostream& printResultType(std::ostream& o, Type type, Module* wasm) {
-  return printPrefixedTypes(o, "result", type, wasm);
-}
-
-static std::ostream& printParamType(std::ostream& o, Type type, Module* wasm) {
-  return printPrefixedTypes(o, "param", type, wasm);
-}
-
-// Generic processing of a struct's field, given an optional module. Calls func
-// with the field name, if it is present, or with a null Name if not.
-template<typename T>
-void processFieldName(Module* wasm, HeapType type, Index index, T func) {
-  if (wasm) {
-    auto it = wasm->typeNames.find(type);
-    if (it != wasm->typeNames.end()) {
-      auto& fieldNames = it->second.fieldNames;
-      auto it = fieldNames.find(index);
-      if (it != fieldNames.end()) {
-        auto name = it->second;
-        if (name.is()) {
-          func(it->second);
-          return;
-        }
-      }
-    }
-  }
-  func(Name());
-}
-
-} // anonymous namespace
-
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
 // format. Print something else to make it pass.
-static Type forceConcrete(Type type) {
-  return type.isConcrete() ? type : Type::i32;
-}
+Type forceConcrete(Type type) { return type.isConcrete() ? type : Type::i32; }
+
+} // anonymous namespace
 
 // Prints the internal contents of an expression: everything but
 // the children.
 struct PrintExpressionContents
   : public OverriddenVisitor<PrintExpressionContents> {
-  Module* wasm = nullptr;
-  Function* currFunction = nullptr;
+  TypePrintingContext& typeContext;
+  Module*& wasm;
+  Function* currFunction;
   std::ostream& o;
   FeatureSet features;
 
-  PrintExpressionContents(Module* wasm, Function* currFunction, std::ostream& o)
-    : wasm(wasm), currFunction(currFunction), o(o), features(wasm->features) {}
-
-  PrintExpressionContents(Function* currFunction, std::ostream& o)
-    : currFunction(currFunction), o(o), features(FeatureSet::All) {}
+  PrintExpressionContents(TypePrintingContext& typeContext,
+                          Function* currFunction)
+    : typeContext(typeContext), wasm(typeContext.wasm),
+      currFunction(currFunction), o(typeContext.o),
+      features(wasm ? wasm->features : FeatureSet::All) {}
 
   void visitBlock(Block* curr) {
     printMedium(o, "block");
@@ -375,14 +183,14 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      typeContext.printResultType(curr->type);
     }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      typeContext.printResultType(curr->type);
     }
   }
   void visitLoop(Loop* curr) {
@@ -393,7 +201,7 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      typeContext.printResultType(curr->type);
     }
   }
   void visitBreak(Break* curr) {
@@ -436,7 +244,7 @@ struct PrintExpressionContents
     o << '(';
     printMinor(o, "type ");
 
-    TypeNamePrinter(o, wasm).print(curr->heapType);
+    typeContext.printHeapType(curr->heapType);
 
     o << ')';
   }
@@ -1862,7 +1670,7 @@ struct PrintExpressionContents
     restoreNormalColor(o);
     if (curr->type.isRef()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      typeContext.printResultType(curr->type);
     }
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
@@ -1871,7 +1679,7 @@ struct PrintExpressionContents
   void visitMemoryGrow(MemoryGrow* curr) { printMedium(o, "memory.grow"); }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
-    printHeapType(o, curr->type.getHeapType(), wasm);
+    typeContext.printHeapType(curr->type.getHeapType());
   }
   void visitRefIs(RefIs* curr) {
     switch (curr->op) {
@@ -1920,7 +1728,7 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      typeContext.printResultType(curr->type);
     }
   }
   void visitThrow(Throw* curr) {
@@ -1937,7 +1745,7 @@ struct PrintExpressionContents
     prepareColor(o) << "pop";
     for (auto type : curr->type) {
       o << ' ';
-      printType(o, type, wasm);
+      typeContext.printType(type);
     }
     restoreNormalColor(o);
   }
@@ -1962,7 +1770,7 @@ struct PrintExpressionContents
       printMedium(o, "ref.test");
     } else {
       printMedium(o, "ref.test_static ");
-      printHeapType(o, curr->intendedType, wasm);
+      typeContext.printHeapType(curr->intendedType);
     }
   }
   void visitRefCast(RefCast* curr) {
@@ -1970,7 +1778,7 @@ struct PrintExpressionContents
       printMedium(o, "ref.cast");
     } else {
       printMedium(o, "ref.cast_static ");
-      printHeapType(o, curr->intendedType, wasm);
+      typeContext.printHeapType(curr->intendedType);
     }
   }
   void visitBrOn(BrOn* curr) {
@@ -1988,7 +1796,7 @@ struct PrintExpressionContents
           printMedium(o, "br_on_cast_static ");
           printName(curr->name, o);
           o << ' ';
-          printHeapType(o, curr->intendedType, wasm);
+          typeContext.printHeapType(curr->intendedType);
           return;
         }
         break;
@@ -1999,7 +1807,7 @@ struct PrintExpressionContents
           printMedium(o, "br_on_cast_static_fail ");
           printName(curr->name, o);
           o << ' ';
-          printHeapType(o, curr->intendedType, wasm);
+          typeContext.printHeapType(curr->intendedType);
           return;
         }
         break;
@@ -2028,7 +1836,7 @@ struct PrintExpressionContents
   }
   void visitRttCanon(RttCanon* curr) {
     printMedium(o, "rtt.canon ");
-    TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
+    typeContext.printHeapType(curr->type.getRtt().heapType);
   }
   void visitRttSub(RttSub* curr) {
     if (curr->fresh) {
@@ -2036,7 +1844,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "rtt.sub ");
     }
-    TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
+    typeContext.printHeapType(curr->type.getRtt().heapType);
   }
 
   // If we cannot print a valid unreachable instruction (say, a struct.get,
@@ -2066,18 +1874,9 @@ struct PrintExpressionContents
       printMedium(o, "_with_rtt");
     }
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    typeContext.printHeapType(curr->type.getHeapType());
   }
 
-  void printFieldName(HeapType type, Index index) {
-    processFieldName(wasm, type, index, [&](Name name) {
-      if (name.is()) {
-        o << '$' << name;
-      } else {
-        o << index;
-      }
-    });
-  }
   void visitStructGet(StructGet* curr) {
     if (printUnreachableReplacement(curr->ref)) {
       return;
@@ -2093,9 +1892,9 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "struct.get ");
     }
-    TypeNamePrinter(o, wasm).print(heapType);
+    typeContext.printHeapType(heapType);
     o << ' ';
-    printFieldName(heapType, curr->index);
+    typeContext.printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
     if (printUnreachableReplacement(curr->ref)) {
@@ -2103,9 +1902,9 @@ struct PrintExpressionContents
     }
     printMedium(o, "struct.set ");
     auto heapType = curr->ref->type.getHeapType();
-    TypeNamePrinter(o, wasm).print(heapType);
+    typeContext.printHeapType(heapType);
     o << ' ';
-    printFieldName(heapType, curr->index);
+    typeContext.printFieldName(heapType, curr->index);
   }
   void visitArrayNew(ArrayNew* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -2119,7 +1918,7 @@ struct PrintExpressionContents
       printMedium(o, "_with_rtt");
     }
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    typeContext.printHeapType(curr->type.getHeapType());
   }
   void visitArrayInit(ArrayInit* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -2130,7 +1929,7 @@ struct PrintExpressionContents
       printMedium(o, "_static");
     }
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    typeContext.printHeapType(curr->type.getHeapType());
   }
   void visitArrayGet(ArrayGet* curr) {
     if (printUnreachableReplacement(curr->ref)) {
@@ -2146,21 +1945,21 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "array.get ");
     }
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    typeContext.printHeapType(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
     if (printUnreachableReplacement(curr->ref)) {
       return;
     }
     printMedium(o, "array.set ");
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    typeContext.printHeapType(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) {
     if (printUnreachableReplacement(curr->ref)) {
       return;
     }
     printMedium(o, "array.len ");
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    typeContext.printHeapType(curr->ref->type.getHeapType());
   }
   void visitArrayCopy(ArrayCopy* curr) {
     if (printUnreachableReplacement(curr->srcRef) ||
@@ -2168,9 +1967,9 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, "array.copy ");
-    TypeNamePrinter(o, wasm).print(curr->destRef->type.getHeapType());
+    typeContext.printHeapType(curr->destRef->type.getHeapType());
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
+    typeContext.printHeapType(curr->srcRef->type.getHeapType());
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
@@ -2216,7 +2015,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Used to print delegate's depth argument when it throws to the caller
   int controlFlowDepth = 0;
 
-  PrintSExpression(std::ostream& o) : o(o) {
+  TypePrintingContext typeContext;
+
+  PrintSExpression(std::ostream& o) : o(o), typeContext(o, currModule) {
     setMinify(false);
     if (!full) {
       full = isFullForced();
@@ -2272,11 +2073,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
 
   void printExpressionContents(Expression* curr) {
-    if (currModule) {
-      PrintExpressionContents(currModule, currFunction, o).visit(curr);
-    } else {
-      PrintExpressionContents(currFunction, o).visit(curr);
-    }
+    PrintExpressionContents(typeContext, currFunction).visit(curr);
   }
 
   void visit(Expression* curr) {
@@ -2571,128 +2368,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitArrayGet(ArrayGet* curr) {
     maybePrintUnreachableReplacement(curr, curr->ref->type);
   }
-  // Module-level visitors
-  void printSupertypeOr(HeapType curr, std::string noSuper) {
-    if (auto super = curr.getSuperType()) {
-      TypeNamePrinter(o, currModule).print(*super);
-    } else {
-      o << noSuper;
-    }
-  }
 
-  void handleSignature(HeapType curr, Name name = Name()) {
-    Signature sig = curr.getSignature();
-    bool hasSupertype =
-      !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
-                     getTypeSystem() == TypeSystem::Isorecursive);
-    if (hasSupertype) {
-      o << "(func_subtype";
-    } else {
-      o << "(func";
-    }
-    if (name.is()) {
-      o << " $" << name;
-    }
-    if (sig.params.size() > 0) {
-      o << maybeSpace;
-      o << "(param ";
-      auto sep = "";
-      for (auto type : sig.params) {
-        o << sep;
-        printType(o, type, currModule);
-        sep = " ";
-      }
-      o << ')';
-    }
-    if (sig.results.size() > 0) {
-      o << maybeSpace;
-      o << "(result ";
-      auto sep = "";
-      for (auto type : sig.results) {
-        o << sep;
-        printType(o, type, currModule);
-        sep = " ";
-      }
-      o << ')';
-    }
-    if (hasSupertype) {
-      o << ' ';
-      printSupertypeOr(curr, "func");
-    }
-    o << ")";
-  }
-  void handleFieldBody(const Field& field) {
-    if (field.mutable_) {
-      o << "(mut ";
-    }
-    if (field.type == Type::i32 && field.packedType != Field::not_packed) {
-      if (field.packedType == Field::i8) {
-        o << "i8";
-      } else if (field.packedType == Field::i16) {
-        o << "i16";
-      } else {
-        WASM_UNREACHABLE("invalid packed type");
-      }
-    } else {
-      printType(o, field.type, currModule);
-    }
-    if (field.mutable_) {
-      o << ')';
-    }
-  }
-  void handleArray(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
-    if (hasSupertype) {
-      o << "(array_subtype ";
-    } else {
-      o << "(array ";
-    }
-    handleFieldBody(curr.getArray().element);
-    if (hasSupertype) {
-      o << ' ';
-      printSupertypeOr(curr, "data");
-    }
-    o << ')';
-  }
-  void handleStruct(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
-    const auto& fields = curr.getStruct().fields;
-    if (hasSupertype) {
-      o << "(struct_subtype ";
-    } else {
-      o << "(struct ";
-    }
-    auto sep = "";
-    for (Index i = 0; i < fields.size(); i++) {
-      o << sep << "(field ";
-      processFieldName(currModule, curr, i, [&](Name name) {
-        if (name.is()) {
-          o << '$' << name << ' ';
-        }
-      });
-      handleFieldBody(fields[i]);
-      o << ')';
-      sep = " ";
-    }
-    if (hasSupertype) {
-      o << ' ';
-      printSupertypeOr(curr, "data");
-    }
-    o << ')';
-  }
-  void handleHeapType(HeapType type) {
-    if (type.isSignature()) {
-      handleSignature(type);
-    } else if (type.isArray()) {
-      handleArray(type);
-    } else if (type.isStruct()) {
-      handleStruct(type);
-    } else {
-      o << type;
-    }
-  }
   void visitExport(Export* curr) {
     o << '(';
     printMedium(o, "export ");
@@ -2734,9 +2410,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void emitGlobalType(Global* curr) {
     if (curr->mutable_) {
       o << "(mut ";
-      printType(o, curr->type, currModule) << ')';
+      typeContext.printType(curr->type) << ')';
     } else {
-      printType(o, curr->type, currModule);
+      typeContext.printType(curr->type);
     }
   }
   void visitImportedGlobal(Global* curr) {
@@ -2768,12 +2444,22 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void visitImportedFunction(Function* curr) {
     doIndent(o, indent);
-    currFunction = curr;
-    lastPrintedLocation = {0, 0, 0};
+    // currFunction = curr;
+    // lastPrintedLocation = {0, 0, 0};
     o << '(';
     emitImportHeader(curr);
-    handleSignature(curr->getSig(), curr->name);
-    o << ')';
+    o << "(func ";
+    printName(curr->name, o);
+    auto sig = curr->getSig();
+    if (sig.params != Type::none) {
+      o << ' ';
+      typeContext.printParamType(sig.params);
+    }
+    if (sig.results != Type::none) {
+      o << ' ';
+      typeContext.printResultType(sig.results);
+    }
+    o << "))";
     o << maybeNewLine;
   }
   void visitDefinedFunction(Function* curr) {
@@ -2789,7 +2475,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (getTypeSystem() == TypeSystem::Nominal ||
         getTypeSystem() == TypeSystem::Isorecursive) {
       o << " (type ";
-      printHeapType(o, curr->type, currModule) << ')';
+      typeContext.printHeapType(curr->type) << ')';
     }
     if (!stackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
@@ -2802,13 +2488,13 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
         o << ' ';
-        printType(o, param, currModule) << ')';
+        typeContext.printType(param) << ')';
         ++i;
       }
     }
     if (curr->getResults() != Type::none) {
       o << maybeSpace;
-      printResultType(o, curr->getResults(), currModule);
+      typeContext.printResultType(curr->getResults());
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -2816,7 +2502,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o) << ' ';
-      printType(o, curr->getLocalType(i), currModule) << ')';
+      typeContext.printType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.
@@ -2836,7 +2522,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       assert(controlFlowDepth == 0);
     } else {
       // Print the stack IR.
-      printStackIR(curr->stackIR.get(), o, curr);
+      printStackIR(typeContext, curr->stackIR.get(), curr);
     }
     if (currFunction->epilogLocation.size() &&
         lastPrintedLocation != *currFunction->epilogLocation.begin()) {
@@ -2867,7 +2553,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << "(tag ";
     printName(curr->name, o);
     o << maybeSpace;
-    printParamType(o, curr->sig.params, currModule);
+    typeContext.printParamType(curr->sig.params);
     o << "))";
     o << maybeNewLine;
   }
@@ -2877,7 +2563,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     printMedium(o, "tag ");
     printName(curr->name, o);
     o << maybeSpace;
-    printParamType(o, curr->sig.params, currModule);
+    typeContext.printParamType(curr->sig.params);
     o << ")" << maybeNewLine;
   }
   void printTableHeader(Table* curr) {
@@ -2889,7 +2575,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ' ' << curr->max;
     }
     o << ' ';
-    printType(o, curr->type, currModule) << ')';
+    typeContext.printType(curr->type) << ')';
   }
   void visitTable(Table* curr) {
     if (curr->imported()) {
@@ -2910,7 +2596,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       if (!usesExpressions) {
         o << "func";
       } else {
-        printType(o, curr->type, currModule);
+        typeContext.printType(curr->type);
       }
     };
 
@@ -3101,10 +2787,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
-      TypeNamePrinter(o, curr).print(type);
-      o << ' ';
-      handleHeapType(type);
-      o << ")" << maybeNewLine;
+      typeContext.printHeapType(type) << ' ' << type.print([&](HeapType ht) {
+        return typeContext.getTypeNames(ht);
+      }) << ")" << maybeNewLine;
     }
     finishGroup();
 
@@ -3280,15 +2965,17 @@ static std::ostream& printExpression(Expression* expression,
   return o;
 }
 
-static std::ostream&
-printStackInst(StackInst* inst, std::ostream& o, Function* func) {
+static std::ostream& printStackInst(TypePrintingContext& typeContext,
+                                    StackInst* inst,
+                                    Function* func) {
+  std::ostream& o = typeContext.o;
   switch (inst->op) {
     case StackInst::Basic:
     case StackInst::BlockBegin:
     case StackInst::IfBegin:
     case StackInst::LoopBegin:
     case StackInst::TryBegin: {
-      PrintExpressionContents(func, o).visit(inst->origin);
+      PrintExpressionContents(typeContext, func).visit(inst->origin);
       break;
     }
     case StackInst::BlockEnd:
@@ -3297,7 +2984,7 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     case StackInst::TryEnd: {
       printMedium(o, "end");
       o << " ;; type: ";
-      TypeNamePrinter(o).print(inst->type);
+      typeContext.printType(inst->type);
       break;
     }
     case StackInst::IfElse: {
@@ -3326,7 +3013,8 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
 }
 
 static std::ostream&
-printStackIR(StackIR* ir, std::ostream& o, Function* func) {
+printStackIR(TypePrintingContext& typeContext, StackIR* ir, Function* func) {
+  std::ostream& o = typeContext.o;
   size_t indent = func ? 2 : 0;
   auto doIndent = [&indent, &o]() {
     for (size_t j = 0; j < indent; j++) {
@@ -3351,7 +3039,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
           break;
         }
 
-        PrintExpressionContents(func, o).visit(inst->origin);
+        PrintExpressionContents(typeContext, func).visit(inst->origin);
         break;
       }
       case StackInst::TryBegin:
@@ -3362,7 +3050,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       case StackInst::LoopBegin: {
         controlFlowDepth++;
         doIndent();
-        PrintExpressionContents(func, o).visit(inst->origin);
+        PrintExpressionContents(typeContext, func).visit(inst->origin);
         indent++;
         break;
       }
@@ -3446,11 +3134,15 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
-  return wasm::printStackInst(&inst, o);
+  wasm::Module* wasm = nullptr;
+  wasm::TypePrintingContext typeContext(o, wasm);
+  return wasm::printStackInst(typeContext, &inst);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir) {
-  return wasm::printStackIR(&ir, o);
+  wasm::Module* wasm = nullptr;
+  wasm::TypePrintingContext typeContext(o, wasm);
+  return wasm::printStackIR(typeContext, &ir);
 }
 
 } // namespace std

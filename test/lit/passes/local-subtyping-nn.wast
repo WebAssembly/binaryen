@@ -5,8 +5,8 @@
 ;; RUN:   | filecheck %s --check-prefix=NOMNL
 
 (module
-  ;; CHECK:      (type $struct (struct ))
-  ;; NOMNL:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct))
+  ;; NOMNL:      (type $struct (struct_subtype data))
   (type $struct (struct))
 
   ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))
@@ -15,7 +15,7 @@
 
   ;; CHECK:      (func $non-nullable
   ;; CHECK-NEXT:  (local $x (ref $struct))
-  ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
+  ;; CHECK-NEXT:  (local $y (ref $func.0))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (ref.null $struct)
@@ -28,9 +28,9 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $non-nullable (type $none_=>_none)
+  ;; NOMNL:      (func $non-nullable (type $func.1)
   ;; NOMNL-NEXT:  (local $x (ref $struct))
-  ;; NOMNL-NEXT:  (local $y (ref $none_=>_i32))
+  ;; NOMNL-NEXT:  (local $y (ref $func.0))
   ;; NOMNL-NEXT:  (local.set $x
   ;; NOMNL-NEXT:   (ref.as_non_null
   ;; NOMNL-NEXT:    (ref.null $struct)
@@ -75,7 +75,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $uses-default (type $i32_=>_none) (param $i i32)
+  ;; NOMNL:      (func $uses-default (type $func.2) (param $i i32)
   ;; NOMNL-NEXT:  (local $x (ref null $struct))
   ;; NOMNL-NEXT:  (if
   ;; NOMNL-NEXT:   (local.get $i)

@@ -4,13 +4,13 @@
 ;; RUN: foreach %s %t wasm-opt --dae --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.1 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.2 (func (result i32)))
 
-  ;; CHECK:      (type $f64_=>_none (func (param f64)))
+  ;; CHECK:      (type $func.3 (func (param f64)))
 
   ;; CHECK:      (table $0 2 2 funcref)
 
@@ -360,7 +360,7 @@
       )
     )
   )
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (export "a" (func $0))
 
@@ -384,9 +384,9 @@
   )
 )
 (module ;; tail calls inhibit dropped result removal
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
   ;; CHECK:      (func $foo (param $x i32) (result i32)
   ;; CHECK-NEXT:  (drop
@@ -417,7 +417,7 @@
   ;; CHECK:      (type $T (func (result i32)))
   (type $T (func (result i32)))
   (table 1 1 funcref)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (table $0 1 1 funcref)
 
@@ -453,9 +453,9 @@
   )
 )
 (module
- ;; CHECK:      (type $funcref_i32_f64_=>_i64 (func (param funcref i32 f64) (result i64)))
+ ;; CHECK:      (type $func.0 (func (param funcref i32 f64) (result i64)))
 
- ;; CHECK:      (type $f32_=>_funcref (func (param f32) (result funcref)))
+ ;; CHECK:      (type $func.1 (func (param f32) (result funcref)))
 
  ;; CHECK:      (elem declare func $0)
 
@@ -479,7 +479,7 @@
 ;; CHECK-NEXT:  (ref.func $0)
 ;; CHECK-NEXT: )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (type $i64 (func (param i64)))
  (type $i64 (func (param i64)))
@@ -520,7 +520,7 @@
 )
 (module
  ;; a removable non-nullable parameter
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (local $0 (ref null i31))

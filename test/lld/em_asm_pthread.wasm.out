@@ -1,43 +1,43 @@
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
- (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
- (type $i32_i64_i32_=>_i64 (func (param i32 i64 i32) (result i64)))
- (type $i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32) (result i32)))
- (type $none_=>_f64 (func (result f64)))
- (type $i32_i32_f64_=>_i32 (func (param i32 i32 f64) (result i32)))
- (type $i32_i32_i32_=>_f64 (func (param i32 i32 i32) (result f64)))
- (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
- (type $i32_i32_f32_i32_=>_none (func (param i32 i32 f32 i32)))
- (type $i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32 i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (type $f32_=>_none (func (param f32)))
- (type $i32_f32_=>_none (func (param i32 f32)))
- (type $f32_f32_=>_none (func (param f32 f32)))
- (type $i32_f32_f32_=>_none (func (param i32 f32 f32)))
- (type $f32_f32_f32_=>_none (func (param f32 f32 f32)))
- (type $i32_f32_f32_f32_=>_none (func (param i32 f32 f32 f32)))
- (type $f32_f32_f32_f32_=>_none (func (param f32 f32 f32 f32)))
- (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
- (type $i32_f32_f32_f32_f32_=>_none (func (param i32 f32 f32 f32 f32)))
- (type $i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (type $i32_f64_=>_i32 (func (param i32 f64) (result i32)))
- (type $i32_i32_i32_i32_=>_f64 (func (param i32 i32 i32 i32) (result f64)))
- (type $i32_i32_i64_i32_=>_i64 (func (param i32 i32 i64 i32) (result i64)))
+ (type $func.0 (func (param i32) (result i32)))
+ (type $func.1 (func (param i32)))
+ (type $func.2 (func))
+ (type $func.3 (func (param i32 i32) (result i32)))
+ (type $func.4 (func (result i32)))
+ (type $func.5 (func (param i32 i32 i32) (result i32)))
+ (type $func.6 (func (param i32 i32)))
+ (type $func.7 (func (param i32 i32 i32 i32 i32) (result i32)))
+ (type $func.8 (func (param i32 i32 i32 i32) (result i32)))
+ (type $func.9 (func (param i32 i64 i32) (result i64)))
+ (type $func.10 (func (param i32 i32 i32 i32)))
+ (type $func.11 (func (param i32 i32 i32)))
+ (type $func.12 (func (param i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $func.13 (func (result f64)))
+ (type $func.14 (func (param i32 i32 f64) (result i32)))
+ (type $func.15 (func (param i32 i32 i32) (result f64)))
+ (type $func.16 (func (param i32 i32 f32)))
+ (type $func.17 (func (param i32 i32 f32 i32)))
+ (type $func.18 (func (param i32 i32 i32 i32 i32 i32)))
+ (type $func.19 (func (param i32 i32 i32 i32 i32 i32 i32 i32)))
+ (type $func.20 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
+ (type $func.21 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $func.22 (func (param f32)))
+ (type $func.23 (func (param i32 f32)))
+ (type $func.24 (func (param f32 f32)))
+ (type $func.25 (func (param i32 f32 f32)))
+ (type $func.26 (func (param f32 f32 f32)))
+ (type $func.27 (func (param i32 f32 f32 f32)))
+ (type $func.28 (func (param f32 f32 f32 f32)))
+ (type $func.29 (func (param i32 i32 i32 i32 i32)))
+ (type $func.30 (func (param i32 f32 f32 f32 f32)))
+ (type $func.31 (func (param i32 i32 i32 i32 i32 i32 i32)))
+ (type $func.32 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32)))
+ (type $func.33 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
+ (type $func.34 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $func.35 (func (param i32 i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $func.36 (func (param i32 f64) (result i32)))
+ (type $func.37 (func (param i32 i32 i32 i32) (result f64)))
+ (type $func.38 (func (param i32 i32 i64 i32) (result i64)))
  (import "env" "memory" (memory $mimport$0 (shared 256 256)))
  (data "\00/home/azakai/Dev/emscripten/system/lib/pthread/library_pthread.c\00call\00_emscripten_do_dispatch_to_thread\00target_thread\00num_args+1 <= EM_QUEUED_JS_CALL_MAX_ARGS\00emscripten_run_in_main_runtime_thread_js\00q\00_emscripten_call_on_thread\00EM_FUNC_SIG_NUM_FUNC_ARGUMENTS(q->functionEnum) <= EM_QUEUED_CALL_MAX_ARGS\00_do_call\000 && \"Invalid Emscripten pthread _do_call opcode!\"\00target\00GetQueue\00em_queued_call_malloc\00")
  (data "\01\00\00\00\d0\0fP\00\05\00\00\00\00\00\00\00\00\00\00\00\02\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\03\00\00\00\04\00\00\00x\t\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\a0\05\00\00")
@@ -1202,7 +1202,7 @@
                                  (br_if $label$5
                                   (local.get $1)
                                  )
-                                 (call_indirect (type $none_=>_none)
+                                 (call_indirect (type $func.2)
                                   (i32.load offset=4
                                    (local.get $0)
                                   )
@@ -1235,7 +1235,7 @@
                                   (i32.const 100663328)
                                  )
                                 )
-                                (call_indirect (type $i32_i32_f32_=>_none)
+                                (call_indirect (type $func.16)
                                  (i32.load offset=16
                                   (local.get $0)
                                  )
@@ -1284,7 +1284,7 @@
                                   (i32.const 134217760)
                                  )
                                 )
-                                (call_indirect (type $i32_i32_f32_i32_=>_none)
+                                (call_indirect (type $func.17)
                                  (i32.load offset=16
                                   (local.get $0)
                                  )
@@ -1338,7 +1338,7 @@
                                  (i32.const 201326592)
                                 )
                                )
-                               (call_indirect (type $i32_i32_i32_i32_i32_i32_=>_none)
+                               (call_indirect (type $func.18)
                                 (i32.load offset=16
                                  (local.get $0)
                                 )
@@ -1411,7 +1411,7 @@
                                    (i32.const 268435456)
                                   )
                                  )
-                                 (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_i32_=>_none)
+                                 (call_indirect (type $func.19)
                                   (i32.load offset=16
                                    (local.get $0)
                                   )
@@ -1475,7 +1475,7 @@
                                   (i32.const 335544320)
                                  )
                                 )
-                                (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_none)
+                                (call_indirect (type $func.20)
                                  (i32.load offset=16
                                   (local.get $0)
                                  )
@@ -1560,7 +1560,7 @@
                                 )
                                 (i32.store offset=176
                                  (local.get $0)
-                                 (call_indirect (type $none_=>_i32)
+                                 (call_indirect (type $func.4)
                                   (i32.load offset=4
                                    (local.get $0)
                                   )
@@ -1711,7 +1711,7 @@
                                )
                                (i32.store offset=176
                                 (local.get $0)
-                                (call_indirect (type $i32_i32_i32_i32_i32_i32_=>_i32)
+                                (call_indirect (type $func.12)
                                  (i32.load offset=16
                                   (local.get $0)
                                  )
@@ -1772,7 +1772,7 @@
                               )
                               (i32.store offset=176
                                (local.get $0)
-                               (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_i32)
+                               (call_indirect (type $func.21)
                                 (i32.load offset=16
                                  (local.get $0)
                                 )
@@ -1831,7 +1831,7 @@
                               )
                               (br $label$1)
                              )
-                             (call_indirect (type $i32_=>_none)
+                             (call_indirect (type $func.1)
                               (i32.load offset=16
                                (local.get $0)
                               )
@@ -1841,7 +1841,7 @@
                              )
                              (br $label$1)
                             )
-                            (call_indirect (type $f32_=>_none)
+                            (call_indirect (type $func.22)
                              (f32.load offset=16
                               (local.get $0)
                              )
@@ -1851,7 +1851,7 @@
                             )
                             (br $label$1)
                            )
-                           (call_indirect (type $i32_f32_=>_none)
+                           (call_indirect (type $func.23)
                             (i32.load offset=16
                              (local.get $0)
                             )
@@ -1867,7 +1867,7 @@
                            )
                            (br $label$1)
                           )
-                          (call_indirect (type $f32_f32_=>_none)
+                          (call_indirect (type $func.24)
                            (f32.load offset=16
                             (local.get $0)
                            )
@@ -1883,7 +1883,7 @@
                           )
                           (br $label$1)
                          )
-                         (call_indirect (type $i32_i32_i32_=>_none)
+                         (call_indirect (type $func.11)
                           (i32.load offset=16
                            (local.get $0)
                           )
@@ -1905,7 +1905,7 @@
                          )
                          (br $label$1)
                         )
-                        (call_indirect (type $i32_f32_f32_=>_none)
+                        (call_indirect (type $func.25)
                          (i32.load offset=16
                           (local.get $0)
                          )
@@ -1927,7 +1927,7 @@
                         )
                         (br $label$1)
                        )
-                       (call_indirect (type $f32_f32_f32_=>_none)
+                       (call_indirect (type $func.26)
                         (f32.load offset=16
                          (local.get $0)
                         )
@@ -1949,7 +1949,7 @@
                        )
                        (br $label$1)
                       )
-                      (call_indirect (type $i32_i32_i32_i32_=>_none)
+                      (call_indirect (type $func.10)
                        (i32.load offset=16
                         (local.get $0)
                        )
@@ -1977,7 +1977,7 @@
                       )
                       (br $label$1)
                      )
-                     (call_indirect (type $i32_f32_f32_f32_=>_none)
+                     (call_indirect (type $func.27)
                       (i32.load offset=16
                        (local.get $0)
                       )
@@ -2005,7 +2005,7 @@
                      )
                      (br $label$1)
                     )
-                    (call_indirect (type $f32_f32_f32_f32_=>_none)
+                    (call_indirect (type $func.28)
                      (f32.load offset=16
                       (local.get $0)
                      )
@@ -2039,7 +2039,7 @@
                      (i32.const 167772160)
                     )
                    )
-                   (call_indirect (type $i32_i32_i32_i32_i32_=>_none)
+                   (call_indirect (type $func.29)
                     (i32.load offset=16
                      (local.get $0)
                     )
@@ -2073,7 +2073,7 @@
                    )
                    (br $label$1)
                   )
-                  (call_indirect (type $i32_f32_f32_f32_f32_=>_none)
+                  (call_indirect (type $func.30)
                    (i32.load offset=16
                     (local.get $0)
                    )
@@ -2107,7 +2107,7 @@
                   )
                   (br $label$1)
                  )
-                 (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_=>_none)
+                 (call_indirect (type $func.31)
                   (i32.load offset=16
                    (local.get $0)
                   )
@@ -2153,7 +2153,7 @@
                  )
                  (br $label$1)
                 )
-                (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_none)
+                (call_indirect (type $func.32)
                  (i32.load offset=16
                   (local.get $0)
                  )
@@ -2211,7 +2211,7 @@
                 )
                 (br $label$1)
                )
-               (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_i32_i32_i32_i32_=>_none)
+               (call_indirect (type $func.33)
                 (i32.load offset=16
                  (local.get $0)
                 )
@@ -2283,7 +2283,7 @@
               )
               (i32.store offset=176
                (local.get $0)
-               (call_indirect (type $i32_=>_i32)
+               (call_indirect (type $func.0)
                 (i32.load offset=16
                  (local.get $0)
                 )
@@ -2296,7 +2296,7 @@
              )
              (i32.store offset=176
               (local.get $0)
-              (call_indirect (type $i32_i32_=>_i32)
+              (call_indirect (type $func.3)
                (i32.load offset=16
                 (local.get $0)
                )
@@ -2315,7 +2315,7 @@
             )
             (i32.store offset=176
              (local.get $0)
-             (call_indirect (type $i32_i32_i32_=>_i32)
+             (call_indirect (type $func.5)
               (i32.load offset=16
                (local.get $0)
               )
@@ -2340,7 +2340,7 @@
            )
            (i32.store offset=176
             (local.get $0)
-            (call_indirect (type $i32_i32_i32_i32_=>_i32)
+            (call_indirect (type $func.8)
              (i32.load offset=16
               (local.get $0)
              )
@@ -2371,7 +2371,7 @@
           )
           (i32.store offset=176
            (local.get $0)
-           (call_indirect (type $i32_i32_i32_i32_i32_=>_i32)
+           (call_indirect (type $func.7)
             (i32.load offset=16
              (local.get $0)
             )
@@ -2408,7 +2408,7 @@
          )
          (i32.store offset=176
           (local.get $0)
-          (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_=>_i32)
+          (call_indirect (type $func.34)
            (i32.load offset=16
             (local.get $0)
            )
@@ -2457,7 +2457,7 @@
         )
         (i32.store offset=176
          (local.get $0)
-         (call_indirect (type $i32_i32_i32_i32_i32_i32_i32_i32_=>_i32)
+         (call_indirect (type $func.35)
           (i32.load offset=16
            (local.get $0)
           )
@@ -2550,7 +2550,7 @@
     )
     (unreachable)
    )
-   (call_indirect (type $i32_i32_=>_none)
+   (call_indirect (type $func.6)
     (i32.load offset=16
      (local.get $0)
     )
@@ -12590,7 +12590,7 @@
     )
    )
    (drop
-    (call_indirect (type $i32_i32_i32_=>_i32)
+    (call_indirect (type $func.5)
      (local.get $0)
      (i32.const 0)
      (i32.const 0)
@@ -12624,7 +12624,7 @@
     )
    )
    (drop
-    (call_indirect (type $i32_i64_i32_=>_i64)
+    (call_indirect (type $func.9)
      (local.get $0)
      (i64.extend_i32_s
       (i32.sub
@@ -12733,7 +12733,7 @@
        (local.get $5)
        (i32.const 0)
       )
-      (call_indirect (type $i32_=>_none)
+      (call_indirect (type $func.1)
        (local.get $6)
        (i32.load
         (local.get $4)
@@ -12774,19 +12774,19 @@
   )
  )
  (func $dynCall_vi (param $fptr i32) (param $0 i32)
-  (call_indirect (type $i32_=>_none)
+  (call_indirect (type $func.1)
    (local.get $0)
    (local.get $fptr)
   )
  )
  (func $dynCall_ii (param $fptr i32) (param $0 i32) (result i32)
-  (call_indirect (type $i32_=>_i32)
+  (call_indirect (type $func.0)
    (local.get $0)
    (local.get $fptr)
   )
  )
  (func $dynCall_iiii (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (call_indirect (type $i32_i32_i32_=>_i32)
+  (call_indirect (type $func.5)
    (local.get $0)
    (local.get $1)
    (local.get $2)
@@ -12794,7 +12794,7 @@
   )
  )
  (func $dynCall_jiji (param $fptr i32) (param $0 i32) (param $1 i64) (param $2 i32) (result i64)
-  (call_indirect (type $i32_i64_i32_=>_i64)
+  (call_indirect (type $func.9)
    (local.get $0)
    (local.get $1)
    (local.get $2)

@@ -2,7 +2,7 @@
 ;; RUN: foreach %s %t wasm-opt --once-reduction -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -38,7 +38,7 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -197,7 +197,7 @@
 ;; though in fact the function will never execute the payload call of foo(),
 ;; which in theory we could further optimize.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "foo" (func $foo))
   (import "env" "foo" (func $foo))
@@ -237,7 +237,7 @@
 ;; Corner case: function is not quite once, there is code before the if, so no
 ;; optimization will happen.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "foo" (func $foo))
   (import "env" "foo" (func $foo))
@@ -278,7 +278,7 @@
 
 ;; Corner case: a nop after the if.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "foo" (func $foo))
   (import "env" "foo" (func $foo))
@@ -319,7 +319,7 @@
 
 ;; Corner case: The if has an else.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "foo" (func $foo))
   (import "env" "foo" (func $foo))
@@ -360,7 +360,7 @@
 
 ;; Corner case: different global names in the get and set
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once1 (mut i32) (i32.const 0))
   (global $once1 (mut i32) (i32.const 0))
@@ -396,7 +396,7 @@
 
 ;; Corner case: The global is written a zero.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -430,7 +430,7 @@
 
 ;; Corner case: The global is written a zero elsewhere.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -470,7 +470,7 @@
 ;; optimize, and in fact we can write a value different than 1 both there and
 ;; in the "once" function, and we can still optimize.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -521,7 +521,7 @@
 ;; It is ok to call the "once" function inside itself - as that call appears
 ;; behind a set of the global, the call is redundant and we optimize it away.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -548,7 +548,7 @@
 
 ;; Corner case: Non-integer global, which we ignore.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut f64) (f64.const 0))
   (global $once (mut f64) (f64.const 0))
@@ -590,7 +590,7 @@
 ;; not then it will never be written to, and the "once" function will never run
 ;; at all, which is fine too)
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "glob" (global $import i32))
   (import "env" "glob" (global $import i32))
@@ -627,7 +627,7 @@
 
 ;; Corner case: Non-constant later value.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -665,9 +665,9 @@
 
 ;; Corner case: "Once" function has a param.
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -705,9 +705,9 @@
 
 ;; Corner case: "Once" function has a result.
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.0 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -749,7 +749,7 @@
 
 ;; Corner case: "Once" function body is not a block.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -787,7 +787,7 @@
 
 ;; Corner case: Once body is too short.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -817,7 +817,7 @@
 
 ;; Corner case: Additional reads of the global.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -855,7 +855,7 @@
 
 ;; Corner case: Additional reads of the global in the "once" func.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -894,7 +894,7 @@
 ;; Corner case: Optimization opportunties in unreachable code (which we can
 ;; ignore, but should not error on).
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -934,7 +934,7 @@
 
 ;; Add a very long chain of control flow.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -1069,9 +1069,9 @@
 ;; A test with a try-catch. This verifies that we emit their contents properly
 ;; in reverse postorder and do not hit any assertions.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.1 (func (param i32)))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
 
@@ -1133,7 +1133,7 @@
   ;; Test a module with more than one global that we can optimize, and more than
   ;; one that we cannot.
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once1 (mut i32) (i32.const 0))
   (global $once1 (mut i32) (i32.const 0))
@@ -1281,7 +1281,7 @@
 ;; and D calls some "once" functions, then A can infer that it's call to B does
 ;; so.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -1358,7 +1358,7 @@
 ;; Corner case: Imported mutable global. We cannot optimize it, since the
 ;; outside may read and write it.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "glob" (global $once (mut i32)))
   (import "env" "glob" (global $once (mut i32)))
@@ -1393,7 +1393,7 @@
 ;; Corner case: Exported mutable global. We cannot optimize it, since the
 ;; outside may read and write it.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))

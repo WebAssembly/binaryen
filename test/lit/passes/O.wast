@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt -O -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
-  ;; CHECK:      (type $i64_=>_none (func (param i64)))
+  ;; CHECK:      (type $func.2 (func (param i64)))
 
   ;; CHECK:      (export "ret" (func $ret))
 

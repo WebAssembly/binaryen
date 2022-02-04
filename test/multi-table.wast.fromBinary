@@ -14,7 +14,7 @@
  (elem $e3-2 (table $t3) (i32.const 2) func $f $g)
  (elem $passive-1 func $f $g)
  (elem $passive-2 funcref (ref.func $f) (ref.func $g) (ref.null func))
- (elem $passive-3 (ref null $none_=>_none) (ref.func $f) (ref.func $g) (ref.null $none_=>_none) (global.get $g1))
+ (elem $passive-3 (ref null $none_=>_none) (ref.func $f) (ref.func $g) (ref.null $func.0) (global.get $g1))
  (elem $empty func)
  (elem $especial (table $tspecial) (i32.const 0) (ref null $none_=>_none) (ref.func $f) (ref.func $h))
  (func $f

@@ -5,22 +5,22 @@
 
 (module
   (memory 10)
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.0 (func (result i32)))
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.1 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $ii (func (param i32 i32)))
   (type $ii (func (param i32 i32)))
   (type $1 (func))
   (table 1 1 funcref)
   (elem (i32.const 0) $call-me)
-  ;; CHECK:      (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
+  ;; CHECK:      (type $func.2 (func (param i64 i64) (result i64)))
 
-  ;; CHECK:      (type $f32_i64_=>_none (func (param f32 i64)))
+  ;; CHECK:      (type $func.3 (func (param f32 i64)))
 
-  ;; CHECK:      (type $f32_i64_=>_i32 (func (param f32 i64) (result i32)))
+  ;; CHECK:      (type $func.4 (func (param f32 i64) (result i32)))
 
   ;; CHECK:      (global $x (mut i32) (i32.const 0))
   (global $x (mut i32) (i32.const 0))
@@ -1241,7 +1241,7 @@
 )
 ;; if goes to unreachable, need to propagate that up to the global.set
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (global $global (mut f64) (f64.const 0))
  (global $global (mut f64) (f64.const 0))
@@ -1263,7 +1263,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (local $local f64)
@@ -1286,9 +1286,9 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.0 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
   ;; CHECK:      (func $unnecessary-concrete-block (result i32)
   ;; CHECK-NEXT:  (block $foo
@@ -1396,7 +1396,7 @@
   )
 )
 (module
-  ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
+  ;; CHECK:      (type $func.0 (func (result (ref any))))
 
   ;; CHECK:      (func $foo (result (ref any))
   ;; CHECK-NEXT:  (unreachable)

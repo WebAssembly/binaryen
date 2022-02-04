@@ -4,7 +4,7 @@
  (type $1 (func (param i32)))
  (type $2 (func (result f32)))
  (type $4 (func (param i32 f64 i32 i32)))
- (type $none_=>_f64 (func (result f64)))
+ (type $func.0 (func (result f64)))
  (import "env" "int" (func $int (result i32)))
  (global $Int i32 (i32.const 0))
  (memory $0 256 256)
@@ -320,8 +320,8 @@
  )
 )
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $func.0 (func (param i32) (result i32)))
+ (type $func.1 (func (param i32 i32 i32)))
  (global $global$1 (mut i32) (i32.const 0))
  (memory $0 1 1)
  (export "compress" (func $3))
@@ -435,13 +435,13 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (func $foo
   (nop)
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (global $global$0 (mut i32) (i32.const 10))
  (func $1
   (nop)

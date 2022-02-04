@@ -1,6 +1,6 @@
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_funcref (func (result funcref)))
+ (type $func.0 (func (result i32)))
+ (type $func.1 (func (result funcref)))
  (elem declare func $0)
  (func $0 (result i32)
   (i32.const 0)
@@ -10,7 +10,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (global $bar i32 (i32.const 0))
  (memory $foo 16 16)
  (export "memory" (memory $foo))

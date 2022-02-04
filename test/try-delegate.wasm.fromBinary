@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (tag $tag$0 (param))
  (func $0
   (try $label$6

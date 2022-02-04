@@ -15,8 +15,8 @@
  ;; NOMNL:      (type $B (struct_subtype (field (ref null $D)) $A))
  (type $B (struct_subtype (field (ref null $D)) $A))
 
- ;; CHECK:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))))
- ;; NOMNL:      (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
+ ;; CHECK:      (type $D (struct (field (mut (ref $A)) (mut (ref $A)))))
+ ;; NOMNL:      (type $D (struct_subtype (field (mut (ref $A)) (mut (ref $A))) $C))
  (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
 
  ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
@@ -31,7 +31,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $foo (type $ref?|$A|_=>_ref?|$A|) (param $a (ref null $A)) (result (ref null $A))
+ ;; NOMNL:      (func $foo (type $func.0) (param $a (ref null $A)) (result (ref null $A))
  ;; NOMNL-NEXT:  (select (result (ref null $A))
  ;; NOMNL-NEXT:   (local.get $a)
  ;; NOMNL-NEXT:   (ref.null $B)

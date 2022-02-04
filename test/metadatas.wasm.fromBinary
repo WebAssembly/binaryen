@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (export "a" (func $0))
  (func $0
   (nop)

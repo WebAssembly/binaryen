@@ -144,7 +144,7 @@ class SExpressionWasmBuilder {
   // that structurally identical types cannot have different names. However,
   // while parsing the text format we keep this mapping of type indexes to names
   // which does allow reading such content.
-  std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
+  std::unordered_map<size_t, std::unordered_map<size_t, Name>> fieldNames;
 
 public:
   // Assumes control of and modifies the input.

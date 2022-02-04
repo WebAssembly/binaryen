@@ -5,11 +5,11 @@
 
 (module
  (memory 1 1)
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
- ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+ ;; CHECK:      (type $func.1 (func (result i64)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.2 (func))
 
  ;; CHECK:      (import "env" "func" (func $import (result i64)))
  (import "env" "func" (func $import (result i64)))
@@ -454,9 +454,9 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ ;; CHECK:      (type $func.1 (func (param i32 i32)))
 
  ;; CHECK:      (global $f (mut i32) (i32.const -1412567121))
  (global $f (mut i64) (i64.const 0x12345678ABCDEFAF))
@@ -567,9 +567,9 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.1 (func))
 
  ;; CHECK:      (global $f (mut i32) (i32.const -1412567121))
  (global $f (mut i64) (i64.const 0x12345678ABCDEFAF))
@@ -634,7 +634,7 @@
 ;; CHECK-NEXT: )
 (module
  (type $i64_f64_i32_=>_none (func (param i64 f64 i32)))
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 

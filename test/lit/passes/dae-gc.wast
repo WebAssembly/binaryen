@@ -3,14 +3,14 @@
 ;; RUN: wasm-opt %s -all --dae --nominal -S -o - | filecheck %s --check-prefix=NOMNL
 
 (module
- ;; CHECK:      (type ${} (struct ))
- ;; NOMNL:      (type ${} (struct_subtype  data))
+ ;; CHECK:      (type ${} (struct))
+ ;; NOMNL:      (type ${} (struct_subtype data))
  (type ${} (struct))
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (call $bar)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $foo (type $none_=>_none)
+ ;; NOMNL:      (func $foo (type $func.0)
  ;; NOMNL-NEXT:  (call $bar)
  ;; NOMNL-NEXT: )
  (func $foo
@@ -35,7 +35,7 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $bar (type $none_=>_none)
+ ;; NOMNL:      (func $bar (type $func.0)
  ;; NOMNL-NEXT:  (local $0 (ref null i31))
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (ref.as_non_null
@@ -74,7 +74,7 @@
  ;; CHECK:      (func $get-rtt (param $0 (rtt ${}))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $get-rtt (type $rtt_${}_=>_none) (param $0 (rtt ${}))
+ ;; NOMNL:      (func $get-rtt (type $func.1) (param $0 (rtt ${}))
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $get-rtt (param $0 (rtt ${}))
@@ -85,7 +85,7 @@
  ;; CHECK-NEXT:   (rtt.canon ${})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $send-rtt (type $none_=>_none)
+ ;; NOMNL:      (func $send-rtt (type $func.0)
  ;; NOMNL-NEXT:  (call $get-rtt
  ;; NOMNL-NEXT:   (rtt.canon ${})
  ;; NOMNL-NEXT:  )

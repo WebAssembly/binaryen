@@ -1,7 +1,7 @@
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_none (func (param i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (result i32)))
+ (type $func.2 (func (param i32)))
  (import "env" "func" (func $import))
  (import "env" "log_execution" (func $log_execution (param i32)))
  (func $nopp

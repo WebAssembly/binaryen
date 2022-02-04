@@ -27,9 +27,9 @@
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
 (module
- (type $none_=>_none (func))
- (type $f32_=>_none (func (param f32)))
- (type $f64_=>_none (func (param f64)))
+ (type $func.0 (func))
+ (type $func.1 (func (param f32)))
+ (type $func.2 (func (param f64)))
  (import "fuzzing-support" "log-f32" (func $logf32 (param f32)))
  (import "fuzzing-support" "log-f64" (func $logf64 (param f64)))
  (export "test32" (func $0))
@@ -268,10 +268,10 @@
 [fuzz-exec] calling call-compare-maybe-signed-ne
 [fuzz-exec] note result: call-compare-maybe-signed-ne => 1
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (param i32)))
+ (type $func.1 (func))
+ (type $func.2 (func (param i32) (result i32)))
+ (type $func.3 (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "foo" (func $1))
  (export "do-shift" (func $3))

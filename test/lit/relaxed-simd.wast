@@ -11,11 +11,11 @@
 (module
  (memory 1 1)
 
- ;; CHECK-BINARY:      (type $v128_v128_v128_=>_v128 (func (param v128 v128 v128) (result v128)))
+ ;; CHECK-BINARY:      (type $func.0 (func (param v128 v128 v128) (result v128)))
 
- ;; CHECK-BINARY:      (type $v128_v128_=>_v128 (func (param v128 v128) (result v128)))
+ ;; CHECK-BINARY:      (type $func.1 (func (param v128 v128) (result v128)))
 
- ;; CHECK-BINARY:      (type $v128_=>_v128 (func (param v128) (result v128)))
+ ;; CHECK-BINARY:      (type $func.2 (func (param v128) (result v128)))
 
  ;; CHECK-BINARY:      (memory $0 1 1)
 
@@ -25,11 +25,11 @@
  ;; CHECK-BINARY-NEXT:   (local.get $1)
  ;; CHECK-BINARY-NEXT:  )
  ;; CHECK-BINARY-NEXT: )
- ;; CHECK-TEXT:      (type $v128_v128_v128_=>_v128 (func (param v128 v128 v128) (result v128)))
+ ;; CHECK-TEXT:      (type $func.0 (func (param v128 v128 v128) (result v128)))
 
- ;; CHECK-TEXT:      (type $v128_v128_=>_v128 (func (param v128 v128) (result v128)))
+ ;; CHECK-TEXT:      (type $func.1 (func (param v128 v128) (result v128)))
 
- ;; CHECK-TEXT:      (type $v128_=>_v128 (func (param v128) (result v128)))
+ ;; CHECK-TEXT:      (type $func.2 (func (param v128) (result v128)))
 
  ;; CHECK-TEXT:      (memory $0 1 1)
 
@@ -351,11 +351,11 @@
  )
 
 )
-;; CHECK-NODEBUG:      (type $v128_v128_v128_=>_v128 (func (param v128 v128 v128) (result v128)))
+;; CHECK-NODEBUG:      (type $func.0 (func (param v128 v128 v128) (result v128)))
 
-;; CHECK-NODEBUG:      (type $v128_v128_=>_v128 (func (param v128 v128) (result v128)))
+;; CHECK-NODEBUG:      (type $func.1 (func (param v128 v128) (result v128)))
 
-;; CHECK-NODEBUG:      (type $v128_=>_v128 (func (param v128) (result v128)))
+;; CHECK-NODEBUG:      (type $func.2 (func (param v128) (result v128)))
 
 ;; CHECK-NODEBUG:      (memory $0 1 1)
 

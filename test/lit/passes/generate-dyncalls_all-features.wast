@@ -4,17 +4,17 @@
 ;; RUN: foreach %s %t wasm-opt --generate-dyncalls --all-features -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32 i32)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.1 (func (result i32)))
 
- ;; CHECK:      (type $i32_=>_i64 (func (param i32) (result i64)))
+ ;; CHECK:      (type $func.2 (func (param i32) (result i64)))
 
- ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+ ;; CHECK:      (type $func.3 (func (param i32) (result i32)))
 
- ;; CHECK:      (type $i32_i32_=>_i64 (func (param i32 i32) (result i64)))
+ ;; CHECK:      (type $func.4 (func (param i32 i32) (result i64)))
 
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ ;; CHECK:      (type $func.5 (func (param i32 i32)))
 
  ;; CHECK:      (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
@@ -44,33 +44,33 @@
  (elem (i32.const 0) $f1 $f2)
 )
 ;; CHECK:      (func $dynCall_i (param $fptr i32) (result i32)
-;; CHECK-NEXT:  (call_indirect $0 (type $none_=>_i32)
+;; CHECK-NEXT:  (call_indirect $0 (type $func.1)
 ;; CHECK-NEXT:   (local.get $fptr)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $dynCall_ji (param $fptr i32) (param $0 i32) (result i64)
-;; CHECK-NEXT:  (call_indirect $0 (type $i32_=>_i64)
+;; CHECK-NEXT:  (call_indirect $0 (type $func.2)
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:   (local.get $fptr)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
-;; CHECK-NEXT:  (call_indirect $0 (type $i32_i32_=>_none)
+;; CHECK-NEXT:  (call_indirect $0 (type $func.5)
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:   (local.get $1)
 ;; CHECK-NEXT:   (local.get $fptr)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
- ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32 i32)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.1 (func (result i32)))
 
- ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+ ;; CHECK:      (type $func.2 (func (param i32) (result i32)))
 
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ ;; CHECK:      (type $func.3 (func (param i32 i32)))
 
  ;; CHECK:      (import "env" "table" (table $timport$0 1 1 funcref))
  (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
@@ -91,13 +91,13 @@
  )
 )
 ;; CHECK:      (func $dynCall_i (param $fptr i32) (result i32)
-;; CHECK-NEXT:  (call_indirect $timport$0 (type $none_=>_i32)
+;; CHECK-NEXT:  (call_indirect $timport$0 (type $func.1)
 ;; CHECK-NEXT:   (local.get $fptr)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
-;; CHECK-NEXT:  (call_indirect $timport$0 (type $i32_i32_=>_none)
+;; CHECK-NEXT:  (call_indirect $timport$0 (type $func.3)
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:   (local.get $1)
 ;; CHECK-NEXT:   (local.get $fptr)

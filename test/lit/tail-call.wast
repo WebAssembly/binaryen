@@ -58,8 +58,8 @@
   ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct i32))
 
-  ;; CHECK:      (type $B (struct (field i32) (field i32)))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) $A))
+  ;; CHECK:      (type $B (struct (field i32 i32)))
+  ;; NOMNL:      (type $B (struct_subtype (field i32 i32) $A))
   (type $B (struct_subtype i32 i32 $A))
 
   ;; CHECK:      (table $t 1 1 funcref)

@@ -26,11 +26,11 @@
     )
   )
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+  ;; CHECK:      (type $func.0 (func_subtype (result i32) func))
 
   ;; CHECK:      (export "main" (func $main))
 
-  ;; CHECK:      (func $main (type $none_=>_i32) (; has Stack IR ;) (result i32)
+  ;; CHECK:      (func $main (type $func.0) (; has Stack IR ;) (result i32)
   ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT: )
   (func $main (export "main") (result i32)

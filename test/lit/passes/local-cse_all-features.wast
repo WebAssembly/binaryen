@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --local-cse --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
   ;; CHECK:      (elem declare func $calls $ref.func)
 
@@ -64,13 +64,13 @@
   (type $B (array (mut i32)))
 
 
-  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; CHECK:      (type $func.0 (func (param (ref $A))))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+  ;; CHECK:      (type $func.1 (func (param (ref null $A))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.2 (func))
 
-  ;; CHECK:      (type $ref?|$B|_ref|$A|_=>_none (func (param (ref null $B) (ref $A))))
+  ;; CHECK:      (type $func.3 (func (param (ref null $B) (ref $A))))
 
   ;; CHECK:      (func $struct-gets-nullable (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
@@ -298,7 +298,7 @@
   ;; Real-world testcase from AssemblyScript, containing multiple nested things
   ;; that can be optimized. The inputs to the add (the xors) are identical, and
   ;; we can avoid repeating them.
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32 i32) (result i32)))
 
   ;; CHECK:      (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)

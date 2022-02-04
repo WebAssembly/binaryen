@@ -32,10 +32,10 @@
 
 ;; empty struct type
 (module
-  ;; CHECK:      (type $sub (struct_subtype  $super))
+  ;; CHECK:      (type $sub (struct_subtype $super))
   (type $sub (struct) (extends $super))
 
-  ;; CHECK:      (type $super (struct_subtype  data))
+  ;; CHECK:      (type $super (struct_subtype data))
   (type $super (struct))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null $sub))
@@ -44,10 +44,10 @@
 
 ;; struct type with fields
 (module
-  ;; CHECK:      (type $sub (struct_subtype (field i32) (field i64) $super))
+  ;; CHECK:      (type $sub (struct_subtype (field i32 i64) $super))
   (type $sub (struct i32 (field i64)) (extends $super))
 
-  ;; CHECK:      (type $super (struct_subtype (field i32) (field i64) data))
+  ;; CHECK:      (type $super (struct_subtype (field i32 i64) data))
   (type $super (struct (field i32) i64))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null $sub))

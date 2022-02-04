@@ -1,6 +1,6 @@
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)
@@ -158,8 +158,8 @@
  ;; custom section "producers", size 172
 )
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)
@@ -392,8 +392,8 @@
  ;; custom section "producers", size 172
 )
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)
@@ -547,8 +547,8 @@
  ;; custom section "producers", size 172
 )
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 5243904))
  (global $global$1 i32 (i32.const 1024))
  (memory $0 256 256)

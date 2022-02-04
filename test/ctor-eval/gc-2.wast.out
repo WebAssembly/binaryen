@@ -1,6 +1,6 @@
 (module
  (type $struct (struct (field i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (global $ctor-eval$global (ref $struct) (struct.new $struct
   (i32.const 1337)
  ))

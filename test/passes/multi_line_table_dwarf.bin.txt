@@ -421,8 +421,8 @@ file_names[  1]:
 0x0000018d: "sidef"
 0x00000193: "int"
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))

@@ -1,8 +1,8 @@
 (module
  (type $struct (struct (field i32)))
- (type $anyref_=>_none (func (param anyref)))
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param anyref)))
+ (type $func.1 (func (result i32)))
+ (type $func.2 (func))
  (import "import" "import" (func $import (param anyref)))
  (global $global1 (ref $struct) (struct.new $struct
   (i32.const 1337)

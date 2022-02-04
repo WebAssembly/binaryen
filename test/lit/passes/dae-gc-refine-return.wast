@@ -9,22 +9,22 @@
 
  ;; CHECK:      (type ${i32} (struct (field i32)))
 
- ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
+ ;; CHECK:      (type ${i32_i64} (struct (field i32 i64)))
 
- ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+ ;; CHECK:      (type ${i32_f32} (struct (field i32 f32)))
  ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
 
- ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
+ ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32 i64) ${i32}))
 
- ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
+ ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32 f32) ${i32}))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
  (type ${i32} (struct_subtype (field i32) ${}))
 
- ;; CHECK:      (type ${} (struct ))
- ;; NOMNL:      (type ${} (struct_subtype  data))
+ ;; CHECK:      (type ${} (struct))
+ ;; NOMNL:      (type ${} (struct_subtype data))
  (type ${} (struct))
 
  (table 1 1 funcref)
@@ -37,7 +37,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-no-return (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $refine-return-no-return (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-no-return)
@@ -63,7 +63,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $any)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-no-refining (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $refine-return-no-refining (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $any anyref)
  ;; NOMNL-NEXT:  (local.set $temp
@@ -89,7 +89,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $func)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-flow (type $none_=>_funcref) (result funcref)
+ ;; NOMNL:      (func $refine-return-flow (type $func.1) (result funcref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
  ;; NOMNL-NEXT:  (local.set $temp
@@ -116,7 +116,7 @@
  ;; CHECK-NEXT:   (call $refine-return-flow)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $call-refine-return-flow (type $none_=>_funcref) (result funcref)
+ ;; NOMNL:      (func $call-refine-return-flow (type $func.1) (result funcref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $call-refine-return-flow)
@@ -152,7 +152,7 @@
  ;; CHECK-NEXT:   (local.get $func)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-return (type $none_=>_funcref) (result funcref)
+ ;; NOMNL:      (func $refine-return-return (type $func.1) (result funcref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
  ;; NOMNL-NEXT:  (local.set $temp
@@ -192,7 +192,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $func)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many (type $none_=>_funcref) (result funcref)
+ ;; NOMNL:      (func $refine-return-many (type $func.1) (result funcref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
  ;; NOMNL-NEXT:  (local.set $temp
@@ -250,7 +250,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $func)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many-blocked (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $refine-return-many-blocked (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
  ;; NOMNL-NEXT:  (local $data (ref null data))
@@ -311,7 +311,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $data)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many-blocked-2 (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $refine-return-many-blocked-2 (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
  ;; NOMNL-NEXT:  (local $data (ref null data))
@@ -368,7 +368,7 @@
  ;; CHECK-NEXT:   (local.get ${i32_f32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many-middle (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
+ ;; NOMNL:      (func $refine-return-many-middle (type $func.4) (result (ref null ${i32}))
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local ${i32_i64} (ref null ${i32_i64}))
  ;; NOMNL-NEXT:  (local ${i32_f32} (ref null ${i32_f32}))
@@ -415,7 +415,7 @@
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-tuple (type $none_=>_funcref_i32) (result funcref i32)
+ ;; NOMNL:      (func $refine-return-tuple (type $func.3) (result funcref i32)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $func funcref)
  ;; NOMNL-NEXT:  (local.set $temp
@@ -451,16 +451,16 @@
  ;; CHECK:      (func $do-return-call (result funcref)
  ;; CHECK-NEXT:  (return_call $return-ref-func)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $do-return-call (type $none_=>_funcref) (result funcref)
+ ;; NOMNL:      (func $do-return-call (type $func.1) (result funcref)
  ;; NOMNL-NEXT:  (return_call $return-ref-func)
  ;; NOMNL-NEXT: )
  (func $do-return-call (result funcref)
   (return_call $return-ref-func)
  )
- ;; CHECK:      (func $return-ref-func (result (ref $none_=>_funcref))
+ ;; CHECK:      (func $return-ref-func (result (ref $func.1))
  ;; CHECK-NEXT:  (ref.func $do-return-call)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $return-ref-func (type $none_=>_ref|none_->_funcref|) (result (ref $none_=>_funcref))
+ ;; NOMNL:      (func $return-ref-func (type $func.5) (result (ref $func.1))
  ;; NOMNL-NEXT:  (ref.func $do-return-call)
  ;; NOMNL-NEXT: )
  (func $return-ref-func (result funcref)
@@ -499,7 +499,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return_call $tail-callee)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-caller-no (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $tail-caller-no (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (local $any anyref)
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 1)
@@ -527,7 +527,7 @@
  ;; CHECK-NEXT:   (call $tail-caller-no)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-call-caller (type $none_=>_none)
+ ;; NOMNL:      (func $tail-call-caller (type $func.2)
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (call $tail-caller-yes)
  ;; NOMNL-NEXT:  )
@@ -580,7 +580,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-caller-indirect-no (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $tail-caller-indirect-no (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (local $any anyref)
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 1)
@@ -608,7 +608,7 @@
  ;; CHECK-NEXT:   (call $tail-caller-indirect-no)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-call-caller-indirect (type $none_=>_none)
+ ;; NOMNL:      (func $tail-call-caller-indirect (type $func.2)
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (call $tail-caller-indirect-yes)
  ;; NOMNL-NEXT:  )
@@ -665,7 +665,7 @@
  ;; CHECK-NEXT:   (local.get $return_{})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-caller-call_ref-no (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $tail-caller-call_ref-no (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (local $any anyref)
  ;; NOMNL-NEXT:  (local $return_{} (ref null $return_{}))
  ;; NOMNL-NEXT:  (if
@@ -690,7 +690,7 @@
  ;; CHECK:      (func $tail-caller-call_ref-unreachable
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-caller-call_ref-unreachable (type $none_=>_none)
+ ;; NOMNL:      (func $tail-caller-call_ref-unreachable (type $func.2)
  ;; NOMNL-NEXT:  (unreachable)
  ;; NOMNL-NEXT: )
  (func $tail-caller-call_ref-unreachable (result anyref)
@@ -707,7 +707,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $tail-caller-call_ref-unreachable)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-call-caller-call_ref (type $none_=>_none)
+ ;; NOMNL:      (func $tail-call-caller-call_ref (type $func.2)
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (call $tail-caller-call_ref-yes)
  ;; NOMNL-NEXT:  )
@@ -745,7 +745,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $update-null (type $i32_i32_=>_ref?|${i32}|) (param $x i32) (param $y i32) (result (ref null ${i32}))
+ ;; NOMNL:      (func $update-null (type $func.6) (param $x i32) (param $y i32) (result (ref null ${i32}))
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:   (if
@@ -788,7 +788,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $call-update-null (type $none_=>_anyref) (result anyref)
+ ;; NOMNL:      (func $call-update-null (type $func.0) (result anyref)
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (call $update-null
  ;; NOMNL-NEXT:    (i32.const 0)

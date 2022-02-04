@@ -17,7 +17,7 @@
   )
 
   ;; $foo needs to be assigned type foo_t rather than bad_t for this to validate.
-  ;; CHECK:      (func $make-ref (type $none_=>_ref|$foo_t|) (result (ref $foo_t))
+  ;; CHECK:      (func $make-ref (type $func.0) (result (ref $foo_t))
   ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT: )
   (func $make-ref (result (ref $foo_t))

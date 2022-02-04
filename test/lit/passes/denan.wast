@@ -4,13 +4,13 @@
 ;; RUN: foreach %s %t wasm-opt --denan -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $f32_=>_f32 (func (param f32) (result f32)))
+  ;; CHECK:      (type $func.0 (func (param f32) (result f32)))
 
-  ;; CHECK:      (type $f64_=>_f64 (func (param f64) (result f64)))
+  ;; CHECK:      (type $func.1 (func (param f64) (result f64)))
 
-  ;; CHECK:      (type $i32_f32_i64_f64_=>_none (func (param i32 f32 i64 f64)))
+  ;; CHECK:      (type $func.2 (func (param i32 f32 i64 f64)))
 
-  ;; CHECK:      (type $f32_f64_=>_none (func (param f32 f64)))
+  ;; CHECK:      (type $func.3 (func (param f32 f64)))
 
   ;; CHECK:      (global $global$1 (mut f32) (f32.const 0))
   (global $global$1 (mut f32) (f32.const nan))
@@ -202,11 +202,11 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $f32_=>_f32 (func (param f32) (result f32)))
+  ;; CHECK:      (type $func.1 (func (param f32) (result f32)))
 
-  ;; CHECK:      (type $f64_=>_f64 (func (param f64) (result f64)))
+  ;; CHECK:      (type $func.2 (func (param f64) (result f64)))
 
   ;; CHECK:      (func $deNan32
   ;; CHECK-NEXT:  (nop)

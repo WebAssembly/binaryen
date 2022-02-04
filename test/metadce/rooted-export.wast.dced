@@ -1,6 +1,6 @@
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param i32)))
+ (type $func.1 (func))
  (tag $b_wasm_tag (param i32))
  (export "wasm_func_b" (func $b_wasm_func))
  (export "wasm_tag_b" (tag $b_wasm_tag))

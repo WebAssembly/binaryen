@@ -84,7 +84,7 @@
 (module
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "table2" (table $1 1 1 funcref))
  (elem (i32.const 0) $f)
  (func $f
@@ -102,7 +102,7 @@
  (export "tab" (table $timport$0))
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "memory" (memory $0 256))
  (data (i32.const 1) "hello, world!")
  (import "env" "table" (table $timport$0 1 funcref))
@@ -128,7 +128,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
  (func $user
@@ -139,7 +139,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
  (func $user (result i32)
@@ -150,7 +150,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
  (func $user (result i32)
@@ -162,7 +162,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
  (func $user
@@ -178,7 +178,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
  (func $user (result i32)
@@ -189,7 +189,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (memory $0 23 256)
  (export "user" (func $user))
  (func $user (result i32)
@@ -199,7 +199,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (import "env" "memory" (memory $0 256))
  (export "user" (func $user))
  (func $user (result i32)
@@ -209,7 +209,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (memory $0 23 256)
  (export "user" (func $user))
  (func $user (result i32)
@@ -217,7 +217,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "memory" (memory $0 256))
  (data (global.get $memoryBase) "hello, world!")
  (import "env" "table" (table $timport$0 0 funcref))
@@ -229,9 +229,9 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $func.0 (func (result i32)))
+ (type $func.1 (func))
+ (type $func.2 (func (param i32) (result i32)))
  (import "env" "imported" (global $imported i32))
  (import "env" "_puts" (func $_puts (param i32) (result i32)))
  (global $int (mut i32) (global.get $imported))
@@ -263,7 +263,7 @@
 (module
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (start $starter)
  (func $starter
   (drop
@@ -272,7 +272,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "start" (func $start))
  (start $start)
 )
@@ -296,7 +296,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (elem declare func $foo)
  (export "test" (func $test))
  (func $foo

@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --inline-main -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (type $func.1 (func (param i32 i32) (result i32)))
 
  ;; CHECK:      (export "main" (func $main))
  (export "main" (func $main))
@@ -26,9 +26,9 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (type $func.1 (func (param i32 i32) (result i32)))
 
  ;; CHECK:      (export "main" (func $main))
  (export "main" (func $main))
@@ -46,7 +46,7 @@
  )
 )
 (module
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32) (result i32)))
 
  ;; CHECK:      (export "main" (func $main))
  (export "main" (func $main))
@@ -58,9 +58,9 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (type $func.1 (func (param i32 i32) (result i32)))
 
  ;; CHECK:      (export "main" (func $main))
  (export "main" (func $main))
@@ -82,7 +82,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
  ;; CHECK:      (func $__original_main (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
@@ -92,9 +92,9 @@
  )
 )
 (module
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32) (result i32)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.1 (func (result i32)))
 
  ;; CHECK:      (import "env" "main" (func $main (param i32 i32) (result i32)))
  (import "env" "main" (func $main (param i32 i32) (result i32)))
@@ -108,9 +108,9 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (type $func.1 (func (param i32 i32) (result i32)))
 
  ;; CHECK:      (import "env" "original_main" (func $__original_main (result i32)))
  (import "env" "original_main" (func $__original_main (result i32)))

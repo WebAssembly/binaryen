@@ -4,7 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt --dealign --enable-memory64 -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (memory $0 i64 1 1)
  (memory $0 i64 1 1)

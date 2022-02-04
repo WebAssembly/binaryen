@@ -4,7 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt --untee -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (func $tee
   ;; CHECK-NEXT:  (local $x i32)

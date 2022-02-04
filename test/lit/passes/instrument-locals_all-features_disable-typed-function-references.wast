@@ -4,29 +4,29 @@
 ;; RUN: foreach %s %t wasm-opt --instrument-locals --all-features --disable-typed-function-references -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i32_i64_=>_i64 (func (param i32 i32 i64) (result i64)))
+  ;; CHECK:      (type $func.1 (func (param i32 i32 i64) (result i64)))
 
-  ;; CHECK:      (type $i32_i32_f32_=>_f32 (func (param i32 i32 f32) (result f32)))
+  ;; CHECK:      (type $func.2 (func (param i32 i32 f32) (result f32)))
 
-  ;; CHECK:      (type $i32_i32_f64_=>_f64 (func (param i32 i32 f64) (result f64)))
+  ;; CHECK:      (type $func.3 (func (param i32 i32 f64) (result f64)))
 
-  ;; CHECK:      (type $i32_i32_funcref_=>_funcref (func (param i32 i32 funcref) (result funcref)))
+  ;; CHECK:      (type $func.4 (func (param i32 i32 funcref) (result funcref)))
 
-  ;; CHECK:      (type $i32_i32_externref_=>_externref (func (param i32 i32 externref) (result externref)))
+  ;; CHECK:      (type $func.5 (func (param i32 i32 externref) (result externref)))
 
-  ;; CHECK:      (type $i32_i32_anyref_=>_anyref (func (param i32 i32 anyref) (result anyref)))
+  ;; CHECK:      (type $func.6 (func (param i32 i32 anyref) (result anyref)))
 
-  ;; CHECK:      (type $i32_i32_eqref_=>_eqref (func (param i32 i32 eqref) (result eqref)))
+  ;; CHECK:      (type $func.7 (func (param i32 i32 eqref) (result eqref)))
 
-  ;; CHECK:      (type $i32_i32_i31ref_=>_i31ref (func (param i32 i32 i31ref) (result i31ref)))
+  ;; CHECK:      (type $func.8 (func (param i32 i32 i31ref) (result i31ref)))
 
-  ;; CHECK:      (type $i32_i32_dataref_=>_dataref (func (param i32 i32 dataref) (result dataref)))
+  ;; CHECK:      (type $func.9 (func (param i32 i32 dataref) (result dataref)))
 
-  ;; CHECK:      (type $i32_i32_v128_=>_v128 (func (param i32 i32 v128) (result v128)))
+  ;; CHECK:      (type $func.10 (func (param i32 i32 v128) (result v128)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.11 (func))
 
   ;; CHECK:      (import "env" "get_i32" (func $get_i32 (param i32 i32 i32) (result i32)))
 

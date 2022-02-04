@@ -70,8 +70,15 @@ struct Rtt;
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
 
+struct TypeNames {
+  // The name of the type.
+  Name name;
+  // For a Struct, names of fields.
+  std::unordered_map<size_t, Name> fieldNames;
+};
+
 // Used to generate HeapType names
-using HeapTypeNameGenerator = std::function<void(std::ostream&, HeapType)>;
+using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
 
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.

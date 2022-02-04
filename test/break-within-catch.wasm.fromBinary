@@ -1,6 +1,6 @@
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param i32)))
+ (type $func.1 (func))
  (tag $tag$0 (param i32))
  (func $0
   (block $label$2

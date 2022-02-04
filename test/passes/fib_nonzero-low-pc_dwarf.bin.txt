@@ -509,8 +509,8 @@ file_names[  1]:
 0x00000096: "next"
 0x0000009b: "i"
 (module
- (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (param i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))

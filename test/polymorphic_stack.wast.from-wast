@@ -1,8 +1,8 @@
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (type $FUNCSIG$ii (func (param i32) (result i32)))
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $func.1 (func))
+ (type $func.2 (func (param i32)))
  (import "env" "table" (table $timport$0 9 9 funcref))
  (func $break-and-binary (result i32)
   (block $x (result i32)

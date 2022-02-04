@@ -21,7 +21,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
+  ;; NOMNL:      (func $test (type $func.0)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.test_static $struct.B
   ;; NOMNL-NEXT:    (ref.null $struct.A)
@@ -48,7 +48,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
+  ;; NOMNL:      (func $test (type $func.0)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $struct.B
   ;; NOMNL-NEXT:    (ref.null $struct.A)
@@ -71,7 +71,7 @@
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
+  ;; NOMNL:      (func $test (type $func.0)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.new_default $struct.A)
   ;; NOMNL-NEXT:  )
@@ -95,7 +95,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
+  ;; NOMNL:      (func $test (type $func.0)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (array.new $vector
   ;; NOMNL-NEXT:    (f64.const 3.14159)
@@ -127,7 +127,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
+  ;; NOMNL:      (func $test (type $func.0)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (array.init_static $vector
   ;; NOMNL-NEXT:    (f64.const 1)

@@ -6,9 +6,9 @@
 (module
  (type $0 (func (param f32) (result f32)))
  (type $1 (func (param f64 f32 f32 f64 f32 i64 f64) (result i32)))
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
- ;; CHECK:      (type $none_=>_f32 (func (result f32)))
+ ;; CHECK:      (type $func.1 (func (result f32)))
 
  ;; CHECK:      (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))
  (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))

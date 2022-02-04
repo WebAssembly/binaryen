@@ -39,7 +39,7 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
- ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+ ;; CHECK:      (type $func.0 (func (param i32) (result i32)))
 
  ;; CHECK:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
@@ -310,7 +310,7 @@
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
- ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32 i32)))
 
  ;; CHECK:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
@@ -411,7 +411,7 @@
 
 ;; bad type
 (module
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $func.0 (func (param i32)))
 
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -448,7 +448,7 @@
 
 ;; no table
 (module
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $func.0 (func (param i32)))
 
  ;; CHECK:      (func $foo (param $0 i32)
  ;; CHECK-NEXT:  (unreachable)
@@ -461,7 +461,7 @@
 ;; change types
 (module
  (type (func))
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (table $0 8 8 funcref)
  (table $0 8 8 funcref)
@@ -515,7 +515,7 @@
 )
 
 (module
- ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32 i32)))
 
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
@@ -756,9 +756,9 @@
 (module
  ;; CHECK:      (type $F (func (param (ref func))))
 
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $func.0 (func (param i32)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.1 (func))
 
  ;; CHECK:      (table $0 15 15 funcref)
  (table $0 15 15 funcref)
@@ -778,7 +778,7 @@
  )
 
  ;; CHECK:      (func $select-non-nullable (param $x i32)
- ;; CHECK-NEXT:  (local $1 (ref null $i32_=>_none))
+ ;; CHECK-NEXT:  (local $1 (ref null $func.0))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
  ;; CHECK-NEXT:  )

@@ -16,7 +16,7 @@
 
  ;; CHECK:      (type $FUNCSIG$i (func (result i32)))
 
- ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+ ;; CHECK:      (type $func.0 (func (param i32 i32 i32 i32) (result i32)))
 
  ;; CHECK:      (type $FUNCSIG$vii (func (param i32 i32)))
 
@@ -25,13 +25,13 @@
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
  (type $FUNCSIG$vii (func (param i32 i32)))
- ;; CHECK:      (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
+ ;; CHECK:      (type $func.1 (func (param i32 i32 i32 i32 i32) (result i32)))
 
- ;; CHECK:      (type $f64_i32_=>_f64 (func (param f64 i32) (result f64)))
+ ;; CHECK:      (type $func.2 (func (param f64 i32) (result f64)))
 
- ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ ;; CHECK:      (type $func.3 (func (param i32 i32 i32)))
 
- ;; CHECK:      (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
+ ;; CHECK:      (type $func.4 (func (param i32 i32 i32 i32 i32)))
 
  ;; CHECK:      (import "env" "memory" (memory $0 256 256))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
