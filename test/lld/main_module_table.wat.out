@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (import "GOT.func" "__stdio_write" (global $gimport$9 (mut i32)))
  (global $global i32 (i32.const 42))

@@ -1971,14 +1971,7 @@ public:
   // Module name, if specified. Serves a documentary role only.
   Name name;
 
-  // Optional type name information, used in printing only. Note that Types are
-  // globally interned, but type names are specific to a module.
-  struct TypeNames {
-    // The name of the type.
-    Name name;
-    // For a Struct, names of fields.
-    std::unordered_map<Index, Name> fieldNames;
-  };
+  // Optional heap type name information, used in printing only.
   std::unordered_map<HeapType, TypeNames> typeNames;
 
   MixedArena allocator;

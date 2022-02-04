@@ -14,11 +14,11 @@
  (type $2 (func (result i32)))
  ;; CHECK:      (type $3 (func (param i32) (result i32)))
  (type $3 (func (param i32) (result i32)))
- ;; CHECK:      (type $none_=>_f32 (func (result f32)))
+ ;; CHECK:      (type $func.0 (func (result f32)))
 
  ;; CHECK:      (type $4 (func (param i64 i64) (result i64)))
  (type $4 (func (param i64 i64) (result i64)))
- ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+ ;; CHECK:      (type $func.1 (func (result anyref)))
 
  ;; CHECK:      (global $x (mut i32) (i32.const 0))
  (global $x (mut i32) (i32.const 0))
@@ -3477,9 +3477,9 @@
   )
 )
 (module
- ;; CHECK:      (type $i64_f32_=>_none (func (param i64 f32)))
+ ;; CHECK:      (type $func.0 (func (param i64 f32)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.1 (func (result i32)))
 
  ;; CHECK:      (export "test" (func $1))
 
@@ -3515,7 +3515,7 @@
 (module
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
- ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+ ;; CHECK:      (type $func.0 (func (result funcref)))
 
  ;; CHECK:      (func $0 (result funcref)
  ;; CHECK-NEXT:  (local $0 (ref null $none_=>_none))

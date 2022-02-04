@@ -17,7 +17,7 @@ total
  RefFunc        : 3       
 (module
  (type $0 (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $func.0 (func (param i32 i32)))
  (global $glob i32 (i32.const 1337))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")

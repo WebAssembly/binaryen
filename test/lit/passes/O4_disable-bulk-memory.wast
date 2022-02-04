@@ -46,7 +46,7 @@
  (type $7 (func (param i32 i32 i32)))
  ;; CHECK:      (type $11 (func (param i32)))
 
- ;; CHECK:      (type $f64_f64_f64_f64_f64_f64_f64_=>_i32 (func (param f64 f64 f64 f64 f64 f64 f64) (result i32)))
+ ;; CHECK:      (type $func.0 (func (param f64 f64 f64 f64 f64 f64 f64) (result i32)))
 
  ;; CHECK:      (type $8 (func (result f64)))
  (type $8 (func (result f64)))

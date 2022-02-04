@@ -16,7 +16,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $test (type $none_=>_none)
+ ;; NOMNL:      (func $test (type $func.0)
  ;; NOMNL-NEXT:  (call $help
  ;; NOMNL-NEXT:   (rtt.canon $\7bi32\7d)
  ;; NOMNL-NEXT:   (block $label$1 (result i32)
@@ -42,7 +42,7 @@
  ;; CHECK:      (func $help (param $3 (rtt $\7bi32\7d)) (param $4 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $help (type $rtt_$\7bi32\7d_i32_=>_none) (param $3 (rtt $\7bi32\7d)) (param $4 i32)
+ ;; NOMNL:      (func $help (type $func.1) (param $3 (rtt $\7bi32\7d)) (param $4 i32)
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $help (param $3 (rtt ${i32})) (param $4 i32)

@@ -3,20 +3,20 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 --partial-inlining-ifs=4 --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.1 (func (param i32)))
 
-  ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
+  ;; CHECK:      (type $func.2 (func (param anyref) (result anyref)))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+  ;; CHECK:      (type $func.3 (func (param anyref)))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
-  ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
+  ;; CHECK:      (type $func.4 (func (param i32 (rtt $struct))))
 
-  ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
+  ;; CHECK:      (type $func.5 (func (param i64 i32 f64)))
 
   ;; CHECK:      (import "out" "func" (func $import))
   (import "out" "func" (func $import))

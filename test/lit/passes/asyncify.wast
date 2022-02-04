@@ -7,11 +7,11 @@
   ;; CHECK:      (type $f (func (param i32)))
   (type $f (func (param i32)))
   (memory 1 2)
-  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+  ;; CHECK:      (type $func.0 (func (param i32 i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.2 (func (result i32)))
 
   ;; CHECK:      (import "env" "import" (func $import))
   (import "env" "import" (func $import))

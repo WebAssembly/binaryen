@@ -3,8 +3,8 @@
 [fuzz-exec] calling func_1
 [trap final > memory: 18446744073709551615 > 65514]
 (module
- (type $none_=>_i64 (func (result i64)))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i64)))
+ (type $func.1 (func (result i32)))
  (memory $0 1 1)
  (export "func_0" (func $func_0))
  (export "func_1" (func $func_1))
@@ -49,7 +49,7 @@
 [fuzz-exec] calling sub2
 [fuzz-exec] note result: sub2 => nan:0x400000
 (module
- (type $none_=>_f32 (func (result f32)))
+ (type $func.0 (func (result f32)))
  (export "div" (func $0))
  (export "mul1" (func $0))
  (export "mul2" (func $0))

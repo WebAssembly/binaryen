@@ -5,7 +5,7 @@
 ;; RUN: foreach %s %t wasm-opt --extract-function-index --pass-arg=extract-function-index@0 -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "bar" (func $bar))
 
@@ -34,7 +34,7 @@
 
   (elem $0 (table $t) (i32.const 0) func $other)
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (import "env" "other" (func $other))
 

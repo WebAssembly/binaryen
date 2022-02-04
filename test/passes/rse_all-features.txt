@@ -1,8 +1,8 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_f64_=>_none (func (param i32 f64)))
+ (type $func.0 (func))
+ (type $func.1 (func (param i32)))
+ (type $func.2 (func (param i32 i32)))
+ (type $func.3 (func (param i32 f64)))
  (func $basic (param $x i32) (param $y f64)
   (local $a f32)
   (local $b i64)

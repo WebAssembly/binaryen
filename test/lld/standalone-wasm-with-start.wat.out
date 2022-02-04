@@ -1,5 +1,5 @@
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 66112))
  (global $global$1 i32 (i32.const 66112))
  (global $global$2 i32 (i32.const 576))

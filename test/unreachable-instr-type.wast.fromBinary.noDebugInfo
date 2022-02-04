@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (memory $0 (shared 1 1))
  (func $0
   (unreachable)

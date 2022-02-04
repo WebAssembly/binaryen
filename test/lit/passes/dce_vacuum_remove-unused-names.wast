@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt --dce --vacuum --remove-unused-names -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.0 (func (result i32)))
 
-  ;; CHECK:      (type $f32_f32_=>_f32 (func (param f32 f32) (result f32)))
+  ;; CHECK:      (type $func.1 (func (param f32 f32) (result f32)))
 
-  ;; CHECK:      (type $i64_=>_i64 (func (param i64) (result i64)))
+  ;; CHECK:      (type $func.2 (func (param i64) (result i64)))
 
   ;; CHECK:      (func $__Z12serveroptionPc (result i32)
   ;; CHECK-NEXT:  (return

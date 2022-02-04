@@ -90,11 +90,11 @@
   )
  )
 )
-;; CHECK:      (type $none_=>_f32 (func (result f32)))
+;; CHECK:      (type $func.0 (func (result f32)))
 
-;; CHECK:      (type $f32_=>_f32 (func (param f32) (result f32)))
+;; CHECK:      (type $func.1 (func (param f32) (result f32)))
 
-;; CHECK:      (type $f64_=>_f64 (func (param f64) (result f64)))
+;; CHECK:      (type $func.2 (func (param f64) (result f64)))
 
 ;; CHECK:      (export "div" (func $0))
 

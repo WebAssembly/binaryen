@@ -1,10 +1,10 @@
 (module
  (type $3 (func))
  (type $i (func (param i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (type $ii (func (param i32 i32)))
  (type $iii (func (param i32 i32 i32)))
- (type $none_=>_f64 (func (result f64)))
+ (type $func.1 (func (result f64)))
  (memory $0 (shared 256 256))
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-i)
@@ -1299,8 +1299,8 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $f64_i32_=>_i32 (func (param f64 i32) (result i32)))
+ (type $func.0 (func (result i32)))
+ (type $func.1 (func (param f64 i32) (result i32)))
  (func $unreachable-in-sub-block (param $0 f64) (param $1 i32) (result i32)
   (local $2 i32)
   (local $9 i32)
@@ -1352,7 +1352,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (func $merge-some-block
   (drop
    (i32.const 1)
@@ -1674,8 +1674,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (param i32)))
  (tag $e (param i32))
  (func $foo
   (nop)

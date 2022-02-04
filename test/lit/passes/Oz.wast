@@ -5,13 +5,13 @@
 
 (module
   (memory 100 100)
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $func.2 (func (param i32 i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_v128 (func (result v128)))
+  ;; CHECK:      (type $func.3 (func (result v128)))
 
   ;; CHECK:      (memory $0 100 100)
 

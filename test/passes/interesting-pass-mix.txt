@@ -1,8 +1,8 @@
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $func.0 (func (param i32)))
+ (type $func.1 (func))
+ (type $func.2 (func (result i32)))
+ (type $func.3 (func (param i32) (result i32)))
  (func $trivial
   (nop)
  )

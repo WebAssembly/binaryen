@@ -1,6 +1,6 @@
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (result i32)))
+ (type $func.1 (func))
  (import "wasi_snapshot_preview1" "something_else" (func $wasi_something_else (result i32)))
  (memory $0 256 256)
  (data (i32.const 28) "aaaa")

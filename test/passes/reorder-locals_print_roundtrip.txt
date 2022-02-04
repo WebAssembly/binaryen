@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (func $a
   (local $x i32)
   (local $y f64)
@@ -28,7 +28,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (func $a
   (local $x i32)
   (local $y f64)

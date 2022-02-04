@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.2 (func))
 
   ;; CHECK:      (table $0 1 1 funcref)
 
@@ -436,7 +436,7 @@
    )
   )
  )
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (block $__inlined_func$bar_0

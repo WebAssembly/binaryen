@@ -3,9 +3,9 @@
 ;; RUN: wasm-opt %s --poppify --no-validation -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32_i64_f32 (func (result i32 i64 f32)))
+  ;; CHECK:      (type $func.0 (func (result i32 i64 f32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
   ;; CHECK:      (global $foo (mut i32) (i32.const 0))
   (global $foo (mut i32) (i32.const 0))

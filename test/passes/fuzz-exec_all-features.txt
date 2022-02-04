@@ -9,8 +9,8 @@
 [fuzz-exec] calling e
 [fuzz-exec] note result: e => -2146649112
 (module
- (type $none_=>_i64 (func (result i64)))
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i64)))
+ (type $func.1 (func (result i32)))
  (export "a" (func $a))
  (export "b" (func $b))
  (export "c" (func $c))
@@ -70,10 +70,10 @@
 [fuzz-exec] calling oob_notify
 [trap final > memory: 18446744073709551512 > 65514]
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (result i32)))
+ (type $func.1 (func (param i32)))
+ (type $func.2 (func (param i32 i32)))
+ (type $func.3 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "unaligned_load" (func $0))
@@ -147,7 +147,7 @@
 [fuzz-exec] calling unsigned_2_bytes
 [fuzz-exec] note result: unsigned_2_bytes => 65535
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $func.0 (func (result i32)))
  (memory $0 (shared 1 1))
  (data (i32.const 0) "\ff\ff")
  (export "unsigned_2_bytes" (func $0))
@@ -164,8 +164,8 @@
 [fuzz-exec] calling rmw-reads-modifies-and-writes
 [LoggingExternalInterface logging 0]
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param i32)))
+ (type $func.1 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "rmw-reads-modifies-and-writes" (func $0))
@@ -189,8 +189,8 @@
 [fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param i32)))
+ (type $func.1 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "rmw-reads-modifies-and-writes-asymmetrical" (func $0))
@@ -214,7 +214,7 @@
 [fuzz-exec] calling func
 [fuzz-exec] note result: func => funcref
 (module
- (type $none_=>_funcref (func (result funcref)))
+ (type $func.0 (func (result funcref)))
  (elem declare func $func)
  (export "func" (func $func))
  (func $func (result funcref)

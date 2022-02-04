@@ -4,7 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt -O1 -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)

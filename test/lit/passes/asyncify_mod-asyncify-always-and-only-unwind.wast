@@ -5,11 +5,11 @@
 
 (module
   (memory 1 2)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.2 (func (param i32)))
 
   ;; CHECK:      (import "env" "import" (func $import))
   (import "env" "import" (func $import))

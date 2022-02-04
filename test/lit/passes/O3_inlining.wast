@@ -5,7 +5,7 @@
 
 (module
  (global $global$0 (mut f64) (f64.const -32768))
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $func.0 (func (param i32)))
 
  ;; CHECK:      (global $global$1 (mut i32) (i32.const 100))
  (global $global$1 (mut i32) (i32.const 100))

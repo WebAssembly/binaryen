@@ -5,11 +5,11 @@
 
 (module
 )
-;; CHECK:      (type $i32_=>_none (func (param i32)))
+;; CHECK:      (type $func.0 (func (param i32)))
 
-;; CHECK:      (type $none_=>_none (func))
+;; CHECK:      (type $func.1 (func))
 
-;; CHECK:      (type $none_=>_i32 (func (result i32)))
+;; CHECK:      (type $func.2 (func (result i32)))
 
 ;; CHECK:      (import "env" "__asyncify_state" (global $__asyncify_state (mut i32)))
 

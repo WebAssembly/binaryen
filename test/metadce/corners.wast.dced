@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "table" (table $timport$0 10 10 funcref))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "imported_twice" (func $imported_twice_a))

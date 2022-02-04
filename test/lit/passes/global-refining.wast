@@ -6,13 +6,13 @@
   ;; a null, so we have nothing concrete to improve with (though we could use
   ;; the type of the null perhaps, TODO). The second is a ref.func which lets
   ;; us refine.
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $func.0 (func_subtype func))
 
   ;; CHECK:      (global $func-null-init (mut anyref) (ref.null func))
   (global $func-null-init (mut anyref) (ref.null func))
-  ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
+  ;; CHECK:      (global $func-func-init (mut (ref $func.0)) (ref.func $foo))
   (global $func-func-init (mut anyref) (ref.func $foo))
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $func.0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
@@ -22,19 +22,19 @@
   ;; Globals with later assignments of null. The global with a function in its
   ;; init will update the null to allow it to refine.
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $func.0 (func_subtype func))
 
   ;; CHECK:      (global $func-null-init (mut anyref) (ref.null func))
   (global $func-null-init (mut anyref) (ref.null func))
-  ;; CHECK:      (global $func-func-init (mut (ref null $none_=>_none)) (ref.func $foo))
+  ;; CHECK:      (global $func-func-init (mut (ref null $func.0)) (ref.func $foo))
   (global $func-func-init (mut anyref) (ref.func $foo))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $func.0)
   ;; CHECK-NEXT:  (global.set $func-null-init
   ;; CHECK-NEXT:   (ref.null any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $func-func-init
-  ;; CHECK-NEXT:   (ref.null $none_=>_none)
+  ;; CHECK-NEXT:   (ref.null $func.0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
@@ -47,16 +47,16 @@
   ;; Globals with later assignments of something non-null. Both can be refined,
   ;; and the one with a non-null initial value can even become non-nullable.
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $func.0 (func_subtype func))
 
-  ;; CHECK:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null $none_=>_none))
+  ;; CHECK:      (global $func-null-init (mut (ref null $func.0)) (ref.null $func.0))
   (global $func-null-init (mut anyref) (ref.null func))
-  ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
+  ;; CHECK:      (global $func-func-init (mut (ref $func.0)) (ref.func $foo))
   (global $func-func-init (mut anyref) (ref.func $foo))
 
   ;; CHECK:      (elem declare func $foo)
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $func.0)
   ;; CHECK-NEXT:  (global.set $func-null-init
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
@@ -74,16 +74,16 @@
   ;; A global with multiple later assignments. The refined type is more
   ;; specific than the original, but less than each of the non-null values.
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $func.0 (func_subtype func))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+  ;; CHECK:      (type $func.1 (func_subtype (param i32) func))
 
   ;; CHECK:      (global $global (mut funcref) (ref.null func))
   (global $global (mut anyref) (ref.null any))
 
   ;; CHECK:      (elem declare func $bar $foo)
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $func.0)
   ;; CHECK-NEXT:  (global.set $global
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
@@ -109,7 +109,7 @@
    (global.set $global (ref.null data))
   )
 
-  ;; CHECK:      (func $bar (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $bar (type $func.1) (param $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bar (param $x i32)

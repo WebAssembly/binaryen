@@ -1,6 +1,6 @@
 (module
- (type $externref_=>_none (func (param externref)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param externref)))
+ (type $func.1 (func))
  (type $funcref_=>_none (func (param funcref)))
  (memory $0 256 256)
  (data (i32.const 10) "waka waka waka waka waka")

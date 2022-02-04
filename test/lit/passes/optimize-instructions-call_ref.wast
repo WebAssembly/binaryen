@@ -14,7 +14,7 @@
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
 
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $func.0 (func (param i32)))
 
  ;; CHECK:      (type $data_=>_none (func (param dataref)))
  (type $data_=>_none (func (param (ref data))))

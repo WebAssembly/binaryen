@@ -9,9 +9,9 @@
   (memory 1 2)
   (table 1 funcref)
   (elem (i32.const 0))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.1 (func (result i32)))
 
   ;; CHECK:      (import "env" "import" (func $import))
   (import "env" "import" (func $import))

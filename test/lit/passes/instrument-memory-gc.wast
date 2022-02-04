@@ -4,22 +4,22 @@
 ;; RUN: foreach %s %t wasm-opt --instrument-memory --nominal -all -S -o - | filecheck %s --check-prefix=NOMNL
 
 (module
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $func.0 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i64_=>_i64 (func (param i32 i64) (result i64)))
+  ;; CHECK:      (type $func.1 (func (param i32 i64) (result i64)))
 
-  ;; CHECK:      (type $i32_f32_=>_f32 (func (param i32 f32) (result f32)))
+  ;; CHECK:      (type $func.2 (func (param i32 f32) (result f32)))
 
-  ;; CHECK:      (type $i32_f64_=>_f64 (func (param i32 f64) (result f64)))
+  ;; CHECK:      (type $func.3 (func (param i32 f64) (result f64)))
 
   ;; CHECK:      (type $struct (struct (field (mut i32)) (field f32) (field $named f64)))
-  ;; NOMNL:      (type $i32_i32_=>_i32 (func_subtype (param i32 i32) (result i32) func))
+  ;; NOMNL:      (type $func.0 (func_subtype (param i32 i32) (result i32) func))
 
-  ;; NOMNL:      (type $i32_i64_=>_i64 (func_subtype (param i32 i64) (result i64) func))
+  ;; NOMNL:      (type $func.1 (func_subtype (param i32 i64) (result i64) func))
 
-  ;; NOMNL:      (type $i32_f32_=>_f32 (func_subtype (param i32 f32) (result f32) func))
+  ;; NOMNL:      (type $func.2 (func_subtype (param i32 f32) (result f32) func))
 
-  ;; NOMNL:      (type $i32_f64_=>_f64 (func_subtype (param i32 f64) (result f64) func))
+  ;; NOMNL:      (type $func.3 (func_subtype (param i32 f64) (result f64) func))
 
   ;; NOMNL:      (type $struct (struct_subtype (field (mut i32)) (field f32) (field $named f64) data))
   (type $struct (struct
@@ -27,18 +27,18 @@
     (field f32)
     (field $named f64)
   ))
-  ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+  ;; CHECK:      (type $func.4 (func (param i32 i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $func.5 (func (param (ref $struct))))
 
-  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
+  ;; CHECK:      (type $func.6 (func (param (ref $array))))
 
   ;; CHECK:      (type $array (array (mut f64)))
-  ;; NOMNL:      (type $i32_i32_i32_i32_=>_i32 (func_subtype (param i32 i32 i32 i32) (result i32) func))
+  ;; NOMNL:      (type $func.4 (func_subtype (param i32 i32 i32 i32) (result i32) func))
 
-  ;; NOMNL:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; NOMNL:      (type $func.5 (func_subtype (param (ref $struct)) func))
 
-  ;; NOMNL:      (type $ref|$array|_=>_none (func_subtype (param (ref $array)) func))
+  ;; NOMNL:      (type $func.6 (func_subtype (param (ref $array)) func))
 
   ;; NOMNL:      (type $array (array_subtype (mut f64) data))
   (type $array (array (mut f64)))
@@ -188,7 +188,7 @@
 
   ;; NOMNL:      (import "env" "array_set_index" (func $array_set_index (param i32 i32) (result i32)))
 
-  ;; NOMNL:      (func $structs (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; NOMNL:      (func $structs (type $func.5) (param $x (ref $struct))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (call $struct_get_val_i32
   ;; NOMNL-NEXT:    (i32.const 0)
@@ -259,7 +259,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $arrays (type $ref|$array|_=>_none) (param $x (ref $array))
+  ;; NOMNL:      (func $arrays (type $func.6) (param $x (ref $array))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (call $array_get_val_f64
   ;; NOMNL-NEXT:    (i32.const 5)

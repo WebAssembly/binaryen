@@ -1,7 +1,7 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (param i32)))
+ (type $func.2 (func (param i32) (result i32)))
  (import "env" "_Z3foov" (func $foo\28\29))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
@@ -420,9 +420,9 @@ file_names[  1]:
 0x00000081: "_Z21dwarf_with_exceptionsv"
 0x0000009c: "dwarf_with_exceptions"
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (param i32)))
+ (type $func.2 (func (param i32) (result i32)))
  (import "env" "_Z3foov" (func $foo\28\29))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))

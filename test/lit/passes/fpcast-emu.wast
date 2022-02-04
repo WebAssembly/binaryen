@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --fpcast-emu -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
+  ;; CHECK:      (type $func.0 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
 
-  ;; CHECK:      (type $i32_i64_f32_f64_=>_f32 (func (param i32 i64 f32 f64) (result f32)))
+  ;; CHECK:      (type $func.1 (func (param i32 i64 f32 f64) (result f32)))
 
   ;; CHECK:      (type $vijfd (func (param i32 i64 f32 f64)))
   (type $vijfd (func (param i32) (param i64) (param f32) (param f64)))
@@ -28,7 +28,7 @@
 
   ;; CHECK:      (func $a (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_indirect (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64)
+  ;; CHECK-NEXT:   (call_indirect (type $func.0)
   ;; CHECK-NEXT:    (i64.extend_i32_u
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -67,7 +67,7 @@
     )
   )
   ;; CHECK:      (func $b (param $x i32) (param $y i32) (result i64)
-  ;; CHECK-NEXT:  (call_indirect (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64)
+  ;; CHECK-NEXT:  (call_indirect (type $func.0)
   ;; CHECK-NEXT:   (i64.extend_i32_u
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -101,7 +101,7 @@
   ;; CHECK:      (func $c (param $x i64) (param $y i64) (result f32)
   ;; CHECK-NEXT:  (f32.reinterpret_i32
   ;; CHECK-NEXT:   (i32.wrap_i64
-  ;; CHECK-NEXT:    (call_indirect (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64)
+  ;; CHECK-NEXT:    (call_indirect (type $func.0)
   ;; CHECK-NEXT:     (i64.const 1)
   ;; CHECK-NEXT:     (i64.const 2)
   ;; CHECK-NEXT:     (i64.const 0)
@@ -132,7 +132,7 @@
   )
   ;; CHECK:      (func $d (param $x f32) (param $y f32) (result f64)
   ;; CHECK-NEXT:  (f64.reinterpret_i64
-  ;; CHECK-NEXT:   (call_indirect (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64)
+  ;; CHECK-NEXT:   (call_indirect (type $func.0)
   ;; CHECK-NEXT:    (i64.extend_i32_u
   ;; CHECK-NEXT:     (i32.reinterpret_f32
   ;; CHECK-NEXT:      (f32.const 1)
@@ -170,7 +170,7 @@
   )
   ;; CHECK:      (func $e (param $x f64) (param $y f64) (result i32)
   ;; CHECK-NEXT:  (i32.wrap_i64
-  ;; CHECK-NEXT:   (call_indirect (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64)
+  ;; CHECK-NEXT:   (call_indirect (type $func.0)
   ;; CHECK-NEXT:    (i64.reinterpret_f64
   ;; CHECK-NEXT:     (f64.const 1)
   ;; CHECK-NEXT:    )
@@ -297,7 +297,7 @@
  (type $0 (func (param i64)))
  ;; CHECK:      (type $1 (func (param f32) (result i64)))
  (type $1 (func (param f32) (result i64)))
- ;; CHECK:      (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
+ ;; CHECK:      (type $func.0 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
@@ -312,7 +312,7 @@
  ;; CHECK-NEXT:    (global.set $global$0
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call_indirect (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64)
+ ;; CHECK-NEXT:    (call_indirect (type $func.0)
  ;; CHECK-NEXT:     (br $label$1
  ;; CHECK-NEXT:      (i64.const 4294967295)
  ;; CHECK-NEXT:     )
@@ -355,11 +355,11 @@
 (module
  (table 42 42 funcref)
  (elem (i32.const 0) $a $b)
- ;; CHECK:      (type $f32_=>_none (func (param f32)))
+ ;; CHECK:      (type $func.0 (func (param f32)))
 
- ;; CHECK:      (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
+ ;; CHECK:      (type $func.1 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
 
- ;; CHECK:      (type $f64_=>_none (func (param f64)))
+ ;; CHECK:      (type $func.2 (func (param f64)))
 
  ;; CHECK:      (table $0 42 42 funcref)
 

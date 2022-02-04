@@ -7,15 +7,15 @@
 ;; types.
 
 (module
-  ;; CHECK:      (type $leaf (struct_subtype (field i32) (field i64) (field f32) (field f64) $twig))
+  ;; CHECK:      (type $leaf (struct_subtype (field i32 i64 f32 f64) $twig))
   (type $leaf (struct_subtype i32 i64 f32 f64 $twig))
 
-  ;; CHECK:      (type $root (struct_subtype  data))
+  ;; CHECK:      (type $root (struct_subtype data))
 
-  ;; CHECK:      (type $twig (struct_subtype (field i32) (field i64) (field f32) $branch))
+  ;; CHECK:      (type $twig (struct_subtype (field i32 i64 f32) $branch))
   (type $twig (struct_subtype i32 i64 f32 $branch))
 
-  ;; CHECK:      (type $branch (struct_subtype (field i32) (field i64) $trunk))
+  ;; CHECK:      (type $branch (struct_subtype (field i32 i64) $trunk))
   (type $branch (struct_subtype i32 i64 $trunk))
 
   ;; CHECK:      (type $trunk (struct_subtype (field i32) $root))
@@ -23,7 +23,7 @@
 
   (type $root (struct))
 
-  ;; CHECK:      (func $make-root (type $none_=>_ref?|$root|) (result (ref null $root))
+  ;; CHECK:      (func $make-root (type $func.0) (result (ref null $root))
   ;; CHECK-NEXT:  (ref.null $leaf)
   ;; CHECK-NEXT: )
   (func $make-root (result (ref null $root))

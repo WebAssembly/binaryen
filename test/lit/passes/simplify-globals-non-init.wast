@@ -6,7 +6,7 @@
 ;; A global that is written its initial value in all subsequent writes can
 ;; remove those writes.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $global-0 i32 (i32.const 0))
   (global $global-0 (mut i32) (i32.const 0))
@@ -54,9 +54,9 @@
 
 ;; As above, but now we write other values.
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
   ;; CHECK:      (global $global-0 (mut i32) (i32.const 0))
   (global $global-0 (mut i32) (i32.const 0))
@@ -102,9 +102,9 @@
 ;; Globals without constant initial values.
 (module
   ;; An imported global.
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $func.0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.1 (func))
 
   ;; CHECK:      (import "env" "import_global" (global $global-0 (mut i32)))
   (import "env" "import_global" (global $global-0 (mut i32)))

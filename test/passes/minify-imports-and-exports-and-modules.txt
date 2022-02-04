@@ -5,7 +5,7 @@ longname2 => d
 longname3 => e
 longname4 => f
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "a" "a" (memory $0 256 256))
  (import "a" "b" (table $0 4 funcref))
  (import "a" "c" (func $internal1))

@@ -188,11 +188,11 @@ file_names[  1]:
 0x000000c8: "_Z3foov"
 0x000000d0: "foo"
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
- (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $func.0 (func (param i32) (result i32)))
+ (type $func.1 (func (param i32)))
+ (type $func.2 (func (result i32)))
+ (type $func.3 (func))
+ (type $func.4 (func (param i32 i32)))
  (import "env" "__wasm_call_ctors" (func $fimport$0))
  (import "env" "dlmalloc" (func $fimport$1 (param i32) (result i32)))
  (import "env" "dlfree" (func $fimport$2 (param i32)))

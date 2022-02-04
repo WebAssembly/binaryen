@@ -6,7 +6,7 @@
 (module
   (table 1 1 funcref)
   (elem (i32.const 0) $tabled)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (table $0 1 1 funcref)
 
@@ -137,7 +137,7 @@
   )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
  ;; CHECK:      (func $main (result i32)
  ;; CHECK-NEXT:  (unreachable)
@@ -151,7 +151,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+ ;; CHECK:      (type $func.0 (func (result i64)))
 
  ;; CHECK:      (memory $0 (shared 1 1))
  (memory $0 (shared 1 1))
@@ -178,7 +178,7 @@
 )
 ;; potential infinite recursion
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $main
  ;; CHECK-NEXT:  (call $one)
@@ -197,7 +197,7 @@
 )
 ;; potential infinite cycling recursion
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
  ;; CHECK:      (func $main
  ;; CHECK-NEXT:  (call $two)

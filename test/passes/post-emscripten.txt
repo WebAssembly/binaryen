@@ -1,7 +1,7 @@
 (module
- (type $i32_f32_=>_none (func (param i32 f32)))
- (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param i32 f32)))
+ (type $func.1 (func (param i32 i32 f32)))
+ (type $func.2 (func))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)
@@ -62,15 +62,15 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (func $call
   (call $call)
  )
 )
 (module
- (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
- (type $none_=>_none (func))
- (type $i32_f32_=>_none (func (param i32 f32)))
+ (type $func.0 (func (param i32 i32 f32)))
+ (type $func.1 (func))
+ (type $func.2 (func (param i32 f32)))
  (import "env" "glob" (global $glob i32))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
  (memory $0 256 256)
@@ -89,8 +89,8 @@
 )
 (module
  (type $none_=>_none (func))
- (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
- (type $i32_f32_=>_none (func (param i32 f32)))
+ (type $func.0 (func (param i32 i32 f32)))
+ (type $func.1 (func (param i32 f32)))
  (import "env" "glob" (global $glob i32))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
  (memory $0 256 256)

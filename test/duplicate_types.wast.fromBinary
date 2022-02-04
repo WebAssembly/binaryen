@@ -1,6 +1,6 @@
 (module
  (type $0 (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $func.0 (func (param i32) (result i32)))
  (func $f0 (param $0 i32)
   (nop)
  )

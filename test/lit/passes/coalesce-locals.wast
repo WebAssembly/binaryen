@@ -7,13 +7,13 @@
   (memory 10)
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $func.0 (func (result i32)))
 
   ;; CHECK:      (type $4 (func (param i32)))
 
   ;; CHECK:      (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $f64_i32_=>_i64 (func (param f64 i32) (result i64)))
+  ;; CHECK:      (type $func.1 (func (param f64 i32) (result i64)))
 
   ;; CHECK:      (type $3 (func (param i32 f32)))
 
@@ -26,11 +26,11 @@
   (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
   (import $get "env" "get" (result i32))
   (import $set "env" "set" (param i32))
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.2 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+  ;; CHECK:      (type $func.3 (func (param i32 i32)))
 
-  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
+  ;; CHECK:      (type $func.4 (func (result f64)))
 
   ;; CHECK:      (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
 

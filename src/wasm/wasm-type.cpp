@@ -203,7 +203,7 @@ struct DefaultHeapTypeNameGenerator {
   size_t structCount = 0;
   size_t arrayCount = 0;
 
-  void getName(std::ostream& os, HeapType type);
+  TypeNames getNames(HeapType type);
 };
 
 // Helper for printing types.
@@ -221,18 +221,18 @@ struct TypePrinter {
   HeapTypeNameGenerator generator;
 
   // Cache names that have already been generated.
-  std::unordered_map<HeapType, std::string> nameCache;
+  std::unordered_map<HeapType, TypeNames> nameCache;
 
   TypePrinter(std::ostream& os, HeapTypeNameGenerator generator)
     : hasSupertype(getTypeSystem() != TypeSystem::Equirecursive), os(os),
       defaultGenerator(), generator(generator) {}
   TypePrinter(std::ostream& os)
-    : TypePrinter(os, [&](std::ostream& os, HeapType type) {
-        defaultGenerator->getName(os, type);
-      }) {
+    : TypePrinter(
+        os, [&](HeapType type) { return defaultGenerator->getNames(type); }) {
     defaultGenerator = DefaultHeapTypeNameGenerator{};
   }
 
+  TypeNames& getNames(HeapType type);
   void printHeapTypeName(HeapType type);
   void printSupertypeOr(std::optional<HeapType> super, std::string other);
 
@@ -241,11 +241,11 @@ struct TypePrinter {
   std::ostream& print(const Tuple& tuple);
   std::ostream& print(const Field& field);
   std::ostream& print(const Signature& sig,
-                      std::optional<HeapType> super = std::nullopt);
+                      std::optional<HeapType> type = std::nullopt);
   std::ostream& print(const Struct& struct_,
-                      std::optional<HeapType> super = std::nullopt);
+                      std::optional<HeapType> type = std::nullopt);
   std::ostream& print(const Array& array,
-                      std::optional<HeapType> super = std::nullopt);
+                      std::optional<HeapType> type = std::nullopt);
   std::ostream& print(const Rtt& rtt);
 };
 
@@ -1966,16 +1966,27 @@ std::optional<Rtt> TypeBounder::lub(const Rtt& a, const Rtt& b) {
   return Rtt(depth, a.heapType);
 }
 
-void DefaultHeapTypeNameGenerator::getName(std::ostream& os, HeapType type) {
+TypeNames DefaultHeapTypeNameGenerator::getNames(HeapType type) {
+  std::stringstream stream;
   if (type.isSignature()) {
-    os << "func." << funcCount++;
+    stream << "func." << funcCount++;
   } else if (type.isStruct()) {
-    os << "struct." << structCount++;
+    stream << "struct." << structCount++;
   } else if (type.isArray()) {
-    os << "array." << arrayCount++;
+    stream << "array." << arrayCount++;
   } else {
     WASM_UNREACHABLE("unexpected kind");
   }
+  return {stream.str(), {}};
+}
+
+TypeNames& TypePrinter::getNames(HeapType type) {
+  auto [it, inserted] = nameCache.insert({type, TypeNames{}});
+  if (inserted) {
+    // We haven't seen this type before; generate new names for it.
+    it->second = generator(type);
+  }
+  return it->second;
 }
 
 void TypePrinter::printHeapTypeName(HeapType type) {
@@ -1983,15 +1994,7 @@ void TypePrinter::printHeapTypeName(HeapType type) {
     print(type);
     return;
   }
-  os << '$';
-  auto [it, inserted] = nameCache.insert({type, ""});
-  if (inserted) {
-    // We haven't seen this type before; generate a new name for it.
-    std::stringstream stream;
-    generator(stream, type);
-    it->second = stream.str();
-  }
-  os << it->second;
+  os << '$' << getNames(type).name;
 }
 
 void TypePrinter::printSupertypeOr(std::optional<HeapType> super,
@@ -2086,11 +2089,11 @@ std::ostream& TypePrinter::print(HeapType type) {
     os << "(; noncanonical ;) ";
     print(getHeapTypeInfo(type)->basic);
   } else if (type.isSignature()) {
-    print(type.getSignature(), type.getSuperType());
+    print(type.getSignature(), type);
   } else if (type.isStruct()) {
-    print(type.getStruct(), type.getSuperType());
+    print(type.getStruct(), type);
   } else if (type.isArray()) {
-    print(type.getArray(), type.getSuperType());
+    print(type.getArray(), type);
   } else {
     WASM_UNREACHABLE("unexpected type");
   }
@@ -2131,7 +2134,7 @@ std::ostream& TypePrinter::print(const Field& field) {
 }
 
 std::ostream& TypePrinter::print(const Signature& sig,
-                                 std::optional<HeapType> super) {
+                                 std::optional<HeapType> type) {
   auto printPrefixed = [&](const char* prefix, Type type) {
     os << '(' << prefix;
     for (Type t : type) {
@@ -2142,7 +2145,7 @@ std::ostream& TypePrinter::print(const Signature& sig,
   };
 
   os << "(func";
-  if (hasSupertype) {
+  if (hasSupertype && type) {
     os << "_subtype";
   }
   if (sig.params.getID() != Type::none) {
@@ -2153,47 +2156,60 @@ std::ostream& TypePrinter::print(const Signature& sig,
     os << ' ';
     printPrefixed("result", sig.results);
   }
-  if (hasSupertype) {
+  if (hasSupertype && type) {
     os << ' ';
-    printSupertypeOr(super, "func");
+    printSupertypeOr(type->getSuperType(), "func");
   }
   return os << ')';
 }
 
 std::ostream& TypePrinter::print(const Struct& struct_,
-                                 std::optional<HeapType> super) {
+                                 std::optional<HeapType> type) {
   os << "(struct";
-  if (hasSupertype) {
+  if (hasSupertype && type) {
     os << "_subtype";
   }
-  if (struct_.fields.size()) {
-    os << " (field";
+  auto* fieldNames = type ? &getNames(*type).fieldNames : nullptr;
+  if (!struct_.fields.empty()) {
+    if (fieldNames != nullptr && !fieldNames->empty()) {
+      // Print each field separately to accommodate the names.
+      for (size_t i = 0, size = struct_.fields.size(); i < size; ++i) {
+        const Field& field = struct_.fields[i];
+        os << " (field ";
+        if (auto it = fieldNames->find(i); it != fieldNames->end()) {
+          os << '$' << it->second << ' ';
+        }
+        print(field);
+        os << ')';
+      }
+    } else {
+      // No names, so we can print all the fields at once.
+      os << " (field";
+      for (const Field& field : struct_.fields) {
+        os << ' ';
+        print(field);
+      }
+      os << ')';
+    }
   }
-  for (const Field& field : struct_.fields) {
+  if (hasSupertype && type) {
     os << ' ';
-    print(field);
-  }
-  if (struct_.fields.size()) {
-    os << ')';
-  }
-  if (hasSupertype) {
-    os << ' ';
-    printSupertypeOr(super, "data");
+    printSupertypeOr(type->getSuperType(), "data");
   }
   return os << ')';
 }
 
 std::ostream& TypePrinter::print(const Array& array,
-                                 std::optional<HeapType> super) {
+                                 std::optional<HeapType> type) {
   os << "(array";
-  if (hasSupertype) {
+  if (hasSupertype && type) {
     os << "_subtype";
   }
   os << ' ';
   print(array.element);
-  if (hasSupertype) {
+  if (hasSupertype && type) {
     os << ' ';
-    printSupertypeOr(super, "data");
+    printSupertypeOr(type->getSuperType(), "data");
   }
   return os << ')';
 }

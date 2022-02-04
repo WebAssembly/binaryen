@@ -29,7 +29,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.null $A)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $foo (type $none_=>_ref?|$A|) (result (ref null $A))
+  ;; NOMNL:      (func $foo (type $func.1) (result (ref null $A))
   ;; NOMNL-NEXT:  (try $try
   ;; NOMNL-NEXT:   (do
   ;; NOMNL-NEXT:    (nop)

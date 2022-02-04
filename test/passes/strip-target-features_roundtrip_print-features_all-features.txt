@@ -13,7 +13,7 @@
 --enable-typed-function-references
 --enable-relaxed-simd
 (module
- (type $none_=>_v128_externref (func (result v128 externref)))
+ (type $func.0 (func (result v128 externref)))
  (func $foo (result v128 externref)
   (tuple.make
    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)

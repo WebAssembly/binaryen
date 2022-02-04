@@ -5,17 +5,17 @@
 
 (module
  (memory 1)
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.1 (func (result i32)))
 
- ;; CHECK:      (type $none_=>_f64 (func (result f64)))
+ ;; CHECK:      (type $func.2 (func (result f64)))
 
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $func.3 (func (param i32)))
 
- ;; CHECK:      (type $i32_=>_f32 (func (param i32) (result f32)))
+ ;; CHECK:      (type $func.4 (func (param i32) (result f32)))
 
- ;; CHECK:      (type $none_=>_f32 (func (result f32)))
+ ;; CHECK:      (type $func.5 (func (result f32)))
 
  ;; CHECK:      (global $global (mut i32) (i32.const 0))
  (global $global (mut i32) (i32.const 0))

@@ -7,10 +7,10 @@
 (module
   ;; CHECK:      (type $func (func))
 
-  ;; CHECK:      (type $struct (struct (field (ref $array)) (field (ref null $func))))
+  ;; CHECK:      (type $struct (struct (field (ref $array) (ref null $func))))
   ;; NOMNL:      (type $func (func_subtype func))
 
-  ;; NOMNL:      (type $struct (struct_subtype (field (ref $array)) (field (ref null $func)) data))
+  ;; NOMNL:      (type $struct (struct_subtype (field (ref $array) (ref null $func)) data))
   (type $struct (struct
     (field (ref $array))
     (field (ref null $func))

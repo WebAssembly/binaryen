@@ -5,11 +5,11 @@
 
 (module
   (memory 100 100)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $func.1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+  ;; CHECK:      (type $func.2 (func (result i64)))
 
   ;; CHECK:      (memory $0 100 100)
 
@@ -389,7 +389,7 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (global $glob (mut i32) (i32.const 1))
   (global $glob (mut i32) (i32.const 1))

@@ -9,10 +9,10 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
+  ;; CHECK:      (type $struct2 (struct (field (mut i32) (mut i32))))
   (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
+  ;; CHECK:      (type $struct3 (struct (field (mut i32) (mut i32) (mut i32))))
   (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee

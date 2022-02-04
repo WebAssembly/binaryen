@@ -34,7 +34,7 @@ func: ifs
  Drop           : 6       
  If             : 4       
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (type $0 (func (param i32)))
  (global $glob i32 (i32.const 1337))
  (memory $0 256 256)
@@ -134,7 +134,7 @@ export: b (func_b)
  [removable-bytes-without-it]: 18      
  [total]        : 0       
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "waka" (func $waka))
  (export "a" (func $func_a))
  (export "b" (func $func_b))
@@ -198,7 +198,7 @@ start: func_a
  [removable-bytes-without-it]: 3       
  [total]        : 0       
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "waka" (func $waka))
  (export "a" (func $func_a))
  (start $func_a)
@@ -228,7 +228,7 @@ start: func_a
  [removable-bytes-without-it]: 57      
  [total]        : 0       
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "waka" (func $waka))
  (start $func_a)
  (func $func_a

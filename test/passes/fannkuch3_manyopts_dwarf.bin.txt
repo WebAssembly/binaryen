@@ -4698,11 +4698,11 @@ file_names[  4]:
 00000040 0000038c 00000673
 00000040 <End of list>
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $func.0 (func (param i32) (result i32)))
+ (type $func.1 (func (param i32 i32) (result i32)))
+ (type $func.2 (func (param i32 i32 i32) (result i32)))
+ (type $func.3 (func (param i32)))
+ (type $func.4 (func))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 1024) "Pfannkuchen(%d) = %d.\n\00%d\00Wrong argument.\00")
  (import "env" "malloc" (func $malloc (param i32) (result i32)))

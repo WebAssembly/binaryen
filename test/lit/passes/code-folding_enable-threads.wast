@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --code-folding --enable-threads -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $func.0 (func))
 
- ;; CHECK:      (type $none_=>_f32 (func (result f32)))
+ ;; CHECK:      (type $func.1 (func (result f32)))
 
  ;; CHECK:      (type $13 (func (param f32)))
  (type $13 (func (param f32)))
@@ -266,7 +266,7 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $func.0 (func (result i32)))
 
  ;; CHECK:      (memory $0 (shared 1 1))
  (memory $0 (shared 1 1))
@@ -300,7 +300,7 @@
 (module
  ;; CHECK:      (type $0 (func))
  (type $0 (func))
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $func.0 (func (param i32)))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))

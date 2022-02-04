@@ -4,7 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt --const-hoisting -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $func.0 (func))
 
   ;; CHECK:      (func $10-of-each
   ;; CHECK-NEXT:  (local $0 i32)

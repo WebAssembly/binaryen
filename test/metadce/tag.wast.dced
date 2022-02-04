@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $func.0 (func))
  (import "env" "imported_tag" (tag $t0 (param)))
  (tag $t1 (param))
  (export "test" (func $test))

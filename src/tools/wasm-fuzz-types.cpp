@@ -79,9 +79,9 @@ struct Fuzzer {
       if (auto prev = typeIndices[type]; !type.isBasic() && prev != i) {
         std::cout << "identical to $" << prev;
       } else {
-        std::cout << type.print([&](std::ostream& os, HeapType t) {
+        std::cout << type.print([&](HeapType t) -> TypeNames {
           if (auto it = typeIndices.find(t); it != typeIndices.end()) {
-            os << it->second;
+            return {std::to_string(it->second), {}};
           } else {
             Fatal() << "trying to print unknown heap type";
           }

@@ -276,7 +276,7 @@
   i32.and
   i32.const 8
   i32.add
-  call_indirect $0 (type $f32_=>_none)
+  call_indirect (type $FUNCSIG$vf)
  )
  (func $cneg (param $x f32)
   local.get $x
@@ -285,7 +285,7 @@
   i32.and
   i32.const 8
   i32.add
-  call_indirect $0 (type $f32_=>_none)
+  call_indirect (type $FUNCSIG$vf)
  )
  (func $___syscall_ret
   (local $$0 i32)

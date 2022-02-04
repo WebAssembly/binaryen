@@ -1,11 +1,11 @@
 (module
- (type $i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64) (result i64)))
+ (type $func.0 (func (param i64 i64 i64 i64 i64) (result i64)))
  (type $vijfd (func (param i32 i64 f32 f64)))
  (table $0 10 10 funcref)
  (elem (i32.const 0) $byn$fpcast-emu$a)
  (func $a (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   (drop
-   (call_indirect (type $i64_i64_i64_i64_i64_=>_i64)
+   (call_indirect (type $func.0)
     (i64.extend_i32_u
      (i32.const 1)
     )

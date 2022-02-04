@@ -1,6 +1,6 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $func.0 (func))
+ (type $func.1 (func (param i32)))
  (import "env" "table" (table $timport$9 1 funcref))
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (import "GOT.func" "__stdio_write" (global $gimport$9 (mut i32)))
@@ -20,7 +20,7 @@
   (nop)
  )
  (func $dynCall_v (param $fptr i32)
-  (call_indirect (type $none_=>_none)
+  (call_indirect (type $func.0)
    (local.get $fptr)
   )
  )
