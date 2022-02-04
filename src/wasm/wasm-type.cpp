@@ -209,7 +209,7 @@ struct DefaultHeapTypeNameGenerator {
 // Helper for printing types.
 struct TypePrinter {
   // Whether to print explicit supertypes.
-  bool hasSupertype;
+  bool printSupertypes;
 
   // The stream we are printing to.
   std::ostream& os;
@@ -224,7 +224,7 @@ struct TypePrinter {
   std::unordered_map<HeapType, std::string> nameCache;
 
   TypePrinter(std::ostream& os, HeapTypeNameGenerator generator)
-    : hasSupertype(getTypeSystem() != TypeSystem::Equirecursive), os(os),
+    : printSupertypes(getTypeSystem() != TypeSystem::Equirecursive), os(os),
       defaultGenerator(), generator(generator) {}
   TypePrinter(std::ostream& os)
     : TypePrinter(os, [&](std::ostream& os, HeapType type) {
@@ -2142,7 +2142,7 @@ std::ostream& TypePrinter::print(const Signature& sig,
   };
 
   os << "(func";
-  if (hasSupertype) {
+  if (printSupertypes) {
     os << "_subtype";
   }
   if (sig.params.getID() != Type::none) {
@@ -2153,7 +2153,7 @@ std::ostream& TypePrinter::print(const Signature& sig,
     os << ' ';
     printPrefixed("result", sig.results);
   }
-  if (hasSupertype) {
+  if (printSupertypes) {
     os << ' ';
     printSupertypeOr(super, "func");
   }
@@ -2163,7 +2163,7 @@ std::ostream& TypePrinter::print(const Signature& sig,
 std::ostream& TypePrinter::print(const Struct& struct_,
                                  std::optional<HeapType> super) {
   os << "(struct";
-  if (hasSupertype) {
+  if (printSupertypes) {
     os << "_subtype";
   }
   if (struct_.fields.size()) {
@@ -2176,7 +2176,7 @@ std::ostream& TypePrinter::print(const Struct& struct_,
   if (struct_.fields.size()) {
     os << ')';
   }
-  if (hasSupertype) {
+  if (printSupertypes) {
     os << ' ';
     printSupertypeOr(super, "data");
   }
@@ -2186,12 +2186,12 @@ std::ostream& TypePrinter::print(const Struct& struct_,
 std::ostream& TypePrinter::print(const Array& array,
                                  std::optional<HeapType> super) {
   os << "(array";
-  if (hasSupertype) {
+  if (printSupertypes) {
     os << "_subtype";
   }
   os << ' ';
   print(array.element);
-  if (hasSupertype) {
+  if (printSupertypes) {
     os << ' ';
     printSupertypeOr(super, "data");
   }
