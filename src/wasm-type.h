@@ -17,13 +17,15 @@
 #ifndef wasm_wasm_type_h
 #define wasm_wasm_type_h
 
-#include "support/name.h"
-#include "support/parent_index_iterator.h"
-#include "wasm-features.h"
+#include <functional>
 #include <optional>
 #include <ostream>
 #include <variant>
 #include <vector>
+
+#include "support/name.h"
+#include "support/parent_index_iterator.h"
+#include "wasm-features.h"
 
 // TODO: At various code locations we were assuming that single types are basic
 // types, but this is going to change with the introduction of the compound
@@ -67,6 +69,9 @@ struct Rtt;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
+
+// Used to generate HeapType names
+using HeapTypeNameGenerator = std::function<void(std::ostream&, HeapType)>;
 
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
@@ -271,6 +276,19 @@ public:
     return lub;
   }
 
+  // Helper allowing the value of `print(...)` to be sent to an ostream.
+  struct Printed {
+    Type& type;
+    HeapTypeNameGenerator generateName;
+  };
+
+  // Given a function for generating HeapType names, print the definition of
+  // this HeapType to `os`.`generateName` will only be called once per HeapType
+  // seen, so it should return a different value each time it is called.
+  Printed print(HeapTypeNameGenerator generateName) {
+    return Printed{*this, generateName};
+  }
+
   std::string toString() const;
 
   size_t size() const;
@@ -384,6 +402,19 @@ public:
 
   // Return the LUB of two HeapTypes. The LUB always exists.
   static HeapType getLeastUpperBound(HeapType a, HeapType b);
+
+  // Helper allowing the value of `print(...)` to be sent to an ostream.
+  struct Printed {
+    HeapType& type;
+    HeapTypeNameGenerator generateName;
+  };
+
+  // Given a function for generating HeapType names, print the definition of
+  // this HeapType to `os`. `generateName` will only be called once per HeapType
+  // seen, so it should return a different value each time it is called.
+  Printed print(HeapTypeNameGenerator generateName) {
+    return Printed{*this, generateName};
+  }
 
   std::string toString() const;
 };
@@ -667,7 +698,9 @@ struct TypeBuilder {
 };
 
 std::ostream& operator<<(std::ostream&, Type);
+std::ostream& operator<<(std::ostream&, Type::Printed);
 std::ostream& operator<<(std::ostream&, HeapType);
+std::ostream& operator<<(std::ostream&, HeapType::Printed);
 std::ostream& operator<<(std::ostream&, Tuple);
 std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);

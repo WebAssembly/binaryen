@@ -68,8 +68,26 @@ struct Fuzzer {
 
   void printTypes(const std::vector<HeapType>& types) {
     std::cout << "Built " << types.size() << " types:\n";
+    // Record indices to use as names.
+    std::unordered_map<HeapType, size_t> typeIndices;
     for (size_t i = 0; i < types.size(); ++i) {
-      std::cout << i << ": " << types[i] << "\n";
+      typeIndices.insert({types[i], i});
+    }
+    for (size_t i = 0; i < types.size(); ++i) {
+      auto type = types[i];
+      std::cout << "(type $" << i << ' ';
+      if (auto prev = typeIndices[type]; !type.isBasic() && prev != i) {
+        std::cout << "identical to $" << prev;
+      } else {
+        std::cout << type.print([&](std::ostream& os, HeapType t) {
+          if (auto it = typeIndices.find(t); it != typeIndices.end()) {
+            os << it->second;
+          } else {
+            Fatal() << "trying to print unknown heap type";
+          }
+        });
+      }
+      std::cout << ")\n";
     }
   }
 
