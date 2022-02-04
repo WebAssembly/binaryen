@@ -80,7 +80,7 @@ struct Fuzzer {
     for (size_t i = 0; i < types.size(); ++i) {
       auto type = types[i];
       std::cout << "(type $" << i << ' ';
-      if (!type.isBasic()) {
+      if (type.isBasic()) {
         std::cout << print(type) << ")\n";
         continue;
       }
