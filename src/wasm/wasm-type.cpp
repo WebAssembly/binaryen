@@ -1763,7 +1763,8 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
     return getBasicLUB();
   }
 
-  if (typeSystem == TypeSystem::Nominal) {
+  if (typeSystem == TypeSystem::Nominal ||
+      typeSystem == TypeSystem::Isorecursive) {
     // Walk up the subtype tree to find the LUB. Ascend the tree from both `a`
     // and `b` in lockstep. The first type we see for a second time must be the
     // LUB because there are no cycles and the only way to encounter a type
@@ -3675,6 +3676,9 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
 
   for (size_t index = 0; index < state.results.size(); ++index) {
     HeapType type = state.results[index];
+    if (type.isBasic()) {
+      continue;
+    }
     // Validate the supertype. Supertypes must precede their subtypes.
     if (auto super = type.getSuperType()) {
       if (!indexOfType.count(*super)) {

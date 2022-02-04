@@ -184,6 +184,14 @@ int main(int argc, const char* argv[]) {
               [&](Options*, const std::string& arg) {
                 system = TypeSystem::Equirecursive;
               });
+  options.add("--hybrid",
+              "",
+              "Use the isorecursive hybrid type system",
+              WasmFuzzTypesOption,
+              Options::Arguments::Zero,
+              [&](Options*, const std::string& arg) {
+                system = TypeSystem::Isorecursive;
+              });
 
   options.parse(argc, argv);
 

@@ -1,0 +1,24 @@
+;; RUN: wasm-fuzz-types --hybrid -v --seed=0 | filecheck %s
+
+;; CHECK:      Running with seed 0
+;; CHECK-NEXT: Built 20 types:
+;; CHECK-NEXT: 0: (struct)
+;; CHECK-NEXT: 1: (func (param i31ref) (result (ref extern)))
+;; CHECK-NEXT: 2: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 3: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 4: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 5: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 6: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 7: (struct (field (mut (ref (struct (field i16 (mut i32) (mut i16)))))))
+;; CHECK-NEXT: 8: (struct (field i16 (mut i32) (mut i16)))
+;; CHECK-NEXT: 9: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 10: (struct)
+;; CHECK-NEXT: 11: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 12: (struct (field (mut i8) (rtt (struct))))
+;; CHECK-NEXT: 13: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 14: (struct (field funcref f64 (mut (rtt (struct))) (ref null (func (param i31ref) (result (ref extern)))) i8 (ref null (struct (field (mut (ref (struct (field i16 (mut i32) (mut i16))))))))))
+;; CHECK-NEXT: 15: (func (param i31ref) (result (ref extern)))
+;; CHECK-NEXT: 16: (array (mut (rtt 0 extern)))
+;; CHECK-NEXT: 17: (struct (field funcref f64 (mut (rtt (struct))) (ref null (func (param i31ref) (result (ref extern)))) i8 (ref null (struct (field (mut (ref (struct (field i16 (mut i32) (mut i16))))))))))
+;; CHECK-NEXT: 18: (struct (field (mut i8) (rtt (struct))))
+;; CHECK-NEXT: 19: (func (param i31ref) (result (ref extern)))
