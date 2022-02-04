@@ -35,110 +35,121 @@ uint64_t getSeed() {
 struct Fuzzer {
   bool verbose;
 
-  void run(uint64_t seed) {
-    // TODO: Reset the global type state to avoid monotonically increasing
-    // memory use.
-    RandEngine getRand(seed);
-    std::cout << "Running with seed " << seed << "\n";
+  // Generate types and run checkers on them.
+  void run(uint64_t seed);
 
-    // 4kb of random bytes should be enough for anyone!
-    std::vector<char> bytes(4096);
-    for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
-      *(uint64_t*)(bytes.data() + i) = getRand();
-    }
-    Random rand(std::move(bytes));
+  void printTypes(const std::vector<HeapType>& types);
 
-    // TODO: Options to control the size or set it randomly.
-    HeapTypeGenerator generator =
-      HeapTypeGenerator::create(rand, FeatureSet::All, 20);
-    auto result = generator.builder.build();
-    if (auto* err = result.getError()) {
-      Fatal() << "Failed to build types: " << err->reason << " at index "
-              << err->index;
-    }
-    auto types = *result;
-
-    if (verbose) {
-      printTypes(types);
-    }
-
-    checkSubtypes(types, generator.subtypeIndices);
-    checkLUBs(types);
-  }
-
-  void printTypes(const std::vector<HeapType>& types) {
-    std::cout << "Built " << types.size() << " types:\n";
-    for (size_t i = 0; i < types.size(); ++i) {
-      std::cout << i << ": " << types[i] << "\n";
-    }
-  }
-
+  // Checkers for various properties.
   void checkSubtypes(const std::vector<HeapType>& types,
-                     const std::vector<std::vector<Index>>& subtypeIndices) {
-    for (size_t super = 0; super < types.size(); ++super) {
-      for (auto sub : subtypeIndices[super]) {
-        if (!HeapType::isSubType(types[sub], types[super])) {
-          Fatal() << "HeapType " << sub << " should be a subtype of HeapType "
-                  << super << " but is not!\n"
-                  << sub << ": " << types[sub] << "\n"
-                  << super << ": " << types[super] << "\n";
-        }
-      }
-    }
+                     const std::vector<std::vector<Index>>& subtypeIndices);
+  void checkLUBs(const std::vector<HeapType>& types);
+};
+
+void Fuzzer::run(uint64_t seed) {
+  // TODO: Reset the global type state to avoid monotonically increasing
+  // memory use.
+  RandEngine getRand(seed);
+  std::cout << "Running with seed " << seed << "\n";
+
+  // 4kb of random bytes should be enough for anyone!
+  std::vector<char> bytes(4096);
+  for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
+    *(uint64_t*)(bytes.data() + i) = getRand();
+  }
+  Random rand(std::move(bytes));
+
+  // TODO: Options to control the size or set it randomly.
+  HeapTypeGenerator generator =
+    HeapTypeGenerator::create(rand, FeatureSet::All, 20);
+  auto result = generator.builder.build();
+  if (auto* err = result.getError()) {
+    Fatal() << "Failed to build types: " << err->reason << " at index "
+            << err->index;
+  }
+  auto types = *result;
+
+  if (verbose) {
+    printTypes(types);
   }
 
-  void checkLUBs(const std::vector<HeapType>& types) {
-    // For each unordered pair of types...
-    for (size_t i = 0; i < types.size(); ++i) {
-      for (size_t j = i; j < types.size(); ++j) {
-        HeapType a = types[i], b = types[j];
-        // Check that their LUB is stable when calculated multiple times and in
-        // reverse order.
-        HeapType lub = HeapType::getLeastUpperBound(a, b);
-        if (lub != HeapType::getLeastUpperBound(b, a) ||
-            lub != HeapType::getLeastUpperBound(a, b)) {
-          Fatal() << "Could not calculate a stable LUB of HeapTypes " << i
-                  << " and " << j << "!\n"
-                  << i << ": " << a << "\n"
-                  << j << ": " << b << "\n";
-        }
-        // Check that each type is a subtype of the LUB.
-        if (!HeapType::isSubType(a, lub)) {
-          Fatal() << "HeapType " << i
-                  << " is not a subtype of its LUB with HeapType " << j << "!\n"
-                  << i << ": " << a << "\n"
-                  << j << ": " << b << "\n"
-                  << "lub: " << lub << "\n";
-        }
-        if (!HeapType::isSubType(b, lub)) {
-          Fatal() << "HeapType " << j
-                  << " is not a subtype of its LUB with HeapType " << i << "!\n"
-                  << i << ": " << a << "\n"
-                  << j << ": " << b << "\n"
-                  << "lub: " << lub << "\n";
-        }
-        // Check that the LUB of each type and the original LUB is still the
-        // original LUB.
-        if (lub != HeapType::getLeastUpperBound(a, lub)) {
-          Fatal() << "The LUB of HeapType " << i << " and HeapType " << j
-                  << " should be the LUB of itself and HeapType " << i
-                  << ", but it is not!\n"
-                  << i << ": " << a << "\n"
-                  << j << ": " << b << "\n"
-                  << "lub: " << lub << "\n";
-        }
-        if (lub != HeapType::getLeastUpperBound(lub, b)) {
-          Fatal() << "The LUB of HeapType " << i << " and HeapType " << j
-                  << " should be the LUB of itself and HeapType " << j
-                  << ", but it is not!\n"
-                  << i << ": " << a << "\n"
-                  << j << ": " << b << "\n"
-                  << "lub: " << lub << "\n";
-        }
+  checkSubtypes(types, generator.subtypeIndices);
+  checkLUBs(types);
+}
+
+void Fuzzer::printTypes(const std::vector<HeapType>& types) {
+  std::cout << "Built " << types.size() << " types:\n";
+  for (size_t i = 0; i < types.size(); ++i) {
+    std::cout << i << ": " << types[i] << "\n";
+  }
+}
+
+void Fuzzer::checkSubtypes(
+  const std::vector<HeapType>& types,
+  const std::vector<std::vector<Index>>& subtypeIndices) {
+  for (size_t super = 0; super < types.size(); ++super) {
+    for (auto sub : subtypeIndices[super]) {
+      if (!HeapType::isSubType(types[sub], types[super])) {
+        Fatal() << "HeapType " << sub << " should be a subtype of HeapType "
+                << super << " but is not!\n"
+                << sub << ": " << types[sub] << "\n"
+                << super << ": " << types[super] << "\n";
       }
     }
   }
-};
+}
+
+void Fuzzer::checkLUBs(const std::vector<HeapType>& types) {
+  // For each unordered pair of types...
+  for (size_t i = 0; i < types.size(); ++i) {
+    for (size_t j = i; j < types.size(); ++j) {
+      HeapType a = types[i], b = types[j];
+      // Check that their LUB is stable when calculated multiple times and in
+      // reverse order.
+      HeapType lub = HeapType::getLeastUpperBound(a, b);
+      if (lub != HeapType::getLeastUpperBound(b, a) ||
+          lub != HeapType::getLeastUpperBound(a, b)) {
+        Fatal() << "Could not calculate a stable LUB of HeapTypes " << i
+                << " and " << j << "!\n"
+                << i << ": " << a << "\n"
+                << j << ": " << b << "\n";
+      }
+      // Check that each type is a subtype of the LUB.
+      if (!HeapType::isSubType(a, lub)) {
+        Fatal() << "HeapType " << i
+                << " is not a subtype of its LUB with HeapType " << j << "!\n"
+                << i << ": " << a << "\n"
+                << j << ": " << b << "\n"
+                << "lub: " << lub << "\n";
+      }
+      if (!HeapType::isSubType(b, lub)) {
+        Fatal() << "HeapType " << j
+                << " is not a subtype of its LUB with HeapType " << i << "!\n"
+                << i << ": " << a << "\n"
+                << j << ": " << b << "\n"
+                << "lub: " << lub << "\n";
+      }
+      // Check that the LUB of each type and the original LUB is still the
+      // original LUB.
+      if (lub != HeapType::getLeastUpperBound(a, lub)) {
+        Fatal() << "The LUB of HeapType " << i << " and HeapType " << j
+                << " should be the LUB of itself and HeapType " << i
+                << ", but it is not!\n"
+                << i << ": " << a << "\n"
+                << j << ": " << b << "\n"
+                << "lub: " << lub << "\n";
+      }
+      if (lub != HeapType::getLeastUpperBound(lub, b)) {
+        Fatal() << "The LUB of HeapType " << i << " and HeapType " << j
+                << " should be the LUB of itself and HeapType " << j
+                << ", but it is not!\n"
+                << i << ": " << a << "\n"
+                << j << ": " << b << "\n"
+                << "lub: " << lub << "\n";
+      }
+    }
+  }
+}
 
 } // namespace wasm
 
