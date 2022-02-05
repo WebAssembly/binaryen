@@ -24,6 +24,7 @@
 #include <variant>
 #include <vector>
 
+#include "support/index.h"
 #include "support/name.h"
 #include "support/parent_index_iterator.h"
 #include "wasm-features.h"
@@ -76,7 +77,7 @@ struct TypeNames {
   // The name of the type.
   Name name;
   // For a Struct, names of fields.
-  std::unordered_map<size_t, Name> fieldNames;
+  std::unordered_map<Index, Name> fieldNames;
 };
 
 // Used to generate HeapType names.
