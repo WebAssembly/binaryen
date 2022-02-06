@@ -431,3 +431,29 @@ TEST_F(IsorecursiveTest, HeapTypeConstructors) {
   EXPECT_EQ(struct_, struct2);
   EXPECT_EQ(array, array2);
 }
+
+TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
+  TypeBuilder builder(6);
+  // A rec group
+  builder.createRecGroup(0, 2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[1].subTypeOf(builder[0]);
+
+  // The same rec group again
+  builder.createRecGroup(2, 2);
+  builder[2] = Struct{};
+  builder[3] = Struct{};
+  builder[3].subTypeOf(builder[2]);
+
+  // This subtyping only validates if the previous two groups are deduplicated
+  // before checking subtype validity.
+  builder[4] =
+    Struct({Field(builder.getTempRefType(builder[0], Nullable), Immutable)});
+  builder[5] =
+    Struct({Field(builder.getTempRefType(builder[3], Nullable), Immutable)});
+  builder[5].subTypeOf(builder[4]);
+
+  auto result = builder.build();
+  EXPECT_TRUE(result);
+}

@@ -2444,7 +2444,10 @@ size_t RecGroupHasher::hash(const TypeInfo& info) const {
 
 size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   assert(info.isFinalized);
-  size_t digest = wasm::hash(uintptr_t(info.supertype));
+  size_t digest = wasm::hash(bool(info.supertype));
+  if (info.supertype) {
+    hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
+  }
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::BasicKind:
@@ -2568,8 +2571,15 @@ bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
 }
 
 bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
-  if (a.supertype != b.supertype) {
+  if (bool(a.supertype) != bool(b.supertype)) {
     return false;
+  }
+  if (a.supertype) {
+    HeapType superA(uintptr_t(a.supertype));
+    HeapType superB(uintptr_t(b.supertype));
+    if (!eq(superA, superB)) {
+      return false;
+    }
   }
   if (a.kind != b.kind) {
     return false;
@@ -3550,7 +3560,11 @@ void canonicalizeEquirecursive(CanonicalizationState& state) {
 }
 
 std::optional<TypeBuilder::Error>
-validateStructuralSubtyping(const std::vector<HeapType>& types) {
+validateSubtyping(const std::vector<HeapType>& types) {
+  if (getTypeSystem() == TypeSystem::Equirecursive) {
+    // Subtyping is not explicitly declared, so nothing to check.
+    return {};
+  }
   for (size_t i = 0; i < types.size(); ++i) {
     HeapType type = types[i];
     if (type.isBasic()) {
@@ -3623,11 +3637,6 @@ canonicalizeNominal(CanonicalizationState& state) {
     checked.insert(path.begin(), path.end());
   }
 
-  // Check that the declared supertypes are valid.
-  if (auto error = validateStructuralSubtyping(state.results)) {
-    return {*error};
-  }
-
   return {};
 }
 
@@ -3698,11 +3707,6 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   }
   if (auto error = finishGroup(state.results.size())) {
     return *error;
-  }
-
-  // Check that the declared supertypes are structurally valid.
-  if (auto error = validateStructuralSubtyping(state.results)) {
-    return {*error};
   }
 
   // Now that we know everything is valid, start canonicalizing recursion
@@ -3838,6 +3842,11 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   std::cerr << "Global canonicalization took "
             << getMillis(afterStructureCanonicalization, end) << " ms\n";
 #endif
+
+  // Check that the declared supertypes are structurally valid.
+  if (auto error = validateSubtyping(state.results)) {
+    return {*error};
+  }
 
   // Note built signature types. See comment in `HeapType::HeapType(Signature)`.
   for (auto type : state.results) {
