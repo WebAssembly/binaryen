@@ -21,6 +21,7 @@
 #include "support/command-line.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/random.h"
+#include "wasm-type-printing.h"
 
 namespace wasm {
 
@@ -79,8 +80,28 @@ void Fuzzer::run(uint64_t seed) {
 
 void Fuzzer::printTypes(const std::vector<HeapType>& types) {
   std::cout << "Built " << types.size() << " types:\n";
+  struct FatalTypeNameGenerator
+    : TypeNameGeneratorBase<FatalTypeNameGenerator> {
+    TypeNames getNames(HeapType type) {
+      Fatal() << "trying to print unknown heap type";
+    }
+  };
+  IndexedTypeNameGenerator<FatalTypeNameGenerator> print(types);
+  std::unordered_map<HeapType, size_t> seen;
   for (size_t i = 0; i < types.size(); ++i) {
-    std::cout << i << ": " << types[i] << "\n";
+    auto type = types[i];
+    std::cout << "(type $" << i << ' ';
+    if (type.isBasic()) {
+      std::cout << print(type) << ")\n";
+      continue;
+    }
+    auto [it, inserted] = seen.insert({type, i});
+    if (inserted) {
+      std::cout << print(type);
+    } else {
+      std::cout << "identical to $" << it->second;
+    }
+    std::cout << ")\n";
   }
 }
 
