@@ -3814,7 +3814,13 @@ void canonicalizeBasicTypes(CanonicalizationState& state) {
     // canonicalizable as well, for example after creating `(ref null extern)`
     // we can futher canonicalize to `externref`.
     struct TypeCanonicalizer : TypeGraphWalkerBase<TypeCanonicalizer> {
-      void scanType(Type* type) { *type = asCanonical(*type); }
+      void scanType(Type* type) {
+        if (type->isTuple()) {
+          TypeGraphWalkerBase<TypeCanonicalizer>::scanType(type);
+        } else {
+          *type = asCanonical(*type);
+        }
+      }
     };
     for (auto& info : state.newInfos) {
       auto root = asHeapType(info);
