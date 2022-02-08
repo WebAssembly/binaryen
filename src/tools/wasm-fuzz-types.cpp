@@ -88,8 +88,22 @@ void Fuzzer::printTypes(const std::vector<HeapType>& types) {
   };
   IndexedTypeNameGenerator<FatalTypeNameGenerator> print(types);
   std::unordered_map<HeapType, size_t> seen;
+  std::optional<RecGroup> currRecGroup;
+  auto inRecGroup = [&]() { return currRecGroup && currRecGroup->size() > 1; };
   for (size_t i = 0; i < types.size(); ++i) {
     auto type = types[i];
+    if (!type.isBasic() && type.getRecGroup() != currRecGroup) {
+      if (inRecGroup()) {
+        std::cout << ")\n";
+      }
+      currRecGroup = type.getRecGroup();
+      if (inRecGroup()) {
+        std::cout << "(rec\n";
+      }
+    }
+    if (inRecGroup()) {
+      std::cout << ' ';
+    }
     std::cout << "(type $" << i << ' ';
     if (type.isBasic()) {
       std::cout << print(type) << ")\n";
@@ -101,6 +115,9 @@ void Fuzzer::printTypes(const std::vector<HeapType>& types) {
     } else {
       std::cout << "identical to $" << it->second;
     }
+    std::cout << ")\n";
+  }
+  if (inRecGroup()) {
     std::cout << ")\n";
   }
 }
