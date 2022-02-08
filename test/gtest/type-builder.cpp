@@ -468,7 +468,7 @@ static void testCanonicalizeBasicTypes() {
   builder[1] = Struct({Field(externref, Immutable)});
   builder[2] = Struct({Field(Type::externref, Immutable)});
   builder[3] = Signature(externrefs, Type::none);
-  builder[4] = Signature(Type({Type::externref, Type::externref}), Type::none);
+  builder[4] = Signature({Type::externref, Type::externref}, Type::none);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
