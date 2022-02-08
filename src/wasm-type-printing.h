@@ -69,9 +69,13 @@ struct IndexedTypeNameGenerator
   : TypeNameGeneratorBase<IndexedTypeNameGenerator<FallbackGenerator>> {
   FallbackGenerator fallback;
   std::unordered_map<HeapType, TypeNames> names;
-  template<typename T> IndexedTypeNameGenerator(T& types) {
+  template<typename T, typename... Args>
+  IndexedTypeNameGenerator(T& types,
+                           const std::string& prefix = "",
+                           Args&&... args)
+    : fallback(std::forward<Args>(args)...) {
     for (size_t i = 0; i < types.size(); ++i) {
-      names.insert({types[i], {std::to_string(i), {}}});
+      names.insert({types[i], {prefix + std::to_string(i), {}}});
     }
   }
   TypeNames getNames(HeapType type) {
