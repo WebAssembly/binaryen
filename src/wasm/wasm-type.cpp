@@ -2194,7 +2194,6 @@ std::ostream& TypePrinter::print(const Rtt& rtt) {
 }
 
 size_t FiniteShapeHasher::hash(Type type) {
-  type = asCanonical(type);
   size_t digest = wasm::hash(type.isBasic());
   if (type.isBasic()) {
     rehash(digest, type.getID());
@@ -2205,7 +2204,6 @@ size_t FiniteShapeHasher::hash(Type type) {
 }
 
 size_t FiniteShapeHasher::hash(HeapType heapType) {
-  heapType = asCanonical(heapType);
   size_t digest = wasm::hash(heapType.isBasic());
   if (heapType.isBasic()) {
     rehash(digest, heapType.getID());
@@ -2314,8 +2312,6 @@ size_t FiniteShapeHasher::hash(const Rtt& rtt) {
 }
 
 bool FiniteShapeEquator::eq(Type a, Type b) {
-  a = asCanonical(a);
-  b = asCanonical(b);
   if (a.isBasic() != b.isBasic()) {
     return false;
   } else if (a.isBasic()) {
@@ -2326,8 +2322,6 @@ bool FiniteShapeEquator::eq(Type a, Type b) {
 }
 
 bool FiniteShapeEquator::eq(HeapType a, HeapType b) {
-  a = asCanonical(a);
-  b = asCanonical(b);
   if (a.isBasic() != b.isBasic()) {
     return false;
   } else if (a.isBasic()) {
@@ -3798,7 +3792,7 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   return {};
 }
 
-void canonicalizeBasicHeapTypes(CanonicalizationState& state) {
+void canonicalizeBasicTypes(CanonicalizationState& state) {
   // Replace heap types backed by BasicKind HeapTypeInfos with their
   // corresponding BasicHeapTypes. The heap types backed by BasicKind
   // HeapTypeInfos exist only to support building basic types in a TypeBuilder
@@ -3814,6 +3808,19 @@ void canonicalizeBasicHeapTypes(CanonicalizationState& state) {
     }
   }
   state.update(replacements);
+
+  if (replacements.size()) {
+    // Canonicalizing basic heap types may cause their parent types to become
+    // canonicalizable as well, for example after creating `(ref null extern)`
+    // we can futher canonicalize to `externref`.
+    struct TypeCanonicalizer : TypeGraphWalkerBase<TypeCanonicalizer> {
+      void scanType(Type* type) { *type = asCanonical(*type); }
+    };
+    for (auto& info : state.newInfos) {
+      auto root = asHeapType(info);
+      TypeCanonicalizer{}.walkRoot(&root);
+    }
+  }
 }
 
 } // anonymous namespace
@@ -3842,7 +3849,7 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 
   // Eagerly replace references to built basic heap types so the more
   // complicated canonicalization algorithms don't need to consider them.
-  canonicalizeBasicHeapTypes(state);
+  canonicalizeBasicTypes(state);
 
 #if TRACE_CANONICALIZATION
   std::cerr << "After replacing basic heap types:\n";
