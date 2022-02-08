@@ -457,3 +457,30 @@ TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
   auto result = builder.build();
   EXPECT_TRUE(result);
 }
+
+static void testCanonicalizeBasicTypes() {
+  TypeBuilder builder(5);
+
+  Type externref = builder.getTempRefType(builder[0], Nullable);
+  Type externrefs = builder.getTempTupleType({externref, externref});
+
+  builder[0] = HeapType::ext;
+  builder[1] = Struct({Field(externref, Immutable)});
+  builder[2] = Struct({Field(Type::externref, Immutable)});
+  builder[3] = Signature(externrefs, Type::none);
+  builder[4] = Signature({Type::externref, Type::externref}, Type::none);
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[1], built[2]);
+  EXPECT_EQ(built[3], built[4]);
+}
+
+TEST_F(EquirecursiveTest, CanonicalizeBasicTypes) {
+  testCanonicalizeBasicTypes();
+}
+TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
+  testCanonicalizeBasicTypes();
+}
