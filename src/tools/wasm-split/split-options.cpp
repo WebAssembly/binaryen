@@ -191,6 +191,15 @@ WasmSplitOptions::WasmSplitOptions()
            placeholderNamespace = argument;
          })
     .add(
+      "--asyncify",
+      "",
+      "Transform the module to support unwinding the stack from placeholder "
+      "functions and rewinding it once the secondary module has been loaded.",
+      WasmSplitOption,
+      {Mode::Split},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { asyncify = true; })
+    .add(
       "--export-prefix",
       "",
       "An identifying prefix to prepend to new export names created "

@@ -59,6 +59,11 @@
 ;; CHECK-NEXT:                                        import placeholder functions into the
 ;; CHECK-NEXT:                                        primary module.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --asyncify                           [split] Transform the module to support
+;; CHECK-NEXT:                                        unwinding the stack from placeholder
+;; CHECK-NEXT:                                        functions and rewinding it once the
+;; CHECK-NEXT:                                        secondary module has been loaded.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --export-prefix                      [split] An identifying prefix to prepend
 ;; CHECK-NEXT:                                        to new export names created by module
 ;; CHECK-NEXT:                                        splitting.
