@@ -22,5 +22,5 @@
 ;; CHECK-NEXT:  (type $16 (array_subtype (mut (rtt 0 extern)) $2))
 ;; CHECK-NEXT:  (type $17 (struct_subtype (field funcref f64 (mut (rtt $10)) (ref null $15) i8 (ref null $7)) $14))
 ;; CHECK-NEXT:  (type $18 (struct_subtype (field (mut i8) (rtt $0)) $12))
- (type $19 (func_subtype (param i31ref) (result (ref extern)) $15))
-)
+;; CHECK-NEXT:  (type $19 (func_subtype (param i31ref) (result (ref extern)) $15))
+;; CHECK-NEXT: )
