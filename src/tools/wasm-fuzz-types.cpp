@@ -17,6 +17,7 @@
 #include <optional>
 #include <random>
 #include <string>
+#include <variant>
 
 #include "support/command-line.h"
 #include "tools/fuzzing/heap-types.h"
@@ -36,15 +37,22 @@ uint64_t getSeed() {
 struct Fuzzer {
   bool verbose;
 
+  // Initialized by `run` for checkers and possible later inspection
+  std::vector<HeapType> types;
+  std::vector<std::vector<Index>> subtypeIndices;
+  Random rand;
+
+  Fuzzer(bool verbose) : verbose(verbose), rand({}) {}
+
   // Generate types and run checkers on them.
   void run(uint64_t seed);
 
-  void printTypes(const std::vector<HeapType>& types);
+  void printTypes();
 
   // Checkers for various properties.
-  void checkSubtypes(const std::vector<HeapType>& types,
-                     const std::vector<std::vector<Index>>& subtypeIndices);
-  void checkLUBs(const std::vector<HeapType>& types);
+  void checkSubtypes() const;
+  void checkLUBs() const;
+  void checkCanonicalization();
 };
 
 void Fuzzer::run(uint64_t seed) {
@@ -58,7 +66,7 @@ void Fuzzer::run(uint64_t seed) {
   for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
     *(uint64_t*)(bytes.data() + i) = getRand();
   }
-  Random rand(std::move(bytes));
+  rand = Random(std::move(bytes));
 
   // TODO: Options to control the size or set it randomly.
   HeapTypeGenerator generator =
@@ -68,17 +76,19 @@ void Fuzzer::run(uint64_t seed) {
     Fatal() << "Failed to build types: " << err->reason << " at index "
             << err->index;
   }
-  auto types = *result;
+  types = std::move(*result);
+  subtypeIndices = std::move(generator.subtypeIndices);
 
   if (verbose) {
-    printTypes(types);
+    printTypes();
   }
 
-  checkSubtypes(types, generator.subtypeIndices);
-  checkLUBs(types);
+  checkSubtypes();
+  checkLUBs();
+  checkCanonicalization();
 }
 
-void Fuzzer::printTypes(const std::vector<HeapType>& types) {
+void Fuzzer::printTypes() {
   std::cout << "Built " << types.size() << " types:\n";
   struct FatalTypeNameGenerator
     : TypeNameGeneratorBase<FatalTypeNameGenerator> {
@@ -122,9 +132,7 @@ void Fuzzer::printTypes(const std::vector<HeapType>& types) {
   }
 }
 
-void Fuzzer::checkSubtypes(
-  const std::vector<HeapType>& types,
-  const std::vector<std::vector<Index>>& subtypeIndices) {
+void Fuzzer::checkSubtypes() const {
   for (size_t super = 0; super < types.size(); ++super) {
     for (auto sub : subtypeIndices[super]) {
       if (!HeapType::isSubType(types[sub], types[super])) {
@@ -137,7 +145,7 @@ void Fuzzer::checkSubtypes(
   }
 }
 
-void Fuzzer::checkLUBs(const std::vector<HeapType>& types) {
+void Fuzzer::checkLUBs() const {
   // For each unordered pair of types...
   for (size_t i = 0; i < types.size(); ++i) {
     for (size_t j = i; j < types.size(); ++j) {
@@ -185,6 +193,292 @@ void Fuzzer::checkLUBs(const std::vector<HeapType>& types) {
                 << j << ": " << b << "\n"
                 << "lub: " << lub << "\n";
       }
+    }
+  }
+}
+
+void Fuzzer::checkCanonicalization() {
+  // Check that structural canonicalization is working correctly by building the
+  // types again, choosing randomly between equivalent possible children for
+  // each definition from both the new and old sets of built types.
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    // No canonicalization to check.
+    return;
+  }
+
+  TypeBuilder builder(types.size());
+
+  // Helper for creating new definitions of existing types, randomly choosing
+  // between canonical and temporary components.
+  struct Copier {
+    Random& rand;
+    const std::vector<HeapType>& types;
+    TypeBuilder& builder;
+
+    // For each type, the indices in `types` at which it appears.
+    std::unordered_map<HeapType, std::vector<Index>> typeIndices;
+
+    // For each type, the index one past the end of its rec group, or
+    // alternatively the cumulative size of its rec group and previous rec
+    // groups.
+    std::vector<Index> recGroupEnds;
+
+    // The index of the type we are currently building.
+    Index index = 0;
+
+    Copier(Fuzzer& parent, TypeBuilder& builder)
+      : rand(parent.rand), types(parent.types), builder(builder) {
+      // Set the type indices
+      for (size_t i = 0; i < types.size(); ++i) {
+        typeIndices[types[i]].push_back(i);
+      }
+
+      // Set supertypes
+      // TODO: support setting old canonical types as the supertypes.
+      const auto& subtypeIndices = parent.subtypeIndices;
+      for (size_t super = 0; super < subtypeIndices.size(); ++super) {
+        for (auto sub : subtypeIndices[super]) {
+          if (sub != super) {
+            builder[sub].subTypeOf(builder[super]);
+          }
+        }
+      }
+
+      // Set up recursion groups and record group ends to ensure we only select
+      // valid children.
+      recGroupEnds.reserve(builder.size());
+      if (getTypeSystem() != TypeSystem::Isorecursive) {
+        // No rec groups.
+        for (size_t i = 0; i < builder.size(); ++i) {
+          recGroupEnds.push_back(builder.size());
+        }
+      } else {
+        // Set up recursion groups
+        std::optional<RecGroup> currGroup;
+        size_t currGroupStart = 0;
+        auto finishGroup = [&](Index end) {
+          builder.createRecGroup(currGroupStart, end - currGroupStart);
+          for (Index i = currGroupStart; i < end; ++i) {
+            recGroupEnds.push_back(end);
+          }
+          currGroupStart = end;
+        };
+        for (Index i = 0; i < types.size(); ++i) {
+          auto type = types[i];
+          if (type.isBasic()) {
+            continue;
+          }
+          auto newGroup = type.getRecGroup();
+          if (!currGroup || newGroup != currGroup ||
+              type == types[currGroupStart]) {
+            finishGroup(i);
+            currGroup = newGroup;
+          }
+        }
+        finishGroup(builder.size());
+      }
+
+      // Copy the original types
+      for (; index < types.size(); ++index) {
+        auto type = types[index];
+        if (type.isBasic()) {
+          builder[index] = type.getBasic();
+        } else if (type.isSignature()) {
+          builder[index] = getSignature(type.getSignature());
+        } else if (type.isStruct()) {
+          builder[index] = getStruct(type.getStruct());
+        } else if (type.isArray()) {
+          builder[index] = getArray(type.getArray());
+        } else {
+          WASM_UNREACHABLE("unexpected type kind");
+        }
+      }
+    }
+
+    struct NewHeapType : HeapType {};
+    struct OldHeapType : HeapType {};
+    struct CopiedHeapType {
+      std::variant<NewHeapType, OldHeapType> type;
+      NewHeapType* getNew() { return std::get_if<NewHeapType>(&type); }
+      OldHeapType* getOld() { return std::get_if<OldHeapType>(&type); }
+      HeapType get() {
+        return getNew() ? HeapType(*getNew()) : HeapType(*getOld());
+      }
+    };
+
+    struct NewType : Type {};
+    struct OldType : Type {};
+    struct CopiedType {
+      std::variant<NewType, OldType> type;
+      NewType* getNew() { return std::get_if<NewType>(&type); }
+      OldType* getOld() { return std::get_if<OldType>(&type); }
+      Type get() { return getNew() ? Type(*getNew()) : Type(*getOld()); }
+    };
+
+    CopiedHeapType getChildHeapType(HeapType old) {
+      auto it = typeIndices.find(old);
+      if (it == typeIndices.end()) {
+        // This is a basic heap type that wasn't explicitly built.
+        assert(old.isBasic());
+        return {OldHeapType{old}};
+      }
+      if (!old.isBasic() && getTypeSystem() == TypeSystem::Isorecursive) {
+        // Check whether this child heap type is supposed to be a self-reference
+        // into the recursion group we are defining. If it is, we must use the
+        // corresponding type in the new recursion group, since anything else
+        // would break isorecursive equivalence.
+        auto group = old.getRecGroup();
+        if (group == types[index].getRecGroup()) {
+          // This is a self-reference, so find the correct index, which is the
+          // last matching index less than the end of this rec group.
+          std::optional<Index> i;
+          for (auto candidate : it->second) {
+            if (candidate >= recGroupEnds[index]) {
+              break;
+            }
+            i = candidate;
+          }
+          return {NewHeapType{builder[*i]}};
+        }
+      }
+      // Choose whether to use an old type or a new type
+      if (rand.oneIn(2)) {
+        // Using a copied heap type; filter out invalid candidates.
+        // Filter out invalid candidates.
+        std::vector<Index> candidateIndices;
+        for (auto i : it->second) {
+          if (i < recGroupEnds[index]) {
+            candidateIndices.push_back(i);
+          }
+        }
+        if (candidateIndices.empty()) {
+          // This is a basic type that was only ever created after the current
+          // rec group, so we can't refer to a new copy of it after all.
+          assert(old.isBasic());
+          return {OldHeapType{old}};
+        }
+        Index i = rand.pick(candidateIndices);
+        return {NewHeapType{builder[i]}};
+      } else {
+        // Using an original heap type.
+        Index i = rand.pick(it->second);
+        return {OldHeapType{types[i]}};
+      }
+    }
+
+    CopiedType getTuple(Type old) {
+      TypeList types;
+      types.reserve(old.size());
+      bool hasTempChild = false;
+      for (auto type : old) {
+        auto copied = getType(type);
+        if (copied.getNew()) {
+          hasTempChild = true;
+        }
+        types.push_back(copied.get());
+      }
+      // Must use a temporary type if we have a temporary child, otherwise we
+      // can choose.
+      if (hasTempChild || rand.oneIn(2)) {
+        return {NewType{builder.getTempTupleType(types)}};
+      } else {
+        return {OldType{Tuple(std::move(types))}};
+      }
+    }
+
+    CopiedType getRtt(Type old) {
+      auto copied = getChildHeapType(old.getHeapType());
+      auto rtt = old.getRtt();
+      rtt.heapType = copied.get();
+      if (copied.getNew()) {
+        // The child is temporary, so we must put it in a temporary type.
+        return {NewType{builder.getTempRttType(rtt)}};
+      } else {
+        // The child is canonical, so we can either put it in a temporary type
+        // or use the canonical type.
+        if (rand.oneIn(2)) {
+          return {NewType{builder.getTempRttType(rtt)}};
+        } else {
+          return {OldType{Type(rtt)}};
+        }
+      }
+    }
+
+    CopiedType getRef(Type old) {
+      auto copied = getChildHeapType(old.getHeapType());
+      auto type = copied.get();
+      auto nullability = old.getNullability();
+      if (copied.getNew()) {
+        // The child is temporary, so we must put it in a temporary type.
+        return {NewType{builder.getTempRefType(type, nullability)}};
+      } else {
+        // The child is canonical, so we can either put it in a temporary type
+        // or use the canonical type.
+        if (rand.oneIn(2)) {
+          return {NewType{builder.getTempRefType(type, nullability)}};
+        } else {
+          return {OldType{Type(type, nullability)}};
+        }
+      }
+    }
+
+    CopiedType getType(Type old) {
+      if (old.isTuple()) {
+        return getTuple(old);
+      } else if (old.isRtt()) {
+        return getRtt(old);
+      } else if (old.isRef()) {
+        return getRef(old);
+      } else {
+        assert(old.isBasic());
+        return {OldType{old}};
+      }
+    }
+
+    Field getField(Field old) {
+      old.type = getType(old.type).get();
+      return old;
+    }
+
+    Signature getSignature(Signature old) {
+      return {getType(old.params).get(), getType(old.results).get()};
+    }
+
+    Struct getStruct(const Struct& old) {
+      FieldList fields;
+      fields.reserve(old.fields.size());
+      for (const auto& field : old.fields) {
+        fields.push_back(getField(field));
+      }
+      return {std::move(fields)};
+    }
+
+    Array getArray(Array old) {
+      old.element = getField(old.element);
+      return old;
+    }
+  };
+
+  Copier{*this, builder};
+
+  auto result = builder.build();
+  if (auto* error = result.getError()) {
+    IndexedTypeNameGenerator print(types);
+    Fatal() << "Failed to build copies of the types: " << error->reason
+            << " at index " << error->index;
+  }
+  auto newTypes = *result;
+  assert(types.size() == newTypes.size());
+  for (size_t i = 0; i < types.size(); ++i) {
+    if (types[i] != newTypes[i]) {
+      IndexedTypeNameGenerator print(types);
+      std::cerr << "\n";
+      for (size_t j = 0; j < newTypes.size(); ++j) {
+        std::cerr << j << ": " << print(newTypes[j]) << "\n";
+      }
+      Fatal() << "Copy of type at index " << i << " is distinct:\n"
+              << "original: " << print(types[i]) << '\n'
+              << "copy:     " << print(newTypes[i]);
     }
   }
 }
