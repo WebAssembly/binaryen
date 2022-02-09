@@ -30,31 +30,35 @@ void test_builder() {
   Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
   Array array(Field(refNullExt, Mutable));
 
-  IndexedTypeNameGenerator print(builder);
-
-  std::cout << "Before setting heap types:\n";
-  std::cout << "$sig => " << print(builder[0]) << "\n";
-  std::cout << "$struct => " << print(builder[1]) << "\n";
-  std::cout << "$array => " << print(builder[2]) << "\n";
-  std::cout << "(ref $sig) => " << print(refSig) << "\n";
-  std::cout << "(ref $struct) => " << print(refStruct) << "\n";
-  std::cout << "(ref $array) => " << print(refArray) << "\n";
-  std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
-  std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
+  {
+    IndexedTypeNameGenerator print(builder);
+    std::cout << "Before setting heap types:\n";
+    std::cout << "$sig => " << print(builder[0]) << "\n";
+    std::cout << "$struct => " << print(builder[1]) << "\n";
+    std::cout << "$array => " << print(builder[2]) << "\n";
+    std::cout << "(ref $sig) => " << print(refSig) << "\n";
+    std::cout << "(ref $struct) => " << print(refStruct) << "\n";
+    std::cout << "(ref $array) => " << print(refArray) << "\n";
+    std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
+    std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
+  }
 
   builder[0] = sig;
   builder[1] = struct_;
   builder[2] = array;
 
-  std::cout << "After setting heap types:\n";
-  std::cout << "$sig => " << print(builder[0]) << "\n";
-  std::cout << "$struct => " << print(builder[1]) << "\n";
-  std::cout << "$array => " << print(builder[2]) << "\n";
-  std::cout << "(ref $sig) => " << print(refSig) << "\n";
-  std::cout << "(ref $struct) => " << print(refStruct) << "\n";
-  std::cout << "(ref $array) => " << print(refArray) << "\n";
-  std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
-  std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
+  {
+    IndexedTypeNameGenerator print(builder);
+    std::cout << "After setting heap types:\n";
+    std::cout << "$sig => " << print(builder[0]) << "\n";
+    std::cout << "$struct => " << print(builder[1]) << "\n";
+    std::cout << "$array => " << print(builder[2]) << "\n";
+    std::cout << "(ref $sig) => " << print(refSig) << "\n";
+    std::cout << "(ref $struct) => " << print(refStruct) << "\n";
+    std::cout << "(ref $array) => " << print(refArray) << "\n";
+    std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
+    std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
+  }
 
   std::vector<HeapType> built = *builder.build();
 
@@ -64,17 +68,18 @@ void test_builder() {
   Type newRefNullArray = Type(built[2], Nullable);
   Type newRttArray = Type(Rtt(0, built[2]));
 
-  print = IndexedTypeNameGenerator(built);
-
-  std::cout << "After building types:\n";
-  std::cout << "$sig => " << print(built[0]) << "\n";
-  std::cout << "$struct => " << print(built[1]) << "\n";
-  std::cout << "$array => " << print(built[2]) << "\n";
-  std::cout << "(ref $sig) => " << print(newRefSig) << "\n";
-  std::cout << "(ref $struct) => " << print(newRefStruct) << "\n";
-  std::cout << "(ref $array) => " << print(newRefArray) << "\n";
-  std::cout << "(ref null $array) => " << print(newRefNullArray) << "\n";
-  std::cout << "(rtt 0 $array) => " << print(newRttArray) << "\n\n";
+  {
+    IndexedTypeNameGenerator print(built);
+    std::cout << "After building types:\n";
+    std::cout << "$sig => " << print(built[0]) << "\n";
+    std::cout << "$struct => " << print(built[1]) << "\n";
+    std::cout << "$array => " << print(built[2]) << "\n";
+    std::cout << "(ref $sig) => " << print(newRefSig) << "\n";
+    std::cout << "(ref $struct) => " << print(newRefStruct) << "\n";
+    std::cout << "(ref $array) => " << print(newRefArray) << "\n";
+    std::cout << "(ref null $array) => " << print(newRefNullArray) << "\n";
+    std::cout << "(rtt 0 $array) => " << print(newRttArray) << "\n\n";
+  }
 }
 
 // Check that the builder works when there are duplicate definitions

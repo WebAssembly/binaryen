@@ -67,13 +67,23 @@ struct DefaultTypeNameGenerator
 template<typename FallbackGenerator = DefaultTypeNameGenerator>
 struct IndexedTypeNameGenerator
   : TypeNameGeneratorBase<IndexedTypeNameGenerator<FallbackGenerator>> {
-  FallbackGenerator fallback;
+  DefaultTypeNameGenerator defaultGenerator;
+  FallbackGenerator& fallback;
   std::unordered_map<HeapType, TypeNames> names;
-  template<typename T> IndexedTypeNameGenerator(T& types) {
+
+  template<typename T>
+  IndexedTypeNameGenerator(T& types,
+                           FallbackGenerator& fallback,
+                           const std::string& prefix = "")
+    : fallback(fallback) {
     for (size_t i = 0; i < types.size(); ++i) {
-      names.insert({types[i], {std::to_string(i), {}}});
+      names.insert({types[i], {prefix + std::to_string(i), {}}});
     }
   }
+  template<typename T>
+  IndexedTypeNameGenerator(T& types, const std::string& prefix = "")
+    : IndexedTypeNameGenerator(types, defaultGenerator, prefix) {}
+
   TypeNames getNames(HeapType type) {
     if (auto it = names.find(type); it != names.end()) {
       return it->second;

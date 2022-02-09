@@ -95,8 +95,8 @@ void Fuzzer::printTypes() {
     TypeNames getNames(HeapType type) {
       Fatal() << "trying to print unknown heap type";
     }
-  };
-  IndexedTypeNameGenerator<FatalTypeNameGenerator> print(types);
+  } fatalGenerator;
+  IndexedTypeNameGenerator<FatalTypeNameGenerator> print(types, fatalGenerator);
   std::unordered_map<HeapType, size_t> seen;
   std::optional<RecGroup> currRecGroup;
   auto inRecGroup = [&]() { return currRecGroup && currRecGroup->size() > 1; };
