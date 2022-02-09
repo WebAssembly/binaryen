@@ -280,6 +280,16 @@ void splitModule(const WasmSplitOptions& options) {
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize);
 
+  // Run asyncify on the primary module
+  if (options.asyncify) {
+    PassOptions passOptions;
+    passOptions.optimizeLevel = 1;
+    passOptions.arguments.insert({"asyncify-ignore-imports", ""});
+    PassRunner runner(&wasm, passOptions);
+    runner.add("asyncify");
+    runner.run();
+  }
+
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.primaryOutput + ".symbols");
     writeSymbolMap(*secondary, options.secondaryOutput + ".symbols");

@@ -43,6 +43,7 @@ struct WasmSplitOptions : ToolOptions {
   bool emitBinary = true;
   bool symbolMap = false;
   bool placeholderMap = false;
+  bool asyncify = false;
 
   // TODO: Remove this. See the comment in wasm-binary.h.
   bool emitModuleNames = false;
