@@ -85,8 +85,8 @@ void Fuzzer::printTypes(const std::vector<HeapType>& types) {
     TypeNames getNames(HeapType type) {
       Fatal() << "trying to print unknown heap type";
     }
-  };
-  IndexedTypeNameGenerator<FatalTypeNameGenerator> print(types);
+  } fatalGenerator;
+  IndexedTypeNameGenerator<FatalTypeNameGenerator> print(types, fatalGenerator);
   std::unordered_map<HeapType, size_t> seen;
   for (size_t i = 0; i < types.size(); ++i) {
     auto type = types[i];

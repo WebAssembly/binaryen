@@ -122,8 +122,9 @@ TEST_F(TypeTest, PrintTypes) {
   std::vector<HeapType> arrays{built[2], built[3]};
 
   using ArrayPrinter = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
+  ArrayPrinter printArrays(arrays, "array");
   using StructPrinter = IndexedTypeNameGenerator<ArrayPrinter>;
-  StructPrinter print(structs, "struct", arrays, "array");
+  StructPrinter print(structs, printArrays, "struct");
 
   std::stringstream stream;
   stream << print(built[0]);
