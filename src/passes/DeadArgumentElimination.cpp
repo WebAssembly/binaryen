@@ -389,7 +389,7 @@ struct DAE : public Pass {
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
               return EffectAnalyzer(runner->options, *module, operand)
-                .hasSideEffects();
+                .hasUnremovableSideEffects();
             });
           // The type must be valid for us to handle as a local (since we
           // replace the parameter with a local).
