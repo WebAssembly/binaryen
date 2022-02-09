@@ -102,7 +102,7 @@ TEST_F(TypeTest, TypeIterator) {
   EXPECT_EQ(reverse, tuple.rend());
 }
 
-TEST_F(TypeTest, PrintTypes) {
+TEST_F(TypeTest, IndexedTypePrinter) {
   TypeBuilder builder(4);
 
   Type refStructA = builder.getTempRefType(builder[0], Nullable);
@@ -121,6 +121,7 @@ TEST_F(TypeTest, PrintTypes) {
   std::vector<HeapType> structs{built[0], built[1]};
   std::vector<HeapType> arrays{built[2], built[3]};
 
+  // Check that IndexedTypePrinters configured with fallbacks work correctly.
   using ArrayPrinter = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
   ArrayPrinter printArrays(arrays, "array");
   using StructPrinter = IndexedTypeNameGenerator<ArrayPrinter>;
