@@ -383,13 +383,14 @@ struct DAE : public Pass {
       while (1) {
         if (infoMap[name].unusedParams.has(i)) {
           // Great, it's not used. Check if none of the calls has a param with
-          // side effects, as that would prevent us removing them (flattening
-          // should have been done earlier).
+          // side effects that we cannot remove (as if we can remove them, we
+          // will simply do that when we remove the parameter). Note: flattening
+          // the IR beforehand can help here.
           bool callParamsAreValid =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
               return EffectAnalyzer(runner->options, *module, operand)
-                .hasSideEffects();
+                .hasUnremovableSideEffects();
             });
           // The type must be valid for us to handle as a local (since we
           // replace the parameter with a local).
