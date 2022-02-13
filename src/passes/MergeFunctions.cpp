@@ -97,13 +97,9 @@
 
 namespace wasm {
 
-struct ConstValueDiff : public std::monostate {};
-struct ConstCalleeDiff : public std::monostate {};
-
 // A set of constant values of an instruction different between each functions
 // in an EquivalentClass
-using ConstDiff =
-  std::variant<ConstValueDiff, Literals, ConstCalleeDiff, std::vector<Name>>;
+using ConstDiff = std::variant<Literals, std::vector<Name>>;
 
 // Describes a parameter which we create to parameterize the merged function.
 struct ParamInfo {
