@@ -24,17 +24,32 @@
 // https://github.com/apple/swift/blob/main/lib/LLVMPasses/LLVMMergeFunctions.cpp
 // https://github.com/llvm/llvm-project/blob/main/llvm/docs/MergeFunctions.rst
 //
+// The basic idea is:
+//
+// 1. Group possible mergeable functions by hashing instruction kind
+// 2. Create a group of mergeable functions (EquivalentClass) that can be merged
+//    by parameterization. The classes are collected by comparing functions on
+//    a pairwise basis.
+// 3. Derive the parameters to be parameterized (ParamInfo) from each
+//    EquivalentClass. A ParamInfo contains positions of parameter use and a
+//    set of constant values (ConstDiff) for each functions in an
+//    EquivalentClass. (A parameter can be used in multiple times in a function,
+//    so ParamInfo contains an array of use position)
+// 4. Create a shared function from a function picked from EquivalentClass and
+//    an array of ParamInfo.
+// 5. Create thunks for each functions in an EquivalentClass.
+//
 // e.g.
 //
 //  Before:
 //    (func $big-const-42 (result i32)
 //      [[many instr 1]]
-//      (i32.const 44)
+//      (i32.const 42)
 //      [[many instr 2]]
 //    )
 //    (func $big-const-43 (result i32)
 //      [[many instr 1]]
-//      (i32.const 45)
+//      (i32.const 43)
 //      [[many instr 2]]
 //    )
 //  After:
@@ -53,6 +68,12 @@
 //       (i32.const 43)
 //      )
 //    )
+//
+// In the above example, there is an EquivalentClass `[$big-const-42,
+// $big-const-43]`, and a ParamInfo `{ values: [i32(42), i32(43)], uses:
+// [location of (i32.const 42)] }` is derived. Then, clone `$big-const-42`
+// replacing uses of params with local.get, and create thunks for $big-const-42
+// and $big-const-43.
 
 #include "ir/hashed.h"
 #include "ir/manipulation.h"
@@ -79,6 +100,8 @@ namespace wasm {
 struct ConstValueDiff : public std::monostate {};
 struct ConstCalleeDiff : public std::monostate {};
 
+// A set of constant values of an instruction different between each functions
+// in an EquivalentClass
 using ConstDiff =
   std::variant<ConstValueDiff, Literals, ConstCalleeDiff, std::vector<Name>>;
 
