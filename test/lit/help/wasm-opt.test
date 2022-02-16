@@ -422,7 +422,7 @@
 ;; CHECK-NEXT: ---------------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:    -O                                           execute default optimization
-;; CHECK-NEXT:                                                 passes
+;; CHECK-NEXT:                                                 passes (equivalent to -Os)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:    -O0                                          execute no optimization passes
 ;; CHECK-NEXT:
