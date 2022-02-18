@@ -936,7 +936,16 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
 
   auto result = builder.build();
   if (auto* err = result.getError()) {
-    Fatal() << "Invalid type: " << err->reason << " at index " << err->index;
+    // Find the name to provide a better error message.
+    std::stringstream msg;
+    msg << "Invalid type: " << err->reason;
+    for (auto& [name, index] : typeIndices) {
+      if (index == err->index) {
+        Fatal() << msg.str() << " at type $" << name;
+      }
+    }
+    // No name, just report the index.
+    Fatal() << msg.str() << " at index " << err->index;
   }
   types = *result;
 
