@@ -33,6 +33,7 @@ set(passes_SOURCES
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
+  ExceptionOpts.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp

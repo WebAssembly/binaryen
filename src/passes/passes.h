@@ -136,6 +136,7 @@ Pass* createTrapModeJS();
 Pass* createTypeRefiningPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
+Pass* createExceptionOptsPass();
 
 // Test passes:
 Pass* createCatchPopFixupPass();

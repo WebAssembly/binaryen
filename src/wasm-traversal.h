@@ -303,6 +303,9 @@ struct Walker : public VisitorType {
     stack.pop_back();
     return ret;
   }
+  // Stop walking the expression. Use when you don't need to examine the rest of
+  // the expression anymore.
+  void clearTask() { stack.clear(); }
 
   void walk(Expression*& root) {
     assert(stack.size() == 0);

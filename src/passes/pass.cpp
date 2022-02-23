@@ -424,6 +424,8 @@ void PassRegistry::registerPasses() {
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
+  registerPass(
+    "exception-opts", "optimize exceptions", createExceptionOptsPass);
 
   // Register passes used for internal testing. These don't show up in --help.
   registerTestPass("catch-pop-fixup",
