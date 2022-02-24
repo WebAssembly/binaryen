@@ -60,7 +60,8 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
           // This is a static cast check, which we may be able to resolve at
           // compile time. Note that the type must be non-nullable for us to
           // succeed at that inference, as otherwise a null can make us fail.
-          if (Type::isSubType(br->ref->type, Type(br->intendedType, NonNullable))) {
+          if (Type::isSubType(br->ref->type,
+                              Type(br->intendedType, NonNullable))) {
             return flip ? Failure : Success;
           }
         }
