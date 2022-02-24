@@ -52,9 +52,18 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       // We don't check nullability here.
       case BrOnNull:
       case BrOnNonNull:
-      // Casts can only be known at runtime using RTTs.
-      case BrOnCast:
       case BrOnCastFail:
+        flip = true;
+        [[fallthrough]];
+      case BrOnCast:
+        if (!br->rtt) {
+          // This is a static cast check, which we may be able to resolve at
+          // compile time. Note that the type must be non-nullable for us to
+          // succeed at that inference, as otherwise a null can make us fail.
+          if (Type::isSubType(br->ref->type, Type(br->intendedType, NonNullable))) {
+            return flip ? Failure : Success;
+          }
+        }
         return Unknown;
       case BrOnNonFunc:
         flip = true;

@@ -111,5 +111,76 @@
    (unreachable)
   )
  )
-)
 
+ ;; CHECK:      (func $br_on_cast_static (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_static (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    ;; This static cast can be computed at compile time: it will definitely be
+    ;; taken, so we can turn it into a normal br.
+    (br_on_cast_static $block $struct
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_static_no (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_static $block $struct
+ ;; CHECK-NEXT:     (ref.null $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_static_no (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    (br_on_cast_static $block $struct
+     ;; As above, but now the type is nullable, so we cannot infer anything.
+     (ref.null $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail_static (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_static (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    ;; As $br_on_cast_static, but this is a failing cast, so we know it will
+    ;; *not* be taken.
+    (br_on_cast_static_fail $block $struct
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+)
