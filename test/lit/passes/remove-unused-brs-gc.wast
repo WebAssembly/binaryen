@@ -183,4 +183,36 @@
    (unreachable)
   )
  )
+
+ ;; CHECK:      (func $br_on_cast_dynamic (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $block
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $struct
+ ;; CHECK-NEXT:      (rtt.canon $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (rtt.canon $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_dynamic (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    ;; This dynamic cast happens to be optimizable since we see both sides use
+    ;; rtt.canon, but we do not inspect things that closely, and leave such
+    ;; dynamic casts to runtime.
+    (br_on_cast $block
+     (struct.new_with_rtt $struct
+       (rtt.canon $struct)
+     )
+     (rtt.canon $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
 )
