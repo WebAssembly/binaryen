@@ -174,7 +174,7 @@
   (local $temp (ref null $struct))
   (block $block (result (ref $struct))
    (drop
-    ;; As $br_on_cast_static, but this is a failing cast, so we know it will
+    ;; As $br_on_cast_static, but this checks for a failing cast, so we know it will
     ;; *not* be taken.
     (br_on_cast_static_fail $block $struct
      (struct.new $struct)
