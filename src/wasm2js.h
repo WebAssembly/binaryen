@@ -2600,6 +2600,7 @@ void Wasm2JSGlue::emitPostES6() {
   for (auto& exp : wasm.exports) {
     switch (exp->kind) {
       case ExternalKind::Function:
+      case ExternalKind::Global:
       case ExternalKind::Memory:
         break;
 
