@@ -116,7 +116,6 @@ struct ParamInfo {
   Type getValueType(Module* module) const {
     if (const auto literals = std::get_if<Literals>(&values)) {
       return (*literals)[0].type;
-      return Type::i32;
     } else if (auto callees = std::get_if<std::vector<Name>>(&values)) {
       auto* callee = module->getFunction((*callees)[0]);
       return Type(callee->getSig(), NonNullable);
@@ -146,7 +145,7 @@ struct EquivalentClass {
   // Primary function in the `functions`, which will be the base for the merged
   // function.
   Function* primaryFunction;
-  // List of functions belonging to a same class.
+  // List of functions belonging to this equivalence class.
   std::vector<Function*> functions;
 
   EquivalentClass(Function* primaryFunction, std::vector<Function*> functions)
@@ -209,10 +208,9 @@ struct MergeSimilarFunctions : public Pass {
     }
   }
 
-  // Parameterize direct calls if the module support func ref values.
+  // Parameterize direct calls if the module supports func ref values.
   bool isCallIndirectionEnabled(Module* module) const {
-    return module->features.hasTypedFunctionReferences() &&
-           module->features.hasReferenceTypes();
+    return module->features.hasTypedFunctionReferences();
   }
   bool areInEquvalentClass(Function* lhs, Function* rhs, Module* module);
   void collectEquivalentClasses(std::vector<EquivalentClass>& classes,
@@ -340,7 +338,6 @@ void MergeSimilarFunctions::collectEquivalentClasses(
 
       if (!found) {
         // Same hash but different instruction pattern.
-        // Functions having the same pattern may be in the same hash group.
         classesInGroup.push_back(EquivalentClass(func, {func}));
       }
     }
@@ -355,10 +352,12 @@ void MergeSimilarFunctions::collectEquivalentClasses(
 bool EquivalentClass::deriveParams(Module* module,
                                    std::vector<ParamInfo>& params,
                                    bool isCallIndirectionEnabled) {
+  // Allows iteration over children of the root expression recursively.
   struct DeepValueIterator {
+    // The DFS work list.
     SmallVector<Expression**, 10> tasks;
 
-    DeepValueIterator(Expression** root) : tasks() { tasks.push_back(root); }
+    DeepValueIterator(Expression** root) { tasks.push_back(root); }
 
     void operator++() {
       ChildIterator it(*tasks.back());
@@ -368,7 +367,10 @@ bool EquivalentClass::deriveParams(Module* module,
       }
     }
 
-    Expression*& operator*() { return *tasks.back(); }
+    Expression*& operator*() {
+      assert(!empty());
+      return *tasks.back();
+    }
     bool empty() { return tasks.empty(); }
   };
 
@@ -377,7 +379,9 @@ bool EquivalentClass::deriveParams(Module* module,
   }
   DeepValueIterator primaryIt(&primaryFunction->body);
   std::vector<DeepValueIterator> siblingIterators;
-  // Skip the first function, as it is the primary function.
+  // Skip the first function, as it is the primary function to compare the
+  // primary function with the other functions based on the primary instr type.
+  assert(functions.size() >= 2);
   for (auto func = functions.begin() + 1; func != functions.end(); ++func) {
     siblingIterators.emplace_back(&(*func)->body);
   }
@@ -433,6 +437,31 @@ bool EquivalentClass::deriveParams(Module* module,
       continue;
     }
     // If the derived param is already in the params, reuse it.
+    // e.g.
+    //
+    // ```
+    // (func $use-42-twice (result i32)
+    //   (i32.add (i32.const 42) (i32.const 42))
+    // )
+    // (func $use-43-twice (result i32)
+    //   (i32.add (i32.const 43) (i32.const 43))
+    // )
+    // ```
+    //
+    // will be merged reusing the parameter [42, 43]
+    //
+    // ```
+    // (func $use-42-twice (result i32)
+    //  (call $byn$mgfn-shared$use-42-twice (i32.const 42))
+    // )
+    // (func $use-43-twice (result i32)
+    //  (call $byn$mgfn-shared$use-42-twice (i32.const 43))
+    // )
+    // (func $byn$mgfn-shared$use-42-twice (param $0 i32) (result i32)
+    //  (i32.add (local.get $0) (local.get $0))
+    // )
+    // ```
+    //
     bool paramReused = false;
     for (auto& param : params) {
       if (param.values == diff) {
@@ -549,14 +578,14 @@ Function* EquivalentClass::createShared(Module* module,
     }
     // Re-number local indices of variables (not params) to offset for the extra
     // params
-    if (auto localGet = expr->dynCast<LocalGet>()) {
+    if (auto* localGet = expr->dynCast<LocalGet>()) {
       if (primaryFunction->isVar(localGet->index)) {
         return builder.makeLocalGet(
           newVarBase + (localGet->index - primaryFunction->getNumParams()),
           localGet->type);
       }
     }
-    if (auto localSet = expr->dynCast<LocalSet>()) {
+    if (auto* localSet = expr->dynCast<LocalSet>()) {
       if (primaryFunction->isVar(localSet->index)) {
         auto operand =
           ExpressionManipulator::flexibleCopy(localSet->value, *module, copier);
