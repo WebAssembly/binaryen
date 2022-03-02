@@ -116,60 +116,6 @@
   ;; CHECK-NEXT: )
 )
 
-;; allowing locals indexes order difference by reorder-locals
-(module
-  ;; CHECK:      (func $use-locals-0-1 (result i32)
-  ;; CHECK-NEXT:  (call $byn$mgfn-shared$use-locals-0-1
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $use-locals-0-1 (result i32)
-    (local $0 i32)
-    (local $1 i32)
-    (nop) (nop) (nop) (nop) (nop) (nop)
-    (nop) (nop) (nop) (nop) (nop) (nop)
-    (drop (local.get $0))
-    (i32.add (local.get $1) (i32.const 42))
-  )
-  ;; CHECK:      (func $use-locals-1-0 (result i32)
-  ;; CHECK-NEXT:  (call $byn$mgfn-shared$use-locals-0-1
-  ;; CHECK-NEXT:   (i32.const 43)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $use-locals-1-0 (result i32)
-    (local $0 i32)
-    (local $1 i32)
-    (nop) (nop) (nop) (nop) (nop) (nop)
-    (nop) (nop) (nop) (nop) (nop) (nop)
-    (drop (local.get $1))
-    (i32.add (local.get $0) (i32.const 43))
-  )
-
-  ;; CHECK:      (func $byn$mgfn-shared$use-locals-0-1 (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (local.get $2)
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-)
-
 ;; different callees
 (module
   ;; CHECK:      (func $callee-0 (result i32)

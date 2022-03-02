@@ -175,14 +175,6 @@ struct MergeSimilarFunctions : public Pass {
   bool invalidatesDWARF() override { return true; }
 
   void run(PassRunner* runner, Module* module) override {
-    {
-      // Canonicalize locals indices to make comparison easier.
-      PassRunner runner(module);
-      runner.setIsNested(true);
-      runner.add("reorder-locals");
-      runner.run();
-    }
-
     std::vector<EquivalentClass> classes;
     collectEquivalentClasses(classes, module);
     std::sort(
