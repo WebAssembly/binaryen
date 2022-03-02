@@ -185,10 +185,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-blocks                                merges blocks to their parents
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --merge-functions                             merges similar functions when
-;; CHECK-NEXT:                                                 benefical
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-locals                                merges locals when beneficial
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --merge-similar-functions                     merges similar functions when
+;; CHECK-NEXT:                                                 benefical
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --metrics                                     reports metrics
 ;; CHECK-NEXT:

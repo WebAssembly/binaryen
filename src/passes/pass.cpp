@@ -227,9 +227,9 @@ void PassRegistry::registerPasses() {
                createMemoryPackingPass);
   registerPass(
     "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
-  registerPass("merge-functions",
+  registerPass("merge-similar-functions",
                "merges similar functions when benefical",
-               createMergeFunctionsPass);
+               createMergeSimilarFunctionsPass);
   registerPass(
     "merge-locals", "merges locals when beneficial", createMergeLocalsPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
@@ -575,7 +575,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
 
   // perform after the number of functions is reduced by inlining-optimizing
   if (options.shrinkLevel >= 2) {
-    addIfNoDWARFIssues("merge-functions");
+    addIfNoDWARFIssues("merge-similar-functions");
   }
 
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {

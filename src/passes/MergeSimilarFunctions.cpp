@@ -21,8 +21,8 @@
 // Performing this pass at post-link time can merge more functions across
 // objects. Inspired by Swift compiler's optimization which is derived from
 // LLVM's one:
-// https://github.com/apple/swift/blob/main/lib/LLVMPasses/LLVMMergeFunctions.cpp
-// https://github.com/llvm/llvm-project/blob/main/llvm/docs/MergeFunctions.rst
+// https://github.com/apple/swift/blob/main/lib/LLVMPasses/LLVMMergeSimilarFunctions.cpp
+// https://github.com/llvm/llvm-project/blob/main/llvm/docs/MergeSimilarFunctions.rst
 //
 // The basic idea is:
 //
@@ -172,7 +172,7 @@ struct EquivalentClass {
                     bool isIndirectionEnabled);
 };
 
-struct MergeFunctions : public Pass {
+struct MergeSimilarFunctions : public Pass {
   bool invalidatesDWARF() override { return true; }
 
   void run(PassRunner* runner, Module* module) override {
@@ -220,9 +220,9 @@ struct MergeFunctions : public Pass {
 };
 
 // Determine if two functions are equivalent ignoring constants.
-bool MergeFunctions::areInEquvalentClass(Function* lhs,
-                                         Function* rhs,
-                                         Module* module) {
+bool MergeSimilarFunctions::areInEquvalentClass(Function* lhs,
+                                                Function* rhs,
+                                                Module* module) {
   if (lhs->imported() || rhs->imported()) {
     return false;
   }
@@ -289,7 +289,7 @@ bool MergeFunctions::areInEquvalentClass(Function* lhs,
 }
 
 // Collect all equivalent classes to be merged.
-void MergeFunctions::collectEquivalentClasses(
+void MergeSimilarFunctions::collectEquivalentClasses(
   std::vector<EquivalentClass>& classes, Module* module) {
   auto hashes = FunctionHasher::createMap(module);
   PassRunner runner(module);
@@ -604,6 +604,6 @@ EquivalentClass::replaceWithThunk(Builder& builder,
   return target;
 }
 
-Pass* createMergeFunctionsPass() { return new MergeFunctions(); }
+Pass* createMergeSimilarFunctionsPass() { return new MergeSimilarFunctions(); }
 
 } // namespace wasm
