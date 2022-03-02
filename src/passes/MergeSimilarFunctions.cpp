@@ -580,25 +580,21 @@ Function* EquivalentClass::createShared(Module* module,
     // params
     if (auto* localGet = expr->dynCast<LocalGet>()) {
       if (primaryFunction->isVar(localGet->index)) {
-        return builder.makeLocalGet(
-          newVarBase + (localGet->index - primaryFunction->getNumParams()),
-          localGet->type);
+        localGet->index =
+          newVarBase + (localGet->index - primaryFunction->getNumParams());
+        localGet->finalize();
+        return localGet;
       }
     }
     if (auto* localSet = expr->dynCast<LocalSet>()) {
       if (primaryFunction->isVar(localSet->index)) {
         auto operand =
           ExpressionManipulator::flexibleCopy(localSet->value, *module, copier);
-        if (localSet->isTee()) {
-          return builder.makeLocalTee(
-            newVarBase + (localSet->index - primaryFunction->getNumParams()),
-            operand,
-            localSet->type);
-        } else {
-          return builder.makeLocalSet(
-            newVarBase + (localSet->index - primaryFunction->getNumParams()),
-            operand);
-        }
+        localSet->index =
+          newVarBase + (localSet->index - primaryFunction->getNumParams());
+        localSet->value = operand;
+        localSet->finalize();
+        return localSet;
       }
     }
     return nullptr;
