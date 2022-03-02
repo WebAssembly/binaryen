@@ -21,8 +21,8 @@
 // Performing this pass at post-link time can merge more functions across
 // objects. Inspired by Swift compiler's optimization which is derived from
 // LLVM's one:
-// https://github.com/apple/swift/blob/main/lib/LLVMPasses/LLVMMergeSimilarFunctions.cpp
-// https://github.com/llvm/llvm-project/blob/main/llvm/docs/MergeSimilarFunctions.rst
+// https://github.com/apple/swift/blob/main/lib/LLVMPasses/LLVMMergeFunctions.cpp
+// https://github.com/llvm/llvm-project/blob/main/llvm/docs/MergeFunctions.rst
 //
 // The basic idea is:
 //
