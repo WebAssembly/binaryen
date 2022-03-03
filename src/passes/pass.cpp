@@ -227,6 +227,9 @@ void PassRegistry::registerPasses() {
                createMemoryPackingPass);
   registerPass(
     "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
+  registerPass("merge-similar-functions",
+               "merges similar functions when benefical",
+               createMergeSimilarFunctionsPass);
   registerPass(
     "merge-locals", "merges locals when beneficial", createMergeLocalsPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
@@ -565,9 +568,16 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("inlining-optimizing");
   }
+
   // Optimizations show more functions as duplicate, so run this here in Post.
   addIfNoDWARFIssues("duplicate-function-elimination");
   addIfNoDWARFIssues("duplicate-import-elimination");
+
+  // perform after the number of functions is reduced by inlining-optimizing
+  if (options.shrinkLevel >= 2) {
+    addIfNoDWARFIssues("merge-similar-functions");
+  }
+
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("simplify-globals-optimizing");
   } else {

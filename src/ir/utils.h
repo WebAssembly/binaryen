@@ -82,9 +82,17 @@ struct ExpressionAnalyzer {
     return flexibleEqual(left, right, comparer);
   }
 
+  // Returns true if the expression is handled by the hasher.
+  using ExprHasher = std::function<bool(Expression*, size_t&)>;
+  static bool nothingHasher(Expression*, size_t&) { return false; }
+
+  static size_t flexibleHash(Expression* curr, ExprHasher hasher);
+
   // hash an expression, ignoring superficial details like specific internal
   // names
-  static size_t hash(Expression* curr);
+  static size_t hash(Expression* curr) {
+    return flexibleHash(curr, nothingHasher);
+  }
 
   // hash an expression, ignoring child nodes.
   static size_t shallowHash(Expression* curr);

@@ -71,6 +71,7 @@ Pass* createLoopInvariantCodeMotionPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
+Pass* createMergeSimilarFunctionsPass();
 Pass* createMergeLocalsPass();
 Pass* createMinifiedPrinterPass();
 Pass* createMinifyImportsPass();
