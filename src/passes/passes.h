@@ -41,6 +41,7 @@ Pass* createDirectizePass();
 Pass* createDWARFDumpPass();
 Pass* createDuplicateImportEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
+Pass* createEnableSharedMemoryPass();
 Pass* createEmitTargetFeaturesPass();
 Pass* createExtractFunctionPass();
 Pass* createExtractFunctionIndexPass();

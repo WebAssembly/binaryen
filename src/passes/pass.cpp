@@ -138,6 +138,9 @@ void PassRegistry::registerPasses() {
   registerPass("duplicate-function-elimination",
                "removes duplicate functions",
                createDuplicateFunctionEliminationPass);
+  registerPass("enable-shared-memory",
+               "enable shared memory",
+               createEnableSharedMemoryPass);
   registerPass("emit-target-features",
                "emit the target features section in the output",
                createEmitTargetFeaturesPass);
