@@ -74,6 +74,7 @@ TEST_F(TypeTest, TypeIterator) {
 
 TEST_F(TypeTest, IndexedTypePrinter) {
   TypeBuilder builder(4);
+  builder.createRecGroup(0, 4);
 
   Type refStructA = builder.getTempRefType(builder[0], Nullable);
   Type refStructB = builder.getTempRefType(builder[1], Nullable);
@@ -99,19 +100,19 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 
   std::stringstream stream;
   stream << print(built[0]);
-  EXPECT_EQ(stream.str(), "(struct (field (ref null $array1)))");
+  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $array1)) data)");
 
   stream.str("");
   stream << print(built[1]);
-  EXPECT_EQ(stream.str(), "(struct (field (ref null $struct0)))");
+  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $struct0)) data)");
 
   stream.str("");
   stream << print(built[2]);
-  EXPECT_EQ(stream.str(), "(array (ref null $struct1))");
+  EXPECT_EQ(stream.str(), "(array_subtype (ref null $struct1) data)");
 
   stream.str("");
   stream << print(built[3]);
-  EXPECT_EQ(stream.str(), "(array (ref null $array0))");
+  EXPECT_EQ(stream.str(), "(array_subtype (ref null $array0) data)");
 }
 
 TEST_F(EquirecursiveTest, Basics) {

@@ -32,7 +32,7 @@ protected:
   }
 };
 
-using TypeTest = TypeSystemTest<wasm::TypeSystem::Equirecursive>;
+using TypeTest = TypeSystemTest<wasm::TypeSystem::Isorecursive>;
 using EquirecursiveTest = TypeSystemTest<wasm::TypeSystem::Equirecursive>;
 using NominalTest = TypeSystemTest<wasm::TypeSystem::Nominal>;
 using IsorecursiveTest = TypeSystemTest<wasm::TypeSystem::Isorecursive>;
