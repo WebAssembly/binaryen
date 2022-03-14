@@ -54,6 +54,8 @@ v102
 
 - Replace `BinaryenExpressionGetSideEffects`'s features parameter with a module
   parameter.
+  
+- OptimizeInstructions now lifts identical code in `select`/`if` arms (#3828). This may cause direct `BinaryenTupleExtract(BinaryenTupleMake(...))` to [use multivalue types](https://github.com/grain-lang/grain/pull/1158).
 
 v101
 ----
