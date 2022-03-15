@@ -397,4 +397,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-memory64',
             '--enable-typed-function-references',
             '--enable-relaxed-simd',
+            '--enable-extended-const',
         ], p2.stdout.splitlines())

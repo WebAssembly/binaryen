@@ -414,6 +414,26 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //
 bool isGenerative(Expression* curr, FeatureSet features);
 
+inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
+  if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
+      expr->is<RttCanon>() || expr->is<RttSub>() || expr->is<StructNew>() ||
+      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>()) {
+    return true;
+  }
+
+  if (features.hasExtendedConst()) {
+    if (expr->is<Binary>()) {
+      auto bin = static_cast<Binary*>(expr);
+      if (bin->op == AddInt64 || bin->op == SubInt64 || bin->op == MulInt64 ||
+          bin->op == AddInt32 || bin->op == SubInt32 || bin->op == MulInt32) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 } // namespace wasm::Properties
 
 #endif // wasm_ir_properties_h
