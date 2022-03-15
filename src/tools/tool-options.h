@@ -155,7 +155,7 @@ struct ToolOptions : public Options {
            std::string("Enable ") + description,
            ToolOptionsCategory,
            Arguments::Zero,
-           [=](Options*, const std::string&) {
+           [=, this](Options*, const std::string&) {
              enabledFeatures.set(feature, true);
              disabledFeatures.set(feature, false);
            })
@@ -165,7 +165,7 @@ struct ToolOptions : public Options {
            std::string("Disable ") + description,
            ToolOptionsCategory,
            Arguments::Zero,
-           [=](Options*, const std::string&) {
+           [=, this](Options*, const std::string&) {
              enabledFeatures.set(feature, false);
              disabledFeatures.set(feature, true);
            });

@@ -82,7 +82,7 @@ struct FeatureSet {
     }
   }
 
-  std::string toString() {
+  std::string toString() const {
     std::string ret;
     uint32_t x = 1;
     while (x & Feature::All) {
@@ -102,7 +102,7 @@ struct FeatureSet {
   operator uint32_t() const { return features; }
 
   bool isMVP() const { return features == MVP; }
-  bool has(FeatureSet f) { return (features & f) == f; }
+  bool has(FeatureSet f) const { return (features & f) == f.features; }
   bool hasAtomics() const { return (features & Atomics) != 0; }
   bool hasMutableGlobals() const { return (features & MutableGlobals) != 0; }
   bool hasTruncSat() const { return (features & TruncSat) != 0; }
@@ -165,7 +165,7 @@ struct FeatureSet {
     features = features & ~other.features & All;
   }
 
-  template<typename F> void iterFeatures(F f) {
+  template<typename F> void iterFeatures(F f) const {
     for (uint32_t feature = MVP + 1; feature < All; feature <<= 1) {
       if (has(feature)) {
         f(static_cast<Feature>(feature));
