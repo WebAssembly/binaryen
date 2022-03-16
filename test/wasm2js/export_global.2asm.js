@@ -19,7 +19,11 @@ function asmFunc(env) {
  }
  
  return {
-  "HELLO": global0, 
+  "HELLO": {
+   get value() {
+    return global0;
+   }
+  }, 
   "helloWorld": $0
  };
 }

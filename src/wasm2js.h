@@ -764,10 +764,18 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         break;
       }
       case ExternalKind::Global: {
+        Ref object = ValueBuilder::makeObject();
+
+        Ref block = ValueBuilder::makeBlock();
+
+        block[1]->push_back(ValueBuilder::makeReturn(
+          ValueBuilder::makeName(fromName(export_->value, NameScope::Top))));
+
+        ValueBuilder::appendToObjectAsGetter(object, IString("value"), block);
+
         ValueBuilder::appendToObjectWithQuotes(
-          exports,
-          fromName(export_->name, NameScope::Export),
-          ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
+          exports, fromName(export_->name, NameScope::Export), object);
+
         break;
       }
       case ExternalKind::Tag:

@@ -1463,12 +1463,20 @@ struct JSPrinter {
         newline();
       }
       bool needQuote = false;
+      bool isGetter = false;
       const char* str;
       if (args[i][0]->isArray()) {
-        assert(args[i][0][0] == STRING);
-        // A quoted string.
-        needQuote = true;
-        str = args[i][0][1]->getCString();
+        if (args[i][0][0] == STRING) {
+          // A quoted string.
+          needQuote = true;
+          str = args[i][0][1]->getCString();
+        } else if (args[i][0][0] == GET) {
+          isGetter = true;
+          emit("get ");
+          str = args[i][0][1]->getCString();
+        } else {
+          abort();
+        }
       } else {
         // Just a raw string, no quotes.
         str = args[i][0]->getCString();
@@ -1488,7 +1496,11 @@ struct JSPrinter {
       if (needQuote) {
         emit('"');
       }
-      emit(":");
+      if (isGetter) {
+        emit("()");
+      } else {
+        emit(":");
+      }
       space();
       print(args[i][1]);
     }
@@ -1826,6 +1838,15 @@ public:
     assert(array[0] == OBJECT);
     array[1]->push_back(
       &makeRawArray(2)->push_back(makeString(key)).push_back(value));
+  }
+
+  static void appendToObjectAsGetter(Ref array, IString key, Ref value) {
+    assert(array[0] == OBJECT);
+    array[1]->push_back(&makeRawArray(2)
+                           ->push_back(&makeRawArray(2)
+                                          ->push_back(makeRawString(GET))
+                                          .push_back(makeRawString(key)))
+                           .push_back(value));
   }
 
   static Ref makeSub(Ref obj, Ref index) {

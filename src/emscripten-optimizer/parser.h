@@ -124,6 +124,7 @@ extern IString ATOMICS;
 extern IString COMPARE_EXCHANGE;
 extern IString LOAD;
 extern IString STORE;
+extern IString GET;
 
 extern IStringSet keywords;
 
