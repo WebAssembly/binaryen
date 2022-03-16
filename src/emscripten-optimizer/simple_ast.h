@@ -1472,7 +1472,6 @@ struct JSPrinter {
           str = args[i][0][1]->getCString();
         } else if (args[i][0][0] == GET) {
           isGetter = true;
-          emit("get ");
           str = args[i][0][1]->getCString();
         } else {
           abort();
@@ -1488,6 +1487,10 @@ struct JSPrinter {
           break;
         }
         check++;
+      }
+      if (isGetter) {
+        emit("get");
+        space();
       }
       if (needQuote) {
         emit('"');
