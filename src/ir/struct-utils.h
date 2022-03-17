@@ -106,7 +106,7 @@ struct FunctionStructValuesMap
 //
 // * Note an expression written into a field.
 //
-//   void noteExpression(Expression* expr, HeapType type, Index index, T& info);
+//   void noteWrite(Expression* expr, HeapType type, Index index, T& info);
 //
 // * Note a default value written during creation.
 //
@@ -150,7 +150,7 @@ struct StructScanner
         static_cast<SubType*>(this)->noteDefault(
           fields[i].type, heapType, i, infos[i]);
       } else {
-        noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
+        noteWriteOrCopy(curr->operands[i], heapType, i, infos[i]);
       }
     }
   }
@@ -162,7 +162,7 @@ struct StructScanner
     }
 
     // Note a write to this field of the struct.
-    noteExpressionOrCopy(curr->value,
+    noteWriteOrCopy(curr->value,
                          type.getHeapType(),
                          curr->index,
                          functionSetGetInfos[this->getFunction()]
@@ -184,7 +184,7 @@ struct StructScanner
   }
 
   void
-  noteExpressionOrCopy(Expression* expr, HeapType type, Index index, T& info) {
+  noteWriteOrCopy(Expression* expr, HeapType type, Index index, T& info) {
     // Look at the value falling through, if it has the exact same type
     // (otherwise, we'd need to consider both the type actually written and the
     // type of the fallthrough, somehow).
@@ -200,7 +200,7 @@ struct StructScanner
         return;
       }
     }
-    static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
+    static_cast<SubType*>(this)->noteWrite(expr, type, index, info);
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;

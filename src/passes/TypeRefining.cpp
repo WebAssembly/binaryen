@@ -50,7 +50,7 @@ struct FieldInfoScanner
     : StructUtils::StructScanner<FieldInfo, FieldInfoScanner>(
         functionNewInfos, functionSetGetInfos) {}
 
-  void noteExpression(Expression* expr,
+  void noteWrite(Expression* expr,
                       HeapType type,
                       Index index,
                       FieldInfo& info) {

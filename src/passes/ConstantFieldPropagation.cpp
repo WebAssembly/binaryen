@@ -256,7 +256,7 @@ struct PCVScanner
     : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
         functionNewInfos, functionSetInfos) {}
 
-  void noteExpression(Expression* expr,
+  void noteWrite(Expression* expr,
                       HeapType type,
                       Index index,
                       PossibleConstantValues& info) {
