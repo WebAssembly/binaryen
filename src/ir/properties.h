@@ -414,6 +414,8 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //
 bool isGenerative(Expression* curr, FeatureSet features);
 
+Expression* getSingleDescendantWithEffects(Expression* curr, const PassOptions& options, Module& module);
+    
 } // namespace wasm::Properties
 
 #endif // wasm_ir_properties_h

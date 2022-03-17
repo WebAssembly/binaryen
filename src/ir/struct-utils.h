@@ -130,10 +130,14 @@ struct StructScanner
   : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
+  PassOptions options;
+
   StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
-                FunctionStructValuesMap<T>& functionSetGetInfos)
+                FunctionStructValuesMap<T>& functionSetGetInfos,
+                PassOptions options)
     : functionNewInfos(functionNewInfos),
-      functionSetGetInfos(functionSetGetInfos) {}
+      functionSetGetInfos(functionSetGetInfos),
+      options(options) {}
 
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
@@ -193,13 +197,36 @@ struct StructScanner
     if (fallthrough->type == expr->type) {
       expr = fallthrough;
     }
-    if (auto* get = expr->dynCast<StructGet>()) {
-      if (get->index == index && get->ref->type != Type::unreachable &&
-          get->ref->type.getHeapType() == type) {
-        static_cast<SubType*>(this)->noteCopy(type, index, info);
+
+    // Check if it is a direct copy (a write of a read from the same field).
+    auto readsSameField = [&](Expression* curr) {
+      if (auto* get = expr->dynCast<StructGet>()) {
+        if (get->index == index && get->ref->type != Type::unreachable &&
+            get->ref->type.getHeapType() == type) {
+        }
+      }
+    };
+    if (readsSameField(expr)) {
+      static_cast<SubType*>(this)->noteCopy(type, index, info);
+      return;
+    }
+
+    // Check if it is a read-only-to-write situation, that is, where we read the
+    // field, process that value, then write that result. This is similar to a
+    // copy that was already handled, but the value may not be identical; still,
+    // it has the property that the read value does not "escape" anywhere but
+    // back into this field. (See SimplifyGlobals for the readOnlyToWrite logic
+    // there that is similar to this. Perhaps we can share some code somehow
+    // eventually TODO For now, handle simple cases like incrementing a field
+    // that we see in practice in j2wasm output.)
+    if (auto* single = Properties::getSingleDescendantWithEffects(expr, options, *getModule())) {
+      if (readsSameField(single)) {
+        static_cast<SubType*>(this)->noteReadOnlyToWrite(type, index, info);
         return;
       }
     }
+
+    // Otherwise, note a general write.
     static_cast<SubType*>(this)->noteWrite(expr, type, index, info);
   }
 

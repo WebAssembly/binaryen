@@ -36,4 +36,31 @@ bool isGenerative(Expression* curr, FeatureSet features) {
   return scanner.generative;
 }
 
+Expression* getSingleDescendantWithEffects(Expression* curr, const PassOptions& options, Module& module) {
+  struct Scanner : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    const PassOptions& options;
+    Module& module;
+
+    Scanner(const PassOptions& options, Module& module) : options(options), module(module) {}
+
+    Expression* withEffects = nullptr;
+    bool multiple = false;
+
+    void visitExpression(Expression* curr) {
+      if (multiple) {
+        return;
+      }
+      if (ShallowEffectAnalyzer(options, module, curr).hasSideEffects()) {
+        if (withEffects) {
+          multiple = true;
+        } else {
+          withEffects = curr;
+        }
+      }
+    }
+  } scanner(options, module;
+  scanner.walk(curr);
+  return scanner.generative;
+}
+
 } // namespace wasm::Properties
