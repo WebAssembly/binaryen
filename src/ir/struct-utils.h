@@ -130,14 +130,10 @@ struct StructScanner
   : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
-  PassOptions options;
-
   StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
-                FunctionStructValuesMap<T>& functionSetGetInfos,
-                PassOptions options)
+                FunctionStructValuesMap<T>& functionSetGetInfos)
     : functionNewInfos(functionNewInfos),
-      functionSetGetInfos(functionSetGetInfos),
-      options(options) {}
+      functionSetGetInfos(functionSetGetInfos) {}
 
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
@@ -203,8 +199,10 @@ struct StructScanner
       if (auto* get = expr->dynCast<StructGet>()) {
         if (get->index == index && get->ref->type != Type::unreachable &&
             get->ref->type.getHeapType() == type) {
+          return true;
         }
       }
+      return false;
     };
     if (readsSameField(expr)) {
       static_cast<SubType*>(this)->noteCopy(type, index, info);
@@ -219,14 +217,19 @@ struct StructScanner
     // there that is similar to this. Perhaps we can share some code somehow
     // eventually TODO For now, handle simple cases like incrementing a field
     // that we see in practice in j2wasm output.)
-    if (auto* single = Properties::getSingleDescendantWithEffects(expr, options, *getModule())) {
+    if (auto* single = Properties::getSingleDescendantWithEffects(expr, this->getPassOptions(), *this->getModule())) {
       if (readsSameField(single)) {
-        static_cast<SubType*>(this)->noteReadOnlyToWrite(type, index, info);
+        static_cast<SubType*>(this)->noteReadOnlyToWrite(expr, type, index, info);
         return;
       }
     }
 
     // Otherwise, note a general write.
+    static_cast<SubType*>(this)->noteWrite(expr, type, index, info);
+  }
+
+  void noteReadOnlyToWrite(Expression* expr, HeapType type, Index index, T& info) {
+    // By default call the same code as a general write.
     static_cast<SubType*>(this)->noteWrite(expr, type, index, info);
   }
 

@@ -53,14 +53,15 @@ Expression* getSingleDescendantWithEffects(Expression* curr, const PassOptions& 
       if (ShallowEffectAnalyzer(options, module, curr).hasSideEffects()) {
         if (withEffects) {
           multiple = true;
+          withEffects = nullptr;
         } else {
           withEffects = curr;
         }
       }
     }
-  } scanner(options, module;
+  } scanner(options, module);
   scanner.walk(curr);
-  return scanner.generative;
+  return scanner.withEffects;
 }
 
 } // namespace wasm::Properties
