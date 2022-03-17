@@ -57,6 +57,9 @@ struct FieldInfo {
   void noteReadOnlyToWrite() {
     assert(potentiallyEscapingReads > 0);
     if (potentiallyEscapingReads == 1) {
+      // The read we just saw is part of our pattern, and is safe to ignore: it
+      // does not escape as it is written right back as part of this read-only-
+      // to-write pattern.
       potentiallyEscapingReads = 0;
     } else {
       hasEscapingReads_ = true;
@@ -70,6 +73,10 @@ struct FieldInfo {
     }
     if (!hasEscapingReads_ && other.hasEscapingReads_) {
       hasEscapingReads_ = true;
+      changed = true;
+    }
+    if (!potentiallyEscapingReads && other.potentiallyEscapingReads) {
+      potentiallyEscapingReads = other.potentiallyEscapingReads;
       changed = true;
     }
     return changed;
