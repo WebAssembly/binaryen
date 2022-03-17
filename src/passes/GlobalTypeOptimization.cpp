@@ -42,34 +42,44 @@ namespace {
 
 // Information about usage of a field.
 struct FieldInfo {
-  Index hasWrite = 0;
-  Index hasRead = 0;
-  Index readOnlyToWrites = 0;
+  bool hasWrite = false;
+  bool hasRead = false;
+  bool hasEscapingReads = false;
 
-  void noteWrite() { hasWrite++; }
-  void noteRead() { hasRead++; }
-  void noteReadOnlyToWrite() { readOnlyToWrites++; }
+  // When we see a read we increment potentiallyEscapingReads. If we then see a
+  // read-only-to-write pattern and there was only a single read before, then it
+  // must have been the read in the readOnlyToWrite.
+  Index potentiallyEscapingReads = 0;
 
+  void noteWrite() { hasWrite = true; }
+  void noteRead() {
+    hasRead = true;
+    potentiallyEscapingReads++;
+  }
+  void noteReadOnlyToWrite() {
+    assert(potentiallyEscapingReads > 0);
+    if (potentiallyEscapingReads == 1) {
+      potentiallyEscapingReads = 0;
+    } else {
+      hasEscapingReads = true;
+    }
+  }
   bool combine(const FieldInfo& other) {
     bool changed = false;
-    if (other.hasWrite) {
-      hasWrite += other.hasWrite;
+    if (!hasWrite && other.hasWrite) {
+      hasWrite = true;
       changed = true;
     }
-    if (other.hasRead) {
-      hasRead += other.hasRead;
+    if (!hasRead && other.hasRead) {
+      hasRead = true;
+      changed = true;
+    }
+    if (!hasEscapingReads && other.hasEscapingReads) {
+      hasEscapingReads = true;
       changed = true;
     }
     return changed;
   }
-
-  bool hasNoEscapingReads() const {
-    // Any read-only-to-write pattern contains a read, so the number of reads
-    // cannot exceed the read-only-to-writes.
-    assert(hasRead >= readOnlyToWrites);
-    return hasRead == 0 || hasRead == readOnlyToWrites;
-  }
-
 };
 
 struct FieldInfoScanner
@@ -195,13 +205,13 @@ struct GlobalTypeOptimization : public Pass {
       // Process removability. First, see if we can remove anything before we
       // start to allocate info for that.
       if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-            return info.hasNoEscapingReads();
+            return !info.hasEscapingReads;
           })) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
         for (Index i = 0; i < fields.size(); i++) {
-          if (!infos[i].hasNoEscapingReads()) {
+          if (infos[i].hasEscapingReads) {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
