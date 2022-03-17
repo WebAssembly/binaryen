@@ -391,8 +391,15 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
-        // We must not remove a field that is read from.
-        assert(newIndex != RemovedField);
+        if (newIndex == RemovedField) {
+          // This is a read of the field, but the field has no escaping reads so
+          // we removed it. That means that the field is read only to be written
+          // back into the field, which means we can ignore the read and
+          // replace it with something.
+          Builder builder(*getModule());
+          replaceCurrent(builder.replaceWithIdenticalType(curr));
+        }
+
         curr->index = newIndex;
       }
 
