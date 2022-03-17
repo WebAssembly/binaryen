@@ -43,8 +43,7 @@ namespace {
 // Information about usage of a field.
 struct FieldInfo {
   bool hasWrite = false;
-  bool hasRead = false;
-  bool hasEscapingReads = false;
+  bool hasEscapingReads_ = false;
 
   // When we see a read we increment potentiallyEscapingReads. If we then see a
   // read-only-to-write pattern and there was only a single read before, then it
@@ -53,7 +52,6 @@ struct FieldInfo {
 
   void noteWrite() { hasWrite = true; }
   void noteRead() {
-    hasRead = true;
     potentiallyEscapingReads++;
   }
   void noteReadOnlyToWrite() {
@@ -61,7 +59,7 @@ struct FieldInfo {
     if (potentiallyEscapingReads == 1) {
       potentiallyEscapingReads = 0;
     } else {
-      hasEscapingReads = true;
+      hasEscapingReads_ = true;
     }
   }
   bool combine(const FieldInfo& other) {
@@ -70,15 +68,18 @@ struct FieldInfo {
       hasWrite = true;
       changed = true;
     }
-    if (!hasRead && other.hasRead) {
-      hasRead = true;
-      changed = true;
-    }
-    if (!hasEscapingReads && other.hasEscapingReads) {
-      hasEscapingReads = true;
+    if (!hasEscapingReads_ && other.hasEscapingReads_) {
+      hasEscapingReads_ = true;
       changed = true;
     }
     return changed;
+  }
+
+  // Reads escape if we definitely found one that escapes during processing, or
+  // if processing ended with a read that is still potentially escaping (as we
+  // did not find any proof it does not escape).
+  bool readsEscape() const {
+    return hasEscapingReads_ || potentiallyEscapingReads > 0;
   }
 };
 
@@ -205,13 +206,13 @@ struct GlobalTypeOptimization : public Pass {
       // Process removability. First, see if we can remove anything before we
       // start to allocate info for that.
       if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-            return !info.hasEscapingReads;
+            return !info.readsEscape();
           })) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
         for (Index i = 0; i < fields.size(); i++) {
-          if (infos[i].hasEscapingReads) {
+          if (infos[i].readsEscape()) {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
