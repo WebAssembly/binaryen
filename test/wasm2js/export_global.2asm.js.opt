@@ -22,6 +22,9 @@ function asmFunc(env) {
   "HELLO": {
    get value() {
     return global0;
+   }, 
+   set value(_global0) {
+    global0 = _global0;
    }
   }, 
   "helloWorld": $0

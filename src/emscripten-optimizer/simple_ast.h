@@ -1463,16 +1463,21 @@ struct JSPrinter {
         newline();
       }
       bool needQuote = false;
-      bool isGetter = false;
+      const char* getterSetter = nullptr;
+      const char* setterParam = nullptr;
       const char* str;
       if (args[i][0]->isArray()) {
         if (args[i][0][0] == STRING) {
           // A quoted string.
           needQuote = true;
           str = args[i][0][1]->getCString();
-        } else if (args[i][0][0] == GET) {
-          isGetter = true;
+        } else if (args[i][0][0] == GETTER) {
+          getterSetter = GETTER.c_str();
           str = args[i][0][1]->getCString();
+        } else if (args[i][0][0] == SETTER) {
+          getterSetter = SETTER.c_str();
+          str = args[i][0][1]->getCString();
+          setterParam = args[i][0][2]->getCString();
         } else {
           abort();
         }
@@ -1488,8 +1493,8 @@ struct JSPrinter {
         }
         check++;
       }
-      if (isGetter) {
-        emit("get");
+      if (getterSetter != nullptr) {
+        emit(getterSetter);
         space();
       }
       if (needQuote) {
@@ -1499,8 +1504,12 @@ struct JSPrinter {
       if (needQuote) {
         emit('"');
       }
-      if (isGetter) {
-        emit("()");
+      if (getterSetter != nullptr) {
+        emit('(');
+        if (setterParam != nullptr) {
+          emit(setterParam);
+        }
+        emit(')');
       } else {
         emit(":");
       }
@@ -1847,8 +1856,19 @@ public:
     assert(array[0] == OBJECT);
     array[1]->push_back(&makeRawArray(2)
                            ->push_back(&makeRawArray(2)
-                                          ->push_back(makeRawString(GET))
+                                          ->push_back(makeRawString(GETTER))
                                           .push_back(makeRawString(key)))
+                           .push_back(value));
+  }
+
+  static void
+  appendToObjectAsSetter(Ref array, IString key, IString param, Ref value) {
+    assert(array[0] == OBJECT);
+    array[1]->push_back(&makeRawArray(2)
+                           ->push_back(&makeRawArray(3)
+                                          ->push_back(makeRawString(SETTER))
+                                          .push_back(makeRawString(key))
+                                          .push_back(makeRawString(param)))
                            .push_back(value));
   }
 

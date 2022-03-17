@@ -766,12 +766,34 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       case ExternalKind::Global: {
         Ref object = ValueBuilder::makeObject();
 
-        Ref block = ValueBuilder::makeBlock();
+        IString identName = fromName(export_->value, NameScope::Top);
 
-        block[1]->push_back(ValueBuilder::makeReturn(
-          ValueBuilder::makeName(fromName(export_->value, NameScope::Top))));
+        // getter
+        {
+          Ref block = ValueBuilder::makeBlock();
 
-        ValueBuilder::appendToObjectAsGetter(object, IString("value"), block);
+          block[1]->push_back(
+            ValueBuilder::makeReturn(ValueBuilder::makeName(identName)));
+
+          ValueBuilder::appendToObjectAsGetter(object, IString("value"), block);
+        }
+
+        // setter
+        {
+          std::ostringstream buffer;
+          buffer << '_' << identName.c_str();
+          auto setterParam = stringToIString(buffer.str());
+
+          auto block = ValueBuilder::makeBlock();
+
+          block[1]->push_back(
+            ValueBuilder::makeBinary(ValueBuilder::makeName(identName),
+                                     SET,
+                                     ValueBuilder::makeName(setterParam)));
+
+          ValueBuilder::appendToObjectAsSetter(
+            object, IString("value"), setterParam, block);
+        }
 
         ValueBuilder::appendToObjectWithQuotes(
           exports, fromName(export_->name, NameScope::Export), object);
