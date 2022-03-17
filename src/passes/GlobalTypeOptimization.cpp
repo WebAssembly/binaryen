@@ -405,6 +405,7 @@ struct GlobalTypeOptimization : public Pass {
           // back into the field, which means we can ignore the read and
           // replace it with something.
           Builder builder(*getModule());
+          // TODO: traps
           replaceCurrent(builder.replaceWithIdenticalType(curr));
         }
 

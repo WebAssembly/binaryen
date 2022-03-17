@@ -115,6 +115,66 @@
 )
 
 (module
+  ;; A copy does *not* keep a field from being removed, since the value does not
+  ;; escape and is therefore not observable.
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype (field (mut funcref)) data))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (struct.get $struct 0
+        (local.get $x)
+      )
+    )
+  )
+)
+
+(module
+  ;; A read-only-to-write operation like an increment also does not keep a field
+  ;; from being removed.
+
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct_subtype (field (mut i32)) data))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct))
+    (struct.set $struct 0
+      (local.get $x)
+      (i32.add
+        (struct.get $struct 0
+          (local.get $x)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
   ;; Different struct types with different situations: some fields are read,
   ;; some written, and some both. (Note that this also tests the interaction
   ;; of removing with the immutability inference that --gto does.)
