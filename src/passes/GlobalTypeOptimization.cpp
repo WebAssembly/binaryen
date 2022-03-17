@@ -66,7 +66,7 @@ struct FieldInfo {
   bool hasNoEscapingReads() const {
     // Any read-only-to-write pattern contains a read, so the number of reads
     // cannot exceed the read-only-to-writes.
-    assert(hasRead <= readOnlyToWrites);
+    assert(hasRead >= readOnlyToWrites);
     return hasRead == 0 || hasRead == readOnlyToWrites;
   }
 
