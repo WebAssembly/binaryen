@@ -42,24 +42,34 @@ namespace {
 
 // Information about usage of a field.
 struct FieldInfo {
-  bool hasWrite = false;
-  bool hasRead = false;
+  Index hasWrite = 0;
+  Index hasRead = 0;
+  Index readOnlyToWrites = 0;
 
-  void noteWrite() { hasWrite = true; }
-  void noteRead() { hasRead = true; }
+  void noteWrite() { hasWrite++; }
+  void noteRead() { hasRead++; }
+  void noteReadOnlyToWrite() { readOnlyToWrites++; }
 
   bool combine(const FieldInfo& other) {
     bool changed = false;
-    if (!hasWrite && other.hasWrite) {
-      hasWrite = true;
+    if (other.hasWrite) {
+      hasWrite += other.hasWrite;
       changed = true;
     }
-    if (!hasRead && other.hasRead) {
-      hasRead = true;
+    if (other.hasRead) {
+      hasRead += other.hasRead;
       changed = true;
     }
     return changed;
   }
+
+  bool hasNoEscapingReads() const {
+    // Any read-only-to-write pattern contains a read, so the number of reads
+    // cannot exceed the read-only-to-writes.
+    assert(hasRead <= readOnlyToWrites);
+    return hasRead == 0 || hasRead == readOnlyToWrites;
+  }
+
 };
 
 struct FieldInfoScanner
@@ -87,7 +97,14 @@ struct FieldInfoScanner
   }
 
   void noteCopy(HeapType type, Index index, FieldInfo& info) {
-    info.noteWrite();
+    info.noteReadOnlyToWrite();
+  }
+
+  void noteReadOnlyToWrite(Expression* expr,
+                      HeapType type,
+                      Index index,
+                      FieldInfo& info) {
+    info.noteReadOnlyToWrite();
   }
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
@@ -178,13 +195,13 @@ struct GlobalTypeOptimization : public Pass {
       // Process removability. First, see if we can remove anything before we
       // start to allocate info for that.
       if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-            return !info.hasRead;
+            return info.hasNoEscapingReads();
           })) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
         for (Index i = 0; i < fields.size(); i++) {
-          if (infos[i].hasRead) {
+          if (!infos[i].hasNoEscapingReads()) {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
