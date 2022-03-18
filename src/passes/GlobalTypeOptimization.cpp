@@ -60,6 +60,15 @@ struct FieldInfo {
       // The read we just saw is part of our pattern, and is safe to ignore: it
       // does not escape as it is written right back as part of this read-only-
       // to-write pattern.
+      // XXX This does not work, actually, because we split the Infos into
+      //     ones for struct.new and for .get/set. The .new ones are more
+      //     precise, and gathered separately for that reason. But it means that
+      //     in a struct.new that does a copy (the initial value is a get of the
+      //     same field) we end up having the read in the getSets and the write
+      //     (well, the readOnlyToWrite) in the News. Getting this working would
+      //     require either a larger refactoring here, or to do this analysis
+      //     using a new mechanism (but it would need to take into account
+      //     subtyping, which is why we have the current approach).
       potentiallyEscapingReads = 0;
     } else {
       hasEscapingReads_ = true;
