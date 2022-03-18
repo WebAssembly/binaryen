@@ -360,8 +360,26 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
-        if (newIndex != RemovedField) {
+        auto heapType = curr->ref->type.getHeapType();
+        auto newIndex = getNewIndex(heapType, curr->index);
+
+        // Map to the new index if this is a struct.set that should remain, that
+        // is, if the field remains present, and if we are not making it
+        // immutable (if a struct.set exists and we are in fact making this
+        // field immutable, that means that all writes to it are just copies or
+        // read-only-to-write things, that is, the writes will not be observed
+        // and can be dropped).
+        bool keepSet = newIndex != RemovedField;
+        if (keepSet) {
+          auto immIter = parent.canBecomeImmutable.find(heapType);
+          if (immIter != parent.canBecomeImmutable.end()) {
+            auto& immutableVec = immIter->second;
+            if (curr->index < immutableVec.size() && immutableVec[curr->index]) {
+              keepSet = false;
+            }
+          }
+        }
+        if (keepSet) {
           // Map to the new index.
           curr->index = newIndex;
         } else {
