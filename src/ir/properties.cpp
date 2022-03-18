@@ -50,7 +50,8 @@ Expression* getSingleDescendantWithEffects(Expression* curr, const PassOptions& 
       if (multiple) {
         return;
       }
-      if (ShallowEffectAnalyzer(options, module, curr).hasSideEffects()) {
+      ShallowEffectAnalyzer effects(options, module, curr);
+      if (effects.hasSideEffects() || effects.readsMutableGlobalState()) {
         if (withEffects) {
           multiple = true;
           withEffects = nullptr;

@@ -196,7 +196,7 @@ struct StructScanner
 
     // Check if it is a direct copy (a write of a read from the same field).
     auto readsSameField = [&](Expression* curr) {
-      if (auto* get = expr->dynCast<StructGet>()) {
+      if (auto* get = curr->dynCast<StructGet>()) {
         if (get->index == index && get->ref->type != Type::unreachable &&
             get->ref->type.getHeapType() == type) {
           return true;
