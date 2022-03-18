@@ -50,6 +50,9 @@ Expression* getSingleDescendantWithEffects(Expression* curr, const PassOptions& 
       if (multiple) {
         return;
       }
+      // This handles simple patterns, but cannot ignore nested things that can
+      // be ignored as a whole, which the SimplifyGlobals readOnlyToWrite code
+      // might be able to.
       ShallowEffectAnalyzer effects(options, module, curr);
       if (effects.hasSideEffects() || effects.readsMutableGlobalState()) {
         if (withEffects) {

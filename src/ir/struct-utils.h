@@ -135,6 +135,11 @@ struct StructScanner
     : functionNewInfos(functionNewInfos),
       functionSetGetInfos(functionSetGetInfos) {}
 
+  // We queue reads here. Some of them may be ignored later if they are part of
+  // a copy or a readOnlyToWrite pattern (in which case we only emit that
+  // particular pattern for the entire thing).
+  std::unordered_set<StructGet*> reads;
+
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
     if (type == Type::unreachable) {
@@ -175,12 +180,21 @@ struct StructScanner
       return;
     }
 
-    auto heapType = type.getHeapType();
-    auto index = curr->index;
-    static_cast<SubType*>(this)->noteRead(
-      heapType,
-      index,
-      functionSetGetInfos[this->getFunction()][heapType][index]);
+    reads.insert(curr);
+  }
+
+  void visitFunction(Function* curr) {
+    // "Flush" any reads that have not been removed (which they would have had
+    // they been part of a copy of readOnlyToWrite pattern).
+    for (auto* read : reads) {
+      auto type = read->ref->type;
+      auto heapType = type.getHeapType();
+      auto index = read->index;
+      static_cast<SubType*>(this)->noteRead(
+        heapType,
+        index,
+        functionSetGetInfos[this->getFunction()][heapType][index]);
+    }
   }
 
   void
@@ -195,16 +209,18 @@ struct StructScanner
     }
 
     // Check if it is a direct copy (a write of a read from the same field).
-    auto readsSameField = [&](Expression* curr) {
+    auto readsSameField = [&](Expression* curr) -> StructGet* {
       if (auto* get = curr->dynCast<StructGet>()) {
         if (get->index == index && get->ref->type != Type::unreachable &&
             get->ref->type.getHeapType() == type) {
-          return true;
+          return get;
         }
       }
-      return false;
+      return nullptr;
     };
-    if (readsSameField(expr)) {
+    if (auto* get = readsSameField(expr)) {
+      assert(reads.count(get));
+      reads.erase(get);
       static_cast<SubType*>(this)->noteCopy(type, index, info);
       return;
     }
@@ -218,7 +234,9 @@ struct StructScanner
     // eventually TODO For now, handle simple cases like incrementing a field
     // that we see in practice in j2wasm output.)
     if (auto* single = Properties::getSingleDescendantWithEffects(expr, this->getPassOptions(), *this->getModule())) {
-      if (readsSameField(single)) {
+      if (auto* get = readsSameField(single)) {
+        assert(reads.count(get));
+        reads.erase(get);
         static_cast<SubType*>(this)->noteReadOnlyToWrite(expr, type, index, info);
         return;
       }

@@ -43,36 +43,17 @@ namespace {
 // Information about usage of a field.
 struct FieldInfo {
   bool hasWrite = false;
-  bool hasEscapingReads_ = false;
-
-  // When we see a read we increment potentiallyEscapingReads. If we then see a
-  // read-only-to-write pattern and there was only a single read before, then it
-  // must have been the read in the readOnlyToWrite.
-  Index potentiallyEscapingReads = 0;
+  // Reads noted here are *escaping* reads, since a read that is part of a
+  // copy of readOnlyToWrite pattern would not be recorded.
+  bool hasReads = false;
 
   void noteWrite() { hasWrite = true; }
   void noteRead() {
-    potentiallyEscapingReads++;
+    hasReads = true;
   }
   void noteReadOnlyToWrite() {
-    assert(potentiallyEscapingReads > 0);
-    if (potentiallyEscapingReads == 1) {
-      // The read we just saw is part of our pattern, and is safe to ignore: it
-      // does not escape as it is written right back as part of this read-only-
-      // to-write pattern.
-      // XXX This does not work, actually, because we split the Infos into
-      //     ones for struct.new and for .get/set. The .new ones are more
-      //     precise, and gathered separately for that reason. But it means that
-      //     in a struct.new that does a copy (the initial value is a get of the
-      //     same field) we end up having the read in the getSets and the write
-      //     (well, the readOnlyToWrite) in the News. Getting this working would
-      //     require either a larger refactoring here, or to do this analysis
-      //     using a new mechanism (but it would need to take into account
-      //     subtyping, which is why we have the current approach).
-      potentiallyEscapingReads = 0;
-    } else {
-      hasEscapingReads_ = true;
-    }
+    // Do *not* mark either a read or a write. We can remove this field if all
+    // it has are readOnlyToWrite (or copy) operations.
   }
   bool combine(const FieldInfo& other) {
     bool changed = false;
@@ -80,22 +61,11 @@ struct FieldInfo {
       hasWrite = true;
       changed = true;
     }
-    if (!hasEscapingReads_ && other.hasEscapingReads_) {
-      hasEscapingReads_ = true;
-      changed = true;
-    }
-    if (!potentiallyEscapingReads && other.potentiallyEscapingReads) {
-      potentiallyEscapingReads = other.potentiallyEscapingReads;
+    if (!hasReads && other.hasReads) {
+      hasReads = true;
       changed = true;
     }
     return changed;
-  }
-
-  // Reads escape if we definitely found one that escapes during processing, or
-  // if processing ended with a read that is still potentially escaping (as we
-  // did not find any proof it does not escape).
-  bool readsEscape() const {
-    return hasEscapingReads_ || potentiallyEscapingReads > 0;
   }
 };
 
@@ -222,13 +192,13 @@ struct GlobalTypeOptimization : public Pass {
       // Process removability. First, see if we can remove anything before we
       // start to allocate info for that.
       if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-            return !info.readsEscape();
+            return !info.hasReads;
           })) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
         for (Index i = 0; i < fields.size(); i++) {
-          if (infos[i].readsEscape()) {
+          if (infos[i].hasReads) {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
