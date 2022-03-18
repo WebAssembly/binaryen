@@ -461,11 +461,13 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::MemorySizeId: {
     DELEGATE_START(MemorySize);
+    DELEGATE_FIELD_TYPE(MemorySize, ptrType);
     DELEGATE_END(MemorySize);
     break;
   }
   case Expression::Id::MemoryGrowId: {
     DELEGATE_START(MemoryGrow);
+    DELEGATE_FIELD_TYPE(MemoryGrow, ptrType);
     DELEGATE_FIELD_CHILD(MemoryGrow, delta);
     DELEGATE_END(MemoryGrow);
     break;

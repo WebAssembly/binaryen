@@ -764,10 +764,40 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         break;
       }
       case ExternalKind::Global: {
+        Ref object = ValueBuilder::makeObject();
+
+        IString identName = fromName(export_->value, NameScope::Top);
+
+        // getter
+        {
+          Ref block = ValueBuilder::makeBlock();
+
+          block[1]->push_back(
+            ValueBuilder::makeReturn(ValueBuilder::makeName(identName)));
+
+          ValueBuilder::appendToObjectAsGetter(object, IString("value"), block);
+        }
+
+        // setter
+        {
+          std::ostringstream buffer;
+          buffer << '_' << identName.c_str();
+          auto setterParam = stringToIString(buffer.str());
+
+          auto block = ValueBuilder::makeBlock();
+
+          block[1]->push_back(
+            ValueBuilder::makeBinary(ValueBuilder::makeName(identName),
+                                     SET,
+                                     ValueBuilder::makeName(setterParam)));
+
+          ValueBuilder::appendToObjectAsSetter(
+            object, IString("value"), setterParam, block);
+        }
+
         ValueBuilder::appendToObjectWithQuotes(
-          exports,
-          fromName(export_->name, NameScope::Export),
-          ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
+          exports, fromName(export_->name, NameScope::Export), object);
+
         break;
       }
       case ExternalKind::Tag:
@@ -2600,6 +2630,7 @@ void Wasm2JSGlue::emitPostES6() {
   for (auto& exp : wasm.exports) {
     switch (exp->kind) {
       case ExternalKind::Function:
+      case ExternalKind::Global:
       case ExternalKind::Memory:
         break;
 
