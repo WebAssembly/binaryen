@@ -95,6 +95,8 @@ struct FieldInfoScanner
 
   void noteCopy(HeapType type, Index index, FieldInfo& info) {
     info.noteReadOnlyToWrite();
+    // XXX seems buggy, need more testing as it hangs during instantiate of
+    //     j2wasm
   }
 
   void noteReadOnlyToWrite(Expression* expr,
