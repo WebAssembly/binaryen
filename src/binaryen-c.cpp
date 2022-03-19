@@ -252,6 +252,9 @@ BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void) {
 BinaryenFeatures BinaryenFeatureRelaxedSIMD(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::RelaxedSIMD);
 }
+BinaryenFeatures BinaryenFeatureExtendedConst(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::ExtendedConst);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }

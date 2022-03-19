@@ -303,6 +303,7 @@ void test_features() {
   printf("BinaryenFeatureTypedFunctionReferences: %d\n",
          BinaryenFeatureTypedFunctionReferences());
   printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
+  printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 

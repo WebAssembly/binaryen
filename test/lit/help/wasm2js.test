@@ -555,6 +555,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-simd                        Disable relaxed SIMD
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const                       Enable extended const
+;; CHECK-NEXT:                                                 expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const                      Disable extended const
+;; CHECK-NEXT:                                                 expressions
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct
 ;; CHECK-NEXT:

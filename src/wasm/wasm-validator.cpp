@@ -2767,13 +2767,21 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
 }
 
-static bool checkSegmentOffset(Expression* curr, Address add, Address max) {
-  if (curr->is<GlobalGet>()) {
-    return true;
+static bool checkSegmentOffset(Expression* curr,
+                               Address add,
+                               Address max,
+                               FeatureSet features) {
+  if (!Properties::isValidInConstantExpression(curr, features)) {
+    return false;
   }
   auto* c = curr->dynCast<Const>();
   if (!c) {
-    return false;
+    // Unless the instruction is actually a const instruction, we don't
+    // currently try to evaluate it.
+    // TODO: Attempt to evaluate other expressions that might also be const
+    // such as `global.get` or more complex instruction sequences involving
+    // add/sub/mul/etc.
+    return true;
   }
   uint64_t raw = c->value.getInteger();
   if (raw > std::numeric_limits<Address::address32_t>::max()) {
@@ -2999,9 +3007,10 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(
       curr->init != nullptr, curr->name, "global init must be non-null");
     assert(curr->init);
-    info.shouldBeTrue(GlobalUtils::canInitializeGlobal(curr->init),
-                      curr->name,
-                      "global init must be valid");
+    info.shouldBeTrue(
+      GlobalUtils::canInitializeGlobal(curr->init, module.features),
+      curr->name,
+      "global init must be valid");
 
     if (!info.shouldBeSubType(curr->init->type,
                               curr->type,
@@ -3066,7 +3075,8 @@ static void validateMemory(Module& module, ValidationInfo& info) {
       }
       info.shouldBeTrue(checkSegmentOffset(segment.offset,
                                            segment.data.size(),
-                                           curr.initial * Memory::kPageSize),
+                                           curr.initial * Memory::kPageSize,
+                                           module.features),
                         segment.offset,
                         "memory segment offset should be reasonable");
       if (segment.offset->is<Const>()) {
@@ -3171,7 +3181,8 @@ static void validateTables(Module& module, ValidationInfo& info) {
                          "element segment offset should be i32");
       info.shouldBeTrue(checkSegmentOffset(segment->offset,
                                            segment->data.size(),
-                                           table->initial * Table::kPageSize),
+                                           table->initial * Table::kPageSize,
+                                           module.features),
                         segment->offset,
                         "table segment offset should be reasonable");
       if (module.features.hasTypedFunctionReferences()) {
