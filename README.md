@@ -320,7 +320,7 @@ cmake . && make
 
 A C++17 compiler is required. Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`.
 
-To avoid the gtest dependency, you can pass `-DBUILD_TESTS=NO` to cmake.
+To avoid the gtest dependency, you can pass `-DBUILD_TESTS=OFF` to cmake.
 
 Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
 
