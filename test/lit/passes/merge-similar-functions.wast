@@ -47,22 +47,6 @@
   (func $small-const-45 (result i32)
     (i32.const 45)
   )
-
-  ;; CHECK:      (func $byn$mgfn-shared$big-const-42 (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (local.get $0)
-  ;; CHECK-NEXT: )
 )
 
 ;; offset locals for extra params
@@ -92,28 +76,6 @@
     (i32.add (i32.add (i32.const 43) (local.get $0)) (local.get $1))
   )
 
-  ;; CHECK:      (func $byn$mgfn-shared$take-param-and-local-0 (param $0 i32) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.get $2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
 )
 
 ;; different callees
@@ -290,29 +252,6 @@
     )
   )
 
-  ;; CHECK:      (func $byn$mgfn-shared$yes-call-callee-0 (param $0 (ref $none_=>_i32)) (result i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (call_ref
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
 )
 
 (module
@@ -343,24 +282,6 @@
     )
   )
 
-  ;; CHECK:      (func $byn$mgfn-shared$use-42-twice (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
 )
 
 (module
@@ -405,43 +326,4 @@
     (drop (i32.const 2))
   )
 
- ;; CHECK:      (func $byn$mgfn-shared$yes-offset-local-indices-1 (param $0 i32) (param $1 i32) (param $2 i32)
- ;; CHECK-NEXT:  (local $3 i32)
- ;; CHECK-NEXT:  (local $4 i32)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $1)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $3)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $4)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.tee $3
- ;; CHECK-NEXT:    (local.get $3)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.tee $4
- ;; CHECK-NEXT:    (local.get $4)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.tee $0
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.tee $1
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $2)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
 )
