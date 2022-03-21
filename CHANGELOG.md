@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Updated tests to use filecheck 0.0.22 (#4537). Updating is required to
+  successfully run the lit tests.
+
 v106
 ----
 
