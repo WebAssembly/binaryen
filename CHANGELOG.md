@@ -16,6 +16,9 @@ Current Trunk
 -------------
 
 - Add BUILD_TESTS CMake option to make gtest dependency optional.
+- Updated tests to use filecheck 0.0.22 (#4537). Updating is required to
+  successfully run the lit tests. This can be done with
+  `pip3 install -r requirements-dev.txt`.
 
 v106
 ----
