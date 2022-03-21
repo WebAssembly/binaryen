@@ -108,7 +108,7 @@ jobs:
     # XXX  run: python check.py --binaryen-bin=out/bin
 
     - name: verify auto-updating causes no changes
-      run: ./auto_update_tests.py lit | git diff test/ -
+      run: ./auto_update_tests.py lit | git diff test/
       if: matrix.os == 'ubuntu-latest'
 
   build-clang:
