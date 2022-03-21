@@ -31,6 +31,9 @@ endif()
 # more useful error reports from users.
 option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 
+# Turn this off to avoid the dependency on gtest.
+option(BUILD_TESTS "Build GTest-based tests" ON)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -320,8 +323,10 @@ add_subdirectory(third_party)
 # Configure lit tests
 add_subdirectory(test/lit)
 
-# Configure GTest unit tests
-add_subdirectory(test/gtest)
+if(BUILD_TESTS)
+  # Configure GTest unit tests
+  add_subdirectory(test/gtest)
+endif()
 
 # Object files
 set(binaryen_objs
