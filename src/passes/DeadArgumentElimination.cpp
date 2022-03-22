@@ -87,8 +87,7 @@ struct DAEFunctionInfo {
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
 
 struct DAEScanner
-  : public WalkerPass<
-      PostWalker<DAEScanner, Visitor<DAEScanner>>> {
+  : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DAEScanner(infoMap); }
@@ -144,8 +143,7 @@ struct DAEScanner
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
     info = &((*infoMap)[func->name]);
-    PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(
-      func);
+    PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(func);
     // If there are relevant params, check if they are used. If we can't
     // optimize the function anyhow, there's no point (note that our check here
     // is technically racy - another thread could update hasUnseenCalls to true
