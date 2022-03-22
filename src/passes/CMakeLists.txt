@@ -74,6 +74,7 @@ set(passes_SOURCES
   RoundTrip.cpp
   SetGlobals.cpp
   StackIR.cpp
+  SignaturePruning.cpp
   SignatureRefining.cpp
   Strip.cpp
   StripTargetFeatures.cpp

@@ -40,7 +40,7 @@
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
-#include "ir/local-graph.h"
+#include "ir/function-utils.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
@@ -155,40 +155,7 @@ struct DAEScanner
     // part of, say if we are exported, or if another parallel function finds a
     // RefFunc to us and updates it before we check it).
     if (numParams > 0 && !info->hasUnseenCalls) {
-      findUnusedParams(func);
-    }
-  }
-
-  void findUnusedParams(Function* func) {
-    LocalGraph localGraph(func);
-    std::unordered_set<Index> usedParams;
-    for (auto& [get, sets] : localGraph.getSetses) {
-      if (!func->isParam(get->index)) {
-        continue;
-      }
-
-      // Check if this get of a param index can read from the parameter value
-      // passed into the function. We want to ignore values set in the function
-      // like this:
-      //
-      // function foo(x) {
-      //   x = 10;
-      //   bar(x); // read of a param index, but not the param value passed in.
-      // }
-      for (auto* set : sets) {
-        // A nullptr value indicates there is no LocalSet* that sets the value,
-        // so it must be the parameter value.
-        if (!set) {
-          usedParams.insert(get->index);
-        }
-      }
-    }
-
-    // We can now compute the unused params.
-    for (Index i = 0; i < numParams; i++) {
-      if (usedParams.count(i) == 0) {
-        info->unusedParams.insert(i);
-      }
+      info.unusedParams = FunctionUtils::findUnusedParams(func);
     }
   }
 };

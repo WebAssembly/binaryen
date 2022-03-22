@@ -17,7 +17,9 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
+#include "ir/local-graph.h"
 #include "ir/utils.h"
+#include "support/sorted_vector.h"
 #include "wasm.h"
 
 namespace wasm::FunctionUtils {
@@ -41,6 +43,43 @@ inline bool equal(Function* left, Function* right) {
     return ExpressionAnalyzer::equal(left->body, right->body);
   }
   return left->imported() && right->imported();
+}
+
+SortedVector findUnusedParams(Function* func) {
+  LocalGraph localGraph(func);
+  std::unordered_set<Index> usedParams;
+  for (auto& [get, sets] : localGraph.getSetses) {
+    if (!func->isParam(get->index)) {
+      continue;
+    }
+
+    // Check if this get of a param index can read from the parameter value
+    // passed into the function. We want to ignore values set in the function
+    // like this:
+    //
+    // function foo(x) {
+    //   x = 10;
+    //   bar(x); // read of a param index, but not the param value passed in.
+    // }
+    for (auto* set : sets) {
+      // A nullptr value indicates there is no LocalSet* that sets the value,
+      // so it must be the parameter value.
+      if (!set) {
+        usedParams.insert(get->index);
+      }
+    }
+  }
+
+  SortedVector unusedParams;
+
+  // We can now compute the unused params.
+  for (Index i = 0; i < numParams; i++) {
+    if (usedParams.count(i) == 0) {
+      unusedParams.insert(i);
+    }
+  }
+
+  return unusedParams;
 }
 
 } // namespace wasm::FunctionUtils
