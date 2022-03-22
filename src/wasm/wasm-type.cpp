@@ -530,12 +530,12 @@ namespace wasm {
 namespace {
 
 TypeInfo* getTypeInfo(Type type) {
-  assert(type.isCompound());
+  assert(!type.isBasic());
   return (TypeInfo*)type.getID();
 }
 
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
-  assert(ht.isCompound());
+  assert(!ht.isBasic());
   return (HeapTypeInfo*)ht.getID();
 }
 
