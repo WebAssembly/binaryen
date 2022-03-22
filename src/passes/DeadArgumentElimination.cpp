@@ -291,7 +291,7 @@ struct DAE : public Pass {
       Index i = numParams - 1;
       while (1) {
         if (infoMap[name].unusedParams.has(i)) {
-          if (FuncUtils::removeParameter({func}, i, calls, {}, module, runner) {
+          if (FunctionUtils::removeParameter({func}, i, calls, {}, module, runner)) {
             // Success!
             changed.insert(func);
           }

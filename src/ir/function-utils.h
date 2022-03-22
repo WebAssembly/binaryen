@@ -167,6 +167,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   for (auto* func : funcs) {
     TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
+  return true;
 }
 
 } // namespace wasm::FunctionUtils
