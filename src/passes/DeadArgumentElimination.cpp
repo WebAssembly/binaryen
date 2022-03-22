@@ -37,10 +37,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
+#include "ir/local-graph.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
@@ -86,19 +86,9 @@ struct DAEFunctionInfo {
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
 
-// Information in a basic block
-struct DAEBlockInfo {
-  // A local may be read, written, or not accessed in this block.
-  // If it is both read and written, we just care about the first
-  // action (if it is read first, that's all the info we are
-  // looking for; if it is written first, it can't be read later).
-  enum LocalUse { Read, Written };
-  std::unordered_map<Index, LocalUse> localUses;
-};
-
 struct DAEScanner
   : public WalkerPass<
-      CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>> {
+      PostWalker<DAEScanner, Visitor<DAEScanner>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DAEScanner(infoMap); }
@@ -109,28 +99,6 @@ struct DAEScanner
   DAEFunctionInfo* info;
 
   Index numParams;
-
-  // cfg traversal work
-
-  void visitLocalGet(LocalGet* curr) {
-    if (currBasicBlock) {
-      auto& localUses = currBasicBlock->contents.localUses;
-      auto index = curr->index;
-      if (localUses.count(index) == 0) {
-        localUses[index] = DAEBlockInfo::Read;
-      }
-    }
-  }
-
-  void visitLocalSet(LocalSet* curr) {
-    if (currBasicBlock) {
-      auto& localUses = currBasicBlock->contents.localUses;
-      auto index = curr->index;
-      if (localUses.count(index) == 0) {
-        localUses[index] = DAEBlockInfo::Written;
-      }
-    }
-  }
 
   void visitCall(Call* curr) {
     if (!getModule()->getFunction(curr->target)->imported()) {
@@ -176,7 +144,7 @@ struct DAEScanner
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
     info = &((*infoMap)[func->name]);
-    CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(
+    PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(
       func);
     // If there are relevant params, check if they are used. If we can't
     // optimize the function anyhow, there's no point (note that our check here
@@ -189,64 +157,35 @@ struct DAEScanner
     // part of, say if we are exported, or if another parallel function finds a
     // RefFunc to us and updates it before we check it).
     if (numParams > 0 && !info->hasUnseenCalls) {
-      findUnusedParams();
+      findUnusedParams(func);
     }
   }
 
-  void findUnusedParams() {
-    // Flow the incoming parameter values, see if they reach a read.
-    // Once we've seen a parameter at a block, we need never consider it there
-    // again.
-    std::unordered_map<BasicBlock*, SortedVector> seenBlockIndexes;
-    // Start with all the incoming parameters.
-    SortedVector initial;
-    for (Index i = 0; i < numParams; i++) {
-      initial.push_back(i);
-    }
-    // The used params, which we now compute.
+  void findUnusedParams(Function* func) {
+    LocalGraph localGraph(func);
     std::unordered_set<Index> usedParams;
-    // An item of work is a block plus the values arriving there.
-    typedef std::pair<BasicBlock*, SortedVector> Item;
-    std::vector<Item> work;
-    work.emplace_back(entry, initial);
-    while (!work.empty()) {
-      auto [block, indexes] = std::move(work.back());
-      work.pop_back();
-      // Ignore things we've already seen, or we've already seen to be used.
-      auto& seenIndexes = seenBlockIndexes[block];
-      indexes.filter([&](const Index i) {
-        if (seenIndexes.has(i) || usedParams.count(i)) {
-          return false;
-        } else {
-          seenIndexes.insert(i);
-          return true;
-        }
-      });
-      if (indexes.empty()) {
-        continue; // nothing more to flow
+    for (auto& [get, sets] : localGraph.getSetses) {
+      if (!func->isParam(get->index)) {
+        continue;
       }
-      auto& localUses = block->contents.localUses;
-      SortedVector remainingIndexes;
-      for (auto i : indexes) {
-        auto iter = localUses.find(i);
-        if (iter != localUses.end()) {
-          auto use = iter->second;
-          if (use == DAEBlockInfo::Read) {
-            usedParams.insert(i);
-          }
-          // Whether it was a read or a write, we can stop looking at that local
-          // here.
-        } else {
-          remainingIndexes.insert(i);
-        }
-      }
-      // If there are remaining indexes, flow them forward.
-      if (!remainingIndexes.empty()) {
-        for (auto* next : block->out) {
-          work.emplace_back(next, remainingIndexes);
+
+      // Check if this get of a param index can read from the parameter value
+      // passed into the function. We want to ignore values set in the function
+      // like this:
+      //
+      // function foo(x) {
+      //   x = 10;
+      //   bar(x); // read of a param index, but not the param value passed in.
+      // }
+      for (auto* set : sets) {
+        // A nullptr value indicates there is no LocalSet* that sets the value,
+        // so it must be the parameter value.
+        if (!set) {
+          usedParams.insert(get->index);
         }
       }
     }
+
     // We can now compute the unused params.
     for (Index i = 0; i < numParams; i++) {
       if (usedParams.count(i) == 0) {
