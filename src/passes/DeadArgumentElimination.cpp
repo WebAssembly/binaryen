@@ -291,27 +291,8 @@ struct DAE : public Pass {
       Index i = numParams - 1;
       while (1) {
         if (infoMap[name].unusedParams.has(i)) {
-          // Great, it's not used. Check if none of the calls has a param with
-          // side effects that we cannot remove (as if we can remove them, we
-          // will simply do that when we remove the parameter). Note: flattening
-          // the IR beforehand can help here.
-          bool callParamsAreValid =
-            std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-              auto* operand = call->operands[i];
-              return EffectAnalyzer(runner->options, *module, operand)
-                .hasUnremovableSideEffects();
-            });
-          // The type must be valid for us to handle as a local (since we
-          // replace the parameter with a local).
-          // TODO: if there are no references at all, we can avoid creating a
-          //       local
-          bool typeIsValid =
-            TypeUpdating::canHandleAsLocal(func->getLocalType(i));
-          if (callParamsAreValid && typeIsValid) {
-            // Wonderful, nothing stands in our way! Do it.
-            // TODO: parallelize this?
-            removeParameter(func, i, calls);
-            TypeUpdating::handleNonDefaultableLocals(func, *module);
+          if (FuncUtils::removeParameter({func}, i, calls, {}) {
+            // Success!
             changed.insert(func);
           }
         }
@@ -366,42 +347,6 @@ struct DAE : public Pass {
 
 private:
   std::unordered_map<Call*, Expression**> allDroppedCalls;
-
-  void removeParameter(Function* func, Index i, std::vector<Call*>& calls) {
-    // It's cumbersome to adjust local names - TODO don't clear them?
-    Builder::clearLocalNames(func);
-    // Remove the parameter from the function. We must add a new local
-    // for uses of the parameter, but cannot make it use the same index
-    // (in general).
-    auto paramsType = func->getParams();
-    std::vector<Type> params(paramsType.begin(), paramsType.end());
-    auto type = params[i];
-    params.erase(params.begin() + i);
-    func->setParams(Type(params));
-    Index newIndex = Builder::addVar(func, type);
-    // Update local operations.
-    struct LocalUpdater : public PostWalker<LocalUpdater> {
-      Index removedIndex;
-      Index newIndex;
-      LocalUpdater(Function* func, Index removedIndex, Index newIndex)
-        : removedIndex(removedIndex), newIndex(newIndex) {
-        walk(func->body);
-      }
-      void visitLocalGet(LocalGet* curr) { updateIndex(curr->index); }
-      void visitLocalSet(LocalSet* curr) { updateIndex(curr->index); }
-      void updateIndex(Index& index) {
-        if (index == removedIndex) {
-          index = newIndex;
-        } else if (index > removedIndex) {
-          index--;
-        }
-      }
-    } localUpdater(func, i, newIndex);
-    // Remove the arguments from the calls.
-    for (auto* call : calls) {
-      call->operands.erase(call->operands.begin() + i);
-    }
-  }
 
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {

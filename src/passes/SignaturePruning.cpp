@@ -1,3 +1,4 @@
+#if 0
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -62,11 +63,9 @@ struct SignaturePruning : public Pass {
     // function in parallel.
 
     struct Info {
-      // The calls and call_refs.
       std::vector<Call*> calls;
       std::vector<CallRef*> callRefs;
 
-      // The parameters which are not used.
       std::unordered_set<Index> usedParams;
     };
 
@@ -83,6 +82,9 @@ struct SignaturePruning : public Pass {
     // A map of types to all the information combined over all the functions
     // with that type.
     std::unordered_map<HeapType, Info> allInfo;
+
+    // Map heap types to all functions with that type.
+    std::unordered_map<HeapType, std::vector<Function*>> sigFuncs;
 
     // Combine all the information we gathered into that map.
     for (auto& [func, info] : analysis.map) {
@@ -106,6 +108,8 @@ struct SignaturePruning : public Pass {
       for (auto index : info.usedParams) {
         allUsedParams.insert(index);
       }
+
+      sigFuncs[func->type].push_back(func);
     }
 
     bool pruned = false;
@@ -218,3 +222,5 @@ struct SignaturePruning : public Pass {
 Pass* createSignaturePruningPass() { return new SignaturePruning(); }
 
 } // namespace wasm
+#endif
+
