@@ -35,7 +35,7 @@
 // prepare for this change, the following macro marks affected code locations.
 #define TODO_SINGLE_COMPOUND(type)                                             \
   assert(!type.isTuple() && "Unexpected tuple type");                          \
-  assert(!type.isCompound() && "TODO: handle compound types");
+  assert(type.isBasic() && "TODO: handle compound types");
 
 namespace wasm {
 
@@ -162,7 +162,6 @@ public:
   // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
   constexpr bool isBasic() const { return id <= _last_basic_type; }
-  constexpr bool isCompound() const { return id > _last_basic_type; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
@@ -366,7 +365,6 @@ public:
   HeapType(Array array);
 
   constexpr bool isBasic() const { return id <= _last_basic_type; }
-  constexpr bool isCompound() const { return id > _last_basic_type; }
   bool isFunction() const;
   bool isData() const;
   bool isSignature() const;
