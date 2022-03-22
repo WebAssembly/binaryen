@@ -223,4 +223,3 @@ Pass* createSignaturePruningPass() { return new SignaturePruning(); }
 
 } // namespace wasm
 #endif
-

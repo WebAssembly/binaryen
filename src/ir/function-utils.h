@@ -75,14 +75,19 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
   return usedParams;
 }
 
-// Try to remove a parameter from a set of functions. This assumes that we have already
-// checked that the parameter is unused inside it. It checks anything else we
-// need to check, and if we can remove it it does so and returns true.
+// Try to remove a parameter from a set of functions. This assumes that we have
+// already checked that the parameter is unused inside it. It checks anything
+// else we need to check, and if we can remove it it does so and returns true.
 //
 // This assumes that the set of functions all have the same signature. The main
 // use cases are to send a single function, or a set of functions that all have
 // the same heap type.
-inline bool removeParameter(const std::vector<Function*> funcs, Index i, const std::vector<Call*>& calls, const std::vector<CallRef*>& callRefs, Module* module, PassRunner* runner) {
+inline bool removeParameter(const std::vector<Function*> funcs,
+                            Index i,
+                            const std::vector<Call*>& calls,
+                            const std::vector<CallRef*>& callRefs,
+                            Module* module,
+                            PassRunner* runner) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
 #ifndef NDEBUG
@@ -108,8 +113,7 @@ inline bool removeParameter(const std::vector<Function*> funcs, Index i, const s
   // replace the parameter with a local).
   // TODO: if there are no references at all, we can avoid creating a
   //       local
-  bool typeIsValid =
-    TypeUpdating::canHandleAsLocal(first->getLocalType(i));
+  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(i));
   if (!typeIsValid) {
     return false;
   }
