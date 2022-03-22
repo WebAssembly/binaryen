@@ -67,7 +67,7 @@ struct SignaturePruning : public Pass {
       std::vector<CallRef*> callRefs;
 
       // The parameters which are not used.
-      SortedVector unusedParams;
+      std::unordered_set<Index> usedParams;
     };
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
@@ -77,7 +77,7 @@ struct SignaturePruning : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.resultsLUB = LUB::getResultsLUB(func, *module);
+        info.usedParams = FunctionUtils::getUsedParams(func);
       });
 
     // A map of types to all the information combined over all the functions
@@ -100,14 +100,17 @@ struct SignaturePruning : public Pass {
         }
       }
 
-      // Add the function's return LUB to the one for the heap type of that
-      // function.
-      allInfo[func->type].resultsLUB.combine(info.resultsLUB);
+      // A parameter used in this function is used in the heap type - just one
+      // function is enough to prevent the parameter from being removed.
+      auto allUsedParams = allInfo[func->type].usedParams;
+      for (auto index : info.usedParams) {
+        allUsedParams.insert(index);
+      }
     }
 
-    bool refinedResults = false;
+    bool pruned = false;
 
-    // Compute optimal LUBs.
+    // Find parameters to prune.
     std::unordered_set<HeapType> seen;
     for (auto& func : module->functions) {
       auto type = func->type;
@@ -116,79 +119,39 @@ struct SignaturePruning : public Pass {
       }
 
       auto sig = type.getSignature();
-
-      auto numParams = sig.params.size();
-      std::vector<LUBFinder> paramLUBs(numParams);
-
-      auto updateLUBs = [&](const ExpressionList& operands) {
-        for (Index i = 0; i < numParams; i++) {
-          paramLUBs[i].noteUpdatableExpression(operands[i]);
-        }
-      };
-
       auto& info = allInfo[type];
-      for (auto* call : info.calls) {
-        updateLUBs(call->operands);
-      }
-      for (auto* callRef : info.callRefs) {
-        updateLUBs(callRef->operands);
-      }
-
-      // Find the final LUBs, and see if we found an improvement.
-      std::vector<Type> newParamsTypes;
-      for (auto& lub : paramLUBs) {
-        if (!lub.noted()) {
-          break;
-        }
-        newParamsTypes.push_back(lub.getBestPossible());
-      }
-      Type newParams;
-      if (newParamsTypes.size() < numParams) {
-        // We did not have type information to calculate a LUB (no calls, or
-        // some param is always unreachable), so there is nothing we can improve
-        // here. Other passes might remove the type entirely.
-        newParams = func->getParams();
-      } else {
-        newParams = Type(newParamsTypes);
-      }
-
-      auto& resultsLUB = info.resultsLUB;
-      Type newResults;
-      if (!resultsLUB.noted()) {
-        // We did not have type information to calculate a LUB (no returned
-        // value, or it can return a value but traps instead etc.).
-        newResults = func->getResults();
-      } else {
-        newResults = resultsLUB.getBestPossible();
-      }
-
-      if (newParams == func->getParams() && newResults == func->getResults()) {
+      auto numParams = sig.params.size();
+      if (info.usedParams.size() == numParams) {
+        // All parameters are used, give up on this one.
         continue;
       }
 
-      // We found an improvement!
-      newSignatures[type] = Signature(newParams, newResults);
-
-      // Update nulls as necessary, now that we are changing things.
-      if (newParams != func->getParams()) {
-        for (auto& lub : paramLUBs) {
-          lub.updateNulls();
+      // We found an improvement! Find the specific params that are unused and
+      // can be pruned.
+      std::unordered_set<Index> unusedParams;
+      for (Index i = 0; i < numParams; i++) {
+        if (usedParams.count(i) == 0) {
+          unusedParams.insert(i);
         }
       }
-      if (newResults != func->getResults()) {
-        resultsLUB.updateNulls();
-        refinedResults = true;
 
-        // Update the types of calls using the signature.
-        for (auto* call : info.calls) {
-          if (call->type != Type::unreachable) {
-            call->type = newResults;
-          }
+      std::vector<Type> newParamsTypes;
+      for (Index i = 0; i < numParams; i++) {
+        if (usedParams.count(i)) {
+          newParamsTypes.push_back(func->getLocalType(i);
         }
-        for (auto* callRef : info.callRefs) {
-          if (callRef->type != Type::unreachable) {
-            callRef->type = newResults;
-          }
+      }
+      newSignatures[type] = Signature(newParams, sig.getResults());
+
+      // Update the calls. TODO
+      for (auto* call : info.calls) {
+        if (call->type != Type::unreachable) {
+          call->type = newResults;
+        }
+      }
+      for (auto* callRef : info.callRefs) {
+        if (callRef->type != Type::unreachable) {
+          callRef->type = newResults;
         }
       }
     }
@@ -242,7 +205,7 @@ struct SignaturePruning : public Pass {
 
     TypeRewriter(*module, *this).update();
 
-    if (refinedResults) {
+    if (pruned) {
       // After return types change we need to propagate.
       // TODO: we could do this only in relevant functions perhaps
       ReFinalize().run(runner, module);

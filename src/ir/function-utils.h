@@ -19,7 +19,6 @@
 
 #include "ir/local-graph.h"
 #include "ir/utils.h"
-#include "support/sorted_vector.h"
 #include "wasm.h"
 
 namespace wasm::FunctionUtils {
@@ -45,9 +44,11 @@ inline bool equal(Function* left, Function* right) {
   return left->imported() && right->imported();
 }
 
-SortedVector findUnusedParams(Function* func) {
+std::unordered_set<Index> getUsedParams(Function* func) {
   LocalGraph localGraph(func);
+
   std::unordered_set<Index> usedParams;
+
   for (auto& [get, sets] : localGraph.getSetses) {
     if (!func->isParam(get->index)) {
       continue;
@@ -70,16 +71,7 @@ SortedVector findUnusedParams(Function* func) {
     }
   }
 
-  SortedVector unusedParams;
-
-  // We can now compute the unused params.
-  for (Index i = 0; i < numParams; i++) {
-    if (usedParams.count(i) == 0) {
-      unusedParams.insert(i);
-    }
-  }
-
-  return unusedParams;
+  return usedParams;
 }
 
 } // namespace wasm::FunctionUtils
