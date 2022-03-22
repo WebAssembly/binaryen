@@ -1,39 +1,9 @@
+#include "type-test.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
-
-// Helper test fixture for managing the global type system state.
-template<TypeSystem system> class TypeSystemTest : public ::testing::Test {
-  TypeSystem originalSystem;
-
-protected:
-  void SetUp() override {
-    originalSystem = getTypeSystem();
-    setTypeSystem(system);
-  }
-  void TearDown() override {
-    destroyAllTypesForTestingPurposesOnly();
-    setTypeSystem(originalSystem);
-  }
-
-  // Utilities
-  Struct makeStruct(TypeBuilder& builder,
-                    std::initializer_list<size_t> indices) {
-    FieldList fields;
-    for (auto index : indices) {
-      Type ref = builder.getTempRefType(builder[index], Nullable);
-      fields.emplace_back(ref, Mutable);
-    }
-    return Struct(std::move(fields));
-  }
-};
-
-using TypeTest = TypeSystemTest<TypeSystem::Equirecursive>;
-using EquirecursiveTest = TypeSystemTest<TypeSystem::Equirecursive>;
-using NominalTest = TypeSystemTest<TypeSystem::Nominal>;
-using IsorecursiveTest = TypeSystemTest<TypeSystem::Isorecursive>;
 
 TEST_F(TypeTest, TypeBuilderGrowth) {
   TypeBuilder builder;
