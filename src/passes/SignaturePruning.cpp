@@ -148,12 +148,8 @@ struct SignaturePruning : public Pass {
       }
 
       auto oldParams = sig.params;
-      auto removedIndexes = FunctionUtils::removeParameters(funcs,
-                                           unusedParams,
-                                           info.calls,
-                                           info.callRefs,
-                                           module,
-                                           runner);
+      auto removedIndexes = FunctionUtils::removeParameters(
+        funcs, unusedParams, info.calls, info.callRefs, module, runner);
       if (removedIndexes.empty()) {
         continue;
       }

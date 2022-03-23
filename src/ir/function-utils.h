@@ -193,11 +193,11 @@ inline bool removeParameter(const std::vector<Function*> funcs,
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
 // remove them all, and returns which we removed.
 inline SortedVector removeParameters(const std::vector<Function*> funcs,
-                             SortedVector indexes,
-                             const std::vector<Call*>& calls,
-                             const std::vector<CallRef*>& callRefs,
-                             Module* module,
-                             PassRunner* runner) {
+                                     SortedVector indexes,
+                                     const std::vector<Call*>& calls,
+                                     const std::vector<CallRef*>& callRefs,
+                                     Module* module,
+                                     PassRunner* runner) {
   if (indexes.empty()) {
     return {};
   }

@@ -288,7 +288,7 @@ struct DAE : public Pass {
         continue;
       }
       auto removedIndexes = FunctionUtils::removeParameters(
-            {func}, infoMap[name].unusedParams, calls, {}, module, runner);
+        {func}, infoMap[name].unusedParams, calls, {}, module, runner);
       if (!removedIndexes.empty()) {
         // Success!
         changed.insert(func);
