@@ -82,13 +82,15 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
   return usedParams;
 }
 
-// Try to remove a parameter from a set of functions. This assumes that we have
-// already checked that the parameter is unused inside it, otherwise it would
-// change the semantics. This helper method checks anything else we need to
-// check, and if we can remove the param it does so and returns true. When
-// removing the param it is removed from the function itself as well as from all
-// calls and callRefs that target the function (which are passed in so that we
-// can do so).
+// Try to remove a parameter from a set of functions and replace it with a local
+// instead. This may not succeed if the parameter type cannot be used in a
+// local, or if we hit another limitation, in which case this returns false and
+// does nothing. If we succeed then the parameter is removed both from the
+// functions and from the calls to it, which are passed in (the caller must
+// ensure to pass in all relevant calls and call_refs).
+//
+// This does not check if removing the parameter would change the semantics
+// (say, if the parameter's value is used), which the caller is assumed to do.
 //
 // This assumes that the set of functions all have the same signature. The main
 // use cases are either to send a single function, or to send a set of functions
@@ -187,6 +189,8 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   return true;
 }
 
+// The same as removeParameter, but gets a sorted list of indexes. It tries to
+// remove them all, and returns true if we managed to remove at least one.
 inline bool removeParameters(const std::vector<Function*> funcs,
                              SortedVector indexes,
                              const std::vector<Call*>& calls,
@@ -205,7 +209,8 @@ inline bool removeParameters(const std::vector<Function*> funcs,
   }
 #endif
 
-  // Iterate downwards, as we may remove more than one.
+  // Iterate downwards, as we may remove more than one, and going forwards would
+  // alter the indexes after us.
   Index i = first->getNumParams() - 1;
   bool removed = false;
   while (1) {
