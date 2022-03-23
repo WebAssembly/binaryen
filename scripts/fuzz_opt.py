@@ -1162,7 +1162,8 @@ opt_choices = [
     ["--flatten", "--rereloop"],
     ["--roundtrip"],
     ["--rse"],
-    # TODO: signature* passes
+    ["--signature-pruning"],
+    ["--signature-refining"],
     ["--simplify-locals"],
     ["--simplify-locals-nonesting"],
     ["--simplify-locals-nostructure"],
