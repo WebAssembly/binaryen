@@ -331,3 +331,33 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $sig (func_subtype (param i32) func))
+  (type $sig (func_subtype (param i32) func))
+
+  (memory 1 1)
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $func (type $sig) (param $i32 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $i32 i32)
+  )
+
+  ;; CHECK:      (func $foobar (type $sig) (param $i32 i32)
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foobar (type $sig) (param $i32 i32)
+    ;; As above, but now there is a second (non-imported) function using this
+    ;; signature, and it does use the param, so we cannot optimize.
+    (i32.store
+      (i32.const 0)
+      (local.get $i32)
+    )
+  )
+)
+
