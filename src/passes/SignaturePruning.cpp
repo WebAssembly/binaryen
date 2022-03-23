@@ -71,8 +71,14 @@ struct SignaturePruning : public Pass {
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
+          // Imports cannot be modified, so this blocks us, as if all the params
+          // were used.
+          for (Index i = 0; i < func->getNumParams(); i++) {
+            info.usedParams.insert(i);
+          }
           return;
         }
+
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
         info.usedParams = FunctionUtils::getUsedParams(func);
@@ -116,6 +122,12 @@ struct SignaturePruning : public Pass {
     for (auto& func : module->functions) {
       auto type = func->type;
       if (!seen.insert(type).second) {
+        continue;
+      }
+      auto& funcs = sigFuncs[type];
+      if (funcs.empty()) {
+        // We saw no useful functions for this type (this can happen if the type
+        // only appears in an imported function, for example).
         continue;
       }
 
