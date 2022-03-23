@@ -20,6 +20,7 @@
 #include "ir/local-graph.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
+#include "support/sorted_vector.h"
 #include "wasm.h"
 
 namespace wasm::FunctionUtils {
@@ -94,7 +95,7 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
 // that all have the same heap type (and so if they all do not use some
 // parameter, it can be removed from them all).
 inline bool removeParameter(const std::vector<Function*> funcs,
-                            Index i,
+                            Index index,
                             const std::vector<Call*>& calls,
                             const std::vector<CallRef*>& callRefs,
                             Module* module,
@@ -113,7 +114,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   // the IR beforehand can help here.
   bool callParamsAreValid =
     std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      auto* operand = call->operands[i];
+      auto* operand = call->operands[index];
       return EffectAnalyzer(runner->options, *module, operand)
         .hasUnremovableSideEffects();
     });
@@ -125,7 +126,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   // replace the parameter with a local).
   // TODO: if there are no references at all, we can avoid creating a
   //       local
-  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(i));
+  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(index));
   if (!typeIsValid) {
     return false;
   }
@@ -137,8 +138,8 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   // (in general).
   auto paramsType = first->getParams();
   std::vector<Type> params(paramsType.begin(), paramsType.end());
-  auto type = params[i];
-  params.erase(params.begin() + i);
+  auto type = params[index];
+  params.erase(params.begin() + index);
   // TODO: parallelize some of these loops?
   for (auto* func : funcs) {
     func->setParams(Type(params));
@@ -169,21 +170,55 @@ inline bool removeParameter(const std::vector<Function*> funcs,
     }
   };
   for (Index j = 0; j < funcs.size(); j++) {
-    LocalUpdater(funcs[j], i, newIndexes[j]);
+    LocalUpdater(funcs[j], index, newIndexes[j]);
   }
 
   // Remove the arguments from the calls.
   for (auto* call : calls) {
-    call->operands.erase(call->operands.begin() + i);
+    call->operands.erase(call->operands.begin() + index);
   }
   for (auto* call : callRefs) {
-    call->operands.erase(call->operands.begin() + i);
+    call->operands.erase(call->operands.begin() + index);
   }
 
   for (auto* func : funcs) {
     TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
   return true;
+}
+
+inline bool removeParameters(const std::vector<Function*> funcs,
+                             SortedVector indexes,
+                             const std::vector<Call*>& calls,
+                             const std::vector<CallRef*>& callRefs,
+                             Module* module,
+                             PassRunner* runner) {
+  assert(!indexes.empty());
+  assert(funcs.size() > 0);
+  auto* first = funcs[0];
+#ifndef NDEBUG
+  for (auto* func : funcs) {
+    assert(func->type == first->type);
+  }
+#endif
+
+  // Iterate downwards, as we may remove more than one.
+  Index i = first->getNumParams() - 1;
+  bool removed = false;
+  while (1) {
+    if (indexes.has(i)) {
+      if (removeParameter(
+            funcs, i, calls, callRefs, module, runner)) {
+        // Success!
+        removed = true;
+      }
+    }
+    if (i == 0) {
+      break;
+    }
+    i--;
+  }
+  return removed;
 }
 
 } // namespace wasm::FunctionUtils

@@ -287,20 +287,10 @@ struct DAE : public Pass {
       if (numParams == 0) {
         continue;
       }
-      // Iterate downwards, as we may remove more than one.
-      Index i = numParams - 1;
-      while (1) {
-        if (infoMap[name].unusedParams.has(i)) {
-          if (FunctionUtils::removeParameter(
-                {func}, i, calls, {}, module, runner)) {
-            // Success!
-            changed.insert(func);
-          }
-        }
-        if (i == 0) {
-          break;
-        }
-        i--;
+      if (FunctionUtils::removeParameters(
+            {func}, infoMap[name].unusedParams, calls, {}, module, runner)) {
+        // Success!
+        changed.insert(func);
       }
     }
     // We can also tell which calls have all their return values dropped. Note
