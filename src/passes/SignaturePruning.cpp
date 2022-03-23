@@ -109,11 +109,10 @@ struct SignaturePruning : public Pass {
 
       // A parameter used in this function is used in the heap type - just one
       // function is enough to prevent the parameter from being removed.
-      auto allUsedParams = allInfo[func->type].usedParams;
+      auto& allUsedParams = allInfo[func->type].usedParams;
       for (auto index : info.usedParams) {
         allUsedParams.insert(index);
       }
-
       sigFuncs[func->type].push_back(func);
     }
 
@@ -134,7 +133,6 @@ struct SignaturePruning : public Pass {
       auto sig = type.getSignature();
       auto& info = allInfo[type];
       auto numParams = sig.params.size();
-//std::cout << "num params " << numParams << ", used " << info.usedParams.size() << '\n';
       if (info.usedParams.size() == numParams) {
         // All parameters are used, give up on this one.
         continue;

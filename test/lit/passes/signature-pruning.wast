@@ -2,20 +2,55 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --signature-pruning -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $sig (func_subtype (param i32 f64) func))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $sig) (param $0 i32) (param $1 f64)
+  ;; CHECK-NEXT:  (local $2 f32)
+  ;; CHECK-NEXT:  (local $3 i64)
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f64.store
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
-    ;; Use the first and last parameter.
-    (drop
+    ;; Use the first and last parameter. The middle parameters will be removed
+    ;; both from the function and from $sig, and also in the calls below.
+    (i32.store
+      (i32.const 0)
       (local.get $i32)
     )
-    (drop
+    (f64.store
+      (i32.const 0)
       (local.get $f64)
     )
   )
 
-  (func $caller (type $sig) (param $x anyref)
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (f64.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:   (f64.const 7)
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $x anyref)
     (call $func
       (i32.const 0)
       (i64.const 1)
