@@ -104,11 +104,11 @@ inline bool removeParameter(const std::vector<Function*> funcs,
                             PassRunner* runner) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
-#ifndef NDEBUG
+//#ifndef NDEBUG
   for (auto* func : funcs) {
     assert(func->type == first->type);
   }
-#endif
+//#endif
 
   // Great, it's not used. Check if none of the calls has a param with
   // side effects that we cannot remove (as if we can remove them, we
@@ -171,8 +171,12 @@ inline bool removeParameter(const std::vector<Function*> funcs,
       }
     }
   };
-  for (Index j = 0; j < funcs.size(); j++) {
-    LocalUpdater(funcs[j], index, newIndexes[j]);
+  for (Index i = 0; i < funcs.size(); i++) {
+    auto* func = funcs[i];
+    if (!func->imported()) {
+      LocalUpdater(funcs[i], index, newIndexes[i]);
+      TypeUpdating::handleNonDefaultableLocals(func, *module);
+    }
   }
 
   // Remove the arguments from the calls.
@@ -183,9 +187,6 @@ inline bool removeParameter(const std::vector<Function*> funcs,
     call->operands.erase(call->operands.begin() + index);
   }
 
-  for (auto* func : funcs) {
-    TypeUpdating::handleNonDefaultableLocals(func, *module);
-  }
   return true;
 }
 
