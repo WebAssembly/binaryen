@@ -24,10 +24,10 @@
 //
 
 #include "ir/find_all.h"
-#include "ir/function-utils.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "param-utils.h"
 #include "pass.h"
 #include "support/sorted_vector.h"
 #include "wasm-type.h"
@@ -81,7 +81,7 @@ struct SignaturePruning : public Pass {
 
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.usedParams = FunctionUtils::getUsedParams(func);
+        info.usedParams = ParamUtils::getUsedParams(func);
       });
 
     // A map of types to all the information combined over all the functions
@@ -148,7 +148,7 @@ struct SignaturePruning : public Pass {
       }
 
       auto oldParams = sig.params;
-      auto removedIndexes = FunctionUtils::removeParameters(
+      auto removedIndexes = ParamUtils::removeParameters(
         funcs, unusedParams, info.calls, info.callRefs, module, runner);
       if (removedIndexes.empty()) {
         continue;
