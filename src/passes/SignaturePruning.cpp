@@ -181,23 +181,7 @@ struct SignaturePruning : public Pass {
     }
 
     // Rewrite the types.
-    // TODO: shared util with SignatureRefining
-    class TypeRewriter : public GlobalTypeRewriter {
-      SignaturePruning& parent;
-
-    public:
-      TypeRewriter(Module& wasm, SignaturePruning& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
-
-      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-        auto iter = parent.newSignatures.find(oldSignatureType);
-        if (iter != parent.newSignatures.end()) {
-          sig.params = getTempType(iter->second.params);
-          sig.results = getTempType(iter->second.results);
-        }
-      }
-    };
-    TypeRewriter(*module, *this).update();
+    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
   }
 };
 
