@@ -210,8 +210,7 @@ inline bool removeParameters(const std::vector<Function*> funcs,
   bool removed = false;
   while (1) {
     if (indexes.has(i)) {
-      if (removeParameter(
-            funcs, i, calls, callRefs, module, runner)) {
+      if (removeParameter(funcs, i, calls, callRefs, module, runner)) {
         // Success!
         removed = true;
       }
