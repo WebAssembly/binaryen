@@ -40,9 +40,9 @@ namespace wasm {
 namespace {
 
 struct SignaturePruning : public Pass {
-  // Maps each heap type to the possible pruned heap type. We will fill this during analysis and then use it while doing
-  // an update of the types. If a type has no improvement that we can find, it
-  // will not appear in this map.
+  // Maps each heap type to the possible pruned heap type. We will fill this
+  // during analysis and then use it while doing an update of the types. If a
+  // type has no improvement that we can find, it will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
 
   void run(PassRunner* runner, Module* module) override {
@@ -135,8 +135,12 @@ struct SignaturePruning : public Pass {
           unusedParams.insert(i);
         }
       }
-      if (!FunctionUtils::removeParameters(
-            sigFuncs[type], unusedParams, info.calls, info.callRefs, module, runner)) {
+      if (!FunctionUtils::removeParameters(sigFuncs[type],
+                                           unusedParams,
+                                           info.calls,
+                                           info.callRefs,
+                                           module,
+                                           runner)) {
         continue;
       }
 
