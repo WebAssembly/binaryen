@@ -45,6 +45,20 @@ inline bool equal(Function* left, Function* right) {
   return left->imported() && right->imported();
 }
 
+// Find which parameters are actually used in the function, that is, that the
+// values arriving in the parameter are read. This ignores values set in the
+// function, like this:
+//
+// function foo(x) {
+//   x = 10;
+//   bar(x); // read of a param index, but not the param value passed in.
+// }
+//
+// This is an actual use:
+//
+// function foo(x) {
+//   bar(x); // read of a param value
+// }
 inline std::unordered_set<Index> getUsedParams(Function* func) {
   LocalGraph localGraph(func);
 
@@ -55,14 +69,6 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
       continue;
     }
 
-    // Check if this get of a param index can read from the parameter value
-    // passed into the function. We want to ignore values set in the function
-    // like this:
-    //
-    // function foo(x) {
-    //   x = 10;
-    //   bar(x); // read of a param index, but not the param value passed in.
-    // }
     for (auto* set : sets) {
       // A nullptr value indicates there is no LocalSet* that sets the value,
       // so it must be the parameter value.
@@ -76,12 +82,17 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
 }
 
 // Try to remove a parameter from a set of functions. This assumes that we have
-// already checked that the parameter is unused inside it. It checks anything
-// else we need to check, and if we can remove it it does so and returns true.
+// already checked that the parameter is unused inside it, otherwise it would
+// change the semantics. This helper method checks anything else we need to
+// check, and if we can remove the param it does so and returns true. When
+// removing the param it is removed from the function itself as well as from all
+// calls and callRefs that target the function (which are passed in so that we
+// can do so).
 //
 // This assumes that the set of functions all have the same signature. The main
-// use cases are to send a single function, or a set of functions that all have
-// the same heap type.
+// use cases are either to send a single function, or to send a set of functions
+// that all have the same heap type (and so if they all do not use some
+// parameter, it can be removed from them all).
 inline bool removeParameter(const std::vector<Function*> funcs,
                             Index i,
                             const std::vector<Call*>& calls,
@@ -109,6 +120,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   if (!callParamsAreValid) {
     return false;
   }
+
   // The type must be valid for us to handle as a local (since we
   // replace the parameter with a local).
   // TODO: if there are no references at all, we can avoid creating a
@@ -134,9 +146,9 @@ inline bool removeParameter(const std::vector<Function*> funcs,
     // It's cumbersome to adjust local names - TODO don't clear them?
     Builder::clearLocalNames(func);
   }
-  Index newIndex;
+  std::vector<Index> newIndexes;
   for (auto* func : funcs) {
-    newIndex = Builder::addVar(func, type);
+    newIndexes.push_back(Builder::addVar(func, type));
   }
   // Update local operations.
   struct LocalUpdater : public PostWalker<LocalUpdater> {
@@ -156,11 +168,15 @@ inline bool removeParameter(const std::vector<Function*> funcs,
       }
     }
   };
-  for (auto* func : funcs) {
-    LocalUpdater(func, i, newIndex);
+  for (Index j = 0; j < funcs.size(); j++) {
+    LocalUpdater(funcs[j], i, newIndexes[j]);
   }
+
   // Remove the arguments from the calls.
   for (auto* call : calls) {
+    call->operands.erase(call->operands.begin() + i);
+  }
+  for (auto* call : callRefs) {
     call->operands.erase(call->operands.begin() + i);
   }
 
