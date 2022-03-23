@@ -1,4 +1,3 @@
-#if 0
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -25,10 +24,10 @@
 //
 
 #include "ir/find_all.h"
+#include "ir/function-utils.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
 #include "support/sorted_vector.h"
 #include "wasm-type.h"
@@ -112,8 +111,6 @@ struct SignaturePruning : public Pass {
       sigFuncs[func->type].push_back(func);
     }
 
-    bool pruned = false;
-
     // Find parameters to prune.
     std::unordered_set<HeapType> seen;
     for (auto& func : module->functions) {
@@ -130,34 +127,27 @@ struct SignaturePruning : public Pass {
         continue;
       }
 
-      // We found an improvement! Find the specific params that are unused and
-      // can be pruned.
-      std::unordered_set<Index> unusedParams;
+      // We found possible work! Find the specific params that are unused try to
+      // prune them.
+      SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i) == 0) {
+        if (info.usedParams.count(i) == 0) {
           unusedParams.insert(i);
         }
       }
+      if (!FunctionUtils::removeParameters(
+            sigFuncs[type], unusedParams, info.calls, info.callRefs, module, runner)) {
+        continue;
+      }
 
-      std::vector<Type> newParamsTypes;
+      // Success! Update the types.
+      std::vector<Type> newParams;
       for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i)) {
-          newParamsTypes.push_back(func->getLocalType(i);
+        if (info.usedParams.count(i)) {
+          newParams.push_back(func->getLocalType(i));
         }
       }
-      newSignatures[type] = Signature(newParams, sig.getResults());
-
-      // Update the calls. TODO
-      for (auto* call : info.calls) {
-        if (call->type != Type::unreachable) {
-          call->type = newResults;
-        }
-      }
-      for (auto* callRef : info.callRefs) {
-        if (callRef->type != Type::unreachable) {
-          callRef->type = newResults;
-        }
-      }
+      newSignatures[type] = Signature(Type(newParams), sig.results);
     }
 
     if (newSignatures.empty()) {
@@ -165,32 +155,8 @@ struct SignaturePruning : public Pass {
       return;
     }
 
-    // Update function contents for their new parameter types.
-    struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
-      bool isFunctionParallel() override { return true; }
-
-      SignaturePruning& parent;
-      Module& wasm;
-
-      CodeUpdater(SignaturePruning& parent, Module& wasm)
-        : parent(parent), wasm(wasm) {}
-
-      CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
-
-      void doWalkFunction(Function* func) {
-        auto iter = parent.newSignatures.find(func->type);
-        if (iter != parent.newSignatures.end()) {
-          std::vector<Type> newParamsTypes;
-          for (auto param : iter->second.params) {
-            newParamsTypes.push_back(param);
-          }
-          TypeUpdating::updateParamTypes(func, newParamsTypes, wasm);
-        }
-      }
-    };
-    CodeUpdater(*this, *module).run(runner, module);
-
     // Rewrite the types.
+    // TODO: shared util with SignatureRefining
     class TypeRewriter : public GlobalTypeRewriter {
       SignaturePruning& parent;
 
@@ -206,14 +172,7 @@ struct SignaturePruning : public Pass {
         }
       }
     };
-
     TypeRewriter(*module, *this).update();
-
-    if (pruned) {
-      // After return types change we need to propagate.
-      // TODO: we could do this only in relevant functions perhaps
-      ReFinalize().run(runner, module);
-    }
   }
 };
 
@@ -222,4 +181,3 @@ struct SignaturePruning : public Pass {
 Pass* createSignaturePruningPass() { return new SignaturePruning(); }
 
 } // namespace wasm
-#endif
