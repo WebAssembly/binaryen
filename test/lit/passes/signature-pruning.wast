@@ -361,3 +361,37 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $sig (func_subtype func))
+  (type $sig (func_subtype (param i32) func))
+
+  ;; CHECK:      (type $sig2 (func_subtype (param i32) func))
+  (type $sig2 (func_subtype (param i32) func))
+
+  (memory 1 1)
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $func (type $sig)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $i32 i32)
+  )
+
+  ;; CHECK:      (func $foobar (type $sig2) (param $i32 i32)
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foobar (type $sig2) (param $i32 i32)
+    ;; As above, but now the second function has a different signature, so we
+    ;; can optimize one while not modifying the other.
+    (i32.store
+      (i32.const 0)
+      (local.get $i32)
+    )
+  )
+)
+
