@@ -104,11 +104,11 @@ inline bool removeParameter(const std::vector<Function*> funcs,
                             PassRunner* runner) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
-//#ifndef NDEBUG
+#ifndef NDEBUG
   for (auto* func : funcs) {
     assert(func->type == first->type);
   }
-//#endif
+#endif
 
   // Great, it's not used. Check if none of the calls has a param with
   // side effects that we cannot remove (as if we can remove them, we
@@ -134,7 +134,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   }
 
   // We can do it!
-//std::cout << "remove one\n";
+
   // Remove the parameter from the function. We must add a new local
   // for uses of the parameter, but cannot make it use the same index
   // (in general).
@@ -144,7 +144,6 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   params.erase(params.begin() + index);
   // TODO: parallelize some of these loops?
   for (auto* func : funcs) {
-  //std::cout << " in func " << func->name << '\n';
     func->setParams(Type(params));
 
     // It's cumbersome to adjust local names - TODO don't clear them?
@@ -194,11 +193,11 @@ inline bool removeParameter(const std::vector<Function*> funcs,
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
 // remove them all, and returns which we removed.
 inline SortedVector removeParameters(const std::vector<Function*> funcs,
-                             SortedVector indexes,
-                             const std::vector<Call*>& calls,
-                             const std::vector<CallRef*>& callRefs,
-                             Module* module,
-                             PassRunner* runner) {
+                                     SortedVector indexes,
+                                     const std::vector<Call*>& calls,
+                                     const std::vector<CallRef*>& callRefs,
+                                     Module* module,
+                                     PassRunner* runner) {
   if (indexes.empty()) {
     return {};
   }
