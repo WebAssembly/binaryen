@@ -134,7 +134,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   }
 
   // We can do it!
-//std::cout << "remove one\n";
+
   // Remove the parameter from the function. We must add a new local
   // for uses of the parameter, but cannot make it use the same index
   // (in general).
@@ -144,7 +144,6 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   params.erase(params.begin() + index);
   // TODO: parallelize some of these loops?
   for (auto* func : funcs) {
-  //std::cout << " in func " << func->name << '\n';
     func->setParams(Type(params));
 
     // It's cumbersome to adjust local names - TODO don't clear them?

@@ -146,7 +146,7 @@ struct SignaturePruning : public Pass {
           unusedParams.insert(i);
         }
       }
-      //std::cout << "num unused params " << unusedParams.size() << '\n';
+
       auto oldParams = sig.params;
       auto removedIndexes = FunctionUtils::removeParameters(funcs,
                                            unusedParams,
@@ -165,10 +165,8 @@ struct SignaturePruning : public Pass {
           newParams.push_back(oldParams[i]);
         }
       }
-//std::cout << "new num params: " << newParams.size() << "\n";
       auto newType = Signature(Type(newParams), sig.results);
       newSignatures[type] = newType;
-//std::cout << "mapping " << type << " => " << newType << '\n';
 
       // removeParameters() updates the type as it goes, but in this pass we
       // need the type to match the other locations, nominally, so undo that;
