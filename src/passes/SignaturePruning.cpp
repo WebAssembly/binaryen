@@ -170,11 +170,14 @@ struct SignaturePruning : public Pass {
 //std::cout << "new num params: " << newParams.size() << "\n";
       auto newType = Signature(Type(newParams), sig.results);
       newSignatures[type] = newType;
+//std::cout << "mapping " << type << " => " << newType << '\n';
 
       // removeParameters() updates the type as it goes, but in this pass we
-      // need the type to match the other locations, nominally, so fix that. 
+      // need the type to match the other locations, nominally, so undo that;
+      // the TypeRewriter below will do the right thing.
+      // TODO: pass flag to removeParams to not touch types?
       for (auto* func : funcs) {
-        func->type = newType;
+        func->type = type;
       }
     }
 

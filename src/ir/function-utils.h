@@ -144,6 +144,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   params.erase(params.begin() + index);
   // TODO: parallelize some of these loops?
   for (auto* func : funcs) {
+  //std::cout << " in func " << func->name << '\n';
     func->setParams(Type(params));
 
     // It's cumbersome to adjust local names - TODO don't clear them?
