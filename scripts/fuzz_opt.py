@@ -1162,8 +1162,7 @@ opt_choices = [
     ["--flatten", "--rereloop"],
     ["--roundtrip"],
     ["--rse"],
-    ["--signature-pruning"],
-    ["--signature-refining"],
+    # TODO: fuzz signature-refining/pruning/etc., but those all need --nominal
     ["--simplify-locals"],
     ["--simplify-locals-nonesting"],
     ["--simplify-locals-nostructure"],
