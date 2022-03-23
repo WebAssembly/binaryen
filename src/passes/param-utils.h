@@ -17,6 +17,7 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
+#include "pass.h"
 #include "support/sorted_vector.h"
 #include "wasm.h"
 
