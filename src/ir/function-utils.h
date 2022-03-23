@@ -193,7 +193,10 @@ inline bool removeParameters(const std::vector<Function*> funcs,
                              const std::vector<CallRef*>& callRefs,
                              Module* module,
                              PassRunner* runner) {
-  assert(!indexes.empty());
+  if (indexes.empty()) {
+    return false;
+  }
+
   assert(funcs.size() > 0);
   auto* first = funcs[0];
 #ifndef NDEBUG
