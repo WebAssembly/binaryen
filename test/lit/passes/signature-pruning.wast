@@ -204,3 +204,49 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $sig (func_subtype func))
+  (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
+
+  (memory 1 1)
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $sig)
+  ;; CHECK-NEXT:  (local $0 f64)
+  ;; CHECK-NEXT:  (local $1 f32)
+  ;; CHECK-NEXT:  (local $2 i64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
+    ;; Use nothing at all: all params can be removed.
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (i32.const 0)
+      (i64.const 1)
+      (f32.const 2)
+      (f64.const 3)
+    )
+    (call_ref
+      (i32.const 4)
+      (i64.const 5)
+      (f32.const 6)
+      (f64.const 7)
+      (ref.func $func)
+    )
+  )
+)
+
