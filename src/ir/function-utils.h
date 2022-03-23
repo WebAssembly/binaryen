@@ -20,6 +20,7 @@
 #include "ir/local-graph.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
+#include "support/sorted_vector.h"
 #include "wasm.h"
 
 namespace wasm::FunctionUtils {
@@ -45,6 +46,20 @@ inline bool equal(Function* left, Function* right) {
   return left->imported() && right->imported();
 }
 
+// Find which parameters are actually used in the function, that is, that the
+// values arriving in the parameter are read. This ignores values set in the
+// function, like this:
+//
+// function foo(x) {
+//   x = 10;
+//   bar(x); // read of a param index, but not the param value passed in.
+// }
+//
+// This is an actual use:
+//
+// function foo(x) {
+//   bar(x); // read of a param value
+// }
 inline std::unordered_set<Index> getUsedParams(Function* func) {
   LocalGraph localGraph(func);
 
@@ -55,14 +70,6 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
       continue;
     }
 
-    // Check if this get of a param index can read from the parameter value
-    // passed into the function. We want to ignore values set in the function
-    // like this:
-    //
-    // function foo(x) {
-    //   x = 10;
-    //   bar(x); // read of a param index, but not the param value passed in.
-    // }
     for (auto* set : sets) {
       // A nullptr value indicates there is no LocalSet* that sets the value,
       // so it must be the parameter value.
@@ -75,15 +82,22 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
   return usedParams;
 }
 
-// Try to remove a parameter from a set of functions. This assumes that we have
-// already checked that the parameter is unused inside it. It checks anything
-// else we need to check, and if we can remove it it does so and returns true.
+// Try to remove a parameter from a set of functions and replace it with a local
+// instead. This may not succeed if the parameter type cannot be used in a
+// local, or if we hit another limitation, in which case this returns false and
+// does nothing. If we succeed then the parameter is removed both from the
+// functions and from the calls to it, which are passed in (the caller must
+// ensure to pass in all relevant calls and call_refs).
+//
+// This does not check if removing the parameter would change the semantics
+// (say, if the parameter's value is used), which the caller is assumed to do.
 //
 // This assumes that the set of functions all have the same signature. The main
-// use cases are to send a single function, or a set of functions that all have
-// the same heap type.
+// use cases are either to send a single function, or to send a set of functions
+// that all have the same heap type (and so if they all do not use some
+// parameter, it can be removed from them all).
 inline bool removeParameter(const std::vector<Function*> funcs,
-                            Index i,
+                            Index index,
                             const std::vector<Call*>& calls,
                             const std::vector<CallRef*>& callRefs,
                             Module* module,
@@ -102,18 +116,19 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   // the IR beforehand can help here.
   bool callParamsAreValid =
     std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      auto* operand = call->operands[i];
+      auto* operand = call->operands[index];
       return EffectAnalyzer(runner->options, *module, operand)
         .hasUnremovableSideEffects();
     });
   if (!callParamsAreValid) {
     return false;
   }
+
   // The type must be valid for us to handle as a local (since we
   // replace the parameter with a local).
   // TODO: if there are no references at all, we can avoid creating a
   //       local
-  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(i));
+  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(index));
   if (!typeIsValid) {
     return false;
   }
@@ -125,8 +140,8 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   // (in general).
   auto paramsType = first->getParams();
   std::vector<Type> params(paramsType.begin(), paramsType.end());
-  auto type = params[i];
-  params.erase(params.begin() + i);
+  auto type = params[index];
+  params.erase(params.begin() + index);
   // TODO: parallelize some of these loops?
   for (auto* func : funcs) {
     func->setParams(Type(params));
@@ -134,9 +149,9 @@ inline bool removeParameter(const std::vector<Function*> funcs,
     // It's cumbersome to adjust local names - TODO don't clear them?
     Builder::clearLocalNames(func);
   }
-  Index newIndex;
+  std::vector<Index> newIndexes;
   for (auto* func : funcs) {
-    newIndex = Builder::addVar(func, type);
+    newIndexes.push_back(Builder::addVar(func, type));
   }
   // Update local operations.
   struct LocalUpdater : public PostWalker<LocalUpdater> {
@@ -156,18 +171,61 @@ inline bool removeParameter(const std::vector<Function*> funcs,
       }
     }
   };
-  for (auto* func : funcs) {
-    LocalUpdater(func, i, newIndex);
+  for (Index j = 0; j < funcs.size(); j++) {
+    LocalUpdater(funcs[j], index, newIndexes[j]);
   }
+
   // Remove the arguments from the calls.
   for (auto* call : calls) {
-    call->operands.erase(call->operands.begin() + i);
+    call->operands.erase(call->operands.begin() + index);
+  }
+  for (auto* call : callRefs) {
+    call->operands.erase(call->operands.begin() + index);
   }
 
   for (auto* func : funcs) {
     TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
   return true;
+}
+
+// The same as removeParameter, but gets a sorted list of indexes. It tries to
+// remove them all, and returns true if we managed to remove at least one.
+inline bool removeParameters(const std::vector<Function*> funcs,
+                             SortedVector indexes,
+                             const std::vector<Call*>& calls,
+                             const std::vector<CallRef*>& callRefs,
+                             Module* module,
+                             PassRunner* runner) {
+  if (indexes.empty()) {
+    return false;
+  }
+
+  assert(funcs.size() > 0);
+  auto* first = funcs[0];
+#ifndef NDEBUG
+  for (auto* func : funcs) {
+    assert(func->type == first->type);
+  }
+#endif
+
+  // Iterate downwards, as we may remove more than one, and going forwards would
+  // alter the indexes after us.
+  Index i = first->getNumParams() - 1;
+  bool removed = false;
+  while (1) {
+    if (indexes.has(i)) {
+      if (removeParameter(funcs, i, calls, callRefs, module, runner)) {
+        // Success!
+        removed = true;
+      }
+    }
+    if (i == 0) {
+      break;
+    }
+    i--;
+  }
+  return removed;
 }
 
 } // namespace wasm::FunctionUtils
