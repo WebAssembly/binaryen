@@ -293,3 +293,41 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $sig (func_subtype func))
+  (type $sig (func_subtype (param i32) func))
+
+  (memory 1 1)
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $func (type $sig)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $i32 i32)
+    ;; This function does not use the parameter. It also has no calls, but that
+    ;; is not a problem - we can still remove the parameter.
+  )
+)
+
+(module
+  ;; CHECK:      (type $sig (func_subtype (param i32) func))
+  (type $sig (func_subtype (param i32) func))
+
+  ;; As above, but now an import also uses this signature, which prevents us
+  ;; from changing anything.
+  ;; CHECK:      (import "out" "func" (func $import (param i32)))
+  (import "out" "func" (func $import (type $sig) (param i32)))
+
+  (memory 1 1)
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $func (type $sig) (param $i32 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $i32 i32)
+  )
+)
+
