@@ -18,7 +18,6 @@
 #define wasm_ir_function_h
 
 #include "ir/utils.h"
-#include "support/sorted_vector.h"
 #include "wasm.h"
 
 namespace wasm::FunctionUtils {
@@ -43,52 +42,6 @@ inline bool equal(Function* left, Function* right) {
   }
   return left->imported() && right->imported();
 }
-
-// Find which parameters are actually used in the function, that is, that the
-// values arriving in the parameter are read. This ignores values set in the
-// function, like this:
-//
-// function foo(x) {
-//   x = 10;
-//   bar(x); // read of a param index, but not the param value passed in.
-// }
-//
-// This is an actual use:
-//
-// function foo(x) {
-//   bar(x); // read of a param value
-// }
-std::unordered_set<Index> getUsedParams(Function* func);
-
-// Try to remove a parameter from a set of functions and replace it with a local
-// instead. This may not succeed if the parameter type cannot be used in a
-// local, or if we hit another limitation, in which case this returns false and
-// does nothing. If we succeed then the parameter is removed both from the
-// functions and from the calls to it, which are passed in (the caller must
-// ensure to pass in all relevant calls and call_refs).
-//
-// This does not check if removing the parameter would change the semantics
-// (say, if the parameter's value is used), which the caller is assumed to do.
-//
-// This assumes that the set of functions all have the same signature. The main
-// use cases are either to send a single function, or to send a set of functions
-// that all have the same heap type (and so if they all do not use some
-// parameter, it can be removed from them all).
-bool removeParameter(const std::vector<Function*> funcs,
-                     Index index,
-                     const std::vector<Call*>& calls,
-                     const std::vector<CallRef*>& callRefs,
-                     Module* module,
-                     PassRunner* runner);
-
-// The same as removeParameter, but gets a sorted list of indexes. It tries to
-// remove them all, and returns which we removed.
-SortedVector removeParameters(const std::vector<Function*> funcs,
-                              SortedVector indexes,
-                              const std::vector<Call*>& calls,
-                              const std::vector<CallRef*>& callRefs,
-                              Module* module,
-                              PassRunner* runner);
 
 } // namespace wasm::FunctionUtils
 
