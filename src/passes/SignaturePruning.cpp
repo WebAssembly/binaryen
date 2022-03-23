@@ -166,8 +166,12 @@ struct SignaturePruning : public Pass {
 
       // removeParameters() updates the type as it goes, but in this pass we
       // need the type to match the other locations, nominally, so undo that;
-      // the TypeRewriter below will do the right thing.
-      // TODO: pass flag to removeParams to not touch types?
+      // the TypeRewriter below will do the right thing. Note that we cannot
+      // just ask removeParameters() to not update the type, as it adds a new
+      // local there, whose index depends on the type (which contains the # of
+      // parameters, that determine where non-parameter locals begin). Rather
+      // than have it update the type and then undo that, which would add more
+      // complexity in that method, reset the type here.
       for (auto* func : funcs) {
         func->type = type;
       }
