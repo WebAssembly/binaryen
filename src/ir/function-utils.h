@@ -75,20 +75,20 @@ std::unordered_set<Index> getUsedParams(Function* func);
 // that all have the same heap type (and so if they all do not use some
 // parameter, it can be removed from them all).
 bool removeParameter(const std::vector<Function*> funcs,
-                            Index index,
-                            const std::vector<Call*>& calls,
-                            const std::vector<CallRef*>& callRefs,
-                            Module* module,
-                            PassRunner* runner);
+                     Index index,
+                     const std::vector<Call*>& calls,
+                     const std::vector<CallRef*>& callRefs,
+                     Module* module,
+                     PassRunner* runner);
 
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
 // remove them all, and returns which we removed.
 SortedVector removeParameters(const std::vector<Function*> funcs,
-                                     SortedVector indexes,
-                                     const std::vector<Call*>& calls,
-                                     const std::vector<CallRef*>& callRefs,
-                                     Module* module,
-                                     PassRunner* runner);
+                              SortedVector indexes,
+                              const std::vector<Call*>& calls,
+                              const std::vector<CallRef*>& callRefs,
+                              Module* module,
+                              PassRunner* runner);
 
 } // namespace wasm::FunctionUtils
 

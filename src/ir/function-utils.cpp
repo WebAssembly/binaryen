@@ -61,11 +61,11 @@ std::unordered_set<Index> getUsedParams(Function* func) {
 }
 
 bool removeParameter(const std::vector<Function*> funcs,
-                            Index index,
-                            const std::vector<Call*>& calls,
-                            const std::vector<CallRef*>& callRefs,
-                            Module* module,
-                            PassRunner* runner) {
+                     Index index,
+                     const std::vector<Call*>& calls,
+                     const std::vector<CallRef*>& callRefs,
+                     Module* module,
+                     PassRunner* runner) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
 #ifndef NDEBUG
@@ -154,11 +154,11 @@ bool removeParameter(const std::vector<Function*> funcs,
 }
 
 SortedVector removeParameters(const std::vector<Function*> funcs,
-                                     SortedVector indexes,
-                                     const std::vector<Call*>& calls,
-                                     const std::vector<CallRef*>& callRefs,
-                                     Module* module,
-                                     PassRunner* runner) {
+                              SortedVector indexes,
+                              const std::vector<Call*>& calls,
+                              const std::vector<CallRef*>& callRefs,
+                              Module* module,
+                              PassRunner* runner) {
   if (indexes.empty()) {
     return {};
   }
