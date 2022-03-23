@@ -134,7 +134,7 @@ inline bool removeParameter(const std::vector<Function*> funcs,
   }
 
   // We can do it!
-
+//std::cout << "remove one\n";
   // Remove the parameter from the function. We must add a new local
   // for uses of the parameter, but cannot make it use the same index
   // (in general).
@@ -191,15 +191,15 @@ inline bool removeParameter(const std::vector<Function*> funcs,
 }
 
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
-// remove them all, and returns true if we managed to remove at least one.
-inline bool removeParameters(const std::vector<Function*> funcs,
+// remove them all, and returns which we removed.
+inline SortedVector removeParameters(const std::vector<Function*> funcs,
                              SortedVector indexes,
                              const std::vector<Call*>& calls,
                              const std::vector<CallRef*>& callRefs,
                              Module* module,
                              PassRunner* runner) {
   if (indexes.empty()) {
-    return false;
+    return {};
   }
 
   assert(funcs.size() > 0);
@@ -213,12 +213,12 @@ inline bool removeParameters(const std::vector<Function*> funcs,
   // Iterate downwards, as we may remove more than one, and going forwards would
   // alter the indexes after us.
   Index i = first->getNumParams() - 1;
-  bool removed = false;
+  SortedVector removed;
   while (1) {
     if (indexes.has(i)) {
       if (removeParameter(funcs, i, calls, callRefs, module, runner)) {
         // Success!
-        removed = true;
+        removed.insert(i);
       }
     }
     if (i == 0) {

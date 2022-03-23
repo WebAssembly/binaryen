@@ -134,6 +134,7 @@ struct SignaturePruning : public Pass {
       auto sig = type.getSignature();
       auto& info = allInfo[type];
       auto numParams = sig.params.size();
+//std::cout << "num params " << numParams << ", used " << info.usedParams.size() << '\n';
       if (info.usedParams.size() == numParams) {
         // All parameters are used, give up on this one.
         continue;
@@ -147,23 +148,34 @@ struct SignaturePruning : public Pass {
           unusedParams.insert(i);
         }
       }
-      if (!FunctionUtils::removeParameters(sigFuncs[type],
+      //std::cout << "num unused params " << unusedParams.size() << '\n';
+      auto oldParams = sig.params;
+      auto removedIndexes = FunctionUtils::removeParameters(funcs,
                                            unusedParams,
                                            info.calls,
                                            info.callRefs,
                                            module,
-                                           runner)) {
+                                           runner);
+      if (removedIndexes.empty()) {
         continue;
       }
 
       // Success! Update the types.
       std::vector<Type> newParams;
       for (Index i = 0; i < numParams; i++) {
-        if (info.usedParams.count(i)) {
-          newParams.push_back(func->getLocalType(i));
+        if (!removedIndexes.has(i)) {
+          newParams.push_back(oldParams[i]);
         }
       }
-      newSignatures[type] = Signature(Type(newParams), sig.results);
+//std::cout << "new num params: " << newParams.size() << "\n";
+      auto newType = Signature(Type(newParams), sig.results);
+      newSignatures[type] = newType;
+
+      // removeParameters() updates the type as it goes, but in this pass we
+      // need the type to match the other locations, nominally, so fix that. 
+      for (auto* func : funcs) {
+        func->type = newType;
+      }
     }
 
     if (newSignatures.empty()) {
