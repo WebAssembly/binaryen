@@ -287,8 +287,9 @@ struct DAE : public Pass {
       if (numParams == 0) {
         continue;
       }
-      if (FunctionUtils::removeParameters(
-            {func}, infoMap[name].unusedParams, calls, {}, module, runner)) {
+      auto removedIndexes = FunctionUtils::removeParameters(
+            {func}, infoMap[name].unusedParams, calls, {}, module, runner);
+      if (!removedIndexes.empty()) {
         // Success!
         changed.insert(func);
       }
