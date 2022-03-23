@@ -13,6 +13,7 @@ configure_file(WasmIntrinsics.cpp.in WasmIntrinsics.cpp @ONLY)
 
 FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
+  param-utils.cpp
   pass.cpp
   test_passes.cpp
   AlignmentLowering.cpp

@@ -40,11 +40,11 @@
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
-#include "ir/function-utils.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
+#include "param-utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -155,7 +155,7 @@ struct DAEScanner
     // part of, say if we are exported, or if another parallel function finds a
     // RefFunc to us and updates it before we check it).
     if (numParams > 0 && !info->hasUnseenCalls) {
-      auto usedParams = FunctionUtils::getUsedParams(func);
+      auto usedParams = ParamUtils::getUsedParams(func);
       for (Index i = 0; i < numParams; i++) {
         if (usedParams.count(i) == 0) {
           info->unusedParams.insert(i);
@@ -287,7 +287,7 @@ struct DAE : public Pass {
       if (numParams == 0) {
         continue;
       }
-      auto removedIndexes = FunctionUtils::removeParameters(
+      auto removedIndexes = ParamUtils::removeParameters(
         {func}, infoMap[name].unusedParams, calls, {}, module, runner);
       if (!removedIndexes.empty()) {
         // Success!
