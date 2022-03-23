@@ -17,8 +17,6 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
-#include "ir/local-graph.h"
-#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "support/sorted_vector.h"
 #include "wasm.h"
@@ -60,27 +58,7 @@ inline bool equal(Function* left, Function* right) {
 // function foo(x) {
 //   bar(x); // read of a param value
 // }
-inline std::unordered_set<Index> getUsedParams(Function* func) {
-  LocalGraph localGraph(func);
-
-  std::unordered_set<Index> usedParams;
-
-  for (auto& [get, sets] : localGraph.getSetses) {
-    if (!func->isParam(get->index)) {
-      continue;
-    }
-
-    for (auto* set : sets) {
-      // A nullptr value indicates there is no LocalSet* that sets the value,
-      // so it must be the parameter value.
-      if (!set) {
-        usedParams.insert(get->index);
-      }
-    }
-  }
-
-  return usedParams;
-}
+std::unordered_set<Index> getUsedParams(Function* func);
 
 // Try to remove a parameter from a set of functions and replace it with a local
 // instead. This may not succeed if the parameter type cannot be used in a
@@ -96,137 +74,21 @@ inline std::unordered_set<Index> getUsedParams(Function* func) {
 // use cases are either to send a single function, or to send a set of functions
 // that all have the same heap type (and so if they all do not use some
 // parameter, it can be removed from them all).
-inline bool removeParameter(const std::vector<Function*> funcs,
+bool removeParameter(const std::vector<Function*> funcs,
                             Index index,
                             const std::vector<Call*>& calls,
                             const std::vector<CallRef*>& callRefs,
                             Module* module,
-                            PassRunner* runner) {
-  assert(funcs.size() > 0);
-  auto* first = funcs[0];
-#ifndef NDEBUG
-  for (auto* func : funcs) {
-    assert(func->type == first->type);
-  }
-#endif
-
-  // Check if none of the calls has a param with side effects that we cannot
-  // remove (as if we can remove them, we will simply do that when we remove the
-  // parameter). Note: flattening the IR beforehand can help here.
-  bool callParamsAreValid =
-    std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      auto* operand = call->operands[index];
-      return EffectAnalyzer(runner->options, *module, operand)
-        .hasUnremovableSideEffects();
-    });
-  if (!callParamsAreValid) {
-    return false;
-  }
-
-  // The type must be valid for us to handle as a local (since we
-  // replace the parameter with a local).
-  // TODO: if there are no references at all, we can avoid creating a
-  //       local
-  bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(index));
-  if (!typeIsValid) {
-    return false;
-  }
-
-  // We can do it!
-
-  // Remove the parameter from the function. We must add a new local
-  // for uses of the parameter, but cannot make it use the same index
-  // (in general).
-  auto paramsType = first->getParams();
-  std::vector<Type> params(paramsType.begin(), paramsType.end());
-  auto type = params[index];
-  params.erase(params.begin() + index);
-  // TODO: parallelize some of these loops?
-  for (auto* func : funcs) {
-    func->setParams(Type(params));
-
-    // It's cumbersome to adjust local names - TODO don't clear them?
-    Builder::clearLocalNames(func);
-  }
-  std::vector<Index> newIndexes;
-  for (auto* func : funcs) {
-    newIndexes.push_back(Builder::addVar(func, type));
-  }
-  // Update local operations.
-  struct LocalUpdater : public PostWalker<LocalUpdater> {
-    Index removedIndex;
-    Index newIndex;
-    LocalUpdater(Function* func, Index removedIndex, Index newIndex)
-      : removedIndex(removedIndex), newIndex(newIndex) {
-      walk(func->body);
-    }
-    void visitLocalGet(LocalGet* curr) { updateIndex(curr->index); }
-    void visitLocalSet(LocalSet* curr) { updateIndex(curr->index); }
-    void updateIndex(Index& index) {
-      if (index == removedIndex) {
-        index = newIndex;
-      } else if (index > removedIndex) {
-        index--;
-      }
-    }
-  };
-  for (Index i = 0; i < funcs.size(); i++) {
-    auto* func = funcs[i];
-    if (!func->imported()) {
-      LocalUpdater(funcs[i], index, newIndexes[i]);
-      TypeUpdating::handleNonDefaultableLocals(func, *module);
-    }
-  }
-
-  // Remove the arguments from the calls.
-  for (auto* call : calls) {
-    call->operands.erase(call->operands.begin() + index);
-  }
-  for (auto* call : callRefs) {
-    call->operands.erase(call->operands.begin() + index);
-  }
-
-  return true;
-}
+                            PassRunner* runner);
 
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
 // remove them all, and returns which we removed.
-inline SortedVector removeParameters(const std::vector<Function*> funcs,
+SortedVector removeParameters(const std::vector<Function*> funcs,
                                      SortedVector indexes,
                                      const std::vector<Call*>& calls,
                                      const std::vector<CallRef*>& callRefs,
                                      Module* module,
-                                     PassRunner* runner) {
-  if (indexes.empty()) {
-    return {};
-  }
-
-  assert(funcs.size() > 0);
-  auto* first = funcs[0];
-#ifndef NDEBUG
-  for (auto* func : funcs) {
-    assert(func->type == first->type);
-  }
-#endif
-
-  // Iterate downwards, as we may remove more than one, and going forwards would
-  // alter the indexes after us.
-  Index i = first->getNumParams() - 1;
-  SortedVector removed;
-  while (1) {
-    if (indexes.has(i)) {
-      if (removeParameter(funcs, i, calls, callRefs, module, runner)) {
-        // Success!
-        removed.insert(i);
-      }
-    }
-    if (i == 0) {
-      break;
-    }
-    i--;
-  }
-  return removed;
-}
+                                     PassRunner* runner);
 
 } // namespace wasm::FunctionUtils
 
