@@ -104,11 +104,11 @@ inline bool removeParameter(const std::vector<Function*> funcs,
                             PassRunner* runner) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
-//#ifndef NDEBUG
+#ifndef NDEBUG
   for (auto* func : funcs) {
     assert(func->type == first->type);
   }
-//#endif
+#endif
 
   // Great, it's not used. Check if none of the calls has a param with
   // side effects that we cannot remove (as if we can remove them, we
