@@ -354,7 +354,7 @@ void PassRegistry::registerPasses() {
                "sets specified globals to specified values",
                createSetGlobalsPass);
   registerPass("signature-pruning",
-               "remove params from function signatures where possible",
+               "remove params from function signature types where possible",
                createSignaturePruningPass);
   registerPass("signature-refining",
                "apply more specific subtypes to signature types where possible",
