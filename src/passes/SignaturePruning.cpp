@@ -22,6 +22,10 @@
 // looks at each heap type at a time, and if all functions with a heap type do
 // not use a particular param, will remove the param.
 //
+// Like in DAE, as part of pruning parameters this will find parameters that are
+// always sent the same constant value. We can then apply that value in the
+// function, making the parameter's value unused, which means we can prune it.
+//
 
 #include "ir/find_all.h"
 #include "ir/lubs.h"
