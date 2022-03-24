@@ -234,7 +234,8 @@ struct DAE : public Pass {
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
       }
-      auto optimizedIndexes = ParamUtils::applyConstantValues({func}, calls, {}, module);
+      auto optimizedIndexes =
+        ParamUtils::applyConstantValues({func}, calls, {}, module);
       for (auto i : optimizedIndexes) {
         // Mark it as unused, which we know it now is (no point to re-scan just
         // for that).
