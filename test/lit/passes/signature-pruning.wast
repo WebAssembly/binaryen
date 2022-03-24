@@ -488,3 +488,28 @@
   )
 )
 
+;; Two functions with two different types have an unused parameter. After
+;; removing the parameter from each, they both have no parameters. They should
+;; *not* have the same type, however: the type should be different nominally
+;; even though after the pruning they are identical structurally.
+(module
+  ;; CHECK:      (type $sig1 (func_subtype func))
+  (type $sig1 (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig2 (func_subtype func))
+  (type $sig2 (func_subtype (param f64) func))
+
+  ;; CHECK:      (func $foo1 (type $sig1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo1 (type $sig1) (param $i32 i32)
+  )
+
+  ;; CHECK:      (func $foo2 (type $sig2)
+  ;; CHECK-NEXT:  (local $0 f64)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo2 (type $sig2) (param $f64 f64)
+  )
+)
+
