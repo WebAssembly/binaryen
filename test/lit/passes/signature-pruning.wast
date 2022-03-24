@@ -579,3 +579,59 @@
   )
 )
 
+;; As above, but $foo's parameter is a ref.func, which is also a constant
+;; value that we can optimize in the case of $foo (but not $bar, again, as $bar
+;; is not always sent a constant value).
+(module
+  ;; CHECK:      (type $sig-foo (func_subtype func))
+  (type $sig-foo (func_subtype (param funcref) func))
+  ;; CHECK:      (type $sig-bar (func_subtype (param funcref) func))
+  (type $sig-bar (func_subtype (param funcref) func))
+
+  (memory 1 1)
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (elem declare func $bar $foo)
+
+  ;; CHECK:      (func $foo (type $sig-foo)
+  ;; CHECK-NEXT:  (local $0 funcref)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (type $sig-foo) (param $funcref funcref)
+    ;; This function is always called with the same constant, and we can
+    ;; apply that constant here and prune the param.
+    (drop (local.get $funcref))
+    (call $foo (ref.func $foo))
+    (call $foo (ref.func $foo))
+    (call $foo (ref.func $foo))
+  )
+
+  ;; CHECK:      (func $bar (type $sig-bar) (param $funcref funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $funcref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $bar
+  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $bar
+  ;; CHECK-NEXT:   (ref.func $bar)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bar (type $sig-bar) (param $funcref funcref)
+    (drop (local.get $funcref))
+    (call $bar (ref.func $foo))
+    (call $bar (ref.func $bar))
+  )
+)
+
