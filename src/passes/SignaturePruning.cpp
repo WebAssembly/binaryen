@@ -147,8 +147,7 @@ struct SignaturePruning : public Pass {
           newParams.push_back(oldParams[i]);
         }
       }
-      auto newType = Signature(Type(newParams), sig.results);
-      newSignatures[type] = newType;
+      newSignatures[type] = Signature(Type(newParams), sig.results);
 
       // removeParameters() updates the type as it goes, but in this pass we
       // need the type to match the other locations, nominally. That is, we need
