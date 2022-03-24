@@ -156,14 +156,15 @@ struct SignaturePruning : public Pass {
       // after this operation, and that must be the exact same type at the
       // relevant call_refs and so forth. The TypeRewriter below will do the
       // right thing as it rewrites everything all at once, so we do not want
-      // the type to be modified here yet, and therefore we undo the type change
-      // that removeParameters() caused.
+      // the type to be modified by removeParameters(), and so we undo the type
+      // it made.
       //
       // Note that we cannot just ask removeParameters() to not update the type,
       // as it adds a new local there, whose index depends on the type (which
-      // contains the # of parameters, that determine where non-parameter local
-      // indexes begin). Rather than have it update the type and then undo that,
-      // which would add more complexity in that method, undo the change here.
+      // contains the # of parameters, and that determine where non-parameter
+      // local indexes begin). Rather than have it update the type and then undo
+      // that, which would add more complexity in that method, undo the change
+      // here.
       for (auto* func : funcs) {
         func->type = type;
       }
