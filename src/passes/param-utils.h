@@ -74,6 +74,18 @@ SortedVector removeParameters(const std::vector<Function*> funcs,
                               Module* module,
                               PassRunner* runner);
 
+// Given a set of functions and the calls and call_refs that reach them, find
+// which parameters are passed the same constant value in all the calls. For
+// each such parameter, apply it inside the function, that is, do a local.set of
+// that value in the function. The parameter's incoming value is then ignored,
+// which allows other optimizations to remove it.
+//
+// Returns the indexes that were optimized.
+SortedVector applyConstantValues(const std::vector<Function*>& funcs,
+                                 const std::vector<Call*>& calls,
+                                 const std::vector<CallRef*>& callRefs,
+                                 Module* module);
+
 } // namespace wasm::ParamUtils
 
 #endif // wasm_ir_function_h
