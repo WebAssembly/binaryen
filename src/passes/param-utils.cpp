@@ -47,7 +47,7 @@ std::unordered_set<Index> getUsedParams(Function* func) {
   return usedParams;
 }
 
-bool removeParameter(const std::vector<Function*> funcs,
+bool removeParameter(const std::vector<Function*>& funcs,
                      Index index,
                      const std::vector<Call*>& calls,
                      const std::vector<CallRef*>& callRefs,
