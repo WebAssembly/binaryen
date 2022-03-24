@@ -635,3 +635,55 @@
   )
 )
 
+;; As above, but the values are now ref.nulls. All nulls compare equal, so we
+;; can still optimize even though the types differ.
+(module
+  ;; CHECK:      (type $sig-foo (func_subtype func))
+  (type $sig-foo (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig-bar (func_subtype (param anyref) func))
+  (type $sig-bar (func_subtype (param anyref) func))
+
+  (memory 1 1)
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (elem declare func $foo)
+
+  ;; CHECK:      (func $foo (type $sig-foo)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (type $sig-foo) (param $anyref anyref)
+    (drop (local.get $anyref))
+    (call $foo (ref.null any))
+    (call $foo (ref.null func))
+  )
+
+  ;; CHECK:      (func $bar (type $sig-bar) (param $anyref anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $anyref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $bar
+  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $bar
+  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bar (type $sig-bar) (param $anyref anyref)
+    (drop (local.get $anyref))
+    ;; Mixing a null with something else prevents optimization, of course.
+    (call $bar (ref.func $foo))
+    (call $bar (ref.null func))
+  )
+)
+
