@@ -225,7 +225,6 @@ struct DAE : public Pass {
         continue;
       }
       auto* func = module->getFunction(name);
-      auto numParams = func->getNumParams();
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.

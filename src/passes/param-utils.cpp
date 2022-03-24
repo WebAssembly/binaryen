@@ -210,7 +210,7 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
         break;
       }
     }
-    for (auto* callRefs : calls) {
+    for (auto* call : callRefs) {
       processOperand(call->operands[i]);
       if (!value.isConstant()) {
         break;
@@ -220,8 +220,10 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
       // Success! We can just apply the constant in the function, which
       // makes the parameter value unused, which lets us remove it later.
       Builder builder(*module);
-      func->body = builder.makeSequence(
-        builder.makeLocalSet(i, builder.makeConst(value)), func->body);
+      for (auto* func : funcs) {
+        func->body = builder.makeSequence(
+          builder.makeLocalSet(i, builder.makeConst(value.getConstantLiteral())), func->body);
+      }
       optimized.insert(i);
     }
   }
