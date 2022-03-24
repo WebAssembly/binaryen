@@ -58,7 +58,7 @@ std::unordered_set<Index> getUsedParams(Function* func);
 // use cases are either to send a single function, or to send a set of functions
 // that all have the same heap type (and so if they all do not use some
 // parameter, it can be removed from them all).
-bool removeParameter(const std::vector<Function*> funcs,
+bool removeParameter(const std::vector<Function*>& funcs,
                      Index index,
                      const std::vector<Call*>& calls,
                      const std::vector<CallRef*>& callRefs,
@@ -67,12 +67,24 @@ bool removeParameter(const std::vector<Function*> funcs,
 
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
 // remove them all, and returns which we removed.
-SortedVector removeParameters(const std::vector<Function*> funcs,
+SortedVector removeParameters(const std::vector<Function*>& funcs,
                               SortedVector indexes,
                               const std::vector<Call*>& calls,
                               const std::vector<CallRef*>& callRefs,
                               Module* module,
                               PassRunner* runner);
+
+// Given a set of functions and the calls and call_refs that reach them, find
+// which parameters are passed the same constant value in all the calls. For
+// each such parameter, apply it inside the function, that is, do a local.set of
+// that value in the function. The parameter's incoming value is then ignored,
+// which allows other optimizations to remove it.
+//
+// Returns the indexes that were optimized.
+SortedVector applyConstantValues(const std::vector<Function*>& funcs,
+                                 const std::vector<Call*>& calls,
+                                 const std::vector<CallRef*>& callRefs,
+                                 Module* module);
 
 } // namespace wasm::ParamUtils
 
