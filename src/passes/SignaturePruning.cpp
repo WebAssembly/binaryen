@@ -147,6 +147,12 @@ struct SignaturePruning : public Pass {
           newParams.push_back(oldParams[i]);
         }
       }
+
+      // Create a new signature. When the TypeRewriter operates below it will
+      // modify the existing heap type in place to change its signature to this
+      // one (which preserves identity, that is, even if after pruning the new
+      // signature is structurally identical to another one, it will remain
+      // nominally different from those).
       newSignatures[type] = Signature(Type(newParams), sig.results);
 
       // removeParameters() updates the type as it goes, but in this pass we
