@@ -118,17 +118,28 @@ struct SignaturePruning : public Pass {
     for (auto& [type, funcs] : sigFuncs) {
       auto sig = type.getSignature();
       auto& info = allInfo[type];
+      auto& usedParams = info.usedParams;
       auto numParams = sig.params.size();
-      if (info.usedParams.size() == numParams) {
+
+      // Apply constant indexes: find the parameters that are always sent a
+      // constant value, and apply that value in the function. That then makes
+      // the parameter unused (since the applied value makes us ignore the value
+      // arriving in the parameter).
+      auto optimizedIndexes = ParamUtils::applyConstantValues(funcs, info.calls, info.callRefs, module);
+      for (auto i : optimizedIndexes) {
+        usedParams.erase(i);
+      }
+
+      if (usedParams.size() == numParams) {
         // All parameters are used, give up on this one.
         continue;
       }
 
-      // We found possible work! Find the specific params that are unused try to
+      // We found possible work! Find the specific params that are unused&try to
       // prune them.
       SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
-        if (info.usedParams.count(i) == 0) {
+        if (usedParams.count(i) == 0) {
           unusedParams.insert(i);
         }
       }
