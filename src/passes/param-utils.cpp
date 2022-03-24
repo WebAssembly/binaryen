@@ -187,11 +187,6 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   }
 #endif
 
-  // If we need that info, we will find which param indexes have their values
-  // used in at least one function. (Computing this requires a localGraph, which
-  // is not cheap, so only do it if it looks like we can optimize here.)
-  std::optional<std::unordered_set<Index>> usedParams;
-
   SortedVector optimized;
   auto numParams = first->getNumParams();
   for (Index i = 0; i < numParams; i++) {
@@ -220,23 +215,6 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
       }
     }
     if (!value.isConstant()) {
-      continue;
-    }
-
-    // The value appears to be a constant that we can apply. Check if we should:
-    // if all the functions already ignore the parameter's value, then there is
-    // no point in doing any work here as the parameter can be removed anyhow
-    // (and if we do the work here, we'd repeat that work again if we were
-    // called once more, that is, we'd increase code size without limit).
-    if (!usedParams) {
-      usedParams = std::unordered_set<Index>();
-      for (auto* func : funcs) {
-        for (auto index : getUsedParams(func)) {
-          usedParams->insert(index);
-        }
-      }
-    }
-    if (!usedParams->count(i)) {
       continue;
     }
 

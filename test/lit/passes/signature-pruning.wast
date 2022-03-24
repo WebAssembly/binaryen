@@ -263,11 +263,16 @@
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.store
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)

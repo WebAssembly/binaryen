@@ -22,6 +22,9 @@
   (elem (i32.const 0) $a9 $c8)
   ;; CHECK:      (func $a
   ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $a (param $x i32))
@@ -31,31 +34,11 @@
   (func $b
     (call $a (i32.const 1)) ;; best case scenario
   )
-
-  ;; As above, but now with a use of the parameter inside the called function.
-  ;; CHECK:      (func $a-use
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $a-use (param $x i32)
-    (drop
-      (local.get $x)
-    )
-  )
-  ;; CHECK:      (func $b-use
-  ;; CHECK-NEXT:  (call $a-use)
-  ;; CHECK-NEXT: )
-  (func $b-use
-    (call $a-use (i32.const 1))
-  )
-
   ;; CHECK:      (func $a1
   ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $a1 (param $x i32)
@@ -245,39 +228,20 @@
   (func $b9
     (call $a9 (i32.const 1))
   )
-
   ;; CHECK:      (func $a10
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (call $a10)
-  ;; CHECK-NEXT:  (call $a10)
-  ;; CHECK-NEXT: )
-  (func $a10 (param $x i32) ;; recursion
-    (call $a10 (i32.const 1))
-    (call $a10 (i32.const 1))
-  )
-
-  ;; CHECK:      (func $a10-use
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (call $a10-use)
-  ;; CHECK-NEXT:   (call $a10-use)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $a10)
+  ;; CHECK-NEXT:   (call $a10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $a10-use (param $x i32)
-    (call $a10-use (i32.const 1))
-    (call $a10-use (i32.const 1))
-    ;; Also use the parameter here.
-    (drop
-      (local.get $x)
-    )
+  (func $a10 (param $x i32) ;; recursion
+    (call $a10 (i32.const 1))
+    (call $a10 (i32.const 1))
   )
-
   ;; CHECK:      (func $a11
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (call $a11)
@@ -440,6 +404,9 @@
   )
   ;; CHECK:      (func $bar (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 7)
   ;; CHECK-NEXT: )
   (func $bar (param $x i32) (result i32)
@@ -456,6 +423,9 @@
 
   ;; CHECK:      (func $foo (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (return_call_indirect $0 (type $T)
   ;; CHECK-NEXT:    (i32.const 0)
