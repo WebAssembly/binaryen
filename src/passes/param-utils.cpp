@@ -18,6 +18,7 @@
 
 #include "ir/function-utils.h"
 #include "ir/local-graph.h"
+#include "ir/possible-constant.h"
 #include "ir/type-updating.h"
 #include "support/sorted_vector.h"
 #include "wasm.h"
@@ -188,50 +189,44 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   }
 #endif
 
+  SortedVector optimized;
   auto numParams = first->getNumParams();
   for (Index i = 0; i < numParams; i++) {
-    // No value yet.
-    struct None : public std::monostate {};
-
-    // Many possible values, and so this represents unknown data: we cannot infer
-    // anything there.
-    struct Many : public std::monostate {};
-
-    using Variant = std::variant<None, Literal, Many>;
-
-    Variant value = None;
+    PossibleConstantValues value;
 
     // Processes one operand.
     auto processOperand = [&](Expression* operand) {
       if (auto* c = operand->dynCast<Const>()) {
-        if (value == None) {
-          // This is the first value seen.
-          value = c->value;
-        } else if (value != c->value) {
-          // Not identical, give up.
-          value = Many;
-        }
-        // TODO: refnull etc.
+        value.note(c->value);
+        return;
       }
+      // TODO: refnull, immutable globals, etc.
       // Not a constant, give up
-      value = Literal(Type::none);
+      value.noteUnknown();
     };
     for (auto* call : calls) {
-      if (!processOperand(call->operands[i]);
+      processOperand(call->operands[i]);
+      if (!value.isConstant()) {
+        break;
+      }
     }
     for (auto* callRefs : calls) {
       processOperand(call->operands[i]);
+      if (!value.isConstant()) {
+        break;
+      }
     }
-    if (value.type != Type::none) {
+    if (value.isConstant()) {
       // Success! We can just apply the constant in the function, which
       // makes the parameter value unused, which lets us remove it later.
       Builder builder(*module);
       func->body = builder.makeSequence(
         builder.makeLocalSet(i, builder.makeConst(value)), func->body);
-      // Mark it as unused, which we know it now is (no point to
-      // re-scan just for that).
-      infoMap[name].unusedParams.insert(i);
+      optimized.insert(i);
     }
   }
+
+  return optimized;
+}
 
 } // namespace wasm::ParamUtils
