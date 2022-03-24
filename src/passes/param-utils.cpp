@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <variant>
-
 #include "ir/function-utils.h"
 #include "ir/local-graph.h"
 #include "ir/possible-constant.h"
@@ -189,6 +187,11 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   }
 #endif
 
+  // If we need that info, we will build a vector where each item is the used
+  // parameters for the function of that index.
+  using FuncUsedParams = std::vector<std::unordered_set<Index>>;
+  std::optional<FuncUsedParams> funcUsedParams;
+
   SortedVector optimized;
   auto numParams = first->getNumParams();
   for (Index i = 0; i < numParams; i++) {
@@ -216,18 +219,32 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
         break;
       }
     }
-    if (value.isConstant()) {
-      // Success! We can just apply the constant in the function, which
-      // makes the parameter value unused, which lets us remove it later.
-      Builder builder(*module);
-      for (auto* func : funcs) {
-        func->body = builder.makeSequence(
-          builder.makeLocalSet(i,
-                               builder.makeConst(value.getConstantLiteral())),
-          func->body);
-      }
-      optimized.insert(i);
+    if (!value.isConstant()) {
+      continue;
     }
+
+    // The value appears to be a constant that we can apply. Check if we should:
+    // if all the functions already ignore the parameter's value, then there is
+    // no point in doing any work here as the parameter can be removed anyhow
+    // (and if we do the work here, we'd just be increasing code size).
+    if (!funcUsedParams) {
+      funcUsedParams = FuncUsedParams();
+      for (auto* func : funcs) {
+        funcUsedParams.push_back(getUsedParams(func));
+      }
+    }
+    
+
+    // Optimize: write the constant value in the function bodies, making them
+    // ignore the parameter's value.
+    Builder builder(*module);
+    for (auto* func : funcs) {
+      func->body = builder.makeSequence(
+        builder.makeLocalSet(i,
+                             builder.makeConst(value.getConstantLiteral())),
+        func->body);
+    }
+    optimized.insert(i);
   }
 
   return optimized;
