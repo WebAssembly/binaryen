@@ -513,3 +513,64 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $sig-foo (func_subtype func))
+  (type $sig-foo (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig-bar (func_subtype (param i32) func))
+  (type $sig-bar (func_subtype (param i32) func))
+
+  (memory 1 1)
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (func $foo (type $sig-foo)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (i32.store
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (type $sig-foo) (param $i32 i32)
+    ;; This function is always called with the same constant, and we can
+    ;; apply that constant here and prune the param.
+    (i32.store
+      (i32.const 0)
+      (local.get $i32)
+    )
+    (call $foo (i32.const 42))
+    (call $foo (i32.const 42))
+    (call $foo (i32.const 42))
+  )
+
+  ;; CHECK:      (func $bar (type $sig-bar) (param $i32 i32)
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $bar
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $bar
+  ;; CHECK-NEXT:   (i32.const 43)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bar (type $sig-bar) (param $i32 i32)
+    ;; This function is called with various values, and cannot be optimized like
+    ;; the previous one.
+    (i32.store
+      (i32.const 0)
+      (local.get $i32)
+    )
+    (call $bar (i32.const 42))
+    (call $bar (i32.const 43))
+  )
+)
+
