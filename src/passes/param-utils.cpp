@@ -191,25 +191,14 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   auto numParams = first->getNumParams();
   for (Index i = 0; i < numParams; i++) {
     PossibleConstantValues value;
-
-    // Processes one operand.
-    auto processOperand = [&](Expression* operand) {
-      if (auto* c = operand->dynCast<Const>()) {
-        value.note(c->value);
-        return;
-      }
-      // TODO: refnull, immutable globals, etc.
-      // Not a constant, give up
-      value.noteUnknown();
-    };
     for (auto* call : calls) {
-      processOperand(call->operands[i]);
+      value.note(call->operands[i], *module);
       if (!value.isConstant()) {
         break;
       }
     }
     for (auto* call : callRefs) {
-      processOperand(call->operands[i]);
+      value.note(call->operands[i], *module);
       if (!value.isConstant()) {
         break;
       }
