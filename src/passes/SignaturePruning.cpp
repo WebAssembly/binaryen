@@ -147,8 +147,15 @@ struct SignaturePruning : public Pass {
           newParams.push_back(oldParams[i]);
         }
       }
-      auto newType = Signature(Type(newParams), sig.results);
-      newSignatures[type] = newType;
+
+      // Create a completely new type here - avoid the default code path which
+      // will canonicalize signature types.
+      // TODO: is this needed? the test does not appear to be affected by it
+      auto newSig = Signature(Type(newParams), sig.results);
+      TypeBuilder typeBuilder(1);
+      typeBuilder.setHeapType(0, newSig);
+      auto newType = (*typeBuilder.build())[0];
+      newSignatures[type] = newType.getSignature();
 
       // removeParameters() updates the type as it goes, but in this pass we
       // need the type to match the other locations, nominally. That is, we need
