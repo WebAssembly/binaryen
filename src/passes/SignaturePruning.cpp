@@ -129,7 +129,8 @@ struct SignaturePruning : public Pass {
       // constant value, and apply that value in the function. That then makes
       // the parameter unused (since the applied value makes us ignore the value
       // arriving in the parameter).
-      auto optimizedIndexes = ParamUtils::applyConstantValues(funcs, info.calls, info.callRefs, module);
+      auto optimizedIndexes = ParamUtils::applyConstantValues(
+        funcs, info.calls, info.callRefs, module);
       for (auto i : optimizedIndexes) {
         usedParams.erase(i);
       }
