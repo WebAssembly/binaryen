@@ -309,7 +309,7 @@
 ;; CHECK-NEXT:                                                 specified values
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --signature-pruning                           remove params from function
-;; CHECK-NEXT:                                                 signatures where possible
+;; CHECK-NEXT:                                                 signature types where possible
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --signature-refining                          apply more specific subtypes to
 ;; CHECK-NEXT:                                                 signature types where possible

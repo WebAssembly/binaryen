@@ -115,19 +115,7 @@ struct SignaturePruning : public Pass {
     }
 
     // Find parameters to prune.
-    std::unordered_set<HeapType> seen;
-    for (auto& func : module->functions) {
-      auto type = func->type;
-      if (!seen.insert(type).second) {
-        continue;
-      }
-      auto& funcs = sigFuncs[type];
-      if (funcs.empty()) {
-        // We saw no useful functions for this type (this can happen if the type
-        // only appears in an imported function, for example).
-        continue;
-      }
-
+    for (auto& [type, funcs] : sigFuncs) {
       auto sig = type.getSignature();
       auto& info = allInfo[type];
       auto numParams = sig.params.size();
