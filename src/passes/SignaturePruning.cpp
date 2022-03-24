@@ -170,11 +170,6 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    if (newSignatures.empty()) {
-      // We found nothing to optimize.
-      return;
-    }
-
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
   }

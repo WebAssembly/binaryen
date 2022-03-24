@@ -339,6 +339,10 @@ public:
   // Helper for the repeating pattern of just updating Signature types using a
   // map of old heap type => new Signature.
   static void updateSignatures(const SignatureUpdates& updates, Module& wasm) {
+    if (updates.empty()) {
+      return;
+    }
+
     class SignatureRewriter : public GlobalTypeRewriter {
       const SignatureUpdates& updates;
 
