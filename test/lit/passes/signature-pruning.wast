@@ -480,16 +480,26 @@
   ;; CHECK:      (type $sig (func_subtype (param i32) func))
   (type $sig (func_subtype (param i32) func))
 
-  (memory 1 1)
-
-  ;; CHECK:      (memory $0 1 1)
-
   ;; CHECK:      (table $0 1 1 anyref)
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
+  )
+)
+
+;; Exports cannot be optimized.
+(module
+  ;; CHECK:      (type $sig (func_subtype (param i32) func))
+  (type $sig (func_subtype (param i32) func))
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo (export "foo") (type $sig) (param $i32 i32)
   )
 )
 
