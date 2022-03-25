@@ -29,7 +29,6 @@
 
 #include "ir/module-utils.h"
 #include "ir/possible-constant.h"
-#include "ir/properties.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -145,23 +144,7 @@ struct PCVScanner
                       HeapType type,
                       Index index,
                       PossibleConstantValues& info) {
-    // If this is a constant literal value, note that.
-    if (Properties::isConstantExpression(expr)) {
-      info.note(Properties::getLiteral(expr));
-      return;
-    }
-
-    // If this is an immutable global that we get, note that.
-    if (auto* get = expr->dynCast<GlobalGet>()) {
-      auto* global = getModule()->getGlobal(get->name);
-      if (global->mutable_ == Immutable) {
-        info.note(get->name);
-        return;
-      }
-    }
-
-    // Otherwise, this is not something we can reason about.
-    info.noteUnknown();
+    info.note(expr, *getModule());
   }
 
   void noteDefault(Type fieldType,

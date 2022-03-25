@@ -538,3 +538,54 @@
   )
  )
 )
+
+;; Arguments that read an immutable global can be optimized, as that is a
+;; constant value.
+(module
+ (global $imm i32 (i32.const 42))
+
+ (global $imm2 i32 (i32.const 43))
+
+ (global $mut (mut i32) (i32.const 1337))
+
+ (func $foo (param $x i32) (param $y i32)
+  ;; "Use" the params to avoid other optimizations kicking in.
+  (drop (local.get $x))
+  (drop (local.get $y))
+ )
+
+ (func $foo-caller
+  ;; Note how the mutable param has a different value in each call, which shows
+  ;; the reason that we cannot optimize in this case. But we can optimize the
+  ;; immutable param.
+  (global.set $mut (i32.const 1))
+  (call $foo
+   (global.get $imm)
+   (global.get $mut)
+  )
+  (global.set $mut (i32.const 2))
+  (call $foo
+   (global.get $imm)
+   (global.get $mut)
+  )
+ )
+
+ (func $bar (param $x i32) (param $y i32)
+  (drop (local.get $x))
+  (drop (local.get $y))
+ )
+
+ (func $bar-caller
+  ;; Corner cases of mixing mutable with immutable and mixing two immutables.
+  (global.set $mut (i32.const 1))
+  (call $bar
+   (global.get $imm)
+   (global.get $imm)
+  )
+  (global.set $mut (i32.const 2))
+  (call $bar
+   (global.get $mut)
+   (global.get $imm2)
+  )
+ )
+)
