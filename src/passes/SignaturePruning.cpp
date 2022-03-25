@@ -69,6 +69,8 @@ struct SignaturePruning : public Pass {
 
       std::unordered_set<Index> usedParams;
 
+      // If we set this to false, we may not attempt to perform any optimization
+      // whatsoever on this data.
       bool optimizable = true;
     };
 
