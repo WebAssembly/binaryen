@@ -16,6 +16,7 @@
 
 #include "ir/function-utils.h"
 #include "ir/local-graph.h"
+#include "ir/possible-constant.h"
 #include "ir/type-updating.h"
 #include "support/sorted_vector.h"
 #include "wasm.h"
@@ -44,7 +45,7 @@ std::unordered_set<Index> getUsedParams(Function* func) {
   return usedParams;
 }
 
-bool removeParameter(const std::vector<Function*> funcs,
+bool removeParameter(const std::vector<Function*>& funcs,
                      Index index,
                      const std::vector<Call*>& calls,
                      const std::vector<CallRef*>& callRefs,
@@ -137,7 +138,7 @@ bool removeParameter(const std::vector<Function*> funcs,
   return true;
 }
 
-SortedVector removeParameters(const std::vector<Function*> funcs,
+SortedVector removeParameters(const std::vector<Function*>& funcs,
                               SortedVector indexes,
                               const std::vector<Call*>& calls,
                               const std::vector<CallRef*>& callRefs,
@@ -172,6 +173,63 @@ SortedVector removeParameters(const std::vector<Function*> funcs,
     i--;
   }
   return removed;
+}
+
+SortedVector applyConstantValues(const std::vector<Function*>& funcs,
+                                 const std::vector<Call*>& calls,
+                                 const std::vector<CallRef*>& callRefs,
+                                 Module* module) {
+  assert(funcs.size() > 0);
+  auto* first = funcs[0];
+#ifndef NDEBUG
+  for (auto* func : funcs) {
+    assert(func->type == first->type);
+  }
+#endif
+
+  SortedVector optimized;
+  auto numParams = first->getNumParams();
+  for (Index i = 0; i < numParams; i++) {
+    PossibleConstantValues value;
+
+    // Processes one operand.
+    auto processOperand = [&](Expression* operand) {
+      if (auto* c = operand->dynCast<Const>()) {
+        value.note(c->value);
+        return;
+      }
+      // TODO: refnull, immutable globals, etc.
+      // Not a constant, give up
+      value.noteUnknown();
+    };
+    for (auto* call : calls) {
+      processOperand(call->operands[i]);
+      if (!value.isConstant()) {
+        break;
+      }
+    }
+    for (auto* call : callRefs) {
+      processOperand(call->operands[i]);
+      if (!value.isConstant()) {
+        break;
+      }
+    }
+    if (!value.isConstant()) {
+      continue;
+    }
+
+    // Optimize: write the constant value in the function bodies, making them
+    // ignore the parameter's value.
+    Builder builder(*module);
+    for (auto* func : funcs) {
+      func->body = builder.makeSequence(
+        builder.makeLocalSet(i, builder.makeConst(value.getConstantLiteral())),
+        func->body);
+    }
+    optimized.insert(i);
+  }
+
+  return optimized;
 }
 
 } // namespace wasm::ParamUtils
