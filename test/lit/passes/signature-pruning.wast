@@ -562,7 +562,8 @@
   )
 )
 
-;; Exports cannot be optimized in any way.
+;; Exports cannot be optimized in any way: we cannot remove parameters from
+;; them, and also we cannot apply constant parameter values either.
 (module
   ;; CHECK:      (type $sig (func_subtype (param i32) func))
   (type $sig (func_subtype (param i32) func))
