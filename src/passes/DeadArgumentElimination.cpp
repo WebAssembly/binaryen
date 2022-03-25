@@ -225,7 +225,6 @@ struct DAE : public Pass {
         continue;
       }
       auto* func = module->getFunction(name);
-      auto numParams = func->getNumParams();
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
@@ -234,39 +233,12 @@ struct DAE : public Pass {
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
       }
-      // Check if all calls pass the same constant for a particular argument.
-      for (Index i = 0; i < numParams; i++) {
-        Literal value;
-        for (auto* call : calls) {
-          assert(call->target == name);
-          assert(call->operands.size() == numParams);
-          auto* operand = call->operands[i];
-          // TODO: refnull etc.
-          if (auto* c = operand->dynCast<Const>()) {
-            if (value.type == Type::none) {
-              // This is the first value seen.
-              value = c->value;
-            } else if (value != c->value) {
-              // Not identical, give up
-              value = Literal(Type::none);
-              break;
-            }
-          } else {
-            // Not a constant, give up
-            value = Literal(Type::none);
-            break;
-          }
-        }
-        if (value.type != Type::none) {
-          // Success! We can just apply the constant in the function, which
-          // makes the parameter value unused, which lets us remove it later.
-          Builder builder(*module);
-          func->body = builder.makeSequence(
-            builder.makeLocalSet(i, builder.makeConst(value)), func->body);
-          // Mark it as unused, which we know it now is (no point to
-          // re-scan just for that).
-          infoMap[name].unusedParams.insert(i);
-        }
+      auto optimizedIndexes =
+        ParamUtils::applyConstantValues({func}, calls, {}, module);
+      for (auto i : optimizedIndexes) {
+        // Mark it as unused, which we know it now is (no point to re-scan just
+        // for that).
+        infoMap[name].unusedParams.insert(i);
       }
     }
     if (refinedReturnTypes) {
