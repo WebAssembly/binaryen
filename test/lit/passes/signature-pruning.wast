@@ -489,17 +489,38 @@
   )
 )
 
-;; Exports cannot be optimized.
+;; Exports cannot be optimized in any way.
 (module
   ;; CHECK:      (type $sig (func_subtype (param i32) func))
   (type $sig (func_subtype (param i32) func))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (export "bar" (func $bar))
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (export "foo") (type $sig) (param $i32 i32)
+  )
+
+  ;; CHECK:      (func $bar (type $sig) (param $i32 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $bar (export "bar") (type $sig) (param $i32 i32)
+  )
+
+  ;; CHECK:      (func $call-bar (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $bar
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-bar
+    (call $bar
+      (i32.const 42)
+    )
   )
 )
 

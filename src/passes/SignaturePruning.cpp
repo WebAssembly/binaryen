@@ -69,20 +69,14 @@ struct SignaturePruning : public Pass {
 
       std::unordered_set<Index> usedParams;
 
-      void markUnoptimizable(Function* func) {
-        // To prevent any optimization, mark all the params as if there were
-        // used.
-        for (Index i = 0; i < func->getNumParams(); i++) {
-          usedParams.insert(i);
-        }
-      }
+      bool optimizable = true;
     };
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           // Imports cannot be modified.
-          info.markUnoptimizable(func);
+          info.optimizable = false;
           return;
         }
 
@@ -120,6 +114,11 @@ struct SignaturePruning : public Pass {
       for (auto index : info.usedParams) {
         allUsedParams.insert(index);
       }
+
+      if (!info.optimizable) {
+        allInfo[func->type].optimizable = false;
+      }
+
       sigFuncs[func->type].push_back(func);
     }
 
@@ -127,7 +126,7 @@ struct SignaturePruning : public Pass {
     for (auto& exp : module->exports) {
       if (exp->kind == ExternalKind::Function) {
         auto* func = module->getFunction(exp->value);
-        allInfo[func->type].markUnoptimizable(func);
+        allInfo[func->type].optimizable = false;
       }
     }
 
@@ -137,6 +136,10 @@ struct SignaturePruning : public Pass {
       auto& info = allInfo[type];
       auto& usedParams = info.usedParams;
       auto numParams = sig.params.size();
+
+      if (!info.optimizable) {
+        continue;
+      }
 
       // Apply constant indexes: find the parameters that are always sent a
       // constant value, and apply that value in the function. That then makes
