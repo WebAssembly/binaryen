@@ -100,12 +100,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    Expression* value;
-    if (info.isConstantLiteral()) {
-      value = builder.makeConstantExpression(info.getConstantLiteral());
-    } else {
-      value = builder.makeGlobalGet(info.getConstantGlobal(), curr->type);
-    }
+    Expression* value = info.makeExpression(*getModule());
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;

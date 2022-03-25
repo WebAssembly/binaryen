@@ -141,6 +141,17 @@ public:
     return std::get<Name>(value);
   }
 
+  // Assuming we have a single value, make an expression containing that value.
+  Expression* makeExpression(Module& wasm) {
+    Builder builder(wasm);
+    if (isConstantLiteral()) {
+      return builder.makeConstantExpression(getConstantLiteral());
+    } else {
+      auto name = getConstantGlobal();
+      return builder.makeGlobalGet(name, wasm.getGlobal(name)->type);
+    }
+  }
+
   // Returns whether we have ever noted a value.
   bool hasNoted() const { return !std::get_if<None>(&value); }
 
