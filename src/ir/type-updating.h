@@ -351,6 +351,34 @@ public:
   // things.
   Type getTempType(Type type);
 
+  using SignatureUpdates = std::unordered_map<HeapType, Signature>;
+
+  // Helper for the repeating pattern of just updating Signature types using a
+  // map of old heap type => new Signature.
+  static void updateSignatures(const SignatureUpdates& updates, Module& wasm) {
+    if (updates.empty()) {
+      return;
+    }
+
+    class SignatureRewriter : public GlobalTypeRewriter {
+      const SignatureUpdates& updates;
+
+    public:
+      SignatureRewriter(Module& wasm, const SignatureUpdates& updates)
+        : GlobalTypeRewriter(wasm), updates(updates) {
+        update();
+      }
+
+      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
+        auto iter = updates.find(oldSignatureType);
+        if (iter != updates.end()) {
+          sig.params = getTempType(iter->second.params);
+          sig.results = getTempType(iter->second.results);
+        }
+      }
+    } rewriter(wasm, updates);
+  }
+
 private:
   TypeBuilder typeBuilder;
 
