@@ -58,6 +58,12 @@ std::unordered_set<Index> getUsedParams(Function* func);
 // use cases are either to send a single function, or to send a set of functions
 // that all have the same heap type (and so if they all do not use some
 // parameter, it can be removed from them all).
+//
+// This does *not* update the types in call_refs. It is assumed that the caller
+// will be updating types, which is simpler as there may be other locations that
+// need adjusting and it is easier to do it all in one place. Also, the caller
+// can update all the types at once throughout the program after making
+// multiple calls to removeParameter().
 bool removeParameter(const std::vector<Function*>& funcs,
                      Index index,
                      const std::vector<Call*>& calls,
