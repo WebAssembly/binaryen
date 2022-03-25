@@ -64,16 +64,21 @@ struct SignaturePruning : public Pass {
       std::vector<CallRef*> callRefs;
 
       std::unordered_set<Index> usedParams;
+
+      void markUnoptimizable(Function* func) {
+        // To prevent any optimization, mark all the params as if there were
+        // used.
+        for (Index i = 0; i < func->getNumParams(); i++) {
+          usedParams.insert(i);
+        }
+      }
     };
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
-          // Imports cannot be modified, so this blocks us, as if all the params
-          // were used.
-          for (Index i = 0; i < func->getNumParams(); i++) {
-            info.usedParams.insert(i);
-          }
+          // Imports cannot be modified.
+          info.markUnoptimizable(func);
           return;
         }
 
@@ -112,6 +117,14 @@ struct SignaturePruning : public Pass {
         allUsedParams.insert(index);
       }
       sigFuncs[func->type].push_back(func);
+    }
+
+    // Exported functions cannot be modified.
+    for (auto& exp : module->exports) {
+      if (exp->kind == ExternalKind::Function) {
+        auto* func = module->getFunction(exp->value);
+        allInfo[func->type].markUnoptimizable(func);
+      }
     }
 
     // Find parameters to prune.
