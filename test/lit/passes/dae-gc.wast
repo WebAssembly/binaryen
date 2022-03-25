@@ -96,3 +96,51 @@
   )
  )
 )
+
+;; Test ref.func and ref.null optimization of constant parameter values.
+(module
+ (global $func (ref func) (ref.func $foo))
+
+ (global $null-any (ref null any) (ref.null any))
+
+ (global $null-func (ref null func) (ref.null func))
+
+ (func $foo (param $x (ref func)) (param $y (ref func))
+  ;; "Use" the params to avoid other optimizations kicking in.
+  (drop (local.get $x))
+  (drop (local.get $y))
+ )
+
+ (func $call-foo
+  ;; Call $foo with a constant function in the first param, which we
+  ;; can optimize, but different ones in the second.
+  (call $foo
+   (ref.func $foo)
+   (ref.func $foo)
+  )
+  (call $foo
+   (ref.func $foo)
+   (ref.func $call-foo)
+  )
+ )
+
+ (func $bar (param $x (ref null any)) (param $y (ref null any))
+  ;; "Use" the params to avoid other optimizations kicking in.
+  (drop (local.get $x))
+  (drop (local.get $y))
+ )
+
+ (func $call-bar
+  ;; Call with nulls. Mixing nulls is fine as they all have the same value, and
+  ;; we can optimize. However, mixing a null with a reference stops us in the
+  ;; second param.
+  (call $bar
+   (ref.null func)
+   (ref.null func)
+  )
+  (call $bar
+   (ref.null any)
+   (ref.func $bar)
+  )
+ )
+)
