@@ -213,7 +213,7 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
     for (auto* func : funcs) {
       func->body = builder.makeSequence(
         builder.makeLocalSet(
-          i, builder.makeConstantExpression(value.getConstantLiteral())),
+          i, value.makeExpression(*module)),
         func->body);
     }
     optimized.insert(i);
