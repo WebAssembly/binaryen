@@ -158,8 +158,8 @@ struct SignaturePruning : public Pass {
         continue;
       }
 
-      // We found possible work! Find the specific params that are unused&try to
-      // prune them.
+      // We found possible work! Find the specific params that are unused & try
+      // to prune them.
       SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
         if (usedParams.count(i) == 0) {
