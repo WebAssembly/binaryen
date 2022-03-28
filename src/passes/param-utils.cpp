@@ -62,13 +62,22 @@ bool removeParameter(const std::vector<Function*>& funcs,
   // Check if none of the calls has a param with side effects that we cannot
   // remove (as if we can remove them, we will simply do that when we remove the
   // parameter). Note: flattening the IR beforehand can help here.
+  auto hasBadEffects = [&](ExpressionList& operands) {
+    return EffectAnalyzer(runner->options, *module, operands[index])
+      .hasUnremovableSideEffects();
+  };
   bool callParamsAreValid =
     std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      auto* operand = call->operands[index];
-      return EffectAnalyzer(runner->options, *module, operand)
-        .hasUnremovableSideEffects();
+      return hasBadEffects(call->operands);
     });
   if (!callParamsAreValid) {
+    return false;
+  }
+  bool callRefParamsAreValid =
+    std::none_of(callRefs.begin(), callRefs.end(), [&](CallRef* call) {
+      return hasBadEffects(call->operands);
+    });
+  if (!callRefParamsAreValid) {
     return false;
   }
 

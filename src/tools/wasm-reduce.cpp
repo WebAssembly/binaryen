@@ -279,6 +279,7 @@ struct Reducer
       "--remove-unused-nonfunction-module-elements",
       "--reorder-functions",
       "--reorder-locals",
+      // TODO: signature* passes
       "--simplify-globals",
       "--simplify-locals --vacuum",
       "--strip",

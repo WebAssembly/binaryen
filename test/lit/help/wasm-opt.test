@@ -346,6 +346,9 @@
 ;; CHECK-NEXT:   --set-globals                                 sets specified globals to
 ;; CHECK-NEXT:                                                 specified values
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --signature-pruning                           remove params from function
+;; CHECK-NEXT:                                                 signature types where possible
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --signature-refining                          apply more specific subtypes to
 ;; CHECK-NEXT:                                                 signature types where possible
 ;; CHECK-NEXT:

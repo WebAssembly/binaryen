@@ -35,8 +35,6 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
-using namespace std;
-
 namespace wasm {
 
 namespace {
@@ -227,23 +225,7 @@ struct SignatureRefining : public Pass {
     CodeUpdater(*this, *module).run(runner, module);
 
     // Rewrite the types.
-    class TypeRewriter : public GlobalTypeRewriter {
-      SignatureRefining& parent;
-
-    public:
-      TypeRewriter(Module& wasm, SignatureRefining& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
-
-      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-        auto iter = parent.newSignatures.find(oldSignatureType);
-        if (iter != parent.newSignatures.end()) {
-          sig.params = getTempType(iter->second.params);
-          sig.results = getTempType(iter->second.results);
-        }
-      }
-    };
-
-    TypeRewriter(*module, *this).update();
+    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
     if (refinedResults) {
       // After return types change we need to propagate.
