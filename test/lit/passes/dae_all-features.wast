@@ -548,11 +548,11 @@
 
  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
 
- ;; CHECK:      (global $imm i32 (i32.const 42))
- (global $imm i32 (i32.const 42))
+ ;; CHECK:      (global $immut i32 (i32.const 42))
+ (global $immut i32 (i32.const 42))
 
- ;; CHECK:      (global $imm2 i32 (i32.const 43))
- (global $imm2 i32 (i32.const 43))
+ ;; CHECK:      (global $immut2 i32 (i32.const 43))
+ (global $immut2 i32 (i32.const 43))
 
  ;; CHECK:      (global $mut (mut i32) (i32.const 1337))
  (global $mut (mut i32) (i32.const 1337))
@@ -560,7 +560,7 @@
  ;; CHECK:      (func $foo (param $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (global.get $imm)
+ ;; CHECK-NEXT:   (global.get $immut)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -597,12 +597,12 @@
   ;; immutable param.
   (global.set $mut (i32.const 1))
   (call $foo
-   (global.get $imm)
+   (global.get $immut)
    (global.get $mut)
   )
   (global.set $mut (i32.const 2))
   (call $foo
-   (global.get $imm)
+   (global.get $immut)
    (global.get $mut)
   )
  )
@@ -625,28 +625,28 @@
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $bar
- ;; CHECK-NEXT:   (global.get $imm)
- ;; CHECK-NEXT:   (global.get $imm)
+ ;; CHECK-NEXT:   (global.get $immut)
+ ;; CHECK-NEXT:   (global.get $immut)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (global.set $mut
  ;; CHECK-NEXT:   (i32.const 2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $bar
  ;; CHECK-NEXT:   (global.get $mut)
- ;; CHECK-NEXT:   (global.get $imm2)
+ ;; CHECK-NEXT:   (global.get $immut2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $bar-caller
   ;; Corner cases of mixing mutable with immutable and mixing two immutables.
   (global.set $mut (i32.const 1))
   (call $bar
-   (global.get $imm)
-   (global.get $imm)
+   (global.get $immut)
+   (global.get $immut)
   )
   (global.set $mut (i32.const 2))
   (call $bar
    (global.get $mut)
-   (global.get $imm2)
+   (global.get $immut2)
   )
  )
 )
