@@ -19,6 +19,7 @@
 
 #include <variant>
 
+#include "ir/properties.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -47,9 +48,29 @@ private:
 public:
   PossibleConstantValues() : value(None()) {}
 
-  // Note a written value as we see it, and update our internal knowledge based
-  // on it and all previous values noted. This can be called using either a
-  // Literal or a Name, so it uses a template.
+  // Notes the contents of an expression and update our internal knowledge based
+  // on it and all previous values noted.
+  void note(Expression* expr, Module& wasm) {
+    // If this is a constant literal value, note that.
+    if (Properties::isConstantExpression(expr)) {
+      note(Properties::getLiteral(expr));
+      return;
+    }
+
+    // If this is an immutable global that we get, note that.
+    if (auto* get = expr->dynCast<GlobalGet>()) {
+      auto* global = wasm.getGlobal(get->name);
+      if (global->mutable_ == Immutable) {
+        note(get->name);
+        return;
+      }
+    }
+
+    // Otherwise, this is not something we can reason about.
+    noteUnknown();
+  }
+
+  // Note either a Literal or a Name.
   template<typename T> void note(T curr) {
     if (std::get_if<None>(&value)) {
       // This is the first value.
@@ -118,6 +139,17 @@ public:
   Name getConstantGlobal() const {
     assert(isConstant());
     return std::get<Name>(value);
+  }
+
+  // Assuming we have a single value, make an expression containing that value.
+  Expression* makeExpression(Module& wasm) {
+    Builder builder(wasm);
+    if (isConstantLiteral()) {
+      return builder.makeConstantExpression(getConstantLiteral());
+    } else {
+      auto name = getConstantGlobal();
+      return builder.makeGlobalGet(name, wasm.getGlobal(name)->type);
+    }
   }
 
   // Returns whether we have ever noted a value.

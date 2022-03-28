@@ -29,7 +29,6 @@
 
 #include "ir/module-utils.h"
 #include "ir/possible-constant.h"
-#include "ir/properties.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -101,12 +100,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    Expression* value;
-    if (info.isConstantLiteral()) {
-      value = builder.makeConstantExpression(info.getConstantLiteral());
-    } else {
-      value = builder.makeGlobalGet(info.getConstantGlobal(), curr->type);
-    }
+    Expression* value = info.makeExpression(*getModule());
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
@@ -145,23 +139,7 @@ struct PCVScanner
                       HeapType type,
                       Index index,
                       PossibleConstantValues& info) {
-    // If this is a constant literal value, note that.
-    if (Properties::isConstantExpression(expr)) {
-      info.note(Properties::getLiteral(expr));
-      return;
-    }
-
-    // If this is an immutable global that we get, note that.
-    if (auto* get = expr->dynCast<GlobalGet>()) {
-      auto* global = getModule()->getGlobal(get->name);
-      if (global->mutable_ == Immutable) {
-        info.note(get->name);
-        return;
-      }
-    }
-
-    // Otherwise, this is not something we can reason about.
-    info.noteUnknown();
+    info.note(expr, *getModule());
   }
 
   void noteDefault(Type fieldType,
