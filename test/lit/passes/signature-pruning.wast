@@ -328,7 +328,6 @@
 
   (memory 1 1)
 
-
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (memory $0 1 1)
@@ -336,16 +335,11 @@
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.store
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
@@ -362,11 +356,14 @@
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT: )
   (func $caller
+    (local $x i32)
     (call $foo
-      (i32.const 0)
+      ;; (avoid passing in a constant value to avoid other opts kicking in)
+      (local.get $x)
     )
   )
 )
@@ -714,8 +711,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig-foo) (param $funcref funcref)
-    ;; This function is always called with the same constant, and we can
-    ;; apply that constant here and prune the param.
     (drop (local.get $funcref))
     (call $foo (ref.func $foo))
     (call $foo (ref.func $foo))
