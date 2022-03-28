@@ -22,6 +22,10 @@
 // looks at each heap type at a time, and if all functions with a heap type do
 // not use a particular param, will remove the param.
 //
+// Like in DAE, as part of pruning parameters this will find parameters that are
+// always sent the same constant value. We can then apply that value in the
+// function, making the parameter's value unused, which means we can prune it.
+//
 
 #include "ir/find_all.h"
 #include "ir/lubs.h"
@@ -65,20 +69,16 @@ struct SignaturePruning : public Pass {
 
       std::unordered_set<Index> usedParams;
 
-      void markUnoptimizable(Function* func) {
-        // To prevent any optimization, mark all the params as if there were
-        // used.
-        for (Index i = 0; i < func->getNumParams(); i++) {
-          usedParams.insert(i);
-        }
-      }
+      // If we set this to false, we may not attempt to perform any optimization
+      // whatsoever on this data.
+      bool optimizable = true;
     };
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           // Imports cannot be modified.
-          info.markUnoptimizable(func);
+          info.optimizable = false;
           return;
         }
 
@@ -116,6 +116,11 @@ struct SignaturePruning : public Pass {
       for (auto index : info.usedParams) {
         allUsedParams.insert(index);
       }
+
+      if (!info.optimizable) {
+        allInfo[func->type].optimizable = false;
+      }
+
       sigFuncs[func->type].push_back(func);
     }
 
@@ -123,7 +128,7 @@ struct SignaturePruning : public Pass {
     for (auto& exp : module->exports) {
       if (exp->kind == ExternalKind::Function) {
         auto* func = module->getFunction(exp->value);
-        allInfo[func->type].markUnoptimizable(func);
+        allInfo[func->type].optimizable = false;
       }
     }
 
@@ -131,17 +136,33 @@ struct SignaturePruning : public Pass {
     for (auto& [type, funcs] : sigFuncs) {
       auto sig = type.getSignature();
       auto& info = allInfo[type];
+      auto& usedParams = info.usedParams;
       auto numParams = sig.params.size();
-      if (info.usedParams.size() == numParams) {
+
+      if (!info.optimizable) {
+        continue;
+      }
+
+      // Apply constant indexes: find the parameters that are always sent a
+      // constant value, and apply that value in the function. That then makes
+      // the parameter unused (since the applied value makes us ignore the value
+      // arriving in the parameter).
+      auto optimizedIndexes = ParamUtils::applyConstantValues(
+        funcs, info.calls, info.callRefs, module);
+      for (auto i : optimizedIndexes) {
+        usedParams.erase(i);
+      }
+
+      if (usedParams.size() == numParams) {
         // All parameters are used, give up on this one.
         continue;
       }
 
-      // We found possible work! Find the specific params that are unused try to
-      // prune them.
+      // We found possible work! Find the specific params that are unused & try
+      // to prune them.
       SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
-        if (info.usedParams.count(i) == 0) {
+        if (usedParams.count(i) == 0) {
           unusedParams.insert(i);
         }
       }
