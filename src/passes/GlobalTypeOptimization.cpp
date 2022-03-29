@@ -31,7 +31,6 @@
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/small_set.h"
 #include "wasm-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -136,15 +135,15 @@ struct GlobalTypeOptimization : public Pass {
     //  * For removing unread fields, we can only remove a field if it is never
     //    read in any sub or supertype, as such a read may alias any of those
     //    types (where the field is present).
-    //    (Note that we could propagate reads only to supertypes, but we would
+    //
+    //    Note that we *can* propagate reads only to supertypes, but we are
     //    be limited in what we optimize. If type A has fields {a, b}, and its
     //    subtype B has the same fields, and if field a is only used in reads of
     //    type B, then we still cannot remove it. If we removed it then A would
     //    have fields {b}, that is, field b would be at index 0, while type B
     //    would still be {a, b} which has field b at index 1, which is not
     //    compatible. The only case in which we can optimize is to remove a
-    //    field from the end, that is, we could remove field b from A. TODO:
-    //    optimize that case.)
+    //    field from the end, that is, we could remove field b from A.
     //
     //  * For immutability, this is necessary because we cannot have a
     //    supertype's field be immutable while a subtype's is not - they must
@@ -156,7 +155,10 @@ struct GlobalTypeOptimization : public Pass {
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
     StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
+    auto subSupers = combinedSetGetInfos;
+    propagator.propagateToSuperAndSubTypes(subSupers);
+    auto subs = std::move(combinedSetGetInfos);
+    propagator.propagateToSuperAndSubTypes(subs);
 
     // Process the propagated info.
     for (auto type : propagator.subTypes.types) {
@@ -164,7 +166,8 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      auto& infos = combinedSetGetInfos[type];
+      auto& subSuper = subSupers[type];
+      auto& sub = subs[type];
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
@@ -173,7 +176,7 @@ struct GlobalTypeOptimization : public Pass {
           continue;
         }
 
-        if (infos[i].hasWrite) {
+        if (subSuper[i].hasWrite) {
           // A set exists.
           continue;
         }
@@ -184,16 +187,33 @@ struct GlobalTypeOptimization : public Pass {
         vec[i] = true;
       }
 
-      // Process removability. First, see if we can remove anything before we
-      // start to allocate info for that.
-      if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-            return !info.hasRead;
-          })) {
+      // Process removability. We check separately for the ability to
+      // remove in a general way based on sub+super-propagated info (that is,
+      // fields that are not used in sub- or super-types, and so we can
+      // definitely remove them from all the relevant types) and also in the
+      // specific way that only works for removing at the end, which as
+      // mentioned above only looks at super-types.
+      std::set<Index> removableIndexes;
+      for (Index i = 0; i < fields.size(); i++) {
+        if (!subSuper[i].hasRead) {
+          removableIndexes.insert(i);
+        }
+      }
+      for (int i = int(fields.size()) - 1; i >= 0; i--) {
+        if (!sub[i].hasRead) {
+          removableIndexes.insert(i);
+        } else {
+          // Once we see something we can't remove, we must stop, as we can only
+          // remove from the end in this case.
+          break;
+        }
+      }
+      if (!removableIndexes.empty()) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
         for (Index i = 0; i < fields.size(); i++) {
-          if (infos[i].hasRead) {
+          if (!removableIndexes.count(i)) {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;

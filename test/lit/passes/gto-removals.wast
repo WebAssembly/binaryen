@@ -635,3 +635,22 @@
     (unreachable)
   )
 )
+
+;; We can remove fields from the end if they are only used in subtypes, because
+;; the subtypes can always add fields at the end (and only at the end).
+(module
+  (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
+  (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+
+  (func $func (param $x (ref $child))
+    ;; The parent has fields 0, 1, 2, 3 and the child adds 4.
+    ;; Use fields only 1 in the parent, and all the rest in the child. We can
+    ;; only remove from the end in the child, which means we can remove 2 and 3
+    ;; in the parent, but not 0.
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $x)))
+    (drop (struct.get $child  2 (local.get $x)))
+    (drop (struct.get $child  3 (local.get $x)))
+    (drop (struct.get $child  4 (local.get $x)))
+  )
+)
