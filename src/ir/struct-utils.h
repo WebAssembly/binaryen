@@ -233,7 +233,9 @@ public:
   }
 
 private:
-  void propagate(StructValuesMap<T>& combinedInfos, bool toSubTypes, bool toSuperTypes) {
+  void propagate(StructValuesMap<T>& combinedInfos,
+                 bool toSubTypes,
+                 bool toSuperTypes) {
     UniqueDeferredQueue<HeapType> work;
     for (auto& [type, _] : combinedInfos) {
       work.push(type);
