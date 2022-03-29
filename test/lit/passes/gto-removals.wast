@@ -686,3 +686,56 @@
     (drop (struct.get $child  4 (local.get $y)))
   )
 )
+
+(module
+  ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field (mut f32)) (field f64) (field anyref) $parent))
+
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field (mut f32)) data))
+  (type $parent (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) data))
+  (type $child (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)) $parent))
+
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (struct.set $parent 2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 4
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
+    ;; As above, but add a write in the parent of field 2. That prevents us from
+    ;; removing it from the parent.
+    (struct.set $parent 2 (local.get $x) (f32.const 0))
+
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    (drop (struct.get $child  3 (local.get $y)))
+    (drop (struct.get $child  4 (local.get $y)))
+  )
+)

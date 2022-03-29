@@ -200,7 +200,13 @@ struct GlobalTypeOptimization : public Pass {
         }
       }
       for (int i = int(fields.size()) - 1; i >= 0; i--) {
-        if (!sub[i].hasRead) {
+        // Unlike above, a write would stop us here: above we propagated to both
+        // sub- and super-types, which means if we see no reads then there is no
+        // possible read of the data at all. But here we just propagated to
+        // subtypes, and so we need to care about the case where the parent
+        // writes to a field but does not read from it - we still need those
+        // writes to happen.
+        if (!sub[i].hasRead && !sub[i].hasWrite) {
           removableIndexes.insert(i);
         } else {
           // Once we see something we can't remove, we must stop, as we can only
