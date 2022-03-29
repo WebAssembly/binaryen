@@ -137,13 +137,15 @@ struct GlobalTypeOptimization : public Pass {
     //    types (where the field is present).
     //
     //    Note that we *can* propagate reads only to supertypes, but we are
-    //    be limited in what we optimize. If type A has fields {a, b}, and its
+    //    limited in what we optimize. If type A has fields {a, b}, and its
     //    subtype B has the same fields, and if field a is only used in reads of
     //    type B, then we still cannot remove it. If we removed it then A would
     //    have fields {b}, that is, field b would be at index 0, while type B
     //    would still be {a, b} which has field b at index 1, which is not
     //    compatible. The only case in which we can optimize is to remove a
     //    field from the end, that is, we could remove field b from A.
+    //    Otherwise, as mentioned before we can only remove a field if we also
+    //    remove it from all sub- and super-types.
     //
     //  * For immutability, this is necessary because we cannot have a
     //    supertype's field be immutable while a subtype's is not - they must
@@ -205,7 +207,7 @@ struct GlobalTypeOptimization : public Pass {
         // possible read of the data at all. But here we just propagated to
         // subtypes, and so we need to care about the case where the parent
         // writes to a field but does not read from it - we still need those
-        // writes to happen.
+        // writes to happen as children may read them.
         if (!sub[i].hasRead && !sub[i].hasWrite) {
           removableIndexes.insert(i);
         } else {
