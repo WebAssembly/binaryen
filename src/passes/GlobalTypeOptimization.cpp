@@ -207,7 +207,10 @@ struct GlobalTypeOptimization : public Pass {
         // possible read of the data at all. But here we just propagated to
         // subtypes, and so we need to care about the case where the parent
         // writes to a field but does not read from it - we still need those
-        // writes to happen as children may read them.
+        // writes to happen as children may read them. (Note that if no child
+        // reads this field, and since we check for reads in parents here, that
+        // means the field is not read anywhere at all, and we would have
+        // handled that case in the previous loop anyhow.)
         if (!sub[i].hasRead && !sub[i].hasWrite) {
           removableIndexes.insert(i);
         } else {
