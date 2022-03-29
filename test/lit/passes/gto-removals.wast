@@ -639,18 +639,50 @@
 ;; We can remove fields from the end if they are only used in subtypes, because
 ;; the subtypes can always add fields at the end (and only at the end).
 (module
+  ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
   (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
   (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
 
-  (func $func (param $x (ref $child))
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 4
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
     ;; The parent has fields 0, 1, 2, 3 and the child adds 4.
     ;; Use fields only 1 in the parent, and all the rest in the child. We can
     ;; only remove from the end in the child, which means we can remove 2 and 3
     ;; in the parent, but not 0.
     (drop (struct.get $parent 1 (local.get $x)))
-    (drop (struct.get $child  0 (local.get $x)))
-    (drop (struct.get $child  2 (local.get $x)))
-    (drop (struct.get $child  3 (local.get $x)))
-    (drop (struct.get $child  4 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    (drop (struct.get $child  3 (local.get $y)))
+    (drop (struct.get $child  4 (local.get $y)))
   )
 )
