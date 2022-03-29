@@ -136,6 +136,15 @@ struct GlobalTypeOptimization : public Pass {
     //  * For removing unread fields, we can only remove a field if it is never
     //    read in any sub or supertype, as such a read may alias any of those
     //    types (where the field is present).
+    //    (Note that we could propagate reads only to supertypes, but we would
+    //    be limited in what we optimize. If type A has fields {a, b}, and its
+    //    subtype B has the same fields, and if field a is only used in reads of
+    //    type B, then we still cannot remove it. If we removed it then A would
+    //    have fields {b}, that is, field b would be at index 0, while type B
+    //    would still be {a, b} which has field b at index 1, which is not
+    //    compatible. The only case in which we can optimize is to remove a
+    //    field from the end, that is, we could remove field b from A. TODO:
+    //    optimize that case.)
     //
     //  * For immutability, this is necessary because we cannot have a
     //    supertype's field be immutable while a subtype's is not - they must
