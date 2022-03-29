@@ -641,7 +641,7 @@
 (module
   ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
 
-  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) data))
   (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
   (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
 

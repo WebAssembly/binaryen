@@ -158,7 +158,7 @@ struct GlobalTypeOptimization : public Pass {
     auto subSupers = combinedSetGetInfos;
     propagator.propagateToSuperAndSubTypes(subSupers);
     auto subs = std::move(combinedSetGetInfos);
-    propagator.propagateToSuperAndSubTypes(subs);
+    propagator.propagateToSubTypes(subs);
 
     // Process the propagated info.
     for (auto type : propagator.subTypes.types) {
