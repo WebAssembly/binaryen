@@ -43,7 +43,11 @@ struct FeatureSet {
     GCNNLocals = 1 << 13,
     RelaxedSIMD = 1 << 14,
     ExtendedConst = 1 << 15,
-    All = (1 << 16) - 1
+    // GCNNLocals are opt-in: merely asking for "All" does not apply them. To
+    // get all possible values use AllPossible.
+    // setAll() below for more details.
+    All = ((1 << 16) - 1) & ~GCNNLocals,
+    AllPossible = (1 << 16) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -88,7 +92,7 @@ struct FeatureSet {
   std::string toString() const {
     std::string ret;
     uint32_t x = 1;
-    while (x & Feature::All) {
+    while (x & Feature::AllPossible) {
       if (features & x) {
         if (!ret.empty()) {
           ret += ", ";
@@ -126,7 +130,7 @@ struct FeatureSet {
   bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
   bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
   bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
-  bool hasAll() const { return (features & All) != 0; }
+  bool hasAll() const { return (features & AllPossible) != 0; }
 
   void set(FeatureSet f, bool v = true) {
     features = v ? (features | f) : (features & ~f);
@@ -161,17 +165,17 @@ struct FeatureSet {
     // --enable-gc-nn-locals -all work (that is, if we enable the feature,
     // then -all does not disable it; it simply does not enable it by itself).
     auto oldGCNNLocals = hasGCNNLocals();
-    features = All;
+    features = AllPossible;
     setGCNNLocals(oldGCNNLocals);
   }
 
   void enable(const FeatureSet& other) { features |= other.features; }
   void disable(const FeatureSet& other) {
-    features = features & ~other.features & All;
+    features = features & ~other.features & AllPossible;
   }
 
   template<typename F> void iterFeatures(F f) const {
-    for (uint32_t feature = MVP + 1; feature < All; feature <<= 1) {
+    for (uint32_t feature = MVP + 1; feature < AllPossible; feature <<= 1) {
       if (has(feature)) {
         f(static_cast<Feature>(feature));
       }
