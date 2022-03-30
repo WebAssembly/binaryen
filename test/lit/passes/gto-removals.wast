@@ -635,3 +635,157 @@
     (unreachable)
   )
 )
+
+;; We can remove fields from the end if they are only used in subtypes, because
+;; the subtypes can always add fields at the end (and only at the end).
+(module
+  ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+  (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) data))
+  (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
+
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 4
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
+    ;; The parent has fields 0, 1, 2, 3 and the child adds 4.
+    ;; Use fields only 1 in the parent, and all the rest in the child. We can
+    ;; only remove from the end in the child, which means we can remove 2 and 3
+    ;; in the parent, but not 0.
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    (drop (struct.get $child  3 (local.get $y)))
+    (drop (struct.get $child  4 (local.get $y)))
+  )
+)
+
+(module
+  ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field (mut f32)) (field f64) (field anyref) $parent))
+  (type $child (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)) $parent))
+
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field (mut f32)) data))
+  (type $parent (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) data))
+
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (struct.set $parent 2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 4
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
+    ;; As above, but add a write in the parent of field 2. That prevents us from
+    ;; removing it from the parent.
+    (struct.set $parent 2 (local.get $x) (f32.const 0))
+
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    (drop (struct.get $child  3 (local.get $y)))
+    (drop (struct.get $child  4 (local.get $y)))
+  )
+)
+
+;; A parent with two children, and there are only reads of the parent. Those
+;; reads might be of data of either child, of course (as a refernce to the
+;; parent might point to them), so we cannot optimize here.
+(module
+  ;; CHECK:      (type $parent (struct_subtype (field i32) data))
+  (type $parent (struct_subtype (field i32) data))
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+
+  ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
+  (type $child1 (struct_subtype (field i32) $parent))
+  ;; CHECK:      (type $child2 (struct_subtype (field i32) $parent))
+  (type $child2 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none) (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (local.get $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+    (drop (struct.get $parent 0 (local.get $parent)))
+  )
+)
+
+;; As above, but now the read is just of one child. We can remove the field
+;; from the parent and the other child.
+(module
+  ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
+  (type $child1 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+
+  ;; CHECK:      (type $parent (struct_subtype  data))
+  (type $parent (struct_subtype (field i32) data))
+  ;; CHECK:      (type $child2 (struct_subtype  $parent))
+  (type $child2 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none) (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child1 0
+  ;; CHECK-NEXT:    (local.get $child1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+    (drop (struct.get $child1 0 (local.get $child1)))
+  )
+)
