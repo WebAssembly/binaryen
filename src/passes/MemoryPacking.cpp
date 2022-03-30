@@ -65,8 +65,11 @@ using Replacement = std::function<Expression*(Function*)>;
 // Maps each bulk memory op to the replacement that must be applied to it.
 using Replacements = std::unordered_map<Expression*, Replacement>;
 
-// A collection of bulk memory operations referring to a particular segment
+// A collection of bulk memory operations referring to a particular segment.
 using Referrers = std::vector<Expression*>;
+
+// Map segment indices to referrers.
+using ReferrersMap = std::unordered_map<Index, Referrers>;
 
 // memory.init: 2 byte opcode + 1 byte segment index + 1 byte memory index +
 //              3 x 2 byte operands
@@ -99,9 +102,9 @@ struct MemoryPacking : public Pass {
   void run(PassRunner* runner, Module* module) override;
   bool canOptimize(const Memory& memory, const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
-  void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
+  void getSegmentReferrers(Module* module, ReferrersMap& referrers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
-                          std::vector<Referrers>& referrers);
+                          ReferrersMap& referrers);
   bool canSplit(const Memory::Segment& segment, const Referrers& referrers);
   void calculateRanges(const Memory::Segment& segment,
                        const Referrers& referrers,
@@ -133,7 +136,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
-  std::vector<Referrers> referrers(segments.size());
+  ReferrersMap referrers;
 
   if (module->features.hasBulkMemory()) {
     // Optimize out memory.inits and data.drops that can be entirely replaced
@@ -442,15 +445,14 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
 }
 
 void MemoryPacking::getSegmentReferrers(Module* module,
-                                        std::vector<Referrers>& referrers) {
-  auto collectReferrers = [&](Function* func,
-                              std::vector<Referrers>& referrers) {
+                                        ReferrersMap& referrers) {
+  auto collectReferrers = [&](Function* func, ReferrersMap& referrers) {
     if (func->imported()) {
       return;
     }
     struct Collector : WalkerPass<PostWalker<Collector>> {
-      std::vector<Referrers>& referrers;
-      Collector(std::vector<Referrers>& referrers) : referrers(referrers) {}
+      ReferrersMap& referrers;
+      Collector(ReferrersMap& referrers) : referrers(referrers) {}
 
       void visitMemoryInit(MemoryInit* curr) {
         referrers[curr->segment].push_back(curr);
@@ -459,48 +461,53 @@ void MemoryPacking::getSegmentReferrers(Module* module,
         referrers[curr->segment].push_back(curr);
       }
       void doWalkFunction(Function* func) {
-        referrers.resize(getModule()->memory.segments.size());
         super::doWalkFunction(func);
       }
     } collector(referrers);
     collector.walkFunctionInModule(func, module);
   };
-  ModuleUtils::ParallelFunctionAnalysis<std::vector<Referrers>> analysis(
+  ModuleUtils::ParallelFunctionAnalysis<ReferrersMap> analysis(
     *module, collectReferrers);
-  referrers.resize(module->memory.segments.size());
-  for (auto& pair : analysis.map) {
-    std::vector<Referrers>& funcReferrers = pair.second;
-    for (size_t i = 0; i < funcReferrers.size(); ++i) {
+  for (auto& [_, funcReferrersMap] : analysis.map) {
+    for (auto& [i, segReferrers] : funcReferrersMap) {
       referrers[i].insert(
-        referrers[i].end(), funcReferrers[i].begin(), funcReferrers[i].end());
+        referrers[i].end(), segReferrers.begin(), segReferrers.end());
     }
   }
 }
 
 void MemoryPacking::dropUnusedSegments(std::vector<Memory::Segment>& segments,
-                                       std::vector<Referrers>& referrers) {
+                                       ReferrersMap& referrers) {
   std::vector<Memory::Segment> usedSegments;
-  std::vector<Referrers> usedReferrers;
+  ReferrersMap usedReferrers;
   // Remove segments that are never used
   // TODO: remove unused portions of partially used segments as well
+  size_t newSegIndex = 0;
   for (size_t i = 0; i < segments.size(); ++i) {
     bool used = false;
+    auto referrersIt = referrers.find(i);
+    bool hasReferrers = referrersIt != referrers.end();
     if (segments[i].isPassive) {
-      for (auto* referrer : referrers[i]) {
-        if (referrer->is<MemoryInit>()) {
-          used = true;
-          break;
+      if (hasReferrers) {
+        for (auto* referrer : referrersIt->second) {
+          if (referrer->is<MemoryInit>()) {
+            used = true;
+            break;
+          }
         }
       }
     } else {
+      // Active segment.
       used = true;
     }
     if (used) {
-      usedSegments.push_back(segments[i]);
-      usedReferrers.push_back(referrers[i]);
-    } else {
+      usedSegments.push_back(std::move(segments[i]));
+      if (hasReferrers) {
+        usedReferrers[newSegIndex++] = std::move(referrersIt->second);
+      }
+    } else if (hasReferrers) {
       // All referrers are data.drops. Make them nops.
-      for (auto* referrer : referrers[i]) {
+      for (auto* referrer : referrersIt->second) {
         ExpressionManipulator::nop(referrer);
       }
     }
