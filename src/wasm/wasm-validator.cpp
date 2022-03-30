@@ -2729,7 +2729,9 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    bool valid = getModule()->features.hasGCNNLocals() ? var.isDefaultableOrNonNullable() : var.isDefaultable();
+    bool valid = getModule()->features.hasGCNNLocals()
+                   ? var.isDefaultableOrNonNullable()
+                   : var.isDefaultable();
     shouldBeTrue(valid, var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
