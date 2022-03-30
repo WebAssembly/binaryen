@@ -1021,6 +1021,18 @@ bool Type::isDefaultable() const {
   return isConcrete() && !isNonNullable() && !isRtt();
 }
 
+bool Type::isDefaultableOrNonNullable() const {
+  if (isTuple()) {
+    for (auto t : *this) {
+      if (!t.isDefaultableOrNonNullable()) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return isConcrete() && !isRtt();
+}
+
 Nullability Type::getNullability() const {
   return isNullable() ? Nullable : NonNullable;
 }

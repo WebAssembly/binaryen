@@ -186,6 +186,13 @@ public:
   bool isArray() const;
   bool isDefaultable() const;
 
+  // Check if a type is either defaultable or non-nullable. This is useful in
+  // the case where we allow non-nullable types, but we disallow other things
+  // that are non-defaultable. For example, with GC-non-nullable references are
+  // allowed we can have  a non-nullable reference, but we cannot have any other
+  // nondefaultable type.
+  bool isDefaultableOrNonNullable() const;
+
   Nullability getNullability() const;
 
 private:

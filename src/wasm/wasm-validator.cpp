@@ -2728,11 +2728,9 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(result.isConcrete(), curr, "results must be concretely typed");
   }
   for (const auto& var : curr->vars) {
-    if (var.isRef() && getModule()->features.hasGCNNLocals()) {
-      continue;
-    }
     features |= var.getFeatures();
-    shouldBeTrue(var.isDefaultable(), var, "vars must be defaultable");
+    bool valid = getModule()->features.hasGCNNLocals() ? var.isDefaultableOrNonNullable() : var.isDefaultable();
+    shouldBeTrue(valid, var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
