@@ -739,3 +739,28 @@
     (drop (struct.get $child  4 (local.get $y)))
   )
 )
+
+;; A parent with two children, and there are only reads of the parent. Those
+;; reads might be of data of either child, of course (as a refernce to the
+;; parent might point to them), so we cannot optimize here.
+(module
+  ;; CHECK:      (type $parent (struct_subtype (field i32) data))
+  (type $parent (struct_subtype (field i32) data))
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+
+  ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
+  (type $child1 (struct_subtype (field i32) $parent))
+  ;; CHECK:      (type $child2 (struct_subtype (field i32) $parent))
+  (type $child2 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none) (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (local.get $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+    (drop (struct.get $parent 0 (local.get $parent)))
+  )
+)
