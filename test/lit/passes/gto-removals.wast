@@ -764,3 +764,28 @@
     (drop (struct.get $parent 0 (local.get $parent)))
   )
 )
+
+;; As above, but now the read is just of one child. We can remove the field
+;; from the parent and the other child.
+(module
+  ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
+  (type $child1 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+
+  ;; CHECK:      (type $parent (struct_subtype  data))
+  (type $parent (struct_subtype (field i32) data))
+  ;; CHECK:      (type $child2 (struct_subtype  $parent))
+  (type $child2 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none) (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child1 0
+  ;; CHECK-NEXT:    (local.get $child1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+    (drop (struct.get $child1 0 (local.get $child1)))
+  )
+)
