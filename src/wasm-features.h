@@ -44,8 +44,8 @@ struct FeatureSet {
     RelaxedSIMD = 1 << 14,
     ExtendedConst = 1 << 15,
     // GCNNLocals are opt-in: merely asking for "All" does not apply them. To
-    // get all possible values use AllPossible.
-    // setAll() below for more details.
+    // get all possible values use AllPossible. See setAll() below for more
+    // details.
     All = ((1 << 16) - 1) & ~GCNNLocals,
     AllPossible = (1 << 16) - 1,
   };
