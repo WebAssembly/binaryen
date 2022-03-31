@@ -2656,24 +2656,25 @@ void WasmBinaryBuilder::pushExpression(Expression* curr) {
     // Store tuple to local and push individual extracted values
     Builder builder(wasm);
     // Non-nullable types require special handling as they cannot be stored to
-    // a local.
-    std::vector<Type> finalTypes;
+    // a local, so we may need to use a different local type than the original.
+    auto localType = type;
     if (!wasm.features.hasGCNNLocals()) {
+      std::vector<Type> finalTypes;
       for (auto t : type) {
         if (t.isNonNullable()) {
           t = Type(t.getHeapType(), Nullable);
         }
         finalTypes.push_back(t);
       }
+      localType = Type(Tuple(finalTypes));
     }
-    auto nullableType = Type(Tuple(finalTypes));
     requireFunctionContext("pushExpression-tuple");
-    Index tuple = builder.addVar(currFunction, nullableType);
+    Index tuple = builder.addVar(currFunction, localType);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
-    for (Index i = 0; i < nullableType.size(); ++i) {
+    for (Index i = 0; i < localType.size(); ++i) {
       Expression* value =
-        builder.makeTupleExtract(builder.makeLocalGet(tuple, nullableType), i);
-      if (nullableType[i] != type[i]) {
+        builder.makeTupleExtract(builder.makeLocalGet(tuple, localType), i);
+      if (localType[i] != type[i]) {
         // We modified this to be nullable; undo that.
         value = builder.makeRefAs(RefAsNonNull, value);
       }

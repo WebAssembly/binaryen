@@ -1,0 +1,6 @@
+# Verify stacky non-nullable tuples binary can be parsed correctly. The wasm
+# contains code that puts such a tuple on the stack and then accesses its
+# elements, which forces us to use a local to store the tuple. This test checks
+# we do not assert or fail to validate while doing so.
+
+RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all
