@@ -46,7 +46,8 @@
   (local $y ((ref any) (ref any)))
   ;; Set values into the tuple locals and use them.
   ;; Note that while the values are the same, we do not optimize them because
-  ;; of current limitations on tuple handling in this pass.
+  ;; of current limitations on tuple handling in this pass, so we are mainly
+  ;; testing for not crashing here.
   (local.set $x
    (tuple.make
     (local.get $any)
