@@ -89,7 +89,8 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   // TODO: add stack max check
   Expression* added;
   if (PointerType == Type::i32) {
-    added = builder.makeBinary(AddInt32,
+    // The stack goes downward in the LLVM wasm backend.
+    added = builder.makeBinary(SubInt32,
                                builder.makeLocalGet(local, PointerType),
                                builder.makeConst(int32_t(size)));
   } else {
@@ -128,10 +129,10 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
     // no need to restore the old stack value, we're gone anyhow
   } else {
     // save the return value
-    auto temp = builder.addVar(func, func->sig.results);
+    auto temp = builder.addVar(func, func->getResults());
     block->list.push_back(builder.makeLocalSet(temp, func->body));
     block->list.push_back(makeStackRestore());
-    block->list.push_back(builder.makeLocalGet(temp, func->sig.results));
+    block->list.push_back(builder.makeLocalGet(temp, func->getResults()));
   }
   block->finalize();
   func->body = block;
