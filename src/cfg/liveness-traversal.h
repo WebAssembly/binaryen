@@ -171,6 +171,10 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     return nullptr;
   }
 
+  bool canRun(Function*) {
+    return true;
+  }
+
   // main entry point
 
   void doWalkFunction(Function* func) {
