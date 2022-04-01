@@ -268,8 +268,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     }
   }
 
-  static std::vector<uint8_t>::size_type indexPairToLinearIndex(Index i,
-                                                                Index j) {
+  std::vector<uint8_t>::size_type indexPairToLinearIndex(Index i,
+                                                         Index j) {
     return (std::vector<uint8_t>::size_type)std::min((uint64_t)i, (uint64_t)j) *
              numLocals +
            std::max((uint64_t)i, (uint64_t)j);
