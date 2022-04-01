@@ -176,12 +176,16 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
     uint64_t newSize = (uint64_t)numLocals * (uint64_t)numLocals;
-    assert(newSize <= std::numeric_limits<size_t>::max() && "More locals that can fit into a size_t to run liveness analysis!");
+    assert(newSize <= std::numeric_limits<size_t>::max() &&
+           "More locals that can fit into a size_t to run liveness analysis!");
     // Erase old elements to zero, and insert new zeros if array size grows.
-    std::fill(copies.begin(), copies.begin() + std::min(newSize, copies.size()), 0);
+    std::fill(
+      copies.begin(), copies.begin() + std::min(newSize, copies.size()), 0);
     copies.resize(newSize);
     // Likewise for totalCopies array
-    std::fill(totalCopies.begin(), totalCopies.begin() + std::min(totalCopies.size() + numLocals), 0);
+    std::fill(totalCopies.begin(),
+              totalCopies.begin() + std::min(totalCopies.size() + numLocals),
+              0);
     totalCopies.resize(numLocals);
     // create the CFG by walking the IR
     CFGWalker<SubType, VisitorType, Liveness>::doWalkFunction(func);
@@ -264,8 +268,11 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     }
   }
 
-  static std::vector<uint8_t>::size_type indexPairToLinearIndex(Index i, Index j) {
-    return (std::vector<uint8_t>::size_type)std::min((uint64_t)i, (uint64_t)j) * numLocals + std::max((uint64_t)i, (uint64_t)j);
+  static std::vector<uint8_t>::size_type indexPairToLinearIndex(Index i,
+                                                                Index j) {
+    return (std::vector<uint8_t>::size_type)std::min((uint64_t)i, (uint64_t)j) *
+             numLocals +
+           std::max((uint64_t)i, (uint64_t)j);
   }
 
   void addCopy(Index i, Index j) {
