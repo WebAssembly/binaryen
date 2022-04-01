@@ -209,7 +209,7 @@ void CoalesceLocals::calculateInterferences() {
 
       for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
         auto type = func->getLocalType(i);
-        if (type.isNonNullable()) {
+        if (type.containsNonNullable()) {
           // A non-nullable value cannot be used anyhow, but we must give it
           // some value. A unique one seems least likely to result in surprise
           // during debugging.
