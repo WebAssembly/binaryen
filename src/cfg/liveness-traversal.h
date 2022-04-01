@@ -179,12 +179,14 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     assert(newSize <= std::numeric_limits<size_t>::max() &&
            "More locals that can fit into a size_t to run liveness analysis!");
     // Erase old elements to zero, and insert new zeros if array size grows.
-    std::fill(
-      copies.begin(), copies.begin() + std::min<uint64_t>(newSize, copies.size()), 0);
+    std::fill(copies.begin(),
+              copies.begin() + std::min<uint64_t>(newSize, copies.size()),
+              0);
     copies.resize(newSize);
     // Likewise for totalCopies array
     std::fill(totalCopies.begin(),
-              totalCopies.begin() + std::min<uint64_t>(totalCopies.size(), numLocals),
+              totalCopies.begin() +
+                std::min<uint64_t>(totalCopies.size(), numLocals),
               0);
     totalCopies.resize(numLocals);
     // create the CFG by walking the IR
