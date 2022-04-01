@@ -181,11 +181,6 @@ public:
   // is irrelevant. (For that reason, this is only the negation of isNullable()
   // on references, but both return false on non-references.)
   bool isNonNullable() const;
-  // As isNonNullable(), but also returns true in the case of a tuple that
-  // contains at least one field that is non-nullable (that is, it also looks
-  // into tuple fields, while isNonNullable() returns false for a tuple because
-  // it is not a reference).
-  bool containsNonNullable() const;
   bool isRtt() const;
   bool isStruct() const;
   bool isArray() const;

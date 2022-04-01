@@ -209,10 +209,11 @@ void CoalesceLocals::calculateInterferences() {
 
       for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
         auto type = func->getLocalType(i);
-        if (type.containsNonNullable()) {
-          // A non-nullable value cannot be used anyhow, but we must give it
-          // some value. A unique one seems least likely to result in surprise
-          // during debugging.
+        if (!LiteralUtils::canMakeZero(type)) {
+          // The default value for a type for which we can't make a zero cannot
+          // be used anyhow, but we must give it some value in this analysis. A
+          // unique one seems least likely to result in surprise during
+          // debugging.
           values[i] = valueNumbering.getUniqueValue();
         } else {
           values[i] = valueNumbering.getValue(Literal::makeZeros(type));

@@ -994,18 +994,6 @@ bool Type::isNonNullable() const {
   }
 }
 
-bool Type::containsNonNullable() const {
-  if (isTuple()) {
-    for (auto t : *this) {
-      if (!t.isNonNullable()) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return isNonNullable();
-}
-
 bool Type::isRtt() const {
   if (isBasic()) {
     return false;
