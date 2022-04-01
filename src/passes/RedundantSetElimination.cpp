@@ -175,7 +175,7 @@ struct RedundantSetElimination
             std::cout << "new param value for " << i << '\n';
 #endif
             start[i] = getUniqueValue();
-          } else if (type.isNonNullable()) {
+          } else if (type.containsNonNullable()) {
 #ifdef RSE_DEBUG
             std::cout << "new unique value for non-nullable " << i << '\n';
 #endif
