@@ -204,7 +204,7 @@ This repository contains code that builds the following tools in `bin/`:
    performs emscripten-specific passes over it.
  * **wasm-ctor-eval**: A tool that can execute functions (or parts of functions)
    at compile time.
- * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
+ * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
 
