@@ -184,7 +184,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     copies.resize(newSize);
     // Likewise for totalCopies array
     std::fill(totalCopies.begin(),
-              totalCopies.begin() + std::min(totalCopies.size() + numLocals),
+              totalCopies.begin() + std::min(totalCopies.size(), numLocals),
               0);
     totalCopies.resize(numLocals);
     // create the CFG by walking the IR
