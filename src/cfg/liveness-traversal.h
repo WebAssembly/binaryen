@@ -171,30 +171,18 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     return nullptr;
   }
 
-  // If there are too many locals, we cannot run currently as
-  // numLocals * numLocals might overflow. We may want to add an option for
-  // a sparse matrix at some point TODO
-  bool canRun(Function* func) {
-    Index numLocals = func->getNumLocals();
-    if (uint64_t(numLocals) * uint64_t(numLocals) <=
-        std::numeric_limits<Index>::max()) {
-      return true;
-    }
-    std::cerr << "warning: too many locals (" << numLocals
-              << ") to run liveness analysis in " << this->getFunction()->name
-              << '\n';
-    return false;
-  }
-
   // main entry point
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
-    assert(canRun(func));
-    copies.resize(numLocals * numLocals);
-    std::fill(copies.begin(), copies.end(), 0);
+    uint64_t newSize = (uint64_t)numLocals * (uint64_t)numLocals;
+    assert(newSize <= std::numeric_limits<size_t>::max() && "More locals that can fit into a size_t to run liveness analysis!");
+    // Erase old elements to zero, and insert new zeros if array size grows.
+    std::fill(copies.begin(), copies.begin() + std::min(newSize, copies.size()), 0);
+    copies.resize(newSize);
+    // Likewise for totalCopies array
+    std::fill(totalCopies.begin(), totalCopies.begin() + std::min(totalCopies.size() + numLocals), 0);
     totalCopies.resize(numLocals);
-    std::fill(totalCopies.begin(), totalCopies.end(), 0);
     // create the CFG by walking the IR
     CFGWalker<SubType, VisitorType, Liveness>::doWalkFunction(func);
     // ignore links to dead blocks, so they don't confuse us and we can see
@@ -276,15 +264,19 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     }
   }
 
+  static std::vector<uint8_t>::size_type indexPairToLinearIndex(Index i, Index j) {
+    return (std::vector<uint8_t>::size_type)std::min((uint64_t)i, (uint64_t)j) * numLocals + std::max((uint64_t)i, (uint64_t)j);
+  }
+
   void addCopy(Index i, Index j) {
-    auto k = std::min(i, j) * numLocals + std::max(i, j);
+    auto k = indexPairToLinearIndex(i, j);
     copies[k] = std::min(copies[k], uint8_t(254)) + 1;
     totalCopies[i]++;
     totalCopies[j]++;
   }
 
   uint8_t getCopies(Index i, Index j) {
-    return copies[std::min(i, j) * numLocals + std::max(i, j)];
+    return copies[indexPairToLinearIndex(i, j)];
   }
 };
 
