@@ -85,40 +85,47 @@ void PossibleTypesOracle::analyze() {
   struct ExpressionLocation {
     Expression* expr;
     TypeSet types;
+    ExpressionLocation(Expression* expr) : expr(expr) {}
   };
 
   struct ResultLocation {
     Function* func;
     Index index;
     TypeSet types;
+    ResultLocation(Function* func, Index index) : func(func), index(index) {}
   };
 
   struct LocalLocation {
     Function* func;
     Index index;
     TypeSet types;
+    LocalLocation(Function* func, Index index) : func(func), index(index) {}
   };
 
   struct BranchLocation {
     Function* func;
     Name target;
     TypeSet types;
+    BranchLocation(Function* func, Name target) : func(func), target(target) {}
   };
 
   struct GlobalLocation {
     Name name;
     TypeSet types;
+    GlobalLocation(Name name) : name(name) {}
   };
 
   struct TableLocation {
     Name name;
     TypeSet types;
+    TableLocation(Name name) : name(name) {}
   };
 
   struct SignatureParamLocation {
     HeapType type;
     Index index;
     TypeSet types;
+    SignatureParamLocation(HeapType type, Index index) : type(type), index(index) {}
   };
   // TODO: result, and use that
 
@@ -126,11 +133,13 @@ void PossibleTypesOracle::analyze() {
     HeapType type;
     Index index;
     TypeSet types;
+    StructLocation(HeapType type, Index index) : type(type), index(index) {}
   };
 
   struct ArrayLocation {
     HeapType type;
     TypeSet types;
+    ArrayLocation(HeapType type) : type(type) {}
   };
 
   // A location is a variant over all the possible types of locations that we
@@ -172,7 +181,7 @@ void PossibleTypesOracle::analyze() {
     std::vector<FuncConnection> connections;
   };
 
-  ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+  ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
       if (func->imported()) {
         // TODO: add an option to not always assume a closed world, in which
@@ -200,7 +209,7 @@ void PossibleTypesOracle::analyze() {
             curr, [&](Name target, Expression* value) {
               if (value && value->type.isRef()) {
                 info.connections.push_back(
-                  {ExpressionLocation{value}, BranchLocation{target}});
+                  {ExpressionLocation(value), BranchLocation(target)});
               }
             });
 
@@ -208,7 +217,7 @@ void PossibleTypesOracle::analyze() {
           if (curr->type.isRef()) {
             BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
               info.connections.push_back(
-                {BranchLocation{target}, ExpressionLocation{curr}});
+                {BranchLocation(target), ExpressionLocation(curr)});
             });
           }
 
@@ -223,7 +232,7 @@ void PossibleTypesOracle::analyze() {
               continue;
             }
             info.connections.push_back(
-              {ExpressionLocation{child}, ExpressionLocation{curr}});
+              {ExpressionLocation(child), ExpressionLocation(curr)});
           }
         }
 
@@ -233,7 +242,7 @@ void PossibleTypesOracle::analyze() {
           if (curr->type->isRef()) {
             info.connections.push_back(
               {LocalLocation(getFunction(), curr->index),
-               ExpressionLocation{curr}});
+               ExpressionLocation(curr)});
           }
         }
         void visitLocalSet(LocalSet* curr) {
@@ -241,7 +250,7 @@ void PossibleTypesOracle::analyze() {
             return;
           }
           info.connections.push_back(
-            {ExpressionLocation{curr->value},
+            {ExpressionLocation(curr->value),
              LocalLocation(getFunction(), curr->index)});
           if (curr->isTee()) {
             info.connections.push_back(
@@ -253,13 +262,13 @@ void PossibleTypesOracle::analyze() {
         void visitGlobalGet(GlobalGet* curr) {
           if (curr->type.isRef()) {
             info.connections.push_back(
-              {GlobalLocation{curr->name}, ExpressionLocation{curr}});
+              {GlobalLocation(curr->name), ExpressionLocation(curr)});
           }
         }
         void visitGlobalSet(GlobalSet* curr) {
           if (curr->value->type.isRef()) {
             info.connections.push_back(
-              {ExpressionLocation{curr->value}, GlobalLocation{curr->name}});
+              {ExpressionLocation(curr->value), GlobalLocation(curr->name)});
           }
         }
 
@@ -270,7 +279,7 @@ void PossibleTypesOracle::analyze() {
           for (auto* operand : operands) {
             if (operand->type->isRef()) {
               info.connections.push_back(
-                {ExpressionLocation{operand}, makeTarget(i)});
+                {ExpressionLocation(operand), makeTarget(i)});
             }
             i++;
           }
@@ -278,13 +287,13 @@ void PossibleTypesOracle::analyze() {
         void visitCall(Call* curr) {
           auto* target = getModule()->getFunction(curr->name);
           handleCall(curr->operands, [&](Index i) {
-            return LocalLocation{target, i};
+            return LocalLocation(target, i);
           });
         }
         void visitCallIndirect(CallIndirect* curr) {
           auto target = curr->heapType;
           handleCall(curr->operands, [&](Index i) {
-            return SignatureParamLocation{target, i};
+            return SignatureParamLocation(target, i);
           });
         }
         void visitCallRef(CallRef* curr) {
@@ -292,7 +301,7 @@ void PossibleTypesOracle::analyze() {
           if (targetType.isRef()) {
             auto target = targetType.getHeapType();
             handleCall(curr->operands, [&](Index i) {
-              return SignatureParamLocation{target, i};
+              return SignatureParamLocation(target, i);
             });
           }
         }
@@ -300,28 +309,28 @@ void PossibleTypesOracle::analyze() {
         // Struct operations access the struct fields' locations.
         void visitStructGet(StructGet* curr) {
           if (curr->type.isRef()) {
-            info.connections.push_back({StructLocation{curr->name, curr->index},
-                                        ExpressionLocation{curr}});
+            info.connections.push_back({StructLocation(curr->name, curr->index),
+                                        ExpressionLocation(curr)});
           }
         }
         void visitStructSet(StructSet* curr) {
           if (curr->value->type.isRef()) {
             info.connections.push_back(
-              {ExpressionLocation{curr->value},
-               StructLocation{curr->name, curr->index}});
+              {ExpressionLocation(curr->value),
+               StructLocation(curr->name, curr->index)});
           }
         }
         // Array operations access the array's location.
         void visitArrayGet(ArrayGet* curr) {
           if (curr->type.isRef()) {
             info.connections.push_back(
-              {ArrayLocation{curr->name}, ExpressionLocation{curr}});
+              {ArrayLocation(curr->name), ExpressionLocation(curr)});
           }
         }
         void visitArraySet(ArraySet* curr) {
           if (curr->value->type.isRef()) {
             info.connections.push_back(
-              {ExpressionLocation{curr->value}, ArrayLocation{curr->name}});
+              {ExpressionLocation(curr->value), ArrayLocation(curr->name)});
           }
         }
 
@@ -329,13 +338,13 @@ void PossibleTypesOracle::analyze() {
         void visitTableGet(TableGet* curr) {
           if (curr->type.isRef()) {
             info.connections.push_back(
-              {TableLocation{curr->name}, ExpressionLocation{curr}});
+              {TableLocation(curr->name), ExpressionLocation(curr)});
           }
         }
         void visitTableSet(TableSet* curr) {
           if (curr->value->type.isRef()) {
             info.connections.push_back(
-              {ExpressionLocation{curr->value}, TableLocation{curr->name}});
+              {ExpressionLocation(curr->value), TableLocation(curr->name)});
           }
         }
 
@@ -348,7 +357,7 @@ void PossibleTypesOracle::analyze() {
           if (body->type.isRef()) {
             if (!body->type.isTuple()) {
               info.connections.push_back(
-                {ExpressionLocation{child}, ResultLocation{func, 0}});
+                {ExpressionLocation(child), ResultLocation(func, 0)});
             } else {
               WASM_UNREACHABLE("multivalue function result support");
             }
