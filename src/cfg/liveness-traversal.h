@@ -106,8 +106,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   Index numLocals;
   std::unordered_set<BasicBlock*> liveBlocks;
-  // access as a upper triangular matrix: i.e. when accessing a pair (i,j), should access
-  // the cell i < j.
+  // access as a upper triangular matrix: i.e. when accessing a pair (i,j),
+  // should access the cell i < j.
   sparse_square_matrix<uint8_t> copies;
 
   // total # of copies for each local, with all others
