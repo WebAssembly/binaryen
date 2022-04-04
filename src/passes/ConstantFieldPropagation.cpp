@@ -83,38 +83,38 @@ public:
 };
 
 void PossibleTypesOracle::analyze() {
-  // Define a struct for each "location" that can store types.
-  struct ExpressionTypes {
+  // Define the data for each "location" that can store types.
+  struct ExpressionLocation {
     Expression* expr;
     TypeSet types;
   };
 
-  struct ResultTypes {
+  struct ResultLocation {
     Function* func;
     Index index;
     TypeSet types;
   };
 
-  struct LocalTypes {
+  struct LocalLocation {
     Function* func;
     Index index;
     TypeSet types;
   };
 
-  struct StructTypes {
+  struct StructLocation {
     HeapType type;
     Index index;
     TypeSet types;
   };
 
-  struct ArrayTypes {
+  struct ArrayLocation {
     HeapType type;
     TypeSet types;
   };
 
   // A location is a variant over all the possible types of locations that we
   // have.
-  using LocationTypes = std::variant<ExpressionTypes, ResultTypes, LocalTypes, StructTypes, ArrayTypes>;
+  using Location = std::variant<ExpressionLocation, ResultLocation, LocalLocation, StructLocation, ArrayLocation>;
 
   // A connection indicates a flow of types from one location to another. For
   // example, if we do a local.get and return that value from a function, then
@@ -144,15 +144,86 @@ void PossibleTypesOracle::analyze() {
   };
 
   ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
-    *module, [&](Function* func, FuncInfo& info) {
+    wasm, [&](Function* func, FuncInfo& info) {
       if (func->imported()) {
         // TODO: add an option to not always assume a closed world, in which
         //       case we'd need to track values escaping etc.
         return;
       }
 
-      str
-      info.sets = std::move(FindAll<GlobalSet>(func->body).list);
+      struct ConnectionFinder : public PostWalker<ConnectionFinder, UnifiedExpressionVisitor<ConnectionFinder>> {
+        FuncInfo& info;
+
+        ConnectionFinder(FuncInfo& info) : info(info) {}
+
+        // Each visit*() call is responsible for connection the children of a
+        // node to that node. Responsibility for connecting the node's output to
+        // the outside (another expression or the function itself, if we are at
+        // the top level) is the responsibility of the outside.
+
+        // The default behavior is to connect all input expressions to the
+        // current one, as it might return an output that includes them.
+        void visitExpression(Expression* curr) {
+          if (!curr->type->isRef()) {
+            return;
+          }
+
+          for (auto* child : ChildIterator(curr)) {
+            if (!child->type->isRef()) {
+              continue;
+            }
+            info.connections.push_back({ExpressionLocation{child}, ExpressionLocation{curr}});
+          }
+        }
+
+        // Locals read and write to their index.
+        // TODO: we could use a LocalGraph for better precision
+        void visitLocalGet(LocalGet* curr) {
+          if (curr->type->isRef()) {
+            info.connections.push_back({LocalLocation(getFunction(), curr->index), ExpressionLocation{curr}});
+          }
+        }
+        void visitLocalSet(LocalSet* curr) {
+          if (!curr->value->type->isRef()) {
+            return;
+          }
+          info.connections.push_back({ExpressionLocation{curr->value}, LocalLocation(getFunction(), curr->index)});
+          if (curr->isTee()) {
+            info.connections.push_back({ExpressionLocation(curr->value), ExpressionLocation(curr)});
+          }
+        }
+
+        // Calls send values to params in their possible targets.
+        void visitCall(Call* curr) {
+          Index i = 0;
+          for (auto* operand : curr->operands) {
+            if (operand->type->isRef()) {
+              info.connections.push_back({ExpressionLocation{operand}, LocalLocation{target, i}});
+            }
+            i++;
+          }
+        }
+        void visitCallIndirect(CallIndirect* curr) {
+        }
+        void visitCallRef(CallRef* curr) {
+        }
+
+
+        void visitFunction(Function* func) {
+          // Functions with a result can flow a value out from their body.
+          auto* body = func->body;
+          if (body->type.isRef()) {
+            if (!body->type.isTuple()) {
+              info.connections.push_back({ExpressionLocation{child}, ResultLocation{func, 0}});
+            } else {
+              WASM_UNREACHABLE("multivalue function result support");
+            }
+          }
+        }
+      };
+      ConnectionFinder finder(info);
+      finder.setFunction(func);
+      finder.walk(func->body);
     });
 
   // A map of globals to the lub for that global.
