@@ -106,11 +106,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   Index numLocals;
   std::unordered_set<BasicBlock*> liveBlocks;
-  // canonicalized - accesses should check (low, high)
-
-  // When the number of locals is low, use a dense N*N matrix to store
-  // counts of copies. When the number of locals is high, use a sparse
-  // hash map instead.
+  // access as a upper triangular matrix: i.e. when accessing a pair (i,j), should access
+  // the cell i < j.
   sparse_square_matrix<uint8_t> copies;
 
   // total # of copies for each local, with all others
@@ -269,12 +266,20 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   }
 
   void addCopy(Index i, Index j) {
+    if (j > i) {
+      std::swap(i, j);
+    }
     copies.set(i, j, std::min(copies.get(i, j), uint8_t(254)) + 1);
     totalCopies[i]++;
     totalCopies[j]++;
   }
 
-  uint8_t getCopies(Index i, Index j) { return copies.get(i, j); }
+  uint8_t getCopies(Index i, Index j) {
+    if (j > i) {
+      std::swap(i, j);
+    }
+    return copies.get(i, j);
+  }
 };
 
 } // namespace wasm
