@@ -35,6 +35,7 @@
 #include "pass.h"
 #include "support/learning.h"
 #include "support/permutations.h"
+#include "support/sparse_square_matrix.h"
 #include "wasm.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
@@ -76,27 +77,28 @@ struct CoalesceLocals
   // interference state
 
   // canonicalized - accesses should check (low, high)
-  std::vector<bool> interferences;
+  //std::vector<bool> interferences;
+  sparse_square_matrix<bool> interferencesM;
 
   void interfere(Index i, Index j) {
     if (i == j) {
       return;
     }
-    interferences[std::min(i, j) * numLocals + std::max(i, j)] = 1;
+    interferencesM.set(std::min(i, j), std::max(i, j), true);
   }
 
   // optimized version where you know that low < high
   void interfereLowHigh(Index low, Index high) {
     assert(low < high);
-    interferences[low * numLocals + high] = 1;
+    interferencesM.set(low, high, true);
   }
 
   void unInterfere(Index i, Index j) {
-    interferences[std::min(i, j) * numLocals + std::max(i, j)] = 0;
+     interferencesM.set(std::min(i, j), std::max(i, j), false);
   }
 
   bool interferes(Index i, Index j) {
-    return interferences[std::min(i, j) * numLocals + std::max(i, j)];
+    return interferencesM.get(std::min(i, j), std::max(i, j));
   }
 };
 
@@ -145,8 +147,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
 }
 
 void CoalesceLocals::calculateInterferences() {
-  interferences.resize(numLocals * numLocals);
-  std::fill(interferences.begin(), interferences.end(), false);
+  interferencesM.recreate(numLocals);
 
   // We will track the values in each local, using a numbering where each index
   // represents a unique different value. This array maps a local index to the
@@ -378,17 +379,23 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
   // registers, for gzip)
   std::vector<Type> types;
   // new index * numLocals => list of all interferences of locals merged to it
-  std::vector<bool> newInterferences;
+//  std::vector<bool> newInterferencesDense;
+  //std::unordered_set<uint64_t> newInterferencesSparse;
+  sparse_square_matrix<bool> newInterferences;
+
   // new index * numLocals => list of all copies of locals merged to it
-  std::vector<uint8_t> newCopies;
+//  std::vector<uint8_t> newCopiesDense;
+  //std::unordered_map<uint64_t, uint8_t> newCopiesSparse;
+  sparse_square_matrix<uint8_t> newCopies;
+
   indices.resize(numLocals);
   types.resize(numLocals);
-  newInterferences.resize(numLocals * numLocals);
-  std::fill(newInterferences.begin(), newInterferences.end(), false);
+
   auto numParams = getFunction()->getNumParams();
-  // start with enough room for the params
-  newCopies.resize(numParams * numLocals);
-  std::fill(newCopies.begin(), newCopies.end(), 0);
+
+  newInterferences.recreate(numLocals);
+  newCopies.recreate(numLocals);
+
   Index nextFree = 0;
   removedCopies = 0;
   // we can't reorder parameters, they are fixed in order, and cannot coalesce
@@ -398,8 +405,8 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
     indices[i] = i;
     types[i] = getFunction()->getLocalType(i);
     for (Index j = numParams; j < numLocals; j++) {
-      newInterferences[numLocals * i + j] = interferes(i, j);
-      newCopies[numLocals * i + j] = getCopies(i, j);
+      newInterferences.set(i, j, interferes(i, j));
+      newCopies.set(i, j, getCopies(i, j));
     }
     nextFree++;
   }
@@ -408,13 +415,13 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
     Index found = -1;
     uint8_t foundCopies = -1;
     for (Index j = 0; j < nextFree; j++) {
-      if (!newInterferences[j * numLocals + actual] &&
+      if (!newInterferences.get(j, actual) &&
           getFunction()->getLocalType(actual) == types[j]) {
         // this does not interfere, so it might be what we want. but pick the
         // one eliminating the most copies (we could stop looking forward when
         // there are no more items that have copies anyhow, but it doesn't seem
         // to help)
-        auto currCopies = newCopies[j * numLocals + actual];
+        auto currCopies = newCopies.get(j, actual);
         if (found == Index(-1) || currCopies > foundCopies) {
           indices[actual] = found = j;
           foundCopies = currCopies;
@@ -426,7 +433,6 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
       types[found] = getFunction()->getLocalType(actual);
       nextFree++;
       removedCopies += getCopies(found, actual);
-      newCopies.resize(nextFree * numLocals);
     } else {
       removedCopies += foundCopies;
     }
@@ -437,9 +443,8 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
     for (Index k = i + 1; k < numLocals; k++) {
       // go in the order, we only need to update for those we will see later
       auto j = order[k];
-      newInterferences[found * numLocals + j] =
-        newInterferences[found * numLocals + j] || interferes(actual, j);
-      newCopies[found * numLocals + j] += getCopies(actual, j);
+      newInterferences.set(found, j, newInterferences.get(found, j) || interferes(actual, j));
+      newCopies.set(found, j, newCopies.get(found, j) + getCopies(actual, j));
     }
   }
 }
