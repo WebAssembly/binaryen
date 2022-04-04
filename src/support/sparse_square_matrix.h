@@ -18,8 +18,7 @@
 
 #pragma once
 
-template<typename Ty> class sparse_square_matrix
-{
+template<typename Ty> class sparse_square_matrix {
   std::vector<Ty> denseStorage;
   std::unordered_map<uint64_t, Ty> sparseStorage;
   uint32_t N;
