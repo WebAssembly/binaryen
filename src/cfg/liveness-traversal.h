@@ -187,14 +187,15 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
     // Choose either a dense or a sparse backing for copies matrix:
     if (numLocals < 8192) {
-       // Erase old elements to zero, and insert new zeros if array size grows.
-       std::fill(copiesDense.begin(),
-          copiesDense.begin() + std::min<uint64_t>(newSize, copiesDense.size()),
-                 0);
-       copiesDense.resize(newSize);
+      // Erase old elements to zero, and insert new zeros if array size grows.
+      std::fill(copiesDense.begin(),
+                copiesDense.begin() +
+                  std::min<uint64_t>(newSize, copiesDense.size()),
+                0);
+      copiesDense.resize(newSize);
     } else {
-       copiesDense.clear();
-       copiesDense.shrink_to_fit();
+      copiesDense.clear();
+      copiesDense.shrink_to_fit();
     }
     copiesSparse.clear();
 
@@ -292,15 +293,17 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   }
 
   void addCopy(Index i, Index j) {
-    auto k = indexPairToLinearIndex(i, j);
-    if (copiesDense.empty()) copiesSparse[k] = std::min(copiesSparse[k], uint8_t(254)) + 1;
-    else copiesDense[k] = std::min(copiesDense[k], uint8_t(254)) + 1;
-   totalCopies[i]++;
-   totalCopies[j]++;
+    if (copiesDense.empty())
+      copiesSparse[k] = std::min(copiesSparse[k], uint8_t(254)) + 1;
+    else
+      copiesDense[k] = std::min(copiesDense[k], uint8_t(254)) + 1;
+    totalCopies[i]++;
+    totalCopies[j]++;
   }
 
   uint8_t getCopies(Index i, Index j) {
-    return copiesDense.empty() ? copiesSparse[indexPairToLinearIndex(i, j)] : copiesDense[indexPairToLinearIndex(i, j)];
+    return copiesDense.empty() ? copiesSparse[indexPairToLinearIndex(i, j)]
+                               : copiesDense[indexPairToLinearIndex(i, j)];
   }
 };
 
