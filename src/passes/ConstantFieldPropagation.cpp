@@ -101,6 +101,12 @@ void PossibleTypesOracle::analyze() {
     TypeSet types;
   };
 
+  struct BranchLocation {
+    Function* func;
+    Name target;
+    TypeSet types;
+  };
+
   struct GlobalLocation {
     Name name;
     TypeSet types;
@@ -131,7 +137,7 @@ void PossibleTypesOracle::analyze() {
 
   // A location is a variant over all the possible types of locations that we
   // have.
-  using Location = std::variant<ExpressionLocation, ResultLocation, LocalLocation, GlobalLocation, TableLocation, SignatureParamLocation, StructLocation, ArrayLocation>;
+  using Location = std::variant<ExpressionLocation, ResultLocation, LocalLocation, BranchLocation, GlobalLocation, TableLocation, SignatureParamLocation, StructLocation, ArrayLocation>;
 
   // A connection indicates a flow of types from one location to another. For
   // example, if we do a local.get and return that value from a function, then
@@ -178,9 +184,25 @@ void PossibleTypesOracle::analyze() {
         // the outside (another expression or the function itself, if we are at
         // the top level) is the responsibility of the outside.
 
-        // The default behavior is to connect all input expressions to the
-        // current one, as it might return an output that includes them.
         void visitExpression(Expression* curr) {
+          // Breaks send values to their destinations. Handle that here using
+          // existing utility code which is shorter than implementing multiple
+          // visit*() methods (however, it may be slower TODO)
+          BranchUtils::operateOnScopeNameUsesAndSentValues(curr, [&](Name target, Expression* value) {
+            if (value && value->type.isRef()) {
+              info.connections.push_back({ExpressionLocation{value}, BranchLocation{target}});
+            }
+          });
+
+          // Branch targets receive the things sent to them and flow them out.
+          if (curr->type.isRef()) {
+            BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
+              info.connections.push_back({BranchLocation{target}, ExpressionLocation{curr}});
+            });
+          }
+
+          // The default behavior is to connect all input expressions to the
+          // current one, as it might return an output that includes them.
           if (!curr->type->isRef()) {
             return;
           }
@@ -209,8 +231,6 @@ void PossibleTypesOracle::analyze() {
             info.connections.push_back({ExpressionLocation(curr->value), ExpressionLocation(curr)});
           }
         }
-
-        // Breaks send values to their destinations.
 
         // Globals read and write from their location.
         void visitGlobalGet(GlobalGet* curr) {
@@ -257,11 +277,29 @@ void PossibleTypesOracle::analyze() {
         }
 
         // Struct operations access the struct fields' locations.
-
+        void visitStructGet(StructGet* curr) {
+          if (curr->type.isRef()) {
+            info.connections.push_back({StructLocation{curr->name, curr->index}, ExpressionLocation{curr}});
+          }
+        }
+        void visitStructSet(StructSet* curr) {
+          if (curr->value->type.isRef()) {
+            info.connections.push_back({ExpressionLocation{curr->value}, StructLocation{curr->name, curr->index}});
+          }
+        }
         // Array operations access the array's location.
+        void visitArrayGet(ArrayGet* curr) {
+          if (curr->type.isRef()) {
+            info.connections.push_back({ArrayLocation{curr->name}, ExpressionLocation{curr}});
+          }
+        }
+        void visitArraySet(ArraySet* curr) {
+          if (curr->value->type.isRef()) {
+            info.connections.push_back({ExpressionLocation{curr->value}, ArrayLocation{curr->name}});
+          }
+        }
 
         // Table operations access the table's locations.
-        // TODO: track constant indexes when possible?
         void visitTableGet(TableGet* curr) {
           if (curr->type.isRef()) {
             info.connections.push_back({TableLocation{curr->name}, ExpressionLocation{curr}});
@@ -273,7 +311,7 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
-        // TODO: wasm exceptions
+        // TODO: exceptions
         // TODO: tuple operations
 
         void visitFunction(Function* func) {
