@@ -193,6 +193,20 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
+        // Breaks send values to their destinations.
+
+        // Globals read and write from their location.
+        void visitGlobalGet(GlobalGet* curr) {
+          if (curr->type.isRef()) {
+            info.connections.push_back({GlobalLocation{curr->name}, ExpressionLocation{curr}});
+          }
+        }
+        void visitGlobalSet(GlobalSet* curr) {
+          if (curr->value->type.isRef()) {
+            info.connections.push_back({ExpressionLocation{curr->value}, GlobalLocation{curr->name}});
+          }
+        }
+
         // Calls send values to params in their possible targets.
         void handleCall(ExpressionList& operands, std::function<Location ()> makeTarget) {
           Index i = 0;
