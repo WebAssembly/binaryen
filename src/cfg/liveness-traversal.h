@@ -133,6 +133,9 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
         //   (unreachable))
         //
         // That pattern lets us set any type we wish.
+        //
+        // TODO: Make a helper function for this, if it is useful in other
+        //       places.
         rep = builder.makeBlock({builder.makeUnreachable()}, curr->type);
       }
       *currp = rep;
