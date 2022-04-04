@@ -41,6 +41,61 @@ namespace wasm {
 
 namespace {
 
+// Analyze the entire wasm file to find which types are possible in which
+// locations. This assumes a closed world and starts from struct.new/array.new
+// instructions, and propagates them to the locations they reach. After the
+// analysis the user of this class can ask which types are possible at any
+// location.
+//
+// TODO: refactor into a separate file if other passes want it too.
+class PossibleTypesOracle {
+  Module& wasm;
+
+  void analyze();
+
+public:
+  PossibleTypesOracle(Module& wasm) : wasm(wasm) {
+    analyze();
+  }
+
+  using TypeSet = std::unordered_set<HeapType>;
+
+  // Get the possible types returned by an expression.
+  TypeSet getTypes(Expression* curr);
+
+  // Get the possible types appearing in a function parameter.
+  TypeSet getParamTypes(Function* func, Index index);
+
+  // Get the possible types appearing in a function result.
+  TypeSet getResultTypes(Function* func, Index result=0);
+
+  // Get the possible types stored in a struct type's field.
+  TypeSet getTypes(HeapType type, Index index);
+
+  // Get the possible types stored in an array type.
+  TypeSet getTypes(HeapType type);
+};
+
+void PossibleTypesOracle::analyze() {
+}
+
+TypeSet PossibleTypesOracle::getTypes(Expression* curr) {
+}
+
+TypeSet PossibleTypesOracle::getParamTypes(Function* func, Index index) {
+}
+
+TypeSet PossibleTypesOracle::getResultTypes(Function* func, Index result) {
+}
+
+TypeSet PossibleTypesOracle::getTypes(HeapType type, Index index) {
+}
+
+TypeSet PossibleTypesOracle::getTypes(HeapType type) {
+}
+
+//===============
+
 using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
