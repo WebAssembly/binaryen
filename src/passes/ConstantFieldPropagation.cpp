@@ -101,6 +101,23 @@ void PossibleTypesOracle::analyze() {
     TypeSet types;
   };
 
+  struct GlobalLocation {
+    Name name;
+    TypeSet types;
+  };
+
+  struct TableLocation {
+    Name name;
+    TypeSet types;
+  };
+
+  struct SignatureParamLocation {
+    HeapType type;
+    Index index;
+    TypeSet types;
+  };
+  // TODO: result, and use that
+
   struct StructLocation {
     HeapType type;
     Index index;
@@ -114,7 +131,7 @@ void PossibleTypesOracle::analyze() {
 
   // A location is a variant over all the possible types of locations that we
   // have.
-  using Location = std::variant<ExpressionLocation, ResultLocation, LocalLocation, StructLocation, ArrayLocation>;
+  using Location = std::variant<ExpressionLocation, ResultLocation, LocalLocation, GlobalLocation, TableLocation, SignatureParamLocation, StructLocation, ArrayLocation>;
 
   // A connection indicates a flow of types from one location to another. For
   // example, if we do a local.get and return that value from a function, then
@@ -239,11 +256,25 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
-        // Struct reads and writes access the struct fields' locations.
+        // Struct operations access the struct fields' locations.
 
-        // Array reads and writes access the array's location.
+        // Array operations access the array's location.
+
+        // Table operations access the table's locations.
+        // TODO: track constant indexes when possible?
+        void visitTableGet(TableGet* curr) {
+          if (curr->type.isRef()) {
+            info.connections.push_back({TableLocation{curr->name}, ExpressionLocation{curr}});
+          }
+        }
+        void visitTableSet(TableSet* curr) {
+          if (curr->value->type.isRef()) {
+            info.connections.push_back({ExpressionLocation{curr->value}, TableLocation{curr->name}});
+          }
+        }
 
         // TODO: wasm exceptions
+        // TODO: tuple operations
 
         void visitFunction(Function* func) {
           // Functions with a result can flow a value out from their body.
