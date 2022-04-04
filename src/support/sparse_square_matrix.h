@@ -53,7 +53,8 @@ public:
   }
 
   // Resizes the matrix, and discards all previous data entries.
-  void recreate(uint32_t N) {
+  void recreate(uint32_t n) {
+    N = n;
     denseStorage.clear();
     sparseStorage.clear();
     if (N < 8192) {
