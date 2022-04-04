@@ -493,6 +493,10 @@ struct HeapTypeGeneratorImpl {
       if (rand.oneIn(8)) {
         return super;
       }
+// Work around a gcc incorrect warning about some of these X{} things being
+// supposedly uninitialized.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
       switch (*basic) {
         case HeapType::func:
           return SignatureKind{};
@@ -510,6 +514,7 @@ struct HeapTypeGeneratorImpl {
         case HeapType::data:
           return DataKind{};
       }
+#pragma GCC diagnostic pop
       WASM_UNREACHABLE("unexpected kind");
     } else {
       // Signature and Data types can only have Signature and Data subtypes.
