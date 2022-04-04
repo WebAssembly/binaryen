@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 template<typename Ty> class sparse_square_matrix {
   std::vector<Ty> denseStorage;
