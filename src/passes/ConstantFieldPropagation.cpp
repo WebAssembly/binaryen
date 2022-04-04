@@ -61,22 +61,110 @@ public:
   using TypeSet = std::unordered_set<HeapType>;
 
   // Get the possible types returned by an expression.
-  TypeSet getTypes(Expression* curr);
-
-  // Get the possible types appearing in a function parameter.
-  TypeSet getParamTypes(Function* func, Index index);
+  TypeSet getTypes(Expression* expr);
 
   // Get the possible types appearing in a function result.
-  TypeSet getResultTypes(Function* func, Index result=0);
+  TypeSet getResultTypes(Function* func, Index index);
+
+  // Get the possible types appearing in a function local. This will include the
+  // incoming parameter values for parameters, like getParamTypes, and also
+  // includes values written into that parameter in this function itself.
+  // TODO: Also track param types specifically?
+  TypeSet getLocalTypes(Function* func, Index index);
 
   // Get the possible types stored in a struct type's field.
   TypeSet getTypes(HeapType type, Index index);
 
   // Get the possible types stored in an array type.
   TypeSet getTypes(HeapType type);
+
+  // TODO: Add analysis and retrieval logic for fields of immutable globals,
+  //       including multiple levels of depth (necessary for itables in j2wasm)
 };
 
 void PossibleTypesOracle::analyze() {
+  // Define a struct for each "location" that can store types.
+  struct ExpressionTypes {
+    Expression* expr;
+    TypeSet types;
+  };
+
+  struct ResultTypes {
+    Function* func;
+    Index index;
+    TypeSet types;
+  };
+
+  struct LocalTypes {
+    Function* func;
+    Index index;
+    TypeSet types;
+  };
+
+  struct StructTypes {
+    HeapType type;
+    Index index;
+    TypeSet types;
+  };
+
+  struct ArrayTypes {
+    HeapType type;
+    TypeSet types;
+  };
+
+  // A location is a variant over all the possible types of locations that we
+  // have.
+  using LocationTypes = std::variant<ExpressionTypes, ResultTypes, LocalTypes, StructTypes, ArrayTypes>;
+
+  // A connection indicates a flow of types from one location to another. For
+  // example, if we do a local.get and return that value from a function, then
+  // we have a connection from a location of LocalTypes to a location of
+  // ResultTypes.
+  struct Connection {
+    Location* from;
+    Location* to;
+  };
+
+  // Gather information from functions in parallel.
+  struct FuncInfo {
+    // Similar to Connection, but with inlined locations instead of pointers to
+    // them. In the main graph later the pointers are necessary as we need to
+    // "canonicalize" locations - e.g. the location for param index i in
+    // function foo must be a singleton - but during function info gathering we
+    // cannot canonicalize globally yet since we work in parallel. For
+    // simplicity we simply have copies of the location info here, and leave all
+    // canonicalization for later.
+    // TODO: as an optimization we could perhaps at least avoid redundant copies
+    //       in the vector of locations?
+    struct FuncConnection {
+      Location from;
+      Location to;
+    };
+    std::vector<FuncConnection> connections;
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+    *module, [&](Function* func, FuncInfo& info) {
+      if (func->imported()) {
+        // TODO: add an option to not always assume a closed world, in which
+        //       case we'd need to track values escaping etc.
+        return;
+      }
+
+      str
+      info.sets = std::move(FindAll<GlobalSet>(func->body).list);
+    });
+
+  // A map of globals to the lub for that global.
+  std::unordered_map<Name, LUBFinder> lubs;
+
+  // Combine all the information we gathered and compute lubs.
+  for (auto& [func, info] : analysis.map) {
+    for (auto* set : info.sets) {
+      lubs[set->name].noteUpdatableExpression(set->value);
+    }
+  }
+
 }
 
 TypeSet PossibleTypesOracle::getTypes(Expression* curr) {
