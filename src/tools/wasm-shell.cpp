@@ -134,7 +134,7 @@ protected:
     lastModule = module->name;
     builders[moduleName] = builder;
     modules[moduleName].swap(module);
-    modules[moduleName]->features.setAll();
+    modules[moduleName]->features = FeatureSet::All;
     bool valid = WasmValidator().validate(*modules[moduleName]);
     if (!valid) {
       std::cout << *modules[moduleName] << '\n';
@@ -237,7 +237,7 @@ protected:
 
   void parseModuleAssertion(Element& s) {
     Module wasm;
-    wasm.features.setAll();
+    wasm.features = FeatureSet::All;
     std::unique_ptr<SExpressionWasmBuilder> builder;
     auto id = s[0]->str();
 
@@ -358,7 +358,7 @@ protected:
       "memory", spectest->memory.name, ExternalKind::Memory));
 
     modules["spectest"].swap(spectest);
-    modules["spectest"]->features.setAll();
+    modules["spectest"]->features = FeatureSet::All;
     instantiate(modules["spectest"].get());
     linkedInstances["spectest"] = instances["spectest"];
     // print_* functions are handled separately, no need to define here.

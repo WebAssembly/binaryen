@@ -94,11 +94,6 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
 } // anonymous namespace
 
 struct MemoryPacking : public Pass {
-  // FIXME: Chrome has a bug decoding section indices that prevents it from
-  // using more than 63. Just use WebLimitations::MaxDataSegments once this is
-  // fixed. See https://bugs.chromium.org/p/v8/issues/detail?id=10151.
-  uint32_t maxSegments;
-
   void run(PassRunner* runner, Module* module) override;
   bool canOptimize(const Memory& memory, const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
@@ -128,10 +123,6 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   if (!canOptimize(module->memory, runner->options)) {
     return;
   }
-
-  maxSegments = module->features.hasBulkMemory()
-                  ? 63
-                  : uint32_t(WebLimitations::MaxDataSegments);
 
   auto& segments = module->memory.segments;
 
@@ -541,7 +532,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
         offset = segment.offset;
       }
     }
-    if (maxSegments <= packed.size() + segmentsRemaining) {
+    if (WebLimitations::MaxDataSegments <= packed.size() + segmentsRemaining) {
       // Give up splitting and merge all remaining ranges except end zeroes
       auto lastNonzero = ranges.end() - 1;
       if (lastNonzero->isZero) {
