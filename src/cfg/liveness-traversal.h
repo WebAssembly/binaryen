@@ -106,9 +106,13 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   Index numLocals;
   std::unordered_set<BasicBlock*> liveBlocks;
   // canonicalized - accesses should check (low, high)
-  // TODO: use a map for high N, as this tends to be sparse? or don't look at
-  // copies at all for big N?
-  std::vector<uint8_t> copies;
+
+  // When the number of locals is low, use a dense N*N matrix to store
+  // counts of copies. When the number of locals is high, use a sparse
+  // hash map instead.
+  std::vector<uint8_t> copiesDense;
+  std::unordered_map<uint64_t, uint8_t> copiesSparse;
+
   // total # of copies for each local, with all others
   std::vector<Index> totalCopies;
 
@@ -180,11 +184,20 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     uint64_t newSize = (uint64_t)numLocals * (uint64_t)numLocals;
     assert(newSize <= std::numeric_limits<size_t>::max() &&
            "More locals that can fit into a size_t to run liveness analysis!");
-    // Erase old elements to zero, and insert new zeros if array size grows.
-    std::fill(copies.begin(),
-              copies.begin() + std::min<uint64_t>(newSize, copies.size()),
-              0);
-    copies.resize(newSize);
+
+    // Choose either a dense or a sparse backing for copies matrix:
+    if (numLocals < 8192) {
+       // Erase old elements to zero, and insert new zeros if array size grows.
+       std::fill(copiesDense.begin(),
+          copiesDense.begin() + std::min<uint64_t>(newSize, copiesDense.size()),
+                 0);
+       copiesDense.resize(newSize);
+    } else {
+       copiesDense.clear();
+       copiesDense.shrink_to_fit();
+    }
+    copiesSparse.clear();
+
     // Likewise for totalCopies array
     std::fill(totalCopies.begin(),
               totalCopies.begin() +
@@ -280,13 +293,14 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   void addCopy(Index i, Index j) {
     auto k = indexPairToLinearIndex(i, j);
-    copies[k] = std::min(copies[k], uint8_t(254)) + 1;
-    totalCopies[i]++;
-    totalCopies[j]++;
+    if (copiesDense.empty()) copiesSparse[k] = std::min(copiesSparse[k], uint8_t(254)) + 1;
+    else copiesDense[k] = std::min(copiesDense[k], uint8_t(254)) + 1;
+   totalCopies[i]++;
+   totalCopies[j]++;
   }
 
   uint8_t getCopies(Index i, Index j) {
-    return copies[indexPairToLinearIndex(i, j)];
+    return copiesDense.empty() ? copiesSparse[indexPairToLinearIndex(i, j)] : copiesDense[indexPairToLinearIndex(i, j)];
   }
 };
 
