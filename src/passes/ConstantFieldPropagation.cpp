@@ -194,20 +194,42 @@ void PossibleTypesOracle::analyze() {
         }
 
         // Calls send values to params in their possible targets.
-        void visitCall(Call* curr) {
+        void handleCall(ExpressionList& operands, std::function<Location ()> makeTarget) {
           Index i = 0;
-          for (auto* operand : curr->operands) {
+          for (auto* operand : operands) {
             if (operand->type->isRef()) {
-              info.connections.push_back({ExpressionLocation{operand}, LocalLocation{target, i}});
+              info.connections.push_back({ExpressionLocation{operand}, makeTarget(i)});
             }
             i++;
           }
         }
+        void visitCall(Call* curr) {
+          auto* target = getModule()->getFunction(curr->name);
+          handleCall(curr->operands, [&](Index i) {
+            return LocalLocation{target, i};
+          });
+        }
         void visitCallIndirect(CallIndirect* curr) {
+          auto target = curr->heapType;
+          handleCall(curr->operands, [&](Index i) {
+            return SignatureParamLocation{target, i};
+          });
         }
         void visitCallRef(CallRef* curr) {
+          auto targetType = curr->target->type;
+          if (targetType.isRef()) {
+            auto target = targetType.getHeapType();
+            handleCall(curr->operands, [&](Index i) {
+              return SignatureParamLocation{target, i};
+            });
+          }
         }
 
+        // Struct reads and writes access the struct fields' locations.
+
+        // Array reads and writes access the array's location.
+
+        // TODO: wasm exceptions
 
         void visitFunction(Function* func) {
           // Functions with a result can flow a value out from their body.
