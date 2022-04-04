@@ -279,9 +279,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     totalCopies[j]++;
   }
 
-  uint8_t getCopies(Index i, Index j) {
-    return copies.get(i, j);
-  }
+  uint8_t getCopies(Index i, Index j) { return copies.get(i, j); }
 };
 
 } // namespace wasm

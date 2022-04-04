@@ -77,28 +77,27 @@ struct CoalesceLocals
   // interference state
 
   // canonicalized - accesses should check (low, high)
-  //std::vector<bool> interferences;
-  sparse_square_matrix<bool> interferencesM;
+  sparse_square_matrix<bool> interferences;
 
   void interfere(Index i, Index j) {
     if (i == j) {
       return;
     }
-    interferencesM.set(std::min(i, j), std::max(i, j), true);
+    interferences.set(std::min(i, j), std::max(i, j), true);
   }
 
   // optimized version where you know that low < high
   void interfereLowHigh(Index low, Index high) {
     assert(low < high);
-    interferencesM.set(low, high, true);
+    interferences.set(low, high, true);
   }
 
   void unInterfere(Index i, Index j) {
-     interferencesM.set(std::min(i, j), std::max(i, j), false);
+    interferences.set(std::min(i, j), std::max(i, j), false);
   }
 
   bool interferes(Index i, Index j) {
-    return interferencesM.get(std::min(i, j), std::max(i, j));
+    return interferences.get(std::min(i, j), std::max(i, j));
   }
 };
 
@@ -147,7 +146,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
 }
 
 void CoalesceLocals::calculateInterferences() {
-  interferencesM.recreate(numLocals);
+  interferences.recreate(numLocals);
 
   // We will track the values in each local, using a numbering where each index
   // represents a unique different value. This array maps a local index to the
@@ -379,13 +378,9 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
   // registers, for gzip)
   std::vector<Type> types;
   // new index * numLocals => list of all interferences of locals merged to it
-//  std::vector<bool> newInterferencesDense;
-  //std::unordered_set<uint64_t> newInterferencesSparse;
   sparse_square_matrix<bool> newInterferences;
 
   // new index * numLocals => list of all copies of locals merged to it
-//  std::vector<uint8_t> newCopiesDense;
-  //std::unordered_map<uint64_t, uint8_t> newCopiesSparse;
   sparse_square_matrix<uint8_t> newCopies;
 
   indices.resize(numLocals);
@@ -443,7 +438,8 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
     for (Index k = i + 1; k < numLocals; k++) {
       // go in the order, we only need to update for those we will see later
       auto j = order[k];
-      newInterferences.set(found, j, newInterferences.get(found, j) || interferes(actual, j));
+      newInterferences.set(
+        found, j, newInterferences.get(found, j) || interferes(actual, j));
       newCopies.set(found, j, newCopies.get(found, j) + getCopies(actual, j));
     }
   }

@@ -18,50 +18,43 @@
 
 #pragma once
 
-template<typename Ty>
-class sparse_square_matrix
+template<typename Ty> class sparse_square_matrix
 {
   std::vector<Ty> denseStorage;
   std::unordered_map<uint64_t, Ty> sparseStorage;
   uint32_t N;
 
 public:
-  sparse_square_matrix()
-  :N(0)
-  {
+  sparse_square_matrix() : N(0) {}
 
-  }
-
-  explicit sparse_square_matrix(int N)
-  :N(N)
-  {
+  explicit sparse_square_matrix(int N) : N(N) {
     if (N < 8192) {
-      denseStorage.resize(N*N);
+      denseStorage.resize(N * N);
     }
   }
 
-  void set(uint32_t i, uint32_t j, const Ty &value)
-  {
-    if (denseStorage.empty()) sparseStorage[i*N+j] = value;
-    else denseStorage[i * N + j] = value;
-  }
-
-  const Ty get(uint32_t i, uint32_t j) const
-  {
+  void set(uint32_t i, uint32_t j, const Ty& value) {
     if (denseStorage.empty()) {
-       auto iter = sparseStorage.find(i*N+j);
-       return iter == sparseStorage.end() ? Ty() : iter->second;
+      sparseStorage[i * N + j] = value;
+    } else {
+      denseStorage[i * N + j] = value;
     }
-    return denseStorage[i*N+j];
+  }
+
+  const Ty get(uint32_t i, uint32_t j) const {
+    if (denseStorage.empty()) {
+      auto iter = sparseStorage.find(i * N + j);
+      return iter == sparseStorage.end() ? Ty() : iter->second;
+    }
+    return denseStorage[i * N + j];
   }
 
   // Resizes the matrix, and discards all previous data entries.
-  void recreate(uint32_t N)
-  {
+  void recreate(uint32_t N) {
     denseStorage.clear();
     sparseStorage.clear();
     if (N < 8192) {
-      denseStorage.resize(N*N);
+      denseStorage.resize(N * N);
     }
   }
 };
