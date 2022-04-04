@@ -294,10 +294,11 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   void addCopy(Index i, Index j) {
     auto k = indexPairToLinearIndex(i, j);
-    if (copiesDense.empty())
+    if (copiesDense.empty()) {
       copiesSparse[k] = std::min(copiesSparse[k], uint8_t(254)) + 1;
-    else
+    } else {
       copiesDense[k] = std::min(copiesDense[k], uint8_t(254)) + 1;
+    }
     totalCopies[i]++;
     totalCopies[j]++;
   }
