@@ -181,12 +181,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
-    uint64_t newSize = (uint64_t)numLocals * (uint64_t)numLocals;
-    assert(newSize <= std::numeric_limits<size_t>::max() &&
-           "More locals that can fit into a size_t to run liveness analysis!");
-
     copies.recreate(numLocals);
-
     std::fill(totalCopies.begin(),
               totalCopies.begin() +
                 std::min<uint64_t>(totalCopies.size(), numLocals),
