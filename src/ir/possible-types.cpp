@@ -369,7 +369,17 @@ void PossibleTypesOracle::analyze() {
     flowInfoMap[connection.from].targets.push_back(connection.to);
   }
 
-  // TODO: assert that no duplicates in targets vector, by design.
+#ifndef NDEBUG
+  for (auto& [location, info] : flowInfoMap) {
+    // The vector of targets must have no duplicates.
+    auto& targets = info.targets;
+    std::unordered_set<Location> uniqueTargets;
+    for (const auto& target : targets) {
+      uniqueTargets.insert(target);
+    }
+    assert(uniqueTargets.size() == targets.size());
+  }
+#endif
 
   // The work remaining to do: locations that we just updated, which means we
   // should update their children when we pop them from this queue.
@@ -399,7 +409,7 @@ void PossibleTypesOracle::analyze() {
   // Flow the data.
   while (!work.empty()) {
     auto location = work.pop();
-    auto& info = flowInfoMap[location];
+    const auto& info = flowInfoMap[location];
 
     // TODO: implement the following optimization, and remove the hardcoded
     //       links created above.
@@ -429,7 +439,7 @@ void PossibleTypesOracle::analyze() {
 
     // TODO: We can refine the types here, by not flowing anything through a
     //       ref.cast that it would trap on.
-    auto& types = info.types;
+    const auto& types = info.types;
 
     // Update the targets, and add the ones that changes to the remaining work.
     for (const auto& target : targets) {
