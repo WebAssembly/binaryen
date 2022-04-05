@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-#include "ir/possible-types.h"
+#include <variant>
+
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
+#include "ir/possible-types.h"
+#include "ir/subtypes.h"
+#include "support/unique_deferring_queue.h"
+#include "wasm.h"
 
 namespace wasm {
 

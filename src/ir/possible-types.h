@@ -19,8 +19,6 @@
 
 #include <variant>
 
-#include "ir/properties.h"
-#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -250,7 +248,7 @@ public:
 
   // Get the possible types returned by an expression.
   TypeSet getExpressionTypes(Expression* expr) {
-    return flowInfoMap[ExpressionLocation{curr}].types;
+    return flowInfoMap[ExpressionLocation{expr}].types;
   }
 
 private:
