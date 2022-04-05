@@ -45,7 +45,7 @@ namespace {
 // TODO describe each
 struct ExpressionLocation {
   Expression* expr;
-  bool operator==(const ExpressionLocation& other) {
+  bool operator==(const ExpressionLocation& other) const {
     return expr == other.expr;
   }
 };
@@ -53,7 +53,7 @@ struct ExpressionLocation {
 struct ResultLocation {
   Function* func;
   Index index;
-  bool operator==(const ResultLocation& other) {
+  bool operator==(const ResultLocation& other) const {
     return func == other.func && index == other.index;
   }
 };
@@ -61,7 +61,7 @@ struct ResultLocation {
 struct LocalLocation {
   Function* func;
   Index index;
-  bool operator==(const LocalLocation& other) {
+  bool operator==(const LocalLocation& other) const {
     return func == other.func && index == other.index;
   }
 };
@@ -69,21 +69,21 @@ struct LocalLocation {
 struct BranchLocation {
   Function* func;
   Name target;
-  bool operator==(const BranchLocation& other) {
+  bool operator==(const BranchLocation& other) const {
     return func == other.func && target == other.target;
   }
 };
 
 struct GlobalLocation {
   Name name;
-  bool operator==(const GlobalLocation& other) {
+  bool operator==(const GlobalLocation& other) const {
     return name == other.name;
   }
 };
 
 struct TableLocation {
   Name name;
-  bool operator==(const TableLocation& other) {
+  bool operator==(const TableLocation& other) const {
     return name == other.name;
   }
 };
@@ -91,7 +91,7 @@ struct TableLocation {
 struct SignatureParamLocation {
   HeapType type;
   Index index;
-  bool operator==(const SignatureParamLocation& other) {
+  bool operator==(const SignatureParamLocation& other) const {
     return type == other.type && index == other.index;
   }
 };
@@ -100,14 +100,14 @@ struct SignatureParamLocation {
 struct StructLocation {
   HeapType type;
   Index index;
-  bool operator==(const StructLocation& other) {
+  bool operator==(const StructLocation& other) const {
     return type == other.type && index == other.index;
   }
 };
 
 struct ArrayLocation {
   HeapType type;
-  bool operator==(const ArrayLocation& other) {
+  bool operator==(const ArrayLocation& other) const {
     return type == other.type;
   }
 };
@@ -132,7 +132,7 @@ struct Connection {
   Location from;
   Location to;
 
-  bool operator==(const Connection& other) {
+  bool operator==(const Connection& other) const {
     return from == other.from && to == other.to;
   }
 };
