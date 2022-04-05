@@ -65,6 +65,8 @@ struct SubTypes {
     }
   }
 
+  // All the types in the program. This is computed here anyhow, and can be
+  // useful for callers to iterate on, so it is public.
   std::vector<HeapType> types;
 
 private:

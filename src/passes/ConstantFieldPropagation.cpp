@@ -29,6 +29,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/possible-constant.h"
+#include "ir/subtypes.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -113,7 +114,13 @@ struct SignatureResultLocation {
   }
 };
 
-// The location of a struct field.
+// The location of a struct field. This represents a struct.get/set/new instr
+// with a particular type. Due to subtyping, the struct.get/set may actually be
+// operating on a subtype of that type, which the flow will need to take into
+// account.
+// TODO: we use this in both get/set and new. if we separate them we would get a
+//       more precise analysis because struct.new does know the precise type
+//       exactly.
 struct StructLocation {
   HeapType type;
   Index index;
@@ -613,14 +620,27 @@ void PossibleTypesOracle::analyze() {
 
   // Add subtyping connections, but see the TODO below about how we can do this
   // "dynamically" in a more effective but complex way.
-  for (auto& connection : connections) {
-    auto handleLocation = [&](const Location& location) {
-      if (auto* structLoc = std::get_if<StructLocation>(&location)) {
-        
+  SubTypes subTypes(wasm);
+  for (auto type : subTypes.types) {
+    if (type.isStruct()) {
+      // StructLocations refer to a struct.get/set/new and so in general they
+      // may refer to data of a subtype of the type written on them. Connect to
+      // their immediate subtypes here.
+      auto numFields = type.getStruct().fields.size();
+      for (auto subType : subTypes.getSubTypes(type)) {
+        for (Index i = 0; i < numFields; i++) {
+          connections.insert({StructLocation{type, i}, StructLocation{subType, i}});
+        }
       }
-    };
-    handleLocation(connection.from);
-    handleLocation(connection.to);
+    } else if (type.isArray()) {
+      // StructLocations refer to a struct.get/set/new and so in general they
+      // may refer to data of a subtype of the type written on them. Connect to
+      // their immediate subtypes here.
+      for (auto subType : subTypes.getSubTypes(type)) {
+        connections.insert({ArrayLocation{type, i}, ArrayLocation{subType, i}});
+      }
+    }
+
   }
 
   // Build the flow info. First, note the connection targets.
