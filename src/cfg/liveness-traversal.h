@@ -177,10 +177,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
     copies.recreate(numLocals);
-    std::fill(totalCopies.begin(),
-              totalCopies.begin() +
-                std::min<uint64_t>(totalCopies.size(), numLocals),
-              0);
+    totalCopies.clear();
     totalCopies.resize(numLocals);
     // create the CFG by walking the IR
     CFGWalker<SubType, VisitorType, Liveness>::doWalkFunction(func);
