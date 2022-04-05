@@ -42,7 +42,9 @@ namespace wasm {
 namespace {
 
 // *Location structs describe particular locations.
-// TODO describe each
+
+// The location of a specific expression, referring to the possible types
+// it can contain (which may be more precise than expr->type).
 struct ExpressionLocation {
   Expression* expr;
   bool operator==(const ExpressionLocation& other) const {
@@ -50,6 +52,7 @@ struct ExpressionLocation {
   }
 };
 
+// The location of one of the results of a function.
 struct ResultLocation {
   Function* func;
   Index index;
@@ -58,6 +61,8 @@ struct ResultLocation {
   }
 };
 
+// The location of one of the locals in a function (either a parameter or a
+// var). TODO: would separating params from vars help?
 struct LocalLocation {
   Function* func;
   Index index;
@@ -66,6 +71,7 @@ struct LocalLocation {
   }
 };
 
+// The location of a branch target in a function, identified by its name.
 struct BranchLocation {
   Function* func;
   Name target;
@@ -74,6 +80,7 @@ struct BranchLocation {
   }
 };
 
+// The location of a global in the module.
 struct GlobalLocation {
   Name name;
   bool operator==(const GlobalLocation& other) const {
@@ -81,6 +88,7 @@ struct GlobalLocation {
   }
 };
 
+// The location of a table in the module.
 struct TableLocation {
   Name name;
   bool operator==(const TableLocation& other) const {
@@ -88,6 +96,7 @@ struct TableLocation {
   }
 };
 
+// The location of one of the parameters in a function signature.
 struct SignatureParamLocation {
   HeapType type;
   Index index;
@@ -97,6 +106,7 @@ struct SignatureParamLocation {
 };
 // TODO: result, and use that
 
+// The location of a struct field.
 struct StructLocation {
   HeapType type;
   Index index;
@@ -105,6 +115,8 @@ struct StructLocation {
   }
 };
 
+// The location of an element in the array (without index - we consider them all
+// as one, since we may not have static indexes for them all).
 struct ArrayLocation {
   HeapType type;
   bool operator==(const ArrayLocation& other) const {
@@ -522,6 +534,15 @@ void PossibleTypesOracle::analyze() {
   for (auto& [func, info] : analysis.map) {
     for (auto& connection : info.connections) {
       connections.insert(connection);
+    }
+  }
+
+  // Connect function parameters to their signature, so that any indirect call
+  // of that signature will reach them.
+  // TODO: find which functions are even taken by reference
+  for (auto& func : wasm.functions) {
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      connections.insert({SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i}});
     }
   }
 
