@@ -51,7 +51,7 @@ struct Fuzzer {
 
   // Checkers for various properties.
   void checkSubtypes() const;
-  void checkLUBs() const;
+  void checkLUBs();
   void checkCanonicalization();
 };
 
@@ -145,11 +145,18 @@ void Fuzzer::checkSubtypes() const {
   }
 }
 
-void Fuzzer::checkLUBs() const {
+void Fuzzer::checkLUBs() {
   // For each unordered pair of types...
   for (size_t i = 0; i < types.size(); ++i) {
     for (size_t j = i; j < types.size(); ++j) {
       HeapType a = types[i], b = types[j];
+      // Apply random refinements.
+      if (rand.oneIn(2)) {
+        a = a.refined(Refinement(rand.upTo(4)));
+      }
+      if (rand.oneIn(2)) {
+        b = b.refined(Refinement(rand.upTo(4)));
+      }
       // Check that their LUB is stable when calculated multiple times and in
       // reverse order.
       HeapType lub = HeapType::getLeastUpperBound(a, b);

@@ -68,6 +68,7 @@ struct Field;
 struct Struct;
 struct Array;
 struct Rtt;
+struct Refinement;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
@@ -390,9 +391,21 @@ public:
   // number of supertypes in its supertype chain.
   size_t getDepth() const;
 
+  // Like getDepth, but additionally counts through the basic type hierarchy
+  // above the defined types.
+  size_t getDepthFromAny() const;
+
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
   size_t getRecGroupIndex() const;
+
+  // The unrefined version of this heap type (or this heap type, if it is not
+  // refined).
+  HeapType unrefined() const;
+  // This heap type with its existing refinement or the given refinement,
+  // whichever is more specific.
+  HeapType refined(Refinement refinement) const;
+  Refinement getRefinement() const;
 
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
@@ -586,6 +599,37 @@ struct Rtt {
   std::string toString() const;
 };
 
+// Extra information that can be attached to a HeapType to create a refined
+// version of the HeapType. Refined types are always subtypes of the type they
+// refine. Refinements must form a lattice (i.e. any two refinements must have a
+// least upper bound and a greatest lower bound).
+struct Refinement {
+  static constexpr size_t UnboundedDepth = size_t(-1);
+  // How much lower in the subtype hierarchy the dynamic type of values can be
+  // than the refined type.
+  size_t subtypeDepth = UnboundedDepth;
+
+  // The top refinement that adds no new information.
+  Refinement() = default;
+  explicit Refinement(size_t depth) : subtypeDepth(depth) {}
+
+  // Whether a type with this refinement is any more specific than the type
+  // without refinement.
+  operator bool() const { return subtypeDepth != UnboundedDepth; }
+
+  bool operator==(const Refinement& other) const {
+    return subtypeDepth == other.subtypeDepth;
+  }
+  bool operator!=(const Refinement& other) const { return !(*this == other); }
+
+  // Whether the refined type is exact and does not have any subtypes.
+  bool isExact() const { return subtypeDepth == 0; }
+
+  // The least upper or greatest lower bounds of this refinement and another.
+  Refinement lub(const Refinement& other) const;
+  Refinement glb(const Refinement& other) const;
+};
+
 // TypeBuilder - allows for the construction of recursive types. Contains a
 // table of `n` mutable HeapTypes and can construct temporary types that are
 // backed by those HeapTypes, refering to them by reference. Those temporary
@@ -729,6 +773,7 @@ std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
 std::ostream& operator<<(std::ostream&, Rtt);
 std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
+std::ostream& operator<<(std::ostream&, Refinement);
 
 } // namespace wasm
 
@@ -769,6 +814,10 @@ public:
 template<> class hash<wasm::RecGroup> {
 public:
   size_t operator()(const wasm::RecGroup&) const;
+};
+template<> class hash<wasm::Refinement> {
+public:
+  size_t operator()(const wasm::Refinement&) const;
 };
 
 } // namespace std

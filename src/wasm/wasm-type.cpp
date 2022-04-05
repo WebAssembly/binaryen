@@ -120,12 +120,18 @@ struct HeapTypeInfo {
     SignatureKind,
     StructKind,
     ArrayKind,
+    RefinedKind,
   } kind;
+  struct RefinedType {
+    HeapType base;
+    Refinement refinement;
+  };
   union {
     HeapType::BasicHeapType basic;
     Signature signature;
     Struct struct_;
     Array array;
+    RefinedType refined;
   };
 
   HeapTypeInfo(HeapType::BasicHeapType basic) : kind(BasicKind), basic(basic) {}
@@ -134,6 +140,8 @@ struct HeapTypeInfo {
   HeapTypeInfo(Struct&& struct_)
     : kind(StructKind), struct_(std::move(struct_)) {}
   HeapTypeInfo(Array array) : kind(ArrayKind), array(array) {}
+  HeapTypeInfo(HeapType base, Refinement refinement)
+    : kind(RefinedKind), refined{base, refinement} {}
   HeapTypeInfo(const HeapTypeInfo& other);
   ~HeapTypeInfo();
 
@@ -159,7 +167,7 @@ struct SubTyper {
   // otherwise.
   std::unordered_set<std::pair<HeapType, HeapType>> seen;
   bool isSubType(Type a, Type b);
-  bool isSubType(HeapType a, HeapType b);
+  std::optional<size_t> isSubType(HeapType a, HeapType b);
   bool isSubType(const Tuple& a, const Tuple& b);
   bool isSubType(const Field& a, const Field& b);
   bool isSubType(const Signature& a, const Signature& b);
@@ -685,6 +693,9 @@ HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
     case ArrayKind:
       new (&array) auto(other.array);
       return;
+    case RefinedKind:
+      new (&refined) auto(other.refined);
+      return;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -702,6 +713,9 @@ HeapTypeInfo::~HeapTypeInfo() {
     case ArrayKind:
       array.~Array();
       return;
+    case RefinedKind:
+      refined.~RefinedType();
+      return;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -709,6 +723,9 @@ HeapTypeInfo::~HeapTypeInfo() {
 std::optional<HeapType> HeapTypeInfo::getCanonical() const {
   if (isFinalized && kind == BasicKind) {
     return basic;
+  }
+  if (kind == RefinedKind && !refined.refinement) {
+    return refined.base;
   }
   return {};
 }
@@ -1335,65 +1352,71 @@ HeapType::HeapType(Array array) {
 }
 
 bool HeapType::isFunction() const {
-  if (isBasic()) {
-    return id == func;
+  auto self = unrefined();
+  if (self.isBasic()) {
+    return self.id == func;
   } else {
-    return getHeapTypeInfo(*this)->isSignature();
+    return getHeapTypeInfo(self)->isSignature();
   }
 }
 
 bool HeapType::isData() const {
-  if (isBasic()) {
-    return id == data;
+  auto self = unrefined();
+  if (self.isBasic()) {
+    return self.id == data;
   } else {
-    return getHeapTypeInfo(*this)->isData();
+    return getHeapTypeInfo(self)->isData();
   }
 }
 
 bool HeapType::isSignature() const {
-  if (isBasic()) {
+  auto self = unrefined();
+  if (self.isBasic()) {
     return false;
   } else {
-    return getHeapTypeInfo(*this)->isSignature();
+    return getHeapTypeInfo(self)->isSignature();
   }
 }
 
 bool HeapType::isStruct() const {
-  if (isBasic()) {
+  auto self = unrefined();
+  if (self.isBasic()) {
     return false;
   } else {
-    return getHeapTypeInfo(*this)->isStruct();
+    return getHeapTypeInfo(self)->isStruct();
   }
 }
 
 bool HeapType::isArray() const {
-  if (isBasic()) {
+  auto self = unrefined();
+  if (self.isBasic()) {
     return false;
   } else {
-    return getHeapTypeInfo(*this)->isArray();
+    return getHeapTypeInfo(self)->isArray();
   }
 }
 
 Signature HeapType::getSignature() const {
   assert(isSignature());
-  return getHeapTypeInfo(*this)->signature;
+  return getHeapTypeInfo(unrefined())->signature;
 }
 
 const Struct& HeapType::getStruct() const {
   assert(isStruct());
-  return getHeapTypeInfo(*this)->struct_;
+  return getHeapTypeInfo(unrefined())->struct_;
 }
 
 Array HeapType::getArray() const {
   assert(isArray());
-  return getHeapTypeInfo(*this)->array;
+  return getHeapTypeInfo(unrefined())->array;
 }
 
 std::optional<HeapType> HeapType::getSuperType() const {
-  if (isBasic()) {
+  auto self = unrefined();
+  if (self.isBasic()) {
     return {};
   }
-  HeapTypeInfo* super = getHeapTypeInfo(*this)->supertype;
+  HeapTypeInfo* super = getHeapTypeInfo(self)->supertype;
   if (super != nullptr) {
     return HeapType(uintptr_t(super));
   }
@@ -1409,12 +1432,47 @@ size_t HeapType::getDepth() const {
   return depth;
 }
 
+size_t HeapType::getDepthFromAny() const {
+  size_t depth = getDepth();
+  auto type = unrefined();
+  if (type.isSignature()) {
+    ++depth;
+    type = HeapType::func;
+  } else if (type.isStruct() || type.isArray()) {
+    ++depth;
+    type = HeapType::data;
+  }
+  assert(type.isBasic());
+  switch (type.getBasic()) {
+    case HeapType::func:
+      // func -> any
+      return depth + 1;
+    case HeapType::ext:
+      // ext -> any
+      // TODO: ext is now an alias for any
+      return depth + 1;
+    case HeapType::any:
+      // Top type
+      return depth + 0;
+    case HeapType::eq:
+      // eq -> any
+      return depth + 1;
+    case HeapType::i31:
+      // i31 -> eq -> any
+      return depth + 2;
+    case HeapType::data:
+      // data -> eq -> any
+      return depth + 2;
+  }
+  WASM_UNREACHABLE("Unexpected basic type");
+}
+
 bool HeapType::isSubType(HeapType left, HeapType right) {
   // As an optimization, in the common case do not even construct a SubTyper.
   if (left == right) {
     return true;
   }
-  return SubTyper().isSubType(left, right);
+  return bool(SubTyper().isSubType(left, right));
 }
 
 std::vector<HeapType> HeapType::getHeapTypeChildren() const {
@@ -1442,19 +1500,59 @@ HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
 static_assert(alignof(std::vector<HeapType>) > 1);
 
 RecGroup HeapType::getRecGroup() const {
-  assert(!isBasic());
-  if (auto* info = getHeapTypeInfo(*this)->recGroup) {
+  auto self = unrefined();
+  assert(!self.isBasic());
+  if (auto* info = getHeapTypeInfo(self)->recGroup) {
     return RecGroup(uintptr_t(info));
   } else {
     // Mark the low bit to signify that this is a trivial recursion group and
     // points to a heap type info rather than a vector of heap types.
-    return RecGroup(id | 1);
+    return RecGroup(self.id | 1);
   }
 }
 
 size_t HeapType::getRecGroupIndex() const {
-  assert(!isBasic());
-  return getHeapTypeInfo(*this)->recGroupIndex;
+  auto base = unrefined();
+  assert(!base.isBasic());
+  return getHeapTypeInfo(base)->recGroupIndex;
+}
+
+HeapType HeapType::unrefined() const {
+  if (isBasic()) {
+    return *this;
+  }
+  auto* info = getHeapTypeInfo(*this);
+  if (info->kind == HeapTypeInfo::RefinedKind) {
+    return info->refined.base;
+  }
+  return *this;
+}
+
+HeapType HeapType::refined(Refinement refinement) const {
+  // Only support refined types in isorecursive or nominal modes.
+  if (getTypeSystem() == TypeSystem::Equirecursive) {
+    return *this;
+  }
+  if (!refinement) {
+    return *this;
+  }
+  auto curr = getRefinement();
+  if (!curr) {
+    return globalHeapTypeStore.insert(
+      std::make_unique<HeapTypeInfo>(*this, refinement));
+  }
+  return unrefined().refined(refinement.glb(curr));
+}
+
+Refinement HeapType::getRefinement() const {
+  if (isBasic()) {
+    return Refinement();
+  }
+  auto* info = getHeapTypeInfo(*this);
+  if (info->kind == HeapTypeInfo::RefinedKind) {
+    return info->refined.refinement;
+  }
+  return Refinement();
 }
 
 HeapType RecGroup::Iterator::operator*() const {
@@ -1550,6 +1648,12 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
+std::ostream& operator<<(std::ostream& os, Refinement refinement) {
+  if (refinement.subtypeDepth == 0) {
+    return os << "exact";
+  }
+  return os << "depth " << refinement.subtypeDepth;
+}
 
 unsigned Field::getByteSize() const {
   if (type != Type::i32) {
@@ -1564,6 +1668,17 @@ unsigned Field::getByteSize() const {
       return 4;
   }
   WASM_UNREACHABLE("impossible packed type");
+}
+
+Refinement Refinement::lub(const Refinement& other) const {
+  if (subtypeDepth == UnboundedDepth || other.subtypeDepth == UnboundedDepth) {
+    return Refinement(UnboundedDepth);
+  }
+  return Refinement(std::max(subtypeDepth, other.subtypeDepth));
+}
+
+Refinement Refinement::glb(const Refinement& other) const {
+  return Refinement(std::min(subtypeDepth, other.subtypeDepth));
 }
 
 namespace {
@@ -1588,63 +1703,96 @@ bool SubTyper::isSubType(Type a, Type b) {
   return false;
 }
 
-bool SubTyper::isSubType(HeapType a, HeapType b) {
+std::optional<size_t> SubTyper::isSubType(HeapType a, HeapType b) {
   // See:
   // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
   // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
   if (a == b) {
-    return true;
+    return {0};
+  }
+  auto refinementA = a.getRefinement();
+  auto refinementB = b.getRefinement();
+  if (refinementA || refinementB) {
+    // A depth n1 <: B depth n2 iff A <: B and B - A + n1 <= n2
+    // (where B - A is the distance from A to B in the subtype hierarchy)
+    if (refinementB && !refinementA) {
+      return {};
+    }
+    auto distance = isSubType(a.unrefined(), b.unrefined());
+    if (!distance) {
+      return {};
+    }
+    if (*distance + refinementA.subtypeDepth <= refinementB.subtypeDepth) {
+      return {refinementB.subtypeDepth -
+              (*distance + refinementA.subtypeDepth)};
+    }
+    return {};
   }
   if (b.isBasic()) {
     switch (b.getBasic()) {
       case HeapType::func:
-        return a.isSignature();
+        if (a.isSignature()) {
+          return {a.getDepthFromAny() - b.getDepthFromAny()};
+        }
+        return {};
       case HeapType::ext:
-        return false;
+        return {};
       case HeapType::any:
-        return true;
+        return {a.getDepthFromAny()};
       case HeapType::eq:
-        return a == HeapType::i31 || a.isData();
+        if (a == HeapType::i31 || a.isData()) {
+          return {a.getDepthFromAny() - b.getDepthFromAny()};
+        }
+        return {};
       case HeapType::i31:
-        return false;
+        return {};
       case HeapType::data:
-        return a.isData();
+        if (a.isData()) {
+          return {a.getDepthFromAny() - b.getDepthFromAny()};
+        }
+        return {};
     }
   }
   if (a.isBasic()) {
     // Basic HeapTypes are never subtypes of compound HeapTypes.
-    return false;
+    return {};
   }
   if (typeSystem == TypeSystem::Nominal ||
       typeSystem == TypeSystem::Isorecursive) {
     // Subtyping must be declared in a nominal system, not derived from
     // structure, so we will not recurse. TODO: optimize this search with some
     // form of caching.
+    size_t distance = 1;
     HeapTypeInfo* curr = getHeapTypeInfo(a);
     while ((curr = curr->supertype)) {
       if (curr == getHeapTypeInfo(b)) {
-        return true;
+        return {distance};
       }
+      ++distance;
     }
-    return false;
+    return {};
   }
-  // As we recurse, we will coinductively assume that a == b unless proven
+  // As we recurse, we will coinductively assume that a <: b unless proven
   // otherwise.
   if (!seen.insert({a, b}).second) {
-    // We weren't able to disprove that a == b since we last saw them, so the
+    // We weren't able to disprove that a <: b since we last saw them, so the
     // relation holds coinductively.
-    return true;
+    return {1};
   }
   if (a.isSignature() && b.isSignature()) {
-    return isSubType(a.getSignature(), b.getSignature());
+    if (isSubType(a.getSignature(), b.getSignature())) {
+      return {1};
+    }
+  } else if (a.isArray() && b.isArray()) {
+    if (isSubType(a.getArray(), b.getArray())) {
+      return {1};
+    }
+  } else if (a.isStruct() && b.isStruct()) {
+    if (isSubType(a.getStruct(), b.getStruct())) {
+      return {1};
+    }
   }
-  if (a.isArray() && b.isArray()) {
-    return isSubType(a.getArray(), b.getArray());
-  }
-  if (a.isStruct() && b.isStruct()) {
-    return isSubType(a.getStruct(), b.getStruct());
-  }
-  return false;
+  return {};
 }
 
 bool SubTyper::isSubType(const Tuple& a, const Tuple& b) {
@@ -1771,19 +1919,37 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
     return a;
   }
 
+  auto refinementA = a.getRefinement();
+  auto refinementB = b.getRefinement();
+  if (refinementA || refinementB) {
+    // LUB(A depth n1, B depth n2) =
+    //     LUB(A, B) depth max(LUB(A, B) - A + n1, LUB(A, B) - B + n2)
+    auto base = lub(a.unrefined(), b.unrefined());
+    SubTyper sub;
+    auto distA = *sub.isSubType(a.unrefined(), base);
+    auto distB = *sub.isSubType(b.unrefined(), base);
+    if (!refinementA || !refinementB) {
+      return base;
+    }
+    return base.refined(Refinement{std::max(distA + refinementA.subtypeDepth,
+                                            distB + refinementB.subtypeDepth)});
+  }
+
   auto getBasicApproximation = [](HeapType x) {
     if (x.isBasic()) {
       return x.getBasic();
     }
-    auto* info = getHeapTypeInfo(x);
+    auto* info = getHeapTypeInfo(x.unrefined());
     switch (info->kind) {
       case HeapTypeInfo::BasicKind:
-        break;
+        return info->basic;
       case HeapTypeInfo::SignatureKind:
         return HeapType::func;
       case HeapTypeInfo::StructKind:
       case HeapTypeInfo::ArrayKind:
         return HeapType::data;
+      case HeapTypeInfo::RefinedKind:
+        break;
     }
     WASM_UNREACHABLE("unexpected kind");
   };
@@ -1869,6 +2035,8 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
         return builder[index] = HeapType::data;
       }
     }
+    case HeapTypeInfo::RefinedKind:
+      WASM_UNREACHABLE("unimplemented");
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -2080,7 +2248,11 @@ std::ostream& TypePrinter::print(HeapType type) {
 #if TRACE_CANONICALIZATION
   os << "(;" << ((type.getID() >> 4) % 1000) << ";)";
 #endif
-  if (getHeapTypeInfo(type)->kind == HeapTypeInfo::BasicKind) {
+  auto* info = getHeapTypeInfo(type);
+  if (info->kind == HeapTypeInfo::RefinedKind) {
+    os << "(; " << info->refined.refinement << " ;) ";
+    print(info->refined.base);
+  } else if (getHeapTypeInfo(type)->kind == HeapTypeInfo::BasicKind) {
     os << "(; noncanonical ;) ";
     print(getHeapTypeInfo(type)->basic);
   } else if (type.isSignature()) {
@@ -2255,6 +2427,12 @@ size_t FiniteShapeHasher::hash(const TypeInfo& info) {
 }
 
 size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
+  size_t digest = wasm::hash(info.kind == HeapTypeInfo::RefinedKind);
+  if (info.kind == HeapTypeInfo::RefinedKind) {
+    hash_combine(digest, hash(info.refined.base));
+    hash_combine(digest, wasm::hash(info.refined.refinement));
+    return digest;
+  }
   if (getTypeSystem() == TypeSystem::Nominal ||
       getTypeSystem() == TypeSystem::Isorecursive) {
     return wasm::hash(uintptr_t(&info));
@@ -2262,7 +2440,7 @@ size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
   // If the HeapTypeInfo is not finalized, then it is mutable and its shape
   // might change in the future. In that case, fall back to pointer identity to
   // keep the hash consistent until all the TypeBuilder's types are finalized.
-  size_t digest = wasm::hash(info.isFinalized);
+  rehash(digest, info.isFinalized);
   if (!info.isFinalized) {
     rehash(digest, uintptr_t(&info));
     return digest;
@@ -2280,6 +2458,9 @@ size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
     case HeapTypeInfo::ArrayKind:
       hash_combine(digest, hash(info.array));
       return digest;
+    case HeapTypeInfo::RefinedKind:
+      // Already handled.
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -2373,6 +2554,11 @@ bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
 }
 
 bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
+  if (a.kind == HeapTypeInfo::RefinedKind &&
+      b.kind == HeapTypeInfo::RefinedKind) {
+    return eq(a.refined.base, b.refined.base) &&
+           a.refined.refinement == b.refined.refinement;
+  }
   if (getTypeSystem() == TypeSystem::Nominal ||
       getTypeSystem() == TypeSystem::Isorecursive) {
     return &a == &b;
@@ -2395,6 +2581,9 @@ bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
       return eq(a.struct_, b.struct_);
     case HeapTypeInfo::ArrayKind:
       return eq(a.array, b.array);
+    case HeapTypeInfo::RefinedKind:
+      // Already handled.
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -2505,6 +2694,8 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   switch (info.kind) {
     case HeapTypeInfo::BasicKind:
       WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
+    case HeapTypeInfo::RefinedKind:
+      WASM_UNREACHABLE("Unexpected refined heap type during canonicalization");
     case HeapTypeInfo::SignatureKind:
       hash_combine(digest, hash(info.signature));
       return digest;
@@ -2640,6 +2831,8 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
   switch (a.kind) {
     case HeapTypeInfo::BasicKind:
       WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
+    case HeapTypeInfo::RefinedKind:
+      WASM_UNREACHABLE("Unexpected refined heap type during canonicalization");
     case HeapTypeInfo::SignatureKind:
       return eq(a.signature, b.signature);
     case HeapTypeInfo::StructKind:
@@ -2757,6 +2950,9 @@ void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
   auto* info = getHeapTypeInfo(*ht);
   switch (info->kind) {
     case HeapTypeInfo::BasicKind:
+      break;
+    case HeapTypeInfo::RefinedKind:
+      scanHeapType(&info->refined.base);
       break;
     case HeapTypeInfo::SignatureKind:
       taskList.push_back(Task::scan(&info->signature.results));
@@ -3640,6 +3836,9 @@ validateSubtyping(const std::vector<HeapType>& types) {
     switch (sub->kind) {
       case HeapTypeInfo::BasicKind:
         WASM_UNREACHABLE("unexpected kind");
+      case HeapTypeInfo::RefinedKind:
+        WASM_UNREACHABLE(
+          "Unexpected refined heap type during canonicalization");
       case HeapTypeInfo::SignatureKind:
         if (!typer.isSubType(sub->signature, super->signature)) {
           return fail();
@@ -3991,6 +4190,11 @@ size_t hash<wasm::HeapType>::operator()(const wasm::HeapType& heapType) const {
 
 size_t hash<wasm::RecGroup>::operator()(const wasm::RecGroup& group) const {
   return wasm::hash(group.getID());
+}
+
+size_t
+hash<wasm::Refinement>::operator()(const wasm::Refinement& refinement) const {
+  return wasm::hash(refinement.subtypeDepth);
 }
 
 size_t hash<wasm::Rtt>::operator()(const wasm::Rtt& rtt) const {

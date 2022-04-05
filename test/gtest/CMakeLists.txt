@@ -1,6 +1,7 @@
 include_directories(../../third_party/googletest/googletest/include)
 
 set(unittest_SOURCES
+  refined-types.cpp
   type-builder.cpp
 )
 
