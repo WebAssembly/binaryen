@@ -113,7 +113,7 @@ struct Connection {
 namespace std {
 
 // Define hashes of all the *Location types so that Location itself is hashable
-// and we can use it in unordered maps and sets. Likewise, Connection as well.
+// and we can use it in unordered maps and sets.
 
 template<> struct hash<wasm::ExpressionLocation> {
   size_t operator()(const wasm::ExpressionLocation& loc) const {
@@ -166,6 +166,12 @@ template<> struct hash<wasm::StructLocation> {
 template<> struct hash<wasm::ArrayLocation> {
   size_t operator()(const wasm::ArrayLocation& loc) const {
     return std::hash<wasm::HeapType>{}(loc.type);
+  }
+};
+
+template<> struct hash<wasm::Connection> {
+  size_t operator()(const wasm::Connection& loc) const {
+    return std::hash<std::pair<wasm::Location, wasm::Location>>{}({loc.from, loc.to});
   }
 };
 
@@ -480,7 +486,7 @@ void PossibleTypesOracle::analyze() {
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
-    flowInfoMap[connection.from].targets.push_back(to);
+    flowInfoMap[connection.from].targets.push_back(connection.to);
   }
 
   // TODO: assert that no duplicates in targets vector, by design.
