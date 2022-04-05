@@ -802,7 +802,8 @@ private:
     std::lock_guard<std::recursive_mutex> lock(mutex);
     // Nominal HeapTypes are always unique, so don't bother deduplicating them.
     if constexpr (std::is_same_v<Info, HeapTypeInfo>) {
-      if (typeSystem == TypeSystem::Nominal) {
+      if (typeSystem == TypeSystem::Nominal &&
+          info.kind != HeapTypeInfo::RefinedKind) {
         return insertNew();
       }
     }
