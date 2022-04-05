@@ -114,19 +114,19 @@ template<> struct hash<wasm::ExpressionLocation> {
 
 template<> struct hash<wasm::ResultLocation> {
   size_t operator()(const wasm::ResultLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Index>>{}(size_t(loc.func), loc.index);
+    return std::hash<std::pair<size_t, wasm::Index>>{}({size_t(loc.func), loc.index});
   }
 };
 
 template<> struct hash<wasm::LocalLocation> {
   size_t operator()(const wasm::LocalLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Index>>{}(size_t(loc.func), loc.index);
+    return std::hash<std::pair<size_t, wasm::Index>>{}({size_t(loc.func), loc.index});
   }
 };
 
 template<> struct hash<wasm::BranchLocation> {
   size_t operator()(const wasm::BranchLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Name>>{}(size_t(loc.func), loc.target);
+    return std::hash<std::pair<size_t, wasm::Name>>{}({size_t(loc.func), loc.target});
   }
 };
 
@@ -144,13 +144,13 @@ template<> struct hash<wasm::TableLocation> {
 
 template<> struct hash<wasm::SignatureParamLocation> {
   size_t operator()(const wasm::SignatureParamLocation& loc) const {
-    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(loc.type, loc.index);
+    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}({loc.type, loc.index});
   }
 };
 
 template<> struct hash<wasm::StructLocation> {
   size_t operator()(const wasm::StructLocation& loc) const {
-    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(loc.type, loc.index);
+    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}({loc.type, loc.index});
   }
 };
 
