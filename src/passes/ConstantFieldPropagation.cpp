@@ -605,11 +605,11 @@ void PossibleTypesOracle::analyze() {
       connections.insert(
         {SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i}});
     }
+    for (Index i = 0; i < func->getResults().size(); i++) {
+      connections.insert(
+        {ResultLocation{func.get(), i}, SignatureResultLocation{func->type, i}});
+    }
   }
-
-  // TODO: add signature connections to functions
-  // TODO: add subtyping (but see TODO later down, we could do this even better
-  //       in a more dynamic manner
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
@@ -647,18 +647,34 @@ void PossibleTypesOracle::analyze() {
   while (!work.empty()) {
     auto location = work.pop();
     auto& info = flowInfoMap[location];
-    auto& targets = info.targets;
+
+    // Compute the targets we need to update. Normally we simply flow to the
+    // targets defined in the graph, however, some connections are best done
+    // "dynamically". Consider a struct.set that writes a references to some
+    // field. We could assume that it writes it to any struct of the type it is
+    // defined on, or any subtype, but instead we use the information in the
+    // graph: the types that are possible in the reference field determine where
+    // the values should flow. That is,
+    //
+    //  (struct.set $A
+    //    (ref B)
+    //    (value C) ;; also a reference type of some kind.
+    //  )
+    //
+    // The rules we apply to such an expression are:
+    //
+    //  1. When a new type arrives in (value C), we send it to the proper field
+    //     of all types that can appear in (ref B).
+    //  2. When a new type arrives in (ref B) we must send the values in
+    //     (value C) to their new target as well.
+    auto targets = info.targets;
     if (targets.empty()) {
       continue;
     }
 
     auto& types = info.types;
-    // TODO: We can refine both the types and the targets here. For types, we
-    //       can avoid flowing anything through a ref.cast that it would trap
-    //       on. For targets, rather than assume struct.set writes to the
-    //       relevant field of any subtype we could construct the list of
-    //       targets based on the currently inferred type of the reference we
-    //       are writing to.
+    // TODO: We can refine both the types here, by not flowing anything through
+    //       a ref.cast that it would trap on.
 
     // Update the targets, and add the ones that changes to the remaining work.
     for (const auto& target : targets) {
