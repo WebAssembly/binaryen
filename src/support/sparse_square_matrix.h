@@ -27,37 +27,42 @@ template<typename Ty> class sparse_square_matrix {
   std::unordered_map<uint64_t, Ty> sparseStorage;
   uint32_t N;
 
+  static const size_t DenseLimit = 8192;
+
 public:
   sparse_square_matrix() : N(0) {}
 
   explicit sparse_square_matrix(int N) : N(N) {
-    if (N < 8192) {
+    if (N < DenseLimit) {
       denseStorage.resize(N * N);
     }
   }
 
+  bool usingDenseStorage() const { return !denseStorage.empty(); }
+
   void set(uint32_t i, uint32_t j, const Ty& value) {
-    if (denseStorage.empty()) {
-      sparseStorage[i * N + j] = value;
-    } else {
+    if (usingDenseStorage()) {
       denseStorage[i * N + j] = value;
+    } else {
+      sparseStorage[i * N + j] = value;
     }
   }
 
   const Ty get(uint32_t i, uint32_t j) const {
-    if (denseStorage.empty()) {
-      auto iter = sparseStorage.find(i * N + j);
-      return iter == sparseStorage.end() ? Ty() : iter->second;
+    if (usingDenseStorage()) {
+      return denseStorage[i * N + j];
     }
-    return denseStorage[i * N + j];
+    auto iter = sparseStorage.find(i * N + j);
+    return iter == sparseStorage.end() ? Ty() : iter->second;
   }
 
-  // Resizes the matrix, and discards all previous data entries.
+  // Resizes the matrix to a new n*n size, and clears all entries
+  // to the default-initialized value.
   void recreate(uint32_t n) {
     N = n;
     denseStorage.clear();
     sparseStorage.clear();
-    if (N < 8192) {
+    if (N < DenseLimit) {
       denseStorage.resize(N * N);
     }
   }
