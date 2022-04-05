@@ -174,19 +174,22 @@ template<> struct hash<wasm::ExpressionLocation> {
 
 template<> struct hash<wasm::ResultLocation> {
   size_t operator()(const wasm::ResultLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Index>>{}({size_t(loc.func), loc.index});
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.func), loc.index});
   }
 };
 
 template<> struct hash<wasm::LocalLocation> {
   size_t operator()(const wasm::LocalLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Index>>{}({size_t(loc.func), loc.index});
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.func), loc.index});
   }
 };
 
 template<> struct hash<wasm::BranchLocation> {
   size_t operator()(const wasm::BranchLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Name>>{}({size_t(loc.func), loc.target});
+    return std::hash<std::pair<size_t, wasm::Name>>{}(
+      {size_t(loc.func), loc.target});
   }
 };
 
@@ -204,19 +207,22 @@ template<> struct hash<wasm::TableLocation> {
 
 template<> struct hash<wasm::SignatureParamLocation> {
   size_t operator()(const wasm::SignatureParamLocation& loc) const {
-    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}({loc.type, loc.index});
+    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
+      {loc.type, loc.index});
   }
 };
 
 template<> struct hash<wasm::SignatureResultLocation> {
   size_t operator()(const wasm::SignatureResultLocation& loc) const {
-    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}({loc.type, loc.index});
+    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
+      {loc.type, loc.index});
   }
 };
 
 template<> struct hash<wasm::StructLocation> {
   size_t operator()(const wasm::StructLocation& loc) const {
-    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}({loc.type, loc.index});
+    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
+      {loc.type, loc.index});
   }
 };
 
@@ -228,7 +234,8 @@ template<> struct hash<wasm::ArrayLocation> {
 
 template<> struct hash<wasm::Connection> {
   size_t operator()(const wasm::Connection& loc) const {
-    return std::hash<std::pair<wasm::Location, wasm::Location>>{}({loc.from, loc.to});
+    return std::hash<std::pair<wasm::Location, wasm::Location>>{}(
+      {loc.from, loc.to});
   }
 };
 
@@ -326,15 +333,16 @@ void PossibleTypesOracle::analyze() {
             curr, [&](Name target, Expression* value) {
               if (value && value->type.isRef()) {
                 info.connections.push_back(
-                  {ExpressionLocation{value}, BranchLocation{getFunction(), target}});
+                  {ExpressionLocation{value},
+                   BranchLocation{getFunction(), target}});
               }
             });
 
           // Branch targets receive the things sent to them and flow them out.
           if (curr->type.isRef()) {
             BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
-              info.connections.push_back(
-                {BranchLocation{getFunction(), target}, ExpressionLocation{curr}});
+              info.connections.push_back({BranchLocation{getFunction(), target},
+                                          ExpressionLocation{curr}});
             });
           }
           // TODO: if we are a branch source or target, skip the loop later
@@ -399,8 +407,8 @@ void PossibleTypesOracle::analyze() {
         // and create the proper location for it.
         void handleCall(Expression* curr,
                         ExpressionList& operands,
-                        std::function<Location (Index)> makeParamLocation,
-                        std::function<Location (Index)> makeResultLocation) {
+                        std::function<Location(Index)> makeParamLocation,
+                        std::function<Location(Index)> makeResultLocation) {
           Index i = 0;
           for (auto* operand : operands) {
             if (operand->type.isRef()) {
@@ -417,38 +425,49 @@ void PossibleTypesOracle::analyze() {
           if (!curr->type.isRef()) {
             return;
           }
-          info.connections.push_back({
-            makeResultLocation(0), ExpressionLocation{curr}
-          });
+          info.connections.push_back(
+            {makeResultLocation(0), ExpressionLocation{curr}});
         }
 
         // Calls send values to params in their possible targets, and receive
         // results.
         void visitCall(Call* curr) {
           auto* target = getModule()->getFunction(curr->target);
-          handleCall(curr, curr->operands, [&](Index i) {
-            return LocalLocation{target, i};
-          }, [&](Index i) {
-            return ResultLocation{target, i};
-          });
+          handleCall(
+            curr,
+            curr->operands,
+            [&](Index i) {
+              return LocalLocation{target, i};
+            },
+            [&](Index i) {
+              return ResultLocation{target, i};
+            });
         }
         void visitCallIndirect(CallIndirect* curr) {
           auto target = curr->heapType;
-          handleCall(curr, curr->operands, [&](Index i) {
-            return SignatureParamLocation{target, i};
-          }, [&](Index i) {
-            return SignatureResultLocation{target, i};
-          });
+          handleCall(
+            curr,
+            curr->operands,
+            [&](Index i) {
+              return SignatureParamLocation{target, i};
+            },
+            [&](Index i) {
+              return SignatureResultLocation{target, i};
+            });
         }
         void visitCallRef(CallRef* curr) {
           auto targetType = curr->target->type;
           if (targetType.isRef()) {
             auto target = targetType.getHeapType();
-            handleCall(curr, curr->operands, [&](Index i) {
-              return SignatureParamLocation{target, i};
-            }, [&](Index i) {
-              return SignatureResultLocation{target, i};
-            });
+            handleCall(
+              curr,
+              curr->operands,
+              [&](Index i) {
+                return SignatureParamLocation{target, i};
+              },
+              [&](Index i) {
+                return SignatureResultLocation{target, i};
+              });
           }
         }
 
@@ -456,7 +475,7 @@ void PossibleTypesOracle::analyze() {
         // target of the connection is created using a function that is passed
         // in which receives the index of the child.
         void handleChildList(ExpressionList& operands,
-                        std::function<Location (Index)> makeTarget) {
+                             std::function<Location(Index)> makeTarget) {
           Index i = 0;
           for (auto* operand : operands) {
             if (operand->type.isRef()) {
@@ -483,8 +502,9 @@ void PossibleTypesOracle::analyze() {
         }
         void visitArrayNew(ArrayNew* curr) {
           if (curr->type != Type::unreachable && curr->init->type.isRef()) {
-            info.connections.push_back({ExpressionLocation{curr->init},
-                                        ArrayLocation{curr->type.getHeapType()}});
+            info.connections.push_back(
+              {ExpressionLocation{curr->init},
+               ArrayLocation{curr->type.getHeapType()}});
           }
         }
         void visitArrayInit(ArrayInit* curr) {
@@ -493,16 +513,16 @@ void PossibleTypesOracle::analyze() {
             return;
           }
           auto type = curr->type.getHeapType();
-          handleChildList(curr->values, [&](Index i) {
-            return ArrayLocation{type};
-          });
+          handleChildList(curr->values,
+                          [&](Index i) { return ArrayLocation{type}; });
         }
 
         // Struct operations access the struct fields' locations.
         void visitStructGet(StructGet* curr) {
           if (curr->type.isRef()) {
-            info.connections.push_back({StructLocation{curr->type.getHeapType(), curr->index},
-                                        ExpressionLocation{curr}});
+            info.connections.push_back(
+              {StructLocation{curr->type.getHeapType(), curr->index},
+               ExpressionLocation{curr}});
           }
         }
         void visitStructSet(StructSet* curr) {
@@ -515,14 +535,15 @@ void PossibleTypesOracle::analyze() {
         // Array operations access the array's location.
         void visitArrayGet(ArrayGet* curr) {
           if (curr->type.isRef()) {
-            info.connections.push_back(
-              {ArrayLocation{curr->type.getHeapType()}, ExpressionLocation{curr}});
+            info.connections.push_back({ArrayLocation{curr->type.getHeapType()},
+                                        ExpressionLocation{curr}});
           }
         }
         void visitArraySet(ArraySet* curr) {
           if (curr->value->type.isRef()) {
             info.connections.push_back(
-              {ExpressionLocation{curr->value}, ArrayLocation{curr->type.getHeapType()}});
+              {ExpressionLocation{curr->value},
+               ArrayLocation{curr->type.getHeapType()}});
           }
         }
 
@@ -540,21 +561,11 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
-        void visitTry(Try* curr) {
-          WASM_UNREACHABLE("todo");
-        }
-        void visitThrow(Throw* curr) {
-          WASM_UNREACHABLE("todo");
-        }
-        void visitRethrow(Rethrow* curr) {
-          WASM_UNREACHABLE("todo");
-        }
-        void visitTupleMake(TupleMake* curr) {
-          WASM_UNREACHABLE("todo");
-        }
-        void visitTupleExtract(TupleExtract* curr) {
-          WASM_UNREACHABLE("todo");
-        }
+        void visitTry(Try* curr) { WASM_UNREACHABLE("todo"); }
+        void visitThrow(Throw* curr) { WASM_UNREACHABLE("todo"); }
+        void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("todo"); }
+        void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("todo"); }
+        void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("todo"); }
 
         void visitFunction(Function* func) {
           // Functions with a result can flow a value out from their body.
@@ -578,7 +589,7 @@ void PossibleTypesOracle::analyze() {
   // the entire program all at once. First, gather all the connections from all
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible types at each location.
-  std::unordered_set<Connection> connections; 
+  std::unordered_set<Connection> connections;
 
   for (auto& [func, info] : analysis.map) {
     for (auto& connection : info.connections) {
@@ -591,7 +602,8 @@ void PossibleTypesOracle::analyze() {
   // TODO: find which functions are even taken by reference
   for (auto& func : wasm.functions) {
     for (Index i = 0; i < func->getParams().size(); i++) {
-      connections.insert({SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i}});
+      connections.insert(
+        {SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i}});
     }
   }
 
@@ -613,7 +625,8 @@ void PossibleTypesOracle::analyze() {
   for (auto& [location, info] : flowInfoMap) {
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
       auto* expr = exprLoc->expr;
-      if (expr->is<StructNew>() || expr->is<ArrayNew>() || expr->is<ArrayInit>()) {
+      if (expr->is<StructNew>() || expr->is<ArrayNew>() ||
+          expr->is<ArrayInit>()) {
         // The type must be a reference, and not unreachable (we should have
         // ignored such things before).
         assert(expr->type.isRef());
@@ -664,15 +677,18 @@ PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(Expression* curr) {
   return flowInfoMap[ExpressionLocation{curr}].types;
 }
 
-PossibleTypesOracle::TypeSet PossibleTypesOracle::getResultTypes(Function* func, Index index) {
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getResultTypes(Function* func,
+                                                                 Index index) {
   return flowInfoMap[ResultLocation{func, index}].types;
 }
 
-PossibleTypesOracle::TypeSet PossibleTypesOracle::getLocalTypes(Function* func, Index index) {
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getLocalTypes(Function* func,
+                                                                Index index) {
   return flowInfoMap[LocalLocation{func, index}].types;
 }
 
-PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(HeapType type, Index index) {
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(HeapType type,
+                                                           Index index) {
   return flowInfoMap[StructLocation{type, index}].types;
 }
 
