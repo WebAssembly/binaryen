@@ -83,66 +83,52 @@ public:
 void PossibleTypesOracle::analyze() {
   // Define the data for each "location" that can store types.
 
-  // A location that is a struct.new or array.new, where a new allocation is
-  // performed.
-  struct NewLocation {
-    Expression* expr;
-  };
-
   struct ExpressionLocation {
     Expression* expr;
-    ExpressionLocation(Expression* expr) : expr(expr) {}
   };
 
   struct ResultLocation {
     Function* func;
     Index index;
-    ResultLocation(Function* func, Index index) : func(func), index(index) {}
   };
 
   struct LocalLocation {
     Function* func;
     Index index;
-    LocalLocation(Function* func, Index index) : func(func), index(index) {}
   };
 
   struct BranchLocation {
     Function* func;
     Name target;
-    BranchLocation(Function* func, Name target) : func(func), target(target) {}
   };
 
   struct GlobalLocation {
     Name name;
-    GlobalLocation(Name name) : name(name) {}
   };
 
   struct TableLocation {
     Name name;
-    TableLocation(Name name) : name(name) {}
   };
 
   struct SignatureParamLocation {
     HeapType type;
     Index index;
-    SignatureParamLocation(HeapType type, Index index) : type(type), index(index) {}
   };
   // TODO: result, and use that
 
   struct StructLocation {
     HeapType type;
     Index index;
-    StructLocation(HeapType type, Index index) : type(type), index(index) {}
   };
 
   struct ArrayLocation {
     HeapType type;
-    ArrayLocation(HeapType type) : type(type) {}
   };
 
   // A location is a variant over all the possible types of locations that we
   // have.
-  using Location = std::variant<ExpressionLocation,
+  using Location = std::variant<NewLocation,
+                                ExpressionLocation,
                                 ResultLocation,
                                 LocalLocation,
                                 BranchLocation,
@@ -275,9 +261,11 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
-        // Calls send values to params in their possible targets.
-        void handleCall(ExpressionList& operands,
-                        std::function<Location()> makeTarget) {
+        // Iterates over a list of children and adds connections as needed. The
+        // target of the connection is created using a function that is passed
+        // in which receives the index of the child.
+        void handleChildList(ExpressionList& operands,
+                        std::function<Location (Index)> makeTarget) {
           Index i = 0;
           for (auto* operand : operands) {
             if (operand->type->isRef()) {
@@ -287,15 +275,17 @@ void PossibleTypesOracle::analyze() {
             i++;
           }
         }
+
+        // Calls send values to params in their possible targets.
         void visitCall(Call* curr) {
           auto* target = getModule()->getFunction(curr->name);
-          handleCall(curr->operands, [&](Index i) {
+          handleChildList(curr->operands, [&](Index i) {
             return LocalLocation(target, i);
           });
         }
         void visitCallIndirect(CallIndirect* curr) {
           auto target = curr->heapType;
-          handleCall(curr->operands, [&](Index i) {
+          handleChildList(curr->operands, [&](Index i) {
             return SignatureParamLocation(target, i);
           });
         }
@@ -303,17 +293,41 @@ void PossibleTypesOracle::analyze() {
           auto targetType = curr->target->type;
           if (targetType.isRef()) {
             auto target = targetType.getHeapType();
-            handleCall(curr->operands, [&](Index i) {
+            handleChildList(curr->operands, [&](Index i) {
               return SignatureParamLocation(target, i);
             });
           }
         }
 
         // Creation operations form the starting connections from where data
-        // flows.
+        // flows. We will create an ExpressionLocation for them when their
+        // parent uses them, as we do for all instructions, so nothing special
+        // needs to be done here, but we do need to create connections from
+        // inputs - the initialization of their data - to the proper places.
         void visitStructNew(StructNew* curr) {
-          info.connections.push_back({StructLocation(curr->name, curr->index),
-                                      ExpressionLocation(curr)});
+          if (curr->type == Type::unreachable) {
+            return;
+          }
+          auto type = curr->type.getHeapType();
+          handleChildList(curr->operands, [&](Index i) {
+            return StructLocation(type, i);
+          });
+        }
+        void visitArrayNew(ArrayNew* curr) {
+          if (curr->type != Type::unreachable && curr->init->type.isRef()) {
+            info.connections.push_back({ExpressionLocation{curr->init},
+                                        ArrayLocation{curr->type.getHeapType()}});
+          });
+        }
+        void visitArrayInit(ArrayInit* curr) {
+          if (curr->type == Type::unreachable || curr->operands.empty() ||
+              !curr->operands[0]->type.isRef()) {
+            return;
+          }
+          auto type = curr->type.getHeapType();
+          handleChildList(curr->operands, [&](Index i) {
+            return ArrayLocation(type);
+          });
         }
 
         // Struct operations access the struct fields' locations.
