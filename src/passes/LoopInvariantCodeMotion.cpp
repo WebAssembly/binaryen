@@ -75,7 +75,6 @@ struct LoopInvariantCodeMotion
     // FIXME: also the loop tail issue from above.
     auto numLocals = getFunction()->getNumLocals();
     std::vector<Index> numSetsForIndex(numLocals);
-    std::fill(numSetsForIndex.begin(), numSetsForIndex.end(), 0);
     LoopSets loopSets;
     {
       FindAll<LocalSet> finder(loop);
