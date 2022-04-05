@@ -82,49 +82,49 @@ public:
 
 void PossibleTypesOracle::analyze() {
   // Define the data for each "location" that can store types.
+
+  // A location that is a struct.new or array.new, where a new allocation is
+  // performed.
+  struct NewLocation {
+    Expression* expr;
+  };
+
   struct ExpressionLocation {
     Expression* expr;
-    TypeSet types;
     ExpressionLocation(Expression* expr) : expr(expr) {}
   };
 
   struct ResultLocation {
     Function* func;
     Index index;
-    TypeSet types;
     ResultLocation(Function* func, Index index) : func(func), index(index) {}
   };
 
   struct LocalLocation {
     Function* func;
     Index index;
-    TypeSet types;
     LocalLocation(Function* func, Index index) : func(func), index(index) {}
   };
 
   struct BranchLocation {
     Function* func;
     Name target;
-    TypeSet types;
     BranchLocation(Function* func, Name target) : func(func), target(target) {}
   };
 
   struct GlobalLocation {
     Name name;
-    TypeSet types;
     GlobalLocation(Name name) : name(name) {}
   };
 
   struct TableLocation {
     Name name;
-    TypeSet types;
     TableLocation(Name name) : name(name) {}
   };
 
   struct SignatureParamLocation {
     HeapType type;
     Index index;
-    TypeSet types;
     SignatureParamLocation(HeapType type, Index index) : type(type), index(index) {}
   };
   // TODO: result, and use that
@@ -132,13 +132,11 @@ void PossibleTypesOracle::analyze() {
   struct StructLocation {
     HeapType type;
     Index index;
-    TypeSet types;
     StructLocation(HeapType type, Index index) : type(type), index(index) {}
   };
 
   struct ArrayLocation {
     HeapType type;
-    TypeSet types;
     ArrayLocation(HeapType type) : type(type) {}
   };
 
@@ -220,6 +218,11 @@ void PossibleTypesOracle::analyze() {
                 {BranchLocation(target), ExpressionLocation(curr)});
             });
           }
+          // TODO: if we are a branch source or target, skip the loop later
+          // down? in general any ref-receiving instruction that reaches that
+          // loop will end up connecting a child ref to the current expression,
+          // but e.g. ref.is_* does not do so. OTOH ref.test's output is then an
+          // integer anyhow, so we don't actually reach the loop.
 
           // The default behavior is to connect all input expressions to the
           // current one, as it might return an output that includes them.
@@ -306,6 +309,13 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
+        // Creation operations form the starting connections from where data
+        // flows.
+        void visitStructNew(StructNew* curr) {
+          info.connections.push_back({StructLocation(curr->name, curr->index),
+                                      ExpressionLocation(curr)});
+        }
+
         // Struct operations access the struct fields' locations.
         void visitStructGet(StructGet* curr) {
           if (curr->type.isRef()) {
@@ -368,6 +378,9 @@ void PossibleTypesOracle::analyze() {
       finder.setFunction(func);
       finder.walk(func->body);
     });
+
+  // Merge the function information.
+  // TODO: add subtyping connections.
 
   // A map of globals to the lub for that global.
   std::unordered_map<Name, LUBFinder> lubs;
