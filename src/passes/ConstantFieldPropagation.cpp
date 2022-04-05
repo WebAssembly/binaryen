@@ -428,12 +428,16 @@ void PossibleTypesOracle::analyze() {
           auto* target = getModule()->getFunction(curr->target);
           handleCall(curr, curr->operands, [&](Index i) {
             return LocalLocation{target, i};
+          }, [&](Index i) {
+            return ResultLocation{target, i};
           });
         }
         void visitCallIndirect(CallIndirect* curr) {
           auto target = curr->heapType;
           handleCall(curr, curr->operands, [&](Index i) {
             return SignatureParamLocation{target, i};
+          }, [&](Index i) {
+            return SignatureResultLocation{target, i};
           });
         }
         void visitCallRef(CallRef* curr) {
@@ -442,6 +446,8 @@ void PossibleTypesOracle::analyze() {
             auto target = targetType.getHeapType();
             handleCall(curr, curr->operands, [&](Index i) {
               return SignatureParamLocation{target, i};
+            }, [&](Index i) {
+              return SignatureResultLocation{target, i};
             });
           }
         }
