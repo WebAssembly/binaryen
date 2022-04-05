@@ -41,6 +41,123 @@ namespace wasm {
 
 namespace {
 
+// *Location structs describe particular locations.
+// TODO describe each
+struct ExpressionLocation {
+  Expression* expr;
+};
+
+struct ResultLocation {
+  Function* func;
+  Index index;
+};
+
+struct LocalLocation {
+  Function* func;
+  Index index;
+};
+
+struct BranchLocation {
+  Function* func;
+  Name target;
+};
+
+struct GlobalLocation {
+  Name name;
+};
+
+struct TableLocation {
+  Name name;
+};
+
+struct SignatureParamLocation {
+  HeapType type;
+  Index index;
+};
+// TODO: result, and use that
+
+struct StructLocation {
+  HeapType type;
+  Index index;
+};
+
+struct ArrayLocation {
+  HeapType type;
+};
+
+// A location is a variant over all the possible types of locations that we
+// have.
+using Location = std::variant<ExpressionLocation,
+                              ResultLocation,
+                              LocalLocation,
+                              BranchLocation,
+                              GlobalLocation,
+                              TableLocation,
+                              SignatureParamLocation,
+                              StructLocation,
+                              ArrayLocation>;
+
+namespace std {
+
+// Define hashes of all the *Location types so that Location itself is hashable
+// and we can use it in unordered maps and sets.
+
+template<> struct hash<ExpressionLocation> {
+  size_t operator()(const ExpressionLocation& loc) const {
+    return std::hash<size_t>{}(size_t(loc.expr));
+  }
+};
+
+template<> struct hash<ResultLocation> {
+  size_t operator()(const ResultLocation& loc) const {
+    return std::hash<std::pair<size_t, Index>>{}(size_t(loc.func), loc.index);
+  }
+};
+
+template<> struct hash<LocalLocation> {
+  size_t operator()(const LocalLocation& loc) const {
+    return std::hash<std::pair<size_t, Index>>{}(size_t(loc.func), loc.index);
+  }
+};
+
+template<> struct hash<BranchLocation> {
+  size_t operator()(const BranchLocation& loc) const {
+    return std::hash<std::pair<size_t, Name>>{}(size_t(loc.func), loc.target);
+  }
+};
+
+template<> struct hash<GlobalLocation> {
+  size_t operator()(const GlobalLocation& loc) const {
+    return std::hash<Name>{}(loc.name);
+  }
+};
+
+template<> struct hash<TableLocation> {
+  size_t operator()(const TableLocation& loc) const {
+    return std::hash<Name>{}(loc.name);
+  }
+};
+
+template<> struct hash<SignatureParamLocation> {
+  size_t operator()(const SignatureParamLocation& loc) const {
+    return std::hash<std::pair<HeapType, Index>>{}(loc.type, loc.index);
+  }
+};
+
+template<> struct hash<StructLocation> {
+  size_t operator()(const StructLocation& loc) const {
+    return std::hash<std::pair<HeapType, Index>>{}(loc.type, loc.index);
+  }
+};
+
+template<> struct hash<ArrayLocation> {
+  size_t operator()(const ArrayLocation& loc) const {
+    return std::hash<HeapType>{}(loc.type);
+  }
+};
+
+} // namespace std
+
 // Analyze the entire wasm file to find which types are possible in which
 // locations. This assumes a closed world and starts from struct.new/array.new
 // instructions, and propagates them to the locations they reach. After the
@@ -78,65 +195,22 @@ public:
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
   //       including multiple levels of depth (necessary for itables in j2wasm)
+
+private:
+  // The information needed during and after flowing the types through the
+  // graph.
+  struct LocationInfo {
+    // The types possible at this location.
+    TypeSet types;
+
+    // The targets to which this sends types.
+    std::vector<Location> targets;
+  };
+
+  std::unordered_map<Location, LocationInfo> flowInfoMap;
 };
 
 void PossibleTypesOracle::analyze() {
-  // *Location structs describe particular locations.
-  // TODO describe each
-  struct ExpressionLocation {
-    Expression* expr;
-  };
-
-  struct ResultLocation {
-    Function* func;
-    Index index;
-  };
-
-  struct LocalLocation {
-    Function* func;
-    Index index;
-  };
-
-  struct BranchLocation {
-    Function* func;
-    Name target;
-  };
-
-  struct GlobalLocation {
-    Name name;
-  };
-
-  struct TableLocation {
-    Name name;
-  };
-
-  struct SignatureParamLocation {
-    HeapType type;
-    Index index;
-  };
-  // TODO: result, and use that
-
-  struct StructLocation {
-    HeapType type;
-    Index index;
-  };
-
-  struct ArrayLocation {
-    HeapType type;
-  };
-
-  // A location is a variant over all the possible types of locations that we
-  // have.
-  using Location = std::variant<ExpressionLocation,
-                                ResultLocation,
-                                LocalLocation,
-                                BranchLocation,
-                                GlobalLocation,
-                                TableLocation,
-                                SignatureParamLocation,
-                                StructLocation,
-                                ArrayLocation>;
-
   // A connection indicates a flow of types from one location to another. For
   // example, if we do a local.get and return that value from a function, then
   // we have a connection from a location of LocalTypes to a location of
@@ -396,26 +470,16 @@ void PossibleTypesOracle::analyze() {
   // TODO: add subtyping connections.
   // TODO: add signature connections to functions
 
-  // The information needed to perform the flow analysis is to know, for each
-  // location, the types possible there as well as the places information flows
-  // from there.
-  struct LocationFlowInfo {
-    TypeSet types;
-    std::vector<Location> targets;
-  };
-
-  // The work remaining to do: locations that we just updated, which means we
-  // should update their children when we pop them from this queue.
-  UniqueDeferredQueue<Location> work;
-
-  std::unordered_map<Location, LocationFlowInfo> flowInfoMap;
-
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
     flowInfoMap[connection.from].targets.push_back(to);
   }
 
   // TODO: assert that no duplicates in targets vector, by design.
+
+  // The work remaining to do: locations that we just updated, which means we
+  // should update their children when we pop them from this queue.
+  UniqueDeferredQueue<Location> work;
 
   for (auto& connection : connections) {
     if (auto* exprLoc : std::get_if<ExpressionLocation>(connection)) {
