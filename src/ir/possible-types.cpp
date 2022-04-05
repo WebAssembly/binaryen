@@ -328,8 +328,8 @@ void PossibleTypesOracle::analyze() {
         {SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
-      connections.insert(
-        {ResultLocation{func.get(), i}, SignatureResultLocation{func->type, i}});
+      connections.insert({ResultLocation{func.get(), i},
+                          SignatureResultLocation{func->type, i}});
     }
   }
 
@@ -344,7 +344,8 @@ void PossibleTypesOracle::analyze() {
       auto numFields = type.getStruct().fields.size();
       for (auto subType : subTypes.getSubTypes(type)) {
         for (Index i = 0; i < numFields; i++) {
-          connections.insert({StructLocation{type, i}, StructLocation{subType, i}});
+          connections.insert(
+            {StructLocation{type, i}, StructLocation{subType, i}});
         }
       }
     } else if (type.isArray()) {
@@ -355,7 +356,6 @@ void PossibleTypesOracle::analyze() {
         connections.insert({ArrayLocation{type}, ArrayLocation{subType}});
       }
     }
-
   }
 
   // Build the flow info. First, note the connection targets.
