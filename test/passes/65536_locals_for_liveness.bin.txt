@@ -19,7 +19,7 @@ total
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 4       
- [vars]         : 1       
+ [vars]         : 1         -65535
  Block          : 1       
  Const          : 1       
  LocalGet       : 1       
