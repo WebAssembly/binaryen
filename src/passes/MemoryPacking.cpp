@@ -473,7 +473,6 @@ void MemoryPacking::dropUnusedSegments(std::vector<Memory::Segment>& segments,
   ReferrersMap usedReferrers;
   // Remove segments that are never used
   // TODO: remove unused portions of partially used segments as well
-  size_t newSegIndex = 0;
   for (size_t i = 0; i < segments.size(); ++i) {
     bool used = false;
     auto referrersIt = referrers.find(i);
@@ -494,7 +493,7 @@ void MemoryPacking::dropUnusedSegments(std::vector<Memory::Segment>& segments,
     if (used) {
       usedSegments.push_back(std::move(segments[i]));
       if (hasReferrers) {
-        usedReferrers[newSegIndex++] = std::move(referrersIt->second);
+        usedReferrers[usedSegments.size() - 1] = std::move(referrersIt->second);
       }
     } else if (hasReferrers) {
       // All referrers are data.drops. Make them nops.

@@ -2270,4 +2270,30 @@
  (data (i32.const 1024) "x")
  (data (i32.const 2048) "\00")
 )
+
 ;; CHECK:      (data (i32.const 1024) "x")
+(module
+ ;; Regression test for a bug where referrers were accidentally associated with
+ ;; the wrong segments in the presence of unreferenced segments.
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (memory $0 (shared 1 1))
+ (memory $0 (shared 1 1))
+ (data (i32.const 0) "")
+ ;; CHECK:      (data "foo")
+ (data "foo")
+ ;; CHECK:      (func $0
+ ;; CHECK-NEXT:  (memory.init 0
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0
+  (memory.init 1
+   (i32.const 0)
+   (i32.const 1)
+   (i32.const 1)
+  )
+ )
+)
