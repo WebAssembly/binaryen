@@ -485,7 +485,6 @@ void PossibleTypesOracle::analyze() {
     }
   }
 
-  // TODO: add subtyping connections.
   // TODO: add signature connections to functions
 
   // Build the flow info. First, note the connection targets.
@@ -523,10 +522,21 @@ void PossibleTypesOracle::analyze() {
   while (!work.empty()) {
     auto location = work.pop();
     auto& info = flowInfoMap[location];
+    auto& targets = info.targets;
+    if (targets.empty()) {
+      continue;
+    }
+
     auto& types = info.types;
+    // TODO: We can refine both the types and the targets here. For types, we
+    //       can avoid flowing anything through a ref.cast that it would trap
+    //       on. For targets, rather than assume struct.set writes to the
+    //       relevant field of any subtype we could construct the list of
+    //       targets based on the currently inferred type of the reference we
+    //       are writing to.
 
     // Update the targets, and add the ones that changes to the remaining work.
-    for (const auto& target : info.targets) {
+    for (const auto& target : targets) {
       auto& targetTypes = flowInfoMap[target].types;
       auto oldSize = targetTypes.size();
       targetTypes.insert(types.begin(), types.end());
@@ -551,7 +561,9 @@ void PossibleTypesOracle::analyze() {
   //       need to have any connections out from that cast - we have found
   //       unreachable code, basically. More precisely, we can only send forward
   //       types that would pass the cast - that could be done with a special
-  //       node in the graph instead of a second pass.  
+  //       node in the graph instead of a second pass.
+  // XXX actually all the above could be done in the main work while loop,
+  //     special-casing
 }
 
 PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(Expression* curr) {
