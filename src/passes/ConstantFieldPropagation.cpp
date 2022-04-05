@@ -45,44 +45,71 @@ namespace {
 // TODO describe each
 struct ExpressionLocation {
   Expression* expr;
+  bool operator==(const ExpressionLocation& other) {
+    return expr == other.expr;
+  }
 };
 
 struct ResultLocation {
   Function* func;
   Index index;
+  bool operator==(const ResultLocation& other) {
+    return func == other.func && index == other.index;
+  }
 };
 
 struct LocalLocation {
   Function* func;
   Index index;
+  bool operator==(const LocalLocation& other) {
+    return func == other.func && index == other.index;
+  }
 };
 
 struct BranchLocation {
   Function* func;
   Name target;
+  bool operator==(const BranchLocation& other) {
+    return func == other.func && target == other.target;
+  }
 };
 
 struct GlobalLocation {
   Name name;
+  bool operator==(const GlobalLocation& other) {
+    return name == other.name;
+  }
 };
 
 struct TableLocation {
   Name name;
+  bool operator==(const TableLocation& other) {
+    return name == other.name;
+  }
 };
 
 struct SignatureParamLocation {
   HeapType type;
   Index index;
+  bool operator==(const SignatureParamLocation& other) {
+    return type == other.type && index == other.index;
+  }
 };
 // TODO: result, and use that
 
 struct StructLocation {
   HeapType type;
   Index index;
+  bool operator==(const StructLocation& other) {
+    return type == other.type && index == other.index;
+  }
 };
 
 struct ArrayLocation {
   HeapType type;
+  bool operator==(const ArrayLocation& other) {
+    return type == other.type;
+  }
 };
 
 // A location is a variant over all the possible types of locations that we
