@@ -364,7 +364,7 @@ TEST_F(IsorecursiveTest, CanonicalizeUses) {
   EXPECT_NE(built[4], built[6]);
 }
 
-TEST_F(IsorecursiveTest, DISABLED_CanonicalizeSelfReferences) {
+TEST_F(IsorecursiveTest, CanonicalizeSelfReferences) {
   TypeBuilder builder(5);
   // Single self-reference
   builder[0] = makeStruct(builder, {0});
