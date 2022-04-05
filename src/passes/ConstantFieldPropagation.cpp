@@ -546,24 +546,6 @@ void PossibleTypesOracle::analyze() {
       }
     }
   }
-
-  // TODO: We could do subsequent iterations of work that do even better by
-  //       "bootstrapping" using the initial data. For example, if during the
-  //       initial data we see a write to a struct of type A at some location
-  //       then we must assume A or any subtype could be written to there. But
-  //       if the analysis finds something more specific there, like only A is
-  //       possible but no subtype, then we can construct a more precise graph
-  //       and flow using that.
-  //       (Beyond that we could also handle "cycles" in this graph's evolution
-  //       over time, in theory.)
-  //       The graph can also be improved by pruning failing casts: if after the
-  //       initial flow we see that a cast will definitely fail, then we do not
-  //       need to have any connections out from that cast - we have found
-  //       unreachable code, basically. More precisely, we can only send forward
-  //       types that would pass the cast - that could be done with a special
-  //       node in the graph instead of a second pass.
-  // XXX actually all the above could be done in the main work while loop,
-  //     special-casing
 }
 
 PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(Expression* curr) {
