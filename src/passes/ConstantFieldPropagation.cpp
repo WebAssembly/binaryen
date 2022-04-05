@@ -479,8 +479,21 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
-        // TODO: exceptions
-        // TODO: tuple operations
+        void visitTry(Try* curr) {
+          WASM_UNREACHABLE("todo");
+        }
+        void visitThrow(Throw* curr) {
+          WASM_UNREACHABLE("todo");
+        }
+        void visitRethrow(Rethrow* curr) {
+          WASM_UNREACHABLE("todo");
+        }
+        void visitTupleMake(TupleMake* curr) {
+          WASM_UNREACHABLE("todo");
+        }
+        void visitTupleExtract(TupleExtract* curr) {
+          WASM_UNREACHABLE("todo");
+        }
 
         void visitFunction(Function* func) {
           // Functions with a result can flow a value out from their body.
@@ -513,6 +526,8 @@ void PossibleTypesOracle::analyze() {
   }
 
   // TODO: add signature connections to functions
+  // TODO: add subtyping (but see TODO later down, we could do this even better
+  //       in a more dynamic manner
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
