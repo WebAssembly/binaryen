@@ -104,7 +104,14 @@ struct SignatureParamLocation {
     return type == other.type && index == other.index;
   }
 };
-// TODO: result, and use that
+
+struct SignatureResultLocation {
+  HeapType type;
+  Index index;
+  bool operator==(const SignatureResultLocation& other) const {
+    return type == other.type && index == other.index;
+  }
+};
 
 // The location of a struct field.
 struct StructLocation {
@@ -133,6 +140,7 @@ using Location = std::variant<ExpressionLocation,
                               GlobalLocation,
                               TableLocation,
                               SignatureParamLocation,
+                              SignatureResultLocation,
                               StructLocation,
                               ArrayLocation>;
 
@@ -196,6 +204,12 @@ template<> struct hash<wasm::TableLocation> {
 
 template<> struct hash<wasm::SignatureParamLocation> {
   size_t operator()(const wasm::SignatureParamLocation& loc) const {
+    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}({loc.type, loc.index});
+  }
+};
+
+template<> struct hash<wasm::SignatureResultLocation> {
+  size_t operator()(const wasm::SignatureResultLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}({loc.type, loc.index});
   }
 };
@@ -380,6 +394,58 @@ void PossibleTypesOracle::analyze() {
           }
         }
 
+        // Iterates over a list of children and adds connections to parameters
+        // and results as needed. The param/result functions receive the index
+        // and create the proper location for it.
+        void handleCall(Expression* curr,
+                        ExpressionList& operands,
+                        std::function<Location (Index)> makeParamLocation,
+                        std::function<Location (Index)> makeResultLocation) {
+          Index i = 0;
+          for (auto* operand : operands) {
+            if (operand->type.isRef()) {
+              info.connections.push_back(
+                {ExpressionLocation{operand}, makeParamLocation(i)});
+            }
+            i++;
+          }
+
+          // Add results, if anything flows out.
+          if (curr->type.isTuple()) {
+            WASM_UNREACHABLE("todo: tuple results");
+          }
+          if (!curr->type.isRef()) {
+            return;
+          }
+          info.connections.push_back({
+            makeResultLocation(0), ExpressionLocation{curr}
+          });
+        }
+
+        // Calls send values to params in their possible targets, and receive
+        // results.
+        void visitCall(Call* curr) {
+          auto* target = getModule()->getFunction(curr->target);
+          handleCall(curr, curr->operands, [&](Index i) {
+            return LocalLocation{target, i};
+          });
+        }
+        void visitCallIndirect(CallIndirect* curr) {
+          auto target = curr->heapType;
+          handleCall(curr, curr->operands, [&](Index i) {
+            return SignatureParamLocation{target, i};
+          });
+        }
+        void visitCallRef(CallRef* curr) {
+          auto targetType = curr->target->type;
+          if (targetType.isRef()) {
+            auto target = targetType.getHeapType();
+            handleCall(curr, curr->operands, [&](Index i) {
+              return SignatureParamLocation{target, i};
+            });
+          }
+        }
+
         // Iterates over a list of children and adds connections as needed. The
         // target of the connection is created using a function that is passed
         // in which receives the index of the child.
@@ -392,29 +458,6 @@ void PossibleTypesOracle::analyze() {
                 {ExpressionLocation{operand}, makeTarget(i)});
             }
             i++;
-          }
-        }
-
-        // Calls send values to params in their possible targets.
-        void visitCall(Call* curr) {
-          auto* target = getModule()->getFunction(curr->target);
-          handleChildList(curr->operands, [&](Index i) {
-            return LocalLocation{target, i};
-          });
-        }
-        void visitCallIndirect(CallIndirect* curr) {
-          auto target = curr->heapType;
-          handleChildList(curr->operands, [&](Index i) {
-            return SignatureParamLocation{target, i};
-          });
-        }
-        void visitCallRef(CallRef* curr) {
-          auto targetType = curr->target->type;
-          if (targetType.isRef()) {
-            auto target = targetType.getHeapType();
-            handleChildList(curr->operands, [&](Index i) {
-              return SignatureParamLocation{target, i};
-            });
           }
         }
 
