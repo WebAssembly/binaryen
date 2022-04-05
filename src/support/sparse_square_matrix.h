@@ -41,6 +41,8 @@ public:
   bool usingDenseStorage() const { return !denseStorage.empty(); }
 
   void set(uint32_t i, uint32_t j, const Ty& value) {
+    assert(i < N);
+    assert(j < N);
     if (usingDenseStorage()) {
       denseStorage[i * N + j] = value;
     } else {
@@ -49,6 +51,8 @@ public:
   }
 
   const Ty get(uint32_t i, uint32_t j) const {
+    assert(i < N);
+    assert(j < N);
     if (usingDenseStorage()) {
       return denseStorage[i * N + j];
     }
