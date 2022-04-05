@@ -947,7 +947,7 @@ class Asyncify(TestCaseHandler):
         # a data segment that is out of bounds, for example - that validates but
         # errors during startup. we need to ignore such testcases here.
         try:
-            run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
+            run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'] + FEATURE_OPTS)
         except Exception:
             print('ignoring due to the testcase not running without error')
             return
