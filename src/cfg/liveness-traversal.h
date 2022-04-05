@@ -118,7 +118,27 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
+      Builder builder(*self->getModule());
+      auto* rep = builder.replaceWithIdenticalType(curr);
+      if (rep->is<LocalGet>()) {
+        // We failed to replace the node with something simpler. This can happen
+        // if the local is non-nullable, for example. We still need to remove
+        // this node entirely, however, as it is unreachable and so we will not
+        // see it in the analysis we perform (for example, we may be changing
+        // local indexes). Replace it with something completely different, even
+        // if it is larger, a block with a forced type that has unreachable
+        // contents,
+        //
+        //  (block (result X)
+        //   (unreachable))
+        //
+        // That pattern lets us set any type we wish.
+        //
+        // TODO: Make a helper function for this, if it is useful in other
+        //       places.
+        rep = builder.makeBlock({builder.makeUnreachable()}, curr->type);
+      }
+      *currp = rep;
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(
