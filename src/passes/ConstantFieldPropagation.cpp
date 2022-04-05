@@ -611,6 +611,18 @@ void PossibleTypesOracle::analyze() {
     }
   }
 
+  // Add subtyping connections, but see the TODO below about how we can do this
+  // "dynamically" in a more effective but complex way.
+  for (auto& connection : connections) {
+    auto handleLocation = [&](const Location& location) {
+      if (auto* structLoc = std::get_if<StructLocation>(&location)) {
+        
+      }
+    };
+    handleLocation(connection.from);
+    handleLocation(connection.to);
+  }
+
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
     flowInfoMap[connection.from].targets.push_back(connection.to);
@@ -648,6 +660,8 @@ void PossibleTypesOracle::analyze() {
     auto location = work.pop();
     auto& info = flowInfoMap[location];
 
+    // TODO: implement the following optimization, and remove the hardcoded
+    //       links created above.
     // Compute the targets we need to update. Normally we simply flow to the
     // targets defined in the graph, however, some connections are best done
     // "dynamically". Consider a struct.set that writes a references to some
@@ -667,14 +681,14 @@ void PossibleTypesOracle::analyze() {
     //     of all types that can appear in (ref B).
     //  2. When a new type arrives in (ref B) we must send the values in
     //     (value C) to their new target as well.
-    auto targets = info.targets;
+    const auto& targets = info.targets;
     if (targets.empty()) {
       continue;
     }
 
+    // TODO: We can refine the types here, by not flowing anything through a
+    //       ref.cast that it would trap on.
     auto& types = info.types;
-    // TODO: We can refine both the types here, by not flowing anything through
-    //       a ref.cast that it would trap on.
 
     // Update the targets, and add the ones that changes to the remaining work.
     for (const auto& target : targets) {
