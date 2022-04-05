@@ -97,6 +97,15 @@ using Location = std::variant<ExpressionLocation,
                               StructLocation,
                               ArrayLocation>;
 
+// A connection indicates a flow of types from one location to another. For
+// example, if we do a local.get and return that value from a function, then
+// we have a connection from a location of LocalTypes to a location of
+// ResultTypes.
+struct Connection {
+  Location from;
+  Location to;
+};
+
 } // anonymous namespace
 
 } // namespace wasm
@@ -104,7 +113,7 @@ using Location = std::variant<ExpressionLocation,
 namespace std {
 
 // Define hashes of all the *Location types so that Location itself is hashable
-// and we can use it in unordered maps and sets.
+// and we can use it in unordered maps and sets. Likewise, Connection as well.
 
 template<> struct hash<wasm::ExpressionLocation> {
   size_t operator()(const wasm::ExpressionLocation& loc) const {
@@ -156,7 +165,7 @@ template<> struct hash<wasm::StructLocation> {
 
 template<> struct hash<wasm::ArrayLocation> {
   size_t operator()(const wasm::ArrayLocation& loc) const {
-    return std::hash<HeapType>{}(loc.type);
+    return std::hash<wasm::HeapType>{}(loc.type);
   }
 };
 
@@ -219,15 +228,6 @@ private:
 };
 
 void PossibleTypesOracle::analyze() {
-  // A connection indicates a flow of types from one location to another. For
-  // example, if we do a local.get and return that value from a function, then
-  // we have a connection from a location of LocalTypes to a location of
-  // ResultTypes.
-  struct Connection {
-    Location from;
-    Location to;
-  };
-
   // Gather information from functions in parallel.
   struct FuncInfo {
     // TODO: as an optimization we could perhaps avoid redundant copies in this
