@@ -943,6 +943,15 @@ class Asyncify(TestCaseHandler):
     frequency = 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        # check if the wasm is valid to run in v8. it may fail if it contains
+        # a data segment that is out of bounds, for example - that validates but
+        # errors during startup. we need to ignore such testcases here.
+        try:
+            run([in_bin('wasm-opt'), before_wasm, '--fuzz-exec-before'])
+        except Exception:
+            print('ignoring due to the testcase not running without error')
+            return
+
         # we must legalize in order to run in JS
         run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', 'async.' + before_wasm] + FEATURE_OPTS)
         run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', 'async.' + after_wasm] + FEATURE_OPTS)
