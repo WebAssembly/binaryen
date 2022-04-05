@@ -104,6 +104,10 @@ using Location = std::variant<ExpressionLocation,
 struct Connection {
   Location from;
   Location to;
+
+  bool operator==(const Connection& other) {
+    return from == other.from && to == other.to;
+  }
 };
 
 } // anonymous namespace
@@ -495,12 +499,13 @@ void PossibleTypesOracle::analyze() {
   // should update their children when we pop them from this queue.
   UniqueDeferredQueue<Location> work;
 
-  for (auto& connection : connections) {
-    if (auto* exprLoc : std::get_if<ExpressionLocation>(connection)) {
-      if (exprLoc->is<StructNew>() || exprLoc->is<ArrayNew>() || exprLoc->is<ArrayInit>()) {
+  for (auto& [location, info] : flowInfoMap) {
+    if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+      auto* expr = exprLoc->expr;
+      if (expr->is<StructNew>() || expr->is<ArrayNew>() || expr->is<ArrayInit>()) {
         // The type must be a reference, and not unreachable (we should have
         // ignored such things before).
-        assert(exprLoc->type.isRef());
+        assert(expr->type.isRef());
 
         auto& info = flowInfoMap[*exprLoc];
 
@@ -508,7 +513,7 @@ void PossibleTypesOracle::analyze() {
         // only be a single ExpressionLocation for each expression.
         assert(info.types.empty());
 
-        info.types.insert(exprLoc->type.getHeapType());
+        info.types.insert(expr->type.getHeapType());
         work.push(*exprLoc);
       }
     }
@@ -518,30 +523,56 @@ void PossibleTypesOracle::analyze() {
   while (!work.empty()) {
     auto location = work.pop();
     auto& info = flowInfoMap[location];
-    auto& targets = info.targets;
+    auto& types = info.types;
 
     // Update the targets, and add the ones that changes to the remaining work.
     for (const auto& target : info.targets) {
       auto& targetTypes = flowInfoMap[target].types;
       auto oldSize = targetTypes.size();
-      targetTypes.insert(targets.begin(), targets.end());
+      targetTypes.insert(types.begin(), types.end());
       if (targetTypes.size() != oldSize) {
         // We inserted something, so there is work to do in this target.
         work.push(target);
       }
     }
   }
+
+  // TODO: We could do subsequent iterations of work that do even better by
+  //       "bootstrapping" using the initial data. For example, if during the
+  //       initial data we see a write to a struct of type A at some location
+  //       then we must assume A or any subtype could be written to there. But
+  //       if the analysis finds something more specific there, like only A is
+  //       possible but no subtype, then we can construct a more precise graph
+  //       and flow using that.
+  //       (Beyond that we could also handle "cycles" in this graph's evolution
+  //       over time, in theory.)
+  //       The graph can also be improved by pruning failing casts: if after the
+  //       initial flow we see that a cast will definitely fail, then we do not
+  //       need to have any connections out from that cast - we have found
+  //       unreachable code, basically. More precisely, we can only send forward
+  //       types that would pass the cast - that could be done with a special
+  //       node in the graph instead of a second pass.  
 }
 
-TypeSet PossibleTypesOracle::getTypes(Expression* curr) {}
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(Expression* curr) {
+  return flowInfoMap[ExpressionLocation{curr}].types;
+}
 
-TypeSet PossibleTypesOracle::getParamTypes(Function* func, Index index) {}
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getResultTypes(Function* func, Index index) {
+  return flowInfoMap[ResultLocation{func, index}].types;
+}
 
-TypeSet PossibleTypesOracle::getResultTypes(Function* func, Index result) {}
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getLocalTypes(Function* func, Index index) {
+  return flowInfoMap[LocalLocation{func, index}].types;
+}
 
-TypeSet PossibleTypesOracle::getTypes(HeapType type, Index index) {}
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(HeapType type, Index index) {
+  return flowInfoMap[StructLocation{type, index}].types;
+}
 
-TypeSet PossibleTypesOracle::getTypes(HeapType type) {}
+PossibleTypesOracle::TypeSet PossibleTypesOracle::getTypes(HeapType type) {
+  return flowInfoMap[ArrayLocation{type}].types;
+}
 
 //===============
 
