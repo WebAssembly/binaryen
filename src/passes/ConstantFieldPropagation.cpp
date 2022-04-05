@@ -81,8 +81,8 @@ public:
 };
 
 void PossibleTypesOracle::analyze() {
-  // Define the data for each "location" that can store types.
-
+  // *Location structs describe particular locations.
+  // TODO describe each
   struct ExpressionLocation {
     Expression* expr;
   };
@@ -142,26 +142,15 @@ void PossibleTypesOracle::analyze() {
   // we have a connection from a location of LocalTypes to a location of
   // ResultTypes.
   struct Connection {
-    Location* from;
-    Location* to;
+    Location from;
+    Location to;
   };
 
   // Gather information from functions in parallel.
   struct FuncInfo {
-    // Similar to Connection, but with inlined locations instead of pointers to
-    // them. In the main graph later the pointers are necessary as we need to
-    // "canonicalize" locations - e.g. the location for param index i in
-    // function foo must be a singleton - but during function info gathering we
-    // cannot canonicalize globally yet since we work in parallel. For
-    // simplicity we simply have copies of the location info here, and leave all
-    // canonicalization for later.
-    // TODO: as an optimization we could perhaps at least avoid redundant copies
-    //       in the vector of locations?
-    struct FuncConnection {
-      Location from;
-      Location to;
-    };
-    std::vector<FuncConnection> connections;
+    // TODO: as an optimization we could perhaps avoid redundant copies in this
+    //       vector using a set?
+    std::vector<Connection> connections;
   };
 
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
@@ -392,17 +381,76 @@ void PossibleTypesOracle::analyze() {
       finder.walk(func->body);
     });
 
-  // Merge the function information.
+  // Merge the function information into a single large graph that represents
+  // the entire program all at once. First, gather all the connections from all
+  // the functions. We do so into a set, which deduplicates everythings.
+  // map of the possible types at each location.
+  std::unordered_set<Connection> connections; 
+
+  for (auto& [func, info] : analysis.map) {
+    for (auto& connection : info.connections) {
+      connections.insert(connection);
+    }
+  }
+
   // TODO: add subtyping connections.
   // TODO: add signature connections to functions
 
-  // A map of globals to the lub for that global.
-  std::unordered_map<Name, LUBFinder> lubs;
+  // The information needed to perform the flow analysis is to know, for each
+  // location, the types possible there as well as the places information flows
+  // from there.
+  struct LocationFlowInfo {
+    TypeSet types;
+    std::vector<Location> targets;
+  };
 
-  // Combine all the information we gathered and compute lubs.
-  for (auto& [func, info] : analysis.map) {
-    for (auto* set : info.sets) {
-      lubs[set->name].noteUpdatableExpression(set->value);
+  // The work remaining to do: locations that we just updated, which means we
+  // should update their children when we pop them from this queue.
+  UniqueDeferredQueue<Location> work;
+
+  std::unordered_map<Location, LocationFlowInfo> flowInfoMap;
+
+  // Build the flow info. First, note the connection targets.
+  for (auto& connection : connections) {
+    flowInfoMap[connection.from].targets.push_back(to);
+  }
+
+  // TODO: assert that no duplicates in targets vector, by design.
+
+  for (auto& connection : connections) {
+    if (auto* exprLoc : std::get_if<ExpressionLocation>(connection)) {
+      if (exprLoc->is<StructNew>() || exprLoc->is<ArrayNew>() || exprLoc->is<ArrayInit>()) {
+        // The type must be a reference, and not unreachable (we should have
+        // ignored such things before).
+        assert(exprLoc->type.isRef());
+
+        auto& info = flowInfoMap[*exprLoc];
+
+        // There must not be anything at this location already, as there can
+        // only be a single ExpressionLocation for each expression.
+        assert(info.types.empty());
+
+        info.types.insert(exprLoc->type.getHeapType());
+        work.push(*exprLoc);
+      }
+    }
+  }
+
+  // Flow the data.
+  while (!work.empty()) {
+    auto location = work.pop();
+    auto& info = flowInfoMap[location];
+    auto& targets = info.targets;
+
+    // Update the targets, and add the ones that changes to the remaining work.
+    for (const auto& target : info.targets) {
+      auto& targetTypes = flowInfoMap[target].types;
+      auto oldSize = targetTypes.size();
+      targetTypes.insert(targets.begin(), targets.end());
+      if (targetTypes.size() != oldSize) {
+        // We inserted something, so there is work to do in this target.
+        work.push(target);
+      }
     }
   }
 }
