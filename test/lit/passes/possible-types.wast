@@ -126,7 +126,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $call-to-get-null
+  ;; CHECK:      (func $get-nothing-calls
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (unreachable)
@@ -148,7 +148,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $call-to-get-null
+  (func $get-nothing-calls
     ;; This should be optimized out since the call does not actually return any
     ;; type in practice.
     (drop
@@ -167,6 +167,82 @@
     (drop
       (ref.as_non_null
         (call $get-nothing)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $two-inputs (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select (result (ref any))
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select (result (ref any))
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select (result (ref any))
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $two-inputs (param $x i32)
+    ;; As above, but now the outer instruction has two children, and some of
+    ;; them may have a possible type - we check all 4 permutations. Only in the
+    ;; case where both inputs are nothing can we optimize away the select, as
+    ;; only then will the select never have anything.
+    (drop
+      (select (result (ref any))
+        (struct.new $struct)
+        (call $get-nothing)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select (result (ref any))
+        (call $get-nothing)
+        (struct.new $struct)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select (result (ref any))
+        (struct.new $struct)
+        (struct.new $struct)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select (result (ref any))
+        (call $get-nothing)
+        (call $get-nothing)
+        (local.get $x)
       )
     )
   )
