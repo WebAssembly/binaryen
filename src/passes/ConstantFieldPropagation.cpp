@@ -29,7 +29,6 @@
 
 #include "ir/module-utils.h"
 #include "ir/possible-constant.h"
-#include "ir/possible-types.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
