@@ -428,6 +428,7 @@ void Oracle::analyze() {
 
     // TODO: implement the following optimization, and remove the hardcoded
     //       links created above.
+    // ==================================TODO==================================
     // Compute the targets we need to update. Normally we simply flow to the
     // targets defined in the graph, however, some connections are best done
     // "dynamically". Consider a struct.set that writes a references to some
@@ -447,6 +448,7 @@ void Oracle::analyze() {
     //     of all types that can appear in (ref B).
     //  2. When a new type arrives in (ref B) we must send the values in
     //     (value C) to their new target as well.
+    // ==================================TODO==================================
     const auto& targets = info.targets;
     if (targets.empty()) {
       continue;
