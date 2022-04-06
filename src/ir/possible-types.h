@@ -246,9 +246,13 @@ public:
 
   using TypeSet = std::unordered_set<HeapType>;
 
-  // Get the possible types returned by an expression.
-  TypeSet getExpressionTypes(Expression* expr) {
-    return flowInfoMap[ExpressionLocation{expr}].types;
+  // Get the types possible at a location.
+  TypeSet getTypes(Location location) {
+    auto iter = flowInfoMap.find(location);
+    if (iter == flowInfoMap.end()) {
+      return {};
+    }
+    return iter->second.types;
   }
 
 private:
