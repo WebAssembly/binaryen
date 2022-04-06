@@ -23,7 +23,7 @@
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::PossibleTypes {
 
 namespace {
 
@@ -299,7 +299,7 @@ struct ConnectionFinder
 
 } // anonymous namespace
 
-void PossibleTypesOracle::analyze() {
+void Oracle::analyze() {
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
       if (func->imported()) {
@@ -472,4 +472,4 @@ void PossibleTypesOracle::analyze() {
   //       including multiple levels of depth (necessary for itables in j2wasm)
 }
 
-} // namespace wasm
+} // namespace wasm::PossibleTypes

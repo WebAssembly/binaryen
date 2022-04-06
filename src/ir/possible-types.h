@@ -21,7 +21,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::PossibleTypes {
 
 // *Location structs describe particular locations where types can appear.
 
@@ -145,89 +145,89 @@ struct Connection {
   }
 };
 
-} // namespace wasm
+} // namespace wasm::PossibleTypes
 
 namespace std {
 
 // Define hashes of all the *Location types so that Location itself is hashable
 // and we can use it in unordered maps and sets.
 
-template<> struct hash<wasm::ExpressionLocation> {
-  size_t operator()(const wasm::ExpressionLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::ExpressionLocation> {
+  size_t operator()(const wasm::PossibleTypes::ExpressionLocation& loc) const {
     return std::hash<size_t>{}(size_t(loc.expr));
   }
 };
 
-template<> struct hash<wasm::ResultLocation> {
-  size_t operator()(const wasm::ResultLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::ResultLocation> {
+  size_t operator()(const wasm::PossibleTypes::ResultLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
       {size_t(loc.func), loc.index});
   }
 };
 
-template<> struct hash<wasm::LocalLocation> {
-  size_t operator()(const wasm::LocalLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::LocalLocation> {
+  size_t operator()(const wasm::PossibleTypes::LocalLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
       {size_t(loc.func), loc.index});
   }
 };
 
-template<> struct hash<wasm::BranchLocation> {
-  size_t operator()(const wasm::BranchLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::BranchLocation> {
+  size_t operator()(const wasm::PossibleTypes::BranchLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Name>>{}(
       {size_t(loc.func), loc.target});
   }
 };
 
-template<> struct hash<wasm::GlobalLocation> {
-  size_t operator()(const wasm::GlobalLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::GlobalLocation> {
+  size_t operator()(const wasm::PossibleTypes::GlobalLocation& loc) const {
     return std::hash<wasm::Name>{}(loc.name);
   }
 };
 
-template<> struct hash<wasm::TableLocation> {
-  size_t operator()(const wasm::TableLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::TableLocation> {
+  size_t operator()(const wasm::PossibleTypes::TableLocation& loc) const {
     return std::hash<wasm::Name>{}(loc.name);
   }
 };
 
-template<> struct hash<wasm::SignatureParamLocation> {
-  size_t operator()(const wasm::SignatureParamLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::SignatureParamLocation> {
+  size_t operator()(const wasm::PossibleTypes::SignatureParamLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
   }
 };
 
-template<> struct hash<wasm::SignatureResultLocation> {
-  size_t operator()(const wasm::SignatureResultLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::SignatureResultLocation> {
+  size_t operator()(const wasm::PossibleTypes::SignatureResultLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
   }
 };
 
-template<> struct hash<wasm::StructLocation> {
-  size_t operator()(const wasm::StructLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::StructLocation> {
+  size_t operator()(const wasm::PossibleTypes::StructLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
   }
 };
 
-template<> struct hash<wasm::ArrayLocation> {
-  size_t operator()(const wasm::ArrayLocation& loc) const {
+template<> struct hash<wasm::PossibleTypes::ArrayLocation> {
+  size_t operator()(const wasm::PossibleTypes::ArrayLocation& loc) const {
     return std::hash<wasm::HeapType>{}(loc.type);
   }
 };
 
-template<> struct hash<wasm::Connection> {
-  size_t operator()(const wasm::Connection& loc) const {
-    return std::hash<std::pair<wasm::Location, wasm::Location>>{}(
+template<> struct hash<wasm::PossibleTypes::Connection> {
+  size_t operator()(const wasm::PossibleTypes::Connection& loc) const {
+    return std::hash<std::pair<wasm::PossibleTypes::Location, wasm::PossibleTypes::Location>>{}(
       {loc.from, loc.to});
   }
 };
 
 } // namespace std
 
-namespace wasm {
+namespace wasm::PossibleTypes {
 
 // Analyze the entire wasm file to find which types are possible in which
 // locations. This assumes a closed world and starts from struct.new/array.new
@@ -236,13 +236,13 @@ namespace wasm {
 // location.
 //
 // TODO: refactor into a separate file if other passes want it too.
-class PossibleTypesOracle {
+class Oracle {
   Module& wasm;
 
   void analyze();
 
 public:
-  PossibleTypesOracle(Module& wasm) : wasm(wasm) { analyze(); }
+  Oracle(Module& wasm) : wasm(wasm) { analyze(); }
 
   using TypeSet = std::unordered_set<HeapType>;
 
@@ -269,6 +269,6 @@ private:
   std::unordered_map<Location, LocationInfo> flowInfoMap;
 };
 
-} // namespace wasm
+} // namespace wasm::PossibleTypes
 
 #endif // wasm_ir_possible_types_h

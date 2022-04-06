@@ -24,7 +24,7 @@
 // actually possible at a particular location, say if we can prove that the
 // casts on the way to that location allow nothing through.
 //
-// This uses the PossibleTypesOracle utility, and aside from the optimization
+// This uses the PossibleTypes::Oracle utility, and aside from the optimization
 // benefits is also a good way to test that code (which is also used in other
 // passes in more complex ways, or will be).
 //
@@ -38,25 +38,25 @@ namespace wasm {
 
 namespace {
 
-struct PossibleTypes : public Pass {
+struct PossibleTypesPass : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    PossibleTypesOracle oracle(*module);
+    PossibleTypes::Oracle oracle(*module);
 
     struct Optimizer
       : public WalkerPass<
           PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
       bool isFunctionParallel() override { return true; }
 
-      PossibleTypesOracle& oracle;
+      PossibleTypes::Oracle& oracle;
 
-      Optimizer(PossibleTypesOracle& oracle) : oracle(oracle) {}
+      Optimizer(PossibleTypes::Oracle& oracle) : oracle(oracle) {}
 
       Optimizer* create() override { return new Optimizer(oracle); }
 
       void visitExpression(Expression* curr) {
         auto type = curr->type;
         if (type.isNonNullable() &&
-            oracle.getTypes(ExpressionLocation{curr}).empty()) {
+            oracle.getTypes(PossibleTypes::ExpressionLocation{curr}).empty()) {
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
@@ -73,6 +73,6 @@ struct PossibleTypes : public Pass {
 
 } // anonymous namespace
 
-Pass* createPossibleTypesPass() { return new PossibleTypes(); }
+Pass* createPossibleTypesPass() { return new PossibleTypesPass(); }
 
 } // namespace wasm
