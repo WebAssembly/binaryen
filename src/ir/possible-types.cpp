@@ -319,7 +319,9 @@ void PossibleTypesOracle::analyze() {
       finder.walk(func->body);
     });
 
-  // FIXME Scan module code!
+  // Also walk the global module code, adding it to the map as a funciton of
+  // null.
+  ConnectionFinder(analysis.map[nullptr]).walkModuleCode(&wasm);
 
   // Merge the function information into a single large graph that represents
   // the entire program all at once. First, gather all the connections from all
