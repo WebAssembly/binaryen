@@ -309,8 +309,7 @@ void Oracle::analyze() {
       }
 
       ConnectionFinder finder(info);
-      finder.setFunction(func);
-      finder.walk(func->body);
+      finder.walkFunctionInModule(func, &wasm);
     });
 
   // Also walk the global module code, adding it to the map as a funciton of
