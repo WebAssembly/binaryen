@@ -116,6 +116,9 @@
     )
   )
 
+  ;; CHECK:      (func $get-nothing (result (ref $struct))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $get-nothing (result (ref $struct))
     ;; This function returns a non-nullable struct by type, but does not
     ;; actually return a value in practice, and our whole-program analysis
@@ -123,6 +126,9 @@
     (unreachable)
   )
 
+  ;; CHECK:      (func $call-to-get-null (result (ref $struct))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $call-to-get-null (result (ref $struct))
     ;; This should be optimized out since the call does not actually return any
     ;; type in practice.
