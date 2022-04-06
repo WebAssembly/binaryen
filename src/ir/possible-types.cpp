@@ -55,16 +55,15 @@ struct ConnectionFinder
       curr, [&](Name target, Expression* value) {
         if (value && value->type.isRef()) {
           info.connections.push_back(
-            {ExpressionLocation{value},
-             BranchLocation{getFunction(), target}});
+            {ExpressionLocation{value}, BranchLocation{getFunction(), target}});
         }
       });
 
     // Branch targets receive the things sent to them and flow them out.
     if (curr->type.isRef()) {
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
-        info.connections.push_back({BranchLocation{getFunction(), target},
-                                    ExpressionLocation{curr}});
+        info.connections.push_back(
+          {BranchLocation{getFunction(), target}, ExpressionLocation{curr}});
       });
     }
     // TODO: if we are a branch source or target, skip the loop later
@@ -93,17 +92,15 @@ struct ConnectionFinder
   void visitLocalGet(LocalGet* curr) {
     if (curr->type.isRef()) {
       info.connections.push_back(
-        {LocalLocation{getFunction(), curr->index},
-         ExpressionLocation{curr}});
+        {LocalLocation{getFunction(), curr->index}, ExpressionLocation{curr}});
     }
   }
   void visitLocalSet(LocalSet* curr) {
     if (!curr->value->type.isRef()) {
       return;
     }
-    info.connections.push_back(
-      {ExpressionLocation{curr->value},
-       LocalLocation{getFunction(), curr->index}});
+    info.connections.push_back({ExpressionLocation{curr->value},
+                                LocalLocation{getFunction(), curr->index}});
     if (curr->isTee()) {
       info.connections.push_back(
         {ExpressionLocation{curr->value}, ExpressionLocation{curr}});
@@ -224,9 +221,8 @@ struct ConnectionFinder
   }
   void visitArrayNew(ArrayNew* curr) {
     if (curr->type != Type::unreachable && curr->init->type.isRef()) {
-      info.connections.push_back(
-        {ExpressionLocation{curr->init},
-         ArrayLocation{curr->type.getHeapType()}});
+      info.connections.push_back({ExpressionLocation{curr->init},
+                                  ArrayLocation{curr->type.getHeapType()}});
     }
   }
   void visitArrayInit(ArrayInit* curr) {
@@ -235,8 +231,7 @@ struct ConnectionFinder
       return;
     }
     auto type = curr->type.getHeapType();
-    handleChildList(curr->values,
-                    [&](Index i) { return ArrayLocation{type}; });
+    handleChildList(curr->values, [&](Index i) { return ArrayLocation{type}; });
   }
 
   // Struct operations access the struct fields' locations.
@@ -257,15 +252,14 @@ struct ConnectionFinder
   // Array operations access the array's location.
   void visitArrayGet(ArrayGet* curr) {
     if (curr->type.isRef()) {
-      info.connections.push_back({ArrayLocation{curr->type.getHeapType()},
-                                  ExpressionLocation{curr}});
+      info.connections.push_back(
+        {ArrayLocation{curr->type.getHeapType()}, ExpressionLocation{curr}});
     }
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->value->type.isRef()) {
-      info.connections.push_back(
-        {ExpressionLocation{curr->value},
-         ArrayLocation{curr->type.getHeapType()}});
+      info.connections.push_back({ExpressionLocation{curr->value},
+                                  ArrayLocation{curr->type.getHeapType()}});
     }
   }
 
