@@ -33,7 +33,13 @@ Expression* getDroppedChildren(Expression* curr, Module& wasm, Expression* last=
   Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {
-    contents.push_back(builder.makeDrop(child));
+    if (child->type.isConcrete()) {
+      contents.push_back(builder.makeDrop(child));
+    } else {
+      // The child is unreachable, or none (none is possible as a child of a
+      // block or loop, etc.); in both cases we do not need a drop.
+      contents.push_back(child);
+    }
   }
   if (last) {
     contents.push_back(last);

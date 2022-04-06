@@ -23,13 +23,18 @@
   ;; CHECK:      (func $nested (result i32)
   ;; CHECK-NEXT:  (ref.is_null
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null any)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (ref.null any)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -39,9 +44,12 @@
     ;; As above, but add other instructions on the outside, which can also be
     ;; replaced.
     (ref.is_null
-      (ref.as_func
-        (ref.as_non_null
-          (ref.null any)
+      (loop (result (ref func))
+        (nop)
+        (ref.as_func
+          (ref.as_non_null
+            (ref.null any)
+          )
         )
       )
     )
