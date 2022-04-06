@@ -2,6 +2,9 @@
 ;; RUN: wasm-opt %s -all --possible-types -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct))
+
   ;; CHECK:      (func $no-non-null (result (ref any))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.null any)
@@ -52,6 +55,21 @@
           )
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $yes-non-null (result (ref any))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $yes-non-null (result (ref any))
+    ;; Similar to the above but now there *is* an allocation, and so we have
+    ;; nothing to optimize. (The ref.as is redundant, but we leave that for
+    ;; other passes, and we keep it in this test to keep the testcase identical
+    ;; to the above in all ways except for having a possible type.)
+    (ref.as_non_null
+      (struct.new $struct)
     )
   )
 )
