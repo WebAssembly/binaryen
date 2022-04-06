@@ -29,7 +29,7 @@
 // passes in more complex ways, or will be).
 //
 
-#include "ir/iteration.h"
+#include "ir/drop.h"
 #include "ir/possible-types.h"
 #include "pass.h"
 #include "wasm.h"
@@ -57,6 +57,8 @@ struct PossibleTypes : public Pass {
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
+          auto& wasm = *getModule();
+          replaceCurrent(getDroppedChildren(curr, wasm, Builder(wasm).makeUnreachable()));
         }
       }
     };
