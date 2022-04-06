@@ -29,7 +29,8 @@ namespace wasm {
 // The caller can pass in a last item to add to the block.
 //
 // TODO: use this in more places
-Expression* getDroppedChildren(Expression* curr, Module& wasm, Expression* last=nullptr) {
+Expression*
+getDroppedChildren(Expression* curr, Module& wasm, Expression* last = nullptr) {
   Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {

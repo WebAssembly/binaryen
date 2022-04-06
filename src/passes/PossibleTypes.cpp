@@ -42,7 +42,9 @@ struct PossibleTypes : public Pass {
   void run(PassRunner* runner, Module* module) override {
     PossibleTypesOracle oracle(*module);
 
-    struct Optimizer : public WalkerPass<PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
+    struct Optimizer
+      : public WalkerPass<
+          PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
       bool isFunctionParallel() override { return true; }
 
       PossibleTypesOracle& oracle;
@@ -53,12 +55,14 @@ struct PossibleTypes : public Pass {
 
       void visitExpression(Expression* curr) {
         auto type = curr->type;
-        if (type.isNonNullable() && oracle.getTypes(ExpressionLocation{curr}).empty()) {
+        if (type.isNonNullable() &&
+            oracle.getTypes(ExpressionLocation{curr}).empty()) {
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
           auto& wasm = *getModule();
-          replaceCurrent(getDroppedChildren(curr, wasm, Builder(wasm).makeUnreachable()));
+          replaceCurrent(
+            getDroppedChildren(curr, wasm, Builder(wasm).makeUnreachable()));
         }
       }
     };
