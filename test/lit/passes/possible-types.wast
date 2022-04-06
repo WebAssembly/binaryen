@@ -72,4 +72,47 @@
       (struct.new $struct)
     )
   )
+
+  ;; CHECK:      (func $breaks
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref any))
+  ;; CHECK-NEXT:    (br $block
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block0 (result anyref)
+  ;; CHECK-NEXT:    (br $block0
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $breaks
+    ;; Check that we notice values sent along breaks. We should optimize
+    ;; nothing here.
+    (drop
+      (block $block (result (ref any))
+        (br $block
+          (struct.new $struct)
+        )
+      )
+    )
+    ;; But here we send a null so we can optimize.
+    (drop
+      (block $block (result (ref null any))
+        (br $block
+          (ref.as_non_null
+            (ref.null $struct)
+          )
+        )
+      )
+    )
+  )
 )
