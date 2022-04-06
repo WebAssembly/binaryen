@@ -279,6 +279,11 @@
 ;; CHECK-NEXT:   --poppify                                     Tranform Binaryen IR into Poppy
 ;; CHECK-NEXT:                                                 IR
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --possible-types                              optimize the entire program
+;; CHECK-NEXT:                                                 using information about which
+;; CHECK-NEXT:                                                 types can actually appear in
+;; CHECK-NEXT:                                                 each location
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for
 ;; CHECK-NEXT:                                                 Emscripten-generated code
 ;; CHECK-NEXT:

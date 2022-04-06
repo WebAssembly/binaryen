@@ -2,13 +2,48 @@
 ;; RUN: wasm-opt %s -all --possible-types -S -o - | filecheck %s
 
 (module
-  (func $foo (result (ref any))
+  ;; CHECK:      (func $no-non-null (result (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $no-non-null (result (ref any))
     ;; Cast a null to non-null in order to get wasm to validate, but of course
     ;; this will trap at runtime. The possible-types pass will see that no
     ;; actual type can reach the function exit, and will add an unreachable
-    ;; here.
+    ;; here. (Replacing the ref.as with an unreachable is not terribly useful in
+    ;; this instance, but it checks that we properly infer things, and in other
+    ;; cases replacing with an unreachable can be good.)
     (ref.as_non_null
       (ref.null any)
+    )
+  )
+
+  ;; CHECK:      (func $nested (result i32)
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null any)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested (result i32)
+    ;; As above, but add other instructions on the outside, which can also be
+    ;; replaced.
+    (ref.is_null
+      (ref.as_func
+        (ref.as_non_null
+          (ref.null any)
+        )
+      )
     )
   )
 )
