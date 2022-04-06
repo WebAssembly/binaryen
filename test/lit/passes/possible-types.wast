@@ -260,13 +260,25 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $locals
@@ -282,15 +294,24 @@
     (local.set $z
       (struct.new $struct)
     )
-    ;; Get the 3 locals, to check that we optimize. We can remove x and y.
+    ;; Get the 3 locals, to check that we optimize. We can remove x and y. Note
+    ;; that we must wrap them in a cast as the locals are nullable themselves,
+    ;; and it is only a cast to non-null that allows us to optimize away the
+    ;; cases where there is no value possible.
     (drop
-      (local.get $x)
+      (ref.as_non_null
+        (local.get $x)
+      )
     )
     (drop
-      (local.get $y)
+      (ref.as_non_null
+        (local.get $y)
+      )
     )
     (drop
-      (local.get $z)
+      (ref.as_non_null
+        (local.get $z)
+      )
     )
   )
 )
