@@ -246,4 +246,51 @@
       )
     )
   )
+
+  ;; CHECK:      (func $locals
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local $y anyref)
+  ;; CHECK-NEXT:  (local $z anyref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $locals
+    (local $x (ref null any))
+    (local $y (ref null any))
+    (local $z (ref null any))
+    ;; Assign to x from a call that actually will not return anything.
+    (local.set $x
+      (call $get-nothing)
+    )
+    ;; Never assign to y.
+    ;; Assign to z an actual value.
+    (local.set $z
+      (struct.new $struct)
+    )
+    ;; Get the 3 locals, to check that we optimize. We can remove x and y.
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+    (drop
+      (local.get $z)
+    )
+  )
 )
