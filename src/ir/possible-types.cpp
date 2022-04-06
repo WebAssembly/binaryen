@@ -25,14 +25,287 @@
 
 namespace wasm {
 
-void PossibleTypesOracle::analyze() {
-  // Gather information from functions in parallel.
-  struct FuncInfo {
-    // TODO: as an optimization we could perhaps avoid redundant copies in this
-    //       vector using a set?
-    std::vector<Connection> connections;
-  };
+namespace {
 
+// Gather information from functions in parallel. In each function we get a
+// vector of all the connections, and later merge them.
+struct FuncInfo {
+  // TODO: as an optimization we could perhaps avoid redundant copies in this
+  //       vector using a set?
+  std::vector<Connection> connections;
+};
+
+struct ConnectionFinder
+  : public PostWalker<ConnectionFinder,
+                      UnifiedExpressionVisitor<ConnectionFinder>> {
+  FuncInfo& info;
+
+  ConnectionFinder(FuncInfo& info) : info(info) {}
+
+  // Each visit*() call is responsible for connection the children of a
+  // node to that node. Responsibility for connecting the node's output to
+  // the outside (another expression or the function itself, if we are at
+  // the top level) is the responsibility of the outside.
+
+  void visitExpression(Expression* curr) {
+    // Breaks send values to their destinations. Handle that here using
+    // existing utility code which is shorter than implementing multiple
+    // visit*() methods (however, it may be slower TODO)
+    BranchUtils::operateOnScopeNameUsesAndSentValues(
+      curr, [&](Name target, Expression* value) {
+        if (value && value->type.isRef()) {
+          info.connections.push_back(
+            {ExpressionLocation{value},
+             BranchLocation{getFunction(), target}});
+        }
+      });
+
+    // Branch targets receive the things sent to them and flow them out.
+    if (curr->type.isRef()) {
+      BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
+        info.connections.push_back({BranchLocation{getFunction(), target},
+                                    ExpressionLocation{curr}});
+      });
+    }
+    // TODO: if we are a branch source or target, skip the loop later
+    // down? in general any ref-receiving instruction that reaches that
+    // loop will end up connecting a child ref to the current expression,
+    // but e.g. ref.is_* does not do so. OTOH ref.test's output is then an
+    // integer anyhow, so we don't actually reach the loop.
+
+    // The default behavior is to connect all input expressions to the
+    // current one, as it might return an output that includes them.
+    if (!curr->type.isRef()) {
+      return;
+    }
+
+    for (auto* child : ChildIterator(curr)) {
+      if (!child->type.isRef()) {
+        continue;
+      }
+      info.connections.push_back(
+        {ExpressionLocation{child}, ExpressionLocation{curr}});
+    }
+  }
+
+  // Locals read and write to their index.
+  // TODO: we could use a LocalGraph for better precision
+  void visitLocalGet(LocalGet* curr) {
+    if (curr->type.isRef()) {
+      info.connections.push_back(
+        {LocalLocation{getFunction(), curr->index},
+         ExpressionLocation{curr}});
+    }
+  }
+  void visitLocalSet(LocalSet* curr) {
+    if (!curr->value->type.isRef()) {
+      return;
+    }
+    info.connections.push_back(
+      {ExpressionLocation{curr->value},
+       LocalLocation{getFunction(), curr->index}});
+    if (curr->isTee()) {
+      info.connections.push_back(
+        {ExpressionLocation{curr->value}, ExpressionLocation{curr}});
+    }
+  }
+
+  // Globals read and write from their location.
+  void visitGlobalGet(GlobalGet* curr) {
+    if (curr->type.isRef()) {
+      info.connections.push_back(
+        {GlobalLocation{curr->name}, ExpressionLocation{curr}});
+    }
+  }
+  void visitGlobalSet(GlobalSet* curr) {
+    if (curr->value->type.isRef()) {
+      info.connections.push_back(
+        {ExpressionLocation{curr->value}, GlobalLocation{curr->name}});
+    }
+  }
+
+  // Iterates over a list of children and adds connections to parameters
+  // and results as needed. The param/result functions receive the index
+  // and create the proper location for it.
+  void handleCall(Expression* curr,
+                  ExpressionList& operands,
+                  std::function<Location(Index)> makeParamLocation,
+                  std::function<Location(Index)> makeResultLocation) {
+    Index i = 0;
+    for (auto* operand : operands) {
+      if (operand->type.isRef()) {
+        info.connections.push_back(
+          {ExpressionLocation{operand}, makeParamLocation(i)});
+      }
+      i++;
+    }
+
+    // Add results, if anything flows out.
+    if (curr->type.isTuple()) {
+      WASM_UNREACHABLE("todo: tuple results");
+    }
+    if (!curr->type.isRef()) {
+      return;
+    }
+    info.connections.push_back(
+      {makeResultLocation(0), ExpressionLocation{curr}});
+  }
+
+  // Calls send values to params in their possible targets, and receive
+  // results.
+  void visitCall(Call* curr) {
+    auto* target = getModule()->getFunction(curr->target);
+    handleCall(
+      curr,
+      curr->operands,
+      [&](Index i) {
+        return LocalLocation{target, i};
+      },
+      [&](Index i) {
+        return ResultLocation{target, i};
+      });
+  }
+  void visitCallIndirect(CallIndirect* curr) {
+    auto target = curr->heapType;
+    handleCall(
+      curr,
+      curr->operands,
+      [&](Index i) {
+        return SignatureParamLocation{target, i};
+      },
+      [&](Index i) {
+        return SignatureResultLocation{target, i};
+      });
+  }
+  void visitCallRef(CallRef* curr) {
+    auto targetType = curr->target->type;
+    if (targetType.isRef()) {
+      auto target = targetType.getHeapType();
+      handleCall(
+        curr,
+        curr->operands,
+        [&](Index i) {
+          return SignatureParamLocation{target, i};
+        },
+        [&](Index i) {
+          return SignatureResultLocation{target, i};
+        });
+    }
+  }
+
+  // Iterates over a list of children and adds connections as needed. The
+  // target of the connection is created using a function that is passed
+  // in which receives the index of the child.
+  void handleChildList(ExpressionList& operands,
+                       std::function<Location(Index)> makeTarget) {
+    Index i = 0;
+    for (auto* operand : operands) {
+      if (operand->type.isRef()) {
+        info.connections.push_back(
+          {ExpressionLocation{operand}, makeTarget(i)});
+      }
+      i++;
+    }
+  }
+
+  // Creation operations form the starting connections from where data
+  // flows. We will create an ExpressionLocation for them when their
+  // parent uses them, as we do for all instructions, so nothing special
+  // needs to be done here, but we do need to create connections from
+  // inputs - the initialization of their data - to the proper places.
+  void visitStructNew(StructNew* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    auto type = curr->type.getHeapType();
+    handleChildList(curr->operands, [&](Index i) {
+      return StructLocation{type, i};
+    });
+  }
+  void visitArrayNew(ArrayNew* curr) {
+    if (curr->type != Type::unreachable && curr->init->type.isRef()) {
+      info.connections.push_back(
+        {ExpressionLocation{curr->init},
+         ArrayLocation{curr->type.getHeapType()}});
+    }
+  }
+  void visitArrayInit(ArrayInit* curr) {
+    if (curr->type == Type::unreachable || curr->values.empty() ||
+        !curr->values[0]->type.isRef()) {
+      return;
+    }
+    auto type = curr->type.getHeapType();
+    handleChildList(curr->values,
+                    [&](Index i) { return ArrayLocation{type}; });
+  }
+
+  // Struct operations access the struct fields' locations.
+  void visitStructGet(StructGet* curr) {
+    if (curr->type.isRef()) {
+      info.connections.push_back(
+        {StructLocation{curr->type.getHeapType(), curr->index},
+         ExpressionLocation{curr}});
+    }
+  }
+  void visitStructSet(StructSet* curr) {
+    if (curr->value->type.isRef()) {
+      info.connections.push_back(
+        {ExpressionLocation{curr->value},
+         StructLocation{curr->type.getHeapType(), curr->index}});
+    }
+  }
+  // Array operations access the array's location.
+  void visitArrayGet(ArrayGet* curr) {
+    if (curr->type.isRef()) {
+      info.connections.push_back({ArrayLocation{curr->type.getHeapType()},
+                                  ExpressionLocation{curr}});
+    }
+  }
+  void visitArraySet(ArraySet* curr) {
+    if (curr->value->type.isRef()) {
+      info.connections.push_back(
+        {ExpressionLocation{curr->value},
+         ArrayLocation{curr->type.getHeapType()}});
+    }
+  }
+
+  // Table operations access the table's locations.
+  void visitTableGet(TableGet* curr) {
+    if (curr->type.isRef()) {
+      info.connections.push_back(
+        {TableLocation{curr->table}, ExpressionLocation{curr}});
+    }
+  }
+  void visitTableSet(TableSet* curr) {
+    if (curr->value->type.isRef()) {
+      info.connections.push_back(
+        {ExpressionLocation{curr->value}, TableLocation{curr->table}});
+    }
+  }
+
+  void visitTry(Try* curr) { WASM_UNREACHABLE("todo"); }
+  void visitThrow(Throw* curr) { WASM_UNREACHABLE("todo"); }
+  void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("todo"); }
+  void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("todo"); }
+  void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("todo"); }
+
+  void visitFunction(Function* func) {
+    // Functions with a result can flow a value out from their body.
+    auto* body = func->body;
+    if (body->type.isRef()) {
+      if (!body->type.isTuple()) {
+        info.connections.push_back(
+          {ExpressionLocation{body}, ResultLocation{func, 0}});
+      } else {
+        WASM_UNREACHABLE("multivalue function result support");
+      }
+    }
+  }
+};
+
+} // anonymous namespace
+
+void PossibleTypesOracle::analyze() {
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
       if (func->imported()) {
@@ -41,277 +314,12 @@ void PossibleTypesOracle::analyze() {
         return;
       }
 
-      struct ConnectionFinder
-        : public PostWalker<ConnectionFinder,
-                            UnifiedExpressionVisitor<ConnectionFinder>> {
-        FuncInfo& info;
-
-        ConnectionFinder(FuncInfo& info) : info(info) {}
-
-        // Each visit*() call is responsible for connection the children of a
-        // node to that node. Responsibility for connecting the node's output to
-        // the outside (another expression or the function itself, if we are at
-        // the top level) is the responsibility of the outside.
-
-        void visitExpression(Expression* curr) {
-          // Breaks send values to their destinations. Handle that here using
-          // existing utility code which is shorter than implementing multiple
-          // visit*() methods (however, it may be slower TODO)
-          BranchUtils::operateOnScopeNameUsesAndSentValues(
-            curr, [&](Name target, Expression* value) {
-              if (value && value->type.isRef()) {
-                info.connections.push_back(
-                  {ExpressionLocation{value},
-                   BranchLocation{getFunction(), target}});
-              }
-            });
-
-          // Branch targets receive the things sent to them and flow them out.
-          if (curr->type.isRef()) {
-            BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
-              info.connections.push_back({BranchLocation{getFunction(), target},
-                                          ExpressionLocation{curr}});
-            });
-          }
-          // TODO: if we are a branch source or target, skip the loop later
-          // down? in general any ref-receiving instruction that reaches that
-          // loop will end up connecting a child ref to the current expression,
-          // but e.g. ref.is_* does not do so. OTOH ref.test's output is then an
-          // integer anyhow, so we don't actually reach the loop.
-
-          // The default behavior is to connect all input expressions to the
-          // current one, as it might return an output that includes them.
-          if (!curr->type.isRef()) {
-            return;
-          }
-
-          for (auto* child : ChildIterator(curr)) {
-            if (!child->type.isRef()) {
-              continue;
-            }
-            info.connections.push_back(
-              {ExpressionLocation{child}, ExpressionLocation{curr}});
-          }
-        }
-
-        // Locals read and write to their index.
-        // TODO: we could use a LocalGraph for better precision
-        void visitLocalGet(LocalGet* curr) {
-          if (curr->type.isRef()) {
-            info.connections.push_back(
-              {LocalLocation{getFunction(), curr->index},
-               ExpressionLocation{curr}});
-          }
-        }
-        void visitLocalSet(LocalSet* curr) {
-          if (!curr->value->type.isRef()) {
-            return;
-          }
-          info.connections.push_back(
-            {ExpressionLocation{curr->value},
-             LocalLocation{getFunction(), curr->index}});
-          if (curr->isTee()) {
-            info.connections.push_back(
-              {ExpressionLocation{curr->value}, ExpressionLocation{curr}});
-          }
-        }
-
-        // Globals read and write from their location.
-        void visitGlobalGet(GlobalGet* curr) {
-          if (curr->type.isRef()) {
-            info.connections.push_back(
-              {GlobalLocation{curr->name}, ExpressionLocation{curr}});
-          }
-        }
-        void visitGlobalSet(GlobalSet* curr) {
-          if (curr->value->type.isRef()) {
-            info.connections.push_back(
-              {ExpressionLocation{curr->value}, GlobalLocation{curr->name}});
-          }
-        }
-
-        // Iterates over a list of children and adds connections to parameters
-        // and results as needed. The param/result functions receive the index
-        // and create the proper location for it.
-        void handleCall(Expression* curr,
-                        ExpressionList& operands,
-                        std::function<Location(Index)> makeParamLocation,
-                        std::function<Location(Index)> makeResultLocation) {
-          Index i = 0;
-          for (auto* operand : operands) {
-            if (operand->type.isRef()) {
-              info.connections.push_back(
-                {ExpressionLocation{operand}, makeParamLocation(i)});
-            }
-            i++;
-          }
-
-          // Add results, if anything flows out.
-          if (curr->type.isTuple()) {
-            WASM_UNREACHABLE("todo: tuple results");
-          }
-          if (!curr->type.isRef()) {
-            return;
-          }
-          info.connections.push_back(
-            {makeResultLocation(0), ExpressionLocation{curr}});
-        }
-
-        // Calls send values to params in their possible targets, and receive
-        // results.
-        void visitCall(Call* curr) {
-          auto* target = getModule()->getFunction(curr->target);
-          handleCall(
-            curr,
-            curr->operands,
-            [&](Index i) {
-              return LocalLocation{target, i};
-            },
-            [&](Index i) {
-              return ResultLocation{target, i};
-            });
-        }
-        void visitCallIndirect(CallIndirect* curr) {
-          auto target = curr->heapType;
-          handleCall(
-            curr,
-            curr->operands,
-            [&](Index i) {
-              return SignatureParamLocation{target, i};
-            },
-            [&](Index i) {
-              return SignatureResultLocation{target, i};
-            });
-        }
-        void visitCallRef(CallRef* curr) {
-          auto targetType = curr->target->type;
-          if (targetType.isRef()) {
-            auto target = targetType.getHeapType();
-            handleCall(
-              curr,
-              curr->operands,
-              [&](Index i) {
-                return SignatureParamLocation{target, i};
-              },
-              [&](Index i) {
-                return SignatureResultLocation{target, i};
-              });
-          }
-        }
-
-        // Iterates over a list of children and adds connections as needed. The
-        // target of the connection is created using a function that is passed
-        // in which receives the index of the child.
-        void handleChildList(ExpressionList& operands,
-                             std::function<Location(Index)> makeTarget) {
-          Index i = 0;
-          for (auto* operand : operands) {
-            if (operand->type.isRef()) {
-              info.connections.push_back(
-                {ExpressionLocation{operand}, makeTarget(i)});
-            }
-            i++;
-          }
-        }
-
-        // Creation operations form the starting connections from where data
-        // flows. We will create an ExpressionLocation for them when their
-        // parent uses them, as we do for all instructions, so nothing special
-        // needs to be done here, but we do need to create connections from
-        // inputs - the initialization of their data - to the proper places.
-        void visitStructNew(StructNew* curr) {
-          if (curr->type == Type::unreachable) {
-            return;
-          }
-          auto type = curr->type.getHeapType();
-          handleChildList(curr->operands, [&](Index i) {
-            return StructLocation{type, i};
-          });
-        }
-        void visitArrayNew(ArrayNew* curr) {
-          if (curr->type != Type::unreachable && curr->init->type.isRef()) {
-            info.connections.push_back(
-              {ExpressionLocation{curr->init},
-               ArrayLocation{curr->type.getHeapType()}});
-          }
-        }
-        void visitArrayInit(ArrayInit* curr) {
-          if (curr->type == Type::unreachable || curr->values.empty() ||
-              !curr->values[0]->type.isRef()) {
-            return;
-          }
-          auto type = curr->type.getHeapType();
-          handleChildList(curr->values,
-                          [&](Index i) { return ArrayLocation{type}; });
-        }
-
-        // Struct operations access the struct fields' locations.
-        void visitStructGet(StructGet* curr) {
-          if (curr->type.isRef()) {
-            info.connections.push_back(
-              {StructLocation{curr->type.getHeapType(), curr->index},
-               ExpressionLocation{curr}});
-          }
-        }
-        void visitStructSet(StructSet* curr) {
-          if (curr->value->type.isRef()) {
-            info.connections.push_back(
-              {ExpressionLocation{curr->value},
-               StructLocation{curr->type.getHeapType(), curr->index}});
-          }
-        }
-        // Array operations access the array's location.
-        void visitArrayGet(ArrayGet* curr) {
-          if (curr->type.isRef()) {
-            info.connections.push_back({ArrayLocation{curr->type.getHeapType()},
-                                        ExpressionLocation{curr}});
-          }
-        }
-        void visitArraySet(ArraySet* curr) {
-          if (curr->value->type.isRef()) {
-            info.connections.push_back(
-              {ExpressionLocation{curr->value},
-               ArrayLocation{curr->type.getHeapType()}});
-          }
-        }
-
-        // Table operations access the table's locations.
-        void visitTableGet(TableGet* curr) {
-          if (curr->type.isRef()) {
-            info.connections.push_back(
-              {TableLocation{curr->table}, ExpressionLocation{curr}});
-          }
-        }
-        void visitTableSet(TableSet* curr) {
-          if (curr->value->type.isRef()) {
-            info.connections.push_back(
-              {ExpressionLocation{curr->value}, TableLocation{curr->table}});
-          }
-        }
-
-        void visitTry(Try* curr) { WASM_UNREACHABLE("todo"); }
-        void visitThrow(Throw* curr) { WASM_UNREACHABLE("todo"); }
-        void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("todo"); }
-        void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("todo"); }
-        void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("todo"); }
-
-        void visitFunction(Function* func) {
-          // Functions with a result can flow a value out from their body.
-          auto* body = func->body;
-          if (body->type.isRef()) {
-            if (!body->type.isTuple()) {
-              info.connections.push_back(
-                {ExpressionLocation{body}, ResultLocation{func, 0}});
-            } else {
-              WASM_UNREACHABLE("multivalue function result support");
-            }
-          }
-        }
-      };
       ConnectionFinder finder(info);
       finder.setFunction(func);
       finder.walk(func->body);
     });
+
+  // FIXME Scan module code!
 
   // Merge the function information into a single large graph that represents
   // the entire program all at once. First, gather all the connections from all

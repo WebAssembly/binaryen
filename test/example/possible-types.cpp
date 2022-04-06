@@ -32,4 +32,5 @@ int main() {
   PossibleTypesOracle oracle(*wasm);
   std::cout << "# of possible types of the $null global: " << oracle.getTypes(GlobalLocation{"foo"}).size() << '\n';
   std::cout << "# of possible types of the $something global: " << oracle.getTypes(GlobalLocation{"something"}).size() << '\n';
+  // Scan module code!
 }
