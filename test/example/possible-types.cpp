@@ -22,6 +22,9 @@ std::unique_ptr<Module> parse(std::string module) {
 }
 
 int main() {
+  // A minimal test of the public API of PossibleTypesOracle. See the lit test
+  // for coverage of all the internals (using lit makes the result more
+  // fuzzable).
   auto wasm = parse(R"(
     (module
       (type $struct (struct))
