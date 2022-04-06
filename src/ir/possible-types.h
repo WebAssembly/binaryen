@@ -192,14 +192,16 @@ template<> struct hash<wasm::PossibleTypes::TableLocation> {
 };
 
 template<> struct hash<wasm::PossibleTypes::SignatureParamLocation> {
-  size_t operator()(const wasm::PossibleTypes::SignatureParamLocation& loc) const {
+  size_t
+  operator()(const wasm::PossibleTypes::SignatureParamLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
   }
 };
 
 template<> struct hash<wasm::PossibleTypes::SignatureResultLocation> {
-  size_t operator()(const wasm::PossibleTypes::SignatureResultLocation& loc) const {
+  size_t
+  operator()(const wasm::PossibleTypes::SignatureResultLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
   }
@@ -220,7 +222,8 @@ template<> struct hash<wasm::PossibleTypes::ArrayLocation> {
 
 template<> struct hash<wasm::PossibleTypes::Connection> {
   size_t operator()(const wasm::PossibleTypes::Connection& loc) const {
-    return std::hash<std::pair<wasm::PossibleTypes::Location, wasm::PossibleTypes::Location>>{}(
+    return std::hash<std::pair<wasm::PossibleTypes::Location,
+                               wasm::PossibleTypes::Location>>{}(
       {loc.from, loc.to});
   }
 };
