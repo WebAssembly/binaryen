@@ -126,12 +126,48 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $call-to-get-null (result (ref $struct))
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK:      (func $call-to-get-null
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $call-to-get-null (result (ref $struct))
+  (func $call-to-get-null
     ;; This should be optimized out since the call does not actually return any
     ;; type in practice.
-    (call $get-nothing)
+    (drop
+      (call $get-nothing)
+    )
+    ;; Test for the result of such a call reaching another instruction. We do
+    ;; not optimize the ref.is_null here, because it returns an i32, and we do
+    ;; not operate on such things in this pass, just references.
+    (drop
+      (ref.is_null
+        (call $get-nothing)
+      )
+    )
+    ;; As above, but an instruction that does return a reference, which we can
+    ;; optimize away.
+    (drop
+      (ref.as_non_null
+        (call $get-nothing)
+      )
+    )
   )
 )
