@@ -274,6 +274,10 @@ void PassRegistry::registerPasses() {
                createPickLoadSignsPass);
   registerPass(
     "poppify", "Tranform Binaryen IR into Poppy IR", createPoppifyPass);
+  registerPass("possible-types",
+               "optimize the entire program using information about which "
+               "types can actually appear in each location",
+               createPossibleTypesPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);

@@ -66,6 +66,7 @@ set(passes_SOURCES
   OptimizeForJS.cpp
   PickLoadSigns.cpp
   Poppify.cpp
+  PossibleTypes.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
