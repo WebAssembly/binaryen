@@ -289,13 +289,13 @@ struct ConnectionFinder
   void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("todo"); }
   void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("todo"); }
 
-  void visitFunction(Function* func) {
+  void visitFunction(Function* curr) {
     // Functions with a result can flow a value out from their body.
-    auto* body = func->body;
+    auto* body = curr->body;
     if (body->type.isRef()) {
       if (!body->type.isTuple()) {
         info.connections.push_back(
-          {ExpressionLocation{body}, ResultLocation{func, 0}});
+          {ExpressionLocation{body}, ResultLocation{curr, 0}});
       } else {
         WASM_UNREACHABLE("multivalue function result support");
       }
@@ -321,7 +321,18 @@ void PossibleTypesOracle::analyze() {
 
   // Also walk the global module code, adding it to the map as a funciton of
   // null.
-  ConnectionFinder(analysis.map[nullptr]).walkModuleCode(&wasm);
+  auto& globalInfo = analysis.map[nullptr];
+  ConnectionFinder(globalInfo).walkModuleCode(&wasm);
+
+  for (auto& global : wasm.globals) {
+    if (!global->imported()) {
+      auto* init = global->init;
+      if (init->type.isRef()) {
+        globalInfo.connections.push_back(
+          {ExpressionLocation{init}, GlobalLocation{global->name}});
+      }
+    }
+  }
 
   // Merge the function information into a single large graph that represents
   // the entire program all at once. First, gather all the connections from all
