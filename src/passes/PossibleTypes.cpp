@@ -30,6 +30,7 @@
 //
 
 #include "ir/drop.h"
+#include "ir/eh-utils.h"
 #include "ir/possible-types.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -54,6 +55,8 @@ struct PossibleTypesPass : public Pass {
 
       Optimizer* create() override { return new Optimizer(oracle); }
 
+      bool optimized = false;
+
       void visitExpression(Expression* curr) {
         auto type = curr->type;
         if (type.isNonNullable() &&
@@ -64,12 +67,25 @@ struct PossibleTypesPass : public Pass {
           auto& wasm = *getModule();
           replaceCurrent(
             getDroppedChildren(curr, wasm, Builder(wasm).makeUnreachable()));
+          optimized = true;
         }
       }
+
       // TODO: if an instruction would trap on null, like struct.get, we could
       //       remove it here if it has no possible types. that information is
       //       present in OptimizeInstructions where it removes redundant
       //       ref.as_non_null, so maybe there is a way to share that
+
+      void visitFunction(Function* func) {
+        if (optimized) {
+          // Optimization may introduce more unreachables, which we need to
+          // propagate.
+//          ReFinalize().walkFunctionInModule(func, getModule());
+
+          // We may add blocks around pops, which we must fix up.
+  //        EHUtils::handleBlockNestedPops(func, *getModule());
+        }
+      }
     };
 
     Optimizer(oracle).run(runner, module);
