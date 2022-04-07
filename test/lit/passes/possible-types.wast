@@ -1010,9 +1010,9 @@
         )
       )
     )
-    ;; Create a parent with nothing. Even though the child wrote to the shared
-    ;; field, it cannot alias here (since where we wrote the child we knew we
-    ;; had an instance of the child and nothing else), so we can optimize.
+    ;; Create a parent with nothing. The child wrote to the shared field,
+    ;; however, which stops us from optimizing (but we could do better with a
+    ;; more precise analysis).
     (drop
       (struct.get $parent 0
         (struct.new $parent
@@ -1070,8 +1070,8 @@
       )
     )
     ;; The child writes nothing to the first field. However, the parent did
-    ;; write there, preventing optimization (although with a more precise
-    ;; analysis we could do better in theory).
+    ;; write there, preventing optimization (but we could do better with a
+    ;; more precise analysis).
     (drop
       (struct.get $child 0
         (struct.new $child
