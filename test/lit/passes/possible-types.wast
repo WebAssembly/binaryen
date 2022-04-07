@@ -1391,4 +1391,68 @@
   )
 )
 
-;; break the chain in the middle
+;; A single long chain as above, but now we break the chain in the middle, which
+;; we pick up on and optimize at the end.
+(module
+  ;; CHECK:      (type $storage (struct_subtype (field (mut anyref)) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct))
+
+  (type $storage (struct (field (mut (ref null any)))))
+
+  ;; CHECK:      (type $anyref_=>_anyref (func_subtype (param anyref) (result anyref) func))
+
+  ;; CHECK:      (global $x (mut anyref) (ref.null any))
+  (global $x (mut (ref null any)) (ref.null any))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $x
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (struct.get $storage 0
+  ;; CHECK-NEXT:     (struct.new $storage
+  ;; CHECK-NEXT:      (call $pass-through
+  ;; CHECK-NEXT:       (global.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    (local $x (ref null any))
+    (local.set $x
+      (struct.new $struct)
+    )
+    (global.set $x
+      (local.get $x)
+    )
+    (drop
+      (ref.as_non_null
+        (struct.get $storage 0
+          (struct.new $storage
+            (call $pass-through
+              (global.get $x)
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $pass-through (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $pass-through (param $x (ref null any)) (result (ref null any))
+    (local.get $x)
+  )
+)
