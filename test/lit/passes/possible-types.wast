@@ -1028,4 +1028,67 @@
   )
 )
 
+;; As above, but with the writes to the parent and child partially flipped on
+;; the shared field (see below).
+(module
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct_subtype data))
+  ;; CHECK:      (type $parent (struct (field (mut (ref $struct)))))
+  (type $parent (struct_subtype (field (mut (ref $struct))) data))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $child (struct (field (mut (ref $struct))) (field i32)))
+  (type $child (struct_subtype (field (mut (ref $struct))) (field i32) $struct))
+
+  ;; CHECK:      (func $func
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (struct.new $parent
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.new $child
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (ref.null $struct)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; Allocate when writing to the parent's field. We cannot
+    ;; optimize here.
+    (drop
+      (struct.get $parent 0
+        (struct.new $parent
+          (struct.new $struct)
+        )
+      )
+    )
+    ;; The child writes nothing to the first field. However, the parent did
+    ;; write there, preventing optimization (although with a more precise
+    ;; analysis we could do better in theory).
+    (drop
+      (struct.get $child 0
+        (struct.new $child
+          (ref.as_non_null
+            (ref.null $struct)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+  )
+)
+
 ;; TODO: test big loop with all the things. then break it
