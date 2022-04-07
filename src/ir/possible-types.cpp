@@ -329,6 +329,8 @@ void Oracle::analyze() {
   auto& globalInfo = analysis.map[nullptr];
   ConnectionFinder(globalInfo).walkModuleCode(&wasm);
 
+  // Connect global init values (which we've just processed, as part of the
+  // module code) to the globals they initialize.
   for (auto& global : wasm.globals) {
     if (!global->imported()) {
       auto* init = global->init;
@@ -375,6 +377,11 @@ void Oracle::analyze() {
 std::cout << "subtypes?\n";
   for (auto type : subTypes.types) {
 std::cout << "  subtype? " << type << "\n";
+    // Tie two locations together, linking them both ways.
+    auto tie = [&](const Location& a, const Location& b) {
+      connections.insert({a, b});
+      connections.insert({b, a});
+    };
     if (type.isStruct()) {
 std::cout << "    struct at least\n";
       // StructLocations refer to a struct.get/set/new and so in general they
@@ -385,10 +392,7 @@ std::cout << "    fields: " << numFields << "\n";
       for (auto subType : subTypes.getSubTypes(type)) {
         for (Index i = 0; i < numFields; i++) {
 std::cout << "subtyping " << type << " : " << subType << " : " << i << '\n';
-          connections.insert(
-            {StructLocation{type, i}, StructLocation{subType, i}});
-          connections.insert(
-            {StructLocation{subType, i}, StructLocation{type, i}});
+          tie(StructLocation{type, i}, StructLocation{subType, i});
         }
       }
     } else if (type.isArray()) {
@@ -396,7 +400,7 @@ std::cout << "subtyping " << type << " : " << subType << " : " << i << '\n';
       // may refer to data of a subtype of the type written on them. Connect to
       // their immediate subtypes here.
       for (auto subType : subTypes.getSubTypes(type)) {
-        connections.insert({ArrayLocation{type}, ArrayLocation{subType}});
+        tie(ArrayLocation{type}, ArrayLocation{subType});
       }
     }
   }

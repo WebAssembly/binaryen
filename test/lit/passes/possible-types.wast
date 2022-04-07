@@ -1133,13 +1133,17 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $nothing (array_subtype (mut anyref) data))
-  (type $nothing (array (mut (ref null any))))
+  (type $nothing (array_subtype (mut (ref null any)) data))
 
-  (type $null (array (mut (ref null any))))
+  (type $null (array_subtype (mut (ref null any)) data))
 
-  (type $something (array (mut (ref null any))))
+  (type $something (array_subtype (mut (ref null any)) data))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
+
+  ;; CHECK:      (type $something-child (array_subtype (mut anyref) $something))
+  (type $something-child (array_subtype (mut (ref null any)) $something))
+
   (type $struct (struct))
 
   ;; CHECK:      (func $func (type $none_=>_none)
@@ -1183,6 +1187,14 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (array.get $something-child
+  ;; CHECK-NEXT:     (ref.null $something-child)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     ;; Write nothing to this array, so we can optimize the cast to non-null of
@@ -1219,6 +1231,16 @@
       (ref.as_non_null
         (array.get $something
           (ref.null $something)
+          (i32.const 0)
+        )
+      )
+    )
+    ;; $something-child has nothing written to it, but it's parent does, so we
+    ;; do not optimize (but a better analysis might improve things).
+    (drop
+      (ref.as_non_null
+        (array.get $something-child
+          (ref.null $something-child)
           (i32.const 0)
         )
       )
