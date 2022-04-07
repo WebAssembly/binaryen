@@ -934,41 +934,40 @@
 (module
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
-  ;; CHECK:      (type $parent (struct (field (mut (ref $struct)))))
-  (type $parent (struct_subtype (field (mut (ref $struct))) data))
   ;; CHECK:      (type $child (struct (field (mut (ref $struct))) (field (mut (ref $struct)))))
-  (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $struct))
 
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $parent (struct (field (mut (ref $struct)))))
+  (type $parent (struct_subtype (field (mut (ref $struct))) data))
+  (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $struct))
+
   ;; CHECK:      (func $func
-  ;; CHECK-NEXT:  (local $parent (ref null $parent))
-  ;; CHECK-NEXT:  (local $child (ref null $child))
-  ;; CHECK-NEXT:  (local.set $parent
-  ;; CHECK-NEXT:   (struct.new $parent
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (struct.new $child
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $child
-  ;; CHECK-NEXT:   (struct.new $child
-  ;; CHECK-NEXT:    (struct.new_default $struct)
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $parent)
+  ;; CHECK-NEXT:     (struct.new $child
+  ;; CHECK-NEXT:      (struct.new_default $struct)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (ref.null $struct)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -976,15 +975,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $child)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $child)
+  ;; CHECK-NEXT:     (struct.new $parent
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (ref.null $struct)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -1015,8 +1013,9 @@
         )
       )
     )
-    ;; Create a parent with nothing, but now we *can* optimize, because the
-    ;; child did write something to that field which is aliased.
+    ;; Create a parent with nothing. Even though the child wrote to the shared
+    ;; field, it cannot alias here (since where we wrote the child we knew we
+    ;; had an instance of the child and nothing else), so we can optimize.
     (drop
       (struct.get $parent 0
         (struct.new $parent

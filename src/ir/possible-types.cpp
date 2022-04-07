@@ -27,12 +27,16 @@ namespace wasm::PossibleTypes {
 
 namespace {
 
-// Gather information from functions in parallel. In each function we get a
-// vector of all the connections, and later merge them.
+// The data we gather from each function, as we process them in parallel. Later
+// this will be merged into a single big graph.
 struct FuncInfo {
+  // All the connections we found in this function.
   // TODO: as an optimization we could perhaps avoid redundant copies in this
   //       vector using a set?
   std::vector<Connection> connections;
+
+  // All the allocations (struct.new, etc.) that we found in this function.
+  std::vector<Expression*> allocations;
 };
 
 struct ConnectionFinder
@@ -220,20 +224,28 @@ std::cout << "new operand to struct loc\n";
 std::cout << "struct.new adding StructLoc\n";
       return StructLocation{type, i};
     });
+    info.allocations.push_back(curr);
   }
   void visitArrayNew(ArrayNew* curr) {
-    if (curr->type != Type::unreachable && curr->init->type.isRef()) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    if (curr->init->type.isRef()) {
       info.connections.push_back({ExpressionLocation{curr->init},
                                   ArrayLocation{curr->type.getHeapType()}});
     }
+    info.allocations.push_back(curr);
   }
   void visitArrayInit(ArrayInit* curr) {
-    if (curr->type == Type::unreachable || curr->values.empty() ||
-        !curr->values[0]->type.isRef()) {
+    if (curr->type == Type::unreachable) {
       return;
     }
-    auto type = curr->type.getHeapType();
-    handleChildList(curr->values, [&](Index i) { return ArrayLocation{type}; });
+    if (!curr->values.empty() &&
+        curr->values[0]->type.isRef()) {
+      auto type = curr->type.getHeapType();
+      handleChildList(curr->values, [&](Index i) { return ArrayLocation{type}; });
+    }
+    info.allocations.push_back(curr);
   }
 
   // Struct operations access the struct fields' locations.
@@ -336,10 +348,14 @@ void Oracle::analyze() {
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
+  std::vector<Expression*> allocations;
 
   for (auto& [func, info] : analysis.map) {
     for (auto& connection : info.connections) {
       connections.insert(connection);
+    }
+    for (auto& allocation : info.allocations) {
+      allocations.push_back(allocation);
     }
   }
 
@@ -405,26 +421,22 @@ std::cout << "total # of connections " << connections.size() << '\n';
   // should update their children when we pop them from this queue.
   UniqueDeferredQueue<Location> work;
 
-  for (auto& [location, info] : flowInfoMap) {
-    if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-      auto* expr = exprLoc->expr;
-std::cout << "exprloc " << *expr << '\n';
-      if (expr->is<StructNew>() || expr->is<ArrayNew>() ||
-          expr->is<ArrayInit>()) {
-        // The type must be a reference, and not unreachable (we should have
-        // ignored such things before).
-        assert(expr->type.isRef());
+  // The starting state for the flow is for each allocation to contain the type
+  // allocated there.
+  for (const auto& allocation : allocations) {
+    // The type must not be a reference (as we allocated here), and it cannot be
+    // unreachable (we should have ignored such things before).
+    assert(allocation->type.isRef());
 
-        auto& info = flowInfoMap[*exprLoc];
+    auto location = ExpressionLocation{allocation};
+    auto& info = flowInfoMap[location];
 
-        // There must not be anything at this location already, as there can
-        // only be a single ExpressionLocation for each expression.
-        assert(info.types.empty());
+    // There must not be anything at this location already, as each allocation
+    // appears once in the vector of allocations.
+    assert(info.types.empty());
 
-        info.types.insert(expr->type.getHeapType());
-        work.push(*exprLoc);
-      }
-    }
+    info.types.insert(allocation->type.getHeapType());
+    work.push(location);
   }
 
   // Flow the data.
