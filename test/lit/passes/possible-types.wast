@@ -546,4 +546,118 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $ref|any|_=>_ref|any| (func (param (ref any)) (result (ref any))))
+
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct))
+
+  ;; CHECK:      (type $ref|any|_ref|any|_ref|any|_=>_none (func (param (ref any) (ref any) (ref any))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $never-called (param $x (ref any)) (result (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $never-called (param $x (ref any)) (result (ref any))
+    ;; This function is never called, so this non-nullable parameter cannot
+    ;; contain any actual value, and we can optimize it away.
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $recursion (param $x (ref any)) (result (ref any))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $recursion (param $x (ref any)) (result (ref any))
+    ;; This function calls itself recursively. That forms a loop, but still, no
+    ;; type is possible here, so we can optimize away.
+    (call $recursion
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $called (param $x (ref any)) (param $y (ref any)) (param $z (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref any)) (param $y (ref any)) (param $z (ref any))
+    ;; This function *is* called, with possible types in the first and last
+    ;; parameter but not the middle, which can be optimized out.
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+    (drop
+      (local.get $z)
+    )
+  )
+
+  ;; CHECK:      (func $call-called
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-called
+    (call $called
+      (struct.new $struct)
+      (ref.as_non_null
+        (ref.null any)
+      )
+      (ref.as_non_null
+        (ref.null any)
+      )
+    )
+    (call $called
+      (ref.as_non_null
+        (ref.null any)
+      )
+      (ref.as_non_null
+        (ref.null any)
+      )
+      (struct.new $struct)
+    )
+  )
+)
+
 ;; TODO: test big loop with all the things. then break it
