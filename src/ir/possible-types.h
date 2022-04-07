@@ -111,6 +111,15 @@ struct ArrayLocation {
   }
 };
 
+// The location of anything written to a particular index of a particular tag.
+struct TagLocation {
+  Name tag;
+  Index index;
+  bool operator==(const TagLocation& other) const {
+    return tag == other.tag && index == other.index;
+  }
+};
+
 // A location is a variant over all the possible types of locations that we
 // have.
 using Location = std::variant<ExpressionLocation,
@@ -121,7 +130,8 @@ using Location = std::variant<ExpressionLocation,
                               SignatureParamLocation,
                               SignatureResultLocation,
                               StructLocation,
-                              ArrayLocation>;
+                              ArrayLocation,
+                              TagLocation>;
 
 // A connection indicates a flow of types from one location to another. For
 // example, if we do a local.get and return that value from a function, then
@@ -202,6 +212,13 @@ template<> struct hash<wasm::PossibleTypes::StructLocation> {
 template<> struct hash<wasm::PossibleTypes::ArrayLocation> {
   size_t operator()(const wasm::PossibleTypes::ArrayLocation& loc) const {
     return std::hash<wasm::HeapType>{}(loc.type);
+  }
+};
+
+template<> struct hash<wasm::PossibleTypes::TagLocation> {
+  size_t operator()(const wasm::PossibleTypes::TagLocation& loc) const {
+    return std::hash<std::pair<wasm::Name, wasm::Index>>{}(
+      {loc.tag, loc.index});
   }
 };
 

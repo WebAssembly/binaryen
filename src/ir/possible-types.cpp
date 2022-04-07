@@ -17,6 +17,7 @@
 #include <variant>
 
 #include "ir/branch-utils.h"
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/possible-types.h"
 #include "ir/subtypes.h"
@@ -278,11 +279,40 @@ struct ConnectionFinder
     }
   }
 
+  // TODO: Model which throws can go to which catches. For now, anything
+  //       thrown is sent to the location of that tag, and any catch of that
+  //       tag can read them
+  void visitThrow(Throw* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    auto tag = curr->tag;
+    handleChildList(curr->operands, [&](Index i) {
+      return TagLocation{tag, i};
+    });
+  }
+  void visitTry(Try* curr) {
+    auto numTags = curr->catchTags.size();
+    for (Index i = 0; i < numTags; i++) {
+      auto tag = curr->catchTags[i];
+      auto* body = curr->catchBodies[i];
+
+      // Find the pops of the tag's contents. There will be one for each item in
+      // the tag, all at the start of the body.
+      FindAll<Pop> pops(body);
+      auto sigSize = getModule()->getTag(tag)->sig.params.size();
+      assert(pops.list.size() >= sigSize);
+      for (Index j = 0; j < sigSize; j++) {
+        auto* pop = pops.list[j];
+        info.connections.push_back({
+          TagLocation{tag, j}, ExpressionLocation{pop}
+        });
+      }
+    }
+  }
+
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
   void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo"); }
-  void visitTry(Try* curr) { WASM_UNREACHABLE("todo"); }
-  void visitThrow(Throw* curr) { WASM_UNREACHABLE("todo"); }
-  void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("todo"); }
   void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("todo"); }
   void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("todo"); }
 
