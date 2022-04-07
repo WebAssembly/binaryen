@@ -238,10 +238,10 @@ struct ConnectionFinder
     if (curr->type == Type::unreachable) {
       return;
     }
-    if (!curr->values.empty() &&
-        curr->values[0]->type.isRef()) {
+    if (!curr->values.empty() && curr->values[0]->type.isRef()) {
       auto type = curr->type.getHeapType();
-      handleChildList(curr->values, [&](Index i) { return ArrayLocation{type}; });
+      handleChildList(curr->values,
+                      [&](Index i) { return ArrayLocation{type}; });
     }
     info.allocations.push_back(curr);
   }
@@ -264,14 +264,15 @@ struct ConnectionFinder
   // Array operations access the array's location.
   void visitArrayGet(ArrayGet* curr) {
     if (curr->type.isRef()) {
-      info.connections.push_back(
-        {ArrayLocation{curr->ref->type.getHeapType()}, ExpressionLocation{curr}});
+      info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
+                                  ExpressionLocation{curr}});
     }
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->value->type.isRef()) {
-      info.connections.push_back({ExpressionLocation{curr->value},
-                                  ArrayLocation{curr->ref->type.getHeapType()}});
+      info.connections.push_back(
+        {ExpressionLocation{curr->value},
+         ArrayLocation{curr->ref->type.getHeapType()}});
     }
   }
 
@@ -295,9 +296,7 @@ struct ConnectionFinder
     }
   }
 
-  void visitReturn(Return* curr) {
-    addResult(curr->value);
-  }
+  void visitReturn(Return* curr) { addResult(curr->value); }
 
   void visitFunction(Function* curr) {
     // Functions with a result can flow a value out from their body.
