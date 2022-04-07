@@ -279,25 +279,33 @@ std::cout << "struct loc from set\n";
     }
   }
 
-  void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo") }
-  void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo") }
+  void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
+  void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo"); }
   void visitTry(Try* curr) { WASM_UNREACHABLE("todo"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("todo"); }
   void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("todo"); }
   void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("todo"); }
   void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("todo"); }
 
+  void addResult(Expression* value) {
+    if (!value || !value->type.isRef()) {
+      return;
+    }
+    if (!value->type.isTuple()) {
+      info.connections.push_back(
+        {ExpressionLocation{value}, ResultLocation{getFunction(), 0}});
+    } else {
+      WASM_UNREACHABLE("multivalue function result support");
+    }
+  }
+
+  void visitReturn(Return* curr) {
+    addResult(curr->value);
+  }
+
   void visitFunction(Function* curr) {
     // Functions with a result can flow a value out from their body.
-    auto* body = curr->body;
-    if (body->type.isRef()) {
-      if (!body->type.isTuple()) {
-        info.connections.push_back(
-          {ExpressionLocation{body}, ResultLocation{curr, 0}});
-      } else {
-        WASM_UNREACHABLE("multivalue function result support");
-      }
-    }
+    addResult(curr->body);
   }
 };
 
@@ -316,7 +324,7 @@ void Oracle::analyze() {
       finder.walkFunctionInModule(func, &wasm);
     });
 
-  // Also walk the global module code, adding it to the map as a funciton of
+  // Also walk the global module code, adding it to the map as a function of
   // null.
   auto& globalInfo = analysis.map[nullptr];
   ConnectionFinder(globalInfo).walkModuleCode(&wasm);
