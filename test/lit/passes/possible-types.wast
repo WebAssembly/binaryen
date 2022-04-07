@@ -660,4 +660,62 @@
   )
 )
 
+;; As above, but using indirect calls
+(module
+  ;; CHECK:      (type $struct (struct ))
+
+  ;; CHECK:      (type $two-params (func (param (ref $struct) (ref $struct))))
+  (type $two-params (func (param (ref $struct)) (param (ref $struct))))
+
+  (type $struct (struct))
+
+  (table 1 funcref)
+
+  (elem (i32.const 0) funcref
+    (ref.func $func)
+  )
+
+  ;; CHECK:      (table $0 1 funcref)
+
+  ;; CHECK:      (elem (i32.const 0) $func)
+
+  ;; CHECK:      (func $func (param $x (ref $struct)) (param $y (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $two-params)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $struct)) (param $y (ref $struct))
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+    ;; Send a value only to the second param.
+    (call_indirect (type $two-params)
+      (ref.as_non_null
+        (ref.null $struct)
+      )
+      (struct.new $struct)
+      (i32.const 0)
+    )
+  )
+)
+
+
 ;; TODO: test big loop with all the things. then break it
