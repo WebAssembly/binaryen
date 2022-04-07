@@ -1851,6 +1851,9 @@ struct PrintExpressionContents
       case RelaxedSwizzleVec8x16:
         o << "i8x16.relaxed_swizzle";
         break;
+      case RelaxedQ15MulrSVecI16x8:
+        o << "i16x8.relaxed_q15mulr_s";
+        break;
 
       case InvalidBinary:
         WASM_UNREACHABLE("unvalid binary operator");
