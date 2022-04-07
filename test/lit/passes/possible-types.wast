@@ -870,4 +870,64 @@
     )
   )
 )
+
+;; Array creation.
+(module
+  ;; CHECK:      (type $vector (array (mut f64)))
+  (type $vector (array (mut f64)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $arrays
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (array.new $vector
+  ;; CHECK-NEXT:     (f64.const 3.14159)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (array.init_static $vector
+  ;; CHECK-NEXT:     (f64.const 1.1)
+  ;; CHECK-NEXT:     (f64.const 2.2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $vector)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $arrays
+    (drop
+      (ref.as_non_null
+        (array.new $vector
+          (f64.const 3.14159)
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (array.init_static $vector
+          (f64.const 1.1)
+          (f64.const 2.2)
+        )
+      )
+    )
+    ;; In the last case we have no possible type and can optimize.
+    (drop
+      (ref.as_non_null
+        (ref.null $vector)
+      )
+    )
+  )
+)
+
 ;; TODO: test big loop with all the things. then break it
