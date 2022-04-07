@@ -917,6 +917,7 @@ public:
       case AvgrUVecI16x8:
         return left.avgrUI16x8(right);
       case Q15MulrSatSVecI16x8:
+      case RelaxedQ15MulrSVecI16x8:
         return left.q15MulrSatSI16x8(right);
       case ExtMulLowSVecI16x8:
         return left.extMulLowSI16x8(right);
