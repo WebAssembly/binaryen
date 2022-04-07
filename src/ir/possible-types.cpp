@@ -42,9 +42,9 @@ struct ConnectionFinder
 
   ConnectionFinder(FuncInfo& info) : info(info) {}
 
-  // Each visit*() call is responsible for connection the children of a
+  // Each visit*() call is responsible for connecting the children of a
   // node to that node. Responsibility for connecting the node's output to
-  // the outside (another expression or the function itself, if we are at
+  // anywhere else (another expression or the function itself, if we are at
   // the top level) is the responsibility of the outside.
 
   void visitExpression(Expression* curr) {
@@ -217,6 +217,7 @@ std::cout << "new operand to struct loc\n";
     }
     auto type = curr->type.getHeapType();
     handleChildList(curr->operands, [&](Index i) {
+std::cout << "struct.new adding StructLoc\n";
       return StructLocation{type, i};
     });
   }
@@ -238,23 +239,25 @@ std::cout << "new operand to struct loc\n";
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
     if (curr->type.isRef()) {
+std::cout << "struct loc to get\n";
       info.connections.push_back(
-        {StructLocation{curr->type.getHeapType(), curr->index},
+        {StructLocation{curr->ref->type.getHeapType(), curr->index},
          ExpressionLocation{curr}});
     }
   }
   void visitStructSet(StructSet* curr) {
     if (curr->value->type.isRef()) {
+std::cout << "struct loc from set\n";
       info.connections.push_back(
         {ExpressionLocation{curr->value},
-         StructLocation{curr->type.getHeapType(), curr->index}});
+         StructLocation{curr->ref->type.getHeapType(), curr->index}});
     }
   }
   // Array operations access the array's location.
   void visitArrayGet(ArrayGet* curr) {
     if (curr->type.isRef()) {
       info.connections.push_back(
-        {ArrayLocation{curr->type.getHeapType()}, ExpressionLocation{curr}});
+        {ArrayLocation{curr->ref->type.getHeapType()}, ExpressionLocation{curr}});
     }
   }
   void visitArraySet(ArraySet* curr) {
@@ -379,6 +382,8 @@ void Oracle::analyze() {
     }
   }
 
+std::cout << "total # of connections " << connections.size() << '\n';
+
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
     flowInfoMap[connection.from].targets.push_back(connection.to);
@@ -403,6 +408,7 @@ void Oracle::analyze() {
   for (auto& [location, info] : flowInfoMap) {
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
       auto* expr = exprLoc->expr;
+std::cout << "exprloc " << *expr << '\n';
       if (expr->is<StructNew>() || expr->is<ArrayNew>() ||
           expr->is<ArrayInit>()) {
         // The type must be a reference, and not unreachable (we should have
@@ -425,6 +431,9 @@ void Oracle::analyze() {
   while (!work.empty()) {
     auto location = work.pop();
     const auto& info = flowInfoMap[location];
+std::cout << "pop item\n";
+if (auto* loc = std::get_if<ExpressionLocation>(&location)) std::cout << "  exprloc " << *loc->expr << '\n';
+if (auto* loc = std::get_if<StructLocation>(&location)) std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
 
     // TODO: implement the following optimization, and remove the hardcoded
     //       links created above.
@@ -450,6 +459,7 @@ void Oracle::analyze() {
     //     (value C) to their new target as well.
     // ==================================TODO==================================
     const auto& targets = info.targets;
+std::cout << "  this item has " << targets.size() << " targets in it\n";
     if (targets.empty()) {
       continue;
     }
@@ -457,6 +467,7 @@ void Oracle::analyze() {
     // TODO: We can refine the types here, by not flowing anything through a
     //       ref.cast that it would trap on.
     const auto& types = info.types;
+std::cout << "  this item has " << types.size() << " types in it\n";
 
     // Update the targets, and add the ones that changes to the remaining work.
     for (const auto& target : targets) {
@@ -464,6 +475,7 @@ void Oracle::analyze() {
       auto oldSize = targetTypes.size();
       targetTypes.insert(types.begin(), types.end());
       if (targetTypes.size() != oldSize) {
+std::cout << "  this item has added to a child\n";//" << types.size() << " types in it\n";
         // We inserted something, so there is work to do in this target.
         work.push(target);
       }
