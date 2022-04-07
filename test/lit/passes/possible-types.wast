@@ -416,3 +416,134 @@
     )
   )
 )
+
+;; As above, but now with a chain of globals: A starts with a value, which is
+;; copied to B, and then C, and then C is read. We will be able to optimize
+;; away *-null (which is where A-null starts with null) but not *-something
+;; (wihch is where A-something starts with a value).
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct))
+
+  ;; CHECK:      (global $A-null anyref (ref.null any))
+  (global $A-null (ref null any) (ref.null any))
+  ;; CHECK:      (global $A-something anyref (struct.new_default $struct))
+  (global $A-something (ref null any) (struct.new $struct))
+
+  ;; CHECK:      (global $B-null (mut anyref) (ref.null any))
+  (global $B-null (mut (ref null any)) (ref.null any))
+  ;; CHECK:      (global $B-something (mut anyref) (ref.null any))
+  (global $B-something (mut (ref null any)) (ref.null any))
+
+  ;; CHECK:      (global $C-null (mut anyref) (ref.null any))
+  (global $C-null (mut (ref null any)) (ref.null any))
+  ;; CHECK:      (global $C-something (mut anyref) (ref.null any))
+  (global $C-something (mut (ref null any)) (ref.null any))
+
+  ;; CHECK:      (func $read-globals
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (global.get $A-null)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (global.get $A-something)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (global.get $B-null)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (global.get $B-something)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (global.get $C-null)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (global.get $C-something)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $read-globals
+    (drop
+      (ref.as_non_null
+        (global.get $A-null)
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (global.get $A-something)
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (global.get $B-null)
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (global.get $B-something)
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (global.get $C-null)
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (global.get $C-something)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $write-globals
+  ;; CHECK-NEXT:  (global.set $B-null
+  ;; CHECK-NEXT:   (global.get $A-null)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $C-null
+  ;; CHECK-NEXT:   (global.get $B-null)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $B-something
+  ;; CHECK-NEXT:   (global.get $A-something)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $C-something
+  ;; CHECK-NEXT:   (global.get $B-something)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $write-globals
+    (global.set $B-null
+      (global.get $A-null)
+    )
+    (global.set $C-null
+      (global.get $B-null)
+    )
+    (global.set $B-something
+      (global.get $A-something)
+    )
+    (global.set $C-something
+      (global.get $B-something)
+    )
+  )
+)
+
+;; TODO: test big loop with all the things. then break it
