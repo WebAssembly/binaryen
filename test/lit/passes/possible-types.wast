@@ -1468,3 +1468,76 @@
     (local.get $x)
   )
 )
+
+;; Combine the last two testcases: start with a loop now, instead of a chain,
+;; and then break the loop.
+(module
+  (type $struct (struct))
+
+  ;; CHECK:      (type $storage (struct_subtype (field (mut anyref)) data))
+  (type $storage (struct (field (mut (ref null any)))))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $anyref_=>_anyref (func_subtype (param anyref) (result anyref) func))
+
+  ;; CHECK:      (global $x (mut anyref) (ref.null any))
+  (global $x (mut (ref null any)) (ref.null any))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.get $storage 0
+  ;; CHECK-NEXT:    (ref.null $storage)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $x
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $storage 0
+  ;; CHECK-NEXT:      (struct.new $storage
+  ;; CHECK-NEXT:       (call $pass-through
+  ;; CHECK-NEXT:        (global.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    (local $x (ref null any))
+    (local.set $x
+      ;; Replace the allocation here with a read from the $storage struct, which
+      ;; is written lower down, so this forms a loop, effectively.
+      (struct.get $storage 0
+        (ref.null $storage)
+      )
+    )
+    (global.set $x
+      (local.get $x)
+    )
+    (drop
+      (ref.as_non_null
+        (struct.get $storage 0
+          (struct.new $storage
+            (call $pass-through
+              (global.get $x)
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $pass-through (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $pass-through (param $x (ref null any)) (result (ref null any))
+    (local.get $x)
+  )
+)
