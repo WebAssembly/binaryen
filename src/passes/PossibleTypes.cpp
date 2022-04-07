@@ -54,11 +54,9 @@ struct PossibleTypesPass : public Pass {
       Optimizer* create() override { return new Optimizer(oracle); }
 
       void visitExpression(Expression* curr) {
-//std::cout << "opt?\n" << *curr << "\n";
         auto type = curr->type;
         if (type.isNonNullable() &&
             oracle.getTypes(PossibleTypes::ExpressionLocation{curr}).empty()) {
-//std::cout << "  opt!!!1\n";
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.

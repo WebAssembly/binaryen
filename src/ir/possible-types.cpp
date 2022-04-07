@@ -202,7 +202,6 @@ struct ConnectionFinder
     Index i = 0;
     for (auto* operand : operands) {
       if (operand->type.isRef()) {
-std::cout << "new operand to struct loc\n";
         info.connections.push_back(
           {ExpressionLocation{operand}, makeTarget(i)});
       }
@@ -221,7 +220,6 @@ std::cout << "new operand to struct loc\n";
     }
     auto type = curr->type.getHeapType();
     handleChildList(curr->operands, [&](Index i) {
-std::cout << "struct.new adding StructLoc\n";
       return StructLocation{type, i};
     });
     info.allocations.push_back(curr);
@@ -251,7 +249,6 @@ std::cout << "struct.new adding StructLoc\n";
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
     if (curr->type.isRef()) {
-std::cout << "struct loc to get\n";
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
          ExpressionLocation{curr}});
@@ -259,7 +256,6 @@ std::cout << "struct loc to get\n";
   }
   void visitStructSet(StructSet* curr) {
     if (curr->value->type.isRef()) {
-std::cout << "struct loc from set\n";
       info.connections.push_back(
         {ExpressionLocation{curr->value},
          StructLocation{curr->ref->type.getHeapType(), curr->index}});
@@ -374,24 +370,19 @@ void Oracle::analyze() {
   // Add subtyping connections, but see the TODO below about how we can do this
   // "dynamically" in a more effective but complex way.
   SubTypes subTypes(wasm);
-std::cout << "subtypes?\n";
   for (auto type : subTypes.types) {
-std::cout << "  subtype? " << type << "\n";
     // Tie two locations together, linking them both ways.
     auto tie = [&](const Location& a, const Location& b) {
       connections.insert({a, b});
       connections.insert({b, a});
     };
     if (type.isStruct()) {
-std::cout << "    struct at least\n";
       // StructLocations refer to a struct.get/set/new and so in general they
       // may refer to data of a subtype of the type written on them. Connect to
       // their immediate subtypes here in both directions.
       auto numFields = type.getStruct().fields.size();
-std::cout << "    fields: " << numFields << "\n";
       for (auto subType : subTypes.getSubTypes(type)) {
         for (Index i = 0; i < numFields; i++) {
-std::cout << "subtyping " << type << " : " << subType << " : " << i << '\n';
           tie(StructLocation{type, i}, StructLocation{subType, i});
         }
       }
@@ -404,8 +395,6 @@ std::cout << "subtyping " << type << " : " << subType << " : " << i << '\n';
       }
     }
   }
-
-std::cout << "total # of connections " << connections.size() << '\n';
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
@@ -450,9 +439,16 @@ std::cout << "total # of connections " << connections.size() << '\n';
   while (!work.empty()) {
     auto location = work.pop();
     const auto& info = flowInfoMap[location];
-std::cout << "pop item\n";
-if (auto* loc = std::get_if<ExpressionLocation>(&location)) std::cout << "  exprloc " << *loc->expr << '\n';
-if (auto* loc = std::get_if<StructLocation>(&location)) std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
+
+#if POSSIBLE_TYPES_DEBUG
+    std::cout << "pop item\n";
+    if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
+      std::cout << "  exprloc " << *loc->expr << '\n';
+    }
+    if (auto* loc = std::get_if<StructLocation>(&location)) {
+      std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
+    }
+#endif
 
     // TODO: implement the following optimization, and remove the hardcoded
     //       links created above.
@@ -478,7 +474,6 @@ if (auto* loc = std::get_if<StructLocation>(&location)) std::cout << "  structlo
     //     (value C) to their new target as well.
     // ==================================TODO==================================
     const auto& targets = info.targets;
-std::cout << "  this item has " << targets.size() << " targets in it\n";
     if (targets.empty()) {
       continue;
     }
@@ -486,7 +481,6 @@ std::cout << "  this item has " << targets.size() << " targets in it\n";
     // TODO: We can refine the types here, by not flowing anything through a
     //       ref.cast that it would trap on.
     const auto& types = info.types;
-std::cout << "  this item has " << types.size() << " types in it\n";
 
     // Update the targets, and add the ones that changes to the remaining work.
     for (const auto& target : targets) {
@@ -494,7 +488,6 @@ std::cout << "  this item has " << types.size() << " types in it\n";
       auto oldSize = targetTypes.size();
       targetTypes.insert(types.begin(), types.end());
       if (targetTypes.size() != oldSize) {
-std::cout << "  this item has added to a child\n";//" << types.size() << " types in it\n";
         // We inserted something, so there is work to do in this target.
         work.push(target);
       }
