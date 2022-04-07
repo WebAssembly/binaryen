@@ -70,14 +70,6 @@ struct GlobalLocation {
   }
 };
 
-// The location of a table in the module.
-struct TableLocation {
-  Name name;
-  bool operator==(const TableLocation& other) const {
-    return name == other.name;
-  }
-};
-
 // The location of one of the parameters in a function signature.
 struct SignatureParamLocation {
   HeapType type;
@@ -126,7 +118,6 @@ using Location = std::variant<ExpressionLocation,
                               LocalLocation,
                               BranchLocation,
                               GlobalLocation,
-                              TableLocation,
                               SignatureParamLocation,
                               SignatureResultLocation,
                               StructLocation,
@@ -181,12 +172,6 @@ template<> struct hash<wasm::PossibleTypes::BranchLocation> {
 
 template<> struct hash<wasm::PossibleTypes::GlobalLocation> {
   size_t operator()(const wasm::PossibleTypes::GlobalLocation& loc) const {
-    return std::hash<wasm::Name>{}(loc.name);
-  }
-};
-
-template<> struct hash<wasm::PossibleTypes::TableLocation> {
-  size_t operator()(const wasm::PossibleTypes::TableLocation& loc) const {
     return std::hash<wasm::Name>{}(loc.name);
   }
 };

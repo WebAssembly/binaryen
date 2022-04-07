@@ -279,20 +279,8 @@ std::cout << "struct loc from set\n";
     }
   }
 
-  // Table operations access the table's locations.
-  void visitTableGet(TableGet* curr) {
-    if (curr->type.isRef()) {
-      info.connections.push_back(
-        {TableLocation{curr->table}, ExpressionLocation{curr}});
-    }
-  }
-  void visitTableSet(TableSet* curr) {
-    if (curr->value->type.isRef()) {
-      info.connections.push_back(
-        {ExpressionLocation{curr->value}, TableLocation{curr->table}});
-    }
-  }
-
+  void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo") }
+  void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo") }
   void visitTry(Try* curr) { WASM_UNREACHABLE("todo"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("todo"); }
   void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("todo"); }
