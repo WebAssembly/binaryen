@@ -930,4 +930,108 @@
   )
 )
 
+;; Struct fields.
+(module
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct_subtype data))
+  ;; CHECK:      (type $parent (struct (field (mut (ref $struct)))))
+  (type $parent (struct_subtype (field (mut (ref $struct))) data))
+  ;; CHECK:      (type $child (struct (field (mut (ref $struct))) (field (mut (ref $struct)))))
+  (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $struct))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $func
+  ;; CHECK-NEXT:  (local $parent (ref null $parent))
+  ;; CHECK-NEXT:  (local $child (ref null $child))
+  ;; CHECK-NEXT:  (local.set $parent
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $child
+  ;; CHECK-NEXT:   (struct.new $child
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $parent)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $child)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $child)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (local $parent (ref null $parent))
+    (local $child (ref null $child))
+    ;; Write nothing to the parent's field.
+    (local.set $parent
+      (struct.new $parent
+        (ref.as_non_null
+          (ref.null $struct)
+        )
+      )
+    )
+    ;; Write something to the child's first field while constructing it, but
+    ;; nothing in the second.
+    (local.set $child
+      (struct.new $child
+        (struct.new $struct)
+        (ref.as_non_null
+          (ref.null $struct)
+        )
+      )
+    )
+    ;; We cannot optimize since a value might appear here, even in the parent,
+    ;; because the write to the child might alias it.
+    ;; which is a subtype of parent.
+    (drop
+      (struct.get $parent 0
+        (local.get $parent)
+      )
+    )
+    (drop
+      (struct.get $child 0
+        (local.get $child)
+      )
+    )
+    ;; However the child's second field cannot contain anything, and can be
+    ;; optimized out.
+    (drop
+      (struct.get $child 1
+        (local.get $child)
+      )
+    )
+  )
+)
+
 ;; TODO: test big loop with all the things. then break it
