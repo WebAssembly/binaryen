@@ -2442,7 +2442,7 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                NarrowUVecI16x8ToVecI8x16,
                                NarrowSVecI32x4ToVecI16x8,
                                NarrowUVecI32x4ToVecI16x8,
-                               SwizzleVec8x16),
+                               SwizzleVecI8x16),
                           make(Type::v128),
                           make(Type::v128)});
     }

@@ -1832,7 +1832,7 @@ struct PrintExpressionContents
         o << "i16x8.narrow_i32x4_u";
         break;
 
-      case SwizzleVec8x16:
+      case SwizzleVecI8x16:
         o << "i8x16.swizzle";
         break;
 
@@ -1848,7 +1848,7 @@ struct PrintExpressionContents
       case RelaxedMaxVecF64x2:
         o << "f64x2.relaxed_max";
         break;
-      case RelaxedSwizzleVec8x16:
+      case RelaxedSwizzleVecI8x16:
         o << "i8x16.relaxed_swizzle";
         break;
 

@@ -503,7 +503,7 @@ instructions = [
     ("i64x2.extend_high_i32x4_s", "makeUnary(s, UnaryOp::ExtendHighSVecI32x4ToVecI64x2)"),
     ("i64x2.extend_low_i32x4_u",  "makeUnary(s, UnaryOp::ExtendLowUVecI32x4ToVecI64x2)"),
     ("i64x2.extend_high_i32x4_u", "makeUnary(s, UnaryOp::ExtendHighUVecI32x4ToVecI64x2)"),
-    ("i8x16.swizzle",             "makeBinary(s, BinaryOp::SwizzleVec8x16)"),
+    ("i8x16.swizzle",             "makeBinary(s, BinaryOp::SwizzleVecI8x16)"),
     ("i16x8.extadd_pairwise_i8x16_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI8x16ToI16x8)"),
     ("i16x8.extadd_pairwise_i8x16_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8)"),
     ("i32x4.extadd_pairwise_i16x8_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4)"),
@@ -516,7 +516,7 @@ instructions = [
     ("f64x2.promote_low_f32x4",       "makeUnary(s, UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
 
     # relaxed SIMD ops
-    ("i8x16.relaxed_swizzle", "makeBinary(s, BinaryOp::RelaxedSwizzleVec8x16)"),
+    ("i8x16.relaxed_swizzle", "makeBinary(s, BinaryOp::RelaxedSwizzleVecI8x16)"),
     ("i32x4.relaxed_trunc_f32x4_s", "makeUnary(s, UnaryOp::RelaxedTruncSVecF32x4ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f32x4_u", "makeUnary(s, UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f64x2_s_zero", "makeUnary(s, UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4)"),
