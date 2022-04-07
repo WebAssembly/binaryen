@@ -65,6 +65,10 @@ struct PossibleTypesPass : public Pass {
             getDroppedChildren(curr, wasm, Builder(wasm).makeUnreachable()));
         }
       }
+      // TODO: if an instruction would trap on null, like struct.get, we could
+      //       remove it here if it has no possible types. that information is
+      //       present in OptimizeInstructions where it removes redundant
+      //       ref.as_non_null, so maybe there is a way to share that
     };
 
     Optimizer(oracle).run(runner, module);
