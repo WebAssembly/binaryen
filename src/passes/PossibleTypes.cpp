@@ -31,6 +31,7 @@
 
 #include "ir/drop.h"
 #include "ir/possible-types.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm.h"
 
@@ -72,6 +73,9 @@ struct PossibleTypesPass : public Pass {
     };
 
     Optimizer(oracle).run(runner, module);
+
+    // Optimization may introduce more unreachables, which we need to propagate.
+    ReFinalize().run(runner, module);
   }
 };
 
