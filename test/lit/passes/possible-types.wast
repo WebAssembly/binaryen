@@ -991,44 +991,39 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
-    (local $parent (ref null $parent))
-    (local $child (ref null $child))
-    ;; Write nothing to the parent's field.
-    (local.set $parent
-      (struct.new $parent
-        (ref.as_non_null
-          (ref.null $struct)
-        )
-      )
-    )
-    ;; Write something to the child's first field while constructing it, but
-    ;; nothing in the second.
-    (local.set $child
-      (struct.new $child
-        (struct.new $struct)
-        (ref.as_non_null
-          (ref.null $struct)
-        )
-      )
-    )
-    ;; We cannot optimize since a value might appear here, even in the parent,
-    ;; because the write to the child might alias it.
-    ;; which is a subtype of parent.
-    (drop
-      (struct.get $parent 0
-        (local.get $parent)
-      )
-    )
+    ;; We create a child with a value in the first field and nothing in the
+    ;; second. Getting the first field should not be optimized as if it
+    ;; contains nothing.
     (drop
       (struct.get $child 0
-        (local.get $child)
+        (struct.new $child
+          (struct.new $struct)
+          (ref.as_non_null
+            (ref.null $struct)
+          )
+        )
       )
     )
-    ;; However the child's second field cannot contain anything, and can be
-    ;; optimized out.
+    ;; Exactly the same but get field 1. This time we can optimize.
     (drop
       (struct.get $child 1
-        (local.get $child)
+        (struct.new $child
+          (struct.new $struct)
+          (ref.as_non_null
+            (ref.null $struct)
+          )
+        )
+      )
+    )
+    ;; Create a parent with nothing, but now we *can* optimize, because the
+    ;; child did write something to that field which is aliased.
+    (drop
+      (struct.get $parent 0
+        (struct.new $parent
+          (ref.as_non_null
+            (ref.null $struct)
+          )
+        )
       )
     )
   )

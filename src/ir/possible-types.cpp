@@ -198,6 +198,7 @@ struct ConnectionFinder
     Index i = 0;
     for (auto* operand : operands) {
       if (operand->type.isRef()) {
+std::cout << "new operand to struct loc\n";
         info.connections.push_back(
           {ExpressionLocation{operand}, makeTarget(i)});
       }
