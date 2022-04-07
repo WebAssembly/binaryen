@@ -28,8 +28,6 @@ template<typename Ty> class sparse_square_matrix {
   std::unordered_map<uint64_t, Ty> sparseStorage;
   uint32_t N;
 
-  static const size_t DenseLimit = 8192;
-
 public:
   sparse_square_matrix() : N(0) {}
 
@@ -38,6 +36,10 @@ public:
       denseStorage.resize(N * N);
     }
   }
+
+  static const size_t DenseLimit = 8192;
+
+  uint32_t width() const { return N; }
 
   bool usingDenseStorage() const { return !denseStorage.empty(); }
 
