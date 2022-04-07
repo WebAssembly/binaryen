@@ -660,7 +660,7 @@
   )
 )
 
-;; As above, but using indirect calls
+;; As above, but using indirect calls.
 (module
   ;; CHECK:      (type $struct (struct ))
 
@@ -822,5 +822,52 @@
   )
 )
 
+;; As above, but using call_ref.
+(module
+  ;; CHECK:      (type $struct (struct ))
 
+  ;; CHECK:      (type $two-params (func (param (ref $struct) (ref $struct))))
+  (type $two-params (func (param (ref $struct)) (param (ref $struct))))
+
+  (type $struct (struct))
+
+  ;; CHECK:      (func $func-2params-a (param $x (ref $struct)) (param $y (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+    ;; Send a value only to the second param.
+    (call_ref
+      (ref.as_non_null
+        (ref.null $struct)
+      )
+      (struct.new $struct)
+      (ref.func $func-2params-a)
+    )
+  )
+)
 ;; TODO: test big loop with all the things. then break it
