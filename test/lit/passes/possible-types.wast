@@ -935,6 +935,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (array.new_default $vector
+  ;; CHECK-NEXT:     (i32.const 100)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (array.init_static $vector
   ;; CHECK-NEXT:     (f64.const 1.1)
   ;; CHECK-NEXT:     (f64.const 2.2)
@@ -956,6 +963,13 @@
         (array.new $vector
           (f64.const 3.14159)
           (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (array.new_default $vector
+          (i32.const 100)
         )
       )
     )

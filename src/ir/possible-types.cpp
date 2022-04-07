@@ -228,7 +228,9 @@ struct ConnectionFinder
     if (curr->type == Type::unreachable) {
       return;
     }
-    if (curr->init->type.isRef()) {
+    // Note that if there is no initial value here then it is null, which is
+    // not something we need to connect.
+    if (curr->init && curr->init->type.isRef()) {
       info.connections.push_back({ExpressionLocation{curr->init},
                                   ArrayLocation{curr->type.getHeapType()}});
     }
