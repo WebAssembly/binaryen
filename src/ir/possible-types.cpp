@@ -275,7 +275,7 @@ std::cout << "struct loc from set\n";
   void visitArraySet(ArraySet* curr) {
     if (curr->value->type.isRef()) {
       info.connections.push_back({ExpressionLocation{curr->value},
-                                  ArrayLocation{curr->type.getHeapType()}});
+                                  ArrayLocation{curr->ref->type.getHeapType()}});
     }
   }
 

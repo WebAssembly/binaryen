@@ -1085,4 +1085,105 @@
   )
 )
 
+;; Arrays get/set
+(module
+  ;; CHECK:      (type $null (array_subtype (mut anyref) data))
+
+  ;; CHECK:      (type $something (array_subtype (mut anyref) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $nothing (array_subtype (mut anyref) data))
+  (type $nothing (array (mut (ref null any))))
+
+  (type $null (array (mut (ref null any))))
+
+  (type $something (array (mut (ref null any))))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get $nothing
+  ;; CHECK-NEXT:      (ref.null $nothing)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $null
+  ;; CHECK-NEXT:   (ref.null $null)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get $null
+  ;; CHECK-NEXT:      (ref.null $null)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $something
+  ;; CHECK-NEXT:   (ref.null $something)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (array.get $something
+  ;; CHECK-NEXT:     (ref.null $something)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; Write nothing to this array, so we can optimize the cast to non-null of
+    ;; a get from it.
+    (drop
+      (ref.as_non_null
+        (array.get $nothing
+          (ref.null $nothing)
+          (i32.const 0)
+        )
+      )
+    )
+    ;; Write a null to this array. Again, we can optimize.
+    (array.set $null
+      (ref.null $null)
+      (i32.const 0)
+      (ref.null any)
+    )
+    (drop
+      (ref.as_non_null
+        (array.get $null
+          (ref.null $null)
+          (i32.const 0)
+        )
+      )
+    )
+    ;; In $something we do actually write a value.
+    (array.set $something
+      (ref.null $something)
+      (i32.const 0)
+      (struct.new $struct)
+    )
+    (drop
+      (ref.as_non_null
+        (array.get $something
+          (ref.null $something)
+          (i32.const 0)
+        )
+      )
+    )
+  )
+)
 ;; TODO: test big loop with all the things. then break it
