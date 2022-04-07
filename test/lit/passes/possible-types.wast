@@ -940,7 +940,7 @@
 
   ;; CHECK:      (type $parent (struct (field (mut (ref $struct)))))
   (type $parent (struct_subtype (field (mut (ref $struct))) data))
-  (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $struct))
+  (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
 
   ;; CHECK:      (func $func
   ;; CHECK-NEXT:  (drop
@@ -1038,7 +1038,7 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $child (struct (field (mut (ref $struct))) (field i32)))
-  (type $child (struct_subtype (field (mut (ref $struct))) (field i32) $struct))
+  (type $child (struct_subtype (field (mut (ref $struct))) (field i32) $parent))
 
   ;; CHECK:      (func $func
   ;; CHECK-NEXT:  (drop

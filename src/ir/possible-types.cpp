@@ -376,16 +376,23 @@ void Oracle::analyze() {
   // Add subtyping connections, but see the TODO below about how we can do this
   // "dynamically" in a more effective but complex way.
   SubTypes subTypes(wasm);
+std::cout << "subtypes?\n";
   for (auto type : subTypes.types) {
+std::cout << "  subtype? " << type << "\n";
     if (type.isStruct()) {
+std::cout << "    struct at least\n";
       // StructLocations refer to a struct.get/set/new and so in general they
       // may refer to data of a subtype of the type written on them. Connect to
-      // their immediate subtypes here.
+      // their immediate subtypes here in both directions.
       auto numFields = type.getStruct().fields.size();
+std::cout << "    fields: " << numFields << "\n";
       for (auto subType : subTypes.getSubTypes(type)) {
         for (Index i = 0; i < numFields; i++) {
+std::cout << "subtyping " << type << " : " << subType << " : " << i << '\n';
           connections.insert(
             {StructLocation{type, i}, StructLocation{subType, i}});
+          connections.insert(
+            {StructLocation{subType, i}, StructLocation{type, i}});
         }
       }
     } else if (type.isArray()) {
