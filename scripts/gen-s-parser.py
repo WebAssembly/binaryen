@@ -533,7 +533,11 @@ instructions = [
     ("f32x4.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF32x4)"),
     ("f64x2.relaxed_min", "makeBinary(s, BinaryOp::RelaxedMinVecF64x2)"),
     ("f64x2.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF64x2)"),
-    ("i16x8.relaxed_q15mulr_s",   "makeBinary(s, BinaryOp::RelaxedQ15MulrSVecI16x8)"),
+    ("i16x8.relaxed_q15mulr_s", "makeBinary(s, BinaryOp::RelaxedQ15MulrSVecI16x8)"),
+    ("i16x8.dot_i8x16_i7x16_s", "makeBinary(s, BinaryOp::DotI8x16I7x16SToVecI16x8)"),
+    ("i16x8.dot_i8x16_i7x16_u", "makeBinary(s, BinaryOp::DotI8x16I7x16UToVecI16x8)"),
+    ("i32x4.dot_i8x16_i7x16_add_s", "makeSIMDTernary(s, SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4)"),
+    ("i32x4.dot_i8x16_i7x16_add_u", "makeSIMDTernary(s, SIMDTernaryOp::DotI8x16I7x16AddUToVecI32x4)"),
 
     # reference types instructions
     ("ref.null",             "makeRefNull(s)"),

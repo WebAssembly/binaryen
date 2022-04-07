@@ -2372,15 +2372,31 @@ Literal Literal::pmaxF64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesF64x2, &Literal::pmax>(*this, other);
 }
 
-Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
-  LaneArray<8> lhs = getLanesSI16x8();
-  LaneArray<8> rhs = other.getLanesSI16x8();
-  LaneArray<4> result;
-  for (size_t i = 0; i < 4; ++i) {
-    result[i] = Literal(lhs[i * 2].geti32() * rhs[i * 2].geti32() +
-                        lhs[i * 2 + 1].geti32() * rhs[i * 2 + 1].geti32());
+template<size_t Lanes,
+         size_t Factor,
+         LaneArray<Lanes * Factor> (Literal::*IntoLanes)() const>
+static Literal dot(const Literal& left, const Literal& right) {
+  LaneArray<Lanes* Factor> lhs = (left.*IntoLanes)();
+  LaneArray<Lanes* Factor> rhs = (right.*IntoLanes)();
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes; ++i) {
+    result[i] = Literal(int32_t(0));
+    for (size_t j = 0; j < Factor; ++j) {
+      result[i] = Literal(result[i].geti32() + lhs[i * Factor + j].geti32() *
+                                                 rhs[i * Factor + j].geti32());
+    }
   }
   return Literal(result);
+}
+
+Literal Literal::dotSI8x16toI16x8(const Literal& other) const {
+  return dot<8, 2, &Literal::getLanesSI8x16>(*this, other);
+}
+Literal Literal::dotUI8x16toI16x8(const Literal& other) const {
+  return dot<8, 2, &Literal::getLanesUI8x16>(*this, other);
+}
+Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
+  return dot<4, 2, &Literal::getLanesSI16x8>(*this, other);
 }
 
 Literal Literal::bitselectV128(const Literal& left,

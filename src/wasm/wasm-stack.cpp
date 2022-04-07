@@ -569,6 +569,12 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
     case RelaxedFmsVecF64x2:
       o << U32LEB(BinaryConsts::F64x2RelaxedFms);
       break;
+    case DotI8x16I7x16AddSToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4DotI8x16I7x16AddS);
+      break;
+    case DotI8x16I7x16AddUToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4DotI8x16I7x16AddU);
+      break;
   }
 }
 
@@ -1845,6 +1851,14 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case RelaxedQ15MulrSVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I16x8RelaxedQ15MulrS);
+      break;
+    case DotI8x16I7x16SToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8DotI8x16I7x16S);
+      break;
+    case DotI8x16I7x16UToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8DotI8x16I7x16U);
       break;
 
     case InvalidBinary:
