@@ -7,11 +7,11 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
   ;; CHECK:      (type $none_=>_ref|any| (func_subtype (result (ref any)) func))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
-  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
 
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
@@ -254,6 +254,45 @@
         (call $get-nothing)
         (local.get $x)
       )
+    )
+  )
+
+  ;; CHECK:      (func $get-something-flow (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  (func $get-something-flow (result (ref $struct))
+    ;; Return a value by flowing it out.
+    (struct.new $struct)
+  )
+
+  ;; CHECK:      (func $get-something-return (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-something-return (result (ref $struct))
+    ;; Return a value using an explicit return
+    (return
+      (struct.new $struct)
+    )
+  )
+
+  ;; CHECK:      (func $call-get-something (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $get-something-flow)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $get-something-return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-get-something
+    ;; In both of these cases a value is actually returned and there is nothing
+    ;; to optimize, unlike get-nothing from above.
+    (drop
+      (call $get-something-flow)
+    )
+    (drop
+      (call $get-something-return)
     )
   )
 
