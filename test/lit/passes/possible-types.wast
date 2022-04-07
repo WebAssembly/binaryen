@@ -667,19 +667,24 @@
   ;; CHECK:      (type $two-params (func (param (ref $struct) (ref $struct))))
   (type $two-params (func (param (ref $struct)) (param (ref $struct))))
 
+  ;; CHECK:      (type $three-params (func (param (ref $struct) (ref $struct) (ref $struct))))
+  (type $three-params (func (param (ref $struct)) (param (ref $struct)) (param (ref $struct))))
+
   (type $struct (struct))
 
-  (table 1 funcref)
+  (table 10 funcref)
 
   (elem (i32.const 0) funcref
-    (ref.func $func)
+    (ref.func $func-2params-a)
+    (ref.func $func-2params-b)
+    (ref.func $func-3params)
   )
 
-  ;; CHECK:      (table $0 1 funcref)
+  ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $func)
+  ;; CHECK:      (elem (i32.const 0) $func-2params-a $func-2params-b $func-3params)
 
-  ;; CHECK:      (func $func (param $x (ref $struct)) (param $y (ref $struct))
+  ;; CHECK:      (func $func-2params-a (param $x (ref $struct)) (param $y (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (unreachable)
@@ -699,7 +704,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func (param $x (ref $struct)) (param $y (ref $struct))
+  (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
     (drop
       (local.get $x)
     )
@@ -708,6 +713,106 @@
     )
     ;; Send a value only to the second param.
     (call_indirect (type $two-params)
+      (ref.as_non_null
+        (ref.null $struct)
+      )
+      (struct.new $struct)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $func-2params-b (param $x (ref $struct)) (param $y (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func-2params-b (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
+    ;; Another function with the same signature as before, which we should
+    ;; optimize in the same way.
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $func-3params (param $x (ref $struct)) (param $y (ref $struct)) (param $z (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $three-params)
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $three-params)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func-3params (type $three-params) (param $x (ref $struct)) (param $y (ref $struct)) (param $z (ref $struct))
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+    (drop
+      (local.get $z)
+    )
+    ;; Send a value only to the first and third param. Do so in two separate
+    ;; calls.
+    (call_indirect (type $three-params)
+      (struct.new $struct)
+      (ref.as_non_null
+        (ref.null $struct)
+      )
+      (ref.as_non_null
+        (ref.null $struct)
+      )
+      (i32.const 0)
+    )
+    (call_indirect (type $three-params)
+      (ref.as_non_null
+        (ref.null $struct)
+      )
       (ref.as_non_null
         (ref.null $struct)
       )
