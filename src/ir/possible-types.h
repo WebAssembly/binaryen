@@ -257,6 +257,7 @@ public:
   using LocationTypes = SmallVector<LimitedTypes, 1>;
 
   // Get the types possible at a location.
+  // TODO maybe getTupleTypes and this one returns [0] or nothing?
   LocationTypes getTypes(Location location) {
     auto iter = flowInfoMap.find(location);
     if (iter == flowInfoMap.end()) {

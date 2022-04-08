@@ -26,25 +26,56 @@ int main() {
   // PossibleTypes requires nominal typing (to find super types).
   wasm::setTypeSystem(TypeSystem::Nominal);
 
-  // A minimal test of the public API of PossibleTypesOracle. See the lit test
-  // for coverage of all the internals (using lit makes the result more
-  // fuzzable).
-  auto wasm = parse(R"(
-    (module
-      (type $struct (struct))
-      (global $null (ref null any) (ref.null any))
-      (global $something (ref null any) (struct.new $struct))
-    )
-  )");
-  Oracle oracle(*wasm);
-  std::cout << "# of possible types of the $null global: "
-            << oracle.getTypes(GlobalLocation{"foo"})[0].size() << '\n';
-  std::cout << "# of possible types of the $something global: "
-            << oracle.getTypes(GlobalLocation{"something"})[0].size() << '\n';
-  for (auto t : oracle.getTypes(GlobalLocation{"something"})[0]) {
-    std::cout << "  type: " << t << "\n";
+  {
+    // A minimal test of the public API of PossibleTypesOracle. See the lit test
+    // for coverage of all the internals (using lit makes the result more
+    // fuzzable).
+    auto wasm = parse(R"(
+      (module
+        (type $struct (struct))
+        (global $null (ref null any) (ref.null any))
+        (global $something (ref null any) (struct.new $struct))
+      )
+    )");
+    Oracle oracle(*wasm);
+    std::cout << "# of possible types of the $null global: "
+              << oracle.getTypes(GlobalLocation{"foo"})[0].size() << '\n';
+    std::cout << "# of possible types of the $something global: "
+              << oracle.getTypes(GlobalLocation{"something"})[0].size() << '\n';
+    for (auto t : oracle.getTypes(GlobalLocation{"something"})[0]) {
+      std::cout << "  type: " << t << "\n";
+    }
   }
 
-  // TODO: testcase with 2 possible types, as that is not checked by
-  //       PossibleTypes yet
+  {
+    // Test for a node with many possible types. The pass limits how many it
+    // notices to not use excessive memory, so even though 4 are possible here,
+    // we'll just report the limit (2).
+    auto wasm = parse(R"(
+      (module
+        (type $A (struct_subtype (field i32) data))
+        (type $B (struct_subtype (field i64) data))
+        (type $C (struct_subtype (field f32) data))
+        (type $D (struct_subtype (field f64) data))
+        (func $foo (result (ref any))
+          (select (result (ref any))
+            (select (result (ref any))
+              (struct.new $A)
+              (struct.new $B)
+              (i32.const 0)
+            )
+            (select (result (ref any))
+              (struct.new $C)
+              (struct.new $D)
+              (i32.const 0)
+            )
+            (i32.const 0)
+          )
+        )
+      )
+    )");
+    Oracle oracle(*wasm);
+    std::cout << "# of possible types of the function's body: "
+              << oracle.getTypes(ResultLocation{wasm->getFunction("foo")})[0].size() << '\n';
+  }
 }

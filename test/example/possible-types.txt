@@ -1,3 +1,4 @@
 # of possible types of the $null global: 0
 # of possible types of the $something global: 1
-  type: (struct)
+  type: (struct_subtype data)
+# of possible types of the function's body: 2

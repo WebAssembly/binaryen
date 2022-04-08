@@ -400,7 +400,10 @@ struct ConnectionFinder
 } // anonymous namespace
 
 void Oracle::analyze() {
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "parallel phase\n";
+#endif
+
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
       if (func->imported()) {
@@ -412,7 +415,10 @@ void Oracle::analyze() {
       ConnectionFinder finder(info);
       finder.walkFunctionInModule(func, &wasm);
     });
+
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "single phase\n";
+#endif
 
   // Also walk the global module code, adding it to the map as a function of
   // null.
@@ -437,7 +443,10 @@ void Oracle::analyze() {
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
   std::vector<Expression*> allocations;
+
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "merging phase\n";
+#endif
 
   for (auto& [func, info] : analysis.map) {
     for (auto& connection : info.connections) {
@@ -447,7 +456,10 @@ void Oracle::analyze() {
       allocations.push_back(allocation);
     }
   }
+
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "func phase\n";
+#endif
 
   // Connect function parameters to their signature, so that any indirect call
   // of that signature will reach them.
@@ -462,7 +474,10 @@ void Oracle::analyze() {
                           SignatureResultLocation{func->type, i}});
     }
   }
+
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "struct phase\n";
+#endif
 
   // Add subtyping connections, but see the TODO below about how we can do this
   // "dynamically" in a more effective but complex way.
@@ -492,7 +507,10 @@ void Oracle::analyze() {
       }
     }
   }
+
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "DAG phase\n";
+#endif
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
@@ -514,7 +532,10 @@ void Oracle::analyze() {
   // The work remaining to do: locations that we just updated, which means we
   // should update their children when we pop them from this queue.
   UniqueDeferredQueue<Location> work;
+
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "prep phase\n";
+#endif
 
   // The starting state for the flow is for each allocation to contain the type
   // allocated there.
@@ -534,7 +555,9 @@ void Oracle::analyze() {
     work.push(location);
   }
 
+#ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "flow phase\n";
+#endif
 
   // Flow the data.
   while (!work.empty()) {
