@@ -301,9 +301,8 @@ struct ConnectionFinder
       assert(pops.list.size() >= sigSize);
       for (Index popIndex = 0; popIndex < sigSize; popIndex++) {
         auto* pop = pops.list[popIndex];
-        info.connections.push_back({
-          TagLocation{tag, popIndex}, ExpressionLocation{pop}
-        });
+        info.connections.push_back(
+          {TagLocation{tag, popIndex}, ExpressionLocation{pop}});
       }
     }
   }
