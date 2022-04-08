@@ -472,6 +472,7 @@ enum BinaryOp {
   RelaxedMaxVecF32x4,
   RelaxedMinVecF64x2,
   RelaxedMaxVecF64x2,
+  RelaxedQ15MulrSVecI16x8,
 
   InvalidBinary
 };

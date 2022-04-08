@@ -11,7 +11,9 @@
  ;; CHECK:      (func $test-dead-get-non-nullable (param $0 dataref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (block (result dataref)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test-dead-get-non-nullable (param $func (ref data))
