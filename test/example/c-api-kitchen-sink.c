@@ -675,7 +675,7 @@ void test_core() {
     makeBinary(module, BinaryenNarrowUVecI16x8ToVecI8x16(), v128),
     makeBinary(module, BinaryenNarrowSVecI32x4ToVecI16x8(), v128),
     makeBinary(module, BinaryenNarrowUVecI32x4ToVecI16x8(), v128),
-    makeBinary(module, BinaryenSwizzleVec8x16(), v128),
+    makeBinary(module, BinaryenSwizzleVecI8x16(), v128),
     // SIMD lane manipulation
     makeSIMDExtract(module, BinaryenExtractLaneSVecI8x16()),
     makeSIMDExtract(module, BinaryenExtractLaneUVecI8x16()),
