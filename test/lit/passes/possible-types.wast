@@ -992,27 +992,47 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
-  (type $parent (struct_subtype (field (mut (ref $struct))) data))
-  (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $parent (struct_subtype (field (mut (ref $struct))) data))
+  (type $parent (struct_subtype (field (mut (ref $struct))) data))
+  (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
+
   ;; CHECK:      (func $func (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local $child (ref null $child))
+  ;; CHECK-NEXT:  (local.tee $child
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.new_default $struct)
+  ;; CHECK-NEXT:       (ref.null $struct)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $child)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.tee $child
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.null $struct)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null $struct)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1020,19 +1040,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.new_default $struct)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.null $struct)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $child)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -1055,28 +1063,35 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
+    (local $child (ref null $child))
     ;; We create a child with a value in the first field and nothing in the
     ;; second. Getting the first field should not be optimized as if it
     ;; contains nothing.
-    (drop
-      (struct.get $child 0
-        (struct.new $child
-          (struct.new $struct)
-          (ref.as_non_null
-            (ref.null $struct)
-          )
+    (local.set $child
+      (struct.new $child
+        (struct.new $struct)
+        (ref.as_non_null
+          (ref.null $struct)
         )
       )
     )
+    (drop
+      (struct.get $child 0
+        (local.get $child)
+      )
+    )
     ;; Exactly the same but get field 1. This time we can optimize.
+    (local.set $child
+      (struct.new $child
+        (struct.new $struct)
+        (ref.as_non_null
+          (ref.null $struct)
+        )
+      )
+    )
     (drop
       (struct.get $child 1
-        (struct.new $child
-          (struct.new $struct)
-          (ref.as_non_null
-            (ref.null $struct)
-          )
-        )
+        (local.get $child)
       )
     )
     ;; Create a parent with nothing. The child wrote to the shared field,
