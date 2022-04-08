@@ -17,7 +17,7 @@ int main() {
 
   // Setting and getting element values in dense storage should work.
   for (int y = 0; y < 100; ++y)
-    for (int x = 0; x < 100;. ++x)
+    for (int x = 0; x < 100; ++x)
       m.set(y, x, y * 100 + x);
   for (int y = 0; y < 100; ++y)
     for (int x = 0; x < 100; ++x)
@@ -38,7 +38,7 @@ int main() {
   // Setting and getting element values in sparse storage should work.
   for (int y = 0; y < m.DenseLimit; ++y)
     for (int x = 0; x < m.DenseLimit; ++x)
-      m.set(y, x, y*m.DenseLimit+x);
+      m.set(y, x, y*m.DenseLimit + x);
   for (int y = 0; y < m.DenseLimit; ++y)
     for (int x = 0; x < m.DenseLimit; ++x)
       assert(m.get(y, x) == y * m.DenseLimit + x);
