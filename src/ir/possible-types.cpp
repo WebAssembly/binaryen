@@ -1,4 +1,3 @@
-#define POSSIBLE_TYPES_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -29,20 +28,6 @@ namespace wasm::PossibleTypes {
 
 namespace {
 
-#ifdef POSSIBLE_TYPES_DEBUG
-void dump(Location location) {
-  if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-    std::cout << "  exprloc \n" << *loc->expr << '\n';
-  } else if (auto* loc = std::get_if<StructLocation>(&location)) {
-    std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
-  } else if (auto* loc = std::get_if<TagLocation>(&location)) {
-    std::cout << "  tagloc " << loc->tag << '\n';
-  } else {
-    std::cout << "  (other)\n";
-  }
-}
-#endif
-
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
 struct FuncInfo {
@@ -64,16 +49,6 @@ bool containsRef(Type type) {
       if (t.isRef()) {
         return true;
       }
-    }
-  }
-  return false;
-}
-
-template<typename T>
-bool containsRef(const T& vec) {
-  for (auto* expr : vec) {
-    if (expr->type.isRef()) {
-      return true;
     }
   }
   return false;
@@ -339,11 +314,6 @@ struct ConnectionFinder
     }
   }
   void visitThrow(Throw* curr) {
-    auto& operands = curr->operands;
-    if (!containsRef(operands)) {
-      return;
-    }
-
     // We must handle the thrown values in a special way. In a catch body we
     // have a pop which will be of a tuple if the tag has more than one element,
     // but the throw does not receive a tuple as an input. (Compare this to a
@@ -352,6 +322,7 @@ struct ConnectionFinder
     // create an artificial TupleMake expression here and route through that,
     // if we have more than one value. First, handle the simple cases.
     auto tag = curr->tag;
+    auto& operands = curr->operands;
     if (operands.empty()) {
       return;
     }
@@ -360,16 +331,11 @@ struct ConnectionFinder
         {ExpressionLocation{operands[0]}, TagLocation{tag}});
     }
 
-    // This is the tuple case. Create a TupleMake with the same operands. (Note
+    // This is the tuple case. Create a TupleMake with the same operands. Note
     // that it shares the operands of the Throw; that would be invalid IR if we
     // actually added the TupleMake into the tree, but we do not, it is only
-    // held on the side.) We must connect the operands to the make, and then the
-    // make to the tag.
+    // held on the side.
     auto* make = Builder(*getModule()).makeTupleMake(operands);
-    for (auto* operand : operands) {
-      info.connections.push_back(
-        {ExpressionLocation{operand}, ExpressionLocation{make}});
-    }
     info.connections.push_back(
       {ExpressionLocation{make}, TagLocation{tag}});
   }
@@ -532,15 +498,13 @@ void Oracle::analyze() {
     auto location = work.pop();
     const auto& info = flowInfoMap[location];
 
-    // TODO: We can refine the types here, by not flowing anything through a
-    //       ref.cast that it would trap on.
-    const auto& types = info.types;
-
-#ifdef POSSIBLE_TYPES_DEBUG
-    std::cout << "pop item with " << types.size() << " lanes\n";
-    dump(location);
-    for (auto& lane : types) {
-      std::cout << "  lane has " << lane.size() << " types\n";
+#if POSSIBLE_TYPES_DEBUG
+    std::cout << "pop item\n";
+    if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
+      std::cout << "  exprloc " << *loc->expr << '\n';
+    }
+    if (auto* loc = std::get_if<StructLocation>(&location)) {
+      std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
     }
 #endif
 
@@ -569,28 +533,22 @@ void Oracle::analyze() {
     // ==================================TODO==================================
     const auto& targets = info.targets;
     if (targets.empty()) {
-      return;
+      continue;
     }
+
+    // TODO: We can refine the types here, by not flowing anything through a
+    //       ref.cast that it would trap on.
+    const auto& types = info.types;
+    auto numTupleIndexes = types.size();
 
     // Update the targets, and add the ones that change to the remaining work.
     for (const auto& target : targets) {
-#ifdef POSSIBLE_TYPES_DEBUG
-      std::cout << "  send to target\n";
-      dump(target);
-#endif
-
       auto& targetTypes = flowInfoMap[target].types;
 
       // Update types in one lane of a tuple, copying from inputs to outputs and
       // adding the target to the remaining work if we added something new.
       auto updateTypes = [&](const std::unordered_set<HeapType>& inputs,
                              std::unordered_set<HeapType>& outputs) {
-        if (inputs.empty()) {
-          return;
-        }
-#ifdef POSSIBLE_TYPES_DEBUG
-        std::cout << "    updateTypes: src has " << inputs.size() << ", dst has " << outputs.size() << '\n';
-#endif
         auto oldSize = outputs.size();
         outputs.insert(inputs.begin(), inputs.end());
         if (outputs.size() != oldSize) {
@@ -604,15 +562,11 @@ void Oracle::analyze() {
       // copy each index in the vectors of sets of types. However, the exception
       // are the tuple operations as TupleMake/TupleExtract go from one to many
       // or many to one, and need special handling.
-      if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
-        if (auto* extract = targetExprLoc->expr->dynCast<TupleExtract>()) {
-          // The target is a TupleExtract, so we are going from a tuple to a
+      if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+        if (auto* extract = exprLoc->expr->dynCast<TupleExtract>()) {
+          // The source is a TupleExtract, so we are going from a tuple to a
           // target that is just one item.
           auto tupleIndex = extract->index;
-
-#ifdef POSSIBLE_TYPES_DEBUG
-          std::cout << "  tuple.extract " << tupleIndex << "\n";
-#endif
 
           // If this is the first time we write to this target, set its size,
           // then copy the types.
@@ -622,7 +576,10 @@ void Oracle::analyze() {
           assert(tupleIndex < types.size());
           updateTypes(types[tupleIndex], targetTypes[0]);
           continue;
-        } else if (auto* make = targetExprLoc->expr->dynCast<TupleMake>()) {
+        }
+      }
+      if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
+        if (auto* make = targetExprLoc->expr->dynCast<TupleMake>()) {
           // The target is a TupleMake, so we are going from one item to a
           // tuple. Find the index in that tuple, using the fact that the input
           // must be an Expression which is one of the TupleMake's children.
@@ -638,11 +595,6 @@ void Oracle::analyze() {
             }
           }
           assert(i < make->operands.size());
-
-#ifdef POSSIBLE_TYPES_DEBUG
-          std::cout << "  tuple.make " << tupleIndex << "\n";
-#endif
-
           // If this is the first time we write to this target, set its size,
           // then copy the types.
           if (targetTypes.empty()) {
@@ -658,10 +610,7 @@ void Oracle::analyze() {
       if (targetTypes.empty()) {
         targetTypes.resize(types.size());
       }
-      for (Index i = 0; i < types.size(); i++) {
-#ifdef POSSIBLE_TYPES_DEBUG
-        std::cout << "  updating lane " << i << "\n";
-#endif
+      for (Index i = 0; i < numTupleIndexes; i++) {
         updateTypes(types[i], targetTypes[i]);
       }
     }
