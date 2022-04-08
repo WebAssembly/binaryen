@@ -43,18 +43,20 @@
   ;; CHECK:      (func $nested (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (ref.is_null
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (nop)
-  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (loop $loop-in
+  ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (ref.null any)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null any)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -1708,3 +1710,35 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type ${} (struct_subtype  data))
+  (type ${} (struct_subtype data))
+
+  ;; CHECK:      (type $none_=>_ref|${}| (func_subtype (result (ref ${})) func))
+
+  ;; CHECK:      (func $func (type $none_=>_ref|${}|) (result (ref ${}))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref ${}))
+  ;; CHECK-NEXT:    (br_on_non_null $block
+  ;; CHECK-NEXT:     (ref.null ${})
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func (result (ref ${}))
+    ;; This block has no possible types, so it can be removed in principle, but
+    ;; we would need to remove the br to it as well, which we currently don't
+    ;; (we hope other passes would help out), so leave it, but add an
+    ;; unreachable on the outside (which would help other passes).
+    (block $block (result (ref ${}))
+      (br_on_non_null $block
+        (ref.null ${})
+      )
+      (unreachable)
+    )
+  )
+)
+

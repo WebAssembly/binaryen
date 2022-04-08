@@ -57,6 +57,17 @@ struct PossibleTypesPass : public Pass {
 
       bool optimized = false;
 
+      // TODO move this into drops.h, a single function that is told "this is
+      // not actually needed; remove it as best you can"
+      bool canRemove(Expression* curr) {
+        // We can remove almost anything, but not a branch target, as we still
+        // need the target for the branches to it to validate.
+        if (BranchUtils::getDefinedName(curr).is()) {
+          return false;
+        }
+        return true;
+      }
+
       void visitExpression(Expression* curr) {
         auto type = curr->type;
         if (type.isNonNullable() &&
@@ -65,8 +76,15 @@ struct PossibleTypesPass : public Pass {
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
           auto& wasm = *getModule();
-          replaceCurrent(
-            getDroppedChildren(curr, wasm, Builder(wasm).makeUnreachable()));
+          Builder builder(wasm);
+          if (canRemove(curr)) {
+            replaceCurrent(
+              getDroppedChildren(curr, wasm, builder.makeUnreachable()));
+          } else {
+            // We can't remove this, but we can at least put an unreachable
+            // right after it.
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr), builder.makeUnreachable()));            
+          }
           optimized = true;
         }
       }
