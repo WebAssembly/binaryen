@@ -1666,7 +1666,7 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
     case Q15MulrSatSVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8Q15mulrSatS);
+        << U32LEB(BinaryConsts::I16x8Q15MulrSatS);
       break;
     case ExtMulLowSVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
@@ -1841,6 +1841,10 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case RelaxedMaxVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F64x2RelaxedMax);
+      break;
+    case RelaxedQ15MulrSVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8RelaxedQ15MulrS);
       break;
 
     case InvalidBinary:

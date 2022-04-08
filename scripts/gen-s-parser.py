@@ -533,6 +533,7 @@ instructions = [
     ("f32x4.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF32x4)"),
     ("f64x2.relaxed_min", "makeBinary(s, BinaryOp::RelaxedMinVecF64x2)"),
     ("f64x2.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF64x2)"),
+    ("i16x8.relaxed_q15mulr_s",   "makeBinary(s, BinaryOp::RelaxedQ15MulrSVecI16x8)"),
 
     # reference types instructions
     ("ref.null",             "makeRefNull(s)"),

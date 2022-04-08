@@ -1139,9 +1139,17 @@ switch (op[0]) {
           case 'q':
             if (strcmp(op, "i16x8.q15mulr_sat_s") == 0) { return makeBinary(s, BinaryOp::Q15MulrSatSVecI16x8); }
             goto parse_error;
-          case 'r':
-            if (strcmp(op, "i16x8.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI16x8, 8); }
-            goto parse_error;
+          case 'r': {
+            switch (op[8]) {
+              case 'l':
+                if (strcmp(op, "i16x8.relaxed_q15mulr_s") == 0) { return makeBinary(s, BinaryOp::RelaxedQ15MulrSVecI16x8); }
+                goto parse_error;
+              case 'p':
+                if (strcmp(op, "i16x8.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI16x8, 8); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 's': {
             switch (op[7]) {
               case 'h': {

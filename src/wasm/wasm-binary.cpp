@@ -5397,7 +5397,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = AvgrUVecI16x8;
       break;
-    case BinaryConsts::I16x8Q15mulrSatS:
+    case BinaryConsts::I16x8Q15MulrSatS:
       curr = allocator.alloc<Binary>();
       curr->op = Q15MulrSatSVecI16x8;
       break;
@@ -5596,6 +5596,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2RelaxedMax:
       curr = allocator.alloc<Binary>();
       curr->op = RelaxedMaxVecF64x2;
+      break;
+    case BinaryConsts::I16x8RelaxedQ15MulrS:
+      curr = allocator.alloc<Binary>();
+      curr->op = RelaxedQ15MulrSVecI16x8;
       break;
     default:
       return false;
