@@ -400,6 +400,7 @@ struct ConnectionFinder
 } // anonymous namespace
 
 void Oracle::analyze() {
+std::cout << "parallel phase\n";
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
       if (func->imported()) {
@@ -411,6 +412,7 @@ void Oracle::analyze() {
       ConnectionFinder finder(info);
       finder.walkFunctionInModule(func, &wasm);
     });
+std::cout << "single phase\n";
 
   // Also walk the global module code, adding it to the map as a function of
   // null.
@@ -435,6 +437,7 @@ void Oracle::analyze() {
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
   std::vector<Expression*> allocations;
+std::cout << "merging phase\n";
 
   for (auto& [func, info] : analysis.map) {
     for (auto& connection : info.connections) {
@@ -444,6 +447,7 @@ void Oracle::analyze() {
       allocations.push_back(allocation);
     }
   }
+std::cout << "func phase\n";
 
   // Connect function parameters to their signature, so that any indirect call
   // of that signature will reach them.
@@ -458,6 +462,7 @@ void Oracle::analyze() {
                           SignatureResultLocation{func->type, i}});
     }
   }
+std::cout << "struct phase\n";
 
   // Add subtyping connections, but see the TODO below about how we can do this
   // "dynamically" in a more effective but complex way.
@@ -487,6 +492,7 @@ void Oracle::analyze() {
       }
     }
   }
+std::cout << "DAG phase\n";
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
@@ -508,6 +514,7 @@ void Oracle::analyze() {
   // The work remaining to do: locations that we just updated, which means we
   // should update their children when we pop them from this queue.
   UniqueDeferredQueue<Location> work;
+std::cout << "prep phase\n";
 
   // The starting state for the flow is for each allocation to contain the type
   // allocated there.
@@ -526,6 +533,8 @@ void Oracle::analyze() {
     info.types.push_back({allocation->type.getHeapType()});
     work.push(location);
   }
+
+std::cout << "flow phase\n";
 
   // Flow the data.
   while (!work.empty()) {
