@@ -1620,3 +1620,98 @@
     )
   )
 )
+
+;; Exceptions with a tuple
+(module
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct))
+
+  ;; CHECK:      (type $anyref_anyref_=>_none (func_subtype (param anyref anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (tag $tag (param anyref anyref))
+  (tag $tag (param (ref null any)) (param (ref null any)))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 (anyref anyref))
+  ;; CHECK-NEXT:  (local $1 (anyref anyref))
+  ;; CHECK-NEXT:  (throw $tag
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop anyref anyref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (tuple.extract 0
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (pop anyref anyref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (tuple.extract 1
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; This tag receives no actual value in the first parameter
+    (throw $tag
+      (ref.null $struct)
+      (struct.new $struct)
+    )
+    ;; Catch the first, which we can optimize.
+    (try
+      (do)
+      (catch $tag
+        (drop
+          (ref.as_non_null
+            (tuple.extract 0
+              (pop (ref null any) (ref null any))
+            )
+          )
+        )
+      )
+    )
+    ;; Catch the second, which we cannot optimize.
+    (try
+      (do)
+      (catch $tag
+        (drop
+          (ref.as_non_null
+            (tuple.extract 1
+              (pop (ref null any) (ref null any))
+            )
+          )
+        )
+      )
+    )
+  )
+)
