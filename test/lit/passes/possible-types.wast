@@ -1535,13 +1535,66 @@
 )
 
 ;; Exceptions.
-(;;module
+(module
+  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (tag $nothing (param anyref))
   (tag $nothing (param (ref null any)))
 
+  ;; CHECK:      (tag $something (param anyref))
   (tag $something (param (ref null any)))
 
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (throw $nothing
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $nothing
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop anyref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (throw $something
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $something
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (pop anyref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func
     ;; This tag receives no actual value, so we can optimize the pop of it,
     ;; later down.
@@ -1573,4 +1626,4 @@
       )
     )
   )
-;;)
+)

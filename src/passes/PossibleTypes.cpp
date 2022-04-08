@@ -80,18 +80,15 @@ struct PossibleTypesPass : public Pass {
         if (optimized) {
           // Optimization may introduce more unreachables, which we need to
           // propagate.
-//          ReFinalize().walkFunctionInModule(func, getModule());
+          ReFinalize().walkFunctionInModule(func, getModule());
 
           // We may add blocks around pops, which we must fix up.
-  //        EHUtils::handleBlockNestedPops(func, *getModule());
+          EHUtils::handleBlockNestedPops(func, *getModule());
         }
       }
     };
 
     Optimizer(oracle).run(runner, module);
-
-    // Optimization may introduce more unreachables, which we need to propagate.
-    ReFinalize().run(runner, module);
   }
 };
 
