@@ -3,7 +3,7 @@
 #include "support/sparse_square_matrix.h"
 
 int main() {
-  sparse_square_matrix<uint8_t> m;
+  sparse_square_matrix<uint32_t> m;
 
   // New matrix should initialize to 0x0 size.
   assert(m.width() == 0);
