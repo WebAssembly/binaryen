@@ -114,9 +114,7 @@ struct ArrayLocation {
 // The location of anything written to a particular index of a particular tag.
 struct TagLocation {
   Name tag;
-  bool operator==(const TagLocation& other) const {
-    return tag == other.tag;
-  }
+  bool operator==(const TagLocation& other) const { return tag == other.tag; }
 };
 
 // A location is a variant over all the possible types of locations that we

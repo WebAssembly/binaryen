@@ -38,7 +38,8 @@ void dump(Location location) {
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
-    std::cout << "  resultloc " << loc->func->name << " : " << loc->index << '\n';
+    std::cout << "  resultloc " << loc->func->name << " : " << loc->index
+              << '\n';
   } else {
     std::cout << "  (other)\n";
   }
@@ -71,8 +72,7 @@ bool containsRef(Type type) {
   return false;
 }
 
-template<typename T>
-bool containsRef(const T& vec) {
+template<typename T> bool containsRef(const T& vec) {
   for (auto* expr : vec) {
     if (expr->type.isRef()) {
       return true;
@@ -336,8 +336,7 @@ struct ConnectionFinder
       FindAll<Pop> pops(body);
       assert(!pops.list.empty());
       auto* pop = pops.list[0];
-      info.connections.push_back(
-        {TagLocation{tag}, ExpressionLocation{pop}});
+      info.connections.push_back({TagLocation{tag}, ExpressionLocation{pop}});
     }
   }
   void visitThrow(Throw* curr) {
@@ -372,8 +371,7 @@ struct ConnectionFinder
       info.connections.push_back(
         {ExpressionLocation{operand}, ExpressionLocation{make}});
     }
-    info.connections.push_back(
-      {ExpressionLocation{make}, TagLocation{tag}});
+    info.connections.push_back({ExpressionLocation{make}, TagLocation{tag}});
   }
 
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
@@ -591,7 +589,8 @@ void Oracle::analyze() {
           return;
         }
 #ifdef POSSIBLE_TYPES_DEBUG
-        std::cout << "    updateTypes: src has " << inputs.size() << ", dst has " << outputs.size() << '\n';
+        std::cout << "    updateTypes: src has " << inputs.size()
+                  << ", dst has " << outputs.size() << '\n';
 #endif
         auto oldSize = outputs.size();
         outputs.insert(inputs.begin(), inputs.end());
