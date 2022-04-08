@@ -513,20 +513,74 @@ void Oracle::analyze() {
     // Update the targets, and add the ones that change to the remaining work.
     for (const auto& target : targets) {
       auto& targetTypes = flowInfoMap[target].types;
-      // The target should have the same tuple size as the source, except when
-      // it is completely uninitialized. In that case, resize it.
+
+      // Update types in one lane of a tuple, copying from inputs to outputs and
+      // adding the target to the remaining work if we added something new.
+      auto updateTypes = [&](const std::unordered_set<HeapType>& inputs,
+                             std::unordered_set<HeapType>& outputs) {
+        auto oldSize = outputs.size();
+        outputs.insert(inputs.begin(), inputs.end());
+        if (outputs.size() != oldSize) {
+          // We inserted something, so there is work to do in this target.
+          work.push(target);
+        }
+      };
+
+      // Typically the target should have the same tuple size as the source,
+      // that is, we copy a tuple from one place to another. To do so we simply
+      // copy each index in the vectors of sets of types. However, the exception
+      // are the tuple operations as TupleMake/TupleExtract go from one to many
+      // or many to one, and need special handling.
+      if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+        if (auto* extract = exprLoc->expr->dynCast<TupleExtract>()) {
+          // The source is a TupleExtract, so we are going from a tuple to a
+          // target that is just one item.
+          auto tupleIndex = extract->index;
+
+          // If this is the first time we write to this target, set its size,
+          // then copy the types.
+          if (targetTypes.empty()) {
+            targetTypes.resize(1);
+          }
+          assert(tupleIndex < types.size());
+          updateTypes(types[tupleIndex], targetTypes[0]);
+          continue;
+        }
+      }
+      if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
+        if (auto* make = targetExprLoc->expr->dynCast<TupleMake>()) {
+          // The target is a TupleMake, so we are going from one item to a
+          // tuple. Find the index in that tuple, using the fact that the input
+          // must be an Expression which is one of the TupleMake's children.
+          // TODO: add another field to avoid linear lookup here? (but tuples
+          // are rare/small)
+          auto* expr = std::get<ExpressionLocation>(location).expr;
+          Index tupleIndex;
+          Index i;
+          for (i = 0; i < make->operands.size(); i++) {
+            if (make->operands[i] == expr) {
+              tupleIndex = i;
+              break;
+            }
+          }
+          assert(i < make->operands.size());
+          // If this is the first time we write to this target, set its size,
+          // then copy the types.
+          if (targetTypes.empty()) {
+            targetTypes.resize(make->operands.size());
+          }
+          assert(types.size() == 1);
+          updateTypes(types[0], targetTypes[tupleIndex]);
+          continue;
+        }
+      }
+
+      // Otherwise, the input and output must have the same number of lanes.
       if (targetTypes.empty()) {
         targetTypes.resize(types.size());
       }
       for (Index i = 0; i < numTupleIndexes; i++) {
-        auto& indexedTypes = types[i];
-        auto& indexedTargetTypes = targetTypes[i];
-        auto oldSize = indexedTargetTypes.size();
-        indexedTargetTypes.insert(indexedTypes.begin(), indexedTypes.end());
-        if (indexedTargetTypes.size() != oldSize) {
-          // We inserted something, so there is work to do in this target.
-          work.push(target);
-        }
+        updateTypes(types[i], targetTypes[i]);
       }
     }
   }
