@@ -249,7 +249,10 @@ class Oracle {
 public:
   Oracle(Module& wasm) : wasm(wasm) { analyze(); }
 
-  using TypeSet = std::unordered_set<HeapType>;
+  // The set of possible types at a location. The types are in a set, and we
+  // have a vector of them to handle the case of tuples; if the value is not a
+  // tuple then we only use the first index.
+  using TypeSet = SmallVector<std::unordered_set<HeapType>, 1>;
 
   // Get the types possible at a location.
   TypeSet getTypes(Location location) {

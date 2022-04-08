@@ -23,6 +23,9 @@ std::unique_ptr<Module> parse(std::string module) {
 }
 
 int main() {
+  // PossibleTypes requires nominal typing (to find super types).
+  wasm::setTypeSystem(TypeSystem::Nominal);
+
   // A minimal test of the public API of PossibleTypesOracle. See the lit test
   // for coverage of all the internals (using lit makes the result more
   // fuzzable).
@@ -35,10 +38,13 @@ int main() {
   )");
   Oracle oracle(*wasm);
   std::cout << "# of possible types of the $null global: "
-            << oracle.getTypes(GlobalLocation{"foo"}).size() << '\n';
+            << oracle.getTypes(GlobalLocation{"foo"})[0].size() << '\n';
   std::cout << "# of possible types of the $something global: "
-            << oracle.getTypes(GlobalLocation{"something"}).size() << '\n';
-  for (auto t : oracle.getTypes(GlobalLocation{"something"})) {
+            << oracle.getTypes(GlobalLocation{"something"})[0].size() << '\n';
+  for (auto t : oracle.getTypes(GlobalLocation{"something"})[0]) {
     std::cout << "  type: " << t << "\n";
   }
+
+  // TODO: testcase with 2 possible types, as that is not checked by
+  //       PossibleTypes yet
 }

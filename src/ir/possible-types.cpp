@@ -458,7 +458,7 @@ void Oracle::analyze() {
     // appears once in the vector of allocations.
     assert(info.types.empty());
 
-    info.types.insert(allocation->type.getHeapType());
+    info.types.push_back({allocation->type.getHeapType()});
     work.push(location);
   }
 
@@ -508,15 +508,25 @@ void Oracle::analyze() {
     // TODO: We can refine the types here, by not flowing anything through a
     //       ref.cast that it would trap on.
     const auto& types = info.types;
+    auto numTupleIndexes = types.size();
 
-    // Update the targets, and add the ones that changes to the remaining work.
+    // Update the targets, and add the ones that change to the remaining work.
     for (const auto& target : targets) {
       auto& targetTypes = flowInfoMap[target].types;
-      auto oldSize = targetTypes.size();
-      targetTypes.insert(types.begin(), types.end());
-      if (targetTypes.size() != oldSize) {
-        // We inserted something, so there is work to do in this target.
-        work.push(target);
+      // The target should have the same tuple size as the source, except when
+      // it is completely uninitialized. In that case, resize it.
+      if (targetTypes.empty()) {
+        targetTypes.resize(types.size());
+      }
+      for (Index i = 0; i < numTupleIndexes; i++) {
+        auto& indexedTypes = types[i];
+        auto& indexedTargetTypes = targetTypes[i];
+        auto oldSize = indexedTargetTypes.size();
+        indexedTargetTypes.insert(indexedTypes.begin(), indexedTypes.end());
+        if (indexedTargetTypes.size() != oldSize) {
+          // We inserted something, so there is work to do in this target.
+          work.push(target);
+        }
       }
     }
   }
