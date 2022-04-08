@@ -37,6 +37,8 @@ void dump(Location location) {
     std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
+  } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
+    std::cout << "  resultloc " << loc->func->name << " : " << loc->index << '\n';
   } else {
     std::cout << "  (other)\n";
   }
@@ -569,7 +571,7 @@ void Oracle::analyze() {
     // ==================================TODO==================================
     const auto& targets = info.targets;
     if (targets.empty()) {
-      return;
+      continue;
     }
 
     // Update the targets, and add the ones that change to the remaining work.

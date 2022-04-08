@@ -1635,7 +1635,6 @@
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 (anyref anyref))
-  ;; CHECK-NEXT:  (local $1 (anyref anyref))
   ;; CHECK-NEXT:  (throw $tag
   ;; CHECK-NEXT:   (ref.null $struct)
   ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -1665,17 +1664,11 @@
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop anyref anyref)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (tuple.extract 1
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (tuple.extract 1
+  ;; CHECK-NEXT:       (pop anyref anyref)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
