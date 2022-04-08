@@ -994,14 +994,15 @@
   (type $struct (struct_subtype data))
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $parent (struct_subtype (field (mut (ref $struct))) data))
   (type $parent (struct_subtype (field (mut (ref $struct))) data))
   (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $child (ref null $child))
+  ;; CHECK-NEXT:  (local $parent (ref null $parent))
   ;; CHECK-NEXT:  (local.tee $child
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -1045,28 +1046,30 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.tee $parent
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.null $struct)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null $struct)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     (local $child (ref null $child))
+    (local $parent (ref null $parent))
     ;; We create a child with a value in the first field and nothing in the
     ;; second. Getting the first field should not be optimized as if it
-    ;; contains nothing.
+    ;; contains nothing, so the struct.get will remain here.
     (local.set $child
       (struct.new $child
         (struct.new $struct)
@@ -1080,7 +1083,8 @@
         (local.get $child)
       )
     )
-    ;; Exactly the same but get field 1. This time we can optimize.
+    ;; Exactly the same but get field 1. This time we can optimize away the
+    ;; struct.get.
     (local.set $child
       (struct.new $child
         (struct.new $struct)
@@ -1097,13 +1101,16 @@
     ;; Create a parent with nothing. The child wrote to the shared field,
     ;; however, which stops us from optimizing (but we could do better with a
     ;; more precise analysis).
+    (local.set $parent
+      (struct.new $parent
+        (ref.as_non_null
+          (ref.null $struct)
+        )
+      )
+    )
     (drop
       (struct.get $parent 0
-        (struct.new $parent
-          (ref.as_non_null
-            (ref.null $struct)
-          )
-        )
+        (local.get $parent)
       )
     )
   )
@@ -1116,59 +1123,74 @@
   (type $struct (struct_subtype data))
   ;; CHECK:      (type $parent (struct_subtype (field (mut (ref $struct))) data))
   (type $parent (struct_subtype (field (mut (ref $struct))) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) (field i32) $parent))
   (type $child (struct_subtype (field (mut (ref $struct))) (field i32) $parent))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $child (ref null $child))
+  ;; CHECK-NEXT:  (local $parent (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $parent
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $parent 0
-  ;; CHECK-NEXT:    (struct.new $parent
-  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    (local.get $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.tee $child
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.null $struct)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $child)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
+    (local $child (ref null $child))
+    (local $parent (ref null $parent))
     ;; Allocate when writing to the parent's field. We cannot
     ;; optimize here.
+    (local.set $parent
+      (struct.new $parent
+        (struct.new $struct)
+      )
+    )
     (drop
       (struct.get $parent 0
-        (struct.new $parent
-          (struct.new $struct)
-        )
+        (local.get $parent)
       )
     )
     ;; The child writes nothing to the first field. However, the parent did
     ;; write there, preventing optimization (but we could do better with a
     ;; more precise analysis).
+    (local.set $child
+      (struct.new $child
+        (ref.as_non_null
+          (ref.null $struct)
+        )
+        (i32.const 0)
+      )
+    )
     (drop
       (struct.get $child 0
-        (struct.new $child
-          (ref.as_non_null
-            (ref.null $struct)
-          )
-          (i32.const 0)
-        )
+        (local.get $child)
       )
     )
   )
