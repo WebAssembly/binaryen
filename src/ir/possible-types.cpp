@@ -592,8 +592,8 @@ std::cout << "flow phase\n";
 
       // Update types in one lane of a tuple, copying from inputs to outputs and
       // adding the target to the remaining work if we added something new.
-      auto updateTypes = [&](const std::unordered_set<HeapType>& inputs,
-                             std::unordered_set<HeapType>& outputs) {
+      auto updateTypes = [&](const LimitedTypes& inputs,
+                             LimitedTypes& outputs) {
         if (inputs.empty()) {
           return;
         }
@@ -602,7 +602,7 @@ std::cout << "flow phase\n";
                   << ", dst has " << outputs.size() << '\n';
 #endif
         auto oldSize = outputs.size();
-        outputs.insert(inputs.begin(), inputs.end());
+        outputs.update(inputs);
         if (outputs.size() != oldSize) {
           // We inserted something, so there is work to do in this target.
           work.push(target);

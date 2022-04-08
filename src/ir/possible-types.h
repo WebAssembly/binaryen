@@ -19,6 +19,7 @@
 
 #include <variant>
 
+#include "support/limited_set.h"
 #include "wasm.h"
 
 namespace wasm::PossibleTypes {
@@ -245,13 +246,18 @@ class Oracle {
 public:
   Oracle(Module& wasm) : wasm(wasm) { analyze(); }
 
-  // The set of possible types at a location. The types are in a set, and we
-  // have a vector of them to handle the case of tuples; if the value is not a
-  // tuple then we only use the first index.
-  using TypeSet = SmallVector<std::unordered_set<HeapType>, 1>;
+  // A set of possible types. The types are in a limited set as we do not want
+  // the analysis to explode in memory usage; we consider a certain amount of
+  // different types "infinity" and limit ourselves there.
+  using LimitedTypes = LimitedSet<HeapType, 2>;
+
+  // The possible types at a location. This is a vector in order to handle the
+  // case of tuples; if the value is not a tuple then we only use the first
+  // index.
+  using LocationTypes = SmallVector<LimitedTypes, 1>;
 
   // Get the types possible at a location.
-  TypeSet getTypes(Location location) {
+  LocationTypes getTypes(Location location) {
     auto iter = flowInfoMap.find(location);
     if (iter == flowInfoMap.end()) {
       return {};
@@ -264,7 +270,7 @@ private:
   // graph.
   struct LocationInfo {
     // The types possible at this location.
-    TypeSet types;
+    LocationTypes types;
 
     // The targets to which this sends types.
     std::vector<Location> targets;

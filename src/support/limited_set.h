@@ -134,6 +134,21 @@ public:
     used = 0;
   }
 
+  void makeFull() {
+    used = N;
+    assert(isFull());
+  }
+
+  void update(const LimitedSet<T, N>& other) {
+    if (other.isFull()) {
+      makeFull();
+      return;
+    }
+    for (auto x : other) {
+      insert(x);
+    }
+  }
+
   bool operator==(const LimitedSet<T, N>& other) const {
     if (size() != other.size()) {
       return false;
@@ -160,22 +175,22 @@ public:
     using pointer = const value_type*;
     using reference = const value_type&;
 
-    Parent* parent;
+    const Parent* parent;
 
     using Iterator = IteratorBase<Parent>;
 
     size_t index;
 
-    IteratorBase(Parent* parent)
+    IteratorBase(const Parent* parent)
       : parent(parent) {}
 
     void setBegin() {
-      assert(!parent.isFull());
+      assert(!parent->isFull());
       index = 0;
     }
 
     void setEnd() {
-      assert(!parent.isFull());
+      assert(!parent->isFull());
       index = parent->size();
     }
 
