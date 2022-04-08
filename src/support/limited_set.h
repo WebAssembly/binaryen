@@ -63,7 +63,7 @@ public:
   using key_type = T;
   using reference = T&;
   using const_reference = const T&;
-  //using set_type = FlexibleSet;
+  // using set_type = FlexibleSet;
   using size_type = size_t;
 
   LimitedSet() {}
@@ -124,15 +124,11 @@ public:
     return 0;
   }
 
-  size_t size() const {
-    return used;
-  }
+  size_t size() const { return used; }
 
   bool empty() const { return size() == 0; }
 
-  void clear() {
-    used = 0;
-  }
+  void clear() { used = 0; }
 
   void makeFull() {
     used = N;
@@ -181,8 +177,7 @@ public:
 
     size_t index;
 
-    IteratorBase(const Parent* parent)
-      : parent(parent) {}
+    IteratorBase(const Parent* parent) : parent(parent) {}
 
     void setBegin() {
       assert(!parent->isFull());

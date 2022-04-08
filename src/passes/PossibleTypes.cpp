@@ -83,7 +83,8 @@ struct PossibleTypesPass : public Pass {
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr), builder.makeUnreachable()));            
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                                builder.makeUnreachable()));
           }
           optimized = true;
         }

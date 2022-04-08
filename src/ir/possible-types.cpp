@@ -400,7 +400,7 @@ struct ConnectionFinder
 } // anonymous namespace
 
 void Oracle::analyze() {
-std::cout << "parallel phase\n";
+  std::cout << "parallel phase\n";
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
       if (func->imported()) {
@@ -412,7 +412,7 @@ std::cout << "parallel phase\n";
       ConnectionFinder finder(info);
       finder.walkFunctionInModule(func, &wasm);
     });
-std::cout << "single phase\n";
+  std::cout << "single phase\n";
 
   // Also walk the global module code, adding it to the map as a function of
   // null.
@@ -437,7 +437,7 @@ std::cout << "single phase\n";
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
   std::vector<Expression*> allocations;
-std::cout << "merging phase\n";
+  std::cout << "merging phase\n";
 
   for (auto& [func, info] : analysis.map) {
     for (auto& connection : info.connections) {
@@ -447,7 +447,7 @@ std::cout << "merging phase\n";
       allocations.push_back(allocation);
     }
   }
-std::cout << "func phase\n";
+  std::cout << "func phase\n";
 
   // Connect function parameters to their signature, so that any indirect call
   // of that signature will reach them.
@@ -462,7 +462,7 @@ std::cout << "func phase\n";
                           SignatureResultLocation{func->type, i}});
     }
   }
-std::cout << "struct phase\n";
+  std::cout << "struct phase\n";
 
   // Add subtyping connections, but see the TODO below about how we can do this
   // "dynamically" in a more effective but complex way.
@@ -492,7 +492,7 @@ std::cout << "struct phase\n";
       }
     }
   }
-std::cout << "DAG phase\n";
+  std::cout << "DAG phase\n";
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
@@ -514,7 +514,7 @@ std::cout << "DAG phase\n";
   // The work remaining to do: locations that we just updated, which means we
   // should update their children when we pop them from this queue.
   UniqueDeferredQueue<Location> work;
-std::cout << "prep phase\n";
+  std::cout << "prep phase\n";
 
   // The starting state for the flow is for each allocation to contain the type
   // allocated there.
@@ -534,7 +534,7 @@ std::cout << "prep phase\n";
     work.push(location);
   }
 
-std::cout << "flow phase\n";
+  std::cout << "flow phase\n";
 
   // Flow the data.
   while (!work.empty()) {
