@@ -1551,7 +1551,6 @@
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 anyref)
-  ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (throw $nothing
   ;; CHECK-NEXT:   (ref.null $struct)
   ;; CHECK-NEXT:  )
@@ -1581,15 +1580,9 @@
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $something
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop anyref)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (pop anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
