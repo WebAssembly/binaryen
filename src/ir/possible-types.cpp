@@ -283,9 +283,6 @@ struct ConnectionFinder
   //       thrown is sent to the location of that tag, and any catch of that
   //       tag can read them
   void visitThrow(Throw* curr) {
-    if (curr->type == Type::unreachable) {
-      return;
-    }
     auto tag = curr->tag;
     handleChildList(curr->operands, [&](Index i) {
       return TagLocation{tag, i};
@@ -293,19 +290,19 @@ struct ConnectionFinder
   }
   void visitTry(Try* curr) {
     auto numTags = curr->catchTags.size();
-    for (Index i = 0; i < numTags; i++) {
-      auto tag = curr->catchTags[i];
-      auto* body = curr->catchBodies[i];
+    for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
+      auto tag = curr->catchTags[tagIndex];
+      auto* body = curr->catchBodies[tagIndex];
 
       // Find the pops of the tag's contents. There will be one for each item in
       // the tag, all at the start of the body.
       FindAll<Pop> pops(body);
       auto sigSize = getModule()->getTag(tag)->sig.params.size();
       assert(pops.list.size() >= sigSize);
-      for (Index j = 0; j < sigSize; j++) {
-        auto* pop = pops.list[j];
+      for (Index popIndex = 0; popIndex < sigSize; popIndex++) {
+        auto* pop = pops.list[popIndex];
         info.connections.push_back({
-          TagLocation{tag, j}, ExpressionLocation{pop}
+          TagLocation{tag, popIndex}, ExpressionLocation{pop}
         });
       }
     }
