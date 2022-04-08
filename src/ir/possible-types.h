@@ -114,9 +114,8 @@ struct ArrayLocation {
 // The location of anything written to a particular index of a particular tag.
 struct TagLocation {
   Name tag;
-  Index index;
   bool operator==(const TagLocation& other) const {
-    return tag == other.tag && index == other.index;
+    return tag == other.tag;
   }
 };
 
@@ -217,8 +216,7 @@ template<> struct hash<wasm::PossibleTypes::ArrayLocation> {
 
 template<> struct hash<wasm::PossibleTypes::TagLocation> {
   size_t operator()(const wasm::PossibleTypes::TagLocation& loc) const {
-    return std::hash<std::pair<wasm::Name, wasm::Index>>{}(
-      {loc.tag, loc.index});
+    return std::hash<wasm::Name>{}(loc.tag);
   }
 };
 

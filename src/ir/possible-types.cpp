@@ -298,29 +298,46 @@ struct ConnectionFinder
   // TODO: Model which throws can go to which catches. For now, anything
   //       thrown is sent to the location of that tag, and any catch of that
   //       tag can read them
-  void visitThrow(Throw* curr) {
-    auto tag = curr->tag;
-    handleChildList(curr->operands, [&](Index i) {
-      return TagLocation{tag, i};
-    });
-  }
   void visitTry(Try* curr) {
     auto numTags = curr->catchTags.size();
     for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
       auto tag = curr->catchTags[tagIndex];
       auto* body = curr->catchBodies[tagIndex];
 
-      // Find the pops of the tag's contents. There will be one for each item in
-      // the tag, all at the start of the body.
+      // Find the pop of the tag's contents. The body must start with such a
+      // pop, which might be of a tuple.
       FindAll<Pop> pops(body);
-      auto sigSize = getModule()->getTag(tag)->sig.params.size();
-      assert(pops.list.size() >= sigSize);
-      for (Index popIndex = 0; popIndex < sigSize; popIndex++) {
-        auto* pop = pops.list[popIndex];
-        info.connections.push_back(
-          {TagLocation{tag, popIndex}, ExpressionLocation{pop}});
-      }
+      assert(!pops.list.empty());
+      auto* pop = pops.list[0];
+      info.connections.push_back(
+        {TagLocation{tag}, ExpressionLocation{pop}});
     }
+  }
+  void visitThrow(Throw* curr) {
+    // We must handle the thrown values in a special way. In a catch body we
+    // have a pop which will be of a tuple if the tag has more than one element,
+    // but the throw does not receive a tuple as an input. (Compare this to a
+    // function call, in which the call has separate operands and the function
+    // that is called receives them each in a separate local.) To handle this,
+    // create an artificial TupleMake expression here and route through that,
+    // if we have more than one value. First, handle the simple cases.
+    auto tag = curr->tag;
+    auto& operands = curr->operands;
+    if (operands.empty()) {
+      return;
+    }
+    if (operands.size() == 1) {
+      info.connections.push_back(
+        {ExpressionLocation{operands[0]}, TagLocation{tag}});
+    }
+
+    // This is the tuple case. Create a TupleMake with the same operands. Note
+    // that it shares the operands of the Throw; that would be invalid IR if we
+    // actually added the TupleMake into the tree, but we do not, it is only
+    // held on the side.
+    auto* make = Builder(*getModule()).makeTupleMake(operands);
+    info.connections.push_back(
+      {ExpressionLocation{make}, TagLocation{tag}});
   }
 
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
