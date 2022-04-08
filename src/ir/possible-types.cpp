@@ -40,6 +40,20 @@ struct FuncInfo {
   std::vector<Expression*> allocations;
 };
 
+bool containsRef(Type type) {
+  if (type.isRef()) {
+    return true;
+  }
+  if (type.isTuple()) {
+    for (auto t : type) {
+      if (t.isRef()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 struct ConnectionFinder
   : public PostWalker<ConnectionFinder,
                       UnifiedExpressionVisitor<ConnectionFinder>> {
@@ -78,13 +92,15 @@ struct ConnectionFinder
     // integer anyhow, so we don't actually reach the loop.
 
     // The default behavior is to connect all input expressions to the
-    // current one, as it might return an output that includes them.
-    if (!curr->type.isRef()) {
+    // current one, as it might return an output that includes them. We only do
+    // so for references or tuples containing a reference as anything else can
+    // be ignored.
+    if (!containsRef(curr->type)) {
       return;
     }
 
     for (auto* child : ChildIterator(curr)) {
-      if (!child->type.isRef()) {
+      if (!containsRef(child->type)) {
         continue;
       }
       info.connections.push_back(
@@ -309,8 +325,6 @@ struct ConnectionFinder
 
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
   void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo"); }
-  void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("todo"); }
-  void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("todo"); }
 
   void addResult(Expression* value) {
     if (!value || !value->type.isRef()) {
