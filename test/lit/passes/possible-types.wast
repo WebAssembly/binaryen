@@ -1742,3 +1742,74 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $B (struct_subtype (field i64) data))
+  (type $B (struct_subtype (field i64) data))
+  ;; CHECK:      (type $C (struct_subtype (field f32) data))
+  (type $C (struct_subtype (field f32) data))
+  ;; CHECK:      (type $D (struct_subtype (field f64) data))
+  (type $D (struct_subtype (field f64) data))
+
+  ;; CHECK:      (func $many-types (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (f32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $D
+  ;; CHECK-NEXT:    (f64.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $many-types
+    (local $x (ref null any))
+    ;; Write 4 different types into $x. That should not confuse us, even if just
+    ;; one is enough to prevent opts.
+    (local.set $x
+      (struct.new $A
+        (i32.const 0)
+      )
+    )
+    (local.set $x
+      (struct.new $B
+        (i64.const 1)
+      )
+    )
+    (local.set $x
+      (struct.new $C
+        (f32.const 2)
+      )
+    )
+    (local.set $x
+      (struct.new $D
+        (f64.const 3)
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (local.get $x)
+      )
+    )
+  )
+)
