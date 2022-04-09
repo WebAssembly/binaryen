@@ -370,6 +370,19 @@ struct ConnectionFinder
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
   void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo"); }
 
+  void visitTupleMake(TupleMake* curr) {
+    if (containsRef(curr->type)) {
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        info.connections.push_back({ExpressionLocation{curr->operands[i], 0}, ExpressionLocation{curr, i}});
+      }
+    }
+  }
+  void visitTupleExtract(TupleExtract* curr) {
+    if (containsRef(curr->type)) {
+      info.connections.push_back({ExpressionLocation{curr->tuple, curr->index}, ExpressionLocation{curr, 0}});
+    }
+  }
+
   void addResult(Expression* value) {
     if (value && containsRef(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
