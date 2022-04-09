@@ -39,10 +39,10 @@ int main() {
     )");
     Oracle oracle(*wasm);
     std::cout << "# of possible types of the $null global: "
-              << oracle.getTypes(GlobalLocation{"foo"})[0].size() << '\n';
+              << oracle.getTypes(GlobalLocation{"foo"}).size() << '\n';
     std::cout << "# of possible types of the $something global: "
-              << oracle.getTypes(GlobalLocation{"something"})[0].size() << '\n';
-    for (auto t : oracle.getTypes(GlobalLocation{"something"})[0]) {
+              << oracle.getTypes(GlobalLocation{"something"}).size() << '\n';
+    for (auto t : oracle.getTypes(GlobalLocation{"something"})) {
       std::cout << "  type: " << t << "\n";
     }
   }
@@ -76,6 +76,6 @@ int main() {
     )");
     Oracle oracle(*wasm);
     std::cout << "# of possible types of the function's body: "
-              << oracle.getTypes(ResultLocation{wasm->getFunction("foo")})[0].size() << '\n';
+              << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).size() << '\n';
   }
 }
