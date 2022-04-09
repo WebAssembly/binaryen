@@ -70,7 +70,8 @@ struct PossibleTypesPass : public Pass {
       }
 
       void visitExpression(Expression* curr) {
-        if (!getFunction()) return; // waka in non-parallel
+        if (!getFunction())
+          return; // waka in non-parallel
         auto type = curr->type;
         if (type.isTuple()) {
           // TODO: tuple types.
@@ -84,13 +85,15 @@ struct PossibleTypesPass : public Pass {
           // unreachable or will trap at runtime. Replace it with a trap.
           auto& wasm = *getModule();
 #if 1
-static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : 9999999;
-if (LIMIT == 0) return;
-LIMIT--;
+          static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : 9999999;
+          if (LIMIT == 0)
+            return;
+          LIMIT--;
 #endif
           Builder builder(wasm);
           if (canRemove(curr)) {
-            replaceCurrent(getDroppedChildren(curr, wasm, builder.makeUnreachable()));
+            replaceCurrent(
+              getDroppedChildren(curr, wasm, builder.makeUnreachable()));
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.

@@ -255,9 +255,7 @@ struct ConnectionFinder
     }
   }
 
-  void visitRefFunc(RefFunc* curr) {
-    info.roots.push_back(curr);
-  }
+  void visitRefFunc(RefFunc* curr) { info.roots.push_back(curr); }
 
   // Iterates over a list of children and adds connections as needed. The
   // target of the connection is created using a function that is passed
