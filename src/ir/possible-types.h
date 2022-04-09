@@ -57,7 +57,8 @@ struct LocalLocation {
   // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
   Index tupleIndex;
   bool operator==(const LocalLocation& other) const {
-    return func == other.func && index == other.index && tupleIndex == other.tupleIndex;
+    return func == other.func && index == other.index &&
+           tupleIndex == other.tupleIndex;
   }
 };
 
@@ -123,7 +124,9 @@ struct ArrayLocation {
 struct TagLocation {
   Name tag;
   Index tupleIndex;
-  bool operator==(const TagLocation& other) const { return tag == other.tag && tupleIndex == other.tupleIndex; }
+  bool operator==(const TagLocation& other) const {
+    return tag == other.tag && tupleIndex == other.tupleIndex;
+  }
 };
 
 // A location is a variant over all the possible types of locations that we
@@ -161,7 +164,8 @@ namespace std {
 
 template<> struct hash<wasm::PossibleTypes::ExpressionLocation> {
   size_t operator()(const wasm::PossibleTypes::ExpressionLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Index>>{}({size_t(loc.expr), loc.tupleIndex});
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.expr), loc.tupleIndex});
   }
 };
 
@@ -223,7 +227,8 @@ template<> struct hash<wasm::PossibleTypes::ArrayLocation> {
 
 template<> struct hash<wasm::PossibleTypes::TagLocation> {
   size_t operator()(const wasm::PossibleTypes::TagLocation& loc) const {
-    return std::hash<std::pair<wasm::Name, wasm::Index>>{}({loc.tag, loc.tupleIndex});
+    return std::hash<std::pair<wasm::Name, wasm::Index>>{}(
+      {loc.tag, loc.tupleIndex});
   }
 };
 
@@ -254,9 +259,9 @@ class Oracle {
 public:
   Oracle(Module& wasm) : wasm(wasm) { analyze(); }
 
-  // A set of possible types at a location. The types are in a limited set as we do not want
-  // the analysis to explode in memory usage; we consider a certain amount of
-  // different types "infinity" and limit ourselves there.
+  // A set of possible types at a location. The types are in a limited set as we
+  // do not want the analysis to explode in memory usage; we consider a certain
+  // amount of different types "infinity" and limit ourselves there.
   using LocationTypes = LimitedSet<HeapType, 2>;
 
   // Get the types possible at a location.

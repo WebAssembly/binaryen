@@ -101,8 +101,8 @@ struct ConnectionFinder
       curr, [&](Name target, Expression* value) {
         if (value && value->type.isRef()) {
           assert(!value->type.isTuple()); // TODO
-          info.connections.push_back(
-            {ExpressionLocation{value, 0}, BranchLocation{getFunction(), target}});
+          info.connections.push_back({ExpressionLocation{value, 0},
+                                      BranchLocation{getFunction(), target}});
         }
       });
 
@@ -132,7 +132,8 @@ struct ConnectionFinder
       // We handle the simple case here of a child that passes its entire value
       // to the parent. Other things (like TupleMake) should be handled in
       // specific visitors below.
-      if (!containsRef(child->type) || curr->type.size() != child->type.size()) {
+      if (!containsRef(child->type) ||
+          curr->type.size() != child->type.size()) {
         continue;
       }
 
@@ -149,7 +150,8 @@ struct ConnectionFinder
     if (containsRef(curr->type)) {
       for (Index i = 0; i < curr->type.size(); i++) {
         info.connections.push_back(
-          {LocalLocation{getFunction(), curr->index, i}, ExpressionLocation{curr, i}});
+          {LocalLocation{getFunction(), curr->index, i},
+           ExpressionLocation{curr, i}});
       }
     }
   }
@@ -158,8 +160,9 @@ struct ConnectionFinder
       return;
     }
     for (Index i = 0; i < curr->value->type.size(); i++) {
-      info.connections.push_back({ExpressionLocation{curr->value, i},
-                                  LocalLocation{getFunction(), curr->index, i}});
+      info.connections.push_back(
+        {ExpressionLocation{curr->value, i},
+         LocalLocation{getFunction(), curr->index, i}});
       if (curr->isTee()) {
         info.connections.push_back(
           {ExpressionLocation{curr->value, i}, ExpressionLocation{curr, i}});
@@ -349,7 +352,8 @@ struct ConnectionFinder
       auto* pop = pops.list[0];
       if (containsRef(pop->type)) {
         for (Index i = 0; i < pop->type.size(); i++) {
-          info.connections.push_back({TagLocation{tag, i}, ExpressionLocation{pop, i}});
+          info.connections.push_back(
+            {TagLocation{tag, i}, ExpressionLocation{pop, i}});
         }
       }
     }
@@ -373,13 +377,15 @@ struct ConnectionFinder
   void visitTupleMake(TupleMake* curr) {
     if (containsRef(curr->type)) {
       for (Index i = 0; i < curr->operands.size(); i++) {
-        info.connections.push_back({ExpressionLocation{curr->operands[i], 0}, ExpressionLocation{curr, i}});
+        info.connections.push_back({ExpressionLocation{curr->operands[i], 0},
+                                    ExpressionLocation{curr, i}});
       }
     }
   }
   void visitTupleExtract(TupleExtract* curr) {
     if (containsRef(curr->type)) {
-      info.connections.push_back({ExpressionLocation{curr->tuple, curr->index}, ExpressionLocation{curr, 0}});
+      info.connections.push_back({ExpressionLocation{curr->tuple, curr->index},
+                                  ExpressionLocation{curr, 0}});
     }
   }
 
@@ -469,8 +475,8 @@ void Oracle::analyze() {
   // TODO: find which functions are even taken by reference
   for (auto& func : wasm.functions) {
     for (Index i = 0; i < func->getParams().size(); i++) {
-      connections.insert(
-        {SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i, 0}});
+      connections.insert({SignatureParamLocation{func->type, i},
+                          LocalLocation{func.get(), i, 0}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       connections.insert({ResultLocation{func.get(), i},

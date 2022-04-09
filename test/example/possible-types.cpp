@@ -75,7 +75,9 @@ int main() {
       )
     )");
     Oracle oracle(*wasm);
-    std::cout << "# of possible types of the function's body: "
-              << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).size() << '\n';
+    std::cout
+      << "# of possible types of the function's body: "
+      << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).size()
+      << '\n';
   }
 }
