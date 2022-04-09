@@ -757,7 +757,7 @@ BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
 BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
   return PromoteLowVecF32x4ToVecF64x2;
 }
-BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
+BinaryenOp BinaryenSwizzleVecI8x16(void) { return SwizzleVecI8x16; }
 BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
 BinaryenOp BinaryenRefIsData(void) { return RefIsData; }

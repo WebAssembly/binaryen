@@ -1012,8 +1012,8 @@ public:
       case NarrowUVecI32x4ToVecI16x8:
         return left.narrowUToI16x8(right);
 
-      case SwizzleVec8x16:
-      case RelaxedSwizzleVec8x16:
+      case SwizzleVecI8x16:
+      case RelaxedSwizzleVecI8x16:
         return left.swizzleI8x16(right);
 
       case InvalidBinary:

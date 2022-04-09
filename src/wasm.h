@@ -464,10 +464,10 @@ enum BinaryOp {
   NarrowUVecI32x4ToVecI16x8,
 
   // SIMD Swizzle
-  SwizzleVec8x16,
+  SwizzleVecI8x16,
 
   // Relaxed SIMD
-  RelaxedSwizzleVec8x16,
+  RelaxedSwizzleVecI8x16,
   RelaxedMinVecF32x4,
   RelaxedMaxVecF32x4,
   RelaxedMinVecF64x2,
