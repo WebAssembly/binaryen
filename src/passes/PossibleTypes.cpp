@@ -48,6 +48,7 @@ struct PossibleTypesPass : public Pass {
       : public WalkerPass<
           PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
       // bool isFunctionParallel() override { return true; }
+      // waka
 
       PossibleTypes::Oracle& oracle;
 
@@ -69,6 +70,7 @@ struct PossibleTypesPass : public Pass {
       }
 
       void visitExpression(Expression* curr) {
+        if (!getFunction()) return; // waka in non-parallel
         auto type = curr->type;
         if (type.isTuple()) {
           // TODO: tuple types.
@@ -81,15 +83,14 @@ struct PossibleTypesPass : public Pass {
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
           auto& wasm = *getModule();
-#if 0
-auto LIMIT = atoi(getenv("LIMIT"));
+#if 1
+static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : 9999999;
 if (LIMIT == 0) return;
 LIMIT--;
 #endif
           Builder builder(wasm);
           if (canRemove(curr)) {
-            replaceCurrent(
-              getDroppedChildren(curr, wasm, builder.makeUnreachable()));
+            replaceCurrent(getDroppedChildren(curr, wasm, builder.makeUnreachable()));
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.
@@ -107,7 +108,7 @@ LIMIT--;
 
       void visitFunction(Function* func) {
         if (optimized) {
-          optimized = false;
+          optimized = false; // waka
           // Optimization may introduce more unreachables, which we need to
           // propagate.
           ReFinalize().walkFunctionInModule(func, getModule());
