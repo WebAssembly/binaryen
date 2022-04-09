@@ -100,16 +100,18 @@ struct ConnectionFinder
     BranchUtils::operateOnScopeNameUsesAndSentValues(
       curr, [&](Name target, Expression* value) {
         if (value && value->type.isRef()) {
+          assert(!value->type.isTuple()); // TODO
           info.connections.push_back(
-            {ExpressionLocation{value}, BranchLocation{getFunction(), target}});
+            {ExpressionLocation{value, 0}, BranchLocation{getFunction(), target}});
         }
       });
 
     // Branch targets receive the things sent to them and flow them out.
     if (curr->type.isRef()) {
+      assert(!curr->type.isTuple()); // TODO
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         info.connections.push_back(
-          {BranchLocation{getFunction(), target}, ExpressionLocation{curr}});
+          {BranchLocation{getFunction(), target}, ExpressionLocation{curr, 0}});
       });
     }
     // TODO: if we are a branch source or target, skip the loop later
@@ -127,31 +129,41 @@ struct ConnectionFinder
     }
 
     for (auto* child : ChildIterator(curr)) {
-      if (!containsRef(child->type)) {
+      // We handle the simple case here of a child that passes its entire value
+      // to the parent. Other things (like TupleMake) should be handled in
+      // specific visitors below.
+      if (!containsRef(child->type) || curr->type.size() != child->type.size()) {
         continue;
       }
-      info.connections.push_back(
-        {ExpressionLocation{child}, ExpressionLocation{curr}});
+
+      for (Index i = 0; i < curr->type.size(); i++) {
+        info.connections.push_back(
+          {ExpressionLocation{child, i}, ExpressionLocation{curr, i}});
+      }
     }
   }
 
   // Locals read and write to their index.
   // TODO: we could use a LocalGraph for better precision
   void visitLocalGet(LocalGet* curr) {
-    if (curr->type.isRef()) {
-      info.connections.push_back(
-        {LocalLocation{getFunction(), curr->index}, ExpressionLocation{curr}});
+    if (containsRef(curr->type)) {
+      for (Index i = 0; i < curr->type.size(); i++) {
+        info.connections.push_back(
+          {LocalLocation{getFunction(), curr->index, i}, ExpressionLocation{curr, i}});
+      }
     }
   }
   void visitLocalSet(LocalSet* curr) {
-    if (!curr->value->type.isRef()) {
+    if (!containsRef(curr->value->type)) {
       return;
     }
-    info.connections.push_back({ExpressionLocation{curr->value},
-                                LocalLocation{getFunction(), curr->index}});
-    if (curr->isTee()) {
-      info.connections.push_back(
-        {ExpressionLocation{curr->value}, ExpressionLocation{curr}});
+    for (Index i = 0; i < curr->value->type.size(); i++) {
+      info.connections.push_back({ExpressionLocation{curr->value, i},
+                                  LocalLocation{getFunction(), curr->index, i}});
+      if (curr->isTee()) {
+        info.connections.push_back(
+          {ExpressionLocation{curr->value, i}, ExpressionLocation{curr, i}});
+      }
     }
   }
 
@@ -159,13 +171,13 @@ struct ConnectionFinder
   void visitGlobalGet(GlobalGet* curr) {
     if (curr->type.isRef()) {
       info.connections.push_back(
-        {GlobalLocation{curr->name}, ExpressionLocation{curr}});
+        {GlobalLocation{curr->name}, ExpressionLocation{curr, 0}});
     }
   }
   void visitGlobalSet(GlobalSet* curr) {
     if (curr->value->type.isRef()) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value}, GlobalLocation{curr->name}});
+        {ExpressionLocation{curr->value, 0}, GlobalLocation{curr->name}});
     }
   }
 
@@ -180,20 +192,18 @@ struct ConnectionFinder
     for (auto* operand : operands) {
       if (operand->type.isRef()) {
         info.connections.push_back(
-          {ExpressionLocation{operand}, makeParamLocation(i)});
+          {ExpressionLocation{operand, 0}, makeParamLocation(i)});
       }
       i++;
     }
 
     // Add results, if anything flows out.
-    if (curr->type.isTuple()) {
-      WASM_UNREACHABLE("todo: tuple results");
+    if (containsRef(curr->type)) {
+      for (Index i = 0; i < curr->type.size(); i++) {
+        info.connections.push_back(
+          {makeResultLocation(i), ExpressionLocation{curr, i}});
+      }
     }
-    if (!curr->type.isRef()) {
-      return;
-    }
-    info.connections.push_back(
-      {makeResultLocation(0), ExpressionLocation{curr}});
   }
 
   // Calls send values to params in their possible targets, and receive
@@ -204,7 +214,7 @@ struct ConnectionFinder
       curr,
       curr->operands,
       [&](Index i) {
-        return LocalLocation{target, i};
+        return LocalLocation{target, i, 0};
       },
       [&](Index i) {
         return ResultLocation{target, i};
@@ -245,9 +255,10 @@ struct ConnectionFinder
                        std::function<Location(Index)> makeTarget) {
     Index i = 0;
     for (auto* operand : operands) {
+      assert(!operand->type.isTuple());
       if (operand->type.isRef()) {
         info.connections.push_back(
-          {ExpressionLocation{operand}, makeTarget(i)});
+          {ExpressionLocation{operand, 0}, makeTarget(i)});
       }
       i++;
     }
@@ -275,7 +286,7 @@ struct ConnectionFinder
     // Note that if there is no initial value here then it is null, which is
     // not something we need to connect.
     if (curr->init && curr->init->type.isRef()) {
-      info.connections.push_back({ExpressionLocation{curr->init},
+      info.connections.push_back({ExpressionLocation{curr->init, 0},
                                   ArrayLocation{curr->type.getHeapType()}});
     }
     info.allocations.push_back(curr);
@@ -297,13 +308,13 @@ struct ConnectionFinder
     if (curr->type.isRef()) {
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
-         ExpressionLocation{curr}});
+         ExpressionLocation{curr, 0}});
     }
   }
   void visitStructSet(StructSet* curr) {
     if (curr->value->type.isRef()) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value},
+        {ExpressionLocation{curr->value, 0},
          StructLocation{curr->ref->type.getHeapType(), curr->index}});
     }
   }
@@ -311,13 +322,13 @@ struct ConnectionFinder
   void visitArrayGet(ArrayGet* curr) {
     if (curr->type.isRef()) {
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
-                                  ExpressionLocation{curr}});
+                                  ExpressionLocation{curr, 0}});
     }
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->value->type.isRef()) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value},
+        {ExpressionLocation{curr->value, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
     }
   }
@@ -336,7 +347,11 @@ struct ConnectionFinder
       FindAll<Pop> pops(body);
       assert(!pops.list.empty());
       auto* pop = pops.list[0];
-      info.connections.push_back({TagLocation{tag}, ExpressionLocation{pop}});
+      if (containsRef(pop->type)) {
+        for (Index i = 0; i < pop->type.size(); i++) {
+          info.connections.push_back({TagLocation{tag, i}, ExpressionLocation{pop, i}});
+        }
+      }
     }
   }
   void visitThrow(Throw* curr) {
@@ -345,47 +360,22 @@ struct ConnectionFinder
       return;
     }
 
-    // We must handle the thrown values in a special way. In a catch body we
-    // have a pop which will be of a tuple if the tag has more than one element,
-    // but the throw does not receive a tuple as an input. (Compare this to a
-    // function call, in which the call has separate operands and the function
-    // that is called receives them each in a separate local.) To handle this,
-    // create an artificial TupleMake expression here and route through that,
-    // if we have more than one value. First, handle the simple cases.
     auto tag = curr->tag;
-    if (operands.empty()) {
-      return;
-    }
-    if (operands.size() == 1) {
+    for (Index i = 0; i < curr->operands.size(); i++) {
       info.connections.push_back(
-        {ExpressionLocation{operands[0]}, TagLocation{tag}});
+        {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
-
-    // This is the tuple case. Create a TupleMake with the same operands. (Note
-    // that it shares the operands of the Throw; that would be invalid IR if we
-    // actually added the TupleMake into the tree, but we do not, it is only
-    // held on the side.) We must connect the operands to the make, and then the
-    // make to the tag.
-    auto* make = Builder(*getModule()).makeTupleMake(operands);
-    for (auto* operand : operands) {
-      info.connections.push_back(
-        {ExpressionLocation{operand}, ExpressionLocation{make}});
-    }
-    info.connections.push_back({ExpressionLocation{make}, TagLocation{tag}});
   }
 
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
   void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo"); }
 
   void addResult(Expression* value) {
-    if (!value || !value->type.isRef()) {
-      return;
-    }
-    if (!value->type.isTuple()) {
-      info.connections.push_back(
-        {ExpressionLocation{value}, ResultLocation{getFunction(), 0}});
-    } else {
-      WASM_UNREACHABLE("multivalue function result support");
+    if (value && containsRef(value->type)) {
+      for (Index i = 0; i < value->type.size(); i++) {
+        info.connections.push_back(
+          {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
+      }
     }
   }
 
@@ -432,7 +422,7 @@ void Oracle::analyze() {
       auto* init = global->init;
       if (init->type.isRef()) {
         globalInfo.connections.push_back(
-          {ExpressionLocation{init}, GlobalLocation{global->name}});
+          {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
       }
     }
   }
@@ -467,7 +457,7 @@ void Oracle::analyze() {
   for (auto& func : wasm.functions) {
     for (Index i = 0; i < func->getParams().size(); i++) {
       connections.insert(
-        {SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i}});
+        {SignatureParamLocation{func->type, i}, LocalLocation{func.get(), i, 0}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       connections.insert({ResultLocation{func.get(), i},
@@ -544,14 +534,14 @@ void Oracle::analyze() {
     // unreachable (we should have ignored such things before).
     assert(allocation->type.isRef());
 
-    auto location = ExpressionLocation{allocation};
+    auto location = ExpressionLocation{allocation, 0};
     auto& info = flowInfoMap[location];
 
     // There must not be anything at this location already, as each allocation
     // appears once in the vector of allocations.
     assert(info.types.empty());
 
-    info.types.push_back({allocation->type.getHeapType()});
+    info.types.insert(allocation->type.getHeapType());
     work.push(location);
   }
 
@@ -615,8 +605,8 @@ void Oracle::analyze() {
 
       // Update types in one lane of a tuple, copying from inputs to outputs and
       // adding the target to the remaining work if we added something new.
-      auto updateTypes = [&](const LimitedTypes& inputs,
-                             LimitedTypes& outputs) {
+      auto updateTypes = [&](const LocationTypes& inputs,
+                             LocationTypes& outputs) {
         if (inputs.empty()) {
           return;
         }
@@ -632,71 +622,11 @@ void Oracle::analyze() {
         }
       };
 
-      // Typically the target should have the same tuple size as the source,
-      // that is, we copy a tuple from one place to another. To do so we simply
-      // copy each index in the vectors of sets of types. However, the exception
-      // are the tuple operations as TupleMake/TupleExtract go from one to many
-      // or many to one, and need special handling.
-      if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
-        if (auto* extract = targetExprLoc->expr->dynCast<TupleExtract>()) {
-          // The target is a TupleExtract, so we are going from a tuple to a
-          // target that is just one item.
-          auto tupleIndex = extract->index;
-
-#ifdef POSSIBLE_TYPES_DEBUG
-          std::cout << "  tuple.extract " << tupleIndex << "\n";
-#endif
-
-          // If this is the first time we write to this target, set its size,
-          // then copy the types.
-          if (targetTypes.empty()) {
-            targetTypes.resize(1);
-          }
-          assert(tupleIndex < types.size());
-          updateTypes(types[tupleIndex], targetTypes[0]);
-          continue;
-        } else if (auto* make = targetExprLoc->expr->dynCast<TupleMake>()) {
-          // The target is a TupleMake, so we are going from one item to a
-          // tuple. Find the index in that tuple, using the fact that the input
-          // must be an Expression which is one of the TupleMake's children.
-          // TODO: add another field to avoid linear lookup here? (but tuples
-          // are rare/small)
-          auto* expr = std::get<ExpressionLocation>(location).expr;
-          Index tupleIndex;
-          Index i;
-          for (i = 0; i < make->operands.size(); i++) {
-            if (make->operands[i] == expr) {
-              tupleIndex = i;
-              break;
-            }
-          }
-          assert(i < make->operands.size());
-
-#ifdef POSSIBLE_TYPES_DEBUG
-          std::cout << "  tuple.make " << tupleIndex << "\n";
-#endif
-
-          // If this is the first time we write to this target, set its size,
-          // then copy the types.
-          if (targetTypes.empty()) {
-            targetTypes.resize(make->operands.size());
-          }
-          assert(types.size() == 1);
-          updateTypes(types[0], targetTypes[tupleIndex]);
-          continue;
-        }
-      }
-
       // Otherwise, the input and output must have the same number of lanes.
-      if (targetTypes.empty()) {
-        targetTypes.resize(types.size());
-      }
-      for (Index i = 0; i < types.size(); i++) {
 #ifdef POSSIBLE_TYPES_DEBUG
-        std::cout << "  updating lane " << i << "\n";
+      std::cout << "  updating lane " << i << "\n";
 #endif
-        updateTypes(types[i], targetTypes[i]);
-      }
+      updateTypes(types, targetTypes);
     }
   }
 
@@ -705,3 +635,8 @@ void Oracle::analyze() {
 }
 
 } // namespace wasm::PossibleTypes
+
+/*
+TODO: w.wasm failure on LIMIT=1
+TODO: null deref at runtime on j2wasm output
+*/

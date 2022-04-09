@@ -30,8 +30,12 @@ namespace wasm::PossibleTypes {
 // it can contain (which may be more precise than expr->type).
 struct ExpressionLocation {
   Expression* expr;
+  // If this expression contains a tuple then each index in the tuple will have
+  // its own location with a corresponding tupleIndex. If this is not a tuple
+  // then we only use tupleIndex 0.
+  Index tupleIndex;
   bool operator==(const ExpressionLocation& other) const {
-    return expr == other.expr;
+    return expr == other.expr && tupleIndex == other.tupleIndex;
   }
 };
 
@@ -48,9 +52,12 @@ struct ResultLocation {
 // var). TODO: would separating params from vars help?
 struct LocalLocation {
   Function* func;
+  // The index of the local.
   Index index;
+  // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
+  Index tupleIndex;
   bool operator==(const LocalLocation& other) const {
-    return func == other.func && index == other.index;
+    return func == other.func && index == other.index && tupleIndex == other.tupleIndex;
   }
 };
 
@@ -115,7 +122,8 @@ struct ArrayLocation {
 // The location of anything written to a particular index of a particular tag.
 struct TagLocation {
   Name tag;
-  bool operator==(const TagLocation& other) const { return tag == other.tag; }
+  Index tupleIndex;
+  bool operator==(const TagLocation& other) const { return tag == other.tag && tupleIndex == other.tupleIndex; }
 };
 
 // A location is a variant over all the possible types of locations that we
@@ -153,7 +161,7 @@ namespace std {
 
 template<> struct hash<wasm::PossibleTypes::ExpressionLocation> {
   size_t operator()(const wasm::PossibleTypes::ExpressionLocation& loc) const {
-    return std::hash<size_t>{}(size_t(loc.expr));
+    return std::hash<std::pair<size_t, wasm::Index>>{}({size_t(loc.expr), loc.tupleIndex});
   }
 };
 
@@ -166,8 +174,8 @@ template<> struct hash<wasm::PossibleTypes::ResultLocation> {
 
 template<> struct hash<wasm::PossibleTypes::LocalLocation> {
   size_t operator()(const wasm::PossibleTypes::LocalLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Index>>{}(
-      {size_t(loc.func), loc.index});
+    return std::hash<std::pair<size_t, std::pair<wasm::Index, wasm::Index>>>{}(
+      {size_t(loc.func), {loc.index, loc.tupleIndex}});
   }
 };
 
@@ -215,7 +223,7 @@ template<> struct hash<wasm::PossibleTypes::ArrayLocation> {
 
 template<> struct hash<wasm::PossibleTypes::TagLocation> {
   size_t operator()(const wasm::PossibleTypes::TagLocation& loc) const {
-    return std::hash<wasm::Name>{}(loc.tag);
+    return std::hash<std::pair<wasm::Name, wasm::Index>>{}({loc.tag, loc.tupleIndex});
   }
 };
 
@@ -246,18 +254,12 @@ class Oracle {
 public:
   Oracle(Module& wasm) : wasm(wasm) { analyze(); }
 
-  // A set of possible types. The types are in a limited set as we do not want
+  // A set of possible types at a location. The types are in a limited set as we do not want
   // the analysis to explode in memory usage; we consider a certain amount of
   // different types "infinity" and limit ourselves there.
-  using LimitedTypes = LimitedSet<HeapType, 2>;
-
-  // The possible types at a location. This is a vector in order to handle the
-  // case of tuples; if the value is not a tuple then we only use the first
-  // index.
-  using LocationTypes = SmallVector<LimitedTypes, 1>;
+  using LocationTypes = LimitedSet<HeapType, 2>;
 
   // Get the types possible at a location.
-  // TODO maybe getTupleTypes and this one returns [0] or nothing?
   LocationTypes getTypes(Location location) {
     auto iter = flowInfoMap.find(location);
     if (iter == flowInfoMap.end()) {

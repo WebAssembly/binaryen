@@ -47,7 +47,7 @@ struct PossibleTypesPass : public Pass {
     struct Optimizer
       : public WalkerPass<
           PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
-      bool isFunctionParallel() override { return true; }
+      // bool isFunctionParallel() override { return true; }
 
       PossibleTypes::Oracle& oracle;
 
@@ -70,12 +70,20 @@ struct PossibleTypesPass : public Pass {
 
       void visitExpression(Expression* curr) {
         auto type = curr->type;
+        if (type.isTuple()) {
+          // TODO: tuple types.
+          return;
+        }
         if (type.isNonNullable() &&
-            oracle.getTypes(PossibleTypes::ExpressionLocation{curr}).empty()) {
+            oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0}).empty()) {
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
           auto& wasm = *getModule();
+auto LIMIT = atoi(getenv("LIMIT"));
+if (LIMIT == 0) return;
+LIMIT--;
+
           Builder builder(wasm);
           if (canRemove(curr)) {
             replaceCurrent(
@@ -97,13 +105,14 @@ struct PossibleTypesPass : public Pass {
 
       void visitFunction(Function* func) {
         if (optimized) {
+          optimized = false;
           // Optimization may introduce more unreachables, which we need to
           // propagate.
           ReFinalize().walkFunctionInModule(func, getModule());
 
           // We may add blocks around pops, which we must fix up.
           EHUtils::handleBlockNestedPops(func, *getModule());
-        }
+                  }
       }
     };
 
