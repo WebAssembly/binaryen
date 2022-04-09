@@ -80,10 +80,11 @@ struct PossibleTypesPass : public Pass {
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
           auto& wasm = *getModule();
+#if 0
 auto LIMIT = atoi(getenv("LIMIT"));
 if (LIMIT == 0) return;
 LIMIT--;
-
+#endif
           Builder builder(wasm);
           if (canRemove(curr)) {
             replaceCurrent(
@@ -112,7 +113,7 @@ LIMIT--;
 
           // We may add blocks around pops, which we must fix up.
           EHUtils::handleBlockNestedPops(func, *getModule());
-                  }
+        }
       }
     };
 
