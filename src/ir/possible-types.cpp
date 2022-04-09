@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 1
+#define POSSIBLE_TYPES_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -40,6 +40,8 @@ void dump(Location location) {
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc " << loc->func->name << " : " << loc->index
               << '\n';
+  } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
+    std::cout << "  globalloc " << loc->name << '\n';
   } else {
     std::cout << "  (other)\n";
   }
@@ -54,8 +56,10 @@ struct FuncInfo {
   //       vector using a set?
   std::vector<Connection> connections;
 
-  // All the allocations (struct.new, etc.) that we found in this function.
-  std::vector<Expression*> allocations;
+  // All the roots of the graph, that is, places where we should mark a type as
+  // possible before starting the analysis. This includes struct.new, ref.func,
+  // etc. All possible types in the rest of the graph flow from such places.
+  std::vector<Expression*> roots;
 };
 
 bool containsRef(Type type) {
@@ -251,6 +255,10 @@ struct ConnectionFinder
     }
   }
 
+  void visitRefFunc(RefFunc* curr) {
+    info.roots.push_back(curr);
+  }
+
   // Iterates over a list of children and adds connections as needed. The
   // target of the connection is created using a function that is passed
   // in which receives the index of the child.
@@ -280,7 +288,7 @@ struct ConnectionFinder
     handleChildList(curr->operands, [&](Index i) {
       return StructLocation{type, i};
     });
-    info.allocations.push_back(curr);
+    info.roots.push_back(curr);
   }
   void visitArrayNew(ArrayNew* curr) {
     if (curr->type == Type::unreachable) {
@@ -292,7 +300,7 @@ struct ConnectionFinder
       info.connections.push_back({ExpressionLocation{curr->init, 0},
                                   ArrayLocation{curr->type.getHeapType()}});
     }
-    info.allocations.push_back(curr);
+    info.roots.push_back(curr);
   }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {
@@ -303,7 +311,7 @@ struct ConnectionFinder
       handleChildList(curr->values,
                       [&](Index i) { return ArrayLocation{type}; });
     }
-    info.allocations.push_back(curr);
+    info.roots.push_back(curr);
   }
 
   // Struct operations access the struct fields' locations.
@@ -451,7 +459,7 @@ void Oracle::analyze() {
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
-  std::vector<Expression*> allocations;
+  std::vector<Expression*> roots;
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "merging phase\n";
@@ -461,8 +469,8 @@ void Oracle::analyze() {
     for (auto& connection : info.connections) {
       connections.insert(connection);
     }
-    for (auto& allocation : info.allocations) {
-      allocations.push_back(allocation);
+    for (auto& root : info.roots) {
+      roots.push_back(root);
     }
   }
 
@@ -546,21 +554,20 @@ void Oracle::analyze() {
   std::cout << "prep phase\n";
 #endif
 
-  // The starting state for the flow is for each allocation to contain the type
-  // allocated there.
-  for (const auto& allocation : allocations) {
+  // The starting state for the flow is for each root to contain its type.
+  for (const auto& root : roots) {
     // The type must not be a reference (as we allocated here), and it cannot be
     // unreachable (we should have ignored such things before).
-    assert(allocation->type.isRef());
+    assert(root->type.isRef());
 
-    auto location = ExpressionLocation{allocation, 0};
+    auto location = ExpressionLocation{root, 0};
     auto& info = flowInfoMap[location];
 
-    // There must not be anything at this location already, as each allocation
-    // appears once in the vector of allocations.
+    // There must not be anything at this location already, as each root
+    // appears once in the vector of roots.
     assert(info.types.empty());
 
-    info.types.insert(allocation->type.getHeapType());
+    info.types.insert(root->type.getHeapType());
     work.push(location);
   }
 
@@ -578,11 +585,8 @@ void Oracle::analyze() {
     const auto& types = info.types;
 
 #ifdef POSSIBLE_TYPES_DEBUG
-    std::cout << "pop item with " << types.size() << " lanes\n";
+    std::cout << "pop item with " << types.size() << " types\n";
     dump(location);
-    for (auto& lane : types) {
-      std::cout << "  lane has " << lane.size() << " types\n";
-    }
 #endif
 
     // TODO: implement the following optimization, and remove the hardcoded
@@ -642,9 +646,6 @@ void Oracle::analyze() {
       };
 
       // Otherwise, the input and output must have the same number of lanes.
-#ifdef POSSIBLE_TYPES_DEBUG
-      std::cout << "  updating lane " << i << "\n";
-#endif
       updateTypes(types, targetTypes);
     }
   }

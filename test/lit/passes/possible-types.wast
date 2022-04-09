@@ -877,6 +877,8 @@
 
   (type $struct (struct))
 
+  ;; CHECK:      (elem declare func $func-2params-a)
+
   ;; CHECK:      (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -894,9 +896,7 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $func-2params-a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
@@ -1814,5 +1814,65 @@
   )
 )
 
-;; vtable in an itable is ignored? maybe the nesting in the global scope?
+;; Test a vtable-like pattern. This tests ref.func values flowing into struct
+;; locations being properly noticed.
+(module
+  ;; CHECK:      (type $vtable-A (struct_subtype (field funcref) (field funcref) data))
+  (type $vtable-A (struct_subtype (field (ref null func)) (field (ref null func)) data))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global-A (ref $vtable-A) (struct.new $vtable-A
+  ;; CHECK-NEXT:  (ref.func $foo)
+  ;; CHECK-NEXT:  (ref.null func)
+  ;; CHECK-NEXT: ))
+  (global $global-A (ref $vtable-A)
+    (struct.new $vtable-A
+      (ref.func $foo)
+      (ref.null func)
+    )
+  )
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (struct.get $vtable-A 0
+  ;; CHECK-NEXT:     (global.get $global-A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $vtable-A 1
+  ;; CHECK-NEXT:      (global.get $global-A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; The first item here contains a value and will not be modified, but the
+    ;; second only has null so we can optimize it.
+    (drop
+      (ref.as_non_null
+        (struct.get $vtable-A 0
+          (global.get $global-A)
+        )
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (struct.get $vtable-A 1
+          (global.get $global-A)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo)
+)
