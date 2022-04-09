@@ -1813,3 +1813,6 @@
     )
   )
 )
+
+;; vtable in an itable is ignored? maybe the nesting in the global scope?
+

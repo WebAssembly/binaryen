@@ -90,8 +90,10 @@ LIMIT--;
 #endif
           Builder builder(wasm);
           if (canRemove(curr)) {
+std::cout << "drop children\n" << *curr << "\n";
             replaceCurrent(getDroppedChildren(curr, wasm, builder.makeUnreachable()));
           } else {
+std::cout << "add unreachable after\n" << *curr << "\n";
             // We can't remove this, but we can at least put an unreachable
             // right after it.
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
