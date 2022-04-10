@@ -1,4 +1,3 @@
-# of possible types of the $null global: 0
-# of possible types of the $something global: 1
-  type: (struct_subtype data)
-# of possible types of the function's body: 2
+possible types of the $null global: unreachable
+possible types of the $something global: (ref $struct.0)
+possible types of the function's body: none

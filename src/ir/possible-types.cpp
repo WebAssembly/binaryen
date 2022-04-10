@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 1
+#define POSSIBLE_TYPES_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -582,7 +582,7 @@ void Oracle::analyze() {
     //       ref.cast that it would trap on.
     const auto& types = info.types;
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
     std::cout << "pop item with " << types.size() << " types\n";
     dump(location);
 #endif
@@ -617,7 +617,7 @@ void Oracle::analyze() {
 
     // Update the targets, and add the ones that change to the remaining work.
     for (const auto& target : targets) {
-#ifdef POSSIBLE_TYPES_DEBUG
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
       std::cout << "  send to target\n";
       dump(target);
 #endif
@@ -631,7 +631,7 @@ void Oracle::analyze() {
         if (inputs.getType() == Type::unreachable) {
           return;
         }
-#ifdef POSSIBLE_TYPES_DEBUG
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "    updateTypes: src has " << inputs.size()
                   << ", dst has " << outputs.size() << '\n';
 #endif

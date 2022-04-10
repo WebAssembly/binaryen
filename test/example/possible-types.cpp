@@ -38,19 +38,16 @@ int main() {
       )
     )");
     Oracle oracle(*wasm);
-    std::cout << "# of possible types of the $null global: "
-              << oracle.getTypes(GlobalLocation{"foo"}).size() << '\n';
-    std::cout << "# of possible types of the $something global: "
-              << oracle.getTypes(GlobalLocation{"something"}).size() << '\n';
-    for (auto t : oracle.getTypes(GlobalLocation{"something"})) {
-      std::cout << "  type: " << t << "\n";
-    }
+    std::cout << "possible types of the $null global: "
+              << oracle.getTypes(GlobalLocation{"foo"}).getType() << '\n';
+    std::cout << "possible types of the $something global: "
+              << oracle.getTypes(GlobalLocation{"something"}).getType() << '\n';
   }
 
   {
     // Test for a node with many possible types. The pass limits how many it
     // notices to not use excessive memory, so even though 4 are possible here,
-    // we'll just report the limit (2).
+    // we'll just report that more than one is possible using Type::none).
     auto wasm = parse(R"(
       (module
         (type $A (struct_subtype (field i32) data))
@@ -76,8 +73,8 @@ int main() {
     )");
     Oracle oracle(*wasm);
     std::cout
-      << "# of possible types of the function's body: "
-      << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).size()
+      << "possible types of the function's body: "
+      << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).getType()
       << '\n';
   }
 }
