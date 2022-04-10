@@ -29,7 +29,7 @@ namespace wasm::PossibleTypes {
 
 namespace {
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
     std::cout << "  exprloc \n" << *loc->expr << '\n';
