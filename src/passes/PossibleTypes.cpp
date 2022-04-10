@@ -47,7 +47,7 @@ struct PossibleTypesPass : public Pass {
     struct Optimizer
       : public WalkerPass<
           PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
-      // bool isFunctionParallel() override { return true; }
+      bool isFunctionParallel() override { return true; }
       // waka
 
       PossibleTypes::Oracle& oracle;
@@ -71,8 +71,8 @@ struct PossibleTypesPass : public Pass {
       }
 
       void visitExpression(Expression* curr) {
-        if (!getFunction())
-          return; // waka in non-parallel
+//        if (!getFunction())
+  //        return; // waka in non-parallel
         auto type = curr->type;
         if (type.isTuple()) {
           // TODO: tuple types.
