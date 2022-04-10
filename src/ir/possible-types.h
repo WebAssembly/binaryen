@@ -19,7 +19,7 @@
 
 #include <variant>
 
-#include "support/limited_set.h"
+#include "ir/possible-constant.h"
 #include "wasm.h"
 
 namespace wasm::PossibleTypes {
@@ -259,13 +259,8 @@ class Oracle {
 public:
   Oracle(Module& wasm) : wasm(wasm) { analyze(); }
 
-  // A set of possible types at a location. The types are in a limited set as we
-  // do not want the analysis to explode in memory usage; we consider a certain
-  // amount of different types "infinity" and limit ourselves there.
-  using LocationTypes = LimitedSet<HeapType, 2>;
-
   // Get the types possible at a location.
-  LocationTypes getTypes(Location location) {
+  PossibleValues getTypes(Location location) {
     auto iter = flowInfoMap.find(location);
     if (iter == flowInfoMap.end()) {
       return {};
@@ -278,7 +273,7 @@ private:
   // graph.
   struct LocationInfo {
     // The types possible at this location.
-    LocationTypes types;
+    PossibleValues types;
 
     // The targets to which this sends types.
     std::vector<Location> targets;

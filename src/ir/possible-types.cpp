@@ -563,9 +563,9 @@ void Oracle::analyze() {
 
     // There must not be anything at this location already, as each root
     // appears once in the vector of roots.
-    assert(info.types.empty());
+    assert(info.types.getType() == Type::unreachable);
 
-    info.types.insert(root->type.getHeapType());
+    info.types.note(root, wasm);
     work.push(location);
   }
 
@@ -626,18 +626,16 @@ void Oracle::analyze() {
 
       // Update types in one lane of a tuple, copying from inputs to outputs and
       // adding the target to the remaining work if we added something new.
-      auto updateTypes = [&](const LocationTypes& inputs,
-                             LocationTypes& outputs) {
-        if (inputs.empty()) {
+      auto updateTypes = [&](const PossibleValues& inputs,
+                             PossibleValues& outputs) {
+        if (inputs.getType() == Type::unreachable) {
           return;
         }
 #ifdef POSSIBLE_TYPES_DEBUG
         std::cout << "    updateTypes: src has " << inputs.size()
                   << ", dst has " << outputs.size() << '\n';
 #endif
-        auto oldSize = outputs.size();
-        outputs.update(inputs);
-        if (outputs.size() != oldSize) {
+        if (outputs.combine(inputs)) {
           // We inserted something, so there is work to do in this target.
           work.push(target);
         }

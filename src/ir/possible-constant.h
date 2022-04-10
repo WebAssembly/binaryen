@@ -224,6 +224,10 @@ public:
     combine(Variant(expr->type));
   }
 
+  template<typename T> void note(T curr) {
+    note(Variant(curr));
+  }
+
   // Notes a value that is unknown - it can be anything. We have failed to
   // identify a constant value here.
   void noteUnknown() { value = Many(); }
@@ -254,6 +258,7 @@ public:
 
     // Neither is None, and neither is Many.
 
+    // TODO: do we need special null handling here?
     if (other.value == value) {
       return false;
     }
@@ -268,6 +273,9 @@ public:
       value = Type(getType());
       return true;
     }
+
+    // TODO: lub of the different types? lub returns none for no possible lub,
+    //       so we also do not need the Many state.
 
     // Worst case.
     value = Many();
@@ -294,6 +302,8 @@ public:
     return std::get<ImmutableGlobal>(value).name;
   }
 
+  // Return the types possible here. If no type is possible, returns
+  // unreachable; if many types are, returns none.
   Type getType() const {
     if (auto* literal = std::get_if<Literal>(&value)) {
       return literal->type;
@@ -301,6 +311,10 @@ public:
       return global->type;
     } else if (auto* type = std::get_if<Type>(&value)) {
       return *type;
+    } else if (std::get_if<None>(&value)) {
+      return Type::unreachable;
+    } else if (std::get_if<Many>(&value)) {
+      return Type::none;
     } else {
       WASM_UNREACHABLE("bad value");
     }

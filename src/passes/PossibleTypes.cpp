@@ -80,7 +80,7 @@ struct PossibleTypesPass : public Pass {
         }
         if (type.isNonNullable() &&
             oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0})
-              .empty()) {
+              .getType() == Type::unreachable) {
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
