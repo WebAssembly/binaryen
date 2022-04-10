@@ -60,6 +60,7 @@ struct PossibleTypesPass : public Pass {
 
       // TODO move this into drops.h, a single function that is told "this is
       // not actually needed; remove it as best you can"
+      // We also could use a TypeUpdater here, but that would be slower.
       bool canRemove(Expression* curr) {
         // We can remove almost anything, but not a branch target, as we still
         // need the target for the branches to it to validate.
