@@ -63,7 +63,6 @@ struct FuncInfo {
 };
 
 bool containsRef(Type type) {
-return true;
   if (type.isRef()) {
     return true;
   }
@@ -78,7 +77,6 @@ return true;
 }
 
 template<typename T> bool containsRef(const T& vec) {
-return true;
   for (auto* expr : vec) {
     if (expr->type.isRef()) {
       return true;
@@ -105,7 +103,7 @@ struct ConnectionFinder
     // visit*() methods (however, it may be slower TODO)
     BranchUtils::operateOnScopeNameUsesAndSentValues(
       curr, [&](Name target, Expression* value) {
-        if (value) {
+        if (value && value->type.isRef()) {
           assert(!value->type.isTuple()); // TODO
           info.connections.push_back({ExpressionLocation{value, 0},
                                       BranchLocation{getFunction(), target}});
@@ -113,7 +111,7 @@ struct ConnectionFinder
       });
 
     // Branch targets receive the things sent to them and flow them out.
-    if (1) {
+    if (curr->type.isRef()) {
       assert(!curr->type.isTuple()); // TODO
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         info.connections.push_back(
@@ -178,13 +176,13 @@ struct ConnectionFinder
 
   // Globals read and write from their location.
   void visitGlobalGet(GlobalGet* curr) {
-    if (1) {
+    if (curr->type.isRef()) {
       info.connections.push_back(
         {GlobalLocation{curr->name}, ExpressionLocation{curr, 0}});
     }
   }
   void visitGlobalSet(GlobalSet* curr) {
-    if (1) {
+    if (curr->value->type.isRef()) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0}, GlobalLocation{curr->name}});
     }
@@ -199,7 +197,7 @@ struct ConnectionFinder
                   std::function<Location(Index)> makeResultLocation) {
     Index i = 0;
     for (auto* operand : operands) {
-      if (1) {
+      if (operand->type.isRef()) {
         info.connections.push_back(
           {ExpressionLocation{operand, 0}, makeParamLocation(i)});
       }
@@ -243,7 +241,7 @@ struct ConnectionFinder
   }
   void visitCallRef(CallRef* curr) {
     auto targetType = curr->target->type;
-    if (1) {
+    if (targetType.isRef()) {
       auto target = targetType.getHeapType();
       handleCall(
         curr,
@@ -267,7 +265,7 @@ struct ConnectionFinder
     Index i = 0;
     for (auto* operand : operands) {
       assert(!operand->type.isTuple());
-      if (1) {
+      if (operand->type.isRef()) {
         info.connections.push_back(
           {ExpressionLocation{operand, 0}, makeTarget(i)});
       }
@@ -296,7 +294,7 @@ struct ConnectionFinder
     }
     // Note that if there is no initial value here then it is null, which is
     // not something we need to connect.
-    if (curr->init) {
+    if (curr->init && curr->init->type.isRef()) {
       info.connections.push_back({ExpressionLocation{curr->init, 0},
                                   ArrayLocation{curr->type.getHeapType()}});
     }
@@ -306,7 +304,7 @@ struct ConnectionFinder
     if (curr->type == Type::unreachable) {
       return;
     }
-    if (!curr->values.empty()) {
+    if (!curr->values.empty() && curr->values[0]->type.isRef()) {
       auto type = curr->type.getHeapType();
       handleChildList(curr->values,
                       [&](Index i) { return ArrayLocation{type}; });
@@ -316,14 +314,14 @@ struct ConnectionFinder
 
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
-    if (1) {
+    if (curr->type.isRef()) {
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
          ExpressionLocation{curr, 0}});
     }
   }
   void visitStructSet(StructSet* curr) {
-    if (1) {
+    if (curr->value->type.isRef()) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0},
          StructLocation{curr->ref->type.getHeapType(), curr->index}});
@@ -331,13 +329,13 @@ struct ConnectionFinder
   }
   // Array operations access the array's location.
   void visitArrayGet(ArrayGet* curr) {
-    if (1) {
+    if (curr->type.isRef()) {
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
                                   ExpressionLocation{curr, 0}});
     }
   }
   void visitArraySet(ArraySet* curr) {
-    if (1) {
+    if (curr->value->type.isRef()) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
@@ -447,7 +445,7 @@ void Oracle::analyze() {
   for (auto& global : wasm.globals) {
     if (!global->imported()) {
       auto* init = global->init;
-      if (1) {
+      if (init->type.isRef()) {
         globalInfo.connections.push_back(
           {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
       }
@@ -473,9 +471,6 @@ void Oracle::analyze() {
       roots.push_back(root);
     }
   }
-
-  // We no longer need the function-level info.
-  analysis.map.clear();
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "func phase\n";
@@ -561,7 +556,7 @@ void Oracle::analyze() {
   for (const auto& root : roots) {
     // The type must not be a reference (as we allocated here), and it cannot be
     // unreachable (we should have ignored such things before).
-    assert(1);
+    assert(root->type.isRef());
 
     auto location = ExpressionLocation{root, 0};
     auto& info = flowInfoMap[location];
