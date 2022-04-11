@@ -74,23 +74,20 @@ struct ConnectionFinder
     if (type == Type::unreachable) {
       return false;
     }
-    return true;
-#if 0
-    // TODO: make a variant that only considers isRelevant() to be relevant,
-    //       and that can just do devirtualization while ignoring everything
-    //       else.
-    if (type.isRef()) {
-      return true;
-    }
     if (type.isTuple()) {
       for (auto t : type) {
-        if (t.isRef()) {
+        if (isRelevant(t)) {
           return true;
         }
       }
     }
-    return false;
-#endif
+    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
+      // If nominal typing is enabled then we cannot handle refs, as we need
+      // to do a subtyping analysis there (which SubTyping only supports in
+      // nominal mode).
+      return false;
+    }
+    return true;
   }
 
   bool isRelevant(Expression* curr) {
@@ -519,31 +516,33 @@ void Oracle::analyze() {
   std::cout << "struct phase\n";
 #endif
 
-  // Add subtyping connections, but see the TODO below about how we can do this
-  // "dynamically" in a more effective but complex way.
-  SubTypes subTypes(wasm);
-  for (auto type : subTypes.types) {
-    // Tie two locations together, linking them both ways.
-    auto tie = [&](const Location& a, const Location& b) {
-      connections.insert({a, b});
-      connections.insert({b, a});
-    };
-    if (type.isStruct()) {
-      // StructLocations refer to a struct.get/set/new and so in general they
-      // may refer to data of a subtype of the type written on them. Connect to
-      // their immediate subtypes here in both directions.
-      auto numFields = type.getStruct().fields.size();
-      for (auto subType : subTypes.getSubTypes(type)) {
-        for (Index i = 0; i < numFields; i++) {
-          tie(StructLocation{type, i}, StructLocation{subType, i});
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    // Add subtyping connections, but see the TODO below about how we can do this
+    // "dynamically" in a more effective but complex way.
+    SubTypes subTypes(wasm);
+    for (auto type : subTypes.types) {
+      // Tie two locations together, linking them both ways.
+      auto tie = [&](const Location& a, const Location& b) {
+        connections.insert({a, b});
+        connections.insert({b, a});
+      };
+      if (type.isStruct()) {
+        // StructLocations refer to a struct.get/set/new and so in general they
+        // may refer to data of a subtype of the type written on them. Connect to
+        // their immediate subtypes here in both directions.
+        auto numFields = type.getStruct().fields.size();
+        for (auto subType : subTypes.getSubTypes(type)) {
+          for (Index i = 0; i < numFields; i++) {
+            tie(StructLocation{type, i}, StructLocation{subType, i});
+          }
         }
-      }
-    } else if (type.isArray()) {
-      // StructLocations refer to a struct.get/set/new and so in general they
-      // may refer to data of a subtype of the type written on them. Connect to
-      // their immediate subtypes here.
-      for (auto subType : subTypes.getSubTypes(type)) {
-        tie(ArrayLocation{type}, ArrayLocation{subType});
+      } else if (type.isArray()) {
+        // StructLocations refer to a struct.get/set/new and so in general they
+        // may refer to data of a subtype of the type written on them. Connect to
+        // their immediate subtypes here.
+        for (auto subType : subTypes.getSubTypes(type)) {
+          tie(ArrayLocation{type}, ArrayLocation{subType});
+        }
       }
     }
   }
