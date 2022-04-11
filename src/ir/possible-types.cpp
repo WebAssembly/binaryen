@@ -37,6 +37,9 @@ void dump(Location location) {
     std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
+  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
+    std::cout << "  localloc " << loc->func->name << " : " << loc->index
+              << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc " << loc->func->name << " : " << loc->index
               << '\n';
@@ -628,6 +631,10 @@ void Oracle::analyze() {
   // We no longer need the function-level info.
   analysis.map.clear();
 
+#ifdef POSSIBLE_TYPES_DEBUG
+  std::cout << "external phase\n";
+#endif
+
   // Add unknown incoming roots from parameters to exported functions and other
   // cases where we can't see the caller.
   auto calledFromOutside = [&](Name funcName) {
@@ -738,11 +745,17 @@ void Oracle::analyze() {
   UniqueDeferredQueue<Location> work;
 
 #ifdef POSSIBLE_TYPES_DEBUG
-  std::cout << "prep phase\n";
+  std::cout << "roots phase\n";
 #endif
 
   // Set up the roots, which are the starting state for the flow analysis.
   for (const auto& [location, value] : roots) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+    std::cout << "  init root\n";
+    dump(location);
+    value.dump(std::cout);
+    std::cout << '\n';
+#endif
     flowInfoMap[location].types = value;
     work.push(location);
   }
