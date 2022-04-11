@@ -62,37 +62,46 @@ struct FuncInfo {
   std::vector<Expression*> roots;
 };
 
-bool containsRef(Type type) {
-return true;
-  if (type.isRef()) {
-    return true;
-  }
-  if (type.isTuple()) {
-    for (auto t : type) {
-      if (t.isRef()) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-template<typename T> bool containsRef(const T& vec) {
-return true;
-  for (auto* expr : vec) {
-    if (expr->type.isRef()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 struct ConnectionFinder
   : public PostWalker<ConnectionFinder,
                       UnifiedExpressionVisitor<ConnectionFinder>> {
   FuncInfo& info;
 
   ConnectionFinder(FuncInfo& info) : info(info) {}
+
+  bool isRelevant(Type type) {
+    // TODO: make a variant that only considers isRelevant() to be relevant,
+    //       and that can just do devirtualization while ignoring everything
+    //       else.
+    return true;
+#if 0
+    if (type.isRef()) {
+      return true;
+    }
+    if (type.isTuple()) {
+      for (auto t : type) {
+        if (t.isRef()) {
+          return true;
+        }
+      }
+    }
+    return false;
+#endif
+  }
+
+  bool isRelevant(Expression* curr) {
+    return curr && isRelevant(curr->type);
+  }
+
+  template<typename T> bool isRelevant(const T& vec) {
+  return true;
+    for (auto* expr : vec) {
+      if (isRelevant(expr->type)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   // Each visit*() call is responsible for connecting the children of a
   // node to that node. Responsibility for connecting the node's output to
@@ -114,7 +123,7 @@ struct ConnectionFinder
       });
 
     // Branch targets receive the things sent to them and flow them out.
-    if (1) {
+    if (isRelevant(curr->type)) {
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
           info.connections.push_back(
@@ -132,7 +141,7 @@ struct ConnectionFinder
     // current one, as it might return an output that includes them. We only do
     // so for references or tuples containing a reference as anything else can
     // be ignored.
-    if (!containsRef(curr->type)) {
+    if (!isRelevant(curr->type)) {
       return;
     }
 
@@ -140,7 +149,7 @@ struct ConnectionFinder
       // We handle the simple case here of a child that passes its entire value
       // to the parent. Other things (like TupleMake) should be handled in
       // specific visitors below.
-      if (!containsRef(child->type) ||
+      if (!isRelevant(child->type) ||
           curr->type.size() != child->type.size()) {
         continue;
       }
@@ -155,7 +164,7 @@ struct ConnectionFinder
   // Locals read and write to their index.
   // TODO: we could use a LocalGraph for better precision
   void visitLocalGet(LocalGet* curr) {
-    if (containsRef(curr->type)) {
+    if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->type.size(); i++) {
         info.connections.push_back(
           {LocalLocation{getFunction(), curr->index, i},
@@ -164,7 +173,7 @@ struct ConnectionFinder
     }
   }
   void visitLocalSet(LocalSet* curr) {
-    if (!containsRef(curr->value->type)) {
+    if (!isRelevant(curr->value->type)) {
       return;
     }
     for (Index i = 0; i < curr->value->type.size(); i++) {
@@ -180,13 +189,13 @@ struct ConnectionFinder
 
   // Globals read and write from their location.
   void visitGlobalGet(GlobalGet* curr) {
-    if (1) {
+    if (isRelevant(curr->type)) {
       info.connections.push_back(
         {GlobalLocation{curr->name}, ExpressionLocation{curr, 0}});
     }
   }
   void visitGlobalSet(GlobalSet* curr) {
-    if (1) {
+    if (isRelevant(curr->value->type)) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0}, GlobalLocation{curr->name}});
     }
@@ -201,7 +210,7 @@ struct ConnectionFinder
                   std::function<Location(Index)> makeResultLocation) {
     Index i = 0;
     for (auto* operand : operands) {
-      if (1) {
+      if (isRelevant(operand->type)) {
         info.connections.push_back(
           {ExpressionLocation{operand, 0}, makeParamLocation(i)});
       }
@@ -209,7 +218,7 @@ struct ConnectionFinder
     }
 
     // Add results, if anything flows out.
-    if (containsRef(curr->type)) {
+    if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->type.size(); i++) {
         info.connections.push_back(
           {makeResultLocation(i), ExpressionLocation{curr, i}});
@@ -245,7 +254,7 @@ struct ConnectionFinder
   }
   void visitCallRef(CallRef* curr) {
     auto targetType = curr->target->type;
-    if (1) {
+    if (isRelevant(targetType)) {
       auto target = targetType.getHeapType();
       handleCall(
         curr,
@@ -269,7 +278,7 @@ struct ConnectionFinder
     Index i = 0;
     for (auto* operand : operands) {
       assert(!operand->type.isTuple());
-      if (1) {
+      if (isRelevant(operand->type)) {
         info.connections.push_back(
           {ExpressionLocation{operand, 0}, makeTarget(i)});
       }
@@ -318,14 +327,14 @@ struct ConnectionFinder
 
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
-    if (1) {
+    if (isRelevant(curr->type)) {
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
          ExpressionLocation{curr, 0}});
     }
   }
   void visitStructSet(StructSet* curr) {
-    if (1) {
+    if (isRelevant(curr->value->type)) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0},
          StructLocation{curr->ref->type.getHeapType(), curr->index}});
@@ -333,13 +342,13 @@ struct ConnectionFinder
   }
   // Array operations access the array's location.
   void visitArrayGet(ArrayGet* curr) {
-    if (1) {
+    if (isRelevant(curr->type)) {
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
                                   ExpressionLocation{curr, 0}});
     }
   }
   void visitArraySet(ArraySet* curr) {
-    if (1) {
+    if (isRelevant(curr->value->type)) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
@@ -360,7 +369,7 @@ struct ConnectionFinder
       FindAll<Pop> pops(body);
       assert(!pops.list.empty());
       auto* pop = pops.list[0];
-      if (containsRef(pop->type)) {
+      if (isRelevant(pop->type)) {
         for (Index i = 0; i < pop->type.size(); i++) {
           info.connections.push_back(
             {TagLocation{tag, i}, ExpressionLocation{pop, i}});
@@ -370,7 +379,7 @@ struct ConnectionFinder
   }
   void visitThrow(Throw* curr) {
     auto& operands = curr->operands;
-    if (!containsRef(operands)) {
+    if (!isRelevant(operands)) {
       return;
     }
 
@@ -385,7 +394,7 @@ struct ConnectionFinder
   void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo"); }
 
   void visitTupleMake(TupleMake* curr) {
-    if (containsRef(curr->type)) {
+    if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->operands.size(); i++) {
         info.connections.push_back({ExpressionLocation{curr->operands[i], 0},
                                     ExpressionLocation{curr, i}});
@@ -393,14 +402,14 @@ struct ConnectionFinder
     }
   }
   void visitTupleExtract(TupleExtract* curr) {
-    if (containsRef(curr->type)) {
+    if (isRelevant(curr->type)) {
       info.connections.push_back({ExpressionLocation{curr->tuple, curr->index},
                                   ExpressionLocation{curr, 0}});
     }
   }
 
   void addResult(Expression* value) {
-    if (value && containsRef(value->type)) {
+    if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
         info.connections.push_back(
           {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
@@ -442,14 +451,15 @@ void Oracle::analyze() {
   // Also walk the global module code, adding it to the map as a function of
   // null.
   auto& globalInfo = analysis.map[nullptr];
-  ConnectionFinder(globalInfo).walkModuleCode(&wasm);
+  ConnectionFinder finder(globalInfo);
+  finder.walkModuleCode(&wasm);
 
   // Connect global init values (which we've just processed, as part of the
   // module code) to the globals they initialize.
   for (auto& global : wasm.globals) {
     if (!global->imported()) {
       auto* init = global->init;
-      if (1) {
+      if (finder.isRelevant(init->type)) {
         globalInfo.connections.push_back(
           {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
       }
@@ -563,7 +573,7 @@ void Oracle::analyze() {
   for (const auto& root : roots) {
     // The type must not be a reference (as we allocated here), and it cannot be
     // unreachable (we should have ignored such things before).
-    assert(1);
+    assert(finder.isRelevant(root->type));
 
     auto location = ExpressionLocation{root, 0};
     auto& info = flowInfoMap[location];
