@@ -17,7 +17,21 @@
 
   ;; CHECK:      (func $bar (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $bar (param $x i32)
@@ -36,7 +50,12 @@
   ;; CHECK:      (func $baz (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.eqz
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (i32.const 1)
@@ -62,3 +81,6 @@
     )
   )
 )
+
+;; TODO: test "cycles" with various things involved, another thing other
+;;       passes fail at
