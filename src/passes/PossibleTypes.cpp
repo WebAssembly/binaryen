@@ -131,6 +131,13 @@ struct PossibleTypesPass : public Pass {
           // TODO: tuple types.
           return;
         }
+
+        if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
+          // Without nominal typing we skip analysis of subtyping, so we cannot
+          // infer anything about refs.
+          return;
+        }
+
         auto values =
           oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
 
