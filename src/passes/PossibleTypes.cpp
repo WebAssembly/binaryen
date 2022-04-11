@@ -74,27 +74,52 @@ struct PossibleTypesPass : public Pass {
         //        if (!getFunction())
         //        return; // waka in non-parallel
         auto type = curr->type;
+        if (curr->is<Const>() || curr->is<RefFunc>()) { // TODO use helper
+          return;
+        }
+
+        auto& options = getPassOptions();
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+
+        auto replaceWithUnreachable = [&]() {
+          if (canRemove(curr)) {
+            replaceCurrent(getDroppedChildren(
+              curr, builder.makeUnreachable(), wasm, options));
+          } else {
+            // We can't remove this, but we can at least put an unreachable
+            // right after it.
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                                builder.makeUnreachable()));
+          }
+          optimized = true;
+        };
+
         if (type.isTuple()) {
           // TODO: tuple types.
           return;
         }
-        if (curr->is<Const>() || curr->is<RefFunc>()) { // TODO use helper
-          return;
-        }
-        auto& options = getPassOptions();
-        auto& wasm = *getModule();
-        Builder builder(wasm);
         auto values =
           oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
+
         if (values.isConstant()) {
           auto* c = values.makeExpression(wasm);
-          if (canRemove(curr)) {
-            replaceCurrent(getDroppedChildren(curr, c, wasm, options));
+          // We can only place the constant value here if it has the right
+          // type. For example, a block may return (ref any), that is, not allow
+          // a null, but in practice only a null may flow there.
+          if (c->type == curr->type) {
+            if (canRemove(curr)) {
+              replaceCurrent(getDroppedChildren(curr, c, wasm, options));
+            } else {
+              // We can't remove this, but we can at least put an unreachable
+              // right after it.
+              replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
+            }
           } else {
-            // We can't remove this, but we can at least put an unreachable
-            // right after it.
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
+            // The type does *not* match. This means the code is unreachable.
+            replaceWithUnreachable();
           }
+          return;
         }
         if (type.isNonNullable() && values.getType() == Type::unreachable) {
           // This cannot contain a null, but also we have inferred that it
@@ -106,16 +131,7 @@ struct PossibleTypesPass : public Pass {
             return;
           LIMIT--;
 #endif
-          if (canRemove(curr)) {
-            replaceCurrent(getDroppedChildren(
-              curr, builder.makeUnreachable(), wasm, options));
-          } else {
-            // We can't remove this, but we can at least put an unreachable
-            // right after it.
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                                builder.makeUnreachable()));
-          }
-          optimized = true;
+          replaceWithUnreachable();
         }
       }
 
