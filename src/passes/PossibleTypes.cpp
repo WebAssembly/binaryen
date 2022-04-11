@@ -32,6 +32,7 @@
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
 #include "ir/possible-types.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm.h"
@@ -77,14 +78,36 @@ struct PossibleTypesPass : public Pass {
         return true;
       }
 
+      // Given we know an expression is equivalent to a constant, check if we
+      // should in fact replace it with that constant.
+      bool shouldOptimizeToConstant(Expression* curr) {
+        // We should not optimize something that is already a constant. But we
+        // can just assert on that as we should have not even gotten here, as
+        // there is an early exit for that.
+        assert(!Properties::isConstantExpression(curr));
+
+        // The case that we do want to avoid here is if this looks like the
+        // output of our optimization, which is (block .. (constant)), a block
+        // ending in a constant and with no breaks. If this is already that,
+        // then do nothing (this avoids repeated runs of the pass monotonically
+        // increasing code size for no benefit).
+        if (auto* block = curr->dynCast<Block>()) {
+          // If we got here, the list cannot be empty - an empty block is not
+          // equivalent to any constant, so a logic error occurred before.
+          assert(!block->list.empty());
+          if (!block->name.is() && Properties::isConstantExpression(block->list.back()) {
+            return false;
+          }
+        }
+        return true;
+      }
+
       void visitExpression(Expression* curr) {
-        //        if (!getFunction())
-        //        return; // waka in non-parallel
-        auto type = curr->type;
-        if (curr->is<Const>() || curr->is<RefFunc>()) { // TODO use helper
+        if (Properties::isConstantExpression(curr)) {
           return;
         }
 
+        auto type = curr->type;
         auto& options = getPassOptions();
         auto& wasm = *getModule();
         Builder builder(wasm);
@@ -110,6 +133,10 @@ struct PossibleTypesPass : public Pass {
           oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
 
         if (values.isConstant()) {
+          if (!shouldOptimizeToConstant(curr)) {
+            return;
+          }
+
           auto* c = values.makeExpression(wasm);
           // We can only place the constant value here if it has the right
           // type. For example, a block may return (ref any), that is, not allow
