@@ -156,7 +156,8 @@
     (if
       (local.get $param)
       (local.set $x
-        ;; As above, but now we set 0 here. We can optimize in this case.
+        ;; As above, but now we set 0 here. We can optimize the local.get to 0
+        ;; in this case.
         (i32.const 0)
       )
     )
