@@ -45,7 +45,6 @@
 namespace wasm {
 
 static TypeSystem typeSystem = TypeSystem::Equirecursive;
-//static TypeSystem typeSystem = TypeSystem::Nominal; // XXX nominal fuzzing Equirecursive;
 
 void setTypeSystem(TypeSystem system) { typeSystem = system; }
 
