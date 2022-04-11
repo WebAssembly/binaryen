@@ -630,6 +630,11 @@ void Oracle::analyze() {
   // We no longer need the function-level info.
   analysis.map.clear();
 
+  // Add unknown incoming roots from parameters to exported functions.
+  // TODO: Do the same for functions whose reference is taken/escapes to the
+  //       outside. E.g. JS can call the function via the table.
+
+
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "func phase\n";
 #endif
