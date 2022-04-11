@@ -532,8 +532,6 @@ struct ConnectionFinder
   void addResult(Expression* value) {
     if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
-        std::cout << "adding reuslt " << *value << " in " << getFunction()->name
-                  << '\n';
         info.connections.push_back(
           {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
       }
@@ -553,7 +551,7 @@ struct ConnectionFinder
             info.connections.push_back(
               {loc, LocalLocation{curr, i, j}}
             );
-            addRoot(loc, Literal::makeNull(t));
+            addRoot(loc, Literal::makeZero(t));
           }
           j++;
         }
