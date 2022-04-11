@@ -134,14 +134,10 @@ struct PossibleTypesPass : public Pass {
         auto values =
           oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
 
-std::cout << "a\n" << *curr << '\n';
         if (values.isConstant()) {
-std::cout << "b\n";
-
           if (!shouldOptimizeToConstant(curr)) {
             return;
           }
-std::cout << "c\n";
 
           auto* c = values.makeExpression(wasm);
           // We can only place the constant value here if it has the right
