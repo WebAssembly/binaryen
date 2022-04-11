@@ -65,13 +65,13 @@ struct FuncInfo {
 
 struct ConnectionFinder
   : public PostWalker<ConnectionFinder,
-                      UnifiedExpressionVisitor<ConnectionFinder>> {
+                      OverriddenVisitor<ConnectionFinder>> {
   FuncInfo& info;
 
   ConnectionFinder(FuncInfo& info) : info(info) {}
 
   bool isRelevant(Type type) {
-    if (type == Type::unreachable) {
+    if (type == Type::unreachable || type == type::none) {
       return false;
     }
     if (type.isTuple()) {
@@ -109,7 +109,9 @@ struct ConnectionFinder
   // anywhere else (another expression or the function itself, if we are at
   // the top level) is the responsibility of the outside.
 
-  void visitExpression(Expression* curr) {
+  // Handles the value sent in a break instruction. Does not handle anything
+  // else like the condition etc.
+  void handleBreakValue(Expression* curr) {
     // Breaks send values to their destinations. Handle that here using
     // existing utility code which is shorter than implementing multiple
     // visit*() methods (however, it may be slower TODO)
@@ -122,8 +124,11 @@ struct ConnectionFinder
           }
         }
       });
+  }
 
-    // Branch targets receive the things sent to them and flow them out.
+  // Handles receiving values from breaks at the target (block/loop).
+  void handleBreakTarget(Expression* curr) {
+    // Break targets receive the things sent to them and flow them out.
     if (isRelevant(curr->type)) {
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
@@ -132,29 +137,12 @@ struct ConnectionFinder
         }
       });
     }
-    // TODO: if we are a branch source or target, skip the loop later
-    // down? in general any ref-receiving instruction that reaches that
-    // loop will end up connecting a child ref to the current expression,
-    // but e.g. ref.is_* does not do so. OTOH ref.test's output is then an
-    // integer anyhow, so we don't actually reach the loop.
+  }
 
-    // The default behavior is to connect all input expressions to the
-    // current one, as it might return an output that includes them. We only do
-    // so for references or tuples containing a reference as anything else can
-    // be ignored.
-    if (!isRelevant(curr->type)) {
-      return;
-    }
-
-    for (auto* child : ChildIterator(curr)) {
-      // We handle the simple case here of a child that passes its entire value
-      // to the parent. Other things (like TupleMake) should be handled in
-      // specific visitors below.
-      if (!isRelevant(child->type) ||
-          curr->type.size() != child->type.size()) {
-        continue;
-      }
-
+  // Connect a child's value to the parent, that is, all things possible in the
+  // child may flow to the parent.
+  void connectChildToParent(Expression* child, Expression* parent) {
+    if (isRelevant(parent) && isRelevant(child)) {
       for (Index i = 0; i < curr->type.size(); i++) {
         info.connections.push_back(
           {ExpressionLocation{child, i}, ExpressionLocation{curr, i}});
@@ -162,8 +150,176 @@ struct ConnectionFinder
     }
   }
 
+  // Adds a root, if the expression is relevant.
+  void addRoot(Expression* curr, T contents) {
+    if (isRelevant(curr)) {
+      info.roots[curr] = T;
+    }
+  }
+
+  void visitBlock(Block* curr) {
+    handleBreakTarget(curr);
+  }
+  void visitIf(If* curr) {
+    connectChildToParent(curr->ifTrue, curr);
+    connectChildToParent(curr->ifFalse, curr);
+  }
+  void visitLoop(Loop* curr) {
+    handleBreakTarget(curr);
+  }
+  void visitBreak(Break* curr) {
+    handleBreakValue(curr);
+    // The value may also flow through in a br_if (the type will indicate that,
+    // which connectChildToParent will notice).
+    connectChildToParent(curr->value, curr);
+  }
+  void visitSwitch(Switch* curr) {
+    handleBreakValue(curr);
+  }
+  void visitLoad(Load* curr) {
+    // We can only infer the type here (at least for now), and likewise in all
+    // other memory operations.
+    addRoot(curr, curr->type);
+  }
+  void visitStore(Store* curr) {
+  }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitAtomicWait(AtomicWait* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitAtomicNotify(AtomicNotify* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitAtomicFence(AtomicFence* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitSIMDExtract(SIMDExtract* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitSIMDReplace(SIMDReplace* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitSIMDShuffle(SIMDShuffle* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitSIMDTernary(SIMDTernary* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitSIMDShift(SIMDShift* curr) {
+     addRoot(curr, curr->type);
+
+  }
+  void visitSIMDLoad(SIMDLoad* curr) {
+     addRoot(curr, curr->type);
+
+  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      addRoot(curr, curr->type);
+
+  }
+  void visitMemoryInit(MemoryInit* curr) {
+  }
+  void visitDataDrop(DataDrop* curr) {
+
+  }
+  void visitMemoryCopy(MemoryCopy* curr) {
+
+  }
+  void visitMemoryFill(MemoryFill* curr) {
+  }
   void visitConst(Const* curr) {
-    info.roots[curr] = curr->value;
+    addRoot(curr, curr->value);
+  }
+  void visitUnary(Unary* curr) {
+    // Assume we only know the type in all math operations (for now).
+    addRoot(curr, curr->type);
+
+  }
+  void visitBinary(Binary* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitSelect(Select* curr) {
+    connectChildToParent(curr->ifTrue, curr);
+    connectChildToParent(curr->ifFalse, curr);
+  }
+  void visitDrop(Drop* curr) {  }
+  void visitMemorySize(MemorySize* curr) {
+    addRoot(curr, curr->type);
+
+  }
+  void visitMemoryGrow(MemoryGrow* curr) { 
+      addRoot(curr, curr->type);
+ }
+  void visitRefNull(RefNull* curr) {
+    addRoot(curr, Literal::makeNull(curr->type));
+
+  }
+  void visitRefIs(RefIs* curr) {
+    // TODO the flow could infer the result here in some cases
+    addRoot(curr, curr->type);
+  }
+  void visitRefFunc(RefFunc* curr) { addRoot(curr, Literal(curr->func, curr->type)); }
+  void visitRefEq(RefEq* curr) { 
+      addRoot(curr, curr->type);
+ }
+  void visitTableGet(TableGet* curr) {
+    addRoot(curr, curr->type);
+
+  }
+  void visitTableSet(TableSet* curr) {
+  
+  }
+  void visitTableSize(TableSize* curr) {
+    addRoot(curr, curr->type);
+
+  }
+  void visitTableGrow(TableGrow* curr) {
+    addRoot(curr, curr->type);
+
+  }
+  
+  void visitNop(Nop* curr) { }
+  void visitUnreachable(Unreachable* curr) {  }
+  void visitPop(Pop* curr) {
+    // For now we only handle pops in a catch body, set visitTry()
+    WASM_UNREACHABLE("TODO: arbitrary pops");
+
+  }
+  void visitI31New(I31New* curr) {     addRoot(curr, curr->type);
+ }
+  void visitI31Get(I31Get* curr) {
+    // TODO: optimize like struct references
+    addRoot(curr, curr->type);
+
+  }
+
+  void visitRefTest(RefTest* curr) {
+    // TODO: optimize when possible
+    addRoot(curr, curr->type);
+  }
+  void visitRefCast(RefCast* curr) {
+    // TODO: optimize when possible
+    addRoot(curr, curr->type);
+  }
+  void visitBrOn(BrOn* curr) {
+      handleBreakValue(curr);
+      connectChildToParent(curr->ref, curr);
+  }
+  }
+  void visitRttCanon(RttCanon* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitRttSub(RttSub* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitRefAs(RefAs* curr) {
+    // TODO optimize when possible
+    addRoot(curr, curr->type);
   }
 
   // Locals read and write to their index.
@@ -273,8 +429,6 @@ struct ConnectionFinder
     }
   }
 
-  void visitRefFunc(RefFunc* curr) { info.roots[curr] = Literal(curr->func, curr->type); }
-
   // Iterates over a list of children and adds connections as needed. The
   // target of the connection is created using a function that is passed
   // in which receives the index of the child.
@@ -358,6 +512,12 @@ struct ConnectionFinder
         {ExpressionLocation{curr->value, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
     }
+  }
+
+  void visitArrayLen(ArrayLen* curr) {
+    addRoot(curr, curr->type);
+  }
+  void visitArrayCopy(ArrayCopy* curr) {
   }
 
   // TODO: Model which throws can go to which catches. For now, anything

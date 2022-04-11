@@ -176,6 +176,7 @@ public:
 //  * One possible constant value.
 //  * One possible type but the value of that type is not constant.
 //  * "Many" - either multiple constant values for one type, or multiple types.
+// TODO: PossibleContents perhaps?
 struct PossibleValues {
 private:
   // No possible value.
