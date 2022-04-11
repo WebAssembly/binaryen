@@ -202,6 +202,10 @@ public:
   PossibleValues(Variant value) : value(value) {}
   template<typename T> PossibleValues(T curr) : value(Variant(curr)) {}
 
+  static PossibleValues many() {
+    return PossibleValues(Variant(Many()));
+  }
+
   // Notes the contents of an expression and update our internal knowledge based
   // on it and all previous values noted.
   void note(Expression* expr, Module& wasm) {

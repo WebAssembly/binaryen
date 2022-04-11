@@ -631,8 +631,20 @@ void Oracle::analyze() {
   analysis.map.clear();
 
   // Add unknown incoming roots from parameters to exported functions.
-  // TODO: Do the same for functions whose reference is taken/escapes to the
-  //       outside. E.g. JS can call the function via the table.
+  for (auto& ex : wasm.exports) {
+    if (ex->kind == ExternalKind::Function) {
+      auto* func = wasm.getFunction(ex->value);
+      for (Index i = 0; i < func->getParams().size(); i++) {
+        roots[LocalLocation{func, i, 0}] = PossibleValues::many();
+      }
+    }
+  }
+
+  // If a table is exported, assume any function taken by reference can be
+  // called from the outside
+  // TODO: This does not handle call_ref, for which we'd need to see which
+  //       references escape. For now, assume a closed world for wasm GC.
+
 
 
 #ifdef POSSIBLE_TYPES_DEBUG
