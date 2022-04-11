@@ -168,12 +168,12 @@
 
   ;; CHECK:      (func $param-no (param $param i32) (result i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $param)
   ;; CHECK-NEXT:   (local.set $param
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT:  (local.get $param)
   ;; CHECK-NEXT: )
   (func $param-no (export "param-no") (param $param i32) (result i32)
     (if
