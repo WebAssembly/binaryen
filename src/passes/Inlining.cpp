@@ -261,6 +261,9 @@ struct Updater : public PostWalker<Updater> {
     if (isReturn) {
       // If the inlined callsite was already a return_call, then we can keep
       // return_calls in the inlined function rather than downgrading them.
+      // That is, if A->B and B->C and both those calls are return_calls
+      // then after inlining A->B we want to now have A->C be a
+      // return_call.
       return;
     }
     curr->isReturn = false;
