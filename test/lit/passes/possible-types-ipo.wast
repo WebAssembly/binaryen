@@ -4,10 +4,26 @@
 ;; --possible-types does a whole-program analysis that can find opportunities
 ;; that other passes miss, like the following.
 (module
-  (func $foo (result 42)
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (func $foo (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $foo (result i32)
     (i32.const 42)
   )
 
+  ;; CHECK:      (func $bar (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (call $foo)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $bar (param $x i32)
     (drop
       (select

@@ -199,6 +199,7 @@ private:
 public:
   PossibleValues() : value(None()) {}
   PossibleValues(Variant value) : value(value) {}
+  template<typename T> PossibleValues(T curr) : value(Variant(curr)) {}
 
   // Notes the contents of an expression and update our internal knowledge based
   // on it and all previous values noted.

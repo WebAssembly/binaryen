@@ -59,7 +59,8 @@ struct FuncInfo {
   // All the roots of the graph, that is, places where we should mark a type as
   // possible before starting the analysis. This includes struct.new, ref.func,
   // etc. All possible types in the rest of the graph flow from such places.
-  std::vector<Expression*> roots;
+  // The map here is of the root to the value beginning in it.
+  std::unordered_map<Expression*, PossibleValues> roots;
 };
 
 struct ConnectionFinder
@@ -271,7 +272,7 @@ struct ConnectionFinder
     }
   }
 
-  void visitRefFunc(RefFunc* curr) { info.roots.push_back(curr); }
+  void visitRefFunc(RefFunc* curr) { info.roots[curr] = curr->type; }
 
   // Iterates over a list of children and adds connections as needed. The
   // target of the connection is created using a function that is passed
@@ -302,7 +303,7 @@ struct ConnectionFinder
     handleChildList(curr->operands, [&](Index i) {
       return StructLocation{type, i};
     });
-    info.roots.push_back(curr);
+    info.roots[curr] = curr->type;
   }
   void visitArrayNew(ArrayNew* curr) {
     if (curr->type == Type::unreachable) {
@@ -314,7 +315,7 @@ struct ConnectionFinder
       info.connections.push_back({ExpressionLocation{curr->init, 0},
                                   ArrayLocation{curr->type.getHeapType()}});
     }
-    info.roots.push_back(curr);
+    info.roots[curr] = curr->type;
   }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {
@@ -325,7 +326,7 @@ struct ConnectionFinder
       handleChildList(curr->values,
                       [&](Index i) { return ArrayLocation{type}; });
     }
-    info.roots.push_back(curr);
+    info.roots[curr] = curr->type;
   }
 
   // Struct operations access the struct fields' locations.
@@ -474,7 +475,7 @@ void Oracle::analyze() {
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
-  std::vector<Expression*> roots;
+  std::unordered_map<Expression*, PossibleValues> roots;
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "merging phase\n";
@@ -484,8 +485,8 @@ void Oracle::analyze() {
     for (auto& connection : info.connections) {
       connections.insert(connection);
     }
-    for (auto& root : info.roots) {
-      roots.push_back(root);
+    for (auto& [root, value] : info.roots) {
+      roots[root] = value;
     }
   }
 
@@ -572,8 +573,8 @@ void Oracle::analyze() {
   std::cout << "prep phase\n";
 #endif
 
-  // The starting state for the flow is for each root to contain its type.
-  for (const auto& root : roots) {
+  // Set up the roots, which are the starting state for the flow analysis.
+  for (const auto& [root, value] : roots) {
     // The type must not be a reference (as we allocated here), and it cannot be
     // unreachable (we should have ignored such things before).
     assert(finder.isRelevant(root->type));
@@ -585,7 +586,7 @@ void Oracle::analyze() {
     // appears once in the vector of roots.
     assert(info.types.getType() == Type::unreachable);
 
-    info.types.note(root, wasm);
+    info.types = value;
     work.push(location);
   }
 
