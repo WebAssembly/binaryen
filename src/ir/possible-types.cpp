@@ -1,4 +1,4 @@
-#define POSSIBLE_TYPES_DEBUG 2
+#define POSSIBLE_TYPES_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
