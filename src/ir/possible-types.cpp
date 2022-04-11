@@ -630,22 +630,36 @@ void Oracle::analyze() {
   // We no longer need the function-level info.
   analysis.map.clear();
 
-  // Add unknown incoming roots from parameters to exported functions.
+  // Add unknown incoming roots from parameters to exported functions and other
+  // cases where we can't see the caller.
+  auto calledFromOutside = [&](Name funcName) {
+    auto* func = wasm.getFunction(funcName);
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      roots[LocalLocation{func, i, 0}] = PossibleValues::many();
+    }
+  };
+
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
-      auto* func = wasm.getFunction(ex->value);
-      for (Index i = 0; i < func->getParams().size(); i++) {
-        roots[LocalLocation{func, i, 0}] = PossibleValues::many();
+      calledFromOutside(ex->value);
+    } else if (ex->kind == ExternalKind::Table) {
+      // If a table is exported, assume any function in tables can be called
+      // from the outside.
+      // TODO: This could be more precise about which tables
+      // TODO: This does not handle table.get/table.set, or call_ref, for which
+      //       we'd need to see which references are used and which escape etc.
+      //       For now, assume a closed world for such such advanced use cases /
+      //       assume this pass won't be run in them anyhow.
+      // TODO: do this once if multiple tables are exported
+      for (auto& elementSegment : wasm.elementSegments) {
+        for (auto* curr : elementSegment->data) {
+          if (auto* refFunc = curr->dynCast<RefFunc>()) {
+            calledFromOutside(refFunc->func);
+          }
+        }
       }
     }
   }
-
-  // If a table is exported, assume any function taken by reference can be
-  // called from the outside
-  // TODO: This does not handle call_ref, for which we'd need to see which
-  //       references escape. For now, assume a closed world for wasm GC.
-
-
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "func phase\n";

@@ -211,5 +211,104 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $i (func (param i32)))
+  (type $i (func (param i32)))
+
+  (table 10 funcref)
+  (elem (i32.const 0) funcref
+    (ref.func $reffed)
+  )
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (table $0 10 funcref)
+
+  ;; CHECK:      (elem (i32.const 0) $reffed)
+
+  ;; CHECK:      (export "table" (table $0))
+  (export "table" (table 0))
+
+  ;; CHECK:      (func $reffed (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed (param $x i32)
+    ;; This function is in the table, and the table is exported, so we cannot
+    ;; see all callers, and cannot infer the value here.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $do-calls
+  ;; CHECK-NEXT:  (call $reffed
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $i)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-calls
+    (call $reffed
+      (i32.const 42)
+    )
+    (call_indirect (type $i)
+      (i32.const 42)
+      (i32.const 0)
+    )
+  )
+)
+
+;; As above, but the table is not exported. We have a direct and an indirect
+;; call with the same value, so we can optimize.
+(module
+  ;; CHECK:      (type $i (func (param i32)))
+  (type $i (func (param i32)))
+
+  (table 10 funcref)
+  (elem (i32.const 0) funcref
+    (ref.func $reffed)
+  )
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (table $0 10 funcref)
+
+  ;; CHECK:      (elem (i32.const 0) $reffed)
+
+  ;; CHECK:      (func $reffed (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $do-calls
+  ;; CHECK-NEXT:  (call $reffed
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $i)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-calls
+    (call $reffed
+      (i32.const 42)
+    )
+    (call_indirect (type $i)
+      (i32.const 42)
+      (i32.const 0)
+    )
+  )
+)
+
 ;; TODO: test "cycles" with various things involved, another thing other
 ;;       passes fail at
