@@ -67,6 +67,10 @@ struct PossibleTypesPass : public Pass {
         if (BranchUtils::getDefinedName(curr).is()) {
           return false;
         }
+        // Pops are structurally necessary in catch bodies.
+        if (curr->is<Pop>()) {
+          return false;
+        }
         return true;
       }
 
