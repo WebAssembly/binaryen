@@ -1817,28 +1817,38 @@
 ;; Test a vtable-like pattern. This tests ref.func values flowing into struct
 ;; locations being properly noticed.
 (module
-  ;; CHECK:      (type $vtable-A (struct_subtype (field funcref) (field funcref) data))
-  (type $vtable-A (struct_subtype (field (ref null func)) (field (ref null func)) data))
+  ;; CHECK:      (type $vtable-A (struct_subtype (field funcref) (field funcref) (field funcref) data))
+  (type $vtable-A (struct_subtype (field (ref null func)) (field (ref null func)) (field (ref null func)) data))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (global $global-A (ref $vtable-A) (struct.new $vtable-A
   ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT:  (ref.null func)
+  ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT: ))
   (global $global-A (ref $vtable-A)
     (struct.new $vtable-A
       (ref.func $foo)
       (ref.null func)
+      (ref.func $foo)
     )
   )
 
+  ;; CHECK:      (elem declare func $foo $test)
+
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (struct.get $vtable-A 0
-  ;; CHECK-NEXT:     (global.get $global-A)
+  ;; CHECK-NEXT:   (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (global.get $global-A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.func $foo)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $foo)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1851,10 +1861,24 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $vtable-A
+  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (struct.get $vtable-A 2
+  ;; CHECK-NEXT:     (global.get $global-A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; The first item here contains a value and will not be modified, but the
-    ;; second only has null so we can optimize it.
+    ;; The first item here contains a fixed value (ref.func $foo) which we can
+    ;; apply.
     (drop
       (ref.as_non_null
         (struct.get $vtable-A 0
@@ -1862,9 +1886,28 @@
         )
       )
     )
+    ;; The second item here contains a null, so we can optimize away the
+    ;; ref.as_non_null.
     (drop
       (ref.as_non_null
         (struct.get $vtable-A 1
+          (global.get $global-A)
+        )
+      )
+    )
+    ;; The third item has more than one possible value, which we add with
+    ;; another struct.new here, so we cannot optimize away the struct.get or
+    ;; the ref.as_non_null
+    (drop
+      (struct.new $vtable-A
+        (ref.null func)
+        (ref.null func)
+        (ref.func $test)
+      )
+    )
+    (drop
+      (ref.as_non_null
+        (struct.get $vtable-A 2
           (global.get $global-A)
         )
       )

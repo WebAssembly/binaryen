@@ -66,8 +66,10 @@ struct LocalLocation {
 struct BranchLocation {
   Function* func;
   Name target;
+  // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
+  Index tupleIndex;
   bool operator==(const BranchLocation& other) const {
-    return func == other.func && target == other.target;
+    return func == other.func && target == other.target && tupleIndex == other.tupleIndex;
   }
 };
 
@@ -185,8 +187,8 @@ template<> struct hash<wasm::PossibleTypes::LocalLocation> {
 
 template<> struct hash<wasm::PossibleTypes::BranchLocation> {
   size_t operator()(const wasm::PossibleTypes::BranchLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Name>>{}(
-      {size_t(loc.func), loc.target});
+    return std::hash<std::pair<size_t, std::pair<wasm::Name, wasm::Index>>>{}(
+      {size_t(loc.func), {loc.target, loc.tupleIndex}});
   }
 };
 

@@ -106,18 +106,20 @@ struct ConnectionFinder
     BranchUtils::operateOnScopeNameUsesAndSentValues(
       curr, [&](Name target, Expression* value) {
         if (value) {
-          assert(!value->type.isTuple()); // TODO
-          info.connections.push_back({ExpressionLocation{value, 0},
-                                      BranchLocation{getFunction(), target}});
+          for (Index i = 0; i < value->type.size(); i++) {
+            info.connections.push_back({ExpressionLocation{value, i},
+                                        BranchLocation{getFunction(), target, i}});
+          }
         }
       });
 
     // Branch targets receive the things sent to them and flow them out.
     if (1) {
-      assert(!curr->type.isTuple()); // TODO
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
-        info.connections.push_back(
-          {BranchLocation{getFunction(), target}, ExpressionLocation{curr, 0}});
+        for (Index i = 0; i < curr->type.size(); i++) {
+          info.connections.push_back(
+            {BranchLocation{getFunction(), target, i}, ExpressionLocation{curr, i}});
+        }
       });
     }
     // TODO: if we are a branch source or target, skip the loop later
