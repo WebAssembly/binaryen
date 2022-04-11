@@ -409,7 +409,7 @@ struct ConnectionFinder
       auto heapType = targetType.getHeapType();
       handleCall(
         curr,
-          [&](Index i) {
+        [&](Index i) {
           return SignatureParamLocation{heapType, i};
         },
         [&](Index i) {
