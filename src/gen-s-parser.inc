@@ -2863,7 +2863,7 @@ switch (op[0]) {
           case 'r': {
             switch (op[8]) {
               case 'l':
-                if (strcmp(op, "i8x16.relaxed_swizzle") == 0) { return makeBinary(s, BinaryOp::RelaxedSwizzleVec8x16); }
+                if (strcmp(op, "i8x16.relaxed_swizzle") == 0) { return makeBinary(s, BinaryOp::RelaxedSwizzleVecI8x16); }
                 goto parse_error;
               case 'p':
                 if (strcmp(op, "i8x16.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI8x16, 16); }
@@ -2918,7 +2918,7 @@ switch (op[0]) {
                 }
               }
               case 'w':
-                if (strcmp(op, "i8x16.swizzle") == 0) { return makeBinary(s, BinaryOp::SwizzleVec8x16); }
+                if (strcmp(op, "i8x16.swizzle") == 0) { return makeBinary(s, BinaryOp::SwizzleVecI8x16); }
                 goto parse_error;
               default: goto parse_error;
             }

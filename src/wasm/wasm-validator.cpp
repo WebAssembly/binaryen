@@ -1633,8 +1633,8 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case NarrowUVecI16x8ToVecI8x16:
     case NarrowSVecI32x4ToVecI16x8:
     case NarrowUVecI32x4ToVecI16x8:
-    case SwizzleVec8x16:
-    case RelaxedSwizzleVec8x16:
+    case SwizzleVecI8x16:
+    case RelaxedSwizzleVecI8x16:
     case RelaxedQ15MulrSVecI16x8:
     case DotI8x16I7x16SToVecI16x8:
     case DotI8x16I7x16UToVecI16x8: {
