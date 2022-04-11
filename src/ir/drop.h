@@ -30,8 +30,10 @@ namespace wasm {
 // The caller also passes in a last item to add to the block.
 //
 // TODO: use this in more places
-Expression*
-getDroppedChildren(Expression* curr, Expression* last, Module& wasm, const PassOptions& options) {
+Expression* getDroppedChildren(Expression* curr,
+                               Expression* last,
+                               Module& wasm,
+                               const PassOptions& options) {
   Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {

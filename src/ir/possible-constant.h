@@ -226,9 +226,7 @@ public:
     combine(Variant(expr->type));
   }
 
-  template<typename T> void note(T curr) {
-    note(Variant(curr));
-  }
+  template<typename T> void note(T curr) { note(Variant(curr)); }
 
   // Notes a value that is unknown - it can be anything. We have failed to
   // identify a constant value here.
@@ -271,7 +269,7 @@ public:
       if (std::get_if<Type>(&value)) {
         // We were already marked as an arbitrary value of this type.
         return false;
-      }        
+      }
       value = Type(getType());
       return true;
     }

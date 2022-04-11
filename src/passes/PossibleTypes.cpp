@@ -71,8 +71,8 @@ struct PossibleTypesPass : public Pass {
       }
 
       void visitExpression(Expression* curr) {
-//        if (!getFunction())
-  //        return; // waka in non-parallel
+        //        if (!getFunction())
+        //        return; // waka in non-parallel
         auto type = curr->type;
         if (type.isTuple()) {
           // TODO: tuple types.
@@ -84,22 +84,19 @@ struct PossibleTypesPass : public Pass {
         auto& options = getPassOptions();
         auto& wasm = *getModule();
         Builder builder(wasm);
-        auto values = oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
+        auto values =
+          oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
         if (values.isConstant()) {
           auto* c = values.makeExpression(wasm);
           if (canRemove(curr)) {
-            replaceCurrent(
-              getDroppedChildren(curr, c, wasm, options));
+            replaceCurrent(getDroppedChildren(curr, c, wasm, options));
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                                c));
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
           }
         }
-        if (type.isNonNullable() &&
-            values
-              .getType() == Type::unreachable) {
+        if (type.isNonNullable() && values.getType() == Type::unreachable) {
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
@@ -110,8 +107,8 @@ struct PossibleTypesPass : public Pass {
           LIMIT--;
 #endif
           if (canRemove(curr)) {
-            replaceCurrent(
-              getDroppedChildren(curr, builder.makeUnreachable(), wasm, options));
+            replaceCurrent(getDroppedChildren(
+              curr, builder.makeUnreachable(), wasm, options));
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.

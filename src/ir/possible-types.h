@@ -69,7 +69,8 @@ struct BranchLocation {
   // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
   Index tupleIndex;
   bool operator==(const BranchLocation& other) const {
-    return func == other.func && target == other.target && tupleIndex == other.tupleIndex;
+    return func == other.func && target == other.target &&
+           tupleIndex == other.tupleIndex;
   }
 };
 

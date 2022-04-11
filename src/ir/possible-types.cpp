@@ -64,8 +64,7 @@ struct FuncInfo {
 };
 
 struct ConnectionFinder
-  : public PostWalker<ConnectionFinder,
-                      OverriddenVisitor<ConnectionFinder>> {
+  : public PostWalker<ConnectionFinder, OverriddenVisitor<ConnectionFinder>> {
   FuncInfo& info;
 
   ConnectionFinder(FuncInfo& info) : info(info) {}
@@ -90,12 +89,10 @@ struct ConnectionFinder
     return true;
   }
 
-  bool isRelevant(Expression* curr) {
-    return curr && isRelevant(curr->type);
-  }
+  bool isRelevant(Expression* curr) { return curr && isRelevant(curr->type); }
 
   template<typename T> bool isRelevant(const T& vec) {
-  return true;
+    return true;
     for (auto* expr : vec) {
       if (isRelevant(expr->type)) {
         return true;
@@ -119,8 +116,9 @@ struct ConnectionFinder
       curr, [&](Name target, Expression* value) {
         if (value) {
           for (Index i = 0; i < value->type.size(); i++) {
-            info.connections.push_back({ExpressionLocation{value, i},
-                                        BranchLocation{getFunction(), target, i}});
+            info.connections.push_back(
+              {ExpressionLocation{value, i},
+               BranchLocation{getFunction(), target, i}});
           }
         }
       });
@@ -132,8 +130,8 @@ struct ConnectionFinder
     if (isRelevant(curr->type)) {
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
-          info.connections.push_back(
-            {BranchLocation{getFunction(), target, i}, ExpressionLocation{curr, i}});
+          info.connections.push_back({BranchLocation{getFunction(), target, i},
+                                      ExpressionLocation{curr, i}});
         }
       });
     }
@@ -154,153 +152,91 @@ struct ConnectionFinder
   }
 
   // Adds a root, if the expression is relevant.
-  template<typename T>
-  void addRoot(Expression* curr, T contents) {
+  template<typename T> void addRoot(Expression* curr, T contents) {
     if (isRelevant(curr)) {
       info.roots[curr] = contents;
     }
   }
 
-  void visitBlock(Block* curr) {
-    handleBreakTarget(curr);
-  }
+  void visitBlock(Block* curr) { handleBreakTarget(curr); }
   void visitIf(If* curr) {
     connectChildToParent(curr->ifTrue, curr);
     connectChildToParent(curr->ifFalse, curr);
   }
-  void visitLoop(Loop* curr) {
-    handleBreakTarget(curr);
-  }
+  void visitLoop(Loop* curr) { handleBreakTarget(curr); }
   void visitBreak(Break* curr) {
     handleBreakValue(curr);
     // The value may also flow through in a br_if (the type will indicate that,
     // which connectChildToParent will notice).
     connectChildToParent(curr->value, curr);
   }
-  void visitSwitch(Switch* curr) {
-    handleBreakValue(curr);
-  }
+  void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
     // We can only infer the type here (at least for now), and likewise in all
     // other memory operations.
     addRoot(curr, curr->type);
   }
-  void visitStore(Store* curr) {
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitAtomicWait(AtomicWait* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitAtomicNotify(AtomicNotify* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitAtomicFence(AtomicFence* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitSIMDExtract(SIMDExtract* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitSIMDReplace(SIMDReplace* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitSIMDShuffle(SIMDShuffle* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitSIMDTernary(SIMDTernary* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitSIMDShift(SIMDShift* curr) {
-     addRoot(curr, curr->type);
-
-  }
-  void visitSIMDLoad(SIMDLoad* curr) {
-     addRoot(curr, curr->type);
-
-  }
+  void visitStore(Store* curr) {}
+  void visitAtomicRMW(AtomicRMW* curr) { addRoot(curr, curr->type); }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { addRoot(curr, curr->type); }
+  void visitAtomicWait(AtomicWait* curr) { addRoot(curr, curr->type); }
+  void visitAtomicNotify(AtomicNotify* curr) { addRoot(curr, curr->type); }
+  void visitAtomicFence(AtomicFence* curr) { addRoot(curr, curr->type); }
+  void visitSIMDExtract(SIMDExtract* curr) { addRoot(curr, curr->type); }
+  void visitSIMDReplace(SIMDReplace* curr) { addRoot(curr, curr->type); }
+  void visitSIMDShuffle(SIMDShuffle* curr) { addRoot(curr, curr->type); }
+  void visitSIMDTernary(SIMDTernary* curr) { addRoot(curr, curr->type); }
+  void visitSIMDShift(SIMDShift* curr) { addRoot(curr, curr->type); }
+  void visitSIMDLoad(SIMDLoad* curr) { addRoot(curr, curr->type); }
   void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-      addRoot(curr, curr->type);
-
+    addRoot(curr, curr->type);
   }
-  void visitMemoryInit(MemoryInit* curr) {
-  }
-  void visitDataDrop(DataDrop* curr) {
-
-  }
-  void visitMemoryCopy(MemoryCopy* curr) {
-
-  }
-  void visitMemoryFill(MemoryFill* curr) {
-  }
-  void visitConst(Const* curr) {
-    addRoot(curr, curr->value);
-  }
+  void visitMemoryInit(MemoryInit* curr) {}
+  void visitDataDrop(DataDrop* curr) {}
+  void visitMemoryCopy(MemoryCopy* curr) {}
+  void visitMemoryFill(MemoryFill* curr) {}
+  void visitConst(Const* curr) { addRoot(curr, curr->value); }
   void visitUnary(Unary* curr) {
     // Assume we only know the type in all math operations (for now).
     addRoot(curr, curr->type);
-
   }
-  void visitBinary(Binary* curr) {
-    addRoot(curr, curr->type);
-  }
+  void visitBinary(Binary* curr) { addRoot(curr, curr->type); }
   void visitSelect(Select* curr) {
     connectChildToParent(curr->ifTrue, curr);
     connectChildToParent(curr->ifFalse, curr);
   }
-  void visitDrop(Drop* curr) {  }
-  void visitMemorySize(MemorySize* curr) {
-    addRoot(curr, curr->type);
-
-  }
-  void visitMemoryGrow(MemoryGrow* curr) { 
-      addRoot(curr, curr->type);
- }
+  void visitDrop(Drop* curr) {}
+  void visitMemorySize(MemorySize* curr) { addRoot(curr, curr->type); }
+  void visitMemoryGrow(MemoryGrow* curr) { addRoot(curr, curr->type); }
   void visitRefNull(RefNull* curr) {
     addRoot(curr, Literal::makeNull(curr->type));
-
   }
   void visitRefIs(RefIs* curr) {
     // TODO: optimize when possible
-        addRoot(curr, curr->type);
+    addRoot(curr, curr->type);
   }
-  void visitRefFunc(RefFunc* curr) { addRoot(curr, Literal(curr->func, curr->type)); }
-  void visitRefEq(RefEq* curr) { 
-      addRoot(curr, curr->type);
- }
+  void visitRefFunc(RefFunc* curr) {
+    addRoot(curr, Literal(curr->func, curr->type));
+  }
+  void visitRefEq(RefEq* curr) { addRoot(curr, curr->type); }
   void visitTableGet(TableGet* curr) {
     // TODO: optimize when possible
-        addRoot(curr, curr->type);
-
-  }
-  void visitTableSet(TableSet* curr) {
-  
-  }
-  void visitTableSize(TableSize* curr) {
     addRoot(curr, curr->type);
-
   }
-  void visitTableGrow(TableGrow* curr) {
-    addRoot(curr, curr->type);
+  void visitTableSet(TableSet* curr) {}
+  void visitTableSize(TableSize* curr) { addRoot(curr, curr->type); }
+  void visitTableGrow(TableGrow* curr) { addRoot(curr, curr->type); }
 
-  }
-  
-  void visitNop(Nop* curr) { }
-  void visitUnreachable(Unreachable* curr) {  }
+  void visitNop(Nop* curr) {}
+  void visitUnreachable(Unreachable* curr) {}
   void visitPop(Pop* curr) {
     // For now we only handle pops in a catch body, set visitTry()
     WASM_UNREACHABLE("TODO: arbitrary pops");
-
   }
-  void visitI31New(I31New* curr) {     addRoot(curr, curr->type);
- }
+  void visitI31New(I31New* curr) { addRoot(curr, curr->type); }
   void visitI31Get(I31Get* curr) {
     // TODO: optimize like struct references
     addRoot(curr, curr->type);
-
   }
 
   void visitRefTest(RefTest* curr) {
@@ -312,15 +248,11 @@ struct ConnectionFinder
     addRoot(curr, curr->type);
   }
   void visitBrOn(BrOn* curr) {
-      handleBreakValue(curr);
-      connectChildToParent(curr->ref, curr);
+    handleBreakValue(curr);
+    connectChildToParent(curr->ref, curr);
   }
-  void visitRttCanon(RttCanon* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitRttSub(RttSub* curr) {
-    addRoot(curr, curr->type);
-  }
+  void visitRttCanon(RttCanon* curr) { addRoot(curr, curr->type); }
+  void visitRttSub(RttSub* curr) { addRoot(curr, curr->type); }
   void visitRefAs(RefAs* curr) {
     // TODO optimize when possible
     addRoot(curr, curr->type);
@@ -518,11 +450,8 @@ struct ConnectionFinder
     }
   }
 
-  void visitArrayLen(ArrayLen* curr) {
-    addRoot(curr, curr->type);
-  }
-  void visitArrayCopy(ArrayCopy* curr) {
-  }
+  void visitArrayLen(ArrayLen* curr) { addRoot(curr, curr->type); }
+  void visitArrayCopy(ArrayCopy* curr) {}
 
   // TODO: Model which throws can go to which catches. For now, anything
   //       thrown is sent to the location of that tag, and any catch of that
@@ -558,8 +487,7 @@ struct ConnectionFinder
         {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
   }
-  void visitRethrow(Rethrow* curr) {
-  }
+  void visitRethrow(Rethrow* curr) {}
 
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {
@@ -680,8 +608,8 @@ void Oracle::analyze() {
 #endif
 
   if (getTypeSystem() == TypeSystem::Nominal) {
-    // Add subtyping connections, but see the TODO below about how we can do this
-    // "dynamically" in a more effective but complex way.
+    // Add subtyping connections, but see the TODO below about how we can do
+    // this "dynamically" in a more effective but complex way.
     SubTypes subTypes(wasm);
     for (auto type : subTypes.types) {
       // Tie two locations together, linking them both ways.
@@ -691,8 +619,8 @@ void Oracle::analyze() {
       };
       if (type.isStruct()) {
         // StructLocations refer to a struct.get/set/new and so in general they
-        // may refer to data of a subtype of the type written on them. Connect to
-        // their immediate subtypes here in both directions.
+        // may refer to data of a subtype of the type written on them. Connect
+        // to their immediate subtypes here in both directions.
         auto numFields = type.getStruct().fields.size();
         for (auto subType : subTypes.getSubTypes(type)) {
           for (Index i = 0; i < numFields; i++) {
@@ -701,8 +629,8 @@ void Oracle::analyze() {
         }
       } else if (type.isArray()) {
         // StructLocations refer to a struct.get/set/new and so in general they
-        // may refer to data of a subtype of the type written on them. Connect to
-        // their immediate subtypes here.
+        // may refer to data of a subtype of the type written on them. Connect
+        // to their immediate subtypes here.
         for (auto subType : subTypes.getSubTypes(type)) {
           tie(ArrayLocation{type}, ArrayLocation{subType});
         }
