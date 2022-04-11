@@ -151,6 +151,7 @@ struct PossibleTypesPass : public Pass {
               // right after it.
               replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
             }
+            optimized = true;
           } else {
             // The type is not compatible: we cannot place |c| in this location,
             // even though we have proven it is the only value possible here.
@@ -181,7 +182,6 @@ struct PossibleTypesPass : public Pass {
 
       void visitFunction(Function* func) {
         if (optimized) {
-          optimized = false; // waka
           // Optimization may introduce more unreachables, which we need to
           // propagate.
           ReFinalize().walkFunctionInModule(func, getModule());

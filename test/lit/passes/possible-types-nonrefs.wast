@@ -310,5 +310,44 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $const (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $const (result i32)
+    ;; Return a const to the caller below.
+    (i32.const 42)
+  )
+
+  ;; CHECK:      (func $retcall (result i32)
+  ;; CHECK-NEXT:  (return_call $const)
+  ;; CHECK-NEXT: )
+  (func $retcall (result i32)
+    ;; Do a return call. This tests that we pass its value out as a result.
+    (return_call $const)
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $retcall)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; Call the return caller. We can optimize this value to 42.
+    (drop
+      (call $retcall)
+    )
+  )
+)
+
 ;; TODO: test "cycles" with various things involved, another thing other
 ;;       passes fail at

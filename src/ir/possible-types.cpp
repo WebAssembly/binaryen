@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 1
+#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -45,6 +45,20 @@ void dump(Location location) {
               << '\n';
   } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
     std::cout << "  globalloc " << loc->name << '\n';
+  } else if (auto* loc = std::get_if<BranchLocation>(&location)) {
+    std::cout << "  branchloc " << loc->func->name << " : " << loc->target
+              << " tupleIndex " << loc->tupleIndex << '\n';
+  } else if (auto* loc = std::get_if<SignatureParamLocation>(&location)) {
+    WASM_UNUSED(loc);
+    std::cout << "  sigparamloc " << '\n';
+  } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
+    WASM_UNUSED(loc);
+    std::cout << "  sigresultloc " << '\n';
+  } else if (auto* loc = std::get_if<ArrayLocation>(&location)) {
+    WASM_UNUSED(loc);
+    std::cout << "  Arrayloc " << '\n';
+  } else if (auto* loc = std::get_if<NullLocation>(&location)) {
+    std::cout << "  Nullloc " << loc->type << '\n';
   } else {
     std::cout << "  (other)\n";
   }
@@ -87,6 +101,9 @@ struct ConnectionFinder
       // If nominal typing is enabled then we cannot handle refs, as we need
       // to do a subtyping analysis there (which SubTyping only supports in
       // nominal mode).
+      // TODO: this is not good enough. In non-nominal fuzzing we still need to
+      // mark struct.new etc. as roots, just so they do not get turned into
+      // unreachables. Or maybe fix on the PossibleTypes pass side, yeah...
       return false;
     }
     return true;
@@ -323,12 +340,12 @@ struct ConnectionFinder
   // Iterates over a list of children and adds connections to parameters
   // and results as needed. The param/result functions receive the index
   // and create the proper location for it.
-  void handleCall(Expression* curr,
-                  ExpressionList& operands,
+  template<typename T>
+  void handleCall(T* curr,
                   std::function<Location(Index)> makeParamLocation,
                   std::function<Location(Index)> makeResultLocation) {
     Index i = 0;
-    for (auto* operand : operands) {
+    for (auto* operand : curr->operands) {
       if (isRelevant(operand->type)) {
         info.connections.push_back(
           {ExpressionLocation{operand, 0}, makeParamLocation(i)});
@@ -337,10 +354,23 @@ struct ConnectionFinder
     }
 
     // Add results, if anything flows out.
-    if (isRelevant(curr->type)) {
-      for (Index i = 0; i < curr->type.size(); i++) {
+    for (Index i = 0; i < curr->type.size(); i++) {
+      if (isRelevant(curr->type[i])) {
         info.connections.push_back(
           {makeResultLocation(i), ExpressionLocation{curr, i}});
+      }
+    }
+
+    // If this is a return call then send the result to the function return as
+    // well.
+    if (curr->isReturn) {
+      auto results = getFunction()->getResults();
+      for (Index i = 0; i < results.size(); i++) {
+        auto result = results[i];
+        if (isRelevant(result)) {
+          info.connections.push_back(
+            {makeResultLocation(i), ResultLocation{getFunction(), i}});
+        }
       }
     }
   }
@@ -351,7 +381,6 @@ struct ConnectionFinder
     auto* target = getModule()->getFunction(curr->target);
     handleCall(
       curr,
-      curr->operands,
       [&](Index i) {
         return LocalLocation{target, i, 0};
       },
@@ -363,7 +392,6 @@ struct ConnectionFinder
     auto target = curr->heapType;
     handleCall(
       curr,
-      curr->operands,
       [&](Index i) {
         return SignatureParamLocation{target, i};
       },
@@ -377,8 +405,7 @@ struct ConnectionFinder
       auto target = targetType.getHeapType();
       handleCall(
         curr,
-        curr->operands,
-        [&](Index i) {
+          [&](Index i) {
           return SignatureParamLocation{target, i};
         },
         [&](Index i) {

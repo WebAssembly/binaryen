@@ -396,7 +396,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1467,10 +1467,10 @@
 
 ;; Exceptions.
 (module
-  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
-
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
+
+  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -1495,11 +1495,11 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:      (block (result (ref null $struct))
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (ref.null $struct)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1582,13 +1582,13 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:      (block (result (ref null $struct))
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (tuple.extract 0
   ;; CHECK-NEXT:         (local.get $0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (ref.null $struct)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
