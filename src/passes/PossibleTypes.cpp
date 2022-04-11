@@ -96,7 +96,7 @@ struct PossibleTypesPass : public Pass {
           // If we got here, the list cannot be empty - an empty block is not
           // equivalent to any constant, so a logic error occurred before.
           assert(!block->list.empty());
-          if (!block->name.is() && Properties::isConstantExpression(block->list.back()) {
+          if (!block->name.is() && Properties::isConstantExpression(block->list.back())) {
             return false;
           }
         }
