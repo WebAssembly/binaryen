@@ -229,9 +229,18 @@ struct ConnectionFinder
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
+
+#ifndef NDEBUG
+  Index totalPops = 0;
+  Index handledPops = 0;
+#endif
+
   void visitPop(Pop* curr) {
-    // For now we only handle pops in a catch body, set visitTry()
-    WASM_UNREACHABLE("TODO: arbitrary pops");
+    // For now we only handle pops in a catch body, set visitTry(). Note that
+    // we've seen one so we can assert on this later.
+#ifndef NDEBUG
+    totalPops++;
+#endif
   }
   void visitI31New(I31New* curr) { addRoot(curr, curr->type); }
   void visitI31Get(I31Get* curr) {
@@ -473,6 +482,12 @@ struct ConnectionFinder
             {TagLocation{tag, i}, ExpressionLocation{pop, i}});
         }
       }
+
+      // This pop was in the position we can handle, note that (see visitPop
+      // for details).
+#ifndef NDEBUG
+      handledPops++;
+#endif
     }
   }
   void visitThrow(Throw* curr) {
@@ -518,6 +533,9 @@ struct ConnectionFinder
   void visitFunction(Function* curr) {
     // Functions with a result can flow a value out from their body.
     addResult(curr->body);
+
+    // See visitPop().
+    assert(handledPops == totalPops);
   }
 };
 
