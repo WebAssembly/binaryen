@@ -71,7 +71,7 @@ struct ConnectionFinder
   ConnectionFinder(FuncInfo& info) : info(info) {}
 
   bool isRelevant(Type type) {
-    if (type == Type::unreachable || type == type::none) {
+    if (type == Type::unreachable || type == Type::none) {
       return false;
     }
     if (type.isTuple()) {
@@ -143,17 +143,21 @@ struct ConnectionFinder
   // child may flow to the parent.
   void connectChildToParent(Expression* child, Expression* parent) {
     if (isRelevant(parent) && isRelevant(child)) {
-      for (Index i = 0; i < curr->type.size(); i++) {
+      // The tuple sizes must match (or, if not a tuple, the size should be 1 in
+      // both cases.
+      assert(child->type.size() == parent->type.size());
+      for (Index i = 0; i < child->type.size(); i++) {
         info.connections.push_back(
-          {ExpressionLocation{child, i}, ExpressionLocation{curr, i}});
+          {ExpressionLocation{child, i}, ExpressionLocation{parent, i}});
       }
     }
   }
 
   // Adds a root, if the expression is relevant.
+  template<typename T>
   void addRoot(Expression* curr, T contents) {
     if (isRelevant(curr)) {
-      info.roots[curr] = T;
+      info.roots[curr] = contents;
     }
   }
 
@@ -260,15 +264,16 @@ struct ConnectionFinder
 
   }
   void visitRefIs(RefIs* curr) {
-    // TODO the flow could infer the result here in some cases
-    addRoot(curr, curr->type);
+    // TODO: optimize when possible
+        addRoot(curr, curr->type);
   }
   void visitRefFunc(RefFunc* curr) { addRoot(curr, Literal(curr->func, curr->type)); }
   void visitRefEq(RefEq* curr) { 
       addRoot(curr, curr->type);
  }
   void visitTableGet(TableGet* curr) {
-    addRoot(curr, curr->type);
+    // TODO: optimize when possible
+        addRoot(curr, curr->type);
 
   }
   void visitTableSet(TableSet* curr) {
@@ -309,7 +314,6 @@ struct ConnectionFinder
   void visitBrOn(BrOn* curr) {
       handleBreakValue(curr);
       connectChildToParent(curr->ref, curr);
-  }
   }
   void visitRttCanon(RttCanon* curr) {
     addRoot(curr, curr->type);
@@ -554,9 +558,8 @@ struct ConnectionFinder
         {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
   }
-
-  void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("todo"); }
-  void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("todo"); }
+  void visitRethrow(Rethrow* curr) {
+  }
 
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {
