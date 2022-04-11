@@ -4,13 +4,15 @@
 ;; --possible-types does a whole-program analysis that can find opportunities
 ;; that other passes miss, like the following.
 (module
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
-
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (export "param-no" (func $param-no))
 
   ;; CHECK:      (func $foo (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
@@ -118,7 +120,7 @@
     )
   )
 
-  ;; CHECK:      (func $locals-no (param $param i32) (result i32)
+  ;; CHECK:      (func $local-no (param $param i32) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $param)
@@ -128,7 +130,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $x)
   ;; CHECK-NEXT: )
-  (func $locals-no (param $param i32) (result i32)
+  (func $local-no (param $param i32) (result i32)
     (local $x i32)
     (if
       (local.get $param)
@@ -141,7 +143,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $locals-yes (param $param i32) (result i32)
+  ;; CHECK:      (func $local-yes (param $param i32) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $param)
@@ -151,7 +153,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $locals-yes (param $param i32) (result i32)
+  (func $local-yes (param $param i32) (result i32)
     (local $x i32)
     (if
       (local.get $param)
@@ -162,6 +164,50 @@
       )
     )
     (local.get $x)
+  )
+
+  ;; CHECK:      (func $param-no (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $param
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $param-no (export "param-no") (param $param i32) (result i32)
+    (if
+      (local.get $param)
+      (local.set $param
+        (i32.const 1)
+      )
+    )
+    ;; $x has two possible values, the incoming param value and 1, so we cannot
+    ;; optimize.
+    (local.get $param)
+  )
+
+  ;; CHECK:      (func $param-yes (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $param
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $param-yes (param $param i32) (result i32)
+    (if
+      (local.get $param)
+      (local.set $param
+        (i32.const 1)
+      )
+    )
+    ;; As above, but now the function is not exported. That means it has no
+    ;; callers, so the only possible contents for $param are the local.set here,
+    ;; as this code is unreachable. We don't try to optimize in such cases, so
+    ;; nothing will happen here.
+    (local.get $param)
   )
 )
 
