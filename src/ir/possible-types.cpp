@@ -70,11 +70,14 @@ struct ConnectionFinder
   ConnectionFinder(FuncInfo& info) : info(info) {}
 
   bool isRelevant(Type type) {
+    if (type == Type::unreachable) {
+      return false;
+    }
+    return true;
+#if 0
     // TODO: make a variant that only considers isRelevant() to be relevant,
     //       and that can just do devirtualization while ignoring everything
     //       else.
-    return true;
-#if 0
     if (type.isRef()) {
       return true;
     }
