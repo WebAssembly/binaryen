@@ -134,16 +134,20 @@ struct PossibleTypesPass : public Pass {
         auto values =
           oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
 
+std::cout << "a\n" << *curr << '\n';
         if (values.isConstant()) {
+std::cout << "b\n";
+
           if (!shouldOptimizeToConstant(curr)) {
             return;
           }
+std::cout << "c\n";
 
           auto* c = values.makeExpression(wasm);
           // We can only place the constant value here if it has the right
           // type. For example, a block may return (ref any), that is, not allow
           // a null, but in practice only a null may flow there.
-          if (c->type == curr->type) {
+          if (Type::isSubType(c->type, curr->type)) {
             if (canRemove(curr)) {
               replaceCurrent(getDroppedChildren(curr, c, wasm, options));
             } else {
@@ -152,7 +156,10 @@ struct PossibleTypesPass : public Pass {
               replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
             }
           } else {
-            // The type does *not* match. This means the code is unreachable.
+            // The type is not compatible: we cannot place |c| in this location,
+            // even though we have proven it is the only value possible here.
+            // That means no value is possible and this code is unreachable.
+            // TODO add test
             replaceWithUnreachable();
           }
           return;

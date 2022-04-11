@@ -1,4 +1,4 @@
-#define POSSIBLE_TYPES_DEBUG 1
+#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -825,8 +825,10 @@ void Oracle::analyze() {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "    updateTypes src:\n";
         inputs.dump(std::cout);
+        std::cout << '\n';
         std::cout << "    updateTypes dest:\n";
-        inputs.dump(std::cout);
+        outputs.dump(std::cout);
+        std::cout << '\n';
 #endif
         if (outputs.combine(inputs)) {
           // We inserted something, so there is work to do in this target.
@@ -843,7 +845,8 @@ void Oracle::analyze() {
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
-  //       including multiple levels of depth (necessary for itables in j2wasm)
+  //       including multiple levels of depth (necessary for itables in j2wasm).
+  //       Get --cfp tests passing with this code
 }
 
 } // namespace wasm::PossibleTypes
