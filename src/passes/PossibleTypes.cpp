@@ -78,20 +78,36 @@ struct PossibleTypesPass : public Pass {
           // TODO: tuple types.
           return;
         }
+        if (curr->is<Const>() || curr->is<RefFunc>()) { // TODO use helper
+          return;
+        }
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+        auto values = oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
+        if (values.isConstant()) {
+          auto* c = values.makeExpression(wasm);
+          if (canRemove(curr)) {
+            replaceCurrent(
+              getDroppedChildren(curr, wasm, c));
+          } else {
+            // We can't remove this, but we can at least put an unreachable
+            // right after it.
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                                c));
+          }
+        }
         if (type.isNonNullable() &&
-            oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0})
+            values
               .getType() == Type::unreachable) {
           // This cannot contain a null, but also we have inferred that it
           // will never contain any type at all, which means that this code is
           // unreachable or will trap at runtime. Replace it with a trap.
-          auto& wasm = *getModule();
 #if 1
           static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : 9999999;
           if (LIMIT == 0)
             return;
           LIMIT--;
 #endif
-          Builder builder(wasm);
           if (canRemove(curr)) {
             replaceCurrent(
               getDroppedChildren(curr, wasm, builder.makeUnreachable()));
