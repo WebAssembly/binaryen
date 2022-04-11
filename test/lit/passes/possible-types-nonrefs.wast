@@ -4,9 +4,11 @@
 ;; --possible-types does a whole-program analysis that can find opportunities
 ;; that other passes miss, like the following.
 (module
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $foo (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
@@ -78,6 +80,44 @@
         )
         (local.get $x)
       )
+    )
+  )
+
+  ;; CHECK:      (func $return (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: )
+  (func $return (result i32)
+    ;; Return one result in a return and flow another out.
+    (if
+      (i32.const 0)
+      (return
+        (i32.const 1)
+      )
+    )
+    (i32.const 2)
+  )
+
+  ;; CHECK:      (func $call-return
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $return)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-return
+    ;; The called function has two possible return values, so we cannot optimize
+    ;; anything here.
+    (drop
+      (call $return)
     )
   )
 )
