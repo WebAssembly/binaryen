@@ -409,7 +409,7 @@ struct ConnectionFinder
     handleChildList(curr->operands, [&](Index i) {
       return StructLocation{type, i};
     });
-    info.roots[curr] = curr->type;
+    addRoot(curr, curr->type);
   }
   void visitArrayNew(ArrayNew* curr) {
     if (curr->type == Type::unreachable) {
@@ -421,7 +421,7 @@ struct ConnectionFinder
       info.connections.push_back({ExpressionLocation{curr->init, 0},
                                   ArrayLocation{curr->type.getHeapType()}});
     }
-    info.roots[curr] = curr->type;
+    addRoot(curr, curr->type);
   }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {
@@ -432,7 +432,7 @@ struct ConnectionFinder
       handleChildList(curr->values,
                       [&](Index i) { return ArrayLocation{type}; });
     }
-    info.roots[curr] = curr->type;
+    addRoot(curr, curr->type);
   }
 
   // Struct operations access the struct fields' locations.
