@@ -152,8 +152,8 @@ struct ExecutionResults {
     // We allow nulls to have different types (as they compare equal regardless)
     // but anything else must have an identical type.
     if (a.type != b.type && !(a.isNull() && b.isNull())) {
-      std::cout << "types not identical! " << a << " != " << b << '\n';
-      return false;
+      // XXX nominal fuzzing std::cout << "types not identical! " << a << " != " << b << '\n';
+      //return false;
     }
     if (a.type.isRef()) {
       // Don't compare references - only their types. There are several issues
