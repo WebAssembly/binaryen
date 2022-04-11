@@ -169,9 +169,7 @@ struct ConnectionFinder
     connectChildToParent(curr->ifTrue, curr);
     connectChildToParent(curr->ifFalse, curr);
   }
-  void visitLoop(Loop* curr) {
-    connectChildToParent(curr->body, curr);
-  }
+  void visitLoop(Loop* curr) { connectChildToParent(curr->body, curr); }
   void visitBreak(Break* curr) {
     handleBreakValue(curr);
     // The value may also flow through in a br_if (the type will indicate that,
@@ -530,7 +528,8 @@ struct ConnectionFinder
   void addResult(Expression* value) {
     if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
-std::cout << "adding reuslt " << *value << " in " << getFunction()->name << '\n';
+        std::cout << "adding reuslt " << *value << " in " << getFunction()->name
+                  << '\n';
         info.connections.push_back(
           {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
       }

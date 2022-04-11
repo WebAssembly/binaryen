@@ -72,7 +72,8 @@ struct PossibleTypesPass : public Pass {
         if (curr->is<Pop>()) {
           return false;
         }
-        if (EffectAnalyzer(getPassOptions(), *getModule(), curr).hasUnremovableSideEffects()) {
+        if (EffectAnalyzer(getPassOptions(), *getModule(), curr)
+              .hasUnremovableSideEffects()) {
           return false;
         }
         return true;
