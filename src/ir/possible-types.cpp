@@ -548,9 +548,7 @@ struct ConnectionFinder
         for (auto t : curr->getLocalType(i)) {
           if (t.isDefaultable()) {
             auto loc = NullLocation{t};
-            info.connections.push_back(
-              {loc, LocalLocation{curr, i, j}}
-            );
+            info.connections.push_back({loc, LocalLocation{curr, i, j}});
             addRoot(loc, Literal::makeZero(t));
           }
           j++;
