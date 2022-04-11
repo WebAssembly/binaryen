@@ -42,23 +42,13 @@
 
   ;; CHECK:      (func $nested (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (ref.is_null
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (loop $loop-in
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block (result (ref func))
-  ;; CHECK-NEXT:        (nop)
-  ;; CHECK-NEXT:        (ref.as_func
-  ;; CHECK-NEXT:         (ref.as_non_null
-  ;; CHECK-NEXT:          (ref.null any)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:   (loop $loop-in (result (ref func))
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (ref.as_func
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null any)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

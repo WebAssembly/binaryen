@@ -158,12 +158,20 @@ struct ConnectionFinder
     }
   }
 
-  void visitBlock(Block* curr) { handleBreakTarget(curr); }
+  void visitBlock(Block* curr) {
+    if (curr->list.empty()) {
+      return;
+    }
+    handleBreakTarget(curr);
+    connectChildToParent(curr->list.back(), curr);
+  }
   void visitIf(If* curr) {
     connectChildToParent(curr->ifTrue, curr);
     connectChildToParent(curr->ifFalse, curr);
   }
-  void visitLoop(Loop* curr) { handleBreakTarget(curr); }
+  void visitLoop(Loop* curr) {
+    connectChildToParent(curr->body, curr);
+  }
   void visitBreak(Break* curr) {
     handleBreakValue(curr);
     // The value may also flow through in a br_if (the type will indicate that,
@@ -522,6 +530,7 @@ struct ConnectionFinder
   void addResult(Expression* value) {
     if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
+std::cout << "adding reuslt " << *value << " in " << getFunction()->name << '\n';
         info.connections.push_back(
           {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
       }
@@ -716,7 +725,7 @@ void Oracle::analyze() {
     const auto& types = info.types;
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-    std::cout << "pop item with " << types.size() << " types\n";
+    std::cout << "pop item\n";
     dump(location);
 #endif
 
@@ -765,12 +774,17 @@ void Oracle::analyze() {
           return;
         }
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-        std::cout << "    updateTypes: src has " << inputs.size()
-                  << ", dst has " << outputs.size() << '\n';
+        std::cout << "    updateTypes src:\n";
+        inputs.dump(std::cout);
+        std::cout << "    updateTypes dest:\n";
+        inputs.dump(std::cout);
 #endif
         if (outputs.combine(inputs)) {
           // We inserted something, so there is work to do in this target.
           work.push(target);
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+          std::cout << "    more work\n";
+#endif
         }
       };
 

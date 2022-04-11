@@ -84,10 +84,15 @@
   )
 
   ;; CHECK:      (func $return (result i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (return
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 2)
@@ -105,12 +110,7 @@
 
   ;; CHECK:      (func $call-return
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $return)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $return)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-return
