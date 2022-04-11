@@ -81,6 +81,7 @@ struct PossibleTypesPass : public Pass {
         if (curr->is<Const>() || curr->is<RefFunc>()) { // TODO use helper
           return;
         }
+        auto& options = getPassOptions();
         auto& wasm = *getModule();
         Builder builder(wasm);
         auto values = oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
@@ -88,7 +89,7 @@ struct PossibleTypesPass : public Pass {
           auto* c = values.makeExpression(wasm);
           if (canRemove(curr)) {
             replaceCurrent(
-              getDroppedChildren(curr, wasm, c));
+              getDroppedChildren(curr, c, wasm, options));
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.
@@ -110,7 +111,7 @@ struct PossibleTypesPass : public Pass {
 #endif
           if (canRemove(curr)) {
             replaceCurrent(
-              getDroppedChildren(curr, wasm, builder.makeUnreachable()));
+              getDroppedChildren(curr, builder.makeUnreachable(), wasm, options));
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.

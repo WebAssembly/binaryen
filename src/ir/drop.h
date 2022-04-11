@@ -17,6 +17,7 @@
 #ifndef wasm_ir_drop_h
 #define wasm_ir_drop_h
 
+#include "ir/effects.h"
 #include "ir/iteration.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -26,14 +27,17 @@ namespace wasm {
 // Returns a block containing the dropped children of a node. This is useful if
 // we know the node is not needed but need to keep the children around.
 //
-// The caller can pass in a last item to add to the block.
+// The caller also passes in a last item to add to the block.
 //
 // TODO: use this in more places
 Expression*
-getDroppedChildren(Expression* curr, Module& wasm, Expression* last = nullptr) {
+getDroppedChildren(Expression* curr, Expression* last, Module& wasm, const PassOptions& options) {
   Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {
+    if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
+      continue;
+    }
     if (child->type.isConcrete()) {
       contents.push_back(builder.makeDrop(child));
     } else {
@@ -42,9 +46,10 @@ getDroppedChildren(Expression* curr, Module& wasm, Expression* last = nullptr) {
       contents.push_back(child);
     }
   }
-  if (last) {
-    contents.push_back(last);
+  if (contents.empty()) {
+    return last;
   }
+  contents.push_back(last);
   return builder.makeBlock(contents);
 }
 
