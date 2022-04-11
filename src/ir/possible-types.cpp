@@ -1,4 +1,4 @@
-#define POSSIBLE_TYPES_DEBUG 2
+//#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -107,6 +107,10 @@ struct ConnectionFinder
       return false;
     }
     return true;
+  }
+
+  bool isRelevant(Signature sig) {
+    return isRelevant(sig.params) || isRelevant(sig.results);
   }
 
   bool isRelevant(Expression* curr) { return curr && isRelevant(curr->type); }
@@ -401,15 +405,15 @@ struct ConnectionFinder
   }
   void visitCallRef(CallRef* curr) {
     auto targetType = curr->target->type;
-    if (isRelevant(targetType)) {
-      auto target = targetType.getHeapType();
+    if (targetType != Type::unreachable) {
+      auto heapType = targetType.getHeapType();
       handleCall(
         curr,
           [&](Index i) {
-          return SignatureParamLocation{target, i};
+          return SignatureParamLocation{heapType, i};
         },
         [&](Index i) {
-          return SignatureResultLocation{target, i};
+          return SignatureResultLocation{heapType, i};
         });
     }
   }
