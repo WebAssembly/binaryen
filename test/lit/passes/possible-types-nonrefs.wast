@@ -35,7 +35,15 @@
 
   ;; CHECK:      (func $baz (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $baz (param $x i32)
