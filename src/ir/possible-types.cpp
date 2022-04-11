@@ -165,6 +165,10 @@ struct ConnectionFinder
     }
   }
 
+  void visitConst(Const* curr) {
+    info.roots[curr] = curr->value;
+  }
+
   // Locals read and write to their index.
   // TODO: we could use a LocalGraph for better precision
   void visitLocalGet(LocalGet* curr) {

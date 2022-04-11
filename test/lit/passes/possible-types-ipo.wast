@@ -17,14 +17,26 @@
 
   ;; CHECK:      (func $bar (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (call $foo)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $bar (param $x i32)
+    ;; Both arms of the select have identical values, 42. Inlining +
+    ;; OptimizeInstructions could of course discover that in this case, but
+    ;; possible-types can do so even without inlining.
     (drop
       (select
         (call $foo)
