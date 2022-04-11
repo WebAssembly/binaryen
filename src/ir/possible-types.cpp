@@ -60,7 +60,7 @@ struct FuncInfo {
   // possible before starting the analysis. This includes struct.new, ref.func,
   // etc. All possible types in the rest of the graph flow from such places.
   // The map here is of the root to the value beginning in it.
-  std::unordered_map<Expression*, PossibleValues> roots;
+  std::unordered_map<Location, PossibleValues> roots;
 };
 
 struct ConnectionFinder
@@ -154,8 +154,12 @@ struct ConnectionFinder
   // Adds a root, if the expression is relevant.
   template<typename T> void addRoot(Expression* curr, T contents) {
     if (isRelevant(curr)) {
-      info.roots[curr] = contents;
+      addRoot(ExpressionLocation{curr, 0}, contents);
     }
+  }
+
+  template<typename T> void addRoot(Location loc, T contents) {
+    info.roots[loc] = contents;
   }
 
   void visitBlock(Block* curr) {
@@ -539,6 +543,23 @@ struct ConnectionFinder
   void visitReturn(Return* curr) { addResult(curr->value); }
 
   void visitFunction(Function* curr) {
+    // Vars have an initial value.
+    for (Index i = 0; i < curr->getNumLocals(); i++) {
+      if (curr->isVar(i)) {
+        Index j = 0;
+        for (auto t : curr->getLocalType(i)) {
+          if (t.isDefaultable()) {
+            auto loc = NullLocation{t};
+            info.connections.push_back(
+              {loc, LocalLocation{curr, i, j}}
+            );
+            addRoot(loc, Literal::makeNull(t));
+          }
+          j++;
+        }
+      }
+    }
+
     // Functions with a result can flow a value out from their body.
     addResult(curr->body);
 
@@ -593,7 +614,7 @@ void Oracle::analyze() {
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
-  std::unordered_map<Expression*, PossibleValues> roots;
+  std::unordered_map<Location, PossibleValues> roots;
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "merging phase\n";
@@ -694,19 +715,8 @@ void Oracle::analyze() {
 #endif
 
   // Set up the roots, which are the starting state for the flow analysis.
-  for (const auto& [root, value] : roots) {
-    // The type must not be a reference (as we allocated here), and it cannot be
-    // unreachable (we should have ignored such things before).
-    assert(finder.isRelevant(root->type));
-
-    auto location = ExpressionLocation{root, 0};
-    auto& info = flowInfoMap[location];
-
-    // There must not be anything at this location already, as each root
-    // appears once in the vector of roots.
-    assert(info.types.getType() == Type::unreachable);
-
-    info.types = value;
+  for (const auto& [location, value] : roots) {
+    flowInfoMap[location].types = value;
     work.push(location);
   }
 

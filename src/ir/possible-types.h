@@ -132,6 +132,15 @@ struct TagLocation {
   }
 };
 
+// A null value. This is used as the location of the default value of a var in a
+// function, a null written to a struct field in struct.new_with_default, etc.
+struct NullLocation {
+  Type type;
+  bool operator==(const NullLocation& other) const {
+    return type == other.type;
+  }
+};
+
 // A location is a variant over all the possible types of locations that we
 // have.
 using Location = std::variant<ExpressionLocation,
@@ -143,7 +152,8 @@ using Location = std::variant<ExpressionLocation,
                               SignatureResultLocation,
                               StructLocation,
                               ArrayLocation,
-                              TagLocation>;
+                              TagLocation,
+                              NullLocation>;
 
 // A connection indicates a flow of types from one location to another. For
 // example, if we do a local.get and return that value from a function, then
@@ -232,6 +242,12 @@ template<> struct hash<wasm::PossibleTypes::TagLocation> {
   size_t operator()(const wasm::PossibleTypes::TagLocation& loc) const {
     return std::hash<std::pair<wasm::Name, wasm::Index>>{}(
       {loc.tag, loc.tupleIndex});
+  }
+};
+
+template<> struct hash<wasm::PossibleTypes::NullLocation> {
+  size_t operator()(const wasm::PossibleTypes::NullLocation& loc) const {
+    return std::hash<wasm::Type>{}(loc.type);
   }
 };
 
