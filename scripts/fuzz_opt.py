@@ -185,7 +185,7 @@ def init_important_initial_contents():
         os.path.join('lit', 'passes', 'inlining_splitting.wast'),
         os.path.join('heap-types.wast'),
     ]
-    RECENT_DAYS = 30
+    RECENT_DAYS = 1
 
     # Returns the list of test wast/wat files added or modified within the
     # RECENT_DAYS number of days counting from the commit time of HEAD
@@ -1178,6 +1178,8 @@ def randomize_opt_flags():
     has_flatten = False
     # core opts
     while 1:
+        if random.random() < 0.5:
+            flag_groups.append(['--possible-types'])
         choice = random.choice(opt_choices)
         if '--flatten' in choice or '-O4' in choice:
             if has_flatten:
