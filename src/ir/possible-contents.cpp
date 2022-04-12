@@ -515,13 +515,19 @@ struct ConnectionFinder
       auto tag = curr->catchTags[tagIndex];
       auto* body = curr->catchBodies[tagIndex];
 
+      auto params = getModule()->getTag(tag)->sig.params;
+      if (params.size() == 0) {
+        return;
+      }
+
       // Find the pop of the tag's contents. The body must start with such a
       // pop, which might be of a tuple.
       FindAll<Pop> pops(body);
       assert(!pops.list.empty());
       auto* pop = pops.list[0];
-      if (isRelevant(pop->type)) {
-        for (Index i = 0; i < pop->type.size(); i++) {
+      assert(pop->type.size() == params.size());
+      for (Index i = 0; i < params.size(); i++) {
+        if (isRelevant(params[i])) {
           info.connections.push_back(
             {TagLocation{tag, i}, ExpressionLocation{pop, i}});
         }

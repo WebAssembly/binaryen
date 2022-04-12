@@ -396,7 +396,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -406,8 +406,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $read-globals
-    ;; This global has no possible type written to it, so we can see this will
-    ;; trap and optimize it away.
+    ;; This global has no possible type written to it, so we can optimize it to
+    ;; a null. TODO: remove ref.as_non_nulls
     (drop
       (ref.as_non_null
         (global.get $null)
@@ -1470,15 +1470,18 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
 
-  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
-
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
 
   ;; CHECK:      (tag $nothing (param anyref))
   (tag $nothing (param (ref null any)))
 
   ;; CHECK:      (tag $something (param anyref))
   (tag $something (param (ref null any)))
+
+  ;; CHECK:      (tag $empty (param))
+  (tag $empty (param))
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 anyref)
@@ -1549,6 +1552,28 @@
             (pop (ref null any))
           )
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $empty-tag (type $none_=>_none)
+  ;; CHECK-NEXT:  (try $label$3
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $empty
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $empty-tag
+    ;; Check we do not error on catching an empty tag.
+    (try $label$3
+      (do
+        (nop)
+      )
+      (catch $empty
+        (nop)
       )
     )
   )
