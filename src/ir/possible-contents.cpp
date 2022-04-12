@@ -455,10 +455,8 @@ struct ConnectionFinder
     if (curr->isWithDefault()) {
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
-        info.connections.push_back({
-          getNullLocation(fields[i].type),
-          StructLocation{type, i}
-        });
+        info.connections.push_back(
+          {getNullLocation(fields[i].type), StructLocation{type, i}});
       }
     } else {
       handleChildList(curr->operands, [&](Index i) {
@@ -476,13 +474,11 @@ struct ConnectionFinder
     auto type = curr->type.getHeapType();
     // TODO simplify if to avoid 2 push_backs
     if (curr->init) {
-      info.connections.push_back({ExpressionLocation{curr->init, 0},
-                                  ArrayLocation{type}});
+      info.connections.push_back(
+        {ExpressionLocation{curr->init, 0}, ArrayLocation{type}});
     } else {
-      info.connections.push_back({
-        getNullLocation(type.getArray().element.type),
-        ArrayLocation{type}
-      });
+      info.connections.push_back(
+        {getNullLocation(type.getArray().element.type), ArrayLocation{type}});
     }
     addRoot(curr, curr->type);
   }
@@ -629,7 +625,8 @@ struct ConnectionFinder
         Index j = 0;
         for (auto t : curr->getLocalType(i)) {
           if (t.isDefaultable()) {
-            info.connections.push_back({getNullLocation(t), LocalLocation{curr, i, j}});
+            info.connections.push_back(
+              {getNullLocation(t), LocalLocation{curr, i, j}});
           }
           j++;
         }
