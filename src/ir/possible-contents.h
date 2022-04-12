@@ -392,16 +392,14 @@ template<> struct hash<wasm::GlobalLocation> {
 };
 
 template<> struct hash<wasm::SignatureParamLocation> {
-  size_t
-  operator()(const wasm::SignatureParamLocation& loc) const {
+  size_t operator()(const wasm::SignatureParamLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
   }
 };
 
 template<> struct hash<wasm::SignatureResultLocation> {
-  size_t
-  operator()(const wasm::SignatureResultLocation& loc) const {
+  size_t operator()(const wasm::SignatureResultLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
   }
@@ -435,8 +433,7 @@ template<> struct hash<wasm::NullLocation> {
 
 template<> struct hash<wasm::Connection> {
   size_t operator()(const wasm::Connection& loc) const {
-    return std::hash<std::pair<wasm::Location,
-                               wasm::Location>>{}(
+    return std::hash<std::pair<wasm::Location, wasm::Location>>{}(
       {loc.from, loc.to});
   }
 };

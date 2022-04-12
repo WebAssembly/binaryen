@@ -140,8 +140,7 @@ struct PossibleTypesPass : public Pass {
           return;
         }
 
-        auto values =
-          oracle.getTypes(ExpressionLocation{curr, 0});
+        auto values = oracle.getTypes(ExpressionLocation{curr, 0});
 
         if (values.isConstant()) {
           if (!shouldOptimizeToConstant(curr)) {
