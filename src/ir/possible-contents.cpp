@@ -418,6 +418,14 @@ struct ConnectionFinder
     }
   }
 
+  // Creates a location for a null of a particular type. All nulls are roots as
+  // a value begins there, which we set up here.
+  Location getNullLocation(Type type) {
+    auto location = NullLocation{type};
+    addRoot(location, Literal::makeZero(type));
+    return location;
+  }
+
   // Iterates over a list of children and adds connections as needed. The
   // target of the connection is created using a function that is passed
   // in which receives the index of the child.
@@ -444,9 +452,19 @@ struct ConnectionFinder
       return;
     }
     auto type = curr->type.getHeapType();
-    handleChildList(curr->operands, [&](Index i) {
-      return StructLocation{type, i};
-    });
+    if (curr->isWithDefault()) {
+      auto& fields = type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        info.connections.push_back({
+          getNullLocation(fields[i].type),
+          StructLocation{type, i}
+        });
+      }
+    } else {
+      handleChildList(curr->operands, [&](Index i) {
+        return StructLocation{type, i};
+      });
+    }
     addRoot(curr, curr->type);
   }
   void visitArrayNew(ArrayNew* curr) {
@@ -455,9 +473,16 @@ struct ConnectionFinder
     }
     // Note that if there is no initial value here then it is null, which is
     // not something we need to connect.
+    auto type = curr->type.getHeapType();
+    // TODO simplify if to avoid 2 push_backs
     if (curr->init) {
       info.connections.push_back({ExpressionLocation{curr->init, 0},
-                                  ArrayLocation{curr->type.getHeapType()}});
+                                  ArrayLocation{type}});
+    } else {
+      info.connections.push_back({
+        getNullLocation(type.getArray().element.type),
+        ArrayLocation{type}
+      });
     }
     addRoot(curr, curr->type);
   }
@@ -475,6 +500,12 @@ struct ConnectionFinder
 
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
+    if (!isRelevant(curr->ref)) {
+      // We are not tracking references, and so we cannot properly analyze
+      // values read from them, and must assume the worst.
+      addRoot(curr, curr->type);
+      return;
+    }
     if (isRelevant(curr->type)) {
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
@@ -490,6 +521,12 @@ struct ConnectionFinder
   }
   // Array operations access the array's location.
   void visitArrayGet(ArrayGet* curr) {
+    if (!isRelevant(curr->ref)) {
+      // We are not tracking references, and so we cannot properly analyze
+      // values read from them, and must assume the worst.
+      addRoot(curr, curr->type);
+      return;
+    }
     if (isRelevant(curr->type)) {
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
                                   ExpressionLocation{curr, 0}});
@@ -587,9 +624,7 @@ struct ConnectionFinder
         Index j = 0;
         for (auto t : curr->getLocalType(i)) {
           if (t.isDefaultable()) {
-            auto loc = NullLocation{t};
-            info.connections.push_back({loc, LocalLocation{curr, i, j}});
-            addRoot(loc, Literal::makeZero(t));
+            info.connections.push_back({getNullLocation(t), LocalLocation{curr, i, j}});
           }
           j++;
         }

@@ -396,7 +396,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -421,6 +421,8 @@
     )
     ;; This mutable global has no possible types as we only write a null to it
     ;; in the function later down.
+    ;; FIXME: this test is nondeterministic, ref null any/$struct. All nulls are
+    ;;        equal, so the first one "wins". We should put the LUB I guess?
     (drop
       (ref.as_non_null
         (global.get $mut-null)
@@ -1030,6 +1032,82 @@
     (drop
       (struct.get $parent 0
         (local.get $parent)
+      )
+    )
+  )
+)
+
+;; Default values in struct fields.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $B (struct_subtype (field i32) data))
+  (type $B (struct_subtype (field i32) data))
+  ;; CHECK:      (type $C (struct_subtype (field i32) data))
+  (type $C (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $B 0
+  ;; CHECK-NEXT:      (ref.null $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 0
+  ;; CHECK-NEXT:    (ref.null $C)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; Create a struct with default values. We can propagate a 0 to the get.
+    (drop
+      (struct.new_default $A)
+    )
+    (drop
+      (struct.get $A 0
+        (ref.null $A)
+      )
+    )
+    ;; Allocate with a non-default value, that can also be propagated.
+    (drop
+      (struct.new $B
+        (i32.const 1)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (ref.null $B)
+      )
+    )
+    ;; Never allocate, so no value is possible.
+    (drop
+      (struct.get $C 0
+        (ref.null $C)
       )
     )
   )

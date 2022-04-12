@@ -567,6 +567,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("remove-unused-module-elements");
     addIfNoDWARFIssues("cfp");
   }
+if (getenv("NOW"))  addIfNoDWARFIssues("possible-types");
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
