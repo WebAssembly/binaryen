@@ -547,6 +547,11 @@ struct ConnectionFinder
   //       thrown is sent to the location of that tag, and any catch of that
   //       tag can read them
   void visitTry(Try* curr) {
+    connectChildToParent(curr->body, curr);
+    for (auto* catchBody : curr->catchBodies) {
+      connectChildToParent(catchBody, curr);
+    }
+
     auto numTags = curr->catchTags.size();
     for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
       auto tag = curr->catchTags[tagIndex];

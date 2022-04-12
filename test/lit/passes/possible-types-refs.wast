@@ -1545,10 +1545,10 @@
 
 ;; Exceptions.
 (module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
 
@@ -1652,6 +1652,122 @@
       )
       (catch $empty
         (nop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try-results (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (try $try (result i32)
+  ;; CHECK-NEXT:      (do
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (catch $empty
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (catch_all
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (try $try1 (result i32)
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $empty
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch_all
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (try $try2 (result i32)
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $empty
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch_all
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (try $try3 (result i32)
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $empty
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch_all
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-results
+    ;; If all values flowing out are identical, we can optimize.
+    (drop
+      (try (result i32)
+        (do
+          (i32.const 0)
+        )
+        (catch $empty
+          (i32.const 0)
+        )
+        (catch_all
+          (i32.const 0)
+        )
+      )
+    )
+    ;; If any of the values is changed, we cannot.
+    (drop
+      (try (result i32)
+        (do
+          (i32.const 42)
+        )
+        (catch $empty
+          (i32.const 0)
+        )
+        (catch_all
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (try (result i32)
+        (do
+          (i32.const 0)
+        )
+        (catch $empty
+          (i32.const 42)
+        )
+        (catch_all
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (try (result i32)
+        (do
+          (i32.const 0)
+        )
+        (catch $empty
+          (i32.const 0)
+        )
+        (catch_all
+          (i32.const 42)
+        )
       )
     )
   )
