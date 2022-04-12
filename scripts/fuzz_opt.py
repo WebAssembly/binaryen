@@ -1183,7 +1183,7 @@ def randomize_opt_flags():
     # core opts
     while 1:
         if random.random() < 0.5:
-            flag_groups.append(['--possible-types'])
+            flag_groups.append(['--gufa'])
         choice = random.choice(opt_choices)
         if '--flatten' in choice or '-O4' in choice:
             if has_flatten:

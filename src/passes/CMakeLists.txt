@@ -39,6 +39,7 @@ set(passes_SOURCES
   GenerateDynCalls.cpp
   GlobalRefining.cpp
   GlobalTypeOptimization.cpp
+  GUFA.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
@@ -66,7 +67,6 @@ set(passes_SOURCES
   OptimizeForJS.cpp
   PickLoadSigns.cpp
   Poppify.cpp
-  PossibleTypes.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
