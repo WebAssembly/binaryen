@@ -15,7 +15,7 @@
  */
 
 //
-// Whole-program content flow analysis
+// Whole-program content flow analysis / Grand Unified Flow Analysis
 //
 // Optimize based on information about which types can appear in each location
 // in the program. This does a whole-program analysis to find that out and
