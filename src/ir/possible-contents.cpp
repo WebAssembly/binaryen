@@ -508,6 +508,9 @@ struct ConnectionFinder
     }
   }
   void visitStructSet(StructSet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0},
@@ -528,6 +531,9 @@ struct ConnectionFinder
     }
   }
   void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0},
