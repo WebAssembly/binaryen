@@ -68,9 +68,11 @@ void dump(Location location) {
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
 struct FuncInfo {
-  // All the connections we found in this function.
-  // TODO: as an optimization we could perhaps avoid redundant copies in this
-  //       vector using a set?
+  // All the connections we found in this function. Rarely are there duplicates
+  // in this list (say when writing to the same global location from another
+  // global location), and we do not try to deduplicate here, just store them in
+  // a plain array for now, which is faster (later, when we merge all the info
+  // from the functions, we need to deduplicate anyhow).
   std::vector<Connection> connections;
 
   // All the roots of the graph, that is, places where we should mark a type as
@@ -101,9 +103,6 @@ struct ConnectionFinder
       // If nominal typing is enabled then we cannot handle refs, as we need
       // to do a subtyping analysis there (which SubTyping only supports in
       // nominal mode).
-      // TODO: this is not good enough. In non-nominal fuzzing we still need to
-      // mark struct.new etc. as roots, just so they do not get turned into
-      // unreachables. Or maybe fix on the PossibleTypes pass side, yeah...
       return false;
     }
     return true;
