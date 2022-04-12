@@ -15,20 +15,15 @@
  */
 
 //
-// Whole-program content flow analysis / Grand Unified Flow Analysis
-//
-// Optimize based on information about which types can appear in each location
+// Optimize based on information about what content can appear in each location
 // in the program. This does a whole-program analysis to find that out and
 // hopefully learn more than the type system does - for example, a type might be
 // $A, which means $A or any subtype can appear there, but perhaps the analysis
 // can find that only $A', a particular subtype, can appear there in practice,
 // and not $A or any subtypes of $A', etc. Or, we may find that no type is
 // actually possible at a particular location, say if we can prove that the
-// casts on the way to that location allow nothing through.
-//
-// This uses the ContentOracle utility, and aside from the optimization
-// benefits is also a good way to test that code (which is also used in other
-// passes in more complex ways, or will be).
+// casts on the way to that location allow nothing through. We can also find
+// that only a particular value is possible of that type.
 //
 
 #include "ir/drop.h"
@@ -51,7 +46,6 @@ struct PossibleTypesPass : public Pass {
       : public WalkerPass<
           PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>>> {
       bool isFunctionParallel() override { return true; }
-      // waka
 
       ContentOracle& oracle;
 
@@ -61,9 +55,6 @@ struct PossibleTypesPass : public Pass {
 
       bool optimized = false;
 
-      // TODO move this into drops.h, a single function that is told "this is
-      // not actually needed; remove it as best you can"
-      // We also could use a TypeUpdater here, but that would be slower.
       bool canRemove(Expression* curr) {
         // We can remove almost anything, but not a branch target, as we still
         // need the target for the branches to it to validate.
