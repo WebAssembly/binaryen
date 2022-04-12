@@ -67,7 +67,7 @@ int main() {
         )
       )
     )");
-    PossibleContentsOracle oracle(*wasm);
+    ContentOracle oracle(*wasm);
     std::cout
       << "possible types of the function's body: "
       << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).getType()
