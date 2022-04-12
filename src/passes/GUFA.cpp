@@ -100,11 +100,15 @@ struct GUFAPass : public Pass {
       }
 
       void visitExpression(Expression* curr) {
+        auto type = curr->type;
+        if (type == Type::unreachable || type == Type::none) {
+          return;
+        }
+
         if (Properties::isConstantExpression(curr)) {
           return;
         }
 
-        auto type = curr->type;
         auto& options = getPassOptions();
         auto& wasm = *getModule();
         Builder builder(wasm);
@@ -135,43 +139,39 @@ struct GUFAPass : public Pass {
 
         auto values = oracle.getTypes(ExpressionLocation{curr, 0});
 
-        if (values.isConstant()) {
-          if (!shouldOptimizeToConstant(curr)) {
-            return;
-          }
-
-          auto* c = values.makeExpression(wasm);
-          // We can only place the constant value here if it has the right
-          // type. For example, a block may return (ref any), that is, not allow
-          // a null, but in practice only a null may flow there.
-          if (Type::isSubType(c->type, curr->type)) {
-            if (canRemove(curr)) {
-              replaceCurrent(getDroppedChildren(curr, c, wasm, options));
-            } else {
-              // We can't remove this, but we can at least put an unreachable
-              // right after it.
-              replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
-            }
-            optimized = true;
-          } else {
-            // The type is not compatible: we cannot place |c| in this location,
-            // even though we have proven it is the only value possible here.
-            // That means no value is possible and this code is unreachable.
-            // TODO add test
-            replaceWithUnreachable();
-          }
+        if (values.getType() == Type::unreachable) {
+          // This cannot contain any possible value at all. It must be
+          // unreachable code.
+          replaceWithUnreachable();
           return;
         }
-        if (type.isNonNullable() && values.getType() == Type::unreachable) {
-          // This cannot contain a null, but also we have inferred that it
-          // will never contain any type at all, which means that this code is
-          // unreachable or will trap at runtime. Replace it with a trap.
-#if 1
-          static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : 9999999;
-          if (LIMIT == 0)
-            return;
-          LIMIT--;
-#endif
+
+        if (!values.isConstant()) {
+          return;
+        }
+        if (!shouldOptimizeToConstant(curr)) {
+          return;
+        }
+
+        // This is a constant value that we should optimize to.
+        auto* c = values.makeExpression(wasm);
+        // We can only place the constant value here if it has the right
+        // type. For example, a block may return (ref any), that is, not allow
+        // a null, but in practice only a null may flow there.
+        if (Type::isSubType(c->type, curr->type)) {
+          if (canRemove(curr)) {
+            replaceCurrent(getDroppedChildren(curr, c, wasm, options));
+          } else {
+            // We can't remove this, but we can at least put an unreachable
+            // right after it.
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
+          }
+          optimized = true;
+        } else {
+          // The type is not compatible: we cannot place |c| in this location,
+          // even though we have proven it is the only value possible here.
+          // That means no value is possible and this code is unreachable.
+          // TODO add test
           replaceWithUnreachable();
         }
       }
