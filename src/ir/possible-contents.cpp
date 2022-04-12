@@ -20,12 +20,12 @@
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
-#include "ir/possible-types.h"
+#include "ir/possible-contents.h"
 #include "ir/subtypes.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
-namespace wasm::PossibleTypes {
+namespace wasm {
 
 namespace {
 
@@ -77,7 +77,7 @@ struct FuncInfo {
   // possible before starting the analysis. This includes struct.new, ref.func,
   // etc. All possible types in the rest of the graph flow from such places.
   // The map here is of the root to the value beginning in it.
-  std::unordered_map<Location, PossibleValues> roots;
+  std::unordered_map<Location, PossibleContents> roots;
 };
 
 struct ConnectionFinder
@@ -600,7 +600,7 @@ struct ConnectionFinder
 
 } // anonymous namespace
 
-void Oracle::analyze() {
+void ContentOracle::analyze() {
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "parallel phase\n";
 #endif
@@ -644,7 +644,7 @@ void Oracle::analyze() {
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
-  std::unordered_map<Location, PossibleValues> roots;
+  std::unordered_map<Location, PossibleContents> roots;
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "merging phase\n";
@@ -671,7 +671,7 @@ void Oracle::analyze() {
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[LocalLocation{func, i, 0}] = PossibleValues::many();
+      roots[LocalLocation{func, i, 0}] = PossibleContents::many();
     }
   };
 
@@ -848,8 +848,8 @@ void Oracle::analyze() {
 
       // Update types in one lane of a tuple, copying from inputs to outputs and
       // adding the target to the remaining work if we added something new.
-      auto updateTypes = [&](const PossibleValues& inputs,
-                             PossibleValues& outputs) {
+      auto updateTypes = [&](const PossibleContents& inputs,
+                             PossibleContents& outputs) {
         if (inputs.getType() == Type::unreachable) {
           return;
         }
@@ -880,7 +880,7 @@ void Oracle::analyze() {
   //       Get --cfp tests passing with this code
 }
 
-} // namespace wasm::PossibleTypes
+} // namespace wasm
 
 /*
 TODO: w.wasm failure on LIMIT=1

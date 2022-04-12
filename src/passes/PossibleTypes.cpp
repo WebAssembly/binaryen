@@ -15,6 +15,8 @@
  */
 
 //
+// Whole-program content flow analysis
+//
 // Optimize based on information about which types can appear in each location
 // in the program. This does a whole-program analysis to find that out and
 // hopefully learn more than the type system does - for example, a type might be
@@ -24,14 +26,14 @@
 // actually possible at a particular location, say if we can prove that the
 // casts on the way to that location allow nothing through.
 //
-// This uses the PossibleTypes::Oracle utility, and aside from the optimization
+// This uses the ContentOracle utility, and aside from the optimization
 // benefits is also a good way to test that code (which is also used in other
 // passes in more complex ways, or will be).
 //
 
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
-#include "ir/possible-types.h"
+#include "ir/possible-contents.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -43,7 +45,7 @@ namespace {
 
 struct PossibleTypesPass : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    PossibleTypes::Oracle oracle(*module);
+    ContentOracle oracle(*module);
 
     struct Optimizer
       : public WalkerPass<
@@ -51,9 +53,9 @@ struct PossibleTypesPass : public Pass {
       bool isFunctionParallel() override { return true; }
       // waka
 
-      PossibleTypes::Oracle& oracle;
+      ContentOracle& oracle;
 
-      Optimizer(PossibleTypes::Oracle& oracle) : oracle(oracle) {}
+      Optimizer(ContentOracle& oracle) : oracle(oracle) {}
 
       Optimizer* create() override { return new Optimizer(oracle); }
 
@@ -139,7 +141,7 @@ struct PossibleTypesPass : public Pass {
         }
 
         auto values =
-          oracle.getTypes(PossibleTypes::ExpressionLocation{curr, 0});
+          oracle.getTypes(ExpressionLocation{curr, 0});
 
         if (values.isConstant()) {
           if (!shouldOptimizeToConstant(curr)) {

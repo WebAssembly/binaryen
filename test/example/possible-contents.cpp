@@ -6,7 +6,6 @@
 #include "wasm.h"
 
 using namespace wasm;
-using namespace wasm::PossibleTypes;
 
 std::unique_ptr<Module> parse(std::string module) {
   auto wasm = std::make_unique<Module>();
@@ -37,7 +36,7 @@ int main() {
         (global $something (ref null any) (struct.new $struct))
       )
     )");
-    Oracle oracle(*wasm);
+    PossibleContentsOracle oracle(*wasm);
     std::cout << "possible types of the $null global: "
               << oracle.getTypes(GlobalLocation{"foo"}).getType() << '\n';
     std::cout << "possible types of the $something global: "
@@ -71,7 +70,7 @@ int main() {
         )
       )
     )");
-    Oracle oracle(*wasm);
+    PossibleContentsOracle oracle(*wasm);
     std::cout
       << "possible types of the function's body: "
       << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).getType()

@@ -8,7 +8,7 @@ set(ir_SOURCES
   memory-utils.cpp
   module-utils.cpp
   names.cpp
-  possible-types.cpp
+  possible-contents.cpp
   properties.cpp
   LocalGraph.cpp
   ReFinalize.cpp
