@@ -349,5 +349,44 @@
   )
 )
 
+;; Imports have unknown values.
+(module
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (func $internal (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $internal (result i32)
+    (i32.const 42)
+  )
+
+  ;; CHECK:      (func $calls
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $internal)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls
+    (drop
+      (call $import)
+    )
+    (drop
+      (call $internal)
+    )
+  )
+)
+
 ;; TODO: test "cycles" with various things involved, another thing other
 ;;       passes fail at
