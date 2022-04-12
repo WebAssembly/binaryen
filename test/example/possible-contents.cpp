@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "ir/possible-types.h"
+#include "ir/possible-contents.h"
 #include "wasm-s-parser.h"
 #include "wasm.h"
 
@@ -22,9 +22,6 @@ std::unique_ptr<Module> parse(std::string module) {
 }
 
 int main() {
-  // PossibleTypes requires nominal typing (to find super types).
-  wasm::setTypeSystem(TypeSystem::Nominal);
-
   {
     // A minimal test of the public API of PossibleTypesOracle. See the lit test
     // for coverage of all the internals (using lit makes the result more
@@ -36,7 +33,7 @@ int main() {
         (global $something (ref null any) (struct.new $struct))
       )
     )");
-    PossibleContentsOracle oracle(*wasm);
+    ContentOracle oracle(*wasm);
     std::cout << "possible types of the $null global: "
               << oracle.getTypes(GlobalLocation{"foo"}).getType() << '\n';
     std::cout << "possible types of the $something global: "
