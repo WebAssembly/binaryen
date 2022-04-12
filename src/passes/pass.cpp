@@ -170,6 +170,11 @@ void PassRegistry::registerPasses() {
     "global-refining", "refine the types of globals", createGlobalRefiningPass);
   registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass("gufa",
+               "Grand Unified Flow Analysis: optimize the entire program using "
+               "information about what content can actually appear in each "
+               "location",
+               createGUFAPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
@@ -274,10 +279,6 @@ void PassRegistry::registerPasses() {
                createPickLoadSignsPass);
   registerPass(
     "poppify", "Tranform Binaryen IR into Poppy IR", createPoppifyPass);
-  registerPass("possible-types",
-               "optimize the entire program using information about which "
-               "types can actually appear in each location",
-               createPossibleTypesPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -567,7 +568,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("remove-unused-module-elements");
     addIfNoDWARFIssues("cfp");
   }
-if (getenv("NOW"))  addIfNoDWARFIssues("possible-types");
+if (getenv("NOW"))  addIfNoDWARFIssues("gufa");
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {

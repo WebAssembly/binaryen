@@ -15,6 +15,8 @@
  */
 
 //
+// Grand Unified Flow Analysis (GUFA)
+//
 // Optimize based on information about what content can appear in each location
 // in the program. This does a whole-program analysis to find that out and
 // hopefully learn more than the type system does - for example, a type might be
@@ -38,7 +40,7 @@ namespace wasm {
 
 namespace {
 
-struct PossibleTypesPass : public Pass {
+struct GUFAPass : public Pass {
   void run(PassRunner* runner, Module* module) override {
     ContentOracle oracle(*module);
 
@@ -197,6 +199,6 @@ struct PossibleTypesPass : public Pass {
 
 } // anonymous namespace
 
-Pass* createPossibleTypesPass() { return new PossibleTypesPass(); }
+Pass* createGUFAPass() { return new GUFAPass(); }
 
 } // namespace wasm
