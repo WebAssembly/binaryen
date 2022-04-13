@@ -108,7 +108,7 @@ struct GUFAPass : public Pass {
           // If we got here, the list cannot be empty - an empty block is not
           // equivalent to any constant, so a logic error occurred before.
           assert(!block->list.empty());
-          if (!BranchUtils::hasBranchTarget(block, block->name) &&
+          if (!BranchUtils::BranchSeeker::has(block, block->name) &&
               Properties::isConstantExpression(block->list.back())) {
             return false;
           }

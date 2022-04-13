@@ -2,14 +2,13 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -S -o - | filecheck %s
 
 (module
-
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
-
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
@@ -491,6 +490,93 @@
         (local.get $y)
       )
       (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $blocks
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $named (result i32)
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $named0 (result i32)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (br $named0
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $named1 (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (br $named1
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $blocks
+    ;; We can infer a constant value here, but should not make any changes, as
+    ;; what we would optimize to would be a block ending in a constant with the
+    ;; old block nested in it, that is, we'd increase code size for no benefit.
+    (drop
+      (block (result i32)
+        (nop)
+        (i32.const 1)
+      )
+    )
+    ;; Even if the block has a name, we should not make any changes.
+    (drop
+      (block $named (result i32)
+        (nop)
+        (i32.const 1)
+      )
+    )
+    ;; But if the block also has a branch to it, then we should: we'd be placing
+    ;; something simpler (a nameless block with no branches to it) on the
+    ;; outside.
+    (drop
+      (block $named (result i32)
+        (if
+          (i32.const 0)
+          (br $named
+            (i32.const 1)
+          )
+        )
+        (i32.const 1)
+      )
+    )
+    ;; As above, but the two values reaching the block do not agree, so we
+    ;; should not optimize.
+    (drop
+      (block $named (result i32)
+        (if
+          (i32.const 0)
+          (br $named
+            (i32.const 2)
+          )
+        )
+        (i32.const 1)
+      )
     )
   )
 )
