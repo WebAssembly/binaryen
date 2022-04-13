@@ -655,13 +655,16 @@ void ContentOracle::analyze() {
 
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
+      ConnectionFinder finder(info);
+
       if (func->imported()) {
-        // TODO: add an option to not always assume a closed world, in which
-        //       case we'd need to track values escaping etc.
+        // Imports return unknown values.
+        for (Index i = 0; i < func->getResults().size(); i++) {
+          finder.addRoot(ResultLocation{func, i}, PossibleContents::many());
+        }
         return;
       }
 
-      ConnectionFinder finder(info);
       finder.walkFunctionInModule(func, &wasm);
     });
 
@@ -678,12 +681,15 @@ void ContentOracle::analyze() {
   // Connect global init values (which we've just processed, as part of the
   // module code) to the globals they initialize.
   for (auto& global : wasm.globals) {
-    if (!global->imported()) {
-      auto* init = global->init;
-      if (finder.isRelevant(init->type)) {
-        globalInfo.connections.push_back(
-          {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
-      }
+    if (global->imported()) {
+      // Imports are unknown values.
+      finder.addRoot(GlobalLocation{global->name}, PossibleContents::many());
+      continue;
+    }
+    auto* init = global->init;
+    if (finder.isRelevant(init->type)) {
+      globalInfo.connections.push_back(
+        {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
     }
   }
 
