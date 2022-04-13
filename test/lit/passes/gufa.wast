@@ -7,14 +7,25 @@
 
   ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
-
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
+
   ;; CHECK:      (export "param-no" (func $param-no))
+
+  ;; CHECK:      (func $never-called (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $never-called (param $param i32) (result i32)
+    ;; This function is never called, so no content is possible in $param, and
+    ;; we know this must be unreachable code that can be removed (replaced with
+    ;; an unreachable).
+    (local.get $param)
+  )
 
   ;; CHECK:      (func $foo (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
