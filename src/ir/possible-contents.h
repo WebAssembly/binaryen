@@ -281,13 +281,8 @@ struct SignatureResultLocation {
   }
 };
 
-// The location of a struct field. This represents a struct.get/set/new instr
-// with a particular type. Due to subtyping, the struct.get/set may actually be
-// operating on a subtype of that type, which the flow will need to take into
-// account.
-// TODO: we use this in both get/set and new. if we separate them we would get a
-//       more precise analysis because struct.new does know the precise type
-//       exactly.
+// The location of a struct field. Note that this is specific to this type - it
+// does not include data about subtypes or supertypes.
 struct StructLocation {
   HeapType type;
   Index index;

@@ -1186,6 +1186,61 @@
   )
 )
 
+;; Write to the parent and read from the child.
+(module
+  (type $parent (struct_subtype (field (mut i32)) data))
+  (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $child (ref null $child))
+  ;; CHECK-NEXT:  (local $parent (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $parent
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (local.get $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $child
+  ;; CHECK-NEXT:   (struct.new $child
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $child)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (local $child (ref null $child))
+    (local $parent (ref null $parent))
+    (local.set $parent
+      (struct.new $parent
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.get $parent 0
+        (local.get $parent)
+      )
+    )
+    (drop
+      (struct.get $child 0
+        (local.get $child)
+      )
+    )
+  )
+)
+
 ;; Arrays get/set
 (module
   (type $nothing (array_subtype (mut (ref null any)) data))
@@ -1196,13 +1251,11 @@
   ;; CHECK:      (type $something (array_subtype (mut anyref) data))
   (type $something (array_subtype (mut (ref null any)) data))
 
+  (type $something-child (array_subtype (mut (ref null any)) $something))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
-
-  ;; CHECK:      (type $something-child (array_subtype (mut anyref) $something))
-  (type $something-child (array_subtype (mut (ref null any)) $something))
-
   (type $struct (struct))
 
   ;; CHECK:      (func $func (type $none_=>_none)
@@ -1242,10 +1295,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (array.get $something-child
-  ;; CHECK-NEXT:     (ref.null $something-child)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
