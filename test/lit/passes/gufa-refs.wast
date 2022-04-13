@@ -1045,7 +1045,6 @@
   (type $A (struct_subtype (field i32) data))
   ;; CHECK:      (type $B (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) data))
-  ;; CHECK:      (type $C (struct_subtype (field i32) data))
   (type $C (struct_subtype (field i32) data))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -1080,14 +1079,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $C 0
-  ;; CHECK-NEXT:      (ref.null $C)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
@@ -1196,18 +1188,15 @@
 
 ;; Arrays get/set
 (module
-  ;; CHECK:      (type $null (array_subtype (mut anyref) data))
-
-  ;; CHECK:      (type $something (array_subtype (mut anyref) data))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $nothing (array_subtype (mut anyref) data))
   (type $nothing (array_subtype (mut (ref null any)) data))
 
+  ;; CHECK:      (type $null (array_subtype (mut anyref) data))
   (type $null (array_subtype (mut (ref null any)) data))
 
+  ;; CHECK:      (type $something (array_subtype (mut anyref) data))
   (type $something (array_subtype (mut (ref null any)) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
 
@@ -1218,15 +1207,7 @@
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (array.get $nothing
-  ;; CHECK-NEXT:      (ref.null $nothing)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.set $null
   ;; CHECK-NEXT:   (ref.null $null)

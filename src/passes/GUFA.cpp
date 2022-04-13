@@ -57,21 +57,38 @@ struct GUFAPass : public Pass {
 
       bool optimized = false;
 
-      bool canRemove(Expression* curr) {
+      // Check if removing something (but not its children - just the node
+      // itself) would be ok structurally - whether the IR would still validate.
+      bool canRemoveStructurally(Expression* curr) {
         // We can remove almost anything, but not a branch target, as we still
         // need the target for the branches to it to validate.
         if (BranchUtils::getDefinedName(curr).is()) {
           return false;
         }
         // Pops are structurally necessary in catch bodies.
-        if (curr->is<Pop>()) {
+        return !curr->is<Pop>();
+      }
+
+      // Whether we can remove something (but not its children) without changing
+      // observable behavior.
+      bool canRemove(Expression* curr) {
+        if (!canRemoveStructurally(curr)) {
           return false;
         }
-        if (EffectAnalyzer(getPassOptions(), *getModule(), curr)
-              .hasUnremovableSideEffects()) {
+        return !EffectAnalyzer(getPassOptions(), *getModule(), curr)
+              .hasUnremovableSideEffects();
+      }
+
+      // Whether we can replcae something (but not its children) with an
+      // unreachable without changing observable behavior.
+      bool canReplaceWithUnreachable(Expression* curr) {
+        if (!canRemoveStructurally(curr)) {
           return false;
         }
-        return true;
+        EffectAnalyzer effects(getPassOptions(), *getModule(), curr);
+        // Ignore a trap, as the unreachable replacement would trap too.
+        effects.trap = false;
+        return !effects.hasUnremovableSideEffects();
       }
 
       // Given we know an expression is equivalent to a constant, check if we
@@ -114,7 +131,7 @@ struct GUFAPass : public Pass {
         Builder builder(wasm);
 
         auto replaceWithUnreachable = [&]() {
-          if (canRemove(curr)) {
+          if (canReplaceWithUnreachable(curr)) {
             replaceCurrent(getDroppedChildren(
               curr, builder.makeUnreachable(), wasm, options));
           } else {
