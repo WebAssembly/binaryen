@@ -494,6 +494,20 @@ struct ConnectionFinder
     addRoot(curr, curr->type);
   }
 
+  // Add connections to make it possible to reach an expression's parent, which
+  // we need during the flow in special cases. See the comment on the |parent|
+  // field on the ExpressionLocation class for more details.
+  void addParentLink(Expression* child, Expression* parent) {
+    // The mechanism we use is to connect the main location (referred to in
+    // various other places potentially) to a new location that has the parent.
+    // The main location feeds values to the latter, and we can then use the
+    // parent in the main flow logic.
+    info.connections.push_back({
+      ExpressionLocation{child, nullptr, 0},
+      ExpressionLocation{child, parent, 0}
+    });
+  }
+
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
     if (!isRelevant(curr->ref)) {
@@ -506,6 +520,10 @@ struct ConnectionFinder
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
          ExpressionLocation{curr, nullptr, 0}});
+
+      // The struct.get will receive different values depending on the contents
+      // in the reference, so mark us as the parent of the ref.
+      addParentLink(curr->ref, curr);
     }
   }
   void visitStructSet(StructSet* curr) {
@@ -516,6 +534,10 @@ struct ConnectionFinder
       info.connections.push_back(
         {ExpressionLocation{curr->value, nullptr, 0},
          StructLocation{curr->ref->type.getHeapType(), curr->index}});
+
+      // See comment on visitStructGet. Here we also connect the value.
+      addParentLink(curr->ref, curr);
+      addParentLink(curr->value, curr);
     }
   }
   // Array operations access the array's location.
@@ -529,6 +551,9 @@ struct ConnectionFinder
     if (isRelevant(curr->type)) {
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
                                   ExpressionLocation{curr, nullptr, 0}});
+
+      // See StructGet comment.
+      addParentLink(curr->ref, curr);
     }
   }
   void visitArraySet(ArraySet* curr) {
@@ -539,6 +564,10 @@ struct ConnectionFinder
       info.connections.push_back(
         {ExpressionLocation{curr->value, nullptr, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
+
+      // See StructSet comment.
+      addParentLink(curr->ref, curr);
+      addParentLink(curr->value, curr);
     }
   }
 
