@@ -3,22 +3,30 @@
 ;; (remove-unused-names is added to test fallthrough values without a block
 ;; name getting in the way)
 
-;; XXX FIXME when we are done, just add another run-like to cfp.wast and rremove
-;;           this file entirely
+;; This is almost identical to cfp.wast, and is meant to facilitate comparisons
+;; between the passes - in particular, gufa should do everything cfp can do,
+;; although it may do it differently. Changes include:
+;;
+;;  * Tests must avoid things gufa optimizes away that would make the test
+;;    irrelevant. In particular, parameters to functions that are never called
+;;    will be turned to unreachable by gufa, so instead make those calls to
+;;    imports.
+;;  * Gufa optimizes in a more general way. Cfp will turn a struct.get that can
+;;    return no value into a ref.as_non_null (to preserve the trap if the ref is
+;;    null), while gufa has no special handling for struct.get, so it will use
+;;    its normal pattern there (of a drop of the struct.get followed by an
+;;    unreachable, and it assumes other passes can remove the struct.get, which
+;;    vacuum can in trapsNeverHappen mode).
+;;  * Gufa's more general optimizations can remove more unreachable code, as it
+;;    checks for effects (and removes effectless code).
 
 (module
+  (type $struct (struct i32))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
-  (type $struct (struct i32))
   ;; CHECK:      (func $impossible-get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $impossible-get
