@@ -32,7 +32,8 @@ namespace {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-    std::cout << "  exprloc \n" << *loc->expr << '\n';
+    std::cout << "  exprloc \n" << *loc->expr << " (parent? " << !!loc->parent
+              << ")\n";
   } else if (auto* loc = std::get_if<StructLocation>(&location)) {
     std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
@@ -140,7 +141,7 @@ struct ConnectionFinder
         if (value) {
           for (Index i = 0; i < value->type.size(); i++) {
             info.connections.push_back(
-              {ExpressionLocation{value, i},
+              {ExpressionLocation{value, nullptr, i},
                BranchLocation{getFunction(), target, i}});
           }
         }
@@ -154,7 +155,7 @@ struct ConnectionFinder
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
           info.connections.push_back({BranchLocation{getFunction(), target, i},
-                                      ExpressionLocation{curr, i}});
+                                      ExpressionLocation{curr, nullptr, i}});
         }
       });
     }
@@ -169,7 +170,7 @@ struct ConnectionFinder
       assert(child->type.size() == parent->type.size());
       for (Index i = 0; i < child->type.size(); i++) {
         info.connections.push_back(
-          {ExpressionLocation{child, i}, ExpressionLocation{parent, i}});
+          {ExpressionLocation{child, nullptr, i}, ExpressionLocation{parent, nullptr, i}});
       }
     }
   }
@@ -177,7 +178,7 @@ struct ConnectionFinder
   // Adds a root, if the expression is relevant.
   template<typename T> void addRoot(Expression* curr, T contents) {
     if (isRelevant(curr)) {
-      addRoot(ExpressionLocation{curr, 0}, contents);
+      addRoot(ExpressionLocation{curr, nullptr, 0}, contents);
     }
   }
 
@@ -307,7 +308,7 @@ struct ConnectionFinder
       for (Index i = 0; i < curr->type.size(); i++) {
         info.connections.push_back(
           {LocalLocation{getFunction(), curr->index, i},
-           ExpressionLocation{curr, i}});
+           ExpressionLocation{curr, nullptr, i}});
       }
     }
   }
@@ -317,11 +318,11 @@ struct ConnectionFinder
     }
     for (Index i = 0; i < curr->value->type.size(); i++) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, i},
+        {ExpressionLocation{curr->value, nullptr, i},
          LocalLocation{getFunction(), curr->index, i}});
       if (curr->isTee()) {
         info.connections.push_back(
-          {ExpressionLocation{curr->value, i}, ExpressionLocation{curr, i}});
+          {ExpressionLocation{curr->value, nullptr, i}, ExpressionLocation{curr, nullptr, i}});
       }
     }
   }
@@ -330,13 +331,13 @@ struct ConnectionFinder
   void visitGlobalGet(GlobalGet* curr) {
     if (isRelevant(curr->type)) {
       info.connections.push_back(
-        {GlobalLocation{curr->name}, ExpressionLocation{curr, 0}});
+        {GlobalLocation{curr->name}, ExpressionLocation{curr, nullptr, 0}});
     }
   }
   void visitGlobalSet(GlobalSet* curr) {
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, 0}, GlobalLocation{curr->name}});
+        {ExpressionLocation{curr->value, nullptr, 0}, GlobalLocation{curr->name}});
     }
   }
 
@@ -351,7 +352,7 @@ struct ConnectionFinder
     for (auto* operand : curr->operands) {
       if (isRelevant(operand->type)) {
         info.connections.push_back(
-          {ExpressionLocation{operand, 0}, makeParamLocation(i)});
+          {ExpressionLocation{operand, nullptr, 0}, makeParamLocation(i)});
       }
       i++;
     }
@@ -360,7 +361,7 @@ struct ConnectionFinder
     for (Index i = 0; i < curr->type.size(); i++) {
       if (isRelevant(curr->type[i])) {
         info.connections.push_back(
-          {makeResultLocation(i), ExpressionLocation{curr, i}});
+          {makeResultLocation(i), ExpressionLocation{curr, nullptr, i}});
       }
     }
 
@@ -435,7 +436,7 @@ struct ConnectionFinder
       assert(!operand->type.isTuple());
       if (isRelevant(operand->type)) {
         info.connections.push_back(
-          {ExpressionLocation{operand, 0}, makeTarget(i)});
+          {ExpressionLocation{operand, nullptr, 0}, makeTarget(i)});
       }
       i++;
     }
@@ -474,7 +475,7 @@ struct ConnectionFinder
     // TODO simplify if to avoid 2 push_backs
     if (curr->init) {
       info.connections.push_back(
-        {ExpressionLocation{curr->init, 0}, ArrayLocation{type}});
+        {ExpressionLocation{curr->init, nullptr, 0}, ArrayLocation{type}});
     } else {
       info.connections.push_back(
         {getNullLocation(type.getArray().element.type), ArrayLocation{type}});
@@ -504,7 +505,7 @@ struct ConnectionFinder
     if (isRelevant(curr->type)) {
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
-         ExpressionLocation{curr, 0}});
+         ExpressionLocation{curr, nullptr, 0}});
     }
   }
   void visitStructSet(StructSet* curr) {
@@ -513,7 +514,7 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, 0},
+        {ExpressionLocation{curr->value, nullptr, 0},
          StructLocation{curr->ref->type.getHeapType(), curr->index}});
     }
   }
@@ -527,7 +528,7 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->type)) {
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
-                                  ExpressionLocation{curr, 0}});
+                                  ExpressionLocation{curr, nullptr, 0}});
     }
   }
   void visitArraySet(ArraySet* curr) {
@@ -536,7 +537,7 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, 0},
+        {ExpressionLocation{curr->value, nullptr, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
     }
   }
@@ -572,7 +573,7 @@ struct ConnectionFinder
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
           info.connections.push_back(
-            {TagLocation{tag, i}, ExpressionLocation{pop, i}});
+            {TagLocation{tag, i}, ExpressionLocation{pop, nullptr, i}});
         }
       }
 
@@ -592,7 +593,7 @@ struct ConnectionFinder
     auto tag = curr->tag;
     for (Index i = 0; i < curr->operands.size(); i++) {
       info.connections.push_back(
-        {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
+        {ExpressionLocation{operands[i], nullptr, 0}, TagLocation{tag, i}});
     }
   }
   void visitRethrow(Rethrow* curr) {}
@@ -600,15 +601,15 @@ struct ConnectionFinder
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->operands.size(); i++) {
-        info.connections.push_back({ExpressionLocation{curr->operands[i], 0},
-                                    ExpressionLocation{curr, i}});
+        info.connections.push_back({ExpressionLocation{curr->operands[i], nullptr, 0},
+                                    ExpressionLocation{curr, nullptr, i}});
       }
     }
   }
   void visitTupleExtract(TupleExtract* curr) {
     if (isRelevant(curr->type)) {
-      info.connections.push_back({ExpressionLocation{curr->tuple, curr->index},
-                                  ExpressionLocation{curr, 0}});
+      info.connections.push_back({ExpressionLocation{curr->tuple, nullptr, curr->index},
+                                  ExpressionLocation{curr, nullptr, 0}});
     }
   }
 
@@ -616,7 +617,7 @@ struct ConnectionFinder
     if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
         info.connections.push_back(
-          {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
+          {ExpressionLocation{value, nullptr, i}, ResultLocation{getFunction(), i}});
       }
     }
   }
@@ -689,7 +690,7 @@ void ContentOracle::analyze() {
     auto* init = global->init;
     if (finder.isRelevant(init->type)) {
       globalInfo.connections.push_back(
-        {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
+        {ExpressionLocation{init, nullptr, 0}, GlobalLocation{global->name}});
     }
   }
 

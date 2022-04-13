@@ -154,7 +154,7 @@ struct GUFAPass : public Pass {
           return;
         }
 
-        auto values = oracle.getTypes(ExpressionLocation{curr, 0});
+        auto values = oracle.getTypes(ExpressionLocation{curr, nullptr, 0});
 
         if (values.getType() == Type::unreachable) {
           // This cannot contain any possible value at all. It must be
