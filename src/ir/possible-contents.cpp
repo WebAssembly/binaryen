@@ -868,11 +868,11 @@ void ContentOracle::analyze() {
     dump(location);
 #endif
 
-    // Update types from an input to an output, and add more work to a target if
-    // we found any.
+    // Update types from an input to an output, and add more work to if we found
+    // any.
     auto updateTypes = [&](const PossibleContents& input,
                            PossibleContents& output,
-                           Location target) {
+                           Location outputLocation) {
       if (input.getType() == Type::unreachable) {
         return;
       }
@@ -886,12 +886,29 @@ void ContentOracle::analyze() {
 #endif
       if (output.combine(input)) {
         // We inserted something, so there is work to do in this target.
-        work.push(target);
+        work.push(outputLocation);
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "    more work\n";
 #endif
       }
     };
+
+    if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
+      if (loc->parent) {
+        // This is a special node that links to its parent (see the comment on
+        // the |parent| field on the ExpressionLocation class). Handle the
+        // special cases that need such parent links here.
+        if (auto* get = loc->parent->dynCast<StructGet>()) {
+          // This is the reference child of a struct.get.
+          assert(get->ref == loc->expr);
+          // As more content is possible in the reference, so are more values
+          // possible in the struct.get - perhaps before no reference was
+          // possible at all, so the struct.get could return nothing, but now
+          // some type can appear in the reference, so the struct.get should
+          // return anything that is possible to read from that type.
+        }
+      }
+    }
 
     const auto& targets = info.targets;
     if (targets.empty()) {
