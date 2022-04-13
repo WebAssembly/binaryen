@@ -893,9 +893,11 @@ void ContentOracle::analyze() {
           // possible in the struct.get - perhaps before no reference was
           // possible at all, so the struct.get could return nothing, but now
           // some type can appear in the reference, so the struct.get should
-          // return anything that is possible to read from that type.
-          // XXX it is not enough to do that now - we must also add new links to
-          //     the graph. targets; should probably be a smallset<1> and not a vec... but slow
+          // return anything that is possible to read from that type. We need to
+          // update the graph of connections so that the contents in the struct
+          // locations that are now relevant will flow to this struct.get, both
+          // right now and in the future if changes occur there.
+          
         }
       }
     }
