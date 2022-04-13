@@ -11,12 +11,12 @@
 ;;    irrelevant. In particular, parameters to functions that are never called
 ;;    will be turned to unreachable by gufa, so instead make those calls to
 ;;    imports.
-;;  * Gufa optimizes in a more general way. Cfp will turn a struct.get that can
-;;    return no value into a ref.as_non_null (to preserve the trap if the ref is
-;;    null), while gufa has no special handling for struct.get, so it will use
-;;    its normal pattern there (of a drop of the struct.get followed by an
-;;    unreachable, and it assumes other passes can remove the struct.get, which
-;;    vacuum can in trapsNeverHappen mode).
+;;  * Gufa optimizes in a more general way. Cfp will turn a struct.get whose
+;;    value it infers into a ref.as_non_null (to preserve the trap if the ref is
+;;    null) followed by the constant. Gufa has no special handling for
+;;    struct.get, so it will use its normal pattern there, of a drop of the
+;;    struct.get followed by the constant. (Other passes can remove the
+;;    dropped operation, like vacuum in trapsNeverHappen mode).
 ;;  * Gufa's more general optimizations can remove more unreachable code, as it
 ;;    checks for effects (and removes effectless code).
 
@@ -55,7 +55,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -99,7 +99,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
