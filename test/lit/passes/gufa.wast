@@ -2,15 +2,17 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
-
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
 
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (export "param-no" (func $param-no))
 
@@ -21,7 +23,7 @@
     (i32.const 1)
   )
 
-  ;; CHECK:      (func $bar (param $x i32)
+  ;; CHECK:      (func $bar
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -33,14 +35,14 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $bar (param $x i32)
+  (func $bar
     ;; Both arms of the select have identical values, 1. Inlining +
     ;; OptimizeInstructions could of course discover that in this case, but
     ;; possible-types can do so even without inlining.
@@ -48,12 +50,12 @@
       (select
         (call $foo)
         (i32.const 1)
-        (local.get $x)
+        (call $import)
       )
     )
   )
 
-  ;; CHECK:      (func $baz (param $x i32)
+  ;; CHECK:      (func $baz
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (block (result i32)
@@ -67,11 +69,11 @@
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $baz (param $x i32)
+  (func $baz
     (drop
       (select
         (call $foo)
@@ -82,7 +84,7 @@
             (i32.const 1)
           )
         )
-        (local.get $x)
+        (call $import)
       )
     )
   )
@@ -120,20 +122,20 @@
     )
   )
 
-  ;; CHECK:      (func $local-no (param $param i32) (result i32)
+  ;; CHECK:      (func $local-no (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:   (call $import)
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $x)
   ;; CHECK-NEXT: )
-  (func $local-no (param $param i32) (result i32)
+  (func $local-no (result i32)
     (local $x i32)
     (if
-      (local.get $param)
+      (call $import)
       (local.set $x
         (i32.const 1)
       )
@@ -143,20 +145,20 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $local-yes (param $param i32) (result i32)
+  ;; CHECK:      (func $local-yes (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:   (call $import)
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $local-yes (param $param i32) (result i32)
+  (func $local-yes (result i32)
     (local $x i32)
     (if
-      (local.get $param)
+      (call $import)
       (local.set $x
         ;; As above, but now we set 0 here. We can optimize the local.get to 0
         ;; in this case.
@@ -212,18 +214,36 @@
 
   ;; CHECK:      (func $cycle (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (call $cycle
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (call $cycle
-  ;; CHECK-NEXT:       (local.get $x)
-  ;; CHECK-NEXT:       (local.get $y)
+  ;; CHECK-NEXT:      (select
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (call $cycle
+  ;; CHECK-NEXT:          (i32.const 42)
+  ;; CHECK-NEXT:          (i32.const 1)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 42)
@@ -233,6 +253,14 @@
     ;; value is 42, which we can optimize to.
     ;; (Nothing else calls $cycle, so this is dead code in actuality, but this
     ;; pass leaves such things to other passes.)
+    ;; Note that the caller passes a constant for $y which lets us optimize that
+    ;; too.
+    (drop
+      (call $cycle
+        (i32.const 42)
+        (i32.const 1)
+      )
+    )
     (select
       (i32.const 42)
       (call $cycle
@@ -245,23 +273,47 @@
 
   ;; CHECK:      (func $cycle-2 (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (call $cycle-2
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (call $cycle-2
-  ;; CHECK-NEXT:       (local.get $y)
-  ;; CHECK-NEXT:       (local.get $y)
+  ;; CHECK-NEXT:      (select
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (call $cycle-2
+  ;; CHECK-NEXT:          (i32.const 1)
+  ;; CHECK-NEXT:          (i32.const 1)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $x)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (func $cycle-2 (param $x i32) (param $y i32) (result i32)
+    (drop
+      (call $cycle-2
+        (i32.const 42)
+        (i32.const 1)
+      )
+    )
     ;; As above, but flip $x and $y's usage in the function. There is still only
     ;; the one value possible as nothing else flows in.
     (select
@@ -313,8 +365,8 @@
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (func $cycle-3 (param $x i32) (param $y i32) (result i32)
-    ;; Even adding a caller does not prevent us from optimizing here. Note that
-    ;; the caller passes a constant for $y which lets us optimize that too.
+    ;; Even adding a caller with a different value for $x does not prevent us
+    ;; from optimizing here.
     (drop
       (call $cycle-3
         (i32.const 1337)
