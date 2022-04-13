@@ -127,12 +127,18 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field f32) data))
   (type $struct (struct f32))
-  ;; CHECK:      (type $f32_=>_none (func_subtype (param f32) func))
 
-  ;; CHECK:      (func $test (type $f32_=>_none) (param $f f32)
+  ;; CHECK:      (type $none_=>_f32 (func_subtype (result f32) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result f32)))
+  (import "a" "b" (func $import (result f32)))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -142,11 +148,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $f f32)
+  (func $test
     ;; The value given is not a constant, and so we cannot optimize.
     (drop
       (struct.new_with_rtt $struct
-        (local.get $f)
+        (call $import)
         (rtt.canon $struct)
       )
     )
@@ -161,10 +167,10 @@
 ;; Create in one function, get in another. The 10 should be forwarded to the
 ;; get.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_with_rtt $struct
@@ -185,7 +191,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -205,16 +211,16 @@
 ;; As before, but with the order of functions reversed to check for any ordering
 ;; issues.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -384,7 +390,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -405,9 +411,13 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut f32)) data))
   (type $struct (struct (mut f32)))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -432,22 +442,27 @@
       )
     )
   )
-  ;; CHECK:      (func $set (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (ref.null $struct)
-  ;; CHECK-NEXT:   (if (result f32)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (block (result f32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (if (result f32)
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (f32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $set (param $x i32)
+  (func $set
     (struct.set $struct 0
       (ref.null $struct)
       ;; Fall though a 42 via an if.
       (if (result f32)
-        (local.get $x)
+        (call $import)
         (unreachable)
         (f32.const 42)
       )
@@ -457,7 +472,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -476,10 +491,10 @@
 
 ;; Test a function reference instead of a number.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field funcref) data))
   (type $struct (struct funcref))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (elem declare func $test)
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -492,7 +507,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $none_=>_none))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
