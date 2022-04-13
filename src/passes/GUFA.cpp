@@ -76,7 +76,7 @@ struct GUFAPass : public Pass {
           return false;
         }
         return !EffectAnalyzer(getPassOptions(), *getModule(), curr)
-              .hasUnremovableSideEffects();
+                  .hasUnremovableSideEffects();
       }
 
       // Whether we can replcae something (but not its children) with an
