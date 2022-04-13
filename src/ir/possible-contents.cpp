@@ -868,29 +868,31 @@ void ContentOracle::analyze() {
     dump(location);
 #endif
 
-    // TODO: implement the following optimization, and remove the hardcoded
-    //       links created above.
-    // ==================================TODO==================================
-    // Compute the targets we need to update. Normally we simply flow to the
-    // targets defined in the graph, however, some connections are best done
-    // "dynamically". Consider a struct.set that writes a references to some
-    // field. We could assume that it writes it to any struct of the type it is
-    // defined on, or any subtype, but instead we use the information in the
-    // graph: the types that are possible in the reference field determine where
-    // the values should flow. That is,
-    //
-    //  (struct.set $A
-    //    (ref B)
-    //    (value C) ;; also a reference type of some kind.
-    //  )
-    //
-    // The rules we apply to such an expression are:
-    //
-    //  1. When a new type arrives in (value C), we send it to the proper field
-    //     of all types that can appear in (ref B).
-    //  2. When a new type arrives in (ref B) we must send the values in
-    //     (value C) to their new target as well.
-    // ==================================TODO==================================
+    // Update types from an input to an output, and add more work to a target if
+    // we found any.
+    auto updateTypes = [&](const PossibleContents& input,
+                           PossibleContents& output,
+                           Location target) {
+      if (input.getType() == Type::unreachable) {
+        return;
+      }
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+      std::cout << "    updateTypes src:\n";
+      input.dump(std::cout);
+      std::cout << '\n';
+      std::cout << "    updateTypes dest:\n";
+      output.dump(std::cout);
+      std::cout << '\n';
+#endif
+      if (output.combine(input)) {
+        // We inserted something, so there is work to do in this target.
+        work.push(target);
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+        std::cout << "    more work\n";
+#endif
+      }
+    };
+
     const auto& targets = info.targets;
     if (targets.empty()) {
       continue;
@@ -902,35 +904,7 @@ void ContentOracle::analyze() {
       std::cout << "  send to target\n";
       dump(target);
 #endif
-
-      auto& targetTypes = flowInfoMap[target].types;
-
-      // Update types in one lane of a tuple, copying from inputs to outputs and
-      // adding the target to the remaining work if we added something new.
-      auto updateTypes = [&](const PossibleContents& inputs,
-                             PossibleContents& outputs) {
-        if (inputs.getType() == Type::unreachable) {
-          return;
-        }
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-        std::cout << "    updateTypes src:\n";
-        inputs.dump(std::cout);
-        std::cout << '\n';
-        std::cout << "    updateTypes dest:\n";
-        outputs.dump(std::cout);
-        std::cout << '\n';
-#endif
-        if (outputs.combine(inputs)) {
-          // We inserted something, so there is work to do in this target.
-          work.push(target);
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-          std::cout << "    more work\n";
-#endif
-        }
-      };
-
-      // Otherwise, the input and output must have the same number of lanes.
-      updateTypes(types, targetTypes);
+      updateTypes(types, flowInfoMap[target].types, target);
     }
   }
 
