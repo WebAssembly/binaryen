@@ -101,14 +101,14 @@ struct GUFAPass : public Pass {
 
         // The case that we do want to avoid here is if this looks like the
         // output of our optimization, which is (block .. (constant)), a block
-        // ending in a constant and with no breaks. If this is already that,
+        // ending in a constant and with no breaks to it. If this is already so
         // then do nothing (this avoids repeated runs of the pass monotonically
         // increasing code size for no benefit).
         if (auto* block = curr->dynCast<Block>()) {
           // If we got here, the list cannot be empty - an empty block is not
           // equivalent to any constant, so a logic error occurred before.
           assert(!block->list.empty());
-          if (!block->name.is() &&
+          if (!BranchUtils::hasBranchTarget(block, block->name) &&
               Properties::isConstantExpression(block->list.back())) {
             return false;
           }
