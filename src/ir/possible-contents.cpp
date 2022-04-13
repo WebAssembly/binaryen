@@ -815,20 +815,8 @@ void ContentOracle::analyze() {
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
-    flowInfoMap[connection.from].targets.push_back(connection.to);
+    flowInfoMap[connection.from].targets.insert(connection.to);
   }
-
-#ifndef NDEBUG
-  for (auto& [location, info] : flowInfoMap) {
-    // The vector of targets must have no duplicates.
-    auto& targets = info.targets;
-    std::unordered_set<Location> uniqueTargets;
-    for (const auto& target : targets) {
-      uniqueTargets.insert(target);
-    }
-    assert(uniqueTargets.size() == targets.size());
-  }
-#endif
 
   // The work remaining to do: locations that we just updated, which means we
   // should update their children when we pop them from this queue.
@@ -906,6 +894,8 @@ void ContentOracle::analyze() {
           // possible at all, so the struct.get could return nothing, but now
           // some type can appear in the reference, so the struct.get should
           // return anything that is possible to read from that type.
+          // XXX it is not enough to do that now - we must also add new links to
+          //     the graph. targets; should probably be a smallset<1> and not a vec... but slow
         }
       }
     }
