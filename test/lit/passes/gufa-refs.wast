@@ -13,15 +13,17 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
 
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
 
-  ;; CHECK:      (type $none_=>_ref|any| (func_subtype (result (ref any)) func))
-
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+  ;; CHECK:      (type $none_=>_ref|any| (func_subtype (result (ref any)) func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $no-non-null (type $none_=>_ref|any|) (result (ref any))
   ;; CHECK-NEXT:  (ref.as_non_null
@@ -185,7 +187,7 @@
     )
   )
 
-  ;; CHECK:      (func $two-inputs (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $two-inputs (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (struct.new_default $struct)
@@ -195,7 +197,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -207,14 +209,14 @@
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (struct.new_default $struct)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select (result (ref $struct))
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:    (struct.new_default $struct)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -233,44 +235,44 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $two-inputs (param $x i32)
-    ;; As above, but now the outer instruction has two children, and some of
-    ;; them may have a possible type - we check all 4 permutations. Only in the
+  (func $two-inputs
+    ;; As above, but now the outer instruction is a select, and some of the arms
+    ;; may have a possible type - we check all 4 permutations. Only in the
     ;; case where both inputs are nothing can we optimize away the select, as
     ;; only then will the select never have anything.
     (drop
       (select (result (ref any))
         (struct.new $struct)
         (call $get-nothing)
-        (local.get $x)
+        (call $import)
       )
     )
     (drop
       (select (result (ref any))
         (call $get-nothing)
         (struct.new $struct)
-        (local.get $x)
+        (call $import)
       )
     )
     (drop
       (select (result (ref any))
         (struct.new $struct)
         (struct.new $struct)
-        (local.get $x)
+        (call $import)
       )
     )
     (drop
       (select (result (ref any))
         (call $get-nothing)
         (call $get-nothing)
-        (local.get $x)
+        (call $import)
       )
     )
   )
@@ -1078,8 +1080,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $C 0
-  ;; CHECK-NEXT:    (ref.null $C)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $C 0
+  ;; CHECK-NEXT:      (ref.null $C)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1211,11 +1218,14 @@
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (array.get $nothing
-  ;; CHECK-NEXT:     (ref.null $nothing)
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get $nothing
+  ;; CHECK-NEXT:      (ref.null $nothing)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.set $null
@@ -1259,14 +1269,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
-    ;; Write nothing to this array, so we can optimize the cast to non-null of
-    ;; a get from it.
+    ;; Write nothing to this array, so we can optimize to an unreachable.
     (drop
-      (ref.as_non_null
-        (array.get $nothing
-          (ref.null $nothing)
-          (i32.const 0)
-        )
+      (array.get $nothing
+        (ref.null $nothing)
+        (i32.const 0)
       )
     )
     ;; Write a null to this array. Again, we can optimize.
