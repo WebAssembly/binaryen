@@ -892,31 +892,6 @@ void ContentOracle::analyze() {
     dump(location);
 #endif
 
-    // Update types from an input to an output, and add more work if we found
-    // any.
-    auto updateTypes = [&](const PossibleContents& inputContents,
-                           Location target,
-                           PossibleContents& targetContents) {
-      if (inputContents.isNone()) {
-        return;
-      }
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-      std::cout << "    updateTypes src:\n";
-      inputContents.dump(std::cout);
-      std::cout << '\n';
-      std::cout << "    updateTypes dest:\n";
-      targetContents.dump(std::cout);
-      std::cout << '\n';
-#endif
-      if (targetContents.combine(inputContents)) {
-        // We inserted something, so there is work to do in this target.
-        work.push(target);
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-        std::cout << "    more work\n";
-#endif
-      }
-    };
-
     const auto& targets = info.targets;
     if (targets.empty()) {
       continue;
@@ -929,190 +904,7 @@ void ContentOracle::analyze() {
       dump(target);
 #endif
 
-      auto& targetContents = flowInfoMap[target].types;
-
-      if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
-        auto* targetExpr = targetExprLoc->expr;
-        auto iter = childParents.find(targetExpr);
-        if (iter != childParents.end()) {
-          // The target is one of the special cases where it is an expression
-          // for whom we must know the parent in order to handle things in a
-          // special manner.
-          auto* parent = iter->second;
-
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-          std::cout << "  special, parent:\n" << *parent << '\n';
-#endif
-
-          // When handling these special cases we care about what actually
-          // changed, so save the state before doing the update.
-          auto oldTargetContents = targetContents;
-          updateTypes(types, target, targetContents);
-          if (oldTargetContents == targetContents) {
-            // Nothing changed; nothing more to do.
-            continue;
-          }
-
-          // Something changed, handle the special cases.
-
-          // Given a heap location, add a connection from that location to an
-          // expression that reads from it (e.g. from a StructLocation to a
-          // struct.get).
-          auto readFromHeap = [&](Location heapLoc, Expression* target) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-            std::cout << "    add special read\n";
-#endif
-            auto targetLoc = ExpressionLocation{target, 0};
-            newConnections.push_back({heapLoc, targetLoc});
-            updateTypes(flowInfoMap[heapLoc].types,
-                        targetLoc,
-                        // TODO helper function without this all the time
-                        flowInfoMap[targetLoc].types);
-          };
-
-          // Given the old and new contents at the current target, add reads to
-          // it based on the latest changes. The reads are sent to |parent|,
-          // which is either a struct.get or an array.get. That is, new types
-          // are possible for the reference, which means we need to read from
-          // more possible heap locations. This receives a function that gets a
-          // heap type and returns a location, which we will call on all
-          // relevant heap types as we add the connections.
-          // @param declaredRefType: the type declared in the IR on the
-          //        reference input to the struct.get/array.get.
-          auto readFromNewLocations =
-            [&](std::function<Location(HeapType)> getLocation,
-                HeapType declaredRefType) {
-              // Add a connection from the proper field of a struct type to this
-              // struct.get, and also update that value based on the field's
-              // current contents right now.
-              if (oldTargetContents.isNone()) {
-                // Nothing was present before, so we can just add the new stuff.
-                assert(!targetContents.isNone());
-                if (targetContents.isType() || targetContents.isConstant()) {
-                  // A single new type was added here. Read from exactly that
-                  // and nothing else.
-                  // TODO: In the case that this is a constant, it could be null
-                  //       or an immutable global, which we could do even more
-                  //       with.
-                  readFromHeap(
-                    getLocation(targetContents.getType().getHeapType()),
-                    parent);
-                } else {
-                  // Many types are possible here. We will need to assume the
-                  // worst, which is any subtype of the type on the struct.get.
-                  assert(targetContents.isMany());
-                  // TODO: caching of AllSubTypes lists?
-                  for (auto subType :
-                       subTypes->getAllSubTypes(declaredRefType)) {
-                    readFromHeap(getLocation(subType), parent);
-                  }
-                }
-              } else {
-                // Something was present before, but now there is more. Atm
-                // there is just one such case, a single type that is now many.
-                assert(oldTargetContents.isType());
-                assert(targetContents.isMany());
-                auto oldType = oldTargetContents.getType().getHeapType();
-                for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
-                  if (subType != oldType) {
-                    readFromHeap(getLocation(subType), parent);
-                  }
-                }
-                // TODO ensure tests for all these
-              }
-              // TODO: A less simple but more memory-efficient approach might be
-              //       to keep special data structures on the side for such
-              //       "dynamic" information, basically a list of all
-              //       struct.gets impacted by each type, etc., and use those in
-              //       the proper places. Then each location would have not just
-              //       a list of target locations but also a list of target
-              //       expressions perhaps, etc.
-            };
-
-          // Similar to readFromNewLocations, but sends values from a
-          // struct.set/array.set to a heap location. In addition to the
-          // |getLocation| function (which plays the same role as in
-          // readFromNewLocations), gets the reference and the value of the
-          // struct.set/array.set operation
-          auto writeToNewLocations =
-            [&](std::function<Location(HeapType)> getLocation,
-                Expression* ref,
-                Expression* value) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-              std::cout << "    add special writes\n";
-#endif
-              // We could set up connections here, but as we get to this code in
-              // any case when either the ref or the value of the struct.get has
-              // new contents, we can just flow the values forward directly. We
-              // can do that in a simple way that does not even check whether
-              // the ref or the value was just updated: simply figure out the
-              // values being written in the current state (which is after the
-              // current update) and forward them.
-              auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].types;
-              auto valueContents =
-                flowInfoMap[ExpressionLocation{value, 0}].types;
-              if (refContents.isNone()) {
-                return;
-              }
-              if (refContents.isType() || refContents.isConstant()) {
-                // Update the one possible type here.
-                // TODO: In the case that this is a constant, it could be null
-                //       or an immutable global, which we could do even more
-                //       with.
-                auto heapLoc = getLocation(refContents.getType().getHeapType());
-                updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
-              } else {
-                assert(refContents.isMany());
-                // Update all possible types here.
-                for (auto subType :
-                     subTypes->getAllSubTypes(ref->type.getHeapType())) {
-                  auto heapLoc = getLocation(subType);
-                  updateTypes(
-                    valueContents, heapLoc, flowInfoMap[heapLoc].types);
-                }
-              }
-            };
-
-          if (auto* get = parent->dynCast<StructGet>()) {
-            // This is the reference child of a struct.get.
-            assert(get->ref == targetExpr);
-            readFromNewLocations(
-              [&](HeapType type) {
-                return StructLocation{type, get->index};
-              },
-              get->ref->type.getHeapType());
-          } else if (auto* set = parent->dynCast<StructSet>()) {
-            // This is either the reference or the value child of a struct.set.
-            // A change to either one affects what values are written to that
-            // struct location, which we handle here.
-            assert(set->ref == targetExpr || set->value == targetExpr);
-            writeToNewLocations(
-              [&](HeapType type) {
-                return StructLocation{type, set->index};
-              },
-              set->ref,
-              set->value);
-          } else if (auto* get = parent->dynCast<ArrayGet>()) {
-            assert(get->ref == targetExpr);
-            readFromNewLocations(
-              [&](HeapType type) { return ArrayLocation{type}; },
-              get->ref->type.getHeapType());
-          } else if (auto* set = parent->dynCast<ArraySet>()) {
-            assert(set->ref == targetExpr || set->value == targetExpr);
-            writeToNewLocations(
-              [&](HeapType type) { return ArrayLocation{type}; },
-              set->ref,
-              set->value);
-          } else {
-            WASM_UNREACHABLE("bad childParents content");
-          }
-
-          continue;
-        }
-      }
-
-      // Otherwise, this is not a special case, and just do the update.
-      updateTypes(types, target, targetContents);
+      updateTarget(types, target);
     }
 
     // Update any new connections.
@@ -1128,6 +920,218 @@ void ContentOracle::analyze() {
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
   //       including multiple levels of depth (necessary for itables in j2wasm).
+}
+
+void ContentOracle::updateTarget(const PossibleContents& contents, Location target) {
+  auto& targetContents = flowInfoMap[target].types;
+
+  // Update types from an input to an output, and add more work if we found
+  // any.
+  auto updateTypes = [&](const PossibleContents& inputContents,
+                         Location target,
+                         PossibleContents& targetContents) {
+    if (inputContents.isNone()) {
+      return;
+    }
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+    std::cout << "    updateTypes src:\n";
+    inputContents.dump(std::cout);
+    std::cout << '\n';
+    std::cout << "    updateTypes dest:\n";
+    targetContents.dump(std::cout);
+    std::cout << '\n';
+#endif
+    if (targetContents.combine(inputContents)) {
+      // We inserted something, so there is work to do in this target.
+      work.push(target);
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+      std::cout << "    more work\n";
+#endif
+    }
+  };
+
+  if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
+    auto* targetExpr = targetExprLoc->expr;
+    auto iter = childParents.find(targetExpr);
+    if (iter != childParents.end()) {
+      // The target is one of the special cases where it is an expression
+      // for whom we must know the parent in order to handle things in a
+      // special manner.
+      auto* parent = iter->second;
+
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+      std::cout << "  special, parent:\n" << *parent << '\n';
+#endif
+
+      // When handling these special cases we care about what actually
+      // changed, so save the state before doing the update.
+      auto oldTargetContents = targetContents;
+      updateTypes(types, target, targetContents);
+      if (oldTargetContents == targetContents) {
+        // Nothing changed; nothing more to do.
+        continue;
+      }
+
+      // Something changed, handle the special cases.
+
+      // Given a heap location, add a connection from that location to an
+      // expression that reads from it (e.g. from a StructLocation to a
+      // struct.get).
+      auto readFromHeap = [&](Location heapLoc, Expression* target) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+        std::cout << "    add special read\n";
+#endif
+        auto targetLoc = ExpressionLocation{target, 0};
+        newConnections.push_back({heapLoc, targetLoc});
+        updateTypes(flowInfoMap[heapLoc].types,
+                    targetLoc,
+                    // TODO helper function without this all the time
+                    flowInfoMap[targetLoc].types);
+      };
+
+      // Given the old and new contents at the current target, add reads to
+      // it based on the latest changes. The reads are sent to |parent|,
+      // which is either a struct.get or an array.get. That is, new types
+      // are possible for the reference, which means we need to read from
+      // more possible heap locations. This receives a function that gets a
+      // heap type and returns a location, which we will call on all
+      // relevant heap types as we add the connections.
+      // @param declaredRefType: the type declared in the IR on the
+      //        reference input to the struct.get/array.get.
+      auto readFromNewLocations =
+        [&](std::function<Location(HeapType)> getLocation,
+            HeapType declaredRefType) {
+          // Add a connection from the proper field of a struct type to this
+          // struct.get, and also update that value based on the field's
+          // current contents right now.
+          if (oldTargetContents.isNone()) {
+            // Nothing was present before, so we can just add the new stuff.
+            assert(!targetContents.isNone());
+            if (targetContents.isType() || targetContents.isConstant()) {
+              // A single new type was added here. Read from exactly that
+              // and nothing else.
+              // TODO: In the case that this is a constant, it could be null
+              //       or an immutable global, which we could do even more
+              //       with.
+              readFromHeap(
+                getLocation(targetContents.getType().getHeapType()),
+                parent);
+            } else {
+              // Many types are possible here. We will need to assume the
+              // worst, which is any subtype of the type on the struct.get.
+              assert(targetContents.isMany());
+              // TODO: caching of AllSubTypes lists?
+              for (auto subType :
+                   subTypes->getAllSubTypes(declaredRefType)) {
+                readFromHeap(getLocation(subType), parent);
+              }
+            }
+          } else {
+            // Something was present before, but now there is more. Atm
+            // there is just one such case, a single type that is now many.
+            assert(oldTargetContents.isType());
+            assert(targetContents.isMany());
+            auto oldType = oldTargetContents.getType().getHeapType();
+            for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
+              if (subType != oldType) {
+                readFromHeap(getLocation(subType), parent);
+              }
+            }
+            // TODO ensure tests for all these
+          }
+          // TODO: A less simple but more memory-efficient approach might be
+          //       to keep special data structures on the side for such
+          //       "dynamic" information, basically a list of all
+          //       struct.gets impacted by each type, etc., and use those in
+          //       the proper places. Then each location would have not just
+          //       a list of target locations but also a list of target
+          //       expressions perhaps, etc.
+        };
+
+      // Similar to readFromNewLocations, but sends values from a
+      // struct.set/array.set to a heap location. In addition to the
+      // |getLocation| function (which plays the same role as in
+      // readFromNewLocations), gets the reference and the value of the
+      // struct.set/array.set operation
+      auto writeToNewLocations =
+        [&](std::function<Location(HeapType)> getLocation,
+            Expression* ref,
+            Expression* value) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+          std::cout << "    add special writes\n";
+#endif
+          // We could set up connections here, but as we get to this code in
+          // any case when either the ref or the value of the struct.get has
+          // new contents, we can just flow the values forward directly. We
+          // can do that in a simple way that does not even check whether
+          // the ref or the value was just updated: simply figure out the
+          // values being written in the current state (which is after the
+          // current update) and forward them.
+          auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].types;
+          auto valueContents =
+            flowInfoMap[ExpressionLocation{value, 0}].types;
+          if (refContents.isNone()) {
+            return;
+          }
+          if (refContents.isType() || refContents.isConstant()) {
+            // Update the one possible type here.
+            // TODO: In the case that this is a constant, it could be null
+            //       or an immutable global, which we could do even more
+            //       with.
+            auto heapLoc = getLocation(refContents.getType().getHeapType());
+            updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
+          } else {
+            assert(refContents.isMany());
+            // Update all possible types here.
+            for (auto subType :
+                 subTypes->getAllSubTypes(ref->type.getHeapType())) {
+              auto heapLoc = getLocation(subType);
+              updateTypes(
+                valueContents, heapLoc, flowInfoMap[heapLoc].types);
+            }
+          }
+        };
+
+      if (auto* get = parent->dynCast<StructGet>()) {
+        // This is the reference child of a struct.get.
+        assert(get->ref == targetExpr);
+        readFromNewLocations(
+          [&](HeapType type) {
+            return StructLocation{type, get->index};
+          },
+          get->ref->type.getHeapType());
+      } else if (auto* set = parent->dynCast<StructSet>()) {
+        // This is either the reference or the value child of a struct.set.
+        // A change to either one affects what values are written to that
+        // struct location, which we handle here.
+        assert(set->ref == targetExpr || set->value == targetExpr);
+        writeToNewLocations(
+          [&](HeapType type) {
+            return StructLocation{type, set->index};
+          },
+          set->ref,
+          set->value);
+      } else if (auto* get = parent->dynCast<ArrayGet>()) {
+        assert(get->ref == targetExpr);
+        readFromNewLocations(
+          [&](HeapType type) { return ArrayLocation{type}; },
+          get->ref->type.getHeapType());
+      } else if (auto* set = parent->dynCast<ArraySet>()) {
+        assert(set->ref == targetExpr || set->value == targetExpr);
+        writeToNewLocations(
+          [&](HeapType type) { return ArrayLocation{type}; },
+          set->ref,
+          set->value);
+      } else {
+        WASM_UNREACHABLE("bad childParents content");
+      }
+
+      continue;
+    }
+  }
+
+  // Otherwise, this is not a special case, and just do the update.
+  updateTypes(types, target, targetContents);
 }
 
 } // namespace wasm

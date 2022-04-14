@@ -480,6 +480,8 @@ private:
 
   std::unordered_map<Location, LocationInfo> flowInfoMap;
 
+  // Internals for flow.
+
   // The work remaining to do during the flow: locations that we just updated,
   // which means we should update their children when we pop them from this
   // queue.
@@ -489,6 +491,9 @@ private:
   // the side as we are iterating on |targets| here, which might be one of the
   // lists we want to update.
   std::vector<Connection> newConnections;
+
+  // Update a target location with contents arriving to it.
+  void updateTarget(const PossibleContents& contents, Location target);
 };
 
 } // namespace wasm
