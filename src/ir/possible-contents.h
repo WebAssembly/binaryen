@@ -117,24 +117,25 @@ public:
 
     // Neither is None, and neither is Many.
 
-    // TODO: do we need special null handling here?
+    // TODO: do we need special null handling here? e.g. nulls of different
+    //       types can be merged, they are not actually different values.
     if (other.value == value) {
       return false;
     }
 
-    // The values differ, but if they share the same type then we can set to
-    // that.
-    if (other.getType() == getType()) {
-      if (std::get_if<Type>(&value)) {
-        // We were already marked as an arbitrary value of this type.
+    // The values differ, but if they have a lub then we can set to that.
+    // TODO unit test all this
+    auto lub = Type::getLeastUpperBound(getType(), other.getType());
+    if (lub != Type::none) {
+      if (isType() && getType() == lub) {
+        // We were already marked as an arbitrary value of this type, so
+        // nothing changes.
         return false;
       }
-      value = Type(getType());
+
+      value = lub;
       return true;
     }
-
-    // TODO: lub of the different types? lub returns none for no possible lub,
-    //       so we also do not need the Many state.
 
     // Worst case.
     value = Many();

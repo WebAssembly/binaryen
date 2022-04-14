@@ -917,7 +917,9 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // We inserted something, so there is work to do in this target.
       work.push(target);
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-      std::cout << "    more work\n";
+      std::cout << "    more work since the new dest is\n";
+      targetContents.dump(std::cout);
+      std::cout << '\n';
 #endif
     }
   };
