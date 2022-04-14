@@ -815,7 +815,7 @@ void ContentOracle::analyze() {
 
   // Build the flow info. First, note the connection targets.
   for (auto& connection : connections) {
-    flowInfoMap[connection.from].targets.insert(connection.to);
+    flowInfoMap[connection.from].targets.push_back(connection.to);
   }
 
   // The work remaining to do: locations that we just updated, which means we
@@ -893,22 +893,20 @@ void ContentOracle::analyze() {
           // possible in the struct.get - perhaps before no reference was
           // possible at all, so the struct.get could return nothing, but now
           // some type can appear in the reference, so the struct.get should
-          // return anything that is possible to read from that type. We need to
-          // update the graph of connections so that the contents in the struct
-          // locations that are now relevant will flow to this struct.get, both
-          // right now and in the future if changes occur there.
-          
+          // return anything that is possible to read from that type.
+          // XXX it is not enough to do that now - we must also add new links to
+          //     the graph. targets; should probably be a smallset<1> and not a vec... but slow
         }
       }
     }
 
-    const auto& targets = info.targets;
+    auto& targets = info.targets;
     if (targets.empty()) {
       continue;
     }
 
     // Update the targets, and add the ones that change to the remaining work.
-    for (const auto& target : targets) {
+    for (auto& target : targets) {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
       std::cout << "  send to target\n";
       dump(target);

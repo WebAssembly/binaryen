@@ -20,7 +20,6 @@
 #include <variant>
 
 #include "ir/possible-constant.h"
-#include "support/small_set.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -495,10 +494,8 @@ private:
     // The types possible at this location.
     PossibleContents types;
 
-    // The targets to which this sends types. Commonly there is just one target
-    // (e.g. an expression, which in almost all cases just has its parent as a
-    // target).
-    SmallUnorderedSet<Location, 1> targets;
+    // The targets to which this sends types.
+    std::vector<Location> targets;
   };
 
   std::unordered_map<Location, LocationInfo> flowInfoMap;
