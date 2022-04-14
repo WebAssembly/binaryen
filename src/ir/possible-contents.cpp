@@ -991,9 +991,12 @@ void ContentOracle::analyze() {
               if (oldTargetContents.isNone()) {
                 // Nothing was present before, so we can just add the new stuff.
                 assert(!targetContents.isNone());
-                if (targetContents.isType()) {
+                if (targetContents.isType() || targetContents.isConstant()) {
                   // A single new type was added here. Read from exactly that
                   // and nothing else.
+                  // TODO: In the case that this is a constant, it could be null
+                  //       or an immutable global, which we could do even more
+                  //       with.
                   readFromHeap(
                     getLocation(targetContents.getType().getHeapType()),
                     parent);
