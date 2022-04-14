@@ -54,7 +54,7 @@ void dump(Location location) {
     std::cout << "  sigresultloc " << '\n';
   } else if (auto* loc = std::get_if<ArrayLocation>(&location)) {
     WASM_UNUSED(loc);
-    std::cout << "  Arrayloc " << '\n';
+    std::cout << "  Arrayloc " << loc->type << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
   } else {
@@ -543,10 +543,6 @@ struct ConnectionFinder
       return;
     }
     if (isRelevant(curr->type)) {
-      // TODO: remove
-      info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
-                                  ExpressionLocation{curr, 0}});
-
       // See StructGet comment.
       linkChildToParent(curr->ref, curr);
     }
@@ -556,11 +552,6 @@ struct ConnectionFinder
       return;
     }
     if (isRelevant(curr->value->type)) {
-      // TODO: remove
-      info.connections.push_back(
-        {ExpressionLocation{curr->value, 0},
-         ArrayLocation{curr->ref->type.getHeapType()}});
-
       // See StructSet comment.
       linkChildToParent(curr->ref, curr);
       linkChildToParent(curr->value, curr);
@@ -841,8 +832,9 @@ void ContentOracle::analyze() {
     value.dump(std::cout);
     std::cout << '\n';
 #endif
-    flowInfoMap[location].types = value;
-    work.push(location);
+
+    // Update the root from having nothing to having its initial content.
+    updateTarget(value, location);
   }
 
 #ifdef POSSIBLE_TYPES_DEBUG
@@ -880,8 +872,15 @@ void ContentOracle::analyze() {
 
     // Update any new connections.
     for (auto newConnection : newConnections) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+      std::cout << "newConnection:\n";
+      dump(newConnection.from);
+      dump(newConnection.to);
+#endif
+
       auto& targets = flowInfoMap[newConnection.from].targets;
       targets.push_back(newConnection.to);
+
 #ifndef NDEBUG
       disallowDuplicates(targets);
 #endif

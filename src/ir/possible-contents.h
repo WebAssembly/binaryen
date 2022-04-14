@@ -58,6 +58,7 @@ public:
   PossibleContents(Variant value) : value(value) {}
   template<typename T> PossibleContents(T curr) : value(Variant(curr)) {}
 
+  static PossibleContents none() { return PossibleContents(Variant(None())); }
   static PossibleContents many() { return PossibleContents(Variant(Many())); }
 
   bool operator==(const PossibleContents& other) const {
