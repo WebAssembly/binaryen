@@ -961,6 +961,18 @@ void ContentOracle::analyze() {
 
           // Something changed, handle the special cases.
 
+          // Given a heap type, add a connection from that location to an
+          // expression that reads from it (e.g. from a struct location to a
+          // struct.get).
+          auto readFromHeap = [&](Location heapLoc, Expression* target) {
+            auto targetLoc = ExpressionLocation{target, 0};
+            newConnections.push_back({heapLoc, targetLoc});
+            updateTypes(flowInfoMap[heapLoc].types,
+                        targetLoc,
+                        // TODO helper function without this all the time
+                        flowInfoMap[targetLoc].types);
+          };
+
           if (auto* get = parent->dynCast<StructGet>()) {
             // This is the reference child of a struct.get, and we have just
             // added new contents to that reference. That means that the
@@ -983,28 +995,19 @@ void ContentOracle::analyze() {
             // Add a connection from the proper field of a struct type to this
             // struct.get, and also update that value based on the field's
             // current contents right now.
-            auto connectAndUpdate = [&](HeapType heapType) {
-              auto structLoc = StructLocation{heapType, get->index};
-              auto getLoc = ExpressionLocation{get, 0};
-              newConnections.push_back({structLoc, getLoc});
-              updateTypes(flowInfoMap[structLoc].types,
-                          getLoc,
-                          // TODO helper function without this all the time
-                          flowInfoMap[getLoc].types);
-            };
             if (oldTargetContents.isNone()) {
               // Nothing was present before, so we can just add the new stuff.
               assert(!targetContents.isNone());
               if (targetContents.isType()) {
                 // A single new type was added here.
-                connectAndUpdate(refType);
+                readFromHeap(StructLocation{refType, get->index}, get);
               } else {
                 // Many types are possible here. We will need to assume the
                 // worst, which is any subtype of the type on the struct.get.
                 assert(targetContents.isMany());
                 // TODO: caching of AllSubTypes lists?
                 for (auto subType : subTypes->getAllSubTypes(refType)) {
-                  connectAndUpdate(subType);
+                  readFromHeap(StructLocation{subType, get->index}, get);
                 }
               }
             } else {
@@ -1015,7 +1018,7 @@ void ContentOracle::analyze() {
               auto oldType = oldTargetContents.getType().getHeapType();
               for (auto subType : subTypes->getAllSubTypes(refType)) {
                 if (subType != oldType) {
-                  connectAndUpdate(subType);
+                  readFromHeap(StructLocation{subType, get->index}, get);
                 }
               }
               // TODO ensure tests for all these
