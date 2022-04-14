@@ -1051,8 +1051,11 @@ void ContentOracle::analyze() {
               if (refContents.isNone()) {
                 return;
               }
-              if (refContents.isType()) {
+              if (refContents.isType() || refContents.isConstant()) {
                 // Update the one possible type here.
+                // TODO: In the case that this is a constant, it could be null
+                //       or an immutable global, which we could do even more
+                //       with.
                 auto heapLoc = getLocation(refContents.getType().getHeapType());
                 updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
               } else {
