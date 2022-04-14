@@ -1121,11 +1121,11 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           set->value);
       } else if (auto* get = parent->dynCast<ArrayGet>()) {
         assert(get->ref == targetExpr);
-        readFromNewLocations([&](HeapType type) { return ArrayLocation{type}; },
+        readFromNewLocations([&](HeapType type) -> std::optional<Location> { return ArrayLocation{type}; },
                              get->ref->type.getHeapType());
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
-        writeToNewLocations([&](HeapType type) { return ArrayLocation{type}; },
+        writeToNewLocations([&](HeapType type) -> std::optional<Location> { return ArrayLocation{type}; },
                             set->ref,
                             set->value);
       } else {
