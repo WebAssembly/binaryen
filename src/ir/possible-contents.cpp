@@ -1064,16 +1064,8 @@ void ContentOracle::analyze() {
           };
 
           if (auto* get = parent->dynCast<StructGet>()) {
-            // This is the reference child of a struct.get, and we have just
-            // added new contents to that reference. That means that the
-            // struct.get can read from more locations, for example because no
-            // type was possible here before but now one is, so we need to add
-            // the contents possible in that type's field here. Not only do we
-            // need to update those values now, but any future change to the
-            // contents possible in that type's field will impact us, so create
-            // new connections in the graph.
+            // This is the reference child of a struct.get.
             assert(get->ref == targetExpr);
-
             readFromNewLocations([&](HeapType type) {
               return StructLocation{type, get->index};
             }, get->ref->type.getHeapType());
@@ -1085,8 +1077,17 @@ void ContentOracle::analyze() {
             writeToNewLocations([&](HeapType type) {
               return StructLocation{type, set->index};
             }, set->ref, set->value);
+          } else if (auto* get = parent->dynCast<ArrayGet>()) {
+            assert(get->ref == targetExpr);
+            readFromNewLocations([&](HeapType type) {
+              return ArrayLocation{type};
+            }, get->ref->type.getHeapType());
+          } else if (auto* set = parent->dynCast<ArraySet>()) {
+            assert(set->ref == targetExpr || set->value == targetExpr);
+            writeToNewLocations([&](HeapType type) {
+              return ArrayLocation{type};
+            }, set->ref, set->value);
           } else {
-            // TODO: array ops
             WASM_UNREACHABLE("bad childParents content");
           }
 
