@@ -885,26 +885,26 @@ void ContentOracle::analyze() {
     dump(location);
 #endif
 
-    // Update types from an input to an output, and add more work to if we found
+    // Update types from an input to an output, and add more work if we found
     // any.
-    auto updateTypes = [&](const PossibleContents& input,
-                           PossibleContents& output,
-                           Location inputLocation,
-                           Location outputLocation) {
-      if (input.getType() == Type::unreachable) {
+    auto updateTypes = [&](Location input,
+                           const PossibleContents& inputContents,
+                           Location target,
+                           PossibleContents& targetContents) {
+      if (inputContents.getType() == Type::unreachable) {
         return;
       }
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
       std::cout << "    updateTypes src:\n";
-      input.dump(std::cout);
+      inputContents.dump(std::cout);
       std::cout << '\n';
       std::cout << "    updateTypes dest:\n";
-      output.dump(std::cout);
+      targetContents.dump(std::cout);
       std::cout << '\n';
 #endif
-      if (output.combine(input)) {
+      if (targetContents.combine(inputContents)) {
         // We inserted something, so there is work to do in this target.
-        work.push(outputLocation);
+        work.push(target);
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "    more work\n";
 #endif
@@ -922,7 +922,7 @@ void ContentOracle::analyze() {
       std::cout << "  send to target\n";
       dump(target);
 #endif
-      updateTypes(types, flowInfoMap[target].types, location, target);
+      updateTypes(location, types, target, flowInfoMap[target].types);
     }
   }
 
