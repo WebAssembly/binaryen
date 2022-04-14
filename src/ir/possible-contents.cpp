@@ -74,6 +74,7 @@ struct FuncInfo {
   // global location), and we do not try to deduplicate here, just store them in
   // a plain array for now, which is faster (later, when we merge all the info
   // from the functions, we need to deduplicate anyhow).
+  // TODO rename to links
   std::vector<Connection> connections;
 
   // All the roots of the graph, that is, places where we should mark a type as
@@ -847,6 +848,20 @@ void ContentOracle::analyze() {
     flowInfoMap[connection.from].targets.push_back(connection.to);
   }
 
+#ifndef NDEBUG
+  // The vector of targets must have no duplicates.
+  auto disallowDuplicates = [&](const std::vector<Location>& targets) {
+    std::unordered_set<Location> uniqueTargets;
+    for (const auto& target : targets) {
+      uniqueTargets.insert(target);
+    }
+    assert(uniqueTargets.size() == targets.size());
+  };
+  for (auto& [location, info] : flowInfoMap) {
+    disallowDuplicates(info.targets);
+  }
+#endif
+
   // The work remaining to do: locations that we just updated, which means we
   // should update their children when we pop them from this queue.
   UniqueDeferredQueue<Location> work;
@@ -891,7 +906,7 @@ void ContentOracle::analyze() {
                            const PossibleContents& inputContents,
                            Location target,
                            PossibleContents& targetContents) {
-      if (inputContents.getType() == Type::unreachable) {
+      if (inputContents.isNone()) {
         return;
       }
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
@@ -911,10 +926,15 @@ void ContentOracle::analyze() {
       }
     };
 
-    auto& targets = info.targets;
+    const auto& targets = info.targets;
     if (targets.empty()) {
       continue;
     }
+
+    // We may add new connections as we go. Do so to a temporary structure on
+    // the side as we are iterating on |targets| here, which might be one of the
+    // lists we want to update.
+    std::vector<Connection> newConnections;
 
     // Update the targets, and add the ones that change to the remaining work.
     for (auto& target : targets) {
@@ -922,8 +942,102 @@ void ContentOracle::analyze() {
       std::cout << "  send to target\n";
       dump(target);
 #endif
-      updateTypes(location, types, target, flowInfoMap[target].types);
+
+      auto& targetContents = flowInfoMap[target].types;
+
+      if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
+        auto* targetExpr = targetExprLoc->expr;
+        auto iter = childParents.find(targetExpr);
+        if (iter != childParents.end()) {
+          // The target is one of the special cases where it is an expression
+          // for whom we must know the parent in order to handle things in a
+          // special manner.
+          auto* parent = iter->second;
+
+          // When handling these special cases we care about what actually
+          // changed, so save the state before doing the update.
+          auto oldTargetContents = targetContents;
+          updateTypes(location, types, target, targetContents);
+          if (oldTargetContents == targetContents) {
+            // Nothing changed; nothing more to do.
+            continue;
+          }
+
+          // Something changed, handle the special cases.
+
+          auto type = targetContents.getType().getHeapType();
+
+          if (auto* get = parent->dynCast<StructGet>()) {
+            assert(get->ref == targetExpr);
+            // This is the reference child of a struct.get, and we have just
+            // added new contents to that reference. That means that the
+            // struct.get can read from more locations, for example because no
+            // type was possible here before but now one is, so we need to add
+            // the contents possible in that type's field here. Not only do we
+            // need to update those values now, but any future change to the
+            // contents possible in that type's field will impact us, so create
+            // new connections in the graph.
+            // TODO: A less simple but more memory-efficient approach might be
+            //       to keep special data structures on the side for such
+            //       "dynamic" information, basically a list of all struct.gets
+            //       impacted by each type, etc., and use those in the proper
+            //       places. Then each location would have not just a list of
+            //       target locations but also a list of target expressions
+            //       perhaps, etc.
+            if (oldTargetContents.isNone()) {
+              // Nothing was present before, so we can just add the new stuff.
+              assert(!targetContents.isNone());
+              if (targetContents.isType()) {
+                // A single new type was added here. Add a link from its field
+                // to this get.
+                newConnections.push_back({
+                  StructLocation{type, get->index},
+                  target
+                });
+              } else {
+                // Many types are possible here. We will need to assume the
+                // worst, which is any subtype of the type on the struct.get.
+                assert(targetContents.isMany());
+                // TODO: caching of AllSubTypes lists?
+                for (auto subType : subTypes.getAllSubTypes(type)) {
+                  newConnections.push_back({
+                    StructLocation{subType, get->index},
+                    target
+                  });
+                }
+              }
+            } else {
+              // Something was present before, but now there is more. Atm there
+              // is just one such case, a single type that is now many.
+              assert(oldTargetContents.isType());
+              assert(targetContents.isMany());
+              auto oldType = oldTargetContents.getType();
+              for (auto subType : subTypes.getAllSubTypes(type)) {
+                if (subType != oldType) {
+                  newConnections.push_back({
+                    StructLocation{subType, get->index},
+                    target
+                  });
+                }
+              }
+            }
+          } else {
+            WASM_UNREACHABLE("bad childParents content");
+          }
+
+          continue;
+        }
+      }
+
+      // Otherwise, this is not a special case, and just do the update.
+      updateTypes(location, types, target, targetContents);
     }
+
+    // Update any new connections
+    newConnections..
+#ifndef NDEBUG
+    disallowDuplicates(..);
+#endif
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,

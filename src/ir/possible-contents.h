@@ -138,15 +138,16 @@ public:
     return true;
   }
 
+  bool isNone() const { return std::get_if<None>(&value); }
   // Check if all the values are identical and constant.
   bool isConstant() const {
     return !std::get_if<None>(&value) && !std::get_if<Many>(&value) &&
            !std::get_if<Type>(&value);
   }
-
   bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
-
   bool isConstantGlobal() const { return std::get_if<ImmutableGlobal>(&value); }
+  bool isType() const { return std::get_if<Type>(&value); }
+  bool isMany() const { return std::get_if<Many>(&value); }
 
   // Returns the single constant value.
   Literal getConstantLiteral() const {
