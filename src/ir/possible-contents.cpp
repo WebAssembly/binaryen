@@ -961,8 +961,8 @@ void ContentOracle::analyze() {
 
           // Something changed, handle the special cases.
 
-          // Given a heap type, add a connection from that location to an
-          // expression that reads from it (e.g. from a struct location to a
+          // Given a heap location, add a connection from that location to an
+          // expression that reads from it (e.g. from a StructLocation to a
           // struct.get).
           auto readFromHeap = [&](Location heapLoc, Expression* target) {
             auto targetLoc = ExpressionLocation{target, 0};
@@ -971,6 +971,50 @@ void ContentOracle::analyze() {
                         targetLoc,
                         // TODO helper function without this all the time
                         flowInfoMap[targetLoc].types);
+          };
+
+          // Given the old and new contents at the current target, add reads to
+          // it based on the latest changes. The reads are sent to |parent|,
+          // which is either a struct.get or an array.get. That is, new types are possible for
+          // the reference, which means we need to read from more possible heap
+          // locations. This receives a function that gets a heap type and
+          // returns a location, which we will call on all relevant heap types
+          // as we add the connections.
+          // @param declaredRefType: the type declared in the IR on the
+          //        reference input to the struct.get/array.get.
+          auto readFromNewLocations = [&](std::function<Location(HeapType)> getLocation, HeapType declaredRefType) {
+            // Add a connection from the proper field of a struct type to this
+            // struct.get, and also update that value based on the field's
+            // current contents right now.
+            if (oldTargetContents.isNone()) {
+              // Nothing was present before, so we can just add the new stuff.
+              assert(!targetContents.isNone());
+              if (targetContents.isType()) {
+                // A single new type was added here. Read from exactly that and
+                // nothing else.
+                readFromHeap(getLocation(targetContents.getType().getHeapType()), parent);
+              } else {
+                // Many types are possible here. We will need to assume the
+                // worst, which is any subtype of the type on the struct.get.
+                assert(targetContents.isMany());
+                // TODO: caching of AllSubTypes lists?
+                for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
+                  readFromHeap(getLocation(subType), parent);
+                }
+              }
+            } else {
+              // Something was present before, but now there is more. Atm there
+              // is just one such case, a single type that is now many.
+              assert(oldTargetContents.isType());
+              assert(targetContents.isMany());
+              auto oldType = oldTargetContents.getType().getHeapType();
+              for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
+                if (subType != oldType) {
+                  readFromHeap(getLocation(subType), parent);
+                }
+              }
+              // TODO ensure tests for all these          
+            }
           };
 
           if (auto* get = parent->dynCast<StructGet>()) {
@@ -983,7 +1027,6 @@ void ContentOracle::analyze() {
             // contents possible in that type's field will impact us, so create
             // new connections in the graph.
             assert(get->ref == targetExpr);
-            auto refType = targetContents.getType().getHeapType();
             // TODO: A less simple but more memory-efficient approach might be
             //       to keep special data structures on the side for such
             //       "dynamic" information, basically a list of all struct.gets
@@ -992,37 +1035,9 @@ void ContentOracle::analyze() {
             //       target locations but also a list of target expressions
             //       perhaps, etc.
 
-            // Add a connection from the proper field of a struct type to this
-            // struct.get, and also update that value based on the field's
-            // current contents right now.
-            if (oldTargetContents.isNone()) {
-              // Nothing was present before, so we can just add the new stuff.
-              assert(!targetContents.isNone());
-              if (targetContents.isType()) {
-                // A single new type was added here.
-                readFromHeap(StructLocation{refType, get->index}, get);
-              } else {
-                // Many types are possible here. We will need to assume the
-                // worst, which is any subtype of the type on the struct.get.
-                assert(targetContents.isMany());
-                // TODO: caching of AllSubTypes lists?
-                for (auto subType : subTypes->getAllSubTypes(refType)) {
-                  readFromHeap(StructLocation{subType, get->index}, get);
-                }
-              }
-            } else {
-              // Something was present before, but now there is more. Atm there
-              // is just one such case, a single type that is now many.
-              assert(oldTargetContents.isType());
-              assert(targetContents.isMany());
-              auto oldType = oldTargetContents.getType().getHeapType();
-              for (auto subType : subTypes->getAllSubTypes(refType)) {
-                if (subType != oldType) {
-                  readFromHeap(StructLocation{subType, get->index}, get);
-                }
-              }
-              // TODO ensure tests for all these
-            }
+            readFromNewLocations([&](HeapType type) {
+              return StructLocation{type, get->index};
+            }, get->ref->type.getHeapType());
           } else if (auto* set = parent->dynCast<StructSet>()) {
             // This is either the reference or the value child of a struct.set.
             // A change to either one affects what values are written to that
