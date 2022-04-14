@@ -32,8 +32,8 @@ namespace {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-    std::cout << "  exprloc \n" << *loc->expr << " (parent? " << !!loc->parent
-              << ")\n";
+    std::cout << "  exprloc \n"
+              << *loc->expr << " (parent? " << !!loc->parent << ")\n";
   } else if (auto* loc = std::get_if<StructLocation>(&location)) {
     std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
@@ -986,10 +986,7 @@ void ContentOracle::analyze() {
             auto connectAndUpdate = [&](HeapType heapType) {
               auto structLoc = StructLocation{heapType, get->index};
               auto getLoc = ExpressionLocation{get, 0};
-              newConnections.push_back({
-                structLoc,
-                getLoc
-              });
+              newConnections.push_back({structLoc, getLoc});
               updateTypes(flowInfoMap[structLoc].types,
                           getLoc,
                           // TODO helper function without this all the time
@@ -1035,22 +1032,26 @@ void ContentOracle::analyze() {
             // ref or the value was just updated: simply figure out the values
             // being written in the current state (which is after the current
             // update) and forward them.
-            auto refContents = flowInfoMap[ExpressionLocation{set->ref, 0}].types;
-            auto valueContents = flowInfoMap[ExpressionLocation{set->value, 0}].types;
+            auto refContents =
+              flowInfoMap[ExpressionLocation{set->ref, 0}].types;
+            auto valueContents =
+              flowInfoMap[ExpressionLocation{set->value, 0}].types;
             if (refContents.isEmpty()) {
               continue;
             }
             if (refContents.isType()) {
               // Update the one possible type here.
-              auto refContentType = refContents.getType().getHeapType()
-              auto structLoc = StructLocation{refContentType, set->index};
+              auto refContentType =
+                refContents.getType().getHeapType() auto structLoc =
+                  StructLocation{refContentType, set->index};
               updateTypes(valueContents,
                           structLoc,
                           flowInfoMap[structLoc].types;
             } else {
               assert(refContents.isMany());
               // Update all possible types here.
-              for (auto subType : subTypes.getAllSubTypes(set->ref->type.getHeapType())) {
+              for (auto subType :
+                   subTypes.getAllSubTypes(set->ref->type.getHeapType())) {
                 auto structLoc = StructLocation{subType, set->index};
                 updateTypes(valueContents,
                             structLoc,
@@ -1073,7 +1074,7 @@ void ContentOracle::analyze() {
     // Update any new connections
     newConnections..
 #ifndef NDEBUG
-    disallowDuplicates(..);
+      disallowDuplicates(..);
 #endif
   }
 
