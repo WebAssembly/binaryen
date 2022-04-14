@@ -81,6 +81,34 @@ struct FuncInfo {
   // etc. All possible types in the rest of the graph flow from such places.
   // The map here is of the root to the value beginning in it.
   std::unordered_map<Location, PossibleContents> roots;
+
+  // In some cases we need to know the parent of an expression. This maps such
+  // children to their parents. TODO merge comments
+  // In some cases we need to know the parent of the expression, like with GC
+  // operations. Consider this:
+  //
+  //  (struct.set $A k
+  //    (local.get $ref)
+  //    (local.get $value)
+  //  )
+  //
+  // Imagine that the first local.get, for $ref, receives a new value. That can
+  // affect where the struct.set sends values: if previously that local.get had
+  // no possible contents, and now it does, then we have StructLocations to
+  // update. Likewise, when the second local.get is updated we must do the same,
+  // but again which StructLocations we update depends on the ref passed to the
+  // struct.get. To handle such things, we set |parent| to the parent, and check
+  // for it during the flow. In the common case, however, where the parent does
+  // not matter, this field can be nullptr XXX.
+  //
+  // In practice we always create an ExpressionLocation with a nullptr parent
+  // for everything, so the local.gets above would each have two: one
+  // ExpressionLocation without a parent, that is used in the graph normally,
+  // and whose value flows into an ExpressionLocation with a parent equal to the
+  // struct.set. This is practical because normally we do not know the parent of
+  // each node as we traverse, so always adding a parent would make the graph-
+  // building logic more complicated.
+  std::unordered_map<Expression*, Expression*> childParents;
 };
 
 struct ConnectionFinder
@@ -141,7 +169,7 @@ struct ConnectionFinder
         if (value) {
           for (Index i = 0; i < value->type.size(); i++) {
             info.connections.push_back(
-              {ExpressionLocation{value, nullptr, i},
+              {ExpressionLocation{value, i},
                BranchLocation{getFunction(), target, i}});
           }
         }
@@ -155,7 +183,7 @@ struct ConnectionFinder
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
           info.connections.push_back({BranchLocation{getFunction(), target, i},
-                                      ExpressionLocation{curr, nullptr, i}});
+                                      ExpressionLocation{curr, i}});
         }
       });
     }
@@ -170,7 +198,7 @@ struct ConnectionFinder
       assert(child->type.size() == parent->type.size());
       for (Index i = 0; i < child->type.size(); i++) {
         info.connections.push_back(
-          {ExpressionLocation{child, nullptr, i}, ExpressionLocation{parent, nullptr, i}});
+          {ExpressionLocation{child, i}, ExpressionLocation{parent, i}});
       }
     }
   }
@@ -178,7 +206,7 @@ struct ConnectionFinder
   // Adds a root, if the expression is relevant.
   template<typename T> void addRoot(Expression* curr, T contents) {
     if (isRelevant(curr)) {
-      addRoot(ExpressionLocation{curr, nullptr, 0}, contents);
+      addRoot(ExpressionLocation{curr, 0}, contents);
     }
   }
 
@@ -308,7 +336,7 @@ struct ConnectionFinder
       for (Index i = 0; i < curr->type.size(); i++) {
         info.connections.push_back(
           {LocalLocation{getFunction(), curr->index, i},
-           ExpressionLocation{curr, nullptr, i}});
+           ExpressionLocation{curr, i}});
       }
     }
   }
@@ -318,11 +346,11 @@ struct ConnectionFinder
     }
     for (Index i = 0; i < curr->value->type.size(); i++) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, nullptr, i},
+        {ExpressionLocation{curr->value, i},
          LocalLocation{getFunction(), curr->index, i}});
       if (curr->isTee()) {
         info.connections.push_back(
-          {ExpressionLocation{curr->value, nullptr, i}, ExpressionLocation{curr, nullptr, i}});
+          {ExpressionLocation{curr->value, i}, ExpressionLocation{curr, i}});
       }
     }
   }
@@ -331,13 +359,13 @@ struct ConnectionFinder
   void visitGlobalGet(GlobalGet* curr) {
     if (isRelevant(curr->type)) {
       info.connections.push_back(
-        {GlobalLocation{curr->name}, ExpressionLocation{curr, nullptr, 0}});
+        {GlobalLocation{curr->name}, ExpressionLocation{curr, 0}});
     }
   }
   void visitGlobalSet(GlobalSet* curr) {
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, nullptr, 0}, GlobalLocation{curr->name}});
+        {ExpressionLocation{curr->value, 0}, GlobalLocation{curr->name}});
     }
   }
 
@@ -352,7 +380,7 @@ struct ConnectionFinder
     for (auto* operand : curr->operands) {
       if (isRelevant(operand->type)) {
         info.connections.push_back(
-          {ExpressionLocation{operand, nullptr, 0}, makeParamLocation(i)});
+          {ExpressionLocation{operand, 0}, makeParamLocation(i)});
       }
       i++;
     }
@@ -361,7 +389,7 @@ struct ConnectionFinder
     for (Index i = 0; i < curr->type.size(); i++) {
       if (isRelevant(curr->type[i])) {
         info.connections.push_back(
-          {makeResultLocation(i), ExpressionLocation{curr, nullptr, i}});
+          {makeResultLocation(i), ExpressionLocation{curr, i}});
       }
     }
 
@@ -436,7 +464,7 @@ struct ConnectionFinder
       assert(!operand->type.isTuple());
       if (isRelevant(operand->type)) {
         info.connections.push_back(
-          {ExpressionLocation{operand, nullptr, 0}, makeTarget(i)});
+          {ExpressionLocation{operand, 0}, makeTarget(i)});
       }
       i++;
     }
@@ -475,7 +503,7 @@ struct ConnectionFinder
     // TODO simplify if to avoid 2 push_backs
     if (curr->init) {
       info.connections.push_back(
-        {ExpressionLocation{curr->init, nullptr, 0}, ArrayLocation{type}});
+        {ExpressionLocation{curr->init, 0}, ArrayLocation{type}});
     } else {
       info.connections.push_back(
         {getNullLocation(type.getArray().element.type), ArrayLocation{type}});
@@ -496,16 +524,13 @@ struct ConnectionFinder
 
   // Add connections to make it possible to reach an expression's parent, which
   // we need during the flow in special cases. See the comment on the |parent|
-  // field on the ExpressionLocation class for more details.
-  void addParentLink(Expression* child, Expression* parent) {
+  // field on the ExpressionLocation class for more details. FIXME comment
+  void linkChildToParent(Expression* child, Expression* parent) {
     // The mechanism we use is to connect the main location (referred to in
     // various other places potentially) to a new location that has the parent.
     // The main location feeds values to the latter, and we can then use the
     // parent in the main flow logic.
-    info.connections.push_back({
-      ExpressionLocation{child, nullptr, 0},
-      ExpressionLocation{child, parent, 0}
-    });
+    info.childParents[child] = parent;
   }
 
   // Struct operations access the struct fields' locations.
@@ -519,11 +544,11 @@ struct ConnectionFinder
     if (isRelevant(curr->type)) {
       info.connections.push_back(
         {StructLocation{curr->ref->type.getHeapType(), curr->index},
-         ExpressionLocation{curr, nullptr, 0}});
+         ExpressionLocation{curr, 0}});
 
       // The struct.get will receive different values depending on the contents
       // in the reference, so mark us as the parent of the ref.
-      addParentLink(curr->ref, curr);
+      linkChildToParent(curr->ref, curr);
     }
   }
   void visitStructSet(StructSet* curr) {
@@ -532,12 +557,12 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, nullptr, 0},
+        {ExpressionLocation{curr->value, 0},
          StructLocation{curr->ref->type.getHeapType(), curr->index}});
 
       // See comment on visitStructGet. Here we also connect the value.
-      addParentLink(curr->ref, curr);
-      addParentLink(curr->value, curr);
+      linkChildToParent(curr->ref, curr);
+      linkChildToParent(curr->value, curr);
     }
   }
   // Array operations access the array's location.
@@ -550,10 +575,10 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->type)) {
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
-                                  ExpressionLocation{curr, nullptr, 0}});
+                                  ExpressionLocation{curr, 0}});
 
       // See StructGet comment.
-      addParentLink(curr->ref, curr);
+      linkChildToParent(curr->ref, curr);
     }
   }
   void visitArraySet(ArraySet* curr) {
@@ -562,12 +587,12 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->value->type)) {
       info.connections.push_back(
-        {ExpressionLocation{curr->value, nullptr, 0},
+        {ExpressionLocation{curr->value, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
 
       // See StructSet comment.
-      addParentLink(curr->ref, curr);
-      addParentLink(curr->value, curr);
+      linkChildToParent(curr->ref, curr);
+      linkChildToParent(curr->value, curr);
     }
   }
 
@@ -602,7 +627,7 @@ struct ConnectionFinder
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
           info.connections.push_back(
-            {TagLocation{tag, i}, ExpressionLocation{pop, nullptr, i}});
+            {TagLocation{tag, i}, ExpressionLocation{pop, i}});
         }
       }
 
@@ -622,7 +647,7 @@ struct ConnectionFinder
     auto tag = curr->tag;
     for (Index i = 0; i < curr->operands.size(); i++) {
       info.connections.push_back(
-        {ExpressionLocation{operands[i], nullptr, 0}, TagLocation{tag, i}});
+        {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
   }
   void visitRethrow(Rethrow* curr) {}
@@ -630,15 +655,15 @@ struct ConnectionFinder
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->operands.size(); i++) {
-        info.connections.push_back({ExpressionLocation{curr->operands[i], nullptr, 0},
-                                    ExpressionLocation{curr, nullptr, i}});
+        info.connections.push_back({ExpressionLocation{curr->operands[i], 0},
+                                    ExpressionLocation{curr, i}});
       }
     }
   }
   void visitTupleExtract(TupleExtract* curr) {
     if (isRelevant(curr->type)) {
-      info.connections.push_back({ExpressionLocation{curr->tuple, nullptr, curr->index},
-                                  ExpressionLocation{curr, nullptr, 0}});
+      info.connections.push_back({ExpressionLocation{curr->tuple, curr->index},
+                                  ExpressionLocation{curr, 0}});
     }
   }
 
@@ -646,7 +671,7 @@ struct ConnectionFinder
     if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
         info.connections.push_back(
-          {ExpressionLocation{value, nullptr, i}, ResultLocation{getFunction(), i}});
+          {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
       }
     }
   }
@@ -719,7 +744,7 @@ void ContentOracle::analyze() {
     auto* init = global->init;
     if (finder.isRelevant(init->type)) {
       globalInfo.connections.push_back(
-        {ExpressionLocation{init, nullptr, 0}, GlobalLocation{global->name}});
+        {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
     }
   }
 
@@ -729,6 +754,7 @@ void ContentOracle::analyze() {
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
   std::unordered_map<Location, PossibleContents> roots;
+  std::unordered_map<Expression*, Expression*> childParents;
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "merging phase\n";
@@ -740,6 +766,9 @@ void ContentOracle::analyze() {
     }
     for (auto& [root, value] : info.roots) {
       roots[root] = value;
+    }
+    for (auto [child, parent] : info.childParents) {
+      childParents[child] = parent;
     }
   }
 
@@ -860,6 +889,7 @@ void ContentOracle::analyze() {
     // any.
     auto updateTypes = [&](const PossibleContents& input,
                            PossibleContents& output,
+                           Location inputLocation,
                            Location outputLocation) {
       if (input.getType() == Type::unreachable) {
         return;
@@ -881,25 +911,6 @@ void ContentOracle::analyze() {
       }
     };
 
-    if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-      if (loc->parent) {
-        // This is a special node that links to its parent (see the comment on
-        // the |parent| field on the ExpressionLocation class). Handle the
-        // special cases that need such parent links here.
-        if (auto* get = loc->parent->dynCast<StructGet>()) {
-          // This is the reference child of a struct.get.
-          assert(get->ref == loc->expr);
-          // As more content is possible in the reference, so are more values
-          // possible in the struct.get - perhaps before no reference was
-          // possible at all, so the struct.get could return nothing, but now
-          // some type can appear in the reference, so the struct.get should
-          // return anything that is possible to read from that type.
-          // XXX it is not enough to do that now - we must also add new links to
-          //     the graph. targets; should probably be a smallset<1> and not a vec... but slow
-        }
-      }
-    }
-
     auto& targets = info.targets;
     if (targets.empty()) {
       continue;
@@ -911,13 +922,12 @@ void ContentOracle::analyze() {
       std::cout << "  send to target\n";
       dump(target);
 #endif
-      updateTypes(types, flowInfoMap[target].types, target);
+      updateTypes(types, flowInfoMap[target].types, location, target);
     }
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
   //       including multiple levels of depth (necessary for itables in j2wasm).
-  //       Get --cfp tests passing with this code
 }
 
 } // namespace wasm

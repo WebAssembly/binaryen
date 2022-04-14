@@ -212,38 +212,12 @@ public:
 // it can contain (which may be more precise than expr->type).
 struct ExpressionLocation {
   Expression* expr;
-  // In some cases we need to know the parent of the expression, like with GC
-  // operations. Consider this:
-  //
-  //  (struct.set $A k
-  //    (local.get $ref)
-  //    (local.get $value)
-  //  )
-  //
-  // Imagine that the first local.get, for $ref, receives a new value. That can
-  // affect where the struct.set sends values: if previously that local.get had
-  // no possible contents, and now it does, then we have StructLocations to
-  // update. Likewise, when the second local.get is updated we must do the same,
-  // but again which StructLocations we update depends on the ref passed to the
-  // struct.get. To handle such things, we set |parent| to the parent, and check
-  // for it during the flow. In the common case, however, where the parent does
-  // not matter, this field can be nullptr.
-  //
-  // In practice we always create an ExpressionLocation with a nullptr parent
-  // for everything, so the local.gets above would each have two: one
-  // ExpressionLocation without a parent, that is used in the graph normally,
-  // and whose value flows into an ExpressionLocation with a parent equal to the
-  // struct.set. This is practical because normally we do not know the parent of
-  // each node as we traverse, so always adding a parent would make the graph-
-  // building logic more complicated.
-  Expression* parent;
   // If this expression contains a tuple then each index in the tuple will have
   // its own location with a corresponding tupleIndex. If this is not a tuple
   // then we only use tupleIndex 0.
   Index tupleIndex;
   bool operator==(const ExpressionLocation& other) const {
-    return expr == other.expr && parent == other.parent &&
-           tupleIndex == other.tupleIndex;
+    return expr == other.expr && tupleIndex == other.tupleIndex;
   }
 };
 
@@ -380,8 +354,8 @@ namespace std {
 
 template<> struct hash<wasm::ExpressionLocation> {
   size_t operator()(const wasm::ExpressionLocation& loc) const {
-    return std::hash<std::pair<std::pair<size_t, size_t>, wasm::Index>>{}(
-      {{size_t(loc.expr), size_t(loc.parent)}, loc.tupleIndex});
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.expr), loc.tupleIndex});
   }
 };
 
@@ -489,7 +463,8 @@ public:
 
 private:
   // The information needed during and after flowing the types through the
-  // graph.
+  // graph. TODO: do not keep this around forever, delete the stuff we only need
+  // during the flow after the flow.
   struct LocationInfo {
     // The types possible at this location.
     PossibleContents types;
