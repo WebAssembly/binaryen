@@ -91,10 +91,6 @@ public:
 
   template<typename T> void note(T curr) { note(Variant(curr)); }
 
-  // Notes a value that is unknown - it can be anything. We have failed to
-  // identify a constant value here.
-  void noteUnknown() { value = Many(); }
-
   // Combine the information in a given PossibleContents to this one. This
   // is the same as if we have called note*() on us with all the history of
   // calls to that other object.
@@ -193,19 +189,20 @@ public:
     }
   }
 
-  // Returns whether we have ever noted a value.
-  bool hasNoted() const { return !std::get_if<None>(&value); }
-
   void dump(std::ostream& o) const {
     o << '[';
-    if (!hasNoted()) {
-      o << "unwritten";
-    } else if (!isConstant()) {
-      o << "unknown";
+    if (isNone()) {
+      o << "none";
     } else if (isConstantLiteral()) {
       o << getConstantLiteral();
     } else if (isConstantGlobal()) {
       o << '$' << getConstantGlobal();
+    } else if (isType()) {
+      o << getType();
+    } else if (isMany()) {
+      o << "many";
+    } else {
+      WASM_UNREACHABLE("bad variant");
     }
     o << ']';
   }

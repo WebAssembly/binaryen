@@ -988,7 +988,8 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
                            parent);
             } else {
               // Many types are possible here. We will need to assume the
-              // worst, which is any subtype of the type on the struct.get.
+              // worst, which is any subtype of the type on the struct.get,
+              // including itself.
               assert(targetContents.isMany());
               // TODO: caching of AllSubTypes lists?
               for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
