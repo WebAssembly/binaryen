@@ -20,6 +20,7 @@
 #include <variant>
 
 #include "ir/possible-constant.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -478,6 +479,16 @@ private:
   };
 
   std::unordered_map<Location, LocationInfo> flowInfoMap;
+
+  // The work remaining to do during the flow: locations that we just updated,
+  // which means we should update their children when we pop them from this
+  // queue.
+  UniqueDeferredQueue<Location> work;
+
+  // We may add new connections as we flow. Do so to a temporary structure on
+  // the side as we are iterating on |targets| here, which might be one of the
+  // lists we want to update.
+  std::vector<Connection> newConnections;
 };
 
 } // namespace wasm

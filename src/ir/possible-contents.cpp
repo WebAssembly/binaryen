@@ -22,7 +22,6 @@
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "ir/subtypes.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -859,10 +858,6 @@ void ContentOracle::analyze() {
   }
 #endif
 
-  // The work remaining to do: locations that we just updated, which means we
-  // should update their children when we pop them from this queue.
-  UniqueDeferredQueue<Location> work;
-
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "roots phase\n";
 #endif
@@ -926,11 +921,6 @@ void ContentOracle::analyze() {
     if (targets.empty()) {
       continue;
     }
-
-    // We may add new connections as we go. Do so to a temporary structure on
-    // the side as we are iterating on |targets| here, which might be one of the
-    // lists we want to update.
-    std::vector<Connection> newConnections;
 
     // Update the targets, and add the ones that change to the remaining work.
     for (auto& target : targets) {
@@ -1133,6 +1123,7 @@ void ContentOracle::analyze() {
       disallowDuplicates(targets);
 #endif
     }
+    newConnections.clear();
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
