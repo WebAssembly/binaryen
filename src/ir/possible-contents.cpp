@@ -530,7 +530,7 @@ struct ConnectionFinder
     // The main location feeds values to the latter, and we can then use the
     // parent in the main flow logic.
     info.childParents[child] = parent;
-std::cout << "link child to this parent\n" << *parent << '\n';
+    std::cout << "link child to this parent\n" << *parent << '\n';
   }
 
   // Struct operations access the struct fields' locations.
@@ -922,7 +922,8 @@ void ContentOracle::analyze() {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-void ContentOracle::updateTarget(const PossibleContents& contents, Location target) {
+void ContentOracle::updateTarget(const PossibleContents& contents,
+                                 Location target) {
   auto& targetContents = flowInfoMap[target].types;
 
   // Update types from an input to an output, and add more work if we found
@@ -1013,16 +1014,14 @@ void ContentOracle::updateTarget(const PossibleContents& contents, Location targ
               // TODO: In the case that this is a constant, it could be null
               //       or an immutable global, which we could do even more
               //       with.
-              readFromHeap(
-                getLocation(targetContents.getType().getHeapType()),
-                parent);
+              readFromHeap(getLocation(targetContents.getType().getHeapType()),
+                           parent);
             } else {
               // Many types are possible here. We will need to assume the
               // worst, which is any subtype of the type on the struct.get.
               assert(targetContents.isMany());
               // TODO: caching of AllSubTypes lists?
-              for (auto subType :
-                   subTypes->getAllSubTypes(declaredRefType)) {
+              for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
                 readFromHeap(getLocation(subType), parent);
               }
             }
@@ -1068,8 +1067,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents, Location targ
           // values being written in the current state (which is after the
           // current update) and forward them.
           auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].types;
-          auto valueContents =
-            flowInfoMap[ExpressionLocation{value, 0}].types;
+          auto valueContents = flowInfoMap[ExpressionLocation{value, 0}].types;
           if (refContents.isNone()) {
             return;
           }
@@ -1086,8 +1084,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents, Location targ
             for (auto subType :
                  subTypes->getAllSubTypes(ref->type.getHeapType())) {
               auto heapLoc = getLocation(subType);
-              updateTypes(
-                valueContents, heapLoc, flowInfoMap[heapLoc].types);
+              updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
             }
           }
         };
@@ -1113,15 +1110,13 @@ void ContentOracle::updateTarget(const PossibleContents& contents, Location targ
           set->value);
       } else if (auto* get = parent->dynCast<ArrayGet>()) {
         assert(get->ref == targetExpr);
-        readFromNewLocations(
-          [&](HeapType type) { return ArrayLocation{type}; },
-          get->ref->type.getHeapType());
+        readFromNewLocations([&](HeapType type) { return ArrayLocation{type}; },
+                             get->ref->type.getHeapType());
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
-        writeToNewLocations(
-          [&](HeapType type) { return ArrayLocation{type}; },
-          set->ref,
-          set->value);
+        writeToNewLocations([&](HeapType type) { return ArrayLocation{type}; },
+                            set->ref,
+                            set->value);
       } else {
         WASM_UNREACHABLE("bad childParents content");
       }

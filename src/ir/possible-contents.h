@@ -149,9 +149,7 @@ public:
   bool isType() const { return std::get_if<Type>(&value); }
   bool isMany() const { return std::get_if<Many>(&value); }
 
-  bool isConstant() const {
-    return isConstantLiteral() || isConstantGlobal();
-  }
+  bool isConstant() const { return isConstantLiteral() || isConstantGlobal(); }
 
   // Returns the single constant value.
   Literal getConstantLiteral() const {
