@@ -543,12 +543,11 @@ struct ConnectionFinder
       return;
     }
     if (isRelevant(curr->type)) {
-      info.connections.push_back(
-        {StructLocation{curr->ref->type.getHeapType(), curr->index},
-         ExpressionLocation{curr, 0}});
-
       // The struct.get will receive different values depending on the contents
-      // in the reference, so mark us as the parent of the ref.
+      // in the reference, so mark us as the parent of the ref, and we will
+      // handle all of this in a special way during the flow. Note that we do
+      // not even create a StructLocation here; anything that we need will be
+      // added during the flow.
       linkChildToParent(curr->ref, curr);
     }
   }
@@ -557,10 +556,6 @@ struct ConnectionFinder
       return;
     }
     if (isRelevant(curr->value->type)) {
-      info.connections.push_back(
-        {ExpressionLocation{curr->value, 0},
-         StructLocation{curr->ref->type.getHeapType(), curr->index}});
-
       // See comment on visitStructGet. Here we also connect the value.
       linkChildToParent(curr->ref, curr);
       linkChildToParent(curr->value, curr);
@@ -575,6 +570,7 @@ struct ConnectionFinder
       return;
     }
     if (isRelevant(curr->type)) {
+      // TODO: remove
       info.connections.push_back({ArrayLocation{curr->ref->type.getHeapType()},
                                   ExpressionLocation{curr, 0}});
 
@@ -587,6 +583,7 @@ struct ConnectionFinder
       return;
     }
     if (isRelevant(curr->value->type)) {
+      // TODO: remove
       info.connections.push_back(
         {ExpressionLocation{curr->value, 0},
          ArrayLocation{curr->ref->type.getHeapType()}});
@@ -902,8 +899,7 @@ void ContentOracle::analyze() {
 
     // Update types from an input to an output, and add more work if we found
     // any.
-    auto updateTypes = [&](Location input,
-                           const PossibleContents& inputContents,
+    auto updateTypes = [&](const PossibleContents& inputContents,
                            Location target,
                            PossibleContents& targetContents) {
       if (inputContents.isNone()) {
@@ -957,7 +953,7 @@ void ContentOracle::analyze() {
           // When handling these special cases we care about what actually
           // changed, so save the state before doing the update.
           auto oldTargetContents = targetContents;
-          updateTypes(location, types, target, targetContents);
+          updateTypes(types, target, targetContents);
           if (oldTargetContents == targetContents) {
             // Nothing changed; nothing more to do.
             continue;
@@ -965,10 +961,7 @@ void ContentOracle::analyze() {
 
           // Something changed, handle the special cases.
 
-          auto type = targetContents.getType().getHeapType();
-
           if (auto* get = parent->dynCast<StructGet>()) {
-            assert(get->ref == targetExpr);
             // This is the reference child of a struct.get, and we have just
             // added new contents to that reference. That means that the
             // struct.get can read from more locations, for example because no
@@ -977,6 +970,8 @@ void ContentOracle::analyze() {
             // need to update those values now, but any future change to the
             // contents possible in that type's field will impact us, so create
             // new connections in the graph.
+            assert(get->ref == targetExpr);
+            auto refType = targetContents.getType().getHeapType();
             // TODO: A less simple but more memory-efficient approach might be
             //       to keep special data structures on the side for such
             //       "dynamic" information, basically a list of all struct.gets
@@ -984,26 +979,35 @@ void ContentOracle::analyze() {
             //       places. Then each location would have not just a list of
             //       target locations but also a list of target expressions
             //       perhaps, etc.
+
+            // Add a connection from the proper field of a struct type to this
+            // struct.get, and also update that value based on the field's
+            // current contents right now.
+            auto connectAndUpdate = [&](HeapType heapType) {
+              auto structLoc = StructLocation{heapType, get->index};
+              auto getLoc = ExpressionLocation{get, 0};
+              newConnections.push_back({
+                structLoc,
+                getLoc
+              });
+              updateTypes(flowInfoMap[structLoc].types,
+                          getLoc,
+                          // TODO helper function without this all the time
+                          flowInfoMap[getLoc].types);
+            };
             if (oldTargetContents.isNone()) {
               // Nothing was present before, so we can just add the new stuff.
               assert(!targetContents.isNone());
               if (targetContents.isType()) {
-                // A single new type was added here. Add a link from its field
-                // to this get.
-                newConnections.push_back({
-                  StructLocation{type, get->index},
-                  target
-                });
+                // A single new type was added here.
+                connectAndUpdate(refType);
               } else {
                 // Many types are possible here. We will need to assume the
                 // worst, which is any subtype of the type on the struct.get.
                 assert(targetContents.isMany());
                 // TODO: caching of AllSubTypes lists?
-                for (auto subType : subTypes.getAllSubTypes(type)) {
-                  newConnections.push_back({
-                    StructLocation{subType, get->index},
-                    target
-                  });
+                for (auto subType : subTypes.getAllSubTypes(refType)) {
+                  connectAndUpdate(subType);
                 }
               }
             } else {
@@ -1012,16 +1016,49 @@ void ContentOracle::analyze() {
               assert(oldTargetContents.isType());
               assert(targetContents.isMany());
               auto oldType = oldTargetContents.getType();
-              for (auto subType : subTypes.getAllSubTypes(type)) {
+              for (auto subType : subTypes.getAllSubTypes(refType)) {
                 if (subType != oldType) {
-                  newConnections.push_back({
-                    StructLocation{subType, get->index},
-                    target
-                  });
+                  connectAndUpdate(subType);
                 }
+              }
+              // TODO ensure tests for all these
+            }
+          } else if (auto* set = parent->dynCast<StructSet>()) {
+            // This is either the reference or the value child of a struct.set.
+            // A change to either one affects what values are written to that
+            // struct location, which we handle here.
+            assert(set->ref == targetExpr || set->value == targetExpr);
+            // We could set up connections here, but as we get to this code in
+            // any case when either the ref or the value of the struct.get has
+            // new contents, we can just flow the values forward directly. We
+            // can do that in a simple way that does not even check whether the
+            // ref or the value was just updated: simply figure out the values
+            // being written in the current state (which is after the current
+            // update) and forward them.
+            auto refContents = flowInfoMap[ExpressionLocation{set->ref, 0}].types;
+            auto valueContents = flowInfoMap[ExpressionLocation{set->value, 0}].types;
+            if (refContents.isEmpty()) {
+              continue;
+            }
+            if (refContents.isType()) {
+              // Update the one possible type here.
+              auto refContentType = refContents.getType().getHeapType()
+              auto structLoc = StructLocation{refContentType, set->index};
+              updateTypes(valueContents,
+                          structLoc,
+                          flowInfoMap[structLoc].types;
+            } else {
+              assert(refContents.isMany());
+              // Update all possible types here.
+              for (auto subType : subTypes.getAllSubTypes(set->ref->type.getHeapType())) {
+                auto structLoc = StructLocation{subType, set->index};
+                updateTypes(valueContents,
+                            structLoc,
+                            flowInfoMap[structLoc].types;
               }
             }
           } else {
+            // TODO: array ops
             WASM_UNREACHABLE("bad childParents content");
           }
 
@@ -1030,7 +1067,7 @@ void ContentOracle::analyze() {
       }
 
       // Otherwise, this is not a special case, and just do the update.
-      updateTypes(location, types, target, targetContents);
+      updateTypes(types, target, targetContents);
     }
 
     // Update any new connections
