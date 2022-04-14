@@ -1111,7 +1111,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
           [&](HeapType type) -> std::optional<Location> {
-            if (get->index >= type.getStruct().fields.size()) {
+            if (set->index >= type.getStruct().fields.size()) {
               // This field is not present on this struct.
               return {};
             }
