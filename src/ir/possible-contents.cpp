@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 2
+#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -32,8 +32,7 @@ namespace {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-    std::cout << "  exprloc \n"
-              << *loc->expr << " (parent? " << !!loc->parent << ")\n";
+    std::cout << "  exprloc \n" << *loc->expr << '\n';
   } else if (auto* loc = std::get_if<StructLocation>(&location)) {
     std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
@@ -532,6 +531,7 @@ struct ConnectionFinder
     // The main location feeds values to the latter, and we can then use the
     // parent in the main flow logic.
     info.childParents[child] = parent;
+std::cout << "link child to this parent\n" << *parent << '\n';
   }
 
   // Struct operations access the struct fields' locations.
@@ -950,6 +950,10 @@ void ContentOracle::analyze() {
           // special manner.
           auto* parent = iter->second;
 
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+          std::cout << "  special, parent:\n" << *parent << '\n';
+#endif
+
           // When handling these special cases we care about what actually
           // changed, so save the state before doing the update.
           auto oldTargetContents = targetContents;
@@ -965,6 +969,9 @@ void ContentOracle::analyze() {
           // expression that reads from it (e.g. from a StructLocation to a
           // struct.get).
           auto readFromHeap = [&](Location heapLoc, Expression* target) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+            std::cout << "    add special read\n";
+#endif
             auto targetLoc = ExpressionLocation{target, 0};
             newConnections.push_back({heapLoc, targetLoc});
             updateTypes(flowInfoMap[heapLoc].types,
@@ -1041,6 +1048,9 @@ void ContentOracle::analyze() {
             [&](std::function<Location(HeapType)> getLocation,
                 Expression* ref,
                 Expression* value) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+              std::cout << "    add special writes\n";
+#endif
               // We could set up connections here, but as we get to this code in
               // any case when either the ref or the value of the struct.get has
               // new contents, we can just flow the values forward directly. We
