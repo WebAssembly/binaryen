@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <optional>
 #include <variant>
 
 #include "ir/branch-utils.h"
@@ -967,10 +968,12 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // more possible heap locations. This receives a function that gets a
       // heap type and returns a location, which we will call on all
       // relevant heap types as we add the connections.
+      // @param getLocation: returns the location for a particular heap type, if
+      //                     such a location exists.
       // @param declaredRefType: the type declared in the IR on the
-      //        reference input to the struct.get/array.get.
+      //                         reference input to the struct.get/array.get.
       auto readFromNewLocations =
-        [&](std::function<Location(HeapType)> getLocation,
+        [&](std::function<std::optional<Location>(HeapType)> getLocation,
             HeapType declaredRefType) {
           // Add a connection from the proper field of a struct type to this
           // struct.get, and also update that value based on the field's
@@ -984,31 +987,48 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               // TODO: In the case that this is a constant, it could be null
               //       or an immutable global, which we could do even more
               //       with.
-              readFromHeap(getLocation(targetContents.getType().getHeapType()),
+              readFromHeap(*getLocation(targetContents.getType().getHeapType()),
                            parent);
-            } else {
-              // Many types are possible here. We will need to assume the
-              // worst, which is any subtype of the type on the struct.get,
-              // including itself.
-              assert(targetContents.isMany());
-              // TODO: caching of AllSubTypes lists?
-              for (auto subType : subTypes->getAllSubTypesInclusive(declaredRefType)) {
-                readFromHeap(getLocation(subType), parent);
-              }
+              return;
             }
-          } else {
-            // Something was present before, but now there is more. Atm
-            // there is just one such case, a single type that is now many.
-            assert(oldTargetContents.isType());
-            assert(targetContents.isMany());
-            auto oldType = oldTargetContents.getType().getHeapType();
-            for (auto subType : subTypes->getAllSubTypesInclusive(declaredRefType)) {
-              if (subType != oldType) {
-                readFromHeap(getLocation(subType), parent);
-              }
-            }
-            // TODO ensure tests for all these
           }
+
+          // We handled the case of nothing that turned into a single type. We
+          // are left with the cases of a single type that turned into many, or
+          // nothing that turned into many; either way, the result is many, but
+          // there may have been one type before that we should ignore.
+          assert(targetContents.isMany());
+          // If there is no old type, use HeapType::any; nothing will be equal
+          // to it in the loops below (we are handling structs or arrays, and
+          // anyhow only things that can actually be constructed and not
+          // abstract types like funcref/dataref/anyref etc.).
+          HeapType oldType = HeapType::func;
+          if (oldTargetContents.isType()) {
+            oldType = oldTargetContents.getType().getHeapType();
+          }
+
+          // First, handle subTypes, including the type itself (unless we ignore
+          // it due to being the old type).
+          for (auto subType : subTypes->getAllSubTypesInclusive(declaredRefType)) {
+            if (subType != oldType) {
+              readFromHeap(*getLocation(subType), parent);
+            }
+          }
+
+          // Finally, handle supertypes that also have the field.
+          // Next, all supertypes that also have this field.
+          auto type = declaredRefType;
+          while (auto superType = type.getSuperType()) {
+            auto heapLoc = getLocation(*superType);
+            if (!heapLoc) {
+              break;
+            }
+            if (*superType != oldType) {
+              readFromHeap(*heapLoc, parent);
+            }
+            type = *superType;
+          }
+
           // TODO: A less simple but more memory-efficient approach might be
           //       to keep special data structures on the side for such
           //       "dynamic" information, basically a list of all
@@ -1024,7 +1044,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // readFromNewLocations), gets the reference and the value of the
       // struct.set/array.set operation
       auto writeToNewLocations =
-        [&](std::function<Location(HeapType)> getLocation,
+        [&](std::function<std::optional<Location>(HeapType)> getLocation,
             Expression* ref,
             Expression* value) {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
@@ -1047,15 +1067,27 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             // TODO: In the case that this is a constant, it could be null
             //       or an immutable global, which we could do even more
             //       with.
-            auto heapLoc = getLocation(refContents.getType().getHeapType());
+            auto heapLoc = *getLocation(refContents.getType().getHeapType());
             updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
           } else {
             assert(refContents.isMany());
-            // Update all possible types here.
+            // Update all possible types here. First, subtypes, including the
+            // type itself.
+            auto type = ref->type.getHeapType();
             for (auto subType :
-                 subTypes->getAllSubTypesInclusive(ref->type.getHeapType())) {
-              auto heapLoc = getLocation(subType);
+                 subTypes->getAllSubTypesInclusive(type)) {
+              auto heapLoc = *getLocation(subType);
               updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
+            }
+
+            // Next, all supertypes that also have this field.
+            while (auto superType = type.getSuperType()) {
+              auto heapLoc = getLocation(*superType);
+              if (!heapLoc) {
+                break;
+              }
+              updateTypes(valueContents, *heapLoc, flowInfoMap[*heapLoc].types);
+              type = *superType;
             }
           }
         };
@@ -1064,7 +1096,11 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         // This is the reference child of a struct.get.
         assert(get->ref == targetExpr);
         readFromNewLocations(
-          [&](HeapType type) {
+          [&](HeapType type) -> std::optional<Location> {
+            if (get->index >= type.getStruct().fields.size()) {
+              // This field is not present on this struct.
+              return {};
+            }
             return StructLocation{type, get->index};
           },
           get->ref->type.getHeapType());
@@ -1074,7 +1110,11 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         // struct location, which we handle here.
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
-          [&](HeapType type) {
+          [&](HeapType type) -> std::optional<Location> {
+            if (get->index >= type.getStruct().fields.size()) {
+              // This field is not present on this struct.
+              return {};
+            }
             return StructLocation{type, set->index};
           },
           set->ref,
