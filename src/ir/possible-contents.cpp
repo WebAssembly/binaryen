@@ -1015,6 +1015,52 @@ void ContentOracle::analyze() {
               }
               // TODO ensure tests for all these          
             }
+            // TODO: A less simple but more memory-efficient approach might be
+            //       to keep special data structures on the side for such
+            //       "dynamic" information, basically a list of all struct.gets
+            //       impacted by each type, etc., and use those in the proper
+            //       places. Then each location would have not just a list of
+            //       target locations but also a list of target expressions
+            //       perhaps, etc.
+          };
+
+          // Similar to readFromNewLocations, but sends values from a
+          // struct.set/array.set to a heap location. In addition to the
+          // |getLocation| function (which plays the same role as in
+          // readFromNewLocations), gets the reference and the value of the
+          // struct.set/array.set operation
+          auto writeToNewLocations = [&](std::function<Location(HeapType)> getLocation, Expression* ref, Expression* value) {
+            // We could set up connections here, but as we get to this code in
+            // any case when either the ref or the value of the struct.get has
+            // new contents, we can just flow the values forward directly. We
+            // can do that in a simple way that does not even check whether the
+            // ref or the value was just updated: simply figure out the values
+            // being written in the current state (which is after the current
+            // update) and forward them.
+            auto refContents =
+              flowInfoMap[ExpressionLocation{ref, 0}].types;
+            auto valueContents =
+              flowInfoMap[ExpressionLocation{value, 0}].types;
+            if (refContents.isNone()) {
+              return;
+            }
+            if (refContents.isType()) {
+              // Update the one possible type here.
+              auto heapLoc = getLocation(refContents.getType().getHeapType());
+              updateTypes(valueContents,
+                          heapLoc,
+                          flowInfoMap[heapLoc].types);
+            } else {
+              assert(refContents.isMany());
+              // Update all possible types here.
+              for (auto subType :
+                   subTypes->getAllSubTypes(ref->type.getHeapType())) {
+                auto heapLoc = getLocation(subType);
+                updateTypes(valueContents,
+                            heapLoc,
+                            flowInfoMap[heapLoc].types);
+              }
+            }
           };
 
           if (auto* get = parent->dynCast<StructGet>()) {
@@ -1027,13 +1073,6 @@ void ContentOracle::analyze() {
             // contents possible in that type's field will impact us, so create
             // new connections in the graph.
             assert(get->ref == targetExpr);
-            // TODO: A less simple but more memory-efficient approach might be
-            //       to keep special data structures on the side for such
-            //       "dynamic" information, basically a list of all struct.gets
-            //       impacted by each type, etc., and use those in the proper
-            //       places. Then each location would have not just a list of
-            //       target locations but also a list of target expressions
-            //       perhaps, etc.
 
             readFromNewLocations([&](HeapType type) {
               return StructLocation{type, get->index};
@@ -1043,40 +1082,9 @@ void ContentOracle::analyze() {
             // A change to either one affects what values are written to that
             // struct location, which we handle here.
             assert(set->ref == targetExpr || set->value == targetExpr);
-            // We could set up connections here, but as we get to this code in
-            // any case when either the ref or the value of the struct.get has
-            // new contents, we can just flow the values forward directly. We
-            // can do that in a simple way that does not even check whether the
-            // ref or the value was just updated: simply figure out the values
-            // being written in the current state (which is after the current
-            // update) and forward them.
-            auto refContents =
-              flowInfoMap[ExpressionLocation{set->ref, 0}].types;
-            auto valueContents =
-              flowInfoMap[ExpressionLocation{set->value, 0}].types;
-            if (refContents.isNone()) {
-              continue;
-            }
-            if (refContents.isType()) {
-              // Update the one possible type here.
-              auto refContentType =
-                refContents.getType().getHeapType();
-              auto structLoc =
-                StructLocation{refContentType, set->index};
-              updateTypes(valueContents,
-                          structLoc,
-                          flowInfoMap[structLoc].types);
-            } else {
-              assert(refContents.isMany());
-              // Update all possible types here.
-              for (auto subType :
-                   subTypes->getAllSubTypes(set->ref->type.getHeapType())) {
-                auto structLoc = StructLocation{subType, set->index};
-                updateTypes(valueContents,
-                            structLoc,
-                            flowInfoMap[structLoc].types);
-              }
-            }
+            writeToNewLocations([&](HeapType type) {
+              return StructLocation{type, set->index};
+            }, set->ref, set->value);
           } else {
             // TODO: array ops
             WASM_UNREACHABLE("bad childParents content");
