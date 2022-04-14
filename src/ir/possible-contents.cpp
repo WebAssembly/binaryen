@@ -21,7 +21,6 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
-#include "ir/subtypes.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -81,32 +80,7 @@ struct FuncInfo {
   // The map here is of the root to the value beginning in it.
   std::unordered_map<Location, PossibleContents> roots;
 
-  // In some cases we need to know the parent of an expression. This maps such
-  // children to their parents. TODO merge comments
-  // In some cases we need to know the parent of the expression, like with GC
-  // operations. Consider this:
-  //
-  //  (struct.set $A k
-  //    (local.get $ref)
-  //    (local.get $value)
-  //  )
-  //
-  // Imagine that the first local.get, for $ref, receives a new value. That can
-  // affect where the struct.set sends values: if previously that local.get had
-  // no possible contents, and now it does, then we have StructLocations to
-  // update. Likewise, when the second local.get is updated we must do the same,
-  // but again which StructLocations we update depends on the ref passed to the
-  // struct.get. To handle such things, we set |parent| to the parent, and check
-  // for it during the flow. In the common case, however, where the parent does
-  // not matter, this field can be nullptr XXX.
-  //
-  // In practice we always create an ExpressionLocation with a nullptr parent
-  // for everything, so the local.gets above would each have two: one
-  // ExpressionLocation without a parent, that is used in the graph normally,
-  // and whose value flows into an ExpressionLocation with a parent equal to the
-  // struct.set. This is practical because normally we do not know the parent of
-  // each node as we traverse, so always adding a parent would make the graph-
-  // building logic more complicated.
+  // See ContentOracle::childParents.
   std::unordered_map<Expression*, Expression*> childParents;
 };
 
@@ -751,7 +725,6 @@ void ContentOracle::analyze() {
   // map of the possible types at each location.
   std::unordered_set<Connection> connections;
   std::unordered_map<Location, PossibleContents> roots;
-  std::unordered_map<Expression*, Expression*> childParents;
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "merging phase\n";
@@ -829,8 +802,6 @@ void ContentOracle::analyze() {
   std::cout << "struct phase\n";
 #endif
 
-  // During the flow we will need information about subtyping.
-  std::unique_ptr<SubTypes> subTypes;
   if (getTypeSystem() == TypeSystem::Nominal) {
     subTypes = std::make_unique<SubTypes>(wasm);
   }
@@ -967,10 +938,10 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // When handling these special cases we care about what actually
       // changed, so save the state before doing the update.
       auto oldTargetContents = targetContents;
-      updateTypes(types, target, targetContents);
+      updateTypes(contents, target, targetContents);
       if (oldTargetContents == targetContents) {
         // Nothing changed; nothing more to do.
-        continue;
+        return;
       }
 
       // Something changed, handle the special cases.
@@ -1121,12 +1092,12 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         WASM_UNREACHABLE("bad childParents content");
       }
 
-      continue;
+      return;
     }
   }
 
   // Otherwise, this is not a special case, and just do the update.
-  updateTypes(types, target, targetContents);
+  updateTypes(contents, target, targetContents);
 }
 
 } // namespace wasm

@@ -20,6 +20,7 @@
 #include <variant>
 
 #include "ir/possible-constant.h"
+#include "ir/subtypes.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -480,10 +481,41 @@ private:
 
   // Internals for flow.
 
+  // In some cases we need to know the parent of an expression. This maps such
+  // children to their parents. TODO merge comments
+  // In some cases we need to know the parent of the expression, like with GC
+  // operations. Consider this:
+  //
+  //  (struct.set $A k
+  //    (local.get $ref)
+  //    (local.get $value)
+  //  )
+  //
+  // Imagine that the first local.get, for $ref, receives a new value. That can
+  // affect where the struct.set sends values: if previously that local.get had
+  // no possible contents, and now it does, then we have StructLocations to
+  // update. Likewise, when the second local.get is updated we must do the same,
+  // but again which StructLocations we update depends on the ref passed to the
+  // struct.get. To handle such things, we set |parent| to the parent, and check
+  // for it during the flow. In the common case, however, where the parent does
+  // not matter, this field can be nullptr XXX.
+  //
+  // In practice we always create an ExpressionLocation with a nullptr parent
+  // for everything, so the local.gets above would each have two: one
+  // ExpressionLocation without a parent, that is used in the graph normally,
+  // and whose value flows into an ExpressionLocation with a parent equal to the
+  // struct.set. This is practical because normally we do not know the parent of
+  // each node as we traverse, so always adding a parent would make the graph-
+  // building logic more complicated.
+  std::unordered_map<Expression*, Expression*> childParents;
+
   // The work remaining to do during the flow: locations that we just updated,
   // which means we should update their children when we pop them from this
   // queue.
   UniqueDeferredQueue<Location> work;
+
+  // During the flow we will need information about subtyping.
+  std::unique_ptr<SubTypes> subTypes;
 
   // We may add new connections as we flow. Do so to a temporary structure on
   // the side as we are iterating on |targets| here, which might be one of the
