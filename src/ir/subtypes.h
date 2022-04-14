@@ -39,6 +39,13 @@ struct SubTypes {
     return typeSubTypes[type];
   }
 
+  // Like getSubTypes, but also includes the type itself.
+  std::vector<HeapType> getSubTypesInclusive(HeapType type) {
+    auto ret = getSubTypes(type);
+    ret.push_back(type);
+    return ret;
+  }
+
   // Get all subtypes of a type, and their subtypes and so forth, recursively.
   std::vector<HeapType> getAllSubTypes(HeapType type) {
     std::vector<HeapType> ret, work;
@@ -51,6 +58,13 @@ struct SubTypes {
         work.push_back(sub);
       }
     }
+    return ret;
+  }
+
+  // Like getAllSubTypes, but also includes the type itself.
+  std::vector<HeapType> getAllSubTypesInclusive(HeapType type) {
+    auto ret = getAllSubTypes(type);
+    ret.push_back(type);
     return ret;
   }
 

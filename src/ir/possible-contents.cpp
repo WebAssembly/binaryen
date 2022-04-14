@@ -992,7 +992,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               // including itself.
               assert(targetContents.isMany());
               // TODO: caching of AllSubTypes lists?
-              for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
+              for (auto subType : subTypes->getAllSubTypesInclusive(declaredRefType)) {
                 readFromHeap(getLocation(subType), parent);
               }
             }
@@ -1002,7 +1002,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             assert(oldTargetContents.isType());
             assert(targetContents.isMany());
             auto oldType = oldTargetContents.getType().getHeapType();
-            for (auto subType : subTypes->getAllSubTypes(declaredRefType)) {
+            for (auto subType : subTypes->getAllSubTypesInclusive(declaredRefType)) {
               if (subType != oldType) {
                 readFromHeap(getLocation(subType), parent);
               }
@@ -1053,7 +1053,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             assert(refContents.isMany());
             // Update all possible types here.
             for (auto subType :
-                 subTypes->getAllSubTypes(ref->type.getHeapType())) {
+                 subTypes->getAllSubTypesInclusive(ref->type.getHeapType())) {
               auto heapLoc = getLocation(subType);
               updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
             }
