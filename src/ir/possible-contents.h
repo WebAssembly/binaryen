@@ -58,6 +58,10 @@ public:
 
   static PossibleContents many() { return PossibleContents(Variant(Many())); }
 
+  bool operator==(const PossibleContents& other) const {
+    return value == other.value;
+  }
+
   // Notes the contents of an expression and update our internal knowledge based
   // on it and all previous values noted.
   void note(Expression* expr, Module& wasm) {

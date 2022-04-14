@@ -1003,7 +1003,7 @@ void ContentOracle::analyze() {
                 // worst, which is any subtype of the type on the struct.get.
                 assert(targetContents.isMany());
                 // TODO: caching of AllSubTypes lists?
-                for (auto subType : subTypes.getAllSubTypes(refType)) {
+                for (auto subType : subTypes->getAllSubTypes(refType)) {
                   connectAndUpdate(subType);
                 }
               }
@@ -1012,8 +1012,8 @@ void ContentOracle::analyze() {
               // is just one such case, a single type that is now many.
               assert(oldTargetContents.isType());
               assert(targetContents.isMany());
-              auto oldType = oldTargetContents.getType();
-              for (auto subType : subTypes.getAllSubTypes(refType)) {
+              auto oldType = oldTargetContents.getType().getHeapType();
+              for (auto subType : subTypes->getAllSubTypes(refType)) {
                 if (subType != oldType) {
                   connectAndUpdate(subType);
                 }
@@ -1036,26 +1036,27 @@ void ContentOracle::analyze() {
               flowInfoMap[ExpressionLocation{set->ref, 0}].types;
             auto valueContents =
               flowInfoMap[ExpressionLocation{set->value, 0}].types;
-            if (refContents.isEmpty()) {
+            if (refContents.isNone()) {
               continue;
             }
             if (refContents.isType()) {
               // Update the one possible type here.
               auto refContentType =
-                refContents.getType().getHeapType() auto structLoc =
-                  StructLocation{refContentType, set->index};
+                refContents.getType().getHeapType();
+              auto structLoc =
+                StructLocation{refContentType, set->index};
               updateTypes(valueContents,
                           structLoc,
-                          flowInfoMap[structLoc].types;
+                          flowInfoMap[structLoc].types);
             } else {
               assert(refContents.isMany());
               // Update all possible types here.
               for (auto subType :
-                   subTypes.getAllSubTypes(set->ref->type.getHeapType())) {
+                   subTypes->getAllSubTypes(set->ref->type.getHeapType())) {
                 auto structLoc = StructLocation{subType, set->index};
                 updateTypes(valueContents,
                             structLoc,
-                            flowInfoMap[structLoc].types;
+                            flowInfoMap[structLoc].types);
               }
             }
           } else {
@@ -1071,11 +1072,14 @@ void ContentOracle::analyze() {
       updateTypes(types, target, targetContents);
     }
 
-    // Update any new connections
-    newConnections..
+    // Update any new connections.
+    for (auto newConnection : newConnections) {
+      auto& targets = flowInfoMap[newConnection.from].targets;
+      targets.push_back(newConnection.to);
 #ifndef NDEBUG
-      disallowDuplicates(..);
+      disallowDuplicates(targets);
 #endif
+    }
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
