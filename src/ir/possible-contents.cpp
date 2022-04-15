@@ -1170,8 +1170,11 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         // RefCast only allows valid values to go through nulls and things of
         // the cast type. And of course Many is always passed through.
         bool isNull = contents.isConstantLiteral() && contents.getConstantLiteral().isNull();
-        bool isSubType = HeapType::isSubType(contents.getType().getHeapType(), cast->getIntendedType());
-        if (isNull || isSubType || contents.isMany()) {
+        bool isMany = contents.isMany();
+        // We cannot check for subtyping if the type is Many (getType() would
+        // return none, which has no heap type).
+        bool isSubType = isMany ? false : HeapType::isSubType(contents.getType().getHeapType(), cast->getIntendedType());
+        if (isNull || isMany || isSubType) {
           // Recurse: the parent may also be a special child, e.g.
           //   (struct.get
           //     (ref.cast ..)
