@@ -8,6 +8,8 @@
 
   ;; CHECK:      (type $f32_=>_none (func (param f32)))
 
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (tag $tag$i32 (param i32))
@@ -15,7 +17,7 @@
   ;; CHECK:      (tag $tag$f32 (param f32))
   (tag $tag$f32 (param f32))
 
-  ;; CHECK:      (func $test (result i32)
+  ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (try
@@ -51,19 +53,8 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try (result i32)
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $tag$i32
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (result i32)
+  (func $test
     (try
       (do
         (throw $tag$i32
@@ -84,14 +75,27 @@
         )
       )
     )
-    ;; Like the first case, we can optimize this, but now the try has a return
-    ;; value, so we must emit output that makes sense for that. The try has no
-    ;; name, so we may want to remove it, but we can't - we can't leave its
-    ;; children without the parent, as the children contain a pop that would be
-    ;; in an improper position.
+  )
+
+  ;; CHECK:      (func $bar (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $bar (result i32)
+    ;; Like the first case, we can optimize the pop here. The pop and the try
+    ;; body agree on the value, 42, so we can replace the entire try in theory,
+    ;; but we should not - removing the try would leave a pop without a proper
+    ;; parent (that is a problem even though the try does not have a name).
     (try (result i32)
       (do
-        (i32.const 0)
+        (i32.const 42)
       )
       (catch $tag$i32
         (pop i32)
