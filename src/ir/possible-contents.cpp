@@ -28,6 +28,14 @@ namespace wasm {
 
 namespace {
 
+void disallowDuplicates(std::vector<Location>& targets) {
+  std::unordered_set<Location> uniqueTargets;
+  for (const auto& target : targets) {
+    uniqueTargets.insert(target);
+  }
+  assert(uniqueTargets.size() == targets.size());
+}
+
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
@@ -809,13 +817,6 @@ void ContentOracle::analyze() {
 
 #ifndef NDEBUG
   // The vector of targets must have no duplicates.
-  auto disallowDuplicates = [&](const std::vector<Location>& targets) {
-    std::unordered_set<Location> uniqueTargets;
-    for (const auto& target : targets) {
-      uniqueTargets.insert(target);
-    }
-    assert(uniqueTargets.size() == targets.size());
-  };
   for (auto& [location, info] : flowInfoMap) {
     disallowDuplicates(info.targets);
   }
@@ -837,6 +838,8 @@ void ContentOracle::analyze() {
     // Update the root from having nothing to having its initial content.
     updateTarget(value, location);
   }
+
+  updateNewConnections();
 
 #ifdef POSSIBLE_TYPES_DEBUG
   std::cout << "flow phase\n";
@@ -871,22 +874,7 @@ void ContentOracle::analyze() {
       updateTarget(types, target);
     }
 
-    // Update any new connections.
-    for (auto newConnection : newConnections) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-      std::cout << "newConnection:\n";
-      dump(newConnection.from);
-      dump(newConnection.to);
-#endif
-
-      auto& targets = flowInfoMap[newConnection.from].targets;
-      targets.push_back(newConnection.to);
-
-#ifndef NDEBUG
-      disallowDuplicates(targets);
-#endif
-    }
-    newConnections.clear();
+    updateNewConnections();
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
@@ -988,7 +976,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               // and nothing else.
               // TODO: In the case that this is a constant, it could be null
               //       or an immutable global, which we could do even more
-              //       with.
+              //       with (for null, nothing needs to be read).
               readFromHeap(*getLocation(targetContents.getType().getHeapType()),
                            parent);
               return;
@@ -1140,6 +1128,25 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
 
   // Otherwise, this is not a special case, and just do the update.
   updateTypes(contents, target, targetContents);
+}
+
+void ContentOracle::updateNewConnections() {
+  // Update any new connections.
+  for (auto newConnection : newConnections) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+    std::cout << "\nnewConnection:\n";
+    dump(newConnection.from);
+    dump(newConnection.to);
+#endif
+
+    auto& targets = flowInfoMap[newConnection.from].targets;
+    targets.push_back(newConnection.to);
+
+#ifndef NDEBUG
+    disallowDuplicates(targets);
+#endif
+  }
+  newConnections.clear();
 }
 
 } // namespace wasm

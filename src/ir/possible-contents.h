@@ -557,6 +557,8 @@ private:
 
   // Update a target location with contents arriving to it.
   void updateTarget(const PossibleContents& contents, Location target);
+
+  void updateNewConnections();
 };
 
 } // namespace wasm
