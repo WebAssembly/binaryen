@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 2
+#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -859,6 +859,9 @@ void ContentOracle::analyze() {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
     std::cout << "\npop item\n";
     dump(location);
+    std::cout << " with contents \n";
+    info.types.dump(std::cout);
+    std::cout << '\n';
 #endif
 
     const auto& targets = info.targets;
@@ -887,6 +890,13 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
                                  Location target) {
   auto& targetContents = flowInfoMap[target].types;
 
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+  std::cout << "updateTarget src:\n";
+  dump(target);
+  contents.dump(std::cout);
+  std::cout << '\n';
+#endif
+
   // Update types from an input to an output, and add more work if we found
   // any.
   auto updateTypes = [&](const PossibleContents& inputContents,
@@ -908,8 +918,9 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       work.push(target);
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
       std::cout << "    more work since the new dest is\n";
-      targetContents.dump(std::cout);
-      std::cout << '\n';
+      targetContents.dump(std::cout);      
+      std::cout << "\nat ";
+      dump(target);
 #endif
     }
   };
@@ -1155,7 +1166,10 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         bool isNull = contents.isConstantLiteral() && contents.getConstantLiteral().isNull();
         bool isSubType = HeapType::isSubType(contents.getType().getHeapType(), cast->getIntendedType());
         if (isNull || isSubType || contents.isMany()) {
-          updateTypes(contents, target, targetContents);
+          auto parentLoc = ExpressionLocation{parent, 0};
+std::cout << "cast is good to flow\n";
+dump(parentLoc);
+          updateTypes(contents, parentLoc, flowInfoMap[parentLoc].types);
         }
       } else {
         WASM_UNREACHABLE("bad childParents content");
