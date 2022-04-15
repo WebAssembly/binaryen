@@ -1086,6 +1086,8 @@
   ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype i32 f64 anyref $struct2))
 
+  ;; CHECK:      (type $none_=>_ref|$struct3| (func_subtype (result (ref $struct3)) func))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $struct1))
@@ -1094,32 +1096,32 @@
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) data))
   (type $struct1 (struct i32))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (ref.null any)
-  ;; CHECK-NEXT:    (rtt.canon $struct3)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct3|) (result (ref $struct3))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (f64.const 3.14159)
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (rtt.canon $struct3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct3
-        (i32.const 20)
-        (f64.const 3.14159)
-        (ref.null any)
-        (rtt.canon $struct3)
-      )
+  (func $create (result (ref $struct3))
+    (struct.new_with_rtt $struct3
+      (i32.const 20)
+      (f64.const 3.14159)
+      (ref.null any)
+      (rtt.canon $struct3)
     )
   )
   ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct3))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (call $create)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct1)
+  ;; CHECK-NEXT:     (struct.get $struct3 0
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1128,8 +1130,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     (struct.get $struct3 0
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1138,8 +1140,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     (struct.get $struct3 1
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 3.14159)
@@ -1148,8 +1150,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     (struct.get $struct3 0
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1158,8 +1160,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     (struct.get $struct3 1
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 3.14159)
@@ -1168,8 +1170,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     (struct.get $struct3 2
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null any)
@@ -1177,38 +1179,42 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
+    (local $ref (ref null $struct3))
+    (local.set $ref
+      (call $create)
+    )
     ;; Get field 0 from the $struct1. This can be optimized to a constant
     ;; since we only ever created an instance of struct3 with a constant there.
     (drop
       (struct.get $struct1 0
-        (ref.null $struct1)
+        (local.get $ref)
       )
     )
     ;; Get both fields of $struct2.
     (drop
       (struct.get $struct2 0
-        (ref.null $struct2)
+        (local.get $ref)
       )
     )
     (drop
       (struct.get $struct2 1
-        (ref.null $struct2)
+        (local.get $ref)
       )
     )
     ;; Get all 3 fields of $struct3
     (drop
       (struct.get $struct3 0
-        (ref.null $struct3)
+        (local.get $ref)
       )
     )
     (drop
       (struct.get $struct3 1
-        (ref.null $struct3)
+        (local.get $ref)
       )
     )
     (drop
       (struct.get $struct3 2
-        (ref.null $struct3)
+        (local.get $ref)
       )
     )
   )
