@@ -729,48 +729,25 @@
 ;;            reference to the subtype (we never create a supertype) and so we
 ;;            can optimize.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $substruct
-        (i32.const 10)
-        (f64.const 3.14159)
-        (rtt.canon $substruct)
-      )
-    )
-  )
-  ;; CHECK:      (func $get (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get
+  (func $test
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new_with_rtt $substruct
+          (i32.const 10)
+          (f64.const 3.14159)
+          (rtt.canon $substruct)
+        )
       )
     )
   )
