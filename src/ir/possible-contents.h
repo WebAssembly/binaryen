@@ -34,7 +34,7 @@ namespace wasm {
 //  * Exactly one possible type (but the value of that type is not constant).
 //    This is an *exact* type as regards the heap type: this type and no subtype
 //    (if subtypes are possible here than we will be in the "Many" state). As
-//    regards nullability, if this is nullable then the value may be null. 
+//    regards nullability, if this is nullable then the value may be null.
 //  * "Many" - either multiple constant values for one type, or multiple types.
 struct PossibleContents {
 private:
@@ -148,7 +148,8 @@ public:
       return true;
     }
 
-    if (type.isRef() && otherType.isRef() && type.getHeapType() == otherType.getHeapType()) {
+    if (type.isRef() && otherType.isRef() &&
+        type.getHeapType() == otherType.getHeapType()) {
       // The types differ, but the heap types agree, so the only difference here
       // is in nullability, and the combined value is the nullable type.
       auto newContents = PossibleContents(Type(type.getHeapType(), Nullable));

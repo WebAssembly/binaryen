@@ -999,7 +999,8 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
 
           // First, handle subTypes, including the type itself (unless we ignore
           // it due to being the old type).
-          for (auto subType : subTypes->getAllSubTypesInclusive(declaredRefType)) {
+          for (auto subType :
+               subTypes->getAllSubTypesInclusive(declaredRefType)) {
             if (subType != oldType) {
               readFromHeap(*getLocation(subType), parent);
             }
@@ -1064,8 +1065,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             // Update all possible types here. First, subtypes, including the
             // type itself.
             auto type = ref->type.getHeapType();
-            for (auto subType :
-                 subTypes->getAllSubTypesInclusive(type)) {
+            for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
               auto heapLoc = *getLocation(subType);
               updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
             }
@@ -1111,13 +1111,19 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           set->value);
       } else if (auto* get = parent->dynCast<ArrayGet>()) {
         assert(get->ref == targetExpr);
-        readFromNewLocations([&](HeapType type) -> std::optional<Location> { return ArrayLocation{type}; },
-                             get->ref->type.getHeapType());
+        readFromNewLocations(
+          [&](HeapType type) -> std::optional<Location> {
+            return ArrayLocation{type};
+          },
+          get->ref->type.getHeapType());
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
-        writeToNewLocations([&](HeapType type) -> std::optional<Location> { return ArrayLocation{type}; },
-                            set->ref,
-                            set->value);
+        writeToNewLocations(
+          [&](HeapType type) -> std::optional<Location> {
+            return ArrayLocation{type};
+          },
+          set->ref,
+          set->value);
       } else {
         WASM_UNREACHABLE("bad childParents content");
       }
