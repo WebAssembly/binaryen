@@ -65,8 +65,9 @@ struct GUFAPass : public Pass {
         if (BranchUtils::getDefinedName(curr).is()) {
           return false;
         }
-        // Pops are structurally necessary in catch bodies.
-        return !curr->is<Pop>();
+        // Pops are structurally necessary in catch bodies, and removing a try
+        // could leave a pop without a proper parent.
+        return !curr->is<Pop>() && !curr->is<Try>();
       }
 
       // Whether we can remove something (but not its children) without changing
