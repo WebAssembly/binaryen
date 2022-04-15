@@ -756,59 +756,57 @@
 ;; Subtyping: Create both a subtype and a supertype, with identical constants
 ;;            for the shared field, and get the supertype.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $struct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
-    )
-    (drop
-      (struct.new_with_rtt $substruct
-        (i32.const 10)
-        (f64.const 3.14159)
-        (rtt.canon $substruct)
-      )
-    )
-  )
-  ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     (struct.get $struct 0
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $test
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (rtt.canon $struct)
+      )
+    )
+    (local.set $ref
+      (struct.new_with_rtt $substruct
+        (i32.const 10)
+        (f64.const 3.14159)
+        (rtt.canon $substruct)
+      )
+    )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $ref)
       )
     )
   )
@@ -825,47 +823,45 @@
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $struct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
+  (func $test
+    (local $ref (ref null $struct))
+    (local.set $ref
       (struct.new_with_rtt $struct
         (i32.const 10)
         (rtt.canon $struct)
       )
     )
-    (drop
+    (local.set $ref
       (struct.new_with_rtt $substruct
-        (i32.const 20)
+        (i32.const 20) ;; this constant changed
         (f64.const 3.14159)
         (rtt.canon $substruct)
       )
     )
-  )
-  ;; CHECK:      (func $get (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $ref)
       )
     )
   )
@@ -876,60 +872,62 @@
 ;;            shared between the types, but we only create the substruct with
 ;;            one value, so we can optimize.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $struct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
-    )
-    (drop
-      (struct.new_with_rtt $substruct
-        (i32.const 20)
-        (f64.const 3.14159)
-        (rtt.canon $substruct)
-      )
-    )
-  )
-  ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $substruct)
+  ;; CHECK-NEXT:     (struct.get $substruct 0
+  ;; CHECK-NEXT:      (ref.cast_static $substruct
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $test
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (rtt.canon $struct)
+      )
+    )
+    (local.set $ref
+      (struct.new_with_rtt $substruct
+        (i32.const 20) ;; this constant changed
+        (f64.const 3.14159)
+        (rtt.canon $substruct)
+      )
+    )
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (ref.cast_static $substruct
+          (local.get $ref)
+        )
       )
     )
   )
