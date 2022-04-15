@@ -10,7 +10,10 @@
 ;;  * Tests must avoid things gufa optimizes away that would make the test
 ;;    irrelevant. In particular, parameters to functions that are never called
 ;;    will be turned to unreachable by gufa, so instead make those calls to
-;;    imports.
+;;    imports. Gufa will also realize that passing ref.null to a struct.get/set
+;;    can be optimized (as no actual allocation is created there), so avoid that
+;;    and store allocations in locals (instead of dropping them and using
+;;    ref.null later; replace the ref.null with a local.get).
 ;;  * Gufa optimizes in a more general way. Cfp will turn a struct.get whose
 ;;    value it infers into a ref.as_non_null (to preserve the trap if the ref is
 ;;    null) followed by the constant. Gufa has no special handling for
@@ -941,57 +944,137 @@
   ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
 
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $struct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
-  ;; CHECK-NEXT:   (i32.const 10)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $substruct 0
+  ;; CHECK-NEXT:    (ref.cast_static $substruct
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
+  (func $test
+    (local $ref (ref null $struct))
+    (local.set $ref
       (struct.new_with_rtt $struct
         (i32.const 10)
         (rtt.canon $struct)
       )
     )
-    (struct.set $struct 0
-      (ref.null $struct)
-      (i32.const 10)
-    )
-    (drop
+    (local.set $ref
       (struct.new_with_rtt $substruct
         (i32.const 20)
         (f64.const 3.14159)
         (rtt.canon $substruct)
       )
     )
+    ;; This set is added. Even though the type is the super, this writes to the
+    ;; child, and so we cannot optimize.
+    (struct.set $struct 0
+      (local.get $ref)
+      (i32.const 10)
+    )
+    (drop
+      (struct.get $substruct 0
+        (ref.cast_static $substruct
+          (local.get $ref)
+        )
+      )
+    )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+)
+
+;; As above, but now the constants agree.
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct (mut i32)))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
+  (type $substruct (struct_subtype (mut i32) f64 $struct))
+
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (rtt.canon $substruct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $substruct 0
-  ;; CHECK-NEXT:    (ref.null $substruct)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $substruct 0
+  ;; CHECK-NEXT:      (ref.cast_static $substruct
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $test
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (rtt.canon $struct)
+      )
+    )
+    (local.set $ref
+      (struct.new_with_rtt $substruct
+        (i32.const 20)
+        (f64.const 3.14159)
+        (rtt.canon $substruct)
+      )
+    )
+    (struct.set $struct 0
+      (local.get $ref)
+      ;; This now writes the same value as in the $substruct already has, 20, so
+      ;; we can optimize the get below. Note that the the $struct has 10 there,
+      ;; but that does not stop us.
+      (i32.const 20)
+    )
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (ref.cast_static $substruct
+          (local.get $ref)
+        )
       )
     )
   )
