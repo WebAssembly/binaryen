@@ -1186,8 +1186,11 @@
   )
 )
 
-;; Write to the parent and read from the child.
+;; Write to the parent and the child and read from the child.
 (module
+  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
+
+  ;; CHECK:      (type $parent (struct_subtype (field (mut i32)) data))
   (type $parent (struct_subtype (field (mut i32)) data))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
 
@@ -1198,7 +1201,100 @@
   ;; CHECK-NEXT:  (local $parent (ref null $parent))
   ;; CHECK-NEXT:  (local.set $parent
   ;; CHECK-NEXT:   (struct.new $parent
-  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $parent 0
+  ;; CHECK-NEXT:      (local.get $parent)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $child
+  ;; CHECK-NEXT:   (struct.new $child
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $child 0
+  ;; CHECK-NEXT:      (local.get $child)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $child 1
+  ;; CHECK-NEXT:      (local.get $child)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (local $child (ref null $child))
+    (local $parent (ref null $parent))
+    (local.set $parent
+      (struct.new $parent
+        (i32.const 10)
+      )
+    )
+    ;; This can be optimized to 10. The child also sets this field, but the
+    ;; reference in the local $parent can only be a $parent and nothing else.
+    (drop
+      (struct.get $parent 0
+        (local.get $parent)
+      )
+    )
+    (local.set $child
+      (struct.new $child
+        ;; The value here conflicts with the parent's for this field, but the
+        ;; local $child can only contain a $child and nothing else, so we can
+        ;; optimize the get below us.
+        (i32.const 20)
+        (i32.const 30)
+      )
+    )
+    (drop
+      (struct.get $child 0
+        (local.get $child)
+      )
+    )
+    ;; This get aliases nothing but 30, so we can optimize.
+    (drop
+      (struct.get $child 1
+        (local.get $child)
+      )
+    )
+  )
+)
+
+;; As above, but the $parent local can now contain a child too.
+(module
+  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
+
+  ;; CHECK:      (type $parent (struct_subtype (field (mut i32)) data))
+  (type $parent (struct_subtype (field (mut i32)) data))
+  (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $child (ref null $child))
+  ;; CHECK-NEXT:  (local $parent (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $parent
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1206,17 +1302,102 @@
   ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $child
-  ;; CHECK-NEXT:   (struct.new $child
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:  (local.set $parent
+  ;; CHECK-NEXT:   (local.tee $child
+  ;; CHECK-NEXT:    (struct.new $child
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:     (i32.const 30)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $child 0
-  ;; CHECK-NEXT:    (local.get $child)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $child 0
+  ;; CHECK-NEXT:      (local.get $child)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (local $child (ref null $child))
+    (local $parent (ref null $parent))
+    (local.set $parent
+      (struct.new $parent
+        (i32.const 10)
+      )
+    )
+    ;; This get cannot be optimized because below us because the local is
+    ;; written a child, below. So the local $parent can refer to either one,
+    ;; and they disagree on the aliased value.
+    (drop
+      (struct.get $parent 0
+        (local.get $parent)
+      )
+    )
+    (local.set $parent
+      (local.tee $child
+        (struct.new $child
+          (i32.const 20)
+          (i32.const 30)
+        )
+      )
+    )
+    ;; But this one can be optimized as it can only contain a child.
+    (drop
+      (struct.get $child 0
+        (local.get $child)
+      )
+    )
+  )
+)
+
+;; As above, but now the parent and child happen to agree on the aliased value.
+(module
+  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
+
+  ;; CHECK:      (type $parent (struct_subtype (field (mut i32)) data))
+  (type $parent (struct_subtype (field (mut i32)) data))
+  (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $child (ref null $child))
+  ;; CHECK-NEXT:  (local $parent (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $parent
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $parent 0
+  ;; CHECK-NEXT:      (local.get $parent)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $parent
+  ;; CHECK-NEXT:   (local.tee $child
+  ;; CHECK-NEXT:    (struct.new $child
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $child 0
+  ;; CHECK-NEXT:      (local.get $child)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1231,6 +1412,15 @@
     (drop
       (struct.get $parent 0
         (local.get $parent)
+      )
+    )
+    (local.set $parent
+      (local.tee $child
+        (struct.new $child
+          (i32.const 10) ;; This is 10, like above, so we can optimize the get
+                         ;; before us.
+          (i32.const 30)
+        )
       )
     )
     (drop
