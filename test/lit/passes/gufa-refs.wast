@@ -2467,6 +2467,7 @@
 (module
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (ref $A) data))
+  (type $C (struct_subtype (ref $B) data))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -2480,9 +2481,13 @@
     (drop
       (struct.get $A 0
         (struct.get $B 0
-          (struct.new $B
-            (struct.new $A
-              (i32.const 42)
+          (struct.get $C 0
+            (struct.new $C
+              (struct.new $B
+                (struct.new $A
+                  (i32.const 42)
+                )
+              )
             )
           )
         )
@@ -2496,6 +2501,8 @@
   (type $A (struct_subtype (field i32) data))
   ;; CHECK:      (type $B (struct_subtype (field (ref $A)) data))
   (type $B (struct_subtype (ref $A) data))
+  ;; CHECK:      (type $C (struct_subtype (field (ref $B)) data))
+  (type $C (struct_subtype (ref $B) data))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
@@ -2508,9 +2515,13 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
   ;; CHECK-NEXT:    (struct.get $B 0
-  ;; CHECK-NEXT:     (struct.new $B
-  ;; CHECK-NEXT:      (struct.new $A
-  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:     (struct.get $C 0
+  ;; CHECK-NEXT:      (struct.new $C
+  ;; CHECK-NEXT:       (struct.new $B
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (call $import)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2522,9 +2533,13 @@
     (drop
       (struct.get $A 0
         (struct.get $B 0
-          (struct.new $B
-            (struct.new $A
-              (call $import)
+          (struct.get $C 0
+            (struct.new $C
+              (struct.new $B
+                (struct.new $A
+                  (call $import)
+                )
+              )
             )
           )
         )

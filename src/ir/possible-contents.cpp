@@ -958,10 +958,12 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
 #endif
         auto targetLoc = ExpressionLocation{target, 0};
         newConnections.push_back({heapLoc, targetLoc});
-        updateTypes(flowInfoMap[heapLoc].types,
-                    targetLoc,
-                    // TODO helper function without this all the time
-                    flowInfoMap[targetLoc].types);
+        // Recurse: the parent may also be a special child, e.g.
+        //   (struct.get
+        //     (struct.get ..)
+        //   )
+        // TODO unrecurse with a stack, although such recursion will be rare
+        updateTarget(flowInfoMap[heapLoc].types, targetLoc);
       };
 
       // Given the old and new contents at the current target, add reads to
@@ -1094,6 +1096,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             //       or an immutable global, which we could do even more
             //       with.
             auto heapLoc = *getLocation(refContents.getType().getHeapType());
+            // TODO helper function without this last param all the time
             updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
           } else {
             assert(refContents.isMany());
