@@ -1,4 +1,4 @@
-#define POSSIBLE_TYPES_DEBUG 2
+//#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1166,10 +1166,12 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         bool isNull = contents.isConstantLiteral() && contents.getConstantLiteral().isNull();
         bool isSubType = HeapType::isSubType(contents.getType().getHeapType(), cast->getIntendedType());
         if (isNull || isSubType || contents.isMany()) {
-          auto parentLoc = ExpressionLocation{parent, 0};
-std::cout << "cast is good to flow\n";
-dump(parentLoc);
-          updateTypes(contents, parentLoc, flowInfoMap[parentLoc].types);
+          // Recurse: the parent may also be a special child, e.g.
+          //   (struct.get
+          //     (ref.cast ..)
+          //   )
+          // TODO unrecurse with a stack, although such recursion will be rare
+          updateTarget(contents, ExpressionLocation{parent, 0});
         }
       } else {
         WASM_UNREACHABLE("bad childParents content");
