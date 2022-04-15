@@ -952,18 +952,21 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // Given a heap location, add a connection from that location to an
       // expression that reads from it (e.g. from a StructLocation to a
       // struct.get).
-      auto readFromHeap = [&](Location heapLoc, Expression* target) {
+      auto readFromHeap = [&](std::optional<Location> heapLoc, Expression* target) {
+        if (!heapLoc) {
+          return;
+        }
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "    add special read\n";
 #endif
         auto targetLoc = ExpressionLocation{target, 0};
-        newConnections.push_back({heapLoc, targetLoc});
+        newConnections.push_back({*heapLoc, targetLoc});
         // Recurse: the parent may also be a special child, e.g.
         //   (struct.get
         //     (struct.get ..)
         //   )
         // TODO unrecurse with a stack, although such recursion will be rare
-        updateTarget(flowInfoMap[heapLoc].types, targetLoc);
+        updateTarget(flowInfoMap[*heapLoc].types, targetLoc);
       };
 
       // Given the old and new contents at the current target, add reads to
@@ -995,7 +998,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               // TODO: In the case that this is a constant, it could be null
               //       or an immutable global, which we could do even more
               //       with (for null, nothing needs to be read).
-              readFromHeap(*getLocation(targetContents.getType().getHeapType()),
+              readFromHeap(getLocation(targetContents.getType().getHeapType()),
                            parent);
               return;
             }
@@ -1039,7 +1042,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           for (auto subType :
                subTypes->getAllSubTypesInclusive(declaredRefType)) {
             if (subType != oldType) {
-              readFromHeap(*getLocation(subType), parent);
+              readFromHeap(getLocation(subType), parent);
             }
           }
 
@@ -1052,7 +1055,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               break;
             }
             if (*superType != oldType) {
-              readFromHeap(*heapLoc, parent);
+              readFromHeap(heapLoc, parent);
             }
             type = *superType;
           }
