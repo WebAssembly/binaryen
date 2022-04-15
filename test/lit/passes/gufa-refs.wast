@@ -2463,3 +2463,72 @@
     )
   )
 )
+
+(module
+  (type $A (struct_subtype (field i32) data))
+  (type $B (struct_subtype (ref $A) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; Test nested struct.get operations. We can optimize all this.
+    (drop
+      (struct.get $A 0
+        (struct.get $B 0
+          (struct.new $B
+            (struct.new $A
+              (i32.const 42)
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $B (struct_subtype (field (ref $A)) data))
+  (type $B (struct_subtype (ref $A) data))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (struct.get $B 0
+  ;; CHECK-NEXT:     (struct.new $B
+  ;; CHECK-NEXT:      (struct.new $A
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; As above, but now call an import for the i32; we cannot optimize.
+    (drop
+      (struct.get $A 0
+        (struct.get $B 0
+          (struct.new $B
+            (struct.new $A
+              (call $import)
+            )
+          )
+        )
+      )
+    )
+  )
+)
