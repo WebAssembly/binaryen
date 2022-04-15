@@ -513,7 +513,6 @@ struct ConnectionFinder
     // The main location feeds values to the latter, and we can then use the
     // parent in the main flow logic.
     info.childParents[child] = parent;
-    std::cout << "link child to this parent\n" << *parent << '\n';
   }
 
   // Struct operations access the struct fields' locations.
@@ -971,6 +970,9 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           if (oldTargetContents.isNone()) {
             // Nothing was present before, so we can just add the new stuff.
             assert(!targetContents.isNone());
+
+            // Handle the case of a single type here. Below we'll handle the
+            // case of Many for all cases.
             if (targetContents.isType() || targetContents.isConstant()) {
               // A single new type was added here. Read from exactly that
               // and nothing else.
@@ -981,6 +983,25 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
                            parent);
               return;
             }
+          }
+
+          if (targetContents.isType()) {
+            // The new value is not Many, and we already handled the case of the
+            // old contents being None. That means we went from a constant (a
+            // null, etc.) to anything of that type, or the old type was
+            // non-nullable and the new one allows nulls. Either way, we have
+            // nothing to do here as for now we have no special handling for
+            // null and other constants: we've already added the relevant links
+            // for this type before.
+            if (targetContents.getType().isRef()) {
+              // This field is a reference, so it must have the same heap type
+              // as before (either the change is to make it nullable, or to
+              // make it anything of that type and not a constant). This
+              // assertion ensures we added the right links before.
+              assert(oldTargetContents.getType().getHeapType() ==
+                     targetContents.getType().getHeapType());
+            }
+            return;
           }
 
           // We handled the case of nothing that turned into a single type. We

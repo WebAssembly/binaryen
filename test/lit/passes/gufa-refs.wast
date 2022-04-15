@@ -2288,3 +2288,54 @@
   ;; CHECK-NEXT: )
   (func $foo)
 )
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (block $block (result (ref $struct))
+  ;; CHECK-NEXT:    (block $block0 (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct 0
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $ref (ref null $struct))
+    ;; Regression test for an assertion firing in this case. We should properly
+    ;; handle the multiple intermediate blocks here, allowing us to optimize the
+    ;; get below to a 42.
+    (local.set $ref
+      (block (result (ref $struct))
+        (block (result (ref $struct))
+          (struct.new $struct
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+    )
+  )
+)
+
