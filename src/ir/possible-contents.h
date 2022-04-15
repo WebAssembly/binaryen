@@ -29,9 +29,11 @@ namespace wasm {
 
 // Similar to PossibleConstantValues, but considers more types of contents.
 // Specifically, this can also track types, making this a variant over:
-//  * No possible value.
+//  * "None": No possible value.
 //  * One possible constant value.
-//  * One possible type but the value of that type is not constant.
+//  * One possible type but the value of that type is not constant. Note that
+//    this is an *exact* type: this type and no subtype (if subtypes are
+//    possible here than we will be in the "Many" state).
 //  * "Many" - either multiple constant values for one type, or multiple types.
 struct PossibleContents {
 private:
@@ -118,22 +120,26 @@ public:
     // Neither is None, and neither is Many.
 
     // TODO: do we need special null handling here? e.g. nulls of different
-    //       types can be merged, they are not actually different values.
+    //       types can be merged, they are not actually different values, so
+    //       we could LUB there.
     if (other.value == value) {
       return false;
     }
 
-    // The values differ, but if they have a lub then we can set to that.
     // TODO unit test all this
-    auto lub = Type::getLeastUpperBound(getType(), other.getType());
-    if (lub != Type::none) {
-      if (isType() && getType() == lub) {
-        // We were already marked as an arbitrary value of this type, so
-        // nothing changes.
+    // The values differ, but if they share the same type then we can set to
+    // that.
+    if (other.getType() == getType()) {
+      if (isType()) {
+        // We were already marked as an arbitrary value of this type.
         return false;
       }
 
-      value = lub;
+      // We were a constant, and encountered another constant or an arbitrary
+      // value of our type. We change to be an arbitrary value of our type.
+      assert(isConstant());
+      assert(other.isConstant() || other.isType());
+      value = Type(getType());
       return true;
     }
 
@@ -200,6 +206,11 @@ public:
       o << '$' << getConstantGlobal();
     } else if (isType()) {
       o << getType();
+      auto t = getType();
+      if (t.isRef()) {
+        auto h = t.getHeapType();
+        o << " HT: " << h << '\n';
+      }
     } else if (isMany()) {
       o << "many";
     } else {
