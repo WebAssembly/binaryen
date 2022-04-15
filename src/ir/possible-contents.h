@@ -30,10 +30,11 @@ namespace wasm {
 // Similar to PossibleConstantValues, but considers more types of contents.
 // Specifically, this can also track types, making this a variant over:
 //  * "None": No possible value.
-//  * One possible constant value.
-//  * One possible type but the value of that type is not constant. Note that
-//    this is an *exact* type: this type and no subtype (if subtypes are
-//    possible here than we will be in the "Many" state).
+//  * Exactly one possible constant value.
+//  * Exactly one possible type (but the value of that type is not constant).
+//    This is an *exact* type as regards the heap type: this type and no subtype
+//    (if subtypes are possible here than we will be in the "Many" state). As
+//    regards nullability, if this is nullable then the value may be null. 
 //  * "Many" - either multiple constant values for one type, or multiple types.
 struct PossibleContents {
 private:
@@ -131,7 +132,9 @@ public:
     // that.
     // TODO: what if one is nullable and the other isn't? Should we be tracking
     //       a heap type here, really?
-    if (other.getType() == getType()) {
+    auto type = getType();
+    auto otherType = other.getType();
+    if (otherType == type) {
       if (isType()) {
         // We were already marked as an arbitrary value of this type.
         return false;
@@ -141,7 +144,20 @@ public:
       // value of our type. We change to be an arbitrary value of our type.
       assert(isConstant());
       assert(other.isConstant() || other.isType());
-      value = Type(getType());
+      value = Type(type);
+      return true;
+    }
+
+    if (type.isRef() && otherType.isRef() && type.getHeapType() == otherType.getHeapType()) {
+      // The types differ, but the heap types agree, so the only difference here
+      // is in nullability, and the combined value is the nullable type.
+      auto newContents = PossibleContents(Type(type.getHeapType(), Nullable));
+      if (*this == newContents) {
+        assert(otherType.isNonNullable());
+        return false;
+      }
+
+      *this = newContents;
       return true;
     }
 
