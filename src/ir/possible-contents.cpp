@@ -852,7 +852,7 @@ void ContentOracle::analyze() {
     const auto& types = info.types;
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-    std::cout << "pop item\n";
+    std::cout << "\npop item\n";
     dump(location);
 #endif
 

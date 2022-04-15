@@ -129,6 +129,8 @@ public:
     // TODO unit test all this
     // The values differ, but if they share the same type then we can set to
     // that.
+    // TODO: what if one is nullable and the other isn't? Should we be tracking
+    //       a heap type here, really?
     if (other.getType() == getType()) {
       if (isType()) {
         // We were already marked as an arbitrary value of this type.
@@ -199,20 +201,25 @@ public:
   void dump(std::ostream& o) const {
     o << '[';
     if (isNone()) {
-      o << "none";
+      o << "None";
     } else if (isConstantLiteral()) {
-      o << getConstantLiteral();
+      o << "Literal " << getConstantLiteral();
+      auto t = getType();
+      if (t.isRef()) {
+        auto h = t.getHeapType();
+        o << " HT: " << h << '\n';
+      }
     } else if (isConstantGlobal()) {
-      o << '$' << getConstantGlobal();
+      o << "Global $" << getConstantGlobal();
     } else if (isType()) {
-      o << getType();
+      o << "Type " << getType();
       auto t = getType();
       if (t.isRef()) {
         auto h = t.getHeapType();
         o << " HT: " << h << '\n';
       }
     } else if (isMany()) {
-      o << "many";
+      o << "Many";
     } else {
       WASM_UNREACHABLE("bad variant");
     }
