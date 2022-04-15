@@ -1532,7 +1532,7 @@ struct Asyncify : public Pass {
     auto verbose =
       runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
     auto sideModule =
-      runner->options.getArgumentOrDefault("asyncify-side-module", "") != "";
+      runner->options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
