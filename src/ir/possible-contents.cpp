@@ -173,7 +173,7 @@ struct ConnectionFinder
 
   // Connect a child's value to the parent, that is, all things possible in the
   // child may flow to the parent.
-  void connectChildToParent(Expression* child, Expression* parent) {
+  void receiveChildValue(Expression* child, Expression* parent) {
     if (isRelevant(parent) && isRelevant(child)) {
       // The tuple sizes must match (or, if not a tuple, the size should be 1 in
       // both cases.
@@ -183,6 +183,17 @@ struct ConnectionFinder
           {ExpressionLocation{child, i}, ExpressionLocation{parent, i}});
       }
     }
+  }
+
+  // Add connections to make it possible to reach an expression's parent, which
+  // we need during the flow in special cases. See the comment on the |parent|
+  // field on the ExpressionLocation class for more details. FIXME comment
+  void addSpecialChildParentLink(Expression* child, Expression* parent) {
+    // The mechanism we use is to connect the main location (referred to in
+    // various other places potentially) to a new location that has the parent.
+    // The main location feeds values to the latter, and we can then use the
+    // parent in the main flow logic.
+    info.childParents[child] = parent;
   }
 
   // Adds a root, if the expression is relevant.
@@ -201,18 +212,18 @@ struct ConnectionFinder
       return;
     }
     handleBreakTarget(curr);
-    connectChildToParent(curr->list.back(), curr);
+    receiveChildValue(curr->list.back(), curr);
   }
   void visitIf(If* curr) {
-    connectChildToParent(curr->ifTrue, curr);
-    connectChildToParent(curr->ifFalse, curr);
+    receiveChildValue(curr->ifTrue, curr);
+    receiveChildValue(curr->ifFalse, curr);
   }
-  void visitLoop(Loop* curr) { connectChildToParent(curr->body, curr); }
+  void visitLoop(Loop* curr) { receiveChildValue(curr->body, curr); }
   void visitBreak(Break* curr) {
     handleBreakValue(curr);
     // The value may also flow through in a br_if (the type will indicate that,
-    // which connectChildToParent will notice).
-    connectChildToParent(curr->value, curr);
+    // which receiveChildValue will notice).
+    receiveChildValue(curr->value, curr);
   }
   void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
@@ -246,8 +257,8 @@ struct ConnectionFinder
   }
   void visitBinary(Binary* curr) { addRoot(curr, curr->type); }
   void visitSelect(Select* curr) {
-    connectChildToParent(curr->ifTrue, curr);
-    connectChildToParent(curr->ifFalse, curr);
+    receiveChildValue(curr->ifTrue, curr);
+    receiveChildValue(curr->ifFalse, curr);
   }
   void visitDrop(Drop* curr) {}
   void visitMemorySize(MemorySize* curr) { addRoot(curr, curr->type); }
@@ -297,12 +308,15 @@ struct ConnectionFinder
     addRoot(curr, curr->type);
   }
   void visitRefCast(RefCast* curr) {
-    // TODO: optimize when possible
-    addRoot(curr, curr->type);
+    // We will handle this in a special way, as ref.cast only allows valid
+    // values to flow through.
+    if (isRelevant(curr->type)) {
+      addSpecialChildParentLink(curr->ref, curr);
+    }
   }
   void visitBrOn(BrOn* curr) {
     handleBreakValue(curr);
-    connectChildToParent(curr->ref, curr);
+    receiveChildValue(curr->ref, curr);
   }
   void visitRttCanon(RttCanon* curr) { addRoot(curr, curr->type); }
   void visitRttSub(RttSub* curr) { addRoot(curr, curr->type); }
@@ -504,17 +518,6 @@ struct ConnectionFinder
     addRoot(curr, curr->type);
   }
 
-  // Add connections to make it possible to reach an expression's parent, which
-  // we need during the flow in special cases. See the comment on the |parent|
-  // field on the ExpressionLocation class for more details. FIXME comment
-  void linkChildToParent(Expression* child, Expression* parent) {
-    // The mechanism we use is to connect the main location (referred to in
-    // various other places potentially) to a new location that has the parent.
-    // The main location feeds values to the latter, and we can then use the
-    // parent in the main flow logic.
-    info.childParents[child] = parent;
-  }
-
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
     if (!isRelevant(curr->ref)) {
@@ -529,7 +532,7 @@ struct ConnectionFinder
       // handle all of this in a special way during the flow. Note that we do
       // not even create a StructLocation here; anything that we need will be
       // added during the flow.
-      linkChildToParent(curr->ref, curr);
+      addSpecialChildParentLink(curr->ref, curr);
     }
   }
   void visitStructSet(StructSet* curr) {
@@ -538,8 +541,8 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->value->type)) {
       // See comment on visitStructGet. Here we also connect the value.
-      linkChildToParent(curr->ref, curr);
-      linkChildToParent(curr->value, curr);
+      addSpecialChildParentLink(curr->ref, curr);
+      addSpecialChildParentLink(curr->value, curr);
     }
   }
   // Array operations access the array's location.
@@ -552,7 +555,7 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->type)) {
       // See StructGet comment.
-      linkChildToParent(curr->ref, curr);
+      addSpecialChildParentLink(curr->ref, curr);
     }
   }
   void visitArraySet(ArraySet* curr) {
@@ -561,8 +564,8 @@ struct ConnectionFinder
     }
     if (isRelevant(curr->value->type)) {
       // See StructSet comment.
-      linkChildToParent(curr->ref, curr);
-      linkChildToParent(curr->value, curr);
+      addSpecialChildParentLink(curr->ref, curr);
+      addSpecialChildParentLink(curr->value, curr);
     }
   }
 
@@ -573,9 +576,9 @@ struct ConnectionFinder
   //       thrown is sent to the location of that tag, and any catch of that
   //       tag can read them
   void visitTry(Try* curr) {
-    connectChildToParent(curr->body, curr);
+    receiveChildValue(curr->body, curr);
     for (auto* catchBody : curr->catchBodies) {
-      connectChildToParent(catchBody, curr);
+      receiveChildValue(catchBody, curr);
     }
 
     auto numTags = curr->catchTags.size();
@@ -1145,6 +1148,15 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           },
           set->ref,
           set->value);
+      } else if (auto* cast = parent->dynCast<RefCast>()) {
+        assert(cast->ref == targetExpr);
+        // RefCast only allows valid values to go through nulls and things of
+        // the cast type. And of course Many is always passed through.
+        bool isNull = contents.isConstantLiteral() && contents.getConstantLiteral().isNull();
+        bool isSubType = HeapType::isSubType(contents.getType().getHeapType(), cast->getIntendedType());
+        if (isNull || isSubType || contents.isMany()) {
+          updateTypes(contents, target, targetContents);
+        }
       } else {
         WASM_UNREACHABLE("bad childParents content");
       }
