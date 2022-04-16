@@ -915,11 +915,36 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
   auto oldTargetContents = targetContents;
   if (!targetContents.combine(contents)) {
     assert(oldTargetContents == targetContents);
+
     // Nothing changed; nothing more to do.
     return;
   }
 
-  // We inserted something, so there is work to do in this target.
+  if (auto* globalLoc = std::get_if<GlobalLocation>(&target)) {
+    auto* global = wasm.getGlobal(globalLoc->name);
+    if (global->mutable_ == Immutable) {
+      // This is an immutable global. We never need to consider this value as
+      // "Many", since in the worst case we can just use the immutable value.
+      // That is, we can always replace this value with (global.get $name) which
+      // will get the right value.
+      if (targetContents.isMany()) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+        std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
+#endif
+
+        targetContents = PossibleContents::ImmutableGlobal{global->name, global->type};
+
+        // Furthermore, perhaps nothing changed at all of that was already the
+        // previous value here.
+        if (targetContents == oldTargetContents) {
+          return;
+        }
+      }
+    }
+  }
+
+  // We made an actual change to this target. Add it in the work queue so that
+  // the flow continues from there.
   work.push(target);
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
   std::cout << "    more work since the new dest is\n";
@@ -930,20 +955,6 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
 
   // We are mostly done, except for handling interesting/special cases in the
   // flow.
-
-  if (auto* globalLoc = std::get_if<GlobalLocation>(&target)) {
-    auto* global = wasm.getGlobal(globalLoc->name);
-    if (global->mutable_ == Immutable) {
-      // This is an immutable global. We never need to consider this value as
-      // "Many", since in the worst case we can just use the immutable value.
-      // That is, we can always replace this value with (global.get $name) which
-      // will get the right value.
-      if (targetContents.isMany()) {
-        targetContents = PossibleContents::ImmutableGlobal{global->name, global->type};
-      }
-    }
-    return;
-  }
 
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
     auto* targetExpr = targetExprLoc->expr;
