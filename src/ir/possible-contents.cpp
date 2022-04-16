@@ -714,7 +714,6 @@ void ContentOracle::analyze() {
       finder.addRoot(GlobalLocation{global->name}, PossibleContents::many());
       continue;
     }
-    // What to do with immutable globals?
     auto* init = global->init;
     if (finder.isRelevant(init->type)) {
       globalInfo.connections.push_back(
@@ -1047,22 +1046,6 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             }
           }
 
-#if 0
-          // Finally, handle supertypes that also have the field.
-          // Next, all supertypes that also have this field.
-          auto type = declaredRefType;
-          while (auto superType = type.getSuperType()) {
-            auto heapLoc = getLocation(*superType);
-            if (!heapLoc) {
-              break;
-            }
-            if (*superType != oldType) {
-              readFromHeap(heapLoc, parent);
-            }
-            type = *superType;
-          }
-#endif
-
           // TODO: A less simple but more memory-efficient approach might be
           //       to keep special data structures on the side for such
           //       "dynamic" information, basically a list of all
@@ -1103,7 +1086,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             //       with.
             auto heapLoc = *getLocation(refContents.getType().getHeapType());
             // TODO helper function without this last param all the time
-            updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
+            updateTarget(valueContents, heapLoc);
           } else {
             assert(refContents.isMany());
             // Update all possible types here. First, subtypes, including the
@@ -1111,20 +1094,8 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             auto type = ref->type.getHeapType();
             for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
               auto heapLoc = *getLocation(subType);
-              updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
+              updateTarget(valueContents, heapLoc);
             }
-
-#if 0
-            // Next, all supertypes that also have this field.
-            while (auto superType = type.getSuperType()) {
-              auto heapLoc = getLocation(*superType);
-              if (!heapLoc) {
-                break;
-              }
-              updateTypes(valueContents, *heapLoc, flowInfoMap[*heapLoc].types);
-              type = *superType;
-            }
-#endif
           }
         };
 
