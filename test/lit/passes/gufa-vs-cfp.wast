@@ -1443,13 +1443,19 @@
   ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
   ;; CHECK:      (type $none_=>_ref|$struct1| (func_subtype (result (ref $struct1)) func))
 
   ;; CHECK:      (type $none_=>_ref|$struct2| (func_subtype (result (ref $struct2)) func))
 
   ;; CHECK:      (type $none_=>_ref|$struct3| (func_subtype (result (ref $struct3)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
   ;; CHECK-NEXT:  (struct.new_with_rtt $struct1
@@ -1544,6 +1550,207 @@
     (drop
       (struct.get $struct3 0
         (call $create3)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-imprecise-1 (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct1 0
+  ;; CHECK-NEXT:      (select (result (ref $struct1))
+  ;; CHECK-NEXT:       (call $create1)
+  ;; CHECK-NEXT:       (call $create1)
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (select (result (ref $struct1))
+  ;; CHECK-NEXT:     (call $create1)
+  ;; CHECK-NEXT:     (call $create2)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (select (result (ref $struct1))
+  ;; CHECK-NEXT:     (call $create1)
+  ;; CHECK-NEXT:     (call $create3)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-imprecise-1
+    ;; Check the results of reading from a ref that can be one of two things.
+    ;; We check all permutations in the arms of the select in this function and
+    ;; the next two.
+    ;;
+    ;; Atm we can only optimize when the ref is the same in both arms, since
+    ;; even if two different types agree on the value (like $struct1 and
+    ;; $struct3 do), once we see two different types we already see the type as
+    ;; imprecise, and $struct2 in the middle has a different value, so imprecise
+    ;; info is not enough.
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create1)
+          (call $create1)
+          (call $import)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create1)
+          (call $create2)
+          (call $import)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create1)
+          (call $create3)
+          (call $import)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-imprecise-2 (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (select (result (ref $struct1))
+  ;; CHECK-NEXT:     (call $create2)
+  ;; CHECK-NEXT:     (call $create1)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct2 0
+  ;; CHECK-NEXT:      (select (result (ref $struct2))
+  ;; CHECK-NEXT:       (call $create2)
+  ;; CHECK-NEXT:       (call $create2)
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 9999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct2 0
+  ;; CHECK-NEXT:    (select (result (ref $struct2))
+  ;; CHECK-NEXT:     (call $create2)
+  ;; CHECK-NEXT:     (call $create3)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-imprecise-2
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create2)
+          (call $create1)
+          (call $import)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create2)
+          (call $create2)
+          (call $import)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create2)
+          (call $create3)
+          (call $import)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-imprecise-3 (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (select (result (ref $struct1))
+  ;; CHECK-NEXT:     (call $create3)
+  ;; CHECK-NEXT:     (call $create1)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct2 0
+  ;; CHECK-NEXT:    (select (result (ref $struct2))
+  ;; CHECK-NEXT:     (call $create3)
+  ;; CHECK-NEXT:     (call $create2)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct3 0
+  ;; CHECK-NEXT:      (select (result (ref $struct3))
+  ;; CHECK-NEXT:       (call $create3)
+  ;; CHECK-NEXT:       (call $create3)
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-imprecise-3
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create3)
+          (call $create1)
+          (call $import)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create3)
+          (call $create2)
+          (call $import)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct1 0
+        (select
+          (call $create3)
+          (call $create3)
+          (call $import)
+        )
       )
     )
   )
