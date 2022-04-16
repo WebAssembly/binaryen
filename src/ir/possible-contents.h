@@ -31,10 +31,12 @@ namespace wasm {
 // Specifically, this can also track types, making this a variant over:
 //  * "None": No possible value.
 //  * Exactly one possible constant value.
-//  * Exactly one possible type (but the value of that type is not constant).
+//  * "ExactType": Exactly one possible type (but the value of that type is not constant).
 //    This is an *exact* type as regards the heap type: this type and no subtype
 //    (if subtypes are possible here than we will be in the "Many" state). As
 //    regards nullability, if this is nullable then the value may be null.
+//    * TODO: add ConeType, which would include subtypes (but may still be more
+//            refined than the type declared in the IR)
 //  * "Many" - either multiple constant values for one type, or multiple types.
 struct PossibleContents {
 public:
@@ -110,7 +112,7 @@ public:
     auto type = getType();
     auto otherType = other.getType();
     if (otherType == type) {
-      if (isType()) {
+      if (isExactType()) {
         // We were already marked as an arbitrary value of this type.
         return false;
       }
@@ -118,7 +120,7 @@ public:
       // We were a constant, and encountered another constant or an arbitrary
       // value of our type. We change to be an arbitrary value of our type.
       assert(isConstant());
-      assert(other.isConstant() || other.isType());
+      assert(other.isConstant() || other.isExactType());
       value = Type(type);
       return true;
     }
@@ -145,7 +147,7 @@ public:
   bool isNone() const { return std::get_if<None>(&value); }
   bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
   bool isConstantGlobal() const { return std::get_if<ImmutableGlobal>(&value); }
-  bool isType() const { return std::get_if<Type>(&value); }
+  bool isExactType() const { return std::get_if<Type>(&value); }
   bool isMany() const { return std::get_if<Many>(&value); }
 
   bool isConstant() const { return isConstantLiteral() || isConstantGlobal(); }
@@ -203,7 +205,7 @@ public:
       }
     } else if (isConstantGlobal()) {
       o << "Global $" << getConstantGlobal();
-    } else if (isType()) {
+    } else if (isExactType()) {
       o << "Type " << getType();
       auto t = getType();
       if (t.isRef()) {

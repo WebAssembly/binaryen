@@ -1014,7 +1014,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
 
             // Handle the case of a single type here. Below we'll handle the
             // case of Many for all cases.
-            if (targetContents.isType() || targetContents.isConstant()) {
+            if (targetContents.isExactType() || targetContents.isConstant()) {
               // A single new type was added here. Read from exactly that
               // and nothing else.
               // TODO: In the case that this is a constant, it could be null
@@ -1026,7 +1026,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             }
           }
 
-          if (targetContents.isType()) {
+          if (targetContents.isExactType()) {
             // The new value is not Many, and we already handled the case of the
             // old contents being None. That means we went from a constant (a
             // null, etc.) to anything of that type, or the old type was
@@ -1055,7 +1055,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           // anyhow only things that can actually be constructed and not
           // abstract types like funcref/dataref/anyref etc.).
           HeapType oldType = HeapType::func;
-          if (oldTargetContents.isType()) {
+          if (oldTargetContents.isExactType()) {
             oldType = oldTargetContents.getType().getHeapType();
           }
 
@@ -1101,7 +1101,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           if (refContents.isNone()) {
             return;
           }
-          if (refContents.isType() || refContents.isConstant()) {
+          if (refContents.isExactType() || refContents.isConstant()) {
             // Update the one possible type here.
             // TODO: In the case that this is a constant, it could be null
             //       or an immutable global, which we could do even more
