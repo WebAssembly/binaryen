@@ -1046,6 +1046,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             }
           }
 
+#if 0
           // Finally, handle supertypes that also have the field.
           // Next, all supertypes that also have this field.
           auto type = declaredRefType;
@@ -1059,6 +1060,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             }
             type = *superType;
           }
+#endif
 
           // TODO: A less simple but more memory-efficient approach might be
           //       to keep special data structures on the side for such
@@ -1111,6 +1113,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               updateTypes(valueContents, heapLoc, flowInfoMap[heapLoc].types);
             }
 
+#if 0
             // Next, all supertypes that also have this field.
             while (auto superType = type.getSuperType()) {
               auto heapLoc = getLocation(*superType);
@@ -1120,6 +1123,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               updateTypes(valueContents, *heapLoc, flowInfoMap[*heapLoc].types);
               type = *superType;
             }
+#endif
           }
         };
 
