@@ -2466,8 +2466,44 @@
   )
 )
 
+;; bad from here
+
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct_subtype (field anyref) data))
+  (type $struct (struct (ref null any)))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global anyref (struct.new $struct
+  ;; CHECK-NEXT:  (ref.null any)
+  ;; CHECK-NEXT: ))
+  (global $global (ref null any) (struct.new $struct
+    (ref.null any)
+  ))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; An immutable global is the only thing written to this field, so we can
+    ;; propagate the value to the struct.get and replace it with a global.get.
+    (drop
+      (struct.get $struct 0
+        (struct.new $struct
+          (global.get $global)
+        )
+      )
+    )
+  )
+)
+
+(module
   (type $struct (struct i32))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -2477,39 +2513,23 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     ;; An immutable global is the only thing written to this field, so we can
     ;; propagate the value to the struct.get and replace it with a global.get.
     (drop
-      (struct.new $struct
-        (global.get $global)
-      )
-    )
-    (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new $struct
+          (global.get $global)
+        )
       )
     )
   )
 )
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -2519,26 +2539,16 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     ;; As above, but the global is *not* immutable, so we cannot optimize.
     (drop
-      (struct.new $struct
-        (global.get $global)
-      )
-    )
-    (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new $struct
+          (global.get $global)
+        )
       )
     )
   )
@@ -2554,88 +2564,31 @@
   (global $global i32 (i32.const 42))
 
   ;; CHECK:      (func $test (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
-  ;; CHECK-NEXT:   (global.get $global)
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    (drop
-      (struct.new $struct
-        (global.get $global)
-      )
-    )
     ;; As above, but there is another set of the field. It is the same, though,
     ;; so that is fine. Also, the struct's field is now mutable as well to allow
     ;; that, and that also does not prevent optimization.
     (struct.set $struct 0
-      (ref.null $struct)
-      (global.get $global)
-    )
-    (drop
-      (struct.get $struct 0
-        (ref.null $struct)
-      )
-    )
-  )
-)
-
-(module
-  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
-  (type $struct (struct (mut i32)))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (global $global i32 (i32.const 42))
-  (global $global i32 (i32.const 42))
-  ;; CHECK:      (global $global-2 i32 (i32.const 1337))
-  (global $global-2 i32 (i32.const 1337))
-
-  ;; CHECK:      (func $test (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
-  ;; CHECK-NEXT:   (global.get $global-2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test
-    (drop
       (struct.new $struct
         (global.get $global)
       )
-    )
-    ;; As above, but set a different global, which prevents optimization.
-    (struct.set $struct 0
-      (ref.null $struct)
-      (global.get $global-2)
+      (i32.const 42)
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new $struct
+          (global.get $global)
+        )
       )
     )
   )
@@ -2653,36 +2606,78 @@
   (global $global-2 i32 (i32.const 1337))
 
   ;; CHECK:      (func $test (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 1337)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    (drop
+    ;; As above, but set a different global, which prevents optimization.
+    (struct.set $struct 0
       (struct.new $struct
         (global.get $global)
       )
+      (global.get $global-2)
     )
+    (drop
+      (struct.get $struct 0
+        (struct.new $struct
+          (global.get $global)
+        )
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global i32 (i32.const 42))
+  (global $global i32 (i32.const 42))
+  ;; CHECK:      (global $global-2 i32 (i32.const 1337))
+  (global $global-2 i32 (i32.const 1337))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
     ;; As above, but set a constant, which means we are mixing constants with
     ;; globals, which prevents the optimization.
     (struct.set $struct 0
-      (ref.null $struct)
+      (struct.new $struct
+        (global.get $global)
+      )
       (i32.const 1337)
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new $struct
+          (global.get $global)
+        )
       )
     )
   )
@@ -2721,31 +2716,18 @@
   ))
 
   ;; CHECK:      (func $test (type $none_=>_funcref) (result funcref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $object
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.get $vtable 0
   ;; CHECK-NEXT:   (array.get $itable
-  ;; CHECK-NEXT:    (block (result (ref $itable))
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (ref.null $object)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (struct.get $object $itable
+  ;; CHECK-NEXT:     (struct.new $object
+  ;; CHECK-NEXT:      (global.get $global)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.get $global)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (result funcref)
-    (drop
-      (struct.new $object
-        (global.get $global)
-      )
-    )
     ;; Realistic usage of an itable: read an item from it, then a func from
     ;; that, and return the value (all verifying that the types are correct
     ;; after optimization). Note how after optimization everything is lined up
@@ -2755,11 +2737,12 @@
     (struct.get $vtable 0
       (array.get $itable
         (struct.get $object $itable
-          (ref.null $object)
+          (struct.new $object
+            (global.get $global)
+          )
         )
         (i32.const 1)
       )
     )
   )
 )
-
