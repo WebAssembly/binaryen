@@ -888,6 +888,10 @@ void ContentOracle::analyze() {
 
 void ContentOracle::updateTarget(const PossibleContents& contents,
                                  Location target) {
+  if (contents.isNone()) {
+    return;
+  }
+
   auto& targetContents = flowInfoMap[target].types;
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
@@ -897,42 +901,32 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
   std::cout << '\n';
 #endif
 
-  // Update types from an input to an output, and add more work if we found
-  // any.
-  auto updateTypes = [&](const PossibleContents& inputContents,
-                         Location target,
-                         PossibleContents& targetContents) {
-    if (inputContents.isNone()) {
-      return;
-    }
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-    std::cout << "    updateTypes src:\n";
-    inputContents.dump(std::cout);
-    std::cout << '\n';
-    std::cout << "    updateTypes dest:\n";
-    targetContents.dump(std::cout);
-    std::cout << '\n';
+  std::cout << "    updateTypes src:\n";
+  contents.dump(std::cout);
+  std::cout << '\n';
+  std::cout << "    updateTypes dest:\n";
+  targetContents.dump(std::cout);
+  std::cout << '\n';
 #endif
-    if (targetContents.combine(inputContents)) {
-      // We inserted something, so there is work to do in this target.
-      work.push(target);
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-      std::cout << "    more work since the new dest is\n";
-      targetContents.dump(std::cout);      
-      std::cout << "\nat ";
-      dump(target);
-#endif
-    }
-  };
 
   // When handling some cases we care about what actually
   // changed, so save the state before doing the update.
   auto oldTargetContents = targetContents;
-  updateTypes(contents, target, targetContents);
-  if (oldTargetContents == targetContents) {
+  if (!targetContents.combine(contents)) {
+    assert(oldTargetContents == targetContents);
     // Nothing changed; nothing more to do.
     return;
   }
+
+  // We inserted something, so there is work to do in this target.
+  work.push(target);
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+  std::cout << "    more work since the new dest is\n";
+  targetContents.dump(std::cout);      
+  std::cout << "\nat ";
+  dump(target);
+#endif
 
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
     auto* targetExpr = targetExprLoc->expr;
