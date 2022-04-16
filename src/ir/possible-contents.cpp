@@ -925,6 +925,15 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
     }
   };
 
+  // When handling some cases we care about what actually
+  // changed, so save the state before doing the update.
+  auto oldTargetContents = targetContents;
+  updateTypes(contents, target, targetContents);
+  if (oldTargetContents == targetContents) {
+    // Nothing changed; nothing more to do.
+    return;
+  }
+
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
     auto* targetExpr = targetExprLoc->expr;
     auto iter = childParents.find(targetExpr);
@@ -937,15 +946,6 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
       std::cout << "  special, parent:\n" << *parent << '\n';
 #endif
-
-      // When handling these special cases we care about what actually
-      // changed, so save the state before doing the update.
-      auto oldTargetContents = targetContents;
-      updateTypes(contents, target, targetContents);
-      if (oldTargetContents == targetContents) {
-        // Nothing changed; nothing more to do.
-        return;
-      }
 
       // Something changed, handle the special cases.
 
@@ -1165,9 +1165,6 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       return;
     }
   }
-
-  // Otherwise, this is not a special case, and just do the update.
-  updateTypes(contents, target, targetContents);
 }
 
 void ContentOracle::updateNewConnections() {
