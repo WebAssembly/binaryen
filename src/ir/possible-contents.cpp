@@ -933,7 +933,8 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
 #endif
 
-        targetContents = PossibleContents::ImmutableGlobal{global->name, global->type};
+        targetContents =
+          PossibleContents::ImmutableGlobal{global->name, global->type};
 
         // Furthermore, perhaps nothing changed at all of that was already the
         // previous value here.
@@ -949,7 +950,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
   work.push(target);
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
   std::cout << "    more work since the new dest is\n";
-  targetContents.dump(std::cout);      
+  targetContents.dump(std::cout);
   std::cout << "\nat ";
   dump(target);
 #endif
@@ -975,7 +976,8 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // Given a heap location, add a connection from that location to an
       // expression that reads from it (e.g. from a StructLocation to a
       // struct.get).
-      auto readFromHeap = [&](std::optional<Location> heapLoc, Expression* target) {
+      auto readFromHeap = [&](std::optional<Location> heapLoc,
+                              Expression* target) {
         if (!heapLoc) {
           return;
         }
@@ -1168,11 +1170,15 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         assert(cast->ref == targetExpr);
         // RefCast only allows valid values to go through nulls and things of
         // the cast type. And of course Many is always passed through.
-        bool isNull = contents.isConstantLiteral() && contents.getConstantLiteral().isNull();
+        bool isNull = contents.isConstantLiteral() &&
+                      contents.getConstantLiteral().isNull();
         bool isMany = contents.isMany();
         // We cannot check for subtyping if the type is Many (getType() would
         // return none, which has no heap type).
-        bool isSubType = isMany ? false : HeapType::isSubType(contents.getType().getHeapType(), cast->getIntendedType());
+        bool isSubType =
+          isMany ? false
+                 : HeapType::isSubType(contents.getType().getHeapType(),
+                                       cast->getIntendedType());
         if (isNull || isMany || isSubType) {
           // Recurse: the parent may also be a special child, e.g.
           //   (struct.get

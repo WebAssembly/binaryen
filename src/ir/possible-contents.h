@@ -31,7 +31,8 @@ namespace wasm {
 // Specifically, this can also track types, making this a variant over:
 //  * "None": No possible value.
 //  * Exactly one possible constant value.
-//  * "ExactType": Exactly one possible type (but the value of that type is not constant).
+//  * "ExactType": Exactly one possible type (but the value of that type is not
+//  constant).
 //    This is an *exact* type as regards the heap type: this type and no subtype
 //    (if subtypes are possible here than we will be in the "Many" state). As
 //    regards nullability, if this is nullable then the value may be null.
