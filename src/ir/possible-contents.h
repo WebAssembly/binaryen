@@ -68,32 +68,6 @@ public:
     return value == other.value;
   }
 
-  // Notes the contents of an expression and update our internal knowledge based
-  // on it and all previous values noted.
-  void note(Expression* expr, Module& wasm) {
-    // If this is a constant literal value, note that.
-    if (Properties::isConstantExpression(expr)) {
-      combine(Variant(Properties::getLiteral(expr)));
-      return;
-    }
-
-    // If this is an immutable global that we get, note that.
-    if (auto* get = expr->dynCast<GlobalGet>()) {
-      auto* global = wasm.getGlobal(get->name);
-      if (global->mutable_ == Immutable) {
-        combine(Variant(ImmutableGlobal{get->name, global->type}));
-        return;
-      }
-    }
-
-    // Otherwise, note the type.
-    // TODO: should we ignore unreachable here, or assume the caller has already
-    //       run dce or otherwise handled that?
-    combine(Variant(expr->type));
-  }
-
-  template<typename T> void note(T curr) { note(Variant(curr)); }
-
   // Combine the information in a given PossibleContents to this one. This
   // is the same as if we have called note*() on us with all the history of
   // calls to that other object.

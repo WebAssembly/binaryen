@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 2
+#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -714,6 +714,7 @@ void ContentOracle::analyze() {
       finder.addRoot(GlobalLocation{global->name}, PossibleContents::many());
       continue;
     }
+    // What to do with immutable globals?
     auto* init = global->init;
     if (finder.isRelevant(init->type)) {
       globalInfo.connections.push_back(
