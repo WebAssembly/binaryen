@@ -926,8 +926,9 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // This is an immutable global. We never need to consider this value as
       // "Many", since in the worst case we can just use the immutable value.
       // That is, we can always replace this value with (global.get $name) which
-      // will get the right value.
-      if (targetContents.isMany()) {
+      // will get the right value. Likewise, using the immutable value is better
+      // than any value in a particular type, even an exact one.
+      if (targetContents.isMany() || targetContents.isExactType()) {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
 #endif
