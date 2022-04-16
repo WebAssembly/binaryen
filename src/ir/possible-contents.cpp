@@ -928,6 +928,23 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
   dump(target);
 #endif
 
+  // We are mostly done, except for handling interesting/special cases in the
+  // flow.
+
+  if (auto* globalLoc = std::get_if<GlobalLocation>(&target)) {
+    auto* global = wasm.getGlobal(globalLoc->name);
+    if (global->mutable_ == Immutable) {
+      // This is an immutable global. We never need to consider this value as
+      // "Many", since in the worst case we can just use the immutable value.
+      // That is, we can always replace this value with (global.get $name) which
+      // will get the right value.
+      if (targetContents.isMany()) {
+        targetContents = PossibleContents::ImmutableGlobal{global->name, global->type};
+      }
+    }
+    return;
+  }
+
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
     auto* targetExpr = targetExprLoc->expr;
     auto iter = childParents.find(targetExpr);
@@ -1155,8 +1172,6 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       } else {
         WASM_UNREACHABLE("bad childParents content");
       }
-
-      return;
     }
   }
 }

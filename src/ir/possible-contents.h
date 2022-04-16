@@ -37,14 +37,7 @@ namespace wasm {
 //    regards nullability, if this is nullable then the value may be null.
 //  * "Many" - either multiple constant values for one type, or multiple types.
 struct PossibleContents {
-private:
-  // No possible value.
-  struct None : public std::monostate {};
-
-  // Many possible values, and so this represents unknown data: we cannot infer
-  // anything there.
-  struct Many : public std::monostate {};
-
+public:
   struct ImmutableGlobal {
     Name name;
     Type type;
@@ -52,6 +45,14 @@ private:
       return name == other.name && type == other.type;
     }
   };
+
+private:
+  // No possible value.
+  struct None : public std::monostate {};
+
+  // Many possible values, and so this represents unknown data: we cannot infer
+  // anything there.
+  struct Many : public std::monostate {};
 
   using Variant = std::variant<None, Literal, ImmutableGlobal, Type, Many>;
   Variant value;
