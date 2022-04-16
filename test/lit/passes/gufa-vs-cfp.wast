@@ -1225,75 +1225,65 @@
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field i32) data))
   (type $struct1 (struct i32 i32))
 
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
-  (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
+  ;; CHECK:      (type $none_=>_anyref (func_subtype (result anyref) func))
 
-  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
+  ;; CHECK:      (type $none_=>_ref|$struct1| (func_subtype (result (ref $struct1)) func))
+
+  ;; CHECK:      (type $none_=>_ref|$struct3| (func_subtype (result (ref $struct3)) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $create (type $anyref_=>_none) (param $any anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct1
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:    (rtt.canon $struct1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (i32.const 999)
-  ;; CHECK-NEXT:    (f64.const 2.71828)
-  ;; CHECK-NEXT:    (f64.const 9.9999999)
-  ;; CHECK-NEXT:    (ref.null any)
-  ;; CHECK-NEXT:    (local.get $any)
-  ;; CHECK-NEXT:    (rtt.canon $struct3)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
+  (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
+
+  ;; CHECK:      (import "a" "b" (func $import (result anyref)))
+  (import "a" "b" (func $import (result anyref)))
+
+  ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct1
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (rtt.canon $struct1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create (param $any anyref)
-    (drop
-      (struct.new_with_rtt $struct1
-        (i32.const 10)
-        (i32.const 20)
-        (rtt.canon $struct1)
-      )
-    )
-    (drop
-      (struct.new_with_rtt $struct3
-        (i32.const 10)
-        (i32.const 999) ;; use a different value here
-        (f64.const 2.71828)
-        (f64.const 9.9999999)
-        (ref.null any)
-        (local.get $any) ;; use a non-constant value here, which can never be
-                         ;; optimized.
-        (rtt.canon $struct3)
-      )
+  (func $create1 (result (ref $struct1))
+    (struct.new_with_rtt $struct1
+      (i32.const 10)
+      (i32.const 20)
+      (rtt.canon $struct1)
     )
   )
+
+  ;; CHECK:      (func $create3 (type $none_=>_ref|$struct3|) (result (ref $struct3))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 999)
+  ;; CHECK-NEXT:   (f64.const 2.71828)
+  ;; CHECK-NEXT:   (f64.const 9.9999999)
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (rtt.canon $struct3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create3 (result (ref $struct3))
+    (struct.new_with_rtt $struct3
+      (i32.const 10)
+      (i32.const 999) ;; use a different value here
+      (f64.const 2.71828)
+      (f64.const 9.9999999)
+      (ref.null any)
+      (call $import) ;; use an unknown value here, which can never be
+                     ;; optimized.
+      (rtt.canon $struct3)
+    )
+  )
+
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct1 1
-  ;; CHECK-NEXT:    (ref.null $struct1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     (struct.get $struct1 0
+  ;; CHECK-NEXT:      (call $create1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
@@ -1302,8 +1292,40 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     (struct.get $struct1 1
+  ;; CHECK-NEXT:      (call $create1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct3 0
+  ;; CHECK-NEXT:      (call $create3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct3 1
+  ;; CHECK-NEXT:      (call $create3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 999)
@@ -1312,8 +1334,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     (struct.get $struct3 2
+  ;; CHECK-NEXT:      (call $create3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 2.71828)
@@ -1322,48 +1344,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (f64.const 9.9999999)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 999)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result f64)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (f64.const 2.71828)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result f64)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     (struct.get $struct3 3
+  ;; CHECK-NEXT:      (call $create3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 9.9999999)
@@ -1372,8 +1354,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     (struct.get $struct3 4
+  ;; CHECK-NEXT:      (call $create3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null any)
@@ -1381,7 +1363,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct3 5
-  ;; CHECK-NEXT:    (ref.null $struct3)
+  ;; CHECK-NEXT:    (call $create3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1389,14 +1371,16 @@
     ;; Get all the fields of all the structs.
     (drop
       (struct.get $struct1 0
-        (ref.null $struct1)
+        (call $create1)
       )
     )
     (drop
       (struct.get $struct1 1
-        (ref.null $struct1)
+        (call $create1)
       )
     )
+    ;; $struct2 is never created, and only accessed via nulls; all these should
+    ;; trap.
     (drop
       (struct.get $struct2 0
         (ref.null $struct2)
@@ -1419,32 +1403,32 @@
     )
     (drop
       (struct.get $struct3 0
-        (ref.null $struct3)
+        (call $create3)
       )
     )
     (drop
       (struct.get $struct3 1
-        (ref.null $struct3)
+        (call $create3)
       )
     )
     (drop
       (struct.get $struct3 2
-        (ref.null $struct3)
+        (call $create3)
       )
     )
     (drop
       (struct.get $struct3 3
-        (ref.null $struct3)
+        (call $create3)
       )
     )
     (drop
       (struct.get $struct3 4
-        (ref.null $struct3)
+        (call $create3)
       )
     )
     (drop
       (struct.get $struct3 5
-        (ref.null $struct3)
+        (call $create3)
       )
     )
   )
