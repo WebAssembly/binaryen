@@ -232,9 +232,9 @@ public:
         o << " HT: " << h << '\n';
       }
     } else if (isConstantGlobal()) {
-      o << "Global $" << getConstantGlobal();
+      o << "ImmutableGlobal $" << getConstantGlobal();
     } else if (isExactType()) {
-      o << "Type " << getType();
+      o << "ExactType " << getType();
       auto t = getType();
       if (t.isRef()) {
         auto h = t.getHeapType();
