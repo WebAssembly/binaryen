@@ -21,8 +21,30 @@ static std::unique_ptr<Module> parse(std::string module) {
   return wasm;
 }
 
+template<typename T>
+void assertEqualSymmetric(const T& a, const T& b) {
+  assert(a == b);
+  assert(b == a);
+}
+
+template<typename T>
+void assertNotEqualSymmetric(const T& a, const T& b) {
+  assert(a != b);
+  assert(b != a);
+  assert(!(a == b));
+  assert(!(b == a));
+}
+
 static void testPossibleContents() {
-  assert(PossibleContents::none() != PossibleContents::none());
+  auto sig1 = Signature(Type::none, Type::none);
+  auto sig2 = Signature(Type::i32, Type::f64);
+
+  assertEqualSymmetric(PossibleContents::none(), PossibleContents::none());
+  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantLiteral(Literal(int32_t(0))));
+  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantGlobal("global1", Type::i32));
+  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::none));
+  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::i32));
+  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::many());
 }
 
 static void testOracle() {

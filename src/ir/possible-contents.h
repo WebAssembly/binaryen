@@ -40,7 +40,9 @@ namespace wasm {
 //            refined than the type declared in the IR)
 //  * "Many" - either multiple constant values for one type, or multiple types.
 struct PossibleContents {
-public:
+  // No possible value.
+  struct None : public std::monostate {};
+
   struct ImmutableGlobal {
     Name name;
     Type type;
@@ -48,10 +50,6 @@ public:
       return name == other.name && type == other.type;
     }
   };
-
-private:
-  // No possible value.
-  struct None : public std::monostate {};
 
   // Many possible values, and so this represents unknown data: we cannot infer
   // anything there.
@@ -66,15 +64,24 @@ public:
   template<typename T> PossibleContents(T curr) : value(Variant(curr)) {}
 
   static PossibleContents none() { return PossibleContents(Variant(None())); }
+  static PossibleContents constantLiteral(Literal c) {
+    return PossibleContents(Variant(c));
+  }
+  static PossibleContents constantGlobal(Name name, Type type) {
+    return PossibleContents(Variant(ImmutableGlobal{name, type}));
+  }
+  static PossibleContents exactType(Type type) {
+    return PossibleContents(Variant(type));
+  }
   static PossibleContents many() { return PossibleContents(Variant(Many())); }
 
   bool operator==(const PossibleContents& other) const {
     return value == other.value;
   }
 
-//  bool operator!=(const PossibleContents& other) const {
-//    return value != other.value;
-//  }
+  bool operator!=(const PossibleContents& other) const {
+    return !(*this == other);
+  }
 
   // Combine the information in a given PossibleContents to this one. This
   // is the same as if we have called note*() on us with all the history of
