@@ -975,6 +975,31 @@ void ContentOracle::processWork(const Work& work) {
 
       // Something changed, handle the special cases.
 
+      // Return the list of possible types that can read from a struct.get or
+      // write from a struct.set, etc. This is passed the possible contents of
+      // the reference, and computes which types it can contain.
+      auto getPossibleTypes = [&](const PossibleContents& refContents,
+                                  HeapType declaredRefType) -> std::unordered_set<HeapType> {
+        // We can handle a null like none: a null never leads to an actual read
+        // from anywhere, so we can ignore it.
+        if (refContents.isNone() || refContents.isNull()) {
+          return {};
+        }
+
+        if (refContents.isMany()) {
+          std::unordered_set<HeapType> ret;
+          for (auto type : subTypes->getAllSubTypesInclusive(declaredRefType)) {
+            ret.insert(type);
+          }
+          return ret;
+        }
+
+        // Otherwise, this is an exact type or a constant that is not a null. In
+        // both cases we know the exact type.
+        assert(refContents.isExactType() || refContents.isConstant());
+        return {refContents.getType().getHeapType()};
+      };
+
       // Given a heap location, add a connection from that location to an
       // expression that reads from it (e.g. from a StructLocation to a
       // struct.get).
@@ -1017,71 +1042,15 @@ void ContentOracle::processWork(const Work& work) {
       auto readFromNewLocations =
         [&](std::function<std::optional<Location>(HeapType)> getLocation,
             HeapType declaredRefType) {
-          // Add a connection from the proper field of a struct type to this
-          // struct.get, and also update that value based on the field's
-          // current contents right now.
-          if (oldContents.isNone()) {
-            // Nothing was present before, so we can just add the new stuff.
-            assert(!contents.isNone());
-
-            // Handle the case of a single type here. Below we'll handle the
-            // case of Many for all cases.
-            if (contents.isExactType() || contents.isConstant()) {
-              // A single new type was added here. Read from exactly that
-              // and nothing else.
-              // TODO: In the case that this is a constant, it could be null
-              //       or an immutable global, which we could do even more
-              //       with (for null, nothing needs to be read).
+          auto oldPossibleTypes = getPossibleTypes(oldContents, declaredRefType);
+          auto newPossibleTypes = getPossibleTypes(contents, declaredRefType);
+          for (auto type : newPossibleTypes) {
+            if (!oldPossibleTypes.count(type)) {
+              // This is new.
               auto heapLoc = getLocation(contents.getType().getHeapType());
               if (heapLoc) {
                 readFromHeap(*heapLoc,
                              parent);
-              }
-              return;
-            }
-          }
-
-          if (contents.isExactType()) {
-            // The new value is not Many, and we already handled the case of the
-            // old contents being None. That means we went from a constant (a
-            // null, etc.) to anything of that type, or the old type was
-            // non-nullable and the new one allows nulls. Either way, we have
-            // nothing to do here as for now we have no special handling for
-            // null and other constants: we've already added the relevant links
-            // for this type before.
-            if (contents.getType().isRef()) {
-              // This field is a reference, so it must have the same heap type
-              // as before (either the change is to make it nullable, or to
-              // make it anything of that type and not a constant). This
-              // assertion ensures we added the right links before.
-              assert(oldContents.getType().getHeapType() ==
-                     contents.getType().getHeapType());
-            }
-            return;
-          }
-
-          // We handled the case of nothing that turned into a single type. We
-          // are left with the cases of a single type that turned into many, or
-          // nothing that turned into many; either way, the result is many, but
-          // there may have been one type before that we should ignore.
-          assert(contents.isMany());
-          // If there is no old type, use HeapType::any; nothing will be equal
-          // to it in the loops below (we are handling structs or arrays, and
-          // anyhow only things that can actually be constructed and not
-          // abstract types like funcref/dataref/anyref etc.).
-          HeapType oldType = HeapType::func;
-          if (oldContents.isExactType()) {
-            oldType = oldContents.getType().getHeapType();
-          }
-
-          // First, handle subTypes, including the type itself (unless we ignore
-          // it due to being the old type).
-          for (auto subType :
-               subTypes->getAllSubTypesInclusive(declaredRefType)) {
-            if (subType != oldType) {
-              auto heapLoc = getLocation(subType);
-              if (heapLoc) {
-                readFromHeap(*heapLoc, parent);
               }
             }
           }
@@ -1186,7 +1155,7 @@ void ContentOracle::processWork(const Work& work) {
           set->value);
       } else if (auto* cast = parent->dynCast<RefCast>()) {
         assert(cast->ref == targetExpr);
-        // RefCast only allows valid values to go through nulls and things of
+        // RefCast only allows valid values to go through: nulls and things of
         // the cast type. And of course Many is always passed through.
         bool isNull = contents.isConstantLiteral() &&
                       contents.getConstantLiteral().isNull();
@@ -1208,6 +1177,8 @@ void ContentOracle::processWork(const Work& work) {
 #endif
           addWork({ExpressionLocation{parent, 0}, contents});
         }
+        // TODO: ref.test and all other casts can be optimized (see the cast
+        //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
       } else {
         WASM_UNREACHABLE("bad childParents content");
       }
