@@ -45,25 +45,12 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i64) data))
   (type $struct (struct i64))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i64)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
@@ -75,53 +62,33 @@
     ;; references escaping and being stored etc. - it just thinks at the type
     ;; level.)
     (drop
-      (struct.new_default_with_rtt $struct
-        (rtt.canon $struct)
-      )
-    )
-    (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new_default_with_rtt $struct
+          (rtt.canon $struct)
+        )
       )
     )
   )
 )
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field f32) data))
   (type $struct (struct f32))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result f32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     ;; The only place this type is created is with a constant value, and so we
     ;; can optimize the later get into a constant (plus a drop of the ref).
     (drop
-      (struct.new_with_rtt $struct
-        (f32.const 42)
-        (rtt.canon $struct)
-      )
-    )
-    (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new_with_rtt $struct
+          (f32.const 42)
+          (rtt.canon $struct)
+        )
       )
     )
   )
@@ -140,28 +107,22 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (call $import)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     ;; The value given is not a constant, and so we cannot optimize.
     (drop
-      (struct.new_with_rtt $struct
-        (call $import)
-        (rtt.canon $struct)
-      )
-    )
-    (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new_with_rtt $struct
+          (call $import)
+          (rtt.canon $struct)
+        )
       )
     )
   )
@@ -172,22 +133,20 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      (i32.const 10)
+      (rtt.canon $struct)
     )
   )
   ;; CHECK:      (func $get (type $none_=>_none)
@@ -195,7 +154,7 @@
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
@@ -205,7 +164,7 @@
   (func $get
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (call $create)
       )
     )
   )
@@ -219,12 +178,14 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
@@ -234,25 +195,21 @@
   (func $get
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (call $create)
       )
     )
   )
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      (i32.const 10)
+      (rtt.canon $struct)
     )
   )
 )
@@ -272,14 +229,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (f32.const 1337)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:     (f32.const 1337)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -290,15 +244,13 @@
         (rtt.canon $struct)
       )
     )
-    (drop
-      (struct.new_with_rtt $struct
-        (f32.const 1337)
-        (rtt.canon $struct)
-      )
-    )
+    ;; (A better analysis could see that the first struct.new is dropped.)
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new_with_rtt $struct
+          (f32.const 1337)
+          (rtt.canon $struct)
+        )
       )
     )
   )
@@ -310,45 +262,43 @@
   (type $struct (struct (mut f32)))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (f32.const 42)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (f32.const 42)
-        (rtt.canon $struct)
-      )
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      (f32.const 42)
+      (rtt.canon $struct)
     )
   )
   ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (f32.const 1337)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set
     (struct.set $struct 0
-      (ref.null $struct)
+      (call $create)
       (f32.const 1337)
     )
   )
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (call $create)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (call $create)
       )
     )
   )
@@ -361,31 +311,29 @@
   (type $struct (struct (mut f32)))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (f32.const 42)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (f32.const 42)
-        (rtt.canon $struct)
-      )
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      (f32.const 42)
+      (rtt.canon $struct)
     )
   )
   ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set
     (struct.set $struct 0
-      (ref.null $struct)
+      (call $create)
       (f32.const 42) ;; The last testcase had 1337 here.
     )
   )
@@ -394,7 +342,7 @@
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 42)
@@ -404,7 +352,7 @@
   (func $get
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (call $create)
       )
     )
   )
@@ -419,35 +367,33 @@
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (block (result f32)
-  ;; CHECK-NEXT:     (nop)
-  ;; CHECK-NEXT:     (f32.const 42)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (block (result f32)
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        ;; Fall though a 42 via a block.
-        (block (result f32)
-          (nop)
-          (f32.const 42)
-        )
-        (rtt.canon $struct)
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      ;; Fall though a 42 via a block.
+      (block (result f32)
+        (nop)
+        (f32.const 42)
       )
+      (rtt.canon $struct)
     )
   )
   ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (if (result f32)
@@ -462,7 +408,7 @@
   ;; CHECK-NEXT: )
   (func $set
     (struct.set $struct 0
-      (ref.null $struct)
+      (call $create)
       ;; Fall though a 42 via an if.
       (if (result f32)
         (call $import)
@@ -476,7 +422,7 @@
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 42)
@@ -486,7 +432,7 @@
   (func $get
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (call $create)
       )
     )
   )
@@ -494,7 +440,6 @@
 
 ;; Test a function reference instead of a number.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field funcref) data))
   (type $struct (struct funcref))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -502,32 +447,16 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (ref.func $test)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $none_=>_none))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.func $test)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (struct.new_with_rtt $struct
-        (ref.func $test)
-        (rtt.canon $struct)
-      )
-    )
-    (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (struct.new_with_rtt $struct
+          (ref.func $test)
+          (rtt.canon $struct)
+        )
       )
     )
   )
@@ -549,16 +478,13 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 20)
@@ -572,13 +498,10 @@
         (unreachable)
       )
     )
-    (drop
+    (struct.set $struct 0
       (struct.get $struct 0
         (unreachable)
       )
-    )
-    (struct.set $struct 0
-      (unreachable)
       (i32.const 20)
     )
   )
@@ -588,37 +511,54 @@
 ;;            subtype, the get must trap anyhow (the reference it receives can
 ;;            only be null in this closed world).
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) $struct))
   (type $substruct (struct_subtype i32 $struct))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      (i32.const 10)
+      (rtt.canon $struct)
     )
   )
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.cast_static $substruct
+  ;; CHECK-NEXT:          (call $create)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (ref.cast_static $substruct
+          (call $create)
+        )
       )
     )
   )
