@@ -529,6 +529,8 @@ private:
   // During the flow we will need information about subtyping.
   std::unique_ptr<SubTypes> subTypes;
 
+  std::unordered_set<Connection> connections;
+
   // We may add new connections as we flow. Do so to a temporary structure on
   // the side as we are iterating on |targets| here, which might be one of the
   // lists we want to update.

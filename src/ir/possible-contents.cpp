@@ -1,4 +1,4 @@
-#define POSSIBLE_TYPES_DEBUG 2
+//#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -725,7 +725,6 @@ void ContentOracle::analyze() {
   // the entire program all at once. First, gather all the connections from all
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible types at each location.
-  std::unordered_set<Connection> connections;
   std::unordered_map<Location, PossibleContents> roots;
 
 #ifdef POSSIBLE_TYPES_DEBUG
@@ -985,7 +984,14 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         std::cout << "    add special read\n";
 #endif
         auto targetLoc = ExpressionLocation{target, 0};
-        newConnections.push_back({*heapLoc, targetLoc});
+
+        // Add this to the graph if it is an entirely new connection.
+        auto newConnection = Connection{*heapLoc, targetLoc};
+        if (connections.count(newConnection) == 0) {
+          newConnections.push_back(newConnection);
+          connections.insert(newConnection);
+        }
+
         // Recurse: the parent may also be a special child, e.g.
         //   (struct.get
         //     (struct.get ..)
