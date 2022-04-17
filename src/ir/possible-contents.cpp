@@ -1029,8 +1029,11 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
               // TODO: In the case that this is a constant, it could be null
               //       or an immutable global, which we could do even more
               //       with (for null, nothing needs to be read).
-              readFromHeap(getLocation(targetContents.getType().getHeapType()),
-                           parent);
+              auto heapLoc = getLocation(targetContents.getType().getHeapType());
+              if (heapLoc) {
+                readFromHeap(*heapLoc,
+                             parent);
+              }
               return;
             }
           }
@@ -1073,7 +1076,10 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           for (auto subType :
                subTypes->getAllSubTypesInclusive(declaredRefType)) {
             if (subType != oldType) {
-              readFromHeap(getLocation(subType), parent);
+              auto heapLoc = getLocation(subType);
+              if (heapLoc) {
+                readFromHeap(*heapLoc, parent);
+              }
             }
           }
 
@@ -1115,17 +1121,20 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             // TODO: In the case that this is a constant, it could be null
             //       or an immutable global, which we could do even more
             //       with.
-            auto heapLoc = *getLocation(refContents.getType().getHeapType());
-            // TODO helper function without this last param all the time
-            updateTarget(valueContents, heapLoc);
+            auto heapLoc = getLocation(refContents.getType().getHeapType());
+            if (heapLoc) {
+              updateTarget(valueContents, *heapLoc);
+            }
           } else {
             assert(refContents.isMany());
             // Update all possible types here. First, subtypes, including the
             // type itself.
             auto type = ref->type.getHeapType();
             for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
-              auto heapLoc = *getLocation(subType);
-              updateTarget(valueContents, heapLoc);
+              auto heapLoc = getLocation(subType);
+              if (heapLoc) {
+                updateTarget(valueContents, *heapLoc);
+              }
             }
           }
         };
