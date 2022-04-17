@@ -1047,7 +1047,7 @@ void ContentOracle::processWork(const Work& work) {
           for (auto type : newPossibleTypes) {
             if (!oldPossibleTypes.count(type)) {
               // This is new.
-              auto heapLoc = getLocation(contents.getType().getHeapType());
+              auto heapLoc = getLocation(type);
               if (heapLoc) {
                 readFromHeap(*heapLoc,
                              parent);
