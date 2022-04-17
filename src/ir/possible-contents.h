@@ -197,6 +197,22 @@ public:
     }
   }
 
+  size_t hash() const {
+    if (isNone()) {
+      return 0; // TODO: better
+    } else if (isConstantLiteral()) {
+      return std::hash<Literal>()(getConstantLiteral());
+    } else if (isConstantGlobal()) {
+      return std::hash<Name>()(getConstantGlobal());
+    } else if (isExactType()) {
+      return std::hash<Type>()(getType());
+    } else if (isMany()) {
+      return 1;
+    } else {
+      WASM_UNREACHABLE("bad variant");
+    }
+  }
+
   void dump(std::ostream& o) const {
     o << '[';
     if (isNone()) {
@@ -369,6 +385,12 @@ struct Connection {
 
 namespace std {
 
+template<> struct hash<wasm::PossibleContents> {
+  size_t operator()(const wasm::PossibleContents& contents) const {
+    return contents.hash();
+  }
+};
+
 // Define hashes of all the *Location types so that Location itself is hashable
 // and we can use it in unordered maps and sets.
 
@@ -525,10 +547,15 @@ private:
   // building logic more complicated.
   std::unordered_map<Expression*, Expression*> childParents;
 
+  // A piece of work during the flow: A location and some content that is sent
+  // to it. That content may or may not actually lead to something new at that
+  // location; if it does, then it may create further work.
+  using Work = std::pair<Location, PossibleContents>;
+
   // The work remaining to do during the flow: locations that we just updated,
   // which means we should update their children when we pop them from this
   // queue.
-  UniqueDeferredQueue<Location> work;
+  UniqueDeferredQueue<Work> workQueue;
 
   // During the flow we will need information about subtyping.
   std::unique_ptr<SubTypes> subTypes;
@@ -540,8 +567,13 @@ private:
   // lists we want to update.
   std::vector<Connection> newConnections;
 
-  // Update a target location with contents arriving to it.
-  void updateTarget(const PossibleContents& contents, Location target);
+  void addWork(const Work& work) {
+    workQueue.push(work);
+  }
+
+  // Update a target location with contents arriving to it. Add new work as
+  // relevant based on what happens there.
+  void processWork(const Work& work);
 
   void updateNewConnections();
 };

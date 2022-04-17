@@ -841,7 +841,7 @@ void ContentOracle::analyze() {
 #endif
 
     // Update the root from having nothing to having its initial content.
-    updateTarget(value, location);
+    addWork({location, value});
   }
 
   updateNewConnections();
@@ -854,14 +854,9 @@ void ContentOracle::analyze() {
   // TODO: unit test all the movements of PossibleContents, always making sure
   // they are Lyapunov. Rule out an infinite loop. On barista work.size() hangs
   // around 30K for a long time. but it does get lower. just very very slow?
-  while (!work.empty()) {
-std::cout << "work left: " << work.size() << '\n';
-    auto location = work.pop();
-    const auto& info = flowInfoMap[location];
-
-    // TODO: We can refine the types here, by not flowing anything through a
-    //       ref.cast that it would trap on.
-    const auto& types = info.types;
+  while (!workQueue.empty()) {
+std::cout << "work left: " << workQueue.size() << '\n';
+    auto work = workQueue.pop();
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
     std::cout << "\npop item\n";
@@ -871,20 +866,7 @@ std::cout << "work left: " << work.size() << '\n';
     std::cout << '\n';
 #endif
 
-    const auto& targets = info.targets;
-    if (targets.empty()) {
-      continue;
-    }
-
-    // Update the targets, and add the ones that change to the remaining work.
-    for (auto& target : targets) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-      std::cout << "  send to target\n";
-      dump(target);
-#endif
-
-      updateTarget(types, target);
-    }
+    processWork(work);
 
     updateNewConnections();
   }
@@ -893,17 +875,20 @@ std::cout << "work left: " << work.size() << '\n';
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-void ContentOracle::updateTarget(const PossibleContents& contents,
-                                 Location target) {
-  if (contents.isNone()) {
+void ContentOracle::processWork(const Work& work) {
+  auto& location = work.first;
+  auto& arrivingContents = work.second;
+
+  if (arrivingContents.isNone()) {
+    // Nothing is arriving here at al.
     return;
   }
 
-  auto& targetContents = flowInfoMap[target].types;
+  auto& contents = flowInfoMap[location].types;
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-  std::cout << "updateTarget src:\n";
-  dump(target);
+  std::cout << "processWork src:\n";
+  dump(location);
   contents.dump(std::cout);
   std::cout << '\n';
 #endif
@@ -913,21 +898,28 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
   contents.dump(std::cout);
   std::cout << '\n';
   std::cout << "    updateTypes dest:\n";
-  targetContents.dump(std::cout);
+  contents.dump(std::cout);
   std::cout << '\n';
 #endif
 
   // When handling some cases we care about what actually
   // changed, so save the state before doing the update.
-  auto oldTargetContents = targetContents;
-  if (!targetContents.combine(contents)) {
-    assert(oldTargetContents == targetContents);
+  auto oldContents = contents;
+  if (!contents.combine(arrivingContents)) {
+    assert(oldContents == contents);
 
     // Nothing changed; nothing more to do.
     return;
   }
 
-  if (auto* globalLoc = std::get_if<GlobalLocation>(&target)) {
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+  std::cout << "  something changed!\n";
+  contents.dump(std::cout);
+  std::cout << "\nat ";
+  dump(location);
+#endif
+
+  if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     auto* global = wasm.getGlobal(globalLoc->name);
     if (global->mutable_ == Immutable) {
       // This is an immutable global. We never need to consider this value as
@@ -935,37 +927,38 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
       // That is, we can always replace this value with (global.get $name) which
       // will get the right value. Likewise, using the immutable value is better
       // than any value in a particular type, even an exact one.
-      if (targetContents.isMany() || targetContents.isExactType()) {
+      if (contents.isMany() || contents.isExactType()) {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
 #endif
 
-        targetContents =
+        contents =
           PossibleContents::ImmutableGlobal{global->name, global->type};
 
         // Furthermore, perhaps nothing changed at all of that was already the
         // previous value here.
-        if (targetContents == oldTargetContents) {
+        if (contents == oldContents) {
           return;
         }
       }
     }
   }
 
-  // We made an actual change to this target. Add it in the work queue so that
-  // the flow continues from there.
-  work.push(target);
+  // We made an actual change to this location. Add its targets to the work
+  // queue.
+  for (auto& target : flowInfoMap[location].targets) {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-  std::cout << "    more work since the new dest is\n";
-  targetContents.dump(std::cout);
-  std::cout << "\nat ";
-  dump(target);
+    std::cout << "  send to target\n";
+    dump(target);
 #endif
+
+    addWork({target, contents});
+  }
 
   // We are mostly done, except for handling interesting/special cases in the
   // flow.
 
-  if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&target)) {
+  if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto* targetExpr = targetExprLoc->expr;
     auto iter = childParents.find(targetExpr);
     if (iter != childParents.end()) {
@@ -1005,7 +998,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
         //     (struct.get ..)
         //   )
         // TODO unrecurse with a stack, although such recursion will be rare
-        updateTarget(flowInfoMap[*heapLoc].types, targetLoc);
+        addWork({targetLoc, flowInfoMap[*heapLoc].types});
       };
 
       // Given the old and new contents at the current target, add reads to
@@ -1025,19 +1018,19 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           // Add a connection from the proper field of a struct type to this
           // struct.get, and also update that value based on the field's
           // current contents right now.
-          if (oldTargetContents.isNone()) {
+          if (oldContents.isNone()) {
             // Nothing was present before, so we can just add the new stuff.
-            assert(!targetContents.isNone());
+            assert(!contents.isNone());
 
             // Handle the case of a single type here. Below we'll handle the
             // case of Many for all cases.
-            if (targetContents.isExactType() || targetContents.isConstant()) {
+            if (contents.isExactType() || contents.isConstant()) {
               // A single new type was added here. Read from exactly that
               // and nothing else.
               // TODO: In the case that this is a constant, it could be null
               //       or an immutable global, which we could do even more
               //       with (for null, nothing needs to be read).
-              auto heapLoc = getLocation(targetContents.getType().getHeapType());
+              auto heapLoc = getLocation(contents.getType().getHeapType());
               if (heapLoc) {
                 readFromHeap(*heapLoc,
                              parent);
@@ -1046,7 +1039,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             }
           }
 
-          if (targetContents.isExactType()) {
+          if (contents.isExactType()) {
             // The new value is not Many, and we already handled the case of the
             // old contents being None. That means we went from a constant (a
             // null, etc.) to anything of that type, or the old type was
@@ -1054,13 +1047,13 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             // nothing to do here as for now we have no special handling for
             // null and other constants: we've already added the relevant links
             // for this type before.
-            if (targetContents.getType().isRef()) {
+            if (contents.getType().isRef()) {
               // This field is a reference, so it must have the same heap type
               // as before (either the change is to make it nullable, or to
               // make it anything of that type and not a constant). This
               // assertion ensures we added the right links before.
-              assert(oldTargetContents.getType().getHeapType() ==
-                     targetContents.getType().getHeapType());
+              assert(oldContents.getType().getHeapType() ==
+                     contents.getType().getHeapType());
             }
             return;
           }
@@ -1069,14 +1062,14 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           // are left with the cases of a single type that turned into many, or
           // nothing that turned into many; either way, the result is many, but
           // there may have been one type before that we should ignore.
-          assert(targetContents.isMany());
+          assert(contents.isMany());
           // If there is no old type, use HeapType::any; nothing will be equal
           // to it in the loops below (we are handling structs or arrays, and
           // anyhow only things that can actually be constructed and not
           // abstract types like funcref/dataref/anyref etc.).
           HeapType oldType = HeapType::func;
-          if (oldTargetContents.isExactType()) {
-            oldType = oldTargetContents.getType().getHeapType();
+          if (oldContents.isExactType()) {
+            oldType = oldContents.getType().getHeapType();
           }
 
           // First, handle subTypes, including the type itself (unless we ignore
@@ -1131,7 +1124,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             //       with.
             auto heapLoc = getLocation(refContents.getType().getHeapType());
             if (heapLoc) {
-              updateTarget(valueContents, *heapLoc);
+              addWork({*heapLoc, valueContents});
             }
           } else {
             assert(refContents.isMany());
@@ -1141,7 +1134,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
             for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
               auto heapLoc = getLocation(subType);
               if (heapLoc) {
-                updateTarget(valueContents, *heapLoc);
+                addWork({*heapLoc, valueContents});
               }
             }
           }
@@ -1208,7 +1201,7 @@ void ContentOracle::updateTarget(const PossibleContents& contents,
           //     (ref.cast ..)
           //   )
           // TODO unrecurse with a stack, although such recursion will be rare
-          updateTarget(contents, ExpressionLocation{parent, 0});
+          addWork({ExpressionLocation{parent, 0}, contents});
         }
       } else {
         WASM_UNREACHABLE("bad childParents content");
