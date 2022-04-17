@@ -36,31 +36,41 @@ void assertNotEqualSymmetric(const T& a, const T& b) {
 }
 
 static void testPossibleContents() {
-  auto i32Zero = Literal(int32_t(0));
-  auto f64One = Literal(double(1));
+  auto none_ = PossibleContents::none();
 
-  assertEqualSymmetric(PossibleContents::none(), PossibleContents::none());
-  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantLiteral(i32Zero));
-  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantGlobal("global1", Type::i32));
-  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::i32));
-  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::many());
+  auto i32Zero = PossibleContents::constantLiteral(Literal(int32_t(0)));
+  auto f64One = PossibleContents::constantLiteral(Literal(double(1)));
 
-  assertEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantLiteral(i32Zero));
-  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantLiteral(f64One));
-  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantGlobal("global1", Type::i32));
-  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::exactType(Type::i32));
-  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::many());
+  auto global1 = PossibleContents::constantGlobal("global1", Type::i32);
+  auto global2 = PossibleContents::constantGlobal("global2", Type::i32);
 
-  assertEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::constantGlobal("global1", Type::i32));
-  assertNotEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::constantGlobal("global2", Type::i32));
-  assertNotEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::exactType(Type::i32));
-  assertNotEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::many());
+  auto exactI32 = PossibleContents::exactType(Type::i32);
+  auto exactAnyref = PossibleContents::exactType(Type::anyref);
 
-  assertEqualSymmetric(PossibleContents::exactType(Type::i32), PossibleContents::exactType(Type::i32));
-  assertNotEqualSymmetric(PossibleContents::exactType(Type::i32), PossibleContents::exactType(Type::anyref));
-  assertNotEqualSymmetric(PossibleContents::exactType(Type::i32), PossibleContents::many());
+  auto many = PossibleContents::many();
+  
+  assertEqualSymmetric(none_, none_);
+  assertNotEqualSymmetric(none_, i32Zero);
+  assertNotEqualSymmetric(none_, global1);
+  assertNotEqualSymmetric(none_, exactI32);
+  assertNotEqualSymmetric(none_, many);
 
-  assertEqualSymmetric(PossibleContents::many(), PossibleContents::many());
+  assertEqualSymmetric(i32Zero, i32Zero);
+  assertNotEqualSymmetric(i32Zero, f64One);
+  assertNotEqualSymmetric(i32Zero, global1);
+  assertNotEqualSymmetric(i32Zero, exactI32);
+  assertNotEqualSymmetric(i32Zero, many);
+
+  assertEqualSymmetric(global1, global1);
+  assertNotEqualSymmetric(global1, global2);
+  assertNotEqualSymmetric(global1, exactI32);
+  assertNotEqualSymmetric(global1, many);
+
+  assertEqualSymmetric(exactI32, exactI32);
+  assertNotEqualSymmetric(exactI32, exactAnyref);
+  assertNotEqualSymmetric(exactI32, many);
+
+  assertEqualSymmetric(many, many);
 }
 
 static void testOracle() {
