@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 2
+#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -923,12 +923,19 @@ void ContentOracle::processWork(const Work& work) {
       // will get the right value. Likewise, using the immutable value is better
       // than any value in a particular type, even an exact one.
       if (contents.isMany() || contents.isExactType()) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-        std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
-#endif
-
         contents =
           PossibleContents::ImmutableGlobal{global->name, global->type};
+
+        // TODO: We could do better here, to set global->init->type instead of
+        //       global->type, or even the contents.getType() - either of those
+        //       may be more refined. But other passes will handle that in
+        //       general.
+
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+        std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
+        contents.dump(std::cout);
+        std::cout << '\n';
+#endif
 
         // Furthermore, perhaps nothing changed at all of that was already the
         // previous value here.

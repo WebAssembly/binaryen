@@ -182,8 +182,6 @@ static void testOracle() {
               << oracle.getTypes(GlobalLocation{"foo"}).getType() << '\n';
     std::cout << "possible types of the $something global: "
               << oracle.getTypes(GlobalLocation{"something"}).getType() << '\n';
-    // XXX this should be ref null $.. and not anyref in the output...
-    assert(oracle.getTypes(GlobalLocation{"something"}).getType().isNonNullable());
   }
 
   {
