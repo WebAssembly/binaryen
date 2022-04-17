@@ -1,3 +1,539 @@
+
+assertEqualSymmetric
+[None]
+[None]
+
+assertNotEqualSymmetric
+[None]
+[Literal 0]
+
+assertNotEqualSymmetric
+[None]
+[ImmutableGlobal $i32Global1]
+
+assertNotEqualSymmetric
+[None]
+[ExactType i32]
+
+assertNotEqualSymmetric
+[None]
+[Many]
+
+assertEqualSymmetric
+[Literal 0]
+[Literal 0]
+
+assertNotEqualSymmetric
+[Literal 0]
+[Literal 1]
+
+assertNotEqualSymmetric
+[Literal 0]
+[Literal 1]
+
+assertNotEqualSymmetric
+[Literal 0]
+[ImmutableGlobal $i32Global1]
+
+assertNotEqualSymmetric
+[Literal 0]
+[ExactType i32]
+
+assertNotEqualSymmetric
+[Literal 0]
+[Many]
+
+assertEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+
+assertNotEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global2]
+
+assertNotEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[ExactType i32]
+
+assertNotEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[Many]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertNotEqualSymmetric
+[ExactType i32]
+[ExactType anyref HT: any null]
+
+assertNotEqualSymmetric
+[ExactType i32]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertNotEqualSymmetric
+[Literal 0]
+[Literal anyref(null) HT: any]
+
+assertEqualSymmetric
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+
+assertEqualSymmetric
+[Literal anyref(null) HT: any]
+[Literal funcref(null) HT: func]
+
+assertEqualSymmetric
+[ExactType (ref any) HT: any]
+[ExactType (ref any) HT: any]
+
+assertNotEqualSymmetric
+[ExactType (ref any) HT: any]
+[ExactType anyref HT: any null]
+
+
+assertCombination
+[None]
+[None]
+[None]
+[None]
+
+assertEqualSymmetric
+[None]
+[None]
+[None]
+
+assertEqualSymmetric
+[None]
+[None]
+
+assertCombination
+[None]
+[Literal 0]
+[Literal 0]
+[Literal 0]
+
+assertEqualSymmetric
+[Literal 0]
+[Literal 0]
+[Literal 0]
+
+assertEqualSymmetric
+[Literal 0]
+[Literal 0]
+
+assertCombination
+[None]
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+
+assertEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+
+assertEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+
+assertCombination
+[None]
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[None]
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[Literal 0]
+[Literal 0]
+[Literal 0]
+[Literal 0]
+
+assertEqualSymmetric
+[Literal 0]
+[Literal 0]
+[Literal 0]
+
+assertEqualSymmetric
+[Literal 0]
+[Literal 0]
+
+assertCombination
+[Literal 0]
+[Literal 1]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[Literal 0]
+[Literal 1]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[Literal 0]
+[ImmutableGlobal $i32Global1]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[Literal 0]
+[ImmutableGlobal $f64Global]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[Literal 0]
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[Literal 0]
+[ExactType anyref HT: any null]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[Literal 0]
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+
+assertEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+
+assertEqualSymmetric
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global1]
+
+assertCombination
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $i32Global2]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[ImmutableGlobal $i32Global1]
+[ImmutableGlobal $f64Global]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[ImmutableGlobal $i32Global1]
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[ImmutableGlobal $i32Global1]
+[ExactType anyref HT: any null]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[ImmutableGlobal $i32Global1]
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[ExactType i32]
+[ExactType anyref HT: any null]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[ExactType i32]
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[Many]
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[Literal anyref(null) HT: any]
+[Literal 0]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+
+assertEqualSymmetric
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+
+assertEqualSymmetric
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+
+assertCombination
+[Literal anyref(null) HT: any]
+[Literal funcref(null) HT: func]
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+
+assertEqualSymmetric
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+[Literal funcref(null) HT: func]
+
+assertEqualSymmetric
+[Literal funcref(null) HT: func]
+[Literal anyref(null) HT: any]
+
+assertCombination
+[Literal anyref(null) HT: any]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+
+assertEqualSymmetric
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+
+assertEqualSymmetric
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+
+assertCombination
+[ExactType (ref any) HT: any]
+[ExactType (ref any) HT: any]
+[ExactType (ref any) HT: any]
+[ExactType (ref any) HT: any]
+
+assertEqualSymmetric
+[ExactType (ref any) HT: any]
+[ExactType (ref any) HT: any]
+[ExactType (ref any) HT: any]
+
+assertEqualSymmetric
+[ExactType (ref any) HT: any]
+[ExactType (ref any) HT: any]
+
+assertCombination
+[Literal anyref(null) HT: any]
+[ExactType (ref any) HT: any]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+
+assertEqualSymmetric
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+
+assertEqualSymmetric
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+
 possible types of the $null global: unreachable
-possible types of the $something global: (ref $struct.0)
+possible types of the $something global: anyref
 possible types of the function's body: none
+
+
+ok.
