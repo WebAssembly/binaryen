@@ -28,13 +28,17 @@ namespace wasm {
 
 namespace {
 
+#ifndef NDEBUG
 void disallowDuplicates(std::vector<Location>& targets) {
+#ifdef POSSIBLE_TYPES_DEBUG
   std::unordered_set<Location> uniqueTargets;
   for (const auto& target : targets) {
     uniqueTargets.insert(target);
   }
   assert(uniqueTargets.size() == targets.size());
+#endif
 }
+#endif
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
 void dump(Location location) {
@@ -847,7 +851,11 @@ void ContentOracle::analyze() {
 #endif
 
   // Flow the data.
+  // TODO: unit test all the movements of PossibleContents, always making sure
+  // they are Lyapunov. Rule out an infinite loop. On barista work.size() hangs
+  // around 30K for a long time. but it does get lower. just very very slow?
   while (!work.empty()) {
+std::cout << "work left: " << work.size() << '\n';
     auto location = work.pop();
     const auto& info = flowInfoMap[location];
 
@@ -1229,8 +1237,3 @@ void ContentOracle::updateNewConnections() {
 }
 
 } // namespace wasm
-
-/*
-TODO: w.wasm failure on LIMIT=1
-TODO: null deref at runtime on j2wasm output
-*/

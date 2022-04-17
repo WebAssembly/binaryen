@@ -72,6 +72,10 @@ public:
     return value == other.value;
   }
 
+//  bool operator!=(const PossibleContents& other) const {
+//    return value != other.value;
+//  }
+
   // Combine the information in a given PossibleContents to this one. This
   // is the same as if we have called note*() on us with all the history of
   // calls to that other object.

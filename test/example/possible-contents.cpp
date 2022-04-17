@@ -7,7 +7,7 @@
 
 using namespace wasm;
 
-std::unique_ptr<Module> parse(std::string module) {
+static std::unique_ptr<Module> parse(std::string module) {
   auto wasm = std::make_unique<Module>();
   wasm->features = FeatureSet::All;
   try {
@@ -21,10 +21,11 @@ std::unique_ptr<Module> parse(std::string module) {
   return wasm;
 }
 
-int main() {
-  // Use nominal typing to test struct types.
-  wasm::setTypeSystem(TypeSystem::Nominal);
+static void testPossibleContents() {
+  assert(PossibleContents::none() != PossibleContents::none());
+}
 
+static void testOracle() {
   {
     // A minimal test of the public API of PossibleTypesOracle. See the lit test
     // for coverage of all the internals (using lit makes the result more
@@ -76,4 +77,12 @@ int main() {
       << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).getType()
       << '\n';
   }
+}
+
+int main() {
+  // Use nominal typing to test struct types.
+  wasm::setTypeSystem(TypeSystem::Nominal);
+
+  testPossibleContents();
+  testOracle();
 }
