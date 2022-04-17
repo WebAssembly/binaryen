@@ -36,15 +36,22 @@ void assertNotEqualSymmetric(const T& a, const T& b) {
 }
 
 static void testPossibleContents() {
-  auto sig1 = Signature(Type::none, Type::none);
-  auto sig2 = Signature(Type::i32, Type::f64);
+  auto i32Zero = Literal(int32_t(0));
+  auto f64One = Literal(double(1));
 
   assertEqualSymmetric(PossibleContents::none(), PossibleContents::none());
-  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantLiteral(Literal(int32_t(0))));
+  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantLiteral(i32Zero));
   assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantGlobal("global1", Type::i32));
-  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::none));
   assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::i32));
+  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::anyref));
   assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::many());
+
+  assertEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantLiteral(i32Zero));
+  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantLiteral(f64One));
+  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantGlobal("global1", Type::i32));
+  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::exactType(Type::i32));
+  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::exactType(Type::anyref));
+  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::many());
 }
 
 static void testOracle() {
@@ -107,4 +114,6 @@ int main() {
 
   testPossibleContents();
   testOracle();
+
+  std::cout << "ok.\n";
 }
