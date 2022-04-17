@@ -109,20 +109,43 @@ public:
 
     // Neither is None, and neither is Many.
 
-    // TODO: do we need special null handling here? e.g. nulls of different
-    //       types can be merged, they are not actually different values, so
-    //       we could LUB there.
+    auto applyIfDifferent = [&](const PossibleContents& newContents) {
+      if (*this == newContents) {
+        return false;
+      }
+
+      *this = newContents;
+      return true;
+    };
+
+    auto type = getType();
+    auto otherType = other.getType();
+
+    if (type.isRef() && otherType.isRef() && (isNull() || other.isNull())) {
+      // Special handling for nulls. Nulls are always equal to each other even
+      // if their types differ.
+      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(), otherType.getHeapType()), Nullable);
+      if (!isNull() || !other.isNull()) {
+        // Only one of the two is a null. The result is a type, of the LUB.
+        return applyIfDifferent(
+          PossibleContents(lub)
+        );
+      }
+
+      // Both are null. The result is a null, of the LUB.
+      return applyIfDifferent(
+        PossibleContents(Literal::makeNull(lub))
+      );
+    }
+
     if (other.value == value) {
       return false;
     }
 
-    // TODO unit test all this
     // The values differ, but if they share the same type then we can set to
     // that.
     // TODO: what if one is nullable and the other isn't? Should we be tracking
     //       a heap type here, really?
-    auto type = getType();
-    auto otherType = other.getType();
     if (otherType == type) {
       if (isExactType()) {
         // We were already marked as an arbitrary value of this type.
@@ -141,14 +164,9 @@ public:
         type.getHeapType() == otherType.getHeapType()) {
       // The types differ, but the heap types agree, so the only difference here
       // is in nullability, and the combined value is the nullable type.
-      auto newContents = PossibleContents(Type(type.getHeapType(), Nullable));
-      if (*this == newContents) {
-        assert(otherType.isNonNullable());
-        return false;
-      }
-
-      *this = newContents;
-      return true;
+      return applyIfDifferent(
+        PossibleContents(Type(type.getHeapType(), Nullable))
+      );
     }
 
     // Worst case.
@@ -173,6 +191,10 @@ public:
   Name getConstantGlobal() const {
     assert(isConstant());
     return std::get<ImmutableGlobal>(value).name;
+  }
+
+  bool isNull() const {
+    return isConstantLiteral() && getConstantLiteral().isNull();
   }
 
   // Return the types possible here. If no type is possible, returns
@@ -229,7 +251,7 @@ public:
       auto t = getType();
       if (t.isRef()) {
         auto h = t.getHeapType();
-        o << " HT: " << h << '\n';
+        o << " HT: " << h;
       }
     } else if (isConstantGlobal()) {
       o << "ImmutableGlobal $" << getConstantGlobal();
@@ -238,7 +260,10 @@ public:
       auto t = getType();
       if (t.isRef()) {
         auto h = t.getHeapType();
-        o << " HT: " << h << '\n';
+        o << " HT: " << h;
+        if (t.isNullable()) {
+          o << " null";
+        }
       }
     } else if (isMany()) {
       o << "Many";

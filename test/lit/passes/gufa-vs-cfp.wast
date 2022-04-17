@@ -674,7 +674,8 @@
 
 ;; As above, pass the created supertype through a local and a cast on the way
 ;; to a read of the subtype. Still, no actual instance of the subtype can
-;; appear in the get, so we can optimize.
+;; appear in the get, so we can optimize the value. The cast can also be
+;; optimized, since we know it will trap.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))

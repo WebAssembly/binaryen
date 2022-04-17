@@ -859,10 +859,10 @@ void ContentOracle::analyze() {
     auto work = workQueue.pop();
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-    std::cout << "\npop item\n";
-    dump(location);
+    std::cout << "\npop work item\n";
+    dump(work.first);
     std::cout << " with contents \n";
-    info.types.dump(std::cout);
+    work.second.dump(std::cout);
     std::cout << '\n';
 #endif
 
@@ -887,17 +887,12 @@ void ContentOracle::processWork(const Work& work) {
   auto& contents = flowInfoMap[location].types;
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-  std::cout << "processWork src:\n";
+  std::cout << "\nprocessWork src:\n";
   dump(location);
-  contents.dump(std::cout);
+  std::cout << "  arriving:\n";
+  arrivingContents.dump(std::cout);
   std::cout << '\n';
-#endif
-
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
-  std::cout << "    updateTypes src:\n";
-  contents.dump(std::cout);
-  std::cout << '\n';
-  std::cout << "    updateTypes dest:\n";
+  std::cout << "  existing:\n";
   contents.dump(std::cout);
   std::cout << '\n';
 #endif
@@ -1201,6 +1196,9 @@ void ContentOracle::processWork(const Work& work) {
           //     (ref.cast ..)
           //   )
           // TODO unrecurse with a stack, although such recursion will be rare
+#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+          std::cout << "    ref.cast passing through\n";
+#endif
           addWork({ExpressionLocation{parent, 0}, contents});
         }
       } else {
