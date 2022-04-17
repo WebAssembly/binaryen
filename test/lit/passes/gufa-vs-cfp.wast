@@ -1958,47 +1958,45 @@
   ;; CHECK:      (type $struct (struct_subtype (field i32) (field f64) (field i32) (field f64) (field i32) data))
   (type $struct (struct i32 f64 i32 f64 i32))
 
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:    (f64.abs
-  ;; CHECK-NEXT:     (f64.const 2.71828)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 30)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f64.const 3.14159)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.const 2.71828)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (i32.eqz (i32.const 10)) ;; not a constant (as far as this pass knows)
-        (f64.const 3.14159)
-        (i32.const 20)
-        (f64.abs (f64.const 2.71828)) ;; not a constant
-        (i32.const 30)
-        (rtt.canon $struct)
-      )
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      (i32.eqz (i32.const 10)) ;; not a constant (as far as this pass knows)
+      (f64.const 3.14159)
+      (i32.const 20)
+      (f64.abs (f64.const 2.71828)) ;; not a constant
+      (i32.const 30)
+      (rtt.canon $struct)
     )
   )
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (call $create)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 1
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 3.14159)
@@ -2008,7 +2006,7 @@
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 2
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -2016,14 +2014,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 3
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (call $create)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 4
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 30)
@@ -2033,7 +2031,7 @@
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 4
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 30)
@@ -2043,33 +2041,33 @@
   (func $get
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (call $create)
       )
     )
     (drop
       (struct.get $struct 1
-        (ref.null $struct)
+        (call $create)
       )
     )
     (drop
       (struct.get $struct 2
-        (ref.null $struct)
+        (call $create)
       )
     )
     (drop
       (struct.get $struct 3
-        (ref.null $struct)
+        (call $create)
       )
     )
     (drop
       (struct.get $struct 4
-        (ref.null $struct)
+        (call $create)
       )
     )
     ;; Also test for multiple gets of the same field.
     (drop
       (struct.get $struct 4
-        (ref.null $struct)
+        (call $create)
       )
     )
   )
