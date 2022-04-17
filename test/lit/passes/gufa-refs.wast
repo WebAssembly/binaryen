@@ -986,6 +986,9 @@
   ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     (local $child (ref null $child))
@@ -1034,6 +1037,12 @@
     (drop
       (struct.get $parent 0
         (local.get $parent)
+      )
+    )
+    ;; A null is easy to optimize.
+    (drop
+      (struct.get $parent 0
+        (ref.null $parent)
       )
     )
   )
