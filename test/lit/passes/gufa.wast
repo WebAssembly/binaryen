@@ -680,6 +680,156 @@
   )
 )
 
+;; As above but the only calls are indirect.
+(module
+  ;; CHECK:      (type $i (func (param i32)))
+  (type $i (func (param i32)))
+
+  (table 10 funcref)
+  (elem (i32.const 0) funcref
+    (ref.func $reffed)
+  )
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (table $0 10 funcref)
+
+  ;; CHECK:      (elem (i32.const 0) $reffed)
+
+  ;; CHECK:      (func $reffed (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $do-calls
+  ;; CHECK-NEXT:  (call_indirect $0 (type $i)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $i)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-calls
+    (call_indirect (type $i)
+      (i32.const 42)
+      (i32.const 0)
+    )
+    (call_indirect (type $i)
+      (i32.const 42)
+      (i32.const 0)
+    )
+  )
+)
+
+;; As above but the indirect calls have different parameters.
+(module
+  ;; CHECK:      (type $i (func (param i32)))
+  (type $i (func (param i32)))
+
+  (table 10 funcref)
+  (elem (i32.const 0) funcref
+    (ref.func $reffed)
+  )
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (table $0 10 funcref)
+
+  ;; CHECK:      (elem (i32.const 0) $reffed)
+
+  ;; CHECK:      (func $reffed (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $do-calls
+  ;; CHECK-NEXT:  (call_indirect $0 (type $i)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $i)
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-calls
+    (call_indirect (type $i)
+      (i32.const 42)
+      (i32.const 0)
+    )
+    (call_indirect (type $i)
+      (i32.const 1337)
+      (i32.const 0)
+    )
+  )
+)
+
+;; As above but the second call is of another signature, so it does not prevent
+;; us from optimizing.
+(module
+  ;; CHECK:      (type $i (func (param i32)))
+  (type $i (func (param i32)))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $f (func (param f32)))
+  (type $f (func (param f32)))
+
+  (table 10 funcref)
+  (elem (i32.const 0) funcref
+    (ref.func $reffed)
+  )
+
+  ;; CHECK:      (table $0 10 funcref)
+
+  ;; CHECK:      (elem (i32.const 0) $reffed)
+
+  ;; CHECK:      (func $reffed (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $do-calls
+  ;; CHECK-NEXT:  (call_indirect $0 (type $i)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $0 (type $f)
+  ;; CHECK-NEXT:   (f32.const 1337)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-calls
+    (call_indirect (type $i)
+      (i32.const 42)
+      (i32.const 0)
+    )
+    (call_indirect (type $f)
+      (f32.const 1337)
+      (i32.const 0)
+    )
+  )
+)
+
 (module
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 

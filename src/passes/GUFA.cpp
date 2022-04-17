@@ -118,6 +118,13 @@ struct GUFAPass : public Pass {
       }
 
       void visitExpression(Expression* curr) {
+#if 0
+        static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : size_t(-1);
+        if (LIMIT == 0) {
+          return;
+        }
+        LIMIT--;
+#endif
         auto type = curr->type;
         if (type == Type::unreachable || type == Type::none) {
           return;
