@@ -38,6 +38,8 @@ auto none_ = PossibleContents::none();
 auto i32Zero = PossibleContents::constantLiteral(Literal(int32_t(0)));
 auto i32One = PossibleContents::constantLiteral(Literal(int32_t(1)));
 auto f64One = PossibleContents::constantLiteral(Literal(double(1)));
+auto anyNull = PossibleContents::constantLiteral(Literal::makeNull(Type::anyref));
+auto funcNull = PossibleContents::constantLiteral(Literal::makeNull(Type::funcref));
 
 auto i32Global1 = PossibleContents::constantGlobal("i32Global1", Type::i32);
 auto i32Global2 = PossibleContents::constantGlobal("i32Global2", Type::i32);
@@ -45,6 +47,7 @@ auto f64Global = PossibleContents::constantGlobal("f64Global", Type::f64);
 
 auto exactI32 = PossibleContents::exactType(Type::i32);
 auto exactAnyref = PossibleContents::exactType(Type::anyref);
+auto exactNonNullAnyref = PossibleContents::exactType(Type(HeapType::any, NonNullable));
 
 auto many = PossibleContents::many();
 
@@ -72,6 +75,15 @@ static void testComparisons() {
   assertNotEqualSymmetric(exactI32, many);
 
   assertEqualSymmetric(many, many);
+
+  // Nulls
+
+  assertNotEqualSymmetric(i32Zero, anyNull);
+  assertEqualSymmetric(anyNull, anyNull);
+  assertEqualSymmetric(anyNull, funcNull); // All nulls compare equal.
+
+  assertEqualSymmetric(exactNonNullAnyref, exactNonNullAnyref);
+  assertNotEqualSymmetric(exactNonNullAnyref, exactAnyref);
 }
 
 template<typename T>
@@ -127,6 +139,16 @@ static void testCombinations() {
   assertCombination(exactI32, many, many);
 
   assertCombination(many, many, many);
+
+  // Nulls
+
+  assertCombination(anyNull, i32Zero, many);
+  assertCombination(anyNull, anyNull, anyNull);
+  assertCombination(anyNull, funcNull, anyNull); // Nulls go to the lub
+  assertCombination(anyNull, exactAnyref, exactAnyref);
+
+  assertCombination(exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
+  assertCombination(anyNull, exactNonNullAnyref, exactAnyref); // Null in lub
 }
 
 static std::unique_ptr<Module> parse(std::string module) {
@@ -202,8 +224,11 @@ int main() {
   wasm::setTypeSystem(TypeSystem::Nominal);
 
   testComparisons();
+  std::cout << '\n';
   testCombinations();
+  std::cout << '\n';
   testOracle();
+  std::cout << '\n';
 
   std::cout << "\nok.\n";
 }
