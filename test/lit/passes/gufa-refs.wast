@@ -1041,9 +1041,7 @@
 
 ;; Default values in struct fields.
 (module
-  ;; CHECK:      (type $A (struct_subtype (field i32) data))
   (type $A (struct_subtype (field i32) data))
-  ;; CHECK:      (type $B (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) data))
   (type $C (struct_subtype (field i32) data))
 
@@ -1051,32 +1049,10 @@
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $A 0
-  ;; CHECK-NEXT:      (ref.null $A)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $B
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $B 0
-  ;; CHECK-NEXT:      (ref.null $B)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
@@ -1085,22 +1061,16 @@
   (func $func
     ;; Create a struct with default values. We can propagate a 0 to the get.
     (drop
-      (struct.new_default $A)
-    )
-    (drop
       (struct.get $A 0
-        (ref.null $A)
+        (struct.new_default $A)
       )
     )
     ;; Allocate with a non-default value, that can also be propagated.
     (drop
-      (struct.new $B
-        (i32.const 1)
-      )
-    )
-    (drop
       (struct.get $B 0
-        (ref.null $B)
+        (struct.new $B
+          (i32.const 1)
+        )
       )
     )
     ;; Never allocate, so no value is possible.
@@ -1453,7 +1423,9 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.set $null
-  ;; CHECK-NEXT:   (ref.null $null)
+  ;; CHECK-NEXT:   (array.new_default $null
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (ref.null any)
   ;; CHECK-NEXT:  )
@@ -1462,7 +1434,9 @@
   ;; CHECK-NEXT:    (block (result anyref)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (array.get $null
-  ;; CHECK-NEXT:       (ref.null $null)
+  ;; CHECK-NEXT:       (array.new_default $null
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -1471,21 +1445,28 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.set $something
-  ;; CHECK-NEXT:   (ref.null $something)
+  ;; CHECK-NEXT:   (array.new_default $something
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (array.get $something
-  ;; CHECK-NEXT:     (ref.null $something)
+  ;; CHECK-NEXT:     (array.new_default $something
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1499,38 +1480,51 @@
     )
     ;; Write a null to this array. Again, we can optimize.
     (array.set $null
-      (ref.null $null)
+      (array.new_default $null
+        (i32.const 10)
+      )
       (i32.const 0)
       (ref.null any)
     )
     (drop
       (ref.as_non_null
         (array.get $null
-          (ref.null $null)
+          (array.new_default $null
+            (i32.const 10)
+          )
           (i32.const 0)
         )
       )
     )
     ;; In $something we do actually write a value.
     (array.set $something
-      (ref.null $something)
+      (array.new_default $something
+        (i32.const 10)
+      )
       (i32.const 0)
       (struct.new $struct)
     )
     (drop
       (ref.as_non_null
         (array.get $something
-          (ref.null $something)
+          (array.new_default $something
+            (i32.const 10)
+          )
           (i32.const 0)
         )
       )
     )
-    ;; $something-child has nothing written to it, but it's parent does, so we
+    ;; $something-child has nothing written to it, but it's parent does. Still,
+    ;; no $something-child exists so we know this will trap.
     ;; do not optimize (but a better analysis might improve things).
     (drop
       (ref.as_non_null
         (array.get $something-child
-          (ref.null $something-child)
+          (ref.cast_static $something-child
+            (array.new_default $something
+              (i32.const 10)
+            )
+          )
           (i32.const 0)
         )
       )
@@ -1629,7 +1623,16 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $storage 0
-  ;; CHECK-NEXT:      (ref.null $storage)
+  ;; CHECK-NEXT:      (struct.new $storage
+  ;; CHECK-NEXT:       (block (result anyref)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (call $pass-through
+  ;; CHECK-NEXT:          (ref.null any)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null any)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null any)
@@ -1666,7 +1669,11 @@
       ;; Replace the allocation here with a read from the $storage struct, which
       ;; is written lower down, so this forms a loop, effectively.
       (struct.get $storage 0
-        (ref.null $storage)
+        (struct.new $storage
+          (call $pass-through
+            (global.get $x)
+          )
+        )
       )
     )
     (global.set $x
@@ -2397,15 +2404,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (block (result (ref null $struct))
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.cast_static $struct
-  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.cast_static $struct
+  ;; CHECK-NEXT:        (ref.null $struct)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null $struct)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2453,7 +2463,7 @@
         )
       )
     )
-    ;; Start with a null.
+    ;; Start with a null. This will definitely trap.
     (drop
       (struct.get $struct 0
         (ref.cast_static $struct
