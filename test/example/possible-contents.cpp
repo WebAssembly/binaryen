@@ -43,15 +43,24 @@ static void testPossibleContents() {
   assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantLiteral(i32Zero));
   assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::constantGlobal("global1", Type::i32));
   assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::i32));
-  assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::exactType(Type::anyref));
   assertNotEqualSymmetric(PossibleContents::none(), PossibleContents::many());
 
   assertEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantLiteral(i32Zero));
   assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantLiteral(f64One));
   assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::constantGlobal("global1", Type::i32));
   assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::exactType(Type::i32));
-  assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::exactType(Type::anyref));
   assertNotEqualSymmetric(PossibleContents::constantLiteral(i32Zero), PossibleContents::many());
+
+  assertEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::constantGlobal("global1", Type::i32));
+  assertNotEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::constantGlobal("global2", Type::i32));
+  assertNotEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::exactType(Type::i32));
+  assertNotEqualSymmetric(PossibleContents::constantGlobal("global1", Type::i32), PossibleContents::many());
+
+  assertEqualSymmetric(PossibleContents::exactType(Type::i32), PossibleContents::exactType(Type::i32));
+  assertNotEqualSymmetric(PossibleContents::exactType(Type::i32), PossibleContents::exactType(Type::anyref));
+  assertNotEqualSymmetric(PossibleContents::exactType(Type::i32), PossibleContents::many());
+
+  assertEqualSymmetric(PossibleContents::many(), PossibleContents::many());
 }
 
 static void testOracle() {
