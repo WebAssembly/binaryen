@@ -79,17 +79,16 @@ void dump(Location location) {
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
 struct FuncInfo {
-  // All the linkss we found in this function. Rarely are there duplicates
+  // All the links we found in this function. Rarely are there duplicates
   // in this list (say when writing to the same global location from another
   // global location), and we do not try to deduplicate here, just store them in
   // a plain array for now, which is faster (later, when we merge all the info
   // from the functions, we need to deduplicate anyhow).
-  // TODO rename to links
   std::vector<Link> links;
 
-  // All the roots of the graph, that is, places where we should mark a type as
-  // possible before starting the analysis. This includes struct.new, ref.func,
-  // etc. All possible contents in the rest of the graph flow from such places.
+  // All the roots of the graph, that is, places that begin containing some
+  // partcular content. That includes *.const, ref.func, struct.new, etc. All
+  // possible contents in the rest of the graph flow from such places.
   // The map here is of the root to the value beginning in it.
   std::unordered_map<Location, PossibleContents> roots;
 
@@ -190,13 +189,9 @@ struct LinkFinder
   }
 
   // Add links to make it possible to reach an expression's parent, which
-  // we need during the flow in special cases. See the comment on the |parent|
-  // field on the ExpressionLocation class for more details. FIXME comment
+  // we need during the flow in special cases. See the comment on |childParents|
+  // on ContentOracle for details.
   void addSpecialChildParentLink(Expression* child, Expression* parent) {
-    // The mechanism we use is to connect the main location (referred to in
-    // various other places potentially) to a new location that has the parent.
-    // The main location feeds values to the latter, and we can then use the
-    // parent in the main flow logic.
     info.childParents[child] = parent;
   }
 
@@ -296,7 +291,8 @@ struct LinkFinder
 
   void visitPop(Pop* curr) {
     // For now we only handle pops in a catch body, set visitTry(). Note that
-    // we've seen one so we can assert on this later.
+    // we've seen a pop so we can assert later on not having anything we cannot
+    // handle.
 #ifndef NDEBUG
     totalPops++;
 #endif
@@ -447,8 +443,9 @@ struct LinkFinder
     }
   }
 
-  // Creates a location for a null of a particular type. All nulls are roots as
-  // a value begins there, which we set up here.
+  // Creates a location for a null of a particular type and adds a root for it.
+  // Such roots are where the default value of an i32 local comes from, or the
+  // value in a ref.null.
   Location getNullLocation(Type type) {
     auto location = NullLocation{type};
     addRoot(location, Literal::makeZero(type));
@@ -457,7 +454,7 @@ struct LinkFinder
 
   // Iterates over a list of children and adds links as needed. The
   // target of the link is created using a function that is passed
-  // in which receives the index of the child.
+  // in, which receives the index of the child.
   void handleChildList(ExpressionList& operands,
                        std::function<Location(Index)> makeTarget) {
     Index i = 0;
@@ -471,23 +468,20 @@ struct LinkFinder
     }
   }
 
-  // Creation operations form the starting links from where data
-  // flows. We will create an ExpressionLocation for them when their
-  // parent uses them, as we do for all instructions, so nothing special
-  // needs to be done here, but we do need to create links from
-  // inputs - the initialization of their data - to the proper places.
   void visitStructNew(StructNew* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
     auto type = curr->type.getHeapType();
     if (curr->isWithDefault()) {
+      // Link the default values to the struct's fields.
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         info.links.push_back(
           {getNullLocation(fields[i].type), StructLocation{type, i}});
       }
     } else {
+      // Link the operands to the struct's fields.
       handleChildList(curr->operands, [&](Index i) {
         return StructLocation{type, i};
       });
@@ -498,10 +492,7 @@ struct LinkFinder
     if (curr->type == Type::unreachable) {
       return;
     }
-    // Note that if there is no initial value here then it is null, which is
-    // not something we need to connect.
     auto type = curr->type.getHeapType();
-    // TODO simplify if to avoid 2 push_backs
     if (curr->init) {
       info.links.push_back(
         {ExpressionLocation{curr->init, 0}, ArrayLocation{type}});
@@ -550,16 +541,13 @@ struct LinkFinder
       addSpecialChildParentLink(curr->value, curr);
     }
   }
-  // Array operations access the array's location.
+  // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
-      // We are not tracking references, and so we cannot properly analyze
-      // values read from them, and must assume the worst.
       addRoot(curr, curr->type);
       return;
     }
     if (isRelevant(curr->type)) {
-      // See StructGet comment.
       addSpecialChildParentLink(curr->ref, curr);
     }
   }
@@ -568,7 +556,6 @@ struct LinkFinder
       return;
     }
     if (isRelevant(curr->value->type)) {
-      // See StructSet comment.
       addSpecialChildParentLink(curr->ref, curr);
       addSpecialChildParentLink(curr->value, curr);
     }
@@ -609,9 +596,9 @@ struct LinkFinder
         }
       }
 
+#ifndef NDEBUG
       // This pop was in the position we can handle, note that (see visitPop
       // for details).
-#ifndef NDEBUG
       handledPops++;
 #endif
     }

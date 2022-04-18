@@ -560,8 +560,6 @@ private:
 
   // Internals for flow.
 
-  // In some cases we need to know the parent of an expression. This maps such
-  // children to their parents. TODO merge comments
   // In some cases we need to know the parent of the expression, like with GC
   // operations. Consider this:
   //
@@ -575,17 +573,9 @@ private:
   // no possible contents, and now it does, then we have StructLocations to
   // update. Likewise, when the second local.get is updated we must do the same,
   // but again which StructLocations we update depends on the ref passed to the
-  // struct.get. To handle such things, we set |parent| to the parent, and check
-  // for it during the flow. In the common case, however, where the parent does
-  // not matter, this field can be nullptr XXX.
-  //
-  // In practice we always create an ExpressionLocation with a nullptr parent
-  // for everything, so the local.gets above would each have two: one
-  // ExpressionLocation without a parent, that is used in the graph normally,
-  // and whose value flows into an ExpressionLocation with a parent equal to the
-  // struct.set. This is practical because normally we do not know the parent of
-  // each node as we traverse, so always adding a parent would make the graph-
-  // building logic more complicated.
+  // struct.get. To handle such things, we set add a childParent link, and then
+  // when we update the child we can handle any possible action regarding the
+  // parent.
   std::unordered_map<Expression*, Expression*> childParents;
 
   // A piece of work during the flow: A location and some content that is sent
@@ -604,8 +594,7 @@ private:
   std::unordered_set<Link> links;
 
   // We may add new links as we flow. Do so to a temporary structure on
-  // the side as we are iterating on |targets| here, which might be one of the
-  // lists we want to update.
+  // the side to avoid any aliasing as we work.
   std::vector<Link> newLinks;
 
   void addWork(const Work& work) {
