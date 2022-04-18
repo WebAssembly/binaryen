@@ -881,7 +881,7 @@ void ContentOracle::processWork(const Work& work) {
   auto& arrivingContents = work.second;
 
   if (arrivingContents.isNone()) {
-    // Nothing is arriving here at al.
+    // Nothing is arriving here at all.
     return;
   }
 
@@ -1169,7 +1169,7 @@ std::cout << '\n';
 if (contents.getType().isRef()) {
   std::cout << "content type " << contents.getType().getHeapType() << " : " << wasm.typeNames[contents.getType().getHeapType()].name << '\n';
 }
-std::cout << "intended type " << cast->getIntendedType() << " : " << wasm.typeNames[contents.getType().getHeapType()].name << '\n';
+std::cout << "intended type " << cast->getIntendedType() << " : " << wasm.typeNames[cast->getIntendedType()].name << '\n';
         bool isSubType =
           isMany ? false
                  : HeapType::isSubType(contents.getType().getHeapType(),

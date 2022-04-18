@@ -122,7 +122,7 @@ struct GUFAPass : public Pass {
         {
           auto values = oracle.getTypes(ExpressionLocation{curr, 0});
           std::cout << "curr:\n" << *curr << "..has values: ";
-          values.dump(std::cout);
+          values.dump(std::cout, getModule());
           std::cout << "\n\n";
         }
 #endif

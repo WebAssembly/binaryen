@@ -121,18 +121,26 @@ public:
     auto type = getType();
     auto otherType = other.getType();
 
+    // Special handling for nulls. Nulls are always equal to each other, even
+    // if their types differ.
     if (type.isRef() && otherType.isRef() && (isNull() || other.isNull())) {
-      // Special handling for nulls. Nulls are always equal to each other, even
-      // if their types differ.
-      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(), otherType.getHeapType()), Nullable);
-      if (!isNull() || !other.isNull()) {
-        // Only one of the two is a null. The result is a type, of the LUB.
+      // If only one is a null then the combination is to add nullability to this
+      // one. (This is correct both for a literal or for a type: if it was a
+      // literal then now we have either a literal or a null, so we do not
+      // have a single constant anymore).
+      if (!isNull()) {
         return applyIfDifferent(
-          PossibleContents(lub)
+          PossibleContents(Type(type.getHeapType(), Nullable))
+        );
+      }
+      if (!other.isNull()) {
+        return applyIfDifferent(
+          PossibleContents(Type(otherType.getHeapType(), Nullable))
         );
       }
 
       // Both are null. The result is a null, of the LUB.
+      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(), otherType.getHeapType()), Nullable);
       return applyIfDifferent(
         PossibleContents(Literal::makeNull(lub))
       );
@@ -262,7 +270,7 @@ public:
         auto h = t.getHeapType();
         o << " HT: " << h;
         if (wasm && wasm->typeNames.count(h)) {
-          o << ' ' << wasm->typeNames[h].name;
+          o << " $" << wasm->typeNames[h].name;
         }
         if (t.isNullable()) {
           o << " null";
