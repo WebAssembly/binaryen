@@ -71,7 +71,7 @@ struct GUFAPass : public Pass {
       }
 
       // Whether we can remove something (but not its children) without changing
-      // observable behavior.
+      // observable behavior or breaking validation.
       bool canRemove(Expression* curr) {
         if (!canRemoveStructurally(curr)) {
           return false;
@@ -80,8 +80,9 @@ struct GUFAPass : public Pass {
                   .hasUnremovableSideEffects();
       }
 
-      // Whether we can replcae something (but not its children) with an
-      // unreachable without changing observable behavior.
+      // Whether we can replace something (but not its children, we can keep
+      // then with drops) with an unreachable without changing observable
+      // behavior or breaking validation.
       bool canReplaceWithUnreachable(Expression* curr) {
         if (!canRemoveStructurally(curr)) {
           return false;
@@ -146,19 +147,6 @@ struct GUFAPass : public Pass {
         auto& wasm = *getModule();
         Builder builder(wasm);
 
-        auto replaceWithUnreachable = [&]() {
-          if (canReplaceWithUnreachable(curr)) {
-            replaceCurrent(getDroppedChildren(
-              curr, builder.makeUnreachable(), wasm, options));
-          } else {
-            // We can't remove this, but we can at least put an unreachable
-            // right after it.
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                                builder.makeUnreachable()));
-          }
-          optimized = true;
-        };
-
         if (type.isTuple()) {
           // TODO: tuple types.
           return;
@@ -171,6 +159,19 @@ struct GUFAPass : public Pass {
         }
 
         auto contents = oracle.getContents(ExpressionLocation{curr, 0});
+
+        auto replaceWithUnreachable = [&]() {
+          if (canReplaceWithUnreachable(curr)) {
+            replaceCurrent(getDroppedChildren(
+              curr, builder.makeUnreachable(), wasm, options));
+          } else {
+            // We can't remove this, but we can at least put an unreachable
+            // right after it.
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                                builder.makeUnreachable()));
+          }
+          optimized = true;
+        };
 
         if (contents.getType() == Type::unreachable) {
           // This cannot contain any possible value at all. It must be
@@ -186,20 +187,25 @@ struct GUFAPass : public Pass {
           return;
         }
 
+        // We have a constant here.
+        // TODO: Handle more than a constant, e.g., ExactType can help us
+        //       optimize in a ref.is for example - however, that may already
+        //       be handled by ContentOracle.
+
         if (contents.isNull() && curr->type.isNullable()) {
           // Null values are all identical, so just fix up the type here, as
-          // we can change the type to anyhting to fit the IR.
-          // (If curr's type is not null, then we would trap before getitng to
-          // here, and that is handled lower down.)
+          // we can change the type to anything to fit the IR.
+          // (If curr's type is not nullable, then the code will trap at
+          // runtime; we handle that below.)
           // TODO: would emitting a more specific null be useful when valid?
           contents = PossibleContents(Literal::makeNull(curr->type));
         }
 
-        // This is a constant value that we should optimize to.
         auto* c = contents.makeExpression(wasm);
         // We can only place the constant value here if it has the right
         // type. For example, a block may return (ref any), that is, not allow
-        // a null, but in practice only a null may flow there.
+        // a null, but in practice only a null may flow there (if it goes
+        // through casts that will trap at runtime).
         if (Type::isSubType(c->type, curr->type)) {
           if (canRemove(curr)) {
             replaceCurrent(getDroppedChildren(curr, c, wasm, options));
@@ -217,8 +223,8 @@ struct GUFAPass : public Pass {
         }
       }
 
-      // TODO: if an instruction would trap on null, like struct.get, we could
-      //       remove it here if it has no possible contents. that information is
+      // TODO: If an instruction would trap on null, like struct.get, we could
+      //       remove it here if it has no possible contents. That information is
       //       present in OptimizeInstructions where it removes redundant
       //       ref.as_non_null, so maybe there is a way to share that
 
