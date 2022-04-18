@@ -1531,7 +1531,7 @@ struct Asyncify : public Pass {
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
     auto verbose =
       runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
-    auto sideModule =
+    auto relocatable =
       runner->options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     removeList = handleBracketingOperators(removeList);
@@ -1567,7 +1567,7 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module, sideModule);
+    addGlobals(module, relocatable);
 
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
