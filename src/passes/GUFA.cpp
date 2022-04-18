@@ -186,6 +186,15 @@ struct GUFAPass : public Pass {
           return;
         }
 
+        if (values.isNull() && curr->type.isNullable()) {
+          // Null values are all identical, so just fix up the type here, as
+          // we can change the type to anyhting to fit the IR.
+          // (If curr's type is not null, then we would trap before getitng to
+          // here, and that is handled lower down.)
+          // TODO: would emitting a more specific null be useful when valid?
+          values = PossibleContents(Literal::makeNull(curr->type));
+        }
+
         // This is a constant value that we should optimize to.
         auto* c = values.makeExpression(wasm);
         // We can only place the constant value here if it has the right
@@ -203,8 +212,7 @@ struct GUFAPass : public Pass {
         } else {
           // The type is not compatible: we cannot place |c| in this location,
           // even though we have proven it is the only value possible here.
-          // That means no value is possible and this code is unreachable.
-          // TODO add test
+          // That means no value is possible and this code is unreachable
           replaceWithUnreachable();
         }
       }

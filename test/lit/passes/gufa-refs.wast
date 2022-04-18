@@ -398,7 +398,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -935,10 +935,10 @@
 
 ;; Struct fields.
 (module
-  ;; CHECK:      (type $struct (struct_subtype  data))
-  (type $struct (struct_subtype data))
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
 
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
   ;; CHECK:      (type $parent (struct_subtype (field (mut (ref $struct))) data))
   (type $parent (struct_subtype (field (mut (ref $struct))) data))
   (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $struct))) $parent))
@@ -1045,6 +1045,96 @@
         (ref.null $parent)
       )
     )
+  )
+
+  ;; CHECK:      (func $nulls (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null $parent)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block (result anyref)
+  ;; CHECK-NEXT:      (br $block
+  ;; CHECK-NEXT:       (ref.null any)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $parent))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block0 (result (ref null $child))
+  ;; CHECK-NEXT:      (br $block0
+  ;; CHECK-NEXT:       (ref.null $child)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $child))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block1 (result (ref null $child))
+  ;; CHECK-NEXT:      (br $block1
+  ;; CHECK-NEXT:       (block (result (ref null $child))
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.cast_static $child
+  ;; CHECK-NEXT:          (ref.null $parent)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null $child)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $child)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nulls
+    ;; Leave null constants alone.
+    (drop
+      (ref.null $parent)
+    )
+    ;; Send a null to the block, which is the only value exiting, so we can
+    ;; optimize here.
+    (drop
+      (block $block (result (ref null any))
+        (br $block
+          (ref.null any)
+        )
+        (unreachable)
+      )
+    )
+    ;; Send a more specific type. We should emit a valid null constant.
+    (drop
+      (block $block (result (ref null $parent))
+        (br $block
+          (ref.null $child)
+        )
+        (unreachable)
+      )
+    )
+    ;; Send a less specific type, via a cast. But all nulls are identical and
+    ;; ref.cast passes nulls through, so this is ok.
+    (drop
+      (block $block (result (ref null $child))
+        (br $block
+          (ref.cast_static $child
+            (ref.null $parent)
+          )
+        )
+        (unreachable)
+      )
+    )
+    ;; TODO: similar tests with non-null values.
   )
 )
 
@@ -1791,10 +1881,10 @@
 (module
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
-
-  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
 
   ;; CHECK:      (tag $nothing (param anyref))
   (tag $nothing (param (ref null any)))
@@ -1820,11 +1910,11 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (block (result anyref)
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (ref.null any)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2045,13 +2135,13 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (block (result anyref)
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (tuple.extract 0
   ;; CHECK-NEXT:         (local.get $0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (ref.null any)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
