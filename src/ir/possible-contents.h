@@ -133,7 +133,6 @@ public:
           PossibleContents(Type(type.getHeapType(), Nullable))
         );
       }
-      // XXX Test this now XXX
       if (!other.isNull()) {
         return applyIfDifferent(
           PossibleContents(Type(otherType.getHeapType(), Nullable))
