@@ -1,4 +1,4 @@
-//#define POSSIBLE_TYPES_DEBUG 2
+//#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -30,7 +30,7 @@ namespace {
 
 #ifndef NDEBUG
 void disallowDuplicates(std::vector<Location>& targets) {
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::unordered_set<Location> uniqueTargets;
   for (const auto& target : targets) {
     uniqueTargets.insert(target);
@@ -40,7 +40,7 @@ void disallowDuplicates(std::vector<Location>& targets) {
 }
 #endif
 
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
     std::cout << "  exprloc \n" << *loc->expr << '\n';
@@ -89,7 +89,7 @@ struct FuncInfo {
 
   // All the roots of the graph, that is, places where we should mark a type as
   // possible before starting the analysis. This includes struct.new, ref.func,
-  // etc. All possible types in the rest of the graph flow from such places.
+  // etc. All possible contents in the rest of the graph flow from such places.
   // The map here is of the root to the value beginning in it.
   std::unordered_map<Location, PossibleContents> roots;
 
@@ -682,7 +682,7 @@ struct ConnectionFinder
 } // anonymous namespace
 
 void ContentOracle::analyze() {
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
 
@@ -701,7 +701,7 @@ void ContentOracle::analyze() {
       finder.walkFunctionInModule(func, &wasm);
     });
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "single phase\n";
 #endif
 
@@ -729,10 +729,10 @@ void ContentOracle::analyze() {
   // Merge the function information into a single large graph that represents
   // the entire program all at once. First, gather all the connections from all
   // the functions. We do so into a set, which deduplicates everythings.
-  // map of the possible types at each location.
+  // map of the possible contents at each location.
   std::unordered_map<Location, PossibleContents> roots;
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "merging phase\n";
 #endif
 
@@ -751,7 +751,7 @@ void ContentOracle::analyze() {
   // We no longer need the function-level info.
   analysis.map.clear();
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "external phase\n";
 #endif
 
@@ -786,7 +786,7 @@ void ContentOracle::analyze() {
     }
   }
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "func phase\n";
 #endif
 
@@ -804,7 +804,7 @@ void ContentOracle::analyze() {
     }
   }
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "struct phase\n";
 #endif
 
@@ -812,7 +812,7 @@ void ContentOracle::analyze() {
     subTypes = std::make_unique<SubTypes>(wasm);
   }
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "DAG phase\n";
 #endif
 
@@ -828,13 +828,13 @@ void ContentOracle::analyze() {
   }
 #endif
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "roots phase\n";
 #endif
 
   // Set up the roots, which are the starting state for the flow analysis.
   for (const auto& [location, value] : roots) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  init root\n";
     dump(location);
     value.dump(std::cout, &wasm);
@@ -847,7 +847,7 @@ void ContentOracle::analyze() {
 
   updateNewConnections();
 
-#ifdef POSSIBLE_TYPES_DEBUG
+#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "flow phase\n";
 #endif
 
@@ -859,7 +859,7 @@ void ContentOracle::analyze() {
     //std::cout << "work left: " << workQueue.size() << '\n';
     auto work = workQueue.pop();
 
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "\npop work item\n";
     dump(work.first);
     std::cout << " with contents \n";
@@ -885,9 +885,9 @@ void ContentOracle::processWork(const Work& work) {
     return;
   }
 
-  auto& contents = flowInfoMap[location].types;
+  auto& contents = flowInfoMap[location].contents;
 
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "\nprocessWork src:\n";
   dump(location);
   std::cout << "  arriving:\n";
@@ -908,7 +908,7 @@ void ContentOracle::processWork(const Work& work) {
     return;
   }
 
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "  something changed!\n";
   contents.dump(std::cout, &wasm);
   std::cout << "\nat ";
@@ -932,7 +932,7 @@ void ContentOracle::processWork(const Work& work) {
         //       may be more refined. But other passes will handle that in
         //       general.
 
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
         std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
         contents.dump(std::cout, &wasm);
         std::cout << '\n';
@@ -950,7 +950,7 @@ void ContentOracle::processWork(const Work& work) {
   // We made an actual change to this location. Add its targets to the work
   // queue.
   for (auto& target : flowInfoMap[location].targets) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  send to target\n";
     dump(target);
 #endif
@@ -970,7 +970,7 @@ void ContentOracle::processWork(const Work& work) {
       // special manner.
       auto* parent = iter->second;
 
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  special, parent:\n" << *parent << '\n';
 #endif
 
@@ -1009,7 +1009,7 @@ void ContentOracle::processWork(const Work& work) {
         if (!heapLoc) {
           return;
         }
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
         std::cout << "    add special read\n";
 #endif
         auto targetLoc = ExpressionLocation{target, 0};
@@ -1026,12 +1026,12 @@ void ContentOracle::processWork(const Work& work) {
         //     (struct.get ..)
         //   )
         // TODO unrecurse with a stack, although such recursion will be rare
-        addWork({targetLoc, flowInfoMap[*heapLoc].types});
+        addWork({targetLoc, flowInfoMap[*heapLoc].contents});
       };
 
       // Given the old and new contents at the current target, add reads to
       // it based on the latest changes. The reads are sent to |parent|,
-      // which is either a struct.get or an array.get. That is, new types
+      // which is either a struct.get or an array.get. That is, new contents
       // are possible for the reference, which means we need to read from
       // more possible heap locations. This receives a function that gets a
       // heap type and returns a location, which we will call on all
@@ -1074,7 +1074,7 @@ void ContentOracle::processWork(const Work& work) {
         [&](std::function<std::optional<Location>(HeapType)> getLocation,
             Expression* ref,
             Expression* value) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    add special writes\n";
 #endif
           // We could set up connections here, but as we get to this code in
@@ -1084,8 +1084,8 @@ void ContentOracle::processWork(const Work& work) {
           // the ref or the value was just updated: simply figure out the
           // values being written in the current state (which is after the
           // current update) and forward them.
-          auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].types;
-          auto valueContents = flowInfoMap[ExpressionLocation{value, 0}].types;
+          auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].contents;
+          auto valueContents = flowInfoMap[ExpressionLocation{value, 0}].contents;
           if (refContents.isNone()) {
             return;
           }
@@ -1173,7 +1173,7 @@ void ContentOracle::processWork(const Work& work) {
           //     (ref.cast ..)
           //   )
           // TODO unrecurse with a stack, although such recursion will be rare
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    ref.cast passing through\n";
 #endif
           addWork({ExpressionLocation{parent, 0}, contents});
@@ -1190,7 +1190,7 @@ void ContentOracle::processWork(const Work& work) {
 void ContentOracle::updateNewConnections() {
   // Update any new connections.
   for (auto newConnection : newConnections) {
-#if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "\nnewConnection:\n";
     dump(newConnection.from);
     dump(newConnection.to);

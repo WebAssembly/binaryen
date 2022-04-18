@@ -120,9 +120,9 @@ struct GUFAPass : public Pass {
       void visitExpression(Expression* curr) {
 #if 0
         {
-          auto values = oracle.getTypes(ExpressionLocation{curr, 0});
-          std::cout << "curr:\n" << *curr << "..has values: ";
-          values.dump(std::cout, getModule());
+          auto contents = oracle.getTypes(ExpressionLocation{curr, 0});
+          std::cout << "curr:\n" << *curr << "..has contents: ";
+          contents.dump(std::cout, getModule());
           std::cout << "\n\n";
         }
 #endif
@@ -170,33 +170,33 @@ struct GUFAPass : public Pass {
           return;
         }
 
-        auto values = oracle.getTypes(ExpressionLocation{curr, 0});
+        auto contents = oracle.getContents(ExpressionLocation{curr, 0});
 
-        if (values.getType() == Type::unreachable) {
+        if (contents.getType() == Type::unreachable) {
           // This cannot contain any possible value at all. It must be
           // unreachable code.
           replaceWithUnreachable();
           return;
         }
 
-        if (!values.isConstant()) {
+        if (!contents.isConstant()) {
           return;
         }
         if (!shouldOptimizeToConstant(curr)) {
           return;
         }
 
-        if (values.isNull() && curr->type.isNullable()) {
+        if (contents.isNull() && curr->type.isNullable()) {
           // Null values are all identical, so just fix up the type here, as
           // we can change the type to anyhting to fit the IR.
           // (If curr's type is not null, then we would trap before getitng to
           // here, and that is handled lower down.)
           // TODO: would emitting a more specific null be useful when valid?
-          values = PossibleContents(Literal::makeNull(curr->type));
+          contents = PossibleContents(Literal::makeNull(curr->type));
         }
 
         // This is a constant value that we should optimize to.
-        auto* c = values.makeExpression(wasm);
+        auto* c = contents.makeExpression(wasm);
         // We can only place the constant value here if it has the right
         // type. For example, a block may return (ref any), that is, not allow
         // a null, but in practice only a null may flow there.
@@ -218,7 +218,7 @@ struct GUFAPass : public Pass {
       }
 
       // TODO: if an instruction would trap on null, like struct.get, we could
-      //       remove it here if it has no possible types. that information is
+      //       remove it here if it has no possible contents. that information is
       //       present in OptimizeInstructions where it removes redundant
       //       ref.as_non_null, so maybe there is a way to share that
 

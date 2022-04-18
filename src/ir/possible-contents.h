@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_possible_types_h
-#define wasm_ir_possible_types_h
+#ifndef wasm_ir_possible_contents_h
+#define wasm_ir_possible_contents_h
 
 #include <variant>
 
@@ -29,18 +29,20 @@ namespace wasm {
 
 // Similar to PossibleConstantValues, but considers more types of contents.
 // Specifically, this can also track types, making this a variant over:
-//  * "None": No possible value.
-//  * Exactly one possible constant value.
-//  * "ExactType": Exactly one possible type (but the value of that type is not
-//  constant).
-//    This is an *exact* type as regards the heap type: this type and no subtype
-//    (if subtypes are possible here than we will be in the "Many" state). As
-//    regards nullability, if this is nullable then the value may be null.
-//    * TODO: add ConeType, which would include subtypes (but may still be more
-//            refined than the type declared in the IR)
-//  * "Many" - either multiple constant values for one type, or multiple types.
+//  * None: No possible value.
+//  * Literal: One possible constant value like i32(42)
+//  * ImmutableGlobal: The name of an immutable global whose value is here. We
+//    do not know that value at compile time, but we know it is equal to the
+//    global.
+//  * ExactType: Any possible value of a specific exact type. For example,
+//               ExactType($struct) means the value is of type $struct but not
+//               any subtype of it.
+//               If the type here is nullable then null is also allowed.
+//               TODO: add ConeType, which would include subtypes
+//  * Many: None of the above, so we must assume many things are possible here,
+//          more than we are willing to track, and must assume the worst in the
+//          calling code.
 struct PossibleContents {
-  // No possible value.
   struct None : public std::monostate {};
 
   struct ImmutableGlobal {
@@ -51,8 +53,6 @@ struct PossibleContents {
     }
   };
 
-  // Many possible values, and so this represents unknown data: we cannot infer
-  // anything there.
   struct Many : public std::monostate {};
 
   using Variant = std::variant<None, Literal, ImmutableGlobal, Type, Many>;
@@ -83,9 +83,8 @@ public:
     return !(*this == other);
   }
 
-  // Combine the information in a given PossibleContents to this one. This
-  // is the same as if we have called note*() on us with all the history of
-  // calls to that other object.
+  // Combine the information in a given PossibleContents to this one. The
+  // contents here will then include whatever content was possible in |other|.
   //
   // Returns whether we changed anything.
   bool combine(const PossibleContents& other) {
@@ -152,8 +151,6 @@ public:
 
     // The values differ, but if they share the same type then we can set to
     // that.
-    // TODO: what if one is nullable and the other isn't? Should we be tracking
-    //       a heap type here, really?
     if (otherType == type) {
       if (isExactType()) {
         // We were already marked as an arbitrary value of this type.
@@ -235,16 +232,18 @@ public:
   }
 
   size_t hash() const {
-    if (isNone()) {
-      return 0; // TODO: better
+    // Encode this using three bits for the variant type, then the rest of the
+    // contents.
+    if (isNone()) {      
+      return 0;
     } else if (isConstantLiteral()) {
-      return std::hash<Literal>()(getConstantLiteral());
+      return size_t(1) | (std::hash<Literal>()(getConstantLiteral()) << 3);
     } else if (isConstantGlobal()) {
-      return std::hash<Name>()(getConstantGlobal());
+      return size_t(2) | (std::hash<Name>()(getConstantGlobal()) << 3);
     } else if (isExactType()) {
-      return std::hash<Type>()(getType());
+      return size_t(3) | (std::hash<Type>()(getType()) << 3);
     } else if (isMany()) {
-      return 1;
+      return 4;
     } else {
       WASM_UNREACHABLE("bad variant");
     }
@@ -285,9 +284,9 @@ public:
   }
 };
 
-// *Location structs describe particular locations where types can appear.
+// *Location structs describe particular locations where content can appear.
 
-// The location of a specific expression, referring to the possible types
+// The location of a specific expression, referring to the possible content
 // it can contain (which may be more precise than expr->type).
 struct ExpressionLocation {
   Expression* expr;
@@ -397,7 +396,7 @@ struct NullLocation {
   }
 };
 
-// A location is a variant over all the possible types of locations that we
+// A location is a variant over all the possible flavors of locations that we
 // have.
 using Location = std::variant<ExpressionLocation,
                               ResultLocation,
@@ -411,10 +410,9 @@ using Location = std::variant<ExpressionLocation,
                               TagLocation,
                               NullLocation>;
 
-// A connection indicates a flow of types from one location to another. For
+// A connection indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a connection from a location of LocalTypes to a location of
-// ResultTypes.
+// we have a connection from a LocalLocaiton to a ResultLocation.
 struct Connection {
   Location from;
   Location to;
@@ -434,7 +432,7 @@ template<> struct hash<wasm::PossibleContents> {
   }
 };
 
-// Define hashes of all the *Location types so that Location itself is hashable
+// Define hashes of all the *Location flavors so that Location itself is hashable
 // and we can use it in unordered maps and sets.
 
 template<> struct hash<wasm::ExpressionLocation> {
@@ -522,13 +520,13 @@ template<> struct hash<wasm::Connection> {
 
 namespace wasm {
 
-// Analyze the entire wasm file to find which types are possible in which
-// locations. This assumes a closed world and starts from struct.new/array.new
-// instructions, and propagates them to the locations they reach. After the
-// analysis the user of this class can ask which types are possible at any
+// Analyze the entire wasm file to find which contents are possible in which
+// locations. This assumes a closed world and starts from roots - newly created
+// values - and propagates them to the locations they reach. After the
+// analysis the user of this class can ask which contents are possible at any
 // location.
 //
-// TODO: refactor into a separate file if other passes want it too.
+// TODO: refactor the internals out of this header.
 class ContentOracle {
   Module& wasm;
 
@@ -537,24 +535,24 @@ class ContentOracle {
 public:
   ContentOracle(Module& wasm) : wasm(wasm) { analyze(); }
 
-  // Get the types possible at a location.
-  PossibleContents getTypes(Location location) {
+  // Get the contents possible at a location.
+  PossibleContents getContents(Location location) {
     auto iter = flowInfoMap.find(location);
     if (iter == flowInfoMap.end()) {
       return {};
     }
-    return iter->second.types;
+    return iter->second.contents;
   }
 
 private:
-  // The information needed during and after flowing the types through the
+  // The information needed during and after flowing the contents through the
   // graph. TODO: do not keep this around forever, delete the stuff we only need
   // during the flow after the flow.
   struct LocationInfo {
-    // The types possible at this location.
-    PossibleContents types;
+    // The contents possible at this location.
+    PossibleContents contents;
 
-    // The targets to which this sends types.
+    // The targets to which this sends contents.
     std::vector<Location> targets;
   };
 
@@ -623,4 +621,4 @@ private:
 
 } // namespace wasm
 
-#endif // wasm_ir_possible_types_h
+#endif // wasm_ir_possible_contents_h
