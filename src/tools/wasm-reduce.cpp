@@ -406,7 +406,7 @@ struct Reducer
 
   // Returns a random number in the range [0, max). This is deterministic given
   // all the previous work done in the reducer.
-  bool deterministicRandom(size_t max) {
+  size_t deterministicRandom(size_t max) {
     assert(max > 0);
     return decisionCounter % max;
   }
@@ -893,7 +893,7 @@ struct Reducer
     bool justReduced = true;
     // Start from a new place each time.
     size_t base = deterministicRandom(numFuncs);
-    std::cerr << "|    try to remove functions (base: " << base << ")\n";
+    std::cerr << "|    try to remove functions (base: " << base << ", decisionCounter: " << decisionCounter << ", numFuncs " << numFuncs << ")\n";
     for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
       if (!justReduced &&
