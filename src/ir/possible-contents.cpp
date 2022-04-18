@@ -79,13 +79,13 @@ void dump(Location location) {
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
 struct FuncInfo {
-  // All the connections we found in this function. Rarely are there duplicates
+  // All the linkss we found in this function. Rarely are there duplicates
   // in this list (say when writing to the same global location from another
   // global location), and we do not try to deduplicate here, just store them in
   // a plain array for now, which is faster (later, when we merge all the info
   // from the functions, we need to deduplicate anyhow).
   // TODO rename to links
-  std::vector<Connection> connections;
+  std::vector<Link> links;
 
   // All the roots of the graph, that is, places where we should mark a type as
   // possible before starting the analysis. This includes struct.new, ref.func,
@@ -97,11 +97,11 @@ struct FuncInfo {
   std::unordered_map<Expression*, Expression*> childParents;
 };
 
-struct ConnectionFinder
-  : public PostWalker<ConnectionFinder, OverriddenVisitor<ConnectionFinder>> {
+struct LinkFinder
+  : public PostWalker<LinkFinder, OverriddenVisitor<LinkFinder>> {
   FuncInfo& info;
 
-  ConnectionFinder(FuncInfo& info) : info(info) {}
+  LinkFinder(FuncInfo& info) : info(info) {}
 
   bool isRelevant(Type type) {
     if (type == Type::unreachable || type == Type::none) {
@@ -154,7 +154,7 @@ struct ConnectionFinder
       curr, [&](Name target, Expression* value) {
         if (value) {
           for (Index i = 0; i < value->type.size(); i++) {
-            info.connections.push_back(
+            info.links.push_back(
               {ExpressionLocation{value, i},
                BranchLocation{getFunction(), target, i}});
           }
@@ -168,7 +168,7 @@ struct ConnectionFinder
     if (isRelevant(curr->type)) {
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
-          info.connections.push_back({BranchLocation{getFunction(), target, i},
+          info.links.push_back({BranchLocation{getFunction(), target, i},
                                       ExpressionLocation{curr, i}});
         }
       });
@@ -183,13 +183,13 @@ struct ConnectionFinder
       // both cases.
       assert(child->type.size() == parent->type.size());
       for (Index i = 0; i < child->type.size(); i++) {
-        info.connections.push_back(
+        info.links.push_back(
           {ExpressionLocation{child, i}, ExpressionLocation{parent, i}});
       }
     }
   }
 
-  // Add connections to make it possible to reach an expression's parent, which
+  // Add links to make it possible to reach an expression's parent, which
   // we need during the flow in special cases. See the comment on the |parent|
   // field on the ExpressionLocation class for more details. FIXME comment
   void addSpecialChildParentLink(Expression* child, Expression* parent) {
@@ -335,7 +335,7 @@ struct ConnectionFinder
   void visitLocalGet(LocalGet* curr) {
     if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->type.size(); i++) {
-        info.connections.push_back(
+        info.links.push_back(
           {LocalLocation{getFunction(), curr->index, i},
            ExpressionLocation{curr, i}});
       }
@@ -346,11 +346,11 @@ struct ConnectionFinder
       return;
     }
     for (Index i = 0; i < curr->value->type.size(); i++) {
-      info.connections.push_back(
+      info.links.push_back(
         {ExpressionLocation{curr->value, i},
          LocalLocation{getFunction(), curr->index, i}});
       if (curr->isTee()) {
-        info.connections.push_back(
+        info.links.push_back(
           {ExpressionLocation{curr->value, i}, ExpressionLocation{curr, i}});
       }
     }
@@ -359,18 +359,18 @@ struct ConnectionFinder
   // Globals read and write from their location.
   void visitGlobalGet(GlobalGet* curr) {
     if (isRelevant(curr->type)) {
-      info.connections.push_back(
+      info.links.push_back(
         {GlobalLocation{curr->name}, ExpressionLocation{curr, 0}});
     }
   }
   void visitGlobalSet(GlobalSet* curr) {
     if (isRelevant(curr->value->type)) {
-      info.connections.push_back(
+      info.links.push_back(
         {ExpressionLocation{curr->value, 0}, GlobalLocation{curr->name}});
     }
   }
 
-  // Iterates over a list of children and adds connections to parameters
+  // Iterates over a list of children and adds links to parameters
   // and results as needed. The param/result functions receive the index
   // and create the proper location for it.
   template<typename T>
@@ -380,7 +380,7 @@ struct ConnectionFinder
     Index i = 0;
     for (auto* operand : curr->operands) {
       if (isRelevant(operand->type)) {
-        info.connections.push_back(
+        info.links.push_back(
           {ExpressionLocation{operand, 0}, makeParamLocation(i)});
       }
       i++;
@@ -389,7 +389,7 @@ struct ConnectionFinder
     // Add results, if anything flows out.
     for (Index i = 0; i < curr->type.size(); i++) {
       if (isRelevant(curr->type[i])) {
-        info.connections.push_back(
+        info.links.push_back(
           {makeResultLocation(i), ExpressionLocation{curr, i}});
       }
     }
@@ -401,7 +401,7 @@ struct ConnectionFinder
       for (Index i = 0; i < results.size(); i++) {
         auto result = results[i];
         if (isRelevant(result)) {
-          info.connections.push_back(
+          info.links.push_back(
             {makeResultLocation(i), ResultLocation{getFunction(), i}});
         }
       }
@@ -455,8 +455,8 @@ struct ConnectionFinder
     return location;
   }
 
-  // Iterates over a list of children and adds connections as needed. The
-  // target of the connection is created using a function that is passed
+  // Iterates over a list of children and adds links as needed. The
+  // target of the link is created using a function that is passed
   // in which receives the index of the child.
   void handleChildList(ExpressionList& operands,
                        std::function<Location(Index)> makeTarget) {
@@ -464,17 +464,17 @@ struct ConnectionFinder
     for (auto* operand : operands) {
       assert(!operand->type.isTuple());
       if (isRelevant(operand->type)) {
-        info.connections.push_back(
+        info.links.push_back(
           {ExpressionLocation{operand, 0}, makeTarget(i)});
       }
       i++;
     }
   }
 
-  // Creation operations form the starting connections from where data
+  // Creation operations form the starting links from where data
   // flows. We will create an ExpressionLocation for them when their
   // parent uses them, as we do for all instructions, so nothing special
-  // needs to be done here, but we do need to create connections from
+  // needs to be done here, but we do need to create links from
   // inputs - the initialization of their data - to the proper places.
   void visitStructNew(StructNew* curr) {
     if (curr->type == Type::unreachable) {
@@ -484,7 +484,7 @@ struct ConnectionFinder
     if (curr->isWithDefault()) {
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
-        info.connections.push_back(
+        info.links.push_back(
           {getNullLocation(fields[i].type), StructLocation{type, i}});
       }
     } else {
@@ -503,10 +503,10 @@ struct ConnectionFinder
     auto type = curr->type.getHeapType();
     // TODO simplify if to avoid 2 push_backs
     if (curr->init) {
-      info.connections.push_back(
+      info.links.push_back(
         {ExpressionLocation{curr->init, 0}, ArrayLocation{type}});
     } else {
-      info.connections.push_back(
+      info.links.push_back(
         {getNullLocation(type.getArray().element.type), ArrayLocation{type}});
     }
     addRoot(curr, curr->type);
@@ -604,7 +604,7 @@ struct ConnectionFinder
       assert(pop->type.size() == params.size());
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
-          info.connections.push_back(
+          info.links.push_back(
             {TagLocation{tag, i}, ExpressionLocation{pop, i}});
         }
       }
@@ -624,7 +624,7 @@ struct ConnectionFinder
 
     auto tag = curr->tag;
     for (Index i = 0; i < curr->operands.size(); i++) {
-      info.connections.push_back(
+      info.links.push_back(
         {ExpressionLocation{operands[i], 0}, TagLocation{tag, i}});
     }
   }
@@ -633,14 +633,14 @@ struct ConnectionFinder
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->operands.size(); i++) {
-        info.connections.push_back({ExpressionLocation{curr->operands[i], 0},
+        info.links.push_back({ExpressionLocation{curr->operands[i], 0},
                                     ExpressionLocation{curr, i}});
       }
     }
   }
   void visitTupleExtract(TupleExtract* curr) {
     if (isRelevant(curr->type)) {
-      info.connections.push_back({ExpressionLocation{curr->tuple, curr->index},
+      info.links.push_back({ExpressionLocation{curr->tuple, curr->index},
                                   ExpressionLocation{curr, 0}});
     }
   }
@@ -648,7 +648,7 @@ struct ConnectionFinder
   void addResult(Expression* value) {
     if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
-        info.connections.push_back(
+        info.links.push_back(
           {ExpressionLocation{value, i}, ResultLocation{getFunction(), i}});
       }
     }
@@ -663,7 +663,7 @@ struct ConnectionFinder
         Index j = 0;
         for (auto t : curr->getLocalType(i)) {
           if (t.isDefaultable()) {
-            info.connections.push_back(
+            info.links.push_back(
               {getNullLocation(t), LocalLocation{curr, i, j}});
           }
           j++;
@@ -688,7 +688,7 @@ void ContentOracle::analyze() {
 
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     wasm, [&](Function* func, FuncInfo& info) {
-      ConnectionFinder finder(info);
+      LinkFinder finder(info);
 
       if (func->imported()) {
         // Imports return unknown values.
@@ -708,7 +708,7 @@ void ContentOracle::analyze() {
   // Also walk the global module code, adding it to the map as a function of
   // null.
   auto& globalInfo = analysis.map[nullptr];
-  ConnectionFinder finder(globalInfo);
+  LinkFinder finder(globalInfo);
   finder.walkModuleCode(&wasm);
 
   // Connect global init values (which we've just processed, as part of the
@@ -721,13 +721,13 @@ void ContentOracle::analyze() {
     }
     auto* init = global->init;
     if (finder.isRelevant(init->type)) {
-      globalInfo.connections.push_back(
+      globalInfo.links.push_back(
         {ExpressionLocation{init, 0}, GlobalLocation{global->name}});
     }
   }
 
   // Merge the function information into a single large graph that represents
-  // the entire program all at once. First, gather all the connections from all
+  // the entire program all at once. First, gather all the links from all
   // the functions. We do so into a set, which deduplicates everythings.
   // map of the possible contents at each location.
   std::unordered_map<Location, PossibleContents> roots;
@@ -737,8 +737,8 @@ void ContentOracle::analyze() {
 #endif
 
   for (auto& [func, info] : analysis.map) {
-    for (auto& connection : info.connections) {
-      connections.insert(connection);
+    for (auto& link : info.links) {
+      links.insert(link);
     }
     for (auto& [root, value] : info.roots) {
       roots[root] = value;
@@ -795,11 +795,11 @@ void ContentOracle::analyze() {
   // TODO: find which functions are even taken by reference
   for (auto& func : wasm.functions) {
     for (Index i = 0; i < func->getParams().size(); i++) {
-      connections.insert({SignatureParamLocation{func->type, i},
+      links.insert({SignatureParamLocation{func->type, i},
                           LocalLocation{func.get(), i, 0}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
-      connections.insert({ResultLocation{func.get(), i},
+      links.insert({ResultLocation{func.get(), i},
                           SignatureResultLocation{func->type, i}});
     }
   }
@@ -816,9 +816,9 @@ void ContentOracle::analyze() {
   std::cout << "DAG phase\n";
 #endif
 
-  // Build the flow info. First, note the connection targets.
-  for (auto& connection : connections) {
-    flowInfoMap[connection.from].targets.push_back(connection.to);
+  // Build the flow info. First, note the link targets.
+  for (auto& link : links) {
+    flowInfoMap[link.from].targets.push_back(link.to);
   }
 
 #ifndef NDEBUG
@@ -845,7 +845,7 @@ void ContentOracle::analyze() {
     addWork({location, value});
   }
 
-  updateNewConnections();
+  updateNewLinks();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "flow phase\n";
@@ -869,7 +869,7 @@ void ContentOracle::analyze() {
 
     processWork(work);
 
-    updateNewConnections();
+    updateNewLinks();
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
@@ -1001,7 +1001,7 @@ void ContentOracle::processWork(const Work& work) {
         return {refContents.getType().getHeapType()};
       };
 
-      // Given a heap location, add a connection from that location to an
+      // Given a heap location, add a link from that location to an
       // expression that reads from it (e.g. from a StructLocation to a
       // struct.get).
       auto readFromHeap = [&](std::optional<Location> heapLoc,
@@ -1014,11 +1014,11 @@ void ContentOracle::processWork(const Work& work) {
 #endif
         auto targetLoc = ExpressionLocation{target, 0};
 
-        // Add this to the graph if it is an entirely new connection.
-        auto newConnection = Connection{*heapLoc, targetLoc};
-        if (connections.count(newConnection) == 0) {
-          newConnections.push_back(newConnection);
-          connections.insert(newConnection);
+        // Add this to the graph if it is an entirely new link.
+        auto newLink = Link{*heapLoc, targetLoc};
+        if (links.count(newLink) == 0) {
+          newLinks.push_back(newLink);
+          links.insert(newLink);
         }
 
         // Recurse: the parent may also be a special child, e.g.
@@ -1035,7 +1035,7 @@ void ContentOracle::processWork(const Work& work) {
       // are possible for the reference, which means we need to read from
       // more possible heap locations. This receives a function that gets a
       // heap type and returns a location, which we will call on all
-      // relevant heap types as we add the connections.
+      // relevant heap types as we add the links.
       // @param getLocation: returns the location for a particular heap type, if
       //                     such a location exists.
       // @param declaredRefType: the type declared in the IR on the
@@ -1077,7 +1077,7 @@ void ContentOracle::processWork(const Work& work) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    add special writes\n";
 #endif
-          // We could set up connections here, but as we get to this code in
+          // We could set up links here, but as we get to this code in
           // any case when either the ref or the value of the struct.get has
           // new contents, we can just flow the values forward directly. We
           // can do that in a simple way that does not even check whether
@@ -1187,23 +1187,23 @@ void ContentOracle::processWork(const Work& work) {
   }
 }
 
-void ContentOracle::updateNewConnections() {
-  // Update any new connections.
-  for (auto newConnection : newConnections) {
+void ContentOracle::updateNewLinks() {
+  // Update any new links.
+  for (auto newLink : newLinks) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "\nnewConnection:\n";
-    dump(newConnection.from);
-    dump(newConnection.to);
+    std::cout << "\nnewLink:\n";
+    dump(newLink.from);
+    dump(newLink.to);
 #endif
 
-    auto& targets = flowInfoMap[newConnection.from].targets;
-    targets.push_back(newConnection.to);
+    auto& targets = flowInfoMap[newLink.from].targets;
+    targets.push_back(newLink.to);
 
 #ifndef NDEBUG
     disallowDuplicates(targets);
 #endif
   }
-  newConnections.clear();
+  newLinks.clear();
 }
 
 } // namespace wasm

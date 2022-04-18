@@ -410,14 +410,14 @@ using Location = std::variant<ExpressionLocation,
                               TagLocation,
                               NullLocation>;
 
-// A connection indicates a flow of content from one location to another. For
+// A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a connection from a LocalLocaiton to a ResultLocation.
-struct Connection {
+// we have a link from a LocalLocaiton to a ResultLocation.
+struct Link {
   Location from;
   Location to;
 
-  bool operator==(const Connection& other) const {
+  bool operator==(const Link& other) const {
     return from == other.from && to == other.to;
   }
 };
@@ -509,8 +509,8 @@ template<> struct hash<wasm::NullLocation> {
   }
 };
 
-template<> struct hash<wasm::Connection> {
-  size_t operator()(const wasm::Connection& loc) const {
+template<> struct hash<wasm::Link> {
+  size_t operator()(const wasm::Link& loc) const {
     return std::hash<std::pair<wasm::Location, wasm::Location>>{}(
       {loc.from, loc.to});
   }
@@ -601,12 +601,12 @@ private:
   // During the flow we will need information about subtyping.
   std::unique_ptr<SubTypes> subTypes;
 
-  std::unordered_set<Connection> connections;
+  std::unordered_set<Link> links;
 
-  // We may add new connections as we flow. Do so to a temporary structure on
+  // We may add new links as we flow. Do so to a temporary structure on
   // the side as we are iterating on |targets| here, which might be one of the
   // lists we want to update.
-  std::vector<Connection> newConnections;
+  std::vector<Link> newLinks;
 
   void addWork(const Work& work) {
     workQueue.push(work);
@@ -616,7 +616,7 @@ private:
   // relevant based on what happens there.
   void processWork(const Work& work);
 
-  void updateNewConnections();
+  void updateNewLinks();
 };
 
 } // namespace wasm
