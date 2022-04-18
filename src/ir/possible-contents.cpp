@@ -692,8 +692,8 @@ void ContentOracle::analyze() {
   std::cout << "single phase\n";
 #endif
 
-  // Also walk the global module code, adding it to the map as a function of
-  // null.
+  // Also walk the global module code (for simplicitiy, also add it to the
+  // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
   LinkFinder finder(globalInfo);
   finder.walkModuleCode(&wasm);
@@ -715,8 +715,7 @@ void ContentOracle::analyze() {
 
   // Merge the function information into a single large graph that represents
   // the entire program all at once. First, gather all the links from all
-  // the functions. We do so into a set, which deduplicates everythings.
-  // map of the possible contents at each location.
+  // the functions. We do so into a set, which deduplicates everything.
   std::unordered_map<Location, PossibleContents> roots;
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -809,7 +808,8 @@ void ContentOracle::analyze() {
   }
 
 #ifndef NDEBUG
-  // The vector of targets must have no duplicates.
+  // The vector of targets (which is a vector for efficiency) must have no
+  // duplicates.
   for (auto& [location, info] : flowInfoMap) {
     disallowDuplicates(info.targets);
   }
@@ -819,7 +819,8 @@ void ContentOracle::analyze() {
   std::cout << "roots phase\n";
 #endif
 
-  // Set up the roots, which are the starting state for the flow analysis.
+  // Set up the roots, which are the starting state for the flow analysis: add
+  // work to set up their initial values.
   for (const auto& [location, value] : roots) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  init root\n";
@@ -828,20 +829,14 @@ void ContentOracle::analyze() {
     std::cout << '\n';
 #endif
 
-    // Update the root from having nothing to having its initial content.
     addWork({location, value});
   }
-
-  updateNewLinks();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "flow phase\n";
 #endif
 
   // Flow the data.
-  // TODO: unit test all the movements of PossibleContents, always making sure
-  // they are Lyapunov. Rule out an infinite loop. On barista work.size() hangs
-  // around 30K for a long time. but it does get lower. just very very slow?
   while (!workQueue.empty()) {
     //std::cout << "work left: " << workQueue.size() << '\n';
     auto work = workQueue.pop();
