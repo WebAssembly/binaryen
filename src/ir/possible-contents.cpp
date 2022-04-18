@@ -1,4 +1,4 @@
-#define POSSIBLE_TYPES_DEBUG 2
+//#define POSSIBLE_TYPES_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -855,7 +855,7 @@ void ContentOracle::analyze() {
   // they are Lyapunov. Rule out an infinite loop. On barista work.size() hangs
   // around 30K for a long time. but it does get lower. just very very slow?
   while (!workQueue.empty()) {
-//std::cout << "work left: " << workQueue.size() << '\n';
+    //std::cout << "work left: " << workQueue.size() << '\n';
     auto work = workQueue.pop();
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
