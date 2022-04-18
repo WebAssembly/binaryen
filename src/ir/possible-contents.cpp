@@ -890,13 +890,7 @@ void ContentOracle::processWork(const Work& work) {
     return;
   }
 
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "  something changed!\n";
-  contents.dump(std::cout, &wasm);
-  std::cout << "\nat ";
-  dump(location);
-#endif
-
+  // Handle special cases: Some locations modify the arriving contents.
   if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     auto* global = wasm.getGlobal(globalLoc->name);
     if (global->mutable_ == Immutable) {
@@ -929,8 +923,16 @@ void ContentOracle::processWork(const Work& work) {
     }
   }
 
-  // We made an actual change to this location. Add its targets to the work
-  // queue.
+  // Something changed!
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "  something changed!\n";
+  contents.dump(std::cout, &wasm);
+  std::cout << "\nat ";
+  dump(location);
+#endif
+
+  // Add all targets this location links to, sending them the new contents.
   for (auto& target : flowInfoMap[location].targets) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  send to target\n";
@@ -941,7 +943,8 @@ void ContentOracle::processWork(const Work& work) {
   }
 
   // We are mostly done, except for handling interesting/special cases in the
-  // flow.
+  // flow, additional operations that we need to do aside from sending the new
+  // contents to the linked targets.
 
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto* targetExpr = targetExprLoc->expr;
@@ -955,8 +958,6 @@ void ContentOracle::processWork(const Work& work) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  special, parent:\n" << *parent << '\n';
 #endif
-
-      // Something changed, handle the special cases.
 
       // Return the list of possible types that can read from a struct.get or
       // write from a struct.set, etc. This is passed the possible contents of
@@ -1003,11 +1004,7 @@ void ContentOracle::processWork(const Work& work) {
           links.insert(newLink);
         }
 
-        // Recurse: the parent may also be a special child, e.g.
-        //   (struct.get
-        //     (struct.get ..)
-        //   )
-        // TODO unrecurse with a stack, although such recursion will be rare
+        // Add a work item to receive the new contents there now.
         addWork({targetLoc, flowInfoMap[*heapLoc].contents});
       };
 
@@ -1051,7 +1048,7 @@ void ContentOracle::processWork(const Work& work) {
       // struct.set/array.set to a heap location. In addition to the
       // |getLocation| function (which plays the same role as in
       // readFromNewLocations), gets the reference and the value of the
-      // struct.set/array.set operation
+      // struct.set/array.set operation.
       auto writeToNewLocations =
         [&](std::function<std::optional<Location>(HeapType)> getLocation,
             Expression* ref,
@@ -1150,11 +1147,7 @@ void ContentOracle::processWork(const Work& work) {
                  : HeapType::isSubType(contents.getType().getHeapType(),
                                        cast->getIntendedType());
         if (isNull || isMany || isSubType) {
-          // Recurse: the parent may also be a special child, e.g.
-          //   (struct.get
-          //     (ref.cast ..)
-          //   )
-          // TODO unrecurse with a stack, although such recursion will be rare
+          // Send the value through to the ref.cast.
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    ref.cast passing through\n";
 #endif
