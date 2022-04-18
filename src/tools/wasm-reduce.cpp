@@ -397,10 +397,18 @@ struct Reducer
     return out == expected;
   }
 
+  size_t decisionCounter = 0;
+
   bool shouldTryToReduce(size_t bonus = 1) {
-    static size_t counter = 0;
-    counter += bonus;
-    return (counter % factor) <= bonus;
+    decisionCounter += bonus;
+    return (decisionCounter % factor) <= bonus;
+  }
+
+  // Returns a random number in the range [0, max). This is deterministic given
+  // all the previous work done in the reducer.
+  bool deterministicRandom(size_t max) {
+    assert(max > 0);
+    return decisionCounter % max;
   }
 
   bool isOkReplacement(Expression* with) {
@@ -870,17 +878,24 @@ struct Reducer
   // amount of reduction that justifies doing even more.
   bool reduceFunctions() {
     // try to remove functions
-    std::cerr << "|    try to remove functions\n";
     std::vector<Name> functionNames;
     for (auto& func : module->functions) {
       functionNames.push_back(func->name);
+    }
+    auto numFuncs = functionNames.size();
+    if (numFuncs == 0) {
+      return false;
     }
     size_t skip = 1;
     size_t maxSkip = 1;
     // If we just removed some functions in the previous iteration, keep trying
     // to remove more as this is one of the most efficient ways to reduce.
     bool justReduced = true;
-    for (size_t i = 0; i < functionNames.size(); i++) {
+    // Start from a new place each time.
+    size_t base = deterministicRandom(numFuncs);
+    std::cerr << "|    try to remove functions (base: " << base << ")\n";
+    for (size_t x = 0; x < functionNames.size(); x++) {
+      size_t i = (base + x) % numFuncs;
       if (!justReduced &&
           functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
           !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
