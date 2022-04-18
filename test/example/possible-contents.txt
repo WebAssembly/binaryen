@@ -531,6 +531,36 @@ assertEqualSymmetric
 [ExactType anyref HT: any null]
 [ExactType anyref HT: any null]
 
+assertCombination
+[Literal anyref(null) HT: any]
+[ExactType (ref func) HT: func]
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+
+assertEqualSymmetric
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+
+assertEqualSymmetric
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+
+assertCombination
+[Literal anyref(null) HT: any]
+[Literal funcref(func) HT: func]
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+
+assertEqualSymmetric
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+
+assertEqualSymmetric
+[ExactType funcref HT: func null]
+[ExactType funcref HT: func null]
+
 possible types of the $null global: unreachable
 possible types of the $something global: anyref
 possible types of the function's body: none

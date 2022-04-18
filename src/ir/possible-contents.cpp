@@ -1163,23 +1163,10 @@ void ContentOracle::processWork(const Work& work) {
         bool isMany = contents.isMany();
         // We cannot check for subtyping if the type is Many (getType() would
         // return none, which has no heap type).
-std::cout << "ref cast " << '\n' << *cast << '\n';
-contents.dump(std::cout, &wasm);
-std::cout << '\n';
-if (contents.getType().isRef()) {
-  std::cout << "content type " << contents.getType().getHeapType() << " : " << wasm.typeNames[contents.getType().getHeapType()].name << '\n';
-}
-std::cout << "intended type " << cast->getIntendedType() << " : " << wasm.typeNames[cast->getIntendedType()].name << '\n';
         bool isSubType =
           isMany ? false
                  : HeapType::isSubType(contents.getType().getHeapType(),
                                        cast->getIntendedType());
-std::cout << "ref cast " << isNull << " : " << isMany << " : " << isSubType << '\n';// << *cast << '\n';
-#if 0
-ref cast 1 : 0 : 0
-ref cast 0 : 0 : 0
-#endif
-
         if (isNull || isMany || isSubType) {
           // Recurse: the parent may also be a special child, e.g.
           //   (struct.get

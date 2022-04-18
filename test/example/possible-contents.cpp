@@ -45,9 +45,13 @@ auto i32Global1 = PossibleContents::constantGlobal("i32Global1", Type::i32);
 auto i32Global2 = PossibleContents::constantGlobal("i32Global2", Type::i32);
 auto f64Global = PossibleContents::constantGlobal("f64Global", Type::f64);
 
+auto func = PossibleContents::constantLiteral(Literal("func", Type(HeapType::func, NonNullable)));
+
 auto exactI32 = PossibleContents::exactType(Type::i32);
 auto exactAnyref = PossibleContents::exactType(Type::anyref);
+auto exactFuncref = PossibleContents::exactType(Type::funcref);
 auto exactNonNullAnyref = PossibleContents::exactType(Type(HeapType::any, NonNullable));
+auto exactNonNullFuncref = PossibleContents::exactType(Type(HeapType::func, NonNullable));
 
 auto many = PossibleContents::many();
 
@@ -144,11 +148,16 @@ static void testCombinations() {
 
   assertCombination(anyNull, i32Zero, many);
   assertCombination(anyNull, anyNull, anyNull);
-  assertCombination(anyNull, funcNull, anyNull); // Nulls go to the lub
+  assertCombination(anyNull, funcNull, anyNull); // Two nulls go to the lub
   assertCombination(anyNull, exactAnyref, exactAnyref);
 
   assertCombination(exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
-  assertCombination(anyNull, exactNonNullAnyref, exactAnyref); // Null in lub
+
+  // If one is a null and the other is not, it makes the one that is not a null
+  // be a nullable type.
+  assertCombination(anyNull, exactNonNullAnyref, exactAnyref);
+  assertCombination(anyNull, exactNonNullFuncref, exactFuncref);
+  assertCombination(anyNull, func, exactFuncref);
 }
 
 static std::unique_ptr<Module> parse(std::string module) {
