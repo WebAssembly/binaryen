@@ -224,8 +224,8 @@ struct GUFAPass : public Pass {
       }
 
       // TODO: If an instruction would trap on null, like struct.get, we could
-      //       remove it here if it has no possible contents. That information is
-      //       present in OptimizeInstructions where it removes redundant
+      //       remove it here if it has no possible contents. That information
+      //       is present in OptimizeInstructions where it removes redundant
       //       ref.as_non_null, so maybe there is a way to share that
 
       void visitFunction(Function* func) {

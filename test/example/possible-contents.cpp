@@ -7,8 +7,7 @@
 
 using namespace wasm;
 
-template<typename T>
-void assertEqualSymmetric(const T& a, const T& b) {
+template<typename T> void assertEqualSymmetric(const T& a, const T& b) {
   std::cout << "\nassertEqualSymmetric\n";
   a.dump(std::cout);
   std::cout << '\n';
@@ -19,8 +18,7 @@ void assertEqualSymmetric(const T& a, const T& b) {
   assert(b == a);
 }
 
-template<typename T>
-void assertNotEqualSymmetric(const T& a, const T& b) {
+template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
   std::cout << "\nassertNotEqualSymmetric\n";
   a.dump(std::cout);
   std::cout << '\n';
@@ -38,20 +36,25 @@ auto none_ = PossibleContents::none();
 auto i32Zero = PossibleContents::constantLiteral(Literal(int32_t(0)));
 auto i32One = PossibleContents::constantLiteral(Literal(int32_t(1)));
 auto f64One = PossibleContents::constantLiteral(Literal(double(1)));
-auto anyNull = PossibleContents::constantLiteral(Literal::makeNull(Type::anyref));
-auto funcNull = PossibleContents::constantLiteral(Literal::makeNull(Type::funcref));
+auto anyNull =
+  PossibleContents::constantLiteral(Literal::makeNull(Type::anyref));
+auto funcNull =
+  PossibleContents::constantLiteral(Literal::makeNull(Type::funcref));
 
 auto i32Global1 = PossibleContents::constantGlobal("i32Global1", Type::i32);
 auto i32Global2 = PossibleContents::constantGlobal("i32Global2", Type::i32);
 auto f64Global = PossibleContents::constantGlobal("f64Global", Type::f64);
 
-auto func = PossibleContents::constantLiteral(Literal("func", Type(HeapType::func, NonNullable)));
+auto func = PossibleContents::constantLiteral(
+  Literal("func", Type(HeapType::func, NonNullable)));
 
 auto exactI32 = PossibleContents::exactType(Type::i32);
 auto exactAnyref = PossibleContents::exactType(Type::anyref);
 auto exactFuncref = PossibleContents::exactType(Type::funcref);
-auto exactNonNullAnyref = PossibleContents::exactType(Type(HeapType::any, NonNullable));
-auto exactNonNullFuncref = PossibleContents::exactType(Type(HeapType::func, NonNullable));
+auto exactNonNullAnyref =
+  PossibleContents::exactType(Type(HeapType::any, NonNullable));
+auto exactNonNullFuncref =
+  PossibleContents::exactType(Type(HeapType::func, NonNullable));
 
 auto many = PossibleContents::many();
 

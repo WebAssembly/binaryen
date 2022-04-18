@@ -123,26 +123,24 @@ public:
     // Special handling for nulls. Nulls are always equal to each other, even
     // if their types differ.
     if (type.isRef() && otherType.isRef() && (isNull() || other.isNull())) {
-      // If only one is a null then the combination is to add nullability to this
-      // one. (This is correct both for a literal or for a type: if it was a
-      // literal then now we have either a literal or a null, so we do not
+      // If only one is a null then the combination is to add nullability to
+      // this one. (This is correct both for a literal or for a type: if it was
+      // a literal then now we have either a literal or a null, so we do not
       // have a single constant anymore).
       if (!isNull()) {
         return applyIfDifferent(
-          PossibleContents(Type(type.getHeapType(), Nullable))
-        );
+          PossibleContents(Type(type.getHeapType(), Nullable)));
       }
       if (!other.isNull()) {
         return applyIfDifferent(
-          PossibleContents(Type(otherType.getHeapType(), Nullable))
-        );
+          PossibleContents(Type(otherType.getHeapType(), Nullable)));
       }
 
       // Both are null. The result is a null, of the LUB.
-      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(), otherType.getHeapType()), Nullable);
-      return applyIfDifferent(
-        PossibleContents(Literal::makeNull(lub))
-      );
+      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
+                                                   otherType.getHeapType()),
+                      Nullable);
+      return applyIfDifferent(PossibleContents(Literal::makeNull(lub)));
     }
 
     if (other.value == value) {
@@ -170,8 +168,7 @@ public:
       // The types differ, but the heap types agree, so the only difference here
       // is in nullability, and the combined value is the nullable type.
       return applyIfDifferent(
-        PossibleContents(Type(type.getHeapType(), Nullable))
-      );
+        PossibleContents(Type(type.getHeapType(), Nullable)));
     }
 
     // Worst case.
@@ -234,7 +231,7 @@ public:
   size_t hash() const {
     // Encode this using three bits for the variant type, then the rest of the
     // contents.
-    if (isNone()) {      
+    if (isNone()) {
       return 0;
     } else if (isConstantLiteral()) {
       return size_t(1) | (std::hash<Literal>()(getConstantLiteral()) << 3);
@@ -249,7 +246,7 @@ public:
     }
   }
 
-  void dump(std::ostream& o, Module* wasm=nullptr) const {
+  void dump(std::ostream& o, Module* wasm = nullptr) const {
     o << '[';
     if (isNone()) {
       o << "None";
@@ -432,8 +429,8 @@ template<> struct hash<wasm::PossibleContents> {
   }
 };
 
-// Define hashes of all the *Location flavors so that Location itself is hashable
-// and we can use it in unordered maps and sets.
+// Define hashes of all the *Location flavors so that Location itself is
+// hashable and we can use it in unordered maps and sets.
 
 template<> struct hash<wasm::ExpressionLocation> {
   size_t operator()(const wasm::ExpressionLocation& loc) const {
@@ -597,9 +594,7 @@ private:
   // the side to avoid any aliasing as we work.
   std::vector<Link> newLinks;
 
-  void addWork(const Work& work) {
-    workQueue.push(work);
-  }
+  void addWork(const Work& work) { workQueue.push(work); }
 
   // Update a target location with contents arriving to it. Add new work as
   // relevant based on what happens there.

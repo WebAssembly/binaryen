@@ -153,9 +153,8 @@ struct LinkFinder
       curr, [&](Name target, Expression* value) {
         if (value) {
           for (Index i = 0; i < value->type.size(); i++) {
-            info.links.push_back(
-              {ExpressionLocation{value, i},
-               BranchLocation{getFunction(), target, i}});
+            info.links.push_back({ExpressionLocation{value, i},
+                                  BranchLocation{getFunction(), target, i}});
           }
         }
       });
@@ -168,7 +167,7 @@ struct LinkFinder
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
           info.links.push_back({BranchLocation{getFunction(), target, i},
-                                      ExpressionLocation{curr, i}});
+                                ExpressionLocation{curr, i}});
         }
       });
     }
@@ -331,9 +330,8 @@ struct LinkFinder
   void visitLocalGet(LocalGet* curr) {
     if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->type.size(); i++) {
-        info.links.push_back(
-          {LocalLocation{getFunction(), curr->index, i},
-           ExpressionLocation{curr, i}});
+        info.links.push_back({LocalLocation{getFunction(), curr->index, i},
+                              ExpressionLocation{curr, i}});
       }
     }
   }
@@ -342,9 +340,8 @@ struct LinkFinder
       return;
     }
     for (Index i = 0; i < curr->value->type.size(); i++) {
-      info.links.push_back(
-        {ExpressionLocation{curr->value, i},
-         LocalLocation{getFunction(), curr->index, i}});
+      info.links.push_back({ExpressionLocation{curr->value, i},
+                            LocalLocation{getFunction(), curr->index, i}});
       if (curr->isTee()) {
         info.links.push_back(
           {ExpressionLocation{curr->value, i}, ExpressionLocation{curr, i}});
@@ -461,8 +458,7 @@ struct LinkFinder
     for (auto* operand : operands) {
       assert(!operand->type.isTuple());
       if (isRelevant(operand->type)) {
-        info.links.push_back(
-          {ExpressionLocation{operand, 0}, makeTarget(i)});
+        info.links.push_back({ExpressionLocation{operand, 0}, makeTarget(i)});
       }
       i++;
     }
@@ -621,14 +617,14 @@ struct LinkFinder
     if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->operands.size(); i++) {
         info.links.push_back({ExpressionLocation{curr->operands[i], 0},
-                                    ExpressionLocation{curr, i}});
+                              ExpressionLocation{curr, i}});
       }
     }
   }
   void visitTupleExtract(TupleExtract* curr) {
     if (isRelevant(curr->type)) {
       info.links.push_back({ExpressionLocation{curr->tuple, curr->index},
-                                  ExpressionLocation{curr, 0}});
+                            ExpressionLocation{curr, 0}});
     }
   }
 
@@ -782,11 +778,11 @@ void ContentOracle::analyze() {
   for (auto& func : wasm.functions) {
     for (Index i = 0; i < func->getParams().size(); i++) {
       links.insert({SignatureParamLocation{func->type, i},
-                          LocalLocation{func.get(), i, 0}});
+                    LocalLocation{func.get(), i, 0}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       links.insert({ResultLocation{func.get(), i},
-                          SignatureResultLocation{func->type, i}});
+                    SignatureResultLocation{func->type, i}});
     }
   }
 
@@ -838,7 +834,7 @@ void ContentOracle::analyze() {
 
   // Flow the data.
   while (!workQueue.empty()) {
-    //std::cout << "work left: " << workQueue.size() << '\n';
+    // std::cout << "work left: " << workQueue.size() << '\n';
     auto work = workQueue.pop();
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -962,8 +958,9 @@ void ContentOracle::processWork(const Work& work) {
       // Return the list of possible types that can read from a struct.get or
       // write from a struct.set, etc. This is passed the possible contents of
       // the reference, and computes which types it can contain.
-      auto getPossibleTypes = [&](const PossibleContents& refContents,
-                                  HeapType declaredRefType) -> std::unordered_set<HeapType> {
+      auto getPossibleTypes =
+        [&](const PossibleContents& refContents,
+            HeapType declaredRefType) -> std::unordered_set<HeapType> {
         // We can handle a null like none: a null never leads to an actual read
         // from anywhere, so we can ignore it.
         if (refContents.isNone() || refContents.isNull()) {
@@ -1022,15 +1019,15 @@ void ContentOracle::processWork(const Work& work) {
       auto readFromNewLocations =
         [&](std::function<std::optional<Location>(HeapType)> getLocation,
             HeapType declaredRefType) {
-          auto oldPossibleTypes = getPossibleTypes(oldContents, declaredRefType);
+          auto oldPossibleTypes =
+            getPossibleTypes(oldContents, declaredRefType);
           auto newPossibleTypes = getPossibleTypes(contents, declaredRefType);
           for (auto type : newPossibleTypes) {
             if (!oldPossibleTypes.count(type)) {
               // This is new.
               auto heapLoc = getLocation(type);
               if (heapLoc) {
-                readFromHeap(*heapLoc,
-                             parent);
+                readFromHeap(*heapLoc, parent);
               }
             }
           }
@@ -1049,47 +1046,47 @@ void ContentOracle::processWork(const Work& work) {
       // |getLocation| function (which plays the same role as in
       // readFromNewLocations), gets the reference and the value of the
       // struct.set/array.set operation.
-      auto writeToNewLocations =
-        [&](std::function<std::optional<Location>(HeapType)> getLocation,
-            Expression* ref,
-            Expression* value) {
+      auto writeToNewLocations = [&](std::function<std::optional<Location>(
+                                       HeapType)> getLocation,
+                                     Expression* ref,
+                                     Expression* value) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-          std::cout << "    add special writes\n";
+        std::cout << "    add special writes\n";
 #endif
-          // We could set up links here, but as we get to this code in
-          // any case when either the ref or the value of the struct.get has
-          // new contents, we can just flow the values forward directly. We
-          // can do that in a simple way that does not even check whether
-          // the ref or the value was just updated: simply figure out the
-          // values being written in the current state (which is after the
-          // current update) and forward them.
-          auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].contents;
-          auto valueContents = flowInfoMap[ExpressionLocation{value, 0}].contents;
-          if (refContents.isNone()) {
-            return;
+        // We could set up links here, but as we get to this code in
+        // any case when either the ref or the value of the struct.get has
+        // new contents, we can just flow the values forward directly. We
+        // can do that in a simple way that does not even check whether
+        // the ref or the value was just updated: simply figure out the
+        // values being written in the current state (which is after the
+        // current update) and forward them.
+        auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].contents;
+        auto valueContents = flowInfoMap[ExpressionLocation{value, 0}].contents;
+        if (refContents.isNone()) {
+          return;
+        }
+        if (refContents.isExactType() || refContents.isConstant()) {
+          // Update the one possible type here.
+          // TODO: In the case that this is a constant, it could be null
+          //       or an immutable global, which we could do even more
+          //       with.
+          auto heapLoc = getLocation(refContents.getType().getHeapType());
+          if (heapLoc) {
+            addWork({*heapLoc, valueContents});
           }
-          if (refContents.isExactType() || refContents.isConstant()) {
-            // Update the one possible type here.
-            // TODO: In the case that this is a constant, it could be null
-            //       or an immutable global, which we could do even more
-            //       with.
-            auto heapLoc = getLocation(refContents.getType().getHeapType());
+        } else {
+          assert(refContents.isMany());
+          // Update all possible types here. First, subtypes, including the
+          // type itself.
+          auto type = ref->type.getHeapType();
+          for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
+            auto heapLoc = getLocation(subType);
             if (heapLoc) {
               addWork({*heapLoc, valueContents});
             }
-          } else {
-            assert(refContents.isMany());
-            // Update all possible types here. First, subtypes, including the
-            // type itself.
-            auto type = ref->type.getHeapType();
-            for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
-              auto heapLoc = getLocation(subType);
-              if (heapLoc) {
-                addWork({*heapLoc, valueContents});
-              }
-            }
           }
-        };
+        }
+      };
 
       if (auto* get = parent->dynCast<StructGet>()) {
         // This is the reference child of a struct.get.
