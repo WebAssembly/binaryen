@@ -320,6 +320,7 @@ struct ConnectionFinder
   }
   void visitBrOn(BrOn* curr) {
     handleBreakValue(curr);
+    // TODO: write out each case here in full for maximum optimizability.
     receiveChildValue(curr->ref, curr);
   }
   void visitRttCanon(RttCanon* curr) { addRoot(curr, curr->type); }
@@ -836,7 +837,7 @@ void ContentOracle::analyze() {
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
     std::cout << "  init root\n";
     dump(location);
-    value.dump(std::cout);
+    value.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
 
@@ -862,7 +863,7 @@ void ContentOracle::analyze() {
     std::cout << "\npop work item\n";
     dump(work.first);
     std::cout << " with contents \n";
-    work.second.dump(std::cout);
+    work.second.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
 
@@ -890,10 +891,10 @@ void ContentOracle::processWork(const Work& work) {
   std::cout << "\nprocessWork src:\n";
   dump(location);
   std::cout << "  arriving:\n";
-  arrivingContents.dump(std::cout);
+  arrivingContents.dump(std::cout, &wasm);
   std::cout << '\n';
   std::cout << "  existing:\n";
-  contents.dump(std::cout);
+  contents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
 
@@ -909,7 +910,7 @@ void ContentOracle::processWork(const Work& work) {
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
   std::cout << "  something changed!\n";
-  contents.dump(std::cout);
+  contents.dump(std::cout, &wasm);
   std::cout << "\nat ";
   dump(location);
 #endif
@@ -933,7 +934,7 @@ void ContentOracle::processWork(const Work& work) {
 
 #if defined(POSSIBLE_TYPES_DEBUG) && POSSIBLE_TYPES_DEBUG >= 2
         std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
-        contents.dump(std::cout);
+        contents.dump(std::cout, &wasm);
         std::cout << '\n';
 #endif
 
@@ -1162,10 +1163,23 @@ void ContentOracle::processWork(const Work& work) {
         bool isMany = contents.isMany();
         // We cannot check for subtyping if the type is Many (getType() would
         // return none, which has no heap type).
+std::cout << "ref cast " << '\n' << *cast << '\n';
+contents.dump(std::cout, &wasm);
+std::cout << '\n';
+if (contents.getType().isRef()) {
+  std::cout << "content type " << contents.getType().getHeapType() << " : " << wasm.typeNames[contents.getType().getHeapType()].name << '\n';
+}
+std::cout << "intended type " << cast->getIntendedType() << " : " << wasm.typeNames[contents.getType().getHeapType()].name << '\n';
         bool isSubType =
           isMany ? false
                  : HeapType::isSubType(contents.getType().getHeapType(),
                                        cast->getIntendedType());
+std::cout << "ref cast " << isNull << " : " << isMany << " : " << isSubType << '\n';// << *cast << '\n';
+#if 0
+ref cast 1 : 0 : 0
+ref cast 0 : 0 : 0
+#endif
+
         if (isNull || isMany || isSubType) {
           // Recurse: the parent may also be a special child, e.g.
           //   (struct.get

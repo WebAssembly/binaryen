@@ -122,7 +122,7 @@ public:
     auto otherType = other.getType();
 
     if (type.isRef() && otherType.isRef() && (isNull() || other.isNull())) {
-      // Special handling for nulls. Nulls are always equal to each other even
+      // Special handling for nulls. Nulls are always equal to each other, even
       // if their types differ.
       auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(), otherType.getHeapType()), Nullable);
       if (!isNull() || !other.isNull()) {
@@ -242,7 +242,7 @@ public:
     }
   }
 
-  void dump(std::ostream& o) const {
+  void dump(std::ostream& o, Module* wasm=nullptr) const {
     o << '[';
     if (isNone()) {
       o << "None";
@@ -261,6 +261,9 @@ public:
       if (t.isRef()) {
         auto h = t.getHeapType();
         o << " HT: " << h;
+        if (wasm && wasm->typeNames.count(h)) {
+          o << ' ' << wasm->typeNames[h].name;
+        }
         if (t.isNullable()) {
           o << " null";
         }

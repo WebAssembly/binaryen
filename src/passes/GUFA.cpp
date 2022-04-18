@@ -118,7 +118,7 @@ struct GUFAPass : public Pass {
       }
 
       void visitExpression(Expression* curr) {
-#if 0
+#if 1
         {
           auto values = oracle.getTypes(ExpressionLocation{curr, 0});
           std::cout << "curr:\n" << *curr << "..has values: ";
