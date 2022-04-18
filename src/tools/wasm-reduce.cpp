@@ -913,18 +913,19 @@ struct Reducer
       if (names.size() == 0) {
         continue;
       }
+      std::cerr << "|     trying at i=" << i << " of size " << names.size() << "\n";
       // Try to remove functions and/or empty them. Note that
       // tryToRemoveFunctions() will reload the module if it fails, which means
       // function names may change - for that reason, run it second.
       justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
-        i += skip;
+        x += skip;
         skip = std::min(size_t(factor), 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
-        i += factor / 100;
+        x += factor / 100;
       }
     }
     // If maxSkip is 1 then we never reduced at all. If it is 2 then we did
