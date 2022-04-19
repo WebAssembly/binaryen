@@ -1,4 +1,4 @@
-#define POSSIBLE_CONTENTS_DEBUG 2
+//#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1093,6 +1093,9 @@ void ContentOracle::processWork(const Work& work) {
         assert(get->ref == targetExpr);
         readFromNewLocations(
           [&](HeapType type) -> std::optional<Location> {
+            if (!type.isStruct()) {
+              return {};
+            }
             if (get->index >= type.getStruct().fields.size()) {
               // This field is not present on this struct.
               return {};
@@ -1107,6 +1110,9 @@ void ContentOracle::processWork(const Work& work) {
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
           [&](HeapType type) -> std::optional<Location> {
+            if (!type.isStruct()) {
+              return {};
+            }
             if (set->index >= type.getStruct().fields.size()) {
               // This field is not present on this struct.
               return {};
@@ -1119,6 +1125,9 @@ void ContentOracle::processWork(const Work& work) {
         assert(get->ref == targetExpr);
         readFromNewLocations(
           [&](HeapType type) -> std::optional<Location> {
+            if (!type.isArray()) {
+              return {};
+            }
             return ArrayLocation{type};
           },
           get->ref->type.getHeapType());
@@ -1126,6 +1135,9 @@ void ContentOracle::processWork(const Work& work) {
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
           [&](HeapType type) -> std::optional<Location> {
+            if (!type.isArray()) {
+              return {};
+            }
             return ArrayLocation{type};
           },
           set->ref,
