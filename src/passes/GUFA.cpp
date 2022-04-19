@@ -218,7 +218,14 @@ struct GUFAPass : public Pass {
         } else {
           // The type is not compatible: we cannot place |c| in this location,
           // even though we have proven it is the only value possible here.
-          // That means no value is possible and this code is unreachable
+          // That means no value is possible and this code is unreachable.
+          // FIXME but a global.get is an exception. consider
+          // (ref.as_non_null
+          //   (global.get $Immutable))
+          // We know that the ref.as_non_null will contain that immutable
+          // global, so we want to replace it with a global.get of it as well.
+          // However the global.get might be nullable, while the ref.as has a
+          // non-nullable type.
           replaceWithUnreachable();
         }
       }
