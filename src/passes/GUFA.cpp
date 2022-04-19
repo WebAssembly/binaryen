@@ -218,15 +218,41 @@ struct GUFAPass : public Pass {
         } else {
           // The type is not compatible: we cannot place |c| in this location,
           // even though we have proven it is the only value possible here.
-          // That means no value is possible and this code is unreachable.
-          // FIXME but a global.get is an exception. consider
-          // (ref.as_non_null
-          //   (global.get $Immutable))
-          // We know that the ref.as_non_null will contain that immutable
-          // global, so we want to replace it with a global.get of it as well.
-          // However the global.get might be nullable, while the ref.as has a
-          // non-nullable type.
-          replaceWithUnreachable();
+          if (Properties::isConstantExpression(c)) {
+            // This is a constant expression like a *.const or ref.func, and
+            // those things have exactly the proper type for themselves, which
+            // means this code must be unreachable - no content is possible
+            // here. (For what "exactly the proper type" means, see the next
+            // case with globals.)
+            replaceWithUnreachable();
+          } else {
+            // This is not a constant expression, but we are certain it is the
+            // right value. Atm the only such case we handle is a global.get of
+            // an immutable global. We don't know what the value will be, nor
+            // its specific type, but we do know that a global.get will get that
+            // value properly. However, in this case it does not have the right
+            // type for this location. That can happen since the global.get does
+            // not have exactly the proper type for the contents: the global.get
+            // might be nullable, for example, even though the contents are not
+            // actually a null. Consider what happens here:
+            //
+            //  (global $foo (ref null any) (struct.new $Foo))
+            //  ..
+            //    (ref.as_non_null
+            //      (global.get $foo))
+            //
+            // We create a $Foo in the global $foo, so its value is not a null.
+            // But the global's type is nullable, so the global.get's type will
+            // be as well. When we get to the ref.as_non_null, we then want to
+            // replace it with a global.get - in fact that's what its child
+            // already is, showing it is the right content for it - but that
+            // global.get would not have a non-nullable type like a/
+            // ref.as_non_null must have, so we cannot simply replace it.
+            //
+            // For now, do nothing here, but in some cases we could probably
+            // optimize TOOD
+            assert(c->is<GlobalGet>());
+          }
         }
       }
 
