@@ -309,7 +309,7 @@ struct LinkFinder
   void visitRefCast(RefCast* curr) {
     // We will handle this in a special way, as ref.cast only allows valid
     // values to flow through.
-    if (isRelevant(curr->type)) {
+    if (isRelevant(curr->type)) { // TODO: check this in the called function
       addSpecialChildParentLink(curr->ref, curr);
     }
   }
@@ -321,8 +321,8 @@ struct LinkFinder
   void visitRttCanon(RttCanon* curr) { addRoot(curr, curr->type); }
   void visitRttSub(RttSub* curr) { addRoot(curr, curr->type); }
   void visitRefAs(RefAs* curr) {
-    // TODO optimize when possible
-    addRoot(curr, curr->type);
+    // TODO optimize when possible: like RefCast, not all values flow through.
+    receiveChildValue(curr->value, curr);
   }
 
   // Locals read and write to their index.
