@@ -127,7 +127,7 @@ struct GUFAPass : public Pass {
           std::cout << "\n\n";
         }
 #endif
-#if 0
+#if 1
         static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : size_t(-1);
         if (LIMIT == 0) {
           return;

@@ -408,6 +408,7 @@ struct Reducer
   // all the previous work done in the reducer.
   size_t deterministicRandom(size_t max) {
     assert(max > 0);
+    // decisionCounter += .. // need to not return the same again and again
     return decisionCounter % max;
   }
 
@@ -833,7 +834,7 @@ struct Reducer
     // First, shrink segment elements.
     bool shrank = false;
     for (auto& segment : module->elementSegments) {
-      shrank = shrank || shrinkByReduction(segment.get(), 1);
+      shrank = shrinkByReduction(segment.get(), 1) || shrank;
     }
 
     // Second, try to replace elements with a "zero".
@@ -920,7 +921,7 @@ struct Reducer
       justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
-        x += skip;
+        x += skip; // - 1?
         skip = std::min(size_t(factor), 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
