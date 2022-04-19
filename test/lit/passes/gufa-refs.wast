@@ -2656,3 +2656,57 @@
     )
   )
 )
+
+;; ref.as* test.
+(module
+  ;; CHECK:      (type $B (struct_subtype (field i32) (field f64) $A))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $none_=>_ref|$B| (func_subtype (result (ref $B)) func))
+
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  (type $B (struct_subtype (field i32) (field f64) $A))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (func $foo (type $none_=>_ref|$B|) (result (ref $B))
+  ;; CHECK-NEXT:  (local $A (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.tee $A
+  ;; CHECK-NEXT:      (struct.new $B
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:       (f64.const 13.37)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $foo (result (ref $B))
+    (local $A (ref null $A))
+    (ref.cast_static $B ;; if it is $A, this will look like it traps
+      (ref.as_non_null ;; should be $B based on the child's *contents*, not type
+        (local.tee $A ;; flows out a $B, but has type $A
+          (struct.new $B ;; returns a $B
+            (i32.const 42)
+            (f64.const 13.37)
+          )
+        )
+      )
+    )
+  )
+)
+
+;; Test for precise local analysis.
+;; XXX TODO the principle is: without a LocalGraph we are
+;;     sending values to too many places. If that leads us to a LUB that is too
+;;     pessimistic - a cast looks like it will fail due to a value written to
+;;     the local, but it never reaches tihs particular local.get - then we have
+;;     a problem
+

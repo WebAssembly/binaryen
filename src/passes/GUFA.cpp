@@ -121,13 +121,13 @@ struct GUFAPass : public Pass {
       void visitExpression(Expression* curr) {
 #if 0
         {
-          auto contents = oracle.getTypes(ExpressionLocation{curr, 0});
+          auto contents = oracle.getContents(ExpressionLocation{curr, 0});
           std::cout << "curr:\n" << *curr << "..has contents: ";
           contents.dump(std::cout, getModule());
           std::cout << "\n\n";
         }
 #endif
-#if 1
+#if 0
         static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : size_t(-1);
         if (LIMIT == 0) {
           return;

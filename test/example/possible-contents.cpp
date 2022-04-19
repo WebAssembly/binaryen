@@ -157,7 +157,7 @@ static void testCombinations() {
   assertCombination(exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
 
   // If one is a null and the other is not, it makes the one that is not a null
-  // be a nullable type.
+  // be a nullable type - but keeps the heap type of the other.
   assertCombination(anyNull, exactNonNullAnyref, exactAnyref);
   assertCombination(anyNull, exactNonNullFuncref, exactFuncref);
   assertCombination(anyNull, func, exactFuncref);
@@ -191,9 +191,9 @@ static void testOracle() {
     )");
     ContentOracle oracle(*wasm);
     std::cout << "possible types of the $null global: "
-              << oracle.getTypes(GlobalLocation{"foo"}).getType() << '\n';
+              << oracle.getContents(GlobalLocation{"foo"}).getType() << '\n';
     std::cout << "possible types of the $something global: "
-              << oracle.getTypes(GlobalLocation{"something"}).getType() << '\n';
+              << oracle.getContents(GlobalLocation{"something"}).getType() << '\n';
   }
 
   {
@@ -226,7 +226,7 @@ static void testOracle() {
     ContentOracle oracle(*wasm);
     std::cout
       << "possible types of the function's body: "
-      << oracle.getTypes(ResultLocation{wasm->getFunction("foo")}).getType()
+      << oracle.getContents(ResultLocation{wasm->getFunction("foo")}).getType()
       << '\n';
   }
 }

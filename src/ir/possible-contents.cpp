@@ -1,4 +1,4 @@
-//#define POSSIBLE_CONTENTS_DEBUG 2
+#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
