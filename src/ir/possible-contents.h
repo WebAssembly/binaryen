@@ -47,6 +47,10 @@ struct PossibleContents {
 
   struct ImmutableGlobal {
     Name name;
+    // The type of the global in the module. We stash this here so that we do
+    // not need to pass around a module all the time.
+    // TODO: could we save size in this variant if we did pass around the
+    //       module?
     Type type;
     bool operator==(const ImmutableGlobal& other) const {
       return name == other.name && type == other.type;

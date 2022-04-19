@@ -902,7 +902,9 @@ void ContentOracle::processWork(const Work& work) {
         // TODO: We could do better here, to set global->init->type instead of
         //       global->type, or even the contents.getType() - either of those
         //       may be more refined. But other passes will handle that in
-        //       general.
+        //       general. And ImmutableGlobal carries around the type declared
+        //       in the global (since that is the type a global.get would get
+        //       if we apply this optimization and write a global.get there).
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
         std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
