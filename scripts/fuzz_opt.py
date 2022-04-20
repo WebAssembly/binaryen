@@ -36,7 +36,10 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # parameters
 
 # feature options that are always passed to the tools.
-CONSTANT_FEATURE_OPTS = ['--all-features']
+CONSTANT_FEATURE_OPTS = [
+    '--all-features',
+    '--nominal'
+]
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
