@@ -601,7 +601,8 @@ private:
 
   // This applies the new contents to the given location, and if something
   // changes it adds a work item to further propagate. TODO rename
-  void addWork(const Location& location, const PossibleContents& newContents);
+  // Returns the combined contents with this change.
+  PossibleContents addWork(const Location& location, const PossibleContents& newContents);
 
   // Update a target location with contents arriving to it. Add new work as
   // relevant based on what happens there.

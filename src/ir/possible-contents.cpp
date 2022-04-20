@@ -870,7 +870,7 @@ void ContentOracle::analyze() {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-void ContentOracle::addWork(const Location& location, const PossibleContents& newContents) {
+PossibleContents ContentOracle::addWork(const Location& location, const PossibleContents& newContents) {
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
   auto& contents = flowInfoMap[location].contents;
@@ -880,7 +880,7 @@ void ContentOracle::addWork(const Location& location, const PossibleContents& ne
     // work item but we didn't add anything on top, or there is no work item but
     // we don't add anything on top of the current contents. Either way there is
     // nothing to do.
-    return;
+    return contents;
   }
 
   // Add a work item if there isn't already.
@@ -888,11 +888,19 @@ void ContentOracle::addWork(const Location& location, const PossibleContents& ne
   if (!workQueue.count(location)) {
     workQueue[location] = oldContents;
   }
+
+  return contents;
 }
 
 void ContentOracle::processWork(const Location& location, const PossibleContents& oldContents) {
   auto& contents = flowInfoMap[location].contents;
+  // |contents| is the value after the new data arrives. As something arrives,
+  // and we never send nothing around, it cannot be None.
   assert(!contents.isNone());
+  // We never update after something is already in the Many state, as that would
+  // just be waste for no benefit.
+  assert(!oldContents.isMany());
+  // We only update when there is a reason.
   assert(contents != oldContents);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -950,21 +958,28 @@ void ContentOracle::processWork(const Location& location, const PossibleContents
   dump(location);
 #endif
 
-  // Add all targets this location links to, sending them the new contents.
+  // Add all targets this location links to, sending them the new contents. As
+  // we do so, prune any targets that end up in the Many state, as there will
+  // never be a reason to send them anything again.
   auto& targets = flowInfoMap[location].targets;
-  for (auto& target : targets) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "  send to target\n";
-    dump(target);
-#endif
 
-    addWork(target, contents);
-  }
+  targets.erase(
+    std::remove_if(targets.begin(),
+                   targets.end(),
+                   [&](const Location& target) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+                      std::cout << "  send to target\n";
+                      dump(target);
+#endif
+                     return addWork(target, contents).isMany();
+                   }),
+    targets.end());
 
   if (contents.isMany()) {
     // We just added work to send Many to all our targets. We'll never need to
-    // send anything else ever again, so save memory.
-    targets.clear();
+    // send anything else ever again, but we should have already removed all the
+    // targets since we made them Many as well in the above operation.
+    assert(targets.empty());
   }
 
   // We are mostly done, except for handling interesting/special cases in the
