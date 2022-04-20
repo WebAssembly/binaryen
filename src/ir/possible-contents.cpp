@@ -29,7 +29,8 @@ namespace wasm {
 namespace {
 
 #ifndef NDEBUG
-void disallowDuplicates(std::vector<Location>& targets) {
+template<typename T>
+void disallowDuplicates(const T& targets) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::unordered_set<Location> uniqueTargets;
   for (const auto& target : targets) {
@@ -869,42 +870,41 @@ void ContentOracle::analyze() {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-void ContentOracle::addWork(const Location& location, const PossibleContents& contents) {
-  auto [iter, inserted] = workQueue.insert({location, contents});
-  if (!inserted) {
-    // There was an existing item for this target; combine the work.
-    iter->second.combine(contents);
-  }  
-}
-
-void ContentOracle::processWork(const Location& location, const PossibleContents& arrivingContents) {
-  if (arrivingContents.isNone()) {
-    // Nothing is arriving here at all.
+void ContentOracle::addWork(const Location& location, const PossibleContents& newContents) {
+  // The work queue contains the *old* contents, which if they already exist we
+  // do not need to alter.
+  auto& contents = flowInfoMap[location].contents;
+  auto oldContents = contents;
+  if (!contents.combine(newContents)) {
+    // The new contents did not change anything. Either there is an existing
+    // work item but we didn't add anything on top, or there is no work item but
+    // we don't add anything on top of the current contents. Either way there is
+    // nothing to do.
     return;
   }
 
+  // Add a work item if there isn't already.
+  // TODO: do this more efficiently with insert.second
+  if (!workQueue.count(location)) {
+    workQueue[location] = oldContents;
+  }
+}
+
+void ContentOracle::processWork(const Location& location, const PossibleContents& oldContents) {
   auto& contents = flowInfoMap[location].contents;
+  assert(!contents.isNone());
+  assert(contents != oldContents);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "\nprocessWork src:\n";
   dump(location);
   std::cout << "  arriving:\n";
-  arrivingContents.dump(std::cout, &wasm);
+  contents.dump(std::cout, &wasm);
   std::cout << '\n';
   std::cout << "  existing:\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
-
-  // When handling some cases we care about what actually
-  // changed, so save the state before doing the update.
-  auto oldContents = contents;
-  if (!contents.combine(arrivingContents)) {
-    assert(oldContents == contents);
-
-    // Nothing changed; nothing more to do.
-    return;
-  }
 
   // Handle special cases: Some locations modify the arriving contents.
   if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {

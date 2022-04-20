@@ -21,6 +21,7 @@
 
 #include "ir/possible-constant.h"
 #include "ir/subtypes.h"
+#include "support/small_vector.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -553,6 +554,9 @@ private:
     PossibleContents contents;
 
     // The targets to which this sends contents.
+    // Commonly? there is a single target e.g. an expression has a single parent
+    // and only sends a value there.
+    // TODO: benchmark SmallVector<1> some more, but it seems to not help
     std::vector<Location> targets;
   };
 
@@ -583,6 +587,7 @@ private:
   // efficient since we may send contents A to a target and then send further
   // contents B before we even get to processing that target; rather than queue
   // two work items, we want just one with the combined contents.
+  // XXX experiment with having the OLD contents here actually.
   std::unordered_map<Location, PossibleContents> workQueue;
 
   // During the flow we will need information about subtyping.
@@ -596,11 +601,12 @@ private:
 
   // TODO: if we add work that turns a target into Many, we can delete the link
   //       to it.
-  void addWork(const Location& location, const PossibleContents& contents);
+  void addWork(const Location& location, const PossibleContents& newContents);
 
   // Update a target location with contents arriving to it. Add new work as
   // relevant based on what happens there.
-  void processWork(const Location& location, const PossibleContents& arrivingContents);
+  // XXX comment
+  void processWork(const Location& location, const PossibleContents& oldContents);
 
   void updateNewLinks();
 };
