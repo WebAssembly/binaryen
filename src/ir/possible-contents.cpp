@@ -30,7 +30,7 @@ namespace {
 
 #ifndef NDEBUG
 void disallowDuplicates(std::vector<Location>& targets) {
-#ifdef POSSIBLE_CONTENTS_DEBUG
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::unordered_set<Location> uniqueTargets;
   for (const auto& target : targets) {
     uniqueTargets.insert(target);
