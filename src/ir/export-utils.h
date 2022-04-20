@@ -25,7 +25,7 @@ inline std::vector<Function*> getExportedFunctions(Module& wasm) {
   std::vector<Function*> ret;
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
-      ret.push_back(ex->value);
+      ret.push_back(wasm.getFunction(ex->value));
     }
   }
   return ret;

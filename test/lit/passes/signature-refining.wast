@@ -627,17 +627,18 @@
 
 ;; Exports prevent optimization, so $func's type will not change here.
 (module
-  ;; CHECK:      (type $struct (struct_subtype  data))
-  (type $struct (struct_subtype data))
-
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
-  (type $sig (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  (type $sig (func_subtype (param anyref) func))
+
   ;; CHECK:      (export "prevent-opts" (func $func))
 
-  ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (export "prevent-opts") (type $sig) (param $x anyref)
@@ -654,4 +655,3 @@
     )
   )
 )
-
