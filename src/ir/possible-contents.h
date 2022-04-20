@@ -599,8 +599,8 @@ private:
   // the side to avoid any aliasing as we work.
   std::vector<Link> newLinks;
 
-  // TODO: if we add work that turns a target into Many, we can delete the link
-  //       to it.
+  // This applies the new contents to the given location, and if something
+  // changes it adds a work item to further propagate. TODO rename
   void addWork(const Location& location, const PossibleContents& newContents);
 
   // Update a target location with contents arriving to it. Add new work as
