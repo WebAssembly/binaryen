@@ -974,6 +974,7 @@ void ContentOracle::processWork(const Location& location, const PossibleContents
                      return addWork(target, contents).isMany();
                    }),
     targets.end());
+  targets.shrink_to_fit(); // XXX
 
   if (contents.isMany()) {
     // We just added work to send Many to all our targets. We'll never need to
