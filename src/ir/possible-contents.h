@@ -598,6 +598,8 @@ private:
   // the side to avoid any aliasing as we work.
   std::vector<Link> newLinks;
 
+  // TODO: if we add work that turns a target into Many, we can delete the link
+  //       to it.
   void addWork(const Work& work) { workQueue.push(work); }
 
   // Update a target location with contents arriving to it. Add new work as

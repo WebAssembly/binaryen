@@ -1,4 +1,4 @@
-//#define POSSIBLE_CONTENTS_DEBUG 2
+#define POSSIBLE_CONTENTS_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -833,8 +833,20 @@ void ContentOracle::analyze() {
 #endif
 
   // Flow the data.
+  size_t iters = 0;
   while (!workQueue.empty()) {
-    // std::cout << "work left: " << workQueue.size() << '\n';
+    // TODO: assert on no cycles - store a set of all (location, value) pairs
+    //       we've ever seen.
+    // TODO: profile manually to see how much time we spend in each Location
+    //       flavor
+    // TODO: if we are Many, delete all our outgoing links - we'll never prop
+    //       again
+    // TODO: make the wokr queue map of location => contents.
+    iters++;
+    if ((iters & 255) == 0) {
+      std::cout << iters++ << " iters, work left: " << workQueue.size() << '\n';
+    }
+
     auto work = workQueue.pop();
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
