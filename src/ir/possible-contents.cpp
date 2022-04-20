@@ -825,7 +825,7 @@ void ContentOracle::analyze() {
     std::cout << '\n';
 #endif
 
-    addWork({location, value});
+    addWork(location, value);
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -847,17 +847,20 @@ void ContentOracle::analyze() {
       std::cout << iters++ << " iters, work left: " << workQueue.size() << '\n';
     }
 
-    auto work = workQueue.pop();
+    auto iter = workQueue.begin();
+    auto location = iter->first;
+    auto contents = iter->second;
+    workQueue.erase(iter);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "\npop work item\n";
-    dump(work.first);
+    dump(location);
     std::cout << " with contents \n";
-    work.second.dump(std::cout, &wasm);
+    contents.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
 
-    processWork(work);
+    processWork(location, contents);
 
     updateNewLinks();
   }
@@ -866,10 +869,15 @@ void ContentOracle::analyze() {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-void ContentOracle::processWork(const Work& work) {
-  auto& location = work.first;
-  auto& arrivingContents = work.second;
+void ContentOracle::addWork(const Location& location, const PossibleContents& contents) {
+  auto [iter, inserted] = workQueue.insert({location, contents});
+  if (!inserted) {
+    // There was an existing item for this target; combine the work.
+    iter->second.combine(contents);
+  }  
+}
 
+void ContentOracle::processWork(const Location& location, const PossibleContents& arrivingContents) {
   if (arrivingContents.isNone()) {
     // Nothing is arriving here at all.
     return;
@@ -950,7 +958,7 @@ void ContentOracle::processWork(const Work& work) {
     dump(target);
 #endif
 
-    addWork({target, contents});
+    addWork(target, contents);
   }
 
   if (contents.isMany()) {
@@ -1023,7 +1031,7 @@ void ContentOracle::processWork(const Work& work) {
         }
 
         // Add a work item to receive the new contents there now.
-        addWork({targetLoc, flowInfoMap[*heapLoc].contents});
+        addWork(targetLoc, flowInfoMap[*heapLoc].contents);
       };
 
       // Given the old and new contents at the current target, add reads to
@@ -1093,7 +1101,7 @@ void ContentOracle::processWork(const Work& work) {
           //       with.
           auto heapLoc = getLocation(refContents.getType().getHeapType());
           if (heapLoc) {
-            addWork({*heapLoc, valueContents});
+            addWork(*heapLoc, valueContents);
           }
         } else {
           assert(refContents.isMany());
@@ -1103,7 +1111,7 @@ void ContentOracle::processWork(const Work& work) {
           for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
             auto heapLoc = getLocation(subType);
             if (heapLoc) {
-              addWork({*heapLoc, valueContents});
+              addWork(*heapLoc, valueContents);
             }
           }
         }
@@ -1181,7 +1189,7 @@ void ContentOracle::processWork(const Work& work) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    ref.cast passing through\n";
 #endif
-          addWork({ExpressionLocation{parent, 0}, contents});
+          addWork(ExpressionLocation{parent, 0}, contents);
         }
         // TODO: ref.test and all other casts can be optimized (see the cast
         //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
