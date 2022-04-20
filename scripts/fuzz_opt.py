@@ -35,11 +35,15 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
+NOMINAL = True
+
 # feature options that are always passed to the tools.
 CONSTANT_FEATURE_OPTS = [
     '--all-features',
-    '--nominal'
 ]
+
+if NOMINAL:
+    CONSTANT_FEATURE_OPTS += ['--nominal']
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
@@ -1355,6 +1359,9 @@ on valid wasm files.)
                 auto_init = ''
                 if shared.options.auto_initial_contents:
                     auto_init = '--auto-initial-contents'
+                nominal = ''
+                if NOMINAL:
+                    nominal = '--nominal'
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
@@ -1366,7 +1373,7 @@ echo "  " $?
 
 # run the command
 echo "The following value should be 1:"
-./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py %(auto_init)s $(nominal) --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "  " $?
 
 #
@@ -1396,6 +1403,7 @@ echo "  " $?
                          'bin': shared.options.binaryen_bin,
                          'seed': seed,
                          'auto_init': auto_init,
+                         'nominal': nominal,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
                          'reduce_sh': os.path.abspath('reduce.sh')})
@@ -1419,7 +1427,7 @@ You can reduce the testcase by running this now:
 vvvv
 
 
-%(wasm_reduce)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
+%(wasm_reduce)s %(nominal)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
 
 ^^^^
@@ -1448,7 +1456,8 @@ After reduction, the reduced file will be in %(working_wasm)s
                        'temp_wasm': os.path.abspath('t.wasm'),
                        'working_wasm': os.path.abspath('w.wasm'),
                        'wasm_reduce': in_bin('wasm-reduce'),
-                       'reduce_sh': os.path.abspath('reduce.sh')})
+                       'reduce_sh': os.path.abspath('reduce.sh'),
+                       'nominal': nominal})
                 break
         if given_seed is not None:
             break
