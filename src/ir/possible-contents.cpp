@@ -943,13 +943,20 @@ void ContentOracle::processWork(const Work& work) {
 #endif
 
   // Add all targets this location links to, sending them the new contents.
-  for (auto& target : flowInfoMap[location].targets) {
+  auto& targets = flowInfoMap[location].targets;
+  for (auto& target : targets) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  send to target\n";
     dump(target);
 #endif
 
     addWork({target, contents});
+  }
+
+  if (contents.isMany()) {
+    // We just added work to send Many to all our targets. We'll never need to
+    // send anything else ever again, so save memory.
+    targets.clear();
   }
 
   // We are mostly done, except for handling interesting/special cases in the
