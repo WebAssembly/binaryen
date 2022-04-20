@@ -2399,6 +2399,8 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                     HeapType(),
                     curr,
                     "static ref.cast must set intendedType field");
+    shouldBeTrue(
+      !curr->intendedType.isBasic(), curr, "ref.cast must cast to a non-basic");
   }
 }
 
