@@ -21,12 +21,6 @@
 
  ;; CHECK:      (elem declare func $2 $3)
 
- ;; CHECK:      (export "func_406_invoker" (func $0))
- ;; NOMNL:      (export "func_406_invoker" (func $0))
- (export "func_406_invoker" (func $0))
- ;; CHECK:      (export "func_448_invoker" (func $1))
- ;; NOMNL:      (export "func_448_invoker" (func $1))
- (export "func_448_invoker" (func $1))
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
@@ -193,19 +187,13 @@
  (memory $0 (shared 16 17))
  ;; CHECK:      (elem declare func $2 $3)
 
- ;; CHECK:      (export "func_406_invoker" (func $0))
- ;; NOMNL:      (elem declare func $2 $3)
-
- ;; NOMNL:      (export "func_406_invoker" (func $0))
- (export "func_406_invoker" (func $0))
- ;; CHECK:      (export "func_448_invoker" (func $1))
- ;; NOMNL:      (export "func_448_invoker" (func $1))
- (export "func_448_invoker" (func $1))
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; NOMNL:      (elem declare func $2 $3)
+
  ;; NOMNL:      (func $0 (type $type$0)
  ;; NOMNL-NEXT:  (call $byn$mgfn-shared$0
  ;; NOMNL-NEXT:   (ref.func $2)
