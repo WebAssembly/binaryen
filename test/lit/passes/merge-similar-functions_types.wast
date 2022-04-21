@@ -15,11 +15,7 @@
  (type $type$1 (func_subtype func))
  ;; NOMNL:      (type $type$2 (func_subtype func))
  (type $type$2 (func_subtype func))
- ;; CHECK:      (type $type$3 (func (param f32) (result f32)))
- ;; NOMNL:      (type $type$3 (func_subtype (param f32) (result f32) func))
  (type $type$3 (func_subtype (param f32) (result f32) func))
- ;; CHECK:      (type $type$4 (func (param f64) (result f64)))
- ;; NOMNL:      (type $type$4 (func_subtype (param f64) (result f64) func))
  (type $type$4 (func_subtype (param f64) (result f64) func))
  ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
 
@@ -137,29 +133,17 @@
  )
  ;; CHECK:      (func $2
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $4
- ;; CHECK-NEXT:    (f32.load align=1
- ;; CHECK-NEXT:     (i32.const 17)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 17)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $2 (type $type$1)
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (call $4
- ;; NOMNL-NEXT:    (f32.load align=1
- ;; NOMNL-NEXT:     (i32.const 17)
- ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (i32.const 17)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $2 (type $type$1)
   (drop
-   (call $4
-    (f32.load align=1
-     (i32.const 17)
-    )
-   )
+   (i32.const 17)
   )
  )
  ;; CHECK:      (func $3
@@ -186,70 +170,11 @@
    )
   )
  )
- ;; CHECK:      (func $4 (param $0 f32) (result f32)
- ;; CHECK-NEXT:  (if (result f32)
- ;; CHECK-NEXT:   (f32.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $4 (type $type$3) (param $0 f32) (result f32)
- ;; NOMNL-NEXT:  (if (result f32)
- ;; NOMNL-NEXT:   (f32.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f32.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $4 (type $type$3) (param $0 f32) (result f32)
-  (if (result f32)
-   (f32.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f32.const 0)
-  )
- )
- ;; CHECK:      (func $5 (param $0 f64) (result f64)
- ;; CHECK-NEXT:  (if (result f64)
- ;; CHECK-NEXT:   (f64.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f64.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $5 (type $type$4) (param $0 f64) (result f64)
- ;; NOMNL-NEXT:  (if (result f64)
- ;; NOMNL-NEXT:   (f64.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f64.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $5 (type $type$4) (param $0 f64) (result f64)
-  (if (result f64)
-   (f64.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f64.const 0)
-  )
- )
 )
 
-;; As above, but now the nominal types do match, so we can optimize in all
-;; modes.
+
+
+
 ;; CHECK:      (func $byn$mgfn-shared$0 (param $0 (ref $type$0))
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.eqz
@@ -277,17 +202,16 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
+ ;; As above, but now the nominal types do match, so we can optimize in all
+ ;; modes.
+
  ;; CHECK:      (type $type$0 (func))
  ;; NOMNL:      (type $type$1 (func_subtype func))
 
  ;; NOMNL:      (type $type$0 (func_subtype func))
  (type $type$0 (func_subtype func))
  (type $type$1 (func_subtype func))
- ;; CHECK:      (type $type$3 (func (param f32) (result f32)))
- ;; NOMNL:      (type $type$3 (func_subtype (param f32) (result f32) func))
  (type $type$3 (func_subtype (param f32) (result f32) func))
- ;; CHECK:      (type $type$4 (func (param f64) (result f64)))
- ;; NOMNL:      (type $type$4 (func_subtype (param f64) (result f64) func))
  (type $type$4 (func_subtype (param f64) (result f64) func))
  ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
 
@@ -375,29 +299,17 @@
  )
  ;; CHECK:      (func $2
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $4
- ;; CHECK-NEXT:    (f32.load align=1
- ;; CHECK-NEXT:     (i32.const 17)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 17)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $2 (type $type$1)
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (call $4
- ;; NOMNL-NEXT:    (f32.load align=1
- ;; NOMNL-NEXT:     (i32.const 17)
- ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (i32.const 17)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $2 (type $type$1)
   (drop
-   (call $4
-    (f32.load align=1
-     (i32.const 17)
-    )
-   )
+   (i32.const 17)
   )
  )
  ;; CHECK:      (func $3
@@ -422,66 +334,6 @@
     (global.get $global$0)
     (i32.const 1)
    )
-  )
- )
- ;; CHECK:      (func $4 (param $0 f32) (result f32)
- ;; CHECK-NEXT:  (if (result f32)
- ;; CHECK-NEXT:   (f32.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $4 (type $type$3) (param $0 f32) (result f32)
- ;; NOMNL-NEXT:  (if (result f32)
- ;; NOMNL-NEXT:   (f32.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f32.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $4 (type $type$3) (param $0 f32) (result f32)
-  (if (result f32)
-   (f32.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f32.const 0)
-  )
- )
- ;; CHECK:      (func $5 (param $0 f64) (result f64)
- ;; CHECK-NEXT:  (if (result f64)
- ;; CHECK-NEXT:   (f64.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f64.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $5 (type $type$4) (param $0 f64) (result f64)
- ;; NOMNL-NEXT:  (if (result f64)
- ;; NOMNL-NEXT:   (f64.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f64.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $5 (type $type$4) (param $0 f64) (result f64)
-  (if (result f64)
-   (f64.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f64.const 0)
   )
  )
 )
