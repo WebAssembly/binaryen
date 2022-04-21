@@ -2375,6 +2375,8 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
                     HeapType(),
                     curr,
                     "static ref.test must set intendedType field");
+    shouldBeTrue(
+      !curr->intendedType.isBasic(), curr, "ref.test must test a non-basic");
   }
 }
 
@@ -2429,6 +2431,9 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                       HeapType(),
                       curr,
                       "static br_on_cast* must set intendedType field");
+      shouldBeTrue(!curr->intendedType.isBasic(),
+                   curr,
+                   "br_on_cast* must cast to a non-basic");
     }
   } else {
     shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");

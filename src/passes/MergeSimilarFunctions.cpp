@@ -246,16 +246,8 @@ bool MergeSimilarFunctions::areInEquvalentClass(Function* lhs,
       }
       auto* lhsCallee = module->getFunction(lhsCast->target);
       auto* rhsCallee = module->getFunction(rhsCast->target);
-      // In nominal typing we need the types to match perfectly. Otherwise,
-      // structurally is sufficient.
-      if (getTypeSystem() == TypeSystem::Nominal) {
-        if (lhsCallee->type != rhsCallee->type) {
-          return false;
-        }
-      } else {
-        if (lhsCallee->getSig() != rhsCallee->getSig()) {
-          return false;
-        }
+      if (lhsCallee->type != rhsCallee->type) {
+        return false;
       }
 
       // Arguments operands should be also equivalent ignoring constants.

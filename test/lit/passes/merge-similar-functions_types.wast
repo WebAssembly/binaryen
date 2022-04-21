@@ -15,76 +15,54 @@
  (type $type$1 (func_subtype func))
  ;; NOMNL:      (type $type$2 (func_subtype func))
  (type $type$2 (func_subtype func))
- ;; CHECK:      (type $type$3 (func (param f32) (result f32)))
- ;; NOMNL:      (type $type$3 (func_subtype (param f32) (result f32) func))
  (type $type$3 (func_subtype (param f32) (result f32) func))
- ;; CHECK:      (type $type$4 (func (param f64) (result f64)))
- ;; NOMNL:      (type $type$4 (func_subtype (param f64) (result f64) func))
  (type $type$4 (func_subtype (param f64) (result f64) func))
  ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
 
- ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
- ;; NOMNL:      (global $global$0 (mut i32) (i32.const 10))
- (global $global$0 (mut i32) (i32.const 10))
- ;; CHECK:      (memory $0 (shared 16 17))
- ;; NOMNL:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
  ;; CHECK:      (elem declare func $2 $3)
 
- ;; CHECK:      (export "func_406_invoker" (func $0))
- ;; NOMNL:      (export "func_406_invoker" (func $0))
- (export "func_406_invoker" (func $0))
- ;; CHECK:      (export "func_448_invoker" (func $1))
- ;; NOMNL:      (export "func_448_invoker" (func $1))
- (export "func_448_invoker" (func $1))
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $0 (type $type$0)
- ;; NOMNL-NEXT:  (if
- ;; NOMNL-NEXT:   (i32.eqz
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (return)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (global.set $global$0
- ;; NOMNL-NEXT:   (i32.sub
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:    (i32.const 1)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (if
- ;; NOMNL-NEXT:   (global.get $global$0)
- ;; NOMNL-NEXT:   (call $2)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (if
- ;; NOMNL-NEXT:   (global.get $global$0)
- ;; NOMNL-NEXT:   (call $2)
- ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (call $2)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $0 (type $type$0)
-  (if
-   (i32.eqz
-    (global.get $global$0)
-   )
-   (return)
-  )
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
-  )
-  (if
-   (global.get $global$0)
-   (call $2)
-  )
-  (if
-   (global.get $global$0)
-   (call $2)
-  )
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (call $2)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
  )
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
@@ -92,202 +70,110 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $1 (type $type$0)
- ;; NOMNL-NEXT:  (if
- ;; NOMNL-NEXT:   (i32.eqz
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (return)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (global.set $global$0
- ;; NOMNL-NEXT:   (i32.sub
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:    (i32.const 1)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (if
- ;; NOMNL-NEXT:   (global.get $global$0)
- ;; NOMNL-NEXT:   (call $3)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (if
- ;; NOMNL-NEXT:   (global.get $global$0)
- ;; NOMNL-NEXT:   (call $3)
- ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (call $3)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $1 (type $type$0)
-  (if
-   (i32.eqz
-    (global.get $global$0)
-   )
-   (return)
-  )
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
-  )
-  (if
-   (global.get $global$0)
-   (call $3)
-  )
-  (if
-   (global.get $global$0)
-   (call $3)
-  )
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (call $3)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
  )
  ;; CHECK:      (func $2
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $4
- ;; CHECK-NEXT:    (f32.load align=1
- ;; CHECK-NEXT:     (i32.const 17)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 17)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $2 (type $type$1)
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (call $4
- ;; NOMNL-NEXT:    (f32.load align=1
- ;; NOMNL-NEXT:     (i32.const 17)
- ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (i32.const 17)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $2 (type $type$1)
   (drop
-   (call $4
-    (f32.load align=1
-     (i32.const 17)
-    )
-   )
+   (i32.const 17)
   )
  )
  ;; CHECK:      (func $3
- ;; CHECK-NEXT:  (global.set $global$0
- ;; CHECK-NEXT:   (i32.sub
- ;; CHECK-NEXT:    (global.get $global$0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 999)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $3 (type $type$2)
- ;; NOMNL-NEXT:  (global.set $global$0
- ;; NOMNL-NEXT:   (i32.sub
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:    (i32.const 1)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (i32.const 999)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $3 (type $type$2)
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
-  )
- )
- ;; CHECK:      (func $4 (param $0 f32) (result f32)
- ;; CHECK-NEXT:  (if (result f32)
- ;; CHECK-NEXT:   (f32.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $4 (type $type$3) (param $0 f32) (result f32)
- ;; NOMNL-NEXT:  (if (result f32)
- ;; NOMNL-NEXT:   (f32.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f32.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $4 (type $type$3) (param $0 f32) (result f32)
-  (if (result f32)
-   (f32.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f32.const 0)
-  )
- )
- ;; CHECK:      (func $5 (param $0 f64) (result f64)
- ;; CHECK-NEXT:  (if (result f64)
- ;; CHECK-NEXT:   (f64.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f64.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $5 (type $type$4) (param $0 f64) (result f64)
- ;; NOMNL-NEXT:  (if (result f64)
- ;; NOMNL-NEXT:   (f64.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f64.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $5 (type $type$4) (param $0 f64) (result f64)
-  (if (result f64)
-   (f64.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f64.const 0)
+  (drop
+   (i32.const 999)
   )
  )
 )
 
-;; As above, but now the nominal types do match, so we can optimize in all
-;; modes.
+
+
+
 ;; CHECK:      (func $byn$mgfn-shared$0 (param $0 (ref $type$0))
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (i32.eqz
-;; CHECK-NEXT:    (global.get $global$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (call_ref
+;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (global.set $global$0
-;; CHECK-NEXT:   (i32.sub
-;; CHECK-NEXT:    (global.get $global$0)
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (global.get $global$0)
-;; CHECK-NEXT:   (call_ref
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (global.get $global$0)
-;; CHECK-NEXT:   (call_ref
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module
+ ;; As above, but now the nominal types do match, so we can optimize in all
+ ;; modes.
+
  ;; CHECK:      (type $type$0 (func))
  ;; NOMNL:      (type $type$1 (func_subtype func))
 
  ;; NOMNL:      (type $type$0 (func_subtype func))
  (type $type$0 (func_subtype func))
  (type $type$1 (func_subtype func))
- ;; CHECK:      (type $type$3 (func (param f32) (result f32)))
- ;; NOMNL:      (type $type$3 (func_subtype (param f32) (result f32) func))
  (type $type$3 (func_subtype (param f32) (result f32) func))
- ;; CHECK:      (type $type$4 (func (param f64) (result f64)))
- ;; NOMNL:      (type $type$4 (func_subtype (param f64) (result f64) func))
  (type $type$4 (func_subtype (param f64) (result f64) func))
  ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
 
@@ -301,45 +187,36 @@
  (memory $0 (shared 16 17))
  ;; CHECK:      (elem declare func $2 $3)
 
- ;; CHECK:      (export "func_406_invoker" (func $0))
- ;; NOMNL:      (elem declare func $2 $3)
-
- ;; NOMNL:      (export "func_406_invoker" (func $0))
- (export "func_406_invoker" (func $0))
- ;; CHECK:      (export "func_448_invoker" (func $1))
- ;; NOMNL:      (export "func_448_invoker" (func $1))
- (export "func_448_invoker" (func $1))
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; NOMNL:      (elem declare func $2 $3)
+
  ;; NOMNL:      (func $0 (type $type$0)
  ;; NOMNL-NEXT:  (call $byn$mgfn-shared$0
  ;; NOMNL-NEXT:   (ref.func $2)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $0 (type $type$0)
-  (if
-   (i32.eqz
-    (global.get $global$0)
-   )
-   (return)
-  )
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
-  )
-  (if
-   (global.get $global$0)
-   (call $2)
-  )
-  (if
-   (global.get $global$0)
-   (call $2)
-  )
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (call $2)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
  )
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
@@ -352,189 +229,95 @@
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $1 (type $type$0)
-  (if
-   (i32.eqz
-    (global.get $global$0)
-   )
-   (return)
-  )
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
-  )
-  (if
-   (global.get $global$0)
-   (call $3)
-  )
-  (if
-   (global.get $global$0)
-   (call $3)
-  )
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (call $3)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
+  (nop)
  )
  ;; CHECK:      (func $2
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $4
- ;; CHECK-NEXT:    (f32.load align=1
- ;; CHECK-NEXT:     (i32.const 17)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 17)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $2 (type $type$1)
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (call $4
- ;; NOMNL-NEXT:    (f32.load align=1
- ;; NOMNL-NEXT:     (i32.const 17)
- ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (i32.const 17)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $2 (type $type$1)
   (drop
-   (call $4
-    (f32.load align=1
-     (i32.const 17)
-    )
-   )
+   (i32.const 17)
   )
  )
  ;; CHECK:      (func $3
- ;; CHECK-NEXT:  (global.set $global$0
- ;; CHECK-NEXT:   (i32.sub
- ;; CHECK-NEXT:    (global.get $global$0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 999)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $3 (type $type$1)
- ;; NOMNL-NEXT:  (global.set $global$0
- ;; NOMNL-NEXT:   (i32.sub
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:    (i32.const 1)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (i32.const 999)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $3 (type $type$1)
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
-  )
- )
- ;; CHECK:      (func $4 (param $0 f32) (result f32)
- ;; CHECK-NEXT:  (if (result f32)
- ;; CHECK-NEXT:   (f32.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $4 (type $type$3) (param $0 f32) (result f32)
- ;; NOMNL-NEXT:  (if (result f32)
- ;; NOMNL-NEXT:   (f32.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f32.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $4 (type $type$3) (param $0 f32) (result f32)
-  (if (result f32)
-   (f32.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f32.const 0)
-  )
- )
- ;; CHECK:      (func $5 (param $0 f64) (result f64)
- ;; CHECK-NEXT:  (if (result f64)
- ;; CHECK-NEXT:   (f64.eq
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (f64.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $5 (type $type$4) (param $0 f64) (result f64)
- ;; NOMNL-NEXT:  (if (result f64)
- ;; NOMNL-NEXT:   (f64.eq
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (local.get $0)
- ;; NOMNL-NEXT:   (f64.const 0)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $5 (type $type$4) (param $0 f64) (result f64)
-  (if (result f64)
-   (f64.eq
-    (local.get $0)
-    (local.get $0)
-   )
-   (local.get $0)
-   (f64.const 0)
+  (drop
+   (i32.const 999)
   )
  )
 )
 ;; CHECK:      (func $byn$mgfn-shared$0 (param $0 (ref $type$0))
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (i32.eqz
-;; CHECK-NEXT:    (global.get $global$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (call_ref
+;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (global.set $global$0
-;; CHECK-NEXT:   (i32.sub
-;; CHECK-NEXT:    (global.get $global$0)
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (global.get $global$0)
-;; CHECK-NEXT:   (call_ref
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (global.get $global$0)
-;; CHECK-NEXT:   (call_ref
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
 ;; NOMNL:      (func $byn$mgfn-shared$0 (type $ref|$type$1|_=>_none) (param $0 (ref $type$1))
-;; NOMNL-NEXT:  (if
-;; NOMNL-NEXT:   (i32.eqz
-;; NOMNL-NEXT:    (global.get $global$0)
-;; NOMNL-NEXT:   )
-;; NOMNL-NEXT:   (return)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (call_ref
+;; NOMNL-NEXT:   (local.get $0)
 ;; NOMNL-NEXT:  )
-;; NOMNL-NEXT:  (global.set $global$0
-;; NOMNL-NEXT:   (i32.sub
-;; NOMNL-NEXT:    (global.get $global$0)
-;; NOMNL-NEXT:    (i32.const 1)
-;; NOMNL-NEXT:   )
-;; NOMNL-NEXT:  )
-;; NOMNL-NEXT:  (if
-;; NOMNL-NEXT:   (global.get $global$0)
-;; NOMNL-NEXT:   (call_ref
-;; NOMNL-NEXT:    (local.get $0)
-;; NOMNL-NEXT:   )
-;; NOMNL-NEXT:  )
-;; NOMNL-NEXT:  (if
-;; NOMNL-NEXT:   (global.get $global$0)
-;; NOMNL-NEXT:   (call_ref
-;; NOMNL-NEXT:    (local.get $0)
-;; NOMNL-NEXT:   )
-;; NOMNL-NEXT:  )
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
+;; NOMNL-NEXT:  (nop)
 ;; NOMNL-NEXT: )
