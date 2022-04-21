@@ -1,4 +1,4 @@
-#define POSSIBLE_CONTENTS_DEBUG 1
+//#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1190,22 +1190,28 @@ void ContentOracle::processWork(const Location& location, const PossibleContents
       } else if (auto* cast = parent->dynCast<RefCast>()) {
         assert(cast->ref == targetExpr);
         // RefCast only allows valid values to go through: nulls and things of
-        // the cast type. And of course Many is always passed through.
-        bool isNull = contents.isConstantLiteral() &&
-                      contents.getConstantLiteral().isNull();
+        // the cast type. Filter anything else out.
         bool isMany = contents.isMany();
-        // We cannot check for subtyping if the type is Many (getType() would
-        // return none, which has no heap type).
-        bool isSubType =
-          isMany ? false
-                 : HeapType::isSubType(contents.getType().getHeapType(),
-                                       cast->getIntendedType());
-        if (isNull || isMany || isSubType) {
-          // Send the value through to the ref.cast.
+        auto intendedType = cast->getIntendedType();
+        bool mayBeSubType = isMany ||
+                  HeapType::isSubType(contents.getType().getHeapType(),
+                                       intendedType);
+        PossibleContents filtered;
+        if (mayBeSubType) {
+          // TODO: we should emit a cone type here when we get one
+          filtered = PossibleContents::many();
+        }
+        bool mayBeNull = isMany || contents.getType().isNullable();
+        if (mayBeNull) {
+          filtered.combine(PossibleContents(
+            Literal::makeNull(Type(intendedType, Nullable))
+          ));
+        }
+        if (!filtered.isNone()) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    ref.cast passing through\n";
 #endif
-          addWork(ExpressionLocation{parent, 0}, contents);
+          addWork(ExpressionLocation{parent, 0}, filtered);
         }
         // TODO: ref.test and all other casts can be optimized (see the cast
         //       helper code used in OptimizeInstructions and RemoveUnusedBrs)

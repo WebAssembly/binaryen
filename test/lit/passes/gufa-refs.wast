@@ -2477,121 +2477,156 @@
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
 
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (elem declare func $test)
+
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $substruct 0
-  ;; CHECK-NEXT:      (ref.cast_static $substruct
-  ;; CHECK-NEXT:       (struct.new $substruct
-  ;; CHECK-NEXT:        (i32.const 1)
-  ;; CHECK-NEXT:        (i32.const 2)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $substruct 0
-  ;; CHECK-NEXT:      (ref.cast_static $substruct
-  ;; CHECK-NEXT:       (struct.new $subsubstruct
-  ;; CHECK-NEXT:        (i32.const 3)
-  ;; CHECK-NEXT:        (i32.const 4)
-  ;; CHECK-NEXT:        (i32.const 5)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.cast_static $struct
-  ;; CHECK-NEXT:     (struct.new $struct
-  ;; CHECK-NEXT:      (i32.const 6)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (ref.cast_static $substruct
+  ;; CHECK-NEXT:    (struct.new $substruct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.cast_static $struct
-  ;; CHECK-NEXT:        (ref.null $struct)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (ref.cast_static $substruct
+  ;; CHECK-NEXT:    (struct.new $subsubstruct
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 6)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     ;; The cast here will fail, and the ref.cast allows nothing through.
     (drop
-      (struct.get $struct 0
-        (ref.cast_static $substruct
-          (struct.new $struct
-            (i32.const 0)
-          )
+      (ref.cast_static $substruct
+        (struct.new $struct
+          (i32.const 0)
         )
       )
     )
-    ;; This cast will succeed, and we can optimize.
+    ;; This cast will succeed, and we can optimize in principle, but atm we
+    ;; lack a cone type so we do not see that only $substruct is possible, and
+    ;; we make no changes here.
     (drop
-      (struct.get $struct 0
-        (ref.cast_static $substruct
-          (struct.new $substruct
-            (i32.const 1)
-            (i32.const 2)
-          )
+      (ref.cast_static $substruct
+        (struct.new $substruct
+          (i32.const 1)
+          (i32.const 2)
         )
       )
     )
-    ;; This cast of a subtype will also succeed.
+    ;; This cast of a subtype will also succeed. As above, we can make no
+    ;; changes atm.
     (drop
-      (struct.get $struct 0
-        (ref.cast_static $substruct
-          (struct.new $subsubstruct
-            (i32.const 3)
-            (i32.const 4)
-            (i32.const 5)
-          )
+      (ref.cast_static $substruct
+        (struct.new $subsubstruct
+          (i32.const 3)
+          (i32.const 4)
+          (i32.const 5)
         )
       )
     )
-    ;; All operations on the same struct now; success
+    ;; All operations on the same struct now. As above, we can make no changes
+    ;; atm.
     (drop
-      (struct.get $struct 0
-        (ref.cast_static $struct
+      (ref.cast_static $struct
+        (struct.new $struct
+          (i32.const 6)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-nulls (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (block (result (ref null $struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (select (result (ref null $struct))
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (select (result anyref)
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.func $test)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (select (result (ref null $struct))
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-nulls
+    ;; Only a null can flow through the cast, which we can infer.
+    (drop
+      (ref.cast_static $struct
+        (select
+          (ref.null $struct)
+          (ref.null $struct)
+          (call $import)
+        )
+      )
+    )
+    ;; A null or a func will reach the cast; only the null can actually pass
+    ;; through (a func would fail the cast), so we should be able to infer the
+    ;; result in principle. However, the values combine in the select into a
+    ;; Many before it reaches us, so we cannot atm.
+    (drop
+      (ref.cast_static $struct
+        (select
+          (ref.null $struct)
+          (ref.func $test)
+          (call $import)
+        )
+      )
+    )
+    ;; A null or a $struct may arrive, and so we cannot do anything here.
+    (drop
+      (ref.cast_static $struct
+        (select
+          (ref.null $struct)
           (struct.new $struct
             (i32.const 6)
           )
-        )
-      )
-    )
-    ;; Start with a null. This will definitely trap.
-    (drop
-      (struct.get $struct 0
-        (ref.cast_static $struct
-          (ref.null $struct)
+          (call $import)
         )
       )
     )
