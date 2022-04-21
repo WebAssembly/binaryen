@@ -147,27 +147,18 @@
   )
  )
  ;; CHECK:      (func $3
- ;; CHECK-NEXT:  (global.set $global$0
- ;; CHECK-NEXT:   (i32.sub
- ;; CHECK-NEXT:    (global.get $global$0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 999)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $3 (type $type$2)
- ;; NOMNL-NEXT:  (global.set $global$0
- ;; NOMNL-NEXT:   (i32.sub
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:    (i32.const 1)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (i32.const 999)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $3 (type $type$2)
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
+  (drop
+   (i32.const 999)
   )
  )
 )
@@ -313,27 +304,18 @@
   )
  )
  ;; CHECK:      (func $3
- ;; CHECK-NEXT:  (global.set $global$0
- ;; CHECK-NEXT:   (i32.sub
- ;; CHECK-NEXT:    (global.get $global$0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 999)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $3 (type $type$1)
- ;; NOMNL-NEXT:  (global.set $global$0
- ;; NOMNL-NEXT:   (i32.sub
- ;; NOMNL-NEXT:    (global.get $global$0)
- ;; NOMNL-NEXT:    (i32.const 1)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (i32.const 999)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $3 (type $type$1)
-  (global.set $global$0
-   (i32.sub
-    (global.get $global$0)
-    (i32.const 1)
-   )
+  (drop
+   (i32.const 999)
   )
  )
 )
