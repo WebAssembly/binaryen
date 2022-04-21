@@ -2560,26 +2560,36 @@
 
   ;; CHECK:      (func $test-nulls (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $struct
-  ;; CHECK-NEXT:    (block (result (ref null $struct))
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (select (result (ref null $struct))
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast_static $struct
+  ;; CHECK-NEXT:      (block (result (ref null $struct))
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (select (result (ref null $struct))
+  ;; CHECK-NEXT:         (ref.null $struct)
+  ;; CHECK-NEXT:         (ref.null $struct)
+  ;; CHECK-NEXT:         (call $import)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (ref.null $struct)
-  ;; CHECK-NEXT:       (ref.null $struct)
-  ;; CHECK-NEXT:       (call $import)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null $struct)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $struct
-  ;; CHECK-NEXT:    (select (result anyref)
-  ;; CHECK-NEXT:     (ref.null $struct)
-  ;; CHECK-NEXT:     (ref.func $test)
-  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast_static $struct
+  ;; CHECK-NEXT:      (select (result anyref)
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (ref.func $test)
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2595,7 +2605,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-nulls
-    ;; Only a null can flow through the cast, which we can infer.
+    ;; Only a null can flow through the cast, which we can infer for the value
+    ;; of the cast.
     (drop
       (ref.cast_static $struct
         (select
@@ -2606,9 +2617,8 @@
       )
     )
     ;; A null or a func will reach the cast; only the null can actually pass
-    ;; through (a func would fail the cast), so we should be able to infer the
-    ;; result in principle. However, the values combine in the select into a
-    ;; Many before it reaches us, so we cannot atm.
+    ;; through (a func would fail the cast). Given that, we can infer a null for
+    ;; the value of the cast.
     (drop
       (ref.cast_static $struct
         (select

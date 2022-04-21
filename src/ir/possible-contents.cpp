@@ -1192,20 +1192,28 @@ void ContentOracle::processWork(const Location& location, const PossibleContents
         // RefCast only allows valid values to go through: nulls and things of
         // the cast type. Filter anything else out.
         bool isMany = contents.isMany();
-        auto intendedType = cast->getIntendedType();
-        bool mayBeSubType = isMany ||
-                  HeapType::isSubType(contents.getType().getHeapType(),
-                                       intendedType);
         PossibleContents filtered;
-        if (mayBeSubType) {
-          // TODO: we should emit a cone type here when we get one
-          filtered = PossibleContents::many();
-        }
-        bool mayBeNull = isMany || contents.getType().isNullable();
-        if (mayBeNull) {
-          filtered.combine(PossibleContents(
-            Literal::makeNull(Type(intendedType, Nullable))
-          ));
+        if (isMany) {
+          // Just pass the Many through.
+          // TODO: we could emit a cone type here when we get one, instead of
+          //       emitting a Many in any of these code paths
+          filtered = contents;
+        } else {
+          auto intendedType = cast->getIntendedType();
+          bool mayBeSubType = HeapType::isSubType(contents.getType().getHeapType(),
+                                         intendedType);
+          if (mayBeSubType) {
+            // The contents are not Many, but they may be a subtype, so they are
+            // something like an exact type that is a subtype. Pass that
+            // through. (When we get cone types, we could filter the cone here.)
+            filtered.combine(contents);
+          }
+          bool mayBeNull = contents.getType().isNullable();
+          if (mayBeNull) {
+            filtered.combine(PossibleContents(
+              Literal::makeNull(Type(intendedType, Nullable))
+            ));
+          }
         }
         if (!filtered.isNone()) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
