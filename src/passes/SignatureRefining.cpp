@@ -116,6 +116,11 @@ struct SignatureRefining : public Pass {
     // into non-nullable then callers sending a null will break. Put another
     // way, we need to see all callers to refine types, and for exports we
     // cannot do so.
+    // TODO If a function type is passed we should also mark the types used
+    //      there, etc., recursively. For now this code just handles the top-
+    //      level type, which is enough to keep the fuzzer from erroring. More
+    //      generally, we need to decide about adding a "closed-world" flag of
+    //      some kind.
     for (auto* exportedFunc : ExportUtils::getExportedFunctions(*module)) {
       allInfo[exportedFunc->type].canModify = false;
     }
