@@ -1379,7 +1379,7 @@ echo "  " $?
 
 # run the command
 echo "The following value should be 1:"
-./scripts/fuzz_opt.py %(auto_init)s %(nominal)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py %(auto_init)s --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "  " $?
 
 #
@@ -1409,7 +1409,6 @@ echo "  " $?
                          'bin': shared.options.binaryen_bin,
                          'seed': seed,
                          'auto_init': auto_init,
-                         'nominal': nominal,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
                          'reduce_sh': os.path.abspath('reduce.sh')})
