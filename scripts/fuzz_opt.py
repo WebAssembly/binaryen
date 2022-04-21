@@ -1386,7 +1386,7 @@ echo "  " $?
 
 # run the command
 echo "The following value should be 1:"
-./scripts/fuzz_opt.py %(auto_init)s $(nominal) --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
+./scripts/fuzz_opt.py %(auto_init)s %(nominal) --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
 echo "  " $?
 
 #
