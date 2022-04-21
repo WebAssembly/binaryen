@@ -540,7 +540,7 @@ public:
   PossibleContents getContents(Location location) {
     auto iter = flowInfoMap.find(location);
     if (iter == flowInfoMap.end()) {
-      return {};
+      return {}; // XXX maybe PossibleContents::many(); // FIXME see tests
     }
     return iter->second.contents;
   }
@@ -560,6 +560,7 @@ private:
     std::vector<Location> targets;
   };
 
+  // XXX maybe If an item does not appear here, its type is Many.
   std::unordered_map<Location, LocationInfo> flowInfoMap;
 
   // Internals for flow.
