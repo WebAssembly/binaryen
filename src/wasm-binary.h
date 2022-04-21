@@ -1038,6 +1038,10 @@ enum ASTNodes {
   F64x2RelaxedMin = 0xd4,
   F64x2RelaxedMax = 0xee,
   I16x8RelaxedQ15MulrS = 0x111,
+  I16x8DotI8x16I7x16S = 0x112,
+  I16x8DotI8x16I7x16U = 0x113,
+  I32x4DotI8x16I7x16AddS = 0x114,
+  I32x4DotI8x16I7x16AddU = 0x115,
 
   // bulk memory opcodes
 

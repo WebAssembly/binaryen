@@ -1148,13 +1148,7 @@ public:
   // Returns a replacement with the precise same type, and with minimal contents
   // as best we can. As a replacement, this may reuse the input node.
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
-    if (curr->type.isTuple()) {
-      for (auto t : curr->type) {
-        if (!t.isDefaultable()) { // TODO canMakeZero? but header cycles
-          // TODO We could replace some of the items perhaps.
-          return curr;
-        }
-      }
+    if (curr->type.isTuple() && curr->type.isDefaultable()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
     if (curr->type.isNullable()) {

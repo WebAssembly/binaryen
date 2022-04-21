@@ -5575,11 +5575,11 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       break;
     case BinaryConsts::I8x16Swizzle:
       curr = allocator.alloc<Binary>();
-      curr->op = SwizzleVec8x16;
+      curr->op = SwizzleVecI8x16;
       break;
     case BinaryConsts::I8x16RelaxedSwizzle:
       curr = allocator.alloc<Binary>();
-      curr->op = RelaxedSwizzleVec8x16;
+      curr->op = RelaxedSwizzleVecI8x16;
       break;
     case BinaryConsts::F32x4RelaxedMin:
       curr = allocator.alloc<Binary>();
@@ -5600,6 +5600,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I16x8RelaxedQ15MulrS:
       curr = allocator.alloc<Binary>();
       curr->op = RelaxedQ15MulrSVecI16x8;
+      break;
+    case BinaryConsts::I16x8DotI8x16I7x16S:
+      curr = allocator.alloc<Binary>();
+      curr->op = DotI8x16I7x16SToVecI16x8;
+      break;
+    case BinaryConsts::I16x8DotI8x16I7x16U:
+      curr = allocator.alloc<Binary>();
+      curr->op = DotI8x16I7x16UToVecI16x8;
       break;
     default:
       return false;
@@ -6074,6 +6082,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2RelaxedFms:
       curr = allocator.alloc<SIMDTernary>();
       curr->op = RelaxedFmsVecF64x2;
+      break;
+    case BinaryConsts::I32x4DotI8x16I7x16AddS:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = DotI8x16I7x16AddSToVecI32x4;
+      break;
+    case BinaryConsts::I32x4DotI8x16I7x16AddU:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = DotI8x16I7x16AddUToVecI32x4;
       break;
     default:
       return false;

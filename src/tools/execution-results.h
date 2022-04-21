@@ -151,10 +151,14 @@ struct ExecutionResults {
   bool areEqual(Literal a, Literal b) {
     // We allow nulls to have different types (as they compare equal regardless)
     // but anything else must have an identical type.
-    if (a.type != b.type && !(a.isNull() && b.isNull())) {
-      // XXX nominal fuzzing std::cout << "types not identical! " << a << " != "
-      // << b << '\n';
-      // return false;
+    // We cannot do this in nominal typing, however, as different modules will
+    // have different types in general. We could perhaps compare them
+    // structurally, but that would not be right either.
+    if (getTypeSystem() != TypeSystem::Nominal) {
+      if (a.type != b.type && !(a.isNull() && b.isNull())) {
+        std::cout << "types not identical! " << a << " != " << b << '\n';
+        return false;
+      }
     }
     if (a.type.isRef()) {
       // Don't compare references - only their types. There are several issues
