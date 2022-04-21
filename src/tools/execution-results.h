@@ -152,8 +152,8 @@ struct ExecutionResults {
     // We allow nulls to have different types (as they compare equal regardless)
     // but anything else must have an identical type.
     // We cannot do this in nominal typing, however, as different modules will
-    // have different types in general. We could perhaps compare them
-    // structurally, but that would not be right either.
+    // have different types in general. We could perhaps compare the entire
+    // graph structurally TODO
     if (getTypeSystem() != TypeSystem::Nominal) {
       if (a.type != b.type && !(a.isNull() && b.isNull())) {
         std::cout << "types not identical! " << a << " != " << b << '\n';
