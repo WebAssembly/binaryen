@@ -118,7 +118,7 @@ struct ParamInfo {
       return (*literals)[0].type;
     } else if (auto callees = std::get_if<std::vector<Name>>(&values)) {
       auto* callee = module->getFunction((*callees)[0]);
-      return Type(callee->getSig(), NonNullable);
+      return Type(callee->type, NonNullable);
     } else {
       WASM_UNREACHABLE("unexpected const value type");
     }
@@ -246,7 +246,7 @@ bool MergeSimilarFunctions::areInEquvalentClass(Function* lhs,
       }
       auto* lhsCallee = module->getFunction(lhsCast->target);
       auto* rhsCallee = module->getFunction(rhsCast->target);
-      if (lhsCallee->getSig() != rhsCallee->getSig()) {
+      if (lhsCallee->type != rhsCallee->type) {
         return false;
       }
 
