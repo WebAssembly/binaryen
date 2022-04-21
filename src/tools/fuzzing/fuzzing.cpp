@@ -3041,6 +3041,12 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
 }
 
 Rtt TranslateToFuzzReader::getSubType(Rtt rtt) {
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    // With nominal typing the depth in rtts must match the nominal hierarchy,
+    // so we cannot create a random depth like we do below.
+    // TODO: fuzz more stuff?
+    return rtt;
+  }
   uint32_t depth = rtt.depth != Rtt::NoDepth
                      ? rtt.depth
                      : oneIn(2) ? Rtt::NoDepth : upTo(MAX_RTT_DEPTH + 1);
