@@ -1633,20 +1633,20 @@ struct OptimizeInstructions
           // We must refinalize here, as we may be returning a more specific
           // type, which can alter the parent. For example:
           //
-          //  (struct.get $B 0
-          //   (ref.cast_static $B
-          //    (local.get $C)
+          //  (struct.get $parent 0
+          //   (ref.cast_static $parent
+          //    (local.get $child)
           //   )
           //  )
           //
-          // Try to cast a $C to its parent, $B. That always works,
+          // Try to cast a $child to its parent, $parent. That always works,
           // so the cast can be removed.
           // Then once the cast is removed, the outer struct.get
-          // will have a reference with a different type,
-          // making it a (struct.get $C ..) instead of $B.
-          // But $B and $C have different types on field 0, and so
-          // the struct.get must be refinalized so the node has the
-          // expected type.
+          // will have a reference with a different type, making it a
+          // (struct.get $child ..) instead of $parent.
+          // But if $parent and $child have different types on field 0 (the
+          // child may have a more refined one) then the struct.get must be
+          // refinalized so the IR node has the expected type.
           refinalize = true;
         }
         return;
