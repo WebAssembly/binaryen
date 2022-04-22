@@ -42,65 +42,67 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
   }
 };
 
-Counts getHeapTypeCounts(Module& wasm) {
-  struct CodeScanner
-    : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
-    Counts& counts;
+struct CodeScanner
+  : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
+  Counts& counts;
 
-    CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
-      setModule(&wasm);
-    }
+  CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
+    setModule(&wasm);
+  }
 
-    void visitExpression(Expression* curr) {
-      if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->heapType);
-      } else if (curr->is<RefNull>()) {
+  void visitExpression(Expression* curr) {
+    if (auto* call = curr->dynCast<CallIndirect>()) {
+      counts.note(call->heapType);
+    } else if (curr->is<RefNull>()) {
+      counts.note(curr->type);
+    } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
+      counts.note(curr->type.getRtt().heapType);
+    } else if (auto* make = curr->dynCast<StructNew>()) {
+      handleMake(make);
+    } else if (auto* make = curr->dynCast<ArrayNew>()) {
+      handleMake(make);
+    } else if (auto* make = curr->dynCast<ArrayInit>()) {
+      handleMake(make);
+    } else if (auto* cast = curr->dynCast<RefCast>()) {
+      handleCast(cast);
+    } else if (auto* cast = curr->dynCast<RefTest>()) {
+      handleCast(cast);
+    } else if (auto* cast = curr->dynCast<BrOn>()) {
+      if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
+        handleCast(cast);
+      }
+    } else if (auto* get = curr->dynCast<StructGet>()) {
+      counts.note(get->ref->type);
+    } else if (auto* set = curr->dynCast<StructSet>()) {
+      counts.note(set->ref->type);
+    } else if (Properties::isControlFlowStructure(curr)) {
+      if (curr->type.isTuple()) {
+        // TODO: Allow control flow to have input types as well
+        counts.note(Signature(Type::none, curr->type));
+      } else {
         counts.note(curr->type);
-      } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-        counts.note(curr->type.getRtt().heapType);
-      } else if (auto* make = curr->dynCast<StructNew>()) {
-        // Some operations emit a HeapType in the binary format, if they are
-        // static and not dynamic (if dynamic, the RTT provides the heap type).
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayNew>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayInit>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* cast = curr->dynCast<RefCast>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<RefTest>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<BrOn>()) {
-        if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-          if (!cast->rtt && cast->type != Type::unreachable) {
-            counts.note(cast->getIntendedType());
-          }
-        }
-      } else if (auto* get = curr->dynCast<StructGet>()) {
-        counts.note(get->ref->type);
-      } else if (auto* set = curr->dynCast<StructSet>()) {
-        counts.note(set->ref->type);
-      } else if (Properties::isControlFlowStructure(curr)) {
-        if (curr->type.isTuple()) {
-          // TODO: Allow control flow to have input types as well
-          counts.note(Signature(Type::none, curr->type));
-        } else {
-          counts.note(curr->type);
-        }
       }
     }
-  };
+  }
 
+  template<typename T>
+  void handleMake(T* curr) {
+    if (!curr->rtt && curr->type != Type::unreachable) {
+      counts.note(curr->type.getHeapType());
+    }
+  }
+
+  template<typename T>
+  void handleCast(T* curr) {
+    // Some operations emit a HeapType in the binary format, if they are
+    // static and not dynamic (if dynamic, the RTT provides the heap type).
+    if (!curr->rtt) {
+      counts.note(curr->intendedType);
+    }
+  }
+};
+
+Counts getHeapTypeCounts(Module& wasm) {
   // Collect module-level info.
   Counts counts;
   CodeScanner(wasm, counts).walkModuleCode(&wasm);
