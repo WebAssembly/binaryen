@@ -35,15 +35,11 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
-NOMINAL = True
+TYPE_SYSTEM_FLAG = '--nominal'
 
 # feature options that are always passed to the tools.
-CONSTANT_FEATURE_OPTS = [
-    '--all-features',
-]
-
-if NOMINAL:
-    CONSTANT_FEATURE_OPTS += ['--nominal']
+CONSTANT_FEATURE_OPTS = ['--all-features']
+CONSTANT_FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
@@ -1439,7 +1435,7 @@ You can reduce the testcase by running this now:
 vvvv
 
 
-%(wasm_reduce)s %(nominal)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
+%(wasm_reduce)s %(type_system_flag)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
 
 ^^^^
@@ -1469,7 +1465,7 @@ After reduction, the reduced file will be in %(working_wasm)s
                        'working_wasm': os.path.abspath('w.wasm'),
                        'wasm_reduce': in_bin('wasm-reduce'),
                        'reduce_sh': os.path.abspath('reduce.sh'),
-                       'nominal': nominal})
+                       'type_system_flag': TYPE_SYSTEM_FLAG})
                 break
         if given_seed is not None:
             break
