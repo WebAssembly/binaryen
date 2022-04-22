@@ -35,8 +35,13 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
+NOMINAL = True
+
 # feature options that are always passed to the tools.
 CONSTANT_FEATURE_OPTS = ['--all-features']
+
+if NOMINAL:
+    CONSTANT_FEATURE_OPTS += ['--nominal']
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
@@ -1121,6 +1126,7 @@ def write_commands(commands, filename):
 opt_choices = [
     [],
     ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
+    ["--cfp"],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
@@ -1137,11 +1143,14 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
+    ["--global-refining"],
+    ["--gto"],
     ["--local-cse"],
     ["--heap2local"],
     ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
     ["--licm"],
+    ["--local-subtyping"],
     ["--memory-packing"],
     ["--merge-blocks"],
     ['--merge-locals'],
@@ -1162,13 +1171,15 @@ opt_choices = [
     ["--flatten", "--rereloop"],
     ["--roundtrip"],
     ["--rse"],
-    # TODO: fuzz signature-refining/pruning/etc., but those all need --nominal
+    ["--signature-pruning"],
+    ["--signature-refining"],
     ["--simplify-locals"],
     ["--simplify-locals-nonesting"],
     ["--simplify-locals-nostructure"],
     ["--simplify-locals-notee"],
     ["--simplify-locals-notee-nostructure"],
     ["--ssa"],
+    ["--type-refining"],
     ["--vacuum"],
 ]
 
@@ -1352,6 +1363,9 @@ on valid wasm files.)
                 auto_init = ''
                 if shared.options.auto_initial_contents:
                     auto_init = '--auto-initial-contents'
+                nominal = ''
+                if NOMINAL:
+                    nominal = '--nominal'
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
@@ -1416,7 +1430,7 @@ You can reduce the testcase by running this now:
 vvvv
 
 
-%(wasm_reduce)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
+%(wasm_reduce)s %(nominal)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
 
 ^^^^
@@ -1445,7 +1459,8 @@ After reduction, the reduced file will be in %(working_wasm)s
                        'temp_wasm': os.path.abspath('t.wasm'),
                        'working_wasm': os.path.abspath('w.wasm'),
                        'wasm_reduce': in_bin('wasm-reduce'),
-                       'reduce_sh': os.path.abspath('reduce.sh')})
+                       'reduce_sh': os.path.abspath('reduce.sh'),
+                       'nominal': nominal})
                 break
         if given_seed is not None:
             break
