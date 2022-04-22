@@ -85,15 +85,13 @@ struct CodeScanner
     }
   }
 
-  template<typename T>
-  void handleMake(T* curr) {
+  template<typename T> void handleMake(T* curr) {
     if (!curr->rtt && curr->type != Type::unreachable) {
       counts.note(curr->type.getHeapType());
     }
   }
 
-  template<typename T>
-  void handleCast(T* curr) {
+  template<typename T> void handleCast(T* curr) {
     // Some operations emit a HeapType in the binary format, if they are
     // static and not dynamic (if dynamic, the RTT provides the heap type).
     if (!curr->rtt) {
