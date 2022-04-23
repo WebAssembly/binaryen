@@ -92,25 +92,25 @@ public:
   //
   // Returns whether we changed anything.
   bool combine(const PossibleContents& other) {
-    if (std::get_if<None>(&other.value)) {
+    // First handle the trivial cases of them being equal, or one of them is
+    // None or Many.
+    if (*this == other) {
       return false;
     }
-
-    if (std::get_if<None>(&value)) {
+    if (other.isNone()) {
+      return false;
+    }
+    if (isNone()) {
       value = other.value;
       return true;
     }
-
-    if (std::get_if<Many>(&value)) {
+    if (isMany()) {
       return false;
     }
-
-    if (std::get_if<Many>(&other.value)) {
+    if (other.isMany()) {
       value = Many();
       return true;
     }
-
-    // Neither is None, and neither is Many.
 
     auto applyIfDifferent = [&](const PossibleContents& newContents) {
       if (*this == newContents) {
@@ -124,58 +124,49 @@ public:
     auto type = getType();
     auto otherType = other.getType();
 
-    // Special handling for nulls. Nulls are always equal to each other, even
-    // if their types differ.
-    if (type.isRef() && otherType.isRef() && (isNull() || other.isNull())) {
-      // If only one is a null then the combination is to add nullability to
-      // this one. (This is correct both for a literal or for a type: if it was
-      // a literal then now we have either a literal or a null, so we do not
-      // have a single constant anymore).
-      if (!isNull()) {
+    // Special handling for nulls and nullability.
+    if (type.isRef() && otherType.isRef()) {
+      // Nulls are always equal to each other, even if their types differ.
+      if (isNull() || other.isNull()) {
+        // If only one is a null then the combination is to add nullability to
+        // this one. (This is correct both for a literal or for a type: if it was
+        // a literal then now we have either a literal or a null, so we do not
+        // have a single constant anymore).
+        if (!isNull()) {
+          return applyIfDifferent(
+            PossibleContents(Type(type.getHeapType(), Nullable)));
+        }
+        if (!other.isNull()) {
+          return applyIfDifferent(
+            PossibleContents(Type(otherType.getHeapType(), Nullable)));
+        }
+
+        // Both are null. The result is a null, of the LUB.
+        auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
+                                                     otherType.getHeapType()),
+                        Nullable);
+        return applyIfDifferent(PossibleContents(Literal::makeNull(lub)));
+      }
+
+      if (type.getHeapType() == otherType.getHeapType()) {
+        // The types differ, but the heap types agree, so the only difference here
+        // is in nullability, and the combined value is the nullable type.
         return applyIfDifferent(
           PossibleContents(Type(type.getHeapType(), Nullable)));
       }
-      if (!other.isNull()) {
-        return applyIfDifferent(
-          PossibleContents(Type(otherType.getHeapType(), Nullable)));
-      }
-
-      // Both are null. The result is a null, of the LUB.
-      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
-                                                   otherType.getHeapType()),
-                      Nullable);
-      return applyIfDifferent(PossibleContents(Literal::makeNull(lub)));
     }
 
-    if (other.value == value) {
-      return false;
-    }
-
-    // The values differ, but if they share the same type then we can set to
-    // that.
-    if (otherType == type) {
+    if (type == otherType) {
+      // At least their types match, so we can switch to an exact type here
+      // (unless we were already that, in which case nothing happens.
       if (isExactType()) {
-        // We were already marked as an arbitrary value of this type.
         return false;
       }
-
-      // We were a constant, and encountered another constant or an arbitrary
-      // value of our type. We change to be an arbitrary value of our type.
-      assert(isConstant());
-      assert(other.isConstant() || other.isExactType());
       value = Type(type);
       return true;
     }
 
-    if (type.isRef() && otherType.isRef() &&
-        type.getHeapType() == otherType.getHeapType()) {
-      // The types differ, but the heap types agree, so the only difference here
-      // is in nullability, and the combined value is the nullable type.
-      return applyIfDifferent(
-        PossibleContents(Type(type.getHeapType(), Nullable)));
-    }
-
-    // Worst case.
+    // Nothing else possible combines in an interesting way; emit a Many.
     value = Many();
     return true;
   }
