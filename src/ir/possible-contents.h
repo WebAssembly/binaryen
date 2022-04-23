@@ -129,9 +129,9 @@ public:
       // Nulls are always equal to each other, even if their types differ.
       if (isNull() || other.isNull()) {
         // If only one is a null then the combination is to add nullability to
-        // this one. (This is correct both for a literal or for a type: if it was
-        // a literal then now we have either a literal or a null, so we do not
-        // have a single constant anymore).
+        // this one. (This is correct both for a literal or for a type: if it
+        // was a literal then now we have either a literal or a null, so we do
+        // not have a single constant anymore).
         if (!isNull()) {
           return applyIfDifferent(
             PossibleContents(Type(type.getHeapType(), Nullable)));
@@ -149,8 +149,8 @@ public:
       }
 
       if (type.getHeapType() == otherType.getHeapType()) {
-        // The types differ, but the heap types agree, so the only difference here
-        // is in nullability, and the combined value is the nullable type.
+        // The types differ, but the heap types agree, so the only difference
+        // here is in nullability, and the combined value is the nullable type.
         return applyIfDifferent(
           PossibleContents(Type(type.getHeapType(), Nullable)));
       }
@@ -594,12 +594,14 @@ private:
   // This applies the new contents to the given location, and if something
   // changes it adds a work item to further propagate. TODO rename
   // Returns the combined contents with this change.
-  PossibleContents addWork(const Location& location, const PossibleContents& newContents);
+  PossibleContents addWork(const Location& location,
+                           const PossibleContents& newContents);
 
   // Update a target location with contents arriving to it. Add new work as
   // relevant based on what happens there.
   // XXX comment
-  void processWork(const Location& location, const PossibleContents& oldContents);
+  void processWork(const Location& location,
+                   const PossibleContents& oldContents);
 
   void updateNewLinks();
 };

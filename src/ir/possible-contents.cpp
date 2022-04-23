@@ -29,8 +29,7 @@ namespace wasm {
 namespace {
 
 #ifndef NDEBUG
-template<typename T>
-void disallowDuplicates(const T& targets) {
+template<typename T> void disallowDuplicates(const T& targets) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::unordered_set<Location> uniqueTargets;
   for (const auto& target : targets) {
@@ -870,7 +869,8 @@ void ContentOracle::analyze() {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-PossibleContents ContentOracle::addWork(const Location& location, const PossibleContents& newContents) {
+PossibleContents ContentOracle::addWork(const Location& location,
+                                        const PossibleContents& newContents) {
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
   auto& contents = flowInfoMap[location].contents;
@@ -892,7 +892,8 @@ PossibleContents ContentOracle::addWork(const Location& location, const Possible
   return contents;
 }
 
-void ContentOracle::processWork(const Location& location, const PossibleContents& oldContents) {
+void ContentOracle::processWork(const Location& location,
+                                const PossibleContents& oldContents) {
   auto& contents = flowInfoMap[location].contents;
   // |contents| is the value after the new data arrives. As something arrives,
   // and we never send nothing around, it cannot be None.
@@ -963,17 +964,16 @@ void ContentOracle::processWork(const Location& location, const PossibleContents
   // never be a reason to send them anything again.
   auto& targets = flowInfoMap[location].targets;
 
-  targets.erase(
-    std::remove_if(targets.begin(),
-                   targets.end(),
-                   [&](const Location& target) {
+  targets.erase(std::remove_if(targets.begin(),
+                               targets.end(),
+                               [&](const Location& target) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-                      std::cout << "  send to target\n";
-                      dump(target);
+                                 std::cout << "  send to target\n";
+                                 dump(target);
 #endif
-                     return addWork(target, contents).isMany();
-                   }),
-    targets.end());
+                                 return addWork(target, contents).isMany();
+                               }),
+                targets.end());
   targets.shrink_to_fit(); // XXX
 
   if (contents.isMany()) {
@@ -1200,8 +1200,8 @@ void ContentOracle::processWork(const Location& location, const PossibleContents
           filtered = contents;
         } else {
           auto intendedType = cast->getIntendedType();
-          bool mayBeSubType = HeapType::isSubType(contents.getType().getHeapType(),
-                                         intendedType);
+          bool mayBeSubType =
+            HeapType::isSubType(contents.getType().getHeapType(), intendedType);
           if (mayBeSubType) {
             // The contents are not Many, but they may be a subtype, so they are
             // something like an exact type that is a subtype. Pass that
@@ -1211,8 +1211,7 @@ void ContentOracle::processWork(const Location& location, const PossibleContents
           bool mayBeNull = contents.getType().isNullable();
           if (mayBeNull) {
             filtered.combine(PossibleContents(
-              Literal::makeNull(Type(intendedType, Nullable))
-            ));
+              Literal::makeNull(Type(intendedType, Nullable))));
           }
         }
         if (!filtered.isNone()) {

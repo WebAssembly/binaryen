@@ -894,7 +894,9 @@ struct Reducer
     bool justReduced = true;
     // Start from a new place each time.
     size_t base = deterministicRandom(numFuncs);
-    std::cerr << "|    try to remove functions (base: " << base << ", decisionCounter: " << decisionCounter << ", numFuncs " << numFuncs << ")\n";
+    std::cerr << "|    try to remove functions (base: " << base
+              << ", decisionCounter: " << decisionCounter << ", numFuncs "
+              << numFuncs << ")\n";
     for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
       if (!justReduced &&
@@ -914,7 +916,8 @@ struct Reducer
       if (names.size() == 0) {
         continue;
       }
-      std::cerr << "|     trying at i=" << i << " of size " << names.size() << "\n";
+      std::cerr << "|     trying at i=" << i << " of size " << names.size()
+                << "\n";
       // Try to remove functions and/or empty them. Note that
       // tryToRemoveFunctions() will reload the module if it fails, which means
       // function names may change - for that reason, run it second.

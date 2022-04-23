@@ -193,7 +193,8 @@ static void testOracle() {
     std::cout << "possible types of the $null global: "
               << oracle.getContents(GlobalLocation{"foo"}).getType() << '\n';
     std::cout << "possible types of the $something global: "
-              << oracle.getContents(GlobalLocation{"something"}).getType() << '\n';
+              << oracle.getContents(GlobalLocation{"something"}).getType()
+              << '\n';
   }
 
   {
