@@ -1368,9 +1368,6 @@ on valid wasm files.)
                 auto_init = ''
                 if shared.options.auto_initial_contents:
                     auto_init = '--auto-initial-contents'
-                nominal = ''
-                if NOMINAL:
-                    nominal = '--nominal'
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
