@@ -1147,6 +1147,7 @@ opt_choices = [
     ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
     ["--global-refining"],
     ["--gto"],
+    ["--gufa"],
     ["--local-cse"],
     ["--heap2local"],
     ["--remove-unused-names", "--heap2local"],
@@ -1191,8 +1192,7 @@ def randomize_opt_flags():
     has_flatten = False
     # core opts
     while 1:
-        # TODO: move to the normal place
-        if random.random() < 0.25:
+        if random.random() < 0.25: # XXX
             flag_groups.append(['--gufa'])
         choice = random.choice(opt_choices)
         if '--flatten' in choice or '-O4' in choice:
