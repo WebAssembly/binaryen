@@ -39,6 +39,12 @@ def main():
         result = subprocess.run(new_cmd)
         if result.returncode != 0:
             returncode = result.returncode
+            # For ease of debugging, print out the module that failed (otherwise
+            # the user would need to sift through all the modules in the wat to
+            # find the failing one).
+            print("[Failing module]")
+            print(module)
+            break
     sys.exit(returncode)
 
 
