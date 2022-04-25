@@ -35,6 +35,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/hash.h"
 #include "support/path.h"
 #include "support/timing.h"
 #include "tool-options.h"
@@ -410,8 +411,7 @@ struct Reducer
   // all the previous work done in the reducer.
   size_t deterministicRandom(size_t max) {
     assert(max > 0);
-    // Increment to avoid returning the same result each time.
-    decisionCounter += max;
+    hash_combine(decisionCounter, max);
     return decisionCounter % max;
   }
 
@@ -899,7 +899,7 @@ struct Reducer
     std::cerr << "|    try to remove functions (base: " << base
               << ", decisionCounter: " << decisionCounter << ", numFuncs "
               << numFuncs << ")\n";
-    for (size_t x = 0; x < functionNames.size();) {
+    for (size_t x = 0; x < functionNames.size(); x++) {
       size_t i = (base + x) % numFuncs;
       if (!justReduced &&
           functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
@@ -926,13 +926,14 @@ struct Reducer
       justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
-        x += skip;
+        // Subtract 1 since the loop increments us anyhow by one: we want to
+        // skip over the skipped functions, and not any more.
+        x += skip - 1;
         skip = std::min(size_t(factor), 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
-        // Increment by at least 1, so we do not stay in the same place.
-        x += (factor / 100) + 1;
+        x += factor / 100;
       }
     }
     // If maxSkip is 1 then we never reduced at all. If it is 2 then we did
