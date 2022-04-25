@@ -397,10 +397,22 @@ struct Reducer
     return out == expected;
   }
 
+  size_t decisionCounter = 0;
+
   bool shouldTryToReduce(size_t bonus = 1) {
-    static size_t counter = 0;
-    counter += bonus;
-    return (counter % factor) <= bonus;
+    assert(bonus > 0);
+    // Increment to avoid returning the same result each time.
+    decisionCounter += bonus;
+    return (decisionCounter % factor) <= bonus;
+  }
+
+  // Returns a random number in the range [0, max). This is deterministic given
+  // all the previous work done in the reducer.
+  size_t deterministicRandom(size_t max) {
+    assert(max > 0);
+    // Increment to avoid returning the same result each time.
+    decisionCounter += max;
+    return decisionCounter % max;
   }
 
   bool isOkReplacement(Expression* with) {
@@ -869,17 +881,26 @@ struct Reducer
   // amount of reduction that justifies doing even more.
   bool reduceFunctions() {
     // try to remove functions
-    std::cerr << "|    try to remove functions\n";
     std::vector<Name> functionNames;
     for (auto& func : module->functions) {
       functionNames.push_back(func->name);
+    }
+    auto numFuncs = functionNames.size();
+    if (numFuncs == 0) {
+      return false;
     }
     size_t skip = 1;
     size_t maxSkip = 1;
     // If we just removed some functions in the previous iteration, keep trying
     // to remove more as this is one of the most efficient ways to reduce.
     bool justReduced = true;
-    for (size_t i = 0; i < functionNames.size(); i++) {
+    // Start from a new place each time.
+    size_t base = deterministicRandom(numFuncs);
+    std::cerr << "|    try to remove functions (base: " << base
+              << ", decisionCounter: " << decisionCounter << ", numFuncs "
+              << numFuncs << ")\n";
+    for (size_t x = 0; x < functionNames.size();) {
+      size_t i = (base + x) % numFuncs;
       if (!justReduced &&
           functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
           !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
@@ -897,18 +918,21 @@ struct Reducer
       if (names.size() == 0) {
         continue;
       }
+      std::cerr << "|     trying at i=" << i << " of size " << names.size()
+                << "\n";
       // Try to remove functions and/or empty them. Note that
       // tryToRemoveFunctions() will reload the module if it fails, which means
       // function names may change - for that reason, run it second.
       justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
-        i += skip;
+        x += skip;
         skip = std::min(size_t(factor), 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
-        i += factor / 100;
+        // Increment by at least 1, so we do not stay in the same place.
+        x += (factor / 100) + 1;
       }
     }
     // If maxSkip is 1 then we never reduced at all. If it is 2 then we did
