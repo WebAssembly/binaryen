@@ -35,6 +35,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/hash.h"
 #include "support/path.h"
 #include "support/timing.h"
 #include "tool-options.h"
@@ -400,6 +401,8 @@ struct Reducer
   size_t decisionCounter = 0;
 
   bool shouldTryToReduce(size_t bonus = 1) {
+    assert(bonus > 0);
+    // Increment to avoid returning the same result each time.
     decisionCounter += bonus;
     return (decisionCounter % factor) <= bonus;
   }
@@ -408,7 +411,7 @@ struct Reducer
   // all the previous work done in the reducer.
   size_t deterministicRandom(size_t max) {
     assert(max > 0);
-    // decisionCounter += .. // need to not return the same again and again
+    hash_combine(decisionCounter, max);
     return decisionCounter % max;
   }
 
@@ -924,7 +927,9 @@ struct Reducer
       justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
-        x += skip; // - 1?
+        // Subtract 1 since the loop increments us anyhow by one: we want to
+        // skip over the skipped functions, and not any more.
+        x += skip - 1;
         skip = std::min(size_t(factor), 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
