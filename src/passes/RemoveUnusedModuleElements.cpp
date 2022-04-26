@@ -58,6 +58,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   //       have a flag for that, and when the world is not closed we'd need to
   //       check for RefFuncs that flow out to exports.
   std::unordered_map<HeapType, std::vector<Name>> refFuncMap;
+  // XXX this is not quite right. We will still need to keep the function around
+  //     so the RefFunc validates. Just the function can be emptied out,
+  //     basically, with an unreachable.
 
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
     : module(module) {
