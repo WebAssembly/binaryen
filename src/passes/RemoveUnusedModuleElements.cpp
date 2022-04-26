@@ -43,6 +43,19 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   std::set<ModuleElement> reachable;
   bool usesMemory = false;
 
+  // The signatures that we have seen a call_ref for. When we see a RefFunc of a
+  // signature in here, we know it is reachable.
+  std::unordered_set<HeapType> calledSignatures;
+
+  // All the RefFuncs we've seen, grouped by heap type. When we see a CallRef of
+  // one of the types here, we know all the RefFuncs corresponding to it are
+  // reachable. This is the reverse side of calledSignatures: for a function to
+  // be reached via a reference, we need the combination of a RefFunc of it as
+  // well as a CallRef of that, and we may see them in any order. (Or, if the
+  // RefFunc is in a table, we need a CallIndirect, which is handled in the
+  // table logic.)
+  std::unordered_map<HeapType, std::vector<Name>> refFuncMap;
+
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
     : module(module) {
     queue = roots;
@@ -105,6 +118,27 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   }
   void visitCallIndirect(CallIndirect* curr) { maybeAddTable(curr->table); }
 
+  void visitCallRef(CallRef* curr) {
+    if (curr->target->type.isRef()) {
+      auto type = curr->target->type.getHeapType();
+
+      // Note the signature as called. This means that any future RefFunc of
+      // that signature is callable.
+      calledSignatures.insert(type);
+
+      // Call all the functions of that signature. We can then forget about
+      // them.
+      auto iter = refFuncMap.find(type);
+      if (iter != refFuncMap.end()) {
+        for (Name target : iter->second) {
+          maybeAdd(ModuleElement(ModuleElementKind::Function, target));
+        }
+
+        refFuncMap.erase(iter);
+      }
+    }
+  }
+
   void visitGlobalGet(GlobalGet* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
   }
@@ -126,7 +160,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+    auto type = curr->type.getHeapType();
+    if (calledSignatures.count(type)) {
+      // We've seen a RefFunc for this, so it is reachable.
+      maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+    } else {
+      // We've never seen a RefFunc for this, but might see one later.
+      refFuncMap[type].push_back(curr->func);
+    }
   }
   void visitTableGet(TableGet* curr) { maybeAddTable(curr->table); }
   void visitTableSet(TableSet* curr) { maybeAddTable(curr->table); }
