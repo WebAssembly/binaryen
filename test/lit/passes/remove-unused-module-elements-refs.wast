@@ -2,9 +2,26 @@
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --nominal -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $A (func_subtype func))
   (type $A (func))
+  ;; CHECK:      (type $B (func_subtype func))
   (type $B (func))
 
+  ;; CHECK:      (elem declare func $target-A $target-B)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $foo (export "foo")
     ;; This export has two RefFuncs, and one CallRef.
     (drop
@@ -18,6 +35,9 @@
     )
   )
 
+  ;; CHECK:      (func $target-A (type $A)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target-A (type $A)
     ;; This function is reachable from the export "foo": there is a RefFunc and
     ;; a CallRef for it there.
@@ -28,6 +48,9 @@
     ;; no RefFunc.
   )
 
+  ;; CHECK:      (func $target-B (type $B)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target-B (type $B)
     ;; This function is not reachable. We have a RefFunc in "foo" but no
     ;; suitable CallRef.
@@ -36,9 +59,22 @@
 
 ;; As above, but reverse the order inside $foo, so we see the CallRef first.
 (module
+  ;; CHECK:      (type $A (func_subtype func))
   (type $A (func))
   (type $B (func))
 
+  ;; CHECK:      (elem declare func $target-A)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $foo (export "foo")
     (call_ref
       (ref.null $A)
@@ -48,6 +84,9 @@
     )
   )
 
+  ;; CHECK:      (func $target-A (type $A)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target-A (type $A)
     ;; This function is reachable.
   )
@@ -59,9 +98,28 @@
 
 ;; As above, but interleave CallRefs with RefFuncs.
 (module
+  ;; CHECK:      (type $A (func_subtype func))
   (type $A (func))
   (type $B (func))
 
+  ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $foo (export "foo")
     (call_ref
       (ref.null $A)
@@ -77,10 +135,16 @@
     )
   )
 
+  ;; CHECK:      (func $target-A-1 (type $A)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target-A-1 (type $A)
     ;; This function is reachable.
   )
 
+  ;; CHECK:      (func $target-A-2 (type $A)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target-A-2 (type $A)
     ;; This function is reachable.
   )
@@ -93,9 +157,28 @@
 ;; As above, with the order reversed inside $foo. The results should be the
 ;; same.
 (module
+  ;; CHECK:      (type $A (func_subtype func))
   (type $A (func))
   (type $B (func))
 
+  ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $foo (export "foo")
     (drop
       (ref.func $target-A-1)
@@ -111,10 +194,16 @@
     )
   )
 
+  ;; CHECK:      (func $target-A-1 (type $A)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target-A-1 (type $A)
     ;; This function is reachable.
   )
 
+  ;; CHECK:      (func $target-A-2 (type $A)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target-A-2 (type $A)
     ;; This function is reachable.
   )

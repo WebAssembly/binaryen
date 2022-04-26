@@ -54,6 +54,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // well as a CallRef of that, and we may see them in any order. (Or, if the
   // RefFunc is in a table, we need a CallIndirect, which is handled in the
   // table logic.)
+  // TODO: We assume a closed world in the GC space atm, but eventually should
+  //       have a flag for that, and when the world is not closed we'd need to
+  //       check for RefFuncs that flow out to exports.
   std::unordered_map<HeapType, std::vector<Name>> refFuncMap;
 
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
