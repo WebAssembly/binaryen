@@ -27,6 +27,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -54,6 +55,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // well as a CallRef of that, and we may see them in any order. (Or, if the
   // RefFunc is in a table, we need a CallIndirect, which is handled in the
   // table logic.)
+  //
+  // After we see a call for a type, we can clear out the entry here for it, as
+  // we'll have that type in calledSignatures.
+  //
   // TODO: We assume a closed world in the GC space atm, but eventually should
   //       have a flag for that, and when the world is not closed we'd need to
   //       check for RefFuncs that flow out to exports.
@@ -251,10 +256,35 @@ struct RemoveUnusedModuleElements : public Pass {
     });
     // Compute reachability starting from the root set.
     ReachabilityAnalyzer analyzer(module, roots);
+
+    // RefFuncs that are never called are a special case: We cannot remove the
+    // function, since then (ref.func $foo) would not validate. But if we know
+    // it is never called, at least the contents do not matter, so we can
+    // empty it out.
+    std::unordered_set<Name> uncalledRefFuncs;
+    for (auto& [type, targets] : analyzer.refFuncMap) {
+      for (auto target : targets) {
+        uncalledRefFuncs.insert(target);
+      }
+    }
+
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
-      return analyzer.reachable.count(
-               ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
+      if (analyzer.reachable.count(
+               ModuleElement(ModuleElementKind::Function, curr->name))) {
+        return false;
+      }
+
+      if (uncalledRefFuncs.count(curr->name)) {
+        // See comment above on uncalledRefFuncs.
+        if (!curr->imported()) {
+          curr->body = Builder(*module).makeUnreachable();
+        }
+        return false;
+      }
+
+      // The function is not reached and has no references; remove it.
+      return true;
     });
     module->removeGlobals([&](Global* curr) {
       return analyzer.reachable.count(
