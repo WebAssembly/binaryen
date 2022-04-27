@@ -21,6 +21,9 @@
   ;; CHECK-NEXT:  (call_ref
   ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (export "foo")
     ;; This export has two RefFuncs, and one CallRef.
@@ -32,6 +35,11 @@
     )
     (call_ref
       (ref.null $A)
+    )
+    ;; Verify that we do not crash on an unreachable call_ref, which has no
+    ;; heap type for us to analyze.
+    (call_ref
+      (unreachable)
     )
   )
 
