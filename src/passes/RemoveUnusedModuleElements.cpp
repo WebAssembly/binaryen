@@ -185,7 +185,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       // We've seen a RefFunc for this, so it is reachable.
       maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
     } else {
-      // We've never seen a RefFunc for this, but might see one later.
+      // We've never seen a CallRef for this, but might see one later.
       uncalledRefFuncMap[type].push_back(curr->func);
     }
   }
