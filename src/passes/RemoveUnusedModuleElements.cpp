@@ -57,12 +57,13 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // table logic.)
   //
   // After we see a call for a type, we can clear out the entry here for it, as
-  // we'll have that type in calledSignatures.
+  // we'll have that type in calledSignatures, and so this contains only
+  // RefFuncs that we have not seen a call for yet, hence "uncalledRefFuncMap."
   //
   // TODO: We assume a closed world in the GC space atm, but eventually should
   //       have a flag for that, and when the world is not closed we'd need to
   //       check for RefFuncs that flow out to exports.
-  std::unordered_map<HeapType, std::vector<Name>> refFuncMap;
+  std::unordered_map<HeapType, std::vector<Name>> uncalledRefFuncMap;
   // XXX this is not quite right. We will still need to keep the function around
   //     so the RefFunc validates. Just the function can be emptied out,
   //     basically, with an unreachable.
@@ -133,20 +134,23 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     if (curr->target->type.isRef()) {
       auto type = curr->target->type.getHeapType();
 
-      // Note the signature as called. This means that any future RefFunc of
-      // that signature is callable.
-      calledSignatures.insert(type);
-
       // Call all the functions of that signature. We can then forget about
-      // them.
-      auto iter = refFuncMap.find(type);
-      if (iter != refFuncMap.end()) {
+      // them, as this signature will be marked as called.
+      auto iter = uncalledRefFuncMap.find(type);
+      if (iter != uncalledRefFuncMap.end()) {
+        // We must not have a type in both calledSignatures and
+        // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
+        // it any more.
+        assert(calledSignatures.count(type) == 0);
+
         for (Name target : iter->second) {
           maybeAdd(ModuleElement(ModuleElementKind::Function, target));
         }
 
-        refFuncMap.erase(iter);
+        uncalledRefFuncMap.erase(iter);
       }
+
+      calledSignatures.insert(type);
     }
   }
 
@@ -173,11 +177,16 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitRefFunc(RefFunc* curr) {
     auto type = curr->type.getHeapType();
     if (calledSignatures.count(type)) {
+      // We must not have a type in both calledSignatures and
+      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
+      // any more.
+      assert(uncalledRefFuncMap.count(type) == 0);
+
       // We've seen a RefFunc for this, so it is reachable.
       maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
     } else {
       // We've never seen a RefFunc for this, but might see one later.
-      refFuncMap[type].push_back(curr->func);
+      uncalledRefFuncMap[type].push_back(curr->func);
     }
   }
   void visitTableGet(TableGet* curr) { maybeAddTable(curr->table); }
@@ -264,7 +273,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // it is never called, at least the contents do not matter, so we can
     // empty it out.
     std::unordered_set<Name> uncalledRefFuncs;
-    for (auto& [type, targets] : analyzer.refFuncMap) {
+    for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
       for (auto target : targets) {
         uncalledRefFuncs.insert(target);
       }
