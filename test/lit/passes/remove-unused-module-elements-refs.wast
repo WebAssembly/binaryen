@@ -49,11 +49,15 @@
   )
 
   ;; CHECK:      (func $target-B (type $B)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-B (type $B)
     ;; This function is not reachable. We have a RefFunc in "foo" but no
     ;; suitable CallRef.
+    ;;
+    ;; Note that we cannot remove the function, as the RefFunc must refer to
+    ;; something in order to validate. But we can clear out the body of this
+    ;; function with an unreachable.
   )
 )
 
