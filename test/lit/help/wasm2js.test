@@ -98,6 +98,8 @@
 ;; CHECK-NEXT:   --emit-target-features                        emit the target features section
 ;; CHECK-NEXT:                                                 in the output
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --exception-opts                              optimize exceptions
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --extract-function                            leaves just one function (useful
 ;; CHECK-NEXT:                                                 for debugging)
 ;; CHECK-NEXT:
