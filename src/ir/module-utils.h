@@ -309,7 +309,9 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 // checked.)
 using Modifies = bool;
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
-template<typename T, Modifies Mod=false, template<typename, typename> class MapT = DefaultMap>
+template<typename T,
+         Modifies Mod = false,
+         template<typename, typename> class MapT = DefaultMap>
 struct ParallelFunctionAnalysis {
   Module& wasm;
 
