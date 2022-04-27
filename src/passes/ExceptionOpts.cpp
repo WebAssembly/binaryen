@@ -432,6 +432,9 @@ struct ExceptionOpts : public Pass {
         if (analyzedFuncs.count(func)) {
           return;
         }
+        // If this function was successfully analyzed, i.e., decided whether it
+        // throws or not, this may have unlocked more callers for analysis.
+        // Process the worklist until it is empty.
         if (analyzeFunc(func)) {
           processWorklist();
         }
@@ -527,10 +530,10 @@ struct ExceptionOpts : public Pass {
 
 #ifdef EXCEPTION_OPTS_DEBUG
     // Given a possibly throwing function, figure out all possibly throwing leaf
-    // functions (= functions without any callees or imported functions) that
-    // are eventually called by this function, and add them to
-    // 'throwingLeafFuncs'. This function is used to figure out which functions
-    // are mostly reponsible for making functions throwable.
+    // functions (= functions without any callees) that are eventually called by
+    // this function, and add them to 'throwingLeafFuncs'. This function is used
+    // to figure out which functions are mostly reponsible for making functions
+    // throwable.
     auto addLeafThrowingCall = [&](Function* caller) {
       assert(callGraph.map[caller].throws == ThrowKind::CanThrow);
       if (caller->imported()) {
