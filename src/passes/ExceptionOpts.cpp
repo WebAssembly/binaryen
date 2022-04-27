@@ -426,6 +426,7 @@ struct ExceptionOpts : public Pass {
     // cycle-breaking mechanism, but I doubt it will improve code size at this
     // point.
     for (int i = 0;; i++) {
+      WASM_UNUSED(i); // Only used when EXCEPTION_OPTS_DEBUG is defined
       size_t numAnalyzed = analyzedFuncs.size();
       ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
         if (analyzedFuncs.count(func)) {
