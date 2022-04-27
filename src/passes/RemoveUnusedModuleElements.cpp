@@ -128,27 +128,30 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitCallIndirect(CallIndirect* curr) { maybeAddTable(curr->table); }
 
   void visitCallRef(CallRef* curr) {
-    if (curr->target->type.isRef()) {
-      auto type = curr->target->type.getHeapType();
+    // Ignore unreachable code.
+    if (!curr->target->type.isRef()) {
+      return;
+    }
 
-      // Call all the functions of that signature. We can then forget about
-      // them, as this signature will be marked as called.
-      auto iter = uncalledRefFuncMap.find(type);
-      if (iter != uncalledRefFuncMap.end()) {
-        // We must not have a type in both calledSignatures and
-        // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
-        // it any more.
-        assert(calledSignatures.count(type) == 0);
+    auto type = curr->target->type.getHeapType();
 
-        for (Name target : iter->second) {
-          maybeAdd(ModuleElement(ModuleElementKind::Function, target));
-        }
+    // Call all the functions of that signature. We can then forget about
+    // them, as this signature will be marked as called.
+    auto iter = uncalledRefFuncMap.find(type);
+    if (iter != uncalledRefFuncMap.end()) {
+      // We must not have a type in both calledSignatures and
+      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
+      // it any more.
+      assert(calledSignatures.count(type) == 0);
 
-        uncalledRefFuncMap.erase(iter);
+      for (Name target : iter->second) {
+        maybeAdd(ModuleElement(ModuleElementKind::Function, target));
       }
 
-      calledSignatures.insert(type);
+      uncalledRefFuncMap.erase(iter);
     }
+
+    calledSignatures.insert(type);
   }
 
   void visitGlobalGet(GlobalGet* curr) {
