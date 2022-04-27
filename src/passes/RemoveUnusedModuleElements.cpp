@@ -26,8 +26,8 @@
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "wasm.h"
 #include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -271,7 +271,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
       if (analyzer.reachable.count(
-               ModuleElement(ModuleElementKind::Function, curr->name))) {
+            ModuleElement(ModuleElementKind::Function, curr->name))) {
         return false;
       }
 
