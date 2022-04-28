@@ -39,6 +39,7 @@ namespace wasm {
 // Variables to measure stats
 static std::atomic<int> numRemovedTrys = 0;
 static std::atomic<int> numTrys = 0;
+static bool optimizing_phase = false;
 static std::set<Function*> throwingFuncs;
 static std::mutex throwingFuncsMutex;
 static std::map<Function*, int> throwingLeafFuncs;
@@ -178,7 +179,7 @@ struct ExceptionOpts : public Pass {
     void markAsThrowOrUnknown(Expression* curr) {
       if (Call* call = curr->dynCast<Call>()) {
         auto* func = wasm->getFunction(call->target);
-        if (throwInfoMap.at(func).throws == ThrowKind::Unknown) {
+        if (throwInfoMap.at(func).throws == ThrowKind::Unknown && !throws) {
           unknown = true;
           clearTask();
           return;
@@ -189,7 +190,9 @@ struct ExceptionOpts : public Pass {
       // Bookeeping why it throws for later analysis
       if (Call* call = curr->dynCast<Call>()) {
         std::lock_guard<std::mutex> lock(throwingFuncsMutex);
-        throwingFuncs.insert(wasm->getFunction(call->target));
+        if (optimizing_phase) {
+          throwingFuncs[wasm->getFunction(call->target)]++;
+        }
         throwReason = ThrowReason::Call;
       } else if (curr->is<CallIndirect>() || curr->is<CallRef>()) {
         throwReason = ThrowReason::CallIndirect;
@@ -201,6 +204,7 @@ struct ExceptionOpts : public Pass {
 #endif
 
       throws = true;
+      unknown = false;
       // Now we know that this throws, we don't need to examine other parts of
       // the expression.
       clearTask();
@@ -456,7 +460,7 @@ struct ExceptionOpts : public Pass {
     std::cerr << "# of analyzable functions = " << analyzedFuncs.size() << "\n";
     if (!numCalleesLeft.empty()) {
       std::cerr << "Ratio of analyzable functions = "
-                << (float)analyzedFuncs.size() / numCalleesLeft.size() << "\n";
+                << (float)analyzedFuncs.size() / numDefinedFuncs << "\n";
     }
     std::cerr << "\n";
 
@@ -477,11 +481,14 @@ struct ExceptionOpts : public Pass {
       std::cerr << "func: " << func->name << ": " << msg << "\n";
     });
     std::cerr << "\nThrowing functions = " << numCanThrow << " / "
-              << numDefinedFuncs << "\n";
+              << numDefinedFuncs << " (" << (float)numCanThrow / numDefinedFuncs
+              << ")\n";
     std::cerr << "Non-throwing functions = " << numCannotThrow << " / "
-              << numDefinedFuncs << "\n";
+              << numDefinedFuncs << " ("
+              << (float)numCannotThrow / numDefinedFuncs << ")\n";
     std::cerr << "Unknown functions = " << numUnknown << " / "
-              << numDefinedFuncs << "\n\n";
+              << numDefinedFuncs << " (" << (float)numUnknown / numDefinedFuncs
+              << ")\n\n";
 #endif
 
     // If some functions' throability is still unknown, treat them as throwable.
@@ -493,6 +500,9 @@ struct ExceptionOpts : public Pass {
 
     // Optimize trys out if their body doesn't throw, using functions' throwing
     // info we gathered above.
+#ifdef EXCEPTION_OPTS_DEBUG
+    optimizing_phase = true;
+#endif
     struct ExceptionOptimizer
       : public WalkerPass<PostWalker<ExceptionOptimizer>> {
       const std::map<Function*, Info>& throwInfoMap;
@@ -524,6 +534,9 @@ struct ExceptionOpts : public Pass {
     };
     ExceptionOptimizer opt(callGraph.map);
     opt.run(runner, wasm);
+#ifdef EXCEPTION_OPTS_DEBUG
+    optimizing_phase = false;
+#endif
 
     // Because we have replaced expressions above, refinalize the module.
     ReFinalize().run(runner, wasm);
