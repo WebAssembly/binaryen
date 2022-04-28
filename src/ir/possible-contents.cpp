@@ -714,16 +714,26 @@ struct Flower {
   std::vector<Location> locations;
   std::unordered_map<Location, LocationIndex> locationIndexes;
 
+  Location getLocation(LocationIndex index) {
+    assert(index < locations.size());
+    return locations[index];
+  }
+
   LocationIndex getIndex(const Location& location) {
     // We must have an indexing of all relevant locations: no new locations
     // should show up during our work.
-    assert(locationIndexes.find(location));
+    assert(locationIndexes.count(location));
     return locationIndexes[location];
   }
 
   // Maps location indexes to the contents in the corresponding locations.
   // TODO: merge with |locations|?
-  std::vector<PossibleContents> contents;
+  std::vector<PossibleContents> locationContents;
+
+  PossibleContents& getContents(LocationIndex index) {
+    assert(index < locationContents.size());
+    return locationContents[index];
+  }
 
   // Maps location indexes to the vector of targets to which that location sends
   // content.
@@ -731,7 +741,12 @@ struct Flower {
   // Commonly? there is a single target e.g. an expression has a single parent
   // and only sends a value there.
   // TODO: benchmark SmallVector<1> some more, but it seems to not help
-  std::vector<std::vector<LocationIndex>> targets;
+  std::vector<std::vector<LocationIndex>> locationTargets;
+
+  std::vector<LocationIndex>& getTargets(LocationIndex index) {
+    assert(index < locationTargets.size());
+    return locationTargets[index];
+  }
 
   // Internals for flow.
 
@@ -778,13 +793,19 @@ struct Flower {
   // This applies the new contents to the given location, and if something
   // changes it adds a work item to further propagate. TODO rename
   // Returns the combined contents with this change.
-  PossibleContents addWork(const Location& location,
+  PossibleContents addWork(LocationIndex locationIndex,
                            const PossibleContents& newContents);
+
+  // Slow helper, which should be avoided when possible.
+  PossibleContents addWork(const Location& location,
+                           const PossibleContents& newContents) {
+    return addWork(getIndex(location), newContents);
+  }
 
   // Update a target location with contents arriving to it. Add new work as
   // relevant based on what happens there.
   // XXX comment
-  void processWork(const Location& location,
+  void processWork(LocationIndex locationIndex,
                    const PossibleContents& oldContents);
 
   void updateNewLinks();
@@ -930,44 +951,44 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // Convert the data into the efficient LocationIndex form we will use during
   // the flow analysis. First, find all the locations and index them.
   for (auto& link : links) {
-    auto ensureIndex = [&](const Location& location) {
+    auto ensureIndex = [&](const Location& location) -> LocationIndex {
       auto iter = locationIndexes.find(location);
       if (iter != locationIndexes.end()) {
         return iter->second;
       }
 
       // Allocate a new index here.
-      auto index = locations.size();
-      if (index >= std::limits::max<LocationIndex>()) {
+      size_t index = locations.size();
+      if (index >= std::numeric_limits<LocationIndex>::max()) {
         // 32 bits should be enough since each location takes at least one byte
         // in the binary, and we don't have 4GB wasm binaries yet... do we?
         Fatal() << "Too many locations for 32 bits";
       }
       locations.push_back(location);
-      locationIndexes[index] = location;
+      locationIndexes[location] = index;
       return index;
     };
 
     auto fromIndex = ensureIndex(link.from);
     auto toIndex = ensureIndex(link.to);
 
-    // Add this link to |targets|.
-    if (fromIndex >= targets.size()) {
-      targets.resize(fromIndex + 1);
+    // Add this link to |locationTargets|.
+    if (fromIndex >= locationTargets.size()) {
+      locationTargets.resize(fromIndex + 1);
     }
-    targets[fromIndex].push_back(toIndex);
+    locationTargets[fromIndex].push_back(toIndex);
   }
 
   // TODO: numLocations = locations.size() ?
 
   // Initialize all contents to the default (nothing) state.
-  contents.resize(locations.size());
+  locationContents.resize(locations.size());
 
 #ifndef NDEBUG
-  // The vector of targets (which is a vector for efficiency) must have no
+  // Each vector of targets (which is a vector for efficiency) must have no
   // duplicates.
-  for (auto& list : targets) {
-    disallowDuplicates(list);
+  for (auto& targets : locationTargets) {
+    disallowDuplicates(targets);
   }
 #endif
 
@@ -1008,19 +1029,19 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     }
 
     auto iter = workQueue.begin();
-    auto location = iter->first;
+    auto locationIndex = iter->first;
     auto contents = iter->second;
     workQueue.erase(iter);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "\npop work item\n";
-    dump(location);
+    dump(getLocation(locationIndex));
     std::cout << " with contents \n";
     contents.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
 
-    processWork(location, contents);
+    processWork(locationIndex, contents);
 
     updateNewLinks();
   }
@@ -1029,7 +1050,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-PossibleContents Flower::addWork(const Location& location,
+PossibleContents Flower::addWork(LocationIndex locationIndex,
                                  const PossibleContents& newContents) {
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
@@ -1052,9 +1073,10 @@ PossibleContents Flower::addWork(const Location& location,
   return contents;
 }
 
-void Flower::processWork(const Location& location,
+void Flower::processWork(LocationIndex locationIndex,
                          const PossibleContents& oldContents) {
-  auto& contents = flowInfoMap[location].contents;
+  const& location = getLocation(locationIndex);
+  auto& contents = locationContents[locationIndex];
   // |contents| is the value after the new data arrives. As something arrives,
   // and we never send nothing around, it cannot be None.
   assert(!contents.isNone());
@@ -1131,7 +1153,7 @@ void Flower::processWork(const Location& location,
                                  std::cout << "  send to target\n";
                                  dump(target);
 #endif
-                                 return addWork(target, contents).isMany();
+                                 return addWork(targetIndex, contents).isMany();
                                }),
                 targets.end());
   targets.shrink_to_fit(); // XXX
@@ -1207,7 +1229,7 @@ void Flower::processWork(const Location& location,
         }
 
         // Add a work item to receive the new contents there now.
-        addWork(targetLoc, flowInfoMap[*heapLoc].contents);
+        addWork(targetLocIndex, flowInfoMap[*heapLoc].contents);
       };
 
       // Given the old and new contents at the current target, add reads to
