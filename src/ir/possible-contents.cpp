@@ -797,6 +797,7 @@ struct Flower {
                            const PossibleContents& newContents);
 
   // Slow helper, which should be avoided when possible.
+  // FIXME count these with logging and ensure we issue few of these calls
   PossibleContents addWork(const Location& location,
                            const PossibleContents& newContents) {
     return addWork(getIndex(location), newContents);
@@ -1054,7 +1055,7 @@ PossibleContents Flower::addWork(LocationIndex locationIndex,
                                  const PossibleContents& newContents) {
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
-  auto& contents = flowInfoMap[location].contents;
+  auto& contents = getContents(locationIndex);
   auto oldContents = contents;
   if (!contents.combine(newContents)) {
     // The new contents did not change anything. Either there is an existing
@@ -1066,8 +1067,8 @@ PossibleContents Flower::addWork(LocationIndex locationIndex,
 
   // Add a work item if there isn't already.
   // TODO: do this more efficiently with insert.second
-  if (!workQueue.count(location)) {
-    workQueue[location] = oldContents;
+  if (!workQueue.count(locationIndex)) {
+    workQueue[locationIndex] = oldContents;
   }
 
   return contents;
@@ -1075,7 +1076,7 @@ PossibleContents Flower::addWork(LocationIndex locationIndex,
 
 void Flower::processWork(LocationIndex locationIndex,
                          const PossibleContents& oldContents) {
-  const& location = getLocation(locationIndex);
+  const auto location = getLocation(locationIndex);
   auto& contents = locationContents[locationIndex];
   // |contents| is the value after the new data arrives. As something arrives,
   // and we never send nothing around, it cannot be None.
@@ -1144,11 +1145,11 @@ void Flower::processWork(LocationIndex locationIndex,
   // Add all targets this location links to, sending them the new contents. As
   // we do so, prune any targets that end up in the Many state, as there will
   // never be a reason to send them anything again.
-  auto& targets = flowInfoMap[location].targets;
+  auto& targets = getTargets(locationIndex);
 
   targets.erase(std::remove_if(targets.begin(),
                                targets.end(),
-                               [&](const Location& target) {
+                               [&](LocationIndex targetIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
                                  std::cout << "  send to target\n";
                                  dump(target);
@@ -1229,7 +1230,7 @@ void Flower::processWork(LocationIndex locationIndex,
         }
 
         // Add a work item to receive the new contents there now.
-        addWork(targetLocIndex, flowInfoMap[*heapLoc].contents);
+        addWork(targetLoc, getContents(getIndex(*heapLoc)));
       };
 
       // Given the old and new contents at the current target, add reads to
@@ -1287,8 +1288,8 @@ void Flower::processWork(LocationIndex locationIndex,
         // the ref or the value was just updated: simply figure out the
         // values being written in the current state (which is after the
         // current update) and forward them.
-        auto refContents = flowInfoMap[ExpressionLocation{ref, 0}].contents;
-        auto valueContents = flowInfoMap[ExpressionLocation{value, 0}].contents;
+        auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+        auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
         if (refContents.isNone()) {
           return;
         }
@@ -1430,8 +1431,8 @@ void Flower::updateNewLinks() {
     dump(newLink.to);
 #endif
 
-    auto& targets = flowInfoMap[newLink.from].targets;
-    targets.push_back(newLink.to);
+    auto& targets = getTargets(getIndex(newLink.from));
+    targets.push_back(getIndex(newLink.to));
 
 #ifndef NDEBUG
     disallowDuplicates(targets);
@@ -1444,8 +1445,8 @@ void Flower::updateNewLinks() {
 
 void ContentOracle::analyze() {
   Flower flower(wasm);
-  for (auto& [location, info] : flower.flowInfoMap) {
-    locationContents[location] = info.contents;
+  for (LocationIndex i = 0; i < locations.size(); i++) {
+    locationContents[getLocation(i)] = locations[i];
   }
 }
 
