@@ -945,7 +945,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 }
 
 PossibleContents Flower::addWork(const Location& location,
-                                        const PossibleContents& newContents) {
+                                 const PossibleContents& newContents) {
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
   auto& contents = flowInfoMap[location].contents;
@@ -968,7 +968,7 @@ PossibleContents Flower::addWork(const Location& location,
 }
 
 void Flower::processWork(const Location& location,
-                                const PossibleContents& oldContents) {
+                         const PossibleContents& oldContents) {
   auto& contents = flowInfoMap[location].contents;
   // |contents| is the value after the new data arrives. As something arrives,
   // and we never send nothing around, it cannot be None.
