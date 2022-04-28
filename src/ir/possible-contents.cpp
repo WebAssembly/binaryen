@@ -1,4 +1,4 @@
-#define POSSIBLE_CONTENTS_DEBUG 2
+#define POSSIBLE_CONTENTS_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -737,7 +737,6 @@ struct Flower {
   std::vector<std::vector<LocationIndex>> locationTargets;
 
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
-std::cout << "get targets " << index << '\n';
     assert(index < locationTargets.size());
     return locationTargets[index];
   }
@@ -745,8 +744,6 @@ std::cout << "get targets " << index << '\n';
   // Convert the data into the efficient LocationIndex form we will use during
   // the flow analysis. First, find all the locations and index them.
   LocationIndex getIndex(const Location& location) {
-std::cout << "ensure\n";
-dump(location);
     // New locations may be indexed during the flow, since we add new links
     // during the flow. Allocate indexes and other bookkeeping as necessary.
     auto iter = locationIndexes.find(location);
