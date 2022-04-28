@@ -1,4 +1,4 @@
-#define POSSIBLE_CONTENTS_DEBUG 1
+//#define POSSIBLE_CONTENTS_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1018,10 +1018,10 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "flow phase\n";
+  size_t iters = 0;
 #endif
 
   // Flow the data.
-  size_t iters = 0;
   while (!workQueue.empty()) {
     // TODO: assert on no cycles - store a set of all (location, value) pairs
     //       we've ever seen.
@@ -1030,10 +1030,12 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     // TODO: if we are Many, delete all our outgoing links - we'll never prop
     //       again
     // TODO: make the wokr queue map of location => contents.
+#ifdef POSSIBLE_CONTENTS_DEBUG
     iters++;
     if ((iters & 255) == 0) {
       std::cout << iters++ << " iters, work left: " << workQueue.size() << '\n';
     }
+#endif
 
     auto iter = workQueue.begin();
     auto locationIndex = iter->first;
