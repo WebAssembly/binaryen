@@ -719,15 +719,6 @@ struct Flower {
     return locations[index];
   }
 
-  LocationIndex getIndex(const Location& location) {
-    // We must have an indexing of all relevant locations: no new locations
-    // should show up during our work.
-std::cout << "get\n";
-dump(location);
-    assert(locationIndexes.count(location));
-    return locationIndexes[location];
-  }
-
   // Maps location indexes to the contents in the corresponding locations.
   // TODO: merge with |locations|?
   std::vector<PossibleContents> locationContents;
@@ -749,6 +740,41 @@ dump(location);
 std::cout << "get targets " << index << '\n';
     assert(index < locationTargets.size());
     return locationTargets[index];
+  }
+
+  // Convert the data into the efficient LocationIndex form we will use during
+  // the flow analysis. First, find all the locations and index them.
+  LocationIndex getIndex(const Location& location) {
+std::cout << "ensure\n";
+dump(location);
+    // New locations may be indexed during the flow, since we add new links
+    // during the flow. Allocate indexes and other bookkeeping as necessary.
+    auto iter = locationIndexes.find(location);
+    if (iter != locationIndexes.end()) {
+      return iter->second;
+    }
+
+    // Allocate a new index here.
+    size_t index = locations.size();
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "  new index " << index << " for ";
+    dump(location);
+#endif
+    if (index >= std::numeric_limits<LocationIndex>::max()) {
+      // 32 bits should be enough since each location takes at least one byte
+      // in the binary, and we don't have 4GB wasm binaries yet... do we?
+      Fatal() << "Too many locations for 32 bits";
+    }
+    locations.push_back(location);
+    locationIndexes[location] = index;
+
+    // Update additional data.
+    locationContents.resize(locationContents.size() + 1);
+    assert(locationContents.size() == locations.size());
+    locationTargets.resize(locationTargets.size() + 1);
+    assert(locationTargets.size() == locations.size());
+
+    return index;
   }
 
   // Internals for flow.
@@ -952,41 +978,12 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "indexing phase\n";
 #endif
 
-  // Convert the data into the efficient LocationIndex form we will use during
-  // the flow analysis. First, find all the locations and index them.
-  auto ensureIndex = [&](const Location& location) -> LocationIndex {
-std::cout << "ensure\n";
-dump(location);
-    auto iter = locationIndexes.find(location);
-    if (iter != locationIndexes.end()) {
-      return iter->second;
-    }
-
-    // Allocate a new index here.
-    size_t index = locations.size();
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "  new index " << index << " for ";
-    dump(location);
-#endif
-    if (index >= std::numeric_limits<LocationIndex>::max()) {
-      // 32 bits should be enough since each location takes at least one byte
-      // in the binary, and we don't have 4GB wasm binaries yet... do we?
-      Fatal() << "Too many locations for 32 bits";
-    }
-    locations.push_back(location);
-    locationIndexes[location] = index;
-    return index;
-  };
-
   for (auto& link : links) {
     auto fromIndex = ensureIndex(link.from);
     auto toIndex = ensureIndex(link.to);
 
     // Add this link to |locationTargets|.
-    if (fromIndex >= locationTargets.size()) {
-      locationTargets.resize(fromIndex + 1);
-    }
-    locationTargets[fromIndex].push_back(toIndex);
+    getTargets(fromIndex).push_back(toIndex);
   }
 
   // Roots may appear that have no links to them, so index them as well to make
@@ -996,9 +993,6 @@ dump(location);
   }
 
   // TODO: numLocations = locations.size() ?
-
-  // Initialize all contents to the default (nothing) state.
-  locationContents.resize(locations.size());
 
 #ifndef NDEBUG
   // Each vector of targets (which is a vector for efficiency) must have no
