@@ -36,18 +36,18 @@ int main() {
   assert(!m.usingDenseStorage());
 
   // Setting and getting element values in sparse storage should work.
-  for (int y = 0; y < m.DenseLimit; ++y)
-    for (int x = 0; x < m.DenseLimit; ++x)
+  for (int y = 0; y < m.DenseLimit; y += 128)
+    for (int x = 0; x < m.DenseLimit; x += 128)
       m.set(y, x, y * m.DenseLimit + x);
-  for (int y = 0; y < m.DenseLimit; ++y)
-    for (int x = 0; x < m.DenseLimit; ++x)
+  for (int y = 0; y < m.DenseLimit; y += 128)
+    for (int x = 0; x < m.DenseLimit; x += 128)
       assert(m.get(y, x) == y * m.DenseLimit + x);
 
   // Recreating matrix in sparse mode should reset values in sparse
   // storage to zero.
   m.recreate(m.DenseLimit + 1);
-  for (int y = 0; y < m.width(); ++y)
-    for (int x = 0; x < m.width(); ++x)
+  for (int y = 0; y < m.width(); y += 128)
+    for (int x = 0; x < m.width(); x += 128)
       assert(m.get(y, x) == 0);
 
   std::cout << "ok.\n";
