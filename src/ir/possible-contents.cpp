@@ -415,6 +415,7 @@ struct LinkFinder
       });
   }
   void visitCallIndirect(CallIndirect* curr) {
+    // TODO: the table identity could also be used here
     auto target = curr->heapType;
     handleCall(
       curr,

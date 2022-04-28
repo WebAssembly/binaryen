@@ -548,6 +548,8 @@ private:
     // Commonly? there is a single target e.g. an expression has a single parent
     // and only sends a value there.
     // TODO: benchmark SmallVector<1> some more, but it seems to not help
+    // TODO: instead of this, index each Location up front, then make the grpah
+    //       contain those indexes everywhere. no hashing, and 32 bits.
     std::vector<Location> targets;
   };
 
