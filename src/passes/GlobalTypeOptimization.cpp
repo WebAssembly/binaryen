@@ -21,8 +21,6 @@
 //  * Immutability: If a field has no struct.set, it can become immutable.
 //  * Fields that are never read from can be removed entirely.
 //
-// TODO: Specialize field types.
-//
 
 #include "ir/effects.h"
 #include "ir/localize.h"
