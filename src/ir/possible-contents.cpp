@@ -1,4 +1,4 @@
-#define POSSIBLE_CONTENTS_DEBUG 1
+#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -28,10 +28,19 @@ namespace wasm {
 
 namespace {
 
+// We are going to do a very large flow operation, potentially, as we create
+// a Location for every interesting part in the entire wasm, and some of those
+// places will have lots of links (like a struct field may link out to every
+// single struct.get of that type), so we must make the data structures here
+// as efficient as possible. Towards that goal, we work with location
+// *indexes* where possible, which are small (32 bits) and do not require any
+// complex hashing when we use them in sets or maps.
+using LocationIndex = uint32_t;
+
 #ifndef NDEBUG
 template<typename T> void disallowDuplicates(const T& targets) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::unordered_set<Location> uniqueTargets;
+  std::unordered_set<LocationIndex> uniqueTargets;
   for (const auto& target : targets) {
     uniqueTargets.insert(target);
   }
@@ -699,15 +708,6 @@ struct Flower {
 
   Flower(Module& wasm);
 
-  // We are going to do a very large flow operation, potentially, as we create
-  // a Location for every interesting part in the entire wasm, and some of those
-  // places will have lots of links (like a struct field may link out to every
-  // single struct.get of that type), so we must make the data structures here
-  // as efficient as possible. Towards that goal, we work with location
-  // *indexes* where possible, which are small (32 bits) and do not require any
-  // complex hashing when we use them in sets or maps.
-  using LocationIndex = uint32_t;
-
   // Maps location indexes to the location stored in them. We also have a map
   // for the reverse relationship (we hope to use that map as little as possible
   // as it requires more work than just using an index).
@@ -722,6 +722,8 @@ struct Flower {
   LocationIndex getIndex(const Location& location) {
     // We must have an indexing of all relevant locations: no new locations
     // should show up during our work.
+std::cout << "get\n";
+dump(location);
     assert(locationIndexes.count(location));
     return locationIndexes[location];
   }
@@ -744,6 +746,7 @@ struct Flower {
   std::vector<std::vector<LocationIndex>> locationTargets;
 
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
+std::cout << "get targets " << index << '\n';
     assert(index < locationTargets.size());
     return locationTargets[index];
   }
@@ -951,25 +954,31 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
   // Convert the data into the efficient LocationIndex form we will use during
   // the flow analysis. First, find all the locations and index them.
+  auto ensureIndex = [&](const Location& location) -> LocationIndex {
+std::cout << "ensure\n";
+dump(location);
+    auto iter = locationIndexes.find(location);
+    if (iter != locationIndexes.end()) {
+      return iter->second;
+    }
+
+    // Allocate a new index here.
+    size_t index = locations.size();
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "  new index " << index << " for ";
+    dump(location);
+#endif
+    if (index >= std::numeric_limits<LocationIndex>::max()) {
+      // 32 bits should be enough since each location takes at least one byte
+      // in the binary, and we don't have 4GB wasm binaries yet... do we?
+      Fatal() << "Too many locations for 32 bits";
+    }
+    locations.push_back(location);
+    locationIndexes[location] = index;
+    return index;
+  };
+
   for (auto& link : links) {
-    auto ensureIndex = [&](const Location& location) -> LocationIndex {
-      auto iter = locationIndexes.find(location);
-      if (iter != locationIndexes.end()) {
-        return iter->second;
-      }
-
-      // Allocate a new index here.
-      size_t index = locations.size();
-      if (index >= std::numeric_limits<LocationIndex>::max()) {
-        // 32 bits should be enough since each location takes at least one byte
-        // in the binary, and we don't have 4GB wasm binaries yet... do we?
-        Fatal() << "Too many locations for 32 bits";
-      }
-      locations.push_back(location);
-      locationIndexes[location] = index;
-      return index;
-    };
-
     auto fromIndex = ensureIndex(link.from);
     auto toIndex = ensureIndex(link.to);
 
@@ -978,6 +987,12 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       locationTargets.resize(fromIndex + 1);
     }
     locationTargets[fromIndex].push_back(toIndex);
+  }
+
+  // Roots may appear that have no links to them, so index them as well to make
+  // sure everything is covered.
+  for (const auto& [location, _] : roots) {
+    ensureIndex(location);
   }
 
   // TODO: numLocations = locations.size() ?
@@ -1152,7 +1167,7 @@ void Flower::processWork(LocationIndex locationIndex,
                                [&](LocationIndex targetIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
                                  std::cout << "  send to target\n";
-                                 dump(target);
+                                 dump(getLocation(targetIndex));
 #endif
                                  return addWork(targetIndex, contents).isMany();
                                }),
@@ -1446,7 +1461,7 @@ void Flower::updateNewLinks() {
 
 void ContentOracle::analyze() {
   Flower flower(wasm);
-  for (Flower::LocationIndex i = 0; i < flower.locations.size(); i++) {
+  for (LocationIndex i = 0; i < flower.locations.size(); i++) {
     locationContents[flower.getLocation(i)] = flower.getContents(i);
   }
 }
