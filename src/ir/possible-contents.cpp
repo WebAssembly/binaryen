@@ -148,7 +148,7 @@ struct FuncInfo {
   // The map here is of the root to the value beginning in it.
   std::unordered_map<Location, PossibleContents> roots;
 
-  // See childParents.
+  // See childParents comment elsewhere XXX where?
   std::unordered_map<Expression*, Expression*> childParents;
 };
 
@@ -812,8 +812,7 @@ struct Flower {
   // struct.get. To handle such things, we set add a childParent link, and then
   // when we update the child we can handle any possible action regarding the
   // parent.
-  // TODO: use LocationIndexes here??
-  std::unordered_map<Expression*, Expression*> childParents;
+  std::unordered_map<LocationIndex, LocationIndex> childParents;
 
   // The work remaining to do during the flow: locations that we are sending an
   // update to. This maps the target location to the new contents, which is
@@ -921,7 +920,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       roots[root] = value;
     }
     for (auto [child, parent] : info.childParents) {
-      childParents[child] = parent;
+      childParents[getIndex(ExpressionLocation{child, 0})] = getIndex(ExpressionLocation{parent, 0});
     }
   }
 
@@ -1198,12 +1197,13 @@ void Flower::processWork(LocationIndex locationIndex,
 
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto* targetExpr = targetExprLoc->expr;
-    auto iter = childParents.find(targetExpr);
+    auto iter = childParents.find(locationIndex);
     if (iter != childParents.end()) {
       // The target is one of the special cases where it is an expression
       // for whom we must know the parent in order to handle things in a
       // special manner.
-      auto* parent = iter->second;
+      auto parentIndex = iter->second;
+      auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  special, parent:\n" << *parent << '\n';
