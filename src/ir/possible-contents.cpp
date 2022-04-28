@@ -1445,8 +1445,8 @@ void Flower::updateNewLinks() {
 
 void ContentOracle::analyze() {
   Flower flower(wasm);
-  for (LocationIndex i = 0; i < locations.size(); i++) {
-    locationContents[getLocation(i)] = locations[i];
+  for (Flower::LocationIndex i = 0; i < flower.locations.size(); i++) {
+    locationContents[flower.getLocation(i)] = flower.getContents(i);
   }
 }
 
