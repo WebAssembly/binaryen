@@ -304,13 +304,12 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
 // The operation performend should not modify the wasm module in any way, by
-// default - otherwise, ModifiesIR should be set to true. (This is not enforced
-// at compile time - TODO find a way - but at runtime in pass-debug mode it is
+// default - otherwise, set the Mutability to Mutable. (This is not enforced at
+// compile time - TODO find a way - but at runtime in pass-debug mode it is
 // checked.)
-using Modifies = bool;
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
 template<typename T,
-         Modifies Mod = false,
+         Mutability Mut = Immutable,
          template<typename, typename> class MapT = DefaultMap>
 struct ParallelFunctionAnalysis {
   Module& wasm;
@@ -336,7 +335,7 @@ struct ParallelFunctionAnalysis {
 
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
-      bool modifiesBinaryenIR() override { return Mod; }
+      bool modifiesBinaryenIR() override { return Mut; }
 
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
