@@ -979,8 +979,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #endif
 
   for (auto& link : links) {
-    auto fromIndex = ensureIndex(link.from);
-    auto toIndex = ensureIndex(link.to);
+    auto fromIndex = getIndex(link.from);
+    auto toIndex = getIndex(link.to);
 
     // Add this link to |locationTargets|.
     getTargets(fromIndex).push_back(toIndex);
@@ -989,7 +989,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // Roots may appear that have no links to them, so index them as well to make
   // sure everything is covered.
   for (const auto& [location, _] : roots) {
-    ensureIndex(location);
+    getIndex(location);
   }
 
   // TODO: numLocations = locations.size() ?
