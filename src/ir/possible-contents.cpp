@@ -76,6 +76,37 @@ void dump(Location location) {
 }
 #endif
 
+// A link indicates a flow of content from one location to another. For
+// example, if we do a local.get and return that value from a function, then
+// we have a link from a LocalLocaiton to a ResultLocation.
+struct Link {
+  Location from;
+  Location to;
+
+  bool operator==(const Link& other) const {
+    return from == other.from && to == other.to;
+  }
+};
+
+} // anonymous namespace
+
+} // namespace wasm
+
+namespace std {
+
+template<> struct hash<wasm::Link> {
+  size_t operator()(const wasm::Link& loc) const {
+    return std::hash<std::pair<wasm::Location, wasm::Location>>{}(
+      {loc.from, loc.to});
+  }
+};
+
+} // namespace std
+
+namespace wasm {
+
+namespace {
+
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
 struct FuncInfo {
