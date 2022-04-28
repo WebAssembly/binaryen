@@ -76,7 +76,9 @@ struct SignatureRefining : public Pass {
       bool canModify = true;
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+    // This analysis also modifies the wasm as it goes, as the getResultsLUB()
+    // operation has side effects (see comment on header declaration).
+    ModuleUtils::ParallelFunctionAnalysis<Info, Mutable> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           return;

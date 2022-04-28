@@ -115,8 +115,8 @@ Counts getHeapTypeCounts(Module& wasm) {
   }
 
   // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
-    wasm, [&](Function* func, Counts& counts) {
+  ModuleUtils::ParallelFunctionAnalysis<Counts, Immutable, InsertOrderedMap>
+    analysis(wasm, [&](Function* func, Counts& counts) {
       counts.note(func->type);
       for (auto type : func->vars) {
         counts.note(type);
