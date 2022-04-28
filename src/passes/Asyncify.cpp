@@ -1344,14 +1344,6 @@ private:
 
     RelevantLiveLocalsWalker walker;
     walker.setFunction(func);
-    if (!walker.canRun(func)) {
-      // We can proceed without this optimization, which will cause more
-      // spilling - assume all locals are relevant.
-      for (Index i = 0; i < func->getNumLocals(); i++) {
-        relevantLiveLocals.insert(i);
-      }
-      return;
-    }
     walker.walkFunctionInModule(func, getModule());
     // The relevant live locals are ones that are alive at an unwind/rewind
     // location. TODO look more precisely inside basic blocks, as one might stop
