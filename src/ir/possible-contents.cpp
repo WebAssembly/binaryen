@@ -785,6 +785,10 @@ struct Flower {
     return index;
   }
 
+  IndexLink getIndexes(const LocationLink& link) {
+    return {getIndex(link.from), getIndex(link.to)};
+  }
+
   // Internals for flow.
 
   // In some cases we need to know the parent of the expression, like with GC
@@ -819,8 +823,7 @@ struct Flower {
 
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
-  // TODO: use LocationIndexes
-  std::unordered_set<LocationLink> links;
+  std::unordered_set<IndexLink> links;
 
   // We may add new links as we flow. Do so to a temporary structure on
   // the side to avoid any aliasing as we work.
@@ -908,7 +911,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
-      links.insert(link);
+      links.insert(getIndexes(link));
     }
     for (auto& [root, value] : info.roots) {
       roots[root] = value;
@@ -965,12 +968,12 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // TODO: find which functions are even taken by reference
   for (auto& func : wasm.functions) {
     for (Index i = 0; i < func->getParams().size(); i++) {
-      links.insert({SignatureParamLocation{func->type, i},
-                    LocalLocation{func.get(), i, 0}});
+      links.insert(getIndexes({SignatureParamLocation{func->type, i},
+                    LocalLocation{func.get(), i, 0}}));
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
-      links.insert({ResultLocation{func.get(), i},
-                    SignatureResultLocation{func->type, i}});
+      links.insert(getIndexes({ResultLocation{func.get(), i},
+                    SignatureResultLocation{func->type, i}}));
     }
   }
 
@@ -987,8 +990,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #endif
 
   for (auto& link : links) {
-    auto fromIndex = getIndex(link.from);
-    auto toIndex = getIndex(link.to);
+    auto fromIndex = link.from;
+    auto toIndex = link.to;
 
     // Add this link to |locationTargets|.
     getTargets(fromIndex).push_back(toIndex);
@@ -1243,9 +1246,10 @@ void Flower::processWork(LocationIndex locationIndex,
 
         // Add this to the graph if it is an entirely new link.
         auto newLink = LocationLink{*heapLoc, targetLoc};
-        if (links.count(newLink) == 0) {
+        auto newIndexLink = getIndexes(newLink);
+        if (links.count(newIndexLink) == 0) {
           newLinks.push_back(newLink);
-          links.insert(newLink);
+          links.insert(newIndexLink);
         }
 
         // Add a work item to receive the new contents there now.
