@@ -35,6 +35,11 @@ namespace {
 // as efficient as possible. Towards that goal, we work with location
 // *indexes* where possible, which are small (32 bits) and do not require any
 // complex hashing when we use them in sets or maps.
+//
+// Note that we do not use indexes everywhere, since the initial analysis is
+// done in parallel, and we do not have a fixed indexing of locations yet. When
+// we merge the parallel data we create that indexing, and use indexes from then
+// on.
 using LocationIndex = uint32_t;
 
 #ifndef NDEBUG
@@ -827,8 +832,7 @@ struct Flower {
 
   // We may add new links as we flow. Do so to a temporary structure on
   // the side to avoid any aliasing as we work.
-  // TODO: use LocationIndexes
-  std::vector<LocationLink> newLinks;
+  std::vector<IndexLink> newLinks;
 
   // This applies the new contents to the given location, and if something
   // changes it adds a work item to further propagate. TODO rename
@@ -1248,7 +1252,7 @@ void Flower::processWork(LocationIndex locationIndex,
         auto newLink = LocationLink{*heapLoc, targetLoc};
         auto newIndexLink = getIndexes(newLink);
         if (links.count(newIndexLink) == 0) {
-          newLinks.push_back(newLink);
+          newLinks.push_back(newIndexLink);
           links.insert(newIndexLink);
         }
 
@@ -1451,12 +1455,12 @@ void Flower::updateNewLinks() {
   for (auto newLink : newLinks) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "\nnewLink:\n";
-    dump(newLink.from);
-    dump(newLink.to);
+    dump(getLocation(newLink.from));
+    dump(getLocation(newLink.to));
 #endif
 
-    auto& targets = getTargets(getIndex(newLink.from));
-    targets.push_back(getIndex(newLink.to));
+    auto& targets = getTargets(newLink.from);
+    targets.push_back(newLink.to);
 
 #ifndef NDEBUG
     disallowDuplicates(targets);
