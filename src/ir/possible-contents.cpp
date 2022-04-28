@@ -1274,47 +1274,48 @@ void Flower::processWork(LocationIndex locationIndex,
       // |getLocation| function (which plays the same role as in
       // readFromNewLocations), gets the reference and the value of the
       // struct.set/array.set operation.
-      auto writeToNewLocations = [&](std::function<std::optional<Location>(
-                                       HeapType)> getLocation,
-                                     Expression* ref,
-                                     Expression* value) {
+      auto writeToNewLocations =
+        [&](std::function<std::optional<Location>(HeapType)> getLocation,
+            Expression* ref,
+            Expression* value) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-        std::cout << "    add special writes\n";
+          std::cout << "    add special writes\n";
 #endif
-        // We could set up links here, but as we get to this code in
-        // any case when either the ref or the value of the struct.get has
-        // new contents, we can just flow the values forward directly. We
-        // can do that in a simple way that does not even check whether
-        // the ref or the value was just updated: simply figure out the
-        // values being written in the current state (which is after the
-        // current update) and forward them.
-        auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
-        auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
-        if (refContents.isNone()) {
-          return;
-        }
-        if (refContents.isExactType() || refContents.isConstant()) {
-          // Update the one possible type here.
-          // TODO: In the case that this is a constant, it could be null
-          //       or an immutable global, which we could do even more
-          //       with.
-          auto heapLoc = getLocation(refContents.getType().getHeapType());
-          if (heapLoc) {
-            addWork(*heapLoc, valueContents);
+          // We could set up links here, but as we get to this code in
+          // any case when either the ref or the value of the struct.get has
+          // new contents, we can just flow the values forward directly. We
+          // can do that in a simple way that does not even check whether
+          // the ref or the value was just updated: simply figure out the
+          // values being written in the current state (which is after the
+          // current update) and forward them.
+          auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+          auto valueContents =
+            getContents(getIndex(ExpressionLocation{value, 0}));
+          if (refContents.isNone()) {
+            return;
           }
-        } else {
-          assert(refContents.isMany());
-          // Update all possible types here. First, subtypes, including the
-          // type itself.
-          auto type = ref->type.getHeapType();
-          for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
-            auto heapLoc = getLocation(subType);
+          if (refContents.isExactType() || refContents.isConstant()) {
+            // Update the one possible type here.
+            // TODO: In the case that this is a constant, it could be null
+            //       or an immutable global, which we could do even more
+            //       with.
+            auto heapLoc = getLocation(refContents.getType().getHeapType());
             if (heapLoc) {
               addWork(*heapLoc, valueContents);
             }
+          } else {
+            assert(refContents.isMany());
+            // Update all possible types here. First, subtypes, including the
+            // type itself.
+            auto type = ref->type.getHeapType();
+            for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
+              auto heapLoc = getLocation(subType);
+              if (heapLoc) {
+                addWork(*heapLoc, valueContents);
+              }
+            }
           }
-        }
-      };
+        };
 
       if (auto* get = parent->dynCast<StructGet>()) {
         // This is the reference child of a struct.get.
