@@ -529,83 +529,15 @@ public:
 
   // Get the contents possible at a location.
   PossibleContents getContents(Location location) {
-    auto iter = flowInfoMap.find(location);
-    if (iter == flowInfoMap.end()) {
+    auto iter = locationContents.find(location);
+    if (iter == locationContents.end()) {
       return {}; // XXX maybe PossibleContents::many(); // FIXME see tests
     }
-    return iter->second.contents;
+    return iter->second;
   }
 
 private:
-  // The information needed during and after flowing the contents through the
-  // graph. TODO: do not keep this around forever, delete the stuff we only need
-  // during the flow after the flow.
-  struct LocationInfo {
-    // The contents possible at this location.
-    PossibleContents contents;
-
-    // The targets to which this sends contents.
-    // Commonly? there is a single target e.g. an expression has a single parent
-    // and only sends a value there.
-    // TODO: benchmark SmallVector<1> some more, but it seems to not help
-    // TODO: instead of this, index each Location up front, then make the grpah
-    //       contain those indexes everywhere. no hashing, and 32 bits.
-    std::vector<Location> targets;
-  };
-
-  // XXX maybe If an item does not appear here, its type is Many.
-  std::unordered_map<Location, LocationInfo> flowInfoMap;
-
-  // Internals for flow.
-
-  // In some cases we need to know the parent of the expression, like with GC
-  // operations. Consider this:
-  //
-  //  (struct.set $A k
-  //    (local.get $ref)
-  //    (local.get $value)
-  //  )
-  //
-  // Imagine that the first local.get, for $ref, receives a new value. That can
-  // affect where the struct.set sends values: if previously that local.get had
-  // no possible contents, and now it does, then we have StructLocations to
-  // update. Likewise, when the second local.get is updated we must do the same,
-  // but again which StructLocations we update depends on the ref passed to the
-  // struct.get. To handle such things, we set add a childParent link, and then
-  // when we update the child we can handle any possible action regarding the
-  // parent.
-  std::unordered_map<Expression*, Expression*> childParents;
-
-  // The work remaining to do during the flow: locations that we are sending an
-  // update to. This maps the target location to the new contents, which is
-  // efficient since we may send contents A to a target and then send further
-  // contents B before we even get to processing that target; rather than queue
-  // two work items, we want just one with the combined contents.
-  // XXX experiment with having the OLD contents here actually.
-  std::unordered_map<Location, PossibleContents> workQueue;
-
-  // During the flow we will need information about subtyping.
-  std::unique_ptr<SubTypes> subTypes;
-
-  std::unordered_set<Link> links;
-
-  // We may add new links as we flow. Do so to a temporary structure on
-  // the side to avoid any aliasing as we work.
-  std::vector<Link> newLinks;
-
-  // This applies the new contents to the given location, and if something
-  // changes it adds a work item to further propagate. TODO rename
-  // Returns the combined contents with this change.
-  PossibleContents addWork(const Location& location,
-                           const PossibleContents& newContents);
-
-  // Update a target location with contents arriving to it. Add new work as
-  // relevant based on what happens there.
-  // XXX comment
-  void processWork(const Location& location,
-                   const PossibleContents& oldContents);
-
-  void updateNewLinks();
+  std::unordered_map<Location, PossibleContents> locationContents;
 };
 
 } // namespace wasm
