@@ -749,6 +749,8 @@ struct Flower {
   // During the flow we will need information about subtyping.
   std::unique_ptr<SubTypes> subTypes;
 
+  // All existing links in the graph. We keep this to know when a link we want
+  // to add is new or not.
   std::unordered_set<Link> links;
 
   // We may add new links as we flow. Do so to a temporary structure on
