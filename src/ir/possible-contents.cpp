@@ -88,14 +88,18 @@ void dump(Location location) {
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
 // we have a link from a LocalLocaiton to a ResultLocation.
+template<typename T>
 struct Link {
-  Location from;
-  Location to;
+  T from;
+  T to;
 
-  bool operator==(const Link& other) const {
+  bool operator==(const Link<T>& other) const {
     return from == other.from && to == other.to;
   }
 };
+
+using LocationLink = Link<Location>;
+using IndexLink = Link<LocationIndex>;
 
 } // anonymous namespace
 
@@ -103,9 +107,16 @@ struct Link {
 
 namespace std {
 
-template<> struct hash<wasm::Link> {
-  size_t operator()(const wasm::Link& loc) const {
+template<> struct hash<wasm::LocationLink> {
+  size_t operator()(const wasm::LocationLink& loc) const {
     return std::hash<std::pair<wasm::Location, wasm::Location>>{}(
+      {loc.from, loc.to});
+  }
+};
+
+template<> struct hash<wasm::IndexLink> {
+  size_t operator()(const wasm::IndexLink& loc) const {
+    return std::hash<std::pair<wasm::LocationIndex, wasm::LocationIndex>>{}(
       {loc.from, loc.to});
   }
 };
@@ -124,7 +135,7 @@ struct FuncInfo {
   // global location), and we do not try to deduplicate here, just store them in
   // a plain array for now, which is faster (later, when we merge all the info
   // from the functions, we need to deduplicate anyhow).
-  std::vector<Link> links;
+  std::vector<LocationLink> links;
 
   // All the roots of the graph, that is, places that begin containing some
   // partcular content. That includes *.const, ref.func, struct.new, etc. All
@@ -809,12 +820,12 @@ struct Flower {
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
   // TODO: use LocationIndexes
-  std::unordered_set<Link> links;
+  std::unordered_set<LocationLink> links;
 
   // We may add new links as we flow. Do so to a temporary structure on
   // the side to avoid any aliasing as we work.
   // TODO: use LocationIndexes
-  std::vector<Link> newLinks;
+  std::vector<LocationLink> newLinks;
 
   // This applies the new contents to the given location, and if something
   // changes it adds a work item to further propagate. TODO rename
@@ -1231,7 +1242,7 @@ void Flower::processWork(LocationIndex locationIndex,
         auto targetLoc = ExpressionLocation{target, 0};
 
         // Add this to the graph if it is an entirely new link.
-        auto newLink = Link{*heapLoc, targetLoc};
+        auto newLink = LocationLink{*heapLoc, targetLoc};
         if (links.count(newLink) == 0) {
           newLinks.push_back(newLink);
           links.insert(newLink);
