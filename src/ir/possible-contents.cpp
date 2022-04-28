@@ -699,24 +699,39 @@ struct Flower {
 
   Flower(Module& wasm);
 
-  // The information needed during and after flowing the contents through the
-  // graph. TODO: do not keep this around forever, delete the stuff we only need
-  // during the flow after the flow.
-  struct LocationInfo {
-    // The contents possible at this location.
-    PossibleContents contents;
+  // We are going to do a very large flow operation, potentially, as we create
+  // a Location for every interesting part in the entire wasm, and some of those
+  // places will have lots of links (like a struct field may link out to every
+  // single struct.get of that type), so we must make the data structures here
+  // as efficient as possible. Towards that goal, we work with location
+  // *indexes* where possible, which are small (32 bits) and do not require any
+  // complex hashing when we use them in sets or maps.
+  using LocationIndex = uint32_t;
 
-    // The targets to which this sends contents.
-    // Commonly? there is a single target e.g. an expression has a single parent
-    // and only sends a value there.
-    // TODO: benchmark SmallVector<1> some more, but it seems to not help
-    // TODO: instead of this, index each Location up front, then make the grpah
-    //       contain those indexes everywhere. no hashing, and 32 bits.
-    std::vector<Location> targets;
-  };
+  // Maps location indexes to the location stored in them. We also have a map
+  // for the reverse relationship (we hope to use that map as little as possible
+  // as it requires more work than just using an index).
+  std::vector<Location> locations;
+  std::unordered_map<Location, LocationIndex> locationIndexes;
 
-  // XXX maybe If an item does not appear here, its type is Many.
-  std::unordered_map<Location, LocationInfo> flowInfoMap;
+  LocationIndex getIndex(const Location& location) {
+    // We must have an indexing of all relevant locations: no new locations
+    // should show up during our work.
+    assert(locationIndexes.find(location));
+    return locationIndexes[location];
+  }
+
+  // Maps location indexes to the contents in the corresponding locations.
+  // TODO: merge with |locations|?
+  std::vector<PossibleContents> contents;
+
+  // Maps location indexes to the vector of targets to which that location sends
+  // content.
+  // TODO: merge with |locations|?
+  // Commonly? there is a single target e.g. an expression has a single parent
+  // and only sends a value there.
+  // TODO: benchmark SmallVector<1> some more, but it seems to not help
+  std::vector<std::vector<LocationIndex>> targets;
 
   // Internals for flow.
 
@@ -736,6 +751,7 @@ struct Flower {
   // struct.get. To handle such things, we set add a childParent link, and then
   // when we update the child we can handle any possible action regarding the
   // parent.
+  // TODO: use LocationIndexes here?
   std::unordered_map<Expression*, Expression*> childParents;
 
   // The work remaining to do during the flow: locations that we are sending an
@@ -743,18 +759,20 @@ struct Flower {
   // efficient since we may send contents A to a target and then send further
   // contents B before we even get to processing that target; rather than queue
   // two work items, we want just one with the combined contents.
-  // XXX experiment with having the OLD contents here actually.
-  std::unordered_map<Location, PossibleContents> workQueue;
+  // XXX update docs here, this contains the OLD contents here actually.
+  std::unordered_map<LocationIndex, PossibleContents> workQueue;
 
   // During the flow we will need information about subtyping.
   std::unique_ptr<SubTypes> subTypes;
 
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
+  // TODO: use LocationIndexes
   std::unordered_set<Link> links;
 
   // We may add new links as we flow. Do so to a temporary structure on
   // the side to avoid any aliasing as we work.
+  // TODO: use LocationIndexes
   std::vector<Link> newLinks;
 
   // This applies the new contents to the given location, and if something
@@ -819,7 +837,10 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
   // Merge the function information into a single large graph that represents
   // the entire program all at once. First, gather all the links from all
-  // the functions. We do so into a set, which deduplicates everything.
+  // the functions. We do so into sets, which deduplicates everything.
+
+  // The roots are not declared in the class as we only need them during this
+  // function itself.
   std::unordered_map<Location, PossibleContents> roots;
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -903,19 +924,50 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "DAG phase\n";
+  std::cout << "indexing phase\n";
 #endif
 
-  // Build the flow info. First, note the link targets.
+  // Convert the data into the efficient LocationIndex form we will use during
+  // the flow analysis. First, find all the locations and index them.
   for (auto& link : links) {
-    flowInfoMap[link.from].targets.push_back(link.to);
+    auto ensureIndex = [&](const Location& location) {
+      auto iter = locationIndexes.find(location);
+      if (iter != locationIndexes.end()) {
+        return iter->second;
+      }
+
+      // Allocate a new index here.
+      auto index = locations.size();
+      if (index >= std::limits::max<LocationIndex>()) {
+        // 32 bits should be enough since each location takes at least one byte
+        // in the binary, and we don't have 4GB wasm binaries yet... do we?
+        Fatal() << "Too many locations for 32 bits";
+      }
+      locations.push_back(location);
+      locationIndexes[index] = location;
+      return index;
+    };
+
+    auto fromIndex = ensureIndex(link.from);
+    auto toIndex = ensureIndex(link.to);
+
+    // Add this link to |targets|.
+    if (fromIndex >= targets.size()) {
+      targets.resize(fromIndex + 1);
+    }
+    targets[fromIndex].push_back(toIndex);
   }
+
+  // TODO: numLocations = locations.size() ?
+
+  // Initialize all contents to the default (nothing) state.
+  contents.resize(locations.size());
 
 #ifndef NDEBUG
   // The vector of targets (which is a vector for efficiency) must have no
   // duplicates.
-  for (auto& [location, info] : flowInfoMap) {
-    disallowDuplicates(info.targets);
+  for (auto& list : targets) {
+    disallowDuplicates(list);
   }
 #endif
 
