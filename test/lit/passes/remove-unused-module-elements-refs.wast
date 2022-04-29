@@ -225,6 +225,105 @@
   )
 )
 
+;; Multiple references to the same function.
+(module
+  ;; CHECK:      (type $A (func_subtype func))
+  (type $A (func))
+  ;; CHECK:      (type $B (func_subtype func))
+  (type $B (func))
+  ;; CHECK:      (type $C (func_subtype func))
+  (type $C (func))
+
+  ;; CHECK:      (elem declare func $target-A-1 $target-C-1)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-C-1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-C-1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (export "foo")
+    (drop
+      (ref.func $target-A-1)
+    )
+    (call_ref
+      (ref.null $A)
+    )
+    (drop
+      (ref.func $target-A-1)
+    )
+    (call_ref
+      (ref.null $A)
+    )
+    ;; For B just have call_refs.
+    (call_ref
+      (ref.null $B)
+    )
+    (call_ref
+      (ref.null $B)
+    )
+    ;; For C just have ref.funcs.
+    (drop
+      (ref.func $target-C-1)
+    )
+    (drop
+      (ref.func $target-C-1)
+    )
+  )
+
+  ;; CHECK:      (func $target-A-1 (type $A)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $target-A-1 (type $A)
+    ;; This function is reachable.
+  )
+
+  (func $target-A-2 (type $A)
+    ;; This function is not reachable.
+  )
+
+  (func $target-B-1 (type $B)
+    ;; This function is not reachable.
+  )
+
+  (func $target-B-2 (type $B)
+    ;; This function is not reachable.
+  )
+
+  ;; CHECK:      (func $target-C-1 (type $C)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $target-C-1 (type $C)
+    ;; This function is not reachable, but has a reference.
+  )
+
+  (func $target-C-2 (type $C)
+    ;; This function is not reachable.
+  )
+)
+
 (module
   ;; A j2wasm-like itable pattern: An itable is an array of (possibly-null)
   ;; data that is filled with vtables of different types. On usage, we do a
