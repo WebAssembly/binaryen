@@ -612,3 +612,132 @@
     )
   )
 )
+
+;; A sequence of call_ref -> function -> call_ref -> function. This checks that
+;; we properly scan the contents of called functions.
+(module
+  ;; CHECK:      (type $A (func_subtype func))
+  (type $A (func))
+  ;; CHECK:      (type $X (func_subtype func))
+
+  ;; CHECK:      (type $C (func_subtype func))
+
+  ;; CHECK:      (type $Z (func_subtype func))
+
+  ;; CHECK:      (type $B (func_subtype func))
+  (type $B (func))
+  (type $C (func))
+
+  (type $X (func))
+  ;; CHECK:      (type $Y (func_subtype func))
+  (type $Y (func))
+  (type $Z (func))
+
+
+  ;; CHECK:      (elem declare func $target-A $target-B $target-X $target-Y)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $C)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (export "foo")
+    ;; Provide everything for A, just a ref for B, and just a call for C
+    (drop
+      (ref.func $target-A)
+    )
+    (call_ref
+      (ref.null $A)
+    )
+    (drop
+      (ref.func $target-B)
+    )
+    (call_ref
+      (ref.null $C)
+    )
+  )
+
+  ;; CHECK:      (func $target-A (type $A)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $Z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-Y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $X)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-X)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target-A (type $A)
+    ;; Similar to $foo, this provides everything for X, and only partial for Y
+    ;; and Z.
+    (call_ref
+      (ref.null $Z)
+    )
+    (drop
+      (ref.func $target-Y)
+    )
+    (call_ref
+      (ref.null $X)
+    )
+    (drop
+      (ref.func $target-X)
+    )
+  )
+
+  ;; CHECK:      (func $target-B (type $B)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $target-B (type $B)
+    ;; The complement of $foo: provide a call for B and a ref for C, but these
+    ;; are not reached, so it does not matter.
+    (call_ref
+      (ref.null $B)
+    )
+    (drop
+      (ref.func $target-C)
+    )
+  )
+
+  (func $target-C (type $C)
+    ;; Identical to $target-B.
+    (call_ref
+      (ref.null $B)
+    )
+    (drop
+      (ref.func $target-C)
+    )
+  )
+
+  ;; CHECK:      (func $target-X (type $X)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $target-X (type $X)
+    ;; This is reached via foo -> target-A -> here.
+  )
+
+  ;; CHECK:      (func $target-Y (type $Y)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $target-Y (type $Y)
+    ;; This is never reached.
+  )
+
+  (func $target-Z (type $Z)
+    ;; This is never reached.
+  )
+)
