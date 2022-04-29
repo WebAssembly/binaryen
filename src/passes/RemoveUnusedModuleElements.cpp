@@ -23,6 +23,7 @@
 #include <memory>
 
 #include "ir/element-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -62,7 +63,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   //
   // TODO: We assume a closed world in the GC space atm, but eventually should
   //       have a flag for that, and when the world is not closed we'd need to
-  //       check for RefFuncs that flow out to exports.
+  //       check for RefFuncs that flow out to exports or imports
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
@@ -124,7 +125,28 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
   void visitCall(Call* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
+    if (Intrinsics(*module).isCallWithoutEffects(curr)) {
+      // A call-without-effects receives a function reference and calls it, the
+      // same as a CallRef. When we have a flag for non-closed-world, we should
+      // handle this automatically by the reference flowing out to an import,
+      // which is what binaryen intrinsics look like. For now, to support use
+      // cases of a closed world but that also use this intrinsic, handle the
+      // intrinsic specifically here.
+      auto* target = curr->operands.back();
+      if (auto* refFunc = target->dynCast<RefFunc>()) {
+        // We can see exactly where this goes.
+        Call call(module->allocator);
+        call.target = refFunc->func;
+        visitCall(&call);
+      } else {
+        // All we can see is the type, so do a CallRef of that.
+        CallRef callRef(module->allocator);
+        callRef.target = target;
+        visitCallRef(&callRef);
+      }
+    }
   }
+
   void visitCallIndirect(CallIndirect* curr) { maybeAddTable(curr->table); }
 
   void visitCallRef(CallRef* curr) {
