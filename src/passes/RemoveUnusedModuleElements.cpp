@@ -63,7 +63,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // TODO: We assume a closed world in the GC space atm, but eventually should
   //       have a flag for that, and when the world is not closed we'd need to
   //       check for RefFuncs that flow out to exports.
-  std::unordered_map<HeapType, std::vector<Name>> uncalledRefFuncMap;
+  std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
     : module(module) {
@@ -186,7 +186,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
     } else {
       // We've never seen a CallRef for this, but might see one later.
-      uncalledRefFuncMap[type].push_back(curr->func);
+      uncalledRefFuncMap[type].insert(curr->func);
     }
   }
   void visitTableGet(TableGet* curr) { maybeAddTable(curr->table); }
