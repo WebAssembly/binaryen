@@ -1,4 +1,4 @@
-//#define POSSIBLE_CONTENTS_DEBUG 1
+#define POSSIBLE_CONTENTS_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1438,16 +1438,6 @@ void Flower::processWork(LocationIndex locationIndex,
       }
     }
   }
-
-#if 0 // XXX maybe
-  if (contents.isMany()) {
-    // We never need this any more. The lack of tracking info for this location
-    // indicates that it is in the Many state.
-    // TODO: there is no shrink_to_fit, so we might need to copy to a new
-    //       container manually
-    flowInfoMap.erase(location);
-  }
-#endif
 }
 
 void Flower::updateNewLinks() {
