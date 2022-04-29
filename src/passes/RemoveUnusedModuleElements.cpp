@@ -125,6 +125,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
   void visitCall(Call* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
+
     if (Intrinsics(*module).isCallWithoutEffects(curr)) {
       // A call-without-effects receives a function reference and calls it, the
       // same as a CallRef. When we have a flag for non-closed-world, we should
