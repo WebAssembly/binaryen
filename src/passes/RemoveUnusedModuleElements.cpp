@@ -290,18 +290,20 @@ struct RemoveUnusedModuleElements : public Pass {
     module->removeFunctions([&](Function* curr) {
       if (analyzer.reachable.count(
             ModuleElement(ModuleElementKind::Function, curr->name))) {
+        // This is reached.
         return false;
       }
 
       if (uncalledRefFuncs.count(curr->name)) {
-        // See comment above on uncalledRefFuncs.
+        // This is not reached, but has a reference. See comment above on
+        // uncalledRefFuncs.
         if (!curr->imported()) {
           curr->body = Builder(*module).makeUnreachable();
         }
         return false;
       }
 
-      // The function is not reached and has no references; remove it.
+      // The function is not reached and has no reference; remove it.
       return true;
     });
     module->removeGlobals([&](Global* curr) {
