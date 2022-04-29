@@ -331,3 +331,90 @@
     (nop)
   )
 )
+
+(module
+  ;; As above, but do not use the global itable (see comments on the 2 changed
+  ;; lines). This lets us completely remove both functions.
+
+  ;; CHECK:      (type $object (struct_subtype (field (ref null $itable)) data))
+
+  ;; CHECK:      (type $itable (array_subtype (ref null data) data))
+
+  ;; CHECK:      (type $vtable-B (struct_subtype (field (ref $B)) data))
+
+  ;; CHECK:      (type $A (func_subtype func))
+  (type $A (func))
+
+  ;; CHECK:      (type $B (func_subtype func))
+  (type $B (func))
+
+  (type $itable (array_subtype (ref null data) data))
+
+  (type $object (struct_subtype (ref null $itable) data)) ;; nullable now
+
+  (type $vtable-A (struct_subtype (ref $A) data))
+
+  (type $vtable-B (struct_subtype (ref $B) data))
+
+  (global $itable (ref $itable)
+    (array.init_static $itable
+      (struct.new $vtable-A
+        (ref.func $func-A)
+      )
+      (struct.new $vtable-B
+        (ref.func $func-B)
+      )
+    )
+  )
+
+  ;; CHECK:      (export "use-itable" (func $use-itable))
+
+  ;; CHECK:      (func $use-itable (type $A)
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (ref.null $itable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (struct.get $vtable-B 0
+  ;; CHECK-NEXT:    (ref.cast_static $vtable-B
+  ;; CHECK-NEXT:     (array.get $itable
+  ;; CHECK-NEXT:      (struct.get $object 0
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-itable (export "use-itable")
+    (local $ref (ref null $object))
+    (local.set $ref
+      (struct.new $object
+        (ref.null $itable) ;; This is the difference.
+      )
+    )
+    (call_ref
+      (struct.get $vtable-B 0
+        (ref.cast_static $vtable-B
+          (array.get $itable
+            (struct.get $object 0
+              (local.get $ref)
+            )
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+
+  (func $func-A (type $A)
+    (nop)
+  )
+
+  (func $func-B (type $B)
+    (nop)
+  )
+)
