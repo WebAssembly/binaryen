@@ -741,3 +741,151 @@
     ;; This is never reached.
   )
 )
+
+;; As above, but add a call from $target-A to $target-B, which ends up keeping
+;; $target-B alive directly, and also $target-C, indirectly.
+(module
+  ;; CHECK:      (type $A (func_subtype func))
+  (type $A (func))
+  ;; CHECK:      (type $B (func_subtype func))
+  (type $B (func))
+  ;; CHECK:      (type $C (func_subtype func))
+  (type $C (func))
+
+  ;; CHECK:      (type $X (func_subtype func))
+  (type $X (func))
+  ;; CHECK:      (type $Y (func_subtype func))
+  (type $Y (func))
+  ;; CHECK:      (type $Z (func_subtype func))
+  (type $Z (func))
+
+
+  ;; CHECK:      (elem declare func $target-A $target-B $target-C $target-X $target-Y)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $C)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (export "foo")
+    (drop
+      (ref.func $target-A)
+    )
+    (call_ref
+      (ref.null $A)
+    )
+    (drop
+      (ref.func $target-B)
+    )
+    (call_ref
+      (ref.null $C)
+    )
+  )
+
+  ;; CHECK:      (func $target-A (type $A)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $Z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-Y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $X)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-X)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $target-B)
+  ;; CHECK-NEXT: )
+  (func $target-A (type $A)
+    ;; and Z.
+    (call_ref
+      (ref.null $Z)
+    )
+    (drop
+      (ref.func $target-Y)
+    )
+    (call_ref
+      (ref.null $X)
+    )
+    (drop
+      (ref.func $target-X)
+    )
+    ;; The change: Add a call to $target-B. This directly keeps that function
+    ;; alive, and also it keeps $target-C alive as we get the missing piece
+    ;; for that, a RefFunc of it (we had a CallRef before).
+    (call $target-B)
+  )
+
+  ;; CHECK:      (func $target-B (type $B)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-C)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target-B (type $B)
+    (call_ref
+      (ref.null $B)
+    )
+    (drop
+      (ref.func $target-C)
+    )
+  )
+
+  ;; CHECK:      (func $target-C (type $C)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-C)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (ref.null $Y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target-C (type $C)
+    (call_ref
+      (ref.null $B)
+    )
+    (drop
+      (ref.func $target-C)
+    )
+    ;; Also add a CallRef for $Y, giving us the missing piece in a parallel way
+    ;; (this time we add the CallRef late, instead of the RefFunc).
+    (call_ref
+      (ref.null $Y)
+    )
+  )
+
+  ;; CHECK:      (func $target-X (type $X)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $target-X (type $X)
+    ;; This is reached via foo -> target-A -> here.
+  )
+
+  ;; CHECK:      (func $target-Y (type $Y)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $target-Y (type $Y)
+    ;; This is now reached, due to a CallRef in $target-C and a RefFunc in
+    ;; $target-A.
+  )
+
+  (func $target-Z (type $Z)
+    ;; This is never reached.
+  )
+)
