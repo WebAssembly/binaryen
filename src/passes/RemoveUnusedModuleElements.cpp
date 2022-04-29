@@ -277,6 +277,13 @@ struct RemoveUnusedModuleElements : public Pass {
       for (auto target : targets) {
         uncalledRefFuncs.insert(target);
       }
+
+      // We cannot have a type in both this map and calledSignatures.
+      assert(analyzer.calledSignatures.count(type) == 0);
+    }
+
+    for (auto type : analyzer.calledSignatures) {
+      assert(analyzer.uncalledRefFuncMap.count(type) == 0);
     }
 
     // Remove unreachable elements.
