@@ -418,3 +418,98 @@
     (nop)
   )
 )
+
+(module
+  ;; As above, but now the functions are both imports. We know one of them is
+  ;; not reachable, but we can't do anything about that - we can't empty out
+  ;; the body of an import.
+
+  ;; CHECK:      (type $vtable-B (struct_subtype (field (ref $B)) data))
+
+  ;; CHECK:      (type $A (func_subtype func))
+  (type $A (func))
+
+  ;; CHECK:      (type $object (struct_subtype (field (ref $itable)) data))
+
+  ;; CHECK:      (type $itable (array_subtype (ref null data) data))
+
+  ;; CHECK:      (type $B (func_subtype func))
+  (type $B (func))
+
+  (type $itable (array_subtype (ref null data) data))
+
+  (type $object (struct_subtype (ref $itable) data))
+
+  ;; CHECK:      (type $vtable-A (struct_subtype (field (ref $A)) data))
+  (type $vtable-A (struct_subtype (ref $A) data))
+
+  (type $vtable-B (struct_subtype (ref $B) data))
+
+  ;; CHECK:      (import "env" "func-A" (func $func-A))
+  (import "env" "func-A" (func $func-A (type $A)))
+
+  ;; CHECK:      (import "env" "func-B" (func $func-B))
+  (import "env" "func-B" (func $func-B (type $B)))
+
+  ;; CHECK:      (global $itable (ref $itable) (array.init_static $itable
+  ;; CHECK-NEXT:  (struct.new $vtable-A
+  ;; CHECK-NEXT:   (ref.func $func-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $vtable-B
+  ;; CHECK-NEXT:   (ref.func $func-B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $itable (ref $itable)
+    (array.init_static $itable
+      (struct.new $vtable-A
+        (ref.func $func-A)
+      )
+      (struct.new $vtable-B
+        (ref.func $func-B)
+      )
+    )
+  )
+
+  ;; CHECK:      (export "use-itable" (func $use-itable))
+
+  ;; CHECK:      (func $use-itable (type $A)
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (global.get $itable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (struct.get $vtable-B 0
+  ;; CHECK-NEXT:    (ref.cast_static $vtable-B
+  ;; CHECK-NEXT:     (array.get $itable
+  ;; CHECK-NEXT:      (struct.get $object 0
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-itable (export "use-itable")
+    (local $ref (ref null $object))
+    (local.set $ref
+      (struct.new $object
+        (global.get $itable)
+      )
+    )
+    (call_ref
+      (struct.get $vtable-B 0
+        (ref.cast_static $vtable-B
+          (array.get $itable
+            (struct.get $object 0
+              (local.get $ref)
+            )
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+)
