@@ -60,7 +60,7 @@ struct DAEFunctionInfo {
   Function* func = nullptr;
   // The unused parameters, if any.
   SortedVector unusedParams;
-  // Maps a function name to the calls going to it.
+  // calls going to this function.
   std::vector<Call*> calls;
   // Whether this function contains any tail calls (including indirect tail
   // calls) and the set of functions this function tail calls. Tail-callers and
