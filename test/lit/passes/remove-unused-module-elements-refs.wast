@@ -224,3 +224,110 @@
     ;; This function is not reachable.
   )
 )
+
+(module
+  ;; A j2wasm-like itable pattern: An itable is an array of (possibly-null)
+  ;; data that is filled with vtables of different types. On usage, we do a
+  ;; cast of the vtable type.
+
+  ;; CHECK:      (type $vtable-B (struct_subtype (field (ref $B)) data))
+
+  ;; CHECK:      (type $A (func_subtype func))
+  (type $A (func))
+
+  ;; CHECK:      (type $object (struct_subtype (field (ref $itable)) data))
+
+  ;; CHECK:      (type $itable (array_subtype (ref null data) data))
+
+  ;; CHECK:      (type $B (func_subtype func))
+  (type $B (func))
+
+  (type $itable (array_subtype (ref null data) data))
+
+  (type $object (struct_subtype (ref $itable) data))
+
+  ;; CHECK:      (type $vtable-A (struct_subtype (field (ref $A)) data))
+  (type $vtable-A (struct_subtype (ref $A) data))
+
+  (type $vtable-B (struct_subtype (ref $B) data))
+
+  ;; CHECK:      (global $itable (ref $itable) (array.init_static $itable
+  ;; CHECK-NEXT:  (struct.new $vtable-A
+  ;; CHECK-NEXT:   (ref.func $func-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $vtable-B
+  ;; CHECK-NEXT:   (ref.func $func-B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $itable (ref $itable)
+    (array.init_static $itable
+      (struct.new $vtable-A
+        (ref.func $func-A)
+      )
+      (struct.new $vtable-B
+        (ref.func $func-B)
+      )
+    )
+  )
+
+  ;; CHECK:      (export "use-itable" (func $use-itable))
+
+  ;; CHECK:      (func $use-itable (type $A)
+  ;; CHECK-NEXT:  (local $ref (ref null $object))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $object
+  ;; CHECK-NEXT:    (global.get $itable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (struct.get $vtable-B 0
+  ;; CHECK-NEXT:    (ref.cast_static $vtable-B
+  ;; CHECK-NEXT:     (array.get $itable
+  ;; CHECK-NEXT:      (struct.get $object 0
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-itable (export "use-itable")
+    (local $ref (ref null $object))
+    ;; This is enough to use all the elements in the itable, which means we need
+    ;; to keep references to $func-A/B around.
+    (local.set $ref
+      (struct.new $object
+        (global.get $itable)
+      )
+    )
+    ;; Also call one of them, $vtable-B, but not the other. $A can be emptied
+    ;; out with an unreachable.
+    (call_ref
+      (struct.get $vtable-B 0
+        (ref.cast_static $vtable-B
+          (array.get $itable
+            (struct.get $object 0
+              (local.get $ref)
+            )
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func-A (type $A)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func-A (type $A)
+    (nop)
+  )
+
+  ;; CHECK:      (func $func-B (type $B)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func-B (type $B)
+    (nop)
+  )
+)
