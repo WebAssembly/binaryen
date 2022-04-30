@@ -191,7 +191,7 @@ struct ExceptionOpts : public Pass {
       if (Call* call = curr->dynCast<Call>()) {
         std::lock_guard<std::mutex> lock(throwingFuncsMutex);
         if (optimizing_phase) {
-          throwingFuncs[wasm->getFunction(call->target)]++;
+          throwingFuncs.insert(wasm->getFunction(call->target));
         }
         throwReason = ThrowReason::Call;
       } else if (curr->is<CallIndirect>() || curr->is<CallRef>()) {
