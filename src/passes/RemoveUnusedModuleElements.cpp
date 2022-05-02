@@ -305,9 +305,11 @@ struct RemoveUnusedModuleElements : public Pass {
       assert(analyzer.calledSignatures.count(type) == 0);
     }
 
+#ifndef NDEBUG
     for (auto type : analyzer.calledSignatures) {
       assert(analyzer.uncalledRefFuncMap.count(type) == 0);
     }
+#endif
 
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
