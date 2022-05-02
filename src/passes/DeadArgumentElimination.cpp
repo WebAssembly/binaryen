@@ -71,7 +71,6 @@ struct DAEFunctionInfo {
   // returns from tail-callers if their tail-callees can have their returns
   // removed as well.
   bool hasTailCalls = false;
-  std::unordered_set<Name> tailCallees;
   // Whether the function can be called from places that
   // affect what we can do. For now, any call we don't
   // see inhibits our optimizations, but TODO: an export
@@ -105,7 +104,7 @@ struct DAEScanner
     }
     if (curr->isReturn) {
       info->hasTailCalls = true;
-      info->tailCallees.insert(curr->target);
+      (*infoMap)[curr->target].hasTailCalls = true;
     }
   }
 
@@ -201,14 +200,10 @@ struct DAE : public Pass {
     scanner.run(runner, module);
     // Combine all the info.
     std::map<Name, std::vector<Call*>> allCalls;
-    std::unordered_set<Name> tailCallees;
     for (auto& [_, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[name];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
-      }
-      for (auto& callee : info.tailCallees) {
-        tailCallees.insert(callee);
       }
       for (auto& [name, calls] : info.droppedCalls) {
         allDroppedCalls[name] = calls;
@@ -251,45 +246,17 @@ struct DAE : public Pass {
     std::unordered_set<Function*> changed;
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& [name, calls] : allCalls) {
-      if (infoMap[name].hasUnseenCalls) {
+      auto& info = infoMap[name];
+      if (info.hasUnseenCalls) {
         continue;
       }
       auto* func = module->getFunction(name);
-      auto numParams = func->getNumParams();
-      if (numParams == 0) {
-        continue;
-      }
-      auto removedIndexes = ParamUtils::removeParameters(
-        {func}, infoMap[name].unusedParams, calls, {}, module, runner);
-      if (!removedIndexes.empty()) {
+      if (func->getNumParams() > 0 && !ParamUtils::removeParameters(
+        {func}, info.unusedParams, calls, {}, module, runner).empty()) {
         // Success!
         changed.insert(func);
-      }
-    }
-    // We can also tell which calls have all their return values dropped. Note
-    // that we can't do this if we changed anything so far, as we may have
-    // modified allCalls (we can't modify a call site twice in one iteration,
-    // once to remove a param, once to drop the return value).
-    if (changed.empty()) {
-      for (auto& func : module->functions) {
-        if (func->getResults() == Type::none) {
-          continue;
-        }
-        auto name = func->name;
-        if (infoMap[name].hasUnseenCalls) {
-          continue;
-        }
-        if (infoMap[name].hasTailCalls) {
-          continue;
-        }
-        if (tailCallees.count(name)) {
-          continue;
-        }
-        auto iter = allCalls.find(name);
-        if (iter == allCalls.end()) {
-          continue;
-        }
-        auto& calls = iter->second;
+      } else if (!info.hasTailCalls && func->getResults() != Type::none) {
+        // We can also tell which calls have all their return values dropped.
         bool allDropped =
           std::all_of(calls.begin(), calls.end(), [&](Call* call) {
             return allDroppedCalls.count(call);
@@ -297,10 +264,10 @@ struct DAE : public Pass {
         if (!allDropped) {
           continue;
         }
-        removeReturnValue(func.get(), calls, module);
+        removeReturnValue(func, calls, module);
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
-        changed.insert(func.get());
+        changed.insert(func);
       }
     }
     if (optimize && !changed.empty()) {
