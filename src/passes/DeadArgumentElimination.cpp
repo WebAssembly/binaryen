@@ -251,8 +251,10 @@ struct DAE : public Pass {
         continue;
       }
       auto* func = module->getFunction(name);
-      if (func->getNumParams() > 0 && !ParamUtils::removeParameters(
-        {func}, info.unusedParams, calls, {}, module, runner).empty()) {
+      if (func->getNumParams() > 0 &&
+          !ParamUtils::removeParameters(
+             {func}, info.unusedParams, calls, {}, module, runner)
+             .empty()) {
         // Success!
         changed.insert(func);
       } else if (!info.hasTailCalls && func->getResults() != Type::none) {
