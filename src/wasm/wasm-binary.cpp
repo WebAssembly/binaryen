@@ -253,7 +253,8 @@ void WasmBinaryWriter::writeTypes() {
     // Check whether we need to start a new recursion group. Recursion groups of
     // size 1 are implicit, so only emit a group header for larger groups. This
     // gracefully handles non-isorecursive type systems, which only have groups
-    // of size 1.
+    // of size 1 internally (even though nominal types are emitted as a single
+    // large group).
     auto currGroup = type.getRecGroup();
     if (lastGroup != currGroup && currGroup.size() > 1) {
       o << S32LEB(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
@@ -1985,10 +1986,6 @@ void WasmBinaryBuilder::readTypes() {
       uint32_t groupSize = getU32LEB();
       if (getTypeSystem() == TypeSystem::Equirecursive) {
         throwError("Recursion groups not allowed with equirecursive typing");
-      }
-      if (getTypeSystem() == TypeSystem::Nominal && i > 0) {
-        throwError(
-          "Only a single recursion group is allowed under nominal typing");
       }
       if (groupSize == 0u) {
         // TODO: Support groups of size zero by shrinking the builder.
