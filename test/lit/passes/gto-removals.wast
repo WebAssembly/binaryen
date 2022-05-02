@@ -645,10 +645,11 @@
 ;; We can remove fields from the end if they are only used in subtypes, because
 ;; the subtypes can always add fields at the end (and only at the end).
 (module
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) data))
+
   ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
   (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
 
-  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) data))
   (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
 
   ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
@@ -694,10 +695,11 @@
 )
 
 (module
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field (mut f32)) data))
+
   ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field (mut f32)) (field f64) (field anyref) $parent))
   (type $child (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)) $parent))
 
-  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field (mut f32)) data))
   (type $parent (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) data))
 
   ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
@@ -774,13 +776,14 @@
 ;; As above, but now the read is just of one child. We can remove the field
 ;; from the parent and the other child.
 (module
+  ;; CHECK:      (type $parent (struct_subtype  data))
+
   ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
   (type $child1 (struct_subtype (field i32) $parent))
 
+  (type $parent (struct_subtype (field i32) data))
   ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
 
-  ;; CHECK:      (type $parent (struct_subtype  data))
-  (type $parent (struct_subtype (field i32) data))
   ;; CHECK:      (type $child2 (struct_subtype  $parent))
   (type $child2 (struct_subtype (field i32) $parent))
 

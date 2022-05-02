@@ -4,11 +4,12 @@
 
 (module
  ;; CHECK:      (type ${i32} (struct (field i32)))
+ ;; NOMNL:      (type ${} (struct_subtype  data))
+
  ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; CHECK:      (type ${} (struct ))
- ;; NOMNL:      (type ${} (struct_subtype  data))
  (type ${} (struct))
 
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
