@@ -1387,6 +1387,7 @@ void Flower::processWork(LocationIndex locationIndex,
             //       or an immutable global, which we could do even more
             //       with.
             auto heapLoc = getLocation(refContents.getType().getHeapType());
+            assert(heapLoc);
             if (heapLoc) {
               addWork(*heapLoc, valueContents);
             }
@@ -1397,6 +1398,7 @@ void Flower::processWork(LocationIndex locationIndex,
             auto type = ref->type.getHeapType();
             for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
               auto heapLoc = getLocation(subType);
+              assert(heapLoc);
               if (heapLoc) {
                 addWork(*heapLoc, valueContents);
               }
