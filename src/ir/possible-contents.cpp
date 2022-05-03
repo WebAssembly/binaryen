@@ -913,6 +913,22 @@ struct Flower {
   std::vector<IndexLink> newLinks;
 
   void updateNewLinks();
+
+  // Add a link from a location to a target, if such a link did not exist
+  // before, during the flow. Doing so during the flow requires more care.
+  // FIXME comment
+  void connectDuringFlow(Location from, Location to) {
+    // Add this to the graph if it is an entirely new link.
+    auto newLink = LocationLink{from, to};
+    auto newIndexLink = getIndexes(newLink);
+    if (links.count(newIndexLink) == 0) {
+      newLinks.push_back(newIndexLink);
+      links.insert(newIndexLink);
+    }
+
+    // Add a work item to receive the new contents there now.
+    sendContents(to, getContents(getIndex(from)));
+  }
 };
 
 Flower::Flower(Module& wasm) : wasm(wasm) {
@@ -1280,25 +1296,9 @@ void Flower::applyContents(LocationIndex locationIndex,
             return;
           }
 
-          // Add a link from a location to a target, if such a link did not exist
-          // before.
-          auto connect = [&](Location from,
-                             Location to) {
-            // Add this to the graph if it is an entirely new link.
-            auto newLink = LocationLink{from, to};
-            auto newIndexLink = getIndexes(newLink);
-            if (links.count(newIndexLink) == 0) {
-              newLinks.push_back(newIndexLink);
-              links.insert(newIndexLink);
-            }
-
-            // Add a work item to receive the new contents there now.
-            sendContents(to, getContents(getIndex(from)));
-          };
-
           if (contents.isExactType()) {
             // Add a single link to this exact location.
-            connect(DataLocation{heapType, fieldIndex}, ExpressionLocation{parent, 0});
+            connectDuringFlow(DataLocation{heapType, fieldIndex}, ExpressionLocation{parent, 0});
           } else {
             // Otherwise, this is a cone: the declared type of the reference, or
             // any subtype of that, as both Many and ConstantGlobal reduce to
@@ -1328,12 +1328,12 @@ void Flower::applyContents(LocationIndex locationIndex,
               // links is not efficient, so maybe not worth it.
               for (auto type :
                    subTypes->getAllSubTypesInclusive(heapType)) {
-                connect(DataLocation{type, fieldIndex}, SpecialLocation{coneReadIndex});
+                connectDuringFlow(DataLocation{type, fieldIndex}, SpecialLocation{coneReadIndex});
               }
             }
 
             // Link to the canonical location.
-            connect(SpecialLocation{coneReadIndex}, ExpressionLocation{parent, 0});
+            connectDuringFlow(SpecialLocation{coneReadIndex}, ExpressionLocation{parent, 0});
           }
         };
 
