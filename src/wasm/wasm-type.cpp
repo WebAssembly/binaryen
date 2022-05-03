@@ -3811,8 +3811,8 @@ void canonicalizeBasicTypes(CanonicalizationState& state) {
 
   if (replacements.size()) {
     // Canonicalizing basic heap types may cause their parent types to become
-    // canonicalizable as well, for example after creating `(ref null extern)`
-    // we can futher canonicalize to `externref`.
+    // canonicalizable as well, for example after creating `(ref null any)` we
+    // can futher canonicalize to `anyref`.
     struct TypeCanonicalizer : TypeGraphWalkerBase<TypeCanonicalizer> {
       void scanType(Type* type) {
         if (type->isTuple()) {

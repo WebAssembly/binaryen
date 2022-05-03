@@ -63,8 +63,8 @@ class Literal {
     // To support the experimental RttFreshSub instruction, we not only store
     // the type, but also a reference to an allocation.
     std::unique_ptr<RttSupers> rttSupers;
-    // TODO: Literals of type `externref` can only be `null` currently but we
-    // will need to represent extern values eventually, to
+    // TODO: Literals of type `anyref` can only be `null` currently but we
+    // will need to represent external values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
     // 2) avoid bailing out when seeing a reference typed value in precompute
   };
@@ -765,8 +765,7 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       // other non-null reference type literals cannot represent concrete
-      // values, i.e. there is no concrete externref, anyref or eqref other than
-      // null.
+      // values, i.e. there is no concrete anyref or eqref other than null.
       WASM_UNREACHABLE("unexpected type");
     };
     if (a.type.isBasic()) {

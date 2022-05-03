@@ -32,7 +32,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging externref or anyref because these are opaque
+  // - there's no point in logging anyref because it is opaque
   // - don't bother logging tuples
   loggableTypes = {Type::i32, Type::i64, Type::f32, Type::f64};
   if (wasm.features.hasSIMD()) {

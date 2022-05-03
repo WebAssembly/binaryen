@@ -68,7 +68,6 @@ Name set_f32("set_f32");
 Name set_f64("set_f64");
 Name set_v128("set_v128");
 Name set_funcref("set_funcref");
-Name set_externref("set_externref");
 Name set_anyref("set_anyref");
 Name set_eqref("set_eqref");
 Name set_i31ref("set_i31ref");
