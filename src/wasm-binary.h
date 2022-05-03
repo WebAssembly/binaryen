@@ -379,13 +379,11 @@ enum EncodedType {
   // run-time type info type, without depth index n
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
-  // func_type form
-  Func = -0x20,            // 0x60
-  Struct = -0x21,          // 0x5f
-  Array = -0x22,           // 0x5e
-  FuncExtending = -0x23,   // 0x5d
-  StructExtending = -0x24, // 0x5c
-  ArrayExtending = -0x25,  // 0x5b
+  // type forms
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
+  Sub = -0x30,    // 0x50
   // isorecursive recursion groups
   Rec = -0x31, // 0x4f
   // block_type
