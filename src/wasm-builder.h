@@ -999,7 +999,6 @@ public:
     }
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
         assert(value.isNull() && "unexpected non-null reference type literal");
@@ -1181,7 +1180,6 @@ public:
       }
       case Type::funcref:
         WASM_UNREACHABLE("handled above");
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);

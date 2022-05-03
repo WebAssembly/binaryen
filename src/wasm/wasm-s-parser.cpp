@@ -1171,10 +1171,8 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
     return Type::funcref;
   }
-  if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
-    return Type::externref;
-  }
-  if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
+  if ((strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) ||
+      (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0))) {
     return Type::anyref;
   }
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
@@ -1206,7 +1204,7 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     }
     if (str[1] == 'x' && str[2] == 't' && str[3] == 'e' && str[4] == 'r' &&
         str[5] == 'n' && (prefix || str[6] == 0)) {
-      return HeapType::ext;
+      return HeapType::any;
     }
   }
   if (str[0] == 'a') {
@@ -1740,7 +1738,6 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
     }
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:

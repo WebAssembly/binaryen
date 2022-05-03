@@ -1304,9 +1304,6 @@ void WasmBinaryWriter::writeType(Type type) {
     case Type::funcref:
       ret = BinaryConsts::EncodedType::funcref;
       break;
-    case Type::externref:
-      ret = BinaryConsts::EncodedType::externref;
-      break;
     case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
@@ -1335,9 +1332,6 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     switch (type.getBasic()) {
       case HeapType::func:
         ret = BinaryConsts::EncodedHeapType::func;
-        break;
-      case HeapType::ext:
-        ret = BinaryConsts::EncodedHeapType::extern_;
         break;
       case HeapType::any:
         ret = BinaryConsts::EncodedHeapType::any;
@@ -1687,9 +1681,6 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::funcref:
       out = Type::funcref;
       return true;
-    case BinaryConsts::EncodedType::externref:
-      out = Type::externref;
-      return true;
     case BinaryConsts::EncodedType::anyref:
       out = Type::anyref;
       return true;
@@ -1711,9 +1702,6 @@ bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
   switch (code) {
     case BinaryConsts::EncodedHeapType::func:
       out = HeapType::func;
-      return true;
-    case BinaryConsts::EncodedHeapType::extern_:
-      out = HeapType::ext;
       return true;
     case BinaryConsts::EncodedHeapType::any:
       out = HeapType::any;

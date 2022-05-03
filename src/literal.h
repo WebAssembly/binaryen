@@ -790,7 +790,6 @@ template<> struct hash<wasm::Literal> {
           wasm::rehash(digest, chunks[1]);
           return digest;
         case wasm::Type::funcref:
-        case wasm::Type::externref:
         case wasm::Type::anyref:
         case wasm::Type::eqref:
         case wasm::Type::dataref:

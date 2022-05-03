@@ -628,7 +628,6 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -656,7 +655,6 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -684,7 +682,6 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -712,7 +709,6 @@ struct Reducer
                 WASM_UNREACHABLE("unexpected type");
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -726,7 +722,6 @@ struct Reducer
           }
           case Type::v128:
           case Type::funcref:
-          case Type::externref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:

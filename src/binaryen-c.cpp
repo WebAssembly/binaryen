@@ -70,7 +70,6 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::funcref:
       ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
       assert(x.isNull() && "unexpected non-null reference type literal");
@@ -100,7 +99,6 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.v128);
     case Type::funcref:
       return Literal::makeFunc(x.func);
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
       return Literal::makeNull(Type(x.type));
@@ -140,7 +138,7 @@ BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
 BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
-BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
+BinaryenType BinaryenTypeExternref(void) { return Type::anyref; } // Deprecate?
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
 BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
