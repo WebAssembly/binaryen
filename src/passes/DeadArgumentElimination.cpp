@@ -70,7 +70,7 @@ struct DAEFunctionInfo {
   // because being in a table inhibits DAE. TODO: Allow the removal of dropped
   // returns from tail-callers if their tail-callees can have their returns
   // removed as well.
-  bool hasTailCalls = false;
+  std::atomic<bool> hasTailCalls;
   // Whether the function can be called from places that
   // affect what we can do. For now, any call we don't
   // see inhibits our optimizations, but TODO: an export
@@ -80,7 +80,10 @@ struct DAEFunctionInfo {
   // during the parallel analysis phase which is run in DAEScanner.
   std::atomic<bool> hasUnseenCalls;
 
-  DAEFunctionInfo() { hasUnseenCalls = false; }
+  DAEFunctionInfo() {
+    hasUnseenCalls = false;
+    hasTailCalls = false;
+  }
 };
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
