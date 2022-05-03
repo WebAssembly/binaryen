@@ -884,7 +884,8 @@ struct Flower {
 
   // Maps a heap type + an index in the type (0 for an array) to the index of a
   // SpecialLocation for a cone read of those contents. XXX move comment to here
-  std::unordered_map<std::pair<HeapType, Index>, LocationIndex> canonicalConeReads;
+  std::unordered_map<std::pair<HeapType, Index>, LocationIndex>
+    canonicalConeReads;
 
   std::unique_ptr<SubTypes> subTypes;
 
@@ -1344,7 +1345,8 @@ void Flower::processWork(LocationIndex locationIndex,
             // that for each struct.get of a cone. If there are M such gets then
             // we have N * M edges for this. Instead, make a single canonical
             // "cone read" location, and add a single link to it from here.
-            auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(declaredRefType, fieldIndex)];
+            auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
+              declaredRefType, fieldIndex)];
             if (coneReadIndex == 0) {
               // 0 is an impossible index for a LocationIndex (as there must be
               // something at index 0 already - the ExpressionLocation of this
@@ -1356,12 +1358,14 @@ void Flower::processWork(LocationIndex locationIndex,
               // TODO: if the old contents here were an exact type then we could
               // remove the old link, which becomes redundant now. But removing
               // links is not efficient, so maybe not worth it.
-              for (auto type : subTypes->getAllSubTypesInclusive(declaredRefType)) {
+              for (auto type :
+                   subTypes->getAllSubTypesInclusive(declaredRefType)) {
                 auto heapLoc = getHeapLocation(type);
                 assert(heapLoc);
                 auto newLink = LocationLink{*heapLoc, coneRead};
                 auto newIndexLink = getIndexes(newLink);
-                // TODO: helper for this "add link" pattern, including the addWork
+                // TODO: helper for this "add link" pattern, including the
+                // addWork
                 assert(links.count(newIndexLink) == 0);
                 newLinks.push_back(newIndexLink);
                 links.insert(newIndexLink);
@@ -1372,10 +1376,13 @@ void Flower::processWork(LocationIndex locationIndex,
             // Whether we added the code read now, or it existed before, it must
             // be of the proper form - its internal index is the same as the
             // global index for it, to avoid any confusion in debugging.
-            assert(std::get<SpecialLocation>(getLocation(coneReadIndex)).index == coneReadIndex);
+            assert(
+              std::get<SpecialLocation>(getLocation(coneReadIndex)).index ==
+              coneReadIndex);
 
             // Link to the canonical location.
-            auto newLink = LocationLink{SpecialLocation{coneReadIndex}, ExpressionLocation{parent, 0}};
+            auto newLink = LocationLink{SpecialLocation{coneReadIndex},
+                                        ExpressionLocation{parent, 0}};
             auto newIndexLink = getIndexes(newLink);
             // Check if this link exists already - we may have been a
             // ConstantGlobal that becomes a Many, and the type may have been
