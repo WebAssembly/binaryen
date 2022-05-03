@@ -245,7 +245,9 @@ struct LinkFinder
   // we need during the flow in special cases. See the comment on |childParents|
   // on ContentOracle for details.
   void addSpecialChildParentLink(Expression* child, Expression* parent) {
-    info.childParents[child] = parent;
+    if (isRelevant(child->type)) {
+      info.childParents[child] = parent;
+    }
   }
 
   // Adds a root, if the expression is relevant.
@@ -363,9 +365,7 @@ struct LinkFinder
   void visitRefCast(RefCast* curr) {
     // We will handle this in a special way, as ref.cast only allows valid
     // values to flow through.
-    if (isRelevant(curr->type)) { // TODO: check this in the called function
-      addSpecialChildParentLink(curr->ref, curr);
-    }
+    addSpecialChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
     handleBreakValue(curr);
@@ -573,24 +573,20 @@ struct LinkFinder
       addRoot(curr, curr->type);
       return;
     }
-    if (isRelevant(curr->type)) {
-      // The struct.get will receive different values depending on the contents
-      // in the reference, so mark us as the parent of the ref, and we will
-      // handle all of this in a special way during the flow. Note that we do
-      // not even create a DataLocation here; anything that we need will be
-      // added during the flow.
-      addSpecialChildParentLink(curr->ref, curr);
-    }
+    // The struct.get will receive different values depending on the contents
+    // in the reference, so mark us as the parent of the ref, and we will
+    // handle all of this in a special way during the flow. Note that we do
+    // not even create a DataLocation here; anything that we need will be
+    // added during the flow.
+    addSpecialChildParentLink(curr->ref, curr);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    if (isRelevant(curr->value->type)) {
-      // See comment on visitStructGet. Here we also connect the value.
-      addSpecialChildParentLink(curr->ref, curr);
-      addSpecialChildParentLink(curr->value, curr);
-    }
+    // See comment on visitStructGet. Here we also connect the value.
+    addSpecialChildParentLink(curr->ref, curr);
+    addSpecialChildParentLink(curr->value, curr);
   }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
@@ -598,18 +594,14 @@ struct LinkFinder
       addRoot(curr, curr->type);
       return;
     }
-    if (isRelevant(curr->type)) {
-      addSpecialChildParentLink(curr->ref, curr);
-    }
+    addSpecialChildParentLink(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    if (isRelevant(curr->value->type)) {
-      addSpecialChildParentLink(curr->ref, curr);
-      addSpecialChildParentLink(curr->value, curr);
-    }
+    addSpecialChildParentLink(curr->ref, curr);
+    addSpecialChildParentLink(curr->value, curr);
   }
 
   void visitArrayLen(ArrayLen* curr) { addRoot(curr, curr->type); }
