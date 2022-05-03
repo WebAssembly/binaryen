@@ -1142,11 +1142,10 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
     return contents;
   }
 
-  // Add a work item if there isn't already.
-  // TODO: do this more efficiently with insert.second
-  if (!workQueue.count(locationIndex)) {
-    workQueue[locationIndex] = oldContents;
-  }
+  // Add a work item if there isn't already. (If one exists, then oldContents
+  // are after the update from that item, and we wouldn't want to insert that
+  // value into the map, which insert() in fact does not.)
+  workQueue.insert({locationIndex, oldContents});
 
   return contents;
 }
