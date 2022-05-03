@@ -900,8 +900,8 @@ struct Flower {
   PossibleContents addWork(LocationIndex locationIndex,
                            const PossibleContents& newContents);
 
-  // Slow helper, which should be avoided when possible.
-  // FIXME count these with logging and ensure we issue few of these calls
+  // Slow helper that converts a Location to a LocationIndex. This should be
+  // avoided. TODO remove the remaining uses of this.
   PossibleContents addWork(const Location& location,
                            const PossibleContents& newContents) {
     return addWork(getIndex(location), newContents);
