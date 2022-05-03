@@ -1328,15 +1328,7 @@ void Flower::applyContents(LocationIndex locationIndex,
               // links is not efficient, so maybe not worth it.
               for (auto type :
                    subTypes->getAllSubTypesInclusive(heapType)) {
-                auto heapLoc = DataLocation{type, fieldIndex};
-                auto newLink = LocationLink{heapLoc, SpecialLocation{coneReadIndex}};
-                auto newIndexLink = getIndexes(newLink);
-                // TODO: helper for this "add link" pattern, including the
-                // sendContents
-                assert(links.count(newIndexLink) == 0);
-                newLinks.push_back(newIndexLink);
-                links.insert(newIndexLink);
-                sendContents(coneReadIndex, getContents(getIndex(heapLoc)));
+                connect(DataLocation{type, fieldIndex}, SpecialLocation{coneReadIndex});
               }
             }
 
