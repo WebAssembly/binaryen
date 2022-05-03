@@ -1329,6 +1329,8 @@ void Flower::processWork(LocationIndex locationIndex,
             // Otherwise, this is a cone: the declared type of the reference, or
             // any subtype of that, as both Many and ConstantGlobal reduce to
             // that in this case TODO text
+            // TODO: the ConstantGlobal case may have a different cone type than
+            //       the declaredRefType, we could use that here.
             assert(contents.isMany() || contents.isConstantGlobal());
 
             // We introduce a special location for a cone read, because what we
@@ -1354,6 +1356,7 @@ void Flower::processWork(LocationIndex locationIndex,
                 assert(heapLoc);
                 auto newLink = LocationLink{*heapLoc, coneRead};
                 auto newIndexLink = getIndexes(newLink);
+                // TODO: helper for this "add link" pattern
                 assert(links.count(newIndexLink) == 0);
                 newLinks.push_back(newIndexLink);
                 links.insert(newIndexLink);
