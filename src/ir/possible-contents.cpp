@@ -84,6 +84,8 @@ void dump(Location location) {
     std::cout << "  Arrayloc " << loc->type << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
+  } else if (auto* loc = std::get_if<SpecialLocation>(&location)) {
+    std::cout << "  Specialloc " << loc->index << '\n';
   } else {
     std::cout << "  (other)\n";
   }
@@ -757,7 +759,8 @@ struct Flower {
   }
 
   // Convert the data into the efficient LocationIndex form we will use during
-  // the flow analysis. First, find all the locations and index them.
+  // the flow analysis. This method returns the indx of a location, allocating
+  // one if this is the first time we see it.
   LocationIndex getIndex(const Location& location) {
     // New locations may be indexed during the flow, since we add new links
     // during the flow. Allocate indexes and other bookkeeping as necessary.
@@ -878,6 +881,10 @@ struct Flower {
   //    A:3 we've applied the value V to the entire cone. That means that if we
   //    are at A:3 - either starting there, or along the way - we need go no
   //    further if our value adds nothing on top of V!
+
+  // Maps a heap type + an index in the type (0 for an array) to the index of a
+  // SpecialLocation for a cone read of those contents. XXX move comment to here
+  std::unordered_map<std::pair<HeapType, Index>, LocationIndex> canonicalConeReads;
 
   std::unique_ptr<SubTypes> subTypes;
 
@@ -1267,33 +1274,6 @@ void Flower::processWork(LocationIndex locationIndex,
       std::cout << "  special, parent:\n" << *parent << '\n';
 #endif
 
-      // Return the list of possible types that can read from a struct.get or
-      // write from a struct.set, etc. This is passed the possible contents of
-      // the reference, and computes which types it can contain.
-      // TODO: memoize internal parts? or do that in getAllSubTypesInclusive?
-      auto getPossibleTypes =
-        [&](const PossibleContents& refContents,
-            HeapType declaredRefType) -> std::unordered_set<HeapType> {
-        // We can handle a null like none: a null never leads to an actual read
-        // from anywhere, so we can ignore it.
-        if (refContents.isNone() || refContents.isNull()) {
-          return {};
-        }
-
-        if (refContents.isMany()) {
-          std::unordered_set<HeapType> ret;
-          for (auto type : subTypes->getAllSubTypesInclusive(declaredRefType)) {
-            ret.insert(type);
-          }
-          return ret;
-        }
-
-        // Otherwise, this is an exact type or a constant that is not a null. In
-        // both cases we know the exact type.
-        assert(refContents.isExactType() || refContents.isConstant());
-        return {refContents.getType().getHeapType()};
-      };
-
       // Given a heap location, add a link from that location to an
       // expression that reads from it (e.g. from a StructLocation to a
       // struct.get).
@@ -1334,19 +1314,55 @@ void Flower::processWork(LocationIndex locationIndex,
       //       asserts.
       auto readFromNewLocations =
         [&](std::function<std::optional<Location>(HeapType)> getLocation,
+            Index fieldIndex,
             HeapType declaredRefType) {
-          auto oldPossibleTypes =
-            getPossibleTypes(oldContents, declaredRefType);
-          auto newPossibleTypes = getPossibleTypes(contents, declaredRefType);
-          for (auto type : newPossibleTypes) {
-            if (!oldPossibleTypes.count(type)) {
-              // This is new.
-              auto heapLoc = getLocation(type);
-              assert(heapLoc);
-              if (heapLoc) {
-                readFromHeap(*heapLoc, parent);
+          if (contents.isExactType()) {
+            // Add a single link to this exact location.
+            auto heapLoc = getLocation(contents.getType().getHeapType());
+            assert(heapLoc);
+            readFromHeap(*heapLoc, parent);
+          } else {
+            // Otherwise, this is a cone: the declared type of the reference, or
+            // any subtype of that.
+            assert(contents.isMany());
+
+            // We introduce a special location for a cone read, because what we
+            // need here are N links, from each of the N subtypes - and we need
+            // that for each struct.get of a cone. If there are M such gets then
+            // we have N * M edges for this. Instead, make a single canonical
+            // "cone read" location, and add a single link to it from here.
+            auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(declaredRefType, fieldIndex)];
+            if (coneReadIndex == 0) {
+              // 0 is an impossible index for a LocationIndex (as there must be
+              // something at index 0 already - the ExpressionLocation of this
+              // very expression, in particular), so we can use that as an
+              // indicator that we have never allocated one yet, and do so now.
+              // Use locationIndexes.size() as the internal index FIXME nice API
+              auto coneRead = SpecialLocation{Index(locationIndexes.size())};
+              coneReadIndex = getIndex(coneRead);
+              assert(coneRead.index == coneReadIndex);
+              // TODO: if the old contents here were an exact type then we could
+              // remove the old link, which becomes redundant now. But removing
+              // links is not efficient, so maybe not worth it.
+              for (auto type : subTypes->getAllSubTypesInclusive(declaredRefType)) {
+                auto heapLoc = getLocation(type);
+                assert(heapLoc);
+                auto newLink = LocationLink{*heapLoc, coneRead};
+                auto newIndexLink = getIndexes(newLink);
+                assert(links.count(newIndexLink) == 0);
+                newLinks.push_back(newIndexLink);
+                links.insert(newIndexLink);
               }
             }
+
+            // Link to the canonical location.
+            auto heapLoc = getLocation(declaredRefType);
+            assert(heapLoc);
+            auto newLink = LocationLink{*heapLoc, SpecialLocation{coneReadIndex}};
+            auto newIndexLink = getIndexes(newLink);
+            assert(links.count(newIndexLink) == 0);
+            newLinks.push_back(newIndexLink);
+            links.insert(newIndexLink);
           }
 
           // TODO: A less simple but more memory-efficient approach might be
@@ -1422,6 +1438,7 @@ void Flower::processWork(LocationIndex locationIndex,
             }
             return StructLocation{type, get->index};
           },
+          get->index,
           get->ref->type.getHeapType());
       } else if (auto* set = parent->dynCast<StructSet>()) {
         // This is either the reference or the value child of a struct.set.
@@ -1450,6 +1467,7 @@ void Flower::processWork(LocationIndex locationIndex,
             }
             return ArrayLocation{type};
           },
+          0,
           get->ref->type.getHeapType());
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);

@@ -363,6 +363,7 @@ struct StructLocation {
 
 // The location of an element in the array (without index - we consider them all
 // as one, since we may not have static indexes for them all).
+// TODO: merge into HeapLocation and use index 0 for arrays.
 struct ArrayLocation {
   HeapType type;
   bool operator==(const ArrayLocation& other) const {
@@ -388,6 +389,23 @@ struct NullLocation {
   }
 };
 
+// Special locations do not correspond to actual locations in the wasm, but are
+// used to organize and optimize the graph. For example, in order to avoid N
+// locations that are all connected to M other nodes - which requires N * M
+// edges - we might introduce a single SpecialLocation that all the N connect to
+// and which connects to all the M. That requires only N + M connections (though
+// it does add "latency" in requiring an additional step along the way for the
+// data).
+struct SpecialLocation {
+  // A unique index for this location. Necessary to keep different
+  // SpecialLocations different, but the actual value here does not matter
+  // otherwise.
+  Index index;
+  bool operator==(const SpecialLocation& other) const {
+    return index == other.index;
+  }
+};
+
 // A location is a variant over all the possible flavors of locations that we
 // have.
 using Location = std::variant<ExpressionLocation,
@@ -400,7 +418,8 @@ using Location = std::variant<ExpressionLocation,
                               StructLocation,
                               ArrayLocation,
                               TagLocation,
-                              NullLocation>;
+                              NullLocation,
+                              SpecialLocation>;
 
 } // namespace wasm
 
@@ -486,6 +505,12 @@ template<> struct hash<wasm::TagLocation> {
 template<> struct hash<wasm::NullLocation> {
   size_t operator()(const wasm::NullLocation& loc) const {
     return std::hash<wasm::Type>{}(loc.type);
+  }
+};
+
+template<> struct hash<wasm::SpecialLocation> {
+  size_t operator()(const wasm::SpecialLocation& loc) const {
+    return std::hash<wasm::Index>{}(loc.index);
   }
 };
 
