@@ -130,6 +130,7 @@ extern "C" {
 //
 
 // Core types
+// TODO: Deprecate BinaryenTypeExternref?
 
 BinaryenType BinaryenTypeNone(void) { return Type::none; }
 BinaryenType BinaryenTypeInt32(void) { return Type::i32; }
@@ -138,7 +139,7 @@ BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
 BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
-BinaryenType BinaryenTypeExternref(void) { return Type::anyref; } // Deprecate?
+BinaryenType BinaryenTypeExternref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
 BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
