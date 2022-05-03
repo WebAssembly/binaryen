@@ -1,4 +1,4 @@
-//#define POSSIBLE_CONTENTS_DEBUG 2
+//#define POSSIBLE_CONTENTS_DEBUG 1
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1326,6 +1326,7 @@ void Flower::processWork(LocationIndex locationIndex,
             // Add a single link to this exact location.
             auto heapLoc = getHeapLocation(contents.getType().getHeapType());
             assert(heapLoc);
+            // TODO refactor this call to something we can use below
             readFromHeap(*heapLoc, parent);
           } else {
             // Otherwise, this is a cone: the declared type of the reference, or
