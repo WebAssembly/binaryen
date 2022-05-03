@@ -1316,6 +1316,10 @@ void Flower::processWork(LocationIndex locationIndex,
         [&](std::function<std::optional<Location>(HeapType)> getLocation,
             Index fieldIndex,
             HeapType declaredRefType) {
+          if (contents.isNull()) {
+            // Nothing is read here.
+            return;
+          }
           if (contents.isExactType()) {
             // Add a single link to this exact location.
             auto heapLoc = getLocation(contents.getType().getHeapType());
@@ -1323,8 +1327,9 @@ void Flower::processWork(LocationIndex locationIndex,
             readFromHeap(*heapLoc, parent);
           } else {
             // Otherwise, this is a cone: the declared type of the reference, or
-            // any subtype of that.
-            assert(contents.isMany());
+            // any subtype of that, as both Many and ConstantGlobal reduce to
+            // that in this case TODO text
+            assert(contents.isMany() || contents.isConstantGlobal());
 
             // We introduce a special location for a cone read, because what we
             // need here are N links, from each of the N subtypes - and we need
@@ -1360,9 +1365,13 @@ void Flower::processWork(LocationIndex locationIndex,
             assert(heapLoc);
             auto newLink = LocationLink{*heapLoc, SpecialLocation{coneReadIndex}};
             auto newIndexLink = getIndexes(newLink);
-            assert(links.count(newIndexLink) == 0);
-            newLinks.push_back(newIndexLink);
-            links.insert(newIndexLink);
+            // Check if this link exists already - we may have been a
+            // ConstantGlobal that becomes a Many, and the type may have been
+            // identical.
+            if (links.count(newIndexLink) == 0) {
+              newLinks.push_back(newIndexLink);
+              links.insert(newIndexLink);
+            }
           }
 
           // TODO: A less simple but more memory-efficient approach might be
