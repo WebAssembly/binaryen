@@ -1297,8 +1297,6 @@ void Flower::applyContents(LocationIndex locationIndex,
       //                     such a location exists.
       // @param declaredRefType: the type declared in the IR on the
       //                         reference input to the struct.get/array.get.
-      // TODO: we partially renamed getLocation to getHeapLocation to avoid
-      //       aliasing; worth doing elsewhere and in the comment here.
       auto readFromNewLocations =
         [&](HeapType heapType,
             Index fieldIndex) {
