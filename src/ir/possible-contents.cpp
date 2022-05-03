@@ -883,10 +883,6 @@ struct Flower {
   // to add is new or not.
   std::unordered_set<IndexLink> links;
 
-  // We may add new links as we flow. Do so to a temporary structure on
-  // the side to avoid any aliasing as we work.
-  std::vector<IndexLink> newLinks;
-
   // This sends new contents to the given location. If we can see that the new
   // contents can cause an actual change there then we will later call
   // applyContents() there (the work is queued for when we get to it later).
@@ -905,6 +901,11 @@ struct Flower {
   // locations, handling special cases as necessary, etc.
   void applyContents(LocationIndex locationIndex,
                    const PossibleContents& oldContents);
+
+  // We may add new links as we flow. Do so to a temporary structure on
+  // the side to avoid any aliasing as we work. updateNewLinks() will be called
+  // at the proper time to apply these links to the graph.
+  std::vector<IndexLink> newLinks;
 
   void updateNewLinks();
 };
