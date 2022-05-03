@@ -1,4 +1,4 @@
-#define POSSIBLE_CONTENTS_DEBUG 1
+//#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1333,6 +1333,9 @@ void Flower::processWork(LocationIndex locationIndex,
             //       the declaredRefType, we could use that here.
             assert(contents.isMany() || contents.isConstantGlobal());
 
+            // TODO: a cone with no subtypes needs no canonical location, just
+            //       add direct links
+
             // We introduce a special location for a cone read, because what we
             // need here are N links, from each of the N subtypes - and we need
             // that for each struct.get of a cone. If there are M such gets then
@@ -1356,10 +1359,11 @@ void Flower::processWork(LocationIndex locationIndex,
                 assert(heapLoc);
                 auto newLink = LocationLink{*heapLoc, coneRead};
                 auto newIndexLink = getIndexes(newLink);
-                // TODO: helper for this "add link" pattern
+                // TODO: helper for this "add link" pattern, including the addWork
                 assert(links.count(newIndexLink) == 0);
                 newLinks.push_back(newIndexLink);
                 links.insert(newIndexLink);
+                addWork(coneReadIndex, getContents(getIndex(*heapLoc)));
               }
             }
 
