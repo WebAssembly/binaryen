@@ -1381,9 +1381,9 @@ void Flower::applyContents(LocationIndex locationIndex,
       // readFromNewLocations), gets the reference and the value of the
       // struct.set/array.set operation.
       auto writeToNewLocations =
-        [&](std::function<std::optional<Location>(HeapType)> getLocation,
-            Expression* ref,
-            Expression* value) {
+        [&](Expression* ref,
+            Expression* value,
+            Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    add special writes\n";
 #endif
@@ -1405,22 +1405,16 @@ void Flower::applyContents(LocationIndex locationIndex,
             // TODO: In the case that this is a constant, it could be null
             //       or an immutable global, which we could do even more
             //       with.
-            auto heapLoc = getLocation(refContents.getType().getHeapType());
-            assert(heapLoc);
-            if (heapLoc) {
-              sendContents(*heapLoc, valueContents);
-            }
+            auto heapLoc = DataLocation{refContents.getType().getHeapType(), fieldIndex};
+            sendContents(heapLoc, valueContents);
           } else {
             assert(refContents.isMany());
             // Update all possible types here. First, subtypes, including the
             // type itself.
             auto type = ref->type.getHeapType();
             for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
-              auto heapLoc = getLocation(subType);
-              assert(heapLoc);
-              if (heapLoc) {
-                sendContents(*heapLoc, valueContents);
-              }
+              auto heapLoc = DataLocation{subType, fieldIndex};
+              sendContents(heapLoc, valueContents);
             }
           }
         };
@@ -1437,18 +1431,9 @@ void Flower::applyContents(LocationIndex locationIndex,
         // struct location, which we handle here.
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
-          [&](HeapType type) -> std::optional<Location> {
-            if (!type.isStruct()) {
-              return {};
-            }
-            if (set->index >= type.getStruct().fields.size()) {
-              // This field is not present on this struct.
-              return {};
-            }
-            return DataLocation{type, set->index};
-          },
           set->ref,
-          set->value);
+          set->value,
+          set->index);
       } else if (auto* get = parent->dynCast<ArrayGet>()) {
         assert(get->ref == targetExpr);
         readFromNewLocations(
@@ -1457,14 +1442,9 @@ void Flower::applyContents(LocationIndex locationIndex,
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
-          [&](HeapType type) -> std::optional<Location> {
-            if (!type.isArray()) {
-              return {};
-            }
-            return DataLocation{type, 0};
-          },
           set->ref,
-          set->value);
+          set->value,
+          0);
       } else if (auto* cast = parent->dynCast<RefCast>()) {
         assert(cast->ref == targetExpr);
         // RefCast only allows valid values to go through: nulls and things of
