@@ -93,8 +93,7 @@ void dump(Location location) {
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
 // we have a link from a LocalLocaiton to a ResultLocation.
-template<typename T>
-struct Link {
+template<typename T> struct Link {
   T from;
   T to;
 
@@ -838,7 +837,8 @@ struct Flower {
   //  * Updating the ref or value of an exact set:
   //    * Update the exact field of that type.
   //    * Update the gets that depend on it.
-  //    * Do the same for the cone field of all supertypes, as a read of a cone of a
+  //    * Do the same for the cone field of all supertypes, as a read of a cone
+  //    of a
   //      super might be reading this type. Go up the supers while the field is
   //      still relevant.
   //  * Updating the ref or value of a cone set:
@@ -873,12 +873,12 @@ struct Flower {
   //    A, field 3, then if any other get already exists we've already computed
   //    the value for it - and can just read it. That would actually be the
   //    common case!
-  //    But cone sets will still need to write to all subs. I guess a memoization
-  //    we can do there is to store a cone marker, with a value: at A:3 we've
-  //    applied the value V to the entire cone. That means that if we are at
-  //    A:3 - either starting there, or along the way - we need go no further if
-  //    our value adds nothing on top of V!
-  
+  //    But cone sets will still need to write to all subs. I guess a
+  //    memoization we can do there is to store a cone marker, with a value: at
+  //    A:3 we've applied the value V to the entire cone. That means that if we
+  //    are at A:3 - either starting there, or along the way - we need go no
+  //    further if our value adds nothing on top of V!
+
   std::unique_ptr<SubTypes> subTypes;
 
   // All existing links in the graph. We keep this to know when a link we want
@@ -976,7 +976,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       roots[root] = value;
     }
     for (auto [child, parent] : info.childParents) {
-      childParents[getIndex(ExpressionLocation{child, 0})] = getIndex(ExpressionLocation{parent, 0});
+      childParents[getIndex(ExpressionLocation{child, 0})] =
+        getIndex(ExpressionLocation{parent, 0});
     }
   }
 
@@ -1028,11 +1029,11 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   for (auto& func : wasm.functions) {
     for (Index i = 0; i < func->getParams().size(); i++) {
       links.insert(getIndexes({SignatureParamLocation{func->type, i},
-                    LocalLocation{func.get(), i, 0}}));
+                               LocalLocation{func.get(), i, 0}}));
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       links.insert(getIndexes({ResultLocation{func.get(), i},
-                    SignatureResultLocation{func->type, i}}));
+                               SignatureResultLocation{func->type, i}}));
     }
   }
 
@@ -1259,7 +1260,8 @@ void Flower::processWork(LocationIndex locationIndex,
       // for whom we must know the parent in order to handle things in a
       // special manner.
       auto parentIndex = iter->second;
-      auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
+      auto* parent =
+        std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  special, parent:\n" << *parent << '\n';
