@@ -559,8 +559,9 @@ struct LinkFinder
     }
     if (!curr->values.empty()) {
       auto type = curr->type.getHeapType();
-      handleChildList(curr->values,
-                      [&](Index i) { return DataLocation{type, 0}; });
+      handleChildList(curr->values, [&](Index i) {
+        return DataLocation{type, 0};
+      });
     }
     addRoot(curr, curr->type);
   }
@@ -717,10 +718,9 @@ struct Flower {
   struct LocationInfo {
     Location location;
     PossibleContents contents;
-    // Maps location indexes to the vector of targets to which that location sends
-    // content.
-    // Commonly? there is a single target e.g. an expression has a single parent
-    // and only sends a value there.
+    // Maps location indexes to the vector of targets to which that location
+    // sends content. Commonly? there is a single target e.g. an expression has
+    // a single parent and only sends a value there.
     // TODO: benchmark SmallVector<1> some more, but it seems to not help
     std::vector<LocationIndex> targets;
 
@@ -890,12 +890,12 @@ struct Flower {
   // contents can cause an actual change there then we will later call
   // applyContents() there (the work is queued for when we get to it later).
   PossibleContents sendContents(LocationIndex locationIndex,
-                           const PossibleContents& newContents);
+                                const PossibleContents& newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
   PossibleContents sendContents(const Location& location,
-                           const PossibleContents& newContents) {
+                                const PossibleContents& newContents) {
     return sendContents(getIndex(location), newContents);
   }
 
@@ -905,7 +905,7 @@ struct Flower {
   // the old contents, which in some cases we need in order to do special
   // processing.
   void applyContents(LocationIndex locationIndex,
-                   const PossibleContents& oldContents);
+                     const PossibleContents& oldContents);
 
   // Add a new connection while the flow is happening. If the link already
   // exists it is not added.
@@ -941,9 +941,9 @@ struct Flower {
   // @param declaredRefType: the type declared in the IR on the
   //                         reference input to the struct.get/array.get.
   void readFromNewLocations(HeapType heapType,
-        Index fieldIndex,
-        const PossibleContents& refContents,
-        Expression* read) {
+                            Index fieldIndex,
+                            const PossibleContents& refContents,
+                            Expression* read) {
     if (refContents.isNull()) {
       // Nothing is read here.
       return;
@@ -951,7 +951,8 @@ struct Flower {
 
     if (refContents.isExactType()) {
       // Add a single link to this exact location.
-      connectDuringFlow(DataLocation{heapType, fieldIndex}, ExpressionLocation{read, 0});
+      connectDuringFlow(DataLocation{heapType, fieldIndex},
+                        ExpressionLocation{read, 0});
     } else {
       // Otherwise, this is a cone: the declared type of the reference, or
       // any subtype of that, as both Many and ConstantGlobal reduce to
@@ -968,8 +969,8 @@ struct Flower {
       // that for each struct.get of a cone. If there are M such gets then
       // we have N * M edges for this. Instead, make a single canonical
       // "cone read" location, and add a single link to it from here.
-      auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
-        heapType, fieldIndex)];
+      auto& coneReadIndex =
+        canonicalConeReads[std::pair<HeapType, Index>(heapType, fieldIndex)];
       if (coneReadIndex == 0) {
         // 0 is an impossible index for a LocationIndex (as there must be
         // something at index 0 already - the ExpressionLocation of this
@@ -979,14 +980,15 @@ struct Flower {
         // TODO: if the old contents here were an exact type then we could
         // remove the old link, which becomes redundant now. But removing
         // links is not efficient, so maybe not worth it.
-        for (auto type :
-             subTypes->getAllSubTypesInclusive(heapType)) {
-          connectDuringFlow(DataLocation{type, fieldIndex}, SpecialLocation{coneReadIndex});
+        for (auto type : subTypes->getAllSubTypesInclusive(heapType)) {
+          connectDuringFlow(DataLocation{type, fieldIndex},
+                            SpecialLocation{coneReadIndex});
         }
       }
 
       // Link to the canonical location.
-      connectDuringFlow(SpecialLocation{coneReadIndex}, ExpressionLocation{read, 0});
+      connectDuringFlow(SpecialLocation{coneReadIndex},
+                        ExpressionLocation{read, 0});
     }
   }
 
@@ -995,9 +997,8 @@ struct Flower {
   // |getLocation| function (which plays the same role as in
   // readFromNewLocations), gets the reference and the value of the
   // struct.set/array.set operation.
-  void writeToNewLocations(Expression* ref,
-        Expression* value,
-        Index fieldIndex) {
+  void
+  writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "    add special writes\n";
 #endif
@@ -1009,8 +1010,7 @@ struct Flower {
     // values being written in the current state (which is after the
     // current update) and forward them.
     auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
-    auto valueContents =
-      getContents(getIndex(ExpressionLocation{value, 0}));
+    auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
     if (refContents.isNone()) {
       return;
     }
@@ -1019,7 +1019,8 @@ struct Flower {
       // TODO: In the case that this is a constant, it could be null
       //       or an immutable global, which we could do even more
       //       with.
-      auto heapLoc = DataLocation{refContents.getType().getHeapType(), fieldIndex};
+      auto heapLoc =
+        DataLocation{refContents.getType().getHeapType(), fieldIndex};
       sendContents(heapLoc, valueContents);
     } else {
       assert(refContents.isMany());
@@ -1248,7 +1249,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 }
 
 PossibleContents Flower::sendContents(LocationIndex locationIndex,
-                                 const PossibleContents& newContents) {
+                                      const PossibleContents& newContents) {
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
   auto& contents = getContents(locationIndex);
@@ -1270,7 +1271,7 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
 }
 
 void Flower::applyContents(LocationIndex locationIndex,
-                         const PossibleContents& oldContents) {
+                           const PossibleContents& oldContents) {
   const auto location = getLocation(locationIndex);
   auto& contents = getContents(locationIndex);
   // |contents| is the value after the new data arrives. As something arrives,
@@ -1342,16 +1343,17 @@ void Flower::applyContents(LocationIndex locationIndex,
   // never be a reason to send them anything again.
   auto& targets = getTargets(locationIndex);
 
-  targets.erase(std::remove_if(targets.begin(),
-                               targets.end(),
-                               [&](LocationIndex targetIndex) {
+  targets.erase(
+    std::remove_if(targets.begin(),
+                   targets.end(),
+                   [&](LocationIndex targetIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-                                 std::cout << "  send to target\n";
-                                 dump(getLocation(targetIndex));
+                     std::cout << "  send to target\n";
+                     dump(getLocation(targetIndex));
 #endif
-                                 return sendContents(targetIndex, contents).isMany();
-                               }),
-                targets.end());
+                     return sendContents(targetIndex, contents).isMany();
+                   }),
+    targets.end());
   targets.shrink_to_fit(); // XXX
 
   if (contents.isMany()) {
@@ -1384,32 +1386,19 @@ void Flower::applyContents(LocationIndex locationIndex,
         // This is the reference child of a struct.get.
         assert(get->ref == targetExpr);
         readFromNewLocations(
-          get->ref->type.getHeapType(),
-          get->index,
-          contents,
-          get);
+          get->ref->type.getHeapType(), get->index, contents, get);
       } else if (auto* set = parent->dynCast<StructSet>()) {
         // This is either the reference or the value child of a struct.set.
         // A change to either one affects what values are written to that
         // struct location, which we handle here.
         assert(set->ref == targetExpr || set->value == targetExpr);
-        writeToNewLocations(
-          set->ref,
-          set->value,
-          set->index);
+        writeToNewLocations(set->ref, set->value, set->index);
       } else if (auto* get = parent->dynCast<ArrayGet>()) {
         assert(get->ref == targetExpr);
-        readFromNewLocations(
-          get->ref->type.getHeapType(),
-          0,
-          contents,
-          get);
+        readFromNewLocations(get->ref->type.getHeapType(), 0, contents, get);
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
-        writeToNewLocations(
-          set->ref,
-          set->value,
-          0);
+        writeToNewLocations(set->ref, set->value, 0);
       } else if (auto* cast = parent->dynCast<RefCast>()) {
         assert(cast->ref == targetExpr);
         // RefCast only allows valid values to go through: nulls and things of
