@@ -1261,31 +1261,6 @@ void Flower::applyContents(LocationIndex locationIndex,
       std::cout << "  special, parent:\n" << *parent << '\n';
 #endif
 
-      // Given a heap location, add a link from that location to an
-      // expression that reads from it (e.g. from a DataLocation to a
-      // struct.get).
-      auto readFromHeap = [&](std::optional<Location> heapLoc,
-                              Expression* target) {
-        if (!heapLoc) {
-          return;
-        }
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-        std::cout << "    add special read\n";
-#endif
-        auto targetLoc = ExpressionLocation{target, 0};
-
-        // Add this to the graph if it is an entirely new link.
-        auto newLink = LocationLink{*heapLoc, targetLoc};
-        auto newIndexLink = getIndexes(newLink);
-        if (links.count(newIndexLink) == 0) {
-          newLinks.push_back(newIndexLink);
-          links.insert(newIndexLink);
-        }
-
-        // Add a work item to receive the new contents there now.
-        sendContents(targetLoc, getContents(getIndex(*heapLoc)));
-      };
-
       // Given the old and new contents at the current target, add reads to
       // it based on the latest changes. The reads are sent to |parent|,
       // which is either a struct.get or an array.get. That is, new contents
@@ -1304,11 +1279,26 @@ void Flower::applyContents(LocationIndex locationIndex,
             // Nothing is read here.
             return;
           }
+
+          // Add a link from a location to a target, if such a link did not exist
+          // before.
+          auto connect = [&](Location from,
+                             Location to) {
+            // Add this to the graph if it is an entirely new link.
+            auto newLink = LocationLink{from, to};
+            auto newIndexLink = getIndexes(newLink);
+            if (links.count(newIndexLink) == 0) {
+              newLinks.push_back(newIndexLink);
+              links.insert(newIndexLink);
+            }
+
+            // Add a work item to receive the new contents there now.
+            sendContents(to, getContents(getIndex(from)));
+          };
+
           if (contents.isExactType()) {
             // Add a single link to this exact location.
-            auto heapLoc = DataLocation{heapType, fieldIndex};
-            // TODO refactor this call to something we can use below
-            readFromHeap(heapLoc, parent);
+            connect(DataLocation{heapType, fieldIndex}, ExpressionLocation{parent, 0});
           } else {
             // Otherwise, this is a cone: the declared type of the reference, or
             // any subtype of that, as both Many and ConstantGlobal reduce to
