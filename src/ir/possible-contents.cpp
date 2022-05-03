@@ -1270,6 +1270,7 @@ void Flower::processWork(LocationIndex locationIndex,
       // Return the list of possible types that can read from a struct.get or
       // write from a struct.set, etc. This is passed the possible contents of
       // the reference, and computes which types it can contain.
+      // TODO: memoize internal parts? or do that in getAllSubTypesInclusive?
       auto getPossibleTypes =
         [&](const PossibleContents& refContents,
             HeapType declaredRefType) -> std::unordered_set<HeapType> {
@@ -1339,6 +1340,7 @@ void Flower::processWork(LocationIndex locationIndex,
             if (!oldPossibleTypes.count(type)) {
               // This is new.
               auto heapLoc = getLocation(type);
+              assert(heapLoc);
               if (heapLoc) {
                 readFromHeap(*heapLoc, parent);
               }
