@@ -719,7 +719,6 @@ struct Flower {
     PossibleContents contents;
     // Maps location indexes to the vector of targets to which that location sends
     // content.
-    // TODO: merge with |locations|?
     // Commonly? there is a single target e.g. an expression has a single parent
     // and only sends a value there.
     // TODO: benchmark SmallVector<1> some more, but it seems to not help
@@ -780,10 +779,6 @@ struct Flower {
   IndexLink getIndexes(const LocationLink& link) {
     return {getIndex(link.from), getIndex(link.to)};
   }
-
-  // TODO: would getIndex(Expression*) be faster? We could have a map of
-  //       Exprssion -> LocationIndex, and avoid creating a full Location.
-  //       that doesn't help Links tho
 
   // Internals for flow.
 
@@ -892,23 +887,23 @@ struct Flower {
   // the side to avoid any aliasing as we work.
   std::vector<IndexLink> newLinks;
 
-  // This applies the new contents to the given location, and if something
-  // changes it adds a work item to further propagate. TODO rename
-  // Returns the combined contents with this change.
-  PossibleContents addWork(LocationIndex locationIndex,
+  // This sends new contents to the given location. If we can see that the new
+  // contents can cause an actual change there then we will later call
+  // applyContents() there (the work is queued for when we get to it later).
+  PossibleContents sendContents(LocationIndex locationIndex,
                            const PossibleContents& newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
-  PossibleContents addWork(const Location& location,
+  PossibleContents sendContents(const Location& location,
                            const PossibleContents& newContents) {
-    return addWork(getIndex(location), newContents);
+    return sendContents(getIndex(location), newContents);
   }
 
-  // Update a target location with contents arriving to it. Add new work as
-  // relevant based on what happens there.
-  // XXX comment
-  void processWork(LocationIndex locationIndex,
+  // Apply new contents at a location where a change occurred. This does the
+  // bulk of the work during the flow: sending contents to other affected
+  // locations, handling special cases as necessary, etc.
+  void applyContents(LocationIndex locationIndex,
                    const PossibleContents& oldContents);
 
   void updateNewLinks();
@@ -1090,7 +1085,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     std::cout << '\n';
 #endif
 
-    addWork(location, value);
+    sendContents(location, value);
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -1127,7 +1122,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     std::cout << '\n';
 #endif
 
-    processWork(locationIndex, contents);
+    applyContents(locationIndex, contents);
 
     updateNewLinks();
   }
@@ -1136,7 +1131,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-PossibleContents Flower::addWork(LocationIndex locationIndex,
+PossibleContents Flower::sendContents(LocationIndex locationIndex,
                                  const PossibleContents& newContents) {
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
@@ -1159,7 +1154,7 @@ PossibleContents Flower::addWork(LocationIndex locationIndex,
   return contents;
 }
 
-void Flower::processWork(LocationIndex locationIndex,
+void Flower::applyContents(LocationIndex locationIndex,
                          const PossibleContents& oldContents) {
   // TODO: use Info& here
   const auto location = getLocation(locationIndex);
@@ -1174,7 +1169,7 @@ void Flower::processWork(LocationIndex locationIndex,
   assert(contents != oldContents);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "\nprocessWork src:\n";
+  std::cout << "\napplyContents src:\n";
   dump(location);
   std::cout << "  arriving:\n";
   contents.dump(std::cout, &wasm);
@@ -1240,7 +1235,7 @@ void Flower::processWork(LocationIndex locationIndex,
                                  std::cout << "  send to target\n";
                                  dump(getLocation(targetIndex));
 #endif
-                                 return addWork(targetIndex, contents).isMany();
+                                 return sendContents(targetIndex, contents).isMany();
                                }),
                 targets.end());
   targets.shrink_to_fit(); // XXX
@@ -1293,7 +1288,7 @@ void Flower::processWork(LocationIndex locationIndex,
         }
 
         // Add a work item to receive the new contents there now.
-        addWork(targetLoc, getContents(getIndex(*heapLoc)));
+        sendContents(targetLoc, getContents(getIndex(*heapLoc)));
       };
 
       // Given the old and new contents at the current target, add reads to
@@ -1359,11 +1354,11 @@ void Flower::processWork(LocationIndex locationIndex,
                 auto newLink = LocationLink{*heapLoc, SpecialLocation{coneReadIndex}};
                 auto newIndexLink = getIndexes(newLink);
                 // TODO: helper for this "add link" pattern, including the
-                // addWork
+                // sendContents
                 assert(links.count(newIndexLink) == 0);
                 newLinks.push_back(newIndexLink);
                 links.insert(newIndexLink);
-                addWork(coneReadIndex, getContents(getIndex(*heapLoc)));
+                sendContents(coneReadIndex, getContents(getIndex(*heapLoc)));
               }
             }
 
@@ -1378,7 +1373,7 @@ void Flower::processWork(LocationIndex locationIndex,
               newLinks.push_back(newIndexLink);
               links.insert(newIndexLink);
             }
-            addWork(ExpressionLocation{parent, 0}, getContents(coneReadIndex));
+            sendContents(ExpressionLocation{parent, 0}, getContents(coneReadIndex));
           }
 
           // TODO: A less simple but more memory-efficient approach might be
@@ -1423,7 +1418,7 @@ void Flower::processWork(LocationIndex locationIndex,
             auto heapLoc = getLocation(refContents.getType().getHeapType());
             assert(heapLoc);
             if (heapLoc) {
-              addWork(*heapLoc, valueContents);
+              sendContents(*heapLoc, valueContents);
             }
           } else {
             assert(refContents.isMany());
@@ -1434,7 +1429,7 @@ void Flower::processWork(LocationIndex locationIndex,
               auto heapLoc = getLocation(subType);
               assert(heapLoc);
               if (heapLoc) {
-                addWork(*heapLoc, valueContents);
+                sendContents(*heapLoc, valueContents);
               }
             }
           }
@@ -1527,7 +1522,7 @@ void Flower::processWork(LocationIndex locationIndex,
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
           std::cout << "    ref.cast passing through\n";
 #endif
-          addWork(ExpressionLocation{parent, 0}, filtered);
+          sendContents(ExpressionLocation{parent, 0}, filtered);
         }
         // TODO: ref.test and all other casts can be optimized (see the cast
         //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
