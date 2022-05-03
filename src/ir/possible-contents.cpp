@@ -1297,30 +1297,26 @@ void Flower::applyContents(LocationIndex locationIndex,
       //                     such a location exists.
       // @param declaredRefType: the type declared in the IR on the
       //                         reference input to the struct.get/array.get.
-      // TODO: it seems like we don't need getLocation to return optional, see
-      //       asserts.
       // TODO: we partially renamed getLocation to getHeapLocation to avoid
       //       aliasing; worth doing elsewhere and in the comment here.
       auto readFromNewLocations =
-        [&](std::function<std::optional<Location>(HeapType)> getHeapLocation,
-            Index fieldIndex,
-            HeapType declaredRefType) {
+        [&](HeapType heapType,
+            Index fieldIndex) {
           if (contents.isNull()) {
             // Nothing is read here.
             return;
           }
           if (contents.isExactType()) {
             // Add a single link to this exact location.
-            auto heapLoc = getHeapLocation(contents.getType().getHeapType());
-            assert(heapLoc);
+            auto heapLoc = DataLocation{heapType, fieldIndex};
             // TODO refactor this call to something we can use below
-            readFromHeap(*heapLoc, parent);
+            readFromHeap(heapLoc, parent);
           } else {
             // Otherwise, this is a cone: the declared type of the reference, or
             // any subtype of that, as both Many and ConstantGlobal reduce to
             // that in this case TODO text
             // TODO: the ConstantGlobal case may have a different cone type than
-            //       the declaredRefType, we could use that here.
+            //       the heapType, we could use that here.
             assert(contents.isMany() || contents.isConstantGlobal());
 
             // TODO: a cone with no subtypes needs no canonical location, just
@@ -1332,7 +1328,7 @@ void Flower::applyContents(LocationIndex locationIndex,
             // we have N * M edges for this. Instead, make a single canonical
             // "cone read" location, and add a single link to it from here.
             auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
-              declaredRefType, fieldIndex)];
+              heapType, fieldIndex)];
             if (coneReadIndex == 0) {
               // 0 is an impossible index for a LocationIndex (as there must be
               // something at index 0 already - the ExpressionLocation of this
@@ -1343,17 +1339,16 @@ void Flower::applyContents(LocationIndex locationIndex,
               // remove the old link, which becomes redundant now. But removing
               // links is not efficient, so maybe not worth it.
               for (auto type :
-                   subTypes->getAllSubTypesInclusive(declaredRefType)) {
-                auto heapLoc = getHeapLocation(type);
-                assert(heapLoc);
-                auto newLink = LocationLink{*heapLoc, SpecialLocation{coneReadIndex}};
+                   subTypes->getAllSubTypesInclusive(heapType)) {
+                auto heapLoc = DataLocation{type, fieldIndex};
+                auto newLink = LocationLink{heapLoc, SpecialLocation{coneReadIndex}};
                 auto newIndexLink = getIndexes(newLink);
                 // TODO: helper for this "add link" pattern, including the
                 // sendContents
                 assert(links.count(newIndexLink) == 0);
                 newLinks.push_back(newIndexLink);
                 links.insert(newIndexLink);
-                sendContents(coneReadIndex, getContents(getIndex(*heapLoc)));
+                sendContents(coneReadIndex, getContents(getIndex(heapLoc)));
               }
             }
 
@@ -1434,18 +1429,8 @@ void Flower::applyContents(LocationIndex locationIndex,
         // This is the reference child of a struct.get.
         assert(get->ref == targetExpr);
         readFromNewLocations(
-          [&](HeapType type) -> std::optional<Location> {
-            if (!type.isStruct()) {
-              return {};
-            }
-            if (get->index >= type.getStruct().fields.size()) {
-              // This field is not present on this struct.
-              return {};
-            }
-            return DataLocation{type, get->index};
-          },
-          get->index,
-          get->ref->type.getHeapType());
+          get->ref->type.getHeapType(),
+          get->index);
       } else if (auto* set = parent->dynCast<StructSet>()) {
         // This is either the reference or the value child of a struct.set.
         // A change to either one affects what values are written to that
@@ -1467,14 +1452,8 @@ void Flower::applyContents(LocationIndex locationIndex,
       } else if (auto* get = parent->dynCast<ArrayGet>()) {
         assert(get->ref == targetExpr);
         readFromNewLocations(
-          [&](HeapType type) -> std::optional<Location> {
-            if (!type.isArray()) {
-              return {};
-            }
-            return DataLocation{type, 0};
-          },
-          0,
-          get->ref->type.getHeapType());
+          get->ref->type.getHeapType(),
+          0);
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
