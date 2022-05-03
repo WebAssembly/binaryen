@@ -509,8 +509,6 @@ namespace wasm {
 // values - and propagates them to the locations they reach. After the
 // analysis the user of this class can ask which contents are possible at any
 // location.
-//
-// TODO: refactor the internals out of this header.
 class ContentOracle {
   Module& wasm;
 
@@ -523,7 +521,8 @@ public:
   PossibleContents getContents(Location location) {
     auto iter = locationContents.find(location);
     if (iter == locationContents.end()) {
-      return {}; // XXX maybe PossibleContents::many(); // FIXME see tests
+      // We know of no possible contents here.
+      return PossibleContents::none();
     }
     return iter->second;
   }
