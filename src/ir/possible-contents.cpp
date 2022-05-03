@@ -907,18 +907,12 @@ struct Flower {
   void applyContents(LocationIndex locationIndex,
                    const PossibleContents& oldContents);
 
-  // We may add new links as we flow. Do so to a temporary structure on
-  // the side to avoid any aliasing as we work. updateNewLinks() will be called
-  // at the proper time to apply these links to the graph.
-  std::vector<IndexLink> newLinks;
-
-  void updateNewLinks();
-
-  // Add a link from a location to a target, if such a link did not exist
-  // before, during the flow. Doing so during the flow requires more care.
-  // FIXME comment
+  // Add a new connection while the flow is happening. If the link already
+  // exists it is not added.
   void connectDuringFlow(Location from, Location to) {
-    // Add this to the graph if it is an entirely new link.
+    // Add the new link to a temporary structure on the side to avoid any
+    // aliasing as we work. updateNewLinks() will be called at the proper time
+    // to apply these links to the graph safely.
     auto newLink = LocationLink{from, to};
     auto newIndexLink = getIndexes(newLink);
     if (links.count(newIndexLink) == 0) {
@@ -929,6 +923,10 @@ struct Flower {
     // Add a work item to receive the new contents there now.
     sendContents(to, getContents(getIndex(from)));
   }
+
+  std::vector<IndexLink> newLinks;
+
+  void updateNewLinks();
 
   // Given the old and new contents at the current target, add reads to
   // it based on the latest changes. The reads are sent to |parent|,
