@@ -1152,7 +1152,6 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
 
 void Flower::applyContents(LocationIndex locationIndex,
                          const PossibleContents& oldContents) {
-  // TODO: use Info& here
   const auto location = getLocation(locationIndex);
   auto& contents = getContents(locationIndex);
   // |contents| is the value after the new data arrives. As something arrives,
