@@ -369,7 +369,7 @@ struct LinkFinder
   }
   void visitBrOn(BrOn* curr) {
     handleBreakValue(curr);
-    // TODO: write out each case here in full for maximum optimizability.
+    // TODO: write out each br_* case here in full for maximum optimizability.
     receiveChildValue(curr->ref, curr);
   }
   void visitRttCanon(RttCanon* curr) { addRoot(curr, curr->type); }
@@ -714,37 +714,39 @@ struct Flower {
 
   Flower(Module& wasm);
 
-  // Maps location indexes to the location stored in them. We also have a map
-  // for the reverse relationship (we hope to use that map as little as possible
-  // as it requires more work than just using an index).
-  std::vector<Location> locations;
+  struct LocationInfo {
+    Location location;
+    PossibleContents contents;
+    // Maps location indexes to the vector of targets to which that location sends
+    // content.
+    // TODO: merge with |locations|?
+    // Commonly? there is a single target e.g. an expression has a single parent
+    // and only sends a value there.
+    // TODO: benchmark SmallVector<1> some more, but it seems to not help
+    std::vector<LocationIndex> targets;
+
+    LocationInfo(Location location) : location(location) {}
+  };
+
+  // Maps location indexes to the information stored there.
+  std::vector<LocationInfo> locations;
+
+  // Reverse mapping of locations to their indexes.
   std::unordered_map<Location, LocationIndex> locationIndexes;
 
   Location getLocation(LocationIndex index) {
     assert(index < locations.size());
-    return locations[index];
+    return locations[index].location;
   }
-
-  // Maps location indexes to the contents in the corresponding locations.
-  // TODO: merge with |locations|?
-  std::vector<PossibleContents> locationContents;
 
   PossibleContents& getContents(LocationIndex index) {
-    assert(index < locationContents.size());
-    return locationContents[index];
+    assert(index < locations.size());
+    return locations[index].contents;
   }
 
-  // Maps location indexes to the vector of targets to which that location sends
-  // content.
-  // TODO: merge with |locations|?
-  // Commonly? there is a single target e.g. an expression has a single parent
-  // and only sends a value there.
-  // TODO: benchmark SmallVector<1> some more, but it seems to not help
-  std::vector<std::vector<LocationIndex>> locationTargets;
-
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
-    assert(index < locationTargets.size());
-    return locationTargets[index];
+    assert(index < locations.size());
+    return locations[index].targets;
   }
 
   // Convert the data into the efficient LocationIndex form we will use during
@@ -769,14 +771,8 @@ struct Flower {
       // in the binary, and we don't have 4GB wasm binaries yet... do we?
       Fatal() << "Too many locations for 32 bits";
     }
-    locations.push_back(location);
+    locations.emplace_back(location);
     locationIndexes[location] = index;
-
-    // Update additional data.
-    locationContents.resize(locationContents.size() + 1);
-    assert(locationContents.size() == locations.size());
-    locationTargets.resize(locationTargets.size() + 1);
-    assert(locationTargets.size() == locations.size());
 
     return index;
   }
@@ -1075,8 +1071,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #ifndef NDEBUG
   // Each vector of targets (which is a vector for efficiency) must have no
   // duplicates.
-  for (auto& targets : locationTargets) {
-    disallowDuplicates(targets);
+  for (auto& info : locations) {
+    disallowDuplicates(info.targets);
   }
 #endif
 
@@ -1165,8 +1161,9 @@ PossibleContents Flower::addWork(LocationIndex locationIndex,
 
 void Flower::processWork(LocationIndex locationIndex,
                          const PossibleContents& oldContents) {
+  // TODO: use Info& here
   const auto location = getLocation(locationIndex);
-  auto& contents = locationContents[locationIndex];
+  auto& contents = getContents(locationIndex);
   // |contents| is the value after the new data arrives. As something arrives,
   // and we never send nothing around, it cannot be None.
   assert(!contents.isNone());
