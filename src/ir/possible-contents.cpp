@@ -1312,8 +1312,10 @@ void Flower::processWork(LocationIndex locationIndex,
       //                         reference input to the struct.get/array.get.
       // TODO: it seems like we don't need getLocation to return optional, see
       //       asserts.
+      // TODO: we partially renamed getLocation to getHeapLocation to avoid
+      //       aliasing; worth doing elsewhere and in the comment here.
       auto readFromNewLocations =
-        [&](std::function<std::optional<Location>(HeapType)> getLocation,
+        [&](std::function<std::optional<Location>(HeapType)> getHeapLocation,
             Index fieldIndex,
             HeapType declaredRefType) {
           if (contents.isNull()) {
@@ -1322,7 +1324,7 @@ void Flower::processWork(LocationIndex locationIndex,
           }
           if (contents.isExactType()) {
             // Add a single link to this exact location.
-            auto heapLoc = getLocation(contents.getType().getHeapType());
+            auto heapLoc = getHeapLocation(contents.getType().getHeapType());
             assert(heapLoc);
             readFromHeap(*heapLoc, parent);
           } else {
@@ -1350,12 +1352,11 @@ void Flower::processWork(LocationIndex locationIndex,
               // Use locationIndexes.size() as the internal index FIXME nice API
               auto coneRead = SpecialLocation{Index(locationIndexes.size())};
               coneReadIndex = getIndex(coneRead);
-              assert(coneRead.index == coneReadIndex);
               // TODO: if the old contents here were an exact type then we could
               // remove the old link, which becomes redundant now. But removing
               // links is not efficient, so maybe not worth it.
               for (auto type : subTypes->getAllSubTypesInclusive(declaredRefType)) {
-                auto heapLoc = getLocation(type);
+                auto heapLoc = getHeapLocation(type);
                 assert(heapLoc);
                 auto newLink = LocationLink{*heapLoc, coneRead};
                 auto newIndexLink = getIndexes(newLink);
@@ -1367,6 +1368,11 @@ void Flower::processWork(LocationIndex locationIndex,
               }
             }
 
+            // Whether we added the code read now, or it existed before, it must
+            // be of the proper form - its internal index is the same as the
+            // global index for it, to avoid any confusion in debugging.
+            assert(std::get<SpecialLocation>(getLocation(coneReadIndex)).index == coneReadIndex);
+
             // Link to the canonical location.
             auto newLink = LocationLink{SpecialLocation{coneReadIndex}, ExpressionLocation{parent, 0}};
             auto newIndexLink = getIndexes(newLink);
@@ -1377,6 +1383,7 @@ void Flower::processWork(LocationIndex locationIndex,
               newLinks.push_back(newIndexLink);
               links.insert(newIndexLink);
             }
+            addWork(ExpressionLocation{parent, 0}, getContents(coneReadIndex));
           }
 
           // TODO: A less simple but more memory-efficient approach might be
