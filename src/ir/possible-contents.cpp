@@ -929,6 +929,110 @@ struct Flower {
     // Add a work item to receive the new contents there now.
     sendContents(to, getContents(getIndex(from)));
   }
+
+  // Given the old and new contents at the current target, add reads to
+  // it based on the latest changes. The reads are sent to |parent|,
+  // which is either a struct.get or an array.get. That is, new contents
+  // are possible for the reference, which means we need to read from
+  // more possible heap locations. This receives a function that gets a
+  // heap type and returns a location, which we will call on all
+  // relevant heap types as we add the links.
+  // @param getLocation: returns the location for a particular heap type, if
+  //                     such a location exists.
+  // @param declaredRefType: the type declared in the IR on the
+  //                         reference input to the struct.get/array.get.
+  void readFromNewLocations(HeapType heapType,
+        Index fieldIndex,
+        const PossibleContents& refContents,
+        Expression* read) {
+    if (refContents.isNull()) {
+      // Nothing is read here.
+      return;
+    }
+
+    if (refContents.isExactType()) {
+      // Add a single link to this exact location.
+      connectDuringFlow(DataLocation{heapType, fieldIndex}, ExpressionLocation{read, 0});
+    } else {
+      // Otherwise, this is a cone: the declared type of the reference, or
+      // any subtype of that, as both Many and ConstantGlobal reduce to
+      // that in this case TODO text
+      // TODO: the ConstantGlobal case may have a different cone type than
+      //       the heapType, we could use that here.
+      assert(refContents.isMany() || refContents.isConstantGlobal());
+
+      // TODO: a cone with no subtypes needs no canonical location, just
+      //       add direct links
+
+      // We introduce a special location for a cone read, because what we
+      // need here are N links, from each of the N subtypes - and we need
+      // that for each struct.get of a cone. If there are M such gets then
+      // we have N * M edges for this. Instead, make a single canonical
+      // "cone read" location, and add a single link to it from here.
+      auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
+        heapType, fieldIndex)];
+      if (coneReadIndex == 0) {
+        // 0 is an impossible index for a LocationIndex (as there must be
+        // something at index 0 already - the ExpressionLocation of this
+        // very expression, in particular), so we can use that as an
+        // indicator that we have never allocated one yet, and do so now.
+        coneReadIndex = makeSpecialLocation();
+        // TODO: if the old contents here were an exact type then we could
+        // remove the old link, which becomes redundant now. But removing
+        // links is not efficient, so maybe not worth it.
+        for (auto type :
+             subTypes->getAllSubTypesInclusive(heapType)) {
+          connectDuringFlow(DataLocation{type, fieldIndex}, SpecialLocation{coneReadIndex});
+        }
+      }
+
+      // Link to the canonical location.
+      connectDuringFlow(SpecialLocation{coneReadIndex}, ExpressionLocation{read, 0});
+    }
+  }
+
+  // Similar to readFromNewLocations, but sends values from a
+  // struct.set/array.set to a heap location. In addition to the
+  // |getLocation| function (which plays the same role as in
+  // readFromNewLocations), gets the reference and the value of the
+  // struct.set/array.set operation.
+  void writeToNewLocations(Expression* ref,
+        Expression* value,
+        Index fieldIndex) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "    add special writes\n";
+#endif
+    // We could set up links here, but as we get to this code in
+    // any case when either the ref or the value of the struct.get has
+    // new contents, we can just flow the values forward directly. We
+    // can do that in a simple way that does not even check whether
+    // the ref or the value was just updated: simply figure out the
+    // values being written in the current state (which is after the
+    // current update) and forward them.
+    auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+    auto valueContents =
+      getContents(getIndex(ExpressionLocation{value, 0}));
+    if (refContents.isNone()) {
+      return;
+    }
+    if (refContents.isExactType() || refContents.isConstant()) {
+      // Update the one possible type here.
+      // TODO: In the case that this is a constant, it could be null
+      //       or an immutable global, which we could do even more
+      //       with.
+      auto heapLoc = DataLocation{refContents.getType().getHeapType(), fieldIndex};
+      sendContents(heapLoc, valueContents);
+    } else {
+      assert(refContents.isMany());
+      // Update all possible types here. First, subtypes, including the
+      // type itself.
+      auto type = ref->type.getHeapType();
+      for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
+        auto heapLoc = DataLocation{subType, fieldIndex};
+        sendContents(heapLoc, valueContents);
+      }
+    }
+  }
 };
 
 Flower::Flower(Module& wasm) : wasm(wasm) {
@@ -1277,116 +1381,14 @@ void Flower::applyContents(LocationIndex locationIndex,
       std::cout << "  special, parent:\n" << *parent << '\n';
 #endif
 
-      // Given the old and new contents at the current target, add reads to
-      // it based on the latest changes. The reads are sent to |parent|,
-      // which is either a struct.get or an array.get. That is, new contents
-      // are possible for the reference, which means we need to read from
-      // more possible heap locations. This receives a function that gets a
-      // heap type and returns a location, which we will call on all
-      // relevant heap types as we add the links.
-      // @param getLocation: returns the location for a particular heap type, if
-      //                     such a location exists.
-      // @param declaredRefType: the type declared in the IR on the
-      //                         reference input to the struct.get/array.get.
-      auto readFromNewLocations =
-        [&](HeapType heapType,
-            Index fieldIndex) {
-          if (contents.isNull()) {
-            // Nothing is read here.
-            return;
-          }
-
-          if (contents.isExactType()) {
-            // Add a single link to this exact location.
-            connectDuringFlow(DataLocation{heapType, fieldIndex}, ExpressionLocation{parent, 0});
-          } else {
-            // Otherwise, this is a cone: the declared type of the reference, or
-            // any subtype of that, as both Many and ConstantGlobal reduce to
-            // that in this case TODO text
-            // TODO: the ConstantGlobal case may have a different cone type than
-            //       the heapType, we could use that here.
-            assert(contents.isMany() || contents.isConstantGlobal());
-
-            // TODO: a cone with no subtypes needs no canonical location, just
-            //       add direct links
-
-            // We introduce a special location for a cone read, because what we
-            // need here are N links, from each of the N subtypes - and we need
-            // that for each struct.get of a cone. If there are M such gets then
-            // we have N * M edges for this. Instead, make a single canonical
-            // "cone read" location, and add a single link to it from here.
-            auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
-              heapType, fieldIndex)];
-            if (coneReadIndex == 0) {
-              // 0 is an impossible index for a LocationIndex (as there must be
-              // something at index 0 already - the ExpressionLocation of this
-              // very expression, in particular), so we can use that as an
-              // indicator that we have never allocated one yet, and do so now.
-              coneReadIndex = makeSpecialLocation();
-              // TODO: if the old contents here were an exact type then we could
-              // remove the old link, which becomes redundant now. But removing
-              // links is not efficient, so maybe not worth it.
-              for (auto type :
-                   subTypes->getAllSubTypesInclusive(heapType)) {
-                connectDuringFlow(DataLocation{type, fieldIndex}, SpecialLocation{coneReadIndex});
-              }
-            }
-
-            // Link to the canonical location.
-            connectDuringFlow(SpecialLocation{coneReadIndex}, ExpressionLocation{parent, 0});
-          }
-        };
-
-      // Similar to readFromNewLocations, but sends values from a
-      // struct.set/array.set to a heap location. In addition to the
-      // |getLocation| function (which plays the same role as in
-      // readFromNewLocations), gets the reference and the value of the
-      // struct.set/array.set operation.
-      auto writeToNewLocations =
-        [&](Expression* ref,
-            Expression* value,
-            Index fieldIndex) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-          std::cout << "    add special writes\n";
-#endif
-          // We could set up links here, but as we get to this code in
-          // any case when either the ref or the value of the struct.get has
-          // new contents, we can just flow the values forward directly. We
-          // can do that in a simple way that does not even check whether
-          // the ref or the value was just updated: simply figure out the
-          // values being written in the current state (which is after the
-          // current update) and forward them.
-          auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
-          auto valueContents =
-            getContents(getIndex(ExpressionLocation{value, 0}));
-          if (refContents.isNone()) {
-            return;
-          }
-          if (refContents.isExactType() || refContents.isConstant()) {
-            // Update the one possible type here.
-            // TODO: In the case that this is a constant, it could be null
-            //       or an immutable global, which we could do even more
-            //       with.
-            auto heapLoc = DataLocation{refContents.getType().getHeapType(), fieldIndex};
-            sendContents(heapLoc, valueContents);
-          } else {
-            assert(refContents.isMany());
-            // Update all possible types here. First, subtypes, including the
-            // type itself.
-            auto type = ref->type.getHeapType();
-            for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
-              auto heapLoc = DataLocation{subType, fieldIndex};
-              sendContents(heapLoc, valueContents);
-            }
-          }
-        };
-
       if (auto* get = parent->dynCast<StructGet>()) {
         // This is the reference child of a struct.get.
         assert(get->ref == targetExpr);
         readFromNewLocations(
           get->ref->type.getHeapType(),
-          get->index);
+          get->index,
+          contents,
+          get);
       } else if (auto* set = parent->dynCast<StructSet>()) {
         // This is either the reference or the value child of a struct.set.
         // A change to either one affects what values are written to that
@@ -1400,7 +1402,9 @@ void Flower::applyContents(LocationIndex locationIndex,
         assert(get->ref == targetExpr);
         readFromNewLocations(
           get->ref->type.getHeapType(),
-          0);
+          0,
+          contents,
+          get);
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(
