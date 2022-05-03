@@ -1361,9 +1361,7 @@ void Flower::processWork(LocationIndex locationIndex,
             }
 
             // Link to the canonical location.
-            auto heapLoc = getLocation(declaredRefType);
-            assert(heapLoc);
-            auto newLink = LocationLink{*heapLoc, SpecialLocation{coneReadIndex}};
+            auto newLink = LocationLink{SpecialLocation{coneReadIndex}, ExpressionLocation{parent, 0}};
             auto newIndexLink = getIndexes(newLink);
             // Check if this link exists already - we may have been a
             // ConstantGlobal that becomes a Many, and the type may have been
