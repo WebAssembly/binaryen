@@ -58,8 +58,8 @@ template<typename T> void disallowDuplicates(const T& targets) {
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
     std::cout << "  exprloc \n" << *loc->expr << '\n';
-  } else if (auto* loc = std::get_if<StructLocation>(&location)) {
-    std::cout << "  structloc " << loc->type << " : " << loc->index << '\n';
+  } else if (auto* loc = std::get_if<DataLocation>(&location)) {
+    std::cout << "  dataloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
   } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
@@ -79,9 +79,6 @@ void dump(Location location) {
   } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
     WASM_UNUSED(loc);
     std::cout << "  sigresultloc " << '\n';
-  } else if (auto* loc = std::get_if<ArrayLocation>(&location)) {
-    WASM_UNUSED(loc);
-    std::cout << "  Arrayloc " << loc->type << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
   } else if (auto* loc = std::get_if<SpecialLocation>(&location)) {
@@ -532,12 +529,12 @@ struct LinkFinder
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         info.links.push_back(
-          {getNullLocation(fields[i].type), StructLocation{type, i}});
+          {getNullLocation(fields[i].type), DataLocation{type, i}});
       }
     } else {
       // Link the operands to the struct's fields.
       handleChildList(curr->operands, [&](Index i) {
-        return StructLocation{type, i};
+        return DataLocation{type, i};
       });
     }
     addRoot(curr, curr->type);
@@ -549,10 +546,10 @@ struct LinkFinder
     auto type = curr->type.getHeapType();
     if (curr->init) {
       info.links.push_back(
-        {ExpressionLocation{curr->init, 0}, ArrayLocation{type}});
+        {ExpressionLocation{curr->init, 0}, DataLocation{type, 0}});
     } else {
       info.links.push_back(
-        {getNullLocation(type.getArray().element.type), ArrayLocation{type}});
+        {getNullLocation(type.getArray().element.type), DataLocation{type, 0}});
     }
     addRoot(curr, curr->type);
   }
@@ -563,7 +560,7 @@ struct LinkFinder
     if (!curr->values.empty()) {
       auto type = curr->type.getHeapType();
       handleChildList(curr->values,
-                      [&](Index i) { return ArrayLocation{type}; });
+                      [&](Index i) { return DataLocation{type, 0}; });
     }
     addRoot(curr, curr->type);
   }
@@ -580,7 +577,7 @@ struct LinkFinder
       // The struct.get will receive different values depending on the contents
       // in the reference, so mark us as the parent of the ref, and we will
       // handle all of this in a special way during the flow. Note that we do
-      // not even create a StructLocation here; anything that we need will be
+      // not even create a DataLocation here; anything that we need will be
       // added during the flow.
       addSpecialChildParentLink(curr->ref, curr);
     }
@@ -812,9 +809,9 @@ struct Flower {
   //
   // Imagine that the first local.get, for $ref, receives a new value. That can
   // affect where the struct.set sends values: if previously that local.get had
-  // no possible contents, and now it does, then we have StructLocations to
+  // no possible contents, and now it does, then we have DataLocations to
   // update. Likewise, when the second local.get is updated we must do the same,
-  // but again which StructLocations we update depends on the ref passed to the
+  // but again which DataLocations we update depends on the ref passed to the
   // struct.get. To handle such things, we set add a childParent link, and then
   // when we update the child we can handle any possible action regarding the
   // parent.
@@ -1276,7 +1273,7 @@ void Flower::processWork(LocationIndex locationIndex,
 #endif
 
       // Given a heap location, add a link from that location to an
-      // expression that reads from it (e.g. from a StructLocation to a
+      // expression that reads from it (e.g. from a DataLocation to a
       // struct.get).
       auto readFromHeap = [&](std::optional<Location> heapLoc,
                               Expression* target) {
@@ -1465,7 +1462,7 @@ void Flower::processWork(LocationIndex locationIndex,
               // This field is not present on this struct.
               return {};
             }
-            return StructLocation{type, get->index};
+            return DataLocation{type, get->index};
           },
           get->index,
           get->ref->type.getHeapType());
@@ -1483,7 +1480,7 @@ void Flower::processWork(LocationIndex locationIndex,
               // This field is not present on this struct.
               return {};
             }
-            return StructLocation{type, set->index};
+            return DataLocation{type, set->index};
           },
           set->ref,
           set->value);
@@ -1494,7 +1491,7 @@ void Flower::processWork(LocationIndex locationIndex,
             if (!type.isArray()) {
               return {};
             }
-            return ArrayLocation{type};
+            return DataLocation{type, 0};
           },
           0,
           get->ref->type.getHeapType());
@@ -1505,7 +1502,7 @@ void Flower::processWork(LocationIndex locationIndex,
             if (!type.isArray()) {
               return {};
             }
-            return ArrayLocation{type};
+            return DataLocation{type, 0};
           },
           set->ref,
           set->value);

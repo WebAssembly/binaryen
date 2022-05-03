@@ -351,23 +351,16 @@ struct SignatureResultLocation {
   }
 };
 
-// The location of a struct field. Note that this is specific to this type - it
-// does not include data about subtypes or supertypes.
-struct StructLocation {
+// The location of contents in a struct or array (i.e., things that can fit in a
+// dataref). Note that this is specific to this type - it does not include data
+// about subtypes or supertypes.
+struct DataLocation {
   HeapType type;
+  // The index of the field in a struct, or 0 for an array (where we do not
+  // attempt to differentiate positions).
   Index index;
-  bool operator==(const StructLocation& other) const {
+  bool operator==(const DataLocation& other) const {
     return type == other.type && index == other.index;
-  }
-};
-
-// The location of an element in the array (without index - we consider them all
-// as one, since we may not have static indexes for them all).
-// TODO: merge into HeapLocation and use index 0 for arrays.
-struct ArrayLocation {
-  HeapType type;
-  bool operator==(const ArrayLocation& other) const {
-    return type == other.type;
   }
 };
 
@@ -415,8 +408,7 @@ using Location = std::variant<ExpressionLocation,
                               GlobalLocation,
                               SignatureParamLocation,
                               SignatureResultLocation,
-                              StructLocation,
-                              ArrayLocation,
+                              DataLocation,
                               TagLocation,
                               NullLocation,
                               SpecialLocation>;
@@ -482,16 +474,10 @@ template<> struct hash<wasm::SignatureResultLocation> {
   }
 };
 
-template<> struct hash<wasm::StructLocation> {
-  size_t operator()(const wasm::StructLocation& loc) const {
+template<> struct hash<wasm::DataLocation> {
+  size_t operator()(const wasm::DataLocation& loc) const {
     return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
       {loc.type, loc.index});
-  }
-};
-
-template<> struct hash<wasm::ArrayLocation> {
-  size_t operator()(const wasm::ArrayLocation& loc) const {
-    return std::hash<wasm::HeapType>{}(loc.type);
   }
 };
 
