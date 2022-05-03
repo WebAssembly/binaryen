@@ -15,6 +15,15 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v107
+----
+
+- Update the wasm GC type section binary format (#4625, #4631)
+- Lift the restriction in liveness-traversal.h on max 65535 locals (#4567)
+- Switch to nominal fuzzing by default (#4610)
+- Refactor Feature::All to match FeatureSet.setAll() (#4557)
+- New Signature Pruning pass (#4545)
+- Add support for extended-const proposal (#4529)
 - Add BUILD_TESTS CMake option to make gtest dependency optional.
 - Updated tests to use filecheck 0.0.22 (#4537). Updating is required to
   successfully run the lit tests. This can be done with
