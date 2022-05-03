@@ -1333,26 +1333,8 @@ void Flower::applyContents(LocationIndex locationIndex,
             }
 
             // Link to the canonical location.
-            auto newLink = LocationLink{SpecialLocation{coneReadIndex},
-                                        ExpressionLocation{parent, 0}};
-            auto newIndexLink = getIndexes(newLink);
-            // Check if this link exists already - we may have been a
-            // ConstantGlobal that becomes a Many, and the type may have been
-            // identical.
-            if (links.count(newIndexLink) == 0) {
-              newLinks.push_back(newIndexLink);
-              links.insert(newIndexLink);
-            }
-            sendContents(ExpressionLocation{parent, 0}, getContents(coneReadIndex));
+            connect(SpecialLocation{coneReadIndex}, ExpressionLocation{parent, 0});
           }
-
-          // TODO: A less simple but more memory-efficient approach might be
-          //       to keep special data structures on the side for such
-          //       "dynamic" information, basically a list of all
-          //       struct.gets impacted by each type, etc., and use those in
-          //       the proper places. Then each location would have not just
-          //       a list of target locations but also a list of target
-          //       expressions perhaps, etc.
         };
 
       // Similar to readFromNewLocations, but sends values from a
