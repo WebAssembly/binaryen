@@ -821,10 +821,11 @@
 ;;            shared between the types, but we only create the substruct with
 ;;            one value, so we can optimize.
 (module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -1029,18 +1030,20 @@
 ;; Multi-level subtyping, check that we propagate not just to the immediate
 ;; supertype but all the way as needed.
 (module
+  ;; CHECK:      (type $struct1 (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $struct1))
+
   ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype i32 f64 anyref $struct2))
+
+  (type $struct2 (struct_subtype i32 f64 $struct1))
+
+  (type $struct1 (struct i32))
 
   ;; CHECK:      (type $none_=>_ref|$struct3| (func_subtype (result (ref $struct3)) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $struct1))
-  (type $struct2 (struct_subtype i32 f64 $struct1))
-
-  ;; CHECK:      (type $struct1 (struct_subtype (field i32) data))
-  (type $struct1 (struct i32))
 
   ;; CHECK:      (func $create (type $none_=>_ref|$struct3|) (result (ref $struct3))
   ;; CHECK-NEXT:  (struct.new_with_rtt $struct3
@@ -1170,11 +1173,16 @@
 ;; different values in the sub-most type. Create the top and bottom types, but
 ;; not the middle one.
 (module
+  ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field i32) data))
+
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
+
   ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref) $struct2))
   (type $struct3 (struct_subtype i32 i32 f64 f64 anyref anyref $struct2))
 
-  ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field i32) data))
   (type $struct1 (struct i32 i32))
+
+  (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
 
   ;; CHECK:      (type $none_=>_anyref (func_subtype (result anyref) func))
 
@@ -1183,9 +1191,6 @@
   ;; CHECK:      (type $none_=>_ref|$struct3| (func_subtype (result (ref $struct3)) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
-  (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
 
   ;; CHECK:      (import "a" "b" (func $import (result anyref)))
   (import "a" "b" (func $import (result anyref)))
@@ -1711,10 +1716,9 @@
 ;; but also a set. We can see that the set just affects the middle class,
 ;; though, so it is not a problem.
 (module
-  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
-
   ;; CHECK:      (type $struct1 (struct_subtype (field (mut i32)) data))
   (type $struct1 (struct (mut i32)))
+  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
@@ -1839,10 +1843,9 @@
 
 ;; As above, but the set is of a different value.
 (module
-  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
-
   ;; CHECK:      (type $struct1 (struct_subtype (field (mut i32)) data))
   (type $struct1 (struct (mut i32)))
+  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
@@ -2087,18 +2090,20 @@
 ;; sets, and the final subtype C has a create and a get. The set to A should
 ;; apply to it, preventing optimization.
 (module
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
+
+  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
+
   ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $B))
   (type $C (struct_subtype (mut i32) $B))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
   (type $A (struct (mut i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$C| (func_subtype (result (ref $C)) func))
-
-  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
   (type $B (struct_subtype (mut i32) $A))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $none_=>_ref|$C| (func_subtype (result (ref $C)) func))
 
   ;; CHECK:      (func $create (type $none_=>_ref|$C|) (result (ref $C))
   ;; CHECK-NEXT:  (struct.new_with_rtt $C

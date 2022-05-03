@@ -912,11 +912,12 @@
 
 ;; Struct fields.
 (module
+  ;; CHECK:      (type $parent (struct_subtype (field (mut (ref null $struct))) data))
+
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) (field (mut (ref null $struct))) $parent))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
-  ;; CHECK:      (type $parent (struct_subtype (field (mut (ref null $struct))) data))
   (type $parent (struct_subtype (field (mut (ref null $struct))) data))
   (type $child (struct_subtype (field (mut (ref null $struct))) (field (mut (ref null $struct))) $parent))
 
@@ -1178,10 +1179,9 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
-  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) (field i32) $parent))
-
   ;; CHECK:      (type $parent (struct_subtype (field (mut (ref null $struct))) data))
   (type $parent (struct_subtype (field (mut (ref null $struct))) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) (field i32) $parent))
   (type $child (struct_subtype (field (mut (ref null $struct))) (field i32) $parent))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -1260,10 +1260,9 @@
 
 ;; Write to the parent and the child and read from the child.
 (module
-  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
-
   ;; CHECK:      (type $parent (struct_subtype (field (mut i32)) data))
   (type $parent (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -1353,10 +1352,9 @@
 
 ;; As above, but the $parent local can now contain a child too.
 (module
-  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
-
   ;; CHECK:      (type $parent (struct_subtype (field (mut i32)) data))
   (type $parent (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -1428,10 +1426,9 @@
 
 ;; As above, but now the parent and child happen to agree on the aliased value.
 (module
-  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
-
   ;; CHECK:      (type $parent (struct_subtype (field (mut i32)) data))
   (type $parent (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -2729,15 +2726,14 @@
 
 ;; ref.as* test.
 (module
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
   ;; CHECK:      (type $B (struct_subtype (field i32) (field f64) $A))
+  (type $B (struct_subtype (field i32) (field f64) $A))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $none_=>_ref|$B| (func_subtype (result (ref $B)) func))
-
-  ;; CHECK:      (type $A (struct_subtype (field i32) data))
-  (type $A (struct_subtype (field i32) data))
-  (type $B (struct_subtype (field i32) (field f64) $A))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
