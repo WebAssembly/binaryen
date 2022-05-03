@@ -12,6 +12,8 @@
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
 
  ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+ ;; NOMNL:      (type ${} (struct_subtype  data))
+
  ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
@@ -24,7 +26,6 @@
  (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; CHECK:      (type ${} (struct ))
- ;; NOMNL:      (type ${} (struct_subtype  data))
  (type ${} (struct))
 
  (table 1 1 funcref)

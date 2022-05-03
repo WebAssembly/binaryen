@@ -203,9 +203,10 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
 }
 
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
+  TypeSystem system = getTypeSystem();
   Counts counts = getHeapTypeCounts(wasm);
 
-  if (getTypeSystem() != TypeSystem::Isorecursive) {
+  if (system == TypeSystem::Equirecursive) {
     // Sort by frequency and then original insertion order.
     std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(),
                                                     counts.end());
@@ -223,9 +224,12 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     return indexedTypes;
   }
 
-  // Isorecursive types have to be arranged into topologically ordered recursion
-  // groups. Sort the groups by average use count among their members so that
-  // the topological sort will place frequently used types first.
+  // Types have to be arranged into topologically ordered recursion groups.
+  // Under isorecrsive typing, the topological sort has to take all referenced
+  // rec groups into account but under nominal typing it only has to take
+  // supertypes into account. First, sort the groups by average use count among
+  // their members so that the later topological sort will place frequently used
+  // types first.
   struct GroupInfo {
     size_t index;
     double useCount = 0;
@@ -236,7 +240,7 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
       if (useCount != other.useCount) {
         return useCount < other.useCount;
       }
-      return index < other.index;
+      return index > other.index;
     }
   };
 
@@ -257,20 +261,35 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     // Update the reference count.
     info.useCount += counts.at(type);
     // Collect predecessor groups.
-    for (auto child : type.getReferencedHeapTypes()) {
-      if (!child.isBasic()) {
-        RecGroup otherGroup = child.getRecGroup();
-        if (otherGroup != group) {
-          info.preds.insert(otherGroup);
+    switch (system) {
+      case TypeSystem::Isorecursive:
+        for (auto child : type.getReferencedHeapTypes()) {
+          if (!child.isBasic()) {
+            RecGroup otherGroup = child.getRecGroup();
+            if (otherGroup != group) {
+              info.preds.insert(otherGroup);
+            }
+          }
         }
-      }
+        break;
+      case TypeSystem::Nominal:
+        if (auto super = type.getSuperType()) {
+          info.preds.insert(super->getRecGroup());
+        }
+        break;
+      case TypeSystem::Equirecursive:
+        WASM_UNREACHABLE(
+          "Equirecursive types should already have been handled");
     }
   }
 
   // Fix up the use counts to be averages to ensure groups are used comensurate
-  // with the amount of index space they occupy.
-  for (auto& [group, info] : groupInfos) {
-    info.useCount /= group.size();
+  // with the amount of index space they occupy. Skip this for nominal types
+  // since their internal group size is always 1.
+  if (system != TypeSystem::Nominal) {
+    for (auto& [group, info] : groupInfos) {
+      info.useCount /= group.size();
+    }
   }
 
   // Sort the predecessors so the most used will be visited first.

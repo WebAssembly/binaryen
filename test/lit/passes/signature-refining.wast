@@ -123,13 +123,14 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $struct (struct_subtype  data))
+
   ;; CHECK:      (type $struct-sub1 (struct_subtype  $struct))
   (type $struct-sub1 (struct_subtype $struct))
 
   ;; CHECK:      (type $struct-sub2 (struct_subtype  $struct))
   (type $struct-sub2 (struct_subtype $struct))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))

@@ -858,7 +858,7 @@ class Wasm2JS(TestCaseHandler):
         # the trap, which lets us compare at least some results in some cases.
         # (this is why wasm2js is not in CompareVMs, which does full
         # comparisons - we need to limit the comparison in a special way here)
-        interpreter = run([in_bin('wasm-opt'), before_wasm_temp, '--fuzz-exec-before'])
+        interpreter = run_bynterp(before_wasm_temp, ['--fuzz-exec-before'])
         if TRAP_PREFIX in interpreter:
             trap_index = interpreter.index(TRAP_PREFIX)
             # we can't test this function, which the trap is in the middle of.
