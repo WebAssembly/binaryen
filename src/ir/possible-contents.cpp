@@ -1330,6 +1330,8 @@ void Flower::processWork(LocationIndex locationIndex,
       //                     such a location exists.
       // @param declaredRefType: the type declared in the IR on the
       //                         reference input to the struct.get/array.get.
+      // TODO: it seems like we don't need getLocation to return optional, see
+      //       asserts.
       auto readFromNewLocations =
         [&](std::function<std::optional<Location>(HeapType)> getLocation,
             HeapType declaredRefType) {
