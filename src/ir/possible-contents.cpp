@@ -918,10 +918,11 @@ struct Flower {
     if (links.count(newIndexLink) == 0) {
       newLinks.push_back(newIndexLink);
       links.insert(newIndexLink);
-    }
 
-    // Add a work item to receive the new contents there now.
-    sendContents(to, getContents(getIndex(from)));
+      // In addition to adding the link, send the contents along it right now,
+      // so that the graph state is consistent.
+      sendContents(to, getContents(getIndex(from)));
+    }
   }
 
   std::vector<IndexLink> newLinks;
