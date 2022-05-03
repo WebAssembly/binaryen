@@ -801,11 +801,14 @@ struct Flower {
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
   // The work remaining to do during the flow: locations that we are sending an
-  // update to. This maps the target location to the new contents, which is
-  // efficient since we may send contents A to a target and then send further
-  // contents B before we even get to processing that target; rather than queue
-  // two work items, we want just one with the combined contents.
-  // XXX update docs here, this contains the OLD contents here actually.
+  // update to. This maps the target location to the old contents before the
+  // update; the new contents are already placed in the contents for that
+  // location (we'll need to place them there anyhow, so do so immediately
+  // instead of waiting; another benefit is that if anything reads them around
+  // this time then they'll get the latest data, saving more iterations later).
+  // Using a map here is efficient as multiple updates may arrive before we
+  // process any of them, and this way each location appears just once in the
+  // queue.
   std::unordered_map<LocationIndex, PossibleContents> workQueue;
 
   // During the flow we will need information about subtyping.
@@ -896,9 +899,11 @@ struct Flower {
     return sendContents(getIndex(location), newContents);
   }
 
-  // Apply new contents at a location where a change occurred. This does the
+  // Apply contents at a location where a change has occurred. This does the
   // bulk of the work during the flow: sending contents to other affected
-  // locations, handling special cases as necessary, etc.
+  // locations, handling special cases as necessary, etc. This is passed
+  // the old contents, which in some cases we need in order to do special
+  // processing.
   void applyContents(LocationIndex locationIndex,
                    const PossibleContents& oldContents);
 
@@ -1062,8 +1067,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     getIndex(location);
   }
 
-  // TODO: numLocations = locations.size() ?
-
 #ifndef NDEBUG
   // Each vector of targets (which is a vector for efficiency) must have no
   // duplicates.
@@ -1096,13 +1099,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
   // Flow the data.
   while (!workQueue.empty()) {
-    // TODO: assert on no cycles - store a set of all (location, value) pairs
-    //       we've ever seen.
-    // TODO: profile manually to see how much time we spend in each Location
-    //       flavor
-    // TODO: if we are Many, delete all our outgoing links - we'll never prop
-    //       again
-    // TODO: make the wokr queue map of location => contents.
 #ifdef POSSIBLE_CONTENTS_DEBUG
     iters++;
     if ((iters & 255) == 0) {
@@ -1112,18 +1108,18 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
     auto iter = workQueue.begin();
     auto locationIndex = iter->first;
-    auto contents = iter->second;
+    auto oldContents = iter->second;
     workQueue.erase(iter);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "\npop work item\n";
     dump(getLocation(locationIndex));
-    std::cout << " with contents \n";
-    contents.dump(std::cout, &wasm);
+    std::cout << " with old contents \n";
+    oldContents.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
 
-    applyContents(locationIndex, contents);
+    applyContents(locationIndex, oldContents);
 
     updateNewLinks();
   }
