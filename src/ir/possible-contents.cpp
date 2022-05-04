@@ -900,64 +900,20 @@ private:
   // time.
   void updateNewLinks();
 
-  // Given the old and new contents at the current target, add reads to
-  // it based on the latest changes. The reads are sent to |parent|,
-  // which is either a struct.get or an array.get. That is, new contents
-  // are possible for the reference, which means we need to read from
-  // more possible heap locations. This receives a function that gets a
-  // heap type and returns a location, which we will call on all
-  // relevant heap types as we add the links.
-  // @param getLocation: returns the location for a particular heap type, if
-  //                     such a location exists.
-  // @param declaredRefType: the type declared in the IR on the
+  // Given the old and new contents at the current target, add reads to it
+  // based on the latest changes. The reads are sent to |read|, which is
+  // either a struct.get or an array.get. That is, new contents are possible
+  // for the reference, which means we need to read from more possible heap
+  // locations.
+  // @param declaredRefType: The type declared in the IR on the
   //                         reference input to the struct.get/array.get.
+  // @param fieldIndex: The field index being read (or 0 for an array).
+  // @param refContents: The contents possible in the reference.
+  // @param read: The struct.get or array.get that does the read.
   void readFromNewLocations(HeapType declaredHeapType,
                             Index fieldIndex,
                             const PossibleContents& refContents,
-                            Expression* read) {
-    if (refContents.isNull()) {
-      // Nothing is read here.
-      return;
-    }
-
-    if (refContents.isExactType()) {
-      // Add a single link to the exact location the reference points to.
-      connectDuringFlow(
-        DataLocation{refContents.getType().getHeapType(), fieldIndex},
-        ExpressionLocation{read, 0});
-    } else {
-      // Otherwise, this is a cone: the declared type of the reference, or
-      // any subtype of that, as both Many and ConstantGlobal reduce to
-      // that in this case TODO text
-      // TODO: the ConstantGlobal case may have a different cone type than
-      //       the heapType, we could use that here.
-      assert(refContents.isMany() || refContents.isGlobal());
-
-      // TODO: a cone with no subtypes needs no canonical location, just
-      //       add direct links
-
-      auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
-        declaredHeapType, fieldIndex)];
-      if (coneReadIndex == 0) {
-        // 0 is an impossible index for a LocationIndex (as there must be
-        // something at index 0 already - the ExpressionLocation of this
-        // very expression, in particular), so we can use that as an
-        // indicator that we have never allocated one yet, and do so now.
-        coneReadIndex = makeSpecialLocation();
-        // TODO: if the old contents here were an exact type then we could
-        // remove the old link, which becomes redundant now. But removing
-        // links is not efficient, so maybe not worth it.
-        for (auto type : subTypes->getAllSubTypesInclusive(declaredHeapType)) {
-          connectDuringFlow(DataLocation{type, fieldIndex},
-                            SpecialLocation{coneReadIndex});
-        }
-      }
-
-      // Link to the canonical location.
-      connectDuringFlow(SpecialLocation{coneReadIndex},
-                        ExpressionLocation{read, 0});
-    }
-  }
+                            Expression* read);
 
   // Similar to readFromNewLocations, but sends values from a
   // struct.set/array.set to a heap location. In addition to the
@@ -1462,6 +1418,54 @@ void Flower::updateNewLinks() {
 #endif
   }
   newLinks.clear();
+}
+
+void Flower::readFromNewLocations(HeapType declaredHeapType,
+                          Index fieldIndex,
+                          const PossibleContents& refContents,
+                          Expression* read) {
+  if (refContents.isNull()) {
+    // Nothing is read here.
+    return;
+  }
+
+  if (refContents.isExactType()) {
+    // Add a single link to the exact location the reference points to.
+    connectDuringFlow(
+      DataLocation{refContents.getType().getHeapType(), fieldIndex},
+      ExpressionLocation{read, 0});
+  } else {
+    // Otherwise, this is a cone: the declared type of the reference, or
+    // any subtype of that, as both Many and ConstantGlobal reduce to
+    // that in this case TODO text
+    // TODO: the ConstantGlobal case may have a different cone type than
+    //       the heapType, we could use that here.
+    assert(refContents.isMany() || refContents.isGlobal());
+
+    // TODO: a cone with no subtypes needs no canonical location, just
+    //       add direct links
+
+    auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
+      declaredHeapType, fieldIndex)];
+    if (coneReadIndex == 0) {
+      // 0 is an impossible index for a LocationIndex (as there must be
+      // something at index 0 already - the ExpressionLocation of this
+      // very expression, in particular), so we can use that as an
+      // indicator that we have never allocated one yet, and do so now.
+      coneReadIndex = makeSpecialLocation();
+      // TODO: if the old contents here were an exact type then we could
+      // remove the old link, which becomes redundant now. But removing
+      // links is not efficient, so maybe not worth it.
+      for (auto type : subTypes->getAllSubTypesInclusive(declaredHeapType)) {
+        connectDuringFlow(DataLocation{type, fieldIndex},
+                          SpecialLocation{coneReadIndex});
+      }
+    }
+
+    // Link to the canonical location.
+    connectDuringFlow(SpecialLocation{coneReadIndex},
+                      ExpressionLocation{read, 0});
+  }
 }
 
 } // anonymous namespace
