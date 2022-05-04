@@ -932,6 +932,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "parallel phase\n";
 #endif
 
+  // First, collect information from each function.
   ModuleUtils::ParallelFunctionAnalysis<CollectedInfo> analysis(
     wasm, [&](Function* func, CollectedInfo& info) {
       InfoCollector finder(info);
