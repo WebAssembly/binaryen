@@ -2907,14 +2907,15 @@
 )
 
 ;; As above, but with a copy in the wrong direction. Now $chars has a single
-;; value (a null) which we can optimize.
+;; value (a null) which we can optimize, but $bytes has two values and we
+;; cannot optimize there.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $bytes (array_subtype (mut anyref) data))
   (type $bytes (array (mut anyref)))
   ;; CHECK:      (type $chars (array_subtype (mut anyref) data))
   (type $chars (array (mut anyref)))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (elem declare func $test)
 
@@ -2939,14 +2940,9 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $none_=>_none))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (array.get $bytes
-  ;; CHECK-NEXT:      (local.get $bytes)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   (array.get $bytes
+  ;; CHECK-NEXT:    (local.get $bytes)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
