@@ -54,7 +54,7 @@ namespace wasm {
 //                     not track what they might be, so we must assume the worst
 //                     in the calling code.
 //
-struct PossibleContents {
+class PossibleContents {
   struct None : public std::monostate {};
 
   struct GlobalInfo {

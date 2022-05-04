@@ -250,14 +250,16 @@ struct LinkFinder
     }
   }
 
-  // Adds a root, if the expression is relevant.
-  template<typename T> void addRoot(Expression* curr, T contents) {
+  // Adds a root, if the expression is relevant. If the value is not specified,
+  // mark the root as containing Many.
+  void addRoot(Expression* curr, PossibleContents contents = PossibleContents::many()) {
     if (isRelevant(curr)) {
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
   }
 
-  template<typename T> void addRoot(Location loc, T contents) {
+  // As above, but given an arbitrary location and not just an expression.
+  void addRoot(Location loc, PossibleContents contents = PossibleContents::many()) {
     info.roots[loc] = contents;
   }
 
@@ -281,60 +283,59 @@ struct LinkFinder
   }
   void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
-    // We can only infer the type here (at least for now), and likewise in all
-    // other memory operations.
-    addRoot(curr, curr->type);
+    // We could infer the exact type here, but as no subtyping is possible, it
+    // would have on benefit.
+    addRoot(curr);
   }
   void visitStore(Store* curr) {}
-  void visitAtomicRMW(AtomicRMW* curr) { addRoot(curr, curr->type); }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { addRoot(curr, curr->type); }
-  void visitAtomicWait(AtomicWait* curr) { addRoot(curr, curr->type); }
-  void visitAtomicNotify(AtomicNotify* curr) { addRoot(curr, curr->type); }
-  void visitAtomicFence(AtomicFence* curr) { addRoot(curr, curr->type); }
-  void visitSIMDExtract(SIMDExtract* curr) { addRoot(curr, curr->type); }
-  void visitSIMDReplace(SIMDReplace* curr) { addRoot(curr, curr->type); }
-  void visitSIMDShuffle(SIMDShuffle* curr) { addRoot(curr, curr->type); }
-  void visitSIMDTernary(SIMDTernary* curr) { addRoot(curr, curr->type); }
-  void visitSIMDShift(SIMDShift* curr) { addRoot(curr, curr->type); }
-  void visitSIMDLoad(SIMDLoad* curr) { addRoot(curr, curr->type); }
+  void visitAtomicRMW(AtomicRMW* curr) { addRoot(curr); }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { addRoot(curr); }
+  void visitAtomicWait(AtomicWait* curr) { addRoot(curr); }
+  void visitAtomicNotify(AtomicNotify* curr) { addRoot(curr); }
+  void visitAtomicFence(AtomicFence* curr) { addRoot(curr); }
+  void visitSIMDExtract(SIMDExtract* curr) { addRoot(curr); }
+  void visitSIMDReplace(SIMDReplace* curr) { addRoot(curr); }
+  void visitSIMDShuffle(SIMDShuffle* curr) { addRoot(curr); }
+  void visitSIMDTernary(SIMDTernary* curr) { addRoot(curr); }
+  void visitSIMDShift(SIMDShift* curr) { addRoot(curr); }
+  void visitSIMDLoad(SIMDLoad* curr) { addRoot(curr); }
   void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    addRoot(curr, curr->type);
+    addRoot(curr);
   }
   void visitMemoryInit(MemoryInit* curr) {}
   void visitDataDrop(DataDrop* curr) {}
   void visitMemoryCopy(MemoryCopy* curr) {}
   void visitMemoryFill(MemoryFill* curr) {}
-  void visitConst(Const* curr) { addRoot(curr, curr->value); }
+  void visitConst(Const* curr) { addRoot(curr, PossibleContents::literal(curr->value)); }
   void visitUnary(Unary* curr) {
-    // Assume we only know the type in all math operations (for now).
-    addRoot(curr, curr->type);
+    addRoot(curr);
   }
-  void visitBinary(Binary* curr) { addRoot(curr, curr->type); }
+  void visitBinary(Binary* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
     receiveChildValue(curr->ifTrue, curr);
     receiveChildValue(curr->ifFalse, curr);
   }
   void visitDrop(Drop* curr) {}
-  void visitMemorySize(MemorySize* curr) { addRoot(curr, curr->type); }
-  void visitMemoryGrow(MemoryGrow* curr) { addRoot(curr, curr->type); }
+  void visitMemorySize(MemorySize* curr) { addRoot(curr); }
+  void visitMemoryGrow(MemoryGrow* curr) { addRoot(curr); }
   void visitRefNull(RefNull* curr) {
-    addRoot(curr, Literal::makeNull(curr->type));
+    addRoot(curr, PossibleContents::literal(Literal::makeNull(curr->type)));
   }
   void visitRefIs(RefIs* curr) {
     // TODO: optimize when possible
-    addRoot(curr, curr->type);
+    addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    addRoot(curr, Literal(curr->func, curr->type));
+    addRoot(curr, PossibleContents::literal(Literal(curr->func, curr->type)));
   }
-  void visitRefEq(RefEq* curr) { addRoot(curr, curr->type); }
+  void visitRefEq(RefEq* curr) { addRoot(curr); }
   void visitTableGet(TableGet* curr) {
     // TODO: optimize when possible
-    addRoot(curr, curr->type);
+    addRoot(curr);
   }
   void visitTableSet(TableSet* curr) {}
-  void visitTableSize(TableSize* curr) { addRoot(curr, curr->type); }
-  void visitTableGrow(TableGrow* curr) { addRoot(curr, curr->type); }
+  void visitTableSize(TableSize* curr) { addRoot(curr); }
+  void visitTableGrow(TableGrow* curr) { addRoot(curr); }
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
@@ -352,15 +353,18 @@ struct LinkFinder
     totalPops++;
 #endif
   }
-  void visitI31New(I31New* curr) { addRoot(curr, curr->type); }
+  void visitI31New(I31New* curr) {
+    // TODO: optimize like struct references
+    addRoot(curr);
+  }
   void visitI31Get(I31Get* curr) {
     // TODO: optimize like struct references
-    addRoot(curr, curr->type);
+    addRoot(curr);
   }
 
   void visitRefTest(RefTest* curr) {
     // TODO: optimize when possible
-    addRoot(curr, curr->type);
+    addRoot(curr);
   }
   void visitRefCast(RefCast* curr) {
     // We will handle this in a special way, as ref.cast only allows valid
@@ -372,8 +376,8 @@ struct LinkFinder
     // TODO: write out each br_* case here in full for maximum optimizability.
     receiveChildValue(curr->ref, curr);
   }
-  void visitRttCanon(RttCanon* curr) { addRoot(curr, curr->type); }
-  void visitRttSub(RttSub* curr) { addRoot(curr, curr->type); }
+  void visitRttCanon(RttCanon* curr) { addRoot(curr); }
+  void visitRttSub(RttSub* curr) { addRoot(curr); }
   void visitRefAs(RefAs* curr) {
     // TODO optimize when possible: like RefCast, not all values flow through.
     receiveChildValue(curr->value, curr);
@@ -500,7 +504,7 @@ struct LinkFinder
   // value in a ref.null.
   Location getNullLocation(Type type) {
     auto location = NullLocation{type};
-    addRoot(location, Literal::makeZero(type));
+    addRoot(location, PossibleContents::literal(Literal::makeZero(type)));
     return location;
   }
 
@@ -537,7 +541,7 @@ struct LinkFinder
         return DataLocation{type, i};
       });
     }
-    addRoot(curr, curr->type);
+    addRoot(curr, PossibleContents::exactType(curr->type));
   }
   void visitArrayNew(ArrayNew* curr) {
     if (curr->type == Type::unreachable) {
@@ -551,7 +555,7 @@ struct LinkFinder
       info.links.push_back(
         {getNullLocation(type.getArray().element.type), DataLocation{type, 0}});
     }
-    addRoot(curr, curr->type);
+    addRoot(curr, PossibleContents::exactType(curr->type));
   }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {
@@ -563,7 +567,7 @@ struct LinkFinder
         return DataLocation{type, 0};
       });
     }
-    addRoot(curr, curr->type);
+    addRoot(curr, PossibleContents::exactType(curr->type));
   }
 
   // Struct operations access the struct fields' locations.
@@ -571,7 +575,7 @@ struct LinkFinder
     if (!isRelevant(curr->ref)) {
       // We are not tracking references, and so we cannot properly analyze
       // values read from them, and must assume the worst.
-      addRoot(curr, curr->type);
+      addRoot(curr);
       return;
     }
     // The struct.get will receive different values depending on the contents
@@ -592,7 +596,7 @@ struct LinkFinder
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
-      addRoot(curr, curr->type);
+      addRoot(curr);
       return;
     }
     addSpecialChildParentLink(curr->ref, curr);
@@ -605,7 +609,7 @@ struct LinkFinder
     addSpecialChildParentLink(curr->value, curr);
   }
 
-  void visitArrayLen(ArrayLen* curr) { addRoot(curr, curr->type); }
+  void visitArrayLen(ArrayLen* curr) { addRoot(curr); }
   void visitArrayCopy(ArrayCopy* curr) {}
 
   // TODO: Model which throws can go to which catches. For now, anything
@@ -1423,8 +1427,8 @@ void Flower::applyContents(LocationIndex locationIndex,
           }
           bool mayBeNull = contents.getType().isNullable();
           if (mayBeNull) {
-            filtered.combine(PossibleContents(
-              Literal::makeNull(Type(intendedType, Nullable))));
+            filtered.combine(
+              PossibleContents::literal(Literal::makeNull(Type(intendedType, Nullable))));
           }
         }
         if (!filtered.isNone()) {

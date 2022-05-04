@@ -198,7 +198,7 @@ struct GUFAPass : public Pass {
           // (If curr's type is not nullable, then the code will trap at
           // runtime; we handle that below.)
           // TODO: would emitting a more specific null be useful when valid?
-          contents = PossibleContents(Literal::makeNull(curr->type));
+          contents = PossibleContents::literal(Literal::makeNull(curr->type));
         }
 
         auto* c = contents.makeExpression(wasm);
