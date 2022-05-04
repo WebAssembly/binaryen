@@ -167,15 +167,16 @@ public:
             PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
         }
         if (!other.isNull()) {
-          return applyIfDifferent(
-            PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
+          return applyIfDifferent(PossibleContents::exactType(
+            Type(otherType.getHeapType(), Nullable)));
         }
 
         // Both are null. The result is a null, of the LUB.
         auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
                                                      otherType.getHeapType()),
                         Nullable);
-        return applyIfDifferent(PossibleContents::literal(Literal::makeNull(lub)));
+        return applyIfDifferent(
+          PossibleContents::literal(Literal::makeNull(lub)));
       }
 
       if (type.getHeapType() == otherType.getHeapType()) {

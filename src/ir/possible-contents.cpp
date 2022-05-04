@@ -252,14 +252,16 @@ struct LinkFinder
 
   // Adds a root, if the expression is relevant. If the value is not specified,
   // mark the root as containing Many.
-  void addRoot(Expression* curr, PossibleContents contents = PossibleContents::many()) {
+  void addRoot(Expression* curr,
+               PossibleContents contents = PossibleContents::many()) {
     if (isRelevant(curr)) {
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
   }
 
   // As above, but given an arbitrary location and not just an expression.
-  void addRoot(Location loc, PossibleContents contents = PossibleContents::many()) {
+  void addRoot(Location loc,
+               PossibleContents contents = PossibleContents::many()) {
     info.roots[loc] = contents;
   }
 
@@ -299,17 +301,15 @@ struct LinkFinder
   void visitSIMDTernary(SIMDTernary* curr) { addRoot(curr); }
   void visitSIMDShift(SIMDShift* curr) { addRoot(curr); }
   void visitSIMDLoad(SIMDLoad* curr) { addRoot(curr); }
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    addRoot(curr);
-  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) { addRoot(curr); }
   void visitMemoryInit(MemoryInit* curr) {}
   void visitDataDrop(DataDrop* curr) {}
   void visitMemoryCopy(MemoryCopy* curr) {}
   void visitMemoryFill(MemoryFill* curr) {}
-  void visitConst(Const* curr) { addRoot(curr, PossibleContents::literal(curr->value)); }
-  void visitUnary(Unary* curr) {
-    addRoot(curr);
+  void visitConst(Const* curr) {
+    addRoot(curr, PossibleContents::literal(curr->value));
   }
+  void visitUnary(Unary* curr) { addRoot(curr); }
   void visitBinary(Binary* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
     receiveChildValue(curr->ifTrue, curr);
@@ -1309,8 +1309,7 @@ void Flower::applyContents(LocationIndex locationIndex,
       // will get the right value. Likewise, using the immutable value is better
       // than any value in a particular type, even an exact one.
       if (contents.isMany() || contents.isExactType()) {
-        contents =
-          PossibleContents::global(global->name, global->type);
+        contents = PossibleContents::global(global->name, global->type);
 
         // TODO: We could do better here, to set global->init->type instead of
         //       global->type, or even the contents.getType() - either of those
@@ -1427,8 +1426,8 @@ void Flower::applyContents(LocationIndex locationIndex,
           }
           bool mayBeNull = contents.getType().isNullable();
           if (mayBeNull) {
-            filtered.combine(
-              PossibleContents::literal(Literal::makeNull(Type(intendedType, Nullable))));
+            filtered.combine(PossibleContents::literal(
+              Literal::makeNull(Type(intendedType, Nullable))));
           }
         }
         if (!filtered.isNone()) {
