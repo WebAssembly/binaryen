@@ -78,24 +78,36 @@ class PossibleContents {
   using Variant = std::variant<None, Literal, GlobalInfo, Type, Many>;
   Variant value;
 
-  template<typename T> PossibleContents(T curr) : value(Variant(curr)) {}
-
 public:
   // The only public constructor creates a None - nothing is possible there. All
   // other things must use one of the static constructors below.
   PossibleContents() : value(None()) {}
 
-  static PossibleContents none() { return PossibleContents(Variant(None())); }
+  static PossibleContents none() {
+    PossibleContents ret;
+    ret.value = None();
+    return ret;
+  }
   static PossibleContents literal(Literal c) {
-    return PossibleContents(Variant(c));
+    PossibleContents ret;
+    ret.value = c;
+    return ret;
   }
   static PossibleContents global(Name name, Type type) {
-    return PossibleContents(Variant(GlobalInfo{name, type}));
+    PossibleContents ret;
+    ret.value = GlobalInfo{name, type};
+    return ret;
   }
   static PossibleContents exactType(Type type) {
-    return PossibleContents(Variant(type));
+    PossibleContents ret;
+    ret.value = type;
+    return ret;
   }
-  static PossibleContents many() { return PossibleContents(Variant(Many())); }
+  static PossibleContents many() {
+    PossibleContents ret;
+    ret.value = Many();
+    return ret;
+  }
 
   bool operator==(const PossibleContents& other) const {
     return value == other.value;
@@ -152,25 +164,25 @@ public:
         // not have a single constant anymore).
         if (!isNull()) {
           return applyIfDifferent(
-            PossibleContents(Type(type.getHeapType(), Nullable)));
+            PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
         }
         if (!other.isNull()) {
           return applyIfDifferent(
-            PossibleContents(Type(otherType.getHeapType(), Nullable)));
+            PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
         }
 
         // Both are null. The result is a null, of the LUB.
         auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
                                                      otherType.getHeapType()),
                         Nullable);
-        return applyIfDifferent(PossibleContents(Literal::makeNull(lub)));
+        return applyIfDifferent(PossibleContents::literal(Literal::makeNull(lub)));
       }
 
       if (type.getHeapType() == otherType.getHeapType()) {
         // The types differ, but the heap types agree, so the only difference
         // here is in nullability, and the combined value is the nullable type.
         return applyIfDifferent(
-          PossibleContents(Type(type.getHeapType(), Nullable)));
+          PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
       }
     }
 
