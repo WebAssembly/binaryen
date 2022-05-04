@@ -1016,10 +1016,10 @@ struct Flower {
     // current update) and forward them.
     auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
     auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
-    if (refContents.isNone()) {
+    if (refContents.isNone() || refContents.isNull()) {
       return;
     }
-    if (refContents.isExactType() || refContents.isConstant()) {
+    if (refContents.isExactType() || refContents.isGlobal()) {
       // Update the one possible type here.
       // TODO: In the case that this is a constant, it could be null
       //       or an immutable global, which we could do even more

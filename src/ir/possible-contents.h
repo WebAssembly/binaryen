@@ -206,26 +206,24 @@ public:
   }
 
   bool isNone() const { return std::get_if<None>(&value); }
-  bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
+  bool isLiteral() const { return std::get_if<Literal>(&value); }
   bool isGlobal() const { return std::get_if<GlobalInfo>(&value); }
   bool isExactType() const { return std::get_if<Type>(&value); }
   bool isMany() const { return std::get_if<Many>(&value); }
 
-  bool isConstant() const { return isConstantLiteral() || isGlobal(); }
-
   // Returns the single constant value.
-  Literal getConstantLiteral() const {
-    assert(isConstant());
+  Literal getLiteral() const {
+    assert(isLiteral());
     return std::get<Literal>(value);
   }
 
   Name getGlobal() const {
-    assert(isConstant());
+    assert(isGlobal());
     return std::get<GlobalInfo>(value).name;
   }
 
   bool isNull() const {
-    return isConstantLiteral() && getConstantLiteral().isNull();
+    return isLiteral() && getLiteral().isNull();
   }
 
   // Return the types possible here. If no type is possible, returns
@@ -246,11 +244,16 @@ public:
     }
   }
 
+  // Whether we can make an Expression* for this containing the proper contents.
+  // We can do that for a Literal (emitting a Const or RefFunc etc.) or a
+  // Global (emitting a GlobalGet), but not for anything else yet.
+  bool canMakeExpression() const { return isLiteral() || isGlobal(); }
+
   // Assuming we have a single value, make an expression containing that value.
   Expression* makeExpression(Module& wasm) {
     Builder builder(wasm);
-    if (isConstantLiteral()) {
-      return builder.makeConstantExpression(getConstantLiteral());
+    if (isLiteral()) {
+      return builder.makeConstantExpression(getLiteral());
     } else {
       auto name = getGlobal();
       return builder.makeGlobalGet(name, wasm.getGlobal(name)->type);
@@ -262,8 +265,8 @@ public:
     // contents.
     if (isNone()) {
       return 0;
-    } else if (isConstantLiteral()) {
-      return size_t(1) | (std::hash<Literal>()(getConstantLiteral()) << 3);
+    } else if (isLiteral()) {
+      return size_t(1) | (std::hash<Literal>()(getLiteral()) << 3);
     } else if (isGlobal()) {
       return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
     } else if (isExactType()) {
@@ -279,8 +282,8 @@ public:
     o << '[';
     if (isNone()) {
       o << "None";
-    } else if (isConstantLiteral()) {
-      o << "Literal " << getConstantLiteral();
+    } else if (isLiteral()) {
+      o << "Literal " << getLiteral();
       auto t = getType();
       if (t.isRef()) {
         auto h = t.getHeapType();

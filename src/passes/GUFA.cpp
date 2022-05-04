@@ -180,7 +180,7 @@ struct GUFAPass : public Pass {
           return;
         }
 
-        if (!contents.isConstant()) {
+        if (!contents.canMakeExpression()) {
           return;
         }
         if (!shouldOptimizeToConstant(curr)) {
