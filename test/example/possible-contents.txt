@@ -9,7 +9,7 @@ assertNotEqualSymmetric
 
 assertNotEqualSymmetric
 [None]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertNotEqualSymmetric
 [None]
@@ -33,7 +33,7 @@ assertNotEqualSymmetric
 
 assertNotEqualSymmetric
 [Literal 0]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertNotEqualSymmetric
 [Literal 0]
@@ -44,19 +44,19 @@ assertNotEqualSymmetric
 [Many]
 
 assertEqualSymmetric
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertNotEqualSymmetric
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global2]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global2]
 
 assertNotEqualSymmetric
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
 [ExactType i32]
 
 assertNotEqualSymmetric
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
 [Many]
 
 assertEqualSymmetric
@@ -128,18 +128,18 @@ assertEqualSymmetric
 
 assertCombination
 [None]
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertEqualSymmetric
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertEqualSymmetric
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertCombination
 [None]
@@ -218,7 +218,7 @@ assertEqualSymmetric
 
 assertCombination
 [Literal 0]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
 [ExactType i32]
 [ExactType i32]
 
@@ -233,7 +233,7 @@ assertEqualSymmetric
 
 assertCombination
 [Literal 0]
-[ImmutableGlobal $f64Global]
+[GlobalInfo $f64Global]
 [Many]
 [Many]
 
@@ -292,53 +292,23 @@ assertEqualSymmetric
 [Many]
 
 assertCombination
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertEqualSymmetric
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertEqualSymmetric
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global1]
 
 assertCombination
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $i32Global2]
-[ExactType i32]
-[ExactType i32]
-
-assertEqualSymmetric
-[ExactType i32]
-[ExactType i32]
-[ExactType i32]
-
-assertEqualSymmetric
-[ExactType i32]
-[ExactType i32]
-
-assertCombination
-[ImmutableGlobal $i32Global1]
-[ImmutableGlobal $f64Global]
-[Many]
-[Many]
-
-assertEqualSymmetric
-[Many]
-[Many]
-[Many]
-
-assertEqualSymmetric
-[Many]
-[Many]
-
-assertCombination
-[ImmutableGlobal $i32Global1]
-[ExactType i32]
+[GlobalInfo $i32Global1]
+[GlobalInfo $i32Global2]
 [ExactType i32]
 [ExactType i32]
 
@@ -352,7 +322,37 @@ assertEqualSymmetric
 [ExactType i32]
 
 assertCombination
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
+[GlobalInfo $f64Global]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[GlobalInfo $i32Global1]
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+[ExactType i32]
+
+assertEqualSymmetric
+[ExactType i32]
+[ExactType i32]
+
+assertCombination
+[GlobalInfo $i32Global1]
 [ExactType anyref HT: any null]
 [Many]
 [Many]
@@ -367,7 +367,7 @@ assertEqualSymmetric
 [Many]
 
 assertCombination
-[ImmutableGlobal $i32Global1]
+[GlobalInfo $i32Global1]
 [Many]
 [Many]
 [Many]
