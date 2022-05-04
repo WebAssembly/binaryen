@@ -985,7 +985,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::unordered_map<Location, PossibleContents> roots;
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "merging phase\n";
+  std::cout << "merging+indexing phase\n";
 #endif
 
   for (auto& [func, info] : analysis.map) {
@@ -994,6 +994,9 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     }
     for (auto& [root, value] : info.roots) {
       roots[root] = value;
+
+      // Ensure an index even for a root with no links to it.
+      getIndex(root);
     }
     for (auto [child, parent] : info.childParents) {
       childParents[getIndex(ExpressionLocation{child, 0})] =
@@ -1073,12 +1076,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // use during the flow.
   for (auto& link : links) {
     getTargets(link.from).push_back(link.to);
-  }
-
-  // Roots may appear that have no links to them, so index them as well to make
-  // sure everything is covered.
-  for (const auto& [location, _] : roots) {
-    getIndex(location);
   }
 
 #ifndef NDEBUG
