@@ -921,7 +921,10 @@ private:
   void
   writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex);
 
-  void copyBetweenNewLocations(Expression* destRef, Expression* srcRef, Index fieldIndex, Expression* copy);
+  void copyBetweenNewLocations(Expression* destRef,
+                               Expression* srcRef,
+                               Index fieldIndex,
+                               Expression* copy);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1372,9 +1375,9 @@ void Flower::updateNewLinks() {
 }
 
 void Flower::readFromNewLocations(HeapType declaredHeapType,
-                          Index fieldIndex,
-                          const PossibleContents& refContents,
-                          Expression* read) {
+                                  Index fieldIndex,
+                                  const PossibleContents& refContents,
+                                  Expression* read) {
   if (refContents.isNull()) {
     // Nothing is read here.
     return;
@@ -1419,8 +1422,9 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
   }
 }
 
-void
-Flower::writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex) {
+void Flower::writeToNewLocations(Expression* ref,
+                                 Expression* value,
+                                 Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
@@ -1456,7 +1460,10 @@ Flower::writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex
   }
 }
 
-void Flower::copyBetweenNewLocations(Expression* destRef, Expression* srcRef, Index fieldIndex, Expression* copy) {
+void Flower::copyBetweenNewLocations(Expression* destRef,
+                                     Expression* srcRef,
+                                     Index fieldIndex,
+                                     Expression* copy) {
   // A copy is equivalent to a read that connects directly to a write. We use
   // the copy itself as the "join" point, that is, we read values into the
   // copy, and use that as the source to write from. A copy instruction has

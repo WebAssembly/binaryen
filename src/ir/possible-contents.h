@@ -221,9 +221,7 @@ public:
     return std::get<GlobalInfo>(value).name;
   }
 
-  bool isNull() const {
-    return isLiteral() && getLiteral().isNull();
-  }
+  bool isNull() const { return isLiteral() && getLiteral().isNull(); }
 
   // Return the relevant type here. Note that the *meaning* of the type varies
   // by the contents (type $foo of a global means that type or any subtype, as a
