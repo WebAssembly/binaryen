@@ -8,10 +8,11 @@
 
 ;; void function type
 (module
+  ;; CHECK:      (type $super (func_subtype func))
+
   ;; CHECK:      (type $sub (func_subtype $super))
   (type $sub (func) (extends $super))
 
-  ;; CHECK:      (type $super (func_subtype func))
   (type $super (func))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null $sub))
@@ -20,10 +21,11 @@
 
 ;; function type with params and results
 (module
+  ;; CHECK:      (type $super (func_subtype (param i32) (result i32) func))
+
   ;; CHECK:      (type $sub (func_subtype (param i32) (result i32) $super))
   (type $sub (func (param i32) (result i32)) (extends $super))
 
-  ;; CHECK:      (type $super (func_subtype (param i32) (result i32) func))
   (type $super (func (param i32) (result i32)))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null $sub))
@@ -32,10 +34,11 @@
 
 ;; empty struct type
 (module
+  ;; CHECK:      (type $super (struct_subtype  data))
+
   ;; CHECK:      (type $sub (struct_subtype  $super))
   (type $sub (struct) (extends $super))
 
-  ;; CHECK:      (type $super (struct_subtype  data))
   (type $super (struct))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null $sub))
@@ -44,10 +47,11 @@
 
 ;; struct type with fields
 (module
+  ;; CHECK:      (type $super (struct_subtype (field i32) (field i64) data))
+
   ;; CHECK:      (type $sub (struct_subtype (field i32) (field i64) $super))
   (type $sub (struct i32 (field i64)) (extends $super))
 
-  ;; CHECK:      (type $super (struct_subtype (field i32) (field i64) data))
   (type $super (struct (field i32) i64))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null $sub))
@@ -56,10 +60,11 @@
 
 ;; array type
 (module
+  ;; CHECK:      (type $super (array_subtype i8 data))
+
   ;; CHECK:      (type $sub (array_subtype i8 $super))
   (type $sub (array i8) (extends $super))
 
-  ;; CHECK:      (type $super (array_subtype i8 data))
   (type $super (array i8))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null $sub))

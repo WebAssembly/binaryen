@@ -362,10 +362,8 @@ enum EncodedType {
   i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
-  // opaque host reference type
-  externref = -0x11, // 0x6f
-  // any reference type
-  anyref = -0x12, // 0x6e
+  // top type of references, including host references
+  anyref = -0x11, // 0x6f
   // comparable reference type
   eqref = -0x13, // 0x6d
   // nullable typed function reference type, with parameter
@@ -379,13 +377,11 @@ enum EncodedType {
   // run-time type info type, without depth index n
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
-  // func_type form
-  Func = -0x20,            // 0x60
-  Struct = -0x21,          // 0x5f
-  Array = -0x22,           // 0x5e
-  FuncExtending = -0x23,   // 0x5d
-  StructExtending = -0x24, // 0x5c
-  ArrayExtending = -0x25,  // 0x5b
+  // type forms
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
+  Sub = -0x30,    // 0x50
   // isorecursive recursion groups
   Rec = -0x31, // 0x4f
   // block_type
@@ -393,12 +389,11 @@ enum EncodedType {
 };
 
 enum EncodedHeapType {
-  func = -0x10,    // 0x70
-  extern_ = -0x11, // 0x6f
-  any = -0x12,     // 0x6e
-  eq = -0x13,      // 0x6d
-  i31 = -0x16,     // 0x6a
-  data = -0x19,    // 0x67
+  func = -0x10, // 0x70
+  any = -0x11,  // 0x6f
+  eq = -0x13,   // 0x6d
+  i31 = -0x16,  // 0x6a
+  data = -0x19, // 0x67
 };
 
 namespace UserSections {

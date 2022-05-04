@@ -372,21 +372,17 @@
   ;; CHECK:      (type $B (struct (field (ref null $A))))
 
   ;; CHECK:      (type $A (struct ))
-  ;; NOMNL:      (type $C (struct_subtype (field (ref null $D)) $B))
-
-  ;; NOMNL:      (type $D (struct_subtype  $A))
-
   ;; NOMNL:      (type $A (struct_subtype  data))
-  ;; NOMNL-TNH:      (type $C (struct_subtype (field (ref null $D)) $B))
-
-  ;; NOMNL-TNH:      (type $D (struct_subtype  $A))
-
   ;; NOMNL-TNH:      (type $A (struct_subtype  data))
   (type $A (struct_subtype  data))
   ;; NOMNL:      (type $B (struct_subtype (field (ref null $A)) $A))
   ;; NOMNL-TNH:      (type $B (struct_subtype (field (ref null $A)) $A))
   (type $B (struct_subtype (field (ref null $A)) $A))
+  ;; NOMNL:      (type $C (struct_subtype (field (ref null $D)) $B))
+  ;; NOMNL-TNH:      (type $C (struct_subtype (field (ref null $D)) $B))
   (type $C (struct_subtype (field (ref null $D)) $B))
+  ;; NOMNL:      (type $D (struct_subtype  $A))
+  ;; NOMNL-TNH:      (type $D (struct_subtype  $A))
   (type $D (struct_subtype  $A))
 
   ;; CHECK:      (func $test (param $C (ref $B)) (result anyref)

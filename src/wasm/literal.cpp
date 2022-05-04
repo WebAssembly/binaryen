@@ -47,7 +47,6 @@ Literal::Literal(Type type) : type(type) {
         return;
       case Type::unreachable:
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -102,7 +101,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
         return;
       case Type::unreachable:
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -128,7 +126,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
     if (heapType.isBasic()) {
       switch (heapType.getBasic()) {
         case HeapType::any:
-        case HeapType::ext:
         case HeapType::eq:
           return; // null
         case HeapType::i31:
@@ -355,7 +352,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::none:
     case Type::unreachable:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -384,7 +380,7 @@ bool Literal::operator==(const Literal& other) const {
       return gcData == other.gcData;
     }
     // other non-null reference type literals cannot represent concrete values,
-    // i.e. there is no concrete externref, anyref or eqref other than null.
+    // i.e. there is no concrete anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");
   };
   if (type.isBasic()) {
@@ -401,7 +397,6 @@ bool Literal::operator==(const Literal& other) const {
       case Type::v128:
         return memcmp(v128, other.v128, 16) == 0;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::dataref:
@@ -528,10 +523,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       }
     } else {
       switch (literal.type.getHeapType().getBasic()) {
-        case HeapType::ext:
-          assert(literal.isNull() && "unexpected non-null externref literal");
-          o << "externref(null)";
-          break;
         case HeapType::any:
           assert(literal.isNull() && "unexpected non-null anyref literal");
           o << "anyref(null)";
@@ -580,7 +571,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         literal.printVec128(o, literal.getv128());
         break;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -804,7 +794,6 @@ Literal Literal::eqz() const {
       return eq(Literal(double(0)));
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -828,7 +817,6 @@ Literal Literal::neg() const {
       return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -852,7 +840,6 @@ Literal Literal::abs() const {
       return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -993,7 +980,6 @@ Literal Literal::add(const Literal& other) const {
       return standardizeNaN(getf64() + other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1017,7 +1003,6 @@ Literal Literal::sub(const Literal& other) const {
       return standardizeNaN(getf64() - other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1120,7 +1105,6 @@ Literal Literal::mul(const Literal& other) const {
       return standardizeNaN(getf64() * other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1356,7 +1340,6 @@ Literal Literal::eq(const Literal& other) const {
       return Literal(getf64() == other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1380,7 +1363,6 @@ Literal Literal::ne(const Literal& other) const {
       return Literal(getf64() != other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:

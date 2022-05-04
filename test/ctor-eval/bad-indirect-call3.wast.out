@@ -1,5 +1,5 @@
 (module
- (type $externref_=>_none (func (param externref)))
+ (type $anyref_=>_none (func (param anyref)))
  (type $none_=>_none (func))
  (type $funcref_=>_none (func (param funcref)))
  (memory $0 256 256)
@@ -7,7 +7,7 @@
  (table $0 1 1 funcref)
  (elem (i32.const 0) $callee)
  (export "sig_mismatch" (func $sig_mismatch))
- (func $callee (param $0 externref)
+ (func $callee (param $0 anyref)
   (i32.store8
    (i32.const 40)
    (i32.const 67)
