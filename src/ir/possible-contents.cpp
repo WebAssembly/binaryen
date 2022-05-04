@@ -915,63 +915,13 @@ private:
                             const PossibleContents& refContents,
                             Expression* read);
 
-  // Similar to readFromNewLocations, but sends values from a
-  // struct.set/array.set to a heap location. In addition to the
-  // |getLocation| function (which plays the same role as in
-  // readFromNewLocations), gets the reference and the value of the
-  // struct.set/array.set operation.
+  // Similar to readFromNewLocations, but sends values from a struct.set or
+  // /array.set to a heap location. Receives the reference, value, and the field
+  // index written to (or 0 for an array).
   void
-  writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "    add special writes\n";
-#endif
-    // We could set up links here, but as we get to this code in
-    // any case when either the ref or the value of the struct.get has
-    // new contents, we can just flow the values forward directly. We
-    // can do that in a simple way that does not even check whether
-    // the ref or the value was just updated: simply figure out the
-    // values being written in the current state (which is after the
-    // current update) and forward them.
-    auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
-    auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
-    if (refContents.isNone() || refContents.isNull()) {
-      return;
-    }
-    if (refContents.isExactType() || refContents.isGlobal()) {
-      // Update the one possible type here.
-      // TODO: In the case that this is a constant, it could be null
-      //       or an immutable global, which we could do even more
-      //       with.
-      auto heapLoc =
-        DataLocation{refContents.getType().getHeapType(), fieldIndex};
-      sendContents(heapLoc, valueContents);
-    } else {
-      assert(refContents.isMany());
-      // Update all possible types here. First, subtypes, including the
-      // type itself.
-      auto type = ref->type.getHeapType();
-      for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
-        auto heapLoc = DataLocation{subType, fieldIndex};
-        sendContents(heapLoc, valueContents);
-      }
-    }
-  }
+  writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex);
 
-  void copyBetweenNewLocations(Expression* destRef, Expression* srcRef, Index fieldIndex, Expression* copy) {
-    // A copy is equivalent to a read that connects directly to a write. We use
-    // the copy itself as the "join" point, that is, we read values into the
-    // copy, and use that as the source to write from. A copy instruction has
-    // type none, so this may be slightly confusing, but creating a new fake
-    // expression as the "join" could be even more confusing as it would not be
-    // part of the IR. (Using a "join" is simpler than duplicating the code in
-    // readFromNewLocations() / writeToNewLocations() to manually copy things.)
-    auto srcRefContents = getContents(getIndex(ExpressionLocation{srcRef, 0}));
-    if (srcRefContents.isNone()) {
-      return;
-    }
-    readFromNewLocations(srcRef->type.getHeapType(), 0, srcRefContents, copy);
-    writeToNewLocations(destRef, copy, 0);
-  }
+  void copyBetweenNewLocations(Expression* destRef, Expression* srcRef, Index fieldIndex, Expression* copy);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1466,6 +1416,59 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
     connectDuringFlow(SpecialLocation{coneReadIndex},
                       ExpressionLocation{read, 0});
   }
+}
+
+void
+Flower::writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "    add special writes\n";
+#endif
+  // We could set up links here, but as we get to this code in
+  // any case when either the ref or the value of the struct.get has
+  // new contents, we can just flow the values forward directly. We
+  // can do that in a simple way that does not even check whether
+  // the ref or the value was just updated: simply figure out the
+  // values being written in the current state (which is after the
+  // current update) and forward them.
+  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+  auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
+  if (refContents.isNone() || refContents.isNull()) {
+    return;
+  }
+  if (refContents.isExactType() || refContents.isGlobal()) {
+    // Update the one possible type here.
+    // TODO: In the case that this is a constant, it could be null
+    //       or an immutable global, which we could do even more
+    //       with.
+    auto heapLoc =
+      DataLocation{refContents.getType().getHeapType(), fieldIndex};
+    sendContents(heapLoc, valueContents);
+  } else {
+    assert(refContents.isMany());
+    // Update all possible types here. First, subtypes, including the
+    // type itself.
+    auto type = ref->type.getHeapType();
+    for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
+      auto heapLoc = DataLocation{subType, fieldIndex};
+      sendContents(heapLoc, valueContents);
+    }
+  }
+}
+
+void Flower::copyBetweenNewLocations(Expression* destRef, Expression* srcRef, Index fieldIndex, Expression* copy) {
+  // A copy is equivalent to a read that connects directly to a write. We use
+  // the copy itself as the "join" point, that is, we read values into the
+  // copy, and use that as the source to write from. A copy instruction has
+  // type none, so this may be slightly confusing, but creating a new fake
+  // expression as the "join" could be even more confusing as it would not be
+  // part of the IR. (Using a "join" is simpler than duplicating the code in
+  // readFromNewLocations() / writeToNewLocations() to manually copy things.)
+  auto srcRefContents = getContents(getIndex(ExpressionLocation{srcRef, 0}));
+  if (srcRefContents.isNone()) {
+    return;
+  }
+  readFromNewLocations(srcRef->type.getHeapType(), 0, srcRefContents, copy);
+  writeToNewLocations(destRef, copy, 0);
 }
 
 } // anonymous namespace
