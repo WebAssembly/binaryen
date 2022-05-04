@@ -211,7 +211,6 @@ public:
   bool isExactType() const { return std::get_if<Type>(&value); }
   bool isMany() const { return std::get_if<Many>(&value); }
 
-  // Returns the single constant value.
   Literal getLiteral() const {
     assert(isLiteral());
     return std::get<Literal>(value);
@@ -226,8 +225,11 @@ public:
     return isLiteral() && getLiteral().isNull();
   }
 
-  // Return the types possible here. If no type is possible, returns
-  // unreachable; if many types are, returns none.
+  // Return the relevant type here. Note that the *meaning* of the type varies
+  // by the contents (type $foo of a global means that type or any subtype, as a
+  // subtype might be written to it, while type $foo of a Literal or an
+  // ExactType means that type and nothing else). If no type is possible, return
+  // unreachable; if many types are, return none.
   Type getType() const {
     if (auto* literal = std::get_if<Literal>(&value)) {
       return literal->type;
@@ -249,7 +251,6 @@ public:
   // Global (emitting a GlobalGet), but not for anything else yet.
   bool canMakeExpression() const { return isLiteral() || isGlobal(); }
 
-  // Assuming we have a single value, make an expression containing that value.
   Expression* makeExpression(Module& wasm) {
     Builder builder(wasm);
     if (isLiteral()) {
@@ -313,10 +314,10 @@ public:
   }
 };
 
-// *Location structs describe particular locations where content can appear.
+// The various *Location structs (ExpressionLocation, ResultLocation, etc.)
+// describe particular locations where content can appear.
 
-// The location of a specific expression, referring to the possible content
-// it can contain (which may be more precise than expr->type).
+// The location of a specific IR expression.
 struct ExpressionLocation {
   Expression* expr;
   // If this expression contains a tuple then each index in the tuple will have
@@ -337,8 +338,8 @@ struct ResultLocation {
   }
 };
 
-// The location of one of the locals in a function (either a parameter or a
-// var). TODO: would separating params from vars help?
+// The location of one of the locals in a function (either a param or a var).
+// TODO: would separating params from vars help?
 struct LocalLocation {
   Function* func;
   // The index of the local.
@@ -380,6 +381,7 @@ struct SignatureParamLocation {
   }
 };
 
+// The location of one of the results in a function signature.
 struct SignatureResultLocation {
   HeapType type;
   Index index;
@@ -429,7 +431,9 @@ struct NullLocation {
 struct SpecialLocation {
   // A unique index for this location. Necessary to keep different
   // SpecialLocations different, but the actual value here does not matter
-  // otherwise.
+  // otherwise. (In practice this will contain the LocationIndex for this
+  // Location, see possible-contents.cpp:makeSpecialLocation(), which is nice
+  // for debugging.)
   Index index;
   bool operator==(const SpecialLocation& other) const {
     return index == other.index;
