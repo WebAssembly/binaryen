@@ -581,9 +581,9 @@ struct InfoCollector
     addSpecialChildParentLink(curr->srcRef, curr);
   }
 
-  // TODO: Model which throws can go to which catches. For now, anything
-  //       thrown is sent to the location of that tag, and any catch of that
-  //       tag can read them
+  // TODO: Model which throws can go to which catches. For now, anything thrown
+  //       is sent to the location of that tag, and any catch of that tag can
+  //       read them.
   void visitTry(Try* curr) {
     receiveChildValue(curr->body, curr);
     for (auto* catchBody : curr->catchBodies) {
@@ -649,6 +649,8 @@ struct InfoCollector
     }
   }
 
+  // Adds a result to the current function, such as from a return or the value
+  // that flows out.
   void addResult(Expression* value) {
     if (value && isRelevant(value->type)) {
       for (Index i = 0; i < value->type.size(); i++) {
@@ -751,11 +753,15 @@ struct InfoCollector
   }
 };
 
+// Main logic for building data for the flow analysis and then performing that
+// analysis.
 struct Flower {
   Module& wasm;
 
   Flower(Module& wasm);
 
+  // Each LocationIndex will have one LocationInfo that contains the relevant
+  // information we need for each location.
   struct LocationInfo {
     Location location;
     PossibleContents contents;
@@ -768,7 +774,7 @@ struct Flower {
     LocationInfo(Location location) : location(location) {}
   };
 
-  // Maps location indexes to the information stored there.
+  // Maps location indexes to the info stored there, as just described above.
   std::vector<LocationInfo> locations;
 
   // Reverse mapping of locations to their indexes.
@@ -784,17 +790,16 @@ struct Flower {
     return locations[index].contents;
   }
 
+private:
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
     assert(index < locations.size());
     return locations[index].targets;
   }
 
   // Convert the data into the efficient LocationIndex form we will use during
-  // the flow analysis. This method returns the indx of a location, allocating
+  // the flow analysis. This method returns the index of a location, allocating
   // one if this is the first time we see it.
   LocationIndex getIndex(const Location& location) {
-    // New locations may be indexed during the flow, since we add new links
-    // during the flow. Allocate indexes and other bookkeeping as necessary.
     auto iter = locationIndexes.find(location);
     if (iter != locationIndexes.end()) {
       return iter->second;
@@ -820,8 +825,6 @@ struct Flower {
   IndexLink getIndexes(const LocationLink& link) {
     return {getIndex(link.from), getIndex(link.to)};
   }
-
-  // Internals for flow.
 
   // See the comment on CollectedInfo::childParents.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
