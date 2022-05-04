@@ -951,8 +951,9 @@ struct Flower {
 
     if (refContents.isExactType()) {
       // Add a single link to the exact location the reference points to.
-      connectDuringFlow(DataLocation{refContents.getType().getHeapType(), fieldIndex},
-                        ExpressionLocation{read, 0});
+      connectDuringFlow(
+        DataLocation{refContents.getType().getHeapType(), fieldIndex},
+        ExpressionLocation{read, 0});
     } else {
       // Otherwise, this is a cone: the declared type of the reference, or
       // any subtype of that, as both Many and ConstantGlobal reduce to
@@ -969,8 +970,8 @@ struct Flower {
       // that for each struct.get of a cone. If there are M such gets then
       // we have N * M edges for this. Instead, make a single canonical
       // "cone read" location, and add a single link to it from here.
-      auto& coneReadIndex =
-        canonicalConeReads[std::pair<HeapType, Index>(declaredHeapType, fieldIndex)];
+      auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
+        declaredHeapType, fieldIndex)];
       if (coneReadIndex == 0) {
         // 0 is an impossible index for a LocationIndex (as there must be
         // something at index 0 already - the ExpressionLocation of this
