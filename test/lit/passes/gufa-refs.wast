@@ -2767,10 +2767,53 @@
   )
 )
 
-;; Test for precise local analysis.
-;; XXX TODO the principle is: without a LocalGraph we are
-;;     sending values to too many places. If that leads us to a LUB that is too
-;;     pessimistic - a cast looks like it will fail due to a value written to
-;;     the local, but it never reaches tihs particular local.get - then we have
-;;     a problem
+(module
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
+  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) $A))
+  (type $B (struct_subtype (field i32) (field i32) $A))
+  ;; CHECK:      (func $0 (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (struct.new $B
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (struct.get $A 0
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $0 (result i32)
+    (local $ref (ref null $A))
+    (local.set $ref
+      (struct.new $B
+        (i32.const 0)
+        (i32.const 1)
+      )
+    )
+    ;; This struct.get has a reference of type $A, but we can infer the type
+    ;; present in the reference must actually be a $B, and $B precisely - no
+    ;; sub or supertypes. So we can infer a value of 0.
+    ;;
+    ;; A possible bug that this is a regression test for is a confusion between
+    ;; the type of the content and the declared type. If we mixed them up and
+    ;; thought this must be precisely an $A and not a $B then we'd emit an
+    ;; unreachable here (since no $A is ever allocated).
+    (struct.get $A 0
+      (local.get $ref)
+    )
+  )
+)
