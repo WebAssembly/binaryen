@@ -1306,7 +1306,7 @@ void Flower::applyContents(LocationIndex locationIndex,
       // than any value in a particular type, even an exact one.
       if (contents.isMany() || contents.isExactType()) {
         contents =
-          PossibleContents::ImmutableGlobal{global->name, global->type};
+          PossibleContents::ConstantGlobal{global->name, global->type};
 
         // TODO: We could do better here, to set global->init->type instead of
         //       global->type, or even the contents.getType() - either of those

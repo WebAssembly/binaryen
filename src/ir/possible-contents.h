@@ -37,11 +37,12 @@ namespace wasm {
 //
 //  * None:            No possible value.
 //
-//  * ConstantLiteral: One possible constant value like an i32 of 42.
+//  * Literal:         One possible constant value like an i32 of 42.
 //
-//  * ConstantGlobal:  The name of an immutable global whose value is here. We
-//                     do not know that value at compile time, but we know it is
-//                     equal to that global.
+//  * Global:          The name of an global whose value is here. We do not know
+//                     the actual value at compile time, but we know it is equal
+//                     to that global. Typically we can only infer this for
+//                     immutable globals.
 //
 //  * ExactType:       Any possible value of a specific exact type - *not*
 //                     including subtypes. For example, struct.new $Foo has
