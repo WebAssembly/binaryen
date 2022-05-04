@@ -80,7 +80,6 @@ struct PossibleContents {
 
 public:
   PossibleContents() : value(None()) {}
-  PossibleContents(Variant value) : value(value) {}
   template<typename T> PossibleContents(T curr) : value(Variant(curr)) {}
 
   static PossibleContents none() { return PossibleContents(Variant(None())); }
