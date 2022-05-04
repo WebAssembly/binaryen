@@ -86,7 +86,7 @@ public:
   PossibleContents() : value(None()) {}
 
   static PossibleContents none() { return PossibleContents(Variant(None())); }
-  static PossibleContents constantLiteral(Literal c) {
+  static PossibleContents literal(Literal c) {
     return PossibleContents(Variant(c));
   }
   static PossibleContents global(Name name, Type type) {
