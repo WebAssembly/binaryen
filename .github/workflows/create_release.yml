@@ -111,6 +111,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: start docker
       run: |
         docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
@@ -124,11 +126,6 @@ jobs:
 
     - name: install python dev dependencies
       run: ./alpine.sh pip3 install -r requirements-dev.txt
-
-    - name: git submodules
-      run: |
-        ./alpine.sh git submodule init
-        ./alpine.sh git submodule update
 
     - name: cmake
       run: |
