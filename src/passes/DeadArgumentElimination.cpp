@@ -122,7 +122,7 @@ struct DAEScanner
     }
     if (curr->isReturn) {
       info->hasTailCalls = true;
-      (*infoMap)[curr->target].hasTailCalls = true;
+      state->functions[curr->target].hasTailCalls = true;
     }
   }
 
