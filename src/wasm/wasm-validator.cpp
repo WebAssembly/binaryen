@@ -1399,7 +1399,6 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2842,7 +2841,6 @@ void FunctionValidator::validateAlignment(
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -3148,17 +3146,16 @@ static void validateTables(Module& module, ValidationInfo& info) {
       "table",
       "Non-nullable reference types are not yet supported for tables");
     if (!module.features.hasGC()) {
-      info.shouldBeTrue(table->type.isFunction() ||
-                          table->type == Type::externref,
+      info.shouldBeTrue(table->type.isFunction() || table->type == Type::anyref,
                         "table",
-                        "Only function reference types or externref are valid "
+                        "Only function reference types or anyref are valid "
                         "for table type (when GC is disabled)");
     }
     if (!module.features.hasTypedFunctionReferences()) {
       info.shouldBeTrue(table->type == Type::funcref ||
-                          table->type == Type::externref,
+                          table->type == Type::anyref,
                         "table",
-                        "Only funcref and externref are valid for table type "
+                        "Only funcref and anyref are valid for table type "
                         "(when typed-function references are disabled)");
     }
   }

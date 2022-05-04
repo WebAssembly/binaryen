@@ -188,7 +188,6 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // a load
         return;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -292,7 +291,6 @@ void BinaryInstWriter::visitStore(Store* curr) {
           << U32LEB(BinaryConsts::V128Store);
         break;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -748,7 +746,6 @@ void BinaryInstWriter::visitConst(Const* curr) {
       break;
     }
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:

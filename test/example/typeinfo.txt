@@ -2,9 +2,6 @@
 func
 funcref
 (ref func)
-extern
-externref
-(ref extern)
 any
 anyref
 (ref any)
@@ -30,7 +27,7 @@ i31ref
 (struct)
 (ref $struct.0)
 (ref null $struct.0)
-(struct (field i32 i64 (mut f32) (mut f64) externref))
+(struct (field i32 i64 (mut f32) (mut f64) anyref))
 (ref $struct.0)
 (ref null $struct.0)
 
@@ -38,21 +35,19 @@ i31ref
 (array i32)
 (ref $array.0)
 (ref null $array.0)
-(array (mut externref))
+(array (mut anyref))
 (ref $array.0)
 (ref null $array.0)
 
 ;; Tuple
 ()
 none
-(i32 f64 externref)
-(i32 f64 externref)
+(i32 f64 anyref)
+(i32 f64 anyref)
 
 ;; Rtt
 (rtt 0 func)
 (rtt 0 func)
-(rtt 1 extern)
-(rtt 1 extern)
 (rtt 2 any)
 (rtt 2 any)
 (rtt 3 eq)

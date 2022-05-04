@@ -153,7 +153,6 @@ struct HeapTypeGeneratorImpl {
 
   HeapType::BasicHeapType generateBasicHeapType() {
     return rand.pick(HeapType::func,
-                     HeapType::ext,
                      HeapType::any,
                      HeapType::eq,
                      HeapType::i31,
@@ -167,7 +166,6 @@ struct HeapTypeGeneratorImpl {
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::funcref,
-             Type::externref,
              Type::anyref,
              Type::eqref,
              Type::i31ref,
@@ -294,7 +292,6 @@ struct HeapTypeGeneratorImpl {
       return type;
     } else {
       switch (type) {
-        case HeapType::ext:
         case HeapType::i31:
           // No other subtypes.
           return type;
@@ -385,8 +382,6 @@ struct HeapTypeGeneratorImpl {
       switch (type.getBasic()) {
         case HeapType::func:
           return pickSubFunc();
-        case HeapType::ext:
-          return HeapType::ext;
         case HeapType::any:
           return pickSubAny();
         case HeapType::eq:
@@ -496,7 +491,6 @@ struct HeapTypeGeneratorImpl {
       switch (*basic) {
         case HeapType::func:
           return SignatureKind{};
-        case HeapType::ext:
         case HeapType::i31:
           return super;
         case HeapType::any:
