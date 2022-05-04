@@ -890,24 +890,14 @@ private:
 
   // Add a new connection while the flow is happening. If the link already
   // exists it is not added.
-  void connectDuringFlow(Location from, Location to) {
-    // Add the new link to a temporary structure on the side to avoid any
-    // aliasing as we work. updateNewLinks() will be called at the proper time
-    // to apply these links to the graph safely.
-    auto newLink = LocationLink{from, to};
-    auto newIndexLink = getIndexes(newLink);
-    if (links.count(newIndexLink) == 0) {
-      newLinks.push_back(newIndexLink);
-      links.insert(newIndexLink);
+  void connectDuringFlow(Location from, Location to);
 
-      // In addition to adding the link, send the contents along it right now,
-      // so that the graph state is consistent.
-      sendContents(to, getContents(getIndex(from)));
-    }
-  }
-
+  // New links added during the flow are added on the side to avoid aliasing
+  // during the flow, which iterates on links.
   std::vector<IndexLink> newLinks;
 
+  // New links are processed when we are not iterating on any links, at a safe
+  // time.
   void updateNewLinks();
 
   // Given the old and new contents at the current target, add reads to
@@ -1436,6 +1426,22 @@ void Flower::applyContents(LocationIndex locationIndex,
         WASM_UNREACHABLE("bad childParents content");
       }
     }
+  }
+}
+
+void Flower::connectDuringFlow(Location from, Location to) {
+  // Add the new link to a temporary structure on the side to avoid any
+  // aliasing as we work. updateNewLinks() will be called at the proper time
+  // to apply these links to the graph safely.
+  auto newLink = LocationLink{from, to};
+  auto newIndexLink = getIndexes(newLink);
+  if (links.count(newIndexLink) == 0) {
+    newLinks.push_back(newIndexLink);
+    links.insert(newIndexLink);
+
+    // In addition to adding the link, send the contents along it right now, so
+    // that the graph state is correct.
+    sendContents(to, getContents(getIndex(from)));
   }
 }
 
