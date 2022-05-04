@@ -118,7 +118,7 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 TEST_F(EquirecursiveTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
-  // (type $array (array (mut externref)))
+  // (type $array (array (mut anyref)))
   TypeBuilder builder(3);
   ASSERT_EQ(builder.size(), size_t{3});
 
@@ -127,11 +127,11 @@ TEST_F(EquirecursiveTest, Basics) {
   Type refArray = builder.getTempRefType(builder[2], NonNullable);
   Type refNullArray = builder.getTempRefType(builder[2], Nullable);
   Type rttArray = builder.getTempRttType(Rtt(0, builder[2]));
-  Type refNullExt(HeapType::ext, Nullable);
+  Type refNullAny(HeapType::any, Nullable);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
   Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
-  Array array(Field(refNullExt, Mutable));
+  Array array(Field(refNullAny, Mutable));
 
   builder[0] = sig;
   builder[1] = struct_;
@@ -159,7 +159,7 @@ TEST_F(EquirecursiveTest, Basics) {
   EXPECT_EQ(
     built[1].getStruct(),
     Struct({Field(newRefNullArray, Immutable), Field(newRttArray, Mutable)}));
-  EXPECT_EQ(built[2].getArray(), Array(Field(refNullExt, Mutable)));
+  EXPECT_EQ(built[2].getArray(), Array(Field(refNullAny, Mutable)));
 
   // The built types should be different from the temporary types.
   EXPECT_NE(newRefSig, refSig);
@@ -475,14 +475,14 @@ TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
 static void testCanonicalizeBasicTypes() {
   TypeBuilder builder(5);
 
-  Type externref = builder.getTempRefType(builder[0], Nullable);
-  Type externrefs = builder.getTempTupleType({externref, externref});
+  Type anyref = builder.getTempRefType(builder[0], Nullable);
+  Type anyrefs = builder.getTempTupleType({anyref, anyref});
 
-  builder[0] = HeapType::ext;
-  builder[1] = Struct({Field(externref, Immutable)});
-  builder[2] = Struct({Field(Type::externref, Immutable)});
-  builder[3] = Signature(externrefs, Type::none);
-  builder[4] = Signature({Type::externref, Type::externref}, Type::none);
+  builder[0] = HeapType::any;
+  builder[1] = Struct({Field(anyref, Immutable)});
+  builder[2] = Struct({Field(Type::anyref, Immutable)});
+  builder[3] = Signature(anyrefs, Type::none);
+  builder[4] = Signature({Type::anyref, Type::anyref}, Type::none);
 
   auto result = builder.build();
   ASSERT_TRUE(result);

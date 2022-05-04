@@ -32,7 +32,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging externref or anyref because these are opaque
+  // - there's no point in logging anyref because it is opaque
   // - don't bother logging tuples
   loggableTypes = {Type::i32, Type::i64, Type::f32, Type::f64};
   if (wasm.features.hasSIMD()) {
@@ -1460,7 +1460,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
         16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
     }
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1564,7 +1563,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
         16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
     }
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1700,7 +1698,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
           return Literal(getDouble());
         case Type::v128:
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -1747,7 +1744,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
           return Literal(double(small));
         case Type::v128:
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -1817,7 +1813,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
           break;
         case Type::v128:
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -1846,7 +1841,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
           break;
         case Type::v128:
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -1919,9 +1913,6 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
       switch (heapType.getBasic()) {
         case HeapType::func:
           return makeRefFuncConst(type);
-        case HeapType::ext:
-          // No trivial way to create an externref.
-          break;
         case HeapType::any: {
           // Choose a subtype we can materialize a constant for. We cannot
           // materialize non-nullable refs to func or i31 in global contexts.
@@ -2067,7 +2058,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
                              make(Type::v128)});
         }
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -2208,7 +2198,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
       WASM_UNREACHABLE("invalid value");
     }
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2447,7 +2436,6 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                           make(Type::v128)});
     }
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2655,7 +2643,6 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       break;
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2913,12 +2900,10 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      WeightedOption{Type::f32, VeryImportant},
                      WeightedOption{Type::f64, VeryImportant})
                 .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
-                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::anyref)
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      // Type(HeapType::func, NonNullable),
-                     // Type(HeapType::ext, NonNullable),
-                     Type(HeapType::any, Nullable),
-                     Type(HeapType::any, NonNullable),
+                     // Type(HeapType::any, NonNullable),
                      Type(HeapType::eq, Nullable),
                      Type(HeapType::eq, NonNullable),
                      Type(HeapType::i31, Nullable),
@@ -2929,11 +2914,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 
 Type TranslateToFuzzReader::getReferenceType() {
   return pick(FeatureOptions<Type>()
-                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::anyref)
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      Type(HeapType::func, NonNullable),
-                     Type(HeapType::ext, NonNullable),
-                     Type(HeapType::any, Nullable),
                      Type(HeapType::any, NonNullable),
                      Type(HeapType::eq, Nullable),
                      Type(HeapType::eq, NonNullable),
@@ -3016,12 +2999,9 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::func:
         // TODO: Typed function references.
         return HeapType::func;
-      case HeapType::ext:
-        return HeapType::ext;
       case HeapType::any:
         // TODO: nontrivial types as well.
         return pick(HeapType::func,
-                    HeapType::ext,
                     HeapType::any,
                     HeapType::eq,
                     HeapType::i31,

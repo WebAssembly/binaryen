@@ -239,7 +239,6 @@ void test_lub() {
   {
     // Basic Types
     for (auto other : {Type::funcref,
-                       Type::externref,
                        Type::anyref,
                        Type::eqref,
                        Type::i31ref,

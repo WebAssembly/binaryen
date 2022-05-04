@@ -1483,7 +1483,7 @@ public:
       return typename Cast::Null{original};
     }
     // The input may not be GC data or a function; for example it could be an
-    // externref or an i31. The cast definitely fails in these cases.
+    // anyref or an i31. The cast definitely fails in these cases.
     if (!original.isData() && !original.isFunction()) {
       return typename Cast::Failure{original};
     }
@@ -2360,7 +2360,6 @@ public:
         case Type::v128:
           return Literal(load128(addr).data());
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -2419,7 +2418,6 @@ public:
           store128(addr, value.getv128());
           break;
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
