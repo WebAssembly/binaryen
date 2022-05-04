@@ -44,6 +44,7 @@ auto funcNull =
 auto i32Global1 = PossibleContents::global("i32Global1", Type::i32);
 auto i32Global2 = PossibleContents::global("i32Global2", Type::i32);
 auto f64Global = PossibleContents::global("f64Global", Type::f64);
+auto anyGlobal = PossibleContents::global("anyGlobal", Type::anyref);
 
 auto func = PossibleContents::literal(
   Literal("func", Type(HeapType::func, NonNullable)));
@@ -124,20 +125,22 @@ static void testCombinations() {
   assertCombination(none_, exactI32, exactI32);
   assertCombination(none_, many, many);
 
-  // i32(0) will become many, unless the value or the type is identical.
+  // i32(0) will become many, unless the value is identical. (We could do
+  // exactI32 if only the values differ, but there is no point as subtyping
+  // does not exist for this type, and so many is just as informative.)
   assertCombination(i32Zero, i32Zero, i32Zero);
-  assertCombination(i32Zero, i32One, exactI32);
+  assertCombination(i32Zero, i32One, many);
   assertCombination(i32Zero, f64One, many);
-  assertCombination(i32Zero, i32Global1, exactI32);
+  assertCombination(i32Zero, i32Global1, many);
   assertCombination(i32Zero, f64Global, many);
-  assertCombination(i32Zero, exactI32, exactI32);
+  assertCombination(i32Zero, exactI32, many);
   assertCombination(i32Zero, exactAnyref, many);
   assertCombination(i32Zero, many, many);
 
   assertCombination(i32Global1, i32Global1, i32Global1);
-  assertCombination(i32Global1, i32Global2, exactI32);
+  assertCombination(i32Global1, i32Global2, many);
   assertCombination(i32Global1, f64Global, many);
-  assertCombination(i32Global1, exactI32, exactI32);
+  assertCombination(i32Global1, exactI32, many);
   assertCombination(i32Global1, exactAnyref, many);
   assertCombination(i32Global1, many, many);
 
@@ -146,6 +149,14 @@ static void testCombinations() {
   assertCombination(exactI32, many, many);
 
   assertCombination(many, many, many);
+
+  // Exact references: An exact reference only stays exact when combined with
+  // the same heap type (nullability may be added, but nothing else).
+  assertCombination(exactFuncref, exactAnyref, many);
+  assertCombination(exactFuncref, anyGlobal, many);
+  assertCombination(exactFuncref, func, many); // TODO this might be better
+  assertCombination(exactFuncref, exactFuncref, exactFuncref);
+  assertCombination(exactFuncref, exactNonNullFuncref, exactFuncref);
 
   // Nulls
 
