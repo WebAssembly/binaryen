@@ -134,7 +134,7 @@ namespace {
 
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
-struct FuncInfo {
+struct CollectedInfo {
   // All the links we found in this function. Rarely are there duplicates
   // in this list (say when writing to the same global location from another
   // global location), and we do not try to deduplicate here, just store them in
@@ -149,16 +149,35 @@ struct FuncInfo {
   // The vector here is of the location of the root and then its contents.
   std::vector<std::pair<Location, PossibleContents>> roots;
 
-  // See childParents comment elsewhere XXX where?
+  // In some cases we need to know the parent of the expression. Consider this:
+  //
+  //  (struct.set $A k
+  //    (local.get $ref)
+  //    (local.get $value)
+  //  )
+  //
+  // Imagine that the first local.get, for $ref, receives a new value. That can
+  // affect where the struct.set sends values: if previously that local.get had
+  // no possible contents, and now it does, then we have DataLocations to
+  // update. Likewise, when the second local.get is updated we must do the same,
+  // but again which DataLocations we update depends on the ref passed to the
+  // struct.get. To handle such things, we set add a childParent link, and then
+  // when we update the child we can find the parent and handle any special
+  // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
 };
 
-struct LinkFinder
-  : public PostWalker<LinkFinder, OverriddenVisitor<LinkFinder>> {
-  FuncInfo& info;
+// Walk the wasm and find all the links we need to care about, and the locations
+// and roots related to them. This builds up a CollectedInfo data structure.
+// After all InfoCollectors run, those data structures will be merged and the
+// main flow will begin.
+struct InfoCollector
+  : public PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
+  CollectedInfo& info;
 
-  LinkFinder(FuncInfo& info) : info(info) {}
+  InfoCollector(CollectedInfo& info) : info(info) {}
 
+  // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
     if (type == Type::unreachable || type == Type::none) {
       return false;
@@ -195,78 +214,10 @@ struct LinkFinder
     return false;
   }
 
-  // Each visit*() call is responsible for connecting the children of a
-  // node to that node. Responsibility for connecting the node's output to
-  // anywhere else (another expression or the function itself, if we are at
-  // the top level) is the responsibility of the outside.
-
-  // Handles the value sent in a break instruction. Does not handle anything
-  // else like the condition etc.
-  void handleBreakValue(Expression* curr) {
-    // Breaks send values to their destinations. Handle that here using
-    // existing utility code which is shorter than implementing multiple
-    // visit*() methods (however, it may be slower TODO)
-    BranchUtils::operateOnScopeNameUsesAndSentValues(
-      curr, [&](Name target, Expression* value) {
-        if (value) {
-          for (Index i = 0; i < value->type.size(); i++) {
-            info.links.push_back({ExpressionLocation{value, i},
-                                  BranchLocation{getFunction(), target, i}});
-          }
-        }
-      });
-  }
-
-  // Handles receiving values from breaks at the target (block/loop).
-  void handleBreakTarget(Expression* curr) {
-    // Break targets receive the things sent to them and flow them out.
-    if (isRelevant(curr->type)) {
-      BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
-        for (Index i = 0; i < curr->type.size(); i++) {
-          info.links.push_back({BranchLocation{getFunction(), target, i},
-                                ExpressionLocation{curr, i}});
-        }
-      });
-    }
-  }
-
-  // Connect a child's value to the parent, that is, all things possible in the
-  // child may flow to the parent.
-  void receiveChildValue(Expression* child, Expression* parent) {
-    if (isRelevant(parent) && isRelevant(child)) {
-      // The tuple sizes must match (or, if not a tuple, the size should be 1 in
-      // both cases.
-      assert(child->type.size() == parent->type.size());
-      for (Index i = 0; i < child->type.size(); i++) {
-        info.links.push_back(
-          {ExpressionLocation{child, i}, ExpressionLocation{parent, i}});
-      }
-    }
-  }
-
-  // Add links to make it possible to reach an expression's parent, which
-  // we need during the flow in special cases. See the comment on |childParents|
-  // on ContentOracle for details.
-  void addSpecialChildParentLink(Expression* child, Expression* parent) {
-    if (isRelevant(child->type)) {
-      info.childParents[child] = parent;
-    }
-  }
-
-  // Adds a root, if the expression is relevant. If the value is not specified,
-  // mark the root as containing Many.
-  void addRoot(Expression* curr,
-               PossibleContents contents = PossibleContents::many()) {
-    if (isRelevant(curr)) {
-      addRoot(ExpressionLocation{curr, 0}, contents);
-    }
-  }
-
-  // As above, but given an arbitrary location and not just an expression.
-  void addRoot(Location loc,
-               PossibleContents contents = PossibleContents::many()) {
-    info.roots.emplace_back(loc, contents);
-  }
+  // Each visit*() call is responsible for connecting the children of a node to
+  // that node. Responsibility for connecting the node's output to anywhere
+  // else (another expression or the function itself, if we are at the top
+  // level) is the responsibility of the outside.
 
   void visitBlock(Block* curr) {
     if (curr->list.empty()) {
@@ -715,6 +666,74 @@ struct LinkFinder
     // See visitPop().
     assert(handledPops == totalPops);
   }
+
+  // Helpers
+
+  // Handles the value sent in a break instruction. Does not handle anything
+  // else like the condition etc.
+  void handleBreakValue(Expression* curr) {
+    BranchUtils::operateOnScopeNameUsesAndSentValues(
+      curr, [&](Name target, Expression* value) {
+        if (value) {
+          for (Index i = 0; i < value->type.size(); i++) {
+            // Breaks send the contents of the break value to the branch target
+            // that the break goes to.
+            info.links.push_back({ExpressionLocation{value, i},
+                                  BranchLocation{getFunction(), target, i}});
+          }
+        }
+      });
+  }
+
+  // Handles receiving values from breaks at the target (block/loop).
+  void handleBreakTarget(Expression* curr) {
+    // Break targets receive the things sent to them and flow them out.
+    if (isRelevant(curr->type)) {
+      BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
+        for (Index i = 0; i < curr->type.size(); i++) {
+          info.links.push_back({BranchLocation{getFunction(), target, i},
+                                ExpressionLocation{curr, i}});
+        }
+      });
+    }
+  }
+
+  // Connect a child's value to the parent, that is, all content in the child is
+  // now considered possible in the parent as well.
+  void receiveChildValue(Expression* child, Expression* parent) {
+    if (isRelevant(parent) && isRelevant(child)) {
+      // The tuple sizes must match (or, if not a tuple, the size should be 1 in
+      // both cases).
+      assert(child->type.size() == parent->type.size());
+      for (Index i = 0; i < child->type.size(); i++) {
+        info.links.push_back(
+          {ExpressionLocation{child, i}, ExpressionLocation{parent, i}});
+      }
+    }
+  }
+
+  // See the comment on CollectedInfo::childParents.
+  void addSpecialChildParentLink(Expression* child, Expression* parent) {
+    if (isRelevant(child->type)) {
+      info.childParents[child] = parent;
+    }
+  }
+
+  // Adds a root, if the expression is relevant. If the value is not specified,
+  // mark the root as containing Many (which is the common case, so avoid
+  // verbose code).
+  void addRoot(Expression* curr,
+               PossibleContents contents = PossibleContents::many()) {
+    if (isRelevant(curr)) {
+      addRoot(ExpressionLocation{curr, 0}, contents);
+    }
+  }
+
+  // As above, but given an arbitrary location and not just an expression.
+  void addRoot(Location loc,
+               PossibleContents contents = PossibleContents::many()) {
+    info.roots.emplace_back(loc, contents);
+  }
 };
 
 struct Flower {
@@ -789,22 +808,7 @@ struct Flower {
 
   // Internals for flow.
 
-  // In some cases we need to know the parent of the expression, like with GC
-  // operations. Consider this:
-  //
-  //  (struct.set $A k
-  //    (local.get $ref)
-  //    (local.get $value)
-  //  )
-  //
-  // Imagine that the first local.get, for $ref, receives a new value. That can
-  // affect where the struct.set sends values: if previously that local.get had
-  // no possible contents, and now it does, then we have DataLocations to
-  // update. Likewise, when the second local.get is updated we must do the same,
-  // but again which DataLocations we update depends on the ref passed to the
-  // struct.get. To handle such things, we set add a childParent link, and then
-  // when we update the child we can handle any possible action regarding the
-  // parent.
+  // See the comment on CollectedInfo::childParents.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
   // The work remaining to do during the flow: locations that we are sending an
@@ -1048,9 +1052,9 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "parallel phase\n";
 #endif
 
-  ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
-    wasm, [&](Function* func, FuncInfo& info) {
-      LinkFinder finder(info);
+  ModuleUtils::ParallelFunctionAnalysis<CollectedInfo> analysis(
+    wasm, [&](Function* func, CollectedInfo& info) {
+      InfoCollector finder(info);
 
       if (func->imported()) {
         // Imports return unknown values.
@@ -1070,7 +1074,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // Also walk the global module code (for simplicitiy, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
-  LinkFinder finder(globalInfo);
+  InfoCollector finder(globalInfo);
   finder.walkModuleCode(&wasm);
 
   // Connect global init values (which we've just processed, as part of the
