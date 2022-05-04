@@ -826,7 +826,8 @@ private:
     return {getIndex(link.from), getIndex(link.to)};
   }
 
-  // See the comment on CollectedInfo::childParents.
+  // See the comment on CollectedInfo::childParents. This is the merged info
+  // from all the functions and the global scope.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
   // The work remaining to do during the flow: locations that we are sending an
@@ -840,62 +841,15 @@ private:
   // queue.
   std::unordered_map<LocationIndex, PossibleContents> workQueue;
 
-  // During the flow we will need information about subtyping.
-  //
-  // XXX
-  // We need a *MemoTree*. Each node represents one field in one heap type, in
-  // which we store the exact value a get would read, or the cone value a get
-  // would read (i.e., a get of that heap type or a subtype - a memo of all
-  // subtypes), and the same for sets. All the memoization then lets us do
-  // incremental work with maximal efficiency:
-  //
-  //  * Updating the ref or value of an exact set:
-  //    * Update the exact field of that type.
-  //    * Update the gets that depend on it.
-  //    * Do the same for the cone field of all supertypes, as a read of a cone
-  //    of a
-  //      super might be reading this type. Go up the supers while the field is
-  //      still relevant.
-  //  * Updating the ref or value of a cone set:
-  //    * Update the exact value of all subtypes, as we might be writing to any
-  //      of them.
-  //    * Update the cone field of all supertypes, as above.
-  //
-  // At all times, the cone field in a type must be equal to the sum over all
-  // subtypes. It is just a memoization of it. Perhaps we can defer that
-  // memoization to the reads?
-  //
-  //  * Updating the ref of an exact get: Just read the exact value there.
-  //  * Updating the ref of a cone exact get: ...
-  //  * Either way, add yourself if you aren't already to the readers of the
-  //    relevant exact values.
-  //  *
-  //    * If we have a memoed value for an exact get of that field, use it.
-  //    * If we have no value, compute it and write a memory. To compute it,
-  //      it is the sum over
-  //    * Either way, add the get to the list of exact gets of that field, if
-  //      we aren't there already.
-  //
-  // XXX We should assume the common case is cones on both sets and gets, and
-  // try to optimize that. While an exact set or get can be a single operation
-  // if we do no memoization, we should probably memoize for the sake of cones.
-  // But maybe start with a dedicated data structure of type fields with no
-  // memoization, and go from there. In such a struct, exact gets and sets are
-  // one operation. A cone set must apply its value to all subtypes, and a cone
-  // get must read from all subtypes - O(n) operations.
-  //  * However, maybe an even simpler memoization is, for gets, to see if some
-  //    other get already exists of what we need. Say we are a cone read of type
-  //    A, field 3, then if any other get already exists we've already computed
-  //    the value for it - and can just read it. That would actually be the
-  //    common case!
-  //    But cone sets will still need to write to all subs. I guess a
-  //    memoization we can do there is to store a cone marker, with a value: at
-  //    A:3 we've applied the value V to the entire cone. That means that if we
-  //    are at A:3 - either starting there, or along the way - we need go no
-  //    further if our value adds nothing on top of V!
-
   // Maps a heap type + an index in the type (0 for an array) to the index of a
-  // SpecialLocation for a cone read of those contents. XXX move comment to here
+  // SpecialLocation for a cone read of those contents. We use such special
+  // locations because a read of a cone type (as opposed to an exact type) will
+  // require N incoming links, from each of the N subtypes - and we need that
+  // for each struct.get of a cone. If there are M such gets then we have N * M
+  // edges for this. Instead, make a single canonical "cone read" location, and
+  // add a single link to it from here, which is only N + M (plus the cost of
+  // adding "latency" in requiring an additional step along the way for the
+  // data to flow along).
   std::unordered_map<std::pair<HeapType, Index>, LocationIndex>
     canonicalConeReads;
 
@@ -908,8 +862,6 @@ private:
     assert(seenIndex == expectedIndex);
     return seenIndex;
   }
-
-  std::unique_ptr<SubTypes> subTypes;
 
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
@@ -931,8 +883,8 @@ private:
   // Apply contents at a location where a change has occurred. This does the
   // bulk of the work during the flow: sending contents to other affected
   // locations, handling special cases as necessary, etc. This is passed
-  // the old contents, which in some cases we need in order to do special
-  // processing.
+  // the old contents, which in some cases we need in order to know exactly what
+  // changed during special processing.
   void applyContents(LocationIndex locationIndex,
                      const PossibleContents& oldContents);
 
@@ -994,11 +946,6 @@ private:
       // TODO: a cone with no subtypes needs no canonical location, just
       //       add direct links
 
-      // We introduce a special location for a cone read, because what we
-      // need here are N links, from each of the N subtypes - and we need
-      // that for each struct.get of a cone. If there are M such gets then
-      // we have N * M edges for this. Instead, make a single canonical
-      // "cone read" location, and add a single link to it from here.
       auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
         declaredHeapType, fieldIndex)];
       if (coneReadIndex == 0) {
@@ -1080,7 +1027,8 @@ private:
     writeToNewLocations(destRef, copy, 0);
   }
 
-  std::unordered_map<Expression*, Expression*> copyHelpers;
+  // We will need subtypes during the flow, so compute them once ahead of time.
+  std::unique_ptr<SubTypes> subTypes;
 };
 
 Flower::Flower(Module& wasm) : wasm(wasm) {

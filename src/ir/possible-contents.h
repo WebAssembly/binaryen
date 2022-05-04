@@ -422,12 +422,8 @@ struct NullLocation {
 };
 
 // Special locations do not correspond to actual locations in the wasm, but are
-// used to organize and optimize the graph. For example, in order to avoid N
-// locations that are all connected to M other nodes - which requires N * M
-// edges - we might introduce a single SpecialLocation that all the N connect to
-// and which connects to all the M. That requires only N + M connections (though
-// it does add "latency" in requiring an additional step along the way for the
-// data).
+// used to organize and optimize the graph. See the comment on
+// possible-contents.cpp:canonicalConeReads.
 struct SpecialLocation {
   // A unique index for this location. Necessary to keep different
   // SpecialLocations different, but the actual value here does not matter
