@@ -27,39 +27,50 @@
 
 namespace wasm {
 
-// Similar to PossibleConstantValues, but considers more types of contents.
-// Specifically, this can also track types, making this a variant over:
-//  * None: No possible value.
-//  * Literal: One possible constant value like i32(42)
-//  * ImmutableGlobal: The name of an immutable global whose value is here. We
-//    do not know that value at compile time, but we know it is equal to the
-//    global.
-//  * ExactType: Any possible value of a specific exact type. For example,
-//               ExactType($struct) means the value is of type $struct but not
-//               any subtype of it.
-//               If the type here is nullable then null is also allowed.
-//               TODO: add ConeType, which would include subtypes
-//  * Many: None of the above, so we must assume many things are possible here,
-//          more than we are willing to track, and must assume the worst in the
-//          calling code.
+//
+// PossibleContents represents the possible contents at a particular location
+// (such as in a local or in a function parameter). This is a little similar to
+// PossibleConstantValues, but considers more types of contents than constant
+// values - in particular, it can track types to some extent.
+//
+// The specific contents this can vary over are:
+//
+//  * None:            No possible value.
+//
+//  * ConstantLiteral: One possible constant value like an i32 of 42.
+//
+//  * ConstantGlobal:  The name of an immutable global whose value is here. We
+//                     do not know that value at compile time, but we know it is
+//                     equal to that global.
+//
+//  * ExactType:       Any possible value of a specific exact type - *not*
+//                     including subtypes. For example, struct.new $Foo has
+//                     ExactType contents of type $Foo.
+//                     If the type here is nullable then null is also allowed.
+//                     TODO: Add ConeType, which would include subtypes.
+//
+//  * Many:            Anything else. Many things are possible here, and we do
+//                     not track what they might be, so we must assume the worst
+//                     in the calling code.
+//
 struct PossibleContents {
   struct None : public std::monostate {};
 
-  struct ImmutableGlobal {
+  struct ConstantGlobal {
     Name name;
     // The type of the global in the module. We stash this here so that we do
     // not need to pass around a module all the time.
     // TODO: could we save size in this variant if we did pass around the
     //       module?
     Type type;
-    bool operator==(const ImmutableGlobal& other) const {
+    bool operator==(const ConstantGlobal& other) const {
       return name == other.name && type == other.type;
     }
   };
 
   struct Many : public std::monostate {};
 
-  using Variant = std::variant<None, Literal, ImmutableGlobal, Type, Many>;
+  using Variant = std::variant<None, Literal, ConstantGlobal, Type, Many>;
   Variant value;
 
 public:
@@ -72,7 +83,7 @@ public:
     return PossibleContents(Variant(c));
   }
   static PossibleContents constantGlobal(Name name, Type type) {
-    return PossibleContents(Variant(ImmutableGlobal{name, type}));
+    return PossibleContents(Variant(ConstantGlobal{name, type}));
   }
   static PossibleContents exactType(Type type) {
     return PossibleContents(Variant(type));
@@ -173,7 +184,7 @@ public:
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
-  bool isConstantGlobal() const { return std::get_if<ImmutableGlobal>(&value); }
+  bool isConstantGlobal() const { return std::get_if<ConstantGlobal>(&value); }
   bool isExactType() const { return std::get_if<Type>(&value); }
   bool isMany() const { return std::get_if<Many>(&value); }
 
@@ -187,7 +198,7 @@ public:
 
   Name getConstantGlobal() const {
     assert(isConstant());
-    return std::get<ImmutableGlobal>(value).name;
+    return std::get<ConstantGlobal>(value).name;
   }
 
   bool isNull() const {
@@ -199,7 +210,7 @@ public:
   Type getType() const {
     if (auto* literal = std::get_if<Literal>(&value)) {
       return literal->type;
-    } else if (auto* global = std::get_if<ImmutableGlobal>(&value)) {
+    } else if (auto* global = std::get_if<ConstantGlobal>(&value)) {
       return global->type;
     } else if (auto* type = std::get_if<Type>(&value)) {
       return *type;
@@ -253,7 +264,7 @@ public:
         o << " HT: " << h;
       }
     } else if (isConstantGlobal()) {
-      o << "ImmutableGlobal $" << getConstantGlobal();
+      o << "ConstantGlobal $" << getConstantGlobal();
     } else if (isExactType()) {
       o << "ExactType " << getType();
       auto t = getType();
