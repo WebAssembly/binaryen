@@ -154,57 +154,51 @@ public:
     auto type = getType();
     auto otherType = other.getType();
 
-    // Special handling for references.
-    if (type.isRef() && otherType.isRef()) {
-      // Nulls are always equal to each other, even if their types differ.
-      if (isNull() || other.isNull()) {
-        // If only one is a null then the combination is to add nullability to
-        // this one. (This is correct both for a literal or for a type: if it
-        // was a literal then now we have either a literal or a null, so we do
-        // not have a single constant anymore).
-        if (!isNull()) {
-          return applyIfDifferent(
-            PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
-        }
-        if (!other.isNull()) {
-          return applyIfDifferent(PossibleContents::exactType(
-            Type(otherType.getHeapType(), Nullable)));
-        }
-
-        // Both are null. The result is a null, of the LUB.
-        auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
-                                                     otherType.getHeapType()),
-                        Nullable);
-        return applyIfDifferent(
-          PossibleContents::literal(Literal::makeNull(lub)));
-      }
-
-      if (isExactType() && other.isExactType() &&
-          type.getHeapType() == otherType.getHeapType()) {
-        // These are two exact types that agree on the heap type but not the
-        // full type (the full type must differ as otherwise they'd be 100%
-        // identical, and we'd have exited before). That means the only
-        // difference is nullability, and the combined value is the nullable
-        // type.
-        return applyIfDifferent(
-          PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
-      }
-    } else if (type.isRef() || otherType.isRef()) {
-      // Just one is a reference, so this definitely becomes Many.
+    if (!type.isRef() | !otherType.isRef()) {
+      // At least one is not a reference. We could in principle try to find ExactType here,
+      // say as the combination of two different constants, but as subtyping does
+      // not exist, Many is good enough anyhow, so do that.
       value = Many();
       return true;
     }
 
-    if (type == otherType) {
-      // At least their types match, so we can switch to an exact type here
-      // (subtyping is not an issue, since we already ruled out references
-      // before).
-      if (isExactType()) {
-        return false;
+    // Special handling for references from here.
+
+    // Nulls are always equal to each other, even if their types differ.
+    if (isNull() || other.isNull()) {
+      // If only one is a null then the combination is to add nullability to
+      // this one. (This is correct both for a literal or for a type: if it
+      // was a literal then now we have either a literal or a null, so we do
+      // not have a single constant anymore).
+      if (!isNull()) {
+        return applyIfDifferent(
+          PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
       }
-      value = Type(type);
-      return true;
+      if (!other.isNull()) {
+        return applyIfDifferent(PossibleContents::exactType(
+          Type(otherType.getHeapType(), Nullable)));
+      }
+
+      // Both are null. The result is a null, of the LUB.
+      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
+                                                   otherType.getHeapType()),
+                      Nullable);
+      return applyIfDifferent(
+        PossibleContents::literal(Literal::makeNull(lub)));
     }
+
+    if (isExactType() && other.isExactType() &&
+        type.getHeapType() == otherType.getHeapType()) {
+      // These are two exact types that agree on the heap type but not the
+      // full type (the full type must differ as otherwise they'd be 100%
+      // identical, and we'd have exited before). That means the only
+      // difference is nullability, and the combined value is the nullable
+      // type.
+      return applyIfDifferent(
+        PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
+    }
+
+    // TODO: An exact type + a function constant might remain an exact type.
 
     // Nothing else possible combines in an interesting way; emit a Many.
     value = Many();
