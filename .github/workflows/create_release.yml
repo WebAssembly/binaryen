@@ -125,6 +125,11 @@ jobs:
     - name: install python dev dependencies
       run: ./alpine.sh pip3 install -r requirements-dev.txt
 
+    - name: git submodules
+      run: |
+        ./alpine.sh git submodule init
+        ./alpine.sh git submodule update
+
     - name: cmake
       run: |
         ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install
