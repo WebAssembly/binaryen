@@ -78,9 +78,12 @@ struct PossibleContents {
   using Variant = std::variant<None, Literal, GlobalInfo, Type, Many>;
   Variant value;
 
-public:
-  PossibleContents() : value(None()) {}
   template<typename T> PossibleContents(T curr) : value(Variant(curr)) {}
+
+public:
+  // The only public constructor creates a None - nothing is possible there. All
+  // other things must use one of the static constructors below.
+  PossibleContents() : value(None()) {}
 
   static PossibleContents none() { return PossibleContents(Variant(None())); }
   static PossibleContents constantLiteral(Literal c) {
