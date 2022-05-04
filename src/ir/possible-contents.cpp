@@ -960,7 +960,7 @@ struct Flower {
       // that in this case TODO text
       // TODO: the ConstantGlobal case may have a different cone type than
       //       the heapType, we could use that here.
-      assert(refContents.isMany() || refContents.isConstantGlobal());
+      assert(refContents.isMany() || refContents.isGlobal());
 
       // TODO: a cone with no subtypes needs no canonical location, just
       //       add direct links
@@ -1306,7 +1306,7 @@ void Flower::applyContents(LocationIndex locationIndex,
       // than any value in a particular type, even an exact one.
       if (contents.isMany() || contents.isExactType()) {
         contents =
-          PossibleContents::ConstantGlobal{global->name, global->type};
+          PossibleContents::global(global->name, global->type);
 
         // TODO: We could do better here, to set global->init->type instead of
         //       global->type, or even the contents.getType() - either of those

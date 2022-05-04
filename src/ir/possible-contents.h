@@ -57,21 +57,25 @@ namespace wasm {
 struct PossibleContents {
   struct None : public std::monostate {};
 
-  struct ConstantGlobal {
+  struct GlobalInfo {
     Name name;
     // The type of the global in the module. We stash this here so that we do
     // not need to pass around a module all the time.
     // TODO: could we save size in this variant if we did pass around the
     //       module?
     Type type;
-    bool operator==(const ConstantGlobal& other) const {
+    bool operator==(const GlobalInfo& other) const {
       return name == other.name && type == other.type;
     }
   };
 
   struct Many : public std::monostate {};
 
-  using Variant = std::variant<None, Literal, ConstantGlobal, Type, Many>;
+  // TODO: This is similar to the variant in PossibleConstantValues, and perhaps
+  //       we could share code, but extending a variant using template magic may
+  //       not be worthwhile. Another option might be to make PCV inherit from
+  //       this and disallow ExactType etc.
+  using Variant = std::variant<None, Literal, GlobalInfo, Type, Many>;
   Variant value;
 
 public:
@@ -83,8 +87,8 @@ public:
   static PossibleContents constantLiteral(Literal c) {
     return PossibleContents(Variant(c));
   }
-  static PossibleContents constantGlobal(Name name, Type type) {
-    return PossibleContents(Variant(ConstantGlobal{name, type}));
+  static PossibleContents global(Name name, Type type) {
+    return PossibleContents(Variant(GlobalInfo{name, type}));
   }
   static PossibleContents exactType(Type type) {
     return PossibleContents(Variant(type));
@@ -185,11 +189,11 @@ public:
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
-  bool isConstantGlobal() const { return std::get_if<ConstantGlobal>(&value); }
+  bool isGlobal() const { return std::get_if<GlobalInfo>(&value); }
   bool isExactType() const { return std::get_if<Type>(&value); }
   bool isMany() const { return std::get_if<Many>(&value); }
 
-  bool isConstant() const { return isConstantLiteral() || isConstantGlobal(); }
+  bool isConstant() const { return isConstantLiteral() || isGlobal(); }
 
   // Returns the single constant value.
   Literal getConstantLiteral() const {
@@ -197,9 +201,9 @@ public:
     return std::get<Literal>(value);
   }
 
-  Name getConstantGlobal() const {
+  Name getGlobal() const {
     assert(isConstant());
-    return std::get<ConstantGlobal>(value).name;
+    return std::get<GlobalInfo>(value).name;
   }
 
   bool isNull() const {
@@ -211,7 +215,7 @@ public:
   Type getType() const {
     if (auto* literal = std::get_if<Literal>(&value)) {
       return literal->type;
-    } else if (auto* global = std::get_if<ConstantGlobal>(&value)) {
+    } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
       return global->type;
     } else if (auto* type = std::get_if<Type>(&value)) {
       return *type;
@@ -230,7 +234,7 @@ public:
     if (isConstantLiteral()) {
       return builder.makeConstantExpression(getConstantLiteral());
     } else {
-      auto name = getConstantGlobal();
+      auto name = getGlobal();
       return builder.makeGlobalGet(name, wasm.getGlobal(name)->type);
     }
   }
@@ -242,8 +246,8 @@ public:
       return 0;
     } else if (isConstantLiteral()) {
       return size_t(1) | (std::hash<Literal>()(getConstantLiteral()) << 3);
-    } else if (isConstantGlobal()) {
-      return size_t(2) | (std::hash<Name>()(getConstantGlobal()) << 3);
+    } else if (isGlobal()) {
+      return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
     } else if (isExactType()) {
       return size_t(3) | (std::hash<Type>()(getType()) << 3);
     } else if (isMany()) {
@@ -264,8 +268,8 @@ public:
         auto h = t.getHeapType();
         o << " HT: " << h;
       }
-    } else if (isConstantGlobal()) {
-      o << "ConstantGlobal $" << getConstantGlobal();
+    } else if (isGlobal()) {
+      o << "GlobalInfo $" << getGlobal();
     } else if (isExactType()) {
       o << "ExactType " << getType();
       auto t = getType();
