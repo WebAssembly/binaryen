@@ -940,7 +940,7 @@ struct Flower {
   //                     such a location exists.
   // @param declaredRefType: the type declared in the IR on the
   //                         reference input to the struct.get/array.get.
-  void readFromNewLocations(HeapType heapType,
+  void readFromNewLocations(HeapType declaredHeapType,
                             Index fieldIndex,
                             const PossibleContents& refContents,
                             Expression* read) {
@@ -950,8 +950,8 @@ struct Flower {
     }
 
     if (refContents.isExactType()) {
-      // Add a single link to this exact location.
-      connectDuringFlow(DataLocation{heapType, fieldIndex},
+      // Add a single link to the exact location the reference points to.
+      connectDuringFlow(DataLocation{refContents.getType().getHeapType(), fieldIndex},
                         ExpressionLocation{read, 0});
     } else {
       // Otherwise, this is a cone: the declared type of the reference, or
@@ -970,7 +970,7 @@ struct Flower {
       // we have N * M edges for this. Instead, make a single canonical
       // "cone read" location, and add a single link to it from here.
       auto& coneReadIndex =
-        canonicalConeReads[std::pair<HeapType, Index>(heapType, fieldIndex)];
+        canonicalConeReads[std::pair<HeapType, Index>(declaredHeapType, fieldIndex)];
       if (coneReadIndex == 0) {
         // 0 is an impossible index for a LocationIndex (as there must be
         // something at index 0 already - the ExpressionLocation of this
@@ -980,7 +980,7 @@ struct Flower {
         // TODO: if the old contents here were an exact type then we could
         // remove the old link, which becomes redundant now. But removing
         // links is not efficient, so maybe not worth it.
-        for (auto type : subTypes->getAllSubTypesInclusive(heapType)) {
+        for (auto type : subTypes->getAllSubTypesInclusive(declaredHeapType)) {
           connectDuringFlow(DataLocation{type, fieldIndex},
                             SpecialLocation{coneReadIndex});
         }
