@@ -1066,15 +1066,13 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "indexing phase\n";
+  std::cout << "Link-targets phase\n";
 #endif
 
+  // Add all links to the targets vectors of the source locations, which we will
+  // use during the flow.
   for (auto& link : links) {
-    auto fromIndex = link.from;
-    auto toIndex = link.to;
-
-    // Add this link to |locationTargets|.
-    getTargets(fromIndex).push_back(toIndex);
+    getTargets(link.from).push_back(link.to);
   }
 
   // Roots may appear that have no links to them, so index them as well to make
