@@ -154,7 +154,7 @@ public:
     auto type = getType();
     auto otherType = other.getType();
 
-    // Special handling for nulls and nullability.
+    // Special handling for references.
     if (type.isRef() && otherType.isRef()) {
       // Nulls are always equal to each other, even if their types differ.
       if (isNull() || other.isNull()) {
@@ -179,17 +179,26 @@ public:
           PossibleContents::literal(Literal::makeNull(lub)));
       }
 
-      if (type.getHeapType() == otherType.getHeapType()) {
-        // The types differ, but the heap types agree, so the only difference
-        // here is in nullability, and the combined value is the nullable type.
+      if (isExactType() && other.isExactType() &&
+          type.getHeapType() == otherType.getHeapType()) {
+        // These are two exact types that agree on the heap type but not the
+        // full type (the full type must differ as otherwise they'd be 100%
+        // identical, and we'd have exited before). That means the only
+        // difference is nullability, and the combined value is the nullable
+        // type.
         return applyIfDifferent(
           PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
       }
+    } else if (type.isRef() || otherType.isRef()) {
+      // Just one is a reference, so this definitely becomes Many.
+      value = Many();
+      return true;
     }
 
     if (type == otherType) {
       // At least their types match, so we can switch to an exact type here
-      // (unless we were already that, in which case nothing happens.
+      // (subtyping is not an issue, since we already ruled out references
+      // before).
       if (isExactType()) {
         return false;
       }
