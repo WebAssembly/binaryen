@@ -62,9 +62,6 @@ struct DAEFunctionInfo {
   SortedVector unusedParams;
   // calls going to this function.
   std::vector<Call*> calls;
-  // Map of all calls that are dropped, to their drops' locations (so that
-  // if we can optimize out the drop, we can replace the drop there).
-  std::unordered_map<Call*, Expression**> droppedCalls;
   // Whether this function contains any tail calls (including indirect tail
   // calls) and the set of functions this function tail calls. Tail-callers and
   // tail-callees cannot have their dropped returns removed because of the
@@ -222,7 +219,7 @@ struct DAE : public Pass {
     // for optimization opportunities.
     for (auto& [name, info] : state.functions) {
       // We can only optimize if we see all the calls and can modify them.
-      if (info.hasUnseenCalls) {
+      if (info.hasUnseenCalls || info.calls.empty()) {
         continue;
       }
       // Refine argument types before doing anything else. This does not
@@ -269,7 +266,7 @@ struct DAE : public Pass {
         if (!allDropped) {
           continue;
         }
-        removeReturnValue(info.func, info.calls, module, info.droppedCalls);
+        removeReturnValue(info.func, info.calls, module, state.droppedCalls);
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
         changed.insert(info.func);
