@@ -1919,7 +1919,12 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
           Nullability nullability = getSubType(type.getNullability());
           HeapType subtype;
           if (funcContext || nullability == Nullable) {
-            subtype = pick(HeapType::func, HeapType::i31, HeapType::data);
+            subtype = pick(FeatureOptions<HeapType>()
+                             .add(FeatureSet::ReferenceTypes, HeapType::func)
+                             .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                                  HeapType::func,
+                                  HeapType::i31,
+                                  HeapType::data));
           } else {
             subtype = HeapType::data;
           }
@@ -3001,11 +3006,15 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return HeapType::func;
       case HeapType::any:
         // TODO: nontrivial types as well.
-        return pick(HeapType::func,
-                    HeapType::any,
-                    HeapType::eq,
-                    HeapType::i31,
-                    HeapType::data);
+        return pick(
+          FeatureOptions<HeapType>()
+            .add(FeatureSet::ReferenceTypes, HeapType::func, HeapType::any)
+            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                 HeapType::func,
+                 HeapType::any,
+                 HeapType::eq,
+                 HeapType::i31,
+                 HeapType::data));
       case HeapType::eq:
         // TODO: nontrivial types as well.
         return pick(HeapType::eq, HeapType::i31, HeapType::data);
