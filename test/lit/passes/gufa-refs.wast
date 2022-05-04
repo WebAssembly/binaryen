@@ -2817,3 +2817,184 @@
     )
   )
 )
+
+;; array.copy between types.
+(module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $bytes (array_subtype (mut anyref) data))
+  (type $bytes (array (mut anyref)))
+  ;; CHECK:      (type $chars (array_subtype (mut anyref) data))
+  (type $chars (array (mut anyref)))
+
+  ;; CHECK:      (elem declare func $test)
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
+  ;; CHECK-NEXT:  (local $chars (ref null $chars))
+  ;; CHECK-NEXT:  (local.set $bytes
+  ;; CHECK-NEXT:   (array.init_static $bytes
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $chars
+  ;; CHECK-NEXT:   (array.init_static $chars
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.copy $chars $bytes
+  ;; CHECK-NEXT:   (local.get $chars)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $bytes)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get $bytes
+  ;; CHECK-NEXT:      (local.get $bytes)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get $chars
+  ;; CHECK-NEXT:      (local.get $chars)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $bytes (ref null $bytes))
+    (local $chars (ref null $chars))
+    (local.set $bytes
+      (array.init_static $bytes
+        (ref.func $test)
+      )
+    )
+    (local.set $chars
+      (array.init_static $chars
+        (ref.null any)
+      )
+    )
+    (array.copy $chars $bytes
+      (local.get $chars)
+      (i32.const 0)
+      (local.get $bytes)
+      (i32.const 0)
+      (i32.const 1)
+    )
+    (drop
+      (array.get $bytes
+        (local.get $bytes)
+        (i32.const 0)
+      )
+    )
+     (drop
+      (array.get $chars
+        (local.get $chars)
+        (i32.const 0)
+      )
+    )
+  )
+)
+
+;; As above, but with a copy in the wrong direction. Now $chars has no possible
+;; non-null value.
+(module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $bytes (array_subtype (mut anyref) data))
+  (type $bytes (array (mut anyref)))
+  ;; CHECK:      (type $chars (array_subtype (mut anyref) data))
+  (type $chars (array (mut anyref)))
+
+  ;; CHECK:      (elem declare func $test)
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
+  ;; CHECK-NEXT:  (local $chars (ref null $chars))
+  ;; CHECK-NEXT:  (local.set $bytes
+  ;; CHECK-NEXT:   (array.init_static $bytes
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $chars
+  ;; CHECK-NEXT:   (array.init_static $chars
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.copy $bytes $chars
+  ;; CHECK-NEXT:   (local.get $bytes)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $chars)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get $bytes
+  ;; CHECK-NEXT:      (local.get $bytes)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get $chars
+  ;; CHECK-NEXT:      (local.get $chars)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $bytes (ref null $bytes))
+    (local $chars (ref null $chars))
+    ;; Write something to $bytes, but just a null to $chars. But then do a copy
+    ;; which means both can contain that non-null value.
+    (local.set $bytes
+      (array.init_static $bytes
+        (ref.func $test)
+      )
+    )
+    (local.set $chars
+      (array.init_static $chars
+        (ref.null any)
+      )
+    )
+    (array.copy $bytes $chars
+      (local.get $bytes)
+      (i32.const 0)
+      (local.get $chars)
+      (i32.const 0)
+      (i32.const 1)
+    )
+    (drop
+      (array.get $bytes
+        (local.get $bytes)
+        (i32.const 0)
+      )
+    )
+     (drop
+      (array.get $chars
+        (local.get $chars)
+        (i32.const 0)
+      )
+    )
+  )
+)

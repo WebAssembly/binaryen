@@ -469,14 +469,17 @@ struct InfoCollector
     return location;
   }
 
-  // Iterates over a list of children and adds links as needed. The
-  // target of the link is created using a function that is passed
-  // in, which receives the index of the child.
+  // Iterates over a list of children and adds links as needed. The target of
+  // the link is created using a function that is passed in, which receives the
+  // index of the child.
   void handleChildList(ExpressionList& operands,
                        std::function<Location(Index)> makeTarget) {
     Index i = 0;
     for (auto* operand : operands) {
+      // This helper is not used from places that allow a tuple (hence we can
+      // hardcode the index 0 a few lines down).
       assert(!operand->type.isTuple());
+
       if (isRelevant(operand->type)) {
         info.links.push_back({ExpressionLocation{operand, 0}, makeTarget(i)});
       }
@@ -525,6 +528,8 @@ struct InfoCollector
     if (!curr->values.empty()) {
       auto type = curr->type.getHeapType();
       handleChildList(curr->values, [&](Index i) {
+        // The index i is ignored, as we do not track indexes in Arrays -
+        // everything is modeled as if at index 0.
         return DataLocation{type, 0};
       });
     }
@@ -571,7 +576,8 @@ struct InfoCollector
   }
 
   void visitArrayLen(ArrayLen* curr) { addRoot(curr); }
-  void visitArrayCopy(ArrayCopy* curr) {}
+  void visitArrayCopy(ArrayCopy* curr) {
+  }
 
   // TODO: Model which throws can go to which catches. For now, anything
   //       thrown is sent to the location of that tag, and any catch of that
