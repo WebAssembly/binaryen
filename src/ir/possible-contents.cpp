@@ -43,6 +43,7 @@ namespace {
 using LocationIndex = uint32_t;
 
 #ifndef NDEBUG
+// Assert on not having duplicates in a vector.
 template<typename T> void disallowDuplicates(const T& targets) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::unordered_set<LocationIndex> uniqueTargets;
@@ -55,6 +56,7 @@ template<typename T> void disallowDuplicates(const T& targets) {
 #endif
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+// Dump out a location for debug purposes.
 void dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
     std::cout << "  exprloc \n" << *loc->expr << '\n';
@@ -140,11 +142,12 @@ struct FuncInfo {
   // from the functions, we need to deduplicate anyhow).
   std::vector<LocationLink> links;
 
-  // All the roots of the graph, that is, places that begin containing some
-  // partcular content. That includes *.const, ref.func, struct.new, etc. All
+  // All the roots of the graph, that is, places that begin by containing some
+  // partcular content. That includes i32.const, ref.func, struct.new, etc. All
   // possible contents in the rest of the graph flow from such places.
-  // The map here is of the root to the value beginning in it.
-  std::unordered_map<Location, PossibleContents> roots;
+  //
+  // The vector here is of the location of the root and then its contents.
+  std::vector<std::pair<Location, PossibleContents>> roots;
 
   // See childParents comment elsewhere XXX where?
   std::unordered_map<Expression*, Expression*> childParents;
@@ -262,7 +265,7 @@ struct LinkFinder
   // As above, but given an arbitrary location and not just an expression.
   void addRoot(Location loc,
                PossibleContents contents = PossibleContents::many()) {
-    info.roots[loc] = contents;
+    info.roots.emplace_back(loc, contents);
   }
 
   void visitBlock(Block* curr) {
