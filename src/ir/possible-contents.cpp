@@ -977,8 +977,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   }
 
   // Merge the function information into a single large graph that represents
-  // the entire program all at once. First, gather all the links from all
-  // the functions. We do so into sets, which deduplicates everything.
+  // the entire program all at once. First, gather all the links from all the
+  // functions. We do so into sets, which deduplicates everything.
 
   // The roots are not declared in the class as we only need them during this
   // function itself.
@@ -1028,7 +1028,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       //       we'd need to see which references are used and which escape etc.
       //       For now, assume a closed world for such such advanced use cases /
       //       assume this pass won't be run in them anyhow.
-      // TODO: do this once if multiple tables are exported
+      // TODO: do this only once if multiple tables are exported
       for (auto& elementSegment : wasm.elementSegments) {
         for (auto* curr : elementSegment->data) {
           if (auto* refFunc = curr->dynCast<RefFunc>()) {
