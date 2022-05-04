@@ -223,16 +223,23 @@ struct InfoCollector
     if (curr->list.empty()) {
       return;
     }
+
+    // Values sent to breaks to this block must be received here.
     handleBreakTarget(curr);
+
+    // The final item in the block can flow a value to here as well.
     receiveChildValue(curr->list.back(), curr);
   }
   void visitIf(If* curr) {
+    // Each arm may flow out a value.
     receiveChildValue(curr->ifTrue, curr);
     receiveChildValue(curr->ifFalse, curr);
   }
   void visitLoop(Loop* curr) { receiveChildValue(curr->body, curr); }
   void visitBreak(Break* curr) {
+    // Connect the value (if present) to the break target.
     handleBreakValue(curr);
+
     // The value may also flow through in a br_if (the type will indicate that,
     // which receiveChildValue will notice).
     receiveChildValue(curr->value, curr);
@@ -240,7 +247,7 @@ struct InfoCollector
   void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
     // We could infer the exact type here, but as no subtyping is possible, it
-    // would have on benefit.
+    // would have no benefit, so just add a generic root (which will be a Many).
     addRoot(curr);
   }
   void visitStore(Store* curr) {}
@@ -295,14 +302,14 @@ struct InfoCollector
   void visitUnreachable(Unreachable* curr) {}
 
 #ifndef NDEBUG
+  // For now we only handle pops in a catch body, see visitTry(). To check for
+  // errors, use counter of the pops we handled and all the pops; those sums
+  // must agree at the end.
   Index totalPops = 0;
   Index handledPops = 0;
 #endif
 
   void visitPop(Pop* curr) {
-    // For now we only handle pops in a catch body, set visitTry(). Note that
-    // we've seen a pop so we can assert later on not having anything we cannot
-    // handle.
 #ifndef NDEBUG
     totalPops++;
 #endif
@@ -326,8 +333,8 @@ struct InfoCollector
     addSpecialChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
+    // TODO: optimize when possible
     handleBreakValue(curr);
-    // TODO: write out each br_* case here in full for maximum optimizability.
     receiveChildValue(curr->ref, curr);
   }
   void visitRttCanon(RttCanon* curr) { addRoot(curr); }
@@ -338,7 +345,7 @@ struct InfoCollector
   }
 
   // Locals read and write to their index.
-  // TODO: we could use a LocalGraph for better precision
+  // TODO: we could use a LocalGraph for SSA-like precision
   void visitLocalGet(LocalGet* curr) {
     if (isRelevant(curr->type)) {
       for (Index i = 0; i < curr->type.size(); i++) {
@@ -354,10 +361,10 @@ struct InfoCollector
     for (Index i = 0; i < curr->value->type.size(); i++) {
       info.links.push_back({ExpressionLocation{curr->value, i},
                             LocalLocation{getFunction(), curr->index, i}});
-      if (curr->isTee()) {
-        info.links.push_back(
-          {ExpressionLocation{curr->value, i}, ExpressionLocation{curr, i}});
-      }
+
+      // Tees also flow out the value (receiveChildValue will see if this is a
+      // tee based on the type, automatically).
+      receiveChildValue(curr->value, curr);
     }
   }
 
