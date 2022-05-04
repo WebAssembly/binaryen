@@ -155,9 +155,9 @@ public:
     auto otherType = other.getType();
 
     if (!type.isRef() | !otherType.isRef()) {
-      // At least one is not a reference. We could in principle try to find ExactType here,
-      // say as the combination of two different constants, but as subtyping does
-      // not exist, Many is good enough anyhow, so do that.
+      // At least one is not a reference. We could in principle try to find
+      // ExactType here, say as the combination of two different constants, but
+      // as subtyping does not exist, Many is good enough anyhow, so do that.
       value = Many();
       return true;
     }
@@ -175,8 +175,8 @@ public:
           PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
       }
       if (!other.isNull()) {
-        return applyIfDifferent(PossibleContents::exactType(
-          Type(otherType.getHeapType(), Nullable)));
+        return applyIfDifferent(
+          PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
       }
 
       // Both are null. The result is a null, of the LUB.
