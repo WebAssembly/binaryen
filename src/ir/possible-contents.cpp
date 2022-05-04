@@ -577,6 +577,8 @@ struct InfoCollector
 
   void visitArrayLen(ArrayLen* curr) { addRoot(curr); }
   void visitArrayCopy(ArrayCopy* curr) {
+    addSpecialChildParentLink(curr->destRef, curr);
+    addSpecialChildParentLink(curr->srcRef, curr);
   }
 
   // TODO: Model which throws can go to which catches. For now, anything
@@ -1058,6 +1060,24 @@ struct Flower {
       }
     }
   }
+
+  void copyBetweenNewLocations(Expression* destRef, Expression* srcRef, Index fieldIndex, Expression* copy) {
+    // A copy is equivalent to a read that connects directly to a write. We use
+    // the copy itself as the "join" point, that is, we read values into the
+    // copy, and use that as the source to write from. A copy instruction has
+    // type none, so this may be slightly confusing, but creating a new fake
+    // expression as the "join" could be even more confusing as it would not be
+    // part of the IR. (Using a "join" is simpler than duplicating the code in
+    // readFromNewLocations() / writeToNewLocations() to manually copy things.)
+    auto srcRefContents = getContents(getIndex(ExpressionLocation{srcRef, 0}));
+    if (srcRefContents.isNone()) {
+      return;
+    }
+    readFromNewLocations(srcRef->type.getHeapType(), 0, srcRefContents, copy);
+    writeToNewLocations(destRef, copy, 0);
+  }
+
+  std::unordered_map<Expression*, Expression*> copyHelpers;
 };
 
 Flower::Flower(Module& wasm) : wasm(wasm) {
@@ -1423,6 +1443,9 @@ void Flower::applyContents(LocationIndex locationIndex,
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(set->ref, set->value, 0);
+      } else if (auto* copy = parent->dynCast<ArrayCopy>()) {
+        assert(copy->destRef == targetExpr || copy->srcRef == targetExpr);
+        copyBetweenNewLocations(copy->destRef, copy->srcRef, 0, copy);
       } else if (auto* cast = parent->dynCast<RefCast>()) {
         assert(cast->ref == targetExpr);
         // RefCast only allows valid values to go through: nulls and things of

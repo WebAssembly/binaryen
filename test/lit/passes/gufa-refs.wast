@@ -2861,20 +2861,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (array.get $chars
-  ;; CHECK-NEXT:      (local.get $chars)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   (array.get $chars
+  ;; CHECK-NEXT:    (local.get $chars)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     (local $bytes (ref null $bytes))
     (local $chars (ref null $chars))
+
+    ;; Write something to $bytes, but just a null to $chars. But then do a copy
+    ;; which means two things are possible in $chars, and we can't optimize
+    ;; there.
     (local.set $bytes
       (array.init_static $bytes
         (ref.func $test)
@@ -2907,8 +2906,8 @@
   )
 )
 
-;; As above, but with a copy in the wrong direction. Now $chars has no possible
-;; non-null value.
+;; As above, but with a copy in the wrong direction. Now $chars has a single
+;; value (a null) which we can optimize.
 (module
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -2965,8 +2964,6 @@
   (func $test
     (local $bytes (ref null $bytes))
     (local $chars (ref null $chars))
-    ;; Write something to $bytes, but just a null to $chars. But then do a copy
-    ;; which means both can contain that non-null value.
     (local.set $bytes
       (array.init_static $bytes
         (ref.func $test)
