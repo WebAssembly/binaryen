@@ -931,7 +931,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "single phase\n";
 #endif
 
-  // Also walk the global module code (for simplicitiy, also add it to the
+  // Also walk the global module code (for simplicity, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
   InfoCollector finder(globalInfo);
@@ -953,8 +953,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   }
 
   // Merge the function information into a single large graph that represents
-  // the entire program all at once. First, gather all the links from all the
-  // functions. We do so into sets, which deduplicates everything.
+  // the entire program all at once, indexing and deduplicating everything as we
+  // go.
 
   // The roots are not declared in the class as we only need them during this
   // function itself.
@@ -1066,8 +1066,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "roots phase\n";
 #endif
 
-  // Set up the roots, which are the starting state for the flow analysis: add
-  // work to set up their initial values.
+  // Set up the roots, which are the starting state for the flow analysis: send
+  // their initial content to them to start the flow.
   for (const auto& [location, value] : roots) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  init root\n";
@@ -1084,7 +1084,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   size_t iters = 0;
 #endif
 
-  // Flow the data.
+  // Flow the data while there is still stuff flowing.
   while (!workQueue.empty()) {
 #ifdef POSSIBLE_CONTENTS_DEBUG
     iters++;
@@ -1097,14 +1097,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     auto locationIndex = iter->first;
     auto oldContents = iter->second;
     workQueue.erase(iter);
-
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "\npop work item\n";
-    dump(getLocation(locationIndex));
-    std::cout << " with old contents \n";
-    oldContents.dump(std::cout, &wasm);
-    std::cout << '\n';
-#endif
 
     applyContents(locationIndex, oldContents);
 
@@ -1153,12 +1145,15 @@ void Flower::applyContents(LocationIndex locationIndex,
                            const PossibleContents& oldContents) {
   const auto location = getLocation(locationIndex);
   auto& contents = getContents(locationIndex);
+
   // |contents| is the value after the new data arrives. As something arrives,
-  // and we never send nothing around, it cannot be None.
+  // and we never send empty values around, it cannot be None.
   assert(!contents.isNone());
+
   // We never update after something is already in the Many state, as that would
   // just be waste for no benefit.
   assert(!oldContents.isMany());
+
   // We only update when there is a reason.
   assert(contents != oldContents);
 
@@ -1211,14 +1206,11 @@ void Flower::applyContents(LocationIndex locationIndex,
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "  something changed!\n";
-  contents.dump(std::cout, &wasm);
-  std::cout << "\nat ";
-  dump(location);
 #endif
 
-  // Add all targets this location links to, sending them the new contents. As
-  // we do so, prune any targets that end up in the Many state, as there will
-  // never be a reason to send them anything again.
+  // Send the new contents to all the targets of this location. As we do so,
+  // prune any targets that end up in the Many state, as there will never be a
+  // reason to send them anything again.
   auto& targets = getTargets(locationIndex);
 
   targets.erase(
@@ -1232,7 +1224,6 @@ void Flower::applyContents(LocationIndex locationIndex,
                      return sendContents(targetIndex, contents).isMany();
                    }),
     targets.end());
-  targets.shrink_to_fit(); // XXX
 
   if (contents.isMany()) {
     // We just added work to send Many to all our targets. We'll never need to
