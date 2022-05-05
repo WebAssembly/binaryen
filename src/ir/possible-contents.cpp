@@ -897,6 +897,10 @@ private:
   void
   writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex);
 
+  // Special handling for RefCast during the flow: RefCast only admits valid
+  // values to flow through it.
+  void flowRefCast(PossibleContents contents, RefCast* cast);
+
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
 
@@ -1272,40 +1276,10 @@ void Flower::applyContents(LocationIndex locationIndex,
       writeToNewLocations(set->ref, set->value, 0);
     } else if (auto* cast = parent->dynCast<RefCast>()) {
       assert(cast->ref == targetExpr);
-      // RefCast only allows valid values to go through: nulls and things of the
-      // cast type. Filter anything else out.
-      bool isMany = contents.isMany();
-      PossibleContents filtered;
-      if (isMany) {
-        // Just pass the Many through.
-        // TODO: we could emit a cone type here when we get one, instead of
-        //       emitting a Many in any of these code paths
-        filtered = contents;
-      } else {
-        auto intendedType = cast->getIntendedType();
-        bool mayBeSubType =
-          HeapType::isSubType(contents.getType().getHeapType(), intendedType);
-        if (mayBeSubType) {
-          // The contents are not Many, but they may be a subtype, so they are
-          // something like an exact type that is a subtype. Pass that
-          // through. (When we get cone types, we could filter the cone here.)
-          filtered.combine(contents);
-        }
-        bool mayBeNull = contents.getType().isNullable();
-        if (mayBeNull) {
-          filtered.combine(PossibleContents::literal(
-            Literal::makeNull(Type(intendedType, Nullable))));
-        }
-      }
-      if (!filtered.isNone()) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-        std::cout << "    ref.cast passing through\n";
-#endif
-        sendContents(ExpressionLocation{parent, 0}, filtered);
-      }
+      flowRefCast(contents, cast);
+    } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
-    } else {
       WASM_UNREACHABLE("bad childParents content");
     }
   }
@@ -1433,6 +1407,40 @@ void Flower::writeToNewLocations(Expression* ref,
       auto heapLoc = DataLocation{subType, fieldIndex};
       sendContents(heapLoc, valueContents);
     }
+  }
+}
+
+void Flower::flowRefCast(PossibleContents contents, RefCast* cast) {
+  // RefCast only allows valid values to go through: nulls and things of the
+  // cast type. Filter anything else out.
+  bool isMany = contents.isMany();
+  PossibleContents filtered;
+  if (isMany) {
+    // Just pass the Many through.
+    // TODO: we could emit a cone type here when we get one, instead of
+    //       emitting a Many in any of these code paths
+    filtered = contents;
+  } else {
+    auto intendedType = cast->getIntendedType();
+    bool mayBeSubType =
+      HeapType::isSubType(contents.getType().getHeapType(), intendedType);
+    if (mayBeSubType) {
+      // The contents are not Many, but they may be a subtype, so they are
+      // something like an exact type that is a subtype. Pass that
+      // through. (When we get cone types, we could filter the cone here.)
+      filtered.combine(contents);
+    }
+    bool mayBeNull = contents.getType().isNullable();
+    if (mayBeNull) {
+      filtered.combine(PossibleContents::literal(
+        Literal::makeNull(Type(intendedType, Nullable))));
+    }
+  }
+  if (!filtered.isNone()) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "    ref.cast passing through\n";
+#endif
+    sendContents(ExpressionLocation{cast, 0}, filtered);
   }
 }
 
