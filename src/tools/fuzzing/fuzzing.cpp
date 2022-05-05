@@ -1856,50 +1856,50 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
-  // ref.as_non_null is allowed in globals and we don't yet support func.ref in
-  // globals because we create globals before we create functions. As a result,
-  // we can only create non-nullable function references if we are in a function
-  // context for now.
-  // TODO: Generate trivial functions to support ref.func in globals.
-  assert(type.isNullable() || funcContext);
-  if (!funcContext || (type.isNullable() && oneIn(8))) {
-    return builder.makeRefNull(type);
-  }
-
   auto heapType = type.getHeapType();
   if (heapType == HeapType::func) {
     // First set to target to the last created function, and try to select
     // among other existing function if possible.
-    Function* target = funcContext->func;
-    if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
+    Function* target = funcContext ? funcContext->func : nullptr;
+    // If there is no last function, and we have others, pick between them. Also
+    // pick between them with some random probability even if there is a last
+    // function.
+    if (!target || (!wasm.functions.empty() && !oneIn(wasm.functions.size()))) {
       target = pick(wasm.functions).get();
     }
-    return builder.makeRefFunc(target->name, target->type);
-  } else {
-    // TODO: randomize the order
-    for (auto& func : wasm.functions) {
-      if (Type::isSubType(type, Type(func->type, NonNullable))) {
-        return builder.makeRefFunc(func->name, func->type);
-      }
+    if (target) {
+      return builder.makeRefFunc(target->name, target->type);
     }
-    // We don't have a matching function, so create a null with high probability
-    // if the type is nullable or otherwise create and cast a null with low
-    // probability.
-    if ((type.isNullable() && !oneIn(8)) || oneIn(8)) {
-      Expression* ret = builder.makeRefNull(Type(heapType, Nullable));
-      if (!type.isNullable()) {
-        ret = builder.makeRefAs(RefAsNonNull, ret);
-      }
-      return ret;
-    }
-    // As a final option, create a new function with the correct signature.
-    auto* func = wasm.addFunction(
-      builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
-                           heapType,
-                           {},
-                           builder.makeUnreachable()));
-    return builder.makeRefFunc(func->name, heapType);
   }
+  if (heapType == HeapType::func) {
+    // From here on we need a specific signature type, as we want to create a
+    // RefFunc or even a Function out of it. Pick an arbitrary one if we only
+    // had generic 'func' here.
+    heapType = Signature(Type::none, Type::none);
+  }
+  // TODO: randomize the order
+  for (auto& func : wasm.functions) {
+    if (Type::isSubType(type, Type(func->type, NonNullable))) {
+      return builder.makeRefFunc(func->name, func->type);
+    }
+  }
+  // We don't have a matching function, so create a null with high probability
+  // if the type is nullable or otherwise create and cast a null with low
+  // probability.
+  if ((type.isNullable() && !oneIn(8)) || oneIn(8)) {
+    Expression* ret = builder.makeRefNull(Type(heapType, Nullable));
+    if (!type.isNullable()) {
+      ret = builder.makeRefAs(RefAsNonNull, ret);
+    }
+    return ret;
+  }
+  // As a final option, create a new function with the correct signature.
+  auto* func = wasm.addFunction(
+    builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
+                         heapType,
+                         {},
+                         builder.makeUnreachable()));
+  return builder.makeRefFunc(func->name, heapType);
 }
 
 Expression* TranslateToFuzzReader::makeConst(Type type) {
@@ -1926,7 +1926,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
                                   HeapType::i31,
                                   HeapType::data));
           } else {
-            subtype = HeapType::data;
+            subtype = HeapType::func;
           }
           return makeConst(Type(subtype, nullability));
         }
@@ -1950,6 +1950,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
             return builder.makeRefNull(type);
           }
         case HeapType::data:
+          assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
           // TODO: Construct nontrivial types. For now just create a hard coded
           // struct or array.
           if (oneIn(2)) {
