@@ -34,6 +34,9 @@ option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
 
+# Turn this on to build binaryen.js as ES5, with additional compatibility options for js_of_ocaml.
+option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
