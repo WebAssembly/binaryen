@@ -1234,7 +1234,7 @@ void Flower::applyContents(LocationIndex locationIndex,
 
   // We are mostly done, except for handling interesting/special cases in the
   // flow, additional operations that we need to do aside from sending the new
-  // contents to the linked targets.
+  // contents to the statically linked targets.
 
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto* targetExpr = targetExprLoc->expr;
