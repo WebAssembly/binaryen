@@ -1919,7 +1919,12 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
           Nullability nullability = getSubType(type.getNullability());
           HeapType subtype;
           if (funcContext || nullability == Nullable) {
-            subtype = pick(HeapType::func, HeapType::i31, HeapType::data);
+            subtype = pick(FeatureOptions<HeapType>()
+                             .add(FeatureSet::ReferenceTypes, HeapType::func)
+                             .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                                  HeapType::func,
+                                  HeapType::i31,
+                                  HeapType::data));
           } else {
             subtype = HeapType::data;
           }
@@ -2914,7 +2919,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 
 Type TranslateToFuzzReader::getReferenceType() {
   return pick(FeatureOptions<Type>()
-                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::anyref)
+                // Avoid Type::anyref without GC enabled, see
+                // TranslateToFuzzReader::getSingleConcreteType.
+                .add(FeatureSet::ReferenceTypes, Type::funcref)
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      Type(HeapType::func, NonNullable),
                      Type(HeapType::any, NonNullable),
@@ -3001,11 +3008,15 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return HeapType::func;
       case HeapType::any:
         // TODO: nontrivial types as well.
-        return pick(HeapType::func,
-                    HeapType::any,
-                    HeapType::eq,
-                    HeapType::i31,
-                    HeapType::data);
+        return pick(
+          FeatureOptions<HeapType>()
+            .add(FeatureSet::ReferenceTypes, HeapType::func, HeapType::any)
+            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                 HeapType::func,
+                 HeapType::any,
+                 HeapType::eq,
+                 HeapType::i31,
+                 HeapType::data));
       case HeapType::eq:
         // TODO: nontrivial types as well.
         return pick(HeapType::eq, HeapType::i31, HeapType::data);
