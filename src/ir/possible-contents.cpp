@@ -541,8 +541,20 @@ struct InfoCollector
 
   void visitArrayLen(ArrayLen* curr) { addRoot(curr); }
   void visitArrayCopy(ArrayCopy* curr) {
-    addSpecialChildParentLink(curr->destRef, curr);
-    addSpecialChildParentLink(curr->srcRef, curr);
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    // Our handling of GC data is not simple - we have special code for each
+    // read and write instruction - and to avoid adding special code for
+    // ArrayCopy, model it as a combination of an ArrayRead and ArrayWrite, by
+    // just emitting fake expressions for those. The fake expressions are not
+    // part of the main IR, which is potentially confusing during debugging,
+    // however, which is a downside.
+    Builder builder(*getModule());
+    auto* get = builder.makeArrayGet(curr->srcRef, curr->srcIndex);
+    visitArrayGet(get);
+    auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
+    visitArraySet(set);
   }
 
   // TODO: Model which throws can go to which catches. For now, anything thrown
@@ -884,11 +896,6 @@ private:
   // index written to (or 0 for an array).
   void
   writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex);
-
-  void copyBetweenNewLocations(Expression* destRef,
-                               Expression* srcRef,
-                               Index fieldIndex,
-                               Expression* copy);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1270,9 +1277,6 @@ void Flower::applyContents(LocationIndex locationIndex,
       } else if (auto* set = parent->dynCast<ArraySet>()) {
         assert(set->ref == targetExpr || set->value == targetExpr);
         writeToNewLocations(set->ref, set->value, 0);
-      } else if (auto* copy = parent->dynCast<ArrayCopy>()) {
-        assert(copy->destRef == targetExpr || copy->srcRef == targetExpr);
-        copyBetweenNewLocations(copy->destRef, copy->srcRef, 0, copy);
       } else if (auto* cast = parent->dynCast<RefCast>()) {
         assert(cast->ref == targetExpr);
         // RefCast only allows valid values to go through: nulls and things of
@@ -1438,27 +1442,6 @@ void Flower::writeToNewLocations(Expression* ref,
       sendContents(heapLoc, valueContents);
     }
   }
-}
-
-void Flower::copyBetweenNewLocations(Expression* destRef,
-                                     Expression* srcRef,
-                                     Index fieldIndex,
-                                     Expression* copy) {
-  // A copy is equivalent to a read that connects directly to a write. We use
-  // the copy itself as the "join" point, that is, we read values into the
-  // copy, and use that as the source to write from. A copy instruction has
-  // type none, so this may be slightly confusing, but creating a new fake
-  // expression as the "join" could be even more confusing as it would not be
-  // part of the IR. (Using a "join" is simpler than duplicating the code in
-  // readFromNewLocations() / writeToNewLocations() to manually copy things.)
-  auto srcRefContents = getContents(getIndex(ExpressionLocation{srcRef, 0}));
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "copy, srcRefContents:\n";
-  srcRefContents.dump(std::cout, &wasm);
-  std::cout << '\n';
-#endif
-  readFromNewLocations(srcRef->type.getHeapType(), 0, srcRefContents, copy);
-  writeToNewLocations(destRef, copy, 0);
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2

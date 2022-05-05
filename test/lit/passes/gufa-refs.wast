@@ -2897,7 +2897,7 @@
         (i32.const 0)
       )
     )
-     (drop
+    (drop
       (array.get $chars
         (local.get $chars)
         (i32.const 0)
@@ -2983,7 +2983,7 @@
         (i32.const 0)
       )
     )
-     (drop
+    (drop
       (array.get $chars
         (local.get $chars)
         (i32.const 0)
