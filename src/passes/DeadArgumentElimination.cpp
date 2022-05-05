@@ -111,11 +111,10 @@ struct DAEScanner
   void visitCall(Call* curr) {
     if (!getModule()->getFunction(curr->target)->imported()) {
       auto& info = state->functions[curr->target];
-      if (info.hasUnseenCalls) {
-        return;
+      if (!info.hasUnseenCalls) {
+        std::lock_guard<std::mutex> lock(info.mutex);
+        info.calls.push_back(curr);
       }
-      std::lock_guard<std::mutex> lock(info.mutex);
-      info.calls.push_back(curr);
     }
     if (curr->isReturn) {
       info->hasTailCalls = true;
