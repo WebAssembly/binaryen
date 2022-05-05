@@ -1418,9 +1418,8 @@ void Flower::writeToNewLocations(Expression* ref,
 void Flower::flowRefCast(PossibleContents contents, RefCast* cast) {
   // RefCast only allows valid values to go through: nulls and things of the
   // cast type. Filter anything else out.
-  bool isMany = contents.isMany();
   PossibleContents filtered;
-  if (isMany) {
+  if (contents.isMany()) {
     // Just pass the Many through.
     // TODO: we could emit a cone type here when we get one, instead of
     //       emitting a Many in any of these code paths
@@ -1430,13 +1429,14 @@ void Flower::flowRefCast(PossibleContents contents, RefCast* cast) {
     bool mayBeSubType =
       HeapType::isSubType(contents.getType().getHeapType(), intendedType);
     if (mayBeSubType) {
-      // The contents are not Many, but they may be a subtype, so they are
-      // something like an exact type that is a subtype. Pass that
-      // through. (When we get cone types, we could filter the cone here.)
+      // The contents are not Many, but they may be a subtype of the intended
+      // type, so we'll pass them through.
+      // TODO When we get cone types, we could filter the cone here.
       filtered.combine(contents);
     }
     bool mayBeNull = contents.getType().isNullable();
     if (mayBeNull) {
+      // A null is possible, so pass that along.
       filtered.combine(PossibleContents::literal(
         Literal::makeNull(Type(intendedType, Nullable))));
     }
