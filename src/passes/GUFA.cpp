@@ -155,6 +155,8 @@ struct GUFAPass : public Pass {
           return;
         }
 
+        // This is an interesting location that we might optimize. See what the
+        // oracle says is possible there.
         auto contents = oracle.getContents(ExpressionLocation{curr, 0});
 
         auto replaceWithUnreachable = [&]() {
@@ -177,14 +179,11 @@ struct GUFAPass : public Pass {
           return;
         }
 
+        // This is reachable. Check if we can emit something optimized for it.
+        // TODO: can we handle more general things here too?
         if (!contents.canMakeExpression()) {
           return;
         }
-
-        // We have a constant here.
-        // TODO: Handle more than a constant, e.g., ExactType can help us
-        //       optimize in a ref.is for example - however, that may already
-        //       be handled by ContentOracle.
 
         if (contents.isNull() && curr->type.isNullable()) {
           // Null values are all identical, so just fix up the type here, as
