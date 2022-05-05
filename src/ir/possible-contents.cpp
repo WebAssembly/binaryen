@@ -1296,7 +1296,8 @@ void Flower::connectDuringFlow(Location from, Location to) {
     links.insert(newIndexLink);
 
     // In addition to adding the link, send the contents along it right now, so
-    // that the graph state is correct.
+    // that the graph state is correct (we cannot assume that a future flow will
+    // happen and carry along the current contents to the target).
     sendContents(to, getContents(getIndex(from)));
   }
 }
@@ -1339,31 +1340,33 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
       DataLocation{refContents.getType().getHeapType(), fieldIndex},
       ExpressionLocation{read, 0});
   } else {
-    // Otherwise, this is a cone: the declared type of the reference, or
-    // any subtype of that, as both Many and ConstantGlobal reduce to
-    // that in this case TODO text
-    // TODO: the ConstantGlobal case may have a different cone type than
-    //       the heapType, we could use that here.
+    // Otherwise, this is a cone: the declared type of the reference, or any
+    // subtype of that, regardless of whether the content is a Many or a Global
+    // or anything else.
+    // TODO: The Global case may have a different cone type than the heapType,
+    //       which we could use here.
     assert(refContents.isMany() || refContents.isGlobal());
 
-    // TODO: a cone with no subtypes needs no canonical location, just
-    //       add direct links
-
+    // We create a special location for the canonical cone of this type, to
+    // avoid bloating the graph, see comment on Flower::canonicalConeReads().
+    // TODO: A cone with no subtypes needs no canonical location, just
+    //       add one direct link here.
     auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
       declaredHeapType, fieldIndex)];
     if (coneReadIndex == 0) {
       // 0 is an impossible index for a LocationIndex (as there must be
-      // something at index 0 already - the ExpressionLocation of this
-      // very expression, in particular), so we can use that as an
-      // indicator that we have never allocated one yet, and do so now.
+      // something at index 0 already - the ExpressionLocation of this very
+      // expression, in particular), so we can use that as an indicator that we
+      // have never allocated one yet, and do so now.
       coneReadIndex = makeSpecialLocation();
-      // TODO: if the old contents here were an exact type then we could
-      // remove the old link, which becomes redundant now. But removing
-      // links is not efficient, so maybe not worth it.
       for (auto type : subTypes->getAllSubTypesInclusive(declaredHeapType)) {
         connectDuringFlow(DataLocation{type, fieldIndex},
                           SpecialLocation{coneReadIndex});
       }
+
+      // TODO: if the old contents here were an exact type then we have an old
+      //       link here that we could remove as it is redundant. But removing
+      //       links is not efficient, so maybe not worth it.
     }
 
     // Link to the canonical location.
@@ -1378,13 +1381,15 @@ void Flower::writeToNewLocations(Expression* ref,
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
-  // We could set up links here, but as we get to this code in
-  // any case when either the ref or the value of the struct.get has
-  // new contents, we can just flow the values forward directly. We
-  // can do that in a simple way that does not even check whether
-  // the ref or the value was just updated: simply figure out the
-  // values being written in the current state (which is after the
-  // current update) and forward them.
+
+  // We could set up links here as we do for reads, but as we get to this code
+  // in any case, we can just flow the values forward directly. This avoids
+  // increasing the size of the graph.
+  //
+  // Figure out what to send in a simple way that does not even check whether
+  // the ref or the value was just updated: simply figure out the values being
+  // written in the current state (which is after the current update) and
+  // forward them.
   auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
   if (refContents.isNone() || refContents.isNull()) {
@@ -1400,8 +1405,8 @@ void Flower::writeToNewLocations(Expression* ref,
     sendContents(heapLoc, valueContents);
   } else {
     assert(refContents.isMany());
-    // Update all possible types here. First, subtypes, including the
-    // type itself.
+
+    // Update all possible subtypes here.
     auto type = ref->type.getHeapType();
     for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
       auto heapLoc = DataLocation{subType, fieldIndex};
