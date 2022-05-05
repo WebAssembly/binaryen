@@ -1,4 +1,4 @@
-//#define POSSIBLE_CONTENTS_DEBUG 1
+//#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -52,42 +52,6 @@ template<typename T> void disallowDuplicates(const T& targets) {
   }
   assert(uniqueTargets.size() == targets.size());
 #endif
-}
-#endif
-
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-// Dump out a location for debug purposes.
-void dump(Location location) {
-  if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-    std::cout << "  exprloc \n" << *loc->expr << '\n';
-  } else if (auto* loc = std::get_if<DataLocation>(&location)) {
-    std::cout << "  dataloc " << loc->type << " : " << loc->index << '\n';
-  } else if (auto* loc = std::get_if<TagLocation>(&location)) {
-    std::cout << "  tagloc " << loc->tag << '\n';
-  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
-    std::cout << "  localloc " << loc->func->name << " : " << loc->index
-              << " tupleIndex " << loc->tupleIndex << '\n';
-  } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
-    std::cout << "  resultloc " << loc->func->name << " : " << loc->index
-              << '\n';
-  } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
-    std::cout << "  globalloc " << loc->name << '\n';
-  } else if (auto* loc = std::get_if<BranchLocation>(&location)) {
-    std::cout << "  branchloc " << loc->func->name << " : " << loc->target
-              << " tupleIndex " << loc->tupleIndex << '\n';
-  } else if (auto* loc = std::get_if<SignatureParamLocation>(&location)) {
-    WASM_UNUSED(loc);
-    std::cout << "  sigparamloc " << '\n';
-  } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
-    WASM_UNUSED(loc);
-    std::cout << "  sigresultloc " << '\n';
-  } else if (auto* loc = std::get_if<NullLocation>(&location)) {
-    std::cout << "  Nullloc " << loc->type << '\n';
-  } else if (auto* loc = std::get_if<SpecialLocation>(&location)) {
-    std::cout << "  Specialloc " << loc->index << '\n';
-  } else {
-    std::cout << "  (other)\n";
-  }
 }
 #endif
 
@@ -928,6 +892,11 @@ private:
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  // Dump out a location for debug purposes.
+  void dump(Location location);
+#endif
 };
 
 Flower::Flower(Module& wasm) : wasm(wasm) {
@@ -1141,6 +1110,14 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
 PossibleContents Flower::sendContents(LocationIndex locationIndex,
                                       const PossibleContents& newContents) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "sendContents\n";
+  dump(getLocation(locationIndex));
+  std::cout << " with new contents \n";
+  newContents.dump(std::cout, &wasm);
+  std::cout << '\n';
+#endif
+
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
   auto& contents = getContents(locationIndex);
@@ -1152,6 +1129,10 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
     // nothing to do.
     return contents;
   }
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "  sendContents has sometihng new\n";
+#endif
 
   // Add a work item if there isn't already. (If one exists, then oldContents
   // are after the update from that item, and we wouldn't want to insert that
@@ -1175,13 +1156,13 @@ void Flower::applyContents(LocationIndex locationIndex,
   assert(contents != oldContents);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "\napplyContents src:\n";
+  std::cout << "\napplyContents to:\n";
   dump(location);
   std::cout << "  arriving:\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
   std::cout << "  existing:\n";
-  contents.dump(std::cout, &wasm);
+  oldContents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
 
@@ -1373,10 +1354,14 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
                                   Index fieldIndex,
                                   const PossibleContents& refContents,
                                   Expression* read) {
-  if (refContents.isNull()) {
+  if (refContents.isNull() || refContents.isNone()) {
     // Nothing is read here.
     return;
   }
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "    add special reads\n";
+#endif
 
   if (refContents.isExactType()) {
     // Add a single link to the exact location the reference points to.
@@ -1467,12 +1452,56 @@ void Flower::copyBetweenNewLocations(Expression* destRef,
   // part of the IR. (Using a "join" is simpler than duplicating the code in
   // readFromNewLocations() / writeToNewLocations() to manually copy things.)
   auto srcRefContents = getContents(getIndex(ExpressionLocation{srcRef, 0}));
-  if (srcRefContents.isNone()) {
-    return;
-  }
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "copy, srcRefContents:\n";
+  srcRefContents.dump(std::cout, &wasm);
+  std::cout << '\n';
+#endif
   readFromNewLocations(srcRef->type.getHeapType(), 0, srcRefContents, copy);
   writeToNewLocations(destRef, copy, 0);
 }
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+// Dump out a location for debug purposes.
+void Flower::dump(Location location) {
+  if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
+    std::cout << "  exprloc \n" << *loc->expr << '\n';
+  } else if (auto* loc = std::get_if<DataLocation>(&location)) {
+    std::cout << "  dataloc ";
+    if (wasm.typeNames.count(loc->type)) {
+      std::cout << '$' << wasm.typeNames[loc->type].name;
+    } else {
+      std::cout << loc->type << '\n';
+    }
+    std::cout << " : " << loc->index << '\n';
+  } else if (auto* loc = std::get_if<TagLocation>(&location)) {
+    std::cout << "  tagloc " << loc->tag << '\n';
+  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
+    std::cout << "  localloc " << loc->func->name << " : " << loc->index
+              << " tupleIndex " << loc->tupleIndex << '\n';
+  } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
+    std::cout << "  resultloc " << loc->func->name << " : " << loc->index
+              << '\n';
+  } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
+    std::cout << "  globalloc " << loc->name << '\n';
+  } else if (auto* loc = std::get_if<BranchLocation>(&location)) {
+    std::cout << "  branchloc " << loc->func->name << " : " << loc->target
+              << " tupleIndex " << loc->tupleIndex << '\n';
+  } else if (auto* loc = std::get_if<SignatureParamLocation>(&location)) {
+    WASM_UNUSED(loc);
+    std::cout << "  sigparamloc " << '\n';
+  } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
+    WASM_UNUSED(loc);
+    std::cout << "  sigresultloc " << '\n';
+  } else if (auto* loc = std::get_if<NullLocation>(&location)) {
+    std::cout << "  Nullloc " << loc->type << '\n';
+  } else if (auto* loc = std::get_if<SpecialLocation>(&location)) {
+    std::cout << "  Specialloc " << loc->index << '\n';
+  } else {
+    std::cout << "  (other)\n";
+  }
+}
+#endif
 
 } // anonymous namespace
 
