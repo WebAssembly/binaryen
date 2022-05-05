@@ -188,8 +188,11 @@ struct GUFAPass : public Pass {
         if (contents.isNull() && curr->type.isNullable()) {
           // Null values are all identical, so just fix up the type here, as
           // we can change the type to anything to fit the IR.
-          // (If curr's type is not nullable, then the code will trap at
-          // runtime; we handle that below.)
+          //
+          // Note that if curr's type is not nullable, then the code will trap
+          // at runtime (the null must arrive through a cast that will trap).
+          // We handle that below.
+          //
           // TODO: would emitting a more specific null be useful when valid?
           contents = PossibleContents::literal(Literal::makeNull(curr->type));
         }
@@ -199,16 +202,16 @@ struct GUFAPass : public Pass {
           return;
         }
 
-        // We can only place the constant value here if it has the right
-        // type. For example, a block may return (ref any), that is, not allow
-        // a null, but in practice only a null may flow there (if it goes
-        // through casts that will trap at runtime).
+        // We can only place the constant value here if it has the right type.
+        // For example, a block may return (ref any), that is, not allow a null,
+        // but in practice only a null may flow there if it goes through casts
+        // that will trap at runtime.
         if (Type::isSubType(c->type, curr->type)) {
           if (canRemove(curr)) {
             replaceCurrent(getDroppedChildren(curr, c, wasm, options));
           } else {
-            // We can't remove this, but we can at least put an unreachable
-            // right after it.
+            // We can't remove this, but we can at least drop it and put the
+            // optimized value right after it.
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
           }
           optimized = true;
@@ -216,11 +219,9 @@ struct GUFAPass : public Pass {
           // The type is not compatible: we cannot place |c| in this location,
           // even though we have proven it is the only value possible here.
           if (Properties::isConstantExpression(c)) {
-            // This is a constant expression like a *.const or ref.func, and
-            // those things have exactly the proper type for themselves, which
-            // means this code must be unreachable - no content is possible
-            // here. (For what "exactly the proper type" means, see the next
-            // case with globals.)
+            // The type is not compatible and this is a simple constant
+            // expression like a ref.func. That means this code must be
+            // unreachable. (See below for the case of a non-constant.)
             replaceWithUnreachable();
           } else {
             // This is not a constant expression, but we are certain it is the
@@ -243,11 +244,11 @@ struct GUFAPass : public Pass {
             // be as well. When we get to the ref.as_non_null, we then want to
             // replace it with a global.get - in fact that's what its child
             // already is, showing it is the right content for it - but that
-            // global.get would not have a non-nullable type like a/
+            // global.get would not have a non-nullable type like a
             // ref.as_non_null must have, so we cannot simply replace it.
             //
             // For now, do nothing here, but in some cases we could probably
-            // optimize TOOD
+            // optimize TODO
             assert(c->is<GlobalGet>());
           }
         }
