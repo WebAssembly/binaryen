@@ -1239,73 +1239,74 @@ void Flower::applyContents(LocationIndex locationIndex,
   if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto* targetExpr = targetExprLoc->expr;
     auto iter = childParents.find(locationIndex);
-    if (iter != childParents.end()) {
-      // The target is one of the special cases where it is an expression
-      // for whom we must know the parent in order to handle things in a
-      // special manner.
-      auto parentIndex = iter->second;
-      auto* parent =
-        std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
+    if (iter == childParents.end()) {
+      return;
+    }
+
+    // The target is one of the special cases where it is an expression for whom
+    // we must know the parent in order to handle things in a special manner.
+    auto parentIndex = iter->second;
+    auto* parent =
+      std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-      std::cout << "  special, parent:\n" << *parent << '\n';
+    std::cout << "  special, parent:\n" << *parent << '\n';
 #endif
 
-      if (auto* get = parent->dynCast<StructGet>()) {
-        // This is the reference child of a struct.get.
-        assert(get->ref == targetExpr);
-        readFromNewLocations(
-          get->ref->type.getHeapType(), get->index, contents, get);
-      } else if (auto* set = parent->dynCast<StructSet>()) {
-        // This is either the reference or the value child of a struct.set.
-        // A change to either one affects what values are written to that
-        // struct location, which we handle here.
-        assert(set->ref == targetExpr || set->value == targetExpr);
-        writeToNewLocations(set->ref, set->value, set->index);
-      } else if (auto* get = parent->dynCast<ArrayGet>()) {
-        assert(get->ref == targetExpr);
-        readFromNewLocations(get->ref->type.getHeapType(), 0, contents, get);
-      } else if (auto* set = parent->dynCast<ArraySet>()) {
-        assert(set->ref == targetExpr || set->value == targetExpr);
-        writeToNewLocations(set->ref, set->value, 0);
-      } else if (auto* cast = parent->dynCast<RefCast>()) {
-        assert(cast->ref == targetExpr);
-        // RefCast only allows valid values to go through: nulls and things of
-        // the cast type. Filter anything else out.
-        bool isMany = contents.isMany();
-        PossibleContents filtered;
-        if (isMany) {
-          // Just pass the Many through.
-          // TODO: we could emit a cone type here when we get one, instead of
-          //       emitting a Many in any of these code paths
-          filtered = contents;
-        } else {
-          auto intendedType = cast->getIntendedType();
-          bool mayBeSubType =
-            HeapType::isSubType(contents.getType().getHeapType(), intendedType);
-          if (mayBeSubType) {
-            // The contents are not Many, but they may be a subtype, so they are
-            // something like an exact type that is a subtype. Pass that
-            // through. (When we get cone types, we could filter the cone here.)
-            filtered.combine(contents);
-          }
-          bool mayBeNull = contents.getType().isNullable();
-          if (mayBeNull) {
-            filtered.combine(PossibleContents::literal(
-              Literal::makeNull(Type(intendedType, Nullable))));
-          }
-        }
-        if (!filtered.isNone()) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-          std::cout << "    ref.cast passing through\n";
-#endif
-          sendContents(ExpressionLocation{parent, 0}, filtered);
-        }
-        // TODO: ref.test and all other casts can be optimized (see the cast
-        //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
+    if (auto* get = parent->dynCast<StructGet>()) {
+      // This is the reference child of a struct.get.
+      assert(get->ref == targetExpr);
+      readFromNewLocations(
+        get->ref->type.getHeapType(), get->index, contents, get);
+    } else if (auto* set = parent->dynCast<StructSet>()) {
+      // This is either the reference or the value child of a struct.set. A
+      // change to either one affects what values are written to that struct
+      // location, which we handle here.
+      assert(set->ref == targetExpr || set->value == targetExpr);
+      writeToNewLocations(set->ref, set->value, set->index);
+    } else if (auto* get = parent->dynCast<ArrayGet>()) {
+      assert(get->ref == targetExpr);
+      readFromNewLocations(get->ref->type.getHeapType(), 0, contents, get);
+    } else if (auto* set = parent->dynCast<ArraySet>()) {
+      assert(set->ref == targetExpr || set->value == targetExpr);
+      writeToNewLocations(set->ref, set->value, 0);
+    } else if (auto* cast = parent->dynCast<RefCast>()) {
+      assert(cast->ref == targetExpr);
+      // RefCast only allows valid values to go through: nulls and things of the
+      // cast type. Filter anything else out.
+      bool isMany = contents.isMany();
+      PossibleContents filtered;
+      if (isMany) {
+        // Just pass the Many through.
+        // TODO: we could emit a cone type here when we get one, instead of
+        //       emitting a Many in any of these code paths
+        filtered = contents;
       } else {
-        WASM_UNREACHABLE("bad childParents content");
+        auto intendedType = cast->getIntendedType();
+        bool mayBeSubType =
+          HeapType::isSubType(contents.getType().getHeapType(), intendedType);
+        if (mayBeSubType) {
+          // The contents are not Many, but they may be a subtype, so they are
+          // something like an exact type that is a subtype. Pass that
+          // through. (When we get cone types, we could filter the cone here.)
+          filtered.combine(contents);
+        }
+        bool mayBeNull = contents.getType().isNullable();
+        if (mayBeNull) {
+          filtered.combine(PossibleContents::literal(
+            Literal::makeNull(Type(intendedType, Nullable))));
+        }
       }
+      if (!filtered.isNone()) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+        std::cout << "    ref.cast passing through\n";
+#endif
+        sendContents(ExpressionLocation{parent, 0}, filtered);
+      }
+      // TODO: ref.test and all other casts can be optimized (see the cast
+      //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
+    } else {
+      WASM_UNREACHABLE("bad childParents content");
     }
   }
 }
