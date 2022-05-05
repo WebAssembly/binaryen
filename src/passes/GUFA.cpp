@@ -65,6 +65,7 @@ struct GUFAPass : public Pass {
         if (BranchUtils::getDefinedName(curr).is()) {
           return false;
         }
+
         // Pops are structurally necessary in catch bodies, and removing a try
         // could leave a pop without a proper parent.
         return !curr->is<Pop>() && !curr->is<Try>();
@@ -93,14 +94,21 @@ struct GUFAPass : public Pass {
         return !effects.hasUnremovableSideEffects();
       }
 
-      // Given we know an expression is equivalent to a constant, check if we
-      // should in fact replace it with that constant.
-      bool shouldOptimizeToConstant(Expression* curr) {
-        // We should not optimize something that is already a constant. But we
-        // can just assert on that as we should have not even gotten here, as
-        // there is an early exit for that.
-        assert(!Properties::isConstantExpression(curr));
-
+      // Checks if the expression looks like it's already been optimized to a
+      // particular value that we want to optimize it to. For example, if curr
+      // is
+      //
+      //  (block
+      //    ..
+      //    (i32.const 20)
+      //  )
+      //
+      // And the value we want to optimize to is (i32.const 20), the same value,
+      // then there is no point to doing so - we'd be expanding code repeatedly
+      // if run on the same module again and again. That can happen because in
+      // general we may add such a block, so we need to look through a block
+      // here to check if we already have the value.
+      bool looksAlreadyOptimizedToValue(Expression* curr, Expression* value) {
         // The case that we do want to avoid here is if this looks like the
         // output of our optimization, which is (block .. (constant)), a block
         // ending in a constant and with no breaks to it. If this is already so
@@ -110,30 +118,19 @@ struct GUFAPass : public Pass {
           // If we got here, the list cannot be empty - an empty block is not
           // equivalent to any constant, so a logic error occurred before.
           assert(!block->list.empty());
-          if (!BranchUtils::BranchSeeker::has(block, block->name) &&
-              Properties::isConstantExpression(block->list.back())) {
+          if (BranchUtils::BranchSeeker::has(block, block->name)) {
+            // We never emit a branch in our blocks, so the presence of a branch
+            // proves we have not already optimized here.
             return false;
           }
+
+          // Look at the final value in the block.
+          curr = block->list.back();
         }
-        return true;
+        return ExpressionAnalyzer::equal(curr, value);
       }
 
       void visitExpression(Expression* curr) {
-#if 0
-        {
-          auto contents = oracle.getContents(ExpressionLocation{curr, 0});
-          std::cout << "curr:\n" << *curr << "..has contents: ";
-          contents.dump(std::cout, getModule());
-          std::cout << "\n\n";
-        }
-#endif
-#if 0
-        static auto LIMIT = getenv("LIMIT") ? atoi(getenv("LIMIT")) : size_t(-1);
-        if (LIMIT == 0) {
-          return;
-        }
-        LIMIT--;
-#endif
         auto type = curr->type;
         if (type == Type::unreachable || type == Type::none) {
           return;
@@ -183,9 +180,6 @@ struct GUFAPass : public Pass {
         if (!contents.canMakeExpression()) {
           return;
         }
-        if (!shouldOptimizeToConstant(curr)) {
-          return;
-        }
 
         // We have a constant here.
         // TODO: Handle more than a constant, e.g., ExactType can help us
@@ -202,6 +196,10 @@ struct GUFAPass : public Pass {
         }
 
         auto* c = contents.makeExpression(wasm);
+        if (looksAlreadyOptimizedToValue(curr, c)) {
+          return;
+        }
+
         // We can only place the constant value here if it has the right
         // type. For example, a block may return (ref any), that is, not allow
         // a null, but in practice only a null may flow there (if it goes
