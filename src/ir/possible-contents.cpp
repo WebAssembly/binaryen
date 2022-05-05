@@ -1250,8 +1250,7 @@ void Flower::applyContents(LocationIndex locationIndex,
     // The target is one of the special cases where it is an expression for whom
     // we must know the parent in order to handle things in a special manner.
     auto parentIndex = iter->second;
-    auto* parent =
-      std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
+    auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  special, parent:\n" << *parent << '\n';
