@@ -183,11 +183,11 @@ static void testCombinations() {
   // nullability.
   assertCombination(func, anyNull, exactFuncSignatureType);
   assertCombination(func, funcNull, exactFuncSignatureType); 
-
-  std::cout << "\nfunc sigs\n";
-
   assertCombination(exactFuncSignatureType, funcNull, exactFuncSignatureType); 
   assertCombination(exactNonNullFuncSignatureType, funcNull, exactFuncSignatureType); 
+  assertCombination(func, exactFuncSignatureType, exactFuncSignatureType);
+  assertCombination(func, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
+  assertCombination(func, exactI32, many);
 }
 
 static std::unique_ptr<Module> parse(std::string module) {
