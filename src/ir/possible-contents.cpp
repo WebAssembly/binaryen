@@ -824,7 +824,7 @@ private:
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
   InsertOrderedMap<LocationIndex, PossibleContents> workQueue;
 #else
-  std::unordered<LocationIndex, PossibleContents> workQueue;
+  std::unordered_map<LocationIndex, PossibleContents> workQueue;
 #endif
 
   // Maps a heap type + an index in the type (0 for an array) to the index of a
