@@ -26,6 +26,9 @@ namespace wasm {
 // them.
 struct SubTypes {
   SubTypes(Module& wasm) {
+    if (getTypeSystem() != TypeSystem::Nominal) {
+      Fatal() << "SubTypes requires nominal typing to find supers";
+    }
     types = ModuleUtils::collectHeapTypes(wasm);
     for (auto type : types) {
       note(type);
@@ -51,6 +54,13 @@ struct SubTypes {
     return ret;
   }
 
+  // Like getAllSubTypes, but also includes the type itself.
+  std::vector<HeapType> getAllSubTypesInclusive(HeapType type) {
+    auto ret = getAllSubTypes(type);
+    ret.push_back(type);
+    return ret;
+  }
+
   // Get all supertypes of a type. The order in the output vector is with the
   // immediate supertype first, then its supertype, and so forth.
   std::vector<HeapType> getAllSuperTypes(HeapType type) {
@@ -65,6 +75,8 @@ struct SubTypes {
     }
   }
 
+  // All the types in the program. This is computed here anyhow, and can be
+  // useful for callers to iterate on, so it is public.
   std::vector<HeapType> types;
 
 private:
