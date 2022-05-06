@@ -166,26 +166,24 @@ public:
 
     // Nulls are always equal to each other, even if their types differ.
     if (isNull() || other.isNull()) {
-      // If only one is a null then the combination is to add nullability to
-      // this one. (This is correct both for a literal or for a type: if it
-      // was a literal then now we have either a literal or a null, so we do
-      // not have a single constant anymore).
+      // If only one is a null, but the other's type is known exactly, then the
+      // combination is to add nullability (if the type is *not* known exactly,
+      // like for a global, then we cannot do anything useful here).
       // TODO: what about Global, here..? FIXME
-      if (!isNull()) {
+      if (!isNull() && isTypeExact()) {
         return applyIfDifferent(
           PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
-      }
-      if (!other.isNull()) {
+      } else if (!other.isNull() && other.isTypeExact()) {
         return applyIfDifferent(
           PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
+      } else if (isNull() && other.isNull()) {
+        // Both are null. The result is a null, of the LUB.
+        auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
+                                                     otherType.getHeapType()),
+                        Nullable);
+        return applyIfDifferent(
+          PossibleContents::literal(Literal::makeNull(lub)));
       }
-
-      // Both are null. The result is a null, of the LUB.
-      auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
-                                                   otherType.getHeapType()),
-                      Nullable);
-      return applyIfDifferent(
-        PossibleContents::literal(Literal::makeNull(lub)));
     }
 
     if (isTypeExact() && other.isTypeExact() &&

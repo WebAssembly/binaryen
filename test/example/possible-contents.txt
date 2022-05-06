@@ -730,6 +730,38 @@ assertEqualSymmetric
 [Many]
 [Many]
 
+globals vs nulls
+
+assertCombination
+[GlobalInfo $anyGlobal]
+[Literal anyref(null) HT: any]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
+assertCombination
+[GlobalInfo $anyGlobal]
+[Literal funcref(null) HT: func]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+[Many]
+
+assertEqualSymmetric
+[Many]
+[Many]
+
 possible types of the $null global: unreachable
 possible types of the $something global: anyref
 possible types of the function's body: none

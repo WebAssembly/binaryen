@@ -190,6 +190,11 @@ static void testCombinations() {
   assertCombination(
     func, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
   assertCombination(func, exactI32, many);
+
+  std::cout << "\nglobals vs nulls\n";
+
+  assertCombination(anyGlobal, anyNull, many);
+  assertCombination(anyGlobal, funcNull, many);
 }
 
 static std::unique_ptr<Module> parse(std::string module) {
