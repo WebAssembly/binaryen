@@ -24,6 +24,12 @@
 #include "ir/possible-contents.h"
 #include "wasm.h"
 
+#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
+// Use an insert-ordered set for easier debugging with deterministic queue
+// ordering.
+#include "support/insert_ordered.h"
+#endif
+
 namespace wasm {
 
 namespace {
@@ -815,7 +821,11 @@ private:
   // Using a map here is efficient as multiple updates may arrive before we
   // process any of them, and this way each location appears just once in the
   // queue.
-  std::unordered_map<LocationIndex, PossibleContents> workQueue;
+#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
+  InsertOrderedMap<LocationIndex, PossibleContents> workQueue;
+#else
+  std::unordered<LocationIndex, PossibleContents> workQueue;
+#endif
 
   // Maps a heap type + an index in the type (0 for an array) to the index of a
   // SpecialLocation for a cone read of those contents. We use such special
@@ -899,7 +909,7 @@ private:
 
   // Special handling for RefCast during the flow: RefCast only admits valid
   // values to flow through it.
-  void flowRefCast(PossibleContents contents, RefCast* cast);
+  void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1113,17 +1123,19 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
 PossibleContents Flower::sendContents(LocationIndex locationIndex,
                                       const PossibleContents& newContents) {
+  auto& contents = getContents(locationIndex);
+
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "sendContents\n";
   dump(getLocation(locationIndex));
-  std::cout << " with new contents \n";
+  contents.dump(std::cout, &wasm);
+  std::cout << "\n with new contents \n";
   newContents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
 
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
-  auto& contents = getContents(locationIndex);
   auto oldContents = contents;
   if (!contents.combine(newContents)) {
     // The new contents did not change anything. Either there is an existing
@@ -1134,7 +1146,9 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
   }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "  sendContents has sometihng new\n";
+  std::cout << "  sendContents has something new\n";
+  contents.dump(std::cout, &wasm);
+  std::cout << '\n';
 #endif
 
   // Add a work item if there isn't already. (If one exists, then oldContents
@@ -1414,7 +1428,7 @@ void Flower::writeToNewLocations(Expression* ref,
   }
 }
 
-void Flower::flowRefCast(PossibleContents contents, RefCast* cast) {
+void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   // RefCast only allows valid values to go through: nulls and things of the
   // cast type. Filter anything else out.
   PossibleContents filtered;
@@ -1443,6 +1457,8 @@ void Flower::flowRefCast(PossibleContents contents, RefCast* cast) {
   if (!filtered.isNone()) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "    ref.cast passing through\n";
+    filtered.dump(std::cout);
+    std::cout << '\n';
 #endif
     sendContents(ExpressionLocation{cast, 0}, filtered);
   }

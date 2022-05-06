@@ -170,7 +170,7 @@ public:
       // this one. (This is correct both for a literal or for a type: if it
       // was a literal then now we have either a literal or a null, so we do
       // not have a single constant anymore).
-      // TODO: what about Global, here..?
+      // TODO: what about Global, here..? FIXME
       if (!isNull()) {
         return applyIfDifferent(
           PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
@@ -188,18 +188,17 @@ public:
         PossibleContents::literal(Literal::makeNull(lub)));
     }
 
-    if (isExactType() && other.isExactType() &&
+    if (isTypeExact() && other.isTypeExact() &&
         type.getHeapType() == otherType.getHeapType()) {
-      // These are two exact types that agree on the heap type but not the
-      // full type (the full type must differ as otherwise they'd be 100%
-      // identical, and we'd have exited before). That means the only
-      // difference is nullability, and the combined value is the nullable
-      // type.
+      // We know the types here exactly, and even the heap types match, but
+      // there is some other difference that prevents them from being 100%
+      // identical (for example, one might be an ExactType and the other a
+      // Literal; or both might be ExactTypes and only one might be nullable).
+      // In these cases we can emit a proper ExactType here, adding nullability
+      // if we need to.
       return applyIfDifferent(
-        PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
+        PossibleContents::exactType(Type(type.getHeapType(), type.isNullable() || otherType.isNullable() ? Nullable : NonNullable)));
     }
-
-    // TODO: An exact type + a function constant might remain an exact type.
 
     // Nothing else possible combines in an interesting way; emit a Many.
     value = Many();
@@ -227,8 +226,9 @@ public:
   // Return the relevant type here. Note that the *meaning* of the type varies
   // by the contents (type $foo of a global means that type or any subtype, as a
   // subtype might be written to it, while type $foo of a Literal or an
-  // ExactType means that type and nothing else). If no type is possible, return
-  // unreachable; if many types are, return none.
+  // ExactType means that type and nothing else). See isTypeExact().
+  //
+  // If no type is possible, return unreachable; if many types are, return none.
   Type getType() const {
     if (auto* literal = std::get_if<Literal>(&value)) {
       return literal->type;
@@ -243,6 +243,14 @@ public:
     } else {
       WASM_UNREACHABLE("bad value");
     }
+  }
+
+  // Returns whether the type we can report here is exact, that is, nothing of a
+  // strict subtype might show up.
+  //
+  // This returns false for None and Many, for whom it is not well-defined.
+  bool isTypeExact() const {
+    return isExactType() || isLiteral();
   }
 
   // Whether we can make an Expression* for this containing the proper contents.
