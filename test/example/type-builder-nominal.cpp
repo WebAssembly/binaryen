@@ -441,12 +441,18 @@ void test_subtypes() {
     // used.
     Module wasm;
     Builder builder(wasm);
-    wasm.addFunction(builder.makeFunction("func", Signature(Type::none, Type::none), { Type(built[0], Nullable), Type(built[1], Nullable) }, builder.makeNop()));
+    wasm.addFunction(
+      builder.makeFunction("func",
+                           Signature(Type::none, Type::none),
+                           {Type(built[0], Nullable), Type(built[1], Nullable)},
+                           builder.makeNop()));
     SubTypes subTypes(wasm);
     auto subTypes0 = subTypes.getSubTypes(built[0]);
     assert(subTypes0.size() == 1 && subTypes0[0] == built[1]);
     auto subTypes0Inclusive = subTypes.getAllSubTypesInclusive(built[0]);
-    assert(subTypes0Inclusive.size() == 2 && subTypes0Inclusive[0] == built[1] && subTypes0Inclusive[1] == built[0]);
+    assert(subTypes0Inclusive.size() == 2 &&
+           subTypes0Inclusive[0] == built[1] &&
+           subTypes0Inclusive[1] == built[0]);
     auto subTypes1 = subTypes.getSubTypes(built[1]);
     assert(subTypes1.size() == 0);
   }
