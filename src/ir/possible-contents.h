@@ -169,7 +169,6 @@ public:
       // If only one is a null, but the other's type is known exactly, then the
       // combination is to add nullability (if the type is *not* known exactly,
       // like for a global, then we cannot do anything useful here).
-      // TODO: what about Global, here..? FIXME
       if (!isNull() && isTypeExact()) {
         return applyIfDifferent(
           PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
