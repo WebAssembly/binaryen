@@ -45,7 +45,7 @@ auto f64Global = PossibleContents::global("f64Global", Type::f64);
 auto anyGlobal = PossibleContents::global("anyGlobal", Type::anyref);
 
 auto func =
-  PossibleContents::literal(Literal("func", Type(HeapType::func, NonNullable)));
+  PossibleContents::literal(Literal("func", Type(Signature(Type::none, Type::none), NonNullable)));
 
 auto exactI32 = PossibleContents::exactType(Type::i32);
 auto exactAnyref = PossibleContents::exactType(Type::anyref);
@@ -54,6 +54,11 @@ auto exactNonNullAnyref =
   PossibleContents::exactType(Type(HeapType::any, NonNullable));
 auto exactNonNullFuncref =
   PossibleContents::exactType(Type(HeapType::func, NonNullable));
+
+auto exactFuncSignatureType =
+  PossibleContents::exactType(Type(Signature(Type::none, Type::none), Nullable));
+auto exactNonNullFuncSignatureType =
+  PossibleContents::exactType(Type(Signature(Type::none, Type::none), NonNullable));
 
 auto many = PossibleContents::many();
 
@@ -152,16 +157,18 @@ static void testCombinations() {
   // the same heap type (nullability may be added, but nothing else).
   assertCombination(exactFuncref, exactAnyref, many);
   assertCombination(exactFuncref, anyGlobal, many);
-  assertCombination(exactFuncref, func, many); // TODO this might be better
+  assertCombination(exactFuncref, func, many);
   assertCombination(exactFuncref, exactFuncref, exactFuncref);
   assertCombination(exactFuncref, exactNonNullFuncref, exactFuncref);
 
-  // Nulls
+  std::cout << "\nnulls\n";
 
   assertCombination(anyNull, i32Zero, many);
   assertCombination(anyNull, anyNull, anyNull);
-  assertCombination(anyNull, funcNull, anyNull); // Two nulls go to the lub
   assertCombination(anyNull, exactAnyref, exactAnyref);
+
+  // Two nulls go to the lub
+  assertCombination(anyNull, funcNull, anyNull);
 
   assertCombination(exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
 
@@ -169,7 +176,18 @@ static void testCombinations() {
   // be a nullable type - but keeps the heap type of the other.
   assertCombination(anyNull, exactNonNullAnyref, exactAnyref);
   assertCombination(anyNull, exactNonNullFuncref, exactFuncref);
-  assertCombination(anyNull, func, exactFuncref);
+
+  std::cout << "\nfuncrefs\n";
+
+  // A function reference + a null becomes an exact type (of that sig), plus
+  // nullability.
+  assertCombination(func, anyNull, exactFuncSignatureType);
+  assertCombination(func, funcNull, exactFuncSignatureType); 
+
+  std::cout << "\nfunc sigs\n";
+
+  assertCombination(exactFuncSignatureType, funcNull, exactFuncSignatureType); 
+  assertCombination(exactNonNullFuncSignatureType, funcNull, exactFuncSignatureType); 
 }
 
 static std::unique_ptr<Module> parse(std::string module) {

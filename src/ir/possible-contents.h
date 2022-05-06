@@ -170,6 +170,7 @@ public:
       // this one. (This is correct both for a literal or for a type: if it
       // was a literal then now we have either a literal or a null, so we do
       // not have a single constant anymore).
+      // TODO: what about Global, here..?
       if (!isNull()) {
         return applyIfDifferent(
           PossibleContents::exactType(Type(type.getHeapType(), Nullable)));

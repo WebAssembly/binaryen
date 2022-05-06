@@ -473,7 +473,7 @@ assertEqualSymmetric
 
 assertCombination
 [ExactType funcref HT: func null]
-[Literal funcref(func) HT: func]
+[Literal funcref(func) HT: (func_subtype func)]
 [Many]
 [Many]
 
@@ -515,6 +515,7 @@ assertEqualSymmetric
 assertEqualSymmetric
 [ExactType funcref HT: func null]
 [ExactType funcref HT: func null]
+nulls
 
 assertCombination
 [Literal anyref(null) HT: any]
@@ -548,33 +549,33 @@ assertEqualSymmetric
 
 assertCombination
 [Literal anyref(null) HT: any]
-[Literal funcref(null) HT: func]
-[Literal anyref(null) HT: any]
-[Literal anyref(null) HT: any]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
 
 assertEqualSymmetric
-[Literal anyref(null) HT: any]
-[Literal anyref(null) HT: any]
-[Literal funcref(null) HT: func]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
 
 assertEqualSymmetric
-[Literal funcref(null) HT: func]
-[Literal anyref(null) HT: any]
+[ExactType anyref HT: any null]
+[ExactType anyref HT: any null]
 
 assertCombination
 [Literal anyref(null) HT: any]
-[ExactType anyref HT: any null]
-[ExactType anyref HT: any null]
-[ExactType anyref HT: any null]
+[Literal funcref(null) HT: func]
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
 
 assertEqualSymmetric
-[ExactType anyref HT: any null]
-[ExactType anyref HT: any null]
-[ExactType anyref HT: any null]
+[Literal anyref(null) HT: any]
+[Literal anyref(null) HT: any]
+[Literal funcref(null) HT: func]
 
 assertEqualSymmetric
-[ExactType anyref HT: any null]
-[ExactType anyref HT: any null]
+[Literal funcref(null) HT: func]
+[Literal anyref(null) HT: any]
 
 assertCombination
 [ExactType (ref any) HT: any]
@@ -620,21 +621,67 @@ assertEqualSymmetric
 assertEqualSymmetric
 [ExactType funcref HT: func null]
 [ExactType funcref HT: func null]
+funcrefs
 
 assertCombination
+[Literal funcref(func) HT: (func_subtype func)]
 [Literal anyref(null) HT: any]
-[Literal funcref(func) HT: func]
-[ExactType funcref HT: func null]
-[ExactType funcref HT: func null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
 
 assertEqualSymmetric
-[ExactType funcref HT: func null]
-[ExactType funcref HT: func null]
-[ExactType funcref HT: func null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
 
 assertEqualSymmetric
-[ExactType funcref HT: func null]
-[ExactType funcref HT: func null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertCombination
+[Literal funcref(func) HT: (func_subtype func)]
+[Literal funcref(null) HT: func]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertEqualSymmetric
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertEqualSymmetric
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertCombination
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[Literal funcref(null) HT: func]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertEqualSymmetric
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertEqualSymmetric
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertCombination
+[ExactType (ref $func.0) HT: (func_subtype func)]
+[Literal funcref(null) HT: func]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertEqualSymmetric
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+
+assertEqualSymmetric
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
+[ExactType (ref null $func.0) HT: (func_subtype func) null]
 
 possible types of the $null global: unreachable
 possible types of the $something global: anyref
