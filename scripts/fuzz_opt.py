@@ -1365,9 +1365,9 @@ on valid wasm files.)
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
 echo "At least one of the next two values should be 0:"
-%(wasm_opt)s --detect-features %(temp_wasm)s
+%(wasm_opt)s %(typesystem)s --detect-features %(temp_wasm)s
 echo "  " $?
-%(wasm_opt)s --all-features %(temp_wasm)s
+%(wasm_opt)s %(typesystem)s --all-features %(temp_wasm)s
 echo "  " $?
 
 # run the command
@@ -1404,6 +1404,7 @@ echo "  " $?
                          'auto_init': auto_init,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
+                         'typesystem': TYPE_SYSTEM_FLAG,
                          'reduce_sh': os.path.abspath('reduce.sh')})
 
                 print('''\
