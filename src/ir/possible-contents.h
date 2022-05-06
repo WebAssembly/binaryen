@@ -196,8 +196,9 @@ public:
       // Literal; or both might be ExactTypes and only one might be nullable).
       // In these cases we can emit a proper ExactType here, adding nullability
       // if we need to.
-      return applyIfDifferent(
-        PossibleContents::exactType(Type(type.getHeapType(), type.isNullable() || otherType.isNullable() ? Nullable : NonNullable)));
+      return applyIfDifferent(PossibleContents::exactType(Type(
+        type.getHeapType(),
+        type.isNullable() || otherType.isNullable() ? Nullable : NonNullable)));
     }
 
     // Nothing else possible combines in an interesting way; emit a Many.
@@ -249,9 +250,7 @@ public:
   // strict subtype might show up.
   //
   // This returns false for None and Many, for whom it is not well-defined.
-  bool isTypeExact() const {
-    return isExactType() || isLiteral();
-  }
+  bool isTypeExact() const { return isExactType() || isLiteral(); }
 
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a

@@ -44,8 +44,8 @@ auto i32Global2 = PossibleContents::global("i32Global2", Type::i32);
 auto f64Global = PossibleContents::global("f64Global", Type::f64);
 auto anyGlobal = PossibleContents::global("anyGlobal", Type::anyref);
 
-auto func =
-  PossibleContents::literal(Literal("func", Type(Signature(Type::none, Type::none), NonNullable)));
+auto func = PossibleContents::literal(
+  Literal("func", Type(Signature(Type::none, Type::none), NonNullable)));
 
 auto exactI32 = PossibleContents::exactType(Type::i32);
 auto exactAnyref = PossibleContents::exactType(Type::anyref);
@@ -55,10 +55,10 @@ auto exactNonNullAnyref =
 auto exactNonNullFuncref =
   PossibleContents::exactType(Type(HeapType::func, NonNullable));
 
-auto exactFuncSignatureType =
-  PossibleContents::exactType(Type(Signature(Type::none, Type::none), Nullable));
-auto exactNonNullFuncSignatureType =
-  PossibleContents::exactType(Type(Signature(Type::none, Type::none), NonNullable));
+auto exactFuncSignatureType = PossibleContents::exactType(
+  Type(Signature(Type::none, Type::none), Nullable));
+auto exactNonNullFuncSignatureType = PossibleContents::exactType(
+  Type(Signature(Type::none, Type::none), NonNullable));
 
 auto many = PossibleContents::many();
 
@@ -182,11 +182,13 @@ static void testCombinations() {
   // A function reference + a null becomes an exact type (of that sig), plus
   // nullability.
   assertCombination(func, anyNull, exactFuncSignatureType);
-  assertCombination(func, funcNull, exactFuncSignatureType); 
-  assertCombination(exactFuncSignatureType, funcNull, exactFuncSignatureType); 
-  assertCombination(exactNonNullFuncSignatureType, funcNull, exactFuncSignatureType); 
+  assertCombination(func, funcNull, exactFuncSignatureType);
+  assertCombination(exactFuncSignatureType, funcNull, exactFuncSignatureType);
+  assertCombination(
+    exactNonNullFuncSignatureType, funcNull, exactFuncSignatureType);
   assertCombination(func, exactFuncSignatureType, exactFuncSignatureType);
-  assertCombination(func, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
+  assertCombination(
+    func, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
   assertCombination(func, exactI32, many);
 }
 
