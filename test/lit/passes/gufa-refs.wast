@@ -69,10 +69,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $yes-non-null (result (ref any))
-    ;; Similar to the above but now there *is* an allocation, and so we have
-    ;; nothing to optimize. (The ref.as is redundant, but we leave that for
-    ;; other passes, and we keep it in this test to keep the testcase identical
-    ;; to the above in all ways except for having a possible type.)
+    ;; Similar to the above but now there *is* an non-null value here, so there
+    ;; is nothing for us to optimize or change here.
     (ref.as_non_null
       (struct.new $struct)
     )
@@ -92,7 +90,7 @@
   ;; CHECK-NEXT: )
   (func $breaks
     ;; Check that we notice values sent along breaks. We should optimize
-    ;; nothing here.
+    ;; nothing in the first block here.
     (drop
       (block $block (result (ref any))
         (br $block
@@ -100,7 +98,7 @@
         )
       )
     )
-    ;; But here we send a null so we can optimize.
+    ;; But here we send a null so we can optimize to an unreachable.
     (drop
       (ref.as_non_null
         (block $block2 (result (ref null any))
@@ -118,7 +116,7 @@
   (func $get-nothing (result (ref $struct))
     ;; This function returns a non-nullable struct by type, but does not
     ;; actually return a value in practice, and our whole-program analysis
-    ;; should pick that up in optimizing the callers.
+    ;; should pick that up in optimizing the callers (but nothing changes here).
     (unreachable)
   )
 
@@ -129,16 +127,6 @@
   ;; CHECK-NEXT:     (call $get-nothing)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (call $get-nothing)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -156,25 +144,36 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $get-nothing)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get-nothing-calls
-    ;; This should be optimized out since the call does not actually return any
-    ;; type in practice.
+    ;; This can be optimized since the call does not actually return any
+    ;; possible content (it has an unreachable), which means we can write an
+    ;; unreachable here (we add it after the call, since the call itself may
+    ;; have side effects).
     (drop
       (call $get-nothing)
     )
-    ;; Test for the result of such a call reaching another instruction. We do
-    ;; not optimize the ref.is_null here, because it returns an i32 (though we
-    ;; could in the future infer its value).
+    ;; As above, add another instruction in the middle. We can optimize it to
+    ;; an unreachable, like the call.
     (drop
-      (ref.is_null
+      (ref.as_non_null
         (call $get-nothing)
       )
     )
-    ;; As above, but an instruction that does return a reference, which we can
-    ;; put an unreachable after.
+    ;; As above, but we do not optimize ref.is_null yet so nothing happens for
+    ;; it (but the call still gets optimized as before).
     (drop
-      (ref.as_non_null
+      (ref.is_null
         (call $get-nothing)
       )
     )
