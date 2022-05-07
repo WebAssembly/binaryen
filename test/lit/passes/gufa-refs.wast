@@ -157,9 +157,9 @@
   ;; CHECK-NEXT: )
   (func $get-nothing-calls
     ;; This can be optimized since the call does not actually return any
-    ;; possible content (it has an unreachable), which means we can write an
-    ;; unreachable here (we add it after the call, since the call itself may
-    ;; have side effects).
+    ;; possible content (it has an unreachable), which means we can optimize
+    ;; away the call's value - we must keep it around in a drop, since it can
+    ;; have side effects, but the drop ignores the value which we do not need.
     (drop
       (call $get-nothing)
     )
@@ -237,8 +237,12 @@
   (func $two-inputs
     ;; As above, but now the outer instruction is a select, and some of the arms
     ;; may have a possible type - we check all 4 permutations. Only in the
-    ;; case where both inputs are nothing can we optimize away the select, as
-    ;; only then will the select never have anything.
+    ;; case where both inputs are nothing can we optimize away the select (that
+    ;; is, drop it and ignore its value), as only then will the select never
+    ;; have any contents.
+    ;; (Note: we are not fully optimal here since we could notice that the
+    ;; select executes both arms unconditionally, so it one traps then it will
+    ;; all trap.)
     (drop
       (select (result (ref any))
         (struct.new $struct)
@@ -273,7 +277,7 @@
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
   (func $get-something-flow (result (ref $struct))
-    ;; Return a value by flowing it out.
+    ;; Return a value by flowing it out. Helper for later code.
     (struct.new $struct)
   )
 
@@ -283,7 +287,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get-something-return (result (ref $struct))
-    ;; Return a value using an explicit return
+    ;; Return a value using an explicit return. Helper for later code.
     (return
       (struct.new $struct)
     )
@@ -338,7 +342,8 @@
     (local $y (ref null any))
     (local $z (ref null any))
     ;; Assign to x from a call that actually will not return anything. We will
-    ;; be able to optimize around the call.
+    ;; be able to optimize away the call's return value (drop it) and append an
+    ;; unreachable.
     (local.set $x
       (call $get-nothing)
     )
@@ -348,7 +353,10 @@
       (struct.new $struct)
     )
     ;; Get the 3 locals, to check that we optimize. We can replace x and y with
-    ;; a null constant.
+    ;; a null constant. (x will not actually contain null since the call will
+    ;; trap, but the only value we see x can contain is the default value, and
+    ;; we don't use SSA yet, so all values written to x anywhere are considered
+    ;; possible at all local.gets)
     (drop
       (local.get $x)
     )
@@ -360,6 +368,8 @@
     )
   )
 )
+
+;; TODO from here
 
 (module
   ;; CHECK:      (type $struct (struct_subtype  data))

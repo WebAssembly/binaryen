@@ -243,6 +243,9 @@ struct InfoCollector
   void visitUnary(Unary* curr) { addRoot(curr); }
   void visitBinary(Binary* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
+    // TODO: We could use the fact that both sides are executed unconditionally
+    //       while optimizing (if one arm must trap, then the Select will trap,
+    //       which is not the same as with an If).
     receiveChildValue(curr->ifTrue, curr);
     receiveChildValue(curr->ifFalse, curr);
   }
