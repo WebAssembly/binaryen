@@ -1,7 +1,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "ir/subtypes.h"
 #include "wasm-builder.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
@@ -435,26 +434,6 @@ void test_subtypes() {
       built = *builder.build();
     }
     assert(LUB(built[1], built[0]) == built[0]);
-
-    // Test SubTypes utility code, which also verifies the above. Create a tiny
-    // module that uses the types in the locals of a function, so the types are
-    // used.
-    Module wasm;
-    Builder builder(wasm);
-    wasm.addFunction(
-      builder.makeFunction("func",
-                           Signature(Type::none, Type::none),
-                           {Type(built[0], Nullable), Type(built[1], Nullable)},
-                           builder.makeNop()));
-    SubTypes subTypes(wasm);
-    auto subTypes0 = subTypes.getSubTypes(built[0]);
-    assert(subTypes0.size() == 1 && subTypes0[0] == built[1]);
-    auto subTypes0Inclusive = subTypes.getAllSubTypesInclusive(built[0]);
-    assert(subTypes0Inclusive.size() == 2 &&
-           subTypes0Inclusive[0] == built[1] &&
-           subTypes0Inclusive[1] == built[0]);
-    auto subTypes1 = subTypes.getSubTypes(built[1]);
-    assert(subTypes1.size() == 0);
   }
 
   {
