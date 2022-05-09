@@ -981,9 +981,6 @@
   ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     (local $child (ref null $child))
@@ -1020,17 +1017,14 @@
         (local.get $parent)
       )
     )
-    ;; Reading from a null reference is easy to optimize - it will trap.
-    (drop
-      (struct.get $parent 0
-        (ref.null $parent)
-      )
-    )
   )
 
   ;; CHECK:      (func $nulls (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.null $parent)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
@@ -1084,6 +1078,12 @@
     (drop
       (ref.null $parent)
     )
+    ;; Reading from a null reference is easy to optimize - it will trap.
+    (drop
+      (struct.get $parent 0
+        (ref.null $parent)
+      )
+    )
     ;; Send a null to the block, which is the only value exiting, so we can
     ;; optimize here.
     (drop
@@ -1104,7 +1104,9 @@
       )
     )
     ;; Send a less specific type, via a cast. But all nulls are identical and
-    ;; ref.cast passes nulls through, so this is ok.
+    ;; ref.cast passes nulls through, so this is ok, but we must be careful to
+    ;; emit a ref.null child on the outside (to not change the outer type to a
+    ;; less refined one).
     (drop
       (block $block (result (ref null $child))
         (br $block
@@ -1115,9 +1117,10 @@
         (unreachable)
       )
     )
-    ;; TODO: similar tests with non-null values.
   )
 )
+
+;; TODO from here
 
 ;; Default values in struct fields.
 (module
@@ -2979,3 +2982,5 @@
     )
   )
 )
+
+;; TODO: all instrs not appearing in here but that are in possible-constants.cpp
