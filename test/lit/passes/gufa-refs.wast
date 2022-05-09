@@ -2565,7 +2565,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; Test nested struct.get operations. We can optimize all this.
+    ;; Test nested struct.get operations. We can optimize all this into the
+    ;; constant 42.
     (drop
       (struct.get $A 0
         (struct.get $B 0
@@ -2635,6 +2636,8 @@
     )
   )
 )
+
+;; TODO
 
 ;; ref.as* test.
 (module
