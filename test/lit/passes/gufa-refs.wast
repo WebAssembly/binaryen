@@ -2175,7 +2175,9 @@
     ;; the br will not be taken, but this pass is not smart enough to see that).
     ;; We can optimize to an unreachable here, but must be careful - we cannot
     ;; remove the block as the wasm would not validate (not unless we also
-    ;; removed the br, which we don't do atm).
+    ;; removed the br, which we don't do atm). All we will do is add an
+    ;; unreachable after the block, on the outside of it (which would help other
+    ;; passes do more work).
     (block $block (result (ref ${}))
       (br_on_non_null $block
         (ref.null ${})
@@ -2227,8 +2229,8 @@
   ;; CHECK-NEXT: )
   (func $many-types
     (local $x (ref null any))
-    ;; Write 4 different types into $x. That should not confuse us, even if just
-    ;; one is enough to prevent opts.
+    ;; Write 4 different types into $x. That should not confuse us, and we
+    ;; should not make any changes in this function.
     (local.set $x
       (struct.new $A
         (i32.const 0)
@@ -2258,7 +2260,8 @@
 )
 
 ;; Test a vtable-like pattern. This tests ref.func values flowing into struct
-;; locations being properly noticed.
+;; locations being properly noticed, both from global locations (the global's
+;; init) and a function ($create).
 (module
   ;; CHECK:      (type $vtable-A (struct_subtype (field funcref) (field funcref) (field funcref) data))
   (type $vtable-A (struct_subtype (field (ref null func)) (field (ref null func)) (field (ref null func)) data))
@@ -2278,68 +2281,60 @@
     )
   )
 
-  ;; CHECK:      (elem declare func $test)
+  ;; CHECK:      (elem declare func $foo $test)
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (struct.get $vtable-A 0
-  ;; CHECK-NEXT:     (global.get $global-A)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.null func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $vtable-A
-  ;; CHECK-NEXT:    (ref.null func)
-  ;; CHECK-NEXT:    (ref.null func)
-  ;; CHECK-NEXT:    (ref.func $test)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (struct.get $vtable-A 2
-  ;; CHECK-NEXT:     (global.get $global-A)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.get $vtable-A 2
+  ;; CHECK-NEXT:    (global.get $global-A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; The first item here contains a fixed value (ref.func $foo) which we can
-    ;; apply.
+    ;; The first item here contains a fixed value (ref.func $foo) in both the
+    ;; global init and in the function $create, which we can apply.
     (drop
-      (ref.as_non_null
-        (struct.get $vtable-A 0
-          (global.get $global-A)
-        )
+      (struct.get $vtable-A 0
+        (global.get $global-A)
       )
     )
-    ;; The second item here contains a null, so we can optimize away the
-    ;; ref.as_non_null.
+    ;; The second item here contains a null in all cases, which we can also
+    ;; apply.
     (drop
-      (ref.as_non_null
-        (struct.get $vtable-A 1
-          (global.get $global-A)
-        )
+      (struct.get $vtable-A 1
+        (global.get $global-A)
       )
     )
     ;; The third item has more than one possible value, which we add with
-    ;; another struct.new here, so we cannot optimize away the struct.get or
-    ;; the ref.as_non_null
+    ;; another struct.new here, so we cannot optimize.
     (drop
-      (struct.new $vtable-A
-        (ref.null func)
-        (ref.null func)
-        (ref.func $test)
+      (struct.get $vtable-A 2
+        (global.get $global-A)
       )
     )
+  )
+
+  ;; CHECK:      (func $create (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $vtable-A
+  ;; CHECK-NEXT:    (ref.func $foo)
+  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
     (drop
-      (ref.as_non_null
-        (struct.get $vtable-A 2
-          (global.get $global-A)
-        )
+      (struct.new $vtable-A
+        (ref.func $foo)
+        (ref.null func)
+        (ref.func $test)
       )
     )
   )
