@@ -2395,8 +2395,7 @@
   )
 )
 
-;; TODO
-
+;; Casts.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct_subtype (field i32) data))
@@ -2435,16 +2434,10 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $struct
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (i32.const 6)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; The cast here will fail, and the ref.cast allows nothing through.
+    ;; The cast here will fail, and the ref.cast allows nothing through, so we
+    ;; can emit an unreachable here.
     (drop
       (ref.cast_static $substruct
         (struct.new $struct
@@ -2452,9 +2445,8 @@
         )
       )
     )
-    ;; This cast will succeed, and we can optimize in principle, but atm we
-    ;; lack a cone type so we do not see that only $substruct is possible, and
-    ;; we make no changes here.
+    ;; This cast of a type to itself can succeed (in fact, it will), so we make
+    ;; no changes here.
     (drop
       (ref.cast_static $substruct
         (struct.new $substruct
@@ -2463,23 +2455,13 @@
         )
       )
     )
-    ;; This cast of a subtype will also succeed. As above, we can make no
-    ;; changes atm.
+    ;; This cast of a subtype will also succeed. As above, we make no changes.
     (drop
       (ref.cast_static $substruct
         (struct.new $subsubstruct
           (i32.const 3)
           (i32.const 4)
           (i32.const 5)
-        )
-      )
-    )
-    ;; All operations on the same struct now. As above, we can make no changes
-    ;; atm.
-    (drop
-      (ref.cast_static $struct
-        (struct.new $struct
-          (i32.const 6)
         )
       )
     )
