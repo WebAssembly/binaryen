@@ -708,15 +708,9 @@
 
   ;; CHECK:      (elem (i32.const 0) $func-2params-a $func-2params-b $func-3params)
 
-  ;; CHECK:      (export "export-so-params-are-live" (func $func-2params-a))
-
-  ;; CHECK:      (export "export-so-params-are-live-b" (func $func-2params-b))
-
-  ;; CHECK:      (export "export-so-params-are-live-c" (func $func-3params))
-
   ;; CHECK:      (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $y)
@@ -727,9 +721,9 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func-2params-a (export "export-so-params-are-live") (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
-    ;; (export this function so that the optimizer realizes values can arrive
-    ;; in the params; otherwise without a call it will see them as unreachable)
+  (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
+    ;; Only null is possible for the first, so we can optimize it to an
+    ;; unreachable.
     (drop
       (local.get $x)
     )
@@ -748,15 +742,15 @@
 
   ;; CHECK:      (func $func-2params-b (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func-2params-b (export "export-so-params-are-live-b") (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
+  (func $func-2params-b (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
     ;; Another function with the same signature as before, which we should
-    ;; optimize in the same way.
+    ;; optimize in the same way: the indirect call can go to either.
     (drop
       (local.get $x)
     )
@@ -770,7 +764,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $z)
@@ -788,7 +782,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func-3params (export "export-so-params-are-live-c") (type $three-params) (param $x (ref $struct)) (param $y (ref $struct)) (param $z (ref $struct))
+  (func $func-3params (type $three-params) (param $x (ref $struct)) (param $y (ref $struct)) (param $z (ref $struct))
     (drop
       (local.get $x)
     )
@@ -798,8 +792,8 @@
     (drop
       (local.get $z)
     )
-    ;; Send a value only to the first and third param. Do so in two separate
-    ;; calls.
+    ;; Send a non-null value only to the first and third param. Do so in two
+    ;; separate calls. The second param, $y, can be optimized.
     (call_indirect (type $three-params)
       (struct.new $struct)
       (ref.as_non_null
@@ -854,7 +848,7 @@
     (drop
       (local.get $y)
     )
-    ;; Send a value only to the second param.
+    ;; Send a non-null value only to the second param.
     (call_ref
       (ref.as_non_null
         (ref.null $struct)
@@ -924,7 +918,8 @@
         )
       )
     )
-    ;; In the last case we have no possible type and can optimize.
+    ;; In the last case we have no possible non-null value and can optimize to
+    ;; an unreachable.
     (drop
       (ref.as_non_null
         (ref.null $vector)
@@ -932,6 +927,8 @@
     )
   )
 )
+
+;; TODO from here
 
 ;; Struct fields.
 (module
