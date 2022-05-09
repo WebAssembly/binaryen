@@ -2071,8 +2071,6 @@
   )
 )
 
-;; TODO
-
 ;; Exceptions with a tuple
 (module
   ;; CHECK:      (type $struct (struct_subtype  data))
@@ -2100,20 +2098,13 @@
   ;; CHECK-NEXT:     (pop anyref anyref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.as_non_null
-  ;; CHECK-NEXT:        (block (result anyref)
-  ;; CHECK-NEXT:         (drop
-  ;; CHECK-NEXT:          (tuple.extract 0
-  ;; CHECK-NEXT:           (local.get $0)
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (ref.null any)
-  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       (tuple.extract 0
+  ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (ref.null any)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2124,30 +2115,26 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (tuple.extract 1
-  ;; CHECK-NEXT:       (pop anyref anyref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (tuple.extract 1
+  ;; CHECK-NEXT:      (pop anyref anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
-    ;; This tag receives no actual value in the first parameter
+    ;; This tag receives a null in the first parameter.
     (throw $tag
       (ref.null $struct)
       (struct.new $struct)
     )
-    ;; Catch the first, which we can optimize.
+    ;; Catch the first, which we can optimize to a null.
     (try
       (do)
       (catch $tag
         (drop
-          (ref.as_non_null
-            (tuple.extract 0
-              (pop (ref null any) (ref null any))
-            )
+          (tuple.extract 0
+            (pop (ref null any) (ref null any))
           )
         )
       )
@@ -2157,10 +2144,8 @@
       (do)
       (catch $tag
         (drop
-          (ref.as_non_null
-            (tuple.extract 1
-              (pop (ref null any) (ref null any))
-            )
+          (tuple.extract 1
+            (pop (ref null any) (ref null any))
           )
         )
       )
@@ -2186,10 +2171,11 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $func (result (ref ${}))
-    ;; This block has no possible types, so it can be removed in principle, but
-    ;; we would need to remove the br to it as well, which we currently don't
-    ;; (we hope other passes would help out), so leave it, but add an
-    ;; unreachable on the outside (which would help other passes).
+    ;; This block can only return a null in theory (in practice, not even that -
+    ;; the br will not be taken, but this pass is not smart enough to see that).
+    ;; We can optimize to an unreachable here, but must be careful - we cannot
+    ;; remove the block as the wasm would not validate (not unless we also
+    ;; removed the br, which we don't do atm).
     (block $block (result (ref ${}))
       (br_on_non_null $block
         (ref.null ${})
