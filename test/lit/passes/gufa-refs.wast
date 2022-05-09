@@ -2914,9 +2914,13 @@
 ;; they might appear as if no content were possible there, and we'd emit an
 ;; unreachable. That should not happen anywhere here.
 (module
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (memory $0 10)
+  (memory $0 10)
+
+  ;; CHECK:      (func $br_table (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -2931,7 +2935,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $br_table
     (drop
       ;; The value 1 can be inferred here.
       (block $A (result i32)
@@ -2941,5 +2945,34 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $memory (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 15)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $memory
+    (drop
+      (i32.load
+        (i32.const 5)
+      )
+    )
+    (i32.store
+      (i32.const 10)
+      (i32.const 15)
+    )
+  )
+
+  ;; CHECK:      (func $store (type $none_=>_none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $store
   )
 )
