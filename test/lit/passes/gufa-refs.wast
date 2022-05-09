@@ -2909,4 +2909,37 @@
   )
 )
 
-;; TODO: all instrs not appearing in here but that are in possible-constants.cpp
+;; Basic tests for all instructions appearing in possible-contents.cpp but not
+;; already shown above. If we forgot to add the proper links to any of them,
+;; they might appear as if no content were possible there, and we'd emit an
+;; unreachable. That should not happen anywhere here.
+(module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $A (result i32)
+  ;; CHECK-NEXT:      (br_table $A $A
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      ;; The value 1 can be inferred here.
+      (block $A (result i32)
+        (br_table $A $A
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+  )
+)
