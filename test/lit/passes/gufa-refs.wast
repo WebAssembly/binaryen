@@ -369,8 +369,6 @@
   )
 )
 
-;; TODO from here
-
 (module
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
@@ -389,6 +387,9 @@
 
   ;; CHECK:      (func $read-globals (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -406,8 +407,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $read-globals
-    ;; This global has no possible type written to it, so we can optimize it to
-    ;; a null. TODO: remove ref.as_non_nulls
+    ;; This global has no possible contents aside from a null, which we can
+    ;; infer and place here.
+    (drop
+      (global.get $null)
+    )
+    ;; This global has no possible contents aside from a null, so the
+    ;; ref.as_non_null can be optimized to an unreachable (since a null is not
+    ;; compatible with its non-nullable type.
     (drop
       (ref.as_non_null
         (global.get $null)
