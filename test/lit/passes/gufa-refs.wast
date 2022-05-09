@@ -1481,8 +1481,6 @@
   )
 )
 
-;; TODO from here
-
 ;; Arrays get/set
 (module
   (type $nothing (array_subtype (mut (ref null any)) data))
@@ -1557,14 +1555,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
-    ;; Write nothing to this array, so we can optimize to an unreachable.
+    ;; Reading from a null will trap, and we can optimize to an unreachable.
     (drop
       (array.get $nothing
         (ref.null $nothing)
         (i32.const 0)
       )
     )
-    ;; Write a null to this array. Again, we can optimize.
+    ;; Write a null to this array.
     (array.set $null
       (array.new_default $null
         (i32.const 10)
@@ -1572,6 +1570,7 @@
       (i32.const 0)
       (ref.null any)
     )
+    ;; We can only read a null here, so this will trap and can be optimized.
     (drop
       (ref.as_non_null
         (array.get $null
@@ -1582,7 +1581,8 @@
         )
       )
     )
-    ;; In $something we do actually write a value.
+    ;; In $something we do actually write a non-null value, so we cannot add
+    ;; unreachables here.
     (array.set $something
       (array.new_default $something
         (i32.const 10)
@@ -1600,9 +1600,9 @@
         )
       )
     )
-    ;; $something-child has nothing written to it, but it's parent does. Still,
-    ;; no $something-child exists so we know this will trap.
-    ;; do not optimize (but a better analysis might improve things).
+    ;; $something-child has nothing written to it, but its parent does. Still,
+    ;; with exact type info that does not confuse us, and we can optimize to an
+    ;; unreachable.
     (drop
       (ref.as_non_null
         (array.get $something-child
@@ -1617,6 +1617,8 @@
     )
   )
 )
+
+;; TODO
 
 ;; A big chain, from an allocation that passes through many locations along the
 ;; way before it is used. Nothing here can be optimized.
