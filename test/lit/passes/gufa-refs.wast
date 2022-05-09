@@ -581,16 +581,26 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
 
+  ;; CHECK:      (type $i32_=>_i32 (func_subtype (param i32) (result i32) func))
+
   ;; CHECK:      (type $ref|any|_ref|any|_ref|any|_=>_none (func_subtype (param (ref any) (ref any) (ref any)) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $never-called (type $ref|any|_=>_ref|any|) (param $x (ref any)) (result (ref any))
+  ;; CHECK:      (func $never-called (type $i32_=>_i32) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $never-called (param $x (ref any)) (result (ref any))
-    ;; This function is never called, so this non-nullable parameter cannot
-    ;; contain any actual value, and we can optimize it away.
+  (func $never-called (param $x i32) (result i32)
+    ;; This function is never called, so the parameter has no possible contents,
+    ;; and we can optimize to an unreachable.
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $never-called-ref (type $ref|any|_=>_ref|any|) (param $x (ref any)) (result (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $never-called-ref (param $x (ref any)) (result (ref any))
+    ;; As above but with a reference.
     (local.get $x)
   )
 
