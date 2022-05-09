@@ -928,8 +928,6 @@
   )
 )
 
-;; TODO from here
-
 ;; Struct fields.
 (module
   ;; CHECK:      (type $parent (struct_subtype (field (mut (ref null $struct))) data))
@@ -938,6 +936,7 @@
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
+
   (type $parent (struct_subtype (field (mut (ref null $struct))) data))
   (type $child (struct_subtype (field (mut (ref null $struct))) (field (mut (ref null $struct))) $parent))
 
@@ -953,31 +952,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (struct.get $child 0
-  ;; CHECK-NEXT:     (local.get $child)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $child
-  ;; CHECK-NEXT:   (struct.new $child
-  ;; CHECK-NEXT:    (struct.new_default $struct)
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $child)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.get $child 1
-  ;; CHECK-NEXT:        (local.get $child)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     (struct.get $child 1
+  ;; CHECK-NEXT:      (local.get $child)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $parent
@@ -986,18 +972,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.get $parent 0
-  ;; CHECK-NEXT:        (local.get $parent)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     (struct.get $parent 0
+  ;; CHECK-NEXT:      (local.get $parent)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1007,52 +988,39 @@
   (func $func
     (local $child (ref null $child))
     (local $parent (ref null $parent))
-    ;; We create a child with a value in the first field and nothing in the
-    ;; second. Getting the first field should not be optimized as if it
-    ;; contains nothing, so the struct.get will remain here.
+    ;; We create a child with a non-null value in field 0 and null in 1.
     (local.set $child
       (struct.new $child
         (struct.new $struct)
         (ref.null $struct)
       )
     )
+    ;; Getting field 0 should not be optimized or changed in any way.
     (drop
-      (ref.as_non_null
-        (struct.get $child 0
-          (local.get $child)
-        )
+      (struct.get $child 0
+        (local.get $child)
       )
     )
-    ;; Exactly the same but get field 1. This time we can optimize away the
-    ;; struct.get.
-    (local.set $child
-      (struct.new $child
-        (struct.new $struct)
-        (ref.null $struct)
-      )
-    )
+    ;; Field one can be optimized into a null constant (+ a drop of the get).
     (drop
-      (ref.as_non_null
-        (struct.get $child 1
-          (local.get $child)
-        )
+      (struct.get $child 1
+        (local.get $child)
       )
     )
-    ;; Create a parent with nothing. The child wrote to the shared field, but
-    ;; using precise type info we can infer that the get can be optimized out.
+    ;; Create a parent with a null. The child wrote to the shared field, but
+    ;; using exact type info we can infer that the get's value must be a null,
+    ;; so we can optimize.
     (local.set $parent
       (struct.new $parent
         (ref.null $struct)
       )
     )
     (drop
-      (ref.as_non_null
-        (struct.get $parent 0
-          (local.get $parent)
-        )
+      (struct.get $parent 0
+        (local.get $parent)
       )
     )
-    ;; A null is easy to optimize.
+    ;; Reading from a null reference is easy to optimize - it will trap.
     (drop
       (struct.get $parent 0
         (ref.null $parent)
