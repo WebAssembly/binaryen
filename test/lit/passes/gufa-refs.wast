@@ -414,28 +414,28 @@
     )
     ;; This global has no possible contents aside from a null, so the
     ;; ref.as_non_null can be optimized to an unreachable (since a null is not
-    ;; compatible with its non-nullable type.
+    ;; compatible with its non-nullable type).
     (drop
       (ref.as_non_null
         (global.get $null)
       )
     )
-    ;; This global has a possible type, so there is nothing to do.
+    ;; This global has a possible non-null value (in the initializer), so there
+    ;; is nothing to do.
     (drop
       (ref.as_non_null
         (global.get $something)
       )
     )
-    ;; This mutable global has no possible types as we only write a null to it
-    ;; in the function later down.
-    ;; FIXME: this test is nondeterministic, ref null any/$struct. All nulls are
-    ;;        equal, so the first one "wins". We should put the LUB I guess?
+    ;; This mutable global has a write aside from the initializer, but it is
+    ;; also of a null, so we can optimize here.
     (drop
       (ref.as_non_null
         (global.get $mut-null)
       )
     )
-    ;; This function is written a non-null value later down.
+    ;; This one also has a later write, of a non-null value, so there is nothing
+    ;; to do.
     (drop
       (ref.as_non_null
         (global.get $mut-something)
