@@ -2954,8 +2954,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:   (i32.const 10)
-  ;; CHECK-NEXT:   (i32.const 15)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $memory
@@ -2965,14 +2965,65 @@
       )
     )
     (i32.store
+      (i32.const 5)
       (i32.const 10)
-      (i32.const 15)
     )
   )
 
-  ;; CHECK:      (func $store (type $none_=>_none)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK:      (func $atomics (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.atomic.rmw.add
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.atomic.rmw.cmpxchg
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (memory.atomic.wait32
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i64.const 15)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (memory.atomic.notify
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store
+  (func $atomics
+    (drop
+      (i32.atomic.rmw.add
+        (i32.const 5)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.atomic.rmw.cmpxchg
+        (i32.const 5)
+        (i32.const 10)
+        (i32.const 15)
+      )
+    )
+    (drop
+      (memory.atomic.wait32
+        (i32.const 5)
+        (i32.const 10)
+        (i64.const 15)
+      )
+    )
+    (drop
+      (memory.atomic.notify
+        (i32.const 5)
+        (i32.const 10)
+      )
+    )
   )
 )
