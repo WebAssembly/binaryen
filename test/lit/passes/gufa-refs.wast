@@ -1618,8 +1618,6 @@
   )
 )
 
-;; TODO
-
 ;; A big chain, from an allocation that passes through many locations along the
 ;; way before it is used. Nothing here can be optimized.
 (module
@@ -1659,7 +1657,7 @@
   ;; CHECK-NEXT: )
   (func $foo
     (local $x (ref null any))
-    ;; Pass it through a local.
+    ;; Allocate a non-null value and pass it through a local.
     (local.set $x
       (struct.new $struct)
     )
@@ -1668,7 +1666,8 @@
       (local.get $x)
     )
     ;; Pass it through a call, then write it to a struct, then read it from
-    ;; there, and coerce to non-null to allow us to optimize.
+    ;; there, and coerce to non-null which we would optimize if the value were
+    ;; only a null. But it is not a null, and no optimizations happen here.
     (drop
       (ref.as_non_null
         (struct.get $storage 0
@@ -1708,6 +1707,9 @@
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x anyref)
   ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $x
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $storage 0
@@ -1726,61 +1728,33 @@
   ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $x
-  ;; CHECK-NEXT:   (ref.null any)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (block (result anyref)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (struct.get $storage 0
-  ;; CHECK-NEXT:         (struct.new $storage
-  ;; CHECK-NEXT:          (block (result anyref)
-  ;; CHECK-NEXT:           (drop
-  ;; CHECK-NEXT:            (call $pass-through
-  ;; CHECK-NEXT:             (ref.null any)
-  ;; CHECK-NEXT:            )
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (ref.null any)
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (ref.null any)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
     (local $x (ref null any))
+    ;; Replace the initial allocation with a read from the global. That is
+    ;; written to lower down, forming a loop - a loop with no actual allocation
+    ;; anywhere, so we can infer the possible values are only a null.
     (local.set $x
-      ;; Replace the allocation here with a read from the $storage struct, which
-      ;; is written lower down, so this forms a loop, effectively.
+      (global.get $x)
+    )
+    ;; Pass it through a call, then write it to a struct, then read it from
+    ;; there, and coerce to non-null which we would optimize if the value were
+    ;; only a null. But it is not a null, and no optimizations happen here.
+    (global.set $x
       (struct.get $storage 0
         (struct.new $storage
           (call $pass-through
-            (global.get $x)
+            (local.get $x)
           )
         )
       )
     )
-    (global.set $x
-      (local.get $x)
-    )
     (drop
       (ref.as_non_null
-        (struct.get $storage 0
-          (struct.new $storage
-            (call $pass-through
-              (global.get $x)
-            )
-          )
-        )
+        (global.get $x)
       )
     )
   )
@@ -1793,8 +1767,8 @@
   )
 )
 
-;; A single long chain as above, but now we break the chain in the middle, which
-;; we pick up on and optimize at the end.
+;; A single long chain as above, but now we break the chain in the middle by
+;; adding a non-null value.
 (module
   ;; CHECK:      (type $storage (struct_subtype (field (mut anyref)) data))
 
@@ -1813,63 +1787,48 @@
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x anyref)
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (global.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $x
-  ;; CHECK-NEXT:   (ref.null any)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (block (result anyref)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (struct.get $storage 0
-  ;; CHECK-NEXT:         (struct.new $storage
-  ;; CHECK-NEXT:          (block (result anyref)
-  ;; CHECK-NEXT:           (drop
-  ;; CHECK-NEXT:            (call $pass-through
-  ;; CHECK-NEXT:             (ref.null any)
-  ;; CHECK-NEXT:            )
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (ref.null any)
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (ref.null any)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (struct.get $storage 0
+  ;; CHECK-NEXT:    (struct.new $storage
+  ;; CHECK-NEXT:     (call $pass-through
+  ;; CHECK-NEXT:      (struct.new_default $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (global.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
     (local $x (ref null any))
     (local.set $x
-      (struct.new $struct)
+      (global.get $x)
     )
-    ;; The only difference from above is that we break the chain by changing the
-    ;; global operation here, writing a null instead of the local $x.
     (global.set $x
-      (ref.null any)
+      (struct.get $storage 0
+        (struct.new $storage
+          (call $pass-through
+            ;; The only change is to allocate here instead of reading the local
+            ;; $x. This causes us to not optimize anything in this function.
+            (struct.new $struct)
+          )
+        )
+      )
     )
     (drop
       (ref.as_non_null
-        (struct.get $storage 0
-          (struct.new $storage
-            (call $pass-through
-              (global.get $x)
-            )
-          )
-        )
+        (global.get $x)
       )
     )
   )
 
   ;; CHECK:      (func $pass-through (type $anyref_=>_anyref) (param $x anyref) (result anyref)
-  ;; CHECK-NEXT:  (ref.null any)
+  ;; CHECK-NEXT:  (local.get $x)
   ;; CHECK-NEXT: )
   (func $pass-through (param $x (ref null any)) (result (ref null any))
     (local.get $x)
@@ -1941,8 +1900,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
-    ;; This tag receives no actual value, so we can optimize the pop of it,
-    ;; later down.
+    ;; This tag receives no non-null value, so we can optimize the pop of it,
+    ;; in the next try-catch, to an unreachable.
     (throw $nothing
       (ref.null $struct)
     )
@@ -2054,7 +2013,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $try-results
-    ;; If all values flowing out are identical, we can optimize.
+    ;; If all values flowing out are identical, we can optimize. That is only
+    ;; the case in the very first try.
     (drop
       (try (result i32)
         (do
@@ -2110,6 +2070,8 @@
     )
   )
 )
+
+;; TODO
 
 ;; Exceptions with a tuple
 (module
