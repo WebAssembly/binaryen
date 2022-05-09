@@ -29,6 +29,9 @@ using namespace wasm;
 
 int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
+
+  const std::string WasmDisOption = "wasm-dis options";
+
   ToolOptions options("wasm-dis",
                       "Un-assemble a .wasm (WebAssembly binary format) into a "
                       ".wat (WebAssembly text format)");
@@ -36,6 +39,7 @@ int main(int argc, const char* argv[]) {
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
+         WasmDisOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
@@ -45,6 +49,7 @@ int main(int argc, const char* argv[]) {
       "--source-map",
       "-sm",
       "Consume source map from the specified file to add location information",
+      WasmDisOption,
       Options::Arguments::One,
       [&sourceMapFilename](Options* o, const std::string& argument) {
         sourceMapFilename = argument;
@@ -60,6 +65,7 @@ int main(int argc, const char* argv[]) {
     std::cerr << "parsing binary..." << std::endl;
   }
   Module wasm;
+  options.applyFeatures(wasm);
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
@@ -71,8 +77,6 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source mapping";
   }
-
-  options.applyFeatures(wasm);
 
   // TODO: Validation. However, validating would mean that users are forced to
   //       run with  wasm-dis -all  or such, to enable the features (unless the

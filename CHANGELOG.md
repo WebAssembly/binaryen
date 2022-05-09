@@ -15,6 +15,71 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v107
+----
+
+- Update the wasm GC type section binary format (#4625, #4631)
+- Lift the restriction in liveness-traversal.h on max 65535 locals (#4567)
+- Switch to nominal fuzzing by default (#4610)
+- Refactor Feature::All to match FeatureSet.setAll() (#4557)
+- New Signature Pruning pass (#4545)
+- Add support for extended-const proposal (#4529)
+- Add BUILD_TESTS CMake option to make gtest dependency optional.
+- Updated tests to use filecheck 0.0.22 (#4537). Updating is required to
+  successfully run the lit tests. This can be done with
+  `pip3 install -r requirements-dev.txt`.
+
+v106
+----
+
+- [wasm2js] Support exports of Globals (#4523)
+- MergeSimilarFunctions optimization pass (#4414)
+- Various wasm-ctor-eval improvements, including support for GC.
+
+v105
+----
+
+- This release contains binaries for ARM64 MacOS devices (#4397)
+- Otherwise, mostly bug fixes and incremental optimization improvements.
+
+v104
+----
+
+- Bugfixes only, release created due to incorrect github release artifacts in
+  v103 release (#4398).
+
+v103
+----
+
+- The EffectAnalyzer now takes advantage of immutability of globals. To achieve
+  that it must have access to the module. That is already the case in the C++
+  API, but the JS API allowed one to optionally not add a module when calling
+  `getSideEffects()`. It is now mandatory to pass in the module.
+- JS and Wasm builds now emit ECMAScript modules. New usage is:
+  ```js
+  import Binaryen from "path/to/binaryen.js";
+  const binaryen = await Binaryen();
+  ...
+  ```
+- CallIndirect changed from storing a Signature to storing a HeapType
+
+v102
+----
+
+- Add `BinaryenUpdateMaps` to the C API.
+
+- Adds a TrapsNeverHappen mode (#4059). This has many of the benefits of
+  IgnoreImplicitTraps, but can be used safely in more cases. IgnoreImplicitTraps
+  is now deprecated.
+
+- Adds type argument for BinaryenAddTable method (#4107). For the binaryen.js api
+  this parameter is optional and by default is set to funcref type.
+
+- Replace `BinaryenExpressionGetSideEffects`'s features parameter with a module
+  parameter.
+
+- OptimizeInstructions now lifts identical code in `select`/`if` arms (#3828). This may cause direct `BinaryenTupleExtract(BinaryenTupleMake(...))` to [use multivalue types](https://github.com/grain-lang/grain/pull/1158).
+
 v101
 ----
 

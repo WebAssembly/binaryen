@@ -30,9 +30,14 @@ memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29y
   var f64ScratchView = new Float64Array(scratchBuffer);
   
   function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
-    if (timeoutLow != -1 || timeoutHigh != -1) throw 'unsupported timeout';
+    var timeout = Infinity;
+    if (timeoutHigh >= 0) {
+      // Convert from nanoseconds to milliseconds
+      // Taken from convertI32PairToI53 in emscripten's library_int53.js
+      timeout = ((timeoutLow >>> 0) / 1e6) + timeoutHigh * (4294967296 / 1e6);
+    }
     var view = new Int32Array(bufferView.buffer); // TODO cache
-    var result = Atomics.wait(view, ptr, expected);
+    var result = Atomics.wait(view, ptr >> 2, expected, timeout);
     if (result == 'ok') return 0;
     if (result == 'not-equal') return 1;
     if (result == 'timed-out') return 2;
@@ -40,7 +45,7 @@ memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29y
   }
       
   function wasm2js_atomic_rmw_i64(op, bytes, offset, ptr, valueLow, valueHigh) {
-    assert(bytes == 8); // TODO: support 1, 2, 4 as well
+    // TODO: support bytes=1, 2, 4 as well as 8.
     var view = new BigInt64Array(bufferView.buffer); // TODO cache
     ptr = (ptr + offset) >> 3;
     var value = BigInt(valueLow >>> 0) | (BigInt(valueHigh >>> 0) << BigInt(32));

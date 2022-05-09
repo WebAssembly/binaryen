@@ -947,17 +947,19 @@ struct JSPrinter {
     bool integer = wasm::isInteger(d);
 #define BUFFERSIZE 1000
     // f is normal, e is scientific for float, x for integer
-    static char full_storage_f[BUFFERSIZE], full_storage_e[BUFFERSIZE];
+    // These need to be thread-local because they are returned.
+    thread_local char full_storage_f[BUFFERSIZE];
+    thread_local char full_storage_e[BUFFERSIZE];
     // full has one more char, for a possible '-'
-    static char *storage_f = full_storage_f + 1,
-                *storage_e = full_storage_e + 1;
+    char* storage_f = full_storage_f + 1;
+    char* storage_e = full_storage_e + 1;
     auto err_f = std::numeric_limits<double>::quiet_NaN();
     auto err_e = std::numeric_limits<double>::quiet_NaN();
     for (int e = 0; e <= 1; e++) {
       char* buffer = e ? storage_e : storage_f;
       double temp;
       if (!integer) {
-        static char format[6];
+        char format[6];
         for (int i = 0; i <= 18; i++) {
           format[0] = '%';
           format[1] = '.';
@@ -1461,12 +1463,24 @@ struct JSPrinter {
         newline();
       }
       bool needQuote = false;
+      const char* getterSetter = nullptr;
+      const char* setterParam = nullptr;
       const char* str;
       if (args[i][0]->isArray()) {
-        assert(args[i][0][0] == STRING);
-        // A quoted string.
-        needQuote = true;
-        str = args[i][0][1]->getCString();
+        if (args[i][0][0] == STRING) {
+          // A quoted string.
+          needQuote = true;
+          str = args[i][0][1]->getCString();
+        } else if (args[i][0][0] == GETTER) {
+          getterSetter = GETTER.c_str();
+          str = args[i][0][1]->getCString();
+        } else if (args[i][0][0] == SETTER) {
+          getterSetter = SETTER.c_str();
+          str = args[i][0][1]->getCString();
+          setterParam = args[i][0][2]->getCString();
+        } else {
+          abort();
+        }
       } else {
         // Just a raw string, no quotes.
         str = args[i][0]->getCString();
@@ -1479,6 +1493,10 @@ struct JSPrinter {
         }
         check++;
       }
+      if (getterSetter != nullptr) {
+        emit(getterSetter);
+        space();
+      }
       if (needQuote) {
         emit('"');
       }
@@ -1486,7 +1504,15 @@ struct JSPrinter {
       if (needQuote) {
         emit('"');
       }
-      emit(":");
+      if (getterSetter != nullptr) {
+        emit('(');
+        if (setterParam != nullptr) {
+          emit(setterParam);
+        }
+        emit(')');
+      } else {
+        emit(":");
+      }
       space();
       print(args[i][1]);
     }
@@ -1824,6 +1850,26 @@ public:
     assert(array[0] == OBJECT);
     array[1]->push_back(
       &makeRawArray(2)->push_back(makeString(key)).push_back(value));
+  }
+
+  static void appendToObjectAsGetter(Ref array, IString key, Ref value) {
+    assert(array[0] == OBJECT);
+    array[1]->push_back(&makeRawArray(2)
+                           ->push_back(&makeRawArray(2)
+                                          ->push_back(makeRawString(GETTER))
+                                          .push_back(makeRawString(key)))
+                           .push_back(value));
+  }
+
+  static void
+  appendToObjectAsSetter(Ref array, IString key, IString param, Ref value) {
+    assert(array[0] == OBJECT);
+    array[1]->push_back(&makeRawArray(2)
+                           ->push_back(&makeRawArray(3)
+                                          ->push_back(makeRawString(SETTER))
+                                          .push_back(makeRawString(key))
+                                          .push_back(makeRawString(param)))
+                           .push_back(value));
   }
 
   static Ref makeSub(Ref obj, Ref index) {

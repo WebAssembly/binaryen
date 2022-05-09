@@ -436,60 +436,6 @@
 )
 (module
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (event $e (attr 0) (param i32))
- (event $e2 (attr 0) (param i32))
- (func $try-test
-  (nop)
- )
- (func $inner-try-catch_all-test
-  (local $0 i32)
-  (try $try0
-   (do
-    (throw $e
-     (i32.const 0)
-    )
-   )
-   (catch_all
-    (local.set $0
-     (i32.const 1)
-    )
-   )
-  )
- )
- (func $inner-try-catch-test
-  (local $0 i32)
-  (try $try
-   (do
-    (try $try1
-     (do
-      (throw $e2
-       (i32.const 0)
-      )
-     )
-     (catch $e
-      (drop
-       (pop i32)
-      )
-      (local.set $0
-       (i32.const 1)
-      )
-     )
-    )
-   )
-   (catch $e
-    (drop
-     (pop i32)
-    )
-   )
-  )
- )
- (func $br-in-catch
-  (unreachable)
- )
-)
-(module
- (type $none_=>_none (func))
  (func $foo
   (nop)
  )

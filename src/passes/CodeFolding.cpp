@@ -303,7 +303,7 @@ private:
         return false;
       }
       if (getModule()->features.hasExceptionHandling()) {
-        EffectAnalyzer effects(getPassOptions(), getModule()->features, item);
+        EffectAnalyzer effects(getPassOptions(), *getModule(), item);
         // Pop instructions are pseudoinstructions used only after 'catch' to
         // simulate its behavior. We cannot move expressions containing pops if
         // they are not enclosed in a 'catch' body, because a pop instruction
@@ -319,7 +319,7 @@ private:
         // conservative approximation because there can be cases that 'try' is
         // within the expression that may throw so it is safe to take the
         // expression out.
-        if (effects.throws && !FindAll<Try>(outOf).list.empty()) {
+        if (effects.throws() && !FindAll<Try>(outOf).list.empty()) {
           return false;
         }
       }
@@ -591,9 +591,8 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(getPassOptions(),
-                                                   getModule()->features,
-                                                   newItem)
+                                if (EffectAnalyzer(
+                                      getPassOptions(), *getModule(), newItem)
                                       .hasExternalBreakTargets()) {
                                   return true;
                                 }
@@ -618,10 +617,10 @@ private:
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto digest = hashes[item];
-        if (seen.count(digest)) {
+        if (!seen.emplace(digest).second) {
           continue;
         }
-        seen.insert(digest);
+
         auto& items = hashed[digest];
         if (items.size() == 1) {
           continue;
@@ -742,7 +741,7 @@ private:
       mergeable.pop_back();
     }
     // ensure the replacement has the same type, so the outside is not surprised
-    outer->finalize(getFunction()->sig.results);
+    outer->finalize(getFunction()->getResults());
     getFunction()->body = outer;
     return true;
   }

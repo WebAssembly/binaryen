@@ -42,9 +42,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace ModuleSplitting {
+namespace wasm::ModuleSplitting {
 
 struct Config {
   // The set of functions to keep in the primary module. All others are split
@@ -62,13 +60,20 @@ struct Config {
   // used to differentiate between "real" exports of the module and exports that
   // should only be consumed by the secondary module.
   std::string newExportPrefix = "";
+  // Whether the export names of newly created exports should be minimized. If
+  // false, the original function names will be used (after `newExportPrefix`)
+  // as the new export names.
+  bool minimizeNewExportNames = false;
+};
+
+struct Results {
+  std::unique_ptr<Module> secondary;
+  std::map<size_t, Name> placeholderMap;
 };
 
 // Returns the new secondary module and modifies the `primary` module in place.
-std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config);
+Results splitFunctions(Module& primary, const Config& config);
 
-} // namespace ModuleSplitting
-
-} // namespace wasm
+} // namespace wasm::ModuleSplitting
 
 #endif // wasm_ir_module_splitting_h

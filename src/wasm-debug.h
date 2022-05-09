@@ -26,9 +26,7 @@
 #include "pass.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Debug {
+namespace wasm::Debug {
 
 bool isDWARFSection(Name name);
 
@@ -44,9 +42,7 @@ bool shouldPreserveDWARF(PassOptions& options, Module& wasm);
 // Update the DWARF sections.
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations);
 
-} // namespace Debug
-
-} // namespace wasm
+} // namespace wasm::Debug
 
 #undef DEBUG_TYPE
 

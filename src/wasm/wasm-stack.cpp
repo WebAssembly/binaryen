@@ -81,10 +81,9 @@ void BinaryInstWriter::visitCall(Call* curr) {
 
 void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   Index tableIdx = parent.getTableIndex(curr->table);
-
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->sig)) << U32LEB(tableIdx);
+  o << op << U32LEB(parent.getTypeIndex(curr->heapType)) << U32LEB(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
@@ -189,7 +188,6 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // a load
         return;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -293,7 +291,6 @@ void BinaryInstWriter::visitStore(Store* curr) {
           << U32LEB(BinaryConsts::V128Store);
         break;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -546,6 +543,36 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
     case Bitselect:
       o << U32LEB(BinaryConsts::V128Bitselect);
       break;
+    case LaneselectI8x16:
+      o << U32LEB(BinaryConsts::I8x16Laneselect);
+      break;
+    case LaneselectI16x8:
+      o << U32LEB(BinaryConsts::I16x8Laneselect);
+      break;
+    case LaneselectI32x4:
+      o << U32LEB(BinaryConsts::I32x4Laneselect);
+      break;
+    case LaneselectI64x2:
+      o << U32LEB(BinaryConsts::I64x2Laneselect);
+      break;
+    case RelaxedFmaVecF32x4:
+      o << U32LEB(BinaryConsts::F32x4RelaxedFma);
+      break;
+    case RelaxedFmsVecF32x4:
+      o << U32LEB(BinaryConsts::F32x4RelaxedFms);
+      break;
+    case RelaxedFmaVecF64x2:
+      o << U32LEB(BinaryConsts::F64x2RelaxedFma);
+      break;
+    case RelaxedFmsVecF64x2:
+      o << U32LEB(BinaryConsts::F64x2RelaxedFms);
+      break;
+    case DotI8x16I7x16AddSToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4DotI8x16I7x16AddS);
+      break;
+    case DotI8x16I7x16AddUToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4DotI8x16I7x16AddU);
+      break;
   }
 }
 
@@ -719,7 +746,6 @@ void BinaryInstWriter::visitConst(Const* curr) {
       break;
     }
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1152,6 +1178,22 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case PromoteLowVecF32x4ToVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F64x2PromoteLowF32x4);
+      break;
+    case RelaxedTruncSVecF32x4ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF32x4S);
+      break;
+    case RelaxedTruncUVecF32x4ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF32x4U);
+      break;
+    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF64x2SZero);
+      break;
+    case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4RelaxedTruncF64x2UZero);
       break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
@@ -1627,7 +1669,7 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
     case Q15MulrSatSVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8Q15mulrSatS);
+        << U32LEB(BinaryConsts::I16x8Q15MulrSatS);
       break;
     case ExtMulLowSVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
@@ -1778,9 +1820,42 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
         << U32LEB(BinaryConsts::I16x8NarrowI32x4U);
       break;
 
-    case SwizzleVec8x16:
+    case SwizzleVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I8x16Swizzle);
+      break;
+
+    case RelaxedSwizzleVecI8x16:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I8x16RelaxedSwizzle);
+      break;
+    case RelaxedMinVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4RelaxedMin);
+      break;
+    case RelaxedMaxVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4RelaxedMax);
+      break;
+    case RelaxedMinVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2RelaxedMin);
+      break;
+    case RelaxedMaxVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2RelaxedMax);
+      break;
+    case RelaxedQ15MulrSVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8RelaxedQ15MulrS);
+      break;
+    case DotI8x16I7x16SToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8DotI8x16I7x16S);
+      break;
+    case DotI8x16I7x16UToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8DotI8x16I7x16U);
       break;
 
     case InvalidBinary:
@@ -1847,6 +1922,26 @@ void BinaryInstWriter::visitRefEq(RefEq* curr) {
   o << int8_t(BinaryConsts::RefEq);
 }
 
+void BinaryInstWriter::visitTableGet(TableGet* curr) {
+  o << int8_t(BinaryConsts::TableGet);
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
+void BinaryInstWriter::visitTableSet(TableSet* curr) {
+  o << int8_t(BinaryConsts::TableSet);
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
+void BinaryInstWriter::visitTableSize(TableSize* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableSize);
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
+void BinaryInstWriter::visitTableGrow(TableGrow* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableGrow);
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);
@@ -1858,7 +1953,7 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
   o << int8_t(BinaryConsts::Catch)
-    << U32LEB(parent.getEventIndex(curr->catchEvents[i]));
+    << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
@@ -1879,7 +1974,7 @@ void BinaryInstWriter::emitDelegate(Try* curr) {
 }
 
 void BinaryInstWriter::visitThrow(Throw* curr) {
-  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getEventIndex(curr->event));
+  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getTagIndex(curr->tag));
 }
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
@@ -1942,11 +2037,23 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 }
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->rtt) {
+    o << U32LEB(BinaryConsts::RefTest);
+  } else {
+    o << U32LEB(BinaryConsts::RefTestStatic);
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->rtt) {
+    o << U32LEB(BinaryConsts::RefCast);
+  } else {
+    o << U32LEB(BinaryConsts::RefCastStatic);
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
@@ -1954,22 +2061,50 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
     case BrOnNull:
       o << int8_t(BinaryConsts::BrOnNull);
       break;
+    case BrOnNonNull:
+      o << int8_t(BinaryConsts::BrOnNonNull);
+      break;
     case BrOnCast:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+      o << int8_t(BinaryConsts::GCPrefix);
+      if (curr->rtt) {
+        o << U32LEB(BinaryConsts::BrOnCast);
+      } else {
+        o << U32LEB(BinaryConsts::BrOnCastStatic);
+      }
+      break;
+    case BrOnCastFail:
+      o << int8_t(BinaryConsts::GCPrefix);
+      if (curr->rtt) {
+        o << U32LEB(BinaryConsts::BrOnCastFail);
+      } else {
+        o << U32LEB(BinaryConsts::BrOnCastStaticFail);
+      }
       break;
     case BrOnFunc:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);
       break;
+    case BrOnNonFunc:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonFunc);
+      break;
     case BrOnData:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnData);
       break;
+    case BrOnNonData:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonData);
+      break;
     case BrOnI31:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnI31);
+      break;
+    case BrOnNonI31:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonI31);
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
   o << U32LEB(getBreakIndex(curr->name));
+  if ((curr->op == BrOnCast || curr->op == BrOnCastFail) && !curr->rtt) {
+    parent.writeIndexedHeapType(curr->intendedType);
+  }
 }
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
@@ -1978,18 +2113,27 @@ void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
 }
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
+  o << int8_t(BinaryConsts::GCPrefix);
+  o << U32LEB(curr->fresh ? BinaryConsts::RttFreshSub : BinaryConsts::RttSub);
   parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->isWithDefault()) {
-    o << U32LEB(BinaryConsts::StructNewDefaultWithRtt);
+  if (curr->rtt) {
+    if (curr->isWithDefault()) {
+      o << U32LEB(BinaryConsts::StructNewDefaultWithRtt);
+    } else {
+      o << U32LEB(BinaryConsts::StructNewWithRtt);
+    }
   } else {
-    o << U32LEB(BinaryConsts::StructNewWithRtt);
+    if (curr->isWithDefault()) {
+      o << U32LEB(BinaryConsts::StructNewDefault);
+    } else {
+      o << U32LEB(BinaryConsts::StructNew);
+    }
   }
-  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
@@ -2016,12 +2160,31 @@ void BinaryInstWriter::visitStructSet(StructSet* curr) {
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->isWithDefault()) {
-    o << U32LEB(BinaryConsts::ArrayNewDefaultWithRtt);
+  if (curr->rtt) {
+    if (curr->isWithDefault()) {
+      o << U32LEB(BinaryConsts::ArrayNewDefaultWithRtt);
+    } else {
+      o << U32LEB(BinaryConsts::ArrayNewWithRtt);
+    }
   } else {
-    o << U32LEB(BinaryConsts::ArrayNewWithRtt);
+    if (curr->isWithDefault()) {
+      o << U32LEB(BinaryConsts::ArrayNewDefault);
+    } else {
+      o << U32LEB(BinaryConsts::ArrayNew);
+    }
   }
-  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->type.getHeapType());
+}
+
+void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->rtt) {
+    o << U32LEB(BinaryConsts::ArrayInit);
+  } else {
+    o << U32LEB(BinaryConsts::ArrayInitStatic);
+  }
+  parent.writeIndexedHeapType(curr->type.getHeapType());
+  o << U32LEB(curr->values.size());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
@@ -2047,6 +2210,12 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
+void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayCopy);
+  parent.writeIndexedHeapType(curr->destRef->type.getHeapType());
+  parent.writeIndexedHeapType(curr->srcRef->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
@@ -2154,8 +2323,8 @@ void BinaryInstWriter::countScratchLocals() {
       scratchLocals[extract->type] = 0;
     }
   }
-  for (auto t : scratchLocals) {
-    noteLocalType(t.first);
+  for (auto& [type, _] : scratchLocals) {
+    noteLocalType(type);
   }
 }
 

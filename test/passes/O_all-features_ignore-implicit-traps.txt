@@ -1,8 +1,0 @@
-(module
- (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
- (type $struct.A (struct (field i32)))
- (export "foo" (func $0))
- (func $0 (; has Stack IR ;) (param $0 (ref null $struct.A))
-  (nop)
- )
-)

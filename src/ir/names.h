@@ -13,32 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef wasm_ir_names_h
 #define wasm_ir_names_h
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Names {
+namespace wasm::Names {
 
 // Add explicit names for function locals not yet named, and do not
 // modify existing names
 inline void ensureNames(Function* func) {
   std::unordered_set<Name> seen;
-  for (auto& pair : func->localNames) {
-    seen.insert(pair.second);
+  for (auto& [_, name] : func->localNames) {
+    seen.insert(name);
   }
   Index nameIndex = seen.size();
   for (Index i = 0; i < func->getNumLocals(); i++) {
     if (!func->hasLocalName(i)) {
       while (1) {
         auto name = Name::fromInt(nameIndex++);
-        if (seen.count(name) == 0) {
+        if (seen.emplace(name).second) {
           func->localNames[i] = name;
           func->localIndices[name] = i;
-          seen.insert(name);
           break;
         }
       }
@@ -79,17 +75,23 @@ inline Name getValidTableName(Module& module, Name root) {
   return getValidName(root,
                       [&](Name test) { return !module.getTableOrNull(test); });
 }
-inline Name getValidEventName(Module& module, Name root) {
+inline Name getValidTagName(Module& module, Name root) {
   return getValidName(root,
-                      [&](Name test) { return !module.getEventOrNull(test); });
+                      [&](Name test) { return !module.getTagOrNull(test); });
 }
 inline Name getValidElementSegmentName(Module& module, Name root) {
   return getValidName(
     root, [&](Name test) { return !module.getElementSegmentOrNull(test); });
 }
 
-} // namespace Names
+class MinifiedNameGenerator {
+  size_t state = 0;
 
-} // namespace wasm
+public:
+  // Get a fresh minified name.
+  std::string getName();
+};
+
+} // namespace wasm::Names
 
 #endif // wasm_ir_names_h

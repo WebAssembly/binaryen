@@ -34,7 +34,19 @@ namespace wasm {
 class Options {
 public:
   using Action = std::function<void(Options*, const std::string&)>;
-  enum class Arguments { Zero, One, N, Optional };
+
+  enum class Arguments {
+    // No arguments.
+    Zero,
+    // One argument, in the form  --flag A  or  --flag=A
+    One,
+    // Multiple arguments, in the form --flag A B C
+    N,
+    // An optional single argument, in the form --flag=A (we disallow --flag A
+    // as that would be ambiguous regarding whether A is another flag, or an
+    // argument to us).
+    Optional
+  };
 
   bool debug;
   std::map<std::string, std::string> extra;
@@ -44,8 +56,10 @@ public:
   Options& add(const std::string& longName,
                const std::string& shortName,
                const std::string& description,
+               const std::string& category,
                Arguments arguments,
-               const Action& action);
+               const Action& action,
+               bool hidden = false);
   Options& add_positional(const std::string& name,
                           Arguments arguments,
                           const Action& action);
@@ -56,14 +70,19 @@ private:
     std::string longName;
     std::string shortName;
     std::string description;
+    std::string category;
     Arguments arguments;
     Action action;
+    bool hidden;
     size_t seen;
   };
   std::vector<Option> options;
   Arguments positional;
   std::string positionalName;
   Action positionalAction;
+
+  // The category names, in the order in which help will be printed.
+  std::vector<std::string> categories;
 };
 
 } // namespace wasm

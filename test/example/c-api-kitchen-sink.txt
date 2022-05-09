@@ -7,10 +7,10 @@
   // BinaryenTypeVec128: 6
   // BinaryenTypeFuncref: 7
   // BinaryenTypeExternref: 8
-  // BinaryenTypeAnyref: 9
-  // BinaryenTypeEqref: 10
-  // BinaryenTypeI31ref: 11
-  // BinaryenTypeDataref: 12
+  // BinaryenTypeAnyref: 8
+  // BinaryenTypeEqref: 9
+  // BinaryenTypeI31ref: 10
+  // BinaryenTypeDataref: 11
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -26,15 +26,29 @@ BinaryenFeatureMultivalue: 512
 BinaryenFeatureGC: 1024
 BinaryenFeatureMemory64: 2048
 BinaryenFeatureTypedFunctionReferences: 4096
-BinaryenFeatureAll: 8191
+BinaryenFeatureRelaxedSIMD: 16384
+BinaryenFeatureExtendedConst: 32768
+BinaryenFeatureAll: 57343
 (f32.neg
  (f32.const -33.61199951171875)
 )
+(table.set $0
+ (i32.const 0)
+ (ref.func "$kitchen()sinker")
+)
+(table.get $0
+ (i32.const 0)
+)
+(table.size $0)
+(table.grow $0
+ (ref.null func)
+ (i32.const 0)
+)
 (module
  (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
+ (type $none_=>_none (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
@@ -45,13 +59,13 @@ BinaryenFeatureAll: 8191
  (table $0 1 1 funcref)
  (elem $0 (table $0) (i32.const 0) func "$kitchen()sinker")
  (elem $passive func "$kitchen()sinker")
- (event $a-event (attr 0) (param i32))
+ (tag $a-tag (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
-  (local $5 externref)
+  (local $5 anyref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -1932,7 +1946,7 @@ BinaryenFeatureAll: 8191
       )
       (drop
        (ref.is_null
-        (ref.null extern)
+        (ref.null any)
        )
       )
       (drop
@@ -1990,11 +2004,11 @@ BinaryenFeatureAll: 8191
       )
       (try
        (do
-        (throw $a-event
+        (throw $a-tag
          (i32.const 0)
         )
        )
-       (catch $a-event
+       (catch $a-tag
         (drop
          (pop i32)
         )
@@ -2007,7 +2021,7 @@ BinaryenFeatureAll: 8191
        (do
         (try
          (do
-          (throw $a-event
+          (throw $a-tag
            (i32.const 0)
           )
          )
@@ -2072,7 +2086,7 @@ BinaryenFeatureAll: 8191
        (pop funcref)
       )
       (drop
-       (pop externref)
+       (pop anyref)
       )
       (drop
        (pop i32 i64 f32 f64)
@@ -2626,8 +2640,8 @@ module s-expr printed (in memory, caller-owned):
 )
 
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
  (func $starter

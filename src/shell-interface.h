@@ -42,7 +42,7 @@ struct TrapException {};
 // GC memory may be allocated, but hosts have limits.)
 struct HostLimitException {};
 
-struct ShellExternalInterface : ModuleInstance::ExternalInterface {
+struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
   // isn't well-behaved in C++. WebAssembly nonetheless expects it to behave
   // properly. Avoid emitting unaligned load/store by checking for alignment
@@ -95,16 +95,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   } memory;
 
   std::unordered_map<Name, std::vector<Literal>> tables;
-  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   ShellExternalInterface(
-    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances_ = {})
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
     : memory() {
     linkedInstances.swap(linkedInstances_);
   }
   virtual ~ShellExternalInterface() = default;
 
-  ModuleInstance* getImportInstance(Importable* import) {
+  ModuleRunner* getImportInstance(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
       Fatal() << "importGlobals: unknown import: " << import->module.str << "."
@@ -113,7 +113,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return it->second.get();
   }
 
-  void init(Module& wasm, ModuleInstance& instance) override {
+  void init(Module& wasm, ModuleRunner& instance) override {
     if (wasm.memory.exists && !wasm.memory.imported()) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     }
@@ -133,7 +133,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -152,10 +152,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   Literals callTable(Name tableName,
                      Index index,
-                     Signature sig,
-                     LiteralList& arguments,
+                     HeapType sig,
+                     Literals& arguments,
                      Type results,
-                     ModuleInstance& instance) override {
+                     ModuleRunner& instance) override {
 
     auto it = tables.find(tableName);
     if (it == tables.end()) {
@@ -163,7 +163,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
 
     auto& table = it->second;
-
     if (index >= table.size()) {
       trap("callTable overflow");
     }
@@ -174,19 +173,19 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (!func) {
       trap("uninitialized table element");
     }
-    if (sig != func->sig) {
-      trap("callIndirect: function signatures don't match");
+    if (sig != func->type) {
+      trap("callIndirect: function types don't match");
     }
-    if (func->sig.params.size() != arguments.size()) {
+    if (func->getParams().size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
     size_t i = 0;
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       if (!Type::isSubType(arguments[i++].type, param)) {
         trap("callIndirect: bad argument type");
       }
     }
-    if (func->sig.results != results) {
+    if (func->getResults() != results) {
       trap("callIndirect: bad result type");
     }
     if (func->imported()) {
@@ -224,13 +223,31 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
-  void tableStore(Name tableName, Address addr, const Literal& entry) override {
+  Index tableSize(Name tableName) override {
+    return (Index)tables[tableName].size();
+  }
+
+  void tableStore(Name tableName, Index index, const Literal& entry) override {
     auto& table = tables[tableName];
-    if (addr >= table.size()) {
+    if (index >= table.size()) {
       trap("out of bounds table access");
     } else {
-      table[addr] = entry;
+      table[index] = entry;
     }
+  }
+
+  Literal tableLoad(Name tableName, Index index) override {
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+      trap("tableGet on non-existing table");
+    }
+
+    auto& table = it->second;
+    if (index >= table.size()) {
+      trap("out of bounds table access");
+    }
+
+    return table[index];
   }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {
@@ -240,6 +257,19 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       return false;
     }
     memory.resize(newSize);
+    return true;
+  }
+
+  bool growTable(Name name,
+                 const Literal& value,
+                 Index /*oldSize*/,
+                 Index newSize) override {
+    // Apply a reasonable limit on table size, 1GB, to avoid DOS on the
+    // interpreter.
+    if (newSize > 1024 * 1024 * 1024) {
+      return false;
+    }
+    tables[name].resize(newSize, value);
     return true;
   }
 

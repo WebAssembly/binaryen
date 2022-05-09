@@ -62,16 +62,14 @@ inline std::ostream& printText(std::ostream& o, const char* str) {
   return o << '"';
 }
 
-inline std::ostream&
-printMajor(std::ostream& o, const char* str, bool major = false) {
+inline std::ostream& printMajor(std::ostream& o, const char* str) {
   prepareMajorColor(o);
   o << str;
   restoreNormalColor(o);
   return o;
 }
 
-inline std::ostream&
-printMedium(std::ostream& o, const char* str, bool major = false) {
+inline std::ostream& printMedium(std::ostream& o, const char* str) {
   prepareColor(o);
   o << str;
   restoreNormalColor(o);

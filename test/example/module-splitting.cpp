@@ -50,7 +50,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   ModuleSplitting::Config config;
   config.primaryFuncs = keptFuncs;
   config.newExportPrefix = "%";
-  auto secondary = splitFunctions(*primary, config);
+  auto secondary = splitFunctions(*primary, config).secondary;
 
   std::cout << "After:\n";
   std::cout << *primary.get();
@@ -64,6 +64,8 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   assert(valid && "secondary invalid!");
 }
 
+void test_minimized_exports();
+
 int main() {
   // Trivial module
   do_test({}, "(module)");
@@ -74,7 +76,7 @@ int main() {
      (memory $mem (shared 3 42))
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
-     (event $e (attr 0) (param i32))
+     (tag $e (param i32))
     ))");
 
   // Imported global stuff
@@ -83,7 +85,7 @@ int main() {
      (import "env" "mem" (memory $mem (shared 3 42)))
      (import "env" "tab" (table $tab 3 42 funcref))
      (import "env" "glob" (global $glob (mut i32)))
-     (import "env" "e" (event $e (attr 0) (param i32)))
+     (import "env" "e" (tag $e (param i32)))
     ))");
 
   // Exported global stuff
@@ -92,11 +94,11 @@ int main() {
      (memory $mem (shared 3 42))
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
-     (event $e (attr 0) (param i32))
+     (tag $e (param i32))
      (export "mem" (memory $mem))
      (export "tab" (table $tab))
      (export "glob" (global $glob))
-     (export "e" (event $e))
+     (export "e" (tag $e))
     ))");
 
   // Non-deferred function
@@ -437,4 +439,48 @@ int main() {
      (export "foo2" (func $foo))
      (func $foo)
     ))");
+
+  test_minimized_exports();
+}
+
+void test_minimized_exports() {
+  Module primary;
+  primary.features = FeatureSet::All;
+
+  std::set<Name> keep;
+  Expression* callBody = nullptr;
+
+  Builder builder(primary);
+  auto funcType = Signature(Type::none, Type::none);
+
+  for (size_t i = 0; i < 10; ++i) {
+    Name name = std::to_string(i);
+    primary.addFunction(
+      Builder::makeFunction(name, funcType, {}, builder.makeNop()));
+    keep.insert(name);
+    callBody =
+      builder.blockify(callBody, builder.makeCall(name, {}, Type::none));
+
+    if (i == 3) {
+      primary.addExport(
+        Builder::makeExport("already_exported", name, ExternalKind::Function));
+    }
+    if (i == 7) {
+      primary.addExport(
+        Builder::makeExport("%b", name, ExternalKind::Function));
+    }
+  }
+
+  primary.addFunction(Builder::makeFunction("call", funcType, {}, callBody));
+
+  ModuleSplitting::Config config;
+  config.primaryFuncs = std::move(keep);
+  config.newExportPrefix = "%";
+  config.minimizeNewExportNames = true;
+
+  auto secondary = splitFunctions(primary, config).secondary;
+  std::cout << "Minimized names primary:\n";
+  std::cout << primary << "\n";
+  std::cout << "Minimized names secondary:\n";
+  std::cout << *secondary << "\n";
 }

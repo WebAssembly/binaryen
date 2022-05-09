@@ -41,7 +41,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
     return ReturnType();                                                       \
   }
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
@@ -50,7 +50,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
-  ReturnType visitEvent(Event* curr) { return ReturnType(); }
+  ReturnType visitTag(Tag* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
 
   ReturnType visit(Expression* curr) {
@@ -62,7 +62,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
     return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
       static_cast<CLASS_TO_VISIT*>(curr))
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -84,7 +84,7 @@ struct OverriddenVisitor {
     WASM_UNREACHABLE("Derived class must implement visit" #CLASS_TO_VISIT);    \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   ReturnType visit(Expression* curr) {
     assert(curr);
@@ -95,7 +95,7 @@ struct OverriddenVisitor {
     return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
       static_cast<CLASS_TO_VISIT*>(curr))
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -117,7 +117,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);                 \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 };
 
 //
@@ -176,9 +176,7 @@ struct Walker : public VisitorType {
     setFunction(nullptr);
   }
 
-  void walkEvent(Event* event) {
-    static_cast<SubType*>(this)->visitEvent(event);
-  }
+  void walkTag(Tag* tag) { static_cast<SubType*>(this)->visitTag(tag); }
 
   void walkFunctionInModule(Function* func, Module* module) {
     setModule(module);
@@ -243,11 +241,11 @@ struct Walker : public VisitorType {
         self->walkFunction(curr.get());
       }
     }
-    for (auto& curr : module->events) {
+    for (auto& curr : module->tags) {
       if (curr->imported()) {
-        self->visitEvent(curr.get());
+        self->visitTag(curr.get());
       } else {
-        self->walkEvent(curr.get());
+        self->walkTag(curr.get());
       }
     }
     for (auto& curr : module->tables) {
@@ -282,7 +280,7 @@ struct Walker : public VisitorType {
   // nested.
 
   // Tasks receive the this pointer and a pointer to the pointer to operate on
-  using TaskFunc = std::function<void(SubType*, Expression**)>;
+  typedef void (*TaskFunc)(SubType*, Expression**);
 
   struct Task {
     TaskFunc func;
@@ -327,7 +325,7 @@ struct Walker : public VisitorType {
     self->visit##CLASS_TO_VISIT((*currp)->cast<CLASS_TO_VISIT>());             \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void setModule(Module* module) { currModule = module; }
 
@@ -357,27 +355,27 @@ struct PostWalker : public Walker<SubType, VisitorType> {
   auto* cast = curr->cast<id>();                                               \
   WASM_UNUSED(cast);
 
-#define DELEGATE_GET_FIELD(id, name) cast->name
+#define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_CHILD(id, name)                                         \
-  self->pushTask(SubType::scan, &cast->name);
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  self->pushTask(SubType::scan, &cast->field);
 
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
-  self->maybePushTask(SubType::scan, &cast->name);
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  self->maybePushTask(SubType::scan, &cast->field);
 
-#define DELEGATE_FIELD_INT(id, name)
-#define DELEGATE_FIELD_INT_ARRAY(id, name)
-#define DELEGATE_FIELD_LITERAL(id, name)
-#define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
-#define DELEGATE_FIELD_SIGNATURE(id, name)
-#define DELEGATE_FIELD_TYPE(id, name)
-#define DELEGATE_FIELD_ADDRESS(id, name)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
   }
 };
 
@@ -518,119 +516,6 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     // also update the stack
     expressionStack.back() = expression;
     return expression;
-  }
-};
-
-// Traversal in the order of execution. This is quick and simple, but
-// does not provide the same comprehensive information that a full
-// conversion to basic blocks would. What it does give is a quick
-// way to view straightline execution traces, i.e., that have no
-// branching. This can let optimizations get most of what they
-// want without the cost of creating another AST.
-//
-// When execution is no longer linear, this notifies via a call
-// to noteNonLinear().
-
-template<typename SubType, typename VisitorType = Visitor<SubType>>
-struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
-  LinearExecutionWalker() = default;
-
-  // subclasses should implement this
-  void noteNonLinear(Expression* curr) { abort(); }
-
-  static void doNoteNonLinear(SubType* self, Expression** currp) {
-    self->noteNonLinear(*currp);
-  }
-
-  static void scan(SubType* self, Expression** currp) {
-
-    Expression* curr = *currp;
-
-    switch (curr->_id) {
-      case Expression::Id::InvalidId:
-        abort();
-      case Expression::Id::BlockId: {
-        self->pushTask(SubType::doVisitBlock, currp);
-        if (curr->cast<Block>()->name.is()) {
-          self->pushTask(SubType::doNoteNonLinear, currp);
-        }
-        auto& list = curr->cast<Block>()->list;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::IfId: {
-        self->pushTask(SubType::doVisitIf, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<If>()->ifFalse);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<If>()->condition);
-        break;
-      }
-      case Expression::Id::LoopId: {
-        self->pushTask(SubType::doVisitLoop, currp);
-        self->pushTask(SubType::scan, &curr->cast<Loop>()->body);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        break;
-      }
-      case Expression::Id::BreakId: {
-        self->pushTask(SubType::doVisitBreak, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->condition);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->value);
-        break;
-      }
-      case Expression::Id::SwitchId: {
-        self->pushTask(SubType::doVisitSwitch, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
-        self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
-        break;
-      }
-      case Expression::Id::ReturnId: {
-        self->pushTask(SubType::doVisitReturn, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
-        break;
-      }
-      case Expression::Id::TryId: {
-        self->pushTask(SubType::doVisitTry, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        auto& list = curr->cast<Try>()->catchBodies;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-          self->pushTask(SubType::doNoteNonLinear, currp);
-        }
-        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
-        break;
-      }
-      case Expression::Id::ThrowId: {
-        self->pushTask(SubType::doVisitThrow, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        auto& list = curr->cast<Throw>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::RethrowId: {
-        self->pushTask(SubType::doVisitRethrow, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        self->pushTask(SubType::doVisitUnreachable, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        break;
-      }
-      default: {
-        // other node types do not have control flow, use regular post-order
-        PostWalker<SubType, VisitorType>::scan(self, currp);
-      }
-    }
   }
 };
 

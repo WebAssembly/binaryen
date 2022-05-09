@@ -1,10 +1,11 @@
 (module
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_i64 (func (result i64)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i64 (func (result i64)))
  (global $glob (mut i32) (i32.const 1))
+ (global $glob-imm i32 (i32.const 1))
  (memory $0 1)
  (func $loop1
   (drop
@@ -686,6 +687,38 @@
   )
   (loop $loop
    (nop)
+   (nop)
+   (br_if $loop
+    (local.get $x)
+   )
+  )
+ )
+ (func $global-call
+  (local $x i32)
+  (loop $loop
+   (local.set $x
+    (global.get $glob)
+   )
+   (call $global)
+   (drop
+    (local.get $x)
+   )
+   (br_if $loop
+    (local.get $x)
+   )
+  )
+ )
+ (func $global-call-immutable
+  (local $x i32)
+  (local.set $x
+   (global.get $glob-imm)
+  )
+  (drop
+   (local.get $x)
+  )
+  (loop $loop
+   (nop)
+   (call $global)
    (nop)
    (br_if $loop
     (local.get $x)

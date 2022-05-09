@@ -19,9 +19,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace GCTypeUtils {
+namespace wasm::GCTypeUtils {
 
 // Helper code to evaluate a reference at compile time and check if it is of a
 // certain kind. Various wasm instructions check if something is a function or
@@ -46,19 +44,43 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
   Kind expected;
   Expression* child;
 
+  // Some operations flip the condition.
+  bool flip = false;
+
   if (auto* br = curr->dynCast<BrOn>()) {
     switch (br->op) {
       // We don't check nullability here.
       case BrOnNull:
-      // Casts can only be known at runtime using RTTs.
+      case BrOnNonNull:
+      case BrOnCastFail:
+        flip = true;
+        [[fallthrough]];
       case BrOnCast:
+        if (!br->rtt) {
+          // This is a static cast check, which we may be able to resolve at
+          // compile time. Note that the type must be non-nullable for us to
+          // succeed at that inference, as otherwise a null can make us fail.
+          if (Type::isSubType(br->ref->type,
+                              Type(br->intendedType, NonNullable))) {
+            return flip ? Failure : Success;
+          }
+        }
         return Unknown;
+      case BrOnNonFunc:
+        flip = true;
+        [[fallthrough]];
       case BrOnFunc:
         expected = Func;
         break;
+      case BrOnNonData:
+        flip = true;
+        [[fallthrough]];
       case BrOnData:
         expected = Data;
         break;
+      case BrOnNonI31:
+        flip = true;
+        [[fallthrough]];
       case BrOnI31:
         expected = I31;
         break;
@@ -120,11 +142,13 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
     return Unknown;
   }
 
-  return actual == expected ? Success : Failure;
+  auto success = actual == expected;
+  if (flip) {
+    success = !success;
+  }
+  return success ? Success : Failure;
 }
 
-} // namespace GCTypeUtils
-
-} // namespace wasm
+} // namespace wasm::GCTypeUtils
 
 #endif // wasm_ir_gc_type_utils_h

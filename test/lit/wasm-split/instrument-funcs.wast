@@ -23,8 +23,11 @@
 ;; Check that a memory has been added
 ;; CHECK: (memory $0 1 1)
 
-;; And the profiling function exported
+;; And the profiling function is exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
+
+;; And the memory has been exported
+;; CHECK: (export "profile-memory" (memory $0))
 
 ;; Check that the function instrumentation is correct
 

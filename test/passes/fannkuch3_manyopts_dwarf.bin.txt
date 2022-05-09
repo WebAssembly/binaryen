@@ -4700,9 +4700,9 @@ file_names[  4]:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 1024) "Pfannkuchen(%d) = %d.\n\00%d\00Wrong argument.\00")
  (import "env" "malloc" (func $malloc (param i32) (result i32)))
@@ -5711,11 +5711,11 @@ file_names[  4]:
      ;; code offset: 0x30a
      (if
       ;; code offset: 0x309
-      (i32.ge_s
+      (i32.gt_s
        ;; code offset: 0x305
        (local.get $2)
        ;; code offset: 0x307
-       (i32.const 1)
+       (i32.const 0)
       )
       (block
        ;; code offset: 0x30c
@@ -6578,11 +6578,11 @@ file_names[  4]:
       ;; code offset: 0x5a8
       (if
        ;; code offset: 0x5a7
-       (i32.ge_s
+       (i32.gt_s
         ;; code offset: 0x5a3
         (local.get $2)
         ;; code offset: 0x5a5
-        (i32.const 1)
+        (i32.const 0)
        )
        (block
         ;; code offset: 0x5aa

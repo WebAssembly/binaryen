@@ -39,9 +39,14 @@ struct PassRegistry {
   typedef std::function<Pass*()> Creator;
 
   void registerPass(const char* name, const char* description, Creator create);
+  // Register a pass that's used for internal testing. These passes do not show
+  // up in --help.
+  void
+  registerTestPass(const char* name, const char* description, Creator create);
   std::unique_ptr<Pass> createPass(std::string name);
   std::vector<std::string> getRegisteredNames();
   std::string getPassDescription(std::string name);
+  bool isPassHidden(std::string name);
 
 private:
   void registerPasses();
@@ -49,9 +54,10 @@ private:
   struct PassInfo {
     std::string description;
     Creator create;
+    bool hidden;
     PassInfo() = default;
-    PassInfo(std::string description, Creator create)
-      : description(description), create(create) {}
+    PassInfo(std::string description, Creator create, bool hidden = false)
+      : description(description), create(create), hidden(hidden) {}
   };
   std::map<std::string, PassInfo> passInfos;
 };
@@ -82,6 +88,11 @@ struct InliningOptions {
   // Loops usually mean the function does heavy work, so the call overhead
   // is not significant and we do not inline such functions by default.
   bool allowFunctionsWithLoops = false;
+  // The number of ifs to allow partial inlining of their conditions. A value of
+  // zero disables partial inlining.
+  // TODO: Investigate enabling this. Locally 4 appears useful on real-world
+  //       code, but reports of regressions have arrived.
+  Index partialInliningIfs = 0;
 };
 
 struct PassOptions {
@@ -98,7 +109,38 @@ struct PassOptions {
   // Tweak thresholds for the Inlining pass.
   InliningOptions inlining;
   // Optimize assuming things like div by 0, bad load/store, will not trap.
+  // This is deprecated in favor of trapsNeverHappen.
   bool ignoreImplicitTraps = false;
+  // Optimize assuming a trap will never happen at runtime. This is similar to
+  // ignoreImplicitTraps, but different:
+  //
+  //  * ignoreImplicitTraps simply ignores the side effect of trapping when it
+  //    computes side effects, and then passes work with that data.
+  //  * trapsNeverHappen assumes that if an instruction with a possible trap is
+  //    reached, then it does not trap, and an (unreachable) - that always
+  //    traps - is never reached.
+  //
+  // The main difference is that in trapsNeverHappen mode we will not move
+  // around code that might trap, like this:
+  //
+  //  (if (condition) (code))
+  //
+  // If (code) might trap, ignoreImplicitTraps ignores that trap, and it might
+  // end up moving (code) to happen before the (condition), that is,
+  // unconditionally. trapsNeverHappen, on the other hand, does not ignore the
+  // side effect of the trap; instead, it will potentially remove the trapping
+  // instruction, if it can - it is always safe to remove a trap in this mode,
+  // as the traps are assumed to not happen. Where it cannot remove the side
+  // effect, it will at least not move code around.
+  //
+  // A consequence of this difference is that code that puts a possible trap
+  // behind a condition is unsafe in ignoreImplicitTraps, but safe in
+  // trapsNeverHappen. In general, trapsNeverHappen is safe on production code
+  // where traps are either fatal errors or assertions, and it is assumed
+  // neither of those can happen (and it is undefined behavior if they do).
+  //
+  // TODO: deprecate and remove ignoreImplicitTraps.
+  bool trapsNeverHappen = false;
   // Optimize assuming that the low 1K of memory is not valid memory for the
   // application to use. In that case, we can optimize load/store offsets in
   // many cases.
@@ -124,10 +166,13 @@ struct PassOptions {
   // passes.
   std::map<std::string, std::string> arguments;
 
+  // -Os is our default
+  static constexpr const int DEFAULT_OPTIMIZE_LEVEL = 2;
+  static constexpr const int DEFAULT_SHRINK_LEVEL = 1;
+
   void setDefaultOptimizationOptions() {
-    // -Os is our default
-    optimizeLevel = 2;
-    shrinkLevel = 1;
+    optimizeLevel = DEFAULT_OPTIMIZE_LEVEL;
+    shrinkLevel = DEFAULT_SHRINK_LEVEL;
   }
 
   static PassOptions getWithDefaultOptimizationOptions() {
@@ -256,10 +301,20 @@ struct PassRunner {
   //  3: like 1, and also dumps out byn-* files for each pass as it is run.
   static int getPassDebug();
 
-protected:
-  bool isNested = false;
+  // Returns whether a pass by that name will remove debug info.
+  static bool passRemovesDebugInfo(const std::string& name);
 
 private:
+  // Whether this is a nested pass runner.
+  bool isNested = false;
+
+  // Whether the passes we have added so far to be run (but not necessarily run
+  // yet) have removed DWARF.
+  bool addedPassesRemovedDWARF = false;
+
+  // Whether this pass runner has run. A pass runner should only be run once.
+  bool ran = false;
+
   void doAdd(std::unique_ptr<Pass> pass);
 
   void runPass(Pass* pass);
@@ -272,6 +327,8 @@ private:
   // If a function is passed, we operate just on that function;
   // otherwise, the whole module.
   void handleAfterEffects(Pass* pass, Function* func = nullptr);
+
+  bool shouldPreserveDWARF();
 };
 
 //
@@ -343,7 +400,7 @@ protected:
 //
 template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
-  PassRunner* runner;
+  PassRunner* runner = nullptr;
 
 protected:
   typedef WalkerPass<WalkerType> super;
@@ -371,6 +428,12 @@ public:
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkFunction(func);
+  }
+
+  void runOnModuleCode(PassRunner* runner, Module* module) {
+    setPassRunner(runner);
+    WalkerType::setModule(module);
+    WalkerType::walkModuleCode(module);
   }
 
   PassRunner* getPassRunner() { return runner; }

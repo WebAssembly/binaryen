@@ -1,0 +1,29 @@
+(module
+ (type $struct (struct (field i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (global $ctor-eval$global (ref $struct) (struct.new $struct
+  (i32.const 1337)
+ ))
+ (global $global1 (ref any) (global.get $ctor-eval$global))
+ (global $ctor-eval$global_0 (ref $struct) (struct.new $struct
+  (i32.const 9999)
+ ))
+ (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_0))
+ (global $global3 (ref $struct) (global.get $ctor-eval$global_0))
+ (export "keepalive" (func $1))
+ (func $1 (result i32)
+  (select
+   (struct.get $struct 0
+    (ref.cast_static $struct
+     (global.get $global1)
+    )
+   )
+   (struct.get $struct 0
+    (global.get $global2)
+   )
+   (struct.get $struct 0
+    (global.get $global3)
+   )
+  )
+ )
+)

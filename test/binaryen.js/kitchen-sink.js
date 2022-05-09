@@ -115,6 +115,8 @@ function test_features() {
   console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.Memory64: " + binaryen.Features.Memory64);
   console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
+  console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
+  console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -153,6 +155,7 @@ function test_ids() {
   console.log("SIMDTernaryId: " + binaryen.SIMDTernaryId);
   console.log("SIMDShiftId: " + binaryen.SIMDShiftId);
   console.log("SIMDLoadId: " + binaryen.SIMDLoadId);
+  console.log("SIMDLoadStoreLaneId: " + binaryen.SIMDLoadStoreLaneId);
   console.log("MemoryInitId: " + binaryen.MemoryInitId);
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
@@ -162,6 +165,10 @@ function test_ids() {
   console.log("RefIsId: " + binaryen.RefIsId);
   console.log("RefFuncId: " + binaryen.RefFuncId);
   console.log("RefEqId: " + binaryen.RefEqId);
+  console.log("TableGetId: " + binaryen.TableGetId);
+  console.log("TableSetId: " + binaryen.TableSetId);
+  console.log("TableSizeId: " + binaryen.TableSizeId);
+  console.log("TableGrowId: " + binaryen.TableGrowId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
@@ -179,6 +186,7 @@ function test_ids() {
   console.log("StructGetId: " + binaryen.StructGetId);
   console.log("StructSetId: " + binaryen.StructSetId);
   console.log("ArrayNewId: " + binaryen.ArrayNewId);
+  console.log("ArrayInitId: " + binaryen.ArrayInitId);
   console.log("ArrayGetId: " + binaryen.ArrayGetId);
   console.log("ArraySetId: " + binaryen.ArraySetId);
   console.log("ArrayLenId: " + binaryen.ArrayLenId);
@@ -190,8 +198,8 @@ function test_core() {
 
   module = new binaryen.Module();
 
-  // Create an event
-  var event_ = module.addEvent("a-event", 0, binaryen.i32, binaryen.none);
+  // Create a tag
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
 
   // Literals and consts
 
@@ -592,8 +600,8 @@ function test_core() {
     // Exception handling
     module.try(
       '',
-      module.throw("a-event", [module.i32.const(0)]),
-      ["a-event"],
+      module.throw("a-tag", [module.i32.const(0)]),
+      ["a-tag"],
       [module.drop(module.i32.pop())],
       ''
     ),
@@ -701,13 +709,13 @@ function test_core() {
   module.addFunctionImport("an-imported", "module", "base", iF, binaryen.f32);
   module.addGlobalImport("a-global-imp", "module", "base", binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", binaryen.i32, true);
-  module.addEventImport("a-event-imp", "module", "base", 0, binaryen.i32, binaryen.none);
+  module.addTagImport("a-tag-imp", "module", "base", binaryen.i32, binaryen.none);
 
   // Exports
 
   module.addFunctionExport("kitchen()sinker", "kitchen_sinker");
   module.addGlobalExport("a-global", "a-global-exp");
-  module.addEventExport("a-event", "a-event-exp");
+  module.addTagExport("a-tag", "a-tag-exp");
 
   // Tables
   module.addTable("t1", 0, 2);
@@ -832,7 +840,7 @@ function test_relooper() {
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
-    temp = makeDroppedInt32(10);
+    var temp = makeDroppedInt32(10);
     relooper.addBranch(block0, block1, makeInt32(55), temp);
     relooper.addBranch(block0, block2, null, makeDroppedInt32(20));
     var body = relooper.renderAndDispose(block0, 0, module);
@@ -972,7 +980,7 @@ function test_binaries() {
     var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-    var event_ = module.addEvent("a-event", 0, binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
+    var tag = module.addTag("a-tag", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
     binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     binaryen.setDebugInfo(false);
@@ -999,7 +1007,7 @@ function test_interpret() {
   module = new binaryen.Module();
 
   module.addFunctionImport("print-i32", "spectest", "print", binaryen.i32, binaryen.none);
-  call = module.call("print-i32", [ makeInt32(1234) ], binaryen.None);
+  var call = module.call("print-i32", [ makeInt32(1234) ], binaryen.None);
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], call);
   module.setStart(starter);
 
@@ -1037,7 +1045,7 @@ function test_parsing() {
   var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-  var event_ = module.addEvent("a-event", 0, binaryen.i32, binaryen.none);
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
   text = module.emitText();
   module.dispose();
   module = null;

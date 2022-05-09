@@ -19,8 +19,10 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "ir/eh-utils.h"
 #include "ir/features.h"
 #include "ir/global-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
@@ -224,7 +226,7 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
 
-  std::set<Type> returnTypes; // types used in returns
+  std::unordered_set<Type> returnTypes; // types used in returns
 
   // Binaryen IR requires that label names must be unique - IR generators must
   // ensure that
@@ -363,6 +365,10 @@ public:
   void visitRefIs(RefIs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
+  void visitTableGet(TableGet* curr);
+  void visitTableSet(TableSet* curr);
+  void visitTableSize(TableSize* curr);
+  void visitTableGrow(TableGrow* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -382,9 +388,11 @@ public:
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
+  void visitArrayInit(ArrayInit* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
+  void visitArrayCopy(ArrayCopy* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -437,7 +445,12 @@ private:
   }
 
   template<typename T>
-  void validateCallParamsAndResult(T* curr, Signature sig) {
+  void validateCallParamsAndResult(T* curr, HeapType sigType) {
+    if (!shouldBeTrue(
+          sigType.isSignature(), curr, "Heap type must be a signature type")) {
+      return;
+    }
+    auto sig = sigType.getSignature();
     if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
                       curr,
                       "call* param number must match")) {
@@ -459,9 +472,9 @@ private:
                     Type(Type::unreachable),
                     curr,
                     "return_call* should have unreachable type");
-      shouldBeEqual(
-        getFunction()->sig.results,
+      shouldBeSubType(
         sig.results,
+        getFunction()->getResults(),
         curr,
         "return_call* callee return type must match caller return type");
     } else {
@@ -480,8 +493,7 @@ void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) {
     return;
   }
-  bool inserted;
-  std::tie(std::ignore, inserted) = labelNames.insert(name);
+  auto [_, inserted] = labelNames.insert(name);
   shouldBeTrue(
     inserted,
     name,
@@ -784,7 +796,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->sig);
+  validateCallParamsAndResult(curr, target->type);
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -797,12 +809,14 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   if (curr->target->type != Type::unreachable) {
     auto* table = getModule()->getTableOrNull(curr->table);
     shouldBeTrue(!!table, curr, "call-indirect table must exist");
-    shouldBeTrue(table->type.isFunction(),
-                 curr,
-                 "call-indirect table must be of function type.");
+    if (table) {
+      shouldBeTrue(table->type.isFunction(),
+                   curr,
+                   "call-indirect table must be of function type.");
+    }
   }
 
-  validateCallParamsAndResult(curr, curr->sig);
+  validateCallParamsAndResult(curr, curr->heapType);
 }
 
 void FunctionValidator::visitConst(Const* curr) {
@@ -1385,7 +1399,6 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1603,6 +1616,8 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MaxVecF32x4:
     case PMinVecF32x4:
     case PMaxVecF32x4:
+    case RelaxedMinVecF32x4:
+    case RelaxedMaxVecF32x4:
     case AddVecF64x2:
     case SubVecF64x2:
     case MulVecF64x2:
@@ -1611,11 +1626,17 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MaxVecF64x2:
     case PMinVecF64x2:
     case PMaxVecF64x2:
+    case RelaxedMinVecF64x2:
+    case RelaxedMaxVecF64x2:
     case NarrowSVecI16x8ToVecI8x16:
     case NarrowUVecI16x8ToVecI8x16:
     case NarrowSVecI32x4ToVecI16x8:
     case NarrowUVecI32x4ToVecI16x8:
-    case SwizzleVec8x16: {
+    case SwizzleVecI8x16:
+    case RelaxedSwizzleVecI8x16:
+    case RelaxedQ15MulrSVecI16x8:
+    case DotI8x16I7x16SToVecI16x8:
+    case DotI8x16I7x16UToVecI16x8: {
       shouldBeEqualOrFirstIsUnreachable(
         curr->left->type, Type(Type::v128), curr, "v128 op");
       shouldBeEqualOrFirstIsUnreachable(
@@ -1888,6 +1909,10 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncSatZeroUVecF64x2ToVecI32x4:
     case DemoteZeroVecF64x2ToVecF32x4:
     case PromoteLowVecF32x4ToVecF64x2:
+    case RelaxedTruncSVecF32x4ToVecI32x4:
+    case RelaxedTruncUVecF32x4ToVecI32x4:
+    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+    case RelaxedTruncZeroUVecF64x2ToVecI32x4:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
@@ -2026,6 +2051,62 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
                   "ref.eq's right argument should be a subtype of eqref");
 }
 
+void FunctionValidator::visitTableGet(TableGet* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "table.get requires reference types to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->index->type, Type(Type::i32), curr, "table.get index must be an i32");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!table, curr, "table.get table must exist") &&
+      curr->type != Type::unreachable) {
+    shouldBeEqual(
+      curr->type, table->type, curr, "table.get must have same type as table.");
+  }
+}
+
+void FunctionValidator::visitTableSet(TableSet* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "table.set requires reference types to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->index->type, Type(Type::i32), curr, "table.set index must be an i32");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!table, curr, "table.set table must exist") &&
+      curr->type != Type::unreachable) {
+    shouldBeSubType(curr->value->type,
+                    table->type,
+                    curr,
+                    "table.set value must have right type");
+  }
+}
+
+void FunctionValidator::visitTableSize(TableSize* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "table.size requires reference types to be enabled");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "table.size table must exist");
+}
+
+void FunctionValidator::visitTableGrow(TableGrow* curr) {
+  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+               curr,
+               "table.grow requires reference types to be enabled");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!table, curr, "table.grow table must exist") &&
+      curr->type != Type::unreachable) {
+    shouldBeSubType(curr->value->type,
+                    table->type,
+                    curr,
+                    "table.grow value must have right type");
+    shouldBeEqual(curr->delta->type,
+                  Type(Type::i32),
+                  curr,
+                  "table.grow must match table index type");
+  }
+}
+
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
     shouldBeTrue(delegateTargetNames.count(name) != 0,
@@ -2070,16 +2151,78 @@ void FunctionValidator::visitTry(Try* curr) {
                     "unreachable try-catch must have unreachable catch body");
     }
   }
-  shouldBeTrue(curr->catchBodies.size() - curr->catchEvents.size() <= 1,
+  shouldBeTrue(curr->catchBodies.size() - curr->catchTags.size() <= 1,
                curr,
-               "the number of catch blocks and events do not match");
+               "the number of catch blocks and tags do not match");
 
   shouldBeFalse(curr->isCatch() && curr->isDelegate(),
                 curr,
                 "try cannot have both catch and delegate at the same time");
-  shouldBeTrue(curr->isCatch() || curr->isDelegate(),
-               curr,
-               "try should have either catches or a delegate");
+
+  // Given a catch body, find pops corresponding to the catch
+  auto findPops = [](Expression* expr) {
+    SmallVector<Pop*, 1> pops;
+    SmallVector<Expression*, 8> work;
+    work.push_back(expr);
+    while (!work.empty()) {
+      auto* curr = work.back();
+      work.pop_back();
+      if (auto* pop = curr->dynCast<Pop>()) {
+        pops.push_back(pop);
+      } else if (auto* try_ = curr->dynCast<Try>()) {
+        // We don't go into inner catch bodies; pops in inner catch bodies
+        // belong to the inner catches
+        work.push_back(try_->body);
+      } else {
+        for (auto* child : ChildIterator(curr)) {
+          work.push_back(child);
+        }
+      }
+    }
+    return pops;
+  };
+
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    Name tagName = curr->catchTags[i];
+    auto* tag = getModule()->getTagOrNull(tagName);
+    if (!shouldBeTrue(tag != nullptr, curr, "")) {
+      getStream() << "tag name is invalid: " << tagName << "\n";
+    }
+
+    auto* catchBody = curr->catchBodies[i];
+    SmallVector<Pop*, 1> pops = findPops(catchBody);
+    if (tag->sig.params == Type::none) {
+      if (!shouldBeTrue(pops.empty(), curr, "")) {
+        getStream() << "catch's tag (" << tagName
+                    << ") doesn't have any params, but there are pops";
+      }
+    } else {
+      if (shouldBeTrue(pops.size() == 1, curr, "")) {
+        auto* pop = *pops.begin();
+        if (!shouldBeSubType(pop->type, tag->sig.params, curr, "")) {
+          getStream()
+            << "catch's tag (" << tagName
+            << ")'s pop doesn't have the same type as the tag's params";
+        }
+        if (!shouldBeTrue(
+              EHUtils::containsValidDanglingPop(catchBody), curr, "")) {
+          getStream() << "catch's body (" << tagName
+                      << ")'s pop's location is not valid";
+        }
+      } else {
+        getStream() << "catch's tag (" << tagName
+                    << ") has params, so there should be a single pop within "
+                       "the catch body";
+      }
+    }
+  }
+
+  if (curr->hasCatchAll()) {
+    auto* catchAllBody = curr->catchBodies.back();
+    shouldBeTrue(findPops(catchAllBody).empty(),
+                 curr,
+                 "catch_all's body should not have pops");
+  }
 
   if (curr->isDelegate()) {
     noteDelegate(curr->delegateTarget, curr);
@@ -2099,21 +2242,21 @@ void FunctionValidator::visitThrow(Throw* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  auto* event = getModule()->getEventOrNull(curr->event);
-  if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "throw's tag must exist")) {
     return;
   }
-  if (!shouldBeTrue(curr->operands.size() == event->sig.params.size(),
+  if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
                     curr,
-                    "event's param numbers must match")) {
+                    "tag's param numbers must match")) {
     return;
   }
   size_t i = 0;
-  for (const auto& param : event->sig.params) {
+  for (const auto& param : tag->sig.params) {
     if (!shouldBeSubType(curr->operands[i]->type,
                          param,
                          curr->operands[i],
-                         "event param types must match") &&
+                         "tag param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
@@ -2183,11 +2326,11 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
                curr,
                "call_ref requires typed-function-references to be enabled");
   if (curr->target->type != Type::unreachable) {
-    shouldBeTrue(curr->target->type.isFunction(),
-                 curr,
-                 "call_ref target must be a function reference");
-    validateCallParamsAndResult(
-      curr, curr->target->type.getHeapType().getSignature());
+    if (shouldBeTrue(curr->target->type.isFunction(),
+                     curr,
+                     "call_ref target must be a function reference")) {
+      validateCallParamsAndResult(curr, curr->target->type.getHeapType());
+    }
   }
 }
 
@@ -2217,9 +2360,22 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
   }
-  if (curr->rtt->type != Type::unreachable) {
+  if (curr->rtt) {
+    if (curr->rtt->type != Type::unreachable) {
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+    }
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "dynamic ref.test must not use intendedType field");
+  } else {
+    shouldBeUnequal(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "static ref.test must set intendedType field");
     shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+      !curr->intendedType.isBasic(), curr, "ref.test must test a non-basic");
   }
 }
 
@@ -2230,9 +2386,22 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.cast ref must have ref type");
   }
-  if (curr->rtt->type != Type::unreachable) {
+  if (curr->rtt) {
+    if (curr->rtt->type != Type::unreachable) {
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
+    }
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "dynamic ref.cast must not use intendedType field");
+  } else {
+    shouldBeUnequal(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "static ref.cast must set intendedType field");
     shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
+      !curr->intendedType.isBasic(), curr, "ref.cast must cast to a non-basic");
   }
 }
 
@@ -2244,17 +2413,35 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
   }
-  if (curr->op == BrOnCast) {
-    // Note that an unreachable rtt is not supported: the text and binary
-    // formats do not provide the type, so if it's unreachable we should not
-    // even create a br_on_cast in such a case, as we'd have no idea what it
-    // casts to.
-    shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
-    noteBreak(curr->name, curr->getCastType(), curr);
+  if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
+    if (curr->rtt) {
+      // Note that an unreachable rtt is not supported: the text and binary
+      // formats do not provide the type, so if it's unreachable we should not
+      // even create a br_on_cast in such a case, as we'd have no idea what it
+      // casts to.
+      shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
+      shouldBeEqual(curr->intendedType,
+                    HeapType(),
+                    curr,
+                    "dynamic br_on_cast* must not use intendedType field");
+    } else {
+      shouldBeUnequal(curr->intendedType,
+                      HeapType(),
+                      curr,
+                      "static br_on_cast* must set intendedType field");
+      shouldBeTrue(!curr->intendedType.isBasic(),
+                   curr,
+                   "br_on_cast* must cast to a non-basic");
+    }
   } else {
     shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");
+    shouldBeEqual(curr->intendedType,
+                  HeapType(),
+                  curr,
+                  "non-cast br_on* must not set intendedType field");
   }
+  noteBreak(curr->name, curr->getSentType(), curr);
 }
 
 void FunctionValidator::visitRttCanon(RttCanon* curr) {
@@ -2262,7 +2449,10 @@ void FunctionValidator::visitRttCanon(RttCanon* curr) {
     getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
   shouldBeTrue(curr->type.isRtt(), curr, "rtt.canon must have RTT type");
   auto rtt = curr->type.getRtt();
-  shouldBeEqual(rtt.depth, Index(0), curr, "rtt.canon has a depth of 0");
+  shouldBeEqual(rtt.depth,
+                Index(curr->type.getHeapType().getDepth()),
+                curr,
+                "rtt.canon must have the depth of its heap type");
 }
 
 void FunctionValidator::visitRttSub(RttSub* curr) {
@@ -2293,11 +2483,19 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
-    return;
+  if (curr->rtt) {
+    if (!shouldBeTrue(
+          curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
+      return;
+    }
   }
-  auto heapType = curr->rtt->type.getHeapType();
+  auto heapType = curr->type.getHeapType();
+  if (curr->rtt) {
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "struct.new heap type must match rtt");
+  }
   if (!shouldBeTrue(
         heapType.isStruct(), curr, "struct.new heap type must be struct")) {
     return;
@@ -2389,11 +2587,19 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "array.new rtt must be rtt")) {
-    return;
+  if (curr->rtt) {
+    if (!shouldBeTrue(
+          curr->rtt->type.isRtt(), curr, "array.new rtt must be rtt")) {
+      return;
+    }
   }
-  auto heapType = curr->rtt->type.getHeapType();
+  auto heapType = curr->type.getHeapType();
+  if (curr->rtt) {
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "array.new heap type must match rtt");
+  }
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.new heap type must be array")) {
     return;
@@ -2413,6 +2619,39 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
                     element.type,
                     curr,
                     "array.new init must have proper type");
+  }
+}
+
+void FunctionValidator::visitArrayInit(ArrayInit* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.init requires gc to be enabled");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (curr->rtt) {
+    if (!shouldBeTrue(
+          curr->rtt->type.isRtt(), curr, "array.init rtt must be rtt")) {
+      return;
+    }
+  }
+  auto heapType = curr->type.getHeapType();
+  if (curr->rtt) {
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  heapType,
+                  curr,
+                  "array.init heap type must match rtt");
+  }
+  if (!shouldBeTrue(
+        heapType.isArray(), curr, "array.init heap type must be array")) {
+    return;
+  }
+  const auto& element = heapType.getArray().element;
+  for (auto* value : curr->values) {
+    shouldBeSubType(value->type,
+                    element.type,
+                    curr,
+                    "array.init value must have proper type");
   }
 }
 
@@ -2457,24 +2696,52 @@ void FunctionValidator::visitArrayLen(ArrayLen* curr) {
     curr->type, Type(Type::i32), curr, "array.len result must be an i32");
 }
 
+void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.copy requires gc to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(curr->srcIndex->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.copy src index must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->destIndex->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.copy dest index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  const auto& srcElement = curr->srcRef->type.getHeapType().getArray().element;
+  const auto& destElement =
+    curr->destRef->type.getHeapType().getArray().element;
+  shouldBeSubType(srcElement.type,
+                  destElement.type,
+                  curr,
+                  "array.copy must have the proper types");
+  shouldBeTrue(destElement.mutable_, curr, "array.copy type must be mutable");
+}
+
 void FunctionValidator::visitFunction(Function* curr) {
-  if (curr->sig.results.isTuple()) {
+  if (curr->getResults().isTuple()) {
     shouldBeTrue(getModule()->features.hasMultivalue(),
                  curr->body,
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
-  for (const auto& param : curr->sig.params) {
+  for (const auto& param : curr->getParams()) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
   }
-  for (const auto& result : curr->sig.results) {
+  for (const auto& result : curr->getResults()) {
     features |= result.getFeatures();
     shouldBeTrue(result.isConcrete(), curr, "results must be concretely typed");
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    shouldBeTrue(var.isDefaultable(), var, "vars must be defaultable");
+    bool valid = getModule()->features.hasGCNNLocals()
+                   ? var.isDefaultableOrNonNullable()
+                   : var.isDefaultable();
+    shouldBeTrue(valid, var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
@@ -2486,12 +2753,12 @@ void FunctionValidator::visitFunction(Function* curr) {
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   shouldBeSubType(curr->body->type,
-                  curr->sig.results,
+                  curr->getResults(),
                   curr->body,
                   "function body type must match, if function returns");
   for (Type returnType : returnTypes) {
     shouldBeSubType(returnType,
-                    curr->sig.results,
+                    curr->getResults(),
                     curr->body,
                     "function result must match, if function has returns");
   }
@@ -2509,13 +2776,21 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
 }
 
-static bool checkSegmentOffset(Expression* curr, Address add, Address max) {
-  if (curr->is<GlobalGet>()) {
-    return true;
+static bool checkSegmentOffset(Expression* curr,
+                               Address add,
+                               Address max,
+                               FeatureSet features) {
+  if (!Properties::isValidInConstantExpression(curr, features)) {
+    return false;
   }
   auto* c = curr->dynCast<Const>();
   if (!c) {
-    return false;
+    // Unless the instruction is actually a const instruction, we don't
+    // currently try to evaluate it.
+    // TODO: Attempt to evaluate other expressions that might also be const
+    // such as `global.get` or more complex instruction sequences involving
+    // add/sub/mul/etc.
+    return true;
   }
   uint64_t raw = c->value.getInteger();
   if (raw > std::numeric_limits<Address::address32_t>::max()) {
@@ -2566,7 +2841,6 @@ void FunctionValidator::validateAlignment(
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2613,9 +2887,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       }
       // check if a node is a duplicate - expressions must not be seen more than
       // once
-      bool inserted;
-      std::tie(std::ignore, inserted) = seen.insert(curr);
-      if (!inserted) {
+      if (!seen.insert(curr).second) {
         std::ostringstream ss;
         ss << "expression seen more than once in the tree in " << scope
            << " on " << curr << '\n';
@@ -2631,25 +2903,35 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
-    if (curr->sig.results.isTuple()) {
+    if (curr->getResults().isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Imported multivalue function "
                         "(multivalue is not enabled)");
     }
     if (info.validateWeb) {
-      for (const auto& param : curr->sig.params) {
+      for (const auto& param : curr->getParams()) {
         info.shouldBeUnequal(param,
                              Type(Type::i64),
                              curr->name,
                              "Imported function must not have i64 parameters");
       }
-      for (const auto& result : curr->sig.results) {
+      for (const auto& result : curr->getResults()) {
         info.shouldBeUnequal(result,
                              Type(Type::i64),
                              curr->name,
                              "Imported function must not have i64 results");
       }
+    }
+
+    if (Intrinsics(module).isCallWithoutEffects(curr)) {
+      auto lastParam = curr->getParams();
+      if (lastParam.isTuple()) {
+        lastParam = lastParam.getTuple().types.back();
+      }
+      info.shouldBeTrue(lastParam.isFunction(),
+                        curr->name,
+                        "call.if.used's last param must be a function");
     }
   });
   ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
@@ -2667,14 +2949,14 @@ static void validateExports(Module& module, ValidationInfo& info) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
         Function* f = module.getFunction(curr->value);
-        for (const auto& param : f->sig.params) {
+        for (const auto& param : f->getParams()) {
           info.shouldBeUnequal(
             param,
             Type(Type::i64),
             f->name,
             "Exported function must not have i64 parameters");
         }
-        for (const auto& result : f->sig.results) {
+        for (const auto& result : f->getResults()) {
           info.shouldBeUnequal(result,
                                Type(Type::i64),
                                f->name,
@@ -2711,10 +2993,9 @@ static void validateExports(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(name == Name("0") || name == module.memory.name,
                         name,
                         "module memory exports must be found");
-    } else if (exp->kind == ExternalKind::Event) {
-      info.shouldBeTrue(module.getEventOrNull(name),
-                        name,
-                        "module event exports must be found");
+    } else if (exp->kind == ExternalKind::Tag) {
+      info.shouldBeTrue(
+        module.getTagOrNull(name), name, "module tag exports must be found");
     } else {
       WASM_UNREACHABLE("invalid ExternalKind");
     }
@@ -2734,9 +3015,10 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(
       curr->init != nullptr, curr->name, "global init must be non-null");
     assert(curr->init);
-    info.shouldBeTrue(GlobalUtils::canInitializeGlobal(curr->init),
-                      curr->name,
-                      "global init must be valid");
+    info.shouldBeTrue(
+      GlobalUtils::canInitializeGlobal(curr->init, module.features),
+      curr->name,
+      "global init must be valid");
 
     if (!info.shouldBeSubType(curr->init->type,
                               curr->type,
@@ -2801,7 +3083,8 @@ static void validateMemory(Module& module, ValidationInfo& info) {
       }
       info.shouldBeTrue(checkSegmentOffset(segment.offset,
                                            segment.data.size(),
-                                           curr.initial * Memory::kPageSize),
+                                           curr.initial * Memory::kPageSize,
+                                           module.features),
                         segment.offset,
                         "memory segment offset should be reasonable");
       if (segment.offset->is<Const>()) {
@@ -2863,17 +3146,16 @@ static void validateTables(Module& module, ValidationInfo& info) {
       "table",
       "Non-nullable reference types are not yet supported for tables");
     if (!module.features.hasGC()) {
-      info.shouldBeTrue(table->type.isFunction() ||
-                          table->type == Type::externref,
+      info.shouldBeTrue(table->type.isFunction() || table->type == Type::anyref,
                         "table",
-                        "Only function reference types or externref are valid "
+                        "Only function reference types or anyref are valid "
                         "for table type (when GC is disabled)");
     }
     if (!module.features.hasTypedFunctionReferences()) {
       info.shouldBeTrue(table->type == Type::funcref ||
-                          table->type == Type::externref,
+                          table->type == Type::anyref,
                         "table",
-                        "Only funcref and externref are valid for table type "
+                        "Only funcref and anyref are valid for table type "
                         "(when typed-function references are disabled)");
     }
   }
@@ -2906,7 +3188,8 @@ static void validateTables(Module& module, ValidationInfo& info) {
                          "element segment offset should be i32");
       info.shouldBeTrue(checkSegmentOffset(segment->offset,
                                            segment->data.size(),
-                                           table->initial * Table::kPageSize),
+                                           table->initial * Table::kPageSize,
+                                           module.features),
                         segment->offset,
                         "table segment offset should be reasonable");
       if (module.features.hasTypedFunctionReferences()) {
@@ -2952,30 +3235,26 @@ static void validateTables(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateEvents(Module& module, ValidationInfo& info) {
-  if (!module.events.empty()) {
+static void validateTags(Module& module, ValidationInfo& info) {
+  if (!module.tags.empty()) {
     info.shouldBeTrue(module.features.hasExceptionHandling(),
-                      module.events[0]->name,
-                      "Module has events (event-handling is disabled)");
+                      module.tags[0]->name,
+                      "Module has tags (exception-handling is disabled)");
   }
-  for (auto& curr : module.events) {
-    info.shouldBeEqual(curr->attribute,
-                       (unsigned)0,
-                       curr->attribute,
-                       "Currently only attribute 0 is supported");
+  for (auto& curr : module.tags) {
     info.shouldBeEqual(curr->sig.results,
                        Type(Type::none),
                        curr->name,
-                       "Event type's result type should be none");
+                       "Tag type's result type should be none");
     if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
-                        "Multivalue event type (multivalue is not enabled)");
+                        "Multivalue tag type (multivalue is not enabled)");
     }
     for (const auto& param : curr->sig.params) {
       info.shouldBeTrue(param.isConcrete(),
                         curr->name,
-                        "Values in an event should have concrete types");
+                        "Values in a tag should have concrete types");
     }
   }
 }
@@ -2986,10 +3265,10 @@ static void validateModule(Module& module, ValidationInfo& info) {
     auto func = module.getFunctionOrNull(module.start);
     if (info.shouldBeTrue(
           func != nullptr, module.start, "start must be found")) {
-      info.shouldBeTrue(func->sig.params == Type::none,
+      info.shouldBeTrue(func->getParams() == Type::none,
                         module.start,
                         "start must have 0 params");
-      info.shouldBeTrue(func->sig.results == Type::none,
+      info.shouldBeTrue(func->getResults() == Type::none,
                         module.start,
                         "start must not return a value");
     }
@@ -3022,7 +3301,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateGlobals(module, info);
     validateMemory(module, info);
     validateTables(module, info);
-    validateEvents(module, info);
+    validateTags(module, info);
     validateModule(module, info);
     validateFeatures(module, info);
   }

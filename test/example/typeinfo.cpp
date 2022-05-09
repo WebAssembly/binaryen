@@ -15,16 +15,6 @@ void test_compound() {
     assert(Type(func, NonNullable).getID() ==
            Type(sameFunc, NonNullable).getID());
 
-    HeapType extern_(HeapType::ext);
-    assert(Type(extern_, Nullable).getID() == Type::externref);
-    assert(Type(extern_, NonNullable).getID() ==
-           Type(extern_, NonNullable).getID());
-    assert(Type(extern_, NonNullable).getID() !=
-           Type(extern_, Nullable).getID());
-    HeapType sameExtern(HeapType::ext);
-    assert(Type(extern_, NonNullable).getID() ==
-           Type(sameExtern, NonNullable).getID());
-
     HeapType any(HeapType::any);
     assert(Type(any, Nullable).getID() == Type::anyref);
     assert(Type(any, NonNullable).getID() == Type(any, NonNullable).getID());
@@ -102,7 +92,7 @@ void test_compound() {
     Tuple sameTuple({Type::i32, Type::f64});
     assert(Type(tuple).getID() == Type(sameTuple).getID());
 
-    Tuple otherTuple({Type::f64, Type::externref});
+    Tuple otherTuple({Type::f64, Type::anyref});
     assert(Type(tuple).getID() != Type(otherTuple).getID());
   }
   {
@@ -140,9 +130,6 @@ void test_printing() {
     std::cout << HeapType(HeapType::func) << "\n";
     std::cout << Type(HeapType::func, Nullable) << "\n";
     std::cout << Type(HeapType::func, NonNullable) << "\n";
-    std::cout << HeapType(HeapType::ext) << "\n";
-    std::cout << Type(HeapType::ext, Nullable) << "\n";
-    std::cout << Type(HeapType::ext, NonNullable) << "\n";
     std::cout << HeapType(HeapType::any) << "\n";
     std::cout << Type(HeapType::any, Nullable) << "\n";
     std::cout << Type(HeapType::any, NonNullable) << "\n";
@@ -152,7 +139,7 @@ void test_printing() {
     std::cout << HeapType(HeapType::i31) << "\n";
     std::cout << Type(HeapType::i31, Nullable) << "\n";
     std::cout << Type(HeapType::i31, NonNullable) << "\n";
-    std::cout << HeapType(Signature(Type::none, Type::none)) << "\n";
+    std::cout << Signature(Type::none, Type::none) << "\n";
     std::cout << HeapType(Struct{}) << "\n";
     std::cout << HeapType(Array({Type::i32, Immutable})) << "\n";
   }
@@ -178,7 +165,7 @@ void test_printing() {
       {Type::i64, Immutable},
       {Type::f32, Mutable},
       {Type::f64, Mutable},
-      {Type::externref, Immutable},
+      {Type::anyref, Immutable},
     });
     std::cout << struct_ << "\n";
     std::cout << Type(struct_, NonNullable) << "\n";
@@ -190,7 +177,7 @@ void test_printing() {
     std::cout << array << "\n";
     std::cout << Type(array, NonNullable) << "\n";
     std::cout << Type(array, Nullable) << "\n";
-    Array arrayMut({Type::externref, Mutable});
+    Array arrayMut({Type::anyref, Mutable});
     std::cout << arrayMut << "\n";
     std::cout << Type(arrayMut, NonNullable) << "\n";
     std::cout << Type(arrayMut, Nullable) << "\n";
@@ -203,7 +190,7 @@ void test_printing() {
     Tuple tuple({
       Type::i32,
       Type::f64,
-      Type::externref,
+      Type::anyref,
     });
     std::cout << tuple << "\n";
     std::cout << Type(tuple) << "\n";
@@ -212,8 +199,6 @@ void test_printing() {
     std::cout << "\n;; Rtt\n";
     std::cout << Rtt(0, HeapType::func) << "\n";
     std::cout << Type(Rtt(0, HeapType::func)) << "\n";
-    std::cout << Rtt(1, HeapType::ext) << "\n";
-    std::cout << Type(Rtt(1, HeapType::ext)) << "\n";
     std::cout << Rtt(2, HeapType::any) << "\n";
     std::cout << Type(Rtt(2, HeapType::any)) << "\n";
     std::cout << Rtt(3, HeapType::eq) << "\n";
@@ -317,7 +302,6 @@ void test_printing() {
     std::cout << tuple << "\n";
     std::cout << Type(tuple) << "\n";
   }
-  // TODO: Think about recursive types. Currently impossible to construct.
   {
     std::cout << "\n;; Recursive (not really)\n";
     Signature signatureSignature(Type::none, Type::none);

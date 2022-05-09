@@ -23,9 +23,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace TableUtils {
+namespace wasm::TableUtils {
 
 struct FlatTable {
   std::vector<Name> names;
@@ -87,7 +85,7 @@ inline Index append(Table& table, Name name, Module& wasm) {
 
   auto* func = wasm.getFunctionOrNull(name);
   assert(func != nullptr && "Cannot append non-existing function to a table.");
-  segment->data.push_back(Builder(wasm).makeRefFunc(name, func->sig));
+  segment->data.push_back(Builder(wasm).makeRefFunc(name, func->type));
   table.initial++;
   return tableIndex;
 }
@@ -110,8 +108,11 @@ inline Index getOrAppend(Table& table, Name name, Module& wasm) {
 // "elem declare" mention in the text and binary formats.
 std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
 
-} // namespace TableUtils
+// Returns whether a segment uses arbitrary wasm expressions, as opposed to the
+// original tables from the MVP that use function indices. (Some post-MVP tables
+// do so, and some do not, depending on their type and use.)
+bool usesExpressions(ElementSegment* curr, Module* module);
 
-} // namespace wasm
+} // namespace wasm::TableUtils
 
 #endif // wasm_ir_table_h

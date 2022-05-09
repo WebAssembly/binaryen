@@ -65,7 +65,7 @@ stealSlice(Builder& builder, Block* input, Index from, Index to) {
 static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
                               PassOptions& options,
-                              FeatureSet features) {
+                              Module& wasm) {
   // if the if isn't even reached, this is all dead code anyhow
   if (ifCondition->type == Type::unreachable) {
     return false;
@@ -73,12 +73,17 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   if (!brValue) {
     return true;
   }
-  EffectAnalyzer value(options, features, brValue);
+  EffectAnalyzer value(options, wasm, brValue);
   if (value.hasSideEffects()) {
     return false;
   }
-  return !EffectAnalyzer(options, features, ifCondition).invalidates(value);
+  return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
 }
+
+// This leads to similar choices as LLVM does.
+// See https://github.com/WebAssembly/binaryen/pull/4228
+// It can be tuned more later.
+const Index TooCostlyToRunUnconditionally = 9;
 
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously
@@ -92,9 +97,18 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
     return false;
   }
   // Consider the cost of executing all the code unconditionally.
-  const auto TOO_MUCH = 7;
   auto total = CostAnalyzer(one).cost + CostAnalyzer(two).cost;
-  return total >= TOO_MUCH;
+  return total >= TooCostlyToRunUnconditionally;
+}
+
+// As above, but a single expression that we are considering moving to a place
+// where it executes unconditionally.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* curr) {
+  if (passOptions.shrinkLevel) {
+    return false;
+  }
+  return CostAnalyzer(curr).cost >= TooCostlyToRunUnconditionally;
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
@@ -329,13 +343,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void visitIf(If* curr) {
-    FeatureSet features = getModule()->features;
     if (!curr->ifFalse) {
       // if without an else. try to reduce
       //    if (condition) br  =>  br_if (condition)
       if (Break* br = curr->ifTrue->dynCast<Break>()) {
         if (canTurnIfIntoBrIf(
-              curr->condition, br->value, getPassOptions(), features)) {
+              curr->condition, br->value, getPassOptions(), *getModule())) {
           if (!br->condition) {
             br->condition = curr->condition;
           } else {
@@ -360,7 +373,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
             // Of course we can't do this if the br's condition has side
             // effects, as we would then execute those unconditionally.
-            if (EffectAnalyzer(getPassOptions(), features, br->condition)
+            if (EffectAnalyzer(getPassOptions(), *getModule(), br->condition)
                   .hasSideEffects()) {
               return;
             }
@@ -375,51 +388,38 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           anotherCycle = true;
         }
       }
+
+      // if (condition-A) { if (condition-B) .. }
+      //   =>
+      // if (condition-A ? condition-B : 0) { .. }
+      //
+      // This replaces an if, which is 3 bytes, with a select plus a zero, which
+      // is also 3 bytes. The benefit is that the select may be faster, and also
+      // further optimizations may be possible on the select.
+      if (auto* child = curr->ifTrue->dynCast<If>()) {
+        if (child->ifFalse) {
+          return;
+        }
+        // If running the child's condition unconditionally is too expensive,
+        // give up.
+        if (tooCostlyToRunUnconditionally(getPassOptions(), child->condition)) {
+          return;
+        }
+        // Of course we can't do this if the inner if's condition has side
+        // effects, as we would then execute those unconditionally.
+        if (EffectAnalyzer(getPassOptions(), *getModule(), child->condition)
+              .hasSideEffects()) {
+          return;
+        }
+        Builder builder(*getModule());
+        curr->condition = builder.makeSelect(
+          child->condition, curr->condition, builder.makeConst(int32_t(0)));
+        curr->ifTrue = child->ifTrue;
+      }
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is
     //       a dead end we handle the case of a returned value to a local.set
     //       later down, see visitLocalSet.
-  }
-
-  void visitBrOn(BrOn* curr) {
-    // Ignore unreachable BrOns which we cannot improve anyhow.
-    if (curr->type == Type::unreachable) {
-      return;
-    }
-
-    // First, check for a possible null which would prevent all other
-    // optimizations.
-    // (Note: if the spec had BrOnNonNull, instead of BrOnNull, then we could
-    // replace a br_on_func whose input is (ref null func) with br_on_non_null,
-    // as only the null check would be needed. But as things are, we cannot do
-    // such a thing.)
-    auto refType = curr->ref->type;
-    if (refType.isNullable()) {
-      return;
-    }
-
-    if (curr->op == BrOnNull) {
-      // This cannot be null, so the br is never taken, and the non-null value
-      // flows through.
-      replaceCurrent(curr->ref);
-      anotherCycle = true;
-      return;
-    }
-
-    // Check if the type is the kind we are checking for.
-    auto result = GCTypeUtils::evaluateKindCheck(curr);
-
-    if (result == GCTypeUtils::Success) {
-      // The type is what we are looking for, so we can switch from BrOn to a
-      // simple br which is always taken.
-      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
-      anotherCycle = true;
-    } else if (result == GCTypeUtils::Failure) {
-      // The type is not what we are looking for, so the branch is never taken,
-      // and the value just flows through.
-      replaceCurrent(curr->ref);
-      anotherCycle = true;
-    }
   }
 
   // override scan to add a pre and a post check task to all nodes
@@ -596,7 +596,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         return false;
       }
       // if there is control flow, we must stop looking
-      if (EffectAnalyzer(getPassOptions(), getModule()->features, curr)
+      if (EffectAnalyzer(getPassOptions(), *getModule(), curr)
             .transfersControlFlow()) {
         return false;
       }
@@ -683,6 +683,82 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     return false;
   }
 
+  // GC-specific optimizations. These are split out from the main code to keep
+  // things as simple as possible.
+  bool optimizeGC(Function* func) {
+    if (!getModule()->features.hasGC()) {
+      return false;
+    }
+
+    struct Optimizer : public PostWalker<Optimizer> {
+      bool worked = false;
+
+      void visitBrOn(BrOn* curr) {
+        // Ignore unreachable BrOns which we cannot improve anyhow. Note that
+        // we must check the ref field manually, as we may be changing types as
+        // we go here. (Another option would be to use a TypeUpdater here
+        // instead of calling ReFinalize at the very end, but that would be more
+        // complex and slower.)
+        if (curr->type == Type::unreachable ||
+            curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        // First, check for a possible null which would prevent all other
+        // optimizations.
+        // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
+        // input is (ref null func) with br_on_non_null (as only the null check
+        // would be needed).
+        auto refType = curr->ref->type;
+        if (refType.isNullable()) {
+          return;
+        }
+
+        if (curr->op == BrOnNull) {
+          // This cannot be null, so the br is never taken, and the non-null
+          // value flows through.
+          replaceCurrent(curr->ref);
+          worked = true;
+          return;
+        }
+        if (curr->op == BrOnNonNull) {
+          // This cannot be null, so the br is always taken.
+          replaceCurrent(
+            Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          worked = true;
+          return;
+        }
+
+        // Check if the type is the kind we are checking for.
+        auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+        if (result == GCTypeUtils::Success) {
+          // The type is what we are looking for, so we can switch from BrOn to
+          // a simple br which is always taken.
+          replaceCurrent(
+            Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          worked = true;
+        } else if (result == GCTypeUtils::Failure) {
+          // The type is not what we are looking for, so the branch is never
+          // taken, and the value just flows through.
+          replaceCurrent(curr->ref);
+          worked = true;
+        }
+      }
+    } optimizer;
+
+    optimizer.setModule(getModule());
+    optimizer.doWalkFunction(func);
+
+    // If we removed any BrOn instructions, that might affect the reachability
+    // of the things they used to break to, so update types.
+    if (optimizer.worked) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
+    }
+    return false;
+  }
+
   void doWalkFunction(Function* func) {
     // multiple cycles may be needed
     do {
@@ -715,8 +791,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       if (anotherCycle) {
         ReFinalize().walkFunctionInModule(func, getModule());
       }
-      // sink blocks
       if (sinkBlocks(func)) {
+        anotherCycle = true;
+      }
+      if (optimizeGC(func)) {
         anotherCycle = true;
       }
     } while (anotherCycle);
@@ -819,7 +897,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         //   the if is dead
         // * note that we do this at the end, because un-conditionalizing can
         //   interfere with optimizeLoop()ing.
-        FeatureSet features = getModule()->features;
         auto& list = curr->list;
         for (Index i = 0; i < list.size(); i++) {
           auto* iff = list[i]->dynCast<If>();
@@ -830,8 +907,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition &&
-              canTurnIfIntoBrIf(
-                iff->condition, ifTrueBreak->value, passOptions, features)) {
+              canTurnIfIntoBrIf(iff->condition,
+                                ifTrueBreak->value,
+                                passOptions,
+                                *getModule())) {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
@@ -843,8 +922,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // otherwise, perhaps we can flip the if
           auto* ifFalseBreak = iff->ifFalse->dynCast<Break>();
           if (ifFalseBreak && !ifFalseBreak->condition &&
-              canTurnIfIntoBrIf(
-                iff->condition, ifFalseBreak->value, passOptions, features)) {
+              canTurnIfIntoBrIf(iff->condition,
+                                ifFalseBreak->value,
+                                passOptions,
+                                *getModule())) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
             ifFalseBreak->finalize();
@@ -873,7 +954,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               if (shrink && br2->type != Type::unreachable) {
                 // Join adjacent br_ifs to the same target, making one br_if
                 // with a "selectified" condition that executes both.
-                if (!EffectAnalyzer(passOptions, features, br2->condition)
+                if (!EffectAnalyzer(passOptions, *getModule(), br2->condition)
                        .hasSideEffects()) {
                   // it's ok to execute them both, do it
                   Builder builder(*getModule());
@@ -901,10 +982,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // This switch has just one target no matter what; replace with a br
           // if we can (to do so, we must put the condition before a possible
           // value).
-          if (!curr->value || EffectAnalyzer::canReorder(passOptions,
-                                                         getModule()->features,
-                                                         curr->condition,
-                                                         curr->value)) {
+          if (!curr->value ||
+              EffectAnalyzer::canReorder(
+                passOptions, *getModule(), curr->condition, curr->value)) {
             Builder builder(*getModule());
             replaceCurrent(builder.makeSequence(
               builder.makeDrop(curr->condition), // might have side effects
@@ -970,12 +1050,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               } else {
                 // To use an if, the value must have no side effects, as in the
                 // if it may not execute.
-                FeatureSet features = getModule()->features;
-                if (!EffectAnalyzer(passOptions, features, br->value)
+                if (!EffectAnalyzer(passOptions, *getModule(), br->value)
                        .hasSideEffects()) {
                   // We also need to reorder the condition and the value.
                   if (EffectAnalyzer::canReorder(
-                        passOptions, features, br->condition, br->value)) {
+                        passOptions, *getModule(), br->condition, br->value)) {
                     ExpressionManipulator::nop(list[0]);
                     replaceCurrent(
                       builder.makeIf(br->condition, br->value, curr));
@@ -1013,12 +1092,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // after ignoring the br_if.
                   list[0] = &nop;
                   auto canReorder = EffectAnalyzer::canReorder(
-                    passOptions, features, br->condition, curr);
+                    passOptions, *getModule(), br->condition, curr);
                   auto hasSideEffects =
-                    EffectAnalyzer(passOptions, features, curr)
+                    EffectAnalyzer(passOptions, *getModule(), curr)
                       .hasSideEffects();
                   list[0] = old;
-                  if (canReorder && !hasSideEffects) {
+                  if (canReorder && !hasSideEffects &&
+                      Properties::canEmitSelectWithArms(br->value, curr)) {
                     ExpressionManipulator::nop(list[0]);
                     replaceCurrent(
                       builder.makeSelect(br->condition, br->value, curr));
@@ -1039,8 +1119,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Convert an if into a select, if possible and beneficial to do so.
       Select* selectify(If* iff) {
-        if (!iff->ifFalse || !iff->ifTrue->type.isSingle() ||
-            !iff->ifFalse->type.isSingle()) {
+        // Only an if-else can be turned into a select.
+        if (!iff->ifFalse) {
+          return nullptr;
+        }
+        if (!Properties::canEmitSelectWithArms(iff->ifTrue, iff->ifFalse)) {
           return nullptr;
         }
         if (iff->condition->type == Type::unreachable) {
@@ -1063,16 +1146,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         // Check if side effects allow this: we need to execute the two arms
         // unconditionally, and also to make the condition run last.
-        FeatureSet features = getModule()->features;
-        EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
+        EffectAnalyzer ifTrue(passOptions, *getModule(), iff->ifTrue);
         if (ifTrue.hasSideEffects()) {
           return nullptr;
         }
-        EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
+        EffectAnalyzer ifFalse(passOptions, *getModule(), iff->ifFalse);
         if (ifFalse.hasSideEffects()) {
           return nullptr;
         }
-        EffectAnalyzer condition(passOptions, features, iff->condition);
+        EffectAnalyzer condition(passOptions, *getModule(), iff->condition);
         if (condition.invalidates(ifTrue) || condition.invalidates(ifFalse)) {
           return nullptr;
         }
@@ -1281,7 +1363,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // dce will clean it up
             return nullptr;
           }
-          auto* binary = br->condition->dynCast<Binary>();
+          auto* condition = br->condition;
+          // Also support eqz, which is the same as == 0.
+          if (auto* unary = condition->dynCast<Unary>()) {
+            if (unary->op == EqZInt32) {
+              return br;
+            }
+            return nullptr;
+          }
+          auto* binary = condition->dynCast<Binary>();
           if (!binary) {
             return nullptr;
           }
@@ -1307,16 +1397,29 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br) {
             return nullptr;
           }
-          return br->condition->cast<Binary>()->left;
+          auto* condition = br->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->left;
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return unary->value;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
 
         // returns the constant value, as a uint32_t
         auto getProperBrIfConstant =
           [&getProperBrIf](Expression* curr) -> uint32_t {
-          return getProperBrIf(curr)
-            ->condition->cast<Binary>()
-            ->right->cast<Const>()
-            ->value.geti32();
+          auto* condition = getProperBrIf(curr)->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->right->cast<Const>()->value.geti32();
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return 0;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
         Index start = 0;
         while (start < list.size() - 1) {
@@ -1325,9 +1428,17 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             start++;
             continue;
           }
+          // If the first condition value is a tee, that is ok, so long as the
+          // others afterwards are gets of the value that is tee'd.
+          LocalGet get;
+          if (auto* tee = conditionValue->dynCast<LocalSet>()) {
+            get.index = tee->index;
+            get.type = getFunction()->getLocalType(get.index);
+            conditionValue = &get;
+          }
           // if the condition has side effects, we can't replace many
           // appearances of it with a single one
-          if (EffectAnalyzer(passOptions, getModule()->features, conditionValue)
+          if (EffectAnalyzer(passOptions, *getModule(), conditionValue)
                 .hasSideEffects()) {
             start++;
             continue;
@@ -1392,13 +1503,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               }
               Builder builder(*getModule());
               // the table and condition are offset by the min
+              auto* newCondition = getProperBrIfConditionValue(list[start]);
+
               if (min != 0) {
-                conditionValue = builder.makeBinary(
-                  SubInt32, conditionValue, builder.makeConst(int32_t(min)));
+                newCondition = builder.makeBinary(
+                  SubInt32, newCondition, builder.makeConst(int32_t(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,
-                builder.makeSwitch(table, defaultName, conditionValue));
+                builder.makeSwitch(table, defaultName, newCondition));
               for (Index i = start; i < end - 1; i++) {
                 ExpressionManipulator::nop(list[i]);
               }

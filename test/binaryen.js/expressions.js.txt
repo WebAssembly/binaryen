@@ -179,6 +179,17 @@
  (i32.const 2)
 )
 
+# SIMDLoadStoreLane
+(v128.load16_lane offset=32 2
+ (i32.const 2)
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+)
+
+(v128.store16_lane offset=32 2
+ (i32.const 2)
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+)
+
 # MemoryInit
 (memory.init 5
  (i32.const 6)
@@ -227,7 +238,7 @@
  (do
   (i32.const 1)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 2)
  )
  (catch_all
@@ -239,7 +250,7 @@
  (do
   (i32.const 4)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 5)
  )
 )
@@ -248,10 +259,10 @@
  (do
   (i32.const 4)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 6)
  )
- (catch $event2
+ (catch $tag2
   (i32.const 5)
  )
 )
@@ -260,7 +271,7 @@
  (do
   (i32.const 4)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 6)
  )
 )
@@ -269,10 +280,10 @@
  (do
   (i32.const 4)
  )
- (catch $event2
+ (catch $tag2
   (i32.const 8)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 10)
  )
 )
@@ -281,10 +292,10 @@
  (do
   (i32.const 4)
  )
- (catch $event2
+ (catch $tag2
   (i32.const 8)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 10)
  )
 )

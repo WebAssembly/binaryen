@@ -1,5 +1,4 @@
 total
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       
@@ -7,6 +6,7 @@ total
  [memory-data]  : 0       
  [table-data]   : 0       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 1964    
  [vars]         : 9       
  Binary         : 240     
@@ -26,10 +26,10 @@ total
  Store          : 160     
  Unary          : 29      
 (module
- (type $2 (func (param i32 i32) (result i32)))
  (type $0 (func (param i32 i32 i32) (result i32)))
- (type $10 (func (param i32)))
+ (type $2 (func (param i32 i32) (result i32)))
  (type $3 (func (param i32 i32 i32 i32)))
+ (type $10 (func (param i32)))
  (import "env" "memory" (memory $108 4096 4096))
  (import "env" "table" (table $timport$109 10 funcref))
  (import "env" "crc32" (func $fimport$14 (param i32 i32 i32) (result i32)))
@@ -2688,13 +2688,13 @@ total
       (i32.const 1)
      )
      (br_if $label$1
-      (i32.lt_s
+      (i32.le_s
        (local.tee $4
         (i32.load offset=24
          (local.get $2)
         )
        )
-       (i32.const 1)
+       (i32.const 0)
       )
      )
      (local.set $1
@@ -3106,13 +3106,13 @@ total
       )
      )
      (if
-      (i32.ge_s
+      (i32.gt_s
        (local.tee $0
         (i32.load offset=24
          (local.get $2)
         )
        )
-       (i32.const 1)
+       (i32.const 0)
       )
       (i32.store offset=24
        (local.get $2)

@@ -229,8 +229,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "imported" (global $imported i32))
  (import "env" "_puts" (func $_puts (param i32) (result i32)))
@@ -272,6 +272,11 @@
  )
 )
 (module
+ (type $none_=>_none (func))
+ (import "env" "start" (func $start))
+ (start $start)
+)
+(module
 )
 (module
 )
@@ -287,43 +292,6 @@
    )
    (f64.const 1)
    (f64.const 0)
-  )
- )
-)
-(module
- (type $0 (func (param i32)))
- (type $none_=>_none (func))
- (type $i64_=>_none (func (param i64)))
- (event $e-export (attr 0) (param i64))
- (event $e-throw (attr 0) (param i32))
- (event $e-catch (attr 0) (param i32))
- (export "e-export" (event $e-export))
- (start $start)
- (func $start
-  (try $try
-   (do
-    (throw $e-throw
-     (i32.const 0)
-    )
-   )
-   (catch $e-catch
-    (drop
-     (pop i32)
-    )
-   )
-  )
- )
-)
-(module
- (type $none_=>_none (func))
- (elem declare func $foo)
- (export "test" (func $test))
- (func $foo
-  (nop)
- )
- (func $test
-  (drop
-   (ref.func $foo)
   )
  )
 )

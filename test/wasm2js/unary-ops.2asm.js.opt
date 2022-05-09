@@ -16,9 +16,8 @@ function asmFunc(env) {
  var i64toi32_i32$HIGH_BITS = 0;
  function $1($0) {
   $0 = $0 | 0;
-  var $1_1 = 0, $2 = 0;
+  var $1_1 = 0;
   while (1) {
-   $2 = $1_1;
    if ($0) {
     $0 = $0 - 1 & $0;
     $1_1 = $1_1 + 1 | 0;
@@ -26,7 +25,7 @@ function asmFunc(env) {
    }
    break;
   };
-  return $2 | 0;
+  return $1_1 | 0;
  }
  
  function $6($0) {
@@ -45,24 +44,21 @@ function asmFunc(env) {
  }
  
  function legalstub$2($0, $1_1, $2, $3) {
-  var $4 = 0, $5 = 0, $6_1 = 0, $7_1 = 0;
-  $7_1 = $2;
-  $4 = $1_1;
+  var $4 = 0, $5 = 0, $6_1 = 0;
+  $4 = $0;
   while (1) {
-   $2 = $5;
-   $1_1 = $6_1;
-   if ($0 | $4) {
-    $1_1 = $0;
-    $0 = $1_1 - 1 & $1_1;
-    $4 = $4 - ($1_1 >>> 0 < 1) & $4;
+   if ($1_1 | $4) {
+    $0 = $4;
+    $4 = $4 - 1 & $4;
+    $1_1 = $1_1 - !$0 & $1_1;
     $5 = $5 + 1 | 0;
-    $6_1 = $5 >>> 0 < 1 ? $6_1 + 1 | 0 : $6_1;
+    $6_1 = $5 ? $6_1 : $6_1 + 1 | 0;
     continue;
    }
    break;
   };
-  i64toi32_i32$HIGH_BITS = $1_1;
-  return ($2 | 0) == ($7_1 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
+  i64toi32_i32$HIGH_BITS = $6_1;
+  return ($2 | 0) == ($5 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
  }
  
  function legalstub$3($0, $1_1, $2) {
@@ -87,7 +83,7 @@ function asmFunc(env) {
  function legalstub$9($0, $1_1, $2, $3) {
   var $4 = 0, $5 = 0, $6_1 = 0, $7_1 = 0;
   __inlined_func$__wasm_ctz_i64 : {
-   if ($0 | $1_1) {
+   if ($1_1 | $0) {
     $4 = $1_1 - 1 | 0;
     $5 = $4 + 1 | 0;
     $6_1 = $4;

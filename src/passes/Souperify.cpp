@@ -86,10 +86,9 @@ struct UseFinder {
                   LocalGraph& localGraph,
                   std::vector<Expression*>& ret) {
     // If already handled, nothing to do here.
-    if (seenSets.count(set)) {
+    if (!seenSets.emplace(set).second) {
       return;
     }
-    seenSets.insert(set);
     // Find all the uses of that set.
     auto& gets = localGraph.setInfluences[set];
     if (debug() >= 2) {

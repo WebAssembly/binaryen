@@ -1,11 +1,11 @@
 (module
  (type $2 (func (result i32)))
+ (type $0 (func (param i32 i32 i32) (result i32)))
  (type $1 (func))
- (type $4 (func (param i32 i32)))
  (type $3 (func (param i32 i32 i32)))
+ (type $4 (func (param i32 i32)))
  (type $5 (func (param i32) (result i32)))
  (type $6 (func (param i32 i32) (result i32)))
- (type $0 (func (param i32 i32 i32) (result i32)))
  (import "env" "emscripten_asm_const_int_sync_on_main_thread" (func $emscripten_asm_const_int_sync_on_main_thread (param i32 i32 i32) (result i32)))
  (global $0 i32 (i32.const 568))
  (global $1 i32 (i32.const 652))
@@ -200,7 +200,6 @@
     "601": "{ return $0 + $1; }",
     "621": "{ Module.print(\"Got \" + $0); }"
   },
-  "tableSize": 1,
   "declares": [
     "emscripten_asm_const_int_sync_on_main_thread"
   ],

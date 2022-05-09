@@ -124,10 +124,6 @@ var asmLibraryArg = {
     console.log('get_f64 ' + [loc, index, value]);
     return value;
   },
-  get_externref: function(loc, index, value) {
-    console.log('get_externref ' + [loc, index, value]);
-    return value;
-  },
   set_i32: function(loc, index, value) {
     console.log('set_i32 ' + [loc, index, value]);
     return value;
@@ -145,10 +141,6 @@ var asmLibraryArg = {
     console.log('set_f64 ' + [loc, index, value]);
     return value;
   },
-  set_externref: function(loc, index, value) {
-    console.log('set_externref ' + [loc, index, value]);
-    return value;
-  },
   load_ptr: function(loc, bytes, offset, ptr) {
     console.log('load_ptr ' + [loc, bytes, offset, ptr]);
     return ptr;
@@ -163,7 +155,7 @@ var asmLibraryArg = {
     return low;
   },
   load_val_f32: function(loc, value) {
-    console.log('loaload_val_i32d_ptr ' + [loc, value]);
+    console.log('load_val_f32 ' + [loc, value]);
     return value;
   },
   load_val_f64: function(loc, value) {
@@ -184,11 +176,85 @@ var asmLibraryArg = {
     return low;
   },
   store_val_f32: function(loc, value) {
-    console.log('loastore_val_i32d_ptr ' + [loc, value]);
+    console.log('store_val_f32 ' + [loc, value]);
     return value;
   },
   store_val_f64: function(loc, value) {
     console.log('store_val_f64 ' + [loc, value]);
+    return value;
+  },
+
+  struct_get_val_i32: function(loc, value) {
+    console.log('struct_get_val_i32 ' + [loc, value]);
+    return value;
+  },
+  struct_get_val_i64: function(loc, value) {
+    console.log('struct_get_val_i64 ' + [loc, value]);
+    return value;
+  },
+  struct_get_val_f32: function(loc, value) {
+    console.log('struct_get_val_f32 ' + [loc, value]);
+    return value;
+  },
+  struct_get_val_f64: function(loc, value) {
+    console.log('struct_get_val_f64 ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_i32: function(loc, value) {
+    console.log('struct_set_val_i32 ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_i64: function(loc, value) {
+    console.log('struct_set_val_i64 ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_f32: function(loc, value) {
+    console.log('struct_set_val_f32 ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_f64: function(loc, value) {
+    console.log('struct_set_val_f64 ' + [loc, value]);
+    return value;
+  },
+
+  array_get_val_i32: function(loc, value) {
+    console.log('array_get_val_i32 ' + [loc, value]);
+    return value;
+  },
+  array_get_val_i64: function(loc, value) {
+    console.log('array_get_val_i64 ' + [loc, value]);
+    return value;
+  },
+  array_get_val_f32: function(loc, value) {
+    console.log('array_get_val_f32 ' + [loc, value]);
+    return value;
+  },
+  array_get_val_f64: function(loc, value) {
+    console.log('array_get_val_f64 ' + [loc, value]);
+    return value;
+  },
+  array_set_val_i32: function(loc, value) {
+    console.log('array_set_val_i32 ' + [loc, value]);
+    return value;
+  },
+  array_set_val_i64: function(loc, value) {
+    console.log('array_set_val_i64 ' + [loc, value]);
+    return value;
+  },
+  array_set_val_f32: function(loc, value) {
+    console.log('array_set_val_f32 ' + [loc, value]);
+    return value;
+  },
+  array_set_val_f64: function(loc, value) {
+    console.log('array_set_val_f64 ' + [loc, value]);
+    return value;
+  },
+  array_get_index: function(loc, value) {
+    console.log('array_get_index ' + [loc, value]);
+    return value;
+  },
+  array_set_index: function(loc, value) {
+    console.log('array_set_index ' + [loc, value]);
     return value;
   },
 };

@@ -41,12 +41,12 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
 
   void analyze(Function* func) {
     auto num = func->getNumLocals();
+    numSets.clear();
     numSets.resize(num);
-    std::fill(numSets.begin(), numSets.end(), 0);
+    numGets.clear();
     numGets.resize(num);
-    std::fill(numGets.begin(), numGets.end(), 0);
+    sfa.clear();
     sfa.resize(num);
-    std::fill(sfa.begin(), sfa.begin() + func->getNumParams(), false);
     std::fill(sfa.begin() + func->getNumParams(), sfa.end(), true);
     walk(func->body);
     for (Index i = 0; i < num; i++) {
@@ -82,16 +82,16 @@ class Pusher {
   LocalAnalyzer& analyzer;
   std::vector<Index>& numGetsSoFar;
   PassOptions& passOptions;
-  FeatureSet features;
+  Module& module;
 
 public:
   Pusher(Block* block,
          LocalAnalyzer& analyzer,
          std::vector<Index>& numGetsSoFar,
          PassOptions& passOptions,
-         FeatureSet features)
+         Module& module)
     : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar),
-      passOptions(passOptions), features(features) {
+      passOptions(passOptions), module(module) {
     // Find an optimization segment: from the first pushable thing, to the first
     // point past which we want to push. We then push in that range before
     // continuing forward.
@@ -128,7 +128,7 @@ private:
     // but also have no side effects, as it may not execute if pushed.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
-        !EffectAnalyzer(passOptions, features, set->value).hasSideEffects()) {
+        !EffectAnalyzer(passOptions, module, set->value).hasSideEffects()) {
       return set;
     }
     return nullptr;
@@ -159,7 +159,7 @@ private:
     assert(firstPushable != Index(-1) && pushPoint != Index(-1) &&
            firstPushable < pushPoint);
     // everything that matters if you want to be pushed past the pushPoint
-    EffectAnalyzer cumulativeEffects(passOptions, features);
+    EffectAnalyzer cumulativeEffects(passOptions, module);
     cumulativeEffects.walk(list[pushPoint]);
     // it is ok to ignore the branching here, that is the crucial point of this
     // opt
@@ -177,7 +177,7 @@ private:
             pushableEffects
               .emplace(std::piecewise_construct,
                        std::forward_as_tuple(pushable),
-                       std::forward_as_tuple(passOptions, features, pushable))
+                       std::forward_as_tuple(passOptions, module, pushable))
               .first;
         }
         auto& effects = iter->second;
@@ -245,8 +245,8 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     // pre-scan to find which vars are sfa, and also count their gets&sets
     analyzer.analyze(func);
     // prepare to walk
+    numGetsSoFar.clear();
     numGetsSoFar.resize(func->getNumLocals());
-    std::fill(numGetsSoFar.begin(), numGetsSoFar.end(), 0);
     // walk and optimize
     walk(func->body);
   }
@@ -268,8 +268,7 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     // don't hit a non-control-flow ordering invalidation issue, since if this
     // isn't a loop, it's fine (we're not used outside), and if it is, we hit
     // the assign before any use (as we can't push it past a use).
-    Pusher pusher(
-      curr, analyzer, numGetsSoFar, getPassOptions(), getModule()->features);
+    Pusher pusher(curr, analyzer, numGetsSoFar, getPassOptions(), *getModule());
   }
 };
 

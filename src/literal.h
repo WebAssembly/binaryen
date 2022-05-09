@@ -19,6 +19,7 @@
 
 #include <array>
 #include <iostream>
+#include <variant>
 
 #include "compiler-support.h"
 #include "support/hash.h"
@@ -31,9 +32,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
-// Subclass the vector type so that this is not easily confused with a vector of
-// types (which could be confusing on the Literal constructor).
-struct RttSupers : std::vector<Type> {};
+struct RttSupers;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -61,9 +60,11 @@ class Literal {
     // would do, but it is simple.)
     // The unique_ptr here is to avoid increasing the size of the union as well
     // as the Literal class itself.
+    // To support the experimental RttFreshSub instruction, we not only store
+    // the type, but also a reference to an allocation.
     std::unique_ptr<RttSupers> rttSupers;
-    // TODO: Literals of type `externref` can only be `null` currently but we
-    // will need to represent extern values eventually, to
+    // TODO: Literals of type `anyref` can only be `null` currently but we
+    // will need to represent external values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
     // 2) avoid bailing out when seeing a reference typed value in precompute
   };
@@ -260,6 +261,10 @@ public:
     return lit;
   }
 
+  // Get the canonical RTT value for a given HeapType. For nominal types, the
+  // canonical RTT reflects the static supertype chain.
+  static Literal makeCanonicalRtt(HeapType type);
+
   Literal castToF32();
   Literal castToF64();
   Literal castToI32();
@@ -420,6 +425,11 @@ public:
   Literal pmax(const Literal& other) const;
   Literal copysign(const Literal& other) const;
 
+  // Fused multiply add and subtract.
+  // Computes this + (left * right) to infinite precision then round once.
+  Literal fma(const Literal& left, const Literal& right) const;
+  Literal fms(const Literal& left, const Literal& right) const;
+
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
   std::array<Literal, 8> getLanesSI16x8() const;
@@ -562,6 +572,8 @@ public:
   Literal minUI32x4(const Literal& other) const;
   Literal maxSI32x4(const Literal& other) const;
   Literal maxUI32x4(const Literal& other) const;
+  Literal dotSI8x16toI16x8(const Literal& other) const;
+  Literal dotUI8x16toI16x8(const Literal& other) const;
   Literal dotSI16x8toI32x4(const Literal& other) const;
   Literal extMulLowSI32x4(const Literal& other) const;
   Literal extMulHighSI32x4(const Literal& other) const;
@@ -569,6 +581,7 @@ public:
   Literal extMulHighUI32x4(const Literal& other) const;
   Literal absI64x2() const;
   Literal negI64x2() const;
+  Literal bitmaskI64x2() const;
   Literal allTrueI64x2() const;
   Literal shlI64x2(const Literal& other) const;
   Literal shrSI64x2(const Literal& other) const;
@@ -610,23 +623,41 @@ public:
   Literal floorF64x2() const;
   Literal truncF64x2() const;
   Literal nearestF64x2() const;
+  Literal extAddPairwiseToSI16x8() const;
+  Literal extAddPairwiseToUI16x8() const;
+  Literal extAddPairwiseToSI32x4() const;
+  Literal extAddPairwiseToUI32x4() const;
   Literal truncSatToSI32x4() const;
   Literal truncSatToUI32x4() const;
   Literal convertSToF32x4() const;
   Literal convertUToF32x4() const;
-  Literal narrowSToVecI8x16(const Literal& other) const;
-  Literal narrowUToVecI8x16(const Literal& other) const;
-  Literal narrowSToVecI16x8(const Literal& other) const;
-  Literal narrowUToVecI16x8(const Literal& other) const;
-  Literal extendLowSToVecI16x8() const;
-  Literal extendHighSToVecI16x8() const;
-  Literal extendLowUToVecI16x8() const;
-  Literal extendHighUToVecI16x8() const;
-  Literal extendLowSToVecI32x4() const;
-  Literal extendHighSToVecI32x4() const;
-  Literal extendLowUToVecI32x4() const;
-  Literal extendHighUToVecI32x4() const;
-  Literal swizzleVec8x16(const Literal& other) const;
+  Literal narrowSToI8x16(const Literal& other) const;
+  Literal narrowUToI8x16(const Literal& other) const;
+  Literal narrowSToI16x8(const Literal& other) const;
+  Literal narrowUToI16x8(const Literal& other) const;
+  Literal extendLowSToI16x8() const;
+  Literal extendHighSToI16x8() const;
+  Literal extendLowUToI16x8() const;
+  Literal extendHighUToI16x8() const;
+  Literal extendLowSToI32x4() const;
+  Literal extendHighSToI32x4() const;
+  Literal extendLowUToI32x4() const;
+  Literal extendHighUToI32x4() const;
+  Literal extendLowSToI64x2() const;
+  Literal extendHighSToI64x2() const;
+  Literal extendLowUToI64x2() const;
+  Literal extendHighUToI64x2() const;
+  Literal convertLowSToF64x2() const;
+  Literal convertLowUToF64x2() const;
+  Literal truncSatZeroSToI32x4() const;
+  Literal truncSatZeroUToI32x4() const;
+  Literal demoteZeroToF32x4() const;
+  Literal promoteLowToF64x2() const;
+  Literal swizzleI8x16(const Literal& other) const;
+  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
   // with this object's RTT can be successfuly cast using the other RTT
@@ -642,6 +673,7 @@ private:
   Literal subSatUI8(const Literal& other) const;
   Literal subSatSI16(const Literal& other) const;
   Literal subSatUI16(const Literal& other) const;
+  Literal q15MulrSatSI16(const Literal& other) const;
   Literal minInt(const Literal& other) const;
   Literal maxInt(const Literal& other) const;
   Literal minUInt(const Literal& other) const;
@@ -663,6 +695,12 @@ public:
   Literals(size_t initialSize) : SmallVector(initialSize) {}
 
   Type getType() {
+    if (empty()) {
+      return Type::none;
+    }
+    if (size() == 1) {
+      return (*this)[0].type;
+    }
     std::vector<Type> types;
     for (auto& val : *this) {
       types.push_back(val.type);
@@ -677,12 +715,39 @@ std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
 // A GC Struct or Array is a set of values with a run-time type saying what it
-// is.
+// is. In the case of static (rtt-free) typing, the rtt is not present and
+// instead we have a static type.
 struct GCData {
+  // The runtime type info for this struct or array.
   Literal rtt;
+
+  // The element or field values.
   Literals values;
+
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
+
+struct RttSuper {
+  // The type of the super.
+  HeapType type;
+  // A shared allocation, used to implement rtt.fresh_sub. This is null for a
+  // normal sub, and for a fresh one we allocate a value here, which can then be
+  // used to differentiate rtts. (The allocation is shared so that when copying
+  // an rtt we remain equal.)
+  // TODO: Remove or optimize this when the spec stabilizes.
+  std::shared_ptr<size_t> freshPtr;
+
+  RttSuper(HeapType type) : type(type) {}
+
+  void makeFresh() { freshPtr = std::make_shared<size_t>(); }
+
+  bool operator==(const RttSuper& other) const {
+    return type == other.type && freshPtr == other.freshPtr;
+  }
+  bool operator!=(const RttSuper& other) const { return !(*this == other); }
+};
+
+struct RttSupers : std::vector<RttSuper> {};
 
 } // namespace wasm
 
@@ -700,8 +765,7 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       // other non-null reference type literals cannot represent concrete
-      // values, i.e. there is no concrete externref, anyref or eqref other than
-      // null.
+      // values, i.e. there is no concrete anyref or eqref other than null.
       WASM_UNREACHABLE("unexpected type");
     };
     if (a.type.isBasic()) {
@@ -725,7 +789,6 @@ template<> struct hash<wasm::Literal> {
           wasm::rehash(digest, chunks[1]);
           return digest;
         case wasm::Type::funcref:
-        case wasm::Type::externref:
         case wasm::Type::anyref:
         case wasm::Type::eqref:
         case wasm::Type::dataref:
@@ -743,7 +806,8 @@ template<> struct hash<wasm::Literal> {
       const auto& supers = a.getRttSupers();
       wasm::rehash(digest, supers.size());
       for (auto super : supers) {
-        wasm::rehash(digest, super.getID());
+        wasm::rehash(digest, super.type.getID());
+        wasm::rehash(digest, uintptr_t(super.freshPtr.get()));
       }
       return digest;
     }
@@ -759,39 +823,7 @@ template<> struct hash<wasm::Literals> {
     return digest;
   }
 };
-template<> struct less<wasm::Literal> {
-  bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
-    if (a.type < b.type) {
-      return true;
-    }
-    if (b.type < a.type) {
-      return false;
-    }
-    TODO_SINGLE_COMPOUND(a.type);
-    switch (a.type.getBasic()) {
-      case wasm::Type::i32:
-        return a.geti32() < b.geti32();
-      case wasm::Type::f32:
-        return a.reinterpreti32() < b.reinterpreti32();
-      case wasm::Type::i64:
-        return a.geti64() < b.geti64();
-      case wasm::Type::f64:
-        return a.reinterpreti64() < b.reinterpreti64();
-      case wasm::Type::v128:
-        return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
-      case wasm::Type::funcref:
-      case wasm::Type::externref:
-      case wasm::Type::anyref:
-      case wasm::Type::eqref:
-      case wasm::Type::i31ref:
-      case wasm::Type::dataref:
-      case wasm::Type::none:
-      case wasm::Type::unreachable:
-        return false;
-    }
-    WASM_UNREACHABLE("unexpected type");
-  }
-};
+
 } // namespace std
 
 #endif // wasm_literal_h

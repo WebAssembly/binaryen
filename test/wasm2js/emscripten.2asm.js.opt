@@ -185,14 +185,16 @@ function asmFunc(env) {
  
  function bools($0) {
   $0 = $0 | 0;
+  var $1 = 0;
   bools(HEAP8[0] & 1);
   bools(HEAP8[0] & 1);
   bools(HEAP16[0] & 1);
   bools(HEAP16[0] & 1);
   bools(HEAP32[0] & 1);
   bools(HEAPU8[0] & 2);
-  bools($0 ^ 1);
-  if ($0 ^ 1) {
+  $1 = $0 ^ 1;
+  bools($1);
+  if ($1) {
    bools(2)
   }
   if ($0 ^ 2) {

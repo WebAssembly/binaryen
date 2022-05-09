@@ -120,9 +120,7 @@ struct DeNaN : public WalkerPass<
     // Add helper functions after the walk, so they are not instrumented.
     Builder builder(*module);
     auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
-      auto* func = new Function;
-      func->name = name;
-      func->sig = Signature(type, type);
+      auto func = Builder::makeFunction(name, Signature(type, type), {});
       // Compare the value to itself to check if it is a NaN, and return 0 if
       // so:
       //
@@ -139,7 +137,7 @@ struct DeNaN : public WalkerPass<
           op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
         builder.makeLocalGet(0, type),
         builder.makeConst(literal));
-      module->addFunction(func);
+      module->addFunction(std::move(func));
     };
     add(deNan32, Type::f32, Literal(float(0)), EqFloat32);
     add(deNan64, Type::f64, Literal(double(0)), EqFloat64);

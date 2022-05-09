@@ -199,8 +199,9 @@ def js_test_wrap():
     # common wrapper code for JS tests, waiting for binaryen.js to become ready
     # and providing common utility used by all tests:
     return '''
-        binaryen.ready.then(function() {
+        (async function __in_test_code__() {
+            var binaryen = await Binaryen()
             function assert(x) { if (!x) throw Error('Test assertion failed'); }
             %TEST%
-        });
+        })();
     '''

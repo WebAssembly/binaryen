@@ -1,5 +1,4 @@
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 1       
@@ -7,10 +6,11 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
- [total]        : 553     
+ [tags]         : 0       
+ [total]        : 551     
  [vars]         : 2       
  Binary         : 12      
- Block          : 7       
+ Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
@@ -20,16 +20,16 @@ total
  If             : 2       
  Load           : 16      
  LocalGet       : 16      
- LocalSet       : 7       
+ LocalSet       : 6       
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")
@@ -54,6 +54,21 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
+  (local.set $0
+   (i32.const 10888)
+  )
+  (loop $label$3
+   (br_if $label$3
+    (i32.load8_s
+     (local.tee $0
+      (i32.add
+       (local.get $0)
+       (i32.const 1)
+      )
+     )
+    )
+   )
+  )
   (local.set $1
    (i32.load offset=24
     (i32.add
@@ -70,27 +85,10 @@ total
    )
   )
   (if
-   (block (result i32)
-    (local.set $0
+   (local.tee $0
+    (i32.sub
+     (local.get $0)
      (i32.const 10888)
-    )
-    (loop $label$3
-     (br_if $label$3
-      (i32.load8_s
-       (local.tee $0
-        (i32.add
-         (local.get $0)
-         (i32.const 1)
-        )
-       )
-      )
-     )
-    )
-    (local.tee $0
-     (i32.sub
-      (local.get $0)
-      (i32.const 10888)
-     )
     )
    )
    (block $label$2
@@ -116,20 +114,18 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (local.tee $1
-        (local.tee $0
-         (i32.load
-          (i32.add
-           (i32.load
-            (i32.sub
-             (i32.load
-              (i32.const 18100)
-             )
-             (i32.const 12)
+       (local.tee $0
+        (i32.load
+         (i32.add
+          (i32.load
+           (i32.sub
+            (i32.load
+             (i32.const 18100)
             )
+            (i32.const 12)
            )
-           (i32.const 18124)
           )
+          (i32.const 18124)
          )
         )
        )
@@ -138,7 +134,7 @@ total
      )
      (i32.const 0)
      (call_indirect (type $i32_i32_=>_i32)
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
       (i32.add
        (i32.load offset=52
@@ -229,7 +225,6 @@ total
  )
 )
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 0             -1
@@ -237,10 +232,11 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
- [total]        : 549           -4
+ [tags]         : 0       
+ [total]        : 547           -4
  [vars]         : 2       
  Binary         : 12      
- Block          : 7       
+ Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
@@ -249,16 +245,16 @@ total
  If             : 2       
  Load           : 16      
  LocalGet       : 14            -2
- LocalSet       : 6             -1
+ LocalSet       : 5             -1
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")
@@ -282,6 +278,21 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
+  (local.set $0
+   (i32.const 10888)
+  )
+  (loop $label$3
+   (br_if $label$3
+    (i32.load8_s
+     (local.tee $0
+      (i32.add
+       (local.get $0)
+       (i32.const 1)
+      )
+     )
+    )
+   )
+  )
   (local.set $1
    (i32.load offset=24
     (i32.add
@@ -298,27 +309,10 @@ total
    )
   )
   (if
-   (block (result i32)
-    (local.set $0
+   (local.tee $0
+    (i32.sub
+     (local.get $0)
      (i32.const 10888)
-    )
-    (loop $label$3
-     (br_if $label$3
-      (i32.load8_s
-       (local.tee $0
-        (i32.add
-         (local.get $0)
-         (i32.const 1)
-        )
-       )
-      )
-     )
-    )
-    (local.tee $0
-     (i32.sub
-      (local.get $0)
-      (i32.const 10888)
-     )
     )
    )
    (block $label$2
@@ -344,20 +338,18 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (local.tee $1
-        (local.tee $0
-         (i32.load
-          (i32.add
-           (i32.load
-            (i32.sub
-             (i32.load
-              (i32.const 18100)
-             )
-             (i32.const 12)
+       (local.tee $0
+        (i32.load
+         (i32.add
+          (i32.load
+           (i32.sub
+            (i32.load
+             (i32.const 18100)
             )
+            (i32.const 12)
            )
-           (i32.const 18124)
           )
+          (i32.const 18124)
          )
         )
        )
@@ -366,7 +358,7 @@ total
      )
      (i32.const 0)
      (call_indirect (type $i32_i32_=>_i32)
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
       (i32.add
        (i32.load offset=52
@@ -452,7 +444,6 @@ total
  )
 )
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 0       
@@ -460,10 +451,11 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
- [total]        : 549     
+ [tags]         : 0       
+ [total]        : 547     
  [vars]         : 2       
  Binary         : 12      
- Block          : 7       
+ Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
@@ -472,16 +464,16 @@ total
  If             : 2       
  Load           : 16      
  LocalGet       : 14      
- LocalSet       : 6       
+ LocalSet       : 5       
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")
@@ -505,6 +497,21 @@ total
  (func $_main (; has Stack IR ;) (result i32)
   (local $0 i32)
   (local $1 i32)
+  (local.set $0
+   (i32.const 10888)
+  )
+  (loop $label$3
+   (br_if $label$3
+    (i32.load8_s
+     (local.tee $0
+      (i32.add
+       (local.get $0)
+       (i32.const 1)
+      )
+     )
+    )
+   )
+  )
   (local.set $1
    (i32.load offset=24
     (i32.add
@@ -521,27 +528,10 @@ total
    )
   )
   (if
-   (block (result i32)
-    (local.set $0
+   (local.tee $0
+    (i32.sub
+     (local.get $0)
      (i32.const 10888)
-    )
-    (loop $label$3
-     (br_if $label$3
-      (i32.load8_s
-       (local.tee $0
-        (i32.add
-         (local.get $0)
-         (i32.const 1)
-        )
-       )
-      )
-     )
-    )
-    (local.tee $0
-     (i32.sub
-      (local.get $0)
-      (i32.const 10888)
-     )
     )
    )
    (block $label$2
@@ -567,20 +557,18 @@ total
     (if (result i32)
      (i32.load
       (i32.add
-       (local.tee $1
-        (local.tee $0
-         (i32.load
-          (i32.add
-           (i32.load
-            (i32.sub
-             (i32.load
-              (i32.const 18100)
-             )
-             (i32.const 12)
+       (local.tee $0
+        (i32.load
+         (i32.add
+          (i32.load
+           (i32.sub
+            (i32.load
+             (i32.const 18100)
             )
+            (i32.const 12)
            )
-           (i32.const 18124)
           )
+          (i32.const 18124)
          )
         )
        )
@@ -589,7 +577,7 @@ total
      )
      (i32.const 0)
      (call_indirect (type $i32_i32_=>_i32)
-      (local.get $1)
+      (local.get $0)
       (i32.const 10)
       (i32.add
        (i32.load offset=52

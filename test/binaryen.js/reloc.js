@@ -15,7 +15,7 @@ module.setMemory(1, -1, null, [
 var func = module.addFunction("func", binaryen.none, binaryen.none, [], module.nop());
 
 module.addGlobalImport("table_base", "env", "table_base", binaryen.i32, false);
-module.addTable("0", 1, -1);
+module.addTable("0", 1, -1, binaryen.funcref);
 module.addActiveElementSegment("0", "0", [ "func", "func" ], module.global.get("table_base", binaryen.i32));
 assert(module.validate());
 console.log(module.emitText());

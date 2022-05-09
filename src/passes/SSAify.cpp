@@ -90,7 +90,7 @@ struct SSAify : public Pass {
     module = module_;
     func = func_;
     LocalGraph graph(func);
-    graph.computeInfluences();
+    graph.computeSetInfluences();
     graph.computeSSAIndexes();
     // create new local indexes, one for each set
     createNewIndexes(graph);

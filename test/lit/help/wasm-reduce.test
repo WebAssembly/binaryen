@@ -1,0 +1,163 @@
+;; RUN: wasm-reduce --help | filecheck %s
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-reduce INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Reduce a wasm file to a smaller one that has the same behavior on a given
+;; CHECK-NEXT: command
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: wasm-reduce options:
+;; CHECK-NEXT: --------------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --command,-cmd                       The command to run on the test, that we
+;; CHECK-NEXT:                                        want to reduce while keeping the
+;; CHECK-NEXT:                                        command's output identical. We look at
+;; CHECK-NEXT:                                        the command's return code and stdout here
+;; CHECK-NEXT:                                        (TODO: stderr), and we reduce while
+;; CHECK-NEXT:                                        keeping those unchanged.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --test,-t                            Test file (this will be written to to
+;; CHECK-NEXT:                                        test, the given command should read it
+;; CHECK-NEXT:                                        when we call it)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --working,-w                         Working file (this will contain the
+;; CHECK-NEXT:                                        current good state while doing temporary
+;; CHECK-NEXT:                                        computations, and will contain the final
+;; CHECK-NEXT:                                        best result at the end)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --binaries,-b                        binaryen binaries location (bin/
+;; CHECK-NEXT:                                        directory)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --text,-S                            Emit intermediate files as text, instead
+;; CHECK-NEXT:                                        of binary (also make sure the test and
+;; CHECK-NEXT:                                        working files have a .wat or .wast
+;; CHECK-NEXT:                                        suffix)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --denan                              Avoid nans when reducing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --verbose,-v                         Verbose output mode
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debugInfo,-g                       Keep debug info in binaries
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --force,-f                           Force the reduction attempt, ignoring
+;; CHECK-NEXT:                                        problems that imply it is unlikely to
+;; CHECK-NEXT:                                        succeed
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --timeout,-to                        A timeout to apply to each execution of
+;; CHECK-NEXT:                                        the command, in seconds (default: 2)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --extra-flags,-ef                    Extra commandline flags to pass to
+;; CHECK-NEXT:                                        wasm-opt while reducing. (default:
+;; CHECK-NEXT:                                        --enable-all)
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --all-features,-all                  Enable all features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --detect-features                    (deprecated - this flag does nothing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
+;; CHECK-NEXT:                                        warnings.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
+;; CHECK-NEXT:                                        purposes.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-threads                     Enable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-threads                    Disable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-mutable-globals             Enable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-mutable-globals            Disable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-simd                        Enable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-simd                       Disable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-tail-call                   Enable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-tail-call                  Disable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-reference-types             Enable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-reference-types            Disable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multivalue                  Enable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multivalue                 Disable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc                          Enable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc                         Disable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-memory64                    Enable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-memory64                   Disable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-function-references   Enable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-function-references  Disable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc-nn-locals                Enable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc-nn-locals               Disable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-NEXT:                                        correct
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
+;; CHECK-NEXT:                                        passes being run. Must be in the form
+;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --nominal                            Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as nominal.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --structural                         Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as structural (i.e.
+;; CHECK-NEXT:                                        equirecursive). This is the default.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --hybrid                             Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed using the isorecursive hybrid type
+;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --version                            Output version information and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --help,-h                            Show this help message and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debug,-d                           Print debug information to stderr
+;; CHECK-NEXT:

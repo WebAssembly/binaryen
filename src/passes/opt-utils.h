@@ -31,7 +31,7 @@ namespace OptUtils {
 
 // Run useful optimizations after inlining new code into a set
 // of functions.
-inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
+inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
   // save the full list of functions on the side
@@ -88,7 +88,7 @@ inline void replaceFunctions(PassRunner* runner,
   // replace direct calls in code both functions and module elements
   FunctionRefReplacer replacer(maybeReplace);
   replacer.run(runner, &module);
-  replacer.walkModuleCode(&module);
+  replacer.runOnModuleCode(runner, &module);
 
   // replace in start
   if (module.start.is()) {
