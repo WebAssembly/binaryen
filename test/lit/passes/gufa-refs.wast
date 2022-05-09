@@ -1120,8 +1120,6 @@
   )
 )
 
-;; TODO from here
-
 ;; Default values in struct fields.
 (module
   (type $A (struct_subtype (field i32) data))
@@ -1137,9 +1135,6 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     ;; Create a struct with default values. We can propagate a 0 to the get.
@@ -1154,12 +1149,6 @@
         (struct.new $B
           (i32.const 1)
         )
-      )
-    )
-    ;; Never allocate, so no value is possible.
-    (drop
-      (struct.get $C 0
-        (ref.null $C)
       )
     )
   )
