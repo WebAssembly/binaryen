@@ -191,7 +191,7 @@ struct TypeRefining : public Pass {
         }
       }
 
-      for (auto subType : subTypes.getSubTypes(type)) {
+      for (auto subType : subTypes.getStrictSubTypes(type)) {
         work.push(subType);
       }
     }
