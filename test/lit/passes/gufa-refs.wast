@@ -613,8 +613,9 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $recursion (param $x (ref any)) (result (ref any))
-    ;; This function calls itself recursively. That forms a loop, but still, no
-    ;; type is possible here, so we can optimize away.
+    ;; This function calls itself recursively. That forms a loop, but still,
+    ;; nothing reaches here, so we can optimize to an unreachable (we cannot
+    ;; remove the call though, as it has effects, so we drop it).
     (call $recursion
       (local.get $x)
     )
@@ -632,8 +633,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref any)) (param $y (ref any)) (param $z (ref any))
-    ;; This function *is* called, with possible types in the first and last
-    ;; parameter but not the middle, which can be optimized out.
+    ;; This function *is* called, with possible non-null values in the 1st & 3rd
+    ;; parameters but not the 2nd, which can be optimized (as the reference is
+    ;; non-nullable).
     (drop
       (local.get $x)
     )
@@ -658,6 +660,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-called
+    ;; Call the above function as described there: The 2nd parameter has only
+    ;; nulls, while the others have both a null and a non-null, so there are
+    ;; non-null contents arriving.
     (call $called
       (struct.new $struct)
       (ref.as_non_null
