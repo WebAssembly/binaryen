@@ -2637,8 +2637,6 @@
   )
 )
 
-;; TODO
-
 ;; ref.as* test.
 (module
   ;; CHECK:      (type $A (struct_subtype (field i32) data))
@@ -2668,9 +2666,13 @@
   ;; CHECK-NEXT: )
   (func $foo (result (ref $B))
     (local $A (ref null $A))
-    (ref.cast_static $B ;; if it is $A, this will look like it traps (but it
-                        ;; should not trap)
-      (ref.as_non_null ;; should be $B based on the child's *contents*, not type
+
+    ;; Read the following from the most nested comment first.
+
+    (ref.cast_static $B ;; if we mistakenly thing this contains content of
+                        ;; type $A, it would trap, but it should not, and we
+                        ;; have nothing to optimize here
+      (ref.as_non_null ;; also $B, based on the child's *contents* (not type!)
         (local.tee $A ;; flows out a $B, but has type $A
           (struct.new $B ;; returns a $B
             (i32.const 42)
@@ -2821,7 +2823,7 @@
   )
 )
 
-;; As above, but with a copy in the wrong direction. Now $chars has a single
+;; As above, but with a copy in the opposite direction. Now $chars has a single
 ;; value (a null) which we can optimize, but $bytes has two values and we
 ;; cannot optimize there.
 (module
