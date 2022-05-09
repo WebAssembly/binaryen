@@ -37,6 +37,9 @@ option(BUILD_TESTS "Build GTest-based tests" ON)
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
+# Turn this off to build only the library
+option(BUILD_TOOLS "Build tools" ON)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -318,7 +321,12 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
-add_subdirectory(src/tools)
+
+if(BUILD_TOOLS)
+  # Build binaryen tools
+  add_subdirectory(src/tools)
+endif()
+
 add_subdirectory(third_party)
 
 # Configure lit tests
