@@ -1154,8 +1154,7 @@
   )
 )
 
-;; As above, but with the writes to the parent and child partially flipped on
-;; the shared field (see below).
+;; Exact types: Writes to the parent class do not confuse us.
 (module
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
@@ -1206,13 +1205,13 @@
   (func $func
     (local $child (ref null $child))
     (local $parent (ref null $parent))
-    ;; Allocate when writing to the parent's field. We cannot
-    ;; optimize here.
+    ;; Allocate when writing to the parent's field.
     (local.set $parent
       (struct.new $parent
         (struct.new $struct)
       )
     )
+    ;; This cannot be optimized in any way.
     (drop
       (ref.as_non_null
         (struct.get $parent 0
@@ -1220,14 +1219,15 @@
         )
       )
     )
-    ;; The child writes nothing to the first field. We can see that there is no
-    ;; value possible and optimize away the get.
+    ;; The child writes a null to the first field.
     (local.set $child
       (struct.new $child
         (ref.null $struct)
         (i32.const 0)
       )
     )
+    ;; The parent wrote to the shared field, but that does not prevent us from
+    ;; seeing that the child must have a null there, and so this will trap.
     (drop
       (ref.as_non_null
         (struct.get $child 0
@@ -1238,7 +1238,7 @@
   )
 )
 
-;; Write to the parent and the child and read from the child.
+;; Write values to the parent *and* the child and read from the child.
 (module
   ;; CHECK:      (type $parent (struct_subtype (field (mut i32)) data))
   (type $parent (struct_subtype (field (mut i32)) data))
@@ -1380,13 +1380,14 @@
       )
     )
     ;; This get cannot be optimized because below us because the local is
-    ;; written a child, below. So the local $parent can refer to either one,
+    ;; written a child as well. So the local $parent can refer to either one,
     ;; and they disagree on the aliased value.
     (drop
       (struct.get $parent 0
         (local.get $parent)
       )
     )
+    ;; This extra local.set to $parent is added here.
     (local.set $parent
       (local.tee $child
         (struct.new $child
@@ -1395,7 +1396,7 @@
         )
       )
     )
-    ;; But this one can be optimized as it can only contain a child.
+    ;; But this one can be optimized as $child can only contain a child.
     (drop
       (struct.get $child 0
         (local.get $child)
@@ -1479,6 +1480,8 @@
     )
   )
 )
+
+;; TODO from here
 
 ;; Arrays get/set
 (module
