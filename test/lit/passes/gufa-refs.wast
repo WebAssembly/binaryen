@@ -3039,6 +3039,23 @@
   ;; CHECK-NEXT:    (v128.const i32x4 0x00000005 0x00000000 0x00000006 0x00000000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i8x16.shr_s
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000000 0x00000002 0x00000000)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (v128.load8_splat
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (v128.load8_lane 0
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000000 0x00000002 0x00000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simd
     (drop
@@ -3065,5 +3082,24 @@
         (v128.const i64x2 5 6)
       )
     )
+    (drop
+      (i8x16.shr_s
+        (v128.const i64x2 1 2)
+        (i32.const 3)
+      )
+    )
+    (drop
+      (v128.load8_splat
+        (i32.const 0)
+      )
+    )
+    (drop
+      (v128.load8_lane 0
+        (i32.const 0)
+        (v128.const i64x2 1 2)
+      )
+    )
   )
+
+
 )
