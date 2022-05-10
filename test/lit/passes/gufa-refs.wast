@@ -2953,24 +2953,6 @@
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
-  ;; CHECK-NEXT:   (i32.const 5)
-  ;; CHECK-NEXT:   (i32.const 10)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $memory
-    (drop
-      (i32.load
-        (i32.const 5)
-      )
-    )
-    (i32.store
-      (i32.const 5)
-      (i32.const 10)
-    )
-  )
-
-  ;; CHECK:      (func $atomics (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.atomic.rmw.add
   ;; CHECK-NEXT:    (i32.const 5)
@@ -2998,7 +2980,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $atomics
+  (func $memory
+    (drop
+      (i32.load
+        (i32.const 5)
+      )
+    )
     (drop
       (i32.atomic.rmw.add
         (i32.const 5)
@@ -3023,6 +3010,59 @@
       (memory.atomic.notify
         (i32.const 5)
         (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $simd (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i8x16.extract_lane_s 0
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000000 0x00000002 0x00000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i8x16.replace_lane 0
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000000 0x00000002 0x00000000)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i8x16.shuffle 0 17 2 19 4 21 6 23 8 25 10 27 12 29 14 31
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000000 0x00000002 0x00000000)
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000003 0x00000000 0x00000004 0x00000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (v128.bitselect
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000000 0x00000002 0x00000000)
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000003 0x00000000 0x00000004 0x00000000)
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000005 0x00000000 0x00000006 0x00000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simd
+    (drop
+      (i8x16.extract_lane_s 0
+        (v128.const i64x2 1 2)
+      )
+    )
+    (drop
+      (i8x16.replace_lane 0
+        (v128.const i64x2 1 2)
+        (i32.const 3)
+      )
+    )
+    (drop
+      (i8x16.shuffle 0 17 2 19 4 21 6 23 8 25 10 27 12 29 14 31
+        (v128.const i64x2 1 2)
+        (v128.const i64x2 3 4)
+      )
+    )
+    (drop
+      (v128.bitselect
+        (v128.const i64x2 1 2)
+        (v128.const i64x2 3 4)
+        (v128.const i64x2 5 6)
       )
     )
   )
