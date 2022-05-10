@@ -2979,6 +2979,14 @@
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (memory.size)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (memory.grow
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $memory
     (drop
@@ -3010,6 +3018,14 @@
       (memory.atomic.notify
         (i32.const 5)
         (i32.const 10)
+      )
+    )
+    (drop
+      (memory.size)
+    )
+    (drop
+      (memory.grow
+        (i32.const 1)
       )
     )
   )
@@ -3101,5 +3117,35 @@
     )
   )
 
+  ;; CHECK:      (func $unary (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unary
+    (drop
+      (i32.eqz
+        (i32.const 1)
+      )
+    )
+  )
 
+  ;; CHECK:      (func $binary (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $binary
+    (drop
+      (i32.add
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+  )
 )
