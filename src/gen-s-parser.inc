@@ -3027,9 +3027,17 @@ switch (op[0]) {
                   case '\0':
                     if (strcmp(op, "ref.cast") == 0) { return makeRefCast(s); }
                     goto parse_error;
-                  case '_':
-                    if (strcmp(op, "ref.cast_static") == 0) { return makeRefCastStatic(s); }
-                    goto parse_error;
+                  case '_': {
+                    switch (op[9]) {
+                      case 'n':
+                        if (strcmp(op, "ref.cast_nop_static") == 0) { return makeRefCastNopStatic(s); }
+                        goto parse_error;
+                      case 's':
+                        if (strcmp(op, "ref.cast_static") == 0) { return makeRefCastStatic(s); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }

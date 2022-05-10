@@ -1457,6 +1457,10 @@ public:
   Expression* rtt = nullptr;
   HeapType intendedType;
 
+  // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
+  // measurements.
+  bool unsafe;
+
   void finalize();
 
   // Returns the type we intend to cast to.
