@@ -1459,7 +1459,8 @@ public:
 
   // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
   // measurements.
-  bool unsafe;
+  enum Safety { Safe, Unsafe };
+  Safety safety;
 
   void finalize();
 

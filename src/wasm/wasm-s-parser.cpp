@@ -2702,13 +2702,13 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
 Expression* SExpressionWasmBuilder::makeRefCastStatic(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
-  return Builder(wasm).makeRefCast(ref, heapType);
+  return Builder(wasm).makeRefCast(ref, heapType, RefCast::Safe);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCastNopStatic(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
-  return Builder(wasm).makeRefCast(ref, heapType, /*unsafe=*/true);
+  return Builder(wasm).makeRefCast(ref, heapType, RefCast::Unsafe);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {

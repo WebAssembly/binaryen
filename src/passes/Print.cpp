@@ -1984,7 +1984,7 @@ struct PrintExpressionContents
     if (curr->rtt) {
       printMedium(o, "ref.cast");
     } else {
-      if (curr->unsafe) {
+      if (curr->safety == RefCast::Unsafe) {
         printMedium(o, "ref.cast_nop_static ");
       } else {
         printMedium(o, "ref.cast_static ");
