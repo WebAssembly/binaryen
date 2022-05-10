@@ -2920,6 +2920,9 @@
   ;; CHECK:      (memory $0 10)
   (memory $0 10)
 
+  ;; CHECK:      (table $t 0 anyref)
+  (table $t 0 externref)
+
   ;; CHECK:      (func $br_table (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
@@ -3145,6 +3148,56 @@
       (i32.add
         (i32.const 1)
         (i32.const 2)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $refs (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.null data)
+  ;; CHECK-NEXT:    (ref.null data)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refs
+    (drop
+      (ref.eq
+        (ref.null data)
+        (ref.null data)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $table (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.get $t
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.size $t)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.grow $t
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $table
+    (drop
+      (table.get $t
+        (i32.const 1)
+      )
+    )
+    (drop
+      (table.size $t)
+    )
+    (drop
+      (table.grow $t
+        (ref.null extern)
+        (i32.const 1)
       )
     )
   )
