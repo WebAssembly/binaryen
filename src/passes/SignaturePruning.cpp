@@ -143,6 +143,15 @@ struct SignaturePruning : public Pass {
         continue;
       }
 
+      // A type with a signature supertype cannot be optimized: we'd need to
+      // remove the field from the super as well, which atm we don't attempt to
+      // do. TODO
+      if (auto super = type.getSuperType()) {
+        if (super->isSignature()) {
+          continue;
+        }
+      }
+
       // Apply constant indexes: find the parameters that are always sent a
       // constant value, and apply that value in the function. That then makes
       // the parameter unused (since the applied value makes us ignore the value
