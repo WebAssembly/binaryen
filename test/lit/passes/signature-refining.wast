@@ -656,3 +656,21 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $A (func_subtype (param i32) func))
+  (type $A (func_subtype (param i32) func))
+  ;; CHECK:      (type $B (func_subtype (param i32) $A))
+  (type $B (func_subtype (param i32) $A))
+
+  ;; CHECK:      (func $bar (type $B) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $bar (type $B) (param $x i32)
+   ;; The parameter to this function can be pruned. But while doing so we must
+   ;; properly preserve the subtyping of $B from $A, which means we cannot just
+   ;; remove it - we'd need to remove it from $A as well, which we don't
+   ;; attempt to do in the pass atm. So we do not optimize here.
+    (nop)
+  )
+)
