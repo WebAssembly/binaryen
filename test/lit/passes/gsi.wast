@@ -24,12 +24,12 @@
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:    (ref.eq
   ;; CHECK-NEXT:     (ref.null $struct)
   ;; CHECK-NEXT:     (global.get $global1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

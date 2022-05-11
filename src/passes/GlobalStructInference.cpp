@@ -194,15 +194,15 @@ struct GlobalStructInference : public Pass {
         Builder builder(wasm);
         replaceCurrent(
           builder.makeSelect(
-            builder.makeConstantExpression(values[0]),
-            builder.makeConstantExpression(values[1]),
             builder.makeRefEq(
               curr->ref,
               builder.makeGlobalGet(
                 globals[0],
                 wasm.getGlobal(globals[0])->type
               )
-            )
+            ),
+            builder.makeConstantExpression(values[0]),
+            builder.makeConstantExpression(values[1])
           )
         );
       }
