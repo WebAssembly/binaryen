@@ -432,6 +432,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
+    ;; This can be inferred to be 42 since both the new and the set write that
+    ;; value.
     (drop
       (struct.get $struct 0
         (call $create)
@@ -556,6 +558,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
+    ;; As the get must trap, we can optimize to an unreachable here.
     (drop
       (struct.get $substruct 0
         (ref.cast_static $substruct
@@ -572,43 +575,65 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
-  (type $substruct (struct_subtype (mut i32) $struct))
-
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (func $create (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
+  (type $substruct (struct_subtype (mut i32) $struct))
+
+  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create (result (ref $struct))
+    (struct.new_with_rtt $struct
+      (i32.const 10)
+      (rtt.canon $struct)
+    )
+  )
+
+  ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create
-    (drop
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
-    )
+  (func $set
     (struct.set $struct 0
-      (ref.null $struct)
+      (call $create)
       (i32.const 10)
     )
   )
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.cast_static $substruct
+  ;; CHECK-NEXT:          (call $create)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (ref.cast_static $substruct
+          (call $create)
+        )
       )
     )
   )
