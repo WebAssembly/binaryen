@@ -19,13 +19,15 @@
  ;; CHECK:      (type $data_=>_none (func (param dataref)))
  (type $data_=>_none (func (param (ref data))))
 
+ ;; CHECK:      (type $i32_i32_i32_ref|$i32_i32_=>_none|_=>_none (func (param i32 i32 i32 (ref $i32_i32_=>_none))))
+
  ;; CHECK:      (table $table-1 10 (ref null $i32_i32_=>_none))
  (table $table-1 10 (ref null $i32_i32_=>_none))
  ;; CHECK:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none) (ref.func $foo))
  (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none)
   (ref.func $foo))
 
- ;; CHECK:      (elem declare func $fallthrough-no-params $fallthrough-non-nullable $return-nothing)
+ ;; CHECK:      (elem declare func $bar $fallthrough-no-params $fallthrough-non-nullable $return-nothing)
 
  ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
@@ -33,6 +35,14 @@
  (func $foo (param i32) (param i32)
   (unreachable)
  )
+
+ ;; CHECK:      (func $bar (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $bar (param i32) (param i32)
+  (unreachable)
+ )
+
  ;; CHECK:      (func $call_ref-to-direct (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
@@ -226,6 +236,62 @@
    (i32.const 2)
    (table.get $table-1
     (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
+ ;; CHECK-NEXT:  (local $4 i32)
+ ;; CHECK-NEXT:  (local $5 i32)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $4
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $5
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:    (call $foo
+ ;; CHECK-NEXT:     (local.get $4)
+ ;; CHECK-NEXT:     (local.get $5)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (call $bar
+ ;; CHECK-NEXT:     (local.get $4)
+ ;; CHECK-NEXT:     (local.get $5)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_ref
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (select (result (ref $i32_i32_=>_none))
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:    (ref.func $bar)
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
+  ;; This call_ref should become an if over two direct calls.
+  (call_ref
+   (local.get $x)
+   (local.get $y)
+   (select
+    (ref.func $foo)
+    (ref.func $bar)
+    (local.get $z)
+   )
+  )
+
+  ;; But here one arm is not constant, so we do not optimize.
+  (call_ref
+   (local.get $x)
+   (local.get $y)
+   (select
+    (local.get $f)
+    (ref.func $bar)
+    (local.get $z)
    )
   )
  )

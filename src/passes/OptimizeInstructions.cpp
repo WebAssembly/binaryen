@@ -1334,6 +1334,65 @@ struct OptimizeInstructions
       curr->operands.back() = builder.makeBlock({set, drop, get});
       replaceCurrent(builder.makeCall(
         ref->func, curr->operands, curr->type, curr->isReturn));
+      return;
+    }
+
+    // If the target is a select of two different constants, we can emit two
+    // direct calls.
+    // TODO: handle 3+
+    // TODO: handle the case where just one arm is a constant?
+    // TODO: merge with Directize
+    if (auto* select = curr->target->dynCast<Select>()) {
+      if (select->ifTrue->is<RefFunc>() && select->ifFalse->is<RefFunc>()) {
+        Builder builder(*getModule());
+        auto* func = getFunction();
+        std::vector<Expression*> blockContents;
+
+        if (select->condition->type == Type::unreachable) {
+          // Leave this for DCE.
+          return;
+        }
+
+        // We must use the operands twice, and also must move the condition to
+        // execute first; use locals for them all. While doing so, if we see
+        // any are unreachable, stop trying to optimize and leave this for DCE.
+        std::vector<Index> operandLocals;
+        for (auto* operand : curr->operands) {
+          if (operand->type == Type::unreachable ||
+              !TypeUpdating::canHandleAsLocal(operand->type)) {
+            return;
+          }
+        }
+
+        // None of the types are a problem, so we can proceed to add new vars as
+        // needed and perform this optimization.
+        for (auto* operand : curr->operands) {
+          auto currLocal = builder.addVar(func, operand->type);
+          operandLocals.push_back(currLocal);
+          blockContents.push_back(builder.makeLocalSet(currLocal, operand));
+        }
+
+        // Build the calls.
+        auto numOperands = curr->operands.size();
+        auto getOperands = [&]() {
+          std::vector<Expression*> newOperands(numOperands);
+          for (Index i = 0; i < numOperands; i++) {
+            newOperands[i] =
+              builder.makeLocalGet(operandLocals[i], curr->operands[i]->type);
+          }
+          return newOperands;
+        };
+        auto* ifTrueCall =
+          builder.makeCall(select->ifTrue->cast<RefFunc>()->func, getOperands(), curr->type);
+        auto* ifFalseCall =
+          builder.makeCall(select->ifFalse->cast<RefFunc>()->func, getOperands(), curr->type);
+
+        // Create the if to pick the calls, and emit the final block.
+        auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);
+        blockContents.push_back(iff);
+        replaceCurrent(builder.makeBlock(blockContents));
+        return;
+      }
     }
   }
 
