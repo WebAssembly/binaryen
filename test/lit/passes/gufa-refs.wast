@@ -2919,6 +2919,9 @@
   ;; CHECK:      (type $A (struct_subtype  data))
   (type $A (struct_subtype data))
 
+  ;; CHECK:      (type $B (array_subtype (mut anyref) data))
+  (type $B (array (mut anyref)))
+
   ;; CHECK:      (memory $0 10)
   (memory $0 10)
 
@@ -3240,6 +3243,21 @@
         (i31.new
           (i32.const 0)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $arrays (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.len $B
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $arrays
+    (drop
+      (array.len $B
+        (ref.null $B)
       )
     )
   )
