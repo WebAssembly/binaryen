@@ -737,31 +737,33 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
   ;; CHECK:      (func $test (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:      (select (result (ref $struct))
+  ;; CHECK-NEXT:       (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:        (rtt.canon $struct)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:        (f64.const 3.14159)
+  ;; CHECK-NEXT:        (rtt.canon $substruct)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
@@ -769,24 +771,21 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    (local $ref (ref null $struct))
-    (local.set $ref
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
-    )
-    (local.set $ref
-      (struct.new_with_rtt $substruct
-        (i32.const 10)
-        (f64.const 3.14159)
-        (rtt.canon $substruct)
-      )
-    )
     ;; We can infer the value here must be 10.
     (drop
       (struct.get $struct 0
-        (local.get $ref)
+        (select
+          (struct.new_with_rtt $struct
+            (i32.const 10)
+            (rtt.canon $struct)
+          )
+          (struct.new_with_rtt $substruct
+            (i32.const 10)
+            (f64.const 3.14159)
+            (rtt.canon $substruct)
+          )
+          (call $import)
+        )
       )
     )
   )
@@ -915,6 +914,7 @@
   )
 )
 
+;; waka
 ;; As above, but add a set of $struct. The set prevents the optimization.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
