@@ -132,8 +132,8 @@ struct GlobalStructInference : public Pass {
     // unoptimizable type makes all its supertypes unoptimizable as well.
     // TODO: this could be specific per field (and not all supers have all
     //       fields)
-    std::vector<HeapType> unoptimizableVec(unoptimizable.begin(), unoptimizable.end());
-    for (auto type : unoptimizableVec) {
+    auto unoptimizableCopy = unoptimizable;
+    for (auto type : unoptimizableCopy) {
       while (1) {
         typeGlobals.erase(type);
         auto super = type.getSuperType();
@@ -142,6 +142,28 @@ struct GlobalStructInference : public Pass {
         }
         type = *super;
       }
+    }
+
+    // Similarly, propagate global names: if one type has [global1], then a get
+    // of any supertype might access that, so propagate to them.
+    auto typeGlobalsCopy = typeGlobals;
+    for (auto& [type, globals] : typeGlobalsCopy) {
+      auto curr = type;
+      while (1) {
+        auto super = curr.getSuperType();
+        if (!super) {
+          break;
+        }
+        curr = *super;
+        for (auto global : globals) {
+          typeGlobals[curr].push_back(global);
+        }
+      }
+    }
+
+    if (typeGlobals.empty()) {
+      // We found nothing we can optimize.
+      return;
     }
 
     // Optimize based on the above.
