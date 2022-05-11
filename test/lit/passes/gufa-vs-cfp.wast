@@ -244,7 +244,8 @@
         (rtt.canon $struct)
       )
     )
-    ;; (A better analysis could see that the first struct.new is dropped.)
+    ;; (A better analysis could see that the first struct.new is dropped and its
+    ;; value cannot reach this struct.get.)
     (drop
       (struct.get $struct 0
         (struct.new_with_rtt $struct
@@ -296,6 +297,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
+    ;; (A better analysis could see that only $create's value can reach here.)
     (drop
       (struct.get $struct 0
         (call $create)
