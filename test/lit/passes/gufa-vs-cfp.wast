@@ -706,8 +706,7 @@
 )
 
 ;; Subtyping: Create a subtype and get a supertype. The get must receive a
-;;            reference to the subtype (we never create a supertype) and so we
-;;            can optimize.
+;;            reference to the subtype and so we can infer the value of the get.
 (module
   (type $substruct (struct_subtype i32 f64 $struct))
 
