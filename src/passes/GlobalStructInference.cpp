@@ -171,12 +171,38 @@ struct GlobalStructInference : public Pass {
         }
 
         // Check if the relevant fields contain constants.
-        // Excellent, we can optimize here!
         auto& wasm = *getModule();
+        auto field = curr->index;
+        auto fieldType = type.getHeapType().getStruct().fields[field];
+        std::vector<Literal> values;
+        for (Index i = 0; i < globals.size(); i++) {
+          auto* structNew = wasm.getGlobal(globals[i]);
+          if (structNew->isWithDefault()) {
+            values.push_back(Literal::makeNull(fieldType));
+          } else {
+            auto* init = structNew->operands[field];
+            if (!Properties::isConstantExpression(init)) {
+              // Non-constant; give up entirely.
+              return;
+            }
+            values.push_back(Properties::getLiteral(init));
+          }
+        }
+
+        // Excellent, we can optimize here!
+        // TODO: trap on null
         Builder builder(wasm);
         replaceCurrent(
           builder.makeSelect(
-            wasm.get
+            builder.makeConstantExpression(values[0]),
+            builder.makeConstantExpression(values[1]),
+            builder.makeRefEq(
+              curr->ref,
+              builder.makeGlobalGet(
+                globals[0],
+                wasm.getGlobal(globals[0])->type
+              )
+            )
           )
         );
       }
