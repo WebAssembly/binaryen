@@ -173,7 +173,7 @@ struct GlobalStructInference : public Pass {
         // Check if the relevant fields contain constants.
         auto& wasm = *getModule();
         auto field = curr->index;
-        auto fieldType = type.getHeapType().getStruct().fields[field];
+        auto fieldType = type.getHeapType().getStruct().fields[field].type;
         std::vector<Literal> values;
         for (Index i = 0; i < globals.size(); i++) {
           auto* structNew = wasm.getGlobal(globals[i])->init->cast<StructNew>();
