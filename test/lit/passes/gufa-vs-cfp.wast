@@ -35,8 +35,7 @@
   (func $impossible-get
     (drop
       ;; This type is never created, so a get is impossible, and we will trap
-      ;; anyhow. So we can turn this into an unreachable (plus a drop of the
-      ;; reference).
+      ;; anyhow. So we can turn this into an unreachable.
       (struct.get $struct 0
         (ref.null $struct)
       )
@@ -55,12 +54,9 @@
   ;; CHECK-NEXT: )
   (func $test
     ;; The only place this type is created is with a default value, and so we
-    ;; can optimize the later get into a constant (plus a drop of the ref).
-    ;;
-    ;; (Note that the allocated reference is dropped here, so it is not actually
-    ;; used anywhere, but this pass does not attempt to trace the paths of
-    ;; references escaping and being stored etc. - it just thinks at the type
-    ;; level.)
+    ;; can optimize the later get into a constant (note that no drop of the
+    ;; ref is needed: the optimize can see that the struct.get cannot trap, as
+    ;; its reference is non-nullable).
     (drop
       (struct.get $struct 0
         (struct.new_default_with_rtt $struct
@@ -82,7 +78,8 @@
   ;; CHECK-NEXT: )
   (func $test
     ;; The only place this type is created is with a constant value, and so we
-    ;; can optimize the later get into a constant (plus a drop of the ref).
+    ;; can optimize to a constant, the same as above (but the constant was
+    ;; passed in, as opposed to being a default value as in the last testcase).
     (drop
       (struct.get $struct 0
         (struct.new_with_rtt $struct
@@ -162,6 +159,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
+    ;; The reference will be dropped here, and not removed entirely, because
+    ;; the optimizer thinks it might have side effects (since it has a call).
+    ;; But the forwarded value, 10, is applied after that drop.
     (drop
       (struct.get $struct 0
         (call $create)
