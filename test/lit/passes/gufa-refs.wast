@@ -2914,8 +2914,10 @@
 ;; they might appear as if no content were possible there, and we'd emit an
 ;; unreachable. That should not happen anywhere here.
 (module
-
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $A (struct_subtype  data))
+  (type $A (struct_subtype data))
 
   ;; CHECK:      (memory $0 10)
   (memory $0 10)
@@ -3152,19 +3154,40 @@
     )
   )
 
-  ;; CHECK:      (func $refs (type $none_=>_none)
+  ;; CHECK:      (func $refs-rtts (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (ref.null data)
   ;; CHECK-NEXT:    (ref.null data)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast
+  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:      (rtt.sub $A
+  ;; CHECK-NEXT:       (rtt.canon $A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $refs
+  (func $refs-rtts
     (drop
       (ref.eq
         (ref.null data)
         (ref.null data)
+      )
+    )
+    (drop
+      (ref.cast
+        (ref.null $A)
+        (rtt.sub $A
+          (rtt.canon $A)
+        )
       )
     )
   )
