@@ -1364,6 +1364,8 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
     // or anything else.
     // TODO: The Global case may have a different cone type than the heapType,
     //       which we could use here.
+    // TODO: A Global may refer to an immutable global, which we can read the
+    //       field from potentially.
     assert(refContents.isMany() || refContents.isGlobal());
 
     // We create a special location for the canonical cone of this type, to

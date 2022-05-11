@@ -49,6 +49,10 @@ namespace wasm {
 //                     ExactType contents of type $Foo.
 //                     If the type here is nullable then null is also allowed.
 //                     TODO: Add ConeType, which would include subtypes.
+//                     TODO: Add ExactTypePlusContents or such, which would be
+//                           used on e.g. a struct.new with an immutable field
+//                           to which we assign a constant: not only do we know
+//                           the exact type, but also certain field's values.
 //
 //  * Many:            Anything else. Many things are possible here, and we do
 //                     not track what they might be, so we must assume the worst
