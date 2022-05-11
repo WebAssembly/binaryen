@@ -573,6 +573,7 @@ instructions = [
     ("ref.test_static",      "makeRefTestStatic(s)"),
     ("ref.cast",             "makeRefCast(s)"),
     ("ref.cast_static",      "makeRefCastStatic(s)"),
+    ("ref.cast_nop_static",  "makeRefCastNopStatic(s)"),
     ("br_on_null",           "makeBrOn(s, BrOnNull)"),
     ("br_on_non_null",       "makeBrOn(s, BrOnNonNull)"),
     ("br_on_cast",           "makeBrOn(s, BrOnCast)"),

@@ -282,6 +282,7 @@ private:
   Expression* makeRefTestStatic(Element& s);
   Expression* makeRefCast(Element& s);
   Expression* makeRefCastStatic(Element& s);
+  Expression* makeRefCastNopStatic(Element& s);
   Expression* makeBrOn(Element& s, BrOnOp op);
   Expression* makeBrOnStatic(Element& s, BrOnOp op);
   Expression* makeRttCanon(Element& s);
