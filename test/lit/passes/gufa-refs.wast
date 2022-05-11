@@ -3310,4 +3310,21 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tuples (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tuples
+    (drop
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+  )
 )
