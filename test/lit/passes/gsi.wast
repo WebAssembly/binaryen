@@ -21,6 +21,10 @@
     (i32.const 1337)
   ))
 
+  ;; A non-reference global does not confuse us.
+  ;; CHECK:      (global $global-other i32 (i32.const 123456))
+  (global $global-other i32 (i32.const 123456))
+
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
