@@ -15,9 +15,36 @@
  */
 
 //
-// Finds types which are only created in assignments to immutable globals. I
+// Finds types which are only created in assignments to immutable globals. For
+// such types we can replace a struct.get with this pattern:
+//
+//  (struct.get $foo i
+//    (..ref..))
+//  =>
+//  (select
+//    (value1)
+//    (value2)
+//    (ref.eq
+//      (..ref..)
+//      (global.get $global1)))
+//
+// That is a valid transformation if there are only two struct.news of $foo, it
+// is created in two immutable globals $global1 and $global2, and the values of
+// field |i| in them are value1 and value2 respectively (and there are no
+// subtypes). In that situation, the reference must be one of those two, so we
+// can compare the reference to the globals and pick the right value there.
+//
+// The benefit of this optimization is primarily in the case of constant values
+// that we can heavily optimize, like function references (constant function
+// refs let us inline, etc.). Function references cannot be directly compared,
+// so we cannot use ConstantFieldPropagation or such with an extension to
+// multiple values, as the select pattern shown above can't be used - it needs a
+// comparison. But we can compare structs, so if the function references are in
+// vtables, and the vtables follow the above pattern, then we can optimize.
 //
 
+#include "ir/find_all.h"
+#include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "pass.h"
 #include "wasm.h"
@@ -26,190 +53,72 @@ namespace wasm {
 
 namespace {
 
-struct SignaturePruning : public Pass {
-  // Maps each heap type to the possible pruned heap type. We will fill this
-  // during analysis and then use it while doing an update of the types. If a
-  // type has no improvement that we can find, it will not appear in this map.
-  std::unordered_map<HeapType, Signature> newSignatures;
-
+struct GlobalStructInference : public Pass {
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "SignaturePruning requires nominal typing";
+      Fatal() << "GlobalStructInference requires nominal typing";
     }
 
-    if (!module->tables.empty()) {
-      // When there are tables we must also take their types into account, which
-      // would require us to take call_indirect, element segments, etc. into
-      // account. For now, do nothing if there are tables.
-      // TODO
-      return;
-    }
+    // First, find all the information we need. We need to know which struct
+    // types are created in functions, because we will not be able to optimize
+    // those.
 
-    // First, find all the information we need. Start by collecting inside each
-    // function in parallel.
+    using StructNewTypes = std::unordered_set<StructNew*>;
 
-    struct Info {
-      std::vector<Call*> calls;
-      std::vector<CallRef*> callRefs;
-
-      std::unordered_set<Index> usedParams;
-
-      // If we set this to false, we may not attempt to perform any optimization
-      // whatsoever on this data.
-      bool optimizable = true;
-    };
-
-    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
-      *module, [&](Function* func, Info& info) {
+    ModuleUtils::ParallelFunctionAnalysis<StructNewTypes> analysis(
+      *module, [&](Function* func, StructNewTypes& structNewTypes) {
         if (func->imported()) {
-          // Imports cannot be modified.
-          info.optimizable = false;
-          return;
-        }
-
-        info.calls = std::move(FindAll<Call>(func->body).list);
-        info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.usedParams = ParamUtils::getUsedParams(func);
-      });
-
-    // A map of types to all the information combined over all the functions
-    // with that type.
-    std::unordered_map<HeapType, Info> allInfo;
-
-    // Map heap types to all functions with that type.
-    std::unordered_map<HeapType, std::vector<Function*>> sigFuncs;
-
-    // Combine all the information we gathered into that map.
-    for (auto& [func, info] : analysis.map) {
-      // For direct calls, add each call to the type of the function being
-      // called.
-      for (auto* call : info.calls) {
-        allInfo[module->getFunction(call->target)->type].calls.push_back(call);
-      }
-
-      // For indirect calls, add each call_ref to the type the call_ref uses.
-      for (auto* callRef : info.callRefs) {
-        auto calledType = callRef->target->type;
-        if (calledType != Type::unreachable) {
-          allInfo[calledType.getHeapType()].callRefs.push_back(callRef);
-        }
-      }
-
-      // A parameter used in this function is used in the heap type - just one
-      // function is enough to prevent the parameter from being removed.
-      auto& allUsedParams = allInfo[func->type].usedParams;
-      for (auto index : info.usedParams) {
-        allUsedParams.insert(index);
-      }
-
-      if (!info.optimizable) {
-        allInfo[func->type].optimizable = false;
-      }
-
-      sigFuncs[func->type].push_back(func);
-    }
-
-    // Exported functions cannot be modified.
-    for (auto& exp : module->exports) {
-      if (exp->kind == ExternalKind::Function) {
-        auto* func = module->getFunction(exp->value);
-        allInfo[func->type].optimizable = false;
-      }
-    }
-
-    // Find parameters to prune.
-    for (auto& [type, funcs] : sigFuncs) {
-      auto sig = type.getSignature();
-      auto& info = allInfo[type];
-      auto& usedParams = info.usedParams;
-      auto numParams = sig.params.size();
-
-      if (!info.optimizable) {
-        continue;
-      }
-
-      // A type with a signature supertype cannot be optimized: we'd need to
-      // remove the field from the super as well, which atm we don't attempt to
-      // do. TODO
-      if (auto super = type.getSuperType()) {
-        if (super->isSignature()) {
           continue;
         }
-      }
 
-      // Apply constant indexes: find the parameters that are always sent a
-      // constant value, and apply that value in the function. That then makes
-      // the parameter unused (since the applied value makes us ignore the value
-      // arriving in the parameter).
-      auto optimizedIndexes = ParamUtils::applyConstantValues(
-        funcs, info.calls, info.callRefs, module);
-      for (auto i : optimizedIndexes) {
-        usedParams.erase(i);
-      }
-
-      if (usedParams.size() == numParams) {
-        // All parameters are used, give up on this one.
-        continue;
-      }
-
-      // We found possible work! Find the specific params that are unused & try
-      // to prune them.
-      SortedVector unusedParams;
-      for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i) == 0) {
-          unusedParams.insert(i);
+        for (auto* structNew : FindAll<StructNew>(func->body).list) {
+          auto type = structNew->type;
+          if (type.isReference()) {
+            structNewTypes.insert(type.getHeapType());
+          }
         }
-      }
+      });
 
-      auto oldParams = sig.params;
-      auto removedIndexes = ParamUtils::removeParameters(
-        funcs, unusedParams, info.calls, info.callRefs, module, runner);
-      if (removedIndexes.empty()) {
-        continue;
-      }
+    // We cannot optimize types that appear in a struct.new in a function, which
+    // we just collected and merge now.
+    StructNewTypes unoptimizable;
 
-      // Success! Update the types.
-      std::vector<Type> newParams;
-      for (Index i = 0; i < numParams; i++) {
-        if (!removedIndexes.has(i)) {
-          newParams.push_back(oldParams[i]);
-        }
-      }
-
-      // Create a new signature. When the TypeRewriter operates below it will
-      // modify the existing heap type in place to change its signature to this
-      // one (which preserves identity, that is, even if after pruning the new
-      // signature is structurally identical to another one, it will remain
-      // nominally different from those).
-      newSignatures[type] = Signature(Type(newParams), sig.results);
-
-      // removeParameters() updates the type as it goes, but in this pass we
-      // need the type to match the other locations, nominally. That is, we need
-      // all the functions of a particular type to still have the same type
-      // after this operation, and that must be the exact same type at the
-      // relevant call_refs and so forth. The TypeRewriter below will do the
-      // right thing as it rewrites everything all at once, so we do not want
-      // the type to be modified by removeParameters(), and so we undo the type
-      // it made.
-      //
-      // Note that we cannot just ask removeParameters() to not update the type,
-      // as it adds a new local there, whose index depends on the type (which
-      // contains the # of parameters, and that determine where non-parameter
-      // local indexes begin). Rather than have it update the type and then undo
-      // that, which would add more complexity in that method, undo the change
-      // here.
-      for (auto* func : funcs) {
-        func->type = type;
+    for (auto& [func, structNewTypes] : analysis.map) {
+      for (auto type : structNewTypes) {
+        unoptimizable.insert(type);
       }
     }
 
-    // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+    // Maps struct types to the globals whose init is a struct.new of them.
+    std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
+
+    // We also cannot optimize a type that appears in a non-toplevel location in
+    // a global init. Note the toplevel global inits as well, while we go.
+    for (auto& global : module->globals) {
+      if (global->imported()) {
+        continue;
+      }
+
+      for (auto* structNew : FindAll<StructNew>(global->init).list) {
+        auto type = structNew->type;
+        if (type.isReference() && structNew != global->init) {
+          unoptimizable.insert(type.getHeapType());
+        }
+      }
+
+      if (global->init->is<StructNew()) {
+        typeGlobals[global->init->type.getHeapType()].push_back(global->name);
+      }
+    }
+
+    // Compute subtypes, as a get from a struct might also read from any of
+    // them.
+    SubTypes subTypes(*module);
   }
 };
 
 } // anonymous namespace
 
-Pass* createSignaturePruningPass() { return new SignaturePruning(); }
+Pass* createGlobalStructInferencePass() { return new GlobalStructInference(); }
 
 } // namespace wasm
