@@ -641,8 +641,7 @@
 
 ;; As above, pass the created supertype through a local and a cast on the way
 ;; to a read of the subtype. Still, no actual instance of the subtype can
-;; appear in the get, so we can optimize the value. The cast can also be
-;; optimized, since we know it will trap.
+;; appear in the get, so we can optimize to an unreachable.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
@@ -692,7 +691,12 @@
       (i32.const 10)
     )
     (drop
+      ;; This must trap, so we can add an unreachable.
       (struct.get $substruct 0
+        ;; Only a null can pass through here, as the cast would not allow a ref
+        ;; to $struct. A null looks possible to the pass due to the default
+        ;; value of the local $ref - an SSA analysis would remove that. For now,
+        ;; we'll optimize the ref.cast to have a null after it.
         (ref.cast_static $substruct
           (local.get $ref)
         )
