@@ -849,7 +849,7 @@
 
 ;; Subtyping: Create both a subtype and a supertype, with different constants
 ;;            for the shared field, but get from the subtype. The field is
-;;            shared between the types, but we only create the substruct with
+;;            shared between the types, but we only create the subtype with
 ;;            one value, so we can optimize.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
@@ -899,13 +899,14 @@
     )
     (local.set $ref
       (struct.new_with_rtt $substruct
-        (i32.const 20) ;; this constant changed
+        (i32.const 20)
         (f64.const 3.14159)
         (rtt.canon $substruct)
       )
     )
     (drop
       (struct.get $substruct 0
+        ;; This cast is added, ensuring only a $substruct can reach the get.
         (ref.cast_static $substruct
           (local.get $ref)
         )

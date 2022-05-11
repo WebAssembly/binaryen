@@ -681,6 +681,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
+    ;; A better analysis could see that the reference is dropped here, and does
+    ;; not reach the get.
     (drop
       (struct.new_with_rtt $substruct
         (i32.const 10)
