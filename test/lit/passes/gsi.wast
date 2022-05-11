@@ -478,3 +478,64 @@
   )
 )
 
+;; One global for each of the type and the subtype. The optimization will pick
+;; between their 2 values.
+(module
+  ;; CHECK:      (type $super-struct (struct_subtype (field i32) data))
+  (type $super-struct (struct_subtype i32 data))
+
+  ;; CHECK:      (type $struct (struct_subtype (field i32) $super-struct))
+  (type $struct (struct_subtype i32 $super-struct))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global1 (ref $super-struct) (struct.new $super-struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $super-struct) (struct.new $super-struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct) (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $super-struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; We cannot optimize the first - it has just one global - but the second
+    ;; will consider the struct and sub-struct, find 2 possible values, and
+    ;; optimize.
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+    (drop
+      (struct.get $super-struct 0
+        (ref.null $super-struct)
+      )
+    )
+  )
+)
+
