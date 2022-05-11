@@ -54,6 +54,10 @@ namespace wasm {
 namespace {
 
 struct GlobalStructInference : public Pass {
+  // Maps optimizable struct types to the globals whose init is a struct.new of
+  // them. If a global is not present here, it cannot be optimized.
+  std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
+
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalStructInference requires nominal typing";
@@ -63,34 +67,31 @@ struct GlobalStructInference : public Pass {
     // types are created in functions, because we will not be able to optimize
     // those.
 
-    using StructNewTypes = std::unordered_set<StructNew*>;
+    using HeapTypes = std::unordered_set<HeapType>;
 
-    ModuleUtils::ParallelFunctionAnalysis<StructNewTypes> analysis(
-      *module, [&](Function* func, StructNewTypes& structNewTypes) {
+    ModuleUtils::ParallelFunctionAnalysis<HeapTypes> analysis(
+      *module, [&](Function* func, HeapTypes& types) {
         if (func->imported()) {
-          continue;
+          return;
         }
 
         for (auto* structNew : FindAll<StructNew>(func->body).list) {
           auto type = structNew->type;
-          if (type.isReference()) {
-            structNewTypes.insert(type.getHeapType());
+          if (type.isRef()) {
+            types.insert(type.getHeapType());
           }
         }
       });
 
     // We cannot optimize types that appear in a struct.new in a function, which
     // we just collected and merge now.
-    StructNewTypes unoptimizable;
+    HeapTypes unoptimizable;
 
-    for (auto& [func, structNewTypes] : analysis.map) {
-      for (auto type : structNewTypes) {
+    for (auto& [func, types] : analysis.map) {
+      for (auto type : types) {
         unoptimizable.insert(type);
       }
     }
-
-    // Maps struct types to the globals whose init is a struct.new of them.
-    std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
     // We also cannot optimize a type that appears in a non-toplevel location in
     // a global init. Note the toplevel global inits as well, while we go.
@@ -101,12 +102,12 @@ struct GlobalStructInference : public Pass {
 
       for (auto* structNew : FindAll<StructNew>(global->init).list) {
         auto type = structNew->type;
-        if (type.isReference() && structNew != global->init) {
+        if (type.isRef() && structNew != global->init) {
           unoptimizable.insert(type.getHeapType());
         }
       }
 
-      if (global->init->is<StructNew()) {
+      if (global->init->is<StructNew>()) {
         typeGlobals[global->init->type.getHeapType()].push_back(global->name);
       }
     }
@@ -114,6 +115,27 @@ struct GlobalStructInference : public Pass {
     // Compute subtypes, as a get from a struct might also read from any of
     // them.
     SubTypes subTypes(*module);
+
+    // Optimize based on the above.
+    struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
+      bool isFunctionParallel() override { return true; }
+
+      Pass* create() override { return new FunctionOptimizer(parent); }
+
+      FunctionOptimizer(GlobalStructInference& parent) : parent(parent) {}
+
+      void visitStructGet(StructGet* curr) {
+        auto type = curr->ref->type;
+        if (type == Type::unreachable) {
+          return;
+        }
+      }
+
+    private:
+      GlobalStructInference& parent;
+    };
+
+    FunctionOptimizer(*this).run(runner, module);
   }
 };
 
