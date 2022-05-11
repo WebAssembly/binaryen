@@ -167,7 +167,8 @@ struct GlobalStructInference : public Pass {
     }
 
     // Optimize based on the above.
-    struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
+    struct FunctionOptimizer
+      : public WalkerPass<PostWalker<FunctionOptimizer>> {
       bool isFunctionParallel() override { return true; }
 
       Pass* create() override { return new FunctionOptimizer(parent); }
@@ -215,22 +216,12 @@ struct GlobalStructInference : public Pass {
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
         Builder builder(wasm);
-        replaceCurrent(
-          builder.makeSelect(
-            builder.makeRefEq(
-              builder.makeRefAs(
-                RefAsNonNull,
-                curr->ref
-              ),
-              builder.makeGlobalGet(
-                globals[0],
-                wasm.getGlobal(globals[0])->type
-              )
-            ),
-            builder.makeConstantExpression(values[0]),
-            builder.makeConstantExpression(values[1])
-          )
-        );
+        replaceCurrent(builder.makeSelect(
+          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
+                            builder.makeGlobalGet(
+                              globals[0], wasm.getGlobal(globals[0])->type)),
+          builder.makeConstantExpression(values[0]),
+          builder.makeConstantExpression(values[1])));
       }
 
     private:
