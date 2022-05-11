@@ -176,7 +176,7 @@ struct GlobalStructInference : public Pass {
         auto fieldType = type.getHeapType().getStruct().fields[field];
         std::vector<Literal> values;
         for (Index i = 0; i < globals.size(); i++) {
-          auto* structNew = wasm.getGlobal(globals[i]);
+          auto* structNew = wasm.getGlobal(globals[i])->init->cast<StructNew>();
           if (structNew->isWithDefault()) {
             values.push_back(Literal::makeNull(fieldType));
           } else {
