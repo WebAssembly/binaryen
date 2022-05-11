@@ -987,7 +987,8 @@
   )
 )
 
-;; As above, but now the constants agree.
+;; As above, but now the constant in the set agrees with the substruct value,
+;; so we can optimize.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
@@ -995,22 +996,27 @@
   ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
 
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
+  ;; CHECK-NEXT:   (select (result (ref $struct))
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:     (f64.const 3.14159)
+  ;; CHECK-NEXT:     (rtt.canon $substruct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -1033,23 +1039,23 @@
   (func $test
     (local $ref (ref null $struct))
     (local.set $ref
-      (struct.new_with_rtt $struct
-        (i32.const 10)
-        (rtt.canon $struct)
-      )
-    )
-    (local.set $ref
-      (struct.new_with_rtt $substruct
-        (i32.const 20)
-        (f64.const 3.14159)
-        (rtt.canon $substruct)
+      (select
+        (struct.new_with_rtt $struct
+          (i32.const 10)
+          (rtt.canon $struct)
+        )
+        (struct.new_with_rtt $substruct
+          (i32.const 20)
+          (f64.const 3.14159)
+          (rtt.canon $substruct)
+        )
+        (call $import)
       )
     )
     (struct.set $struct 0
       (local.get $ref)
       ;; This now writes the same value as in the $substruct already has, 20, so
-      ;; we can optimize the get below. Note that the the $struct has 10 there,
-      ;; but that does not stop us.
+      ;; we can optimize the get below (which must contain a $substruct).
       (i32.const 20)
     )
     (drop
@@ -1061,6 +1067,8 @@
     )
   )
 )
+
+;; TODO
 
 ;; Multi-level subtyping, check that we propagate not just to the immediate
 ;; supertype but all the way as needed.
