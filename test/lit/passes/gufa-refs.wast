@@ -2919,13 +2919,20 @@
   ;; CHECK:      (type $A (struct_subtype  data))
   (type $A (struct_subtype data))
 
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
   ;; CHECK:      (type $B (array_subtype (mut anyref) data))
   (type $B (array (mut anyref)))
 
   ;; CHECK:      (memory $0 10)
-  (memory $0 10)
 
   ;; CHECK:      (table $t 0 anyref)
+
+  ;; CHECK:      (tag $e-i32 (param i32))
+  (tag $e-i32 (param i32))
+
+  (memory $0 10)
+
   (table $t 0 externref)
 
   ;; CHECK:      (func $br_table (type $none_=>_none)
@@ -3258,6 +3265,48 @@
     (drop
       (array.len $B
         (ref.null $B)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $rethrow (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (try $l0
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (throw $e-i32
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e-i32
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (rethrow $l0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rethrow
+    (try $l0
+      (do
+        (throw $e-i32
+          (i32.const 0)
+        )
+      )
+      (catch $e-i32
+        (drop
+          (pop i32)
+        )
+        (rethrow $l0)
       )
     )
   )

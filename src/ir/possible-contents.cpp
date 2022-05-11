@@ -548,7 +548,10 @@ struct InfoCollector
     addSpecialChildParentLink(curr->value, curr);
   }
 
-  void visitArrayLen(ArrayLen* curr) { addRoot(curr); }
+  void visitArrayLen(ArrayLen* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
   void visitArrayCopy(ArrayCopy* curr) {
     if (curr->type == Type::unreachable) {
       return;
