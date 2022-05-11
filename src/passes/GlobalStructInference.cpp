@@ -189,13 +189,17 @@ struct GlobalStructInference : public Pass {
           }
         }
 
-        // Excellent, we can optimize here!
-        // TODO: trap on null
+        // Excellent, we can optimize here! Emit a select.
+        //
+        // Note that we must trap on null, so add a ref.as_non_null here.
         Builder builder(wasm);
         replaceCurrent(
           builder.makeSelect(
             builder.makeRefEq(
-              curr->ref,
+              builder.makeRefAs(
+                RefAsNonNull,
+                curr->ref
+              ),
               builder.makeGlobalGet(
                 globals[0],
                 wasm.getGlobal(globals[0])->type

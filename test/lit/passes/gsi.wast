@@ -27,13 +27,17 @@
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:    (ref.eq
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (global.get $global1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
+    ;; We can infer that this get can reference either $global1 or $global2,
+    ;; and nothing else, and can emit a select between those values.
     (drop
       (struct.get $struct 0
         (ref.null $struct)
