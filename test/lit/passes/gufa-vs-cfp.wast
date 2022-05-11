@@ -783,6 +783,7 @@
         (rtt.canon $substruct)
       )
     )
+    ;; We can infer the value here must be 10.
     (drop
       (struct.get $struct 0
         (local.get $ref)
