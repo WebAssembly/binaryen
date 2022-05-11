@@ -2,7 +2,10 @@
 ;; RUN: foreach %s %t wasm-opt -all --remove-unused-names --gufa -S -o - | filecheck %s
 
 ;; Tests cases where the lack of names matters (hence --remove-unused-names)
-;; Two tags with different values.
+
+;; Two tags with different values. Names are added by text format parsing, which
+;; would inhibit optimizations, hence this pass requires unused names to be
+;; removed.
 (module
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
@@ -110,4 +113,3 @@
     )
   )
 )
-
