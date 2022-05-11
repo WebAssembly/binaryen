@@ -3201,4 +3201,23 @@
       )
     )
   )
+
+  ;; CHECK:      (func $i31 (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i31.get_s
+  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i31
+    (drop
+      (i31.get_s
+        (i31.new
+          (i32.const 0)
+        )
+      )
+    )
+  )
 )
