@@ -1382,10 +1382,10 @@ struct OptimizeInstructions
           }
           return newOperands;
         };
-        auto* ifTrueCall =
-          builder.makeCall(select->ifTrue->cast<RefFunc>()->func, getOperands(), curr->type);
-        auto* ifFalseCall =
-          builder.makeCall(select->ifFalse->cast<RefFunc>()->func, getOperands(), curr->type);
+        auto* ifTrueCall = builder.makeCall(
+          select->ifTrue->cast<RefFunc>()->func, getOperands(), curr->type);
+        auto* ifFalseCall = builder.makeCall(
+          select->ifFalse->cast<RefFunc>()->func, getOperands(), curr->type);
 
         // Create the if to pick the calls, and emit the final block.
         auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);
