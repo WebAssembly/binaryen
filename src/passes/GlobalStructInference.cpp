@@ -47,6 +47,7 @@
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "pass.h"
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -93,13 +94,14 @@ struct GlobalStructInference : public Pass {
       }
     }
 
-    // We also cannot optimize a type that appears in a non-toplevel location in
-    // a global init. Note the toplevel global inits as well, while we go.
+    // Process the globals.
     for (auto& global : module->globals) {
       if (global->imported()) {
         continue;
       }
 
+      // We cannot optimize a type that appears in a non-toplevel location in a
+      // global init.
       for (auto* structNew : FindAll<StructNew>(global->init).list) {
         auto type = structNew->type;
         if (type.isRef() && structNew != global->init) {
@@ -107,14 +109,40 @@ struct GlobalStructInference : public Pass {
         }
       }
 
+      if (!global->init->type.isRef()) {
+        continue;
+      }
+
+      auto type = global->init->type.getHeapType();
+
+      // We cannot optimize mutable globals.
+      if (global->mutable_) {
+        unoptimizable.insert(type);
+        continue;
+      }
+
+      // Finally, if this is a struct.new then it is one we can optimize; note
+      // it.
       if (global->init->is<StructNew>()) {
-        typeGlobals[global->init->type.getHeapType()].push_back(global->name);
+        typeGlobals[type].push_back(global->name);
       }
     }
 
-    // Compute subtypes, as a get from a struct might also read from any of
-    // them.
-    SubTypes subTypes(*module);
+    // A struct.get might also read from any of the subtypes. As a result, an
+    // unoptimizable type makes all its supertypes unoptimizable as well.
+    // TODO: this could be specific per field (and not all supers have all
+    //       fields)
+    std::vector<HeapType> unoptimizableVec(unoptimizable.begin(), unoptimizable.end());
+    for (auto type : unoptimizableVec) {
+      while (1) {
+        typeGlobals.erase(type);
+        auto super = type.getSuperType();
+        if (!super) {
+          break;
+        }
+        type = *super;
+      }
+    }
 
     // Optimize based on the above.
     struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
@@ -129,6 +157,28 @@ struct GlobalStructInference : public Pass {
         if (type == Type::unreachable) {
           return;
         }
+
+        auto iter = parent.typeGlobals.find(type.getHeapType());
+        if (iter == parent.typeGlobals.end()) {
+          return;
+        }
+
+        auto& globals = iter->second;
+
+        // TODO: more sizes
+        if (globals.size() != 2) {
+          return;
+        }
+
+        // Check if the relevant fields contain constants.
+        // Excellent, we can optimize here!
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+        replaceCurrent(
+          builder.makeSelect(
+            wasm.get
+          )
+        );
       }
 
     private:
