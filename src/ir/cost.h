@@ -614,7 +614,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
            maybeVisit(curr->rtt);
   }
   CostType visitBrOn(BrOn* curr) {
-    // BrOnCast of a null can be fairly fast, but anything else is a cast check
+    // BrOn of a null can be fairly fast, but anything else is a cast check
     // basically, and an unacceptable cost.
     CostType base =
       curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : Unacceptable;
