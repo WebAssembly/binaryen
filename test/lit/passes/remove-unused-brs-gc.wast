@@ -249,6 +249,17 @@
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $nothing
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (if (result anyref)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (br_on_null $nothing
+ ;; CHECK-NEXT:      (ref.null $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $casts-are-costly (param $x i32)
   ;; We never turn an if into a select if an arm has a cast of any kind, as
@@ -284,6 +295,18 @@
      )
     )
     (unreachable)
+   )
+  )
+  ;; However, null checks are fairly fast.
+  (block $nothing
+   (drop
+    (if (result anyref)
+     (local.get $x)
+     (br_on_null $nothing
+      (ref.null $struct)
+     )
+     (ref.null any)
+    )
    )
   )
  )
