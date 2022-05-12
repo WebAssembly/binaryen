@@ -72,22 +72,9 @@ public:
 
   // Note either a Literal or a Name.
   template<typename T> void note(T curr) {
-    if (std::get_if<None>(&value)) {
-      // This is the first value.
-      value = curr;
-      return;
-    }
-
-    if (std::get_if<Many>(&value)) {
-      // This was already representing multiple values; nothing changes.
-      return;
-    }
-
-    // This is a subsequent value. Check if it is different from all previous
-    // ones.
-    if (Variant(curr) != value) {
-      noteUnknown();
-    }
+    PossibleConstantValues other;
+    other.value = curr;
+    combine(other);
   }
 
   // Notes a value that is unknown - it can be anything. We have failed to
@@ -118,20 +105,20 @@ public:
       return true;
     }
 
+    // Nulls compare equal, but we must combine them into a null of the LUB,
+    // both for determinism (the order should not matter) and to validate.
     if (isNull() && other.isNull()) {
-      return combineNull(other.getConstantValue());
+      auto type = getConstantLiteral().type.getHeapType();
+      auto otherType = other.getConstantLiteral().type.getHeapType();
+      auto lub = HeapType::getLeastUpperBound(type, otherType);
+      if (lub != type) {
+        value = Literal::makeNull(Type(type, Nullable));
+        return true;
+      }
+      return false;
     }
 
     return false;
-  }
-
-  // Nulls compare equal, but we must combine them into a null of the LUB, both
-  // for determinism (the order should not matter) and to validate in all cases.
-  //
-  // Returns whether we changed anything.
-  bool combineNull(Literal otherNull) {
-    assert(isNull());
-    
   }
 
   // Check if all the values are identical and constant.
