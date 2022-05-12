@@ -2168,8 +2168,6 @@
   )
 )
 
-;; TODO
-
 ;; Never create A, but have a set to its field. A subtype B has no creates nor
 ;; sets, and the final subtype C has a create and a get. The set to A should
 ;; apply to it, preventing optimization.
@@ -2189,13 +2187,13 @@
 
   ;; CHECK:      (type $none_=>_ref|$C| (func_subtype (result (ref $C)) func))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$C|) (result (ref $C))
+  ;; CHECK:      (func $create-C (type $none_=>_ref|$C|) (result (ref $C))
   ;; CHECK-NEXT:  (struct.new_with_rtt $C
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (rtt.canon $C)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create (result (ref $C))
+  (func $create-C (result (ref $C))
     (struct.new_with_rtt $C
       (i32.const 10)
       (rtt.canon $C)
@@ -2204,30 +2202,33 @@
   ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (ref.cast_static $A
-  ;; CHECK-NEXT:    (call $create)
+  ;; CHECK-NEXT:    (call $create-C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set
+    ;; Set of $A, but the reference is actually a $C. We add a cast to make sure
+    ;; the type is $A, which should not confuse us: this set does alias the data
+    ;; in $C, which means we cannot optimize in the function $get below.
     (struct.set $A 0
       (ref.cast_static $A
-        (call $create)
+        (call $create-C)
       )
-      (i32.const 20)
+      (i32.const 20) ;; different value than in $create
     )
   )
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $C 0
-  ;; CHECK-NEXT:    (call $create)
+  ;; CHECK-NEXT:    (call $create-C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
     (drop
       (struct.get $C 0
-        (call $create)
+        (call $create-C)
       )
     )
   )
