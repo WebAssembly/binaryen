@@ -2538,7 +2538,8 @@
   )
 )
 
-;; As above, but with an imported global
+;; As above, but with an imported global, which we can also optimize (since it
+;; is still immutable).
 (module
   (type $struct (struct i32))
 
@@ -2674,9 +2675,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; As above, but there is another set of the field that is the same,
-    ;; so that is fine. Also, the struct's field is now mutable as well to allow
-    ;; that, and that also does not prevent optimization.
+    ;; As above, but there is another set of the field. It writes the same
+    ;; value, though, so that is fine. Also, the struct's field is now mutable
+    ;; as well to allow that, and that also does not prevent optimization.
     (struct.set $struct 0
       (struct.new $struct
         (global.get $global)
