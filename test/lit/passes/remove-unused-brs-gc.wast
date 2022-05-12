@@ -215,4 +215,62 @@
    (unreachable)
   )
  )
+
+ ;; CHECK:      (func $casts-are-costly (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (ref.test_static $struct
+ ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select (result anyref)
+ ;; CHECK-NEXT:    (ref.cast_static $struct
+ ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $casts-are-costly (param $x i32)
+  ;; We never turn an if into a select if an arm has a cast of any kind, as
+  ;; those things involve branches internally, so we'd be adding more than we
+  ;; save.
+  (drop
+   (select
+    (ref.test_static $struct
+     (ref.null any)
+    )
+    (i32.const 0)
+    (local.get $x)
+   )
+  )
+  (drop
+   (select (result anyref)
+    (ref.null any)
+    (ref.cast_static $struct
+     (ref.null any)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (block $block (result (ref $struct))
+    (drop
+     (select
+      (br_on_cast_static $block $struct
+       (ref.null $struct)
+      )
+      (ref.null any)
+      (local.get $x)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
 )
