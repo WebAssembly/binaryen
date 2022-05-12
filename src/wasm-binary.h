@@ -1112,6 +1112,7 @@ enum ASTNodes {
   RefCastStatic = 0x45,
   BrOnCastStatic = 0x46,
   BrOnCastStaticFail = 0x47,
+  RefCastNopStatic = 0x48,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,

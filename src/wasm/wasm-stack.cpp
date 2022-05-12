@@ -2051,7 +2051,11 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   if (curr->rtt) {
     o << U32LEB(BinaryConsts::RefCast);
   } else {
-    o << U32LEB(BinaryConsts::RefCastStatic);
+    if (curr->safety == RefCast::Unsafe) {
+      o << U32LEB(BinaryConsts::RefCastNopStatic);
+    } else {
+      o << U32LEB(BinaryConsts::RefCastStatic);
+    }
     parent.writeIndexedHeapType(curr->intendedType);
   }
 }

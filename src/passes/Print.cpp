@@ -1984,7 +1984,11 @@ struct PrintExpressionContents
     if (curr->rtt) {
       printMedium(o, "ref.cast");
     } else {
-      printMedium(o, "ref.cast_static ");
+      if (curr->safety == RefCast::Unsafe) {
+        printMedium(o, "ref.cast_nop_static ");
+      } else {
+        printMedium(o, "ref.cast_static ");
+      }
       printHeapType(o, curr->intendedType, wasm);
     }
   }
