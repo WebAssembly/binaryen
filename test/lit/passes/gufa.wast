@@ -950,6 +950,7 @@
     (drop
       (call $import)
     )
+    ;; For comparison, we can optimize this call to an internal function.
     (drop
       (call $internal)
     )
