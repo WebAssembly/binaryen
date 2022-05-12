@@ -1215,23 +1215,21 @@
 ;; not the middle one.
 (module
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field i32) data))
+  (type $struct1 (struct i32 i32))
 
   ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
+  (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
 
   ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref) $struct2))
   (type $struct3 (struct_subtype i32 i32 f64 f64 anyref anyref $struct2))
 
-  (type $struct1 (struct i32 i32))
-
-  (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $none_=>_anyref (func_subtype (result anyref) func))
 
   ;; CHECK:      (type $none_=>_ref|$struct1| (func_subtype (result (ref $struct1)) func))
 
   ;; CHECK:      (type $none_=>_ref|$struct3| (func_subtype (result (ref $struct3)) func))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (import "a" "b" (func $import (result anyref)))
   (import "a" "b" (func $import (result anyref)))
@@ -1275,7 +1273,7 @@
     )
   )
 
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get-1 (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1296,18 +1294,93 @@
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-1
+    ;; Get all the fields of all the structs. First, create $struct1 and get
+    ;; its fields. Even though there are subtypes with different fields for some
+    ;; of them, we can optimize these using exact type info, as this must be a
+    ;; $struct1 and nothing else.
+    (drop
+      (struct.get $struct1 0
+        (call $create1)
+      )
+    )
+    (drop
+      (struct.get $struct1 1
+        (call $create1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct3 0
+  ;; CHECK-NEXT:      (call $create3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct3 1
+  ;; CHECK-NEXT:      (call $create3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 999)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct3 2
+  ;; CHECK-NEXT:      (call $create3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 2.71828)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct3 3
+  ;; CHECK-NEXT:      (call $create3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 9.9999999)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-2
+    ;; $struct2 is never created, instead create a $struct3. We can optimize,
+    ;; since $struct1's values are not relevant and cannot confuse us.
+    ;; trap.
+    (drop
+      (struct.get $struct2 0
+        (call $create3)
+      )
+    )
+    (drop
+      (struct.get $struct2 1
+        (call $create3)
+      )
+    )
+    (drop
+      (struct.get $struct2 2
+        (call $create3)
+      )
+    )
+    (drop
+      (struct.get $struct2 3
+        (call $create3)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-3 (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1364,40 +1437,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
-    ;; Get all the fields of all the structs.
-    (drop
-      (struct.get $struct1 0
-        (call $create1)
-      )
-    )
-    (drop
-      (struct.get $struct1 1
-        (call $create1)
-      )
-    )
-    ;; $struct2 is never created, and only accessed via nulls; all these should
-    ;; trap.
-    (drop
-      (struct.get $struct2 0
-        (ref.null $struct2)
-      )
-    )
-    (drop
-      (struct.get $struct2 1
-        (ref.null $struct2)
-      )
-    )
-    (drop
-      (struct.get $struct2 2
-        (ref.null $struct2)
-      )
-    )
-    (drop
-      (struct.get $struct2 3
-        (ref.null $struct2)
-      )
-    )
+  (func $get-3
+    ;; We can optimize all these (where the field is constant).
     (drop
       (struct.get $struct3 0
         (call $create3)
