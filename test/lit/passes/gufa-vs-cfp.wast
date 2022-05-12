@@ -2361,7 +2361,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; As this is not a copy, we cannot optimize struct.1's get lower down.
+    ;; We copy data between the types, but the possible values of their fields
+    ;; are the same anyhow, so we can optimize all the gets to 42.
     (struct.set $struct 1
       (call $create-struct)
       (struct.get $other 1
@@ -2435,7 +2436,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; As this is not a copy, we cannot optimize struct.1's get lower down.
+    ;; As this is not a copy, we cannot optimize the last get lower down:
+    ;; $struct has both 42 and 1337 written to it.
     (struct.set $struct 1
       (call $create-struct)
       (struct.get $other 1
@@ -2449,6 +2451,8 @@
     )
   )
 )
+
+;; TODO
 
 ;; Test of a near-copy, of a different index.
 (module
