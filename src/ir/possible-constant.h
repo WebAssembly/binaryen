@@ -105,8 +105,11 @@ public:
       return true;
     }
 
-    // Nulls compare equal, but we must combine them into a null of the LUB,
-    // both for determinism (the order should not matter) and to validate.
+    // Nulls compare equal, and we could consider any of the input nulls as the
+    // combination of the two (as any of them would be valid to place in the
+    // location we are working to optimize). In order to have simple symmetric
+    // behavior here, which does not depend on the order of the inputs, use the
+    // LUB.
     if (isNull() && other.isNull()) {
       auto type = getConstantLiteral().type.getHeapType();
       auto otherType = other.getConstantLiteral().type.getHeapType();
