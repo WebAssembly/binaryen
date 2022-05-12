@@ -2721,7 +2721,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; As above, but set a different global, which prevents optimization.
+    ;; As above, but set a different global, which prevents optimization of the
+    ;; struct.get below.
     (struct.set $struct 0
       (struct.new $struct
         (global.get $global)
