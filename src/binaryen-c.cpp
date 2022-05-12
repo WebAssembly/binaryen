@@ -101,7 +101,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal::makeFunc(x.func);
     case Type::anyref:
     case Type::eqref:
-      return Literal::makeNull(Type(x.type));
+      return Literal::makeNull(Type(x.type).getHeapType());
     case Type::i31ref:
       WASM_UNREACHABLE("TODO: i31ref");
     case Type::dataref:
