@@ -4,9 +4,9 @@
 (module
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
-
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
 
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
@@ -55,7 +55,9 @@
   (func $bar
     ;; Both arms of the select have identical values, 1. Inlining +
     ;; OptimizeInstructions could of course discover that in this case, but
-    ;; possible-types can do so even without inlining.
+    ;; GUFA can do so even without inlining. As a result the select will be
+    ;; dropped (due to the call which may have effects, we keep it), and after
+    ;; the select we emit the constant 1 for the value.
     (drop
       (select
         (call $foo)
@@ -88,7 +90,8 @@
       (select
         (call $foo)
         ;; As above, but replace 1 with eqz(eqz(1)).This pass assumes any eqz
-        ;; etc is a new value, and so here we do not optimize.
+        ;; etc is a new value, and so here we do not optimize the select (we do
+        ;; still optimize the call's result, though).
         (i32.eqz
           (i32.eqz
             (i32.const 1)
@@ -109,7 +112,8 @@
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $return (result i32)
-    ;; Return one result in a return and flow another out.
+    ;; Helper function that returns one result in a return and flows another
+    ;; out.
     (if
       (i32.const 0)
       (return
@@ -129,6 +133,44 @@
     ;; anything here.
     (drop
       (call $return)
+    )
+  )
+
+  ;; CHECK:      (func $return-same (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $return-same (result i32)
+    ;; Helper function that returns the same result in a return as it flows out.
+    ;; This is the same as above, but now the values are identical.
+    (if
+      (i32.const 0)
+      (return
+        (i32.const 1)
+      )
+    )
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $call-return-same
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $return-same)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-return-same
+    ;; Unlike in $call-return, now we can optimize here.
+    (drop
+      (call $return-same)
     )
   )
 
