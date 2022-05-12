@@ -680,7 +680,7 @@
 )
 
 ;; As above, but the table is not exported. We have a direct and an indirect
-;; call with the same value, so we can optimize.
+;; call with the same value, so we can optimize inside $reffed.
 (module
   ;; CHECK:      (type $i (func (param i32)))
   (type $i (func (param i32)))
@@ -776,7 +776,8 @@
   )
 )
 
-;; As above but the indirect calls have different parameters.
+;; As above but the indirect calls have different parameters, so we do not
+;; optimize.
 (module
   ;; CHECK:      (type $i (func (param i32)))
   (type $i (func (param i32)))
@@ -826,7 +827,7 @@
 )
 
 ;; As above but the second call is of another signature, so it does not prevent
-;; us from optimizing.
+;; us from optimizing even though it has a different value.
 (module
   ;; CHECK:      (type $i (func (param i32)))
   (type $i (func (param i32)))
