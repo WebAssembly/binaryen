@@ -15,6 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v108
+----
+
+- Add CMake flag BUILD_TOOLS to control building tools (#4655)
+- Add CMake flag JS_OF_OCAML for js_of_ocaml (#4637)
+- Remove externref (#4633)
+
 v107
 ----
 

@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.10.2)
 # to reduce this for compatability with emsdk.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 107)
+project(binaryen LANGUAGES C CXX VERSION 108)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -33,6 +33,12 @@ option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
+
+# Turn this off to build only the library.
+option(BUILD_TOOLS "Build tools" ON)
+
+# Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
+option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
@@ -267,7 +273,11 @@ else()
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_compile_flag("-D__STDC_FORMAT_MACROS")
-    add_link_flag("-Wl,--stack,8388608")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      add_link_flag("-Wl,/stack:8388608")
+    else()
+      add_link_flag("-Wl,--stack,8388608")
+    endif()
   elseif(NOT EMSCRIPTEN)
     add_compile_flag("-fPIC")
   endif()
@@ -315,7 +325,12 @@ add_subdirectory(src/emscripten-optimizer)
 add_subdirectory(src/passes)
 add_subdirectory(src/support)
 add_subdirectory(src/wasm)
-add_subdirectory(src/tools)
+
+if(BUILD_TOOLS)
+  # Build binaryen tools
+  add_subdirectory(src/tools)
+endif()
+
 add_subdirectory(third_party)
 
 # Configure lit tests
@@ -403,14 +418,36 @@ if(EMSCRIPTEN)
     # only valid with fastcomp and WASM=0
     target_link_libraries(binaryen_js "-s ELIMINATE_DUPLICATE_FUNCTIONS=1")
   endif()
-  target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
+  # Disabling filesystem and setting web environment for js_of_ocaml
+  # so it doesn't try to detect the "node" environment
+  if(JS_OF_OCAML)
+    target_link_libraries(binaryen_js "-s NO_FILESYSTEM=1")
+    target_link_libraries(binaryen_js "-s ENVIRONMENT=web,worker")
+  else()
+    target_link_libraries(binaryen_js "-s NO_FILESYSTEM=0")
+  endif()
   target_link_libraries(binaryen_js "-s NODERAWFS=0")
   target_link_libraries(binaryen_js "-s EXPORT_NAME=Binaryen")
-  target_link_libraries(binaryen_js "-s EXPORT_ES6=1")
+  # Currently, js_of_ocaml can only process ES5 code
+  if(JS_OF_OCAML)
+    target_link_libraries(binaryen_js "-s EXPORT_ES6=0")
+  else()
+    target_link_libraries(binaryen_js "-s EXPORT_ES6=1")
+  endif()
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-  target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
+  # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
+  if(JS_OF_OCAML)
+    target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
+  else()
+    target_link_libraries(binaryen_js "--extern-pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
+  endif()
   target_link_libraries(binaryen_js optimized "--closure 1")
-  target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
+  # Currently, js_of_ocaml can only process ES5 code
+  if(JS_OF_OCAML)
+    target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT5\"")
+  else()
+    target_link_libraries(binaryen_js optimized "--closure-args \"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
+  endif()
   target_link_libraries(binaryen_js optimized "-flto")
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-s ASSERTIONS")

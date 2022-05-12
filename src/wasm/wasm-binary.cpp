@@ -6712,10 +6712,13 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
     auto* ref = popNonVoidExpression();
     out = Builder(wasm).makeRefCast(ref, rtt);
     return true;
-  } else if (code == BinaryConsts::RefCastStatic) {
+  } else if (code == BinaryConsts::RefCastStatic ||
+             code == BinaryConsts::RefCastNopStatic) {
     auto intendedType = getIndexedHeapType();
     auto* ref = popNonVoidExpression();
-    out = Builder(wasm).makeRefCast(ref, intendedType);
+    auto safety =
+      code == BinaryConsts::RefCastNopStatic ? RefCast::Unsafe : RefCast::Safe;
+    out = Builder(wasm).makeRefCast(ref, intendedType, safety);
     return true;
   }
   return false;
