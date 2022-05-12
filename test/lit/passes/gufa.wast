@@ -192,7 +192,7 @@
         (i32.const 1)
       )
     )
-    ;; $x has two possible values, the default 0 and 1, so we cannot optimize
+    ;; $x has two possible values, 1 and the default 0, so we cannot optimize
     ;; anything here.
     (local.get $x)
   )
@@ -237,7 +237,8 @@
       )
     )
     ;; $x has two possible values, the incoming param value and 1, so we cannot
-    ;; optimize.
+    ;; optimize, since the function is exported - anything on the outside could
+    ;; call it with values we are not aware of during the optimization.
     (local.get $param)
   )
 
@@ -259,8 +260,11 @@
     )
     ;; As above, but now the function is not exported. That means it has no
     ;; callers, so the only possible contents for $param are the local.set here,
-    ;; as this code is unreachable. We don't try to optimize in such cases, so
-    ;; nothing will happen here.
+    ;; as this code is unreachable. We will infer a constant of 1 for all values
+    ;; of $param here. (With an SSA analysis, we could see that the first
+    ;; local.get must be unreachable, and optimize even better; as things are,
+    ;; we see the local.set and it is the only thing that sends values to the
+    ;; local.)
     (local.get $param)
   )
 
@@ -305,8 +309,8 @@
     ;; value is 42, which we can optimize to.
     ;; (Nothing else calls $cycle, so this is dead code in actuality, but this
     ;; pass leaves such things to other passes.)
-    ;; Note that the caller passes a constant for $y which lets us optimize that
-    ;; too.
+    ;; Note that the first call passes constants for $x and $y which lets us
+    ;; optimize them too (as we see no other contents arrive to them).
     (drop
       (call $cycle
         (i32.const 42)
@@ -366,8 +370,8 @@
         (i32.const 1)
       )
     )
-    ;; As above, but flip $x and $y's usage in the function. There is still only
-    ;; the one value possible as nothing else flows in.
+    ;; As above, but flip one $x and $y on the first and last local.gets. There
+    ;; is still only the one value possible as nothing else flows in.
     (select
       (i32.const 42)
       (call $cycle-2
@@ -578,8 +582,9 @@
   ;; CHECK-NEXT: )
   (func $blocks
     ;; We can infer a constant value here, but should not make any changes, as
-    ;; what we would optimize to would be a block ending in a constant with the
-    ;; old block nested in it, that is, we'd increase code size for no benefit.
+    ;; the pattern we try to optimize things to is exactly a block ending in a
+    ;; constant. So we do not optimize such things, which would keep increasing
+    ;; code size each time we run, with no benefit.
     (drop
       (block (result i32)
         (nop)
@@ -614,7 +619,7 @@
         (if
           (i32.const 0)
           (br $named
-            (i32.const 2)
+            (i32.const 2) ;; this changed
           )
         )
         (i32.const 1)
