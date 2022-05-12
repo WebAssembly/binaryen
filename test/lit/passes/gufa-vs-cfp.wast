@@ -2452,9 +2452,7 @@
   )
 )
 
-;; TODO
-
-;; Test of a near-copy, of a different index.
+;; Similar to the above, but different fields within the same struct.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) (field (mut i32)) data))
   (type $struct (struct (mut i32) (mut i32)))
@@ -2495,7 +2493,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; As this is not a copy, we cannot optimize struct.0's get lower down.
+    ;; The get from field 1 can be optimized to 1337, but field 0 has this
+    ;; write to it, which means it can contain 42 or 1337, so we cannot
+    ;; optimize.
     (struct.set $struct 0
       (call $create)
       (struct.get $struct 1
