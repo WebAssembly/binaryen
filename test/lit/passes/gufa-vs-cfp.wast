@@ -1171,8 +1171,10 @@
     (local.set $ref
       (call $create)
     )
-    ;; Get field 0 from the $struct1. This can be optimized to a constant
-    ;; since we only ever created an instance of struct3 with a constant there.
+    ;; Get field 0 from $struct1. This can be optimized to a constant since
+    ;; we only ever created an instance of struct3 with a constant there - the
+    ;; reference must point to a $struct3. The same happens in all the other
+    ;; gets below as well, all optimize to constants.
     (drop
       (struct.get $struct1 0
         (local.get $ref)
