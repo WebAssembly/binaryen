@@ -2028,7 +2028,8 @@
       )
     )
     ;; This set of a different value limits our ability to optimize the get
-    ;; after us.
+    ;; after us. But the get before us and the one at the very end remain
+    ;; optimized - changes to $struct2 do not confuse the other types.
     (struct.set $struct2 0
       (call $create2)
       (i32.const 1234)
