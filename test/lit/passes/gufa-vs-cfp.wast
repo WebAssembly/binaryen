@@ -2280,7 +2280,8 @@
   ;; CHECK-NEXT: )
   (func $test
     ;; This copy does not actually introduce any new possible values, and so it
-    ;; remains true that the only possible value is the default.
+    ;; remains true that the only possible value is the default 0, so we can
+    ;; optimize the get below to a 0 (and also the get in the set).
     (struct.set $struct 0
       (call $create)
       (struct.get $struct 0
