@@ -1068,21 +1068,17 @@
   )
 )
 
-;; TODO
-
 ;; Multi-level subtyping, check that we propagate not just to the immediate
 ;; supertype but all the way as needed.
 (module
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) data))
+  (type $struct1 (struct_subtype i32 data))
 
   ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $struct1))
+  (type $struct2 (struct_subtype i32 f64 $struct1))
 
   ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype i32 f64 anyref $struct2))
-
-  (type $struct2 (struct_subtype i32 f64 $struct1))
-
-  (type $struct1 (struct i32))
 
   ;; CHECK:      (type $none_=>_ref|$struct3| (func_subtype (result (ref $struct3)) func))
 
