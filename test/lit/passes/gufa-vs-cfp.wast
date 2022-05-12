@@ -2824,10 +2824,11 @@
   (func $test (result funcref)
     ;; Realistic usage of an itable: read an item from it, then a func from
     ;; that, and return the value (all verifying that the types are correct
-    ;; after optimization). Note how after optimization everything is lined up
-    ;; so that precompute-propagate can infer from the global.get the specific
-    ;; object the array.get is on, allowing us to emit a constant value for the
-    ;; outer struct.get in principle.
+    ;; after optimization).
+    ;;
+    ;; We optimize some of this, but stop at reading form the immutable global.
+    ;; To continue we need to track the fields of allocated objects, or to look
+    ;; at immutable globals directly, neither of which we do yet.
     (struct.get $vtable 0
       (array.get $itable
         (struct.get $object $itable
