@@ -228,11 +228,25 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (select (result anyref)
+ ;; CHECK-NEXT:    (ref.null any)
  ;; CHECK-NEXT:    (ref.cast_static $struct
  ;; CHECK-NEXT:     (ref.null any)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
  ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref $struct))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (select (result anyref)
+ ;; CHECK-NEXT:      (br_on_cast_static $block $struct
+ ;; CHECK-NEXT:       (ref.null $struct)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (ref.null any)
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

@@ -31,7 +31,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
 
   CostType cost;
 
-  // A cost that is extremely high, something that is far, far more expensive 
+  // A cost that is extremely high, something that is far, far more expensive
   // than a fast operation like an add. This cost is so high it is unacceptable
   // to add any more of it, say by an If=>Select operation (which would execute
   // both arms; if either arm contains an unacceptable cost, we do not do it).
@@ -614,8 +614,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
            maybeVisit(curr->rtt);
   }
   CostType visitBrOn(BrOn* curr) {
-    // BrOnCast has more work to do with the rtt, so add a little there.
-    CostType base = curr->op == BrOnCast ? Unacceptable : 2;
+    // BrOnCast of a null can be fairly fast, but anything else is a cast check
+    // basically, and an unacceptable cost.
+    CostType base = curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : Unacceptable;
     return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref) +
            maybeVisit(curr->rtt);
   }
