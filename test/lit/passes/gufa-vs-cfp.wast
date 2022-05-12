@@ -2168,6 +2168,8 @@
   )
 )
 
+;; TODO
+
 ;; Never create A, but have a set to its field. A subtype B has no creates nor
 ;; sets, and the final subtype C has a create and a get. The set to A should
 ;; apply to it, preventing optimization.
