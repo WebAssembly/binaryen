@@ -118,7 +118,20 @@ public:
       return true;
     }
 
+    if (isNull() && other.isNull()) {
+      return combineNull(other.getConstantValue());
+    }
+
     return false;
+  }
+
+  // Nulls compare equal, but we must combine them into a null of the LUB, both
+  // for determinism (the order should not matter) and to validate in all cases.
+  //
+  // Returns whether we changed anything.
+  bool combineNull(Literal otherNull) {
+    assert(isNull());
+    
   }
 
   // Check if all the values are identical and constant.
@@ -129,6 +142,10 @@ public:
   bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
 
   bool isConstantGlobal() const { return std::get_if<Name>(&value); }
+
+  bool isNull() const {
+    return isConstantLiteral() && getConstantLiteral().isNull();
+  }
 
   // Returns the single constant value.
   Literal getConstantLiteral() const {
