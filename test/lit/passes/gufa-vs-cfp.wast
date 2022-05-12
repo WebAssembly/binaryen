@@ -1899,6 +1899,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get-precise
+    ;; The set only affects $struct2, exactly it and nothing else, so we can
+    ;; optimize all the gets in this function.
     (drop
       (struct.get $struct1 0
         (call $create1)
@@ -1929,7 +1931,6 @@
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
-
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
