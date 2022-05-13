@@ -238,7 +238,7 @@ Literal Literal::makeZero(Type type) {
     if (type == Type::i31ref) {
       return makeI31(0);
     } else {
-      return makeNull(type);
+      return makeNull(type.getHeapType());
     }
   } else if (type.isRtt()) {
     return Literal(type);
