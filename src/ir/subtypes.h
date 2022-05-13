@@ -35,18 +35,18 @@ struct SubTypes {
     }
   }
 
-  const std::vector<HeapType>& getSubTypes(HeapType type) {
+  const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
     return typeSubTypes[type];
   }
 
   // Get all subtypes of a type, and their subtypes and so forth, recursively.
-  std::vector<HeapType> getAllSubTypes(HeapType type) {
+  std::vector<HeapType> getAllStrictSubTypes(HeapType type) {
     std::vector<HeapType> ret, work;
     work.push_back(type);
     while (!work.empty()) {
       auto curr = work.back();
       work.pop_back();
-      for (auto sub : getSubTypes(curr)) {
+      for (auto sub : getStrictSubTypes(curr)) {
         ret.push_back(sub);
         work.push_back(sub);
       }
@@ -54,25 +54,11 @@ struct SubTypes {
     return ret;
   }
 
-  // Like getAllSubTypes, but also includes the type itself.
-  std::vector<HeapType> getAllSubTypesInclusive(HeapType type) {
-    auto ret = getAllSubTypes(type);
+  // Like getAllStrictSubTypes, but also includes the type itself.
+  std::vector<HeapType> getAllSubTypes(HeapType type) {
+    auto ret = getAllStrictSubTypes(type);
     ret.push_back(type);
     return ret;
-  }
-
-  // Get all supertypes of a type. The order in the output vector is with the
-  // immediate supertype first, then its supertype, and so forth.
-  std::vector<HeapType> getAllSuperTypes(HeapType type) {
-    std::vector<HeapType> ret;
-    while (1) {
-      auto super = type.getSuperType();
-      if (!super) {
-        return ret;
-      }
-      ret.push_back(*super);
-      type = *super;
-    }
   }
 
   // All the types in the program. This is computed here anyhow, and can be
