@@ -1383,7 +1383,7 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
       // expression, in particular), so we can use that as an indicator that we
       // have never allocated one yet, and do so now.
       coneReadIndex = makeSpecialLocation();
-      for (auto type : subTypes->getAllSubTypesInclusive(declaredHeapType)) {
+      for (auto type : subTypes->getAllSubTypes(declaredHeapType)) {
         connectDuringFlow(DataLocation{type, fieldIndex},
                           SpecialLocation{coneReadIndex});
       }
@@ -1432,7 +1432,7 @@ void Flower::writeToNewLocations(Expression* ref,
 
     // Update all possible subtypes here.
     auto type = ref->type.getHeapType();
-    for (auto subType : subTypes->getAllSubTypesInclusive(type)) {
+    for (auto subType : subTypes->getAllSubTypes(type)) {
       auto heapLoc = DataLocation{subType, fieldIndex};
       sendContents(heapLoc, valueContents);
     }
