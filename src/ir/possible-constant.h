@@ -115,7 +115,7 @@ public:
       auto otherType = other.getConstantLiteral().type.getHeapType();
       auto lub = HeapType::getLeastUpperBound(type, otherType);
       if (lub != type) {
-        value = Literal::makeNull(Type(lub, Nullable));
+        value = Literal::makeNull(lub));
         return true;
       }
       return false;
