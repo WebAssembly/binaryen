@@ -51,6 +51,9 @@ Expression* getDroppedChildren(Expression* curr,
   if (last) {
     contents.push_back(last);
   }
+  if (contents.size() == 0) {
+    return builder.makeNop();
+  }
   if (contents.size() == 1) {
     return contents[0];
   }
