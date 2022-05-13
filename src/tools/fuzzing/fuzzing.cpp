@@ -1883,10 +1883,11 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
       return builder.makeRefFunc(func->name, func->type);
     }
   }
-  // We don't have a matching function, so create a null with high probability
-  // if the type is nullable or otherwise create and cast a null with low
-  // probability (which would trap).
-  if ((type.isNullable() && !oneIn(16)) || oneIn(16)) {
+  // We don't have a matching function. Create a null some of the time here,
+  // but only rarely if the type is non-nullable (because in that case we'd need
+  // to add a ref.as_non_null to validate, and the code will trap when we get
+  // here).
+  if ((type.isNullable() && oneIn(2)) || (type.isNonNullable() && oneIn(16))) {
     Expression* ret = builder.makeRefNull(Type(heapType, Nullable));
     if (!type.isNullable()) {
       ret = builder.makeRefAs(RefAsNonNull, ret);
@@ -1894,9 +1895,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     return ret;
   }
   // As a final option, create a new function with the correct signature. The
-  // function's body will trap if actually called, which is still better than
-  // the last option of a cast of a null that will trap even if the reference is
-  // not called.
+  // function's body will trap if actually called (which is still better than
+  // the ref.as_non_null path just before us, which traps even without a call).
   auto* func = wasm.addFunction(
     builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
                          heapType,
