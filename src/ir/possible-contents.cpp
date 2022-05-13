@@ -1462,7 +1462,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     if (mayBeNull) {
       // A null is possible, so pass that along.
       filtered.combine(PossibleContents::literal(
-        Literal::makeNull(Type(intendedType, Nullable))));
+        Literal::makeNull(intendedType)));
     }
   }
   if (!filtered.isNone()) {
