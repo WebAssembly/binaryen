@@ -182,7 +182,7 @@ public:
       } else if (isNull() && other.isNull()) {
         // Both are null. The result is a null, of the LUB.
         auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
-                                                     otherType.getHeapType());
+                                                otherType.getHeapType());
         return applyIfDifferent(
           PossibleContents::literal(Literal::makeNull(lub)));
       }

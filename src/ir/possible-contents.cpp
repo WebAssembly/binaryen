@@ -253,7 +253,9 @@ struct InfoCollector
   void visitMemorySize(MemorySize* curr) { addRoot(curr); }
   void visitMemoryGrow(MemoryGrow* curr) { addRoot(curr); }
   void visitRefNull(RefNull* curr) {
-    addRoot(curr, PossibleContents::literal(Literal::makeNull(curr->type.getHeapType())));
+    addRoot(
+      curr,
+      PossibleContents::literal(Literal::makeNull(curr->type.getHeapType())));
   }
   void visitRefIs(RefIs* curr) {
     // TODO: optimize when possible
@@ -1461,8 +1463,8 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     bool mayBeNull = contents.getType().isNullable();
     if (mayBeNull) {
       // A null is possible, so pass that along.
-      filtered.combine(PossibleContents::literal(
-        Literal::makeNull(intendedType)));
+      filtered.combine(
+        PossibleContents::literal(Literal::makeNull(intendedType)));
     }
   }
   if (!filtered.isNone()) {
