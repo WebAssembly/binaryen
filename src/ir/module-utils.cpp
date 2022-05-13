@@ -90,12 +90,26 @@ struct CodeScanner
       // only place in the entire program that uses this type then we'd run into
       // an internal error later, so make sure the type is included here.
       //
+      // This problem is specific to local.get because the type of local.get is
+      // dependent on the function's signature. Therefore local.get types must
+      // be changed atomically with a signature change to one of its params.
+      // However, for modularity we have separate utility code for each and not
+      // a single big monolithic helper that does both, so we need to be a
+      // little flexible here to handle IR that is partially updated,
+      // specifically, has local.get types updated but not the signature yet.
+      //
       // We may find a better way to do this with a refactor of how signature
       // updating works, but for now, calling counts.include() here has no
       // downside aside from a tiny amount of extra work during compilation, as
       // it is logically correct to ensure all local types are included.
       if (get->type.isRef()) {
         counts.include(get->type.getHeapType());
+      }
+    } else if (auto* set = curr->dynCast<LocalSet>()) {
+      // See LocalGet comment above: local.tee also has its type depend on the
+      // type in the signature, like local.get.
+      if (set->type.isRef()) {
+        counts.include(set->type.getHeapType());
       }
     } else if (Properties::isControlFlowStructure(curr)) {
       if (curr->type.isTuple()) {
