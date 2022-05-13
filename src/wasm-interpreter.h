@@ -1337,7 +1337,7 @@ public:
   Flow visitCallRef(CallRef* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
-    return Literal::makeNull(curr->type);
+    return Literal::makeNull(curr->type.getHeapType());
   }
   Flow visitRefIs(RefIs* curr) {
     NOTE_ENTER("RefIs");
@@ -1531,7 +1531,7 @@ public:
     if (auto* breaking = cast.getBreaking()) {
       return *breaking;
     } else if (cast.getNull()) {
-      return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
+      return Literal::makeNull(curr->type.getHeapType());
     } else if (auto* result = cast.getSuccess()) {
       return *result;
     }
@@ -2573,7 +2573,7 @@ private:
       if (table->type.isNullable()) {
         // Initial with nulls in a nullable table.
         auto info = getTableInterfaceInfo(table->name);
-        auto null = Literal::makeNull(table->type);
+        auto null = Literal::makeNull(table->type.getHeapType());
         for (Address i = 0; i < table->initial; i++) {
           info.interface->tableStore(info.name, i, null);
         }

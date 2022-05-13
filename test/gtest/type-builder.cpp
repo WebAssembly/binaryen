@@ -1,3 +1,4 @@
+#include "ir/subtypes.h"
 #include "type-test.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
@@ -497,4 +498,33 @@ TEST_F(EquirecursiveTest, CanonicalizeBasicTypes) {
 }
 TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
   testCanonicalizeBasicTypes();
+}
+
+// Test SubTypes utility code.
+TEST_F(NominalTest, testSubTypes) {
+  // Build type types, the second of which is a subtype.
+  TypeBuilder builder(2);
+  builder[0] = Struct({Field(Type::anyref, Immutable)});
+  builder[1] = Struct({Field(Type::funcref, Immutable)});
+  builder[1].subTypeOf(builder[0]);
+  auto built = *builder.build();
+
+  // Build a tiny wasm module that uses the types, so that we can test the
+  // SubTypes utility code.
+  Module wasm;
+  Builder wasmBuilder(wasm);
+  wasm.addFunction(wasmBuilder.makeFunction(
+    "func",
+    Signature(Type::none, Type::none),
+    {Type(built[0], Nullable), Type(built[1], Nullable)},
+    wasmBuilder.makeNop()));
+  SubTypes subTypes(wasm);
+  auto subTypes0 = subTypes.getStrictSubTypes(built[0]);
+  EXPECT_TRUE(subTypes0.size() == 1 && subTypes0[0] == built[1]);
+  auto subTypes0Inclusive = subTypes.getAllSubTypes(built[0]);
+  EXPECT_TRUE(subTypes0Inclusive.size() == 2 &&
+              subTypes0Inclusive[0] == built[1] &&
+              subTypes0Inclusive[1] == built[0]);
+  auto subTypes1 = subTypes.getStrictSubTypes(built[1]);
+  EXPECT_EQ(subTypes1.size(), 0u);
 }

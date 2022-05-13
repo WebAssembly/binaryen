@@ -85,6 +85,9 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
 // It can be tuned more later.
 const Index TooCostlyToRunUnconditionally = 9;
 
+static_assert(TooCostlyToRunUnconditionally < CostAnalyzer::Unacceptable,
+              "We never run code unconditionally if it has unacceptable cost");
+
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously
 // only one of the two might have executed. We assume here that
