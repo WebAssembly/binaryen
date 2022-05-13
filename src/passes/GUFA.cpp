@@ -194,7 +194,7 @@ struct GUFAPass : public Pass {
           // We handle that below.
           //
           // TODO: would emitting a more specific null be useful when valid?
-          contents = PossibleContents::literal(Literal::makeNull(curr->type));
+          contents = PossibleContents::literal(Literal::makeNull(curr->type.getHeapType()));
         }
 
         auto* c = contents.makeExpression(wasm);
