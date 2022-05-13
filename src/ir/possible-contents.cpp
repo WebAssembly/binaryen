@@ -253,7 +253,7 @@ struct InfoCollector
   void visitMemorySize(MemorySize* curr) { addRoot(curr); }
   void visitMemoryGrow(MemoryGrow* curr) { addRoot(curr); }
   void visitRefNull(RefNull* curr) {
-    addRoot(curr, PossibleContents::literal(Literal::makeNull(curr->type)));
+    addRoot(curr, PossibleContents::literal(Literal::makeNull(curr->type.getHeapType())));
   }
   void visitRefIs(RefIs* curr) {
     // TODO: optimize when possible
