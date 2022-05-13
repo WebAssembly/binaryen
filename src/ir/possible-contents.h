@@ -181,9 +181,8 @@ public:
           PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
       } else if (isNull() && other.isNull()) {
         // Both are null. The result is a null, of the LUB.
-        auto lub = Type(HeapType::getLeastUpperBound(type.getHeapType(),
-                                                     otherType.getHeapType()),
-                        Nullable);
+        auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
+                                                     otherType.getHeapType());
         return applyIfDifferent(
           PossibleContents::literal(Literal::makeNull(lub)));
       }
