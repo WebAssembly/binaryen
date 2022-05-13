@@ -24,16 +24,16 @@
 
 namespace wasm {
 
-// Returns a block containing the dropped children of a node. This is useful if
-// we know the node is not needed but need to keep the children around.
+// Returns the dropped children of a node (in a block, if there is more than
+// one). This is useful if we know the node is not needed but may need to keep
+// the children around; this utility will automatically remove any children we
+// do not actually need to keep, based on their effects.
 //
-// The caller also passes in a last item to add to the block.
-//
-// TODO: use this in more places
+// The caller can also pass in an optional last item to add to the output.
 Expression* getDroppedChildren(Expression* curr,
-                               Expression* last,
                                Module& wasm,
-                               const PassOptions& options) {
+                               const PassOptions& options,
+                               Expression* last = nullptr) {
   Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {
@@ -48,10 +48,12 @@ Expression* getDroppedChildren(Expression* curr,
       contents.push_back(child);
     }
   }
-  if (contents.empty()) {
-    return last;
+  if (last) {
+    contents.push_back(last);
   }
-  contents.push_back(last);
+  if (contents.size() == 1) {
+    return contents[0];
+  }
   return builder.makeBlock(contents);
 }
 

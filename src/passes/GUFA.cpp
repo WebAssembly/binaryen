@@ -162,7 +162,7 @@ struct GUFAPass : public Pass {
         auto replaceWithUnreachable = [&]() {
           if (canReplaceWithUnreachable(curr)) {
             replaceCurrent(getDroppedChildren(
-              curr, builder.makeUnreachable(), wasm, options));
+              curr, wasm, options, builder.makeUnreachable()));
           } else {
             // We can't remove this, but we can at least put an unreachable
             // right after it.
@@ -208,7 +208,7 @@ struct GUFAPass : public Pass {
         // that will trap at runtime.
         if (Type::isSubType(c->type, curr->type)) {
           if (canRemove(curr)) {
-            replaceCurrent(getDroppedChildren(curr, c, wasm, options));
+            replaceCurrent(getDroppedChildren(curr, wasm, options, c));
           } else {
             // We can't remove this, but we can at least drop it and put the
             // optimized value right after it.
