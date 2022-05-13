@@ -15,14 +15,13 @@
  ;; NOMNL:      (type $B (struct_subtype (field (ref null $D)) $A))
  (type $B (struct_subtype (field (ref null $D)) $A))
 
- ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
-
  ;; CHECK:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))))
  ;; NOMNL:      (type $C (struct_subtype (field (mut (ref $A))) data))
 
  ;; NOMNL:      (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
  (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
 
+ ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
  (type $C (struct (field (mut (ref $A)))))
 
 
