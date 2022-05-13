@@ -1896,14 +1896,13 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   }
   // As a final option, create a new function with the correct signature. If it
   // returns a value, write a trap as we do not want to create any more code
-  // here (we might be recursing). Note that a trap is still better than the
+  // here (we might end up recursing). Note that a trap is still better than the
   // ref.as_non_null path just before us, which traps even without a call).
-  auto* body = heapType.getSignature().results == Type::none ? builder.makeNop() : builder.makeUnreachable();
-  auto* func = wasm.addFunction(
-    builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
-                         heapType,
-                         {},
-                         body));
+  Expression* body = heapType.getSignature().results == Type::none
+                           ? builder.makeNop()
+                           : builder.makeUnreachable();
+  auto* func = wasm.addFunction(builder.makeFunction(
+    Names::getValidFunctionName(wasm, "ref_func_target"), heapType, {}, body));
   return builder.makeRefFunc(func->name, heapType);
 }
 
