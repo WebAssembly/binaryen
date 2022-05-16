@@ -11,6 +11,8 @@ TEST_F(TypeTest, TypeBuilderGrowth) {
   EXPECT_EQ(builder.size(), 0u);
   builder.grow(3);
   EXPECT_EQ(builder.size(), 3u);
+  builder.grow(0);
+  EXPECT_EQ(builder.size(), 3u);
 }
 
 TEST_F(TypeTest, TypeIterator) {

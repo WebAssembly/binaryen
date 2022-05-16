@@ -137,6 +137,26 @@ void GlobalTypeRewriter::update() {
     }
 
     void visitExpression(Expression* curr) {
+      // local.get and local.tee are special in that their type is tied to the
+      // type of the local in the function, which is tied to the signature. That
+      // means we must update it based on the signature, and not on the old type
+      // in the local.
+      //
+      // We have already updated function signatures by the time we get here,
+      // which means we can just apply the current local type that we see (there
+      // is no need to call getNew(), which we already did on the function's
+      // signature itself).
+      if (auto* get = curr->dynCast<LocalGet>()) {
+        curr->type = getFunction()->getLocalType(get->index);
+        return;
+      } else if (auto* tee = curr->dynCast<LocalSet>()) {
+        // Rule out a local.set and unreachable code.
+        if (tee->type != Type::none && tee->type != Type::unreachable) {
+          curr->type = getFunction()->getLocalType(tee->index);
+        }
+        return;
+      }
+
       // Update the type to the new one.
       curr->type = getNew(curr->type);
 
@@ -172,6 +192,16 @@ void GlobalTypeRewriter::update() {
 
   CodeUpdater updater(oldToNewTypes);
   PassRunner runner(&wasm);
+
+  // Update functions first, so that we see the updated types for locals (which
+  // can change if the function signature changes).
+  for (auto& func : wasm.functions) {
+    func->type = updater.getNew(func->type);
+    for (auto& var : func->vars) {
+      var = updater.getNew(var);
+    }
+  }
+
   updater.run(&runner, &wasm);
   updater.walkModuleCode(&wasm);
 
@@ -184,12 +214,6 @@ void GlobalTypeRewriter::update() {
   }
   for (auto& global : wasm.globals) {
     global->type = updater.getNew(global->type);
-  }
-  for (auto& func : wasm.functions) {
-    func->type = updater.getNew(func->type);
-    for (auto& var : func->vars) {
-      var = updater.getNew(var);
-    }
   }
   for (auto& tag : wasm.tags) {
     tag->sig = updater.getNew(tag->sig);
@@ -323,7 +347,8 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
 
 void updateParamTypes(Function* func,
                       const std::vector<Type>& newParamTypes,
-                      Module& wasm) {
+                      Module& wasm,
+                      LocalUpdatingMode localUpdating) {
   // Before making this update, we must be careful if the param was "reused",
   // specifically, if it is assigned a less-specific type in the body then
   // we'd get a validation error when we refine it. To handle that, if a less-
@@ -369,7 +394,11 @@ void updateParamTypes(Function* func,
       if (iter != paramFixups.end()) {
         auto fixup = iter->second;
         contents.push_back(builder.makeLocalSet(
-          fixup, builder.makeLocalGet(index, newParamTypes[index])));
+          fixup,
+          builder.makeLocalGet(index,
+                               localUpdating == Update
+                                 ? newParamTypes[index]
+                                 : func->getLocalType(index))));
       }
     }
     contents.push_back(func->body);
@@ -391,17 +420,19 @@ void updateParamTypes(Function* func,
   }
 
   // Update local.get/local.tee operations that use the modified param type.
-  for (auto* get : gets.list) {
-    auto index = get->index;
-    if (func->isParam(index)) {
-      get->type = newParamTypes[index];
+  if (localUpdating == Update) {
+    for (auto* get : gets.list) {
+      auto index = get->index;
+      if (func->isParam(index)) {
+        get->type = newParamTypes[index];
+      }
     }
-  }
-  for (auto* set : sets.list) {
-    auto index = set->index;
-    if (func->isParam(index) && set->isTee()) {
-      set->type = newParamTypes[index];
-      set->finalize();
+    for (auto* set : sets.list) {
+      auto index = set->index;
+      if (func->isParam(index) && set->isTee()) {
+        set->type = newParamTypes[index];
+        set->finalize();
+      }
     }
   }
 
