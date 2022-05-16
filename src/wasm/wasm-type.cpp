@@ -2810,7 +2810,7 @@ TypeBuilder::TypeBuilder(TypeBuilder&& other) = default;
 TypeBuilder& TypeBuilder::operator=(TypeBuilder&& other) = default;
 
 void TypeBuilder::grow(size_t n) {
-  assert(size() + n > size());
+  assert(size() + n >= size());
   impl->entries.resize(size() + n);
 }
 
