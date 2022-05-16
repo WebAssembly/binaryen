@@ -1896,8 +1896,9 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   }
   // As a final option, create a new function with the correct signature. If it
   // returns a value, write a trap as we do not want to create any more code
-  // here (we might end up recursing). Note that a trap is still better than the
-  // ref.as_non_null path just before us, which traps even without a call).
+  // here (we might end up recursing). Note that a trap in the function lets us
+  // execute more code then the ref.as_non_null path just before us, which traps
+  // even if we never call the function.
   auto* body = heapType.getSignature().results == Type::none
                  ? (Expression*)builder.makeNop()
                  : (Expression*)builder.makeUnreachable();
