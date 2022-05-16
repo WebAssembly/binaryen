@@ -32,7 +32,6 @@
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
