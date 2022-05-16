@@ -75,42 +75,6 @@ struct CodeScanner
       counts.note(get->ref->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
       counts.note(set->ref->type);
-    } else if (auto* get = curr->dynCast<LocalGet>()) {
-      // Make sure that local types are all included in the types we know.
-      // Normally they already are: local types appear either in the function
-      // signature (for params) or the function vars, all of which are already
-      // counted. However, we also need to collect heap types *during* a
-      // signature update, when refining the type of a parameter: we first fix
-      // up local.gets and other expressions, then we collect heap types and we
-      // use that to update the signature everywhere it is used, in particular,
-      // in the function itself. We must do that all at once, and so at the
-      // point in time that we collect heap types the local.get has been updated
-      // to match the new param type, but the param type as declared in the
-      // function signature has not yet been updated. If the local.get is the
-      // only place in the entire program that uses this type then we'd run into
-      // an internal error later, so make sure the type is included here.
-      //
-      // This problem is specific to local.get because the type of local.get is
-      // dependent on the function's signature. Therefore local.get types must
-      // be changed atomically with a signature change to one of its params.
-      // However, for modularity we have separate utility code for each and not
-      // a single big monolithic helper that does both, so we need to be a
-      // little flexible here to handle IR that is partially updated,
-      // specifically, has local.get types updated but not the signature yet.
-      //
-      // We may find a better way to do this with a refactor of how signature
-      // updating works, but for now, calling counts.include() here has no
-      // downside aside from a tiny amount of extra work during compilation, as
-      // it is logically correct to ensure all local types are included.
-      if (get->type.isRef()) {
-        counts.include(get->type.getHeapType());
-      }
-    } else if (auto* set = curr->dynCast<LocalSet>()) {
-      // See LocalGet comment above: local.tee also has its type depend on the
-      // type in the signature, like local.get.
-      if (set->type.isRef()) {
-        counts.include(set->type.getHeapType());
-      }
     } else if (Properties::isControlFlowStructure(curr)) {
       if (curr->type.isTuple()) {
         // TODO: Allow control flow to have input types as well
