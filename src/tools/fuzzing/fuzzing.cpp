@@ -2911,13 +2911,7 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      WeightedOption{Type::f32, VeryImportant},
                      WeightedOption{Type::f64, VeryImportant})
                 .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
-                // Avoid Type::anyref without GC enabled, as in some contexts
-                // we will not be able to emit any constant for it (with GC, we
-                // can always emit a struct.new etc., even in a global init,
-                // while atm in global inits we don't yet have access to funcs
-                // so ref.func is not an option - FIXME emit at least one
-                // function before global inits).
-                .add(FeatureSet::ReferenceTypes, Type::funcref)
+                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::anyref)
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      // Type(HeapType::func, NonNullable),
                      // Type(HeapType::any, NonNullable),
