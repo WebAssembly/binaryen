@@ -162,7 +162,7 @@ public:
   // Returns whether we have ever noted a value.
   bool hasNoted() const { return !std::get_if<None>(&value); }
 
-  void dump(std::ostream& o) {
+  void dump(std::ostream& o) const {
     o << '[';
     if (!hasNoted()) {
       o << "unwritten";
