@@ -403,7 +403,7 @@ This will print out JavaScript to the console.
 For example, try
 
 ```
-$ bin/wasm2js test/hello_world.wat
+bin/wasm2js test/hello_world.wat
 ```
 
 That output contains
