@@ -771,7 +771,6 @@ struct Reducer
   template<typename T, typename U, typename C>
   void
   reduceByZeroing(T* segment, U zero, C isZero, size_t bonus, bool shrank) {
-    return;
     for (auto& item : segment->data) {
       if (!shouldTryToReduce(bonus) || isZero(item)) {
         continue;
