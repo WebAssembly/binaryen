@@ -27,6 +27,12 @@
 // casts on the way to that location allow nothing through. We can also find
 // that only a particular value is possible of that type.
 //
+// TODO: GUFA + polymorphic devirtualization + traps-never-happen. If we see
+//       that the possible call targets are {A, B, C}, and GUFA info lets us
+//       prove that A, C will trap if called - say, if they cast the first
+//       parameter to something GUFA proved it cannot be - then we can ignore
+//       them, and devirtualize to a call to B.
+//
 
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
