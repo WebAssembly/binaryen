@@ -831,7 +831,7 @@ struct Reducer
     // First, shrink segment elements.
     bool shrank = false;
     for (auto& segment : module->elementSegments) {
-      shrank = shrank || shrinkByReduction(segment.get(), 1);
+      shrank = shrinkByReduction(segment.get(), 1) || shrank;
     }
 
     // Second, try to replace elements with a "zero".
