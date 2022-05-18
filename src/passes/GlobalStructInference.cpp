@@ -30,9 +30,13 @@
 //
 // That is a valid transformation if there are only two struct.news of $foo, it
 // is created in two immutable globals $global1 and $global2, and the values of
-// field |i| in them are value1 and value2 respectively (and there are no
+// field |i| in them are value1 and value2 respectively (and $foo has no
 // subtypes). In that situation, the reference must be one of those two, so we
-// can compare the reference to the globals and pick the right value there.
+// can compare the reference to the globals and pick the right value there. Note
+// that that is the case even if the field |i| is mutable: we see all the
+// possible values of $foo in the immutable globals, so |i| must contain one of
+// them (if it's mutable, which of them it is might change over time, but that's
+// fine - it still has to be one of them).
 //
 // The benefit of this optimization is primarily in the case of constant values
 // that we can heavily optimize, like function references (constant function
@@ -132,8 +136,7 @@ struct GlobalStructInference : public Pass {
     // unoptimizable type makes all its supertypes unoptimizable as well.
     // TODO: this could be specific per field (and not all supers have all
     //       fields)
-    auto unoptimizableCopy = unoptimizable;
-    for (auto type : unoptimizableCopy) {
+    for (auto type : unoptimizable) {
       while (1) {
         typeGlobals.erase(type);
         auto super = type.getSuperType();
@@ -201,7 +204,7 @@ struct GlobalStructInference : public Pass {
         for (Index i = 0; i < globals.size(); i++) {
           auto* structNew = wasm.getGlobal(globals[i])->init->cast<StructNew>();
           if (structNew->isWithDefault()) {
-            values.push_back(Literal::makeNull(fieldType));
+            values.push_back(Literal::makeZero(fieldType));
           } else {
             auto* init = structNew->operands[field];
             if (!Properties::isConstantExpression(init)) {
