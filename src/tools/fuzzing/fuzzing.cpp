@@ -1936,6 +1936,14 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
           return makeConst(Type(subtype, nullability));
         }
         case HeapType::eq: {
+          assert(wasm.features.hasReferenceTypes());
+          if (!wasm.features.hasGC()) {
+            // Without wasm GC all we have is an "abstract" eqref type, which is
+            // a subtype of anyref, but we cannot create constants of it, except
+            // for null.
+            assert(type.isNullable());
+            return builder.makeRefNull(type);
+          }
           auto nullability = getSubType(type.getNullability());
           // i31.new is not allowed in initializer expressions.
           HeapType subtype;
@@ -1947,6 +1955,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
           return makeConst(Type(subtype, nullability));
         }
         case HeapType::i31:
+          assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
           // i31.new is not allowed in initializer expressions.
           if (funcContext) {
             return builder.makeI31New(makeConst(Type::i32));
@@ -3002,8 +3011,19 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
 }
 
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
-  return nullability == NonNullable ? NonNullable
-                                    : oneIn(2) ? Nullable : NonNullable;
+  if (nullability == NonNullable) {
+    return NonNullable;
+  }
+  // Without wasm GC, avoid non-nullable types as we cannot create any values
+  // of such types. For example, reference types adds eqref, but there is no
+  // way to create such a value, only to receive it from the outside, while GC
+  // adds i31/struct/array creation. Without GC, we will likely need to create a
+  // null of this type (unless we are lucky enough to have a non-null value
+  // arriving from an import), so avoid a non-null type if possible.
+  if (wasm.features.hasGC() && oneIn(2)) {
+    return NonNullable;
+  }
+  return Nullable;
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
