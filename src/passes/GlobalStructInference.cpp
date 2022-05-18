@@ -29,14 +29,12 @@
 //      (global.get $global1)))
 //
 // That is a valid transformation if there are only two struct.news of $foo, it
-// is created in two immutable globals $global1 and $global2, and the values of
-// field |i| in them are value1 and value2 respectively (and $foo has no
-// subtypes). In that situation, the reference must be one of those two, so we
-// can compare the reference to the globals and pick the right value there. Note
-// that that is the case even if the field |i| is mutable: we see all the
-// possible values of $foo in the immutable globals, so |i| must contain one of
-// them (if it's mutable, which of them it is might change over time, but that's
-// fine - it still has to be one of them).
+// is created in two immutable globals $global1 and $global2, the field is
+// immutable, the values of field |i| in them are value1 and value2
+// respectively, and $foo has no subtypes. In that situation, the reference must
+// be one of those two, so we can compare the reference to the globals and pick
+// the right value there. (We can also handle subtypes, if we look at their
+// values as well, see below.)
 //
 // The benefit of this optimization is primarily in the case of constant values
 // that we can heavily optimize, like function references (constant function
@@ -196,17 +194,21 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
-        // Check if the relevant fields contain constants.
+        // Check if the relevant fields contain constants, and are immutable.
         auto& wasm = *getModule();
-        auto field = curr->index;
-        auto fieldType = type.getHeapType().getStruct().fields[field].type;
+        auto fieldIndex = curr->index;
+        auto& field = type.getHeapType().getStruct().fields[fieldIndex];
+        if (field.mutable_ == Mutable) {
+          return;
+        }
+        auto fieldType = field.type;
         std::vector<Literal> values;
         for (Index i = 0; i < globals.size(); i++) {
           auto* structNew = wasm.getGlobal(globals[i])->init->cast<StructNew>();
           if (structNew->isWithDefault()) {
             values.push_back(Literal::makeZero(fieldType));
           } else {
-            auto* init = structNew->operands[field];
+            auto* init = structNew->operands[fieldIndex];
             if (!Properties::isConstantExpression(init)) {
               // Non-constant; give up entirely.
               return;
