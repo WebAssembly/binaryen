@@ -3045,6 +3045,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                  HeapType::data));
       case HeapType::eq:
         // TODO: nontrivial types as well.
+        assert(wasm.features.hasReferenceTypes());
+        assert(wasm.features.hasGC());
         return pick(HeapType::eq, HeapType::i31, HeapType::data);
       case HeapType::i31:
         return HeapType::i31;
