@@ -174,8 +174,9 @@
 
 ;; We ignore imports, as we assume a closed world, but that might change in the
 ;; future. For now, we will optimize here.
-;; TODO: test a reference type here that is imported, and not an i32, but that
-;;       is all that validates atm
+;; TODO: We can't import (ref $struct) here due to
+;;       https://github.com/WebAssembly/binaryen/issues/4676
+;;       So we test an imported i32 for now.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
