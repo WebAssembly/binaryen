@@ -1999,6 +1999,11 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
                "ref.null requires reference-types to be enabled");
   shouldBeTrue(
     curr->type.isNullable(), curr, "ref.null types must be nullable");
+
+  // The type of the null must also be valid for the features.
+  shouldBeTrue(curr->type.getFeatures() <= getModule()->features,
+               curr->type,
+               "ref.null type should be allowed");
 }
 
 void FunctionValidator::visitRefIs(RefIs* curr) {

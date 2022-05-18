@@ -3011,8 +3011,19 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
 }
 
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
-  return nullability == NonNullable ? NonNullable
-                                    : oneIn(2) ? Nullable : NonNullable;
+  if (nullability == NonNullable) {
+    return NonNullable;
+  }
+  // Without wasm GC, avoid non-nullable types as we cannot create any values
+  // of such types. For example, reference types adds eqref, but there is no
+  // way to create such a value, only to receive it from the outside, while GC
+  // adds i31/struct/array creation. Without GC, we will likely need to create a
+  // null of this type (unless we are lucky enough to have a non-null value
+  // arriving from an import), so avoid a non-null type if possible.
+  if (wasm.features.hasGC() && oneIn(2)) {
+    return NonNullable;
+  }
+  return Nullable;
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
@@ -3034,6 +3045,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                  HeapType::data));
       case HeapType::eq:
         // TODO: nontrivial types as well.
+        assert(wasm.features.hasReferenceTypes());
+        assert(wasm.features.hasGC());
         return pick(HeapType::eq, HeapType::i31, HeapType::data);
       case HeapType::i31:
         return HeapType::i31;
