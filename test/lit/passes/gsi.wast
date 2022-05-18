@@ -583,3 +583,190 @@
   )
 )
 
+;; One global each for two subtypes of a common supertype, and one for the
+;; supertype.
+(module
+  ;; CHECK:      (type $super-struct (struct_subtype (field i32) data))
+  (type $super-struct (struct_subtype i32 data))
+
+  ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field f32) $super-struct))
+  (type $struct1 (struct_subtype i32 f32 $super-struct))
+
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $super-struct))
+  (type $struct2 (struct_subtype i32 f64 $super-struct))
+
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global0 (ref $super-struct) (struct.new $super-struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global0 (ref $super-struct) (struct.new $super-struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global1 (ref $struct1) (struct.new $struct1
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT:  (f32.const 3.141590118408203)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct1) (struct.new $struct1
+    (i32.const 1337)
+    (f32.const 3.14159)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct2) (struct.new $struct2
+  ;; CHECK-NEXT:  (i32.const 99999)
+  ;; CHECK-NEXT:  (f64.const 2.71828)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct2) (struct.new $struct2
+    (i32.const 99999)
+    (f64.const 2.71828)
+  ))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super-struct 0
+  ;; CHECK-NEXT:    (ref.null $super-struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (ref.null $struct1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct2 0
+  ;; CHECK-NEXT:    (ref.null $struct2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This has three possible values due to the two children, so we do not
+    ;; optimize.
+    (drop
+      (struct.get $super-struct 0
+        (ref.null $super-struct)
+      )
+    )
+    ;; These each have one possible value, so we also do not optimize.
+    (drop
+      (struct.get $struct1 0
+        (ref.null $struct1)
+      )
+    )
+    (drop
+      (struct.get $struct2 0
+        (ref.null $struct2)
+      )
+    )
+  )
+)
+
+;; As above, but now the subtypes each have 2 values, and we can optimize.
+(module
+  ;; CHECK:      (type $super-struct (struct_subtype (field i32) data))
+  (type $super-struct (struct_subtype i32 data))
+
+  ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field f32) $super-struct))
+  (type $struct1 (struct_subtype i32 f32 $super-struct))
+
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $super-struct))
+  (type $struct2 (struct_subtype i32 f64 $super-struct))
+
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $global0 (ref $super-struct) (struct.new $super-struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global0 (ref $super-struct) (struct.new $super-struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global1 (ref $struct1) (struct.new $struct1
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT:  (f32.const 3.141590118408203)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct1) (struct.new $struct1
+    (i32.const 1337)
+    (f32.const 3.14159)
+  ))
+
+  ;; CHECK:      (global $global1b (ref $struct1) (struct.new $struct1
+  ;; CHECK-NEXT:  (i32.const 1338)
+  ;; CHECK-NEXT:  (f32.const 3.141590118408203)
+  ;; CHECK-NEXT: ))
+  (global $global1b (ref $struct1) (struct.new $struct1
+    (i32.const 1338)
+    (f32.const 3.14159)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct2) (struct.new $struct2
+  ;; CHECK-NEXT:  (i32.const 99999)
+  ;; CHECK-NEXT:  (f64.const 2.71828)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct2) (struct.new $struct2
+    (i32.const 99999)
+    (f64.const 2.71828)
+  ))
+
+  ;; CHECK:      (global $global2b (ref $struct2) (struct.new $struct2
+  ;; CHECK-NEXT:  (i32.const 99998)
+  ;; CHECK-NEXT:  (f64.const 2.71828)
+  ;; CHECK-NEXT: ))
+  (global $global2b (ref $struct2) (struct.new $struct2
+    (i32.const 99998)
+    (f64.const 2.71828)
+  ))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super-struct 0
+  ;; CHECK-NEXT:    (ref.null $super-struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (i32.const 1338)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 99999)
+  ;; CHECK-NEXT:    (i32.const 99998)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This still cannot be optimized.
+    (drop
+      (struct.get $super-struct 0
+        (ref.null $super-struct)
+      )
+    )
+    ;; These can be optimized, and will be different from one another.
+    (drop
+      (struct.get $struct1 0
+        (ref.null $struct1)
+      )
+    )
+    (drop
+      (struct.get $struct2 0
+        (ref.null $struct2)
+      )
+    )
+  )
+)
