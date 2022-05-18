@@ -3045,7 +3045,12 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                  HeapType::data));
       case HeapType::eq:
         // TODO: nontrivial types as well.
-        return pick(HeapType::eq, HeapType::i31, HeapType::data);
+        return pick(
+          FeatureOptions<HeapType>()
+            .add(FeatureSet::ReferenceTypes, HeapType::eq)
+            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                 HeapType::i31,
+                 HeapType::data));
       case HeapType::i31:
         return HeapType::i31;
       case HeapType::data:
