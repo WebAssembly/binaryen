@@ -1048,7 +1048,11 @@ def test_one(random_input, given_wasm):
         # apply properties like not having any NaNs, which the original fuzz
         # wasm had applied. that is, we need to preserve properties like not
         # having nans through reduction.
-        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+        try:
+            run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+        except Exception as e:
+            print("Internal error in fuzzer! Could not run given wasm")
+            raise e
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features

@@ -169,7 +169,7 @@
  ;; CHECK:      (func $bar (param $0 (ref null $none_=>_none))
  ;; CHECK-NEXT:  (local $1 anyref)
  ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (ref.null func)
+ ;; CHECK-NEXT:   (ref.null any)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -183,7 +183,7 @@
  ;; NOMNL:      (func $bar (type $ref?|none_->_none|_=>_none) (param $0 (ref null $none_=>_none))
  ;; NOMNL-NEXT:  (local $1 anyref)
  ;; NOMNL-NEXT:  (local.set $1
- ;; NOMNL-NEXT:   (ref.null func)
+ ;; NOMNL-NEXT:   (ref.null any)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (block
  ;; NOMNL-NEXT:   (drop
@@ -218,8 +218,8 @@
  ;; NOMNL-NEXT: )
  (func $call-bar
   ;; Call with nulls. Mixing nulls is fine as they all have the same value, and
-  ;; we can optimize. However, mixing a null with a reference stops us in the
-  ;; second param.
+  ;; we can optimize (to the LUB of the nulls). However, mixing a null with a
+  ;; reference stops us in the second param.
   (call $bar
    (ref.null func)
    (ref.null func)

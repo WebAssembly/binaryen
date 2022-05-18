@@ -248,9 +248,8 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  static Literal makeNull(Type type) {
-    assert(type.isNullable());
-    return Literal(type);
+  static Literal makeNull(HeapType type) {
+    return Literal(Type(type, Nullable));
   }
   static Literal makeFunc(Name func, Type type = Type::funcref) {
     return Literal(func, type);

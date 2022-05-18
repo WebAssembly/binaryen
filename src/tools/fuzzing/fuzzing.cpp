@@ -1883,22 +1883,27 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
       return builder.makeRefFunc(func->name, func->type);
     }
   }
-  // We don't have a matching function, so create a null with high probability
-  // if the type is nullable or otherwise create and cast a null with low
-  // probability.
-  if ((type.isNullable() && !oneIn(8)) || oneIn(8)) {
+  // We don't have a matching function. Create a null some of the time here,
+  // but only rarely if the type is non-nullable (because in that case we'd need
+  // to add a ref.as_non_null to validate, and the code will trap when we get
+  // here).
+  if ((type.isNullable() && oneIn(2)) || (type.isNonNullable() && oneIn(16))) {
     Expression* ret = builder.makeRefNull(Type(heapType, Nullable));
     if (!type.isNullable()) {
       ret = builder.makeRefAs(RefAsNonNull, ret);
     }
     return ret;
   }
-  // As a final option, create a new function with the correct signature.
-  auto* func = wasm.addFunction(
-    builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
-                         heapType,
-                         {},
-                         builder.makeUnreachable()));
+  // As a final option, create a new function with the correct signature. If it
+  // returns a value, write a trap as we do not want to create any more code
+  // here (we might end up recursing). Note that a trap in the function lets us
+  // execute more code then the ref.as_non_null path just before us, which traps
+  // even if we never call the function.
+  auto* body = heapType.getSignature().results == Type::none
+                 ? (Expression*)builder.makeNop()
+                 : (Expression*)builder.makeUnreachable();
+  auto* func = wasm.addFunction(builder.makeFunction(
+    Names::getValidFunctionName(wasm, "ref_func_target"), heapType, {}, body));
   return builder.makeRefFunc(func->name, heapType);
 }
 
