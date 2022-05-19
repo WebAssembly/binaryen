@@ -978,13 +978,14 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // the entire program all at once, indexing and deduplicating everything as we
   // go.
 
-  // The roots are not declared in the class as we only need them during this
-  // function itself.
-  std::unordered_map<Location, PossibleContents> roots;
-
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "merging+indexing phase\n";
 #endif
+
+  // The merged roots. (Note that all other forms of merged data are declared at
+  // the class level, since we need them during the flow, but the roots are only
+  // needed to start the flow, so we can declare them here.)
+  std::unordered_map<Location, PossibleContents> roots;
 
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
@@ -993,7 +994,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     for (auto& [root, value] : info.roots) {
       roots[root] = value;
 
-      // Ensure an index even for a root with no links to it.
+      // Ensure an index even for a root with no links to it - everything needs
+      // an index.
       getIndex(root);
     }
     for (auto [child, parent] : info.childParents) {
