@@ -160,7 +160,7 @@ struct GUFAOptimizer
       return;
     }
 
-    // This is an interesting location that we might optimize. See what the
+    // Ok, this is an interesting location that we might optimize. See what the
     // oracle says is possible there.
     auto contents = oracle.getContents(ExpressionLocation{curr, 0});
 
@@ -182,8 +182,8 @@ struct GUFAOptimizer
     };
 
     if (contents.getType() == Type::unreachable) {
-      // This cannot contain any possible value at all. It must be
-      // unreachable code.
+      // This cannot contain any possible value at all. It must be unreachable
+      // code.
       replaceWithUnreachable();
       return;
     }
@@ -195,16 +195,16 @@ struct GUFAOptimizer
     }
 
     if (contents.isNull() && curr->type.isNullable()) {
-      // Null values are all identical, so just fix up the type here, as
-      // we can change the type to anything to fit the IR.
-      //
-      // Note that if curr's type is not nullable, then the code will trap
-      // at runtime (the null must arrive through a cast that will trap).
-      // We handle that below.
-      //
-      // TODO: would emitting a more specific null be useful when valid?
+      // Null values are all identical, so just fix up the type here (the null's
+      // type might not fit in this expression).
       contents =
         PossibleContents::literal(Literal::makeNull(curr->type.getHeapType()));
+
+      // Note that if curr's type is *not* nullable, then the code will trap at
+      // runtime (the null must arrive through a cast that will trap). We handle
+      // that below, so we don't need to think about it here.
+
+      // TODO: would emitting a more specific null be useful when valid?
     }
 
     auto* c = contents.makeExpression(wasm);
@@ -212,10 +212,10 @@ struct GUFAOptimizer
       return;
     }
 
-    // We can only place the constant value here if it has the right type.
-    // For example, a block may return (ref any), that is, not allow a null,
-    // but in practice only a null may flow there if it goes through casts
-    // that will trap at runtime.
+    // We can only place the constant value here if it has the right type. For
+    // example, a block may return (ref any), that is, not allow a null, but in
+    // practice only a null may flow there if it goes through casts that will
+    // trap at runtime.
     if (Type::isSubType(c->type, curr->type)) {
       if (canRemove(curr)) {
         replaceCurrent(getDroppedChildren(curr, wasm, options, c));
@@ -226,39 +226,39 @@ struct GUFAOptimizer
       }
       optimized = true;
     } else {
-      // The type is not compatible: we cannot place |c| in this location,
-      // even though we have proven it is the only value possible here.
+      // The type is not compatible: we cannot place |c| in this location, even
+      // though we have proven it is the only value possible here.
       if (Properties::isConstantExpression(c)) {
-        // The type is not compatible and this is a simple constant
-        // expression like a ref.func. That means this code must be
-        // unreachable. (See below for the case of a non-constant.)
+        // The type is not compatible and this is a simple constant expression
+        // like a ref.func. That means this code must be unreachable. (See below
+        // for the case of a non-constant.)
         replaceWithUnreachable();
       } else {
-        // This is not a constant expression, but we are certain it is the
-        // right value. Atm the only such case we handle is a global.get of
-        // an immutable global. We don't know what the value will be, nor
-        // its specific type, but we do know that a global.get will get that
-        // value properly. However, in this case it does not have the right
-        // type for this location. That can happen since the global.get does
-        // not have exactly the proper type for the contents: the global.get
-        // might be nullable, for example, even though the contents are not
-        // actually a null. Consider what happens here:
+        // This is not a constant expression, but we are certain it is the right
+        // value. Atm the only such case we handle is a global.get of an
+        // immutable global. We don't know what the value will be, nor its
+        // specific type, but we do know that a global.get will get that value
+        // properly. However, in this case it does not have the right type for
+        // this location. That can happen since the global.get does not have
+        // exactly the proper type for the contents: the global.get might be
+        // nullable, for example, even though the contents are not actually a
+        // null. For example, consider what happens here:
         //
         //  (global $foo (ref null any) (struct.new $Foo))
         //  ..
         //    (ref.as_non_null
         //      (global.get $foo))
         //
-        // We create a $Foo in the global $foo, so its value is not a null.
-        // But the global's type is nullable, so the global.get's type will
-        // be as well. When we get to the ref.as_non_null, we then want to
-        // replace it with a global.get - in fact that's what its child
-        // already is, showing it is the right content for it - but that
-        // global.get would not have a non-nullable type like a
-        // ref.as_non_null must have, so we cannot simply replace it.
+        // We create a $Foo in the global $foo, so its value is not a null. But
+        // the global's type is nullable, so the global.get's type will be as
+        // well. When we get to the ref.as_non_null, we then want to replace it
+        // with a global.get - in fact that's what its child already is, showing
+        // it is the right content for it - but that global.get would not have a
+        // non-nullable type like a ref.as_non_null must have, so we cannot
+        // simply replace it.
         //
         // For now, do nothing here, but in some cases we could probably
-        // optimize TODO
+        // optimize (e.g. by adding a ref.as_non_null in the example) TODO
         assert(c->is<GlobalGet>());
       }
     }
@@ -267,7 +267,7 @@ struct GUFAOptimizer
   // TODO: If an instruction would trap on null, like struct.get, we could
   //       remove it here if it has no possible contents. That information
   //       is present in OptimizeInstructions where it removes redundant
-  //       ref.as_non_null, so maybe there is a way to share that
+  //       ref.as_non_null, so maybe there is a way to share that.
 
   void visitFunction(Function* func) {
     if (optimized) {
