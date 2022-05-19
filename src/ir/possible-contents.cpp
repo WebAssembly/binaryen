@@ -1,4 +1,3 @@
-//#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -63,7 +62,7 @@ template<typename T> void disallowDuplicates(const T& targets) {
 
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a link from a LocalLocaiton to a ResultLocation.
+// we have a link from a LocalLocation to a ResultLocation.
 template<typename T> struct Link {
   T from;
   T to;
@@ -113,7 +112,7 @@ struct CollectedInfo {
   std::vector<LocationLink> links;
 
   // All the roots of the graph, that is, places that begin by containing some
-  // partcular content. That includes i32.const, ref.func, struct.new, etc. All
+  // particular content. That includes i32.const, ref.func, struct.new, etc. All
   // possible contents in the rest of the graph flow from such places.
   //
   // The vector here is of the location of the root and then its contents.
@@ -160,9 +159,9 @@ struct InfoCollector
       }
     }
     if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
-      // If nominal typing is enabled then we cannot handle refs, as we need
-      // to do a subtyping analysis there (which SubTyping only supports in
-      // nominal mode).
+      // If nominal typing is not enabled then we cannot handle refs, as we need
+      // to do a subtyping analysis there (which the SubTyping helper class only
+      // supports in nominal mode).
       return false;
     }
     return true;
@@ -264,7 +263,11 @@ struct InfoCollector
   void visitRefFunc(RefFunc* curr) {
     addRoot(curr, PossibleContents::literal(Literal(curr->func, curr->type)));
   }
-  void visitRefEq(RefEq* curr) { addRoot(curr); }
+  void visitRefEq(RefEq* curr) {
+    // TODO: optimize when possible (e.g. when both sides must contain the same
+    //       global)
+    addRoot(curr);
+  }
   void visitTableGet(TableGet* curr) {
     // TODO: optimize when possible
     addRoot(curr);
@@ -279,7 +282,7 @@ struct InfoCollector
 #ifndef NDEBUG
   // For now we only handle pops in a catch body, see visitTry(). To check for
   // errors, use counter of the pops we handled and all the pops; those sums
-  // must agree at the end.
+  // must agree at the end, or else we've seen something we can't handle.
   Index totalPops = 0;
   Index handledPops = 0;
 #endif
@@ -303,8 +306,8 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefCast(RefCast* curr) {
-    // We will handle this in a special way, as ref.cast only allows valid
-    // values to flow through.
+    // We will handle this in a special way later during the flow, as ref.cast
+    // only allows valid values to flow through.
     addSpecialChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
@@ -357,9 +360,9 @@ struct InfoCollector
     }
   }
 
-  // Iterates over a list of children and adds links to parameters
-  // and results as needed. The param/result functions receive the index
-  // and create the proper location for it.
+  // Iterates over a list of children and adds links to parameters and results
+  // as needed. The param/result functions receive the index and create the
+  // proper location for it.
   template<typename T>
   void handleCall(T* curr,
                   std::function<Location(Index)> makeParamLocation,
@@ -558,8 +561,8 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
-    // Our handling of GC data is not simple - we have special code for each
-    // read and write instruction - and to avoid adding special code for
+    // Our flow handling of GC data is not simple: we have special code for each
+    // read and write instruction. Therefore, to avoid adding special code for
     // ArrayCopy, model it as a combination of an ArrayRead and ArrayWrite, by
     // just emitting fake expressions for those. The fake expressions are not
     // part of the main IR, which is potentially confusing during debugging,
