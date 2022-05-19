@@ -831,8 +831,6 @@ private:
   //
   // Using a set here is efficient as multiple updates may arrive to a location
   // before we get to processing it.
-  //
-  // TODO deferred?
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
   InsertOrderedSet<LocationIndex> workQueue;
 #else
@@ -900,26 +898,19 @@ private:
   // time.
   void updateNewLinks();
 
-  // Add reads for a XXX waka waka Given the old and new contents at the current target, add reads to it
-  // based on the latest changes. The reads are sent to |read|, which is
-  // either a struct.get or an array.get. That is, new contents are possible
-  // for the reference, which means we need to read from more possible heap
-  // locations.
-  // @param declaredRefType: The type declared in the IR on the
-  //                         reference input to the struct.get/array.get.
-  // @param fieldIndex: The field index being read (or 0 for an array).
-  // @param refContents: The contents possible in the reference.
-  // @param read: The struct.get or array.get that does the read.
-  void readFromNewLocations(HeapType declaredHeapType,
+  // Reads from GC data: a struct.get or array.get. This is given the type of
+  // the read operation, the field that is read on that type, the known contents
+  // in the reference the read receives, and the read instruction itself. We
+  // compute where we need to read from based on the type and the ref contents
+  // and get that data, adding new links in the graph as needed.
+  void readFromData(HeapType declaredHeapType,
                             Index fieldIndex,
                             const PossibleContents& refContents,
                             Expression* read);
 
-  // Similar to readFromNewLocations, but sends values from a struct.set or
-  // /array.set to a heap location. Receives the reference, value, and the field
-  // index written to (or 0 for an array).
+  // Similar to readFromData, but does a write for a struct.set or array.set.
   void
-  writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex);
+  writeToData(Expression* ref, Expression* value, Index fieldIndex);
 
   // Special handling for RefCast during the flow: RefCast only admits valid
   // values to flow through it.
@@ -1261,20 +1252,20 @@ void Flower::applyContents(LocationIndex locationIndex) {
     if (auto* get = parent->dynCast<StructGet>()) {
       // This is the reference child of a struct.get.
       assert(get->ref == targetExpr);
-      readFromNewLocations(
+      readFromData(
         get->ref->type.getHeapType(), get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
       // This is either the reference or the value child of a struct.set. A
       // change to either one affects what values are written to that struct
       // location, which we handle here.
       assert(set->ref == targetExpr || set->value == targetExpr);
-      writeToNewLocations(set->ref, set->value, set->index);
+      writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == targetExpr);
-      readFromNewLocations(get->ref->type.getHeapType(), 0, contents, get);
+      readFromData(get->ref->type.getHeapType(), 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == targetExpr || set->value == targetExpr);
-      writeToNewLocations(set->ref, set->value, 0);
+      writeToData(set->ref, set->value, 0);
     } else if (auto* cast = parent->dynCast<RefCast>()) {
       assert(cast->ref == targetExpr);
       flowRefCast(contents, cast);
@@ -1322,7 +1313,7 @@ void Flower::updateNewLinks() {
   newLinks.clear();
 }
 
-void Flower::readFromNewLocations(HeapType declaredHeapType,
+void Flower::readFromData(HeapType declaredHeapType,
                                   Index fieldIndex,
                                   const PossibleContents& refContents,
                                   Expression* read) {
@@ -1381,7 +1372,7 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
   }
 }
 
-void Flower::writeToNewLocations(Expression* ref,
+void Flower::writeToData(Expression* ref,
                                  Expression* value,
                                  Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
