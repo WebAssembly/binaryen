@@ -400,7 +400,7 @@ struct SignatureResultLocation {
 struct DataLocation {
   HeapType type;
   // The index of the field in a struct, or 0 for an array (where we do not
-  // attempt to differentiate positions).
+  // attempt to differentiate by index).
   Index index;
   bool operator==(const DataLocation& other) const {
     return type == other.type && index == other.index;
