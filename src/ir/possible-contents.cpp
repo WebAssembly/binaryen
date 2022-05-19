@@ -904,13 +904,12 @@ private:
   // compute where we need to read from based on the type and the ref contents
   // and get that data, adding new links in the graph as needed.
   void readFromData(HeapType declaredHeapType,
-                            Index fieldIndex,
-                            const PossibleContents& refContents,
-                            Expression* read);
+                    Index fieldIndex,
+                    const PossibleContents& refContents,
+                    Expression* read);
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
-  void
-  writeToData(Expression* ref, Expression* value, Index fieldIndex);
+  void writeToData(Expression* ref, Expression* value, Index fieldIndex);
 
   // Special handling for RefCast during the flow: RefCast only admits valid
   // values to flow through it.
@@ -1140,7 +1139,8 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
 
   // Handle special cases: Some locations can only contain certain contents, so
   // modify what arrives accordingly.
-  if (auto* globalLoc = std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
+  if (auto* globalLoc =
+        std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
     auto* global = wasm.getGlobal(globalLoc->name);
     if (global->mutable_ == Immutable) {
       // This is an immutable global. We never need to consider this value as
@@ -1152,8 +1152,8 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
         newContents = PossibleContents::global(global->name, global->type);
 
         // TODO: We could do better here, to set global->init->type instead of
-        //       global->type, or even the newContents.getType() - either of those
-        //       may be more refined. But other passes will handle that in
+        //       global->type, or even the newContents.getType() - either of
+        //       those may be more refined. But other passes will handle that in
         //       general. And ImmutableGlobal carries around the type declared
         //       in the global (since that is the type a global.get would get
         //       if we apply this optimization and write a global.get there).
@@ -1252,8 +1252,7 @@ void Flower::applyContents(LocationIndex locationIndex) {
     if (auto* get = parent->dynCast<StructGet>()) {
       // This is the reference child of a struct.get.
       assert(get->ref == targetExpr);
-      readFromData(
-        get->ref->type.getHeapType(), get->index, contents, get);
+      readFromData(get->ref->type.getHeapType(), get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
       // This is either the reference or the value child of a struct.set. A
       // change to either one affects what values are written to that struct
@@ -1314,9 +1313,9 @@ void Flower::updateNewLinks() {
 }
 
 void Flower::readFromData(HeapType declaredHeapType,
-                                  Index fieldIndex,
-                                  const PossibleContents& refContents,
-                                  Expression* read) {
+                          Index fieldIndex,
+                          const PossibleContents& refContents,
+                          Expression* read) {
   if (refContents.isNull() || refContents.isNone()) {
     // Nothing is read here.
     return;
@@ -1372,9 +1371,7 @@ void Flower::readFromData(HeapType declaredHeapType,
   }
 }
 
-void Flower::writeToData(Expression* ref,
-                                 Expression* value,
-                                 Index fieldIndex) {
+void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
