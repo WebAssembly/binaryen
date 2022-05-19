@@ -1132,6 +1132,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 PossibleContents Flower::sendContents(LocationIndex locationIndex,
                                       PossibleContents newContents) {
   auto& contents = getContents(locationIndex);
+  auto oldContents = contents;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "sendContents\n";
@@ -1142,21 +1143,21 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
-  // Handle special cases: Some locations can only contain certain contents, so
-  // modify what arrives accordingly.
-  if (auto* globalLoc =
-        std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
-    filterGlobalContents(newContents, *globalLoc);
+  contents.combine(newContents);
+  if (contents == oldContents) {
+    // Nothing actually changed.
+    return contents;
   }
 
-  // The work queue contains the *old* contents, which if they already exist we
-  // do not need to alter.
-  if (!contents.combine(newContents)) {
-    // The new contents did not change anything. Either there is an existing
-    // work item but we didn't add anything on top, or there is no work item but
-    // we don't add anything on top of the current contents. Either way there is
-    // nothing to do.
-    return contents;
+  // Handle special cases: Some locations can only contain certain contents, so
+  // filter accordingly.
+  if (auto* globalLoc =
+        std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
+    filterGlobalContents(contents, *globalLoc);
+    if (contents == oldContents) {
+      // Nothing actually changed, after filtering.
+      return contents;
+    }
   }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -1191,7 +1192,6 @@ void Flower::applyContents(LocationIndex locationIndex) {
   // prune any targets that end up in the Many state, as there will never be a
   // reason to send them anything again.
   auto& targets = getTargets(locationIndex);
-
   targets.erase(
     std::remove_if(targets.begin(),
                    targets.end(),

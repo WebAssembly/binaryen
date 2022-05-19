@@ -130,36 +130,34 @@ public:
 
   // Combine the information in a given PossibleContents to this one. The
   // contents here will then include whatever content was possible in |other|.
-  //
-  // Returns whether we changed anything.
-  bool combine(const PossibleContents& other) {
+  void combine(const PossibleContents& other) {
     // First handle the trivial cases of them being equal, or one of them is
     // None or Many.
     if (*this == other) {
-      return false;
+      return;
     }
     if (other.isNone()) {
-      return false;
+      return;
     }
     if (isNone()) {
       value = other.value;
-      return true;
+      return;
     }
     if (isMany()) {
-      return false;
+      return;
     }
     if (other.isMany()) {
       value = Many();
-      return true;
+      return;
     }
 
     auto applyIfDifferent = [&](const PossibleContents& newContents) {
       if (*this == newContents) {
-        return false;
+        return;
       }
 
       *this = newContents;
-      return true;
+      return;
     };
 
     auto type = getType();
@@ -170,7 +168,7 @@ public:
       // ExactType here, say as the combination of two different constants, but
       // as subtyping does not exist, Many is good enough anyhow, so do that.
       value = Many();
-      return true;
+      return;
     }
 
     // Special handling for references from here.
@@ -181,17 +179,19 @@ public:
       // combination is to add nullability (if the type is *not* known exactly,
       // like for a global, then we cannot do anything useful here).
       if (!isNull() && isTypeExact()) {
-        return applyIfDifferent(
+        applyIfDifferent(
           PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
+        return;
       } else if (!other.isNull() && other.isTypeExact()) {
-        return applyIfDifferent(
+        applyIfDifferent(
           PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
+        return;
       } else if (isNull() && other.isNull()) {
         // Both are null. The result is a null, of the LUB.
         auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
                                                 otherType.getHeapType());
-        return applyIfDifferent(
-          PossibleContents::literal(Literal::makeNull(lub)));
+        applyIfDifferent(PossibleContents::literal(Literal::makeNull(lub)));
+        return;
       }
     }
 
@@ -203,14 +203,14 @@ public:
       // Literal; or both might be ExactTypes and only one might be nullable).
       // In these cases we can emit a proper ExactType here, adding nullability
       // if we need to.
-      return applyIfDifferent(PossibleContents::exactType(Type(
+      applyIfDifferent(PossibleContents::exactType(Type(
         type.getHeapType(),
         type.isNullable() || otherType.isNullable() ? Nullable : NonNullable)));
+      return;
     }
 
     // Nothing else possible combines in an interesting way; emit a Many.
     value = Many();
-    return true;
   }
 
   bool isNone() const { return std::get_if<None>(&value); }
