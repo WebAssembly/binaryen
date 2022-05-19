@@ -756,12 +756,15 @@ struct Flower {
   // Each LocationIndex will have one LocationInfo that contains the relevant
   // information we need for each location.
   struct LocationInfo {
+    // The location at this index.
     Location location;
+
+    // The possible contents in that location.
     PossibleContents contents;
-    // Maps location indexes to the vector of targets to which that location
-    // sends content. Commonly? there is a single target e.g. an expression has
-    // a single parent and only sends a value there.
-    // TODO: benchmark SmallVector<1> some more, but it seems to not help
+
+    // A list of the target locations to which this location sends content.
+    // TODO: benchmark SmallVector<1> here, as commonly there may be a single
+    //       target (an expression has one parent)
     std::vector<LocationIndex> targets;
 
     LocationInfo(Location location) : location(location) {}
