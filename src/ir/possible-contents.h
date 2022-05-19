@@ -73,21 +73,23 @@ class PossibleContents {
     }
   };
 
+  using ExactType = Type;
+
   struct Many : public std::monostate {};
 
   // TODO: This is similar to the variant in PossibleConstantValues, and perhaps
   //       we could share code, but extending a variant using template magic may
   //       not be worthwhile. Another option might be to make PCV inherit from
-  //       this and disallow ExactType etc.
-  using Variant = std::variant<None, Literal, GlobalInfo, Type, Many>;
+  //       this and disallow ExactType etc., but PCV might get slower.
+  using Variant = std::variant<None, Literal, GlobalInfo, ExactType, Many>;
   Variant value;
 
 public:
-  // The only public constructor creates a None - nothing is possible there. All
-  // other things must use one of the static constructors below.
   PossibleContents() : value(None()) {}
-
   PossibleContents(const PossibleContents& other) : value(other.value) {}
+
+  // Most users will use one of the following static functions to construct a
+  // new instance:
 
   static PossibleContents none() {
     PossibleContents ret;
@@ -106,7 +108,7 @@ public:
   }
   static PossibleContents exactType(Type type) {
     PossibleContents ret;
-    ret.value = type;
+    ret.value = ExactType(type);
     return ret;
   }
   static PossibleContents many() {
@@ -151,15 +153,6 @@ public:
       return;
     }
 
-    auto applyIfDifferent = [&](const PossibleContents& newContents) {
-      if (*this == newContents) {
-        return;
-      }
-
-      *this = newContents;
-      return;
-    };
-
     auto type = getType();
     auto otherType = other.getType();
 
@@ -179,18 +172,16 @@ public:
       // combination is to add nullability (if the type is *not* known exactly,
       // like for a global, then we cannot do anything useful here).
       if (!isNull() && isTypeExact()) {
-        applyIfDifferent(
-          PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
+        value = ExactType(Type(type.getHeapType(), Nullable));
         return;
       } else if (!other.isNull() && other.isTypeExact()) {
-        applyIfDifferent(
-          PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
+        value = ExactType(Type(otherType.getHeapType(), Nullable));
         return;
       } else if (isNull() && other.isNull()) {
         // Both are null. The result is a null, of the LUB.
         auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
                                                 otherType.getHeapType());
-        applyIfDifferent(PossibleContents::literal(Literal::makeNull(lub)));
+        value = Literal::makeNull(lub);
         return;
       }
     }
@@ -203,9 +194,9 @@ public:
       // Literal; or both might be ExactTypes and only one might be nullable).
       // In these cases we can emit a proper ExactType here, adding nullability
       // if we need to.
-      applyIfDifferent(PossibleContents::exactType(Type(
+      value = ExactType(Type(
         type.getHeapType(),
-        type.isNullable() || otherType.isNullable() ? Nullable : NonNullable)));
+        type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
       return;
     }
 
