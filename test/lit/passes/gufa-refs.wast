@@ -3481,3 +3481,75 @@
     )
   )
 )
+
+;; As above, but change the constants in the first field in all cases to 10. Now
+;; we can optimize.
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct_subtype (mut i32) data))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
+  (type $substruct (struct_subtype (mut i32) f64 $struct))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $something (mut (ref $struct)) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $something (mut (ref $struct)) (struct.new $struct
+    (i32.const 10)
+  ))
+
+  ;; CHECK:      (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT:  (f64.const 3.14159)
+  ;; CHECK-NEXT: ))
+  (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+    (i32.const 10)
+    (f64.const 3.14159)
+  ))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $something
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (global.get $something)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    (global.set $something
+      (struct.new $substruct
+        (i32.const 10)
+        (f64.const 3.14159)
+      )
+      (i32.const 10)
+    )
+    (struct.set $struct 0
+      (global.get $something)
+      (i32.const 10)
+    )
+    ;; As a result, we can optimize the first get here (but not the second, as
+    ;; before).
+    (drop
+      (struct.get $struct 0
+        (global.get $something)
+      )
+    )
+    (drop
+      (struct.get $substruct 0
+        (global.get $subsomething)
+      )
+    )
+  )
+)
