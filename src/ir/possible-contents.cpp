@@ -872,12 +872,13 @@ private:
   // Returns whether it is worth sending new contents to this location in the
   // future. If we return false, the sending location never needs to do that
   // ever again.
-  bool updateContents(LocationIndex locationIndex, PossibleContents newContents);
+  bool updateContents(LocationIndex locationIndex,
+                      PossibleContents newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
   bool updateContents(const Location& location,
-                    const PossibleContents& newContents) {
+                      const PossibleContents& newContents) {
     return updateContents(getIndex(location), newContents);
   }
 
@@ -1132,7 +1133,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 }
 
 bool Flower::updateContents(LocationIndex locationIndex,
-                          PossibleContents newContents) {
+                            PossibleContents newContents) {
   auto& contents = getContents(locationIndex);
   auto oldContents = contents;
 
@@ -1152,7 +1153,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   bool worthSendingMore = !contents.isMany();
 
   if (contents == oldContents) {
-    // Nothing actually changed, no need to do anything more here.
+    // Nothing actually changed, so just return.
     return worthSendingMore;
   }
 
