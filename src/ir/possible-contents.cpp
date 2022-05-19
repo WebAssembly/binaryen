@@ -1416,16 +1416,13 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  if (refContents.isExactType() || refContents.isGlobal()) {
+  if (refContents.isTypeExact()) {
     // Update the one possible type here.
-    // TODO: In the case that this is a constant, it could be null
-    //       or an immutable global, which we could do even more
-    //       with.
     auto heapLoc =
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
     updateContents(heapLoc, valueContents);
   } else {
-    assert(refContents.isMany());
+    assert(refContents.isMany() || refContents.isGlobal());
 
     // Update all possible subtypes here.
     auto type = ref->type.getHeapType();
