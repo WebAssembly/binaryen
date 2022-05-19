@@ -36,8 +36,8 @@ auto none_ = PossibleContents::none();
 auto i32Zero = PossibleContents::literal(Literal(int32_t(0)));
 auto i32One = PossibleContents::literal(Literal(int32_t(1)));
 auto f64One = PossibleContents::literal(Literal(double(1)));
-auto anyNull = PossibleContents::literal(Literal::makeNull(Type::anyref));
-auto funcNull = PossibleContents::literal(Literal::makeNull(Type::funcref));
+auto anyNull = PossibleContents::literal(Literal::makeNull(HeapType::any));
+auto funcNull = PossibleContents::literal(Literal::makeNull(HeapType::func));
 
 auto i32Global1 = PossibleContents::global("i32Global1", Type::i32);
 auto i32Global2 = PossibleContents::global("i32Global2", Type::i32);
