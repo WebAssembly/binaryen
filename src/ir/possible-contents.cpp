@@ -776,7 +776,7 @@ struct Flower {
   // Reverse mapping of locations to their indexes.
   std::unordered_map<Location, LocationIndex> locationIndexes;
 
-  Location getLocation(LocationIndex index) {
+  const Location& getLocation(LocationIndex index) {
     assert(index < locations.size());
     return locations[index].location;
   }
@@ -826,20 +826,17 @@ private:
   // from all the functions and the global scope.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
-  // The work remaining to do during the flow: locations that we are sending an
-  // update to. This maps the target location to the *old* contents before the
-  // update; the new contents are already placed in the contents for that
-  // location (we'll need to place them there anyhow, so do so immediately
-  // instead of waiting; another benefit is that if anything reads them around
-  // this time then they'll get the latest data, saving more iterations later).
+  // The work remaining to do during the flow: locations that we need to process
+  // after updating their contents.
   //
-  // Using a map here is efficient as multiple updates may arrive to a location
-  // before we get to processing it, and this way the later ones just overwrite
-  // the previous instead of accumulating.
+  // Using a set here is efficient as multiple updates may arrive to a location
+  // before we get to processing it.
+  //
+  // TODO deferred?
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
-  InsertOrderedMap<LocationIndex, PossibleContents> workQueue;
+  InsertOrderedSet<LocationIndex> workQueue;
 #else
-  std::unordered_map<LocationIndex, PossibleContents> workQueue;
+  std::unordered_set<LocationIndex> workQueue;
 #endif
 
   // Maps a heap type + an index in the type (0 for an array) to the index of a
@@ -868,26 +865,28 @@ private:
   // to add is new or not.
   std::unordered_set<IndexLink> links;
 
-  // This sends new contents to the given location. If we can see that the new
-  // contents can cause an actual change there then we will later call
-  // applyContents() there (the work is queued for when we get to it later).
+  // Send new contents to the given location. If the contents contain something
+  // new for that location then we note that there, and we also queue work for
+  // later to further propagate and handle those changes (which will happen in
+  // applyContents).
+  //
+  // Returns the new contents at the location.
   PossibleContents sendContents(LocationIndex locationIndex,
-                                const PossibleContents& newContents);
+                                PossibleContents newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
+  //
+  // Returns the new contents at the location.
   PossibleContents sendContents(const Location& location,
                                 const PossibleContents& newContents) {
     return sendContents(getIndex(location), newContents);
   }
 
-  // Apply contents at a location where a change has occurred. This does the
+  // Apply contents at a location after we adding something new. This does the
   // bulk of the work during the flow: sending contents to other affected
-  // locations, handling special cases as necessary, etc. This is passed
-  // the old contents, which in some cases we need in order to know exactly what
-  // changed during special processing.
-  void applyContents(LocationIndex locationIndex,
-                     const PossibleContents& oldContents);
+  // locations, handling special cases as necessary, etc.
+  void applyContents(LocationIndex locationIndex);
 
   // Add a new connection while the flow is happening. If the link already
   // exists it is not added.
@@ -901,7 +900,7 @@ private:
   // time.
   void updateNewLinks();
 
-  // Given the old and new contents at the current target, add reads to it
+  // Add reads for a XXX waka waka Given the old and new contents at the current target, add reads to it
   // based on the latest changes. The reads are sent to |read|, which is
   // either a struct.get or an array.get. That is, new contents are possible
   // for the reference, which means we need to read from more possible heap
@@ -1123,11 +1122,10 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #endif
 
     auto iter = workQueue.begin();
-    auto locationIndex = iter->first;
-    auto oldContents = iter->second;
+    auto locationIndex = *iter;
     workQueue.erase(iter);
 
-    applyContents(locationIndex, oldContents);
+    applyContents(locationIndex);
 
     updateNewLinks();
   }
@@ -1137,7 +1135,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 }
 
 PossibleContents Flower::sendContents(LocationIndex locationIndex,
-                                      const PossibleContents& newContents) {
+                                      PossibleContents newContents) {
   auto& contents = getContents(locationIndex);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -1149,9 +1147,37 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
+  // Handle special cases: Some locations can only contain certain contents, so
+  // modify what arrives accordingly.
+  if (auto* globalLoc = std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
+    auto* global = wasm.getGlobal(globalLoc->name);
+    if (global->mutable_ == Immutable) {
+      // This is an immutable global. We never need to consider this value as
+      // "Many", since in the worst case we can just use the immutable value.
+      // That is, we can always replace this value with (global.get $name) which
+      // will get the right value. Likewise, using the immutable value is better
+      // than any value in a particular type, even an exact one.
+      if (newContents.isMany() || newContents.isExactType()) {
+        newContents = PossibleContents::global(global->name, global->type);
+
+        // TODO: We could do better here, to set global->init->type instead of
+        //       global->type, or even the newContents.getType() - either of those
+        //       may be more refined. But other passes will handle that in
+        //       general. And ImmutableGlobal carries around the type declared
+        //       in the global (since that is the type a global.get would get
+        //       if we apply this optimization and write a global.get there).
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+        std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
+        newContents.dump(std::cout, &wasm);
+        std::cout << '\n';
+#endif
+      }
+    }
+  }
+
   // The work queue contains the *old* contents, which if they already exist we
   // do not need to alter.
-  auto oldContents = contents;
   if (!contents.combine(newContents)) {
     // The new contents did not change anything. Either there is an existing
     // work item but we didn't add anything on top, or there is no work item but
@@ -1166,16 +1192,13 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
-  // Add a work item if there isn't already. (If one exists, then oldContents
-  // are after the update from that item, and we wouldn't want to insert that
-  // value into the map, which insert() in fact does not.)
-  workQueue.insert({locationIndex, oldContents});
+  // Add a work item if there isn't already.
+  workQueue.insert(locationIndex);
 
   return contents;
 }
 
-void Flower::applyContents(LocationIndex locationIndex,
-                           const PossibleContents& oldContents) {
+void Flower::applyContents(LocationIndex locationIndex) {
   const auto location = getLocation(locationIndex);
   auto& contents = getContents(locationIndex);
 
@@ -1183,62 +1206,12 @@ void Flower::applyContents(LocationIndex locationIndex,
   // and we never send empty values around, it cannot be None.
   assert(!contents.isNone());
 
-  // We never update after something is already in the Many state, as that would
-  // just be waste for no benefit.
-  assert(!oldContents.isMany());
-
-  // We only update when there is a reason.
-  assert(contents != oldContents);
-
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "\napplyContents to:\n";
   dump(location);
   std::cout << "  arriving:\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
-  std::cout << "  existing:\n";
-  oldContents.dump(std::cout, &wasm);
-  std::cout << '\n';
-#endif
-
-  // Handle special cases: Some locations modify the arriving contents.
-  if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
-    auto* global = wasm.getGlobal(globalLoc->name);
-    if (global->mutable_ == Immutable) {
-      // This is an immutable global. We never need to consider this value as
-      // "Many", since in the worst case we can just use the immutable value.
-      // That is, we can always replace this value with (global.get $name) which
-      // will get the right value. Likewise, using the immutable value is better
-      // than any value in a particular type, even an exact one.
-      if (contents.isMany() || contents.isExactType()) {
-        contents = PossibleContents::global(global->name, global->type);
-
-        // TODO: We could do better here, to set global->init->type instead of
-        //       global->type, or even the contents.getType() - either of those
-        //       may be more refined. But other passes will handle that in
-        //       general. And ImmutableGlobal carries around the type declared
-        //       in the global (since that is the type a global.get would get
-        //       if we apply this optimization and write a global.get there).
-
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-        std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
-        contents.dump(std::cout, &wasm);
-        std::cout << '\n';
-#endif
-
-        // Furthermore, perhaps nothing changed at all of that was already the
-        // previous value here.
-        if (contents == oldContents) {
-          return;
-        }
-      }
-    }
-  }
-
-  // Something changed!
-
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "  something changed!\n";
 #endif
 
   // Send the new contents to all the targets of this location. As we do so,

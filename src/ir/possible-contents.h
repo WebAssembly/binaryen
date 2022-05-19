@@ -87,6 +87,8 @@ public:
   // other things must use one of the static constructors below.
   PossibleContents() : value(None()) {}
 
+  PossibleContents(const PossibleContents& other) : value(other.value) {}
+
   static PossibleContents none() {
     PossibleContents ret;
     ret.value = None();
@@ -111,6 +113,11 @@ public:
     PossibleContents ret;
     ret.value = Many();
     return ret;
+  }
+
+  PossibleContents& operator=(const PossibleContents& other) {
+    value = other.value;
+    return *this;
   }
 
   bool operator==(const PossibleContents& other) const {
