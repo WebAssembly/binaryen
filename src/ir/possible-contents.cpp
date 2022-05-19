@@ -1388,7 +1388,7 @@ void Flower::readFromData(HeapType declaredHeapType,
 
       // TODO: if the old contents here were an exact type then we have an old
       //       link here that we could remove as it is redundant (the cone
-      //       contains the exact type among the othres). But removing links
+      //       contains the exact type among the others). But removing links
       //       is not efficient, so maybe not worth it.
     }
 
