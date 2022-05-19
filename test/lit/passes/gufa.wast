@@ -956,3 +956,18 @@
     )
   )
 )
+
+;; Test for nontrivial code in a global init. We need to process such code
+;; normally and not hit any internal asserts (nothing can be optimized here).
+(module
+  ;; CHECK:      (global $global$0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT:  (i32.const 20)
+  ;; CHECK-NEXT: ))
+  (global $global$0 i32
+    (i32.add
+      (i32.const 10)
+      (i32.const 20)
+    )
+  )
+)
