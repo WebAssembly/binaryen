@@ -59,17 +59,17 @@ struct GUFAOptimizer
 
   bool optimized = false;
 
-  // Check if removing something (but not its children - just the node
-  // itself) would be ok structurally - whether the IR would still validate.
+  // Check if removing something (but not its children - just the node itself)
+  // would be ok structurally - whether the IR would still validate.
   bool canRemoveStructurally(Expression* curr) {
-    // We can remove almost anything, but not a branch target, as we still
-    // need the target for the branches to it to validate.
+    // We can remove almost anything, but not a branch target, as we still need
+    // the target for the branches to it to validate.
     if (BranchUtils::getDefinedName(curr).is()) {
       return false;
     }
 
-    // Pops are structurally necessary in catch bodies, and removing a try
-    // could leave a pop without a proper parent.
+    // Pops are structurally necessary in catch bodies, and removing a try could
+    // leave a pop without a proper parent.
     return !curr->is<Pop>() && !curr->is<Try>();
   }
 
@@ -83,9 +83,9 @@ struct GUFAOptimizer
               .hasUnremovableSideEffects();
   }
 
-  // Whether we can replace something (but not its children, we can keep
-  // then with drops) with an unreachable without changing observable
-  // behavior or breaking validation.
+  // Whether we can replace something (but not its children, we can keep them
+  // with drops) with an unreachable without changing observable behavior or
+  // breaking validation.
   bool canReplaceWithUnreachable(Expression* curr) {
     if (!canRemoveStructurally(curr)) {
       return false;
@@ -97,8 +97,7 @@ struct GUFAOptimizer
   }
 
   // Checks if the expression looks like it's already been optimized to a
-  // particular value that we want to optimize it to. For example, if curr
-  // is
+  // particular value that we want to optimize it to. For example, if curr is
   //
   //  (block
   //    ..
@@ -106,16 +105,26 @@ struct GUFAOptimizer
   //  )
   //
   // And the value we want to optimize to is (i32.const 20), the same value,
-  // then there is no point to doing so - we'd be expanding code repeatedly
-  // if run on the same module again and again. That can happen because in
-  // general we may add such a block, so we need to look through a block
-  // here to check if we already have the value.
+  // then there is no point to doing so - we'd be expanding code repeatedly if
+  // run on the same module again and again, since after optimizing we'd get
+  // this:
+  //
+  //  (block
+  //    (drop
+  //      (block
+  //        ..
+  //        (i32.const 20)
+  //      )
+  //    )
+  //    (i32.const 20)
+  //  )
+  //
+  // That is, in general we will add a drop of the old contents and then the
+  // value we want to optimize to, so avoid doing so in a repetitive way.
   bool looksAlreadyOptimizedToValue(Expression* curr, Expression* value) {
     // The case that we do want to avoid here is if this looks like the
     // output of our optimization, which is (block .. (constant)), a block
-    // ending in a constant and with no breaks to it. If this is already so
-    // then do nothing (this avoids repeated runs of the pass monotonically
-    // increasing code size for no benefit).
+    // ending in a constant and with no breaks to it.
     if (auto* block = curr->dynCast<Block>()) {
       // If we got here, the list cannot be empty - an empty block is not
       // equivalent to any constant, so a logic error occurred before.
@@ -133,18 +142,12 @@ struct GUFAOptimizer
   }
 
   void visitExpression(Expression* curr) {
+    // Skip things we can't improve in any way.
     auto type = curr->type;
-    if (type == Type::unreachable || type == Type::none) {
+    if (type == Type::unreachable || type == Type::none ||
+        Properties::isConstantExpression(curr)) {
       return;
     }
-
-    if (Properties::isConstantExpression(curr)) {
-      return;
-    }
-
-    auto& options = getPassOptions();
-    auto& wasm = *getModule();
-    Builder builder(wasm);
 
     if (type.isTuple()) {
       // TODO: tuple types.
@@ -152,14 +155,18 @@ struct GUFAOptimizer
     }
 
     if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
-      // Without nominal typing we skip analysis of subtyping, so we cannot
-      // infer anything about refs.
+      // Without nominal typing we can't analyze subtypes, so we cannot infer
+      // anything about refs.
       return;
     }
 
     // This is an interesting location that we might optimize. See what the
     // oracle says is possible there.
     auto contents = oracle.getContents(ExpressionLocation{curr, 0});
+
+    auto& options = getPassOptions();
+    auto& wasm = *getModule();
+    Builder builder(wasm);
 
     auto replaceWithUnreachable = [&]() {
       if (canReplaceWithUnreachable(curr)) {
@@ -286,3 +293,5 @@ struct GUFAPass : public Pass {
 Pass* createGUFAPass() { return new GUFAPass(); }
 
 } // namespace wasm
+
+// TODO DROPs
