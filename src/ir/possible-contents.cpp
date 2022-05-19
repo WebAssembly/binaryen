@@ -827,14 +827,15 @@ private:
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
   // The work remaining to do during the flow: locations that we are sending an
-  // update to. This maps the target location to the old contents before the
+  // update to. This maps the target location to the *old* contents before the
   // update; the new contents are already placed in the contents for that
   // location (we'll need to place them there anyhow, so do so immediately
   // instead of waiting; another benefit is that if anything reads them around
   // this time then they'll get the latest data, saving more iterations later).
-  // Using a map here is efficient as multiple updates may arrive before we
-  // process any of them, and this way each location appears just once in the
-  // queue.
+  //
+  // Using a map here is efficient as multiple updates may arrive to a location
+  // before we get to processing it, and this way the later ones just overwrite
+  // the previous instead of accumulating.
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
   InsertOrderedMap<LocationIndex, PossibleContents> workQueue;
 #else
