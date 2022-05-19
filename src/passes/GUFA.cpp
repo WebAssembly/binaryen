@@ -163,8 +163,8 @@ struct GUFAOptimizer
 
     auto replaceWithUnreachable = [&]() {
       if (canReplaceWithUnreachable(curr)) {
-        replaceCurrent(getDroppedChildren(
-          curr, wasm, options, builder.makeUnreachable()));
+        replaceCurrent(
+          getDroppedChildren(curr, wasm, options, builder.makeUnreachable()));
       } else {
         // We can't remove this, but we can at least put an unreachable
         // right after it.
@@ -196,8 +196,8 @@ struct GUFAOptimizer
       // We handle that below.
       //
       // TODO: would emitting a more specific null be useful when valid?
-      contents = PossibleContents::literal(
-        Literal::makeNull(curr->type.getHeapType()));
+      contents =
+        PossibleContents::literal(Literal::makeNull(curr->type.getHeapType()));
     }
 
     auto* c = contents.makeExpression(wasm);
