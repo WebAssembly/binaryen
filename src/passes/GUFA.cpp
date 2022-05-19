@@ -121,6 +121,9 @@ struct GUFAOptimizer
   //
   // That is, in general we will add a drop of the old contents and then the
   // value we want to optimize to, so avoid doing so in a repetitive way.
+  //
+  // TODO: beyond this, we could avoid optimizing unused values - dropped, etc.
+  //       see ExpressionAnalyzer::isResultUsed()
   bool looksAlreadyOptimizedToValue(Expression* curr, Expression* value) {
     // The case that we do want to avoid here is if this looks like the
     // output of our optimization, which is (block .. (constant)), a block
@@ -293,5 +296,3 @@ struct GUFAPass : public Pass {
 Pass* createGUFAPass() { return new GUFAPass(); }
 
 } // namespace wasm
-
-// TODO DROPs
