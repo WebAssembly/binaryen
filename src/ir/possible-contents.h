@@ -39,13 +39,13 @@ namespace wasm {
 //
 //  * Literal:         One possible constant value like an i32 of 42.
 //
-//  * Global:          The name of an global whose value is here. We do not know
+//  * Global:          The name of a global whose value is here. We do not know
 //                     the actual value at compile time, but we know it is equal
 //                     to that global. Typically we can only infer this for
 //                     immutable globals.
 //
 //  * ExactType:       Any possible value of a specific exact type - *not*
-//                     including subtypes. For example, struct.new $Foo has
+//                     including subtypes. For example, (struct.new $Foo) has
 //                     ExactType contents of type $Foo.
 //                     If the type here is nullable then null is also allowed.
 //                     TODO: Add ConeType, which would include subtypes.
