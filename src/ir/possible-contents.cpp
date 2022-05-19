@@ -871,8 +871,7 @@ private:
   // Returns whether it is worth sending new contents to this location in the
   // future. If we return false, the sending location never needs to do that
   // ever again.
-  bool sendContents(LocationIndex locationIndex,
-                    PossibleContents newContents);
+  bool sendContents(LocationIndex locationIndex, PossibleContents newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
@@ -1197,17 +1196,16 @@ void Flower::applyContents(LocationIndex locationIndex) {
   // prune any targets that end up in the Many state, as there will never be a
   // reason to send them anything again.
   auto& targets = getTargets(locationIndex);
-  targets.erase(
-    std::remove_if(targets.begin(),
-                   targets.end(),
-                   [&](LocationIndex targetIndex) {
+  targets.erase(std::remove_if(targets.begin(),
+                               targets.end(),
+                               [&](LocationIndex targetIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-                     std::cout << "  send to target\n";
-                     dump(getLocation(targetIndex));
+                                 std::cout << "  send to target\n";
+                                 dump(getLocation(targetIndex));
 #endif
-                     return !sendContents(targetIndex, contents);
-                   }),
-    targets.end());
+                                 return !sendContents(targetIndex, contents);
+                               }),
+                targets.end());
 
   if (contents.isMany()) {
     // We just added work to send Many to all our targets. We'll never need to
