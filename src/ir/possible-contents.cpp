@@ -848,8 +848,8 @@ private:
   // require N incoming links, from each of the N subtypes - and we need that
   // for each struct.get of a cone. If there are M such gets then we have N * M
   // edges for this. Instead, make a single canonical "cone read" location, and
-  // add a single link to it from here, which is only N + M (plus the cost of
-  // adding "latency" in requiring an additional step along the way for the
+  // add a single link to it from each get, which is only N + M (plus the cost
+  // of adding "latency" in requiring an additional step along the way for the
   // data to flow along).
   std::unordered_map<std::pair<HeapType, Index>, LocationIndex>
     canonicalConeReads;
