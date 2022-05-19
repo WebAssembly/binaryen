@@ -1254,9 +1254,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       assert(get->ref == targetExpr);
       readFromData(get->ref->type.getHeapType(), get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
-      // This is either the reference or the value child of a struct.set. A
-      // change to either one affects what values are written to that struct
-      // location, which we handle here.
+      // This is either the reference or the value child of a struct.set.
       assert(set->ref == targetExpr || set->value == targetExpr);
       writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
