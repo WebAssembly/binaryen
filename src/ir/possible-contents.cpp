@@ -868,16 +868,16 @@ private:
   // later to further propagate and handle those changes (which will happen in
   // applyContents).
   //
-  // Returns the new contents at the location.
-  PossibleContents sendContents(LocationIndex locationIndex,
-                                PossibleContents newContents);
+  // Returns whether it is worth sending new contents to this location in the
+  // future. If we return false, the sending location never needs to do that
+  // ever again.
+  bool sendContents(LocationIndex locationIndex,
+                    PossibleContents newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
-  //
-  // Returns the new contents at the location.
-  PossibleContents sendContents(const Location& location,
-                                const PossibleContents& newContents) {
+  bool sendContents(const Location& location,
+                    const PossibleContents& newContents) {
     return sendContents(getIndex(location), newContents);
   }
 
@@ -1129,8 +1129,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-PossibleContents Flower::sendContents(LocationIndex locationIndex,
-                                      PossibleContents newContents) {
+bool Flower::sendContents(LocationIndex locationIndex,
+                          PossibleContents newContents) {
   auto& contents = getContents(locationIndex);
   auto oldContents = contents;
 
@@ -1144,9 +1144,14 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
 #endif
 
   contents.combine(newContents);
+
+  // It is not worth sending any more to this location if we are now in the
+  // worst possible case, as no future value could cause any change.
+  bool worthSendingMore = !contents.isMany();
+
   if (contents == oldContents) {
-    // Nothing actually changed.
-    return contents;
+    // Nothing actually changed, no need to do anything more here.
+    return worthSendingMore;
   }
 
   // Handle special cases: Some locations can only contain certain contents, so
@@ -1156,7 +1161,7 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
     filterGlobalContents(contents, *globalLoc);
     if (contents == oldContents) {
       // Nothing actually changed, after filtering.
-      return contents;
+      return worthSendingMore;
     }
   }
 
@@ -1169,7 +1174,7 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
   // Add a work item if there isn't already.
   workQueue.insert(locationIndex);
 
-  return contents;
+  return worthSendingMore;
 }
 
 void Flower::applyContents(LocationIndex locationIndex) {
@@ -1200,7 +1205,7 @@ void Flower::applyContents(LocationIndex locationIndex) {
                      std::cout << "  send to target\n";
                      dump(getLocation(targetIndex));
 #endif
-                     return sendContents(targetIndex, contents).isMany();
+                     return !sendContents(targetIndex, contents);
                    }),
     targets.end());
 
