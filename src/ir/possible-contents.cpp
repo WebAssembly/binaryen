@@ -1163,7 +1163,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
         std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
     filterGlobalContents(contents, *globalLoc);
     if (contents == oldContents) {
-      // Nothing actually changed, after filtering.
+      // Nothing actually changed after filtering, so just return.
       return worthSendingMore;
     }
   }
