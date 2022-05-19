@@ -826,11 +826,18 @@ private:
   // from all the functions and the global scope.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
-  // The work remaining to do during the flow: locations that we need to process
-  // after updating their contents.
+  // The work remaining to do during the flow: locations that we need to flow
+  // content from, after new content reached them.
   //
   // Using a set here is efficient as multiple updates may arrive to a location
   // before we get to processing it.
+  //
+  // The items here could be {location, newContents}, but it is more efficient
+  // to have already written the new contents to the main data structure. That
+  // avoids larger data here, and also, updating the contents as early as
+  // possible is helpful as anything reading them meanwhile (before we get to
+  // their work item in the queue) will see the newer value, possibly avoiding
+  // flowing an old value that would later be overwritten.
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
   InsertOrderedSet<LocationIndex> workQueue;
 #else
