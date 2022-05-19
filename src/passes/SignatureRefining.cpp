@@ -243,15 +243,7 @@ struct SignatureRefining : public Pass {
           for (auto param : iter->second.params) {
             newParamsTypes.push_back(param);
           }
-          // Do not update local.get/local.tee here, as we will do so in
-          // GlobalTypeRewriter::updateSignatures, below. (Doing an update here
-          // would leave the IR in an inconsistent state of a partial update;
-          // instead, do the full update at the end.)
-          TypeUpdating::updateParamTypes(
-            func,
-            newParamsTypes,
-            wasm,
-            TypeUpdating::LocalUpdatingMode::DoNotUpdate);
+          TypeUpdating::updateParamTypes(func, newParamsTypes, wasm);
         }
       }
     };

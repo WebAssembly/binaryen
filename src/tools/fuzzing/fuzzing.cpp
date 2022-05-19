@@ -3081,15 +3081,7 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     return Type(types);
   } else if (type.isRef()) {
     auto heapType = getSubType(type.getHeapType());
-    // Without wasm GC, avoid non-nullable types as we cannot create any values
-    // of such types. For example, reference types adds eqref, but there is no
-    // way to create such a value, only to receive it from the outside, while GC
-    // adds i31/struct/array creation. Without GC, we will need to create a null
-    // of this type, if we don't happen to receive a value from the outside.
-    Nullability nullability = Nullable;
-    if (wasm.features.hasGC()) {
-      nullability = getSubType(type.getNullability());
-    }
+    auto nullability = getSubType(type.getNullability());
     return Type(heapType, nullability);
   } else if (type.isRtt()) {
     return Type(getSubType(type.getRtt()));
