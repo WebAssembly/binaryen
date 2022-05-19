@@ -223,9 +223,9 @@ public:
   bool isNull() const { return isLiteral() && getLiteral().isNull(); }
 
   // Return the relevant type here. Note that the *meaning* of the type varies
-  // by the contents (type $foo of a global means that type or any subtype, as a
+  // by the contents: type $foo of a global means that type or any subtype, as a
   // subtype might be written to it, while type $foo of a Literal or an
-  // ExactType means that type and nothing else). See isTypeExact().
+  // ExactType means that type and nothing else; see isTypeExact().
   //
   // If no type is possible, return unreachable; if many types are, return none.
   Type getType() const {
@@ -343,7 +343,7 @@ struct ResultLocation {
 };
 
 // The location of one of the locals in a function (either a param or a var).
-// TODO: would separating params from vars help?
+// TODO: would separating params from vars help? (SSA might be enough)
 struct LocalLocation {
   Function* func;
   // The index of the local.
