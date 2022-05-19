@@ -1184,8 +1184,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   const auto location = getLocation(locationIndex);
   auto& contents = getContents(locationIndex);
 
-  // |contents| is the value after the new data arrives. As something arrives,
-  // and we never send empty values around, it cannot be None.
+  // We are called after a change at a location. A change means that some
+  // content has arrived, since we never send empty values around. Assert on
+  // that.
   assert(!contents.isNone());
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -1197,8 +1198,8 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
 #endif
 
   // Send the new contents to all the targets of this location. As we do so,
-  // prune any targets that end up in the Many state, as there will never be a
-  // reason to send them anything again.
+  // prune any targets that we do not need to bother sending content to in the
+  // future, to save space and work later.
   auto& targets = getTargets(locationIndex);
   targets.erase(std::remove_if(targets.begin(),
                                targets.end(),
