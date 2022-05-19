@@ -3328,3 +3328,78 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct_subtype (mut i32) data))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
+  (type $substruct (struct_subtype (mut i32) f64 $struct))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $something (mut (ref $struct)) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $something (mut (ref $struct)) (struct.new $struct
+    (i32.const 10)
+  ))
+
+  ;; CHECK:      (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+  ;; CHECK-NEXT:  (i32.const 22)
+  ;; CHECK-NEXT:  (f64.const 3.14159)
+  ;; CHECK-NEXT: ))
+  (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+    (i32.const 22)
+    (f64.const 3.14159)
+  ))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $something
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (global.get $something)
+  ;; CHECK-NEXT:   (i32.const 12)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (global.get $something)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 22)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; The global $something has an initial value and this later value, and they
+    ;; are both of type $struct, so we can infer an exact type for the global.
+    (global.set $something
+      (struct.new $struct
+        (i32.const 10)
+      )
+      (i32.const 11)
+    )
+    ;; Write to that global here. This can only affect $struct, and *not*
+    ;; $substruct, thanks to the exact type.
+    (struct.set $struct 0
+      (global.get $something)
+      (i32.const 12)
+    )
+    ;; We cannot optimize the first get here, as it might be 10 or 11.
+    (drop
+      (struct.get $struct 0
+        (global.get $something)
+      )
+    )
+    ;; We can optimize this get, however, as nothing aliased it and 22 is the
+    ;; only possibility.
+    (drop
+      (struct.get $substruct 0
+        (global.get $subsomething)
+      )
+    )
+  )
+)
