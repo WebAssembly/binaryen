@@ -863,27 +863,28 @@ private:
   // to add is new or not.
   std::unordered_set<IndexLink> links;
 
-  // Send new contents to the given location. If the contents contain something
-  // new for that location then we note that there, and we also queue work for
-  // later to further propagate and handle those changes (which will happen in
-  // applyContents).
+  // Update a location with new contents, that are added to everything already
+  // present there. If the update changes the contents at that location (if
+  // there was anything new) then we also need to flow from there, which we will
+  // do by adding the location to the work queue, and eventually flowAfterUpdate
+  // will be called on this location.
   //
   // Returns whether it is worth sending new contents to this location in the
   // future. If we return false, the sending location never needs to do that
   // ever again.
-  bool sendContents(LocationIndex locationIndex, PossibleContents newContents);
+  bool updateContents(LocationIndex locationIndex, PossibleContents newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
-  bool sendContents(const Location& location,
+  bool updateContents(const Location& location,
                     const PossibleContents& newContents) {
-    return sendContents(getIndex(location), newContents);
+    return updateContents(getIndex(location), newContents);
   }
 
-  // Apply contents at a location after we adding something new. This does the
-  // bulk of the work during the flow: sending contents to other affected
-  // locations, handling special cases as necessary, etc.
-  void applyContents(LocationIndex locationIndex);
+  // Flow contents from a location where a change occurred. This sends the new
+  // contents to all the targets of this location, and handles special cases of
+  // flow.
+  void flowAfterUpdate(LocationIndex locationIndex);
 
   // Add a new connection while the flow is happening. If the link already
   // exists it is not added.
@@ -1100,7 +1101,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     std::cout << '\n';
 #endif
 
-    sendContents(location, value);
+    updateContents(location, value);
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -1121,7 +1122,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     auto locationIndex = *iter;
     workQueue.erase(iter);
 
-    applyContents(locationIndex);
+    flowAfterUpdate(locationIndex);
 
     updateNewLinks();
   }
@@ -1130,13 +1131,13 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-bool Flower::sendContents(LocationIndex locationIndex,
+bool Flower::updateContents(LocationIndex locationIndex,
                           PossibleContents newContents) {
   auto& contents = getContents(locationIndex);
   auto oldContents = contents;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "sendContents\n";
+  std::cout << "updateContents\n";
   dump(getLocation(locationIndex));
   contents.dump(std::cout, &wasm);
   std::cout << "\n with new contents \n";
@@ -1167,7 +1168,7 @@ bool Flower::sendContents(LocationIndex locationIndex,
   }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "  sendContents has something new\n";
+  std::cout << "  updateContents has something new\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
@@ -1178,7 +1179,7 @@ bool Flower::sendContents(LocationIndex locationIndex,
   return worthSendingMore;
 }
 
-void Flower::applyContents(LocationIndex locationIndex) {
+void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   const auto location = getLocation(locationIndex);
   auto& contents = getContents(locationIndex);
 
@@ -1187,7 +1188,7 @@ void Flower::applyContents(LocationIndex locationIndex) {
   assert(!contents.isNone());
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "\napplyContents to:\n";
+  std::cout << "\nflowAfterUpdate to:\n";
   dump(location);
   std::cout << "  arriving:\n";
   contents.dump(std::cout, &wasm);
@@ -1205,7 +1206,7 @@ void Flower::applyContents(LocationIndex locationIndex) {
                                  std::cout << "  send to target\n";
                                  dump(getLocation(targetIndex));
 #endif
-                                 return !sendContents(targetIndex, contents);
+                                 return !updateContents(targetIndex, contents);
                                }),
                 targets.end());
 
@@ -1276,7 +1277,7 @@ void Flower::connectDuringFlow(Location from, Location to) {
     // In addition to adding the link, send the contents along it right now, so
     // that the graph state is correct (we cannot assume that a future flow will
     // happen and carry along the current contents to the target).
-    sendContents(to, getContents(getIndex(from)));
+    updateContents(to, getContents(getIndex(from)));
   }
 }
 
@@ -1414,7 +1415,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     //       with.
     auto heapLoc =
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
-    sendContents(heapLoc, valueContents);
+    updateContents(heapLoc, valueContents);
   } else {
     assert(refContents.isMany());
 
@@ -1422,7 +1423,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     auto type = ref->type.getHeapType();
     for (auto subType : subTypes->getAllSubTypes(type)) {
       auto heapLoc = DataLocation{subType, fieldIndex};
-      sendContents(heapLoc, valueContents);
+      updateContents(heapLoc, valueContents);
     }
   }
 }
@@ -1459,7 +1460,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     filtered.dump(std::cout);
     std::cout << '\n';
 #endif
-    sendContents(ExpressionLocation{cast, 0}, filtered);
+    updateContents(ExpressionLocation{cast, 0}, filtered);
   }
 }
 
