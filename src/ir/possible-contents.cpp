@@ -898,6 +898,11 @@ private:
   // time.
   void updateNewLinks();
 
+  // Contents sent to a global location can be filtered in a special way during
+  // the flow, which is handled in this helper.
+  void filterGlobalContents(PossibleContents& contents,
+                            const GlobalLocation& globalLoc);
+
   // Reads from GC data: a struct.get or array.get. This is given the type of
   // the read operation, the field that is read on that type, the known contents
   // in the reference the read receives, and the read instruction itself. We
@@ -1141,30 +1146,7 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
   // modify what arrives accordingly.
   if (auto* globalLoc =
         std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
-    auto* global = wasm.getGlobal(globalLoc->name);
-    if (global->mutable_ == Immutable) {
-      // This is an immutable global. We never need to consider this value as
-      // "Many", since in the worst case we can just use the immutable value.
-      // That is, we can always replace this value with (global.get $name) which
-      // will get the right value. Likewise, using the immutable value is better
-      // than any value in a particular type, even an exact one.
-      if (newContents.isMany() || newContents.isExactType()) {
-        newContents = PossibleContents::global(global->name, global->type);
-
-        // TODO: We could do better here, to set global->init->type instead of
-        //       global->type, or even the newContents.getType() - either of
-        //       those may be more refined. But other passes will handle that in
-        //       general. And ImmutableGlobal carries around the type declared
-        //       in the global (since that is the type a global.get would get
-        //       if we apply this optimization and write a global.get there).
-
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-        std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
-        newContents.dump(std::cout, &wasm);
-        std::cout << '\n';
-#endif
-      }
-    }
+    filterGlobalContents(newContents, *globalLoc);
   }
 
   // The work queue contains the *old* contents, which if they already exist we
@@ -1310,6 +1292,37 @@ void Flower::updateNewLinks() {
 #endif
   }
   newLinks.clear();
+}
+
+void Flower::filterGlobalContents(PossibleContents& contents,
+                                  const GlobalLocation& globalLoc) {
+  auto* global = wasm.getGlobal(globalLoc.name);
+  if (global->mutable_ == Immutable) {
+    // This is an immutable global. We never need to consider this value as
+    // "Many", since in the worst case we can just use the immutable value. That
+    // is, we can always replace this value with (global.get $name) which will
+    // get the right value. Likewise, using the immutable value is often better
+    // than an exact type (as a global.get is likely better than leaving it as
+    // it is).
+    if (contents.isMany() || contents.isExactType()) {
+      contents = PossibleContents::global(global->name, global->type);
+
+      // TODO: We could do better here, to set global->init->type instead of
+      //       global->type, or even the contents.getType() - either of those
+      //       may be more refined. But other passes will handle that in
+      //       general. And ImmutableGlobal carries around the type declared in
+      //       the global (since that is the type a global.get would get if we
+      //       apply this optimization and write a global.get there).
+      // TODO We could note both an exact type *and* that something is equal to
+      //      a global, in some cases.
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+      std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
+      contents.dump(std::cout, &wasm);
+      std::cout << '\n';
+#endif
+    }
+  }
 }
 
 void Flower::readFromData(HeapType declaredHeapType,
