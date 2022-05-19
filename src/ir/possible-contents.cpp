@@ -1213,9 +1213,12 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
                 targets.end());
 
   if (contents.isMany()) {
-    // We just added work to send Many to all our targets. We'll never need to
-    // send anything else ever again, but we should have already removed all the
-    // targets since we made them Many as well in the above operation.
+    // We contain Many, and just called updateContents on our targets to send
+    // that value to them. We'll never need to send anything from here ever
+    // again, since we sent the worst case possible already, so we can just
+    // clear our targets vector. But we should have already removed all the
+    // targets in the above remove_if operation, since they should have all
+    // notified us that we do not need to send them any more updates.
     assert(targets.empty());
   }
 
