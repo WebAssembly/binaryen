@@ -1011,8 +1011,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "external phase\n";
 #endif
 
-  // Add unknown incoming roots from parameters to exported functions and other
-  // cases where we can't see the caller.
+  // Parameters of exported functions are roots, since exports can have callers
+  // that we can't see, so anything might arrive there.
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
     for (Index i = 0; i < func->getParams().size(); i++) {
