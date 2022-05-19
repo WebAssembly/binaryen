@@ -1470,7 +1470,6 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-// Dump out a location for debug purposes.
 void Flower::dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
     std::cout << "  exprloc \n" << *loc->expr << '\n';
