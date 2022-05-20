@@ -2417,7 +2417,7 @@
   (func $create-other (result (ref $other))
     (struct.new $other
       (f64.const 0)
-      (i32.const 1337)
+      (i32.const 1337) ;; this changed
     )
   )
 
@@ -2440,8 +2440,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; As this is not a copy, we cannot optimize the last get lower down:
-    ;; $struct has both 42 and 1337 written to it.
+    ;; As this is not a copy between a struct and itself, we cannot optimize
+    ;; the last get lower down: $struct has both 42 and 1337 written to it.
     (struct.set $struct 1
       (call $create-struct)
       (struct.get $other 1
