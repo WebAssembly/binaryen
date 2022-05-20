@@ -45,7 +45,7 @@ protected:
 public:
   explicit LexCtx(std::string_view in) : input(in) {}
 
-  // What has been lexed so far.
+  // Return the fragment that has been lexed so far.
   std::optional<LexResult> lexed() const {
     if (lexedSize > 0) {
       return {LexResult{input.substr(0, lexedSize)}};
@@ -70,10 +70,16 @@ public:
     return next().substr(0, sv.size()) == sv;
   }
 
+  // Consume the next `n` characters.
+  void take(size_t n) { lexedSize += n; }
+
+  // Consume an additional lexed fragment.
+  void take(const LexResult& res) { lexedSize += res.span.size(); }
+
   // Consume the prefix and return true if possible.
   bool take_prefix(std::string_view sv) {
     if (starts_with(sv)) {
-      *this += sv.size();
+      take(sv.size());
       return true;
     }
     return false;
@@ -81,18 +87,6 @@ public:
 
   // Consume the rest of the input.
   void take_all() { lexedSize = input.size(); }
-
-  // // Whether we have lexed anything.
-  // operator bool() const { return lexedSize > 0; }
-
-  // Consume the next `n` characters.
-  LexCtx& operator+=(size_t n) {
-    lexedSize += n;
-    return *this;
-  }
-
-  // Consume the result of lexing the unlexed input.
-  LexCtx& operator+=(const LexResult& res) { return *this += res.span.size(); }
 };
 
 // The result of lexing an integer token fragment.
@@ -206,7 +200,7 @@ std::optional<LexResult> comment(std::string_view in) {
   // Line comment
   if (ctx.take_prefix(";;"sv)) {
     if (auto size = ctx.next().find('\n'); size != ""sv.npos) {
-      ctx += size;
+      ctx.take(size);
     } else {
       ctx.take_all();
     }
@@ -222,7 +216,7 @@ std::optional<LexResult> comment(std::string_view in) {
       } else if (ctx.take_prefix(";)"sv)) {
         --depth;
       } else {
-        ctx += 1;
+        ctx.take(1);
       }
     }
     if (depth > 0) {
@@ -245,7 +239,7 @@ std::optional<LexResult> space(std::string_view in) {
       continue;
     }
     if (auto lexed = comment(ctx.next())) {
-      ctx += *lexed;
+      ctx.take(*lexed);
     } else {
       break;
     }
@@ -304,14 +298,14 @@ std::optional<LexIntResult> integer(std::string_view in) {
   ctx.take_sign();
   if (ctx.take_prefix("0x"sv)) {
     if (auto lexed = hexnum(ctx.next())) {
-      ctx += *lexed;
+      ctx.take(*lexed);
       return ctx.lexed();
     }
     // TODO: Add error production for unrecognized hexnum.
     return {};
   }
   if (auto lexed = num(ctx.next())) {
-    ctx += *lexed;
+    ctx.take(*lexed);
     return ctx.lexed();
   }
   return {};
