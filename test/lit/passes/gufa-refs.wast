@@ -1382,9 +1382,9 @@
         (i32.const 10)
       )
     )
-    ;; This get cannot be optimized because below us because the local is
-    ;; written a child as well. So the local $parent can refer to either one,
-    ;; and they disagree on the aliased value.
+    ;; This get cannot be optimized because later down the local is written a
+    ;; child as well. So the local $parent can refer to either type, and they
+    ;; disagree on the aliased value.
     (drop
       (struct.get $parent 0
         (local.get $parent)
