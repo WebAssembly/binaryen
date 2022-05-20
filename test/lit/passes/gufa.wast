@@ -820,15 +820,15 @@
   )
 )
 
-;; As above but the second call is of another function type, so it does not
-;; prevent us from optimizing even though it has a different value.
+;; As above but the second call is of another signature, so it does not prevent
+;; us from optimizing even though it has a different value.
 (module
   ;; CHECK:      (type $i (func (param i32)))
   (type $i (func (param i32)))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $i2 (func (param f32)))
-  (type $i2 (func (param i32)))
+  ;; CHECK:      (type $f (func (param f32)))
+  (type $f (func (param f32)))
 
   (table 10 funcref)
   (elem (i32.const 0) funcref
@@ -855,7 +855,7 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_indirect $0 (type $i2)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $f)
   ;; CHECK-NEXT:   (f32.const 1337)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -865,7 +865,7 @@
       (i32.const 42)
       (i32.const 0)
     )
-    (call_indirect (type $i2)
+    (call_indirect (type $f)
       (f32.const 1337)
       (i32.const 0)
     )
