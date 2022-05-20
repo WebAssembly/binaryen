@@ -52,10 +52,11 @@ struct GUFAOptimizer
   bool isFunctionParallel() override { return true; }
 
   ContentOracle& oracle;
+  bool optimizing;
 
-  GUFAOptimizer(ContentOracle& oracle) : oracle(oracle) {}
+  GUFAOptimizer(ContentOracle& oracle, bool optimizing) : oracle(oracle), optimizing(optimizing) {}
 
-  GUFAOptimizer* create() override { return new GUFAOptimizer(oracle); }
+  GUFAOptimizer* create() override { return new GUFAOptimizer(oracle, optimizing); }
 
   bool optimized = false;
 
@@ -230,21 +231,36 @@ struct GUFAOptimizer
       // We may add blocks around pops, which we must fix up.
       EHUtils::handleBlockNestedPops(func, *getModule());
 
-      // TODO: run vacuum and dce, as our changes can be cleaned up a lot by
-      //       those two?
+      if (optimizing) {
+        PassRunner runner(getModule(), getPassOptions());
+        runner.setIsNested(true);
+        // New unreachables we added have created dead code we can remove.
+        runner.add("dce");
+        // New drops we added allow us to remove more unused code and values.
+        runner.add("vacuum");
+        // New constants we propagated globally can perhaps be propagated
+        // locally and used in computations.
+        runner.add("precompute-propagate");
+        runner.runOnFunction(func);
+      }
     }
   }
 };
 
 struct GUFAPass : public Pass {
+  bool optimizing;
+
+  GUFAPass(bool optimizing) : optimizing(optimizing) {}
+
   void run(PassRunner* runner, Module* module) override {
     ContentOracle oracle(*module);
-    GUFAOptimizer(oracle).run(runner, module);
+    GUFAOptimizer(oracle, optimizing).run(runner, module);
   }
 };
 
 } // anonymous namespace
 
-Pass* createGUFAPass() { return new GUFAPass(); }
+Pass* createGUFAPass() { return new GUFAPass(false); }
+Pass* createGUFAOptimizingPass() { return new GUFAPass(true); }
 
 } // namespace wasm

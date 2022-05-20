@@ -175,6 +175,9 @@ void PassRegistry::registerPasses() {
                "information about what content can actually appear in each "
                "location",
                createGUFAPass);
+  registerPass("gufa-optimizing",
+               "GUFA plus local optimizations in functions we modified",
+               createGUFAOptimizingPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
@@ -567,9 +570,6 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("gto");
     addIfNoDWARFIssues("remove-unused-module-elements");
     addIfNoDWARFIssues("cfp");
-  }
-  if (getenv("NOW")) {
-    addIfNoDWARFIssues("gufa");
   }
 }
 
