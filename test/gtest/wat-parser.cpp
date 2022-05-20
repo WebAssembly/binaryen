@@ -298,6 +298,10 @@ TEST(ParserTest, LexHexInt) {
     EXPECT_EQ(lexer, lexer.end());
   }
   {
+    Lexer lexer("0xg"sv);
+    EXPECT_EQ(lexer, lexer.end());
+  }
+  {
     Lexer lexer("0x120x34"sv);
     EXPECT_EQ(lexer, lexer.end());
   }
