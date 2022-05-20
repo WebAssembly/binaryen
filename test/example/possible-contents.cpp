@@ -16,6 +16,8 @@ template<typename T> void assertEqualSymmetric(const T& a, const T& b) {
 
   assert(a == b);
   assert(b == a);
+  assert(!(a != b));
+  assert(!(b != a));
 }
 
 template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
