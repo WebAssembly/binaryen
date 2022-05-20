@@ -3539,8 +3539,6 @@
       (global.get $something)
       (i32.const 10)
     )
-    ;; As a result, we can optimize the first get here (but not the second, as
-    ;; before).
     (drop
       (struct.get $struct 0
         (global.get $something)
