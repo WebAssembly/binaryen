@@ -762,9 +762,9 @@ assertEqualSymmetric
 [Many]
 [Many]
 
-possible types of the $null global: unreachable
-possible types of the $something global: anyref
-possible types of the function's body: none
+possible types of the $null global: [Literal anyref(null) HT: any]
+possible types of the $something global: [Literal 42]
+possible types of the function's body: [Many]
 
 
 ok.

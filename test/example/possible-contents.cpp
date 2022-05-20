@@ -227,21 +227,26 @@ static void testOracle() {
       (module
         (type $struct (struct))
         (global $null (ref null any) (ref.null any))
-        (global $something (ref null any) (struct.new $struct))
+        (global $something i32 (i32.const 42))
       )
     )");
     ContentOracle oracle(*wasm);
-    std::cout << "possible types of the $null global: "
-              << oracle.getContents(GlobalLocation{"foo"}).getType() << '\n';
-    std::cout << "possible types of the $something global: "
-              << oracle.getContents(GlobalLocation{"something"}).getType()
-              << '\n';
+
+    // This will be a null constant.
+    std::cout << "possible types of the $null global: ";
+    oracle.getContents(GlobalLocation{"null"}).dump(std::cout);
+    std::cout << '\n';
+
+    // This will be 42.
+    std::cout << "possible types of the $something global: ";
+    oracle.getContents(GlobalLocation{"something"}).dump(std::cout);
+    std::cout << '\n';
   }
 
   {
     // Test for a node with many possible types. The pass limits how many it
     // notices to not use excessive memory, so even though 4 are possible here,
-    // we'll just report that more than one is possible using Type::none).
+    // we'll just report that more than one is possible ("many").
     auto wasm = parse(R"(
       (module
         (type $A (struct_subtype (field i32) data))
@@ -266,10 +271,9 @@ static void testOracle() {
       )
     )");
     ContentOracle oracle(*wasm);
-    std::cout
-      << "possible types of the function's body: "
-      << oracle.getContents(ResultLocation{wasm->getFunction("foo")}).getType()
-      << '\n';
+    std::cout << "possible types of the function's body: ";
+    oracle.getContents(ResultLocation{wasm->getFunction("foo")}).dump(std::cout);
+    std::cout << '\n';
   }
 }
 

@@ -1330,7 +1330,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
       //       general (by refining the global's type).
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-      std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
+      std::cout << "  setting immglobal to ImmutableGlobal\n";
       contents.dump(std::cout, &wasm);
       std::cout << '\n';
 #endif
