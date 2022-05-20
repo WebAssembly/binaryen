@@ -25,6 +25,10 @@
 ;; changes cause cfp to behave differently in some cases, which could lead to
 ;; more confusion than benefit - the reader would not be able to compare the two
 ;; outputs and see cfp as "correct" which gufa should match.
+;;
+;; Note that there is some overlap with gufa-refs.wast in some places, but
+;; intentionally no tests are removed here compared to cfp.wast, to make it
+;; simple to map the original cfp tests to their ported versions here.
 
 (module
   (type $struct (struct i32))
