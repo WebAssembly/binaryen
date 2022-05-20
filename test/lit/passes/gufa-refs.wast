@@ -1743,9 +1743,6 @@
     (local.set $x
       (global.get $x)
     )
-    ;; Pass it through a call, then write it to a struct, then read it from
-    ;; there, and coerce to non-null which we would optimize if the value were
-    ;; only a null. But it is not a null, and no optimizations happen here.
     (global.set $x
       (struct.get $storage 0
         (struct.new $storage
