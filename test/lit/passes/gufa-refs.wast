@@ -3551,3 +3551,85 @@
     )
   )
 )
+
+;; call_ref types
+(module
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $i1 (func_subtype (param i32) func))
+  (type $i1 (func (param i32)))
+  ;; CHECK:      (type $i2 (func_subtype (param i32) func))
+  (type $i2 (func (param i32)))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (elem declare func $reffed1 $reffed2)
+
+  ;; CHECK:      (func $reffed1 (type $i1) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed1 (type $i1) (param $x i32)
+    ;; This is called with one possible value, 42, which we can optimize the
+    ;; param to.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $reffed2 (type $i2) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed2 (type $i2) (param $x i32)
+    ;; This is called with two possible values, so we cannot optimize. with one possible value, 42, which we can optimize the
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $do-calls (type $none_=>_none)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (ref.func $reffed1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (ref.func $reffed1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:   (ref.func $reffed2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 99999)
+  ;; CHECK-NEXT:   (ref.func $reffed2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-calls
+    ;; Call $i1 twice with the same value, and $i2 twice with different values.
+    ;; Note that structurally the types are identical, but we still
+    ;; differentiate them, allowing us to optimize.
+    (call_ref
+      (i32.const 42)
+      (ref.func $reffed1)
+    )
+    (call_ref
+      (i32.const 42)
+      (ref.func $reffed1)
+    )
+    (call_ref
+      (i32.const 1337)
+      (ref.func $reffed2)
+    )
+    (call_ref
+      (i32.const 99999)
+      (ref.func $reffed2)
+    )
+  )
+)
