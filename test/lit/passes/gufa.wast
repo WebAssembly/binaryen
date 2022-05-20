@@ -820,8 +820,8 @@
   )
 )
 
-;; As above but the second call is of another signature, so it does not prevent
-;; us from optimizing even though it has a different value.
+;; As above but the second call is of another function type, so it does not
+;; prevent us from optimizing even though it has a different value.
 (module
   ;; CHECK:      (type $i (func (param i32)))
   (type $i (func (param i32)))
