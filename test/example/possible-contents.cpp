@@ -7,6 +7,7 @@
 
 using namespace wasm;
 
+// Asserts a == b, in any order.
 template<typename T> void assertEqualSymmetric(const T& a, const T& b) {
   std::cout << "\nassertEqualSymmetric\n";
   a.dump(std::cout);
@@ -20,6 +21,7 @@ template<typename T> void assertEqualSymmetric(const T& a, const T& b) {
   assert(!(b != a));
 }
 
+// Asserts a != b, in any order.
 template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
   std::cout << "\nassertNotEqualSymmetric\n";
   a.dump(std::cout);
@@ -99,6 +101,7 @@ static void testComparisons() {
   assertNotEqualSymmetric(exactNonNullAnyref, exactAnyref);
 }
 
+// Asserts a combined with b (in any order) is equal to c.
 template<typename T>
 void assertCombination(const T& a, const T& b, const T& c) {
   std::cout << "\nassertCombination\n";
@@ -130,9 +133,9 @@ static void testCombinations() {
   assertCombination(none_, exactI32, exactI32);
   assertCombination(none_, many, many);
 
-  // i32(0) will become many, unless the value is identical. (We could do
+  // i32(0) will become Many, unless the value is identical. (We could do
   // exactI32 if only the values differ, but there is no point as subtyping
-  // does not exist for this type, and so many is just as informative.)
+  // does not exist for this type, and so Many is just as informative.)
   assertCombination(i32Zero, i32Zero, i32Zero);
   assertCombination(i32Zero, i32One, many);
   assertCombination(i32Zero, f64One, many);
@@ -169,13 +172,14 @@ static void testCombinations() {
   assertCombination(anyNull, anyNull, anyNull);
   assertCombination(anyNull, exactAnyref, exactAnyref);
 
-  // Two nulls go to the lub
+  // Two nulls go to the lub.
   assertCombination(anyNull, funcNull, anyNull);
 
   assertCombination(exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
 
   // If one is a null and the other is not, it makes the one that is not a null
-  // be a nullable type - but keeps the heap type of the other.
+  // be a nullable type - but keeps the heap type of the other (since the type
+  // of the null does not matter, all nulls compare equal).
   assertCombination(anyNull, exactNonNullAnyref, exactAnyref);
   assertCombination(anyNull, exactNonNullFuncref, exactFuncref);
 
@@ -199,6 +203,7 @@ static void testCombinations() {
   assertCombination(anyGlobal, funcNull, many);
 }
 
+// Parse a module from text and return it.
 static std::unique_ptr<Module> parse(std::string module) {
   auto wasm = std::make_unique<Module>();
   wasm->features = FeatureSet::All;
