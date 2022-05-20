@@ -633,9 +633,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref any)) (param $y (ref any)) (param $z (ref any))
-    ;; This function *is* called, with possible non-null values in the 1st & 3rd
-    ;; parameters but not the 2nd, which can be optimized (as the reference is
-    ;; non-nullable).
+    ;; This function is called, with possible (non-null) values in the 1st & 3rd
+    ;; params, but nothing can arrive in the 2nd, which we can optimize to an
+    ;; unreachable.
     (drop
       (local.get $x)
     )
@@ -660,9 +660,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-called
-    ;; Call the above function as described there: The 2nd parameter has only
-    ;; nulls, while the others have both a null and a non-null, so there are
-    ;; non-null contents arriving.
+    ;; Call the above function as described there: Nothing can arrive in the
+    ;; second param (since we cast a null to non-null there), while the others
+    ;; have both a null and a non-null (different in the 2 calls here). (With
+    ;; more precise analysis we could see that the ref.as must trap, and we
+    ;; could optimize even more here.)
     (call $called
       (struct.new $struct)
       (ref.as_non_null
