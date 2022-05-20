@@ -54,9 +54,12 @@ struct GUFAOptimizer
   ContentOracle& oracle;
   bool optimizing;
 
-  GUFAOptimizer(ContentOracle& oracle, bool optimizing) : oracle(oracle), optimizing(optimizing) {}
+  GUFAOptimizer(ContentOracle& oracle, bool optimizing)
+    : oracle(oracle), optimizing(optimizing) {}
 
-  GUFAOptimizer* create() override { return new GUFAOptimizer(oracle, optimizing); }
+  GUFAOptimizer* create() override {
+    return new GUFAOptimizer(oracle, optimizing);
+  }
 
   bool optimized = false;
 
