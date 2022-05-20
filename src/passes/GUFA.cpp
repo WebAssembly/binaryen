@@ -96,54 +96,6 @@ struct GUFAOptimizer
     return !effects.hasUnremovableSideEffects();
   }
 
-  // Checks if the expression looks like it's already been optimized to a
-  // particular value that we want to optimize it to. For example, if curr is
-  //
-  //  (block
-  //    ..
-  //    (i32.const 20)
-  //  )
-  //
-  // And the value we want to optimize to is (i32.const 20), the same value,
-  // then there is no point to doing so - we'd be expanding code repeatedly if
-  // run on the same module again and again, since after optimizing we'd get
-  // this:
-  //
-  //  (block
-  //    (drop
-  //      (block
-  //        ..
-  //        (i32.const 20)
-  //      )
-  //    )
-  //    (i32.const 20)
-  //  )
-  //
-  // That is, in general we will add a drop of the old contents and then the
-  // value we want to optimize to, so avoid doing so in a repetitive way.
-  //
-  // TODO: beyond this, we could avoid optimizing unused values - dropped, etc.
-  //       see ExpressionAnalyzer::isResultUsed()
-  bool looksAlreadyOptimizedToValue(Expression* curr, Expression* value) {
-    // The case that we do want to avoid here is if this looks like the
-    // output of our optimization, which is (block .. (constant)), a block
-    // ending in a constant and with no breaks to it.
-    if (auto* block = curr->dynCast<Block>()) {
-      // If we got here, the list cannot be empty - an empty block is not
-      // equivalent to any constant, so a logic error occurred before.
-      assert(!block->list.empty());
-      if (BranchUtils::BranchSeeker::has(block, block->name)) {
-        // We never emit a branch in our blocks, so the presence of a branch
-        // proves we have not already optimized here.
-        return false;
-      }
-
-      // Look at the final value in the block.
-      curr = block->list.back();
-    }
-    return ExpressionAnalyzer::equal(curr, value);
-  }
-
   void visitExpression(Expression* curr) {
     // Skip things we can't improve in any way.
     auto type = curr->type;
@@ -211,9 +163,6 @@ struct GUFAOptimizer
     }
 
     auto* c = contents.makeExpression(wasm);
-    if (looksAlreadyOptimizedToValue(curr, c)) {
-      return;
-    }
 
     // We can only place the constant value here if it has the right type. For
     // example, a block may return (ref any), that is, not allow a null, but in

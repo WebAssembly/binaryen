@@ -376,17 +376,14 @@
 
   ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:   (block (result f32)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create (result (ref $struct))
     (struct.new_with_rtt $struct
-      ;; Fall though a 42 via a block.
-      (block (result f32)
+      ;; Fall though a 42. The block can be optimized to a constant.
+      (block $named (result f32)
         (nop)
         (f32.const 42)
       )
