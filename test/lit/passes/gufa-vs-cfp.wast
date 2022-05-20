@@ -61,8 +61,8 @@
   ;; CHECK-NEXT: )
   (func $test
     ;; The only place this type is created is with a default value, and so we
-    ;; can optimize the later get into a constant (note that no drop of the
-    ;; ref is needed: the optimize can see that the struct.get cannot trap, as
+    ;; can optimize the get into a constant (note that no drop of the
+    ;; ref is needed: the optimizer can see that the struct.get cannot trap, as
     ;; its reference is non-nullable).
     (drop
       (struct.get $struct 0
