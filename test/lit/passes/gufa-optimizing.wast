@@ -7,23 +7,55 @@
 ;; things.
 
 (module
-  (import "a" "b" (func $import (result i32)))
+  ;; NO__OPT:      (type $none_=>_i32 (func (result i32)))
 
+  ;; NO__OPT:      (func $foo (result i32)
+  ;; NO__OPT-NEXT:  (i32.const 1)
+  ;; NO__OPT-NEXT: )
+  ;; YES_OPT:      (type $none_=>_i32 (func (result i32)))
+
+  ;; YES_OPT:      (func $foo (result i32)
+  ;; YES_OPT-NEXT:  (i32.const 1)
+  ;; YES_OPT-NEXT: )
   (func $foo (result i32)
+    ;; Helper function.
     (i32.const 1)
   )
 
-  (func $bar
-    ;; Both arms of the select have identical values, 1. Inlining +
-    ;; OptimizeInstructions could of course discover that in this case, but
-    ;; GUFA can do so even without inlining. As a result the select will be
-    ;; dropped (due to the call which may have effects, we keep it), and after
-    ;; the select we emit the constant 1 for the value.
-    (drop
-      (select
+  ;; NO__OPT:      (func $bar (result i32)
+  ;; NO__OPT-NEXT:  (drop
+  ;; NO__OPT-NEXT:   (block $out (result i32)
+  ;; NO__OPT-NEXT:    (block (result i32)
+  ;; NO__OPT-NEXT:     (drop
+  ;; NO__OPT-NEXT:      (block $in (result i32)
+  ;; NO__OPT-NEXT:       (block (result i32)
+  ;; NO__OPT-NEXT:        (drop
+  ;; NO__OPT-NEXT:         (call $foo)
+  ;; NO__OPT-NEXT:        )
+  ;; NO__OPT-NEXT:        (i32.const 1)
+  ;; NO__OPT-NEXT:       )
+  ;; NO__OPT-NEXT:      )
+  ;; NO__OPT-NEXT:     )
+  ;; NO__OPT-NEXT:     (i32.const 1)
+  ;; NO__OPT-NEXT:    )
+  ;; NO__OPT-NEXT:   )
+  ;; NO__OPT-NEXT:  )
+  ;; NO__OPT-NEXT:  (i32.const 1)
+  ;; NO__OPT-NEXT: )
+  ;; YES_OPT:      (func $bar (result i32)
+  ;; YES_OPT-NEXT:  (drop
+  ;; YES_OPT-NEXT:   (call $foo)
+  ;; YES_OPT-NEXT:  )
+  ;; YES_OPT-NEXT:  (i32.const 1)
+  ;; YES_OPT-NEXT: )
+  (func $bar (result i32)
+    ;; GUFA infers a constant value for each block here, adding multiple
+    ;; constants of 1 and dropped earlier values. The optimizing variant of this
+    ;; pass will avoid all that and just emit minimal code here (a drop of the
+    ;; call followed by the value we inferred for it, 1).
+    (block $out (result i32)
+      (block $in (result i32)
         (call $foo)
-        (i32.const 1)
-        (call $import)
       )
     )
   )
