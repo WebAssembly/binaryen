@@ -2669,7 +2669,7 @@
 
     ;; Read the following from the most nested comment first.
 
-    (ref.cast_static $B ;; if we mistakenly thing this contains content of
+    (ref.cast_static $B ;; if we mistakenly think this contains content of
                         ;; type $A, it would trap, but it should not, and we
                         ;; have nothing to optimize here
       (ref.as_non_null ;; also $B, based on the child's *contents* (not type!)
