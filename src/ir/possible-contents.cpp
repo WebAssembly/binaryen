@@ -1367,6 +1367,8 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       in the definition of it, if it is not imported; or, we could track
     //       the contents of immutable fields of allocated objects, and not just
     //       represent them as ExactType).
+    //       See the test TODO with text "We optimize some of this, but stop at
+    //       reading from the immutable global"
     assert(refContents.isMany() || refContents.isGlobal());
 
     // We create a special location for the canonical cone of this type, to

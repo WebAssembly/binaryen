@@ -2830,9 +2830,9 @@
     ;; that, and return the value (all verifying that the types are correct
     ;; after optimization).
     ;;
-    ;; We optimize some of this, but stop at reading form the immutable global.
-    ;; To continue we need to track the fields of allocated objects, or to look
-    ;; at immutable globals directly, neither of which we do yet.
+    ;; We optimize some of this, but stop at reading from the immutable global.
+    ;; To continue we'd need to track the fields of allocated objects, or look
+    ;; at immutable globals directly, neither of which we do yet. TODO
     (struct.get $vtable 0
       (array.get $itable
         (struct.get $object $itable
