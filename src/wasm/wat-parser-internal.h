@@ -28,22 +28,36 @@ namespace {
 // Lexical Analysis
 // ================
 
+// The result of lexing a token fragment.
+struct LexResult {
+  std::string_view span;
+};
+
+// Lexing context that accumulates lexed input to produce a token fragment.
 struct LexCtx {
 protected:
-  std::string_view original;
-  size_t index;
+  // The input we are lexing.
+  std::string_view input;
+
+  // How much of the input we have already lexed.
+  size_t lexedSize = 0;
 
 public:
-  LexCtx(std::string_view str) : original(str), index(0) {}
+  explicit LexCtx(std::string_view in) : input(in) {}
 
   // What has been lexed so far.
-  std::string_view lexed() const { return original.substr(0, index); }
+  std::optional<LexResult> lexed() const {
+    if (lexedSize > 0) {
+      return {LexResult{input.substr(0, lexedSize)}};
+    }
+    return {};
+  }
 
   // The next input that has not already been lexed.
-  std::string_view next() const { return original.substr(index); }
+  std::string_view next() const { return input.substr(lexedSize); }
 
   // The size of the unlexed input.
-  size_t size() const { return original.size() - index; }
+  size_t size() const { return input.size() - lexedSize; }
 
   // Whether there is no more input.
   bool empty() const { return size() == 0; }
@@ -66,36 +80,67 @@ public:
   }
 
   // Consume the rest of the input.
-  void take_all() { index = original.size(); }
+  void take_all() { lexedSize = input.size(); }
 
-  // Whether we have lexed anything.
-  operator bool() const { return index > 0; }
+  // // Whether we have lexed anything.
+  // operator bool() const { return lexedSize > 0; }
 
   // Consume the next `n` characters.
   LexCtx& operator+=(size_t n) {
-    index += n;
+    lexedSize += n;
     return *this;
   }
 
   // Consume the result of lexing the unlexed input.
-  LexCtx& operator+=(const LexCtx& other) { return *this += other.index; }
+  LexCtx& operator+=(const LexResult& res) { return *this += res.span.size(); }
 };
 
-struct LexIntCtx : LexCtx {
-  uint64_t n = 0;
-  LexIntCtx(std::string_view str) : LexCtx(str) {}
+// The result of lexing an integer token fragment.
+struct LexIntResult : LexResult {
+  uint64_t n;
+  bool hasSign;
+};
 
-  LexIntCtx& operator+=(const LexIntCtx& other) {
-    index += other.index;
-    n = other.n;
-    return *this;
+// Lexing context that accumulates lexed input to produce an integer token
+// fragment.
+struct LexIntCtx : LexCtx {
+private:
+  uint64_t n = 0;
+  bool hasSign = false;
+  bool negative = false;
+  bool overflow = false;
+
+public:
+  LexIntCtx(std::string_view in) : LexCtx(in) {}
+
+  std::optional<LexIntResult> lexed() {
+    if (overflow) {
+      return {};
+    }
+    if (auto basic = LexCtx::lexed()) {
+      return {LexIntResult{*basic, negative ? -n : n, hasSign}};
+    }
+    return {};
+  }
+
+  void take_sign() {
+    if (take_prefix("+"sv)) {
+      hasSign = true;
+    } else if (take_prefix("-"sv)) {
+      hasSign = true;
+      negative = true;
+    }
   }
 
   bool take_digit() {
     if (!empty()) {
       if (char d = next()[0]; std::isdigit(d)) {
-        n = n * 10 + (d - '0');
-        index += 1;
+        uint64_t newN = n * 10 + (d - '0');
+        if (newN <= n) {
+          overflow = true;
+        }
+        n = newN;
+        lexedSize += 1;
         return true;
       }
     }
@@ -105,34 +150,43 @@ struct LexIntCtx : LexCtx {
   bool take_hexdigit() {
     if (!empty()) {
       if (char h = next()[0]; std::isxdigit(h)) {
+        uint64_t newN = n * 16;
         n *= 16;
         if (h >= 'a') {
-          n += 10 + h - 'a';
+          newN += 10 + h - 'a';
         } else if (h >= 'A') {
-          n += 10 + h - 'A';
+          newN += 10 + h - 'A';
         } else {
-          n += h - '0';
+          newN += h - '0';
         }
-        index += 1;
+        if (newN <= n) {
+          overflow = true;
+        }
+        n = newN;
+        lexedSize += 1;
         return true;
       }
     }
     return false;
   }
+
+  LexIntCtx& operator+=(const LexIntResult& res) {
+    lexedSize += res.span.size();
+    n = res.n;
+    return *this;
+  }
 };
 
-std::optional<LexCtx> lparen(LexCtx ctx) {
-  if (ctx.take_prefix("("sv)) {
-    return ctx;
-  }
-  return {};
+std::optional<LexResult> lparen(std::string_view in) {
+  LexCtx ctx(in);
+  ctx.take_prefix("("sv);
+  return ctx.lexed();
 }
 
-std::optional<LexCtx> rparen(LexCtx ctx) {
-  if (ctx.take_prefix(")"sv)) {
-    return ctx;
-  }
-  return {};
+std::optional<LexResult> rparen(std::string_view in) {
+  LexCtx ctx(in);
+  ctx.take_prefix(")"sv);
+  return ctx.lexed();
 }
 
 // comment      ::= linecomment | blockcomment
@@ -140,10 +194,11 @@ std::optional<LexCtx> rparen(LexCtx ctx) {
 // linechar     ::= c:char                      (if c != '\n')
 // blockcomment ::= '(;' blockchar* ';)'
 // blockchar    ::= c:char                      (if c != ';' and c != '(')
-//                | ';'                         (if the next char is not ')')
+//   p             | ';'                         (if the next char is not ')')
 //                | '('                         (if the next char is not ';')
 //                | blockcomment
-std::optional<LexCtx> comment(LexCtx ctx) {
+std::optional<LexResult> comment(std::string_view in) {
+  LexCtx ctx(in);
   if (ctx.size() < 2) {
     return {};
   }
@@ -155,7 +210,7 @@ std::optional<LexCtx> comment(LexCtx ctx) {
     } else {
       ctx.take_all();
     }
-    return {ctx};
+    return ctx.lexed();
   }
 
   // Block comment (possibly nested!)
@@ -174,7 +229,7 @@ std::optional<LexCtx> comment(LexCtx ctx) {
       // TODO: Add error production for non-terminated block comment.
       return {};
     }
-    return {ctx};
+    return ctx.lexed();
   }
 
   return {};
@@ -182,7 +237,8 @@ std::optional<LexCtx> comment(LexCtx ctx) {
 
 // space  ::= (' ' | format | comment)*
 // format ::= '\t' | '\n' | '\r'
-std::optional<LexCtx> space(LexCtx ctx) {
+std::optional<LexResult> space(std::string_view in) {
+  LexCtx ctx(in);
   while (ctx.size()) {
     if (ctx.take_prefix(" "sv) || ctx.take_prefix("\n"sv) ||
         ctx.take_prefix("\r"sv) || ctx.take_prefix("\t"sv)) {
@@ -194,10 +250,7 @@ std::optional<LexCtx> space(LexCtx ctx) {
       break;
     }
   }
-  if (!ctx) {
-    return {};
-  }
-  return {ctx};
+  return ctx.lexed();
 }
 
 bool LexCtx::can_finish() const {
@@ -207,14 +260,15 @@ bool LexCtx::can_finish() const {
 // num   ::= d:digit => d
 //         |  n:num '_'? d:digit => 10*n + d
 // digit ::= '0' => 0 | ... | '9' => 9
-std::optional<LexIntCtx> num(LexIntCtx ctx) {
+std::optional<LexIntResult> num(std::string_view in) {
+  LexIntCtx ctx(in);
   if (!ctx.take_digit()) {
     return {};
   }
   while (ctx.take_digit() || ctx.take_prefix("_"sv)) {
   }
   if (ctx.can_finish()) {
-    return {ctx};
+    return ctx.lexed();
   }
   return {};
 }
@@ -224,61 +278,41 @@ std::optional<LexIntCtx> num(LexIntCtx ctx) {
 // hexdigit ::= d:digit => d
 //            | 'A' => 10 | ... | 'F' => 15
 //            | 'a' => 10 | ... | 'f' => 15
-std::optional<LexIntCtx> hexnum(LexIntCtx ctx) {
+std::optional<LexIntResult> hexnum(std::string_view in) {
+  LexIntCtx ctx(in);
   if (!ctx.take_hexdigit()) {
     return {};
   }
   while (ctx.take_hexdigit() || ctx.take_prefix("_"sv)) {
   }
   if (ctx.can_finish()) {
-    return {ctx};
+    return ctx.lexed();
   }
   return {};
 }
 
 // uN ::= n:num         => n (if n < 2^N)
 //      | '0x' n:hexnum => n (if n < 2^N)
-// Note: Defer bounds checking until parsing when we know what N is.
-std::optional<LexIntCtx> uN(LexIntCtx ctx) {
+// sN ::= s:sign n:num         => [s]n (if -2^(N-1) <= [s]n < 2^(N-1))
+//      | s:sign '0x' n:hexnum => [s]n (if -2^(N-1) <= [s]n < 2^(N-1))
+// sign ::= {} => + | '+' => + | '-' => -
+//
+// Note: Defer bounds and sign checking until we know what kind of integer we
+// expect.
+std::optional<LexIntResult> integer(std::string_view in) {
+  LexIntCtx ctx(in);
+  ctx.take_sign();
   if (ctx.take_prefix("0x"sv)) {
     if (auto lexed = hexnum(ctx.next())) {
       ctx += *lexed;
-      return {ctx};
+      return ctx.lexed();
     }
     // TODO: Add error production for unrecognized hexnum.
     return {};
   }
-  return num(ctx.next());
-}
-
-// sN ::= s:sign n:num         => [s]n (if -2^(N-1) <= [s]n < 2^(N-1))
-//      | s:sign '0x' n:hexnum => [s]n (if -2^(N-1) <= [s]n < 2^(N-1))
-// sign ::= {} => + | '+' => + | '-' => -
-// Note: Defer bounds checking until parsing when we know what N is.
-std::optional<LexIntCtx> sN(LexIntCtx ctx) {
-  enum Sign { Pos, Neg };
-  Sign sign = Pos;
-  if (ctx.take_prefix("+"sv)) {
-    // nop
-  } else if (ctx.take_prefix("-"sv)) {
-    sign = Neg;
-  }
-  std::optional<LexIntCtx> lexed;
-  if (ctx.take_prefix("0x"sv)) {
-    lexed = hexnum(ctx.next());
-    if (!lexed) {
-      // TODO: Add error production for unrecognized hexnum.
-      return {};
-    }
-  } else {
-    lexed = num(ctx.next());
-  }
-  if (lexed) {
+  if (auto lexed = num(ctx.next())) {
     ctx += *lexed;
-    if (sign == Neg) {
-      ctx.n = -ctx.n;
-    }
-    return {ctx};
+    return ctx.lexed();
   }
   return {};
 }
@@ -288,11 +322,9 @@ std::optional<LexIntCtx> sN(LexIntCtx ctx) {
 // ======
 
 struct KeywordTok {};
-struct UnsignedTok {
+struct IntTok {
   uint64_t n;
-};
-struct SignedTok {
-  uint64_t n;
+  bool hasSign;
 };
 struct FloatTok {};
 struct StringTok {};
@@ -300,14 +332,8 @@ struct IdTok {};
 struct LParenTok {};
 struct RParenTok {};
 
-using TokenData = std::variant<KeywordTok,
-                               UnsignedTok,
-                               SignedTok,
-                               FloatTok,
-                               StringTok,
-                               IdTok,
-                               LParenTok,
-                               RParenTok>;
+using TokenData = std::
+  variant<KeywordTok, IntTok, FloatTok, StringTok, IdTok, LParenTok, RParenTok>;
 
 struct Token {
   std::string_view span;
@@ -324,7 +350,7 @@ struct Lexer {
 
   std::string_view buffer;
   size_t index = 0;
-  std::optional<Token> currTok;
+  std::optional<Token> curr;
 
   // The end sentinel.
   Lexer() = default;
@@ -339,24 +365,26 @@ struct Lexer {
 
   void skipSpace() {
     if (auto ctx = space(next())) {
-      index += ctx->lexed().size();
+      index += ctx->span.size();
     }
   }
 
   void lexToken() {
     // TODO: Ensure we're getting the longest possible match.
-    if (auto ctx = lparen(next())) {
-      currTok = {Token{ctx->lexed(), LParenTok{}}};
-    } else if (auto ctx = rparen(next())) {
-      currTok = {Token{ctx->lexed(), RParenTok{}}};
-    } else if (auto ctx = uN(next())) {
-      currTok = {Token{ctx->lexed(), UnsignedTok{ctx->n}}};
-    } else if (auto ctx = sN(next())) {
-      currTok = {Token{ctx->lexed(), SignedTok{ctx->n}}};
+    Token tok;
+    if (auto t = lparen(next())) {
+      tok = Token{t->span, LParenTok{}};
+    } else if (auto t = rparen(next())) {
+      tok = Token{t->span, RParenTok{}};
+    } else if (auto t = integer(next())) {
+      tok = Token{t->span, IntTok{t->n, t->hasSign}};
     } else {
       // TODO: Do something about lexing errors.
-      currTok = {};
+      curr = {};
+      return;
     }
+    index += tok.span.size();
+    curr = {tok};
   }
 
   Lexer& operator++() {
@@ -369,15 +397,15 @@ struct Lexer {
   Lexer operator++(int) {
     // Postincrement
     Lexer ret = *this;
-    (*this)++;
+    ++(*this);
     return ret;
   }
 
-  const Token& operator*() { return *currTok; }
+  const Token& operator*() { return *curr; }
 
   bool operator==(const Lexer& other) const {
     // The iterator is equal to the end sentinel when there is no current token.
-    if (!currTok && !other.currTok) {
+    if (!curr && !other.curr) {
       return true;
     }
     // Otherwise they are equivalent when they are at the same position.
