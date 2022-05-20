@@ -272,7 +272,8 @@ static void testOracle() {
     )");
     ContentOracle oracle(*wasm);
     std::cout << "possible types of the function's body: ";
-    oracle.getContents(ResultLocation{wasm->getFunction("foo")}).dump(std::cout);
+    oracle.getContents(ResultLocation{wasm->getFunction("foo")})
+      .dump(std::cout);
     std::cout << '\n';
   }
 }
