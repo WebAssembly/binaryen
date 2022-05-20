@@ -2311,8 +2311,8 @@
         (global.get $global-A)
       )
     )
-    ;; The third item has more than one possible value, which we add with
-    ;; another struct.new here, so we cannot optimize.
+    ;; The third item has more than one possible value, due to the function
+    ;; $create later down, so we cannot optimize.
     (drop
       (struct.get $vtable-A 2
         (global.get $global-A)
