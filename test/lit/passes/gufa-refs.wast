@@ -241,7 +241,7 @@
     ;; is, drop it and ignore its value), as only then will the select never
     ;; have any contents.
     ;; (Note: we are not fully optimal here since we could notice that the
-    ;; select executes both arms unconditionally, so it one traps then it will
+    ;; select executes both arms unconditionally, so if one traps then it will
     ;; all trap.)
     (drop
       (select (result (ref any))

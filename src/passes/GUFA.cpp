@@ -280,6 +280,9 @@ struct GUFAOptimizer
 
       // We may add blocks around pops, which we must fix up.
       EHUtils::handleBlockNestedPops(func, *getModule());
+
+      // TODO: run vacuum and dce, as our changes can be cleaned up a lot by
+      //       those two?
     }
   }
 };
