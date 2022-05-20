@@ -10,10 +10,8 @@
 ;;  * Tests must avoid things gufa optimizes away that would make the test
 ;;    irrelevant. In particular, parameters to functions that are never called
 ;;    will be turned to unreachable by gufa, so instead make those calls to
-;;    imports. Gufa will also realize that passing ref.null to a struct.get/set
-;;    can be optimized (as no actual allocation is created there), so avoid that
-;;    and store allocations in locals (instead of dropping them and using
-;;    ref.null later; replace the ref.null with a local.get).
+;;    imports. Gufa will also realize that passing ref.null as the reference of
+;;    a struct.get/set will trap, so we must actually allocate something.
 ;;  * Gufa optimizes in a more general way. Cfp will turn a struct.get whose
 ;;    value it infers into a ref.as_non_null (to preserve the trap if the ref is
 ;;    null) followed by the constant. Gufa has no special handling for
@@ -22,6 +20,11 @@
 ;;    dropped operation, like vacuum in trapsNeverHappen mode).
 ;;  * Gufa's more general optimizations can remove more unreachable code, as it
 ;;    checks for effects (and removes effectless code).
+;;
+;; This file could also run cfp in addition to gufa, but the aforementioned
+;; changes cause cfp to behave differently in some cases, which could lead to
+;; more confusion than benefit - the reader would not be able to compare the two
+;; outputs and see cfp as "correct" which gufa should match.
 
 (module
   (type $struct (struct i32))
