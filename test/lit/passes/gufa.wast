@@ -594,7 +594,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $blocks
-    ;; A with a branch to it, which we can infer a constant for.
+    ;; A block with a branch to it, which we can infer a constant for.
     (drop
       (block $named (result i32)
         (if
