@@ -600,7 +600,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $never-called-ref (param $x (ref any)) (result (ref any))
-    ;; As above but with a reference.
+    ;; As above but with a reference type. Again, we can apply an unreachable.
     (local.get $x)
   )
 
