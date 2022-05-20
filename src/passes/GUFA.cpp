@@ -237,9 +237,34 @@ struct GUFAOptimizer
       if (optimizing) {
         PassRunner runner(getModule(), getPassOptions());
         runner.setIsNested(true);
-        // New unreachables we added have created dead code we can remove.
+        // New unreachables we added have created dead code we can remove. If we
+        // do not do this, then running GUFA repeatedly can actually increase
+        // code size (by adding multiple unneeded unreachables).
         runner.add("dce");
-        // New drops we added allow us to remove more unused code and values.
+        // New drops we added allow us to remove more unused code and values. As
+        // with unreachables, without a vacuum we may increase code size as in
+        // nested expressions we may apply the same value multiple times:
+        //
+        //  (block $out
+        //   (block $in
+        //    (i32.const 10)))
+        //
+        // In each of the blocks we'll infer the value must be 10, so we'll end
+        // up with this repeating code:
+        //
+        //  (block ;; a new block just to drop the old outer block
+        //   (drop
+        //    (block $out
+        //     (drop
+        //      (block $in
+        //       (i32.const 10)
+        //      )
+        //     )
+        //     (i32.const 10)
+        //    )
+        //   )
+        //   (i32.const 10)
+        //  )
         runner.add("vacuum");
         // New constants we propagated globally can perhaps be propagated
         // locally and used in computations.
