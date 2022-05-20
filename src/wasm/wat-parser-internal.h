@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#include <cassert>
 #include <cctype>
+#include <iostream>
 #include <optional>
 #include <variant>
 
@@ -108,7 +110,7 @@ public:
   LexIntCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexIntResult> lexed() {
-    if (overflow) {
+    if (overflow || (negative && (n & (1ull << 63)))) {
       return {};
     }
     if (auto basic = LexCtx::lexed()) {
@@ -130,7 +132,7 @@ public:
     if (!empty()) {
       if (char d = next()[0]; std::isdigit(d)) {
         uint64_t newN = n * 10 + (d - '0');
-        if (newN <= n) {
+        if (newN < n) {
           overflow = true;
         }
         n = newN;
@@ -153,7 +155,7 @@ public:
         } else {
           newN += h - '0';
         }
-        if (newN <= n) {
+        if (newN < n) {
           overflow = true;
         }
         n = newN;
@@ -164,10 +166,9 @@ public:
     return false;
   }
 
-  LexIntCtx& operator+=(const LexIntResult& res) {
-    lexedSize += res.span.size();
+  void take(const LexIntResult& res) {
+    LexCtx::take(res);
     n = res.n;
-    return *this;
   }
 };
 
@@ -259,12 +260,15 @@ std::optional<LexIntResult> num(std::string_view in) {
   if (!ctx.take_digit()) {
     return {};
   }
-  while (ctx.take_digit() || ctx.take_prefix("_"sv)) {
+  while (true) {
+    bool under = ctx.take_prefix("_"sv);
+    if (!ctx.take_digit()) {
+      if (!under && ctx.can_finish()) {
+        return ctx.lexed();
+      }
+      return {};
+    }
   }
-  if (ctx.can_finish()) {
-    return ctx.lexed();
-  }
-  return {};
 }
 
 // hexnum   ::= h:hexdigit => h
@@ -277,12 +281,15 @@ std::optional<LexIntResult> hexnum(std::string_view in) {
   if (!ctx.take_hexdigit()) {
     return {};
   }
-  while (ctx.take_hexdigit() || ctx.take_prefix("_"sv)) {
+  while (true) {
+    bool under = ctx.take_prefix("_"sv);
+    if (!ctx.take_hexdigit()) {
+      if (!under && ctx.can_finish()) {
+        return ctx.lexed();
+      }
+      return {};
+    }
   }
-  if (ctx.can_finish()) {
-    return ctx.lexed();
-  }
-  return {};
 }
 
 // uN ::= n:num         => n (if n < 2^N)
@@ -315,27 +322,81 @@ std::optional<LexIntResult> integer(std::string_view in) {
 // Tokens
 // ======
 
-struct KeywordTok {};
+struct KeywordTok : std::monostate {};
 struct IntTok {
   uint64_t n;
   bool hasSign;
+  bool operator==(const IntTok& other) const {
+    return n == other.n && hasSign == other.hasSign;
+  }
 };
-struct FloatTok {};
-struct StringTok {};
-struct IdTok {};
-struct LParenTok {};
-struct RParenTok {};
+struct FloatTok : std::monostate {};
+struct StringTok : std::monostate {};
+struct IdTok : std::monostate {};
+struct LParenTok : std::monostate {};
+struct RParenTok : std::monostate {};
 
 using TokenData = std::
   variant<KeywordTok, IntTok, FloatTok, StringTok, IdTok, LParenTok, RParenTok>;
 
+std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
+  return os << "Keyword";
+}
+
+std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
+  return os << "Int(" << tok.n << (tok.hasSign ? " hasSign" : "") << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const FloatTok&) {
+  return os << "Float";
+}
+
+std::ostream& operator<<(std::ostream& os, const StringTok&) {
+  return os << "String";
+}
+
+std::ostream& operator<<(std::ostream& os, const IdTok&) { return os << "Id"; }
+
+std::ostream& operator<<(std::ostream& os, const LParenTok&) {
+  return os << "'('";
+}
+
+std::ostream& operator<<(std::ostream& os, const RParenTok&) {
+  return os << "')'";
+}
+
 struct Token {
   std::string_view span;
   TokenData data;
+
+  const IntTok* get_int() const { return std::get_if<IntTok>(&data); }
+
+  bool operator==(const Token& other) const {
+    return span == other.span && data == other.data;
+  }
+  bool operator!=(const Token& other) const { return !(*this == other); }
+  friend std::ostream& operator<<(std::ostream& os, const Token& tok) {
+    std::visit([&](const auto& t) { os << t; }, tok.data);
+    return os << " \"" << tok.span << "\"";
+  }
+};
+
+struct TextPos {
+  size_t line;
+  size_t col;
+
+  bool operator==(const TextPos& other) const {
+    return line == other.line && col == other.col;
+  }
+  bool operator!=(const TextPos& other) const { return !(*this == other); }
+  friend std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
+    return os << pos.line << ":" << pos.col;
+  }
 };
 
 // A forward iterator over a string_view that produces tokens.
 struct Lexer {
+  using iterator = Lexer;
   using difference_type = std::ptrdiff_t;
   using value_type = Token;
   using pointer = const Token*;
@@ -396,6 +457,7 @@ struct Lexer {
   }
 
   const Token& operator*() { return *curr; }
+  const Token& operator->() { return *curr; }
 
   bool operator==(const Lexer& other) const {
     // The iterator is equal to the end sentinel when there is no current token.
@@ -407,6 +469,28 @@ struct Lexer {
   }
 
   bool operator!=(const Lexer& other) const { return !(*this == other); }
+
+  Lexer begin() { return *this; }
+
+  Lexer end() { return Lexer(); }
+
+  TextPos position(const char* c) {
+    assert(size_t(c - buffer.data()) < buffer.size());
+    TextPos pos{1, 0};
+    for (const char* p = buffer.data(); p != c; ++p) {
+      if (*p == '\n') {
+        pos.line++;
+        pos.col = 0;
+      } else {
+        pos.col++;
+      }
+    }
+    return pos;
+  }
+
+  TextPos position(std::string_view span) { return position(span.data()); }
+
+  TextPos position(Token tok) { return position(tok.span); }
 };
 
 } // anonymous namespace
