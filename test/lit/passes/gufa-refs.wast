@@ -3587,7 +3587,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $reffed2 (type $i2) (param $x i32)
-    ;; This is called with two possible values, so we cannot optimize. with one possible value, 42, which we can optimize the
+    ;; This is called with two possible values, so we cannot optimize.
     (drop
       (local.get $x)
     )
