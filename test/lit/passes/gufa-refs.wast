@@ -1096,7 +1096,8 @@
         (unreachable)
       )
     )
-    ;; Send a more specific type. We should emit a valid null constant.
+    ;; Send a more specific type. We should emit a valid null constant (but in
+    ;; this case, a null of either $parent or $child would be ok).
     (drop
       (block $block (result (ref null $parent))
         (br $block
@@ -1107,7 +1108,7 @@
     )
     ;; Send a less specific type, via a cast. But all nulls are identical and
     ;; ref.cast passes nulls through, so this is ok, but we must be careful to
-    ;; emit a ref.null child on the outside (to not change the outer type to a
+    ;; emit a ref.null $child on the outside (to not change the outer type to a
     ;; less refined one).
     (drop
       (block $block (result (ref null $child))
