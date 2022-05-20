@@ -464,7 +464,7 @@
 ;; As above, but now with a chain of globals: A starts with a value, which is
 ;; copied to B, and then C, and then C is read. We will be able to optimize
 ;; away *-null (which is where A-null starts with null) but not *-something
-;; (wihch is where A-something starts with a value).
+;; (which is where A-something starts with a value).
 (module
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
