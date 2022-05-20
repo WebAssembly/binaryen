@@ -566,10 +566,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $named0 (result i32)
+  ;; CHECK-NEXT:     (block $named (result i32)
   ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (br $named0
+  ;; CHECK-NEXT:       (br $named
   ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -580,10 +580,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $named1 (result i32)
+  ;; CHECK-NEXT:   (block $named0 (result i32)
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (br $named1
+  ;; CHECK-NEXT:     (br $named0
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
