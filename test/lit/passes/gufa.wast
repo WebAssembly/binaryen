@@ -393,8 +393,10 @@
         (i32.const 1)
       )
     )
-    ;; As above, but flip one $x and $y on the first and last local.gets. There
-    ;; is still only the one value possible as nothing else flows in.
+    ;; As above, but flip one $x and $y on the first and last local.gets. We
+    ;; can see that $y must contain 1, and we cannot infer a value for $x (it
+    ;; is sent both 42 and $y which is 1). Even without $x, however, we can see
+    ;; the value leaving the select is 42, which means the call returns 42.
     (select
       (i32.const 42)
       (call $cycle-2
