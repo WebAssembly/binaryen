@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+// Usage note
+// ----------
+//
+// This parser is a work in progress and this file should not yet be included
+// anywhere except for in its own tests. Once the parser is usable, we will add
+// wat-parser.h to declare the public parsing API and wat-parser.cpp to
+// implement the public parsing functions in terms of the private API in this
+// header. The private API will stay in this header rather than moving to
+// wat-parser.cpp so that we can continue to unit test it.
+
 #include <cassert>
 #include <cctype>
 #include <iostream>
@@ -339,8 +349,6 @@ struct RParenTok : std::monostate {};
 using TokenData = std::
   variant<KeywordTok, IntTok, FloatTok, StringTok, IdTok, LParenTok, RParenTok>;
 
-#ifdef IN_TEST
-
 std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
   return os << "Keyword";
 }
@@ -367,8 +375,6 @@ std::ostream& operator<<(std::ostream& os, const RParenTok&) {
   return os << "')'";
 }
 
-#endif // IN_TEST
-
 struct Token {
   std::string_view span;
   TokenData data;
@@ -379,12 +385,10 @@ struct Token {
 
   bool operator!=(const Token& other) const { return !(*this == other); }
 
-#ifdef IN_TEST
   friend std::ostream& operator<<(std::ostream& os, const Token& tok) {
     std::visit([&](const auto& t) { os << t; }, tok.data);
     return os << " \"" << tok.span << "\"";
   }
-#endif // IN_TEST
 };
 
 struct TextPos {
@@ -396,11 +400,9 @@ struct TextPos {
   }
   bool operator!=(const TextPos& other) const { return !(*this == other); }
 
-#ifdef IN_TEST
   friend std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
     return os << pos.line << ":" << pos.col;
   }
-#endif // IN_TEST
 };
 
 // A forward iterator over a string_view that produces tokens.

@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 
-#define IN_TEST
 #include "wat-parser-internal.h"
 
 using namespace wasm::WATParser;
