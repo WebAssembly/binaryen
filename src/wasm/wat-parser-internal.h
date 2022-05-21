@@ -395,9 +395,12 @@ struct TextPos {
     return line == other.line && col == other.col;
   }
   bool operator!=(const TextPos& other) const { return !(*this == other); }
+
+#ifdef IN_TEST
   friend std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
     return os << pos.line << ":" << pos.col;
   }
+#endif // IN_TEST
 };
 
 // A forward iterator over a string_view that produces tokens.
