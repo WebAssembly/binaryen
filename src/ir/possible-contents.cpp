@@ -1,4 +1,3 @@
-//#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -63,7 +62,7 @@ template<typename T> void disallowDuplicates(const T& targets) {
 
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a link from a LocalLocaiton to a ResultLocation.
+// we have a link from a LocalLocation to a ResultLocation.
 template<typename T> struct Link {
   T from;
   T to;
@@ -113,7 +112,7 @@ struct CollectedInfo {
   std::vector<LocationLink> links;
 
   // All the roots of the graph, that is, places that begin by containing some
-  // partcular content. That includes i32.const, ref.func, struct.new, etc. All
+  // particular content. That includes i32.const, ref.func, struct.new, etc. All
   // possible contents in the rest of the graph flow from such places.
   //
   // The vector here is of the location of the root and then its contents.
@@ -160,9 +159,9 @@ struct InfoCollector
       }
     }
     if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
-      // If nominal typing is enabled then we cannot handle refs, as we need
-      // to do a subtyping analysis there (which SubTyping only supports in
-      // nominal mode).
+      // If nominal typing is not enabled then we cannot handle refs, as we need
+      // to do a subtyping analysis there (which the SubTyping helper class only
+      // supports in nominal mode).
       return false;
     }
     return true;
@@ -264,7 +263,11 @@ struct InfoCollector
   void visitRefFunc(RefFunc* curr) {
     addRoot(curr, PossibleContents::literal(Literal(curr->func, curr->type)));
   }
-  void visitRefEq(RefEq* curr) { addRoot(curr); }
+  void visitRefEq(RefEq* curr) {
+    // TODO: optimize when possible (e.g. when both sides must contain the same
+    //       global)
+    addRoot(curr);
+  }
   void visitTableGet(TableGet* curr) {
     // TODO: optimize when possible
     addRoot(curr);
@@ -279,7 +282,7 @@ struct InfoCollector
 #ifndef NDEBUG
   // For now we only handle pops in a catch body, see visitTry(). To check for
   // errors, use counter of the pops we handled and all the pops; those sums
-  // must agree at the end.
+  // must agree at the end, or else we've seen something we can't handle.
   Index totalPops = 0;
   Index handledPops = 0;
 #endif
@@ -303,8 +306,8 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefCast(RefCast* curr) {
-    // We will handle this in a special way, as ref.cast only allows valid
-    // values to flow through.
+    // We will handle this in a special way later during the flow, as ref.cast
+    // only allows valid values to flow through.
     addSpecialChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
@@ -357,9 +360,9 @@ struct InfoCollector
     }
   }
 
-  // Iterates over a list of children and adds links to parameters
-  // and results as needed. The param/result functions receive the index
-  // and create the proper location for it.
+  // Iterates over a list of children and adds links to parameters and results
+  // as needed. The param/result functions receive the index and create the
+  // proper location for it.
   template<typename T>
   void handleCall(T* curr,
                   std::function<Location(Index)> makeParamLocation,
@@ -558,8 +561,8 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
-    // Our handling of GC data is not simple - we have special code for each
-    // read and write instruction - and to avoid adding special code for
+    // Our flow handling of GC data is not simple: we have special code for each
+    // read and write instruction. Therefore, to avoid adding special code for
     // ArrayCopy, model it as a combination of an ArrayRead and ArrayWrite, by
     // just emitting fake expressions for those. The fake expressions are not
     // part of the main IR, which is potentially confusing during debugging,
@@ -753,12 +756,15 @@ struct Flower {
   // Each LocationIndex will have one LocationInfo that contains the relevant
   // information we need for each location.
   struct LocationInfo {
+    // The location at this index.
     Location location;
+
+    // The possible contents in that location.
     PossibleContents contents;
-    // Maps location indexes to the vector of targets to which that location
-    // sends content. Commonly? there is a single target e.g. an expression has
-    // a single parent and only sends a value there.
-    // TODO: benchmark SmallVector<1> some more, but it seems to not help
+
+    // A list of the target locations to which this location sends content.
+    // TODO: benchmark SmallVector<1> here, as commonly there may be a single
+    //       target (an expression has one parent)
     std::vector<LocationIndex> targets;
 
     LocationInfo(Location location) : location(location) {}
@@ -770,7 +776,7 @@ struct Flower {
   // Reverse mapping of locations to their indexes.
   std::unordered_map<Location, LocationIndex> locationIndexes;
 
-  Location getLocation(LocationIndex index) {
+  const Location& getLocation(LocationIndex index) {
     assert(index < locations.size());
     return locations[index].location;
   }
@@ -820,19 +826,22 @@ private:
   // from all the functions and the global scope.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
-  // The work remaining to do during the flow: locations that we are sending an
-  // update to. This maps the target location to the old contents before the
-  // update; the new contents are already placed in the contents for that
-  // location (we'll need to place them there anyhow, so do so immediately
-  // instead of waiting; another benefit is that if anything reads them around
-  // this time then they'll get the latest data, saving more iterations later).
-  // Using a map here is efficient as multiple updates may arrive before we
-  // process any of them, and this way each location appears just once in the
-  // queue.
+  // The work remaining to do during the flow: locations that we need to flow
+  // content from, after new content reached them.
+  //
+  // Using a set here is efficient as multiple updates may arrive to a location
+  // before we get to processing it.
+  //
+  // The items here could be {location, newContents}, but it is more efficient
+  // to have already written the new contents to the main data structure. That
+  // avoids larger data here, and also, updating the contents as early as
+  // possible is helpful as anything reading them meanwhile (before we get to
+  // their work item in the queue) will see the newer value, possibly avoiding
+  // flowing an old value that would later be overwritten.
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
-  InsertOrderedMap<LocationIndex, PossibleContents> workQueue;
+  InsertOrderedSet<LocationIndex> workQueue;
 #else
-  std::unordered_map<LocationIndex, PossibleContents> workQueue;
+  std::unordered_set<LocationIndex> workQueue;
 #endif
 
   // Maps a heap type + an index in the type (0 for an array) to the index of a
@@ -841,8 +850,8 @@ private:
   // require N incoming links, from each of the N subtypes - and we need that
   // for each struct.get of a cone. If there are M such gets then we have N * M
   // edges for this. Instead, make a single canonical "cone read" location, and
-  // add a single link to it from here, which is only N + M (plus the cost of
-  // adding "latency" in requiring an additional step along the way for the
+  // add a single link to it from each get, which is only N + M (plus the cost
+  // of adding "latency" in requiring an additional step along the way for the
   // data to flow along).
   std::unordered_map<std::pair<HeapType, Index>, LocationIndex>
     canonicalConeReads;
@@ -861,26 +870,29 @@ private:
   // to add is new or not.
   std::unordered_set<IndexLink> links;
 
-  // This sends new contents to the given location. If we can see that the new
-  // contents can cause an actual change there then we will later call
-  // applyContents() there (the work is queued for when we get to it later).
-  PossibleContents sendContents(LocationIndex locationIndex,
-                                const PossibleContents& newContents);
+  // Update a location with new contents, that are added to everything already
+  // present there. If the update changes the contents at that location (if
+  // there was anything new) then we also need to flow from there, which we will
+  // do by adding the location to the work queue, and eventually flowAfterUpdate
+  // will be called on this location.
+  //
+  // Returns whether it is worth sending new contents to this location in the
+  // future. If we return false, the sending location never needs to do that
+  // ever again.
+  bool updateContents(LocationIndex locationIndex,
+                      PossibleContents newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
   // avoided. TODO remove the remaining uses of this.
-  PossibleContents sendContents(const Location& location,
-                                const PossibleContents& newContents) {
-    return sendContents(getIndex(location), newContents);
+  bool updateContents(const Location& location,
+                      const PossibleContents& newContents) {
+    return updateContents(getIndex(location), newContents);
   }
 
-  // Apply contents at a location where a change has occurred. This does the
-  // bulk of the work during the flow: sending contents to other affected
-  // locations, handling special cases as necessary, etc. This is passed
-  // the old contents, which in some cases we need in order to know exactly what
-  // changed during special processing.
-  void applyContents(LocationIndex locationIndex,
-                     const PossibleContents& oldContents);
+  // Flow contents from a location where a change occurred. This sends the new
+  // contents to all the targets of this location, and handles special cases of
+  // flow.
+  void flowAfterUpdate(LocationIndex locationIndex);
 
   // Add a new connection while the flow is happening. If the link already
   // exists it is not added.
@@ -894,26 +906,23 @@ private:
   // time.
   void updateNewLinks();
 
-  // Given the old and new contents at the current target, add reads to it
-  // based on the latest changes. The reads are sent to |read|, which is
-  // either a struct.get or an array.get. That is, new contents are possible
-  // for the reference, which means we need to read from more possible heap
-  // locations.
-  // @param declaredRefType: The type declared in the IR on the
-  //                         reference input to the struct.get/array.get.
-  // @param fieldIndex: The field index being read (or 0 for an array).
-  // @param refContents: The contents possible in the reference.
-  // @param read: The struct.get or array.get that does the read.
-  void readFromNewLocations(HeapType declaredHeapType,
-                            Index fieldIndex,
-                            const PossibleContents& refContents,
-                            Expression* read);
+  // Contents sent to a global location can be filtered in a special way during
+  // the flow, which is handled in this helper.
+  void filterGlobalContents(PossibleContents& contents,
+                            const GlobalLocation& globalLoc);
 
-  // Similar to readFromNewLocations, but sends values from a struct.set or
-  // /array.set to a heap location. Receives the reference, value, and the field
-  // index written to (or 0 for an array).
-  void
-  writeToNewLocations(Expression* ref, Expression* value, Index fieldIndex);
+  // Reads from GC data: a struct.get or array.get. This is given the type of
+  // the read operation, the field that is read on that type, the known contents
+  // in the reference the read receives, and the read instruction itself. We
+  // compute where we need to read from based on the type and the ref contents
+  // and get that data, adding new links in the graph as needed.
+  void readFromData(HeapType declaredHeapType,
+                    Index fieldIndex,
+                    const PossibleContents& refContents,
+                    Expression* read);
+
+  // Similar to readFromData, but does a write for a struct.set or array.set.
+  void writeToData(Expression* ref, Expression* value, Index fieldIndex);
 
   // Special handling for RefCast during the flow: RefCast only admits valid
   // values to flow through it.
@@ -978,13 +987,14 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // the entire program all at once, indexing and deduplicating everything as we
   // go.
 
-  // The roots are not declared in the class as we only need them during this
-  // function itself.
-  std::unordered_map<Location, PossibleContents> roots;
-
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "merging+indexing phase\n";
 #endif
+
+  // The merged roots. (Note that all other forms of merged data are declared at
+  // the class level, since we need them during the flow, but the roots are only
+  // needed to start the flow, so we can declare them here.)
+  std::unordered_map<Location, PossibleContents> roots;
 
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
@@ -993,7 +1003,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     for (auto& [root, value] : info.roots) {
       roots[root] = value;
 
-      // Ensure an index even for a root with no links to it.
+      // Ensure an index even for a root with no links to it - everything needs
+      // an index.
       getIndex(root);
     }
     for (auto [child, parent] : info.childParents) {
@@ -1009,8 +1020,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "external phase\n";
 #endif
 
-  // Add unknown incoming roots from parameters to exported functions and other
-  // cases where we can't see the caller.
+  // Parameters of exported functions are roots, since exports can have callers
+  // that we can't see, so anything might arrive there.
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
     for (Index i = 0; i < func->getParams().size(); i++) {
@@ -1098,7 +1109,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     std::cout << '\n';
 #endif
 
-    sendContents(location, value);
+    updateContents(location, value);
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -1116,11 +1127,10 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #endif
 
     auto iter = workQueue.begin();
-    auto locationIndex = iter->first;
-    auto oldContents = iter->second;
+    auto locationIndex = *iter;
     workQueue.erase(iter);
 
-    applyContents(locationIndex, oldContents);
+    flowAfterUpdate(locationIndex);
 
     updateNewLinks();
   }
@@ -1129,12 +1139,13 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   //       including multiple levels of depth (necessary for itables in j2wasm).
 }
 
-PossibleContents Flower::sendContents(LocationIndex locationIndex,
-                                      const PossibleContents& newContents) {
+bool Flower::updateContents(LocationIndex locationIndex,
+                            PossibleContents newContents) {
   auto& contents = getContents(locationIndex);
+  auto oldContents = contents;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "sendContents\n";
+  std::cout << "updateContents\n";
   dump(getLocation(locationIndex));
   contents.dump(std::cout, &wasm);
   std::cout << "\n with new contents \n";
@@ -1142,119 +1153,79 @@ PossibleContents Flower::sendContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
-  // The work queue contains the *old* contents, which if they already exist we
-  // do not need to alter.
-  auto oldContents = contents;
-  if (!contents.combine(newContents)) {
-    // The new contents did not change anything. Either there is an existing
-    // work item but we didn't add anything on top, or there is no work item but
-    // we don't add anything on top of the current contents. Either way there is
-    // nothing to do.
-    return contents;
+  contents.combine(newContents);
+
+  // It is not worth sending any more to this location if we are now in the
+  // worst possible case, as no future value could cause any change.
+  bool worthSendingMore = !contents.isMany();
+
+  if (contents == oldContents) {
+    // Nothing actually changed, so just return.
+    return worthSendingMore;
+  }
+
+  // Handle special cases: Some locations can only contain certain contents, so
+  // filter accordingly.
+  if (auto* globalLoc =
+        std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
+    filterGlobalContents(contents, *globalLoc);
+    if (contents == oldContents) {
+      // Nothing actually changed after filtering, so just return.
+      return worthSendingMore;
+    }
   }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "  sendContents has something new\n";
+  std::cout << "  updateContents has something new\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
 
-  // Add a work item if there isn't already. (If one exists, then oldContents
-  // are after the update from that item, and we wouldn't want to insert that
-  // value into the map, which insert() in fact does not.)
-  workQueue.insert({locationIndex, oldContents});
+  // Add a work item if there isn't already.
+  workQueue.insert(locationIndex);
 
-  return contents;
+  return worthSendingMore;
 }
 
-void Flower::applyContents(LocationIndex locationIndex,
-                           const PossibleContents& oldContents) {
+void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   const auto location = getLocation(locationIndex);
   auto& contents = getContents(locationIndex);
 
-  // |contents| is the value after the new data arrives. As something arrives,
-  // and we never send empty values around, it cannot be None.
+  // We are called after a change at a location. A change means that some
+  // content has arrived, since we never send empty values around. Assert on
+  // that.
   assert(!contents.isNone());
 
-  // We never update after something is already in the Many state, as that would
-  // just be waste for no benefit.
-  assert(!oldContents.isMany());
-
-  // We only update when there is a reason.
-  assert(contents != oldContents);
-
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "\napplyContents to:\n";
+  std::cout << "\nflowAfterUpdate to:\n";
   dump(location);
   std::cout << "  arriving:\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
-  std::cout << "  existing:\n";
-  oldContents.dump(std::cout, &wasm);
-  std::cout << '\n';
-#endif
-
-  // Handle special cases: Some locations modify the arriving contents.
-  if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
-    auto* global = wasm.getGlobal(globalLoc->name);
-    if (global->mutable_ == Immutable) {
-      // This is an immutable global. We never need to consider this value as
-      // "Many", since in the worst case we can just use the immutable value.
-      // That is, we can always replace this value with (global.get $name) which
-      // will get the right value. Likewise, using the immutable value is better
-      // than any value in a particular type, even an exact one.
-      if (contents.isMany() || contents.isExactType()) {
-        contents = PossibleContents::global(global->name, global->type);
-
-        // TODO: We could do better here, to set global->init->type instead of
-        //       global->type, or even the contents.getType() - either of those
-        //       may be more refined. But other passes will handle that in
-        //       general. And ImmutableGlobal carries around the type declared
-        //       in the global (since that is the type a global.get would get
-        //       if we apply this optimization and write a global.get there).
-
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-        std::cout << "  setting immglobal to ImmutableGlobal instead of Many\n";
-        contents.dump(std::cout, &wasm);
-        std::cout << '\n';
-#endif
-
-        // Furthermore, perhaps nothing changed at all of that was already the
-        // previous value here.
-        if (contents == oldContents) {
-          return;
-        }
-      }
-    }
-  }
-
-  // Something changed!
-
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "  something changed!\n";
 #endif
 
   // Send the new contents to all the targets of this location. As we do so,
-  // prune any targets that end up in the Many state, as there will never be a
-  // reason to send them anything again.
+  // prune any targets that we do not need to bother sending content to in the
+  // future, to save space and work later.
   auto& targets = getTargets(locationIndex);
-
-  targets.erase(
-    std::remove_if(targets.begin(),
-                   targets.end(),
-                   [&](LocationIndex targetIndex) {
+  targets.erase(std::remove_if(targets.begin(),
+                               targets.end(),
+                               [&](LocationIndex targetIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-                     std::cout << "  send to target\n";
-                     dump(getLocation(targetIndex));
+                                 std::cout << "  send to target\n";
+                                 dump(getLocation(targetIndex));
 #endif
-                     return sendContents(targetIndex, contents).isMany();
-                   }),
-    targets.end());
+                                 return !updateContents(targetIndex, contents);
+                               }),
+                targets.end());
 
   if (contents.isMany()) {
-    // We just added work to send Many to all our targets. We'll never need to
-    // send anything else ever again, but we should have already removed all the
-    // targets since we made them Many as well in the above operation.
+    // We contain Many, and just called updateContents on our targets to send
+    // that value to them. We'll never need to send anything from here ever
+    // again, since we sent the worst case possible already, so we can just
+    // clear our targets vector. But we should have already removed all the
+    // targets in the above remove_if operation, since they should have all
+    // notified us that we do not need to send them any more updates.
     assert(targets.empty());
   }
 
@@ -1281,20 +1252,17 @@ void Flower::applyContents(LocationIndex locationIndex,
     if (auto* get = parent->dynCast<StructGet>()) {
       // This is the reference child of a struct.get.
       assert(get->ref == targetExpr);
-      readFromNewLocations(
-        get->ref->type.getHeapType(), get->index, contents, get);
+      readFromData(get->ref->type.getHeapType(), get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
-      // This is either the reference or the value child of a struct.set. A
-      // change to either one affects what values are written to that struct
-      // location, which we handle here.
+      // This is either the reference or the value child of a struct.set.
       assert(set->ref == targetExpr || set->value == targetExpr);
-      writeToNewLocations(set->ref, set->value, set->index);
+      writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == targetExpr);
-      readFromNewLocations(get->ref->type.getHeapType(), 0, contents, get);
+      readFromData(get->ref->type.getHeapType(), 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == targetExpr || set->value == targetExpr);
-      writeToNewLocations(set->ref, set->value, 0);
+      writeToData(set->ref, set->value, 0);
     } else if (auto* cast = parent->dynCast<RefCast>()) {
       assert(cast->ref == targetExpr);
       flowRefCast(contents, cast);
@@ -1316,10 +1284,11 @@ void Flower::connectDuringFlow(Location from, Location to) {
     newLinks.push_back(newIndexLink);
     links.insert(newIndexLink);
 
-    // In addition to adding the link, send the contents along it right now, so
-    // that the graph state is correct (we cannot assume that a future flow will
-    // happen and carry along the current contents to the target).
-    sendContents(to, getContents(getIndex(from)));
+    // In addition to adding the link, send the contents along it right now. (If
+    // we do not send the contents then we'd be assuming that some future
+    // flowing value will carry the contents along with it, but that might not
+    // happen.)
+    updateContents(to, getContents(getIndex(from)));
   }
 }
 
@@ -1342,10 +1311,37 @@ void Flower::updateNewLinks() {
   newLinks.clear();
 }
 
-void Flower::readFromNewLocations(HeapType declaredHeapType,
-                                  Index fieldIndex,
-                                  const PossibleContents& refContents,
-                                  Expression* read) {
+void Flower::filterGlobalContents(PossibleContents& contents,
+                                  const GlobalLocation& globalLoc) {
+  auto* global = wasm.getGlobal(globalLoc.name);
+  if (global->mutable_ == Immutable) {
+    // This is an immutable global. We never need to consider this value as
+    // "Many", since in the worst case we can just use the immutable value. That
+    // is, we can always replace this value with (global.get $name) which will
+    // get the right value. Likewise, using the immutable global value is often
+    // better than an exact type, but TODO we could note both an exact type
+    // *and* that something is equal to a global, in some cases.
+    if (contents.isMany() || contents.isExactType()) {
+      contents = PossibleContents::global(global->name, global->type);
+
+      // TODO: We could do better here, to set global->init->type instead of
+      //       global->type, or even the contents.getType() - either of those
+      //       may be more refined. But other passes will handle that in
+      //       general (by refining the global's type).
+
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+      std::cout << "  setting immglobal to ImmutableGlobal\n";
+      contents.dump(std::cout, &wasm);
+      std::cout << '\n';
+#endif
+    }
+  }
+}
+
+void Flower::readFromData(HeapType declaredHeapType,
+                          Index fieldIndex,
+                          const PossibleContents& refContents,
+                          Expression* read) {
   if (refContents.isNull() || refContents.isNone()) {
     // Nothing is read here.
     return;
@@ -1371,6 +1367,8 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
     //       in the definition of it, if it is not imported; or, we could track
     //       the contents of immutable fields of allocated objects, and not just
     //       represent them as ExactType).
+    //       See the test TODO with text "We optimize some of this, but stop at
+    //       reading from the immutable global"
     assert(refContents.isMany() || refContents.isGlobal());
 
     // We create a special location for the canonical cone of this type, to
@@ -1391,8 +1389,9 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
       }
 
       // TODO: if the old contents here were an exact type then we have an old
-      //       link here that we could remove as it is redundant. But removing
-      //       links is not efficient, so maybe not worth it.
+      //       link here that we could remove as it is redundant (the cone
+      //       contains the exact type among the others). But removing links
+      //       is not efficient, so maybe not worth it.
     }
 
     // Link to the canonical location.
@@ -1401,9 +1400,7 @@ void Flower::readFromNewLocations(HeapType declaredHeapType,
   }
 }
 
-void Flower::writeToNewLocations(Expression* ref,
-                                 Expression* value,
-                                 Index fieldIndex) {
+void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
@@ -1421,22 +1418,19 @@ void Flower::writeToNewLocations(Expression* ref,
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  if (refContents.isExactType() || refContents.isGlobal()) {
+  if (refContents.isTypeExact()) {
     // Update the one possible type here.
-    // TODO: In the case that this is a constant, it could be null
-    //       or an immutable global, which we could do even more
-    //       with.
     auto heapLoc =
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
-    sendContents(heapLoc, valueContents);
+    updateContents(heapLoc, valueContents);
   } else {
-    assert(refContents.isMany());
+    assert(refContents.isMany() || refContents.isGlobal());
 
     // Update all possible subtypes here.
     auto type = ref->type.getHeapType();
     for (auto subType : subTypes->getAllSubTypes(type)) {
       auto heapLoc = DataLocation{subType, fieldIndex};
-      sendContents(heapLoc, valueContents);
+      updateContents(heapLoc, valueContents);
     }
   }
 }
@@ -1473,12 +1467,11 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     filtered.dump(std::cout);
     std::cout << '\n';
 #endif
-    sendContents(ExpressionLocation{cast, 0}, filtered);
+    updateContents(ExpressionLocation{cast, 0}, filtered);
   }
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-// Dump out a location for debug purposes.
 void Flower::dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
     std::cout << "  exprloc \n" << *loc->expr << '\n';

@@ -39,13 +39,13 @@ namespace wasm {
 //
 //  * Literal:         One possible constant value like an i32 of 42.
 //
-//  * Global:          The name of an global whose value is here. We do not know
+//  * Global:          The name of a global whose value is here. We do not know
 //                     the actual value at compile time, but we know it is equal
 //                     to that global. Typically we can only infer this for
 //                     immutable globals.
 //
 //  * ExactType:       Any possible value of a specific exact type - *not*
-//                     including subtypes. For example, struct.new $Foo has
+//                     including subtypes. For example, (struct.new $Foo) has
 //                     ExactType contents of type $Foo.
 //                     If the type here is nullable then null is also allowed.
 //                     TODO: Add ConeType, which would include subtypes.
@@ -73,19 +73,23 @@ class PossibleContents {
     }
   };
 
+  using ExactType = Type;
+
   struct Many : public std::monostate {};
 
   // TODO: This is similar to the variant in PossibleConstantValues, and perhaps
   //       we could share code, but extending a variant using template magic may
   //       not be worthwhile. Another option might be to make PCV inherit from
-  //       this and disallow ExactType etc.
-  using Variant = std::variant<None, Literal, GlobalInfo, Type, Many>;
+  //       this and disallow ExactType etc., but PCV might get slower.
+  using Variant = std::variant<None, Literal, GlobalInfo, ExactType, Many>;
   Variant value;
 
 public:
-  // The only public constructor creates a None - nothing is possible there. All
-  // other things must use one of the static constructors below.
   PossibleContents() : value(None()) {}
+  PossibleContents(const PossibleContents& other) : value(other.value) {}
+
+  // Most users will use one of the following static functions to construct a
+  // new instance:
 
   static PossibleContents none() {
     PossibleContents ret;
@@ -104,13 +108,18 @@ public:
   }
   static PossibleContents exactType(Type type) {
     PossibleContents ret;
-    ret.value = type;
+    ret.value = ExactType(type);
     return ret;
   }
   static PossibleContents many() {
     PossibleContents ret;
     ret.value = Many();
     return ret;
+  }
+
+  PossibleContents& operator=(const PossibleContents& other) {
+    value = other.value;
+    return *this;
   }
 
   bool operator==(const PossibleContents& other) const {
@@ -123,37 +132,26 @@ public:
 
   // Combine the information in a given PossibleContents to this one. The
   // contents here will then include whatever content was possible in |other|.
-  //
-  // Returns whether we changed anything.
-  bool combine(const PossibleContents& other) {
+  void combine(const PossibleContents& other) {
     // First handle the trivial cases of them being equal, or one of them is
     // None or Many.
     if (*this == other) {
-      return false;
+      return;
     }
     if (other.isNone()) {
-      return false;
+      return;
     }
     if (isNone()) {
       value = other.value;
-      return true;
+      return;
     }
     if (isMany()) {
-      return false;
+      return;
     }
     if (other.isMany()) {
       value = Many();
-      return true;
+      return;
     }
-
-    auto applyIfDifferent = [&](const PossibleContents& newContents) {
-      if (*this == newContents) {
-        return false;
-      }
-
-      *this = newContents;
-      return true;
-    };
 
     auto type = getType();
     auto otherType = other.getType();
@@ -163,7 +161,7 @@ public:
       // ExactType here, say as the combination of two different constants, but
       // as subtyping does not exist, Many is good enough anyhow, so do that.
       value = Many();
-      return true;
+      return;
     }
 
     // Special handling for references from here.
@@ -174,17 +172,17 @@ public:
       // combination is to add nullability (if the type is *not* known exactly,
       // like for a global, then we cannot do anything useful here).
       if (!isNull() && isTypeExact()) {
-        return applyIfDifferent(
-          PossibleContents::exactType(Type(type.getHeapType(), Nullable)));
+        value = ExactType(Type(type.getHeapType(), Nullable));
+        return;
       } else if (!other.isNull() && other.isTypeExact()) {
-        return applyIfDifferent(
-          PossibleContents::exactType(Type(otherType.getHeapType(), Nullable)));
+        value = ExactType(Type(otherType.getHeapType(), Nullable));
+        return;
       } else if (isNull() && other.isNull()) {
         // Both are null. The result is a null, of the LUB.
         auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
                                                 otherType.getHeapType());
-        return applyIfDifferent(
-          PossibleContents::literal(Literal::makeNull(lub)));
+        value = Literal::makeNull(lub);
+        return;
       }
     }
 
@@ -196,14 +194,14 @@ public:
       // Literal; or both might be ExactTypes and only one might be nullable).
       // In these cases we can emit a proper ExactType here, adding nullability
       // if we need to.
-      return applyIfDifferent(PossibleContents::exactType(Type(
+      value = ExactType(Type(
         type.getHeapType(),
-        type.isNullable() || otherType.isNullable() ? Nullable : NonNullable)));
+        type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
+      return;
     }
 
     // Nothing else possible combines in an interesting way; emit a Many.
     value = Many();
-    return true;
   }
 
   bool isNone() const { return std::get_if<None>(&value); }
@@ -225,9 +223,9 @@ public:
   bool isNull() const { return isLiteral() && getLiteral().isNull(); }
 
   // Return the relevant type here. Note that the *meaning* of the type varies
-  // by the contents (type $foo of a global means that type or any subtype, as a
+  // by the contents: type $foo of a global means that type or any subtype, as a
   // subtype might be written to it, while type $foo of a Literal or an
-  // ExactType means that type and nothing else). See isTypeExact().
+  // ExactType means that type and nothing else; see isTypeExact().
   //
   // If no type is possible, return unreachable; if many types are, return none.
   Type getType() const {
@@ -345,7 +343,7 @@ struct ResultLocation {
 };
 
 // The location of one of the locals in a function (either a param or a var).
-// TODO: would separating params from vars help?
+// TODO: would separating params from vars help? (SSA might be enough)
 struct LocalLocation {
   Function* func;
   // The index of the local.
@@ -402,7 +400,7 @@ struct SignatureResultLocation {
 struct DataLocation {
   HeapType type;
   // The index of the field in a struct, or 0 for an array (where we do not
-  // attempt to differentiate positions).
+  // attempt to differentiate by index).
   Index index;
   bool operator==(const DataLocation& other) const {
     return type == other.type && index == other.index;

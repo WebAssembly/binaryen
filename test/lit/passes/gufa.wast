@@ -103,17 +103,25 @@
   )
 
   ;; CHECK:      (func $return (result i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (return
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $return (result i32)
     ;; Helper function that returns one result in a return and flows another
-    ;; out.
+    ;; out. (The block can be optimized to a constant, which is a little
+    ;; redundant in this case as it already ends in a constant, but we don't
+    ;; do extra work to avoid such redundancy, and leave it to vacuum to sort
+    ;; out later.)
     (if
       (i32.const 0)
       (return
@@ -137,9 +145,14 @@
   )
 
   ;; CHECK:      (func $return-same (result i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (return
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -199,9 +212,14 @@
 
   ;; CHECK:      (func $local-yes (result i32)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -243,9 +261,14 @@
   )
 
   ;; CHECK:      (func $param-yes (param $param i32) (result i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.set $param
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.set $param
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -370,8 +393,10 @@
         (i32.const 1)
       )
     )
-    ;; As above, but flip one $x and $y on the first and last local.gets. There
-    ;; is still only the one value possible as nothing else flows in.
+    ;; As above, but flip one $x and $y on the first and last local.gets. We
+    ;; can see that $y must contain 1, and we cannot infer a value for $x (it
+    ;; is sent both 42 and $y which is 1). Even without $x, however, we can see
+    ;; the value leaving the select is 42, which means the call returns 42.
     (select
       (i32.const 42)
       (call $cycle-2
@@ -541,24 +566,12 @@
 
   ;; CHECK:      (func $blocks
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result i32)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $named (result i32)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $named0 (result i32)
+  ;; CHECK-NEXT:     (block $named (result i32)
   ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (br $named0
+  ;; CHECK-NEXT:       (br $named
   ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -569,10 +582,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $named1 (result i32)
+  ;; CHECK-NEXT:   (block $named0 (result i32)
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (br $named1
+  ;; CHECK-NEXT:     (br $named0
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -581,26 +594,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $blocks
-    ;; We can infer a constant value here, but should not make any changes, as
-    ;; the pattern we try to optimize things to is exactly a block ending in a
-    ;; constant. So we do not optimize such things, which would keep increasing
-    ;; code size each time we run, with no benefit.
-    (drop
-      (block (result i32)
-        (nop)
-        (i32.const 1)
-      )
-    )
-    ;; Even if the block has a name, we should not make any changes.
-    (drop
-      (block $named (result i32)
-        (nop)
-        (i32.const 1)
-      )
-    )
-    ;; But if the block also has a branch to it, then we should: we'd be placing
-    ;; something simpler (a nameless block with no branches to it) on the
-    ;; outside.
+    ;; A block with a branch to it, which we can infer a constant for.
     (drop
       (block $named (result i32)
         (if
@@ -826,8 +820,8 @@
   )
 )
 
-;; As above but the second call is of another signature, so it does not prevent
-;; us from optimizing even though it has a different value.
+;; As above but the second call is of another function type, so it does not
+;; prevent us from optimizing even though it has a different value.
 (module
   ;; CHECK:      (type $i (func (param i32)))
   (type $i (func (param i32)))
@@ -953,6 +947,21 @@
     ;; For comparison, we can optimize this call to an internal function.
     (drop
       (call $internal)
+    )
+  )
+)
+
+;; Test for nontrivial code in a global init. We need to process such code
+;; normally and not hit any internal asserts (nothing can be optimized here).
+(module
+  ;; CHECK:      (global $global$0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT:  (i32.const 20)
+  ;; CHECK-NEXT: ))
+  (global $global$0 i32
+    (i32.add
+      (i32.const 10)
+      (i32.const 20)
     )
   )
 )

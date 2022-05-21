@@ -241,7 +241,7 @@
     ;; is, drop it and ignore its value), as only then will the select never
     ;; have any contents.
     ;; (Note: we are not fully optimal here since we could notice that the
-    ;; select executes both arms unconditionally, so it one traps then it will
+    ;; select executes both arms unconditionally, so if one traps then it will
     ;; all trap.)
     (drop
       (select (result (ref any))
@@ -464,7 +464,7 @@
 ;; As above, but now with a chain of globals: A starts with a value, which is
 ;; copied to B, and then C, and then C is read. We will be able to optimize
 ;; away *-null (which is where A-null starts with null) but not *-something
-;; (wihch is where A-something starts with a value).
+;; (which is where A-something starts with a value).
 (module
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -600,7 +600,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $never-called-ref (param $x (ref any)) (result (ref any))
-    ;; As above but with a reference.
+    ;; As above but with a reference type. Again, we can apply an unreachable.
     (local.get $x)
   )
 
@@ -633,9 +633,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref any)) (param $y (ref any)) (param $z (ref any))
-    ;; This function *is* called, with possible non-null values in the 1st & 3rd
-    ;; parameters but not the 2nd, which can be optimized (as the reference is
-    ;; non-nullable).
+    ;; This function is called, with possible (non-null) values in the 1st & 3rd
+    ;; params, but nothing can arrive in the 2nd, which we can optimize to an
+    ;; unreachable.
     (drop
       (local.get $x)
     )
@@ -660,9 +660,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-called
-    ;; Call the above function as described there: The 2nd parameter has only
-    ;; nulls, while the others have both a null and a non-null, so there are
-    ;; non-null contents arriving.
+    ;; Call the above function as described there: Nothing can arrive in the
+    ;; second param (since we cast a null to non-null there), while the others
+    ;; have both a null and a non-null (different in the 2 calls here). (With
+    ;; more precise analysis we could see that the ref.as must trap, and we
+    ;; could optimize even more here.)
     (call $called
       (struct.new $struct)
       (ref.as_non_null
@@ -1094,7 +1096,8 @@
         (unreachable)
       )
     )
-    ;; Send a more specific type. We should emit a valid null constant.
+    ;; Send a more specific type. We should emit a valid null constant (but in
+    ;; this case, a null of either $parent or $child would be ok).
     (drop
       (block $block (result (ref null $parent))
         (br $block
@@ -1105,7 +1108,7 @@
     )
     ;; Send a less specific type, via a cast. But all nulls are identical and
     ;; ref.cast passes nulls through, so this is ok, but we must be careful to
-    ;; emit a ref.null child on the outside (to not change the outer type to a
+    ;; emit a ref.null $child on the outside (to not change the outer type to a
     ;; less refined one).
     (drop
       (block $block (result (ref null $child))
@@ -1379,9 +1382,9 @@
         (i32.const 10)
       )
     )
-    ;; This get cannot be optimized because below us because the local is
-    ;; written a child as well. So the local $parent can refer to either one,
-    ;; and they disagree on the aliased value.
+    ;; This get cannot be optimized because later down the local is written a
+    ;; child as well. So the local $parent can refer to either type, and they
+    ;; disagree on the aliased value.
     (drop
       (struct.get $parent 0
         (local.get $parent)
@@ -1740,9 +1743,6 @@
     (local.set $x
       (global.get $x)
     )
-    ;; Pass it through a call, then write it to a struct, then read it from
-    ;; there, and coerce to non-null which we would optimize if the value were
-    ;; only a null. But it is not a null, and no optimizations happen here.
     (global.set $x
       (struct.get $storage 0
         (struct.new $storage
@@ -2311,8 +2311,8 @@
         (global.get $global-A)
       )
     )
-    ;; The third item has more than one possible value, which we add with
-    ;; another struct.new here, so we cannot optimize.
+    ;; The third item has more than one possible value, due to the function
+    ;; $create later down, so we cannot optimize.
     (drop
       (struct.get $vtable-A 2
         (global.get $global-A)
@@ -2669,7 +2669,7 @@
 
     ;; Read the following from the most nested comment first.
 
-    (ref.cast_static $B ;; if we mistakenly thing this contains content of
+    (ref.cast_static $B ;; if we mistakenly think this contains content of
                         ;; type $A, it would trap, but it should not, and we
                         ;; have nothing to optimize here
       (ref.as_non_null ;; also $B, based on the child's *contents* (not type!)
@@ -3325,6 +3325,311 @@
         (i32.const 1)
         (i32.const 2)
       )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct_subtype (mut i32) data))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
+  (type $substruct (struct_subtype (mut i32) f64 $struct))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $something (mut (ref $struct)) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $something (mut (ref $struct)) (struct.new $struct
+    (i32.const 10)
+  ))
+
+  ;; CHECK:      (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+  ;; CHECK-NEXT:  (i32.const 22)
+  ;; CHECK-NEXT:  (f64.const 3.14159)
+  ;; CHECK-NEXT: ))
+  (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+    (i32.const 22)
+    (f64.const 3.14159)
+  ))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $something
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (global.get $something)
+  ;; CHECK-NEXT:   (i32.const 12)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (global.get $something)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 22)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; The global $something has an initial value and this later value, and they
+    ;; are both of type $struct, so we can infer an exact type for the global.
+    (global.set $something
+      (struct.new $struct
+        (i32.const 10)
+      )
+      (i32.const 11)
+    )
+    ;; Write to that global here. This can only affect $struct, and *not*
+    ;; $substruct, thanks to the exact type.
+    (struct.set $struct 0
+      (global.get $something)
+      (i32.const 12)
+    )
+    ;; We cannot optimize the first get here, as it might be 10 or 11.
+    (drop
+      (struct.get $struct 0
+        (global.get $something)
+      )
+    )
+    ;; We can optimize this get, however, as nothing aliased it and 22 is the
+    ;; only possibility.
+    (drop
+      (struct.get $substruct 0
+        (global.get $subsomething)
+      )
+    )
+  )
+)
+
+;; As above, but we can no longer infer an exact type for the struct.set on the
+;; global $something.
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct_subtype (mut i32) data))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
+  (type $substruct (struct_subtype (mut i32) f64 $struct))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $something (mut (ref $struct)) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $something (mut (ref $struct)) (struct.new $struct
+    (i32.const 10)
+  ))
+
+  ;; CHECK:      (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+  ;; CHECK-NEXT:  (i32.const 22)
+  ;; CHECK-NEXT:  (f64.const 3.14159)
+  ;; CHECK-NEXT: ))
+  (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+    (i32.const 22)
+    (f64.const 3.14159)
+  ))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $something
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (global.get $something)
+  ;; CHECK-NEXT:   (i32.const 12)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (global.get $something)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $substruct 0
+  ;; CHECK-NEXT:    (global.get $subsomething)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; Write a $substruct to $something, so that the global might contain either
+    ;; of the two types.
+    (global.set $something
+      (struct.new $substruct
+        (i32.const 22)
+        (f64.const 3.14159)
+      )
+      (i32.const 11)
+    )
+    ;; This write might alias both types now.
+    (struct.set $struct 0
+      (global.get $something)
+      (i32.const 12)
+    )
+    ;; As a result, we can optimize neither of these gets.
+    (drop
+      (struct.get $struct 0
+        (global.get $something)
+      )
+    )
+    (drop
+      (struct.get $substruct 0
+        (global.get $subsomething)
+      )
+    )
+  )
+)
+
+;; As above, but change the constants in the first field in all cases to 10. Now
+;; we can optimize.
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct_subtype (mut i32) data))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
+  (type $substruct (struct_subtype (mut i32) f64 $struct))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $something (mut (ref $struct)) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $something (mut (ref $struct)) (struct.new $struct
+    (i32.const 10)
+  ))
+
+  ;; CHECK:      (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT:  (f64.const 3.14159)
+  ;; CHECK-NEXT: ))
+  (global $subsomething (mut (ref $substruct)) (struct.new $substruct
+    (i32.const 10)
+    (f64.const 3.14159)
+  ))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (global.set $something
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (global.get $something)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    (global.set $something
+      (struct.new $substruct
+        (i32.const 10)
+        (f64.const 3.14159)
+      )
+      (i32.const 10)
+    )
+    (struct.set $struct 0
+      (global.get $something)
+      (i32.const 10)
+    )
+    (drop
+      (struct.get $struct 0
+        (global.get $something)
+      )
+    )
+    (drop
+      (struct.get $substruct 0
+        (global.get $subsomething)
+      )
+    )
+  )
+)
+
+;; call_ref types
+(module
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $i1 (func_subtype (param i32) func))
+  (type $i1 (func (param i32)))
+  ;; CHECK:      (type $i2 (func_subtype (param i32) func))
+  (type $i2 (func (param i32)))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (elem declare func $reffed1 $reffed2)
+
+  ;; CHECK:      (func $reffed1 (type $i1) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed1 (type $i1) (param $x i32)
+    ;; This is called with one possible value, 42, which we can optimize the
+    ;; param to.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $reffed2 (type $i2) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed2 (type $i2) (param $x i32)
+    ;; This is called with two possible values, so we cannot optimize.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $do-calls (type $none_=>_none)
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (ref.func $reffed1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (ref.func $reffed1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:   (ref.func $reffed2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:   (i32.const 99999)
+  ;; CHECK-NEXT:   (ref.func $reffed2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-calls
+    ;; Call $i1 twice with the same value, and $i2 twice with different values.
+    ;; Note that structurally the types are identical, but we still
+    ;; differentiate them, allowing us to optimize.
+    (call_ref
+      (i32.const 42)
+      (ref.func $reffed1)
+    )
+    (call_ref
+      (i32.const 42)
+      (ref.func $reffed1)
+    )
+    (call_ref
+      (i32.const 1337)
+      (ref.func $reffed2)
+    )
+    (call_ref
+      (i32.const 99999)
+      (ref.func $reffed2)
     )
   )
 )

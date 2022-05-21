@@ -10,10 +10,8 @@
 ;;  * Tests must avoid things gufa optimizes away that would make the test
 ;;    irrelevant. In particular, parameters to functions that are never called
 ;;    will be turned to unreachable by gufa, so instead make those calls to
-;;    imports. Gufa will also realize that passing ref.null to a struct.get/set
-;;    can be optimized (as no actual allocation is created there), so avoid that
-;;    and store allocations in locals (instead of dropping them and using
-;;    ref.null later; replace the ref.null with a local.get).
+;;    imports. Gufa will also realize that passing ref.null as the reference of
+;;    a struct.get/set will trap, so we must actually allocate something.
 ;;  * Gufa optimizes in a more general way. Cfp will turn a struct.get whose
 ;;    value it infers into a ref.as_non_null (to preserve the trap if the ref is
 ;;    null) followed by the constant. Gufa has no special handling for
@@ -22,6 +20,15 @@
 ;;    dropped operation, like vacuum in trapsNeverHappen mode).
 ;;  * Gufa's more general optimizations can remove more unreachable code, as it
 ;;    checks for effects (and removes effectless code).
+;;
+;; This file could also run cfp in addition to gufa, but the aforementioned
+;; changes cause cfp to behave differently in some cases, which could lead to
+;; more confusion than benefit - the reader would not be able to compare the two
+;; outputs and see cfp as "correct" which gufa should match.
+;;
+;; Note that there is some overlap with gufa-refs.wast in some places, but
+;; intentionally no tests are removed here compared to cfp.wast, to make it
+;; simple to map the original cfp tests to their ported versions here.
 
 (module
   (type $struct (struct i32))
@@ -54,8 +61,8 @@
   ;; CHECK-NEXT: )
   (func $test
     ;; The only place this type is created is with a default value, and so we
-    ;; can optimize the later get into a constant (note that no drop of the
-    ;; ref is needed: the optimize can see that the struct.get cannot trap, as
+    ;; can optimize the get into a constant (note that no drop of the
+    ;; ref is needed: the optimizer can see that the struct.get cannot trap, as
     ;; its reference is non-nullable).
     (drop
       (struct.get $struct 0
@@ -376,17 +383,14 @@
 
   ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:   (block (result f32)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:   (rtt.canon $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create (result (ref $struct))
     (struct.new_with_rtt $struct
-      ;; Fall though a 42 via a block.
-      (block (result f32)
+      ;; Fall though a 42. The block can be optimized to a constant.
+      (block $named (result f32)
         (nop)
         (f32.const 42)
       )
@@ -2413,7 +2417,7 @@
   (func $create-other (result (ref $other))
     (struct.new $other
       (f64.const 0)
-      (i32.const 1337)
+      (i32.const 1337) ;; this changed
     )
   )
 
@@ -2436,8 +2440,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; As this is not a copy, we cannot optimize the last get lower down:
-    ;; $struct has both 42 and 1337 written to it.
+    ;; As this is not a copy between a struct and itself, we cannot optimize
+    ;; the last get lower down: $struct has both 42 and 1337 written to it.
     (struct.set $struct 1
       (call $create-struct)
       (struct.get $other 1
@@ -2826,9 +2830,9 @@
     ;; that, and return the value (all verifying that the types are correct
     ;; after optimization).
     ;;
-    ;; We optimize some of this, but stop at reading form the immutable global.
-    ;; To continue we need to track the fields of allocated objects, or to look
-    ;; at immutable globals directly, neither of which we do yet.
+    ;; We optimize some of this, but stop at reading from the immutable global.
+    ;; To continue we'd need to track the fields of allocated objects, or look
+    ;; at immutable globals directly, neither of which we do yet. TODO
     (struct.get $vtable 0
       (array.get $itable
         (struct.get $object $itable
