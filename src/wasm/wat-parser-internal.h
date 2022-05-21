@@ -407,9 +407,9 @@ struct Token {
 
   bool operator!=(const Token& other) const { return !(*this == other); }
 
-  // Suppress clang-tidy false positive
-  // NOLINTNEXTLINE(clang-diagnostic-unused-function)
-  friend std::ostream& operator<<(std::ostream& os, const Token& tok) {
+  // Suppress clang-tidy false positive about unused functions.
+  [[maybe_unused]] friend std::ostream& operator<<(std::ostream& os,
+                                                   const Token& tok) {
     std::visit([&](const auto& t) { os << t; }, tok.data);
     return os << " \"" << tok.span << "\"";
   }
@@ -424,9 +424,9 @@ struct TextPos {
   }
   bool operator!=(const TextPos& other) const { return !(*this == other); }
 
-  // Suppress clang-tidy false positive
-  // NOLINTNEXTLINE(clang-diagnostic-unused-function)
-  friend std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
+  // Suppress clang-tidy false positive about unused functions.
+  [[maybe_unused]] friend std::ostream& operator<<(std::ostream& os,
+                                                   const TextPos& pos) {
     return os << pos.line << ":" << pos.col;
   }
 };
