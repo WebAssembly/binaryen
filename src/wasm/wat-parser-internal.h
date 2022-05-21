@@ -120,6 +120,7 @@ public:
   LexIntCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexIntResult> lexed() {
+    // Check most significant bit for underflow if we will have to negate.
     if (overflow || (negative && (n & (1ull << 63)))) {
       return {};
     }
@@ -405,7 +406,11 @@ struct TextPos {
   }
 };
 
-// A forward iterator over a string_view that produces tokens.
+// Lexer's purpose is twofold. First, it wraps a buffer to provide a tokenizing
+// iterator over it. Second, it implements that iterator itself. Also provides
+// utilities for locating the text position of tokens within the buffer. Text
+// positions are computed on demand rather than eagerly because they are
+// typically only needed when there is an error to report.
 struct Lexer {
   using iterator = Lexer;
   using difference_type = std::ptrdiff_t;
