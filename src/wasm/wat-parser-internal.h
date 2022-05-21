@@ -339,6 +339,8 @@ struct RParenTok : std::monostate {};
 using TokenData = std::
   variant<KeywordTok, IntTok, FloatTok, StringTok, IdTok, LParenTok, RParenTok>;
 
+#ifdef IN_TEST
+
 std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
   return os << "Keyword";
 }
@@ -365,20 +367,24 @@ std::ostream& operator<<(std::ostream& os, const RParenTok&) {
   return os << "')'";
 }
 
+#endif // IN_TEST
+
 struct Token {
   std::string_view span;
   TokenData data;
 
-  const IntTok* get_int() const { return std::get_if<IntTok>(&data); }
-
   bool operator==(const Token& other) const {
     return span == other.span && data == other.data;
   }
+
   bool operator!=(const Token& other) const { return !(*this == other); }
+
+#ifdef IN_TEST
   friend std::ostream& operator<<(std::ostream& os, const Token& tok) {
     std::visit([&](const auto& t) { os << t; }, tok.data);
     return os << " \"" << tok.span << "\"";
   }
+#endif // IN_TEST
 };
 
 struct TextPos {
