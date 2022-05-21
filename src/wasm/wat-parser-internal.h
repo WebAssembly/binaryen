@@ -444,7 +444,7 @@ struct Lexer {
       tok = Token{t->span, IntTok{t->n, t->hasSign}};
     } else {
       // TODO: Do something about lexing errors.
-      curr = {};
+      curr = std::nullopt;
       return;
     }
     index += tok.span.size();
