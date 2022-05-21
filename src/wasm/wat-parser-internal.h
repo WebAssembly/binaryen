@@ -47,7 +47,7 @@ struct LexResult {
 
 // Lexing context that accumulates lexed input to produce a token fragment.
 struct LexCtx {
-protected:
+private:
   // The input we are lexing.
   std::string_view input;
 
@@ -101,6 +101,26 @@ public:
   void take_all() { lexedSize = input.size(); }
 };
 
+std::optional<int> getDigit(char c) {
+  if ('0' <= c && c <= '9') {
+    return {c - '0'};
+  }
+  return {};
+}
+
+std::optional<int> getHexDigit(char c) {
+  if ('0' <= c && c <= '9') {
+    return {c - '0'};
+  }
+  if ('A' <= c && c <= 'F') {
+    return {10 + c - 'A'};
+  }
+  if ('a' <= c && c <= 'f') {
+    return {10 + c - 'a'};
+  }
+  return {};
+}
+
 // The result of lexing an integer token fragment.
 struct LexIntResult : LexResult {
   uint64_t n;
@@ -141,13 +161,13 @@ public:
 
   bool take_digit() {
     if (!empty()) {
-      if (char d = next()[0]; std::isdigit(d)) {
-        uint64_t newN = n * 10 + (d - '0');
+      if (auto d = getDigit(next()[0])) {
+        LexCtx::take(1);
+        uint64_t newN = n * 10 + *d;
         if (newN < n) {
           overflow = true;
         }
         n = newN;
-        lexedSize += 1;
         return true;
       }
     }
@@ -156,21 +176,13 @@ public:
 
   bool take_hexdigit() {
     if (!empty()) {
-      if (char h = next()[0]; std::isxdigit(h)) {
-        uint64_t newN = n * 16;
-        n *= 16;
-        if (h >= 'a') {
-          newN += 10 + h - 'a';
-        } else if (h >= 'A') {
-          newN += 10 + h - 'A';
-        } else {
-          newN += h - '0';
-        }
+      if (auto h = getHexDigit(next()[0])) {
+        LexCtx::take(1);
+        uint64_t newN = n * 16 + *h;
         if (newN < n) {
           overflow = true;
         }
         n = newN;
-        lexedSize += 1;
         return true;
       }
     }
@@ -241,16 +253,21 @@ std::optional<LexResult> comment(std::string_view in) {
   return {};
 }
 
+std::optional<LexResult> spacechar(std::string_view in) {
+  LexCtx ctx(in);
+  ctx.take_prefix(" "sv) || ctx.take_prefix("\n"sv) ||
+    ctx.take_prefix("\r"sv) || ctx.take_prefix("\t"sv);
+  return ctx.lexed();
+}
+
 // space  ::= (' ' | format | comment)*
 // format ::= '\t' | '\n' | '\r'
 std::optional<LexResult> space(std::string_view in) {
   LexCtx ctx(in);
   while (ctx.size()) {
-    if (ctx.take_prefix(" "sv) || ctx.take_prefix("\n"sv) ||
-        ctx.take_prefix("\r"sv) || ctx.take_prefix("\t"sv)) {
-      continue;
-    }
-    if (auto lexed = comment(ctx.next())) {
+    if (auto lexed = spacechar(ctx.next())) {
+      ctx.take(*lexed);
+    } else if (auto lexed = comment(ctx.next())) {
       ctx.take(*lexed);
     } else {
       break;
@@ -260,7 +277,11 @@ std::optional<LexResult> space(std::string_view in) {
 }
 
 bool LexCtx::can_finish() const {
-  return empty() || lparen(next()) || rparen(next()) || space(next());
+  // Logically we want to check for eof, parens, and space. But we don't
+  // actually want to parse more than a couple characters of space, so check for
+  // individual space chars or comment starts instead.
+  return empty() || lparen(next()) || rparen(next()) || spacechar(next()) ||
+         starts_with(";;"sv);
 }
 
 // num   ::= d:digit => d
