@@ -372,6 +372,72 @@ std::optional<LexIntResult> integer(std::string_view in) {
   return {};
 }
 
+// idchar ::= '0' | ... | '9'
+//          | 'A' | ... | 'Z'
+//          | 'a' | ... | 'z'
+//          | '!' | '#' | '$' | '%' | '&' | ''' | '*' | '+'
+//          | '-' | '.' | '/' | ':' | '<' | '=' | '>' | '?'
+//          | '@' | '\' | '^' | '_' | '`' | '|' | '~'
+std::optional<LexResult> idchar(std::string_view in) {
+  LexCtx ctx(in);
+  if (ctx.empty()) {
+    return {};
+  }
+  char c = ctx.next()[0];
+  if (('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
+      ('a' <= c && c <= 'z')) {
+    ctx.take(1);
+  } else {
+    switch (c) {
+      case '!':
+      case '#':
+      case '$':
+      case '%':
+      case '&':
+      case '\'':
+      case '*':
+      case '+':
+      case '-':
+      case '.':
+      case '/':
+      case ':':
+      case '<':
+      case '=':
+      case '>':
+      case '?':
+      case '@':
+      case '\\':
+      case '^':
+      case '_':
+      case '`':
+      case '|':
+      case '~':
+        ctx.take(1);
+    }
+  }
+  return ctx.lexed();
+}
+
+// id ::= '$' idchar+
+std::optional<LexResult> ident(std::string_view in) {
+  LexCtx ctx(in);
+  if (!ctx.takePrefix("$"sv)) {
+    return {};
+  }
+  if (auto lexed = idchar(ctx.next())) {
+    ctx.take(*lexed);
+  } else {
+    return {};
+  }
+  while (auto lexed = idchar(ctx.next())) {
+    ctx.take(*lexed);
+  }
+  if (ctx.canFinish()) {
+    return ctx.lexed();
+  }
+  return {};
+}
+
 // ======
 // Tokens
 // ======
@@ -405,8 +471,16 @@ struct IntTok {
   }
 };
 
+struct IdTok {
+  friend std::ostream& operator<<(std::ostream& os, const IdTok&) {
+    return os << "id";
+  }
+
+  friend bool operator==(const IdTok&, const IdTok&) { return true; }
+};
+
 struct Token {
-  using Data = std::variant<LParenTok, RParenTok, IntTok>;
+  using Data = std::variant<LParenTok, RParenTok, IntTok, IdTok>;
 
   std::string_view span;
   Data data;
@@ -490,6 +564,8 @@ struct Lexer {
       tok = Token{t->span, LParenTok{}};
     } else if (auto t = rparen(next())) {
       tok = Token{t->span, RParenTok{}};
+    } else if (auto t = ident(next())) {
+      tok = Token{t->span, IdTok{}};
     } else if (auto t = integer(next())) {
       tok = Token{t->span, IntTok{t->n, t->signedness}};
     } else {

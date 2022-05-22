@@ -346,3 +346,24 @@ TEST(ParserTest, LexHexInt) {
     EXPECT_EQ(lexer, lexer.end());
   }
 }
+
+TEST(ParserTest, LexIdent) {
+  {
+    Lexer lexer("$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv);
+    ASSERT_NE(lexer, lexer.end());
+    Token expected{"$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv, IdTok{}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    Lexer lexer("$[]{}"sv);
+    EXPECT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("$abc[]"sv);
+    EXPECT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("$"sv);
+    EXPECT_EQ(lexer, lexer.end());
+  }
+}
