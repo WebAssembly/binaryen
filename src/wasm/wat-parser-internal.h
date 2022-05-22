@@ -101,26 +101,6 @@ public:
   void take_all() { lexedSize = input.size(); }
 };
 
-std::optional<int> getDigit(char c) {
-  if ('0' <= c && c <= '9') {
-    return {c - '0'};
-  }
-  return {};
-}
-
-std::optional<int> getHexDigit(char c) {
-  if ('0' <= c && c <= '9') {
-    return {c - '0'};
-  }
-  if ('A' <= c && c <= 'F') {
-    return {10 + c - 'A'};
-  }
-  if ('a' <= c && c <= 'f') {
-    return {10 + c - 'a'};
-  }
-  return {};
-}
-
 // The result of lexing an integer token fragment.
 struct LexIntResult : LexResult {
   uint64_t n;
@@ -130,14 +110,36 @@ struct LexIntResult : LexResult {
 // Lexing context that accumulates lexed input to produce an integer token
 // fragment.
 struct LexIntCtx : LexCtx {
+  using LexCtx::take;
+
 private:
   uint64_t n = 0;
   bool hasSign = false;
   bool negative = false;
   bool overflow = false;
 
+  std::optional<int> getDigit(char c) {
+    if ('0' <= c && c <= '9') {
+      return {c - '0'};
+    }
+    return {};
+  }
+
+  std::optional<int> getHexDigit(char c) {
+    if ('0' <= c && c <= '9') {
+      return {c - '0'};
+    }
+    if ('A' <= c && c <= 'F') {
+      return {10 + c - 'A'};
+    }
+    if ('a' <= c && c <= 'f') {
+      return {10 + c - 'a'};
+    }
+    return {};
+  }
+
 public:
-  LexIntCtx(std::string_view in) : LexCtx(in) {}
+  explicit LexIntCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexIntResult> lexed() {
     // Check most significant bit for underflow if we will have to negate.
@@ -162,7 +164,7 @@ public:
   bool take_digit() {
     if (!empty()) {
       if (auto d = getDigit(next()[0])) {
-        LexCtx::take(1);
+        take(1);
         uint64_t newN = n * 10 + *d;
         if (newN < n) {
           overflow = true;
@@ -177,7 +179,7 @@ public:
   bool take_hexdigit() {
     if (!empty()) {
       if (auto h = getHexDigit(next()[0])) {
-        LexCtx::take(1);
+        take(1);
         uint64_t newN = n * 16 + *h;
         if (newN < n) {
           overflow = true;
