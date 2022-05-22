@@ -214,7 +214,7 @@ std::optional<LexResult> rparen(std::string_view in) {
 // linechar     ::= c:char                      (if c != '\n')
 // blockcomment ::= '(;' blockchar* ';)'
 // blockchar    ::= c:char                      (if c != ';' and c != '(')
-//   p             | ';'                         (if the next char is not ')')
+//                | ';'                         (if the next char is not ')')
 //                | '('                         (if the next char is not ';')
 //                | blockcomment
 std::optional<LexResult> comment(std::string_view in) {
