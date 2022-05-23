@@ -1866,9 +1866,6 @@ void WasmBinaryBuilder::readMemory() {
 void WasmBinaryBuilder::readTypes() {
   BYN_TRACE("== readTypes\n");
   TypeBuilder builder(getU32LEB());
-  if (getTypeSystem() == TypeSystem::Nominal && builder.size() > 1) {
-    throwError("Nominal type sections must have a single element");
-  }
   BYN_TRACE("num: " << builder.size() << std::endl);
 
   auto makeType = [&](int32_t typeCode) {
