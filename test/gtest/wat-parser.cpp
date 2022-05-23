@@ -367,3 +367,105 @@ TEST(ParserTest, LexIdent) {
     EXPECT_EQ(lexer, lexer.end());
   }
 }
+
+TEST(ParserTest, LexString) {
+  {
+    auto pangram = "\"The quick brown fox jumps over the lazy dog\""sv;
+    Lexer lexer(pangram);
+    ASSERT_NE(lexer, lexer.end());
+    Token expected{pangram, StringTok{{}}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    auto chars = "\"`~!@#$%^&*()_-+0123456789|,.<>/?;:'\""sv;
+    Lexer lexer(chars);
+    ASSERT_NE(lexer, lexer.end());
+    Token expected{chars, StringTok{{}}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    auto escapes = "\"_\\t_\\n_\\r_\\\\_\\\"_\\'_\""sv;
+    Lexer lexer(escapes);
+    ASSERT_NE(lexer, lexer.end());
+    Token expected{escapes, StringTok{{"_\t_\n_\r_\\_\"_'_"}}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    auto escapes = "\"_\\00_\\07_\\20_\\5A_\\7F_\\ff_\\ffff_\""sv;
+    Lexer lexer(escapes);
+    ASSERT_NE(lexer, lexer.end());
+    std::string escaped{"_\0_\7_ _Z_\x7f_\xff_\xff"
+                        "ff_"sv};
+    Token expected{escapes, StringTok{{escaped}}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    // _$_£_€_𐍈_
+    auto unicode = "\"_\\u{24}_\\u{00a3}_\\u{20AC}_\\u{10348}_\""sv;
+    Lexer lexer(unicode);
+    ASSERT_NE(lexer, lexer.end());
+    std::string escaped{"_$_\xC2\xA3_\xE2\x82\xAC_\xF0\x90\x8D\x88_"};
+    Token expected{unicode, StringTok{{escaped}}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    // _$_£_€_𐍈_
+    auto unicode = "\"_$_\xC2\xA3_\xE2\x82\xAC_\xF0\x90\x8D\x88_\""sv;
+    Lexer lexer(unicode);
+    ASSERT_NE(lexer, lexer.end());
+    Token expected{unicode, StringTok{{}}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    Lexer lexer("\"unterminated"sv);
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"unescaped nul\0\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"unescaped U+19\x19\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"unescaped U+7f\x7f\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"\\ stray backslash\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"short \\f hex escape\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"bad hex \\gg\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"empty unicode \\u{}\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"not unicode \\u{abcdefg}\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"extra chars \\u{123(}\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"unpaired surrogate unicode crimes \\u{d800}\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"more surrogate unicode crimes \\u{dfff}\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+  {
+    Lexer lexer("\"too big \\u{110000}\"");
+    ASSERT_EQ(lexer, lexer.end());
+  }
+}
