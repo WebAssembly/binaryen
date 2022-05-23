@@ -266,9 +266,6 @@ struct GUFAOptimizer
         //   (i32.const 10)
         //  )
         runner.add("vacuum");
-        // New constants we propagated globally can perhaps be propagated
-        // locally and used in computations.
-        runner.add("precompute-propagate");
         runner.runOnFunction(func);
       }
     }
