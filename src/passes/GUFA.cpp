@@ -27,6 +27,12 @@
 // casts on the way to that location allow nothing through. We can also find
 // that only a particular value is possible of that type.
 //
+// GUFA will infer constants and unreachability, and add those to the code. This
+// can increase code size if further optimizations are not run later like dead
+// code elimination and vacuum. The "optimizing" variant of this pass will run
+// such followup opts automatically in functions where we make changes, and so
+// it is useful if GUFA is run near the end of the optimization pipeline.
+//
 // TODO: GUFA + polymorphic devirtualization + traps-never-happen. If we see
 //       that the possible call targets are {A, B, C}, and GUFA info lets us
 //       prove that A, C will trap if called - say, if they cast the first
