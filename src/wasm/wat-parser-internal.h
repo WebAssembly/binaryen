@@ -297,7 +297,7 @@ std::optional<LexIntResult> num(std::string_view in) {
   while (true) {
     bool under = ctx.take_prefix("_"sv);
     if (!ctx.take_digit()) {
-      if (!under && ctx.can_finish()) {
+      if (!under) {
         return ctx.lexed();
       }
       return {};
@@ -318,7 +318,7 @@ std::optional<LexIntResult> hexnum(std::string_view in) {
   while (true) {
     bool under = ctx.take_prefix("_"sv);
     if (!ctx.take_hexdigit()) {
-      if (!under && ctx.can_finish()) {
+      if (!under) {
         return ctx.lexed();
       }
       return {};
@@ -340,14 +340,18 @@ std::optional<LexIntResult> integer(std::string_view in) {
   if (ctx.take_prefix("0x"sv)) {
     if (auto lexed = hexnum(ctx.next())) {
       ctx.take(*lexed);
-      return ctx.lexed();
+      if (ctx.can_finish()) {
+        return ctx.lexed();
+      }
     }
     // TODO: Add error production for unrecognized hexnum.
     return {};
   }
   if (auto lexed = num(ctx.next())) {
     ctx.take(*lexed);
-    return ctx.lexed();
+    if (ctx.can_finish()) {
+      return ctx.lexed();
+    }
   }
   return {};
 }
