@@ -122,7 +122,7 @@ private:
     if ('0' <= c && c <= '9') {
       return {c - '0'};
     }
-    return {};
+    return std::nullopt;
   }
 
   std::optional<int> getHexDigit(char c) {
@@ -135,7 +135,7 @@ private:
     if ('a' <= c && c <= 'f') {
       return {10 + c - 'a'};
     }
-    return {};
+    return std::nullopt;
   }
 
 public:
