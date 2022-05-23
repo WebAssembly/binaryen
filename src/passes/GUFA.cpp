@@ -226,49 +226,55 @@ struct GUFAOptimizer
   //       ref.as_non_null, so maybe there is a way to share that.
 
   void visitFunction(Function* func) {
-    if (optimized) {
-      // Optimization may introduce more unreachables, which we need to
-      // propagate.
-      ReFinalize().walkFunctionInModule(func, getModule());
-
-      // We may add blocks around pops, which we must fix up.
-      EHUtils::handleBlockNestedPops(func, *getModule());
-
-      if (optimizing) {
-        PassRunner runner(getModule(), getPassOptions());
-        runner.setIsNested(true);
-        // New unreachables we added have created dead code we can remove. If we
-        // do not do this, then running GUFA repeatedly can actually increase
-        // code size (by adding multiple unneeded unreachables).
-        runner.add("dce");
-        // New drops we added allow us to remove more unused code and values. As
-        // with unreachables, without a vacuum we may increase code size as in
-        // nested expressions we may apply the same value multiple times:
-        //
-        //  (block $out
-        //   (block $in
-        //    (i32.const 10)))
-        //
-        // In each of the blocks we'll infer the value must be 10, so we'll end
-        // up with this repeating code:
-        //
-        //  (block ;; a new block just to drop the old outer block
-        //   (drop
-        //    (block $out
-        //     (drop
-        //      (block $in
-        //       (i32.const 10)
-        //      )
-        //     )
-        //     (i32.const 10)
-        //    )
-        //   )
-        //   (i32.const 10)
-        //  )
-        runner.add("vacuum");
-        runner.runOnFunction(func);
-      }
+    if (!optimized) {
+      return;
     }
+
+    // Optimization may introduce more unreachables, which we need to
+    // propagate.
+    ReFinalize().walkFunctionInModule(func, getModule());
+
+    // We may add blocks around pops, which we must fix up.
+    EHUtils::handleBlockNestedPops(func, *getModule());
+
+    // If we are in "optimizing" mode, we'll also run some more passes on this
+    // function that we just optimized. If not, leave now.
+    if (!optimizing) {
+      return;
+    }
+
+    PassRunner runner(getModule(), getPassOptions());
+    runner.setIsNested(true);
+    // New unreachables we added have created dead code we can remove. If we
+    // do not do this, then running GUFA repeatedly can actually increase
+    // code size (by adding multiple unneeded unreachables).
+    runner.add("dce");
+    // New drops we added allow us to remove more unused code and values. As
+    // with unreachables, without a vacuum we may increase code size as in
+    // nested expressions we may apply the same value multiple times:
+    //
+    //  (block $out
+    //   (block $in
+    //    (i32.const 10)))
+    //
+    // In each of the blocks we'll infer the value must be 10, so we'll end
+    // up with this repeating code:
+    //
+    //  (block ;; a new block just to drop the old outer block
+    //   (drop
+    //    (block $out
+    //     (drop
+    //      (block $in
+    //       (i32.const 10)
+    //      )
+    //     )
+    //     (i32.const 10)
+    //    )
+    //   )
+    //   (i32.const 10)
+    //  )
+    runner.add("vacuum");
+    runner.runOnFunction(func);
   }
 };
 
