@@ -695,7 +695,7 @@ struct InfoCollector
       });
   }
 
-  // Handles receiving values from breaks at the target (block/loop).
+  // Handles receiving values from breaks at the target (as in a block).
   void handleBreakTarget(Expression* curr) {
     // Break targets receive the things sent to them and flow them out.
     if (isRelevant(curr->type)) {
