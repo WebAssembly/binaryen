@@ -356,57 +356,33 @@ std::optional<LexIntResult> integer(std::string_view in) {
 // Tokens
 // ======
 
-struct KeywordTok : std::monostate {};
+struct LParenTok {
+  friend std::ostream& operator<<(std::ostream& os, const LParenTok&) {
+    return os << "'('";
+  }
+};
+
+struct RParenTok {
+  friend std::ostream& operator<<(std::ostream& os, const RParenTok&) {
+    return os << "')'";
+  }
+};
+
 struct IntTok {
   uint64_t n;
   bool hasSign;
-  bool operator==(const IntTok& other) const {
-    return n == other.n && hasSign == other.hasSign;
+  friend std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
+    return os << tok.n << " sign: " << tok.hasSign;
   }
 };
-struct FloatTok : std::monostate {};
-struct StringTok : std::monostate {};
-struct IdTok : std::monostate {};
-struct LParenTok : std::monostate {};
-struct RParenTok : std::monostate {};
-
-using TokenData = std::
-  variant<KeywordTok, IntTok, FloatTok, StringTok, IdTok, LParenTok, RParenTok>;
-
-std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
-  return os << "Keyword";
-}
-
-std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
-  return os << "Int(" << tok.n << (tok.hasSign ? " hasSign" : "") << ")";
-}
-
-std::ostream& operator<<(std::ostream& os, const FloatTok&) {
-  return os << "Float";
-}
-
-std::ostream& operator<<(std::ostream& os, const StringTok&) {
-  return os << "String";
-}
-
-std::ostream& operator<<(std::ostream& os, const IdTok&) { return os << "Id"; }
-
-std::ostream& operator<<(std::ostream& os, const LParenTok&) {
-  return os << "'('";
-}
-
-std::ostream& operator<<(std::ostream& os, const RParenTok&) {
-  return os << "')'";
-}
 
 struct Token {
+  using Data = std::variant<LParenTok, RParenTok, IntTok>;
+
   std::string_view span;
-  TokenData data;
+  Data data;
 
-  bool operator==(const Token& other) const {
-    return span == other.span && data == other.data;
-  }
-
+  bool operator==(const Token& other) const { return span == other.span; }
   bool operator!=(const Token& other) const { return !(*this == other); }
 
   // Suppress clang-tidy false positive about unused functions.
