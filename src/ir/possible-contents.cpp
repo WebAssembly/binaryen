@@ -447,9 +447,9 @@ struct InfoCollector
     return location;
   }
 
-  // Iterates over a list of children and adds links as needed. The target of
-  // the link is created using a function that is passed in, which receives the
-  // index of the child.
+  // Iterates over a list of children and adds links from them. The target of
+  // those link is created using a function that is passed in, which receives
+  // the index of the child.
   void handleChildList(ExpressionList& operands,
                        std::function<Location(Index)> makeTarget) {
     Index i = 0;
