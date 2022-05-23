@@ -712,10 +712,9 @@
     ;; parameter from eqref to ${} we must do something here, as we can no
     ;; longer just write this (ref.null eq) into a parameter of the more
     ;; refined type. While doing so, we must not be confused by the fact that
-    ;; there is nothing remaining in the module of type ${} (since as mentioned
-    ;; above, we will remove the remaining ${} in an internal refinalize). This
-    ;; is a regression test for a crash on not finding the new type to map ${}
-    ;; to.
+    ;; the only mention of ${} in the original module gets removed during our
+    ;; processing, as mentioned in the earlier comment. This is a regression
+    ;; test for a crash because of that.
     (local.set $ref
       (ref.null eq)
     )
