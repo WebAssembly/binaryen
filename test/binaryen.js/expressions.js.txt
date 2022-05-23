@@ -155,17 +155,18 @@
 )
 
 # SIMDShuffle
-(v8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+(i8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
  (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
  (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)
 )
 
 # SIMDTernary
-(f64x2.qfma
- (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
- (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)
- (v128.const i32x4 0x03030303 0x03030303 0x03030303 0x03030303)
+(v128.bitselect
+ (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+ (v128.const i32x4 0x05040302 0x09080706 0x0d0c0b0a 0x11100f0e)
+ (v128.const i32x4 0x06050403 0x0a090807 0x0e0d0c0b 0x1211100f)
 )
+
 
 # SIMDShift
 (i8x16.shr_s
@@ -174,8 +175,19 @@
 )
 
 # SIMDLoad
-(v8x16.load_splat offset=32 align=4
+(v128.load8_splat offset=32 align=4
  (i32.const 2)
+)
+
+# SIMDLoadStoreLane
+(v128.load16_lane offset=32 2
+ (i32.const 2)
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
+)
+
+(v128.store16_lane offset=32 2
+ (i32.const 2)
+ (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
 )
 
 # MemoryInit
@@ -207,6 +219,11 @@
  (local.get $2)
 )
 
+# RefAs
+(ref.as_non_null
+ (local.get $2)
+)
+
 # RefFunc
 (ref.func $b)
 
@@ -221,7 +238,7 @@
  (do
   (i32.const 1)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 2)
  )
  (catch_all
@@ -233,7 +250,7 @@
  (do
   (i32.const 4)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 5)
  )
 )
@@ -242,10 +259,10 @@
  (do
   (i32.const 4)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 6)
  )
- (catch $event2
+ (catch $tag2
   (i32.const 5)
  )
 )
@@ -254,7 +271,7 @@
  (do
   (i32.const 4)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 6)
  )
 )
@@ -263,10 +280,10 @@
  (do
   (i32.const 4)
  )
- (catch $event2
+ (catch $tag2
   (i32.const 8)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 10)
  )
 )
@@ -275,10 +292,10 @@
  (do
   (i32.const 4)
  )
- (catch $event2
+ (catch $tag2
   (i32.const 8)
  )
- (catch $event1
+ (catch $tag1
   (i32.const 10)
  )
 )

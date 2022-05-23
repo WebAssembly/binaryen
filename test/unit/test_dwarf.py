@@ -26,3 +26,26 @@ class DWARFTest(utils.BinaryenTestCase):
         # safe passes do not
         err = shared.run_process(shared.WASM_OPT + args + ['--metrics'], stderr=subprocess.PIPE).stderr
         self.assertNotIn(warning, err)
+
+    def test_strip_dwarf_and_opts(self):
+        # some optimizations are disabled when DWARF is present (as they would
+        # destroy it). we scan the wasm to see if there is any DWARF when
+        # making the decision whether to run them. this test checks that we also
+        # check if --strip* is being run, which would remove the DWARF anyhow
+        path = self.input_path(os.path.join('dwarf', 'cubescript.wasm'))
+        # strip the DWARF, then run all the opts to check as much as possible
+        args = [path, '--strip-dwarf', '-Oz']
+        # run it normally, without -g. in this case no DWARF will be preserved
+        # in a trivial way
+        shared.run_process(shared.WASM_OPT + args + ['-o', 'a.wasm'])
+        # run it with -g. in this case we need to be clever as described above,
+        # and see --strip-dwarf removes the need for DWARF
+        shared.run_process(shared.WASM_OPT + args + ['-o', 'b.wasm', '-g'])
+        # run again on the last output without -g, as we don't want the names
+        # section to skew the results
+        shared.run_process(shared.WASM_OPT + ['b.wasm', '-o', 'c.wasm'])
+        # compare the sizes. there might be a tiny difference in size to to
+        # minor roundtrip changes, so ignore up to a tiny %
+        a_size = os.path.getsize('a.wasm')
+        c_size = os.path.getsize('c.wasm')
+        self.assertLess((100 * abs(a_size - c_size)) / c_size, 1)

@@ -60,7 +60,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
     }
   }
   // The value might be used, so it depends on if the function returns
-  return func->sig.results != Type::none;
+  return func->getResults() != Type::none;
 }
 
 // Checks if a value is dropped.
@@ -169,68 +169,68 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   WASM_UNUSED(castRight);
 
 // Handle each type of field, comparing it appropriately.
-#define DELEGATE_FIELD_CHILD(id, name)                                         \
-  leftStack.push_back(castLeft->name);                                         \
-  rightStack.push_back(castRight->name);
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  leftStack.push_back(castLeft->field);                                        \
+  rightStack.push_back(castRight->field);
 
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-  if (castLeft->name.size() != castRight->name.size()) {                       \
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
     return false;                                                              \
   }                                                                            \
-  for (auto* child : castLeft->name) {                                         \
+  for (auto* child : castLeft->field) {                                        \
     leftStack.push_back(child);                                                \
   }                                                                            \
-  for (auto* child : castRight->name) {                                        \
+  for (auto* child : castRight->field) {                                       \
     rightStack.push_back(child);                                               \
   }
 
-#define COMPARE_FIELD(name)                                                    \
-  if (castLeft->name != castRight->name) {                                     \
+#define COMPARE_FIELD(field)                                                   \
+  if (castLeft->field != castRight->field) {                                   \
     return false;                                                              \
   }
 
-#define DELEGATE_FIELD_INT(id, name) COMPARE_FIELD(name)
-#define DELEGATE_FIELD_LITERAL(id, name) COMPARE_FIELD(name)
-#define DELEGATE_FIELD_NAME(id, name) COMPARE_FIELD(name)
-#define DELEGATE_FIELD_SIGNATURE(id, name) COMPARE_FIELD(name)
-#define DELEGATE_FIELD_TYPE(id, name) COMPARE_FIELD(name)
-#define DELEGATE_FIELD_ADDRESS(id, name) COMPARE_FIELD(name)
+#define DELEGATE_FIELD_INT(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_LITERAL(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_NAME(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_TYPE(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field) COMPARE_FIELD(field)
+#define DELEGATE_FIELD_ADDRESS(id, field) COMPARE_FIELD(field)
 
-#define COMPARE_LIST(name)                                                     \
-  if (castLeft->name.size() != castRight->name.size()) {                       \
+#define COMPARE_LIST(field)                                                    \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
     return false;                                                              \
   }                                                                            \
-  for (Index i = 0; i < castLeft->name.size(); i++) {                          \
-    if (castLeft->name[i] != castRight->name[i]) {                             \
+  for (Index i = 0; i < castLeft->field.size(); i++) {                         \
+    if (castLeft->field[i] != castRight->field[i]) {                           \
       return false;                                                            \
     }                                                                          \
   }
 
-#define DELEGATE_FIELD_INT_ARRAY(id, name) COMPARE_LIST(name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name) COMPARE_LIST(name)
+#define DELEGATE_FIELD_INT_ARRAY(id, field) COMPARE_LIST(field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field) COMPARE_LIST(field)
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)                                \
-  if (castLeft->name.is() != castRight->name.is()) {                           \
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
+  if (castLeft->field.is() != castRight->field.is()) {                         \
     return false;                                                              \
   }                                                                            \
-  rightNames[castLeft->name] = castRight->name;
+  rightNames[castLeft->field] = castRight->field;
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
-  if (!compareNames(castLeft->name, castRight->name)) {                        \
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
+  if (!compareNames(castLeft->field, castRight->field)) {                      \
     return false;                                                              \
   }
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                         \
-  if (castLeft->name.size() != castRight->name.size()) {                       \
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
+  if (castLeft->field.size() != castRight->field.size()) {                     \
     return false;                                                              \
   }                                                                            \
-  for (Index i = 0; i < castLeft->name.size(); i++) {                          \
-    if (!compareNames(castLeft->name[i], castRight->name[i])) {                \
+  for (Index i = 0; i < castLeft->field.size(); i++) {                         \
+    if (!compareNames(castLeft->field[i], castRight->field[i])) {              \
       return false;                                                            \
     }                                                                          \
   }
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
 
       return true;
     }
@@ -250,47 +250,56 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   return Comparer().compare(left, right, comparer);
 }
 
-// hash an expression, ignoring superficial details like specific internal names
-size_t ExpressionAnalyzer::hash(Expression* curr) {
-  struct Hasher {
-    size_t digest = wasm::hash(0);
+namespace {
 
-    Index internalCounter = 0;
-    // for each internal name, its unique id
-    std::map<Name, Index> internalNames;
-    ExpressionStack stack;
+struct Hasher {
+  bool visitChildren;
 
-    Hasher(Expression* curr) {
-      stack.push_back(curr);
-      // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to
-      // the caller. Add it here to prevent the unknown name error.
-      noteScopeName(DELEGATE_CALLER_TARGET);
+  size_t digest = wasm::hash(0);
 
-      while (stack.size() > 0) {
-        curr = stack.back();
-        stack.pop_back();
-        if (!curr) {
-          // This was an optional child that was not present. Hash a 0 to
-          // represent that.
-          rehash(digest, 0);
-          continue;
-        }
-        rehash(digest, curr->_id);
-        // we often don't need to hash the type, as it is tied to other values
-        // we are hashing anyhow, but there are exceptions: for example, a
-        // local.get's type is determined by the function, so if we are
-        // hashing only expression fragments, then two from different
-        // functions may turn out the same even if the type differs. Likewise,
-        // if we hash between modules, then we need to take int account
-        // call_imports type, etc. The simplest thing is just to hash the
-        // type for all of them.
-        rehash(digest, curr->type.getID());
-        // Hash the contents of the expression.
-        hashExpression(curr);
+  Index internalCounter = 0;
+  // for each internal name, its unique id
+  std::map<Name, Index> internalNames;
+  ExpressionStack stack;
+
+  Hasher(Expression* curr,
+         bool visitChildren,
+         ExpressionAnalyzer::ExprHasher custom)
+    : visitChildren(visitChildren) {
+    stack.push_back(curr);
+    // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to
+    // the caller. Add it here to prevent the unknown name error.
+    noteScopeName(DELEGATE_CALLER_TARGET);
+
+    while (stack.size() > 0) {
+      curr = stack.back();
+      stack.pop_back();
+      if (!curr) {
+        // This was an optional child that was not present. Hash a 0 to
+        // represent that.
+        rehash(digest, 0);
+        continue;
       }
+      rehash(digest, curr->_id);
+      // we often don't need to hash the type, as it is tied to other values
+      // we are hashing anyhow, but there are exceptions: for example, a
+      // local.get's type is determined by the function, so if we are
+      // hashing only expression fragments, then two from different
+      // functions may turn out the same even if the type differs. Likewise,
+      // if we hash between modules, then we need to take int account
+      // call_imports type, etc. The simplest thing is just to hash the
+      // type for all of them.
+      rehash(digest, curr->type.getID());
+      // If the custom hasher handled this expr, then we have nothing to do.
+      if (custom(curr, digest)) {
+        continue;
+      }
+      // Hash the contents of the expression normally.
+      hashExpression(curr);
     }
+  }
 
-    void hashExpression(Expression* curr) {
+  void hashExpression(Expression* curr) {
 
 #define DELEGATE_ID curr->_id
 
@@ -300,53 +309,76 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
   WASM_UNUSED(cast);
 
 // Handle each type of field, comparing it appropriately.
-#define DELEGATE_GET_FIELD(id, name) cast->name
+#define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_CHILD(id, name) stack.push_back(cast->name);
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  if (visitChildren) {                                                         \
+    stack.push_back(cast->field);                                              \
+  }
 
-#define HASH_FIELD(name) rehash(digest, cast->name);
+#define HASH_FIELD(field) rehash(digest, cast->field);
 
-#define DELEGATE_FIELD_INT(id, name) HASH_FIELD(name)
-#define DELEGATE_FIELD_LITERAL(id, name) HASH_FIELD(name)
-#define DELEGATE_FIELD_SIGNATURE(id, name) HASH_FIELD(name)
+#define DELEGATE_FIELD_INT(id, field) HASH_FIELD(field)
+#define DELEGATE_FIELD_LITERAL(id, field) HASH_FIELD(field)
 
-#define DELEGATE_FIELD_NAME(id, name) visitNonScopeName(cast->name)
-#define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
-#define DELEGATE_FIELD_ADDRESS(id, name) visitAddress(cast->name);
+#define DELEGATE_FIELD_NAME(id, field) visitNonScopeName(cast->field)
+#define DELEGATE_FIELD_TYPE(id, field) visitType(cast->field);
+#define DELEGATE_FIELD_HEAPTYPE(id, field) visitHeapType(cast->field);
+#define DELEGATE_FIELD_ADDRESS(id, field) visitAddress(cast->field);
 
 // Note that we only note the scope name, but do not also visit it. That means
 // that (block $x) and (block) get the same hash. In other words, we only change
 // the hash based on uses of scope names, that is when there is a noticeable
 // difference in break targets.
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) noteScopeName(cast->name);
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) noteScopeName(cast->field);
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) visitScopeName(cast->name);
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) visitScopeName(cast->field);
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
+  }
+
+  void noteScopeName(Name curr) {
+    if (curr.is()) {
+      internalNames[curr] = internalCounter++;
     }
+  }
+  void visitScopeName(Name curr) {
+    // We consider 3 cases here, and prefix a hash value of 0, 1, or 2 to
+    // maximally differentiate them.
 
-    void noteScopeName(Name curr) {
-      if (curr.is()) {
-        internalNames[curr] = internalCounter++;
-      }
+    // Try's delegate target can be null.
+    if (!curr.is()) {
+      rehash(digest, 0);
+      return;
     }
-    void visitScopeName(Name curr) {
-      if (curr.is()) { // try's delegate target can be null
-        // Names are relative, we give the same hash for
-        // (block $x (br $x))
-        // (block $y (br $y))
-        static_assert(sizeof(Index) == sizeof(int32_t),
-                      "wasm64 will need changes here");
-        assert(internalNames.find(curr) != internalNames.end());
-        rehash(digest, internalNames[curr]);
-      }
+    // Names are relative, we give the same hash for
+    //   (block $x (br $x))
+    //   (block $y (br $y))
+    // But if the name is not known to us, hash the absolute one.
+    if (!internalNames.count(curr)) {
+      rehash(digest, 1);
+      // Perform the same hashing as a generic name.
+      visitNonScopeName(curr);
+      return;
     }
-    void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
-    void visitType(Type curr) { rehash(digest, curr.getID()); }
-    void visitAddress(Address curr) { rehash(digest, curr.addr); }
-  };
+    rehash(digest, 2);
+    rehash(digest, internalNames[curr]);
+  }
+  void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
+  void visitType(Type curr) { rehash(digest, curr.getID()); }
+  void visitHeapType(HeapType curr) { rehash(digest, curr.getID()); }
+  void visitAddress(Address curr) { rehash(digest, curr.addr); }
+};
 
-  return Hasher(curr).digest;
+} // anonymous namespace
+
+size_t ExpressionAnalyzer::flexibleHash(Expression* curr,
+                                        ExpressionAnalyzer::ExprHasher custom) {
+  return Hasher(curr, true, custom).digest;
+}
+
+size_t ExpressionAnalyzer::shallowHash(Expression* curr) {
+  return Hasher(curr, false, ExpressionAnalyzer::nothingHasher).digest;
 }
 
 } // namespace wasm

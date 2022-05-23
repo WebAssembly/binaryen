@@ -31,6 +31,7 @@
 //
 
 #include "asmjs/shared-constants.h"
+#include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
@@ -97,64 +98,25 @@ struct LegalizeJSInterface : public Pass {
         // we need to use the legalized version in the tables, as the import
         // from JS is legal for JS. Our stub makes it look like a native wasm
         // function.
-        for (auto& table : module->tables) {
-          for (auto& segment : table->segments) {
-            for (auto& name : segment.data) {
-              if (name == im->name) {
-                name = funcName;
-              }
-            }
+        ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+          if (name == im->name) {
+            name = funcName;
           }
-        }
+        });
       }
     }
 
     if (!illegalImportsToLegal.empty()) {
-      // Gather functions used in 'ref.func'. They should not be removed.
-      std::unordered_map<Name, std::atomic<bool>> usedInRefFunc;
-
-      // Fill in unordered_map, as we operate on it in parallel.
-      for (auto& func : module->functions) {
-        usedInRefFunc[func->name];
-      }
-
-      struct RefFuncScanner : public WalkerPass<PostWalker<RefFuncScanner>> {
-        Module& wasm;
-        std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc;
-
-        bool isFunctionParallel() override { return true; }
-
-        Pass* create() override {
-          return new RefFuncScanner(wasm, usedInRefFunc);
-        }
-
-        RefFuncScanner(
-          Module& wasm,
-          std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc)
-          : wasm(wasm), usedInRefFunc(usedInRefFunc) {}
-
-        void visitRefFunc(RefFunc* curr) { usedInRefFunc[curr->func] = true; }
-      };
-
-      RefFuncScanner(*module, usedInRefFunc).run(runner, module);
-      for (auto& pair : illegalImportsToLegal) {
-        if (!usedInRefFunc[pair.first]) {
-          module->removeFunction(pair.first);
-        }
-      }
-
       // fix up imports: call_import of an illegal must be turned to a call of a
-      // legal
-      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
+      // legal. the same must be done with ref.funcs.
+      struct Fixer : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override {
-          return new FixImports(illegalImportsToLegal);
-        }
+        Pass* create() override { return new Fixer(illegalImportsToLegal); }
 
         std::map<Name, Name>* illegalImportsToLegal;
 
-        FixImports(std::map<Name, Name>* illegalImportsToLegal)
+        Fixer(std::map<Name, Name>* illegalImportsToLegal)
           : illegalImportsToLegal(illegalImportsToLegal) {}
 
         void visitCall(Call* curr) {
@@ -163,19 +125,30 @@ struct LegalizeJSInterface : public Pass {
             return;
           }
 
-          if (iter->second == getFunction()->name) {
-            // inside the stub function itself, is the one safe place to do the
-            // call
-            return;
-          }
           replaceCurrent(
             Builder(*getModule())
               .makeCall(
                 iter->second, curr->operands, curr->type, curr->isReturn));
         }
+
+        void visitRefFunc(RefFunc* curr) {
+          auto iter = illegalImportsToLegal->find(curr->func);
+          if (iter == illegalImportsToLegal->end()) {
+            return;
+          }
+
+          curr->func = iter->second;
+        }
       };
 
-      FixImports(&illegalImportsToLegal).run(runner, module);
+      Fixer fixer(&illegalImportsToLegal);
+      fixer.run(runner, module);
+      fixer.runOnModuleCode(runner, module);
+
+      // Finally we can remove all the now-unused illegal imports
+      for (const auto& pair : illegalImportsToLegal) {
+        module->removeFunction(pair.first);
+      }
     }
   }
 
@@ -184,12 +157,12 @@ private:
   std::map<Name, Name> illegalImportsToLegal;
 
   template<typename T> bool isIllegal(T* t) {
-    for (const auto& param : t->sig.params) {
+    for (const auto& param : t->getParams()) {
       if (param == Type::i64) {
         return true;
       }
     }
-    return t->sig.results == Type::i64;
+    return t->getResults() == Type::i64;
   }
 
   bool isDynCall(Name name) { return name.startsWith("dynCall_"); }
@@ -228,10 +201,10 @@ private:
 
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
-    call->type = func->sig.results;
+    call->type = func->getResults();
 
     std::vector<Type> legalParams;
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       if (param == Type::i64) {
         call->operands.push_back(I64Utilities::recreateI64(
           builder, legalParams.size(), legalParams.size() + 1));
@@ -243,12 +216,12 @@ private:
         legalParams.push_back(param);
       }
     }
-    legal->sig.params = Type(legalParams);
-
-    if (func->sig.results == Type::i64) {
+    Type resultsType =
+      func->getResults() == Type::i64 ? Type::i32 : func->getResults();
+    legal->type = Signature(Type(legalParams), resultsType);
+    if (func->getResults() == Type::i64) {
       Function* f =
         getFunctionOrImport(module, SET_TEMP_RET0, Type::i32, Type::none);
-      legal->sig.results = Type::i32;
       auto index = Builder::addVar(legal, Name(), Type::i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeLocalSet(index, call));
@@ -258,10 +231,8 @@ private:
       block->finalize();
       legal->body = block;
     } else {
-      legal->sig.results = func->sig.results;
       legal->body = call;
     }
-
     return module->addFunction(legal)->name;
   }
 
@@ -275,14 +246,14 @@ private:
     legalIm->base = im->base;
     auto stub = make_unique<Function>();
     stub->name = Name(std::string("legalfunc$") + im->name.str);
-    stub->sig = im->sig;
+    stub->type = im->type;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = legalIm->name;
 
     std::vector<Type> params;
     Index i = 0;
-    for (const auto& param : im->sig.params) {
+    for (const auto& param : im->getParams()) {
       if (param == Type::i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, i));
         call->operands.push_back(I64Utilities::getI64High(builder, i));
@@ -295,17 +266,17 @@ private:
       ++i;
     }
 
-    if (im->sig.results == Type::i64) {
+    if (im->getResults() == Type::i64) {
       Function* f =
         getFunctionOrImport(module, GET_TEMP_RET0, Type::none, Type::i32);
       call->type = Type::i32;
       Expression* get = builder.makeCall(f->name, {}, call->type);
       stub->body = I64Utilities::recreateI64(builder, call, get);
     } else {
-      call->type = im->sig.results;
+      call->type = im->getResults();
       stub->body = call;
     }
-    legalIm->sig = Signature(Type(params), call->type);
+    legalIm->type = Signature(Type(params), call->type);
 
     const auto& stubName = stub->name;
     if (!module->getFunctionOrNull(stubName)) {
@@ -329,13 +300,12 @@ private:
       return f;
     }
     // Failing that create a new function import.
-    auto import = new Function;
-    import->name = name;
+    auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
-    import->sig = Signature(params, results);
-    module->addFunction(import);
-    return import;
+    auto* ret = import.get();
+    module->addFunction(std::move(import));
+    return ret;
   }
 };
 

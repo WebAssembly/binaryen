@@ -31,29 +31,50 @@ int main() {
       BinaryenAddFunction(module, "adder", params, results, NULL, 0, add);
 
     const char* funcNames[] = {"adder"};
-    BinaryenAddTable(module,
-                     "tab",
-                     1,
-                     1,
-                     funcNames,
-                     1,
-                     BinaryenConst(module, BinaryenLiteralInt32(0)));
+    BinaryenAddTable(module, "tab", 1, 1, BinaryenTypeFuncref());
     assert(BinaryenGetTable(module, "tab") != NULL);
+    BinaryenAddActiveElementSegment(
+      module,
+      "tab",
+      "0",
+      funcNames,
+      1,
+      BinaryenConst(module, BinaryenLiteralInt32(0)));
 
-    BinaryenAddTable(module,
-                     "t2",
-                     1,
-                     1,
-                     funcNames,
-                     1,
-                     BinaryenConst(module, BinaryenLiteralInt32(0)));
+    BinaryenAddTable(module, "t2", 1, 1, BinaryenTypeFuncref());
+    BinaryenAddActiveElementSegment(
+      module,
+      "t2",
+      "1",
+      funcNames,
+      1,
+      BinaryenConst(module, BinaryenLiteralInt32(0)));
+    BinaryenAddPassiveElementSegment(module, "passive", funcNames, 1);
+    assert(NULL != BinaryenGetElementSegmentByIndex(module, 2));
+    assert(1 == BinaryenElementSegmentIsPassive(
+                  BinaryenGetElementSegment(module, "passive")));
     BinaryenTableRef t2 = BinaryenGetTableByIndex(module, 1);
     assert(t2 != NULL);
+    BinaryenElementSegmentRef elem1 = BinaryenGetElementSegment(module, "1");
+    assert(elem1 != NULL);
+    assert(strcmp(BinaryenElementSegmentGetName(elem1), "1") == 0);
+    assert(strcmp(BinaryenElementSegmentGetTable(elem1), "t2") == 0);
+    assert(BinaryenElementSegmentGetLength(elem1) == 1);
+    assert(strcmp(BinaryenElementSegmentGetData(elem1, 0), funcNames[0]) == 0);
 
     assert(strcmp(BinaryenTableGetName(t2), "t2") == 0);
+    BinaryenTableSetName(t2, "table2");
+    BinaryenModuleUpdateMaps(module);
+    assert(strcmp(BinaryenTableGetName(t2), "table2") == 0);
+    BinaryenElementSegmentSetTable(elem1, "table2");
+    assert(strcmp(BinaryenElementSegmentGetTable(elem1), "table2") == 0);
     assert(BinaryenTableGetInitial(t2) == 1);
+    BinaryenTableSetInitial(t2, 2);
+    assert(BinaryenTableGetInitial(t2) == 2);
     assert(BinaryenTableHasMax(t2) == 1);
     assert(BinaryenTableGetMax(t2) == 1);
+    BinaryenTableSetMax(t2, 2);
+    assert(BinaryenTableGetMax(t2) == 2);
     assert(strcmp(BinaryenTableImportGetModule(t2), "") == 0);
     assert(strcmp(BinaryenTableImportGetBase(t2), "") == 0);
 

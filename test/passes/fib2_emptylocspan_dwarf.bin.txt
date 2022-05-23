@@ -614,8 +614,8 @@ file_names[  1]:
 00000000 <End of list>
 (module
  (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "__indirect_function_table" (table $timport$0 1 funcref))

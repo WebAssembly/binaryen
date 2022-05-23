@@ -1,0 +1,175 @@
+;; RUN: wasm-metadce --help | filecheck %s
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-metadce INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: This tool performs dead code elimination (DCE) on a larger space that the wasm
+;; CHECK-NEXT: module is just a part of. For example, if you have JS and wasm that are
+;; CHECK-NEXT: connected, this can DCE the combined graph. By doing so, it is able to eliminate
+;; CHECK-NEXT: wasm module exports, which otherwise regular optimizations cannot.
+;; CHECK-NEXT:
+;; CHECK-NEXT: This tool receives a representation of the reachability graph that the wasm
+;; CHECK-NEXT: module resides in, which contains abstract nodes and connections showing what
+;; CHECK-NEXT: they reach. Some of those nodes can represent the wasm module's imports and
+;; CHECK-NEXT: exports. The tool then completes the graph by adding the internal parts of the
+;; CHECK-NEXT: module, and does DCE on the entire thing.
+;; CHECK-NEXT:
+;; CHECK-NEXT: This tool will output a wasm module with dead code eliminated, and metadata
+;; CHECK-NEXT: describing the things in the rest of the graph that can be eliminated as well.
+;; CHECK-NEXT:
+;; CHECK-NEXT: The graph description file should represent the graph in the following JSON-like
+;; CHECK-NEXT: notation (note, this is not true JSON, things like comments, escaping,
+;; CHECK-NEXT: single-quotes, etc. are not supported):
+;; CHECK-NEXT:
+;; CHECK-NEXT:   [
+;; CHECK-NEXT:     {
+;; CHECK-NEXT:       "name": "entity1",
+;; CHECK-NEXT:       "reaches": ["entity2, "entity3"],
+;; CHECK-NEXT:       "root": true
+;; CHECK-NEXT:     },
+;; CHECK-NEXT:     {
+;; CHECK-NEXT:       "name": "entity2",
+;; CHECK-NEXT:       "reaches": ["entity1, "entity4"]
+;; CHECK-NEXT:     },
+;; CHECK-NEXT:     {
+;; CHECK-NEXT:       "name": "entity3",
+;; CHECK-NEXT:       "reaches": ["entity1"],
+;; CHECK-NEXT:       "export": "export1"
+;; CHECK-NEXT:     },
+;; CHECK-NEXT:     {
+;; CHECK-NEXT:       "name": "entity4",
+;; CHECK-NEXT:       "import": ["module", "import1"]
+;; CHECK-NEXT:     },
+;; CHECK-NEXT:   ]
+;; CHECK-NEXT:
+;; CHECK-NEXT: Each entity has a name and an optional list of the other entities it reaches. It
+;; CHECK-NEXT: can also be marked as a root, export (with the export string), or import (with
+;; CHECK-NEXT: the module and import strings). DCE then computes what is reachable from the
+;; CHECK-NEXT: roots.
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: wasm-opt options:
+;; CHECK-NEXT: -----------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
+;; CHECK-NEXT:                                        output file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debuginfo,-g                       Emit names section and debug info
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --graph-file,-f                      Filename of the graph description file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --dump,-d                            Dump the combined graph file (useful for
+;; CHECK-NEXT:                                        debugging)
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --all-features,-all                  Enable all features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --detect-features                    (deprecated - this flag does nothing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
+;; CHECK-NEXT:                                        warnings.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
+;; CHECK-NEXT:                                        purposes.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-threads                     Enable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-threads                    Disable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-mutable-globals             Enable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-mutable-globals            Disable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-simd                        Enable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-simd                       Disable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-tail-call                   Enable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-tail-call                  Disable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-reference-types             Enable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-reference-types            Disable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multivalue                  Enable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multivalue                 Disable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc                          Enable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc                         Disable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-memory64                    Enable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-memory64                   Disable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-function-references   Enable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-function-references  Disable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc-nn-locals                Enable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc-nn-locals               Disable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-NEXT:                                        correct
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
+;; CHECK-NEXT:                                        passes being run. Must be in the form
+;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --nominal                            Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as nominal.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --structural                         Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as structural (i.e.
+;; CHECK-NEXT:                                        equirecursive). This is the default.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --hybrid                             Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed using the isorecursive hybrid type
+;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --version                            Output version information and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --help,-h                            Show this help message and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debug,-d                           Print debug information to stderr
+;; CHECK-NEXT:

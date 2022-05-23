@@ -228,9 +228,8 @@ struct ReReloop final : public Pass {
       for (Index i = 0; i < num; i++) {
         targetValues[targets[i]].insert(i);
       }
-      for (auto& iter : targetValues) {
-        parent.addSwitchBranch(
-          before, parent.getBreakTarget(iter.first), iter.second);
+      for (auto& [name, indices] : targetValues) {
+        parent.addSwitchBranch(before, parent.getBreakTarget(name), indices);
       }
       // the default may be among the targets, in which case, we can't add it
       // simply as it would be a duplicate, so create a temp block
@@ -318,7 +317,7 @@ struct ReReloop final : public Pass {
     for (auto& cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
       if (cfgBlock->BranchesOut.empty() && block->type != Type::unreachable) {
-        block->list.push_back(function->sig.results == Type::none
+        block->list.push_back(function->getResults() == Type::none
                                 ? (Expression*)builder->makeReturn()
                                 : (Expression*)builder->makeUnreachable());
         block->finalize();
@@ -328,9 +327,7 @@ struct ReReloop final : public Pass {
     std::cout << "rerelooping " << function->name << '\n';
     for (auto* block : relooper->Blocks) {
       std::cout << block << " block:\n" << block->Code << '\n';
-      for (auto& pair : block->BranchesOut) {
-        auto* target = pair.first;
-        auto* branch = pair.second;
+      for (auto& [target, branch] : block->BranchesOut) {
         std::cout << "branch to " << target << "\n";
         if (branch->Condition) {
           std::cout << "  with condition\n" << branch->Condition << '\n';
@@ -351,7 +348,7 @@ struct ReReloop final : public Pass {
       // because of the relooper's boilerplate switch-handling
       // code, for example, which could be optimized out later
       // but isn't yet), then make sure it has a proper type
-      if (function->sig.results != Type::none &&
+      if (function->getResults() != Type::none &&
           function->body->type == Type::none) {
         function->body =
           builder.makeSequence(function->body, builder.makeUnreachable());

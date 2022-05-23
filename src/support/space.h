@@ -48,9 +48,7 @@ struct DisjointSpans {
     // Insert the new span. We can then find its predecessor and successor.
     // They are disjoint by assumption, so the question is then does the new
     // span overlap with them, or not.
-    decltype(spans)::iterator iter;
-    bool inserted;
-    std::tie(iter, inserted) = spans.insert(span);
+    auto [iter, inserted] = spans.insert(span);
     if (!inserted) {
       // This exact span was already there, so there is definite overlap.
       return true;

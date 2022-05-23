@@ -16,20 +16,23 @@
 
 //
 // Removes module elements that are are never used: functions, globals, and
-// events, which may be imported or not, and function types (which we merge and
+// tags, which may be imported or not, and function types (which we merge and
 // remove if unneeded)
 //
 
 #include <memory>
 
+#include "ir/element-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
 
-enum class ModuleElementKind { Function, Global, Event, Table };
+enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
@@ -42,6 +45,27 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   std::set<ModuleElement> reachable;
   bool usesMemory = false;
 
+  // The signatures that we have seen a call_ref for. When we see a RefFunc of a
+  // signature in here, we know it is reachable.
+  std::unordered_set<HeapType> calledSignatures;
+
+  // All the RefFuncs we've seen, grouped by heap type. When we see a CallRef of
+  // one of the types here, we know all the RefFuncs corresponding to it are
+  // reachable. This is the reverse side of calledSignatures: for a function to
+  // be reached via a reference, we need the combination of a RefFunc of it as
+  // well as a CallRef of that, and we may see them in any order. (Or, if the
+  // RefFunc is in a table, we need a CallIndirect, which is handled in the
+  // table logic.)
+  //
+  // After we see a call for a type, we can clear out the entry here for it, as
+  // we'll have that type in calledSignatures, and so this contains only
+  // RefFuncs that we have not seen a call for yet, hence "uncalledRefFuncMap."
+  //
+  // TODO: We assume a closed world in the GC space atm, but eventually should
+  //       have a flag for that, and when the world is not closed we'd need to
+  //       check for RefFuncs that flow out to exports or imports
+  std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
+
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
     : module(module) {
     queue = roots;
@@ -51,35 +75,35 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         walk(segment.offset);
       }
     }
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        walk(segment.offset);
+    for (auto& segment : module->elementSegments) {
+      if (segment->table.is()) {
+        walk(segment->offset);
       }
     }
 
     // main loop
     while (queue.size()) {
-      auto& curr = queue.back();
+      auto curr = queue.back();
       queue.pop_back();
-      if (reachable.count(curr) == 0) {
-        reachable.insert(curr);
-        if (curr.first == ModuleElementKind::Function) {
+      if (reachable.emplace(curr).second) {
+        auto& [kind, value] = curr;
+        if (kind == ModuleElementKind::Function) {
           // if not an import, walk it
-          auto* func = module->getFunction(curr.second);
+          auto* func = module->getFunction(value);
           if (!func->imported()) {
             walk(func->body);
           }
-        } else if (curr.first == ModuleElementKind::Global) {
+        } else if (kind == ModuleElementKind::Global) {
           // if not imported, it has an init expression we need to walk
-          auto* global = module->getGlobal(curr.second);
+          auto* global = module->getGlobal(value);
           if (!global->imported()) {
             walk(global->init);
           }
-        } else if (curr.first == ModuleElementKind::Table) {
-          auto* table = module->getTable(curr.second);
-          for (auto& segment : table->segments) {
-            walk(segment.offset);
-          }
+        } else if (kind == ModuleElementKind::Table) {
+          ModuleUtils::iterTableSegments(
+            *module, curr.second, [&](ElementSegment* segment) {
+              walk(segment->offset);
+            });
         }
       }
     }
@@ -91,13 +115,66 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
   }
 
+  // Add a reference to a table and all its segments and elements.
+  void maybeAddTable(Name name) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, name));
+    ModuleUtils::iterTableSegments(*module, name, [&](ElementSegment* segment) {
+      maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+    });
+  }
+
   void visitCall(Call* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
-  }
-  void visitCallIndirect(CallIndirect* curr) {
-    assert(!module->tables.empty() && "call-indirect to undefined table.");
 
-    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+    if (Intrinsics(*module).isCallWithoutEffects(curr)) {
+      // A call-without-effects receives a function reference and calls it, the
+      // same as a CallRef. When we have a flag for non-closed-world, we should
+      // handle this automatically by the reference flowing out to an import,
+      // which is what binaryen intrinsics look like. For now, to support use
+      // cases of a closed world but that also use this intrinsic, handle the
+      // intrinsic specifically here.
+      auto* target = curr->operands.back();
+      if (auto* refFunc = target->dynCast<RefFunc>()) {
+        // We can see exactly where this goes.
+        Call call(module->allocator);
+        call.target = refFunc->func;
+        visitCall(&call);
+      } else {
+        // All we can see is the type, so do a CallRef of that.
+        CallRef callRef(module->allocator);
+        callRef.target = target;
+        visitCallRef(&callRef);
+      }
+    }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) { maybeAddTable(curr->table); }
+
+  void visitCallRef(CallRef* curr) {
+    // Ignore unreachable code.
+    if (!curr->target->type.isRef()) {
+      return;
+    }
+
+    auto type = curr->target->type.getHeapType();
+
+    // Call all the functions of that signature. We can then forget about
+    // them, as this signature will be marked as called.
+    auto iter = uncalledRefFuncMap.find(type);
+    if (iter != uncalledRefFuncMap.end()) {
+      // We must not have a type in both calledSignatures and
+      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
+      // it any more.
+      assert(calledSignatures.count(type) == 0);
+
+      for (Name target : iter->second) {
+        maybeAdd(ModuleElement(ModuleElementKind::Function, target));
+      }
+
+      uncalledRefFuncMap.erase(iter);
+    }
+
+    calledSignatures.insert(type);
   }
 
   void visitGlobalGet(GlobalGet* curr) {
@@ -121,14 +198,30 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+    auto type = curr->type.getHeapType();
+    if (calledSignatures.count(type)) {
+      // We must not have a type in both calledSignatures and
+      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
+      // any more.
+      assert(uncalledRefFuncMap.count(type) == 0);
+
+      // We've seen a RefFunc for this, so it is reachable.
+      maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+    } else {
+      // We've never seen a CallRef for this, but might see one later.
+      uncalledRefFuncMap[type].insert(curr->func);
+    }
   }
+  void visitTableGet(TableGet* curr) { maybeAddTable(curr->table); }
+  void visitTableSet(TableSet* curr) { maybeAddTable(curr->table); }
+  void visitTableSize(TableSize* curr) { maybeAddTable(curr->table); }
+  void visitTableGrow(TableGrow* curr) { maybeAddTable(curr->table); }
   void visitThrow(Throw* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Event, curr->event));
+    maybeAdd(ModuleElement(ModuleElementKind::Tag, curr->tag));
   }
   void visitTry(Try* curr) {
-    for (auto event : curr->catchEvents) {
-      maybeAdd(ModuleElement(ModuleElementKind::Event, event));
+    for (auto tag : curr->catchTags) {
+      maybeAdd(ModuleElement(ModuleElementKind::Tag, tag));
     }
   }
 };
@@ -145,7 +238,7 @@ struct RemoveUnusedModuleElements : public Pass {
     if (module->start.is()) {
       auto startFunction = module->getFunction(module->start);
       // Can be skipped if the start function is empty.
-      if (startFunction->body->is<Nop>()) {
+      if (!startFunction->imported() && startFunction->body->is<Nop>()) {
         module->start.clear();
       } else {
         roots.emplace_back(ModuleElementKind::Function, module->start);
@@ -157,6 +250,13 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Function, func->name);
       });
     }
+    ModuleUtils::iterActiveElementSegments(
+      *module, [&](ElementSegment* segment) {
+        auto table = module->getTable(segment->table);
+        if (table->imported() && !segment->data.empty()) {
+          roots.emplace_back(ModuleElementKind::ElementSegment, segment->name);
+        }
+      });
     // Exports are roots.
     bool exportsMemory = false;
     for (auto& curr : module->exports) {
@@ -164,10 +264,15 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Function, curr->value);
       } else if (curr->kind == ExternalKind::Global) {
         roots.emplace_back(ModuleElementKind::Global, curr->value);
-      } else if (curr->kind == ExternalKind::Event) {
-        roots.emplace_back(ModuleElementKind::Event, curr->value);
+      } else if (curr->kind == ExternalKind::Tag) {
+        roots.emplace_back(ModuleElementKind::Tag, curr->value);
       } else if (curr->kind == ExternalKind::Table) {
         roots.emplace_back(ModuleElementKind::Table, curr->value);
+        ModuleUtils::iterTableSegments(
+          *module, curr->value, [&](ElementSegment* segment) {
+            roots.emplace_back(ModuleElementKind::ElementSegment,
+                               segment->name);
+          });
       } else if (curr->kind == ExternalKind::Memory) {
         exportsMemory = true;
       }
@@ -178,43 +283,84 @@ struct RemoveUnusedModuleElements : public Pass {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
-    for (auto& table : module->tables) {
-      // TODO(reference-types): Check whether table's datatype is funcref.
-      for (auto& segment : table->segments) {
-        for (auto& curr : segment.data) {
-          roots.emplace_back(ModuleElementKind::Function, curr);
-        }
-      }
-    }
+    // TODO: Compute this based on which ElementSegments are actually reachable,
+    //       and which functions have a call_indirect of the proper type.
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+      roots.emplace_back(ModuleElementKind::Function, name);
+    });
     // Compute reachability starting from the root set.
     ReachabilityAnalyzer analyzer(module, roots);
+
+    // RefFuncs that are never called are a special case: We cannot remove the
+    // function, since then (ref.func $foo) would not validate. But if we know
+    // it is never called, at least the contents do not matter, so we can
+    // empty it out.
+    std::unordered_set<Name> uncalledRefFuncs;
+    for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
+      for (auto target : targets) {
+        uncalledRefFuncs.insert(target);
+      }
+
+      // We cannot have a type in both this map and calledSignatures.
+      assert(analyzer.calledSignatures.count(type) == 0);
+    }
+
+#ifndef NDEBUG
+    for (auto type : analyzer.calledSignatures) {
+      assert(analyzer.uncalledRefFuncMap.count(type) == 0);
+    }
+#endif
+
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
-      return analyzer.reachable.count(
-               ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
+      if (analyzer.reachable.count(
+            ModuleElement(ModuleElementKind::Function, curr->name))) {
+        // This is reached.
+        return false;
+      }
+
+      if (uncalledRefFuncs.count(curr->name)) {
+        // This is not reached, but has a reference. See comment above on
+        // uncalledRefFuncs.
+        if (!curr->imported()) {
+          curr->body = Builder(*module).makeUnreachable();
+        }
+        return false;
+      }
+
+      // The function is not reached and has no reference; remove it.
+      return true;
     });
     module->removeGlobals([&](Global* curr) {
       return analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
     });
-    module->removeEvents([&](Event* curr) {
+    module->removeTags([&](Tag* curr) {
       return analyzer.reachable.count(
-               ModuleElement(ModuleElementKind::Event, curr->name)) == 0;
+               ModuleElement(ModuleElementKind::Tag, curr->name)) == 0;
     });
-
-    for (auto& table : module->tables) {
-      table->segments.erase(
-        std::remove_if(table->segments.begin(),
-                       table->segments.end(),
-                       [&](auto& seg) { return seg.data.empty(); }),
-        table->segments.end());
-    }
+    module->removeElementSegments([&](ElementSegment* curr) {
+      return curr->data.empty() ||
+             analyzer.reachable.count(ModuleElement(
+               ModuleElementKind::ElementSegment, curr->name)) == 0;
+    });
+    // Since we've removed all empty element segments, here we mark all tables
+    // that have a segment left.
+    std::unordered_set<Name> nonemptyTables;
+    ModuleUtils::iterActiveElementSegments(
+      *module,
+      [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
     module->removeTables([&](Table* curr) {
-      return (curr->segments.empty() || !curr->imported()) &&
+      return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
              analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
     });
-    // Handle the memory and table
+    // TODO: After removing elements, we may be able to remove more things, and
+    //       should continue to work. (For example, after removing a reference
+    //       to a function from an element segment, we may be able to remove
+    //       that function, etc.)
+
+    // Handle the memory
     if (!exportsMemory && !analyzer.usesMemory) {
       if (!importsMemory) {
         // The memory is unobservable to the outside, we can remove the

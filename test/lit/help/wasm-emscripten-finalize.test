@@ -1,0 +1,177 @@
+;; RUN: wasm-emscripten-finalize --help | filecheck %s
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-emscripten-finalize INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Performs Emscripten-specific transforms on .wasm files
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: wasm-emscripten-finalize options:
+;; CHECK-NEXT: ---------------------------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output,-o                          Output file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debuginfo,-g                       Emit names section in wasm binary (or
+;; CHECK-NEXT:                                        full debuginfo in wast)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --dwarf                              Update DWARF debug info
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
+;; CHECK-NEXT:                                        output file. In this mode if no output
+;; CHECK-NEXT:                                        file is specified, we write to stdout.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-emit-metadata,-n                Skip the writing to emscripten metadata
+;; CHECK-NEXT:                                        JSON to stdout.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --global-base                        The address at which static globals were
+;; CHECK-NEXT:                                        placed
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --side-module                        Input is an emscripten side module
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
+;; CHECK-NEXT:                                        file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-legalize-javascript-ffi,-nj     Do not fully legalize (i64->i32,
+;; CHECK-NEXT:                                        f32->f64) the imports and exports for
+;; CHECK-NEXT:                                        interfacing with JS
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --bigint,-bi                         Assume JS will use wasm/JS BigInt
+;; CHECK-NEXT:                                        integration, so wasm i64s will turn into
+;; CHECK-NEXT:                                        JS BigInts, and there is no need for any
+;; CHECK-NEXT:                                        legalization at all (not even minimal
+;; CHECK-NEXT:                                        legalization of dynCalls)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map,-osm             Emit source map to the specified file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map-url,-osu         Emit specified string as source map URL
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --separate-data-segments             Separate data segments to a file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --check-stack-overflow               Check for stack overflows every time the
+;; CHECK-NEXT:                                        stack is extended
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --standalone-wasm                    Emit a wasm file that does not depend on
+;; CHECK-NEXT:                                        JS, as much as possible, using wasi and
+;; CHECK-NEXT:                                        other standard conventions etc. where
+;; CHECK-NEXT:                                        possible
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --minimize-wasm-changes              Modify the wasm as little as possible.
+;; CHECK-NEXT:                                        This is useful during development as we
+;; CHECK-NEXT:                                        reduce the number of changes to the wasm,
+;; CHECK-NEXT:                                        as it lets emscripten control how much
+;; CHECK-NEXT:                                        modifications to do.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-dyncalls
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --dyncalls-i64
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --all-features,-all                  Enable all features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --detect-features                    (deprecated - this flag does nothing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
+;; CHECK-NEXT:                                        warnings.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
+;; CHECK-NEXT:                                        purposes.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-threads                     Enable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-threads                    Disable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-mutable-globals             Enable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-mutable-globals            Disable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-simd                        Enable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-simd                       Disable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-tail-call                   Enable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-tail-call                  Disable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-reference-types             Enable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-reference-types            Disable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multivalue                  Enable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multivalue                 Disable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc                          Enable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc                         Disable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-memory64                    Enable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-memory64                   Disable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-function-references   Enable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-function-references  Disable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc-nn-locals                Enable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc-nn-locals               Disable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-NEXT:                                        correct
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
+;; CHECK-NEXT:                                        passes being run. Must be in the form
+;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --nominal                            Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as nominal.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --structural                         Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as structural (i.e.
+;; CHECK-NEXT:                                        equirecursive). This is the default.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --hybrid                             Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed using the isorecursive hybrid type
+;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --version                            Output version information and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --help,-h                            Show this help message and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debug,-d                           Print debug information to stderr
+;; CHECK-NEXT:

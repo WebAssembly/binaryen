@@ -21,3 +21,21 @@
  (func $foo ;; happens to share a name with the memory
  )
 )
+;; renaming after deduplication must update ref.funcs in globals
+(module
+ (type $func (func (result i32)))
+ (global $global$0 (ref $func) (ref.func $bar))
+ ;; These two identical functions can be merged. The ref.func in the global must
+ ;; be updated accordingly.
+ (func $foo (result i32)
+  (unreachable)
+ )
+ (func $bar (result i32)
+  (unreachable)
+ )
+ (func "export" (result i32)
+  (call_ref
+   (global.get $global$0)
+  )
+ )
+)

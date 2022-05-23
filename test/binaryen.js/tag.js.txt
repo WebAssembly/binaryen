@@ -1,0 +1,15 @@
+GetTag is equal: true
+getTagInfo={"name":"a-tag","module":"","base":"","params":2,"results":0}
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_f32_=>_none (func (param i32 f32)))
+ (import "module" "base" (tag $a-tag-imp (param i32 f32)))
+ (tag $a-tag (param i32))
+ (export "a-tag-exp" (tag $a-tag))
+)
+
+(module
+ (type $i32_f32_=>_none (func (param i32 f32)))
+ (import "module" "base" (tag $a-tag-imp (param i32 f32)))
+)
+

@@ -1,7 +1,7 @@
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (event $event$0 (attr 0) (param i32))
+ (type $none_=>_none (func))
+ (tag $tag$0 (param i32))
  (func $0
   (try $label$3
    (do
@@ -9,7 +9,7 @@
      (br $label$1)
     )
    )
-   (catch $event$0
+   (catch $tag$0
     (drop
      (pop i32)
     )

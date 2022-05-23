@@ -40,12 +40,12 @@ bool mayBeUnreachable(Expression* expr);
 } // namespace StackUtils
 
 // Stack signatures are like regular function signatures, but they are used to
-// represent the stack parameters and results of arbitrary sequences of stacky
-// instructions. They have to record whether they cover an unreachable
-// instruction because their composition takes into account the polymorphic
-// results of unreachable instructions. For example, the following instruction
-// sequences both have params {i32, i32} and results {f32}, but only sequence B
-// is unreachable:
+// represent the stack parameters and results of arbitrary sequences of stack
+// machine instructions. Stack signatures that represent instruction sequences
+// including unreachable instructions are `Polymorphic` and otherwise they are
+// `Fixed`. For example, the following instruction sequences both have params
+// {i32, i32} and results {f32}, but sequence A is `Fixed` while sequence B is
+// `Polymorphic.`
 //
 //  A:
 //    i32.add
@@ -59,8 +59,8 @@ bool mayBeUnreachable(Expression* expr);
 //
 // Notice that this distinction is important because sequence B can be the body
 // of the blocks below but sequence A cannot. In other words, the stack
-// signature of sequence B satisfies the signatures of these blocks, but the
-// stack signature of sequence A does not.
+// signature of sequence B is a subtype of the signatures of these blocks, but
+// the stack signature of sequence A is not.
 //
 //  (block (param f64 i32 i32) (result f32) ... )
 //  (block (param i32 i32) (result f64 f32) ... )
@@ -69,12 +69,14 @@ bool mayBeUnreachable(Expression* expr);
 struct StackSignature {
   Type params;
   Type results;
-  bool unreachable;
+  enum Kind {
+    Fixed,
+    Polymorphic,
+  } kind;
 
-  StackSignature()
-    : params(Type::none), results(Type::none), unreachable(false) {}
-  StackSignature(Type params, Type results, bool unreachable)
-    : params(params), results(results), unreachable(unreachable) {}
+  StackSignature() : params(Type::none), results(Type::none), kind(Fixed) {}
+  StackSignature(Type params, Type results, Kind kind)
+    : params(params), results(results), kind(kind) {}
 
   StackSignature(const StackSignature&) = default;
   StackSignature& operator=(const StackSignature&) = default;
@@ -87,7 +89,7 @@ struct StackSignature {
   // compose.
   template<class InputIt>
   explicit StackSignature(InputIt first, InputIt last)
-    : params(Type::none), results(Type::none), unreachable(false) {
+    : params(Type::none), results(Type::none), kind(Fixed) {
     // TODO: It would be more efficient to build the signature directly and
     // construct the params in reverse to avoid quadratic behavior.
     while (first != last) {
@@ -104,7 +106,7 @@ struct StackSignature {
 
   bool operator==(const StackSignature& other) const {
     return params == other.params && results == other.results &&
-           unreachable == other.unreachable;
+           kind == other.kind;
   }
 
   // Whether a block whose contents have stack signature `a` could be typed with
@@ -117,10 +119,10 @@ struct StackSignature {
   //  - t2 <: t2'
   //  - s1 <: s2
   //
-  //  Note that neither signature is unreachable in this rule and that the
+  //  Note that neither signature is polymorphic in this rule and that the
   //  cardinalities of t1* and t1'*, t2* and t2'*, and s1* and s2* must match.
   //
-  // [t1*] -> [t2*] {u} <: [s1* t1'*] -> [s2* t2'*] {u?} iff
+  // [t1*] -> [t2*] {poly} <: [s1* t1'*] -> [s2* t2'*] {poly?} iff
   //
   //  - [t1*] -> [t2*] <: [t1'*] -> [t2'*]
   //
@@ -150,20 +152,19 @@ struct StackSignature {
   //   i32.const 0
   //
   // This instruction sequence has the specific type [i32, i32, anyref] -> [i32]
-  // {u}. It can be used in any situation the previous block can be used in, but
-  // can additionally be used in contexts that expect something like [f32, i32,
-  // i32, anyref] -> [v128, i32]. Because of the unreachable polymorphism, the
+  // {poly}. It can be used in any situation the previous block can be used in,
+  // but can additionally be used in contexts that expect something like [f32,
+  // i32, i32, anyref] -> [v128, i32]. Because of the polymorphism, the
   // additional prefixes on the params and results do not need to match.
   //
-  // Note that a reachable stack signature (without a {u}) is never a subtype of
-  // any unreachable stack signature (with a {u}). This makes sense because a
-  // sequence of instructions that has no polymorphic unreachable behavior
-  // cannot be given a type that says it does have polymorphic unreachable
-  // behavior.
+  // Note that a fixed stack signature (without a {poly}) is never a subtype of
+  // any polymorphic stack signature (with a {poly}). This makes sense because a
+  // sequence of instructions that has no polymorphic behavior cannot be given a
+  // type that says it does have polymorphic behavior.
   //
-  // Also, [] -> [] {u} is the bottom type here; it is a subtype of every other
-  // stack signature. This corresponds to (unreachable) being able to be given
-  // any stack signature.
+  // Also, [] -> [] {poly} is the bottom type here; it is a subtype of every
+  // other stack signature. This corresponds to the `unreachable` instruction
+  // being able to be given any stack signature.
   static bool isSubType(StackSignature a, StackSignature b);
 
   // Returns true iff `a` and `b` have a LUB, i.e. a minimal StackSignature that

@@ -1,6 +1,6 @@
 (module
   (memory 512 512
-   (data passive "hello!")
+   (data "hello!")
   )
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))
@@ -324,16 +324,9 @@
     )
    )
   )
-  (func $no-simd-precompute (result v128)
+  (func $simd-precompute (result v128)
    (i32x4.splat
     (i32.const 0)
-   )
-  )
-  (func $no-simd-precompute-if (result v128)
-   (return
-    (i32x4.splat
-     (i32.const 0)
-    )
    )
   )
   (func $no-memory-init-precompute

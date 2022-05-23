@@ -17,6 +17,7 @@
   (func $foo)
 
   (table funcref (elem $take_externref $take_funcref $take_anyref))
+  (elem declare func $ref-taken-but-not-in-table)
 
   (import "env" "import_func" (func $import_func (param externref) (result funcref)))
   (import "env" "import_global" (global $import_global externref))
@@ -34,7 +35,7 @@
   (global $global_anyref3 (mut anyref) (ref.null func))
   (global $global_anyref4 (mut anyref) (ref.func $foo))
 
-  (event $e-i32 (attr 0) (param i32))
+  (tag $e-i32 (param i32))
 
   (func $test
     (local $local_externref externref)
@@ -532,4 +533,13 @@
     (return (ref.func $foo))
     (return (ref.null func))
   )
+
+  (func $ref-user
+    (drop
+      ;; an "elem declare func" must be emitted for this ref.func which is not
+      ;; in the table
+      (ref.func $ref-taken-but-not-in-table)
+    )
+  )
+  (func $ref-taken-but-not-in-table)
 )

@@ -1,7 +1,7 @@
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $1 (func))
+ (type $0 (func (param i32) (result i32)))
+ (type $2 (func (result i32)))
  (import "env" "memory" (memory $0 0))
  (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
@@ -56,17 +56,16 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 0,
   "declares": [
     "puts"
   ],
-  "externs": [
-    "___stack_pointer",
-    "___memory_base",
-    "___table_base",
-    "_external_var",
-    "_puts",
-    "__Z13print_messagev"
+  "globalImports": [
+    "__stack_pointer",
+    "__memory_base",
+    "__table_base",
+    "external_var",
+    "puts",
+    "_Z13print_messagev"
   ],
   "exports": [
     "__wasm_call_ctors",

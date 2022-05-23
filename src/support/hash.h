@@ -50,4 +50,17 @@ template<typename T> inline void rehash(std::size_t& digest, const T& value) {
 
 } // namespace wasm
 
+namespace std {
+
+// Hashing pairs is often useful
+template<typename T1, typename T2> struct hash<pair<T1, T2>> {
+  size_t operator()(const pair<T1, T2>& p) const {
+    auto digest = wasm::hash(p.first);
+    wasm::rehash(digest, p.second);
+    return digest;
+  }
+};
+
+} // namespace std
+
 #endif // wasm_support_hash_h

@@ -6,9 +6,9 @@
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
- (memory $0 2)
  (global $__stack_pointer (mut i32) (i32.const 66560))
- (event $event$0 (attr 0) (param i32))
+ (memory $0 2)
+ (tag $tag$0 (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
@@ -27,7 +27,7 @@
     (call $foo\28\29)
    )
    ;; code offset: 0x18
-   (catch $event$0
+   (catch $tag$0
     ;; code offset: 0x1e
     (local.set $1
      (pop i32)
@@ -65,7 +65,7 @@
         (call $__cxa_end_catch)
        )
        ;; code offset: 0x4a
-       (catch $event$0
+       (catch $tag$0
         ;; code offset: 0x50
         (local.set $1
          (pop i32)
@@ -427,9 +427,9 @@ file_names[  1]:
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
- (memory $0 2)
  (global $__stack_pointer (mut i32) (i32.const 66560))
- (event $event$0 (attr 0) (param i32))
+ (memory $0 2)
+ (tag $tag$0 (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
@@ -448,7 +448,7 @@ file_names[  1]:
     (call $foo\28\29)
    )
    ;; code offset: 0x12
-   (catch $event$0
+   (catch $tag$0
     ;; code offset: 0x14
     (local.set $1
      (pop i32)
@@ -486,7 +486,7 @@ file_names[  1]:
         (call $__cxa_end_catch)
        )
        ;; code offset: 0x2c
-       (catch $event$0
+       (catch $tag$0
         ;; code offset: 0x2e
         (local.set $1
          (pop i32)

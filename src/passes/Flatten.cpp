@@ -17,13 +17,34 @@
 //
 // Flattens code into "Flat IR" form. See ir/flat.h.
 //
-// TODO: handle non-nullability
+// TODO: handle non-nullability. for example:
 //
+//      (module
+//       (type $none (func))
+//       (func $foo
+//        (drop
+//         (block (result funcref (ref $none))
+//          (tuple.make
+//           (ref.null func)
+//           (ref.func $foo)
+//          )
+//         )
+//        )
+//       )
+//      )
+//
+// The tuple has a non-nullable type, and so it cannot be set to a local. We
+// would need to split up the tuple and reconstruct it later, but that would
+// require allowing tuple operations in more nested places than Flat IR allows
+// today. For now, error on this; eventually changes in the spec regarding
+// null-nullability may make this easier.
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/eh-utils.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -172,6 +193,37 @@ struct Flatten
         loop->finalize();
         replaceCurrent(rep);
 
+      } else if (auto* tryy = curr->dynCast<Try>()) {
+        // remove a try value
+        Expression* rep = tryy;
+        auto* originalBody = tryy->body;
+        std::vector<Expression*> originalCatchBodies(tryy->catchBodies.begin(),
+                                                     tryy->catchBodies.end());
+        auto type = tryy->type;
+        if (type.isConcrete()) {
+          Index temp = builder.addVar(getFunction(), type);
+          if (tryy->body->type.isConcrete()) {
+            tryy->body = builder.makeLocalSet(temp, tryy->body);
+          }
+          for (Index i = 0; i < tryy->catchBodies.size(); i++) {
+            if (tryy->catchBodies[i]->type.isConcrete()) {
+              tryy->catchBodies[i] =
+                builder.makeLocalSet(temp, tryy->catchBodies[i]);
+            }
+          }
+          // and we leave just a get of the value
+          rep = builder.makeLocalGet(temp, type);
+          // the whole try is now a prelude
+          ourPreludes.push_back(tryy);
+        }
+        tryy->body = getPreludesWithExpression(originalBody, tryy->body);
+        for (Index i = 0; i < tryy->catchBodies.size(); i++) {
+          tryy->catchBodies[i] = getPreludesWithExpression(
+            originalCatchBodies[i], tryy->catchBodies[i]);
+        }
+        tryy->finalize();
+        replaceCurrent(rep);
+
       } else {
         WASM_UNREACHABLE("unexpected expr type");
       }
@@ -316,6 +368,21 @@ struct Flatten
     }
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
+    // New locals we added may be non-nullable.
+    TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
+    // We cannot handle non-nullable tuples currently, see the comment at the
+    // top of the file.
+    for (auto type : curr->vars) {
+      if (!type.isDefaultable()) {
+        Fatal() << "Flatten was forced to add a local of a type it cannot "
+                   "handle yet: "
+                << type;
+      }
+    }
+
+    // Flatten can generate blocks within 'catch', making pops invalid. Fix them
+    // up.
+    EHUtils::handleBlockNestedPops(curr, *getModule());
   }
 
 private:

@@ -1,13 +1,15 @@
 (module
  (type $none_=>_none (func))
- (type $none_=>_anyref_f32_anyref_f32 (func (result anyref f32 anyref f32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $ref?|i32_->_i32|_=>_i32 (func (param (ref null $i32_=>_i32)) (result i32)))
+ (type $none_=>_anyref_f32_anyref_f32 (func (result anyref f32 anyref f32)))
  (type $none_=>_eqref (func (result eqref)))
+ (type $ref|i32_->_i32|_=>_i32 (func (param (ref $i32_=>_i32)) (result i32)))
+ (type $ref?|i32_->_i32|_=>_i32 (func (param (ref null $i32_=>_i32)) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $f64_=>_ref?|none_->_eqref| (func (param f64) (result (ref null $none_=>_eqref))))
  (type $none_=>_anyref (func (result anyref)))
  (type $none_=>_i32_ref?|none_->_anyref_f32_anyref_f32|_f64 (func (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)))
- (type $f64_=>_ref?|none_->_eqref| (func (param f64) (result (ref null $none_=>_eqref))))
+ (elem declare func $0 $2)
  (func $0
   (call_ref
    (ref.func $0)
@@ -24,7 +26,7 @@
    (ref.func $2)
   )
  )
- (func $3 (param $0 (ref null $i32_=>_i32)) (result i32)
+ (func $3 (param $0 (ref $i32_=>_i32)) (result i32)
   (call_ref
    (i32.const 42)
    (local.get $0)
@@ -51,8 +53,8 @@
  )
  (func $7
   (local $0 i32)
-  (local $1 f64)
-  (local $2 (ref null $none_=>_anyref))
+  (local $1 (ref null $none_=>_anyref))
+  (local $2 f64)
   (nop)
  )
  (func $8

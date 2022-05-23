@@ -33,11 +33,17 @@ struct Measurer
 
   void visitExpression(Expression* curr) { size++; }
 
+  // Measure the number of expressions.
   static Index measure(Expression* tree) {
     Measurer measurer;
     measurer.walk(tree);
     return measurer.size;
   }
+
+  // A rough estimate of average binary size per expression. The number here is
+  // based on measurements on real-world (MVP) wasm files, on which observed
+  // ratios were 2.2 - 2.8.
+  static constexpr double BytesPerExpr = 2.5;
 };
 
 struct ExpressionAnalyzer {
@@ -76,9 +82,20 @@ struct ExpressionAnalyzer {
     return flexibleEqual(left, right, comparer);
   }
 
+  // Returns true if the expression is handled by the hasher.
+  using ExprHasher = std::function<bool(Expression*, size_t&)>;
+  static bool nothingHasher(Expression*, size_t&) { return false; }
+
+  static size_t flexibleHash(Expression* curr, ExprHasher hasher);
+
   // hash an expression, ignoring superficial details like specific internal
   // names
-  static size_t hash(Expression* curr);
+  static size_t hash(Expression* curr) {
+    return flexibleHash(curr, nothingHasher);
+  }
+
+  // hash an expression, ignoring child nodes.
+  static size_t shallowHash(Expression* curr);
 };
 
 // Re-Finalizes all node types. This can be run after code was modified in
@@ -107,22 +124,22 @@ struct ReFinalize
   ReFinalize() { name = "refinalize"; }
 
   // block finalization is O(bad) if we do each block by itself, so do it in
-  // bulk, tracking break value types so we just do a linear pass
-
-  std::map<Name, Type> breakValues;
+  // bulk, tracking break value types so we just do a linear pass.
+  std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
 
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void visitFunction(Function* curr);
 
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
+  void visitElementSegment(ElementSegment* curr);
   void visitMemory(Memory* curr);
-  void visitEvent(Event* curr);
+  void visitTag(Tag* curr);
   void visitModule(Module* curr);
 
 private:
@@ -139,13 +156,14 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { curr->finalize(); }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
   void visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitElementSegment(ElementSegment* curr) { WASM_UNREACHABLE("unimp"); }
   void visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
-  void visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitTag(Tag* curr) { WASM_UNREACHABLE("unimp"); }
   void visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
   // given a stack of nested expressions, update them all from child to parent
@@ -236,7 +254,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->sig.results == Type::none && curr->body->type.isConcrete()) {
+    if (curr->getResults() == Type::none && curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());

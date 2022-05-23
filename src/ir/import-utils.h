@@ -30,7 +30,7 @@ struct ImportInfo {
   std::vector<Global*> importedGlobals;
   std::vector<Function*> importedFunctions;
   std::vector<Table*> importedTables;
-  std::vector<Event*> importedEvents;
+  std::vector<Tag*> importedTags;
 
   ImportInfo(Module& wasm) : wasm(wasm) {
     for (auto& import : wasm.globals) {
@@ -48,9 +48,9 @@ struct ImportInfo {
         importedTables.push_back(import.get());
       }
     }
-    for (auto& import : wasm.events) {
+    for (auto& import : wasm.tags) {
       if (import->imported()) {
-        importedEvents.push_back(import.get());
+        importedTags.push_back(import.get());
       }
     }
   }
@@ -73,8 +73,8 @@ struct ImportInfo {
     return nullptr;
   }
 
-  Event* getImportedEvent(Name module, Name base) {
-    for (auto* import : importedEvents) {
+  Tag* getImportedTag(Name module, Name base) {
+    for (auto* import : importedTags) {
       if (import->module == module && import->base == base) {
         return import;
       }
@@ -88,11 +88,11 @@ struct ImportInfo {
 
   Index getNumImportedTables() { return importedTables.size(); }
 
-  Index getNumImportedEvents() { return importedEvents.size(); }
+  Index getNumImportedTags() { return importedTags.size(); }
 
   Index getNumImports() {
     return getNumImportedGlobals() + getNumImportedFunctions() +
-           getNumImportedEvents() + (wasm.memory.imported() ? 1 : 0) +
+           getNumImportedTags() + (wasm.memory.imported() ? 1 : 0) +
            getNumImportedTables();
   }
 
@@ -108,9 +108,7 @@ struct ImportInfo {
     return wasm.tables.size() - getNumImportedTables();
   }
 
-  Index getNumDefinedEvents() {
-    return wasm.events.size() - getNumImportedEvents();
-  }
+  Index getNumDefinedTags() { return wasm.tags.size() - getNumImportedTags(); }
 };
 
 } // namespace wasm

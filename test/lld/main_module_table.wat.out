@@ -12,12 +12,11 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 0,
   "declares": [
   ],
-  "externs": [
-    "___stack_pointer",
-    "___stdio_write"
+  "globalImports": [
+    "__stack_pointer",
+    "__stdio_write"
   ],
   "exports": [
     "__stdio_write"

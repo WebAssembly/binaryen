@@ -1,6 +1,6 @@
 (module
- (type $i64_i64_i64_=>_i32 (func (param i64 i64 i64) (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func (param i64 i64 i64) (result i32)))
+ (type $1 (func (param i32) (result i32)))
  (func $figure-1a (param $a i64) (param $x i64) (param $y i64) (result i32)
   (local $i i32)
   (local $j i32)

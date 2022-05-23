@@ -17,6 +17,7 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
+#include "ir/element-utils.h"
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
 #include "ir/properties.h"
@@ -24,14 +25,15 @@
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::ModuleUtils {
 
-namespace ModuleUtils {
-
-inline Function* copyFunction(Function* func, Module& out) {
-  auto* ret = new Function();
-  ret->name = func->name;
-  ret->sig = func->sig;
+// Copies a function into a module. If newName is provided it is used as the
+// name of the function (otherwise the original name is copied).
+inline Function*
+copyFunction(Function* func, Module& out, Name newName = Name()) {
+  auto ret = std::make_unique<Function>();
+  ret->name = newName.is() ? newName : func->name;
+  ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
@@ -41,8 +43,7 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->base = func->base;
   // TODO: copy Stack IR
   assert(!func->stackIR);
-  out.addFunction(ret);
-  return ret;
+  return out.addFunction(std::move(ret));
 }
 
 inline Global* copyGlobal(Global* global, Module& out) {
@@ -61,18 +62,41 @@ inline Global* copyGlobal(Global* global, Module& out) {
   return ret;
 }
 
-inline Event* copyEvent(Event* event, Module& out) {
-  auto* ret = new Event();
-  ret->name = event->name;
-  ret->attribute = event->attribute;
-  ret->sig = event->sig;
-  out.addEvent(ret);
+inline Tag* copyTag(Tag* tag, Module& out) {
+  auto* ret = new Tag();
+  ret->name = tag->name;
+  ret->sig = tag->sig;
+  out.addTag(ret);
   return ret;
 }
 
-inline Table* copyTableWithoutSegments(Table* table, Module& out) {
+inline ElementSegment* copyElementSegment(const ElementSegment* segment,
+                                          Module& out) {
+  auto copy = [&](std::unique_ptr<ElementSegment>&& ret) {
+    ret->name = segment->name;
+    ret->hasExplicitName = segment->hasExplicitName;
+    ret->type = segment->type;
+    ret->data.reserve(segment->data.size());
+    for (auto* item : segment->data) {
+      ret->data.push_back(ExpressionManipulator::copy(item, out));
+    }
+
+    return out.addElementSegment(std::move(ret));
+  };
+
+  if (segment->table.isNull()) {
+    return copy(std::make_unique<ElementSegment>());
+  } else {
+    auto offset = ExpressionManipulator::copy(segment->offset, out);
+    return copy(std::make_unique<ElementSegment>(segment->table, offset));
+  }
+}
+
+inline Table* copyTable(const Table* table, Module& out) {
   auto ret = std::make_unique<Table>();
   ret->name = table->name;
+  ret->hasExplicitName = table->hasExplicitName;
+  ret->type = table->type;
   ret->module = table->module;
   ret->base = table->base;
 
@@ -80,17 +104,6 @@ inline Table* copyTableWithoutSegments(Table* table, Module& out) {
   ret->max = table->max;
 
   return out.addTable(std::move(ret));
-}
-
-inline Table* copyTable(Table* table, Module& out) {
-  auto ret = copyTableWithoutSegments(table, out);
-
-  for (auto segment : table->segments) {
-    segment.offset = ExpressionManipulator::copy(segment.offset, out);
-    ret->segments.push_back(segment);
-  }
-
-  return ret;
 }
 
 inline void copyModule(const Module& in, Module& out) {
@@ -105,12 +118,16 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
   }
-  for (auto& curr : in.events) {
-    copyEvent(curr.get(), out);
+  for (auto& curr : in.tags) {
+    copyTag(curr.get(), out);
+  }
+  for (auto& curr : in.elementSegments) {
+    copyElementSegment(curr.get(), out);
   }
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
+
   out.memory = in.memory;
   for (auto& segment : out.memory.segments) {
     segment.offset = ExpressionManipulator::copy(segment.offset, out);
@@ -118,6 +135,8 @@ inline void copyModule(const Module& in, Module& out) {
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+  out.features = in.features;
+  out.typeNames = in.typeNames;
 }
 
 inline void clearModule(Module& wasm) {
@@ -133,10 +152,10 @@ inline void clearModule(Module& wasm) {
 // call this redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
-  for (auto& pair : map) {
-    if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      assert(!wasm.getFunctionOrNull(pair.second) || F->name == pair.second);
-      F->name = pair.second;
+  for (auto& [oldName, newName] : map) {
+    if (Function* F = wasm.getFunctionOrNull(oldName)) {
+      assert(!wasm.getFunctionOrNull(newName) || F->name == newName);
+      F->name = newName;
     }
   }
   wasm.updateMaps();
@@ -148,13 +167,7 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
     }
   };
   maybeUpdate(wasm.start);
-  for (auto& table : wasm.tables) {
-    for (auto& segment : table->segments) {
-      for (auto& name : segment.data) {
-        maybeUpdate(name);
-      }
-    }
-  }
+  ElementUtils::iterAllElementFunctionNames(&wasm, maybeUpdate);
   for (auto& exp : wasm.exports) {
     if (exp->kind == ExternalKind::Function) {
       maybeUpdate(exp->value);
@@ -208,6 +221,28 @@ template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
   }
 }
 
+template<typename T>
+inline void iterTableSegments(Module& wasm, Name table, T visitor) {
+  // Just a precaution so that we don't iterate over passive elem segments by
+  // accident
+  assert(table.is() && "Table name must not be null");
+
+  for (auto& segment : wasm.elementSegments) {
+    if (segment->table == table) {
+      visitor(segment.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterActiveElementSegments(Module& wasm, T visitor) {
+  for (auto& segment : wasm.elementSegments) {
+    if (segment->table.is()) {
+      visitor(segment.get());
+    }
+  }
+}
+
 template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
     if (import->imported()) {
@@ -241,16 +276,16 @@ template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedEvents(Module& wasm, T visitor) {
-  for (auto& import : wasm.events) {
+template<typename T> inline void iterImportedTags(Module& wasm, T visitor) {
+  for (auto& import : wasm.tags) {
     if (import->imported()) {
       visitor(import.get());
     }
   }
 }
 
-template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
-  for (auto& import : wasm.events) {
+template<typename T> inline void iterDefinedTags(Module& wasm, T visitor) {
+  for (auto& import : wasm.tags) {
     if (!import->imported()) {
       visitor(import.get());
     }
@@ -262,18 +297,24 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
   iterImportedTables(wasm, visitor);
   iterImportedGlobals(wasm, visitor);
   iterImportedFunctions(wasm, visitor);
-  iterImportedEvents(wasm, visitor);
+  iterImportedTags(wasm, visitor);
 }
 
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
-// The operation performend should not modify the wasm module in any way.
-// TODO: enforce this
-template<typename T> struct ParallelFunctionAnalysis {
+// The operation performed should not modify the wasm module in any way, by
+// default - otherwise, set the Mutability to Mutable. (This is not enforced at
+// compile time - TODO find a way - but at runtime in pass-debug mode it is
+// checked.)
+template<typename K, typename V> using DefaultMap = std::map<K, V>;
+template<typename T,
+         Mutability Mut = Immutable,
+         template<typename, typename> class MapT = DefaultMap>
+struct ParallelFunctionAnalysis {
   Module& wasm;
 
-  typedef std::map<Function*, T> Map;
+  typedef MapT<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
@@ -294,7 +335,7 @@ template<typename T> struct ParallelFunctionAnalysis {
 
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
-      bool modifiesBinaryenIR() override { return false; }
+      bool modifiesBinaryenIR() override { return Mut; }
 
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
@@ -375,9 +416,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     map.swap(analysis.map);
 
     // Find what is called by what.
-    for (auto& pair : map) {
-      auto* func = pair.first;
-      auto& info = pair.second;
+    for (auto& [func, info] : map) {
       for (auto* target : info.callsTo) {
         map[target].calledBy.insert(func);
       }
@@ -420,153 +459,20 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
-// Helper function for collecting all the types that are declared in a module,
-// which means the HeapTypes (that are non-basic, that is, not eqref etc., which
-// do not need to be defined).
-//
-// Used when emitting or printing a module to give HeapTypes canonical
-// indices. HeapTypes are sorted in order of decreasing frequency to minize the
-// size of their collective encoding. Both a vector mapping indices to
-// HeapTypes and a map mapping HeapTypes to indices are produced.
-inline void collectHeapTypes(Module& wasm,
-                             std::vector<HeapType>& types,
-                             std::unordered_map<HeapType, Index>& typeIndices) {
-  struct Counts : public std::unordered_map<HeapType, size_t> {
-    bool isRelevant(Type type) {
-      return (type.isRef() || type.isRtt()) && !type.getHeapType().isBasic();
-    }
-    void note(HeapType type) { (*this)[type]++; }
-    void maybeNote(Type type) {
-      if (isRelevant(type)) {
-        note(type.getHeapType());
-      }
-    }
-  };
+// Helper function for collecting all the non-basic heap types used in the
+// module, i.e. the types that would appear in the type section.
+std::vector<HeapType> collectHeapTypes(Module& wasm);
 
-  // Collect the type use counts for a single function
-  auto updateCounts = [&](Function* func, Counts& counts) {
-    if (func->imported()) {
-      return;
-    }
-    struct TypeCounter
-      : PostWalker<TypeCounter, UnifiedExpressionVisitor<TypeCounter>> {
-      Counts& counts;
+struct IndexedHeapTypes {
+  std::vector<HeapType> types;
+  std::unordered_map<HeapType, Index> indices;
+};
 
-      TypeCounter(Counts& counts) : counts(counts) {}
+// Similar to `collectHeapTypes`, but provides fast lookup of the index for each
+// type as well. Also orders the types to be valid and sorts the types by
+// frequency of use to minimize code size.
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
 
-      void visitExpression(Expression* curr) {
-        if (auto* call = curr->dynCast<CallIndirect>()) {
-          counts.note(call->sig);
-        } else if (curr->is<RefNull>()) {
-          counts.maybeNote(curr->type);
-        } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-          counts.note(curr->type.getRtt().heapType);
-        } else if (auto* get = curr->dynCast<StructGet>()) {
-          counts.maybeNote(get->ref->type);
-        } else if (auto* set = curr->dynCast<StructSet>()) {
-          counts.maybeNote(set->ref->type);
-        } else if (Properties::isControlFlowStructure(curr)) {
-          if (curr->type.isTuple()) {
-            // TODO: Allow control flow to have input types as well
-            counts.note(Signature(Type::none, curr->type));
-          } else {
-            counts.maybeNote(curr->type);
-          }
-        }
-      }
-    };
-    TypeCounter(counts).walk(func->body);
-  };
-
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, updateCounts);
-
-  // Collect all the counts.
-  Counts counts;
-  for (auto& curr : wasm.functions) {
-    counts.note(curr->sig);
-    for (auto type : curr->vars) {
-      counts.maybeNote(type);
-      if (type.isTuple()) {
-        for (auto t : type) {
-          counts.maybeNote(t);
-        }
-      }
-    }
-  }
-  for (auto& curr : wasm.events) {
-    counts.note(curr->sig);
-  }
-  for (auto& curr : wasm.globals) {
-    counts.maybeNote(curr->type);
-  }
-  for (auto& pair : analysis.map) {
-    Counts& functionCounts = pair.second;
-    for (auto& innerPair : functionCounts) {
-      counts[innerPair.first] += innerPair.second;
-    }
-  }
-  // A generic utility to traverse the child types of a type.
-  // TODO: work with tlively to refactor this to a shared place
-  auto walkRelevantChildren = [&](HeapType type, auto callback) {
-    auto callIfRelevant = [&](Type type) {
-      if (counts.isRelevant(type)) {
-        callback(type.getHeapType());
-      }
-    };
-    if (type.isSignature()) {
-      auto sig = type.getSignature();
-      for (Type type : {sig.params, sig.results}) {
-        for (auto element : type) {
-          callIfRelevant(element);
-        }
-      }
-    } else if (type.isArray()) {
-      callIfRelevant(type.getArray().element.type);
-    } else if (type.isStruct()) {
-      auto fields = type.getStruct().fields;
-      for (auto field : fields) {
-        callIfRelevant(field.type);
-      }
-    }
-  };
-  // Recursively traverse each reference type, which may have a child type that
-  // is itself a reference type. This reflects an appearance in the binary
-  // format that is in the type section itself.
-  // As we do this we may find more and more types, as nested children of
-  // previous ones. Each such type will appear in the type section once, so
-  // we just need to visit it once.
-  std::unordered_set<HeapType> newTypes;
-  for (auto& pair : counts) {
-    newTypes.insert(pair.first);
-  }
-  while (!newTypes.empty()) {
-    auto iter = newTypes.begin();
-    auto type = *iter;
-    newTypes.erase(iter);
-    walkRelevantChildren(type, [&](HeapType type) {
-      if (!counts.count(type)) {
-        newTypes.insert(type);
-      }
-      counts.note(type);
-    });
-  }
-
-  // Sort by frequency and then simplicity.
-  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
-  std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    if (a.second != b.second) {
-      return a.second > b.second;
-    }
-    return a.first < b.first;
-  });
-  for (Index i = 0; i < sorted.size(); ++i) {
-    typeIndices[sorted[i].first] = i;
-    types.push_back(sorted[i].first);
-  }
-}
-
-} // namespace ModuleUtils
-
-} // namespace wasm
+} // namespace wasm::ModuleUtils
 
 #endif // wasm_ir_module_h

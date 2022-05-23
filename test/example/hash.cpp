@@ -11,6 +11,14 @@ using namespace wasm;
 #define assertNotEqual(left, right)                                            \
   assert(ExpressionAnalyzer::hash(&left) != ExpressionAnalyzer::hash(&right));
 
+#define assertShallowEqual(left, right)                                        \
+  assert(ExpressionAnalyzer::shallowHash(&left) ==                             \
+         ExpressionAnalyzer::shallowHash(&right));
+
+#define assertShallowNotEqual(left, right)                                     \
+  assert(ExpressionAnalyzer::shallowHash(&left) !=                             \
+         ExpressionAnalyzer::shallowHash(&right));
+
 int main() {
   {
     Const x, y;
@@ -33,7 +41,7 @@ int main() {
     assertNotEqual(x, y);
   }
   {
-    // Nested child.
+    // Nested identical child.
     Drop dx, dy;
     Const x, y;
     x.set(Literal(int32_t(10)));
@@ -43,7 +51,17 @@ int main() {
     assertEqual(dx, dy);
   }
   {
-    // Nested child.
+    // Nested identical child, checked shallowly.
+    Drop dx, dy;
+    Const x, y;
+    x.set(Literal(int32_t(10)));
+    y.set(Literal(int32_t(10)));
+    dx.value = &x;
+    dy.value = &y;
+    assertShallowEqual(dx, dy);
+  }
+  {
+    // Nested different child.
     Drop dx, dy;
     Const x, y;
     x.set(Literal(int32_t(10)));
@@ -51,6 +69,17 @@ int main() {
     dx.value = &x;
     dy.value = &y;
     assertNotEqual(dx, dy);
+  }
+  {
+    // Nested different child, checked shallowly (so we ignore the difference,
+    // and return equal).
+    Drop dx, dy;
+    Const x, y;
+    x.set(Literal(int32_t(10)));
+    y.set(Literal(int32_t(11)));
+    dx.value = &x;
+    dy.value = &y;
+    assertShallowEqual(dx, dy);
   }
   MixedArena arena;
   {
@@ -136,6 +165,16 @@ int main() {
     LocalGet x, y;
     x.index = 10;
     y.index = 11;
+    assertNotEqual(x, y);
+  }
+  {
+    // It is ok to hash something that refers to an unknown name, like a break
+    // without the outside context that it branches to. And different names
+    // should have different hashes.
+    Break x;
+    x.name = "foo";
+    Break y;
+    y.name = "bar";
     assertNotEqual(x, y);
   }
   std::cout << "success.\n";

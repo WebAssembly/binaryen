@@ -57,12 +57,11 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
   void visitModule(Module* curr) {
     // Add the import
-    auto import = new Function;
-    import->name = LOGGER;
+    auto import =
+      Builder::makeFunction(LOGGER, Signature(Type::i32, Type::none), {});
     import->module = ENV;
     import->base = LOGGER;
-    import->sig = Signature(Type::i32, Type::none);
-    curr->addFunction(import);
+    curr->addFunction(std::move(import));
   }
 
 private:

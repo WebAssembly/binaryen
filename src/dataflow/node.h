@@ -28,9 +28,7 @@
 #include "ir/utils.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace DataFlow {
+namespace wasm::DataFlow {
 
 //
 // The core IR representation in DataFlow: a Node.
@@ -218,8 +216,6 @@ struct Node {
   }
 };
 
-} // namespace DataFlow
-
-} // namespace wasm
+} // namespace wasm::DataFlow
 
 #endif // wasm_dataflow_node

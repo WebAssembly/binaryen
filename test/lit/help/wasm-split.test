@@ -1,0 +1,221 @@
+;; RUN: wasm-split --help | filecheck %s
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-split INFILES
+;; CHECK-NEXT:
+;; CHECK-NEXT: Split a module into a primary module and a secondary module, or instrument a
+;; CHECK-NEXT: module to gather a profile that can inform future splitting, or manage such
+;; CHECK-NEXT: profiles. Options that are only accepted in particular modes are marked with the
+;; CHECK-NEXT: accepted "[<modes>]" in their descriptions.
+;; CHECK-NEXT: ================================================================================
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: wasm-split options:
+;; CHECK-NEXT: -------------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --split                              Split an input module into two output
+;; CHECK-NEXT:                                        modules. The default mode.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --instrument                         Instrument an input module to allow it to
+;; CHECK-NEXT:                                        generate a profile that can be used to
+;; CHECK-NEXT:                                        guide splitting.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --merge-profiles                     Merge multiple profiles for the same
+;; CHECK-NEXT:                                        module into a single profile.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --profile                            [split] The profile to use to guide
+;; CHECK-NEXT:                                        splitting.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
+;; CHECK-NEXT:                                        to keep in the primary module. The rest
+;; CHECK-NEXT:                                        will be split out. Cannot be used with
+;; CHECK-NEXT:                                        --profile or --split-funcs. You can also
+;; CHECK-NEXT:                                        pass a file with one function per line by
+;; CHECK-NEXT:                                        passing @filename.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --split-funcs                        [split] Comma-separated list of functions
+;; CHECK-NEXT:                                        to split out to the secondary module. The
+;; CHECK-NEXT:                                        rest will be kept. Cannot be used with
+;; CHECK-NEXT:                                        --profile or --keep-funcs. You can also
+;; CHECK-NEXT:                                        pass a file with one function per line by
+;; CHECK-NEXT:                                        passing @filename.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
+;; CHECK-NEXT:                                        module.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --secondary-output,-o2               [split] Output file for the secondary
+;; CHECK-NEXT:                                        module.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --symbolmap                          [split] Write a symbol map file for each
+;; CHECK-NEXT:                                        of the output modules.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --placeholdermap                     [split] Write a file mapping placeholder
+;; CHECK-NEXT:                                        indices to the function names.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --import-namespace                   [split] The namespace from which to
+;; CHECK-NEXT:                                        import objects from the primary module
+;; CHECK-NEXT:                                        into the secondary module.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --placeholder-namespace              [split] The namespace from which to
+;; CHECK-NEXT:                                        import placeholder functions into the
+;; CHECK-NEXT:                                        primary module.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --asyncify                           [split] Transform the module to support
+;; CHECK-NEXT:                                        unwinding the stack from placeholder
+;; CHECK-NEXT:                                        functions and rewinding it once the
+;; CHECK-NEXT:                                        secondary module has been loaded.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --export-prefix                      [split] An identifying prefix to prepend
+;; CHECK-NEXT:                                        to new export names created by module
+;; CHECK-NEXT:                                        splitting.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --profile-export                     [instrument] The export name of the
+;; CHECK-NEXT:                                        function the embedder calls to write the
+;; CHECK-NEXT:                                        profile into memory. Defaults to
+;; CHECK-NEXT:                                        `__write_profile`.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --in-memory                          [instrument] Store profile information in
+;; CHECK-NEXT:                                        memory (starting at address 0 and taking
+;; CHECK-NEXT:                                        one byte per function) rather than
+;; CHECK-NEXT:                                        globals (the default) so that it can be
+;; CHECK-NEXT:                                        shared between multiple threads. Users
+;; CHECK-NEXT:                                        are responsible for ensuring that the
+;; CHECK-NEXT:                                        module does not use the initial memory
+;; CHECK-NEXT:                                        region for anything else.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-module-names                  [split, instrument] Emit module names,
+;; CHECK-NEXT:                                        even if not emitting the rest of the
+;; CHECK-NEXT:                                        names section. Can help differentiate the
+;; CHECK-NEXT:                                        modules in stack traces. This option will
+;; CHECK-NEXT:                                        be removed once simpler ways of naming
+;; CHECK-NEXT:                                        modules are widely available. See
+;; CHECK-NEXT:                                        https://bugs.chromium.org/p/v8/issues/detail?id=11808.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --initial-table                      [split, instrument] A hack to ensure the
+;; CHECK-NEXT:                                        split and instrumented modules have the
+;; CHECK-NEXT:                                        same table size when using Emscripten's
+;; CHECK-NEXT:                                        SPLIT_MODULE mode with dynamic linking.
+;; CHECK-NEXT:                                        TODO: Figure out a more elegant solution
+;; CHECK-NEXT:                                        for that use case and remove this.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-text,-S                       [split, instrument] Emit text instead of
+;; CHECK-NEXT:                                        binary for the output file or files.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debuginfo,-g                       [split, instrument] Emit names section in
+;; CHECK-NEXT:                                        wasm binary (or full debuginfo in wast)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles] Output file.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --verbose,-v                         Verbose output mode. Prints the functions
+;; CHECK-NEXT:                                        that will be kept and split out when
+;; CHECK-NEXT:                                        splitting a module.
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: Tool options:
+;; CHECK-NEXT: -------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --all-features,-all                  Enable all features
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --detect-features                    (deprecated - this flag does nothing)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
+;; CHECK-NEXT:                                        warnings.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
+;; CHECK-NEXT:                                        purposes.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-threads                     Enable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-threads                    Disable atomic operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-mutable-globals             Enable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-mutable-globals            Disable mutable globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int
+;; CHECK-NEXT:                                        operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-simd                        Enable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-simd                       Disable SIMD operations and types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-tail-call                   Enable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-tail-call                  Disable tail call operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-reference-types             Enable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-reference-types            Disable reference types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multivalue                  Enable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multivalue                 Disable multivalue functions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc                          Enable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc                         Disable garbage collection
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-memory64                    Enable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-memory64                   Disable memory64
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-function-references   Enable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-function-references  Disable typed function references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-gc-nn-locals                Enable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-gc-nn-locals               Disable GC non-null locals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-NEXT:                                        correct
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
+;; CHECK-NEXT:                                        passes being run. Must be in the form
+;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --nominal                            Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as nominal.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --structural                         Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed as structural (i.e.
+;; CHECK-NEXT:                                        equirecursive). This is the default.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --hybrid                             Force all GC type definitions to be
+;; CHECK-NEXT:                                        parsed using the isorecursive hybrid type
+;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:
+;; CHECK-NEXT:
+;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --version                            Output version information and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --help,-h                            Show this help message and exit
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --debug,-d                           Print debug information to stderr
+;; CHECK-NEXT:

@@ -33,8 +33,8 @@
 
 (module
   (memory i64 1)
-  (data (i32.const 0) "abcdefgh")
-  (data (i32.const 0xfff8) "abcdefgh")
+  (data (i64.const 0) "abcdefgh")
+  (data (i64.const 0xfff8) "abcdefgh")
 
   (func (export "i32.load") (param $a i64) (result i32)
     (i32.load (local.get $a))

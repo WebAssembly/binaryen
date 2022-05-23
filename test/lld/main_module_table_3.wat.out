@@ -4,6 +4,7 @@
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (import "GOT.func" "__stdio_write" (global $gimport$9 (mut i32)))
  (global $global i32 (i32.const 42))
+ (elem (i32.const 0))
  (export "__stdio_write" (func $__stdio_write))
  (export "__data_end" (global $global))
  (func $__stdio_write
@@ -13,12 +14,11 @@
 (;
 --BEGIN METADATA --
 {
-  "tableSize": 1,
   "declares": [
   ],
-  "externs": [
-    "___stack_pointer",
-    "___stdio_write"
+  "globalImports": [
+    "__stack_pointer",
+    "__stdio_write"
   ],
   "exports": [
     "__stdio_write"

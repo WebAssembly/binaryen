@@ -1,5 +1,4 @@
 global
- [events]       : 0       
  [exports]      : 0       
  [funcs]        : 3       
  [globals]      : 1       
@@ -7,8 +6,10 @@ global
  [memory-data]  : 9       
  [table-data]   : 3       
  [tables]       : 1       
- [total]        : 3       
+ [tags]         : 0       
+ [total]        : 6       
  Const          : 3       
+ RefFunc        : 3       
 func: empty
  [binary-bytes] : 3       
  [total]        : 1       
@@ -34,12 +35,12 @@ func: ifs
  If             : 4       
 (module
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $0 (func (param i32)))
+ (global $glob i32 (i32.const 1337))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (table $0 256 256 funcref)
  (elem (i32.const 0) $ifs $ifs $ifs)
- (global $glob i32 (i32.const 1337))
  (func $empty
   (nop)
  )
@@ -91,22 +92,22 @@ func: ifs
  )
 )
 global
- [events]       : 0       
  [exports]      : 0       
  [funcs]        : 0       
  [globals]      : 0       
  [imports]      : 0       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 (module
 )
 global
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 3       
  [globals]      : 0       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 func: func_a
  [binary-bytes] : 16      
@@ -127,7 +128,7 @@ func: func_c
  Block          : 1       
  Call           : 15      
 export: a (func_a)
- [removable-bytes-without-it]: 72      
+ [removable-bytes-without-it]: 58      
  [total]        : 0       
 export: b (func_b)
  [removable-bytes-without-it]: 18      
@@ -177,12 +178,12 @@ export: b (func_b)
  )
 )
 global
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 func: func_a
  [binary-bytes] : 12      
@@ -210,12 +211,12 @@ start: func_a
  )
 )
 global
- [events]       : 0       
  [exports]      : 0       
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 func: func_a
  [binary-bytes] : 12      
@@ -239,12 +240,12 @@ start: func_a
  )
 )
 global
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 1       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 1       
  GlobalGet      : 1       
 func: 0
@@ -253,10 +254,10 @@ func: 0
  [vars]         : 0       
  GlobalGet      : 1       
 export: stackSave (0)
- [removable-bytes-without-it]: 56      
+ [removable-bytes-without-it]: 62      
  [total]        : 0       
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (import "env" "STACKTOP" (global $gimport$0 i32))
  (global $global$0 (mut i32) (global.get $gimport$0))
  (export "stackSave" (func $0))

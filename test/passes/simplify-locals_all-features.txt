@@ -1,16 +1,16 @@
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32)))
+ (type $5 (func (param i32) (result i32)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
+ (type $6 (func (param i32 i32 i32 i32 i32 i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $i64_=>_none (func (param i64)))
- (type $f32_=>_none (func (param f32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $FUNCSIG$iiiiii (func (param i32 i32 i32 i32 i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
+ (type $f32_=>_none (func (param f32)))
+ (type $4 (func (param i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i64_=>_none (func (param i64)))
  (type $i32_f64_f64_f32_i32_=>_f64 (func (param i32 f64 f64 f32 i32) (result f64)))
  (import "env" "waka" (func $waka))
  (import "env" "waka_int" (func $waka_int (result i32)))
@@ -18,8 +18,8 @@
  (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
  (import "env" "lp" (func $lp (param i32 i32) (result i32)))
  (import "fuzzing-support" "log-f32" (func $fimport$0 (param f32)))
- (memory $0 256 256)
  (global $global$0 (mut i32) (i32.const 10))
+ (memory $0 256 256)
  (func $contrast
   (local $x i32)
   (local $y i32)
@@ -1122,21 +1122,21 @@
  )
 )
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
- (type $i32_=>_none (func (param i32)))
+ (type $FUNCSIG$v (func))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $5 (func (param i32) (result i32)))
+ (type $FUNCSIG$iiiiii (func (param i32 i32 i32 i32 i32) (result i32)))
+ (type $4 (func (param i32)))
  (type $f32_=>_none (func (param f32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_f64 (func (result f64)))
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "fuzzing-support" "log1" (func $fimport$0 (result i32)))
  (import "fuzzing-support" "log2" (func $fimport$1 (param i32)))
  (import "fuzzing-support" "log3" (func $fimport$2 (param f32)))
- (memory $0 (shared 256 256))
  (global $global$0 (mut i32) (i32.const 10))
+ (memory $0 (shared 256 256))
  (func $nonatomics (result i32)
   (local $x i32)
   (nop)
@@ -1726,7 +1726,7 @@
 (module
  (type $none_=>_none (func))
  (memory $0 256 256)
- (data passive "hello, there!")
+ (data "hello, there!")
  (func $memory-init-load
   (local $x i32)
   (local.set $x
@@ -1884,7 +1884,7 @@
 (module
  (type $none_=>_anyref (func (result anyref)))
  (func $subtype-test (result anyref)
-  (local $0 externref)
+  (local $0 anyref)
   (local $1 anyref)
   (local $2 anyref)
   (block $block
@@ -1895,95 +1895,9 @@
  )
 )
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $none_=>_i32 (func (result i32)))
- (event $e-i32 (attr 0) (param i32))
- (func $foo (param $0 i32) (param $1 i32)
-  (nop)
- )
- (func $pop-cannot-be-sinked
-  (local $0 i32)
-  (try $try
-   (do
-    (nop)
-   )
-   (catch $e-i32
-    (local.set $0
-     (pop i32)
-    )
-    (call $foo
-     (i32.const 3)
-     (local.get $0)
-    )
-   )
-  )
- )
- (func $pop-within-catch-can-be-sinked
-  (local $0 i32)
-  (try $try
-   (do
-    (nop)
-   )
-   (catch_all
-    (nop)
-    (call $foo
-     (i32.const 3)
-     (try $try0 (result i32)
-      (do
-       (i32.const 0)
-      )
-      (catch $e-i32
-       (pop i32)
-      )
-     )
-    )
-   )
-  )
- )
- (func $bar (result i32)
-  (i32.const 3)
- )
- (func $call-cannot-be-sinked-into-try
-  (local $0 i32)
-  (local.set $0
-   (call $bar)
-  )
-  (try $try
-   (do
-    (drop
-     (local.get $0)
-    )
-   )
-   (catch $e-i32
-    (drop
-     (pop i32)
-    )
-   )
-  )
- )
- (func $non-call-can-be-sinked-into-try
-  (local $0 i32)
-  (nop)
-  (try $try
-   (do
-    (drop
-     (i32.const 3)
-    )
-   )
-   (catch $e-i32
-    (drop
-     (pop i32)
-    )
-   )
-  )
- )
-)
-(module
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 1 1))
- (data passive "data")
+ (data "data")
  (export "foo" (func $0))
  (func $0 (result i32)
   (local $0 i32)

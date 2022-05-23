@@ -3,16 +3,19 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (event $e-i32 (attr 0) (param i32))
- (event $e-i64 (attr 0) (param i64))
- (event $e-i32-i64 (attr 0) (param i32 i64))
+ (type $anyref_=>_none (func (param anyref)))
+ (tag $e-i32 (param i32))
+ (tag $e-i64 (param i64))
+ (tag $e-i32-i64 (param i32 i64))
+ (tag $e-anyref (param anyref))
+ (tag $e-empty (param))
  (func $foo
   (nop)
  )
  (func $bar
   (nop)
  )
- (func $eh_test
+ (func $eh-test
   (local $x (i32 i64))
   (try $try
    (do
@@ -169,6 +172,13 @@
     )
    )
   )
+  (try $try10
+   (do
+    (throw $e-i32
+     (i32.const 0)
+    )
+   )
+  )
  )
  (func $delegate-test
   (try $l0
@@ -179,7 +189,7 @@
      )
      (delegate $l0)
     )
-    (try $try10
+    (try $try11
      (do
       (call $foo)
      )
@@ -190,24 +200,24 @@
     (nop)
    )
   )
-  (block $l014
-   (try $l011
+  (block $l015
+   (try $l012
     (do
-     (try $try12
-      (do
-       (br_if $l014
-        (i32.const 1)
-       )
-      )
-      (delegate $l011)
-     )
      (try $try13
       (do
-       (br_if $l014
+       (br_if $l015
         (i32.const 1)
        )
       )
-      (delegate $l011)
+      (delegate $l012)
+     )
+     (try $try14
+      (do
+       (br_if $l015
+        (i32.const 1)
+       )
+      )
+      (delegate $l012)
      )
     )
     (catch_all
@@ -215,16 +225,24 @@
     )
    )
   )
-  (try $l015
+  (try $l016
    (do
-    (try $try16
+    (try $try17
      (do
       (call $foo)
      )
-     (delegate $l015)
+     (delegate $l016)
     )
    )
    (delegate 0)
+  )
+  (try $try18
+   (do
+    (nop)
+   )
+   (catch $e-empty
+    (nop)
+   )
   )
  )
  (func $rethrow-test
@@ -242,8 +260,8 @@
     (rethrow $l0)
    )
   )
-  (block $l018
-   (try $l017
+  (block $l020
+   (try $l019
     (do
      (call $foo)
     )
@@ -251,14 +269,14 @@
      (drop
       (pop i32)
      )
-     (rethrow $l017)
+     (rethrow $l019)
     )
     (catch_all
-     (br $l018)
+     (br $l020)
     )
    )
   )
-  (try $l019
+  (try $l021
    (do
     (call $foo)
    )
@@ -271,35 +289,10 @@
       (drop
        (pop i32)
       )
-      (rethrow $l019)
+      (rethrow $l021)
      )
      (catch_all
-      (rethrow $l019)
-     )
-    )
-   )
-  )
-  (try $l020
-   (do
-    (call $foo)
-   )
-   (catch_all
-    (try $try21
-     (do
-      (call $foo)
-     )
-     (catch $e-i32
-      (drop
-       (pop i32)
-      )
-      (block $b0
-       (rethrow $l020)
-      )
-     )
-     (catch_all
-      (block $b1
-       (rethrow $l020)
-      )
+      (rethrow $l021)
      )
     )
    )
@@ -311,10 +304,20 @@
    (catch_all
     (try $try23
      (do
-      (rethrow $l022)
+      (call $foo)
+     )
+     (catch $e-i32
+      (drop
+       (pop i32)
+      )
+      (block $b0
+       (rethrow $l022)
+      )
      )
      (catch_all
-      (nop)
+      (block $b1
+       (rethrow $l022)
+      )
      )
     )
    )
@@ -331,6 +334,61 @@
      (catch_all
       (nop)
      )
+    )
+   )
+  )
+  (try $l026
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $try27
+     (do
+      (rethrow $l026)
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+ )
+ (func $pop-test
+  (try $try
+   (do
+    (nop)
+   )
+   (catch $e-i32
+    (throw $e-i32
+     (if (result i32)
+      (pop i32)
+      (i32.const 0)
+      (i32.const 3)
+     )
+    )
+   )
+  )
+  (try $try28
+   (do
+    (nop)
+   )
+   (catch $e-anyref
+    (drop
+     (pop funcref)
+    )
+   )
+  )
+ )
+ (func $catchless-try-with-inner-delegate
+  (try $label$0
+   (do
+    (try $try
+     (do
+      (throw $e-i32
+       (i32.const 0)
+      )
+     )
+     (delegate $label$0)
     )
    )
   )

@@ -3,6 +3,7 @@
 
 (module
   (memory 0)
+  ;; CHECK:      (type $0 (func (param i32 i64)))
   (type $0 (func (param i32 i64)))
   ;; CHECK:      (func $and-and (param $i1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.and
@@ -101,12 +102,10 @@
     )
   )
   ;; CHECK:      (func $if-eqz-two-arms (param $i1 i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $i1)
-  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $i1)
   ;; CHECK-NEXT:    (i32.const 12)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -125,14 +124,12 @@
     )
   )
   ;; CHECK:      (func $if-eqz-two-arms-i64 (param $i2 i64)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i64.eqz
-  ;; CHECK-NEXT:    (local.get $i2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (local.get $i2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 11)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 12)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -587,6 +584,368 @@
         (i32.eqz
           (i32.const 2)
         )
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-32-lt (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-32-lt (param $x i32) (result i32)
+    (select
+      (i32.const -1)
+      (i32.const 1)
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-32-ge (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-32-ge (param $x i32) (result i32)
+    (select
+      (i32.const 1)
+      (i32.const -1)
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-64-lt (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.or
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 63)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-64-lt (param $x i64) (result i64)
+    (select
+      (i64.const -1)
+      (i64.const 1)
+      (i64.lt_s
+        (local.get $x)
+        (i64.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-64-ge (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.or
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 63)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-64-ge (param $x i64) (result i64)
+    (select
+      (i64.const 1)
+      (i64.const -1)
+      (i64.ge_s
+        (local.get $x)
+        (i64.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-lt-skip-1 (param $x i32) (result i64)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i64.const -1)
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-lt-skip-1 (param $x i32) (result i64)
+    (select
+      (i64.const -1)
+      (i64.const 1)
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-lt-skip-2 (param $x i64) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const -1)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i64.lt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-lt-skip-2 (param $x i64) (result i32)
+    (select
+      (i32.const -1)
+      (i32.const 1)
+      (i64.lt_s
+        (local.get $x)
+        (i64.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.const 1)
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (call $select-or-side-effects
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (call $select-or-side-effects
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
+    ;; When there are side effects, the order of the operations must remain
+    ;; correct.
+    (select
+      (i32.const 1)
+      (i32.eq
+        (call $select-or-side-effects
+          (local.get $x)
+          (local.get $y)
+        )
+        (i32.const 1337)
+      )
+      (i32.and
+        (call $select-or-side-effects
+          (local.get $y)
+          (local.get $x)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-no-bits (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-no-bits (param $x i32) (param $y i32)
+    ;; The following cannot be optimized into an "or" operation due to maxBits
+    ;; not being known to be 1.
+    (drop
+      (select
+        ;; Too many bits in ifTrue
+        (i32.const 2)
+        (i32.eq
+          (local.get $y)
+          (i32.const 1337)
+        )
+        (i32.eq
+          (local.get $x)
+          (i32.const 42)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        ;; Too many bits in ifFalse
+        (local.get $y)
+        (i32.eq
+          (local.get $x)
+          (i32.const 42)
+        )
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.eq
+          (local.get $y)
+          (i32.const 1337)
+        )
+        ;; Too many bits in condition
+        (local.get $x)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-no-type (param $x i32) (param $y i64) (result i64)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-no-type (param $x i32) (param $y i64) (result i64)
+    ;; An i64 result cannot be optimized into an "or" of the ifTrue and the
+    ;; condition due to their types being different.
+    (select
+      (i64.const 1)
+      (i64.and
+        (local.get $y)
+        (i64.const 1)
+      )
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
+    (select
+      ;; The wrong const (should be 1).
+      (i32.const 0)
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.and
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.const 0)
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; The wrong constant (should be 0).
+      (i32.const 1)
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
       )
     )
   )
@@ -1190,11 +1549,102 @@
       )
     ))
   )
-  ;; CHECK:      (func $canonicalize-cmp-const (param $x i32) (param $fx f64)
+  ;; CHECK:      (func $canonicalize-cmp-near-zero (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.lt_s
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $canonicalize-cmp-near-zero (param $x i32)
+    ;; i32(x) > -1  ==>  x >= 0
+    (drop (i32.gt_s
+      (local.get $x)
+      (i32.const -1)
+    ))
+    ;; i32(x) <= -1  ==>  x < 0
+    (drop (i32.le_s
+      (local.get $x)
+      (i32.const -1)
+    ))
+    ;; -1 < i32(x)  ==>  x >= 0
+    (drop (i32.lt_s
+      (i32.const -1)
+      (local.get $x)
+    ))
+    ;; -1 >= i32(x)  ==>  x < 0
+    (drop (i32.ge_s
+      (i32.const -1)
+      (local.get $x)
+    ))
+    ;; i32(x) < 1   ==>   x <= 0
+    (drop (i32.lt_s
+      (local.get $x)
+      (i32.const 1)
+    ))
+    ;; (signed)x >= 1   ==>   x > 0
+    (drop (i32.ge_s
+      (local.get $x)
+      (i32.const 1)
+    ))
+    ;; u32(x) < 1   ==>   x == 0
+    (drop (i32.lt_u
+      (local.get $x)
+      (i32.const 1)
+    ))
+    ;; u32(x) >= 1   ==>   x != 0
+    (drop (i32.ge_u
+      (local.get $x)
+      (i32.const 1)
+    ))
+  )
+  ;; CHECK:      (func $canonicalize-cmp-const (param $x i32) (param $fx f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2594,11 +3044,7 @@
   ;; CHECK-NEXT:  (i32.shr_s
   ;; CHECK-NEXT:   (i32.shl
   ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.wrap_i64
-  ;; CHECK-NEXT:      (i64.extend_i32_s
-  ;; CHECK-NEXT:       (i32.const -1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const -1)
   ;; CHECK-NEXT:     (i32.const 24)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 24)
@@ -2624,11 +3070,7 @@
   )
   ;; CHECK:      (func $sext-24-shr_u-wrap-extend (result i32)
   ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.wrap_i64
-  ;; CHECK-NEXT:    (i64.extend_i32_s
-  ;; CHECK-NEXT:     (i32.const -1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -1)
   ;; CHECK-NEXT:   (i32.const 25)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -5736,6 +6178,234 @@
      )
     )
   )
+  ;; CHECK:      (func $remove-signs-for-mul-i32 (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $remove-signs-for-mul-i32 (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $remove-signs-for-mul-i64 (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $remove-signs-for-mul-i64 (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (i64.sub
+        (i64.const 0)
+        (local.get $0)
+      )
+      (i64.sub
+        (i64.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-lhs (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-lhs (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (local.get $1)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-rhs (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-rhs (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (local.get $0)
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i64-lhs (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.sub
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i64-lhs (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (i64.sub
+        (i64.const 0)
+        (local.get $0)
+      )
+      (local.get $1)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i64-rhs (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.sub
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i64-rhs (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (local.get $0)
+      (i64.sub
+        (i64.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-rhs-side (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (call $subzero4
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-rhs-side (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (call $subzero4
+        (local.get $0)
+        (local.get $1)
+      )
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-lhs-const (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const -3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-lhs-const (param $0 i32) (result i32)
+    (i32.mul
+      (i32.const 3)
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-lhs-const-pot (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-lhs-const-pot (param $0 i32) (result i32)
+    (i32.mul
+      (i32.const 2)
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-rhs-const (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-rhs-const (param $0 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.const -5)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-i32-both-sign-consts (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-i32-both-sign-consts (param $0 i32) (result i32)
+    (i32.mul
+      (i32.const -5)
+      (i32.sub
+        (i32.const 0)
+        (i32.const 2)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-smin (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.shl
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 31)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-smin (param $0 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (i32.const 0x80000000)
+    )
+  )
+  ;; CHECK:      (func $propagate-sign-for-mul-i32-skip-2 (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-sign-for-mul-i32-skip-2 (param $0 i32) (result i32)
+    (i32.mul
+      (local.get $0)
+      (i32.sub
+        (i32.const 0)
+        (i32.const 3)
+      )
+    )
+  )
   ;; CHECK:      (func $mul-32-power-2 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $mul-32-power-2
@@ -8029,18 +8699,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
@@ -8337,6 +8999,24 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (i64.and
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i64.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.wrap_i64
   ;; CHECK-NEXT:    (i64.shr_u
   ;; CHECK-NEXT:     (local.get $y)
@@ -8480,6 +9160,22 @@
         (i32.const 1)
       )
       (i32.const 1)
+    ))
+    ;; i32(bool(expr)) ^ 1 -> !bool(expr)
+    (drop (i32.xor
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.const 1)
+    ))
+    ;; i64(bool(expr)) ^ 1 -> extend(!bool(expr))
+    (drop (i64.xor
+      (i64.and
+        (local.get $y)
+        (i64.const 1)
+      )
+      (i64.const 1)
     ))
     ;; i64(bool(expr)) != 0 -> i32(bool(expr))
     (drop (i64.ne
@@ -8991,15 +9687,15 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:   (i32.ge_s
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.gt_s
+  ;; CHECK-NEXT:   (i64.ge_s
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -9014,15 +9710,15 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:   (i32.lt_s
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.le_s
+  ;; CHECK-NEXT:   (i64.lt_s
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -9953,6 +10649,297 @@
       (unreachable)
     )
   )
+  ;; CHECK:      (func $select-with-same-arm-and-cond-32 (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-with-same-arm-and-cond-32 (param $x i32)
+    ;; i32(x) ? i32(x) : 0  ==>  x
+    (drop (select
+      (local.get $x)
+      (i32.const 0)
+      (local.get $x)
+    ))
+    ;; i32(x) ? 0 : i32(x)  ==>  {x, 0}
+    (drop (select
+      (i32.const 0)
+      (local.get $x)
+      (local.get $x)
+    ))
+    ;; i32(x) == 0 ? i32(x) : 0  ==>  {x, 0}
+    (drop (select
+      (local.get $x)
+      (i32.const 0)
+      (i32.eqz (local.get $x))
+    ))
+  )
+
+  ;; CHECK:      (func $select-with-same-arm-and-cond-64 (param $x i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-with-same-arm-and-cond-64 (param $x i64)
+    ;; i64(x) != 0 ? i64(x) : 0  ==>  x
+    (drop (select
+      (local.get $x)
+      (i64.const 0)
+      (i64.ne
+        (local.get $x)
+        (i64.const 0)
+      )
+    ))
+    ;; i64(x) == 0 ? 0 : i64(x)  ==>  x
+    (drop (select
+      (i64.const 0)
+      (local.get $x)
+      (i64.eqz
+        (local.get $x)
+      )
+    ))
+    ;; i64(x) != 0 ? 0 : i64(x)  ==>  0
+    (drop (select
+      (i64.const 0)
+      (local.get $x)
+      (i64.ne
+        (local.get $x)
+        (i64.const 0)
+      )
+    ))
+    ;; i64(x) == 0 ? i64(x) : 0  ==>  {x, 0}
+    (drop (select
+      (local.get $x)
+      (i64.const 0)
+      (i64.eqz
+        (local.get $x)
+      )
+    ))
+    (drop (select
+      (local.get $x)
+      (i64.const 0)
+      (i64.eq
+        (local.get $x)
+        (i64.const 0)
+      )
+    ))
+  )
+
+  ;; CHECK:      (func $select-with-same-arm-and-cond-skips (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.ne
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.ne
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-with-same-arm-and-cond-skips (param $x i32) (param $y i64)
+    ;; skip not equals
+    (drop (select
+      (local.get $x)
+      (i32.const 0)
+      (i32.wrap_i64 (local.get $y))
+    ))
+    (drop (select
+      (i32.const 0)
+      (i32.sub (i32.const 0) (local.get $x))
+      (local.get $x)
+    ))
+
+    ;; skip not zero
+    (drop (select
+      (local.get $x)
+      (i32.const -1)
+      (local.get $x)
+    ))
+    (drop (select
+      (i32.const -1)
+      (local.get $x)
+      (local.get $x)
+    ))
+    (drop (select
+      (i64.const -1)
+      (local.get $y)
+      (i64.ne
+        (local.get $y)
+        (i64.const 0)
+      )
+    ))
+    (drop (select
+      (i64.const 0)
+      (local.get $y)
+      (i64.ne
+        (local.get $y)
+        (i64.const 1)
+      )
+    ))
+  )
+
+  ;; CHECK:      (func $select-with-same-arm-and-cond-skips-side-effects (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.div_u
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.div_u
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (call $ne0)
+  ;; CHECK-NEXT:    (call $ne0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (call $select-sign-64-lt
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (call $select-sign-64-lt
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (call $select-sign-64-lt
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (call $select-sign-64-lt
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-with-same-arm-and-cond-skips-side-effects (param $x i32) (param $y i64)
+    ;; skip with side effects
+    (drop (select
+      (i32.div_u (i32.const 10) (local.get $x))
+      (i32.const 0)
+      (i32.div_u (i32.const 10) (local.get $x))
+    ))
+    (drop (select
+      (i32.const 0)
+      (call $ne0)
+      (call $ne0)
+    ))
+    (drop (select
+      (call $select-sign-64-lt (local.get $y))
+      (i64.const 0)
+      (i64.eqz
+        (call $select-sign-64-lt (local.get $y))
+      )
+    ))
+    (drop (select
+      (i64.const 0)
+      (call $select-sign-64-lt (local.get $y))
+      (i64.eqz
+        (call $select-sign-64-lt (local.get $y))
+      )
+    ))
+  )
   ;; CHECK:      (func $optimize-boolean-context (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -9982,6 +10969,390 @@
         (i32.const 0)
         (local.get $x)
       )
+    ))
+  )
+
+  ;; CHECK:      (func $optimize-combined-by-and-equals-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-and-equals-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) == 0) & (i32(y) == 0)   ==>   i32(x | y) == 0
+    (drop (i32.and
+      (i32.eq (local.get $x) (i32.const 0))
+      (i32.eq (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) == 0) & (i64(y) == 0)   ==>   i64(x | y) == 0
+    (drop (i32.and
+      (i64.eq (local.get $a) (i64.const 0))
+      (i64.eq (local.get $b) (i64.const 0))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-or-noequal-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-or-noequal-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) != 0) | (i32(y) != 0)   ==>   i32(x | y) != 0
+    (drop (i32.or
+      (i32.ne (local.get $x) (i32.const 0))
+      (i32.ne (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) != 0) | (i64(y) != 0)   ==>   i64(x | y) != 0
+    (drop (i32.or
+      (i64.ne (local.get $a) (i64.const 0))
+      (i64.ne (local.get $b) (i64.const 0))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-or-gt-or-eq-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ge_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (i32.ge_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.ge_s
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-or-gt-or-eq-to-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) >= 0) | (i32(y) >= 0)   ==>   i32(x & y) >= 0
+    (drop (i32.or
+      (i32.ge_s (local.get $x) (i32.const 0))
+      (i32.ge_s (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) >= 0) | (i64(y) >= 0)   ==>   i64(x & y) >= 0
+    (drop (i32.or
+      (i64.ge_s (local.get $a) (i64.const 0))
+      (i64.ge_s (local.get $b) (i64.const 0))
+    ))
+
+    ;; skips
+    ;; (i32(x) >= 0) | (i64(y) >= 0)   ==>   skip
+    (drop (i32.or
+      (i32.ge_s (local.get $x) (i32.const 0))
+      (i64.ge_s (local.get $a) (i64.const 0))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-or-ne-to-minus-one (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.ne
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i64.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-or-ne-to-minus-one (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) != -1) | (i32(y) != -1)   ==>   i32(x & y) != -1
+    (drop (i32.or
+      (i32.ne (local.get $x) (i32.const -1))
+      (i32.ne (local.get $y) (i32.const -1))
+    ))
+    ;; (i64(x) != -1) | (i64(y) == -1)   ==>   i64(x & y) != -1
+    (drop (i32.or
+      (i64.ne (local.get $a) (i64.const -1))
+      (i64.ne (local.get $b) (i64.const -1))
+    ))
+
+    ;; skips
+    ;; (i32(x) != -1) | (i64(y) != -1)   ==>   skip
+    (drop (i32.or
+      (i32.ne (local.get $x) (i32.const -1))
+      (i64.ne (local.get $a) (i64.const -1))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-or-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.lt_s
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (i32.lt_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.lt_s
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (i32.lt_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.le_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (i32.lt_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.le_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-or-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) < 0) | (i32(y) < 0)   ==>   i32(x | y) < 0
+    (drop (i32.or
+      (i32.lt_s (local.get $x) (i32.const 0))
+      (i32.lt_s (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) < 0) | (i64(y) < 0)   ==>   i64(x | y) < 0
+    (drop (i32.or
+      (i64.lt_s (local.get $a) (i64.const 0))
+      (i64.lt_s (local.get $b) (i64.const 0))
+    ))
+
+    ;; skips
+    ;; (i32(x) < 0) | (i64(a) < 0)   ==>   skip
+    (drop (i32.or
+      (i32.lt_s (local.get $x) (i32.const 0))
+      (i64.lt_s (local.get $a) (i64.const 0))
+    ))
+    ;; (i32(x) <= 0) | (i32(y) < 0)   ==>   skip
+    (drop (i32.or
+      (i32.le_s (local.get $x) (i32.const 0))
+      (i32.lt_s (local.get $y) (i32.const 0))
+    ))
+    ;; (i32(x) < 1) | (i32(y) < 0)   ==>   skip
+    (drop (i32.or
+      (i32.lt_s (local.get $x) (i32.const 1))
+      (i32.lt_s (local.get $y) (i32.const 0))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-and-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.lt_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-and-lessthan-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) < 0) & (i32(y) < 0)   ==>   i32(x & y) < 0
+    (drop (i32.and
+      (i32.lt_s (local.get $x) (i32.const 0))
+      (i32.lt_s (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) < 0) & (i64(y) < 0)   ==>   i64(x & y) < 0
+    (drop (i32.and
+      (i64.lt_s (local.get $a) (i64.const 0))
+      (i64.lt_s (local.get $b) (i64.const 0))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-and-greatequal-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ge_s
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.ge_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.ge_s
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-and-greatequal-zero (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) >= 0) & (i32(y) >= 0)   ==>   i32(x | y) >= 0
+    (drop (i32.and
+      (i32.ge_s (local.get $x) (i32.const 0))
+      (i32.ge_s (local.get $y) (i32.const 0))
+    ))
+    ;; (i64(x) >= 0) & (i64(y) >= 0)   ==>   i64(x | y) >= 0
+    (drop (i32.and
+      (i64.ge_s (local.get $a) (i64.const 0))
+      (i64.ge_s (local.get $b) (i64.const 0))
+    ))
+
+    ;; skips
+    ;; (i32(x) >= 0) & (i64(y) >= 0)   ==>   skip
+    (drop (i32.and
+      (i32.ge_s (local.get $x) (i32.const 0))
+      (i64.ge_s (local.get $a) (i64.const 0))
+    ))
+  )
+  ;; CHECK:      (func $optimize-combined-by-and-equal-neg-one (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.eq
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i64.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-combined-by-and-equal-neg-one (param $x i32) (param $y i32) (param $a i64) (param $b i64)
+    ;; (i32(x) == -1) & (i32(y) == -1)   ==>   i32(x & y) == -1
+    (drop (i32.and
+      (i32.eq (local.get $x) (i32.const -1))
+      (i32.eq (local.get $y) (i32.const -1))
+    ))
+    ;; (i64(x) == -1) & (i64(y) == -1)   ==>   i64(x & y) == -1
+    (drop (i32.and
+      (i64.eq (local.get $a) (i64.const -1))
+      (i64.eq (local.get $b) (i64.const -1))
+    ))
+
+    ;; skips
+    ;; (i32(x) == -1) & (i64(y) == -1)   ==>   skip
+    (drop (i32.and
+      (i32.eq (local.get $x) (i32.const -1))
+      (i64.eq (local.get $a) (i64.const -1))
     ))
   )
   ;; CHECK:      (func $optimize-relationals (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
@@ -11109,6 +12480,71 @@
       )
     )
   )
+
+  ;; i32.wrap_i64(i64.extend_i32_s(x))  ==>  x
+  ;; i32.wrap_i64(i64.extend_i32_u(x))  ==>  x
+
+  ;; CHECK:      (func $sign-and-zero-extention-elimination-1 (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sign-and-zero-extention-elimination-1 (param $x i32)
+    (drop (i32.wrap_i64 (i64.extend_i32_s (local.get $x))))
+    (drop (i32.wrap_i64 (i64.extend_i32_u (local.get $x))))
+  )
+  ;; i64.extend_i32_u(i32.wrap_i64(x))  =>  x,  where maxBits(x) <= 32
+  ;; i64.extend_i32_s(i32.wrap_i64(x))  =>  x,  where maxBits(x) <= 31
+
+  ;; CHECK:      (func $sign-and-zero-extention-elimination-2 (param $x i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 4294967295)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (i64.and
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i64.const 4294967295)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sign-and-zero-extention-elimination-2 (param $x i64)
+    (drop (i64.extend_i32_u (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x00000000FFFFFFFF)))))
+    (drop (i64.extend_i32_s (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x000000007FFFFFFF)))))
+
+    (drop (i64.extend_i32_u (i32.wrap_i64 (local.get $x)))) ;; skip
+    (drop (i64.extend_i32_s (i32.wrap_i64 (local.get $x)))) ;; skip
+    (drop (i64.extend_i32_s (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x00000000FFFFFFFF))))) ;; skip
+  )
   ;; CHECK:      (func $optimize-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -11666,5 +13102,773 @@
       (f64.abs (f64.add (local.get $x0) (local.get $x1)))
       (f64.abs (f64.add (local.get $x0) (local.get $x0)))
     ))
+  )
+  ;; CHECK:      (func $ternary (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary (param $x i32) (param $y i32)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+        (local.get $x)
+      )
+    )
+    ;; if works too
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-i64-0 (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (if (result i64)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 1)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-i64-0 (param $x i32) (param $y i64)
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i32.const 0)
+        (i64.eqz
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-i64-1 (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (if (result i64)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-i64-1 (param $x i32) (param $y i64)
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i64.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-no (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no (param $x i32) (param $y i32)
+    (drop
+      (select
+        (i32.const 2) ;; only 0 and 1 work
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-no-unreachable-1 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no-unreachable-1 (param $x i32) (result i32)
+    (if (result i32)
+      (local.get $x)
+      ;; one arm is an eqz, the other is 0 or 1, so we can put an eqz on the
+      ;; outside in theory, but we'd need to be careful with the unreachable
+      ;; type here. ignore this case, as DCE is the proper optimization anyhow.
+      (i32.eqz
+        (unreachable)
+      )
+      (i32.const 0)
+    )
+  )
+  ;; CHECK:      (func $ternary-no-unreachable-2 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no-unreachable-2 (param $x i32) (result i32)
+    (if (result i32)
+      (local.get $x)
+      ;; as before, but flipped
+      (i32.const 0)
+      (i32.eqz
+        (unreachable)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        (i32.eqz (local.get $x))
+        (i32.eqz (local.get $y))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-if (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-if (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (if (result i32)
+        (local.get $z)
+        (i32.eqz (local.get $x))
+        (i32.eqz (local.get $y))
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-type-change (param $x f64) (param $y f64) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.demote_f64
+  ;; CHECK-NEXT:    (f64.floor
+  ;; CHECK-NEXT:     (if (result f64)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-type-change (param $x f64) (param $y f64) (param $z i32)
+    (drop
+      ;; the if's type begins as f32, but after moving code out it will be
+      ;; f64
+      (if (result f32)
+        (local.get $z)
+        (f32.demote_f64 (f64.floor (local.get $x)))
+        (f32.demote_f64 (f64.floor (local.get $y)))
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-more (param $x f32) (param $y f32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.floor
+  ;; CHECK-NEXT:    (f32.neg
+  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-more (param $x f32) (param $y f32) (param $z i32)
+    (drop
+      (select
+        (f32.floor (f32.neg (local.get $x)))
+        (f32.floor (f32.neg (local.get $y)))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-morer (param $x f32) (param $y f32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.floor
+  ;; CHECK-NEXT:     (f32.neg
+  ;; CHECK-NEXT:      (select
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (local.get $y)
+  ;; CHECK-NEXT:       (local.get $z)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-morer (param $x f32) (param $y f32) (param $z i32)
+    (drop
+      (select
+        (f32.abs (f32.floor (f32.neg (local.get $x))))
+        (f32.abs (f32.floor (f32.neg (local.get $y))))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-and-type-is-none (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-and-type-is-none (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      (drop (i32.eqz (local.get $x)))
+      (drop (i32.eqz (local.get $y)))
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-and-type-is-none-child-types-mismatch (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (f64.const 2.34)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-and-type-is-none-child-types-mismatch (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      ;; the drop cannot be hoisted out, since the children's type mismatch
+      ;; would not allow us to give a proper type to the if.
+      (drop (i32.const 1))
+      (drop (f64.const 2.34))
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-but-block (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (block $block (result i32)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $block24 (result i32)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-but-block (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        ;; identical arms, but they are control flow structures
+        (block (result i32)
+          (i32.eqz (local.get $x))
+        )
+        (block (result i32)
+          (i32.eqz (local.get $y))
+        )
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-but-binary (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-but-binary (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        ;; identical arms, but they are binaries, not unaries
+        (i32.add
+          (local.get $x)
+          (local.get $x)
+        )
+        (i32.add
+          (local.get $y)
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-br_if-same (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-br_if-same (param $x i32) (param $y i32) (param $z i32)
+    (block $block
+      (if
+        (local.get $z)
+        ;; two br_ifs with the same target are shallowly identical
+        (br_if $block
+          (local.get $x)
+        )
+        (br_if $block
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-br_if-different (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (block $block1
+  ;; CHECK-NEXT:   (block $block2
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (br_if $block1
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br_if $block2
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-br_if-different (param $x i32) (param $y i32) (param $z i32)
+    (block $block1
+      (block $block2
+        (if
+          (local.get $z)
+          ;; two br_ifs with different targets are not shallowly identical
+          (br_if $block1
+            (local.get $x)
+          )
+          (br_if $block2
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-return (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-return (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (block $block
+      (if
+        (local.get $z)
+        (return
+          (local.get $x)
+        )
+        (return
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (block $block
+      ;; we cannot optimize a select currently as the return has side effects
+      (select
+        (return
+          (local.get $x)
+        )
+        (return
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $send-i32 (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $send-i32 (param i32))
+  ;; CHECK:      (func $ternary-identical-arms-call (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (call $send-i32
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-call (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      (call $send-i32
+        (local.get $x)
+      )
+      (call $send-i32
+        (local.get $y)
+      )
+    )
+  )
+  ;; CHECK:      (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
+    ;; if we move the returns outside, we'd become unreachable; avoid that.
+    (if (result i32)
+      (local.get $x)
+      (return
+        (local.get $y)
+      )
+      (return
+        (local.get $z)
+      )
+    )
+  )
+
+  ;; f32.reinterpret_i32(i32.load(x))  =>  f32.load(x)
+  ;; f64.reinterpret_i64(i64.load(x))  =>  f64.load(x)
+  ;; i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
+  ;; i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
+
+  ;; CHECK:      (func $simplify_reinterpret_and_load (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.reinterpret_i32
+  ;; CHECK-NEXT:    (i32.load8_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.reinterpret_i64
+  ;; CHECK-NEXT:    (i64.load32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simplify_reinterpret_and_load (param $x i32)
+    (drop (f32.reinterpret_i32 (i32.load (local.get $x))))
+    (drop (f64.reinterpret_i64 (i64.load (local.get $x))))
+    (drop (i32.reinterpret_f32 (f32.load (local.get $x))))
+    (drop (i64.reinterpret_f64 (f64.load (local.get $x))))
+    (drop (f32.reinterpret_i32 (i32.load8_s (local.get $x))))     ;; skip
+    (drop (f64.reinterpret_i64 (i64.load32_u (local.get $x))))    ;; skip
+  )
+
+  ;; f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
+  ;; f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
+  ;; i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
+  ;; i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
+
+  ;; CHECK:      (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i64.store
+  ;; CHECK-NEXT:   (i32.const 16)
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f32.store
+  ;; CHECK-NEXT:   (i32.const 24)
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f64.store
+  ;; CHECK-NEXT:   (i32.const 32)
+  ;; CHECK-NEXT:   (local.get $w)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store8
+  ;; CHECK-NEXT:   (i32.const 40)
+  ;; CHECK-NEXT:   (i32.reinterpret_f32
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i64.store32
+  ;; CHECK-NEXT:   (i32.const 44)
+  ;; CHECK-NEXT:   (i64.reinterpret_f64
+  ;; CHECK-NEXT:    (local.get $w)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+    (f32.store (i32.const 8) (f32.reinterpret_i32 (local.get $x)))
+    (f64.store (i32.const 16) (f64.reinterpret_i64 (local.get $y)))
+    (i32.store (i32.const 24) (i32.reinterpret_f32 (local.get $z)))
+    (i64.store (i32.const 32) (i64.reinterpret_f64 (local.get $w)))
+    (i32.store8 (i32.const 40) (i32.reinterpret_f32 (local.get $z)))       ;; skip
+    (i64.store32 (i32.const 44) (i64.reinterpret_f64 (local.get $w)))      ;; skip
+  )
+
+  ;; i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
+  ;; i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
+  ;; f32.reinterpret_i32(i32.reinterpret_f32(x))  =>  x
+  ;; f64.reinterpret_i64(i64.reinterpret_f64(x))  =>  x
+
+  ;; CHECK:      (func $eliminate_reinterpret_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $w)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $eliminate_reinterpret_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+    (drop (i32.reinterpret_f32 (f32.reinterpret_i32 (local.get $x))))
+    (drop (i64.reinterpret_f64 (f64.reinterpret_i64 (local.get $y))))
+    (drop (f32.reinterpret_i32 (i32.reinterpret_f32 (local.get $z))))
+    (drop (f64.reinterpret_i64 (i64.reinterpret_f64 (local.get $w))))
+  )
+
+  ;; u64(i32.load(_8|_16)(_u|_s)(x))  =>  i64.load(_8|_16|_32)(_u|_s)(x)
+  ;; except:
+  ;;   i64.extend_i32_u(i32.load8_s(x)) and
+  ;;   i64.extend_i32_u(i32.load16_s(x))
+
+  ;; CHECK:      (func $combine_load_and_extend_u (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.load8_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.load16_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $combine_load_and_extend_u (param $x i32)
+    (drop (i64.extend_i32_u (i32.load8_u (local.get $x))))
+    (drop (i64.extend_i32_u (i32.load16_u (local.get $x))))
+    (drop (i64.extend_i32_u (i32.load (local.get $x))))
+
+    ;; skips
+    (drop (i64.extend_i32_u (i32.load8_s (local.get $x))))
+    (drop (i64.extend_i32_u (i32.load16_s (local.get $x))))
+  )
+
+  ;; i64(i32.load(_8|_16)(_u|_s)(x))  =>  i64.load(_8|_16|_32)(_u|_s)(x)
+
+  ;; CHECK:      (func $combine_load_and_extend_s (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $combine_load_and_extend_s (param $x i32)
+    (drop (i64.extend_i32_s (i32.load8_u (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load16_u (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load8_s (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load16_s (local.get $x))))
+    (drop (i64.extend_i32_s (i32.load (local.get $x))))
   )
 )

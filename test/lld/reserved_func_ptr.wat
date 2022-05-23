@@ -10,7 +10,7 @@
  (memory $0 2)
  (table $0 3 3 funcref)
  (elem (i32.const 1) $address_taken_func\28int\2c\20int\2c\20int\29 $address_taken_func2\28int\2c\20int\2c\20int\29)
- (global $global$0 (mut i32) (i32.const 66112))
+ (global $__stack_pointer (mut i32) (i32.const 66112))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))

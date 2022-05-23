@@ -23,7 +23,6 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
-#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/debug.h"
 #include "wasm-builder.h"
@@ -34,10 +33,7 @@
 
 namespace wasm {
 
-cashew::IString EM_ASM_PREFIX("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
-
-static Name STACK_INIT("stack$init");
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -59,15 +55,16 @@ bool isExported(Module& wasm, Name name) {
 
 Global* getStackPointerGlobal(Module& wasm) {
   // Assumption: The stack pointer is either imported as __stack_pointer or
-  // its the first non-imported and non-exported global.
+  // we just assume it's the first non-imported global.
   // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
   // linker could export it by name?
   for (auto& g : wasm.globals) {
-    if (g->imported()) {
-      if (g->base == STACK_POINTER) {
-        return g.get();
-      }
-    } else if (!isExported(wasm, g->name)) {
+    if (g->imported() && g->base == STACK_POINTER) {
+      return g.get();
+    }
+  }
+  for (auto& g : wasm.globals) {
+    if (!g->imported()) {
       return g.get();
     }
   }
@@ -81,6 +78,11 @@ std::string escape(std::string code) {
   size_t curr = 0;
   while ((curr = code.find("\\n", curr)) != std::string::npos) {
     code = code.replace(curr, 2, "\\\\n");
+    curr += 3; // skip this one
+  }
+  curr = 0;
+  while ((curr = code.find("\\t", curr)) != std::string::npos) {
+    code = code.replace(curr, 2, "\\\\t");
     curr += 3; // skip this one
   }
   // replace double quotes with escaped single quotes
@@ -152,7 +154,7 @@ private:
             Fatal() << "Cannot get offset of passive segment initialized "
                        "multiple times";
           }
-          offsets[curr->segment] = dest->value.geti32();
+          offsets[curr->segment] = dest->value.getInteger();
         }
       } searcher(passiveOffsets);
       searcher.walkModule(&wasm);
@@ -168,7 +170,7 @@ private:
           segmentOffsets.push_back(UNKNOWN_OFFSET);
         }
       } else if (auto* addrConst = segment.offset->dynCast<Const>()) {
-        auto address = addrConst->value.geti32();
+        auto address = addrConst->value.getUnsigned();
         segmentOffsets.push_back(address);
       } else {
         // TODO(sbc): Wasm shared libraries have data segments with non-const
@@ -185,123 +187,6 @@ struct AsmConst {
   Address id;
   std::string code;
 };
-
-struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
-  Module& wasm;
-  bool minimizeWasmChanges;
-  StringConstantTracker stringTracker;
-
-  std::vector<AsmConst> asmConsts;
-  // last sets in the current basic block, per index
-  std::map<Index, LocalSet*> sets;
-
-  AsmConstWalker(Module& _wasm, bool minimizeWasmChanges)
-    : wasm(_wasm), minimizeWasmChanges(minimizeWasmChanges),
-      stringTracker(_wasm) {}
-
-  void noteNonLinear(Expression* curr);
-
-  void visitLocalSet(LocalSet* curr);
-  void visitCall(Call* curr);
-
-  void process();
-
-private:
-  void createAsmConst(uint64_t id, std::string code);
-  void addImports();
-
-  std::vector<std::unique_ptr<Function>> queuedImports;
-};
-
-void AsmConstWalker::noteNonLinear(Expression* curr) {
-  // End of this basic block; clear sets.
-  sets.clear();
-}
-
-void AsmConstWalker::visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
-
-void AsmConstWalker::visitCall(Call* curr) {
-  auto* import = wasm.getFunction(curr->target);
-  // Find calls to emscripten_asm_const* functions whose first argument is
-  // is always a string constant.
-  if (!import->imported()) {
-    return;
-  }
-  auto importName = import->base;
-  if (!importName.hasSubstring(EM_ASM_PREFIX)) {
-    return;
-  }
-
-  auto* arg = curr->operands[0];
-  while (!arg->dynCast<Const>()) {
-    if (auto* get = arg->dynCast<LocalGet>()) {
-      // The argument may be a local.get, in which case, the last set in this
-      // basic block has the value.
-      auto* set = sets[get->index];
-      if (set) {
-        assert(set->index == get->index);
-        arg = set->value;
-      } else {
-        Fatal() << "local.get of unknown in arg0 of call to " << importName
-                << " (used by EM_ASM* macros) in function "
-                << getFunction()->name
-                << ".\nThis might be caused by aggressive compiler "
-                   "transformations. Consider using EM_JS instead.";
-      }
-      continue;
-    }
-
-    if (auto* setlocal = arg->dynCast<LocalSet>()) {
-      // The argument may be a local.tee, in which case we take first child
-      // which is the value being copied into the local.
-      if (setlocal->isTee()) {
-        arg = setlocal->value;
-        continue;
-      }
-    }
-
-    if (auto* bin = arg->dynCast<Binary>()) {
-      if (bin->op == AddInt32 || bin->op == AddInt64) {
-        // In the dynamic linking case the address of the string constant
-        // is the result of adding its offset to __memory_base.
-        // In this case are only looking for the offset from __memory_base
-        // the RHS of the addition is just what we want.
-        arg = bin->right;
-        continue;
-      }
-    }
-
-    if (auto* unary = arg->dynCast<Unary>()) {
-      if (unary->op == WrapInt64) {
-        // This cast may be inserted around the string constant in the
-        // Memory64Lowering pass.
-        arg = unary->value;
-        continue;
-      }
-    }
-
-    Fatal() << "Unexpected arg0 type (" << *arg
-            << ") in call to: " << importName;
-  }
-
-  auto* value = arg->cast<Const>();
-  Address address = value->value.getInteger();
-  asmConsts.push_back({address, stringTracker.stringAtAddr(address)});
-}
-
-void AsmConstWalker::process() {
-  // Find and queue necessary imports
-  walkModule(&wasm);
-  // Add them after the walk, to avoid iterator invalidation on
-  // the list of functions.
-  addImports();
-}
-
-void AsmConstWalker::addImports() {
-  for (auto& import : queuedImports) {
-    wasm.addFunction(import.release());
-  }
-}
 
 struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
   SegmentRemover(Index segment) : segment(segment) {}
@@ -341,27 +226,26 @@ static void removeSegment(Module& wasm, Index segment) {
 static Address getExportedAddress(Module& wasm, Export* export_) {
   Global* g = wasm.getGlobal(export_->value);
   auto* addrConst = g->init->dynCast<Const>();
-  return addrConst->value.getInteger();
+  return addrConst->value.getUnsigned();
 }
 
 static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
                                              bool minimizeWasmChanges) {
+  // Newer version of emscripten/llvm export these symbols so we can use them to
+  // find all the EM_ASM constants.   Sadly __start_em_asm and __stop_em_asm
+  // don't alwasy mark the start and end of segment because in dynamic linking
+  // we merge all data segments into one.
   Export* start = wasm.getExportOrNull("__start_em_asm");
   Export* end = wasm.getExportOrNull("__stop_em_asm");
-
-  // Older versions of emscripten don't export these symbols.  Instead
-  // we run AsmConstWalker in an attempt to derive the string addresses
-  // from the code.
-  if (!start || !end) {
-    AsmConstWalker walker(wasm, minimizeWasmChanges);
-    walker.process();
-    return walker.asmConsts;
+  if (!start && !end) {
+    BYN_TRACE("findEmAsmConsts: no start/stop symbols\n");
+    return {};
   }
 
-  // Newer version of emscripten export this symbols and we
-  // can use it ot find all the EM_ASM constants.   Sadly __start_em_asm and
-  // __stop_em_asm don't alwasy mark the start and end of segment because in
-  // dynamic linking we merge all data segments into one.
+  if (!start || !end) {
+    Fatal() << "Found only one of __start_em_asm and __stop_em_asm";
+  }
+
   std::vector<AsmConst> asmConsts;
   StringConstantTracker stringTracker(wasm);
   Address startAddress = getExportedAddress(wasm, start);
@@ -413,11 +297,11 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       return;
     }
 
-    int64_t address;
+    Address address;
     if (curr->kind == ExternalKind::Global) {
       auto* global = wasm.getGlobal(curr->value);
       Const* const_ = global->init->cast<Const>();
-      address = const_->value.getInteger();
+      address = const_->value.getUnsigned();
     } else if (curr->kind == ExternalKind::Function) {
       auto* func = wasm.getFunction(curr->value);
       // An EM_JS has a single const in the body. Typically it is just returned,
@@ -429,7 +313,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
                 << curr->name;
       }
       auto* addrConst = consts.list[0];
-      address = addrConst->value.getInteger();
+      address = addrConst->value.getUnsigned();
     } else {
       return;
     }
@@ -509,19 +393,11 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   if (!emJsWalker.codeByName.empty()) {
     meta << "  \"emJsFuncs\": {";
     commaFirst = true;
-    for (auto& pair : emJsWalker.codeByName) {
-      auto& name = pair.first;
-      auto& code = pair.second;
+    for (auto& [name, code] : emJsWalker.codeByName) {
       meta << nextElement();
       meta << '"' << name << "\": \"" << escape(code) << '"';
     }
     meta << "\n  },\n";
-  }
-
-  if (!wasm.tables.empty()) {
-    meta << "  \"tableSize\": " << wasm.tables[0]->initial.addr << ",\n";
-  } else {
-    meta << "  \"tableSize\": 0,\n";
   }
 
   // Avoid adding duplicate imports to `declares' or `invokeFuncs`.  Even
@@ -545,12 +421,10 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   });
   meta << "\n  ],\n";
 
-  meta << "  \"externs\": [";
+  meta << "  \"globalImports\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    if (!(import->module == ENV && import->name == STACK_INIT)) {
-      meta << nextElement() << "\"_" << import->base.str << '"';
-    }
+    meta << nextElement() << '"' << import->base.str << '"';
   });
   meta << "\n  ],\n";
 
@@ -569,9 +443,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     for (const auto& ex : wasm.exports) {
       if (ex->kind == ExternalKind::Global) {
         const Global* g = wasm.getGlobal(ex->value);
-        assert(g->type == Type::i32);
+        assert(g->type == Type::i32 || g->type == Type::i64);
         Const* init = g->init->cast<Const>();
-        uint32_t addr = init->value.geti32();
+        uint64_t addr = init->value.getInteger();
         meta << nextElement() << '"' << ex->name.str << "\" : \"" << addr
              << '"';
       }
@@ -638,7 +512,7 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     if (!seg.offset->is<Const>()) {
       Fatal() << "separating relocatable segments not implemented";
     }
-    size_t offset = seg.offset->cast<Const>()->value.geti32();
+    size_t offset = seg.offset->cast<Const>()->value.getInteger();
     offset -= base;
     size_t fill = offset - lastEnd;
     if (fill > 0) {

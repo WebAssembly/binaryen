@@ -26,15 +26,13 @@
 // functions. The secondary module imports all of its dependencies from the
 // primary module.
 //
-// This code currently makes a few assumptions about the modules that will be
+// This code currently makes a couple assumptions about the modules that will be
 // split and will fail assertions if those assumptions are not true.
 //
 //   1) It assumes that mutable-globals are allowed.
 //
 //   2) It assumes that either all segment offsets are constants or there is
 //      exactly one segment that may have a non-constant offset.
-//
-//   3) It assumes that each function appears in the table at most once.
 //
 // These requirements will be relaxed as necessary in the future, but for now
 // this code should be considered experimental and used with care.
@@ -44,9 +42,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace ModuleSplitting {
+namespace wasm::ModuleSplitting {
 
 struct Config {
   // The set of functions to keep in the primary module. All others are split
@@ -64,13 +60,20 @@ struct Config {
   // used to differentiate between "real" exports of the module and exports that
   // should only be consumed by the secondary module.
   std::string newExportPrefix = "";
+  // Whether the export names of newly created exports should be minimized. If
+  // false, the original function names will be used (after `newExportPrefix`)
+  // as the new export names.
+  bool minimizeNewExportNames = false;
+};
+
+struct Results {
+  std::unique_ptr<Module> secondary;
+  std::map<size_t, Name> placeholderMap;
 };
 
 // Returns the new secondary module and modifies the `primary` module in place.
-std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config);
+Results splitFunctions(Module& primary, const Config& config);
 
-} // namespace ModuleSplitting
-
-} // namespace wasm
+} // namespace wasm::ModuleSplitting
 
 #endif // wasm_ir_module_splitting_h

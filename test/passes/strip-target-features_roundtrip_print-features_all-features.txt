@@ -11,15 +11,17 @@
 --enable-gc
 --enable-memory64
 --enable-typed-function-references
+--enable-relaxed-simd
+--enable-extended-const
 (module
- (type $none_=>_v128_externref (func (result v128 externref)))
- (func $foo (result v128 externref)
+ (type $none_=>_v128_anyref (func (result v128 anyref)))
+ (func $foo (result v128 anyref)
   (tuple.make
    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
-   (ref.null extern)
+   (ref.null any)
   )
  )
- (func $bar (result v128 externref)
+ (func $bar (result v128 anyref)
   (return_call $foo)
  )
 )

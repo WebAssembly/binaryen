@@ -1,6 +1,6 @@
 (module
  (type $i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64) (result i64)))
- (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
+ (type $vijfd (func (param i32 i64 f32 f64)))
  (table $0 10 10 funcref)
  (elem (i32.const 0) $byn$fpcast-emu$a)
  (func $a (param $x i32) (param $y i64) (param $z f32) (param $w f64)

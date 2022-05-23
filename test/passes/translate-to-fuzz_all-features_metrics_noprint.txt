@@ -1,39 +1,42 @@
 total
- [events]       : 2       
- [exports]      : 12      
- [funcs]        : 14      
+ [exports]      : 8       
+ [funcs]        : 9       
  [globals]      : 6       
  [imports]      : 5       
  [memory-data]  : 22      
- [table-data]   : 2       
+ [table-data]   : 4       
  [tables]       : 1       
- [total]        : 555     
- [vars]         : 42      
- AtomicFence    : 2       
+ [tags]         : 0       
+ [total]        : 650     
+ [vars]         : 12      
+ AtomicCmpxchg  : 1       
+ AtomicFence    : 1       
  AtomicNotify   : 1       
- Binary         : 72      
- Block          : 60      
- Break          : 16      
- Call           : 34      
- CallRef        : 1       
- Const          : 109     
- DataDrop       : 1       
- Drop           : 5       
- GlobalGet      : 28      
- GlobalSet      : 14      
- If             : 25      
- Load           : 20      
- LocalGet       : 53      
- LocalSet       : 26      
- Loop           : 3       
- MemoryFill     : 1       
- Nop            : 2       
- RefEq          : 1       
- RefFunc        : 2       
- RefNull        : 26      
- Return         : 16      
+ Binary         : 83      
+ Block          : 72      
+ Break          : 5       
+ Call           : 23      
+ CallRef        : 4       
+ Const          : 141     
+ Drop           : 3       
+ GlobalGet      : 39      
+ GlobalSet      : 21      
+ I31New         : 10      
+ If             : 31      
+ Load           : 24      
+ LocalGet       : 49      
+ LocalSet       : 25      
+ Loop           : 11      
+ Nop            : 9       
+ RefEq          : 2       
+ RefFunc        : 12      
+ RefIs          : 1       
+ RefNull        : 2       
+ Return         : 27      
+ SIMDExtract    : 1       
  Select         : 2       
- Store          : 3       
- TupleExtract   : 4       
- TupleMake      : 6       
- Unary          : 22      
+ Store          : 2       
+ StructNew      : 4       
+ TupleExtract   : 2       
+ TupleMake      : 7       
+ Unary          : 35      

@@ -1,17 +1,17 @@
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (param i32)))
+ (type $1 (func))
+ (type $2 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_f64_i32_f64_f32_f32_=>_i32 (func (param i32 f64 i32 f64 f32 f32) (result i32)))
  (type $f32_i32_f32_i32_i32_f64_f32_=>_i32 (func (param f32 i32 f32 i32 i32 f64 f32) (result i32)))
  (type $i32_=>_i64 (func (param i32) (result i64)))
  (type $none_=>_f32 (func (result f32)))
  (type $i32_=>_f32 (func (param i32) (result f32)))
+ (type $i32_f64_i32_f64_f32_f32_=>_i32 (func (param i32 f64 i32 f64 f32 f32) (result i32)))
  (memory $0 256 256)
  (func $b0-yes (param $i1 i32)
   (block $topmost
@@ -1669,6 +1669,109 @@
   )
   (unreachable)
  )
+ (func $br-to-table-initial-tee (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (i32.sub
+        (local.tee $a
+         (i32.add
+          (i32.const 10)
+          (i32.const 1)
+         )
+        )
+        (i32.const 10)
+       )
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-initial-tee-wrong-index (param $a i32)
+  (local $b i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (local.tee $a
+        (i32.const 99)
+       )
+       (i32.const 10)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (local.get $b)
+       (i32.const 11)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (local.get $b)
+       (i32.const 12)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-eqz (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (local.get $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-tee-eqz (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (local.tee $a
+        (i32.add
+         (i32.const 0)
+         (i32.const 1)
+        )
+       )
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
  (func $tiny-switch
   (if
    (i32.const 0)
@@ -1988,17 +2091,16 @@
    )
   )
  )
- (func $drop-restructure-if-bad (param $x i32) (param $y i32) (result i32)
-  (block $label$2 (result i32)
-   (drop
-    (br_if $label$2
-     (local.tee $y
-      (local.get $x)
-     )
-     (local.get $y)
-    )
+ (func $drop-restructure-select (param $x i32) (param $y i32) (result i32)
+  (select
+   (local.tee $y
+    (local.get $x)
    )
-   (i32.const 0)
+   (block $label$2 (result i32)
+    (nop)
+    (i32.const 0)
+   )
+   (local.get $y)
   )
  )
  (func $drop-restructure-if-bad-2 (param $x i32) (param $y i32) (result i32)
@@ -2253,18 +2355,18 @@
  )
  (func $selectify (param $x i32)
   (drop
-   (if (result i32)
+   (select
+    (i32.mul
+     (i32.const 2)
+     (i32.const 3)
+    )
+    (i32.mul
+     (i32.const 2)
+     (i32.const 3)
+    )
     (i32.eq
      (local.get $x)
      (i32.const 1)
-    )
-    (i32.mul
-     (i32.const 2)
-     (i32.const 3)
-    )
-    (i32.mul
-     (i32.const 2)
-     (i32.const 3)
     )
    )
   )

@@ -66,18 +66,6 @@ function asmFunc(env) {
   return ~~$0 >>> 0 | 0;
  }
  
- function $7($0) {
-  $0 = Math_fround($0);
-  i64toi32_i32$HIGH_BITS = Math_fround(Math_abs($0)) >= Math_fround(1.0) ? ($0 > Math_fround(0.0) ? ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) >>> 0 : ~~Math_fround(Math_ceil(Math_fround(Math_fround($0 - Math_fround(~~$0 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10)))) >>> 0) : 0;
-  return ~~$0 >>> 0 | 0;
- }
- 
- function $9($0) {
-  $0 = +$0;
-  i64toi32_i32$HIGH_BITS = Math_abs($0) >= 1.0 ? ($0 > 0.0 ? ~~Math_min(Math_floor($0 * 2.3283064365386963e-10), 4294967295.0) >>> 0 : ~~Math_ceil(($0 - +(~~$0 >>> 0 >>> 0)) * 2.3283064365386963e-10) >>> 0) : 0;
-  return ~~$0 >>> 0 | 0;
- }
- 
  function $11($0) {
   $0 = $0 | 0;
   return Math_fround(Math_fround($0 | 0));
@@ -135,17 +123,15 @@ function asmFunc(env) {
  }
  
  function legalstub$7($0) {
-  var $1 = 0;
-  $1 = $7($0);
+  i64toi32_i32$HIGH_BITS = Math_fround(Math_abs($0)) >= Math_fround(1.0) ? ~~($0 > Math_fround(0.0) ? Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) : Math_fround(Math_ceil(Math_fround(Math_fround($0 - Math_fround(~~$0 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10))))) >>> 0 : 0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return ~~$0 >>> 0;
  }
  
  function legalstub$9($0) {
-  var $1 = 0;
-  $1 = $9($0);
+  i64toi32_i32$HIGH_BITS = Math_abs($0) >= 1.0 ? ~~($0 > 0.0 ? Math_min(Math_floor($0 * 2.3283064365386963e-10), 4294967295.0) : Math_ceil(($0 - +(~~$0 >>> 0 >>> 0)) * 2.3283064365386963e-10)) >>> 0 : 0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return ~~$0 >>> 0;
  }
  
  function legalstub$12($0, $1) {

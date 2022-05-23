@@ -22,6 +22,7 @@
 // differ on wasm's nondeterminism around NaNs.
 //
 
+#include "ir/names.h"
 #include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -31,6 +32,9 @@ namespace wasm {
 
 struct DeNaN : public WalkerPass<
                  ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>> {
+
+  Name deNan32, deNan64;
+
   void visitExpression(Expression* expr) {
     // If the expression returns a floating-point value, ensure it is not a
     // NaN. If we can do this at compile time, do it now, which is useful for
@@ -53,13 +57,13 @@ struct DeNaN : public WalkerPass<
       if (c && c->value.isNaN()) {
         replacement = builder.makeConst(float(0));
       } else {
-        replacement = builder.makeCall("deNan32", {expr}, Type::f32);
+        replacement = builder.makeCall(deNan32, {expr}, Type::f32);
       }
     } else if (expr->type == Type::f64) {
       if (c && c->value.isNaN()) {
         replacement = builder.makeConst(double(0));
       } else {
-        replacement = builder.makeCall("deNan64", {expr}, Type::f64);
+        replacement = builder.makeCall(deNan64, {expr}, Type::f64);
       }
     }
     if (replacement) {
@@ -86,12 +90,12 @@ struct DeNaN : public WalkerPass<
         fixes.push_back(builder.makeLocalSet(
           i,
           builder.makeCall(
-            "deNan32", {builder.makeLocalGet(i, Type::f32)}, Type::f32)));
+            deNan32, {builder.makeLocalGet(i, Type::f32)}, Type::f32)));
       } else if (func->getLocalType(i) == Type::f64) {
         fixes.push_back(builder.makeLocalSet(
           i,
           builder.makeCall(
-            "deNan64", {builder.makeLocalGet(i, Type::f64)}, Type::f64)));
+            deNan64, {builder.makeLocalGet(i, Type::f64)}, Type::f64)));
       }
     }
     if (!fixes.empty()) {
@@ -105,13 +109,18 @@ struct DeNaN : public WalkerPass<
     }
   }
 
-  void visitModule(Module* module) {
-    // Add helper functions.
+  void doWalkModule(Module* module) {
+    // Pick names for the helper functions.
+    deNan32 = Names::getValidFunctionName(*module, "deNan32");
+    deNan64 = Names::getValidFunctionName(*module, "deNan64");
+
+    ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>::doWalkModule(
+      module);
+
+    // Add helper functions after the walk, so they are not instrumented.
     Builder builder(*module);
     auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
-      auto* func = new Function;
-      func->name = name;
-      func->sig = Signature(type, type);
+      auto func = Builder::makeFunction(name, Signature(type, type), {});
       // Compare the value to itself to check if it is a NaN, and return 0 if
       // so:
       //
@@ -128,10 +137,10 @@ struct DeNaN : public WalkerPass<
           op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
         builder.makeLocalGet(0, type),
         builder.makeConst(literal));
-      module->addFunction(func);
+      module->addFunction(std::move(func));
     };
-    add("deNan32", Type::f32, Literal(float(0)), EqFloat32);
-    add("deNan64", Type::f64, Literal(double(0)), EqFloat64);
+    add(deNan32, Type::f32, Literal(float(0)), EqFloat32);
+    add(deNan64, Type::f64, Literal(double(0)), EqFloat64);
   }
 };
 

@@ -24,11 +24,12 @@
 // a less beneficial position for compression, that is, mutually-compressible
 // functions are no longer together (when they were before, in the original
 // order, the has some natural tendency one way or the other). TODO: investigate
-// similarity ordering here.
+// similarity ordering here (see #4322)
 //
 
 #include <memory>
 
+#include <ir/element-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -70,13 +71,8 @@ struct ReorderFunctions : public Pass {
     for (auto& curr : module->exports) {
       counts[curr->value]++;
     }
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        for (auto& curr : segment.data) {
-          counts[curr]++;
-        }
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(
+      module, [&](Name& name) { counts[name]++; });
     // sort
     std::sort(module->functions.begin(),
               module->functions.end(),

@@ -151,6 +151,7 @@ struct LineTableOpcode {
 };
 
 struct LineTable {
+  uint64_t Position; // XXX BINARYEN: the binary location in .debug_line
   InitialLength Length;
   uint16_t Version;
   uint64_t PrologueLength;

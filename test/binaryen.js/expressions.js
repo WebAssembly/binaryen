@@ -1079,7 +1079,7 @@ console.log("# SIMDShuffle");
   var left = module.v128.const([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
   var right = module.v128.const([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]);
   var mask = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-  const theSIMDShuffle = binaryen.SIMDShuffle(module.v8x16.shuffle(left, right, mask));
+  const theSIMDShuffle = binaryen.SIMDShuffle(module.i8x16.shuffle(left, right, mask));
   assert(theSIMDShuffle instanceof binaryen.SIMDShuffle);
   assert(theSIMDShuffle instanceof binaryen.Expression);
   assert(theSIMDShuffle.left === left);
@@ -1101,7 +1101,7 @@ console.log("# SIMDShuffle");
   assert(
     theSIMDShuffle.toText()
     ==
-    "(v8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
+    "(i8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
   );
 
   module.dispose();
@@ -1124,23 +1124,11 @@ console.log("# SIMDTernary");
   assert(theSIMDTernary.c === c);
   assert(theSIMDTernary.type === binaryen.v128);
 
-  theSIMDTernary.op = op = binaryen.Operations.QFMAVecF64x2;
-  assert(theSIMDTernary.op === op);
-  theSIMDTernary.a = a = module.v128.const([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]);
-  assert(theSIMDTernary.a === a);
-  theSIMDTernary.b = b = module.v128.const([2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]);
-  assert(theSIMDTernary.b === b);
-  theSIMDTernary.c = c = module.v128.const([3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]);
-  assert(theSIMDTernary.c === c);
-  theSIMDTernary.type = binaryen.f64;
-  theSIMDTernary.finalize();
-  assert(theSIMDTernary.type === binaryen.v128);
-
-  console.log(theSIMDTernary.toText());
+  console.log(theSIMDTernary.toText() + "\n");
   assert(
     theSIMDTernary.toText()
     ==
-    "(f64x2.qfma\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n (v128.const i32x4 0x03030303 0x03030303 0x03030303 0x03030303)\n)\n"
+    "(v128.bitselect\n (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)\n (v128.const i32x4 0x05040302 0x09080706 0x0d0c0b0a 0x11100f0e)\n (v128.const i32x4 0x06050403 0x0a090807 0x0e0d0c0b 0x1211100f)\n)\n"
   );
 
   module.dispose();
@@ -1185,11 +1173,11 @@ console.log("# SIMDLoad");
 (function testSIMDLoad() {
   const module = new binaryen.Module();
 
-  var op = binaryen.Operations.LoadExtSVec8x8ToVecI16x8;
+  var op = binaryen.Operations.Load8x8SVec128;
   var offset = 16;
   var align = 2;
   var ptr = module.i32.const(1);
-  const theSIMDLoad = binaryen.SIMDLoad(module.i16x8.load8x8_s(offset, align, ptr));
+  const theSIMDLoad = binaryen.SIMDLoad(module.v128.load8x8_s(offset, align, ptr));
   assert(theSIMDLoad instanceof binaryen.SIMDLoad);
   assert(theSIMDLoad instanceof binaryen.Expression);
   assert(theSIMDLoad.offset === offset);
@@ -1197,7 +1185,7 @@ console.log("# SIMDLoad");
   assert(theSIMDLoad.ptr === ptr);
   assert(theSIMDLoad.type === binaryen.v128);
 
-  theSIMDLoad.op = op = binaryen.Operations.LoadSplatVec8x16;
+  theSIMDLoad.op = op = binaryen.Operations.Load8SplatVec128;
   assert(theSIMDLoad.op === op);
   theSIMDLoad.offset = offset = 32;
   assert(theSIMDLoad.offset === offset);
@@ -1213,7 +1201,69 @@ console.log("# SIMDLoad");
   assert(
     theSIMDLoad.toText()
     ==
-    "(v8x16.load_splat offset=32 align=4\n (i32.const 2)\n)\n"
+    "(v128.load8_splat offset=32 align=4\n (i32.const 2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# SIMDLoadStoreLane");
+(function testSIMDLoadStoreLane() {
+  const module = new binaryen.Module();
+
+  var op = binaryen.Operations.Load8LaneVec128;
+  var offset = 16;
+  var index = 1;
+  var align = 1;
+  var ptr = module.i32.const(1);
+  var vec = module.v128.const([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
+  const theSIMDLoadStoreLane = binaryen.SIMDLoadStoreLane(module.v128.load8_lane(offset, align, index, ptr, vec));
+  assert(theSIMDLoadStoreLane instanceof binaryen.SIMDLoadStoreLane);
+  assert(theSIMDLoadStoreLane instanceof binaryen.Expression);
+  assert(theSIMDLoadStoreLane.op === op);
+  assert(theSIMDLoadStoreLane.offset === offset);
+  assert(theSIMDLoadStoreLane.align === align);
+  assert(theSIMDLoadStoreLane.index === index);
+  assert(theSIMDLoadStoreLane.ptr === ptr);
+  assert(theSIMDLoadStoreLane.vec === vec);
+  assert(theSIMDLoadStoreLane.type === binaryen.v128);
+  assert(theSIMDLoadStoreLane.store === false);
+
+  theSIMDLoadStoreLane.op = op = binaryen.Operations.Load16LaneVec128;
+  assert(theSIMDLoadStoreLane.op === op);
+  theSIMDLoadStoreLane.offset = offset = 32;
+  assert(theSIMDLoadStoreLane.offset === offset);
+  theSIMDLoadStoreLane.align = align = 2;
+  assert(theSIMDLoadStoreLane.align === align);
+  theSIMDLoadStoreLane.index = index = 2;
+  assert(theSIMDLoadStoreLane.index === index);
+  theSIMDLoadStoreLane.ptr = ptr = module.i32.const(2);
+  assert(theSIMDLoadStoreLane.ptr === ptr);
+  theSIMDLoadStoreLane.vec = vec = module.v128.const([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]);
+  assert(theSIMDLoadStoreLane.vec === vec);
+  theSIMDLoadStoreLane.type = binaryen.f64;
+  theSIMDLoadStoreLane.finalize();
+  assert(theSIMDLoadStoreLane.type === binaryen.v128);
+
+  console.log(theSIMDLoadStoreLane.toText());
+  assert(
+    theSIMDLoadStoreLane.toText()
+    ==
+    "(v128.load16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
+  );
+
+  theSIMDLoadStoreLane.op = op = binaryen.Operations.Store16LaneVec128;
+  assert(theSIMDLoadStoreLane.op === op);
+  theSIMDLoadStoreLane.type = binaryen.f64;
+  assert(theSIMDLoadStoreLane.store === true);
+  theSIMDLoadStoreLane.finalize();
+  assert(theSIMDLoadStoreLane.type === binaryen.none);
+
+  console.log(theSIMDLoadStoreLane.toText());
+  assert(
+    theSIMDLoadStoreLane.toText()
+    ==
+    "(v128.store16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
   );
 
   module.dispose();
@@ -1359,13 +1409,18 @@ console.log("# RefIs");
 (function testRefIs() {
   const module = new binaryen.Module();
 
+  var op = binaryen.Operations.RefIsNull;
   var value = module.local.get(1, binaryen.externref);
   const theRefIs = binaryen.RefIs(module.ref.is_null(value));
   assert(theRefIs instanceof binaryen.RefIs);
   assert(theRefIs instanceof binaryen.Expression);
+  assert(theRefIs.op === op);
   assert(theRefIs.value === value);
   assert(theRefIs.type === binaryen.i32);
 
+  theRefIs.op = op = binaryen.Operations.RefIsFunc;
+  assert(theRefIs.op === op);
+  theRefIs.op = op = binaryen.Operations.RefIsNull;
   theRefIs.value = value = module.local.get(2, binaryen.externref);
   assert(theRefIs.value === value);
   theRefIs.type = binaryen.f64;
@@ -1398,6 +1453,54 @@ console.log("# RefIs");
   module.dispose();
 })();
 
+console.log("# RefAs");
+(function testRefAs() {
+  const module = new binaryen.Module();
+
+  var op = binaryen.Operations.RefAsNonNull;
+  var value = module.local.get(1, binaryen.anyref);
+  const theRefAs = binaryen.RefAs(module.ref.as_non_null(value));
+  assert(theRefAs instanceof binaryen.RefAs);
+  assert(theRefAs instanceof binaryen.Expression);
+  assert(theRefAs.op === op);
+  assert(theRefAs.value === value);
+  assert(theRefAs.type !== binaryen.i32); // TODO: === (ref any)
+
+  theRefAs.op = op = binaryen.Operations.RefAsFunc;
+  assert(theRefAs.op === op);
+  theRefAs.op = op = binaryen.Operations.RefAsNull;
+  theRefAs.value = value = module.local.get(2, binaryen.anyref);
+  assert(theRefAs.value === value);
+  theRefAs.type = binaryen.f64;
+  theRefAs.finalize();
+  assert(theRefAs.type !== binaryen.f64); // TODO: === (ref any)
+
+  console.log(theRefAs.toText());
+  assert(
+    theRefAs.toText()
+    ==
+    "(ref.as_non_null\n (local.get $2)\n)\n"
+  );
+
+  assert(
+    binaryen.RefAs(module.ref.as_func(value)).toText()
+    ==
+    "(ref.as_func\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefAs(module.ref.as_data(value)).toText()
+    ==
+    "(ref.as_data\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefAs(module.ref.as_i31(value)).toText()
+    ==
+    "(ref.as_i31\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# RefFunc");
 (function testRefFunc() {
   const module = new binaryen.Module();
@@ -1407,7 +1510,9 @@ console.log("# RefFunc");
   assert(theRefFunc instanceof binaryen.RefFunc);
   assert(theRefFunc instanceof binaryen.Expression);
   assert(theRefFunc.func === func);
-  assert(theRefFunc.type === binaryen.funcref);
+  // TODO: check the type. the type is (ref func), that is, a non-nullable func,
+  //       which differs from funcref. we don't have the ability to create such
+  //       a type in the C/JS APIs yet.
 
   theRefFunc.func = func = "b";
   assert(theRefFunc.func === func);
@@ -1460,22 +1565,22 @@ console.log("# RefEq");
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
-  module.addEvent("event1", 0, binaryen.none, binaryen.none);
-  module.addEvent("event2", 0, binaryen.none, binaryen.none);
-  module.addEvent("event3", 0, binaryen.none, binaryen.none);
+  module.addTag("tag1", 0, binaryen.none, binaryen.none);
+  module.addTag("tag2", 0, binaryen.none, binaryen.none);
+  module.addTag("tag3", 0, binaryen.none, binaryen.none);
 
   var body = module.i32.const(1);
   var catchBodies = [
     module.i32.const(2),
     module.i32.const(3)
   ];
-  const theTry = binaryen.Try(module.try('', body, ["event1"], catchBodies, ''));
+  const theTry = binaryen.Try(module.try('', body, ["tag1"], catchBodies, ''));
   assert(theTry instanceof binaryen.Try);
   assert(theTry instanceof binaryen.Expression);
   assert(theTry.body === body);
   assertDeepEqual(theTry.catchBodies, catchBodies);
   assert(theTry.type === binaryen.i32);
-  assert(theTry.getNumCatchEvents() == 1);
+  assert(theTry.getNumCatchTags() == 1);
   assert(theTry.getNumCatchBodies() == 2);
   assert(theTry.hasCatchAll() == 1);
   console.log(theTry.toText());
@@ -1491,31 +1596,31 @@ console.log("# Try");
   assertDeepEqual(theTry.getCatchBodies(), catchBodies);
   console.log(theTry.toText());
 
-  theTry.insertCatchEventAt(1, "event2");
+  theTry.insertCatchTagAt(1, "tag2");
   theTry.insertCatchBodyAt(0, module.i32.const(6));
-  assert(theTry.getNumCatchEvents() == 2);
+  assert(theTry.getNumCatchTags() == 2);
   assert(theTry.getNumCatchBodies() == 2);
   assert(theTry.hasCatchAll() == 0);
   console.log(theTry.toText());
 
-  assert(theTry.removeCatchEventAt(1) == "event2");
+  assert(theTry.removeCatchTagAt(1) == "tag2");
   theTry.removeCatchBodyAt(1);
-  assert(theTry.getNumCatchEvents() == 1);
+  assert(theTry.getNumCatchTags() == 1);
   assert(theTry.getNumCatchBodies() == 1);
   console.log(theTry.toText());
 
-  theTry.appendCatchEvent("event3");
+  theTry.appendCatchTag("tag3");
   theTry.appendCatchBody(module.drop(module.i32.const(7)));
-  assert(theTry.getCatchEventAt(0) == "event1");
-  assert(theTry.getCatchEventAt(1) == "event3");
-  theTry.setCatchEvents(["event2", "event3"]);
-  assertDeepEqual(theTry.getCatchEvents(), ["event2", "event3"]);
+  assert(theTry.getCatchTagAt(0) == "tag1");
+  assert(theTry.getCatchTagAt(1) == "tag3");
+  theTry.setCatchTags(["tag2", "tag3"]);
+  assertDeepEqual(theTry.getCatchTags(), ["tag2", "tag3"]);
   theTry.setCatchBodies([module.i32.const(8), module.i32.const(9)]);
-  assert(theTry.getCatchEventAt(0) == "event2");
-  assert(theTry.getCatchEventAt(1) == "event3");
-  theTry.setCatchEventAt(1, "event1");
+  assert(theTry.getCatchTagAt(0) == "tag2");
+  assert(theTry.getCatchTagAt(1) == "tag3");
+  theTry.setCatchTagAt(1, "tag1");
   theTry.setCatchBodyAt(1, module.i32.const(10));
-  assert(theTry.getCatchEventAt(1) == "event1");
+  assert(theTry.getCatchTagAt(1) == "tag1");
   console.log(theTry.toText());
 
   theTry.type = binaryen.f64;
@@ -1538,20 +1643,20 @@ console.log("# Throw");
 (function testThrow() {
   const module = new binaryen.Module();
 
-  var event = "foo";
+  var tag = "foo";
   var operands = [
     module.i32.const(1),
     module.i32.const(2)
   ];
-  const theThrow = binaryen.Throw(module.throw(event, operands));
+  const theThrow = binaryen.Throw(module.throw(tag, operands));
   assert(theThrow instanceof binaryen.Throw);
   assert(theThrow instanceof binaryen.Expression);
-  assert(theThrow.event === event);
+  assert(theThrow.tag === tag);
   assertDeepEqual(theThrow.operands, operands);
   assert(theThrow.type === binaryen.unreachable);
 
-  theThrow.event = "bar";
-  assert(theThrow.event === "bar");
+  theThrow.tag = "bar";
+  assert(theThrow.tag === "bar");
   theThrow.operands = operands = [
     module.i32.const(3), // set
     module.i32.const(4), // set

@@ -1,0 +1,14 @@
+;; Test that we show a warning on an empty local name, and do not crash.
+;;
+;; The binary contains this, processed by wabt with debug names:
+;;
+;;   (module
+;;     (func $foo (import "imports" "foo") (param i32)))
+;;
+;; Wabt emits a name for that parameter, but it is the empty string. See
+;; https://github.com/WebAssembly/wabt/issues/1799
+
+;; RUN: wasm-opt %s.wasm 2>&1 | filecheck %s
+
+;; CHECK: warning: empty local name at index 0 in function foo
+

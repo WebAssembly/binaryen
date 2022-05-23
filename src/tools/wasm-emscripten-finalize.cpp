@@ -47,6 +47,7 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapUrl;
   std::string dataSegmentFile;
   bool emitBinary = true;
+  bool emitMetadata = true;
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
@@ -60,12 +61,16 @@ int main(int argc, const char* argv[]) {
   bool noDynCalls = false;
   bool onlyI64DynCalls = false;
 
+  const std::string WasmEmscriptenFinalizeOption =
+    "wasm-emscripten-finalize options";
+
   ToolOptions options("wasm-emscripten-finalize",
                       "Performs Emscripten-specific transforms on .wasm files");
   options
     .add("--output",
          "-o",
          "Output file",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::One,
          [&outfile](Options*, const std::string& argument) {
            outfile = argument;
@@ -74,48 +79,49 @@ int main(int argc, const char* argv[]) {
     .add("--debuginfo",
          "-g",
          "Emit names section in wasm binary (or full debuginfo in wast)",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&debugInfo](Options*, const std::string&) { debugInfo = true; })
     .add("--dwarf",
          "",
          "Update DWARF debug info",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&DWARF](Options*, const std::string&) { DWARF = true; })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file. "
          "In this mode if no output file is specified, we write to stdout.",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&emitBinary](Options*, const std::string&) { emitBinary = false; })
+    .add(
+      "--no-emit-metadata",
+      "-n",
+      "Skip the writing to emscripten metadata JSON to stdout.",
+      WasmEmscriptenFinalizeOption,
+      Options::Arguments::Zero,
+      [&emitMetadata](Options*, const std::string&) { emitMetadata = false; })
     .add("--global-base",
          "",
          "The address at which static globals were placed",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::One,
          [&globalBase](Options*, const std::string& argument) {
            globalBase = std::stoull(argument);
          })
-    // TODO(sbc): Remove this one this argument is no longer passed by
-    // emscripten. See https://github.com/emscripten-core/emscripten/issues/8905
-    .add("--initial-stack-pointer",
-         "",
-         "ignored - will be removed in a future release",
-         Options::Arguments::One,
-         [](Options*, const std::string& argument) {})
     .add("--side-module",
          "",
          "Input is an emscripten side module",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
          })
-    .add("--new-pic-abi",
-         "",
-         "Use new/llvm PIC abi",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) {})
     .add("--input-source-map",
          "-ism",
          "Consume source map from the specified file",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::One,
          [&inputSourceMapFilename](Options* o, const std::string& argument) {
            inputSourceMapFilename = argument;
@@ -124,6 +130,7 @@ int main(int argc, const char* argv[]) {
          "-nj",
          "Do not fully legalize (i64->i32, "
          "f32->f64) the imports and exports for interfacing with JS",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&legalizeJavaScriptFFI](Options* o, const std::string&) {
            legalizeJavaScriptFFI = false;
@@ -133,11 +140,13 @@ int main(int argc, const char* argv[]) {
          "Assume JS will use wasm/JS BigInt integration, so wasm i64s will "
          "turn into JS BigInts, and there is no need for any legalization at "
          "all (not even minimal legalization of dynCalls)",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&bigInt](Options* o, const std::string&) { bigInt = true; })
     .add("--output-source-map",
          "-osm",
          "Emit source map to the specified file",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::One,
          [&outputSourceMapFilename](Options* o, const std::string& argument) {
            outputSourceMapFilename = argument;
@@ -145,6 +154,7 @@ int main(int argc, const char* argv[]) {
     .add("--output-source-map-url",
          "-osu",
          "Emit specified string as source map URL",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::One,
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
@@ -152,6 +162,7 @@ int main(int argc, const char* argv[]) {
     .add("--separate-data-segments",
          "",
          "Separate data segments to a file",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::One,
          [&dataSegmentFile](Options* o, const std::string& argument) {
            dataSegmentFile = argument;
@@ -159,6 +170,7 @@ int main(int argc, const char* argv[]) {
     .add("--check-stack-overflow",
          "",
          "Check for stack overflows every time the stack is extended",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&checkStackOverflow](Options* o, const std::string&) {
            checkStackOverflow = true;
@@ -167,6 +179,7 @@ int main(int argc, const char* argv[]) {
          "",
          "Emit a wasm file that does not depend on JS, as much as possible,"
          " using wasi and other standard conventions etc. where possible",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&standaloneWasm](Options* o, const std::string&) {
            standaloneWasm = true;
@@ -176,6 +189,7 @@ int main(int argc, const char* argv[]) {
          "Modify the wasm as little as possible. This is useful during "
          "development as we reduce the number of changes to the wasm, as it "
          "lets emscripten control how much modifications to do.",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&minimizeWasmChanges](Options* o, const std::string&) {
            minimizeWasmChanges = true;
@@ -183,11 +197,13 @@ int main(int argc, const char* argv[]) {
     .add("--no-dyncalls",
          "",
          "",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&noDynCalls](Options* o, const std::string&) { noDynCalls = true; })
     .add("--dyncalls-i64",
          "",
          "",
+         WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&onlyI64DynCalls](Options* o, const std::string&) {
            onlyI64DynCalls = true;
@@ -203,9 +219,31 @@ int main(int argc, const char* argv[]) {
     Fatal() << "Need to specify an infile\n";
   }
 
+  // We will write the modified wasm if the user asked us to, either by
+  // specifying an output file or requesting text output (which goes to stdout
+  // by default).
+  auto writeOutput = outfile.size() > 0 || !emitBinary;
+
   Module wasm;
+  options.applyFeatures(wasm);
   ModuleReader reader;
-  reader.setDWARF(DWARF);
+  // If we are not writing output then we definitely don't need to read debug
+  // info, as it does not affect the metadata we will emit. (However, if we
+  // emit output then definitely load the names section so that we roundtrip
+  // names properly.)
+  reader.setDebugInfo(writeOutput);
+  reader.setDWARF(DWARF && writeOutput);
+  if (!writeOutput) {
+    // If we are not writing the output then all we are doing is simple parsing
+    // of metadata from global parts of the wasm such as imports and exports. In
+    // that case, it is unnecessary to parse function contents which are the
+    // great bulk of the work, and we can skip all that.
+    // Note that the one case we do need function bodies for, pthreads + EM_ASM
+    // parsing, requires special handling. The start function has code that we
+    // parse in order to find the EM_ASMs, and for that reason the binary reader
+    // will still parse the start function even in this mode.
+    reader.setSkipFunctionBodies(true);
+  }
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
   } catch (ParseException& p) {
@@ -217,8 +255,6 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source map";
   }
-
-  options.applyFeatures(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);
@@ -277,18 +313,12 @@ int main(int argc, const char* argv[]) {
 
   passRunner.run();
 
-  if (sideModule) {
-    BYN_TRACE("finalizing as side module\n");
-    // The emscripten PIC ABI still expects a function named
-    // __post_instantiate to be exported by side module.
-    if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-      e->name = "__post_instantiate";
-    }
-  }
-
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata = generator.generateEmscriptenMetadata();
+  std::string metadata;
+  if (emitMetadata) {
+    metadata = generator.generateEmscriptenMetadata();
+  }
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
@@ -303,9 +333,7 @@ int main(int argc, const char* argv[]) {
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << wasm << '\n');
 
-  // Write the modified wasm if the user asked us to, either by specifying an
-  // output file, or requesting text output (which goes to stdout by default).
-  if (outfile.size() > 0 || !emitBinary) {
+  if (writeOutput) {
     Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
     ModuleWriter writer;
     writer.setDebugInfo(debugInfo);
@@ -316,7 +344,7 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
     writer.write(wasm, output);
-    if (!emitBinary) {
+    if (emitMetadata && !emitBinary) {
       output << "(;\n";
       output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
       output << ";)\n";
@@ -324,7 +352,7 @@ int main(int argc, const char* argv[]) {
   }
   // If we emit text then we emitted the metadata together with that text
   // earlier. Otherwise emit it to stdout.
-  if (emitBinary) {
+  if (emitMetadata && emitBinary) {
     std::cout << metadata;
   }
   return 0;

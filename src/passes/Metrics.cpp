@@ -22,11 +22,9 @@
 #include <wasm-binary.h>
 #include <wasm.h>
 
-using namespace std;
-
 namespace wasm {
 
-typedef map<const char*, int> Counts;
+typedef std::map<const char*, int> Counts;
 
 static Counts lastCounts;
 
@@ -61,7 +59,7 @@ struct Metrics
     counts["[imports]"] = imports.getNumImports();
     counts["[funcs]"] = imports.getNumDefinedFunctions();
     counts["[globals]"] = imports.getNumDefinedGlobals();
-    counts["[events]"] = imports.getNumDefinedEvents();
+    counts["[tags]"] = imports.getNumDefinedTags();
     counts["[exports]"] = module->exports.size();
     counts["[tables]"] = imports.getNumDefinedTables();
     // add memory and table
@@ -74,11 +72,13 @@ struct Metrics
     }
 
     Index size = 0;
+    ModuleUtils::iterActiveElementSegments(
+      *module, [&](ElementSegment* segment) { size += segment->data.size(); });
     for (auto& table : module->tables) {
       walkTable(table.get());
-      for (auto& segment : table->segments) {
-        size += segment.data.size();
-      }
+    }
+    for (auto& segment : module->elementSegments) {
+      walkElementSegment(segment.get());
     }
     if (!module->tables.empty()) {
       counts["[table-data]"] = size;
@@ -160,15 +160,21 @@ struct Metrics
   }
 
   void printCounts(std::string title) {
-    ostream& o = cout;
-    vector<const char*> keys;
+    using std::left;
+    using std::noshowpos;
+    using std::right;
+    using std::setw;
+    using std::showpos;
+
+    std::ostream& o = std::cout;
+    std::vector<const char*> keys;
     // add total
     int total = 0;
-    for (auto i : counts) {
-      keys.push_back(i.first);
+    for (auto& [key, value] : counts) {
+      keys.push_back(key);
       // total is of all the normal stuff, not the special [things]
-      if (i.first[0] != '[') {
-        total += i.second;
+      if (key[0] != '[') {
+        total += value;
       }
     }
     keys.push_back("[total]");

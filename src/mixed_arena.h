@@ -104,7 +104,7 @@ struct MixedArena {
         if (!allocated) {
           allocated = new MixedArena(); // has our thread id
         }
-        if (curr->next.compare_exchange_weak(seen, allocated)) {
+        if (curr->next.compare_exchange_strong(seen, allocated)) {
           // we replaced it, so we are the next in the chain
           // we can forget about allocated, it is owned by the chain now
           allocated = nullptr;

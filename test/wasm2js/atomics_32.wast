@@ -1,7 +1,7 @@
 (module
   (memory (shared 256 256))
-  (data passive "hello,")
-  (data passive "world!")
+  (data "hello,")
+  (data "world!")
   (func "test"
     (local $x i32)
     (local $y i64)

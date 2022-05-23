@@ -31,8 +31,8 @@ struct LocalGetCounter : public PostWalker<LocalGetCounter> {
 
   void analyze(Function* func) { analyze(func, func->body); }
   void analyze(Function* func, Expression* ast) {
+    num.clear();
     num.resize(func->getNumLocals());
-    std::fill(num.begin(), num.end(), 0);
     walk(ast);
   }
 
@@ -45,23 +45,21 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
   PassOptions& passOptions;
 
   LocalGetCounter* localGetCounter = nullptr;
-  FeatureSet features;
+  Module& module;
 
-  UnneededSetRemover(Function* func,
-                     PassOptions& passOptions,
-                     FeatureSet features)
-    : passOptions(passOptions), features(features) {
+  UnneededSetRemover(Function* func, PassOptions& passOptions, Module& module)
+    : passOptions(passOptions), module(module) {
     LocalGetCounter counter(func);
-    UnneededSetRemover inner(counter, func, passOptions, features);
+    UnneededSetRemover inner(counter, func, passOptions, module);
     removed = inner.removed;
   }
 
   UnneededSetRemover(LocalGetCounter& localGetCounter,
                      Function* func,
                      PassOptions& passOptions,
-                     FeatureSet features)
+                     Module& module)
     : passOptions(passOptions), localGetCounter(&localGetCounter),
-      features(features) {
+      module(module) {
     walk(func->body);
   }
 
@@ -96,7 +94,7 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
     auto* value = set->value;
     if (set->isTee()) {
       replaceCurrent(value);
-    } else if (EffectAnalyzer(passOptions, features, set->value)
+    } else if (EffectAnalyzer(passOptions, module, set->value)
                  .hasSideEffects()) {
       Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
       drop->value = value;

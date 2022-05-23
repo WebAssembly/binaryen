@@ -15,10 +15,9 @@
   "emJsFuncs": {
     "noarg": "(void)<::>{ out(\"no args works\"); }"
   },
-  "tableSize": 0,
   "declares": [
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
   ],

@@ -13,6 +13,10 @@
 ;; RUN: not wasm-split %s --instrument -o2 %t 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-OUT2
 
+;; --instrument cannot be used with --symbolmap
+;; RUN: not wasm-split %s --instrument --symbolmap 2>&1 \
+;; RUN:   | filecheck %s --check-prefix INSTRUMENT-SYMBOLMAP
+
 ;; --instrument cannot be used with --import-namespace
 ;; RUN: not wasm-split %s --instrument --import-namespace=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-IMPORT-NS
@@ -35,30 +39,62 @@
 
 ;; Split mode requires -o1 and -o2 rather than -o
 ;; RUN: not wasm-split %s -o %t 2>&1 \
-;; RUN:   | filecheck %s --check-prefix NO-INSTRUMENT-OUT
+;; RUN:   | filecheck %s --check-prefix SPLIT-OUT
 
 ;; --instrument is required to use --profile-export
 ;; RUN: not wasm-split %s --profile-export=foo 2>&1 \
-;; RUN:   | filecheck %s --check-prefix NO-INSTRUMENT-PROFILE-EXPORT
+;; RUN:   | filecheck %s --check-prefix SPLIT-PROFILE-EXPORT
 
-;; INSTRUMENT-PROFILE: error: --profile cannot be used with --instrument
+;; -S cannot be used with --merge-profiles
+;; RUN: not wasm-split %s --merge-profiles -S 2>&1 \
+;; RUN:   | filecheck %s --check-prefix MERGE-EMIT-TEXT
 
-;; INSTRUMENT-OUT1: error: primary output cannot be used with --instrument
+;; -g cannot be used with --merge-profiles
+;; RUN: not wasm-split %s --merge-profiles -g 2>&1 \
+;; RUN:   | filecheck %s --check-prefix MERGE-DEBUGINFO
 
-;; INSTRUMENT-OUT2: error: secondary output cannot be used with --instrument
+;; --profile cannot be used with --keep-funcs
+;; RUN: not wasm-split %s --profile=foo --keep-funcs=foo 2>&1 \
+;; RUN:   | filecheck %s --check-prefix PROFILE-KEEP
 
-;; INSTRUMENT-IMPORT-NS: error: --import-namespace cannot be used with --instrument
+;; --profile cannot be used with --split-funcs
+;; RUN: not wasm-split %s --profile=foo --split-funcs=foo 2>&1 \
+;; RUN:   | filecheck %s --check-prefix PROFILE-SPLIT
 
-;; INSTRUMENT-PLACEHOLDER-NS: error: --placeholder-namespace cannot be used with --instrument
+;; --keep-funcs cannot be used with --split-funcs
+;; RUN: not wasm-split %s  --keep-funcs=foo --split-funcs=foo 2>&1 \
+;; RUN:   | filecheck %s --check-prefix KEEP-SPLIT
 
-;; INSTRUMENT-EXPORT-PREFIX: error: --export-prefix cannot be used with --instrument
+;; INSTRUMENT-PROFILE: error: Option --profile cannot be used in instrument mode.
 
-;; INSTRUMENT-KEEP-FUNCS: error: --keep-funcs cannot be used with --instrument
+;; INSTRUMENT-OUT1: error: Option --primary-output cannot be used in instrument mode.
 
-;; INSTRUMENT-SPLIT-FUNCS: error: --split-funcs cannot be used with --instrument
+;; INSTRUMENT-OUT2: error: Option --secondary-output cannot be used in instrument mode.
 
-;; NO-INSTRUMENT-OUT: error: must provide separate primary and secondary output with -o1 and -o2
+;; INSTRUMENT-SYMBOLMAP: error: Option --symbolmap cannot be used in instrument mode.
 
-;; NO-INSTRUMENT-PROFILE-EXPORT: error: --profile-export must be used with --instrument
+;; INSTRUMENT-IMPORT-NS: error: Option --import-namespace cannot be used in instrument mode.
+
+;; INSTRUMENT-PLACEHOLDER-NS: error: Option --placeholder-namespace cannot be used in instrument mode.
+
+;; INSTRUMENT-EXPORT-PREFIX: error: Option --export-prefix cannot be used in instrument mode.
+
+;; INSTRUMENT-KEEP-FUNCS: error: Option --keep-funcs cannot be used in instrument mode.
+
+;; INSTRUMENT-SPLIT-FUNCS: error: Option --split-funcs cannot be used in instrument mode.
+
+;; SPLIT-OUT: error: Option --output cannot be used in split mode.
+
+;; SPLIT-PROFILE-EXPORT: error: Option --profile-export cannot be used in split mode.
+
+;; MERGE-EMIT-TEXT: error: Option --emit-text cannot be used in merge-profiles mode.
+
+;; MERGE-DEBUGINFO: error: Option --debuginfo cannot be used in merge-profiles mode.
+
+;; PROFILE-KEEP: error: Cannot use both --profile and --keep-funcs.
+
+;; PROFILE-SPLIT: error: Cannot use both --profile and --split-funcs.
+
+;; KEEP-SPLIT: error: Cannot use both --keep-funcs and --split-funcs.
 
 (module)

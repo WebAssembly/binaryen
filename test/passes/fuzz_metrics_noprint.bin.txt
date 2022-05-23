@@ -1,31 +1,32 @@
 total
- [events]       : 0       
- [exports]      : 35      
- [funcs]        : 45      
+ [exports]      : 39      
+ [funcs]        : 50      
  [globals]      : 7       
  [imports]      : 4       
  [memory-data]  : 4       
- [table-data]   : 16      
+ [table-data]   : 17      
  [tables]       : 1       
- [total]        : 9206    
- [vars]         : 186     
- Binary         : 715     
- Block          : 1348    
- Break          : 397     
- Call           : 285     
- CallIndirect   : 20      
- Const          : 1464    
- Drop           : 63      
- GlobalGet      : 749     
- GlobalSet      : 324     
- If             : 537     
- Load           : 171     
- LocalGet       : 888     
- LocalSet       : 610     
- Loop           : 248     
- Nop            : 190     
- Return         : 338     
- Select         : 77      
- Store          : 122     
- Unary          : 659     
+ [tags]         : 0       
+ [total]        : 3442    
+ [vars]         : 108     
+ Binary         : 299     
+ Block          : 495     
+ Break          : 110     
+ Call           : 193     
+ CallIndirect   : 29      
+ Const          : 650     
+ Drop           : 48      
+ GlobalGet      : 295     
+ GlobalSet      : 131     
+ If             : 183     
+ Load           : 79      
+ LocalGet       : 199     
+ LocalSet       : 153     
+ Loop           : 71      
+ Nop            : 45      
+ RefFunc        : 17      
+ Return         : 155     
+ Select         : 25      
+ Store          : 29      
+ Unary          : 235     
  Unreachable    : 1       

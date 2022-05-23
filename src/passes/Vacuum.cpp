@@ -69,7 +69,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   // i32.eqz returns the same type as it receives. But for an expression that
   // returns a different type, if the type matters then we cannot replace it.
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
-    FeatureSet features = getModule()->features;
     auto type = curr->type;
     // If the type is none, then we can never replace it with another type.
     if (type == Type::none) {
@@ -102,17 +101,17 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         return curr;
       }
       // Check if this expression itself has side effects, ignoring children.
-      EffectAnalyzer self(getPassOptions(), features);
+      EffectAnalyzer self(getPassOptions(), *getModule());
       self.visit(curr);
-      if (self.hasSideEffects()) {
+      if (self.hasUnremovableSideEffects()) {
         return curr;
       }
       // The result isn't used, and this has no side effects itself, so we can
       // get rid of it. However, the children may have side effects.
       SmallVector<Expression*, 1> childrenWithEffects;
       for (auto* child : ChildIterator(curr)) {
-        if (EffectAnalyzer(getPassOptions(), features, child)
-              .hasSideEffects()) {
+        if (EffectAnalyzer(getPassOptions(), *getModule(), child)
+              .hasUnremovableSideEffects()) {
           childrenWithEffects.push_back(child);
         }
       }
@@ -145,13 +144,19 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         ExpressionAnalyzer::isResultUsed(expressionStack, getFunction());
       auto* optimized = optimize(child, used, true);
       if (!optimized) {
-        if (child->type.isConcrete()) {
-          // We can't just skip a final concrete element, even if it isn't used.
-          // Instead, replace it with something that's easy to optimize out (for
-          // example, code-folding can merge out identical zeros at the end of
-          // if arms).
-          optimized = LiteralUtils::makeZero(child->type, *getModule());
-        } else if (child->type == Type::unreachable) {
+        auto childType = child->type;
+        if (childType.isConcrete()) {
+          if (LiteralUtils::canMakeZero(childType)) {
+            // We can't just skip a final concrete element, even if it isn't
+            // used. Instead, replace it with something that's easy to optimize
+            // out (for example, code-folding can merge out identical zeros at
+            // the end of if arms).
+            optimized = LiteralUtils::makeZero(childType, *getModule());
+          } else {
+            // Don't optimize it out.
+            optimized = child;
+          }
+        } else if (childType == Type::unreachable) {
           // Don't try to optimize out an unreachable child (dce can do that
           // properly).
           optimized = child;
@@ -247,9 +252,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
     } else {
-      // no else
+      // This is an if without an else. If the body is empty, we do not need it.
       if (curr->ifTrue->is<Nop>()) {
-        // no nothing
         replaceCurrent(Builder(*getModule()).makeDrop(curr->condition));
       }
     }
@@ -275,6 +279,24 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       replaceCurrent(set);
       return;
     }
+
+    // If the value has no side effects, or it has side effects we can remove,
+    // do so. This basically means that if noTrapsHappen is set then we can
+    // use that assumption (that no trap actually happens at runtime) and remove
+    // a trapping value.
+    //
+    // TODO: A complete CFG analysis for noTrapsHappen mode, removing all code
+    //       that definitely reaches a trap, *even if* it has side effects.
+    //
+    // Note that we check the type here to avoid removing unreachable code - we
+    // leave that for DCE.
+    if (curr->type == Type::none &&
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr)
+           .hasUnremovableSideEffects()) {
+      ExpressionManipulator::nop(curr);
+      return;
+    }
+
     // if we are dropping a block's return value, we might be able to remove it
     // entirely
     if (auto* block = curr->value->dynCast<Block>()) {
@@ -291,7 +313,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             BranchUtils::BranchSeeker seeker(block->name);
             Expression* temp = block;
             seeker.walk(temp);
-            if (seeker.found && seeker.valueType != Type::none) {
+            if (seeker.found && Type::hasLeastUpperBound(seeker.types)) {
               canPop = false;
             }
           }
@@ -338,8 +360,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   void visitTry(Try* curr) {
     // If try's body does not throw, the whole try-catch can be replaced with
     // the try's body.
-    if (!EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
-           .throws) {
+    if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
       replaceCurrent(curr->body);
       for (auto* catchBody : curr->catchBodies) {
         typeUpdater.noteRecursiveRemoval(catchBody);
@@ -349,15 +370,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
   void visitFunction(Function* curr) {
     auto* optimized =
-      optimize(curr->body, curr->sig.results != Type::none, true);
+      optimize(curr->body, curr->getResults() != Type::none, true);
     if (optimized) {
       curr->body = optimized;
     } else {
       ExpressionManipulator::nop(curr->body);
     }
-    if (curr->sig.results == Type::none &&
-        !EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
-           .hasSideEffects()) {
+    if (curr->getResults() == Type::none &&
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr->body)
+           .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }
   }

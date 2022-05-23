@@ -1,0 +1,26 @@
+;; RUN: wasm-fuzz-types --hybrid -v --seed=0 | filecheck %s
+
+;; CHECK:      (rec
+;; CHECK-NEXT:  (type $0 (struct_subtype data))
+;; CHECK-NEXT:  (type $1 (func_subtype (param i31ref) (result dataref) func))
+;; CHECK-NEXT:  (type $2 (array_subtype i32 data))
+;; CHECK-NEXT:  (type $3 (array_subtype i32 $2))
+;; CHECK-NEXT:  (type $4 (array_subtype i32 $2))
+;; CHECK-NEXT:  (type $5 (array_subtype i32 $3))
+;; CHECK-NEXT:  (type $6 (array_subtype i32 $3))
+;; CHECK-NEXT:  (type $7 (struct_subtype $0))
+;; CHECK-NEXT:  (type $8 (struct_subtype $0))
+;; CHECK-NEXT:  (type $9 (array_subtype i32 $6))
+;; CHECK-NEXT:  (type $10 (struct_subtype $0))
+;; CHECK-NEXT:  (type $11 (array_subtype i32 $2))
+;; CHECK-NEXT:  (type $12 (struct_subtype $0))
+;; CHECK-NEXT:  (type $13 (array_subtype i32 $6))
+;; CHECK-NEXT: )
+;; CHECK-NEXT: (rec
+;; CHECK-NEXT:  (type $14 (struct_subtype $10))
+;; CHECK-NEXT:  (type $15 (func_subtype (param i31ref) (result dataref) $1))
+;; CHECK-NEXT:  (type $16 (array_subtype i32 $2))
+;; CHECK-NEXT:  (type $17 (struct_subtype $14))
+;; CHECK-NEXT:  (type $18 (struct_subtype (field (mut funcref) (mut (ref null $7)) funcref) $12))
+;; CHECK-NEXT:  (type $19 (func_subtype (param i31ref) (result dataref) $15))
+;; CHECK-NEXT: )

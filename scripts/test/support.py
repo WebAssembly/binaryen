@@ -145,7 +145,7 @@ def split_wast(wastFile):
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):
             continue
-        elif chunk.startswith(('(assert', '(invoke')):
+        elif chunk.startswith(('(assert', '(invoke', '(register')):
             # ret may be empty if there are some asserts before the first
             # module. in that case these are asserts *without* a module, which
             # are valid (they may check something that doesn't refer to a module
@@ -199,8 +199,9 @@ def js_test_wrap():
     # common wrapper code for JS tests, waiting for binaryen.js to become ready
     # and providing common utility used by all tests:
     return '''
-        binaryen.ready.then(function() {
+        (async function __in_test_code__() {
+            var binaryen = await Binaryen()
             function assert(x) { if (!x) throw Error('Test assertion failed'); }
             %TEST%
-        });
+        })();
     '''

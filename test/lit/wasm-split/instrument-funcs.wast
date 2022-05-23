@@ -15,16 +15,19 @@
   )
 )
 
-;; Check that a memory has been added
-;; CHECK: (memory $0 1 1)
-
 ;; Check that the counter and timestamps have been added
 ;; CHECK: (global $monotonic_counter (mut i32) (i32.const 0))
 ;; CHECK: (global $bar_timestamp (mut i32) (i32.const 0))
 ;; CHECK: (global $baz_timestamp (mut i32) (i32.const 0))
 
-;; And the profiling function exported
+;; Check that a memory has been added
+;; CHECK: (memory $0 1 1)
+
+;; And the profiling function is exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
+
+;; And the memory has been exported
+;; CHECK: (export "profile-memory" (memory $0))
 
 ;; Check that the function instrumentation is correct
 

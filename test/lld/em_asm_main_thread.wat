@@ -12,6 +12,8 @@
  (import "env" "emscripten_asm_const_int_sync_on_main_thread" (func $emscripten_asm_const_int_sync_on_main_thread (param i32 i32 i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
+ (global (export "__start_em_asm") i32 (i32.const 568))
+ (global (export "__stop_em_asm") i32 (i32.const 652))
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66192))
  (global $global$1 i32 (i32.const 66192))

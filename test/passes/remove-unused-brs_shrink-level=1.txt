@@ -1,6 +1,6 @@
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
+ (type $2 (func (result i32)))
+ (type $1 (func))
  (memory $0 256 256)
  (func $b14 (result i32)
   (drop

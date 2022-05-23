@@ -21,9 +21,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace BranchUtils {
+namespace wasm::BranchUtils {
 
 // Some branches are obviously not actually reachable (e.g. (br $out
 // (unreachable)))
@@ -50,23 +48,23 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
   auto* cast = expr->cast<id>();                                               \
   WASM_UNUSED(cast);
 
-#define DELEGATE_GET_FIELD(id, name) cast->name
+#define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) func(cast->name);
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) func(cast->field);
 
-#define DELEGATE_FIELD_CHILD(id, name)
-#define DELEGATE_FIELD_INT(id, name)
-#define DELEGATE_FIELD_LITERAL(id, name)
-#define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
-#define DELEGATE_FIELD_SIGNATURE(id, name)
-#define DELEGATE_FIELD_TYPE(id, name)
-#define DELEGATE_FIELD_ADDRESS(id, name)
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name)
-#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
 }
 
 // Similar to operateOnScopeNameUses, but also passes in the type that is sent
@@ -81,7 +79,26 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
     } else if (auto* sw = expr->dynCast<Switch>()) {
       func(name, sw->value ? sw->value->type : Type::none);
     } else if (auto* br = expr->dynCast<BrOn>()) {
-      func(name, br->getCastType());
+      func(name, br->getSentType());
+    } else {
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
+    }
+  });
+}
+
+// Similar to operateOnScopeNameUses, but also passes in the expression that is
+// sent if the branch is taken. nullptr is given if there is no value.
+template<typename T>
+void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value);
+    } else if (auto* br = expr->dynCast<BrOn>()) {
+      func(name, br->ref);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
@@ -97,22 +114,22 @@ template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
   auto* cast = expr->cast<id>();                                               \
   WASM_UNUSED(cast);
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) func(cast->name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field)
 
-#define DELEGATE_FIELD_CHILD(id, name)
-#define DELEGATE_FIELD_INT(id, name)
-#define DELEGATE_FIELD_LITERAL(id, name)
-#define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name)
-#define DELEGATE_FIELD_SIGNATURE(id, name)
-#define DELEGATE_FIELD_TYPE(id, name)
-#define DELEGATE_FIELD_ADDRESS(id, name)
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name)
-#define DELEGATE_FIELD_INT_ARRAY(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
 }
 
 using NameSet = std::set<Name>;
@@ -217,6 +234,48 @@ inline NameSet getBranchTargets(Expression* ast) {
   return scanner.targets;
 }
 
+// Check if an expression defines a particular name as a branch target anywhere
+// inside it.
+inline bool hasBranchTarget(Expression* ast, Name target) {
+  if (!target.is()) {
+    return false;
+  }
+
+  struct Scanner
+    : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    Name target;
+    bool has = false;
+
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name& name) {
+        if (name == target) {
+          has = true;
+        }
+      });
+    }
+  };
+  Scanner scanner;
+  scanner.target = target;
+  scanner.walk(ast);
+  return scanner.has;
+}
+
+// Get the name of the branch target that is defined in the expression, or an
+// empty name if there is none.
+inline Name getDefinedName(Expression* curr) {
+  Name ret;
+  operateOnScopeNameDefs(curr, [&](Name& name) { ret = name; });
+  return ret;
+}
+
+// Return the value sent by a branch instruction, or nullptr if there is none.
+inline Expression* getSentValue(Expression* curr) {
+  Expression* ret = nullptr;
+  operateOnScopeNameUsesAndSentValues(
+    curr, [&](Name name, Expression* value) { ret = value; });
+  return ret;
+}
+
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
@@ -225,20 +284,14 @@ struct BranchSeeker
   Name target;
 
   Index found = 0;
-  // None indicates no value is sent.
-  Type valueType = Type::none;
+
+  std::unordered_set<Type> types;
 
   BranchSeeker(Name target) : target(target) {}
 
   void noteFound(Type newType) {
     found++;
-    if (newType != Type::none) {
-      if (found == 1) {
-        valueType = newType;
-      } else {
-        valueType = Type::getLeastUpperBound(valueType, newType);
-      }
-    }
+    types.insert(newType);
   }
 
   void visitExpression(Expression* curr) {
@@ -339,8 +392,44 @@ public:
   }
 };
 
-} // namespace BranchUtils
+// Stores information about branch targets, specifically, finding them by their
+// name, and finding the branches to them.
+struct BranchTargets {
+  BranchTargets(Expression* expr) { inner.walk(expr); }
 
-} // namespace wasm
+  // Gets the expression that defines this branch target, i.e., where we branch
+  // to if we branch to that name.
+  Expression* getTarget(Name name) { return inner.targets[name]; }
+
+  // Gets the expressions branching to a target.
+  std::unordered_set<Expression*> getBranches(Name name) {
+    auto iter = inner.branches.find(name);
+    if (iter != inner.branches.end()) {
+      return iter->second;
+    }
+    return {};
+  }
+
+private:
+  struct Inner : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name name) {
+        if (name.is()) {
+          targets[name] = curr;
+        }
+      });
+      operateOnScopeNameUses(curr, [&](Name& name) {
+        if (name.is()) {
+          branches[name].insert(curr);
+        }
+      });
+    }
+
+    std::map<Name, Expression*> targets;
+    std::map<Name, std::unordered_set<Expression*>> branches;
+  } inner;
+};
+
+} // namespace wasm::BranchUtils
 
 #endif // wasm_ir_branch_h

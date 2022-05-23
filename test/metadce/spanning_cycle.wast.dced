@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (import "env" "js_func" (func $a_js_func))
  (memory $0 1 1)
- (data passive "Hello, datacount section!")
+ (data "Hello, datacount section!")
  (export "wasm_func_a" (func $a_wasm_func))
  (func $a_wasm_func
   (memory.init 0

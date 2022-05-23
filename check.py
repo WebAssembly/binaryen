@@ -39,27 +39,18 @@ def get_changelog_version():
     return int(version)
 
 
-def run_help_tests():
-    print('[ checking --help is useful... ]\n')
+def run_version_tests():
+    print('[ checking --version ... ]\n')
 
-    not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest', 'binaryen-lit']
+    not_executable_suffix = ['.DS_Store', '.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest']
+    not_executable_prefix = ['binaryen-lit', 'binaryen-unittests']
     bin_files = [os.path.join(shared.options.binaryen_bin, f) for f in os.listdir(shared.options.binaryen_bin)]
-    executables = [f for f in bin_files if os.path.isfile(f) and not any(f.endswith(s) for s in not_executable_suffix)]
+    executables = [f for f in bin_files if os.path.isfile(f) and
+                   not any(f.endswith(s) for s in not_executable_suffix) and
+                   not any(os.path.basename(f).startswith(s) for s in not_executable_prefix)]
     executables = sorted(executables)
     assert len(executables)
 
-    for e in executables:
-        print('.. %s --help' % e)
-        out, err = subprocess.Popen([e, '--help'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE).communicate()
-        out = out.decode('utf-8')
-        err = err.decode('utf-8')
-        assert len(err) == 0, 'Expected no stderr, got:\n%s' % err
-        assert os.path.basename(e).replace('.exe', '') in out, 'Expected help to contain program name, got:\n%s' % out
-        assert len(out.split('\n')) > 8, 'Expected some help, got:\n%s' % out
-
-    print('[ checking --version ... ]\n')
     changelog_version = get_changelog_version()
     for e in executables:
         print('.. %s --version' % e)
@@ -128,6 +119,10 @@ def run_ctor_eval_tests():
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
         cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wat', '-S', '--ctors', ctors]
+        if 'ignore-external-input' in t:
+            cmd += ['--ignore-external-input']
+        if 'results' in t:
+            cmd += ['--kept-exports', 'test1,test3']
         support.run_command(cmd)
         actual = open('a.wat').read()
         out = t + '.out'
@@ -230,6 +225,8 @@ def run_spec_tests():
         if 'exports.wast' in base:  # FIXME
             continue
 
+        run_spec_test(wast)
+
         # check binary format. here we can verify execution of the final
         # result, no need for an output verification
         # some wast files cannot be split:
@@ -241,21 +238,21 @@ def run_spec_tests():
         if base not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
             split_num = 0
             actual = ''
-            for module, asserts in support.split_wast(wast):
-                print('        testing split module', split_num)
-                split_num += 1
-                support.write_wast('split.wast', module, asserts)
-                run_spec_test('split.wast')    # before binary stuff - just check it's still ok split out
-                run_opt_test('split.wast')    # also that our optimizer doesn't break on it
-                result_wast = shared.binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
-                # add the asserts, and verify that the test still passes
-                open(result_wast, 'a').write('\n' + '\n'.join(asserts))
-                actual += run_spec_test(result_wast)
+            with open('spec.wast', 'w') as transformed_spec_file:
+                for module, asserts in support.split_wast(wast):
+                    print('        testing split module', split_num)
+                    split_num += 1
+                    support.write_wast('split.wast', module, asserts)
+                    run_opt_test('split.wast')    # also that our optimizer doesn't break on it
+                    result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
+                    with open(result_wast_file) as f:
+                        result_wast = f.read()
+                        # add the asserts, and verify that the test still passes
+                        transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
+
             # compare all the outputs to the expected output
+            actual = run_spec_test('spec.wast')
             check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
-        else:
-            # handle unsplittable wast files
-            run_spec_test(wast)
 
 
 def run_validator_tests():
@@ -275,16 +272,16 @@ def run_validator_tests():
     support.run_command(cmd, expected_status=1)
 
 
-def run_gcc_tests():
-    print('\n[ checking native gcc testcases...]\n')
+def run_example_tests():
+    print('\n[ checking native example testcases...]\n')
     if not shared.NATIVECC or not shared.NATIVEXX:
         shared.fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
         return
     # windows + gcc will need some work
-    if shared.skip_if_on_windows('gcc'):
+    if shared.skip_if_on_windows('example'):
         return
 
-    for t in sorted(os.listdir(shared.get_test_dir('example'))):
+    for t in shared.get_tests(shared.get_test_dir('example')):
         output_file = 'example'
         cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
         if not t.endswith(('.c', '.cpp')):
@@ -329,19 +326,37 @@ def run_unittest():
 
 
 def run_lit():
-    lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
-    lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
-    # lit expects to be run as its own executable
-    cmd = [sys.executable, lit_script, lit_tests, '-vv']
-    result = subprocess.run(cmd)
-    if result.returncode != 0:
-        shared.num_failures += 1
-    if shared.options.abort_on_first_failure and shared.num_failures:
-        raise Exception("lit test failed")
+    def run():
+        lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
+        lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
+        # lit expects to be run as its own executable
+        cmd = [sys.executable, lit_script, lit_tests, '-vv']
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            shared.num_failures += 1
+        if shared.options.abort_on_first_failure and shared.num_failures:
+            raise Exception("lit test failed")
+
+    shared.with_pass_debug(run)
+
+
+def run_gtest():
+    def run():
+        gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
+        if not os.path.isfile(gtest):
+            shared.warn('gtest binary not found - skipping tests')
+        else:
+            result = subprocess.run(gtest)
+            if result.returncode != 0:
+                shared.num_failures += 1
+            if shared.options.abort_on_first_failure and shared.num_failures:
+                raise Exception("gtest test failed")
+
+    shared.with_pass_debug(run)
 
 
 TEST_SUITES = OrderedDict([
-    ('help-messages', run_help_tests),
+    ('version', run_version_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
     ('wasm-dis', run_wasm_dis_tests),
     ('crash', run_crash_tests),
@@ -353,11 +368,12 @@ TEST_SUITES = OrderedDict([
     ('lld', lld.test_wasm_emscripten_finalize),
     ('wasm2js', wasm2js.test_wasm2js),
     ('validator', run_validator_tests),
-    ('gcc', run_gcc_tests),
+    ('example', run_example_tests),
     ('unit', run_unittest),
     ('binaryenjs', binaryenjs.test_binaryen_js),
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
     ('lit', run_lit),
+    ('gtest', run_gtest),
 ])
 
 

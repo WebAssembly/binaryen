@@ -114,6 +114,9 @@ function test_features() {
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
   console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.Memory64: " + binaryen.Features.Memory64);
+  console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
+  console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
+  console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -152,6 +155,7 @@ function test_ids() {
   console.log("SIMDTernaryId: " + binaryen.SIMDTernaryId);
   console.log("SIMDShiftId: " + binaryen.SIMDShiftId);
   console.log("SIMDLoadId: " + binaryen.SIMDLoadId);
+  console.log("SIMDLoadStoreLaneId: " + binaryen.SIMDLoadStoreLaneId);
   console.log("MemoryInitId: " + binaryen.MemoryInitId);
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
@@ -161,6 +165,10 @@ function test_ids() {
   console.log("RefIsId: " + binaryen.RefIsId);
   console.log("RefFuncId: " + binaryen.RefFuncId);
   console.log("RefEqId: " + binaryen.RefEqId);
+  console.log("TableGetId: " + binaryen.TableGetId);
+  console.log("TableSetId: " + binaryen.TableSetId);
+  console.log("TableSizeId: " + binaryen.TableSizeId);
+  console.log("TableGrowId: " + binaryen.TableGrowId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
@@ -178,6 +186,7 @@ function test_ids() {
   console.log("StructGetId: " + binaryen.StructGetId);
   console.log("StructSetId: " + binaryen.StructSetId);
   console.log("ArrayNewId: " + binaryen.ArrayNewId);
+  console.log("ArrayInitId: " + binaryen.ArrayInitId);
   console.log("ArrayGetId: " + binaryen.ArrayGetId);
   console.log("ArraySetId: " + binaryen.ArraySetId);
   console.log("ArrayLenId: " + binaryen.ArrayLenId);
@@ -189,8 +198,8 @@ function test_core() {
 
   module = new binaryen.Module();
 
-  // Create an event
-  var event_ = module.addEvent("a-event", 0, binaryen.i32, binaryen.none);
+  // Create a tag
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
 
   // Literals and consts
 
@@ -264,44 +273,56 @@ function test_core() {
     module.f32x4.splat(module.f32.const(42.0)),
     module.f64x2.splat(module.f64.const(42.0)),
     module.v128.not(module.v128.const(v128_bytes)),
+    module.v128.any_true(module.v128.const(v128_bytes)),
+    module.i8x16.popcnt(module.v128.const(v128_bytes)),
     module.i8x16.abs(module.v128.const(v128_bytes)),
     module.i8x16.neg(module.v128.const(v128_bytes)),
-    module.i8x16.any_true(module.v128.const(v128_bytes)),
     module.i8x16.all_true(module.v128.const(v128_bytes)),
     module.i8x16.bitmask(module.v128.const(v128_bytes)),
     module.i16x8.abs(module.v128.const(v128_bytes)),
     module.i16x8.neg(module.v128.const(v128_bytes)),
-    module.i16x8.any_true(module.v128.const(v128_bytes)),
     module.i16x8.all_true(module.v128.const(v128_bytes)),
     module.i16x8.bitmask(module.v128.const(v128_bytes)),
+    module.i16x8.extadd_pairwise_i8x16_s(module.v128.const(v128_bytes)),
+    module.i16x8.extadd_pairwise_i8x16_u(module.v128.const(v128_bytes)),
     module.i32x4.abs(module.v128.const(v128_bytes)),
     module.i32x4.neg(module.v128.const(v128_bytes)),
-    module.i32x4.any_true(module.v128.const(v128_bytes)),
     module.i32x4.all_true(module.v128.const(v128_bytes)),
     module.i32x4.bitmask(module.v128.const(v128_bytes)),
+    module.i32x4.extadd_pairwise_i16x8_s(module.v128.const(v128_bytes)),
+    module.i32x4.extadd_pairwise_i16x8_u(module.v128.const(v128_bytes)),
+    module.i64x2.abs(module.v128.const(v128_bytes)),
     module.i64x2.neg(module.v128.const(v128_bytes)),
+    module.i64x2.all_true(module.v128.const(v128_bytes)),
+    module.i64x2.bitmask(module.v128.const(v128_bytes)),
     module.f32x4.abs(module.v128.const(v128_bytes)),
     module.f32x4.neg(module.v128.const(v128_bytes)),
     module.f32x4.sqrt(module.v128.const(v128_bytes)),
     module.f64x2.abs(module.v128.const(v128_bytes)),
     module.f64x2.neg(module.v128.const(v128_bytes)),
     module.f64x2.sqrt(module.v128.const(v128_bytes)),
+    module.f64x2.convert_low_i32x4_s(module.v128.const(v128_bytes)),
+    module.f64x2.convert_low_i32x4_u(module.v128.const(v128_bytes)),
+    module.f64x2.promote_low_f32x4(module.v128.const(v128_bytes)),
     module.i32x4.trunc_sat_f32x4_s(module.v128.const(v128_bytes)),
     module.i32x4.trunc_sat_f32x4_u(module.v128.const(v128_bytes)),
-    module.i64x2.trunc_sat_f64x2_s(module.v128.const(v128_bytes)),
-    module.i64x2.trunc_sat_f64x2_u(module.v128.const(v128_bytes)),
     module.f32x4.convert_i32x4_s(module.v128.const(v128_bytes)),
     module.f32x4.convert_i32x4_u(module.v128.const(v128_bytes)),
-    module.f64x2.convert_i64x2_s(module.v128.const(v128_bytes)),
-    module.f64x2.convert_i64x2_u(module.v128.const(v128_bytes)),
-    module.i16x8.widen_low_i8x16_s(module.v128.const(v128_bytes)),
-    module.i16x8.widen_high_i8x16_s(module.v128.const(v128_bytes)),
-    module.i16x8.widen_low_i8x16_u(module.v128.const(v128_bytes)),
-    module.i16x8.widen_high_i8x16_u(module.v128.const(v128_bytes)),
-    module.i32x4.widen_low_i16x8_s(module.v128.const(v128_bytes)),
-    module.i32x4.widen_high_i16x8_s(module.v128.const(v128_bytes)),
-    module.i32x4.widen_low_i16x8_u(module.v128.const(v128_bytes)),
-    module.i32x4.widen_high_i16x8_u(module.v128.const(v128_bytes)),
+    module.f32x4.demote_f64x2_zero(module.v128.const(v128_bytes)),
+    module.i16x8.extend_low_i8x16_s(module.v128.const(v128_bytes)),
+    module.i16x8.extend_high_i8x16_s(module.v128.const(v128_bytes)),
+    module.i16x8.extend_low_i8x16_u(module.v128.const(v128_bytes)),
+    module.i16x8.extend_high_i8x16_u(module.v128.const(v128_bytes)),
+    module.i32x4.extend_low_i16x8_s(module.v128.const(v128_bytes)),
+    module.i32x4.extend_high_i16x8_s(module.v128.const(v128_bytes)),
+    module.i32x4.extend_low_i16x8_u(module.v128.const(v128_bytes)),
+    module.i32x4.extend_high_i16x8_u(module.v128.const(v128_bytes)),
+    module.i32x4.trunc_sat_f64x2_s_zero(module.v128.const(v128_bytes)),
+    module.i32x4.trunc_sat_f64x2_u_zero(module.v128.const(v128_bytes)),
+    module.i64x2.extend_low_i32x4_s(module.v128.const(v128_bytes)),
+    module.i64x2.extend_high_i32x4_s(module.v128.const(v128_bytes)),
+    module.i64x2.extend_low_i32x4_u(module.v128.const(v128_bytes)),
+    module.i64x2.extend_high_i32x4_u(module.v128.const(v128_bytes)),
     // Binary
     module.i32.add(module.i32.const(-10), module.i32.const(-11)),
     module.f64.sub(module.f64.const(-9005.841), module.f64.const(-9007.333)),
@@ -365,6 +386,12 @@ function test_core() {
     module.i32x4.le_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.ge_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.ge_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.eq(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.ne(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.lt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.gt_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.le_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.ge_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.eq(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.ne(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.lt(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -387,7 +414,6 @@ function test_core() {
     module.i8x16.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.sub_saturate_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.sub_saturate_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
-    module.i8x16.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.min_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.min_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.max_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -405,6 +431,11 @@ function test_core() {
     module.i16x8.max_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.max_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.avgr_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.q15mulr_sat_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.extmul_low_i8x16_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.extmul_high_i8x16_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.extmul_low_i8x16_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i16x8.extmul_high_i8x16_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -413,9 +444,17 @@ function test_core() {
     module.i32x4.max_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.max_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i32x4.dot_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.extmul_low_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.extmul_high_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.extmul_low_i16x8_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i32x4.extmul_high_i16x8_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.extmul_low_i32x4_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.extmul_high_i32x4_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.extmul_low_i32x4_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.extmul_high_i32x4_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -444,7 +483,7 @@ function test_core() {
     module.i8x16.narrow_i16x8_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
-    module.v8x16.swizzle(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.swizzle(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // SIMD lane manipulation
     module.i8x16.extract_lane_s(module.v128.const(v128_bytes), 1),
     module.i8x16.extract_lane_u(module.v128.const(v128_bytes), 1),
@@ -474,23 +513,38 @@ function test_core() {
     module.i64x2.shr_s(module.v128.const(v128_bytes), module.i32.const(1)),
     module.i64x2.shr_u(module.v128.const(v128_bytes), module.i32.const(1)),
     // SIMD load
-    module.v8x16.load_splat(0, 1, module.i32.const(128)),
-    module.v16x8.load_splat(16, 1, module.i32.const(128)),
-    module.v32x4.load_splat(16, 4, module.i32.const(128)),
-    module.v64x2.load_splat(0, 4, module.i32.const(128)),
-    module.i16x8.load8x8_s(0, 8, module.i32.const(128)),
-    module.i16x8.load8x8_u(0, 8, module.i32.const(128)),
-    module.i32x4.load16x4_s(0, 8, module.i32.const(128)),
-    module.i32x4.load16x4_u(0, 8, module.i32.const(128)),
-    module.i64x2.load32x2_s(0, 8, module.i32.const(128)),
-    module.i64x2.load32x2_u(0, 8, module.i32.const(128)),
+    module.v128.load8_splat(0, 1, module.i32.const(128)),
+    module.v128.load16_splat(16, 1, module.i32.const(128)),
+    module.v128.load32_splat(16, 4, module.i32.const(128)),
+    module.v128.load64_splat(0, 4, module.i32.const(128)),
+    module.v128.load8x8_s(0, 8, module.i32.const(128)),
+    module.v128.load8x8_u(0, 8, module.i32.const(128)),
+    module.v128.load16x4_s(0, 8, module.i32.const(128)),
+    module.v128.load16x4_u(0, 8, module.i32.const(128)),
+    module.v128.load32x2_s(0, 8, module.i32.const(128)),
+    module.v128.load32x2_u(0, 8, module.i32.const(128)),
+    module.v128.load32_zero(0, 4, module.i32.const(128)),
+    module.v128.load64_zero(0, 8, module.i32.const(128)),
+    // SIMD load/store lane
+    module.v128.load8_lane(0, 1, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load8_lane(1, 1, 15, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load16_lane(0, 2, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load16_lane(2, 1, 7, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load32_lane(0, 4, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load32_lane(4, 2, 3, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load64_lane(0, 8, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load64_lane(8, 4, 1, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store8_lane(0, 1, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store8_lane(1, 1, 15, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store16_lane(0, 2, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store16_lane(2, 1, 7, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store32_lane(0, 4, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store32_lane(4, 2, 3, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store64_lane(0, 8, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store64_lane(8, 4, 1, module.i32.const(128), module.v128.const(v128_bytes)),
     // Other SIMD
-    module.v8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
+    module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
-    module.f32x4.qfma(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
-    module.f32x4.qfms(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
-    module.f64x2.qfma(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
-    module.f64x2.qfms(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
     module.memory.init(0, makeInt32(1024), makeInt32(0), makeInt32(12)),
     module.data.drop(0),
@@ -517,7 +571,7 @@ function test_core() {
       )
     ),
     module.i32.eqz( // check the output type of the call node
-      module.call_indirect("0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
+      module.call_indirect("t0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
     ),
     module.drop(module.local.get(0, binaryen.i32)),
     module.local.set(0, makeInt32(101)),
@@ -532,7 +586,7 @@ function test_core() {
     module.return(makeInt32(1337)),
     // Tail Call
     module.return_call("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], binaryen.i32),
-    module.return_call_indirect("0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
+    module.return_call_indirect("t0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
     // Reference types
     module.ref.is_null(module.ref.null(binaryen.externref)),
@@ -546,8 +600,8 @@ function test_core() {
     // Exception handling
     module.try(
       '',
-      module.throw("a-event", [module.i32.const(0)]),
-      ["a-event"],
+      module.throw("a-tag", [module.i32.const(0)]),
+      ["a-tag"],
       [module.drop(module.i32.pop())],
       ''
     ),
@@ -655,16 +709,16 @@ function test_core() {
   module.addFunctionImport("an-imported", "module", "base", iF, binaryen.f32);
   module.addGlobalImport("a-global-imp", "module", "base", binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", binaryen.i32, true);
-  module.addEventImport("a-event-imp", "module", "base", 0, binaryen.i32, binaryen.none);
+  module.addTagImport("a-tag-imp", "module", "base", binaryen.i32, binaryen.none);
 
   // Exports
 
   module.addFunctionExport("kitchen()sinker", "kitchen_sinker");
   module.addGlobalExport("a-global", "a-global-exp");
-  module.addEventExport("a-event", "a-event-exp");
+  module.addTagExport("a-tag", "a-tag-exp");
 
   // Tables
-  module.addTable("t1", 0, 2, []);
+  module.addTable("t1", 0, 2);
   var tablePtr = module.getTable("t1");
   assert(tablePtr !== 0);
   assert(tablePtr === module.getTableByIndex(0));
@@ -679,9 +733,10 @@ function test_core() {
   module.removeTable("t1");
   assert(module.getNumTables() === 0);
 
-  // Legacy
-  module.setFunctionTable(1, 0xffffffff, [ binaryen.getFunctionInfo(sinker).name ]);
+  module.addTable("t0", 1, 0xffffffff);
+  module.addActiveElementSegment("t0", "e0", [ binaryen.getFunctionInfo(sinker).name ]);
   assert(module.getNumTables() === 1);
+  assert(module.getNumElementSegments() === 1);
 
   // Memory. One per module
 
@@ -785,7 +840,7 @@ function test_relooper() {
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
-    temp = makeDroppedInt32(10);
+    var temp = makeDroppedInt32(10);
     relooper.addBranch(block0, block1, makeInt32(55), temp);
     relooper.addBranch(block0, block2, null, makeDroppedInt32(20));
     var body = relooper.renderAndDispose(block0, 0, module);
@@ -925,7 +980,7 @@ function test_binaries() {
     var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-    var event_ = module.addEvent("a-event", 0, binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
+    var tag = module.addTag("a-tag", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
     binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     binaryen.setDebugInfo(false);
@@ -952,7 +1007,7 @@ function test_interpret() {
   module = new binaryen.Module();
 
   module.addFunctionImport("print-i32", "spectest", "print", binaryen.i32, binaryen.none);
-  call = module.call("print-i32", [ makeInt32(1234) ], binaryen.None);
+  var call = module.call("print-i32", [ makeInt32(1234) ], binaryen.None);
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], call);
   module.setStart(starter);
 
@@ -990,7 +1045,7 @@ function test_parsing() {
   var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-  var event_ = module.addEvent("a-event", 0, binaryen.i32, binaryen.none);
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
   text = module.emitText();
   module.dispose();
   module = null;
@@ -1071,16 +1126,23 @@ function test_for_each() {
     assert(expected_passive[i] === segment.passive);
   }
 
+  module.addTable("t0", 1, 0xffffffff);
+  var ftable = module.getTable("t0");
   var constExprRef = module.i32.const(0);
-  module.setFunctionTable(1, 0xffffffff, funcNames, constExprRef);
+  module.addActiveElementSegment("t0", "e0", funcNames, constExprRef);
 
-  var ftable = module.getFunctionTable();
-  assert(false === ftable.imported);
-  assert(1 === ftable.segments.length);
-  assert(constExprRef === ftable.segments[0].offset);
-  assert(3 === ftable.segments[0].names.length);
-  for (i = 0; i < ftable.segments[0].names.length; i++) {
-    assert(funcNames[i] === ftable.segments[0].names[i]);
+  var tableInfo = binaryen.getTableInfo(ftable);
+  assert("" === tableInfo.module);
+  assert("" === tableInfo.base);
+
+  var segments = module.getTableSegments(ftable);
+  assert(1 === segments.length);
+
+  var elemSegment = binaryen.getElementSegmentInfo(segments[0]);
+  assert(constExprRef === elemSegment.offset);
+  assert(3 === elemSegment.data.length);
+  for (i = 0; i < elemSegment.data.length; i++) {
+    assert(funcNames[i] === elemSegment.data[i]);
   }
 
   console.log(module.emitText());

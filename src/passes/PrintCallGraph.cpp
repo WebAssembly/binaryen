@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <memory>
 
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -85,10 +86,9 @@ struct PrintCallGraph : public Pass {
       }
       void visitCall(Call* curr) {
         auto* target = module->getFunction(curr->target);
-        if (visitedTargets.count(target->name) > 0) {
+        if (!visitedTargets.emplace(target->name).second) {
           return;
         }
-        visitedTargets.insert(target->name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name
                   << "\"; // call\n";
       }
@@ -96,14 +96,10 @@ struct PrintCallGraph : public Pass {
     CallPrinter printer(module);
 
     // Indirect Targets
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        for (auto& curr : segment.data) {
-          auto* func = module->getFunction(curr);
-          o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
-        }
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+      auto* func = module->getFunction(name);
+      o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
+    });
 
     o << "}\n";
   }

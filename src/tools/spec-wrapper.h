@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-static std::string generateSpecWrapper(Module& wasm) {
+inline std::string generateSpecWrapper(Module& wasm) {
   std::string ret;
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
@@ -33,7 +33,7 @@ static std::string generateSpecWrapper(Module& wasm) {
     }
     ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") +
            exp->name.str + "\" ";
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       // zeros in arguments TODO more?
       TODO_SINGLE_COMPOUND(param);
       switch (param.getBasic()) {
@@ -54,9 +54,6 @@ static std::string generateSpecWrapper(Module& wasm) {
           break;
         case Type::funcref:
           ret += "(ref.null func)";
-          break;
-        case Type::externref:
-          ret += "(ref.null extern)";
           break;
         case Type::anyref:
           ret += "(ref.null any)";

@@ -52,7 +52,7 @@
 
 (module
   (memory i64 1)
-  (data (i32.const 0) "ABC\a7D") (data (i32.const 20) "WASM")
+  (data (i64.const 0) "ABC\a7D") (data (i64.const 20) "WASM")
 
   ;; Data section
   (func (export "data") (result i32)

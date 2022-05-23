@@ -15,32 +15,32 @@
  */
 
 #include "asm_v_wasm.h"
+#include "support/utilities.h"
 #include "wasm.h"
 
 namespace wasm {
 
-AsmType wasmToAsmType(Type type) {
+JsType wasmToJsType(Type type) {
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:
-      return ASM_INT;
+      return JS_INT;
     case Type::f32:
-      return ASM_FLOAT;
+      return JS_FLOAT;
     case Type::f64:
-      return ASM_DOUBLE;
+      return JS_DOUBLE;
     case Type::i64:
-      return ASM_INT64;
+      return JS_INT64;
     case Type::v128:
-      assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE("v128 not implemented yet");
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-      assert(false && "reference types are not supported by asm2wasm");
+      WASM_UNREACHABLE("reference types are not supported by wasm2js");
     case Type::none:
-      return ASM_NONE;
+      return JS_NONE;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -62,8 +62,6 @@ char getSig(Type type) {
       return 'V';
     case Type::funcref:
       return 'F';
-    case Type::externref:
-      return 'X';
     case Type::anyref:
       return 'A';
     case Type::eqref:

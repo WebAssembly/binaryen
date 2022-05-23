@@ -23,8 +23,10 @@
 #ifndef wasm_support_unique_deferring_queue_h
 #define wasm_support_unique_deferring_queue_h
 
+#include <cassert>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace wasm {
 
@@ -56,6 +58,31 @@ template<typename T> struct UniqueDeferredQueue {
       }
       // skip this one, keep going
     }
+  }
+
+  void clear() {
+    std::queue<T> empty;
+    std::swap(data, empty);
+    count.clear();
+  }
+};
+
+// As UniqueDeferredQueue, but once an item has been processed through the queue
+// (that is, popped) it will be ignored from then on in later pushes.
+template<typename T>
+struct UniqueNonrepeatingDeferredQueue : UniqueDeferredQueue<T> {
+  std::unordered_set<T> processed;
+
+  void push(T item) {
+    if (!processed.count(item)) {
+      UniqueDeferredQueue<T>::push(item);
+    }
+  }
+
+  T pop() {
+    T ret = UniqueDeferredQueue<T>::pop();
+    processed.insert(ret);
+    return ret;
   }
 };
 

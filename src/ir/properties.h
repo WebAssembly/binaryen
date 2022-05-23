@@ -22,9 +22,7 @@
 #include "ir/match.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Properties {
+namespace wasm::Properties {
 
 inline bool emitsBoolean(Expression* curr) {
   if (auto* unary = curr->dynCast<Unary>()) {
@@ -84,11 +82,12 @@ inline bool isNamedControlFlow(Expression* curr) {
 
 // A constant expression is something like a Const: it has a fixed value known
 // at compile time, and passes that propagate constants can try to propagate it.
-// Constant expressions are also allowed in global initializers in wasm.
+// Constant expressions are also allowed in global initializers in wasm. Also
+// when two constant expressions compare equal at compile time, their values at
+// runtime will be equal as well.
 // TODO: look into adding more things here like RttCanon.
 inline bool isSingleConstantExpression(const Expression* curr) {
-  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
-         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
 }
 
 inline bool isConstantExpression(const Expression* curr) {
@@ -146,6 +145,12 @@ inline Expression* getSignExtValue(Expression* curr) {
   if (curr->type != Type::i32) {
     return nullptr;
   }
+  if (auto* unary = curr->dynCast<Unary>()) {
+    if (unary->op == ExtendS8Int32 || unary->op == ExtendS16Int32) {
+      return unary->value;
+    }
+    return nullptr;
+  }
   using namespace Match;
   int32_t leftShift = 0, rightShift = 0;
   Expression* extended = nullptr;
@@ -162,8 +167,19 @@ inline Expression* getSignExtValue(Expression* curr) {
 // gets the size of the sign-extended value
 inline Index getSignExtBits(Expression* curr) {
   assert(curr->type == Type::i32);
-  auto* rightShift = curr->cast<Binary>()->right;
-  return 32 - Bits::getEffectiveShifts(rightShift);
+  if (auto* unary = curr->dynCast<Unary>()) {
+    switch (unary->op) {
+      case ExtendS8Int32:
+        return 8;
+      case ExtendS16Int32:
+        return 16;
+      default:
+        WASM_UNREACHABLE("invalid unary operation");
+    }
+  } else {
+    auto* rightShift = curr->cast<Binary>()->right;
+    return 32 - Bits::getEffectiveShifts(rightShift);
+  }
 }
 
 // Check if an expression is almost a sign-extend: perhaps the inner shift
@@ -223,9 +239,20 @@ inline Index getZeroExtBits(Expression* curr) {
 // and other operations that receive a value and let it flow through them. If
 // there is no value falling through, returns the node itself (as that is the
 // value that trivially falls through, with 0 steps in the middle).
-inline Expression* getFallthrough(Expression* curr,
-                                  const PassOptions& passOptions,
-                                  FeatureSet features) {
+//
+// Note that this returns the value that would fall through if one does in fact
+// do so. For example, the final element in a block may not fall through if we
+// hit a return or a trap or an exception is thrown before we get there.
+//
+// This method returns the 'immediate' fallthrough, that is, the immediate
+// child of this expression. See getFallthrough for a method that looks all the
+// way to the final value falling through, potentially through multiple
+// intermediate expressions.
+//
+// TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
+inline Expression* getImmediateFallthrough(Expression* curr,
+                                           const PassOptions& passOptions,
+                                           Module& module) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -233,34 +260,89 @@ inline Expression* getFallthrough(Expression* curr,
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee()) {
-      return getFallthrough(set->value, passOptions, features);
+      return set->value;
     }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return getFallthrough(block->list.back(), passOptions, features);
+      return block->list.back();
     }
   } else if (auto* loop = curr->dynCast<Loop>()) {
-    return getFallthrough(loop->body, passOptions, features);
+    return loop->body;
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
       if (iff->ifTrue->type == Type::unreachable) {
-        return getFallthrough(iff->ifFalse, passOptions, features);
+        return iff->ifFalse;
       } else if (iff->ifFalse->type == Type::unreachable) {
-        return getFallthrough(iff->ifTrue, passOptions, features);
+        return iff->ifTrue;
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
     if (br->condition && br->value) {
-      return getFallthrough(br->value, passOptions, features);
+      return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
-      return getFallthrough(tryy->body, passOptions, features);
+    if (!EffectAnalyzer(passOptions, module, tryy->body).throws()) {
+      return tryy->body;
     }
+  } else if (auto* as = curr->dynCast<RefCast>()) {
+    return as->ref;
+  } else if (auto* as = curr->dynCast<RefAs>()) {
+    return as->value;
+  } else if (auto* br = curr->dynCast<BrOn>()) {
+    return br->ref;
   }
   return curr;
+}
+
+// Similar to getImmediateFallthrough, but looks through multiple children to
+// find the final value that falls through.
+inline Expression* getFallthrough(Expression* curr,
+                                  const PassOptions& passOptions,
+                                  Module& module) {
+  while (1) {
+    auto* next = getImmediateFallthrough(curr, passOptions, module);
+    if (next == curr) {
+      return curr;
+    }
+    curr = next;
+  }
+}
+
+inline Index getNumChildren(Expression* curr) {
+  Index ret = 0;
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_CHILD(id, field) ret++;
+
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  if (cast->field) {                                                           \
+    ret++;                                                                     \
+  }
+
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#include "wasm-delegations-fields.def"
+
+  return ret;
 }
 
 // Returns whether the resulting value here must fall through without being
@@ -282,8 +364,76 @@ inline bool isResultFallthrough(Expression* curr) {
          curr->is<Break>();
 }
 
-} // namespace Properties
+inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
+  // A select only allows a single value in its arms in the spec:
+  // https://webassembly.github.io/spec/core/valid/instructions.html#xref-syntax-instructions-syntax-instr-parametric-mathsf-select-t-ast
+  return ifTrue->type.isSingle() && ifFalse->type.isSingle();
+}
 
-} // namespace wasm
+// A "generative" expression is one that can generate different results for the
+// same inputs, and that difference is *not* explained by other expressions that
+// interact with this one. This is an intrinsic/internal property of the
+// expression.
+//
+// To see the issue more concretely, consider these:
+//
+//    x = load(100);
+//    ..
+//    y = load(100);
+//
+//  versus
+//
+//    x = struct.new();
+//    ..
+//    y = struct.new();
+//
+// Are x and y identical in both cases? For loads, we can look at the code
+// in ".." to see: if there are no possible stores to memory, then the
+// result is identical (and we have EffectAnalyzer for that). For the GC
+// allocations, though, it doesn't matter what is in "..": there is nothing
+// in the wasm that we can check to find out if the results are the same or
+// not. (In fact, in this case they are always not the same.) So the
+// generativity is "intrinsic" to the expression and it is because each call to
+// struct.new generates a new value.
+//
+// Thus, loads are nondeterministic but not generative, while GC allocations
+// are in fact generative. Note that "generative" need not mean "allocation" as
+// if wasm were to add "get current time" or "get a random number" instructions
+// then those would also be generative - generating a new current time value or
+// a new random number on each execution, respectively.
+//
+//  * Note that NaN nondeterminism is ignored here. It is a valid wasm
+//    implementation to have deterministic NaN behavior, and we optimize under
+//    that simplifying assumption.
+//  * Note that calls are ignored here. In theory this concept could be defined
+//    either way for them - that is, we could potentially define them as
+//    generative, as they might contain such an instruction, or we could define
+//    this property as only looking at code in the current function. We choose
+//    the latter because calls are already handled best in other manners (using
+//    EffectAnalyzer).
+//
+bool isGenerative(Expression* curr, FeatureSet features);
+
+inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
+  if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
+      expr->is<RttCanon>() || expr->is<RttSub>() || expr->is<StructNew>() ||
+      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>()) {
+    return true;
+  }
+
+  if (features.hasExtendedConst()) {
+    if (expr->is<Binary>()) {
+      auto bin = static_cast<Binary*>(expr);
+      if (bin->op == AddInt64 || bin->op == SubInt64 || bin->op == MulInt64 ||
+          bin->op == AddInt32 || bin->op == SubInt32 || bin->op == MulInt32) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+} // namespace wasm::Properties
 
 #endif // wasm_ir_properties_h

@@ -127,15 +127,24 @@ class SExpressionWasmBuilder {
   std::vector<Name> functionNames;
   std::vector<Name> tableNames;
   std::vector<Name> globalNames;
-  std::vector<Name> eventNames;
+  std::vector<Name> tagNames;
   int functionCounter = 0;
   int globalCounter = 0;
-  int eventCounter = 0;
+  int tagCounter = 0;
   int tableCounter = 0;
+  int elemCounter = 0;
   int memoryCounter = 0;
   // we need to know function return types before we parse their contents
-  std::map<Name, Signature> functionSignatures;
+  std::map<Name, HeapType> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
+
+  // Maps type indexes to a mapping of field index => name. This is not the same
+  // as the field names stored on the wasm object, as that maps types after
+  // their canonicalization. Canonicalization loses information, which means
+  // that structurally identical types cannot have different names. However,
+  // while parsing the text format we keep this mapping of type indexes to names
+  // which does allow reading such content.
+  std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
 
 public:
   // Assumes control of and modifies the input.
@@ -159,7 +168,7 @@ private:
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
   Name getGlobalName(Element& s);
-  Name getEventName(Element& s);
+  Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
 
   // returns the next index in s
@@ -182,6 +191,7 @@ private:
   bool isType(cashew::IString str) {
     return stringToType(str, true) != Type::none;
   }
+  HeapType getFunctionType(Name name, Element& s);
 
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
@@ -225,8 +235,6 @@ private:
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
   Expression* makeSIMDLoad(Element& s, SIMDLoadOp op);
   Expression* makeSIMDLoadStoreLane(Element& s, SIMDLoadStoreLaneOp op);
-  Expression* makeSIMDWiden(Element& s, SIMDWidenOp op);
-  Expression* makePrefetch(Element& s, PrefetchOp op);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);
@@ -238,12 +246,15 @@ private:
   Expression* makeLoop(Element& s);
   Expression* makeCall(Element& s, bool isReturn);
   Expression* makeCallIndirect(Element& s, bool isReturn);
-  template<class T>
-  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+  template<class T> void parseOperands(Element& s, Index i, Index j, T& list) {
     while (i < j) {
-      call->operands.push_back(parseExpression(s[i]));
+      list.push_back(parseExpression(s[i]));
       i++;
     }
+  }
+  template<class T>
+  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+    parseOperands(s, i, j, call->operands);
   }
   enum class LabelType { Break, Exception };
   Name getLabel(Element& s, LabelType labelType = LabelType::Break);
@@ -254,6 +265,10 @@ private:
   Expression* makeRefIs(Element& s, RefIsOp op);
   Expression* makeRefFunc(Element& s);
   Expression* makeRefEq(Element& s);
+  Expression* makeTableGet(Element& s);
+  Expression* makeTableSet(Element& s);
+  Expression* makeTableSize(Element& s);
+  Expression* makeTableGrow(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
@@ -264,18 +279,28 @@ private:
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s);
+  Expression* makeRefTestStatic(Element& s);
   Expression* makeRefCast(Element& s);
+  Expression* makeRefCastStatic(Element& s);
+  Expression* makeRefCastNopStatic(Element& s);
   Expression* makeBrOn(Element& s, BrOnOp op);
+  Expression* makeBrOnStatic(Element& s, BrOnOp op);
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
+  Expression* makeRttFreshSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
-  Index getStructIndex(const HeapType& type, Element& s);
+  Expression* makeStructNewStatic(Element& s, bool default_);
+  Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
+  Expression* makeArrayNewStatic(Element& s, bool default_);
+  Expression* makeArrayInit(Element& s);
+  Expression* makeArrayInitStatic(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
+  Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
 
   // Helper functions
@@ -285,13 +310,12 @@ private:
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);
-  Signature parseTypeRef(Element& s);
+  HeapType parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,
-                      Signature& functionSignature,
+                      HeapType& functionType,
                       std::vector<NameType>& namedParams);
-  size_t
-  parseTypeUse(Element& s, size_t startPos, Signature& functionSignature);
+  size_t parseTypeUse(Element& s, size_t startPos, HeapType& functionType);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
@@ -302,16 +326,16 @@ private:
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);
   void parseTable(Element& s, bool preParseImport = false);
-  void parseElem(Element& s);
-  void parseInnerElem(Table* table,
-                      Element& s,
-                      Index i = 1,
-                      Expression* offset = nullptr);
+  void parseElem(Element& s, Table* table = nullptr);
+  ElementSegment* parseElemFinish(Element& s,
+                                  std::unique_ptr<ElementSegment>& segment,
+                                  Index i = 1,
+                                  bool usesExpressions = false);
 
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);
 
-  void parseEvent(Element& s, bool preParseImport = false);
+  void parseTag(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
 

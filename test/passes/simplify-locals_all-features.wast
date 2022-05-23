@@ -1548,7 +1548,7 @@
 )
 (module
  (memory 256 256)
- (data passive "hello, there!")
+ (data "hello, there!")
  (func $memory-init-load
   (local $x i32)
   (local.set $x
@@ -1671,81 +1671,10 @@
   (local.get $1)
  )
 )
-(module
-  (event $e-i32 (attr 0) (param i32))
-  (func $foo (param i32 i32))
-  (func $pop-cannot-be-sinked (local $0 i32)
-    (try
-      (do)
-      (catch $e-i32
-        ;; This (local.set $0) of (pop i32) cannot be sunk to (local.get $0)
-        ;; below, because the pop should follow right after 'catch'.
-        (local.set $0 (pop i32))
-        (call $foo
-          (i32.const 3)
-          (local.get $0)
-        )
-      )
-    )
-  )
-
-  (func $pop-within-catch-can-be-sinked (local $0 i32)
-    (try
-      (do)
-      (catch_all
-        ;; This whole 'try' body can be sinked to eliminate local.set /
-        ;; local.get. Even though it contains a pop, it is enclosed within
-        ;; try-catch, so it is OK.
-        (local.set $0
-          (try (result i32)
-            (do (i32.const 0))
-            (catch $e-i32 (pop i32))
-          )
-        )
-        (call $foo
-          (i32.const 3)
-          (local.get $0)
-        )
-      )
-    )
-  )
-
-  (func $bar (result i32) (i32.const 3))
-  (func $call-cannot-be-sinked-into-try (local $0 i32)
-    (drop
-      ;; This local.tee should NOT be sinked into 'try' below, because it may
-      ;; throw
-      (local.tee $0 (call $bar))
-    )
-    (try
-      (do
-        (drop (local.get $0))
-      )
-      (catch $e-i32
-        (drop (pop i32))
-      )
-    )
-  )
-
-  (func $non-call-can-be-sinked-into-try (local $0 i32)
-    (drop
-      ;; This local.tee can be sinked into 'try' below, because it cannot throw
-      (local.tee $0 (i32.const 3))
-    )
-    (try
-      (do
-        (drop (local.get $0))
-      )
-      (catch $e-i32
-        (drop (pop i32))
-      )
-    )
-  )
-)
 ;; data.drop has global side effects
 (module
  (memory $0 (shared 1 1))
- (data passive "data")
+ (data "data")
  (func "foo" (result i32)
   (local $0 i32)
   (block (result i32)
@@ -1764,16 +1693,16 @@
 ;; it is no longer equivalent
 ;; (see https://github.com/WebAssembly/binaryen/issues/3266)
 (module
- (func "test" (param $0 eqref) (param $1 i31ref) (result i32)
+ (func "test" (param $0 eqref) (param $1 (ref null i31)) (result i32)
   (local $2 eqref)
-  (local $3 i31ref)
+  (local $3 (ref null i31))
   (local.set $2
    (local.get $0) ;; $0 and $2 are equivalent
   )
   (local.set $0   ;; set $0 to something with another type
    (local.get $3)
   )
-  ;; compares a null eqref and a zero i31ref - should be false
+  ;; compares a null eqref and a zero (ref null i31) - should be false
   (ref.eq
    (local.get $2)
    (local.get $1)

@@ -326,7 +326,7 @@ enum Section {
   Code = 10,
   Data = 11,
   DataCount = 12,
-  Event = 13
+  Tag = 13
 };
 
 // A passive segment is a segment that will not be automatically copied into a
@@ -346,8 +346,8 @@ enum SegmentFlag {
   // Bit 1 if active: 0 = index 0, 1 = index given
   HasIndex = 1 << 1,
   // Table element segments only:
-  // Bit 2: 0 = elemType is funcref and vector of func indexes given
-  //        1 = elemType is given and vector of ref expressions is given
+  // Bit 2: 0 = elemType is funcref and a vector of func indexes given
+  //        1 = elemType is given and a vector of ref expressions is given
   UsesExpressions = 1 << 2
 };
 
@@ -362,10 +362,8 @@ enum EncodedType {
   i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
-  // opaque host reference type
-  externref = -0x11, // 0x6f
-  // any reference type
-  anyref = -0x12, // 0x6e
+  // top type of references, including host references
+  anyref = -0x11, // 0x6f
   // comparable reference type
   eqref = -0x13, // 0x6d
   // nullable typed function reference type, with parameter
@@ -379,27 +377,34 @@ enum EncodedType {
   // run-time type info type, without depth index n
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
-  // func_type form
+  // type forms
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
   Array = -0x22,  // 0x5e
+  Sub = -0x30,    // 0x50
+  // prototype nominal forms we still parse
+  FuncSubtype = -0x23,   // 0x5d
+  StructSubtype = -0x24, // 0x5c
+  ArraySubtype = -0x25,  // 0x5b
+  // isorecursive recursion groups
+  Rec = -0x31, // 0x4f
   // block_type
   Empty = -0x40 // 0x40
 };
 
 enum EncodedHeapType {
-  func = -0x10,    // 0x70
-  extern_ = -0x11, // 0x6f
-  any = -0x12,     // 0x6e
-  eq = -0x13,      // 0x6d
-  i31 = -0x16,     // 0x6a
-  data = -0x19,    // 0x67
+  func = -0x10, // 0x70
+  any = -0x11,  // 0x6f
+  eq = -0x13,   // 0x6d
+  i31 = -0x16,  // 0x6a
+  data = -0x19, // 0x67
 };
 
 namespace UserSections {
 extern const char* Name;
 extern const char* SourceMapUrl;
 extern const char* Dylink;
+extern const char* Dylink0;
 extern const char* Linking;
 extern const char* Producers;
 extern const char* TargetFeatures;
@@ -418,6 +423,8 @@ extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
+extern const char* RelaxedSIMDFeature;
+extern const char* ExtendedConstFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -430,7 +437,12 @@ enum Subsection {
   NameMemory = 6,
   NameGlobal = 7,
   NameElem = 8,
-  NameData = 9
+  NameData = 9,
+  // see: https://github.com/WebAssembly/gc/issues/193
+  NameField = 10,
+
+  DylinkMemInfo = 1,
+  DylinkNeeded = 2,
 };
 
 } // namespace UserSections
@@ -463,6 +475,9 @@ enum ASTNodes {
   LocalTee = 0x22,
   GlobalGet = 0x23,
   GlobalSet = 0x24,
+
+  TableGet = 0x25,
+  TableSet = 0x26,
 
   I32LoadMem = 0x28,
   I64LoadMem = 0x29,
@@ -733,21 +748,21 @@ enum ASTNodes {
   // SIMD opcodes
 
   V128Load = 0x00,
-  I16x8LoadExtSVec8x8 = 0x01,
-  I16x8LoadExtUVec8x8 = 0x02,
-  I32x4LoadExtSVec16x4 = 0x03,
-  I32x4LoadExtUVec16x4 = 0x04,
-  I64x2LoadExtSVec32x2 = 0x05,
-  I64x2LoadExtUVec32x2 = 0x06,
-  V8x16LoadSplat = 0x07,
-  V16x8LoadSplat = 0x08,
-  V32x4LoadSplat = 0x09,
-  V64x2LoadSplat = 0x0a,
+  V128Load8x8S = 0x01,
+  V128Load8x8U = 0x02,
+  V128Load16x4S = 0x03,
+  V128Load16x4U = 0x04,
+  V128Load32x2S = 0x05,
+  V128Load32x2U = 0x06,
+  V128Load8Splat = 0x07,
+  V128Load16Splat = 0x08,
+  V128Load32Splat = 0x09,
+  V128Load64Splat = 0x0a,
   V128Store = 0x0b,
 
   V128Const = 0x0c,
-  V8x16Shuffle = 0x0d,
-  V8x16Swizzle = 0x0e,
+  I8x16Shuffle = 0x0d,
+  I8x16Swizzle = 0x0e,
 
   I8x16Splat = 0x0f,
   I16x8Splat = 0x10,
@@ -801,7 +816,6 @@ enum ASTNodes {
   I32x4LeU = 0x3e,
   I32x4GeS = 0x3f,
   I32x4GeU = 0x40,
-  I64x2Eq = 0xc0,
   F32x4Eq = 0x41,
   F32x4Ne = 0x42,
   F32x4Lt = 0x43,
@@ -817,32 +831,37 @@ enum ASTNodes {
 
   V128Not = 0x4d,
   V128And = 0x4e,
-  V128AndNot = 0x4f,
+  V128Andnot = 0x4f,
   V128Or = 0x50,
   V128Xor = 0x51,
   V128Bitselect = 0x52,
+  V128AnyTrue = 0x53,
 
-  V8x16SignSelect = 0x7d,
-  V16x8SignSelect = 0x7e,
-  V32x4SignSelect = 0x7f,
-  V64x2SignSelect = 0x94,
+  V128Load8Lane = 0x54,
+  V128Load16Lane = 0x55,
+  V128Load32Lane = 0x56,
+  V128Load64Lane = 0x57,
+  V128Store8Lane = 0x58,
+  V128Store16Lane = 0x59,
+  V128Store32Lane = 0x5a,
+  V128Store64Lane = 0x5b,
+  V128Load32Zero = 0x5c,
+  V128Load64Zero = 0x5d,
 
-  V128Load8Lane = 0x58,
-  V128Load16Lane = 0x59,
-  V128Load32Lane = 0x5a,
-  V128Load64Lane = 0x5b,
-  V128Store8Lane = 0x5c,
-  V128Store16Lane = 0x5d,
-  V128Store32Lane = 0x5e,
-  V128Store64Lane = 0x5f,
+  F32x4DemoteF64x2Zero = 0x5e,
+  F64x2PromoteLowF32x4 = 0x5f,
 
   I8x16Abs = 0x60,
   I8x16Neg = 0x61,
-  I8x16AnyTrue = 0x62,
+  I8x16Popcnt = 0x62,
   I8x16AllTrue = 0x63,
   I8x16Bitmask = 0x64,
-  I8x16NarrowSI16x8 = 0x65,
-  I8x16NarrowUI16x8 = 0x66,
+  I8x16NarrowI16x8S = 0x65,
+  I8x16NarrowI16x8U = 0x66,
+  F32x4Ceil = 0x67,
+  F32x4Floor = 0x68,
+  F32x4Trunc = 0x69,
+  F32x4Nearest = 0x6a,
   I8x16Shl = 0x6b,
   I8x16ShrS = 0x6c,
   I8x16ShrU = 0x6d,
@@ -852,26 +871,30 @@ enum ASTNodes {
   I8x16Sub = 0x71,
   I8x16SubSatS = 0x72,
   I8x16SubSatU = 0x73,
-  I8x16Mul = 0x75,
+  F64x2Ceil = 0x74,
+  F64x2Floor = 0x75,
   I8x16MinS = 0x76,
   I8x16MinU = 0x77,
   I8x16MaxS = 0x78,
   I8x16MaxU = 0x79,
+  F64x2Trunc = 0x7a,
   I8x16AvgrU = 0x7b,
-
-  I8x16Popcnt = 0x7c,
+  I16x8ExtaddPairwiseI8x16S = 0x7c,
+  I16x8ExtaddPairwiseI8x16U = 0x7d,
+  I32x4ExtaddPairwiseI16x8S = 0x7e,
+  I32x4ExtaddPairwiseI16x8U = 0x7f,
 
   I16x8Abs = 0x80,
   I16x8Neg = 0x81,
-  I16x8AnyTrue = 0x82,
+  I16x8Q15MulrSatS = 0x82,
   I16x8AllTrue = 0x83,
   I16x8Bitmask = 0x84,
-  I16x8NarrowSI32x4 = 0x85,
-  I16x8NarrowUI32x4 = 0x86,
-  I16x8WidenLowSI8x16 = 0x87,
-  I16x8WidenHighSI8x16 = 0x88,
-  I16x8WidenLowUI8x16 = 0x89,
-  I16x8WidenHighUI8x16 = 0x8a,
+  I16x8NarrowI32x4S = 0x85,
+  I16x8NarrowI32x4U = 0x86,
+  I16x8ExtendLowI8x16S = 0x87,
+  I16x8ExtendHighI8x16S = 0x88,
+  I16x8ExtendLowI8x16U = 0x89,
+  I16x8ExtendHighI8x16U = 0x8a,
   I16x8Shl = 0x8b,
   I16x8ShrS = 0x8c,
   I16x8ShrU = 0x8d,
@@ -881,50 +904,88 @@ enum ASTNodes {
   I16x8Sub = 0x91,
   I16x8SubSatS = 0x92,
   I16x8SubSatU = 0x93,
+  F64x2Nearest = 0x94,
   I16x8Mul = 0x95,
   I16x8MinS = 0x96,
   I16x8MinU = 0x97,
   I16x8MaxS = 0x98,
   I16x8MaxU = 0x99,
+  // 0x9a unused
   I16x8AvgrU = 0x9b,
-  I16x8Q15MulrSatS = 0x9c,
+  I16x8ExtmulLowI8x16S = 0x9c,
+  I16x8ExtmulHighI8x16S = 0x9d,
+  I16x8ExtmulLowI8x16U = 0x9e,
+  I16x8ExtmulHighI8x16U = 0x9f,
 
   I32x4Abs = 0xa0,
   I32x4Neg = 0xa1,
-  I32x4AnyTrue = 0xa2,
+  // 0xa2 for relaxed SIMD
   I32x4AllTrue = 0xa3,
   I32x4Bitmask = 0xa4,
-  I32x4WidenLowSI16x8 = 0xa7,
-  I32x4WidenHighSI16x8 = 0xa8,
-  I32x4WidenLowUI16x8 = 0xa9,
-  I32x4WidenHighUI16x8 = 0xaa,
+  // 0xa5 for relaxed SIMD
+  // 0xa6 for relaxed SIMD
+  I32x4ExtendLowI16x8S = 0xa7,
+  I32x4ExtendHighI16x8S = 0xa8,
+  I32x4ExtendLowI16x8U = 0xa9,
+  I32x4ExtendHighI16x8U = 0xaa,
   I32x4Shl = 0xab,
   I32x4ShrS = 0xac,
   I32x4ShrU = 0xad,
   I32x4Add = 0xae,
+  // 0xaf for relaxed SIMD
+  // 0xb0 for relaxed SIMD
   I32x4Sub = 0xb1,
+  // 0xb2 for relaxed SIMD
+  // 0xb3 for relaxed SIMD
+  // 0xb4 for relaxed SIMD
   I32x4Mul = 0xb5,
   I32x4MinS = 0xb6,
   I32x4MinU = 0xb7,
   I32x4MaxS = 0xb8,
   I32x4MaxU = 0xb9,
-  I32x4DotSVecI16x8 = 0xba,
+  I32x4DotI16x8S = 0xba,
+  // 0xbb unused
+  I32x4ExtmulLowI16x8S = 0xbc,
+  I32x4ExtmulHighI16x8S = 0xbd,
+  I32x4ExtmulLowI16x8U = 0xbe,
+  I32x4ExtmulHighI16x8U = 0xbf,
 
-  I64x2Bitmask = 0xc4,
-  I64x2WidenLowSI32x4 = 0xc7,
-  I64x2WidenHighSI32x4 = 0xc8,
-  I64x2WidenLowUI32x4 = 0xc9,
-  I64x2WidenHighUI32x4 = 0xca,
+  I64x2Abs = 0xc0,
   I64x2Neg = 0xc1,
+  // 0xc2 unused
+  I64x2AllTrue = 0xc3,
+  I64x2Bitmask = 0xc4,
+  // 0xc5 for relaxed SIMD
+  // 0xc6 for relaxed SIMD
+  I64x2ExtendLowI32x4S = 0xc7,
+  I64x2ExtendHighI32x4S = 0xc8,
+  I64x2ExtendLowI32x4U = 0xc9,
+  I64x2ExtendHighI32x4U = 0xca,
   I64x2Shl = 0xcb,
   I64x2ShrS = 0xcc,
   I64x2ShrU = 0xcd,
   I64x2Add = 0xce,
+  // 0xcf for relaxed SIMD
+  // 0xd0 for relaxed SIMD
   I64x2Sub = 0xd1,
+  // 0xd2 for relaxed SIMD
+  // 0xd3 for relaxed SIMD
+  // 0xd4 for relaxed SIMD
   I64x2Mul = 0xd5,
+  I64x2Eq = 0xd6,
+  I64x2Ne = 0xd7,
+  I64x2LtS = 0xd8,
+  I64x2GtS = 0xd9,
+  I64x2LeS = 0xda,
+  I64x2GeS = 0xdb,
+  I64x2ExtmulLowI32x4S = 0xdc,
+  I64x2ExtmulHighI32x4S = 0xdd,
+  I64x2ExtmulLowI32x4U = 0xde,
+  I64x2ExtmulHighI32x4U = 0xdf,
 
   F32x4Abs = 0xe0,
   F32x4Neg = 0xe1,
+  // 0xe2 for relaxed SIMD
   F32x4Sqrt = 0xe3,
   F32x4Add = 0xe4,
   F32x4Sub = 0xe5,
@@ -932,20 +993,12 @@ enum ASTNodes {
   F32x4Div = 0xe7,
   F32x4Min = 0xe8,
   F32x4Max = 0xe9,
-  F32x4PMin = 0xea,
-  F32x4PMax = 0xeb,
-
-  F32x4Ceil = 0xd8,
-  F32x4Floor = 0xd9,
-  F32x4Trunc = 0xda,
-  F32x4Nearest = 0xdb,
-  F64x2Ceil = 0xdc,
-  F64x2Floor = 0xdd,
-  F64x2Trunc = 0xde,
-  F64x2Nearest = 0xdf,
+  F32x4Pmin = 0xea,
+  F32x4Pmax = 0xeb,
 
   F64x2Abs = 0xec,
   F64x2Neg = 0xed,
+  // 0xee for relaxed SIMD
   F64x2Sqrt = 0xef,
   F64x2Add = 0xf0,
   F64x2Sub = 0xf1,
@@ -953,59 +1006,41 @@ enum ASTNodes {
   F64x2Div = 0xf3,
   F64x2Min = 0xf4,
   F64x2Max = 0xf5,
-  F64x2PMin = 0xf6,
-  F64x2PMax = 0xf7,
+  F64x2Pmin = 0xf6,
+  F64x2Pmax = 0xf7,
 
-  I16x8ExtAddPairWiseSI8x16 = 0xc2,
-  I16x8ExtAddPairWiseUI8x16 = 0xc3,
-  I32x4ExtAddPairWiseSI16x8 = 0xa5,
-  I32x4ExtAddPairWiseUI16x8 = 0xa6,
+  I32x4TruncSatF32x4S = 0xf8,
+  I32x4TruncSatF32x4U = 0xf9,
+  F32x4ConvertI32x4S = 0xfa,
+  F32x4ConvertI32x4U = 0xfb,
+  I32x4TruncSatF64x2SZero = 0xfc,
+  I32x4TruncSatF64x2UZero = 0xfd,
+  F64x2ConvertLowI32x4S = 0xfe,
+  F64x2ConvertLowI32x4U = 0xff,
 
-  I32x4TruncSatSF32x4 = 0xf8,
-  I32x4TruncSatUF32x4 = 0xf9,
-  F32x4ConvertSI32x4 = 0xfa,
-  F32x4ConvertUI32x4 = 0xfb,
-
-  V128Load32Zero = 0xfc,
-  V128Load64Zero = 0xfd,
-
-  F32x4QFMA = 0xb4,
-  F32x4QFMS = 0xd4,
-  F64x2QFMA = 0xfe,
-  F64x2QFMS = 0xff,
-
-  I64x2TruncSatSF64x2 = 0x0100,
-  I64x2TruncSatUF64x2 = 0x0101,
-  F64x2ConvertSI64x2 = 0x0102,
-  F64x2ConvertUI64x2 = 0x0103,
-
-  I16x8ExtMulLowSI8x16 = 0x9a,
-  I16x8ExtMulHighSI8x16 = 0x9d,
-  I16x8ExtMulLowUI8x16 = 0x9e,
-  I16x8ExtMulHighUI8x16 = 0x9f,
-  I32x4ExtMulLowSI16x8 = 0xbb,
-  I32x4ExtMulHighSI16x8 = 0xbd,
-  I32x4ExtMulLowUI16x8 = 0xbe,
-  I32x4ExtMulHighUI16x8 = 0xbf,
-  I64x2ExtMulLowSI32x4 = 0xd2,
-  I64x2ExtMulHighSI32x4 = 0xd3,
-  I64x2ExtMulLowUI32x4 = 0xd6,
-  I64x2ExtMulHighUI32x4 = 0xd7,
-
-  F64x2ConvertLowSI32x4 = 0x53,
-  F64x2ConvertLowUI32x4 = 0x54,
-  I32x4TruncSatZeroSF64x2 = 0x55,
-  I32x4TruncSatZeroUF64x2 = 0x56,
-  F32x4DemoteZeroF64x2 = 0x57,
-  F64x2PromoteLowF32x4 = 0x69,
-
-  I32x4WidenSI8x16 = 0x67,
-  I32x4WidenUI8x16 = 0x68,
-
-  // prefetch opcodes
-
-  PrefetchT = 0xc5,
-  PrefetchNT = 0xc6,
+  // relaxed SIMD opcodes
+  I8x16RelaxedSwizzle = 0xa2,
+  I32x4RelaxedTruncF32x4S = 0xa5,
+  I32x4RelaxedTruncF32x4U = 0xa6,
+  I32x4RelaxedTruncF64x2SZero = 0xc5,
+  I32x4RelaxedTruncF64x2UZero = 0xc6,
+  F32x4RelaxedFma = 0xaf,
+  F32x4RelaxedFms = 0xb0,
+  F64x2RelaxedFma = 0xcf,
+  F64x2RelaxedFms = 0xd0,
+  I8x16Laneselect = 0xb2,
+  I16x8Laneselect = 0xb3,
+  I32x4Laneselect = 0xd2,
+  I64x2Laneselect = 0xd3,
+  F32x4RelaxedMin = 0xb4,
+  F32x4RelaxedMax = 0xe2,
+  F64x2RelaxedMin = 0xd4,
+  F64x2RelaxedMax = 0xee,
+  I16x8RelaxedQ15MulrS = 0x111,
+  I16x8DotI8x16I7x16S = 0x112,
+  I16x8DotI8x16I7x16U = 0x113,
+  I32x4DotI8x16I7x16AddS = 0x114,
+  I32x4DotI8x16I7x16AddU = 0x115,
 
   // bulk memory opcodes
 
@@ -1016,11 +1051,14 @@ enum ASTNodes {
 
   // reference types opcodes
 
+  TableGrow = 0x0f,
+  TableSize = 0x10,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
   RefAsNonNull = 0xd3,
   BrOnNull = 0xd4,
+  BrOnNonNull = 0xd6,
 
   // exception handling opcodes
 
@@ -1046,6 +1084,8 @@ enum ASTNodes {
   StructGetS = 0x04,
   StructGetU = 0x05,
   StructSet = 0x06,
+  StructNew = 0x07,
+  StructNewDefault = 0x08,
   ArrayNewWithRtt = 0x11,
   ArrayNewDefaultWithRtt = 0x12,
   ArrayGet = 0x13,
@@ -1053,14 +1093,26 @@ enum ASTNodes {
   ArrayGetU = 0x15,
   ArraySet = 0x16,
   ArrayLen = 0x17,
+  ArrayCopy = 0x18,
+  ArrayInit = 0x19,
+  ArrayInitStatic = 0x1a,
+  ArrayNew = 0x1b,
+  ArrayNewDefault = 0x1c,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
   RttCanon = 0x30,
   RttSub = 0x31,
+  RttFreshSub = 0x32,
   RefTest = 0x40,
   RefCast = 0x41,
   BrOnCast = 0x42,
+  BrOnCastFail = 0x43,
+  RefTestStatic = 0x44,
+  RefCastStatic = 0x45,
+  BrOnCastStatic = 0x46,
+  BrOnCastStaticFail = 0x47,
+  RefCastNopStatic = 0x48,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,
@@ -1070,6 +1122,9 @@ enum ASTNodes {
   BrOnFunc = 0x60,
   BrOnData = 0x61,
   BrOnI31 = 0x62,
+  BrOnNonFunc = 0x63,
+  BrOnNonData = 0x64,
+  BrOnNonI31 = 0x65,
 };
 
 enum MemoryAccess {
@@ -1088,6 +1143,9 @@ enum FeaturePrefix {
 
 } // namespace BinaryConsts
 
+// (local index in IR, tuple index) => binary local index
+using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
+
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
@@ -1098,9 +1156,10 @@ class WasmBinaryWriter {
   // just use them directly).
   struct BinaryIndexes {
     std::unordered_map<Name, Index> functionIndexes;
-    std::unordered_map<Name, Index> eventIndexes;
+    std::unordered_map<Name, Index> tagIndexes;
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
+    std::unordered_map<Name, Index> elemIndexes;
 
     BinaryIndexes(Module& wasm) {
       auto addIndexes = [&](auto& source, auto& indexes) {
@@ -1120,8 +1179,13 @@ class WasmBinaryWriter {
         }
       };
       addIndexes(wasm.functions, functionIndexes);
-      addIndexes(wasm.events, eventIndexes);
+      addIndexes(wasm.tags, tagIndexes);
       addIndexes(wasm.tables, tableIndexes);
+
+      for (auto& curr : wasm.elementSegments) {
+        auto index = elemIndexes.size();
+        elemIndexes[curr->name] = index;
+      }
 
       // Globals may have tuple types in the IR, in which case they lower to
       // multiple globals, one for each tuple element, in the binary. Tuple
@@ -1163,7 +1227,11 @@ public:
     std::vector<Entry> functionBodies;
   } tableOfContents;
 
-  void setNamesSection(bool set) { debugInfo = set; }
+  void setNamesSection(bool set) {
+    debugInfo = set;
+    emitModuleName = set;
+  }
+  void setEmitModuleName(bool set) { emitModuleName = set; }
   void setSourceMap(std::ostream* set, std::string url) {
     sourceMap = set;
     sourceMapUrl = url;
@@ -1191,16 +1259,16 @@ public:
   void writeExports();
   void writeDataCount();
   void writeDataSegments();
-  void writeEvents();
+  void writeTags();
 
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getTableIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
-  uint32_t getEventIndex(Name name) const;
+  uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
 
   void writeTableDeclarations();
-  void writeTableElements();
+  void writeElementSegments();
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
@@ -1208,6 +1276,7 @@ public:
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();
   void writeDylinkSection();
+  void writeLegacyDylinkSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
@@ -1221,6 +1290,7 @@ public:
   void writeInlineString(const char* name);
   void writeEscapedName(const char* name);
   void writeInlineBuffer(const char* data, size_t size);
+  void writeData(const char* data, size_t size);
 
   struct Buffer {
     const char* data;
@@ -1230,26 +1300,34 @@ public:
       : data(data), size(size), pointerLocation(pointerLocation) {}
   };
 
-  std::vector<Buffer> buffersToWrite;
-
-  void emitBuffer(const char* data, size_t size);
-  void emitString(const char* str);
-  void finishUp();
-
   Module* getModule() { return wasm; }
 
   void writeType(Type type);
+
+  // Writes an arbitrary heap type, which may be indexed or one of the
+  // basic types like funcref.
   void writeHeapType(HeapType type);
+  // Writes an indexed heap type. Note that this is encoded differently than a
+  // general heap type because it does not allow negative values for basic heap
+  // types.
+  void writeIndexedHeapType(HeapType type);
+
   void writeField(const Field& field);
 
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
-  std::unordered_map<HeapType, Index> typeIndices;
-  std::vector<HeapType> types;
+  ModuleUtils::IndexedHeapTypes indexedTypes;
 
   bool debugInfo = true;
+
+  // TODO: Remove `emitModuleName` in the future once there are better ways to
+  // ensure modules have meaningful names in stack traces.For example, using
+  // ObjectURLs works in FireFox, but not Chrome. See
+  // https://bugs.chromium.org/p/v8/issues/detail?id=11808.
+  bool emitModuleName = true;
+
   std::ostream* sourceMap = nullptr;
   std::string sourceMapUrl;
   std::string symbolMap;
@@ -1273,6 +1351,11 @@ private:
   // the function is written out.
   std::vector<Expression*> binaryLocationTrackedExpressionsForFunc;
 
+  // Maps function names to their mapped locals. This is used when we emit the
+  // local names section: we map the locals when writing the function, save that
+  // info here, and then use it when writing the names.
+  std::unordered_map<Name, MappedLocals> funcMappedLocals;
+
   void prepare();
 };
 
@@ -1282,7 +1365,9 @@ class WasmBinaryBuilder {
   const std::vector<char>& input;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
+  bool debugInfo = true;
   bool DWARF = false;
+  bool skipFunctionBodies = false;
 
   size_t pos = 0;
   Index startIndex = -1;
@@ -1295,11 +1380,15 @@ class WasmBinaryBuilder {
   std::vector<HeapType> types;
 
 public:
-  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
-    : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
-      nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
+  WasmBinaryBuilder(Module& wasm,
+                    FeatureSet features,
+                    const std::vector<char>& input);
 
+  void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
+  void setSkipFunctionBodies(bool skipFunctionBodies_) {
+    skipFunctionBodies = skipFunctionBodies_;
+  }
   void read();
   void readUserSection(size_t payloadLen);
 
@@ -1328,8 +1417,9 @@ public:
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
   Type getType(int initial);
-
   HeapType getHeapType();
+  HeapType getIndexedHeapType();
+
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
@@ -1345,7 +1435,7 @@ public:
   Name getFunctionName(Index index);
   Name getTableName(Index index);
   Name getGlobalName(Index index);
-  Name getEventName(Index index);
+  Name getTagName(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
@@ -1354,12 +1444,16 @@ public:
                           Address defaultIfNoMax);
   void readImports();
 
-  // The signatures of each function, given in the function section
-  std::vector<Signature> functionSignatures;
+  // The signatures of each function, including imported functions, given in the
+  // import and function sections. Store HeapTypes instead of Signatures because
+  // reconstructing the HeapTypes from the Signatures is expensive.
+  std::vector<HeapType> functionTypes;
 
   void readFunctionSignatures();
-  Signature getSignatureByFunctionIndex(Index index);
+  HeapType getTypeByIndex(Index index);
+  HeapType getTypeByFunctionIndex(Index index);
   Signature getSignatureByTypeIndex(Index index);
+  Signature getSignatureByFunctionIndex(Index index);
 
   size_t nextLabel;
 
@@ -1387,6 +1481,12 @@ public:
   std::vector<Table*> tableImports;
   // at index i we have all references to the table i
   std::map<Index, std::vector<Expression*>> tableRefs;
+
+  std::map<Index, Name> elemTables;
+
+  // we store elems here after being read from binary, until when we know their
+  // names
+  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
 
   // we store globals here before wasm.addGlobal after we know their names
   std::vector<std::unique_ptr<Global>> globals;
@@ -1494,18 +1594,16 @@ public:
   void readDataSegments();
   void readDataCount();
 
-  // A map from table indexes to the map of segment indexes to their elements
-  std::map<Index, std::map<Index, std::vector<Index>>> functionTable;
+  void readTableDeclarations();
+  void readElementSegments();
 
-  void readFunctionTableDeclaration();
-  void readTableElements();
-
-  void readEvents();
+  void readTags();
 
   static Name escape(Name name);
   void readNames(size_t);
   void readFeatures(size_t);
   void readDylink(size_t);
+  void readDylink0(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
@@ -1561,12 +1659,12 @@ public:
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDWiden(Expression*& out, uint32_t code);
-  bool maybeVisitPrefetch(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
+  bool maybeVisitTableSize(Expression*& out, uint32_t code);
+  bool maybeVisitTableGrow(Expression*& out, uint32_t code);
   bool maybeVisitI31New(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
@@ -1578,9 +1676,11 @@ public:
   bool maybeVisitStructGet(Expression*& out, uint32_t code);
   bool maybeVisitStructSet(Expression*& out, uint32_t code);
   bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayInit(Expression*& out, uint32_t code);
   bool maybeVisitArrayGet(Expression*& out, uint32_t code);
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
+  bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);
@@ -1592,6 +1692,8 @@ public:
   void visitRefIs(RefIs* curr, uint8_t code);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
+  void visitTableGet(TableGet* curr);
+  void visitTableSet(TableSet* curr);
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);

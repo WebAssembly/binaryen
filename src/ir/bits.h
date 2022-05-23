@@ -22,9 +22,7 @@
 #include "wasm-builder.h"
 #include <ir/load-utils.h>
 
-namespace wasm {
-
-namespace Bits {
+namespace wasm::Bits {
 
 // get a mask to keep only the low # of bits
 inline int32_t lowBitMask(int32_t bits) {
@@ -385,9 +383,26 @@ Index getMaxBits(Expression* curr,
       case WrapInt64:
       case ExtendUInt32:
         return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
+      case ExtendS8Int32: {
+        auto maxBits = getMaxBits(unary->value, localInfoProvider);
+        return maxBits >= 8 ? Index(32) : maxBits;
+      }
+      case ExtendS16Int32: {
+        auto maxBits = getMaxBits(unary->value, localInfoProvider);
+        return maxBits >= 16 ? Index(32) : maxBits;
+      }
+      case ExtendS8Int64: {
+        auto maxBits = getMaxBits(unary->value, localInfoProvider);
+        return maxBits >= 8 ? Index(64) : maxBits;
+      }
+      case ExtendS16Int64: {
+        auto maxBits = getMaxBits(unary->value, localInfoProvider);
+        return maxBits >= 16 ? Index(64) : maxBits;
+      }
+      case ExtendS32Int64:
       case ExtendSInt32: {
         auto maxBits = getMaxBits(unary->value, localInfoProvider);
-        return maxBits == 32 ? Index(64) : maxBits;
+        return maxBits >= 32 ? Index(64) : maxBits;
       }
       default: {
       }
@@ -396,6 +411,8 @@ Index getMaxBits(Expression* curr,
     // a tee passes through the value
     return getMaxBits(set->value, localInfoProvider);
   } else if (auto* get = curr->dynCast<LocalGet>()) {
+    // TODO: Should this be optional?
+    assert(localInfoProvider);
     return localInfoProvider->getMaxBitsForLocal(get);
   } else if (auto* load = curr->dynCast<Load>()) {
     // if signed, then the sign-extension might fill all the bits
@@ -416,8 +433,6 @@ Index getMaxBits(Expression* curr,
   }
 }
 
-} // namespace Bits
-
-} // namespace wasm
+} // namespace wasm::Bits
 
 #endif // wasm_ir_bits_h

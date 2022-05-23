@@ -1,0 +1,41 @@
+(module
+ (type ${ref|...0|_ref|...0|} (struct (field (ref ${ref|...0|_ref|...0|})) (field (ref ${ref|...0|_ref|...0|}))))
+ (type $[i32] (array i32))
+ (type ${i31ref} (struct (field i31ref)))
+ (type ${ref|...0|} (struct (field (ref ${ref|...0|}))))
+ (type $ref|[i32]|_ref?|[i32]|_=>_none (func (param (ref $[i32]) (ref null $[i32]))))
+ (type $ref|[i31ref]|_ref|[ref|any|]|_=>_none (func (param (ref $[i31ref]) (ref $[ref|any|]))))
+ (type $ref|{i31ref}|_ref|{ref|any|}|_=>_none (func (param (ref ${i31ref}) (ref ${ref|any|}))))
+ (type $ref|{i31ref}|_ref|{i31ref_ref|any|}|_=>_none (func (param (ref ${i31ref}) (ref ${i31ref_ref|any|}))))
+ (type $ref|{ref|...0|}|_ref|{ref|...0|_ref|...0|}|_=>_none (func (param (ref ${ref|...0|}) (ref ${ref|...0|_ref|...0|}))))
+ (type $[i31ref] (array i31ref))
+ (type $[ref|any|] (array (ref any)))
+ (type ${ref|any|} (struct (field (ref any))))
+ (type ${i31ref_ref|any|} (struct (field i31ref) (field (ref any))))
+ (func $0 (param $0 (ref $[i32])) (param $1 (ref null $[i32]))
+  (local.set $1
+   (local.get $0)
+  )
+ )
+ (func $1 (param $0 (ref $[i31ref])) (param $1 (ref $[ref|any|]))
+  (local.set $1
+   (local.get $0)
+  )
+ )
+ (func $2 (param $0 (ref ${i31ref})) (param $1 (ref ${ref|any|}))
+  (local.set $1
+   (local.get $0)
+  )
+ )
+ (func $3 (param $0 (ref ${i31ref})) (param $1 (ref ${i31ref_ref|any|}))
+  (local.set $0
+   (local.get $1)
+  )
+ )
+ (func $4 (param $0 (ref ${ref|...0|})) (param $1 (ref ${ref|...0|_ref|...0|}))
+  (local.set $0
+   (local.get $1)
+  )
+ )
+)
+
