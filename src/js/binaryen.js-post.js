@@ -2507,14 +2507,12 @@ function wrapModule(module, self = {}) {
     var memoryInfo = {
       'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
       'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
+      'initial': Module['_BinaryenMemoryGetInitial'](module),
+      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
     };
-    if (memoryInfo['module'] === '' && memoryInfo['base'] === '') {
-      memoryInfo['initial'] = Module['_BinaryenMemoryGetInitial'](module);
-      if (Module['_BinaryenMemoryHasMax'](module)) {
-        memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
-      }
+    if (Module['_BinaryenMemoryHasMax'](module)) {
+      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
     }
-    memoryInfo['shared'] = Boolean(Module['_BinaryenMemoryIsShared'](module));
     return memoryInfo;
   };
   self['getNumMemorySegments'] = function() {
