@@ -3812,13 +3812,13 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   Fatal() << "non-constant offsets aren't supported yet";
   return 0;
 }
-int BinaryenHasMemory(BinaryenModuleRef module) {
+bool BinaryenHasMemory(BinaryenModuleRef module) {
   return ((Module*)module)->memory.exists;
 }
 BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
   return ((Module*)module)->memory.initial;
 }
-int BinaryenMemoryHasMax(BinaryenModuleRef module) {
+bool BinaryenMemoryHasMax(BinaryenModuleRef module) {
   return ((Module*)module)->memory.hasMax();
 }
 BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module) {
@@ -3840,7 +3840,7 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
     return "";
   }
 }
-int BinaryenMemoryIsShared(BinaryenModuleRef module) {
+bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
   return ((Module*)module)->memory.shared;
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,

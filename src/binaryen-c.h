@@ -2285,14 +2285,14 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex numSegments,
                                     bool shared);
 
-BINARYEN_API int BinaryenHasMemory(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
 BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module);
-BINARYEN_API int BinaryenMemoryHasMax(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenMemoryHasMax(BinaryenModuleRef module);
 BINARYEN_API BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module);
 BINARYEN_API const char*
 BinaryenMemoryImportGetModule(BinaryenModuleRef module);
 BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module);
-BINARYEN_API int BinaryenMemoryIsShared(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module);
 
 // Memory segments. Query utilities.
 
