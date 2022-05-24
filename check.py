@@ -313,7 +313,7 @@ def run_example_tests():
         print('run...', output_file)
         subprocess.check_call([os.path.abspath(output_file)]) # debugg
         actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
-        #os.remove(output_file)
+        os.remove(output_file)
         shared.fail_if_not_identical_to_file(actual, expected)
 
 
