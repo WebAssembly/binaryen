@@ -364,19 +364,28 @@ struct LParenTok {
   friend std::ostream& operator<<(std::ostream& os, const LParenTok&) {
     return os << "'('";
   }
+
+  friend bool operator==(const LParenTok&, const LParenTok&) { return true; }
 };
 
 struct RParenTok {
   friend std::ostream& operator<<(std::ostream& os, const RParenTok&) {
     return os << "')'";
   }
+
+  friend bool operator==(const RParenTok&, const RParenTok&) { return true; }
 };
 
 struct IntTok {
   uint64_t n;
   bool hasSign;
+
   friend std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
     return os << tok.n << " sign: " << tok.hasSign;
+  }
+
+  friend bool operator==(const IntTok& t1, const IntTok& t2) {
+    return t1.n == t2.n && t1.hasSign == t2.hasSign;
   }
 };
 
@@ -386,14 +395,25 @@ struct Token {
   std::string_view span;
   Data data;
 
-  bool operator==(const Token& other) const { return span == other.span; }
-  bool operator!=(const Token& other) const { return !(*this == other); }
-
   // Suppress clang-tidy false positive about unused functions.
   [[maybe_unused]] friend std::ostream& operator<<(std::ostream& os,
                                                    const Token& tok) {
     std::visit([&](const auto& t) { os << t; }, tok.data);
     return os << " \"" << tok.span << "\"";
+  }
+
+  friend bool operator==(const Token& t1, const Token& t2) {
+    return t1.span == t2.span &&
+           std::visit(
+             [](auto& d1, auto& d2) {
+               if constexpr (std::is_same_v<decltype(d1), decltype(d2)>) {
+                 return d1 == d2;
+               } else {
+                 return false;
+               }
+             },
+             t1.data,
+             t2.data);
   }
 };
 

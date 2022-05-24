@@ -6,10 +6,10 @@ using namespace wasm::WATParser;
 
 TEST(ParserTest, LexWhitespace) {
   Token one{"1"sv, IntTok{1, false}};
-  Token two{"2"sv, IntTok{1, false}};
-  Token three{"3"sv, IntTok{1, false}};
-  Token four{"4"sv, IntTok{1, false}};
-  Token five{"5"sv, IntTok{1, false}};
+  Token two{"2"sv, IntTok{2, false}};
+  Token three{"3"sv, IntTok{3, false}};
+  Token four{"4"sv, IntTok{4, false}};
+  Token five{"5"sv, IntTok{5, false}};
 
   Lexer lexer(" 1\t2\n3\r4 \n\n\t 5 "sv);
 
