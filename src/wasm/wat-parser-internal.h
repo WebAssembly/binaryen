@@ -75,10 +75,10 @@ public:
   bool empty() const { return size() == 0; }
 
   // Tokens must be separated by spaces or parentheses.
-  bool can_finish() const;
+  bool canFinish() const;
 
   // Whether the unlexed input starts with prefix `sv`.
-  size_t starts_with(std::string_view sv) const {
+  size_t startsWith(std::string_view sv) const {
     return next().substr(0, sv.size()) == sv;
   }
 
@@ -89,8 +89,8 @@ public:
   void take(const LexResult& res) { lexedSize += res.span.size(); }
 
   // Consume the prefix and return true if possible.
-  bool take_prefix(std::string_view sv) {
-    if (starts_with(sv)) {
+  bool takePrefix(std::string_view sv) {
+    if (startsWith(sv)) {
       take(sv.size());
       return true;
     }
@@ -98,7 +98,7 @@ public:
   }
 
   // Consume the rest of the input.
-  void take_all() { lexedSize = input.size(); }
+  void takeAll() { lexedSize = input.size(); }
 };
 
 // The result of lexing an integer token fragment.
@@ -152,16 +152,16 @@ public:
     return {};
   }
 
-  void take_sign() {
-    if (take_prefix("+"sv)) {
+  void takeSign() {
+    if (takePrefix("+"sv)) {
       hasSign = true;
-    } else if (take_prefix("-"sv)) {
+    } else if (takePrefix("-"sv)) {
       hasSign = true;
       negative = true;
     }
   }
 
-  bool take_digit() {
+  bool takeDigit() {
     if (!empty()) {
       if (auto d = getDigit(next()[0])) {
         take(1);
@@ -176,7 +176,7 @@ public:
     return false;
   }
 
-  bool take_hexdigit() {
+  bool takeHexdigit() {
     if (!empty()) {
       if (auto h = getHexDigit(next()[0])) {
         take(1);
@@ -199,13 +199,13 @@ public:
 
 std::optional<LexResult> lparen(std::string_view in) {
   LexCtx ctx(in);
-  ctx.take_prefix("("sv);
+  ctx.takePrefix("("sv);
   return ctx.lexed();
 }
 
 std::optional<LexResult> rparen(std::string_view in) {
   LexCtx ctx(in);
-  ctx.take_prefix(")"sv);
+  ctx.takePrefix(")"sv);
   return ctx.lexed();
 }
 
@@ -224,22 +224,22 @@ std::optional<LexResult> comment(std::string_view in) {
   }
 
   // Line comment
-  if (ctx.take_prefix(";;"sv)) {
+  if (ctx.takePrefix(";;"sv)) {
     if (auto size = ctx.next().find('\n'); size != ""sv.npos) {
       ctx.take(size);
     } else {
-      ctx.take_all();
+      ctx.takeAll();
     }
     return ctx.lexed();
   }
 
   // Block comment (possibly nested!)
-  if (ctx.take_prefix("(;"sv)) {
+  if (ctx.takePrefix("(;"sv)) {
     size_t depth = 1;
     while (depth > 0 && ctx.size() >= 2) {
-      if (ctx.take_prefix("(;"sv)) {
+      if (ctx.takePrefix("(;"sv)) {
         ++depth;
-      } else if (ctx.take_prefix(";)"sv)) {
+      } else if (ctx.takePrefix(";)"sv)) {
         --depth;
       } else {
         ctx.take(1);
@@ -257,8 +257,8 @@ std::optional<LexResult> comment(std::string_view in) {
 
 std::optional<LexResult> spacechar(std::string_view in) {
   LexCtx ctx(in);
-  ctx.take_prefix(" "sv) || ctx.take_prefix("\n"sv) ||
-    ctx.take_prefix("\r"sv) || ctx.take_prefix("\t"sv);
+  ctx.takePrefix(" "sv) || ctx.takePrefix("\n"sv) || ctx.takePrefix("\r"sv) ||
+    ctx.takePrefix("\t"sv);
   return ctx.lexed();
 }
 
@@ -278,12 +278,12 @@ std::optional<LexResult> space(std::string_view in) {
   return ctx.lexed();
 }
 
-bool LexCtx::can_finish() const {
+bool LexCtx::canFinish() const {
   // Logically we want to check for eof, parens, and space. But we don't
   // actually want to parse more than a couple characters of space, so check for
   // individual space chars or comment starts instead.
   return empty() || lparen(next()) || rparen(next()) || spacechar(next()) ||
-         starts_with(";;"sv);
+         startsWith(";;"sv);
 }
 
 // num   ::= d:digit => d
@@ -291,12 +291,12 @@ bool LexCtx::can_finish() const {
 // digit ::= '0' => 0 | ... | '9' => 9
 std::optional<LexIntResult> num(std::string_view in) {
   LexIntCtx ctx(in);
-  if (!ctx.take_digit()) {
+  if (!ctx.takeDigit()) {
     return {};
   }
   while (true) {
-    bool under = ctx.take_prefix("_"sv);
-    if (!ctx.take_digit()) {
+    bool under = ctx.takePrefix("_"sv);
+    if (!ctx.takeDigit()) {
       if (!under) {
         return ctx.lexed();
       }
@@ -312,12 +312,12 @@ std::optional<LexIntResult> num(std::string_view in) {
 //            | 'a' => 10 | ... | 'f' => 15
 std::optional<LexIntResult> hexnum(std::string_view in) {
   LexIntCtx ctx(in);
-  if (!ctx.take_hexdigit()) {
+  if (!ctx.takeHexdigit()) {
     return {};
   }
   while (true) {
-    bool under = ctx.take_prefix("_"sv);
-    if (!ctx.take_hexdigit()) {
+    bool under = ctx.takePrefix("_"sv);
+    if (!ctx.takeHexdigit()) {
       if (!under) {
         return ctx.lexed();
       }
@@ -336,11 +336,11 @@ std::optional<LexIntResult> hexnum(std::string_view in) {
 // expect.
 std::optional<LexIntResult> integer(std::string_view in) {
   LexIntCtx ctx(in);
-  ctx.take_sign();
-  if (ctx.take_prefix("0x"sv)) {
+  ctx.takeSign();
+  if (ctx.takePrefix("0x"sv)) {
     if (auto lexed = hexnum(ctx.next())) {
       ctx.take(*lexed);
-      if (ctx.can_finish()) {
+      if (ctx.canFinish()) {
         return ctx.lexed();
       }
     }
@@ -349,7 +349,7 @@ std::optional<LexIntResult> integer(std::string_view in) {
   }
   if (auto lexed = num(ctx.next())) {
     ctx.take(*lexed);
-    if (ctx.can_finish()) {
+    if (ctx.canFinish()) {
       return ctx.lexed();
     }
   }
