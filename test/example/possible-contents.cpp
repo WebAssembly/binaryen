@@ -196,11 +196,12 @@ void testMain() {
     // Two nulls go to the lub.
     assertCombination(anyNull, funcNull, anyNull);
 
-    assertCombination(exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
+    assertCombination(
+      exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
 
-    // If one is a null and the other is not, it makes the one that is not a null
-    // be a nullable type - but keeps the heap type of the other (since the type
-    // of the null does not matter, all nulls compare equal).
+    // If one is a null and the other is not, it makes the one that is not a
+    // null be a nullable type - but keeps the heap type of the other (since the
+    // type of the null does not matter, all nulls compare equal).
     assertCombination(anyNull, exactNonNullAnyref, exactAnyref);
     assertCombination(anyNull, exactNonNullFuncref, exactFuncref);
 
@@ -226,8 +227,8 @@ void testMain() {
 
   auto testOracle = [&]() {
     {
-      // A minimal test of the public API of PossibleTypesOracle. See the lit test
-      // for coverage of all the internals (using lit makes the result more
+      // A minimal test of the public API of PossibleTypesOracle. See the lit
+      // test for coverage of all the internals (using lit makes the result more
       // fuzzable).
       auto wasm = parse(R"(
         (module
@@ -251,8 +252,8 @@ void testMain() {
 
     {
       // Test for a node with many possible types. The pass limits how many it
-      // notices to not use excessive memory, so even though 4 are possible here,
-      // we'll just report that more than one is possible ("many").
+      // notices to not use excessive memory, so even though 4 are possible
+      // here, we'll just report that more than one is possible ("many").
       auto wasm = parse(R"(
         (module
           (type $A (struct_subtype (field i32) data))
