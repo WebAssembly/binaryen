@@ -101,10 +101,12 @@ public:
   void takeAll() { lexedSize = input.size(); }
 };
 
+enum Signedness { Unsigned, Signed };
+
 // The result of lexing an integer token fragment.
 struct LexIntResult : LexResult {
   uint64_t n;
-  bool hasSign;
+  Signedness signedness;
 };
 
 // Lexing context that accumulates lexed input to produce an integer token
@@ -114,7 +116,7 @@ struct LexIntCtx : LexCtx {
 
 private:
   uint64_t n = 0;
-  bool hasSign = false;
+  Signedness signedness = Unsigned;
   bool negative = false;
   bool overflow = false;
 
@@ -150,7 +152,7 @@ public:
     if (!basic) {
       return {};
     }
-    if (hasSign) {
+    if (signedness == Signed) {
       if (negative) {
         if (n > (1ull << 63)) {
           // TODO: Add error production for signed underflow.
@@ -163,14 +165,14 @@ public:
         }
       }
     }
-    return {LexIntResult{*basic, negative ? -n : n, hasSign}};
+    return {LexIntResult{*basic, negative ? -n : n, signedness}};
   }
 
   void takeSign() {
     if (takePrefix("+"sv)) {
-      hasSign = true;
+      signedness = Signed;
     } else if (takePrefix("-"sv)) {
-      hasSign = true;
+      signedness = Signed;
       negative = true;
     }
   }
@@ -392,14 +394,14 @@ struct RParenTok {
 
 struct IntTok {
   uint64_t n;
-  bool hasSign;
+  Signedness signedness;
 
   friend std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
-    return os << tok.n << " sign: " << tok.hasSign;
+    return os << tok.n << (tok.signedness == Signed ? " signed" : " unsigned");
   }
 
   friend bool operator==(const IntTok& t1, const IntTok& t2) {
-    return t1.n == t2.n && t1.hasSign == t2.hasSign;
+    return t1.n == t2.n && t1.signedness == t2.signedness;
   }
 };
 
@@ -489,7 +491,7 @@ struct Lexer {
     } else if (auto t = rparen(next())) {
       tok = Token{t->span, RParenTok{}};
     } else if (auto t = integer(next())) {
-      tok = Token{t->span, IntTok{t->n, t->hasSign}};
+      tok = Token{t->span, IntTok{t->n, t->signedness}};
     } else {
       // TODO: Do something about lexing errors.
       curr = std::nullopt;
