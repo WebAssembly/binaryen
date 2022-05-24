@@ -142,14 +142,28 @@ public:
   explicit LexIntCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexIntResult> lexed() {
-    // Check most significant bit for underflow if we will have to negate.
-    if (overflow || (negative && (n & (1ull << 63)))) {
+    // Check most significant bit for overflow of signed numbers.
+    if (overflow) {
       return {};
     }
-    if (auto basic = LexCtx::lexed()) {
-      return {LexIntResult{*basic, negative ? -n : n, hasSign}};
+    auto basic = LexCtx::lexed();
+    if (!basic) {
+      return {};
     }
-    return {};
+    if (hasSign) {
+      if (negative) {
+        if (n > (1ull << 63)) {
+          // TODO: Add error production for signed underflow.
+          return {};
+        }
+      } else {
+        if (n > (1ull << 63) - 1) {
+          // TODO: Add error production for signed overflow.
+          return {};
+        }
+      }
+    }
+    return {LexIntResult{*basic, negative ? -n : n, hasSign}};
   }
 
   void takeSign() {

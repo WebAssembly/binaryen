@@ -208,19 +208,30 @@ TEST(ParserTest, LexInt) {
     EXPECT_EQ(*lexer, expected);
   }
   {
-    // 64-bit overflow!
+    // 64-bit unsigned overflow!
     Lexer lexer("18446744073709551616");
     EXPECT_EQ(lexer, lexer.end());
   }
   {
-    Lexer lexer("-9223372036854775807"sv);
+    Lexer lexer("+9223372036854775807"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-9223372036854775807"sv, IntTok{(1ull << 63) + 1, true}};
+    Token expected{"+9223372036854775807"sv, IntTok{~(1ull << 63), true}};
     EXPECT_EQ(*lexer, expected);
   }
   {
-    // 64-bit underflow!
+    // 64-bit signed overflow!
+    Lexer lexer("+9223372036854775808"sv);
+    EXPECT_EQ(lexer, lexer.end());
+  }
+  {
     Lexer lexer("-9223372036854775808"sv);
+    ASSERT_NE(lexer, lexer.end());
+    Token expected{"-9223372036854775808"sv, IntTok{1ull << 63, true}};
+    EXPECT_EQ(*lexer, expected);
+  }
+  {
+    // 64-bit signed underflow!
+    Lexer lexer("-9223372036854775809"sv);
     EXPECT_EQ(lexer, lexer.end());
   }
 }
