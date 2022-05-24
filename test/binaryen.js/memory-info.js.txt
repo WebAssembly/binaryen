@@ -1,9 +1,9 @@
 false
 true
-{"module":"","base":"","initial":1,"max":64,"shared":false}
+{"module":"","base":"","initial":1,"shared":false,"max":64}
 true
-{"module":"","base":"","initial":1,"max":64,"shared":true}
+{"module":"","base":"","initial":1,"shared":true,"max":64}
 false
-{"module":"env","base":"memory","shared":false}
+{"module":"env","base":"memory","initial":0,"shared":false,"max":65536}
 false
-{"module":"env","base":"memory","shared":true}
+{"module":"env","base":"memory","initial":0,"shared":true,"max":65536}
