@@ -262,6 +262,7 @@ INITIAL_CONTENTS_IGNORE = [
     'relaxed-simd.wast'
 ]
 
+
 def pick_initial_contents():
     # if we use an initial wasm file's contents as the basis for the
     # fuzzing, then that filename, or None if we start entirely from scratch
