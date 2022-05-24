@@ -283,15 +283,17 @@ def run_example_tests():
 
     for t in shared.get_tests(shared.get_test_dir('example')):
         output_file = 'example'
-        cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
+        cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]# '-fsanitize=address,undefined']
         if not t.endswith(('.c', '.cpp')):
+            continue
+        if 'possible' not in t:
             continue
         src = os.path.join(shared.get_test_dir('example'), t)
         expected = os.path.join(shared.get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
         # build the C file separately
         libpath = shared.options.binaryen_lib
         extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
-                 '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
+                 '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']#, '-fsanitize=address,undefined']
         if src.endswith('.cpp'):
             extra += ['-std=c++' + str(shared.cxx_standard)]
         if os.environ.get('COMPILER_FLAGS'):
@@ -309,8 +311,9 @@ def run_example_tests():
         print('link: ', ' '.join(cmd))
         subprocess.check_call(cmd)
         print('run...', output_file)
+        subprocess.check_call([os.path.abspath(output_file)]) # debugg
         actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
-        os.remove(output_file)
+        #os.remove(output_file)
         shared.fail_if_not_identical_to_file(actual, expected)
 
 
