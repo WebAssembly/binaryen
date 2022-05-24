@@ -500,7 +500,7 @@ struct Lexer {
   }
 
   const Token& operator*() { return *curr; }
-  const Token& operator->() { return *curr; }
+  const Token* operator->() { return &*curr; }
 
   bool operator==(const Lexer& other) const {
     // The iterator is equal to the end sentinel when there is no current token.
