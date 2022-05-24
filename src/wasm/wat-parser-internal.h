@@ -402,7 +402,7 @@ struct Token {
     return os << " \"" << tok.span << "\"";
   }
 
-  friend bool operator==(const Token& t1, const Token& t2) {
+  [[maybe_unused]] friend bool operator==(const Token& t1, const Token& t2) {
     return t1.span == t2.span &&
            std::visit(
              [](auto& d1, auto& d2) {
