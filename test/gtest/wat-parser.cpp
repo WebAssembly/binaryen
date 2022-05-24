@@ -5,9 +5,13 @@
 using namespace wasm::WATParser;
 
 TEST(ParserTest, LexWhitespace) {
-  Token expected{"42"sv, IntTok{42, false}};
+  Token one{"1"sv, IntTok{1, false}};
+  Token two{"2"sv, IntTok{1, false}};
+  Token three{"3"sv, IntTok{1, false}};
+  Token four{"4"sv, IntTok{1, false}};
+  Token five{"5"sv, IntTok{1, false}};
 
-  Lexer lexer(" 42\t42\n42\r42 \n\n\t 42 "sv);
+  Lexer lexer(" 1\t2\n3\r4 \n\n\t 5 "sv);
 
   auto it = lexer.begin();
   ASSERT_NE(it, lexer.end());
@@ -22,23 +26,24 @@ TEST(ParserTest, LexWhitespace) {
   Token t5 = *it++;
   EXPECT_EQ(it, lexer.end());
 
-  EXPECT_EQ(t1, expected);
-  EXPECT_EQ(t2, expected);
-  EXPECT_EQ(t3, expected);
-  EXPECT_EQ(t4, expected);
-  EXPECT_EQ(t5, expected);
+  EXPECT_EQ(t1, one);
+  EXPECT_EQ(t2, two);
+  EXPECT_EQ(t3, three);
+  EXPECT_EQ(t4, four);
+  EXPECT_EQ(t5, five);
 
   EXPECT_EQ(lexer.position(t1), (TextPos{1, 1}));
-  EXPECT_EQ(lexer.position(t2), (TextPos{1, 4}));
+  EXPECT_EQ(lexer.position(t2), (TextPos{1, 3}));
   EXPECT_EQ(lexer.position(t3), (TextPos{2, 0}));
-  EXPECT_EQ(lexer.position(t4), (TextPos{2, 3}));
+  EXPECT_EQ(lexer.position(t4), (TextPos{2, 2}));
   EXPECT_EQ(lexer.position(t5), (TextPos{4, 2}));
 }
 
 TEST(ParserTest, LexLineComment) {
-  Token expected{"42"sv, IntTok{42, false}};
+  Token one{"1"sv, IntTok{1, false}};
+  Token six{"6"sv, IntTok{6, false}};
 
-  Lexer lexer("42;; whee! 42 42\t42\r42\n42"sv);
+  Lexer lexer("1;; whee! 2 3\t4\r5\n6"sv);
 
   auto it = lexer.begin();
   Token t1 = *it++;
@@ -46,17 +51,18 @@ TEST(ParserTest, LexLineComment) {
   Token t2 = *it++;
   EXPECT_EQ(it, lexer.end());
 
-  EXPECT_EQ(t1, expected);
-  EXPECT_EQ(t2, expected);
+  EXPECT_EQ(t1, one);
+  EXPECT_EQ(t2, six);
 
   EXPECT_EQ(lexer.position(t1), (TextPos{1, 0}));
   EXPECT_EQ(lexer.position(t2), (TextPos{2, 0}));
 }
 
 TEST(ParserTest, LexBlockComment) {
-  Token expected{"42"sv, IntTok{42, false}};
+  Token one{"1"sv, IntTok{1, false}};
+  Token six{"6"sv, IntTok{6, false}};
 
-  Lexer lexer("42(; whoo! 42\n (; \n42\n ;) 42 (;) 42 ;) \n;)42"sv);
+  Lexer lexer("1(; whoo! 2\n (; \n3\n ;) 4 (;) 5 ;) \n;)6"sv);
 
   auto it = lexer.begin();
   Token t1 = *it++;
@@ -64,8 +70,8 @@ TEST(ParserTest, LexBlockComment) {
   Token t2 = *it++;
   EXPECT_EQ(it, lexer.end());
 
-  EXPECT_EQ(t1, expected);
-  EXPECT_EQ(t2, expected);
+  EXPECT_EQ(t1, one);
+  EXPECT_EQ(t2, six);
 
   EXPECT_EQ(lexer.position(t1), (TextPos{1, 0}));
   EXPECT_EQ(lexer.position(t2), (TextPos{5, 2}));
