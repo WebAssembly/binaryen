@@ -277,7 +277,9 @@ TEST(PossibleContentsTests, PossibleContentsTest) {
       )");
       ContentOracle oracle(*wasm);
       // The function's body should be Many.
-      EXPECT_TRUE(oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0}).isMany());
+      EXPECT_TRUE(
+        oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0})
+          .isMany());
     }
   };
 
