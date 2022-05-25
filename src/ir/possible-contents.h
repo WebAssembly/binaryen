@@ -88,33 +88,25 @@ public:
   PossibleContents() : value(None()) {}
   PossibleContents(const PossibleContents& other) : value(other.value) {}
 
+  template<typename T> explicit PossibleContents(T val) : value(val) {}
+
   // Most users will use one of the following static functions to construct a
   // new instance:
 
   static PossibleContents none() {
-    PossibleContents ret;
-    ret.value = None();
-    return ret;
+    return PossibleContents{None()};
   }
   static PossibleContents literal(Literal c) {
-    PossibleContents ret;
-    ret.value = c;
-    return ret;
+    return PossibleContents{c};
   }
   static PossibleContents global(Name name, Type type) {
-    PossibleContents ret;
-    ret.value = GlobalInfo{name, type};
-    return ret;
+    return PossibleContents{GlobalInfo{name, type}};
   }
   static PossibleContents exactType(Type type) {
-    PossibleContents ret;
-    ret.value = ExactType(type);
-    return ret;
+    return PossibleContents{ExactType(type)};
   }
   static PossibleContents many() {
-    PossibleContents ret;
-    ret.value = Many();
-    return ret;
+    return PossibleContents{Many()};
   }
 
   PossibleContents& operator=(const PossibleContents& other) {
