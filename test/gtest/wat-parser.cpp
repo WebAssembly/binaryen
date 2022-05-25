@@ -469,3 +469,32 @@ TEST(ParserTest, LexString) {
     ASSERT_EQ(lexer, lexer.end());
   }
 }
+
+TEST(ParserTest, LexKeywords) {
+  Token module{"module"sv, KeywordTok{}};
+  Token type{"type"sv, KeywordTok{}};
+  Token func{"func"sv, KeywordTok{}};
+  Token import{"import"sv, KeywordTok{}};
+  Token reserved{"rEsErVeD"sv, KeywordTok{}};
+
+  Lexer lexer("module type func import rEsErVeD");
+
+  auto it = lexer.begin();
+  ASSERT_NE(it, lexer.end());
+  Token t1 = *it++;
+  ASSERT_NE(it, lexer.end());
+  Token t2 = *it++;
+  ASSERT_NE(it, lexer.end());
+  Token t3 = *it++;
+  ASSERT_NE(it, lexer.end());
+  Token t4 = *it++;
+  ASSERT_NE(it, lexer.end());
+  Token t5 = *it++;
+  EXPECT_EQ(it, lexer.end());
+
+  EXPECT_EQ(t1, module);
+  EXPECT_EQ(t2, type);
+  EXPECT_EQ(t3, func);
+  EXPECT_EQ(t4, import);
+  EXPECT_EQ(t5, reserved);
+}

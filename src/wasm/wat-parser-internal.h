@@ -585,6 +585,30 @@ std::optional<LexStrResult> str(std::string_view in) {
   return ctx.lexed();
 }
 
+// keyword ::= ( 'a' | ... | 'z' ) idchar* (if literal terminal in grammar)
+// reserved ::= idchar+
+//
+// The "keyword" token we lex here covers both keywords as well as any reserved
+// tokens that match the keyword format. This saves us from having to enumerate
+// all the valid keywords here. These invalid keywords will still produce
+// errors, just at a higher level of the parser.
+std::optional<LexResult> keyword(std::string_view in) {
+  LexCtx ctx(in);
+  if (ctx.empty()) {
+    return {};
+  }
+  uint8_t start = ctx.peek();
+  if ('a' <= start && start <= 'z') {
+    ctx.take(1);
+  } else {
+    return {};
+  }
+  while (auto lexed = idchar(ctx.next())) {
+    ctx.take(*lexed);
+  }
+  return ctx.lexed();
+}
+
 // ======
 // Tokens
 // ======
@@ -643,8 +667,17 @@ struct StringTok {
   }
 };
 
+struct KeywordTok {
+  friend std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
+    return os << "keyword";
+  }
+
+  friend bool operator==(const KeywordTok&, const KeywordTok&) { return true; }
+};
+
 struct Token {
-  using Data = std::variant<LParenTok, RParenTok, IntTok, IdTok, StringTok>;
+  using Data =
+    std::variant<LParenTok, RParenTok, IntTok, IdTok, StringTok, KeywordTok>;
 
   std::string_view span;
   Data data;
@@ -734,6 +767,8 @@ struct Lexer {
       tok = Token{t->span, IntTok{t->n, t->signedness}};
     } else if (auto t = str(next())) {
       tok = Token{t->span, StringTok{t->str}};
+    } else if (auto t = keyword(next())) {
+      tok = Token{t->span, KeywordTok{}};
     } else {
       // TODO: Do something about lexing errors.
       curr = std::nullopt;
