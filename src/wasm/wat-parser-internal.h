@@ -225,6 +225,8 @@ struct LexStrResult : LexResult {
 
 struct LexStrCtx : LexCtx {
 private:
+  // Whether we are building a string due to the presence of escape
+  // sequences.
   bool building = false;
   std::stringstream ss;
 
