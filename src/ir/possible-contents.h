@@ -86,41 +86,24 @@ class PossibleContents {
 
 public:
   PossibleContents() : value(None()) {}
-  PossibleContents(const PossibleContents& other) : value(other.value) {}
+  PossibleContents(const PossibleContents& other) = default;
+
+  template<typename T> explicit PossibleContents(T val) : value(val) {}
 
   // Most users will use one of the following static functions to construct a
   // new instance:
 
-  static PossibleContents none() {
-    PossibleContents ret;
-    ret.value = None();
-    return ret;
-  }
-  static PossibleContents literal(Literal c) {
-    PossibleContents ret;
-    ret.value = c;
-    return ret;
-  }
+  static PossibleContents none() { return PossibleContents{None()}; }
+  static PossibleContents literal(Literal c) { return PossibleContents{c}; }
   static PossibleContents global(Name name, Type type) {
-    PossibleContents ret;
-    ret.value = GlobalInfo{name, type};
-    return ret;
+    return PossibleContents{GlobalInfo{name, type}};
   }
   static PossibleContents exactType(Type type) {
-    PossibleContents ret;
-    ret.value = ExactType(type);
-    return ret;
+    return PossibleContents{ExactType(type)};
   }
-  static PossibleContents many() {
-    PossibleContents ret;
-    ret.value = Many();
-    return ret;
-  }
+  static PossibleContents many() { return PossibleContents{Many()}; }
 
-  PossibleContents& operator=(const PossibleContents& other) {
-    value = other.value;
-    return *this;
-  }
+  PossibleContents& operator=(const PossibleContents& other) = default;
 
   bool operator==(const PossibleContents& other) const {
     return value == other.value;
@@ -159,7 +142,12 @@ public:
     if (!type.isRef() || !otherType.isRef()) {
       // At least one is not a reference. We could in principle try to find
       // ExactType here, say as the combination of two different constants, but
-      // as subtyping does not exist, Many is good enough anyhow, so do that.
+      // since there is no subtyping between non-ref types, ExactType would not
+      // carry any more information than Many. Furthermore, using Many here
+      // makes it simpler in ContentOracle's flow to know when to stop flowing a
+      // value: Many is a clear signal that we've hit the worst case and can't
+      // do any better in that location, and can stop there (otherwise, we'd
+      // need to check the ExactType to see if it is the worst case or not).
       value = Many();
       return;
     }
