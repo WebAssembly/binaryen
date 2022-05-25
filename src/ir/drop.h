@@ -24,10 +24,11 @@
 
 namespace wasm {
 
-// Returns the dropped children of a node (in a block, if there is more than
-// one). This is useful if we know the node is not needed but may need to keep
-// the children around; this utility will automatically remove any children we
-// do not actually need to keep, based on their effects.
+// Given an expression, returns a new expression that drops the given
+// expression's children that cannot be removed outright due to their side
+// effects. This is useful if we know the node is not needed but may need to
+// keep the children around; this utility will automatically remove any children
+// we do not actually need to keep, based on their effects.
 //
 // The caller can also pass in an optional last item to add to the output.
 Expression* getDroppedChildren(Expression* curr,
