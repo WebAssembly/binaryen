@@ -597,7 +597,7 @@ std::optional<LexResult> keyword(std::string_view in) {
   if (ctx.empty()) {
     return {};
   }
-  char start = ctx.next()[0];
+  uint8_t start = ctx.peek();
   if ('a' <= start && start <= 'z') {
     ctx.take(1);
   } else {
