@@ -86,7 +86,7 @@ class PossibleContents {
 
 public:
   PossibleContents() : value(None()) {}
-  PossibleContents(const PossibleContents& other) : value(other.value) {}
+  PossibleContents(const PossibleContents& other) = default;
 
   template<typename T> explicit PossibleContents(T val) : value(val) {}
 
