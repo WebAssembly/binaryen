@@ -1,9 +1,7 @@
-#include <cassert>
-#include <iostream>
-
 #include "ir/possible-contents.h"
 #include "wasm-s-parser.h"
 #include "wasm.h"
+#include "gtest/gtest.h"
 
 using namespace wasm;
 
@@ -15,10 +13,10 @@ template<typename T> void assertEqualSymmetric(const T& a, const T& b) {
   b.dump(std::cout);
   std::cout << '\n';
 
-  assert(a == b);
-  assert(b == a);
-  assert(!(a != b));
-  assert(!(b != a));
+  EXPECT_TRUE(a == b);
+  EXPECT_TRUE(b == a);
+  EXPECT_FALSE(a != b);
+  EXPECT_FALSE(b != a);
 }
 
 // Asserts a != b, in any order.
@@ -29,10 +27,10 @@ template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
   b.dump(std::cout);
   std::cout << '\n';
 
-  assert(a != b);
-  assert(b != a);
-  assert(!(a == b));
-  assert(!(b == a));
+  EXPECT_TRUE(a != b);
+  EXPECT_TRUE(b != a);
+  EXPECT_FALSE(a == b);
+  EXPECT_FALSE(b == a);
 }
 
 // Asserts a combined with b (in any order) is equal to c.
@@ -79,7 +77,10 @@ static std::unique_ptr<Module> parse(std::string module) {
 // type system itself uses global constructors. Instead, put all the tests
 // inside a "testMain()" function whose scope will contain those reused
 // "globals."
-void testMain() {
+TEST(PossibleContentsTests, PossibleContentsTest) {
+  // Use nominal typing to test struct types.
+  wasm::setTypeSystem(TypeSystem::Nominal);
+
   auto none_ = PossibleContents::none();
 
   auto i32Zero = PossibleContents::literal(Literal(int32_t(0)));
@@ -240,14 +241,11 @@ void testMain() {
       ContentOracle oracle(*wasm);
 
       // This will be a null constant.
-      std::cout << "possible types of the $null global: ";
-      oracle.getContents(GlobalLocation{"null"}).dump(std::cout);
-      std::cout << '\n';
+      EXPECT_TRUE(oracle.getContents(GlobalLocation{"null"}).isNull());
 
       // This will be 42.
-      std::cout << "possible types of the $something global: ";
-      oracle.getContents(GlobalLocation{"something"}).dump(std::cout);
-      std::cout << '\n';
+      EXPECT_EQ(oracle.getContents(GlobalLocation{"something"}).getLiteral(),
+                Literal(int32_t(42)));
     }
 
     {
@@ -278,10 +276,10 @@ void testMain() {
         )
       )");
       ContentOracle oracle(*wasm);
-      std::cout << "possible types of the function's body: ";
-      oracle.getContents(ResultLocation{wasm->getFunction("foo")})
-        .dump(std::cout);
-      std::cout << '\n';
+      // The function's body should be Many.
+      EXPECT_TRUE(
+        oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0})
+          .isMany());
     }
   };
 
@@ -293,13 +291,6 @@ void testMain() {
 
   testOracle();
   std::cout << '\n';
-}
-
-int main() {
-  // Use nominal typing to test struct types.
-  wasm::setTypeSystem(TypeSystem::Nominal);
-
-  testMain();
 
   std::cout << "\nok.\n";
 }
