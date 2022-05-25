@@ -68,6 +68,9 @@ public:
   // The next input that has not already been lexed.
   std::string_view next() const { return input.substr(lexedSize); }
 
+  // Get the next character without consuming it.
+  uint8_t peek() const { return next()[0]; }
+
   // The size of the unlexed input.
   size_t size() const { return input.size() - lexedSize; }
 
@@ -179,7 +182,7 @@ public:
 
   bool takeDigit() {
     if (!empty()) {
-      if (auto d = getDigit(next()[0])) {
+      if (auto d = getDigit(peek())) {
         take(1);
         uint64_t newN = n * 10 + *d;
         if (newN < n) {
@@ -194,7 +197,7 @@ public:
 
   bool takeHexdigit() {
     if (!empty()) {
-      if (auto h = getHexDigit(next()[0])) {
+      if (auto h = getHexDigit(peek())) {
         take(1);
         uint64_t newN = n * 16 + *h;
         if (newN < n) {
@@ -383,7 +386,7 @@ std::optional<LexResult> idchar(std::string_view in) {
   if (ctx.empty()) {
     return {};
   }
-  char c = ctx.next()[0];
+  uint8_t c = ctx.peek();
   if (('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
       ('a' <= c && c <= 'z')) {
     ctx.take(1);
