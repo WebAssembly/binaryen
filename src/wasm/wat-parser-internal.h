@@ -243,7 +243,7 @@ public:
 
   void takeChar() {
     if (building) {
-      ss << next()[0];
+      ss << peek();
     }
     LexCtx::take(1);
   }
@@ -574,7 +574,7 @@ std::optional<LexStrResult> str(std::string_view in) {
       }
     } else {
       // Normal characters
-      if (unsigned char c = ctx.next()[0]; c >= 0x20 && c != 0x7F) {
+      if (uint8_t c = ctx.peek(); c >= 0x20 && c != 0x7F) {
         ctx.takeChar();
       } else {
         // TODO: Add error production for unescaped control characters.
