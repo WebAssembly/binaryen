@@ -28,6 +28,7 @@
 #include <cctype>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <variant>
 
 using namespace std::string_view_literals;
