@@ -2798,14 +2798,15 @@ void FunctionValidator::visitFunction(Function* curr) {
     if (hasNNLocals) {
       LocalGraph graph(curr);
       for (auto& [get, sets] : graph.getSetses) {
-        if (curr->getLocalType(get->index).isNonNullable()) {
-          for (auto* set : sets) {
-            // If this is a null, then it is the value of a param or the default
-            // value of a var. The latter case is an error.
-            shouldBeTrue(!!set || curr->isParam(get->index),
-                         get->index,
-                         "non-nullable local must not read null");
-          }
+        auto index = get->index;
+        // It is always ok to read nullable locals, and it is always ok to read
+        // params even if they are non-nullable.
+        if (!curr->getLocalType(index).isNonNullable() ||
+            curr->isParam(index)) {
+          continue;
+        }
+        for (auto* set : sets) {
+          shouldBeTrue(!!set, index, "non-nullable local must not read null");
         }
       }
     }
