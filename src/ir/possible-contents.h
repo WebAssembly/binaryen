@@ -93,21 +93,15 @@ public:
   // Most users will use one of the following static functions to construct a
   // new instance:
 
-  static PossibleContents none() {
-    return PossibleContents{None()};
-  }
-  static PossibleContents literal(Literal c) {
-    return PossibleContents{c};
-  }
+  static PossibleContents none() { return PossibleContents{None()}; }
+  static PossibleContents literal(Literal c) { return PossibleContents{c}; }
   static PossibleContents global(Name name, Type type) {
     return PossibleContents{GlobalInfo{name, type}};
   }
   static PossibleContents exactType(Type type) {
     return PossibleContents{ExactType(type)};
   }
-  static PossibleContents many() {
-    return PossibleContents{Many()};
-  }
+  static PossibleContents many() { return PossibleContents{Many()}; }
 
   PossibleContents& operator=(const PossibleContents& other) = default;
 
