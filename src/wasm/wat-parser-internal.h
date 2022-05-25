@@ -254,9 +254,7 @@ public:
     building = true;
   }
 
-  void appendEscaped(char c) {
-    ss << c;
-  }
+  void appendEscaped(char c) { ss << c; }
 
   bool appendUnicode(uint64_t u) {
     if ((0xd800 <= u && u < 0xe000) || 0x110000 <= u) {
