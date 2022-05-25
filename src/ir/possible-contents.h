@@ -143,7 +143,11 @@ public:
       // At least one is not a reference. We could in principle try to find
       // ExactType here, say as the combination of two different constants, but
       // since there is no subtyping between non-ref types, ExactType would not
-      // carry any more information than Many.
+      // carry any more information than Many. Furthermore, using Many here
+      // makes it simpler in ContentOracle's flow to know when to stop flowing a
+      // value: Many is a clear signal that we've hit the worst case and can't
+      // do any better in that location, and can stop there (otherwise, we'd
+      // need to check the ExactType to see if it is the worst case or not).
       value = Many();
       return;
     }
