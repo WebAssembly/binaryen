@@ -109,10 +109,7 @@ public:
     return PossibleContents{Many()};
   }
 
-  PossibleContents& operator=(const PossibleContents& other) {
-    value = other.value;
-    return *this;
-  }
+  PossibleContents& operator=(const PossibleContents& other) = default;
 
   bool operator==(const PossibleContents& other) const {
     return value == other.value;
