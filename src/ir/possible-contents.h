@@ -148,7 +148,8 @@ public:
     if (!type.isRef() || !otherType.isRef()) {
       // At least one is not a reference. We could in principle try to find
       // ExactType here, say as the combination of two different constants, but
-      // as subtyping does not exist, Many is good enough anyhow, so do that.
+      // since there is no subtyping between non-ref types, ExactType would not
+      // carry any more information than Many.
       value = Many();
       return;
     }
