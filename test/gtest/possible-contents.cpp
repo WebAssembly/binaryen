@@ -233,58 +233,56 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(anyGlobal, funcNull, many);
 }
 
-TEST_F(PossibleContentsTest, TestOracle) {
-  {
-    // A minimal test of the public API of PossibleTypesOracle. See the lit
-    // test for coverage of all the internals (using lit makes the result more
-    // fuzzable).
-    auto wasm = parse(R"(
-      (module
-        (type $struct (struct))
-        (global $null (ref null any) (ref.null any))
-        (global $something i32 (i32.const 42))
-      )
-    )");
-    ContentOracle oracle(*wasm);
+TEST_F(PossibleContentsTest, TestOracleMinimal) {
+  // A minimal test of the public API of PossibleTypesOracle. See the lit test
+  // for coverage of all the internals (using lit makes the result more
+  // fuzzable).
+  auto wasm = parse(R"(
+    (module
+      (type $struct (struct))
+      (global $null (ref null any) (ref.null any))
+      (global $something i32 (i32.const 42))
+    )
+  )");
+  ContentOracle oracle(*wasm);
 
-    // This will be a null constant.
-    EXPECT_TRUE(oracle.getContents(GlobalLocation{"null"}).isNull());
+  // This will be a null constant.
+  EXPECT_TRUE(oracle.getContents(GlobalLocation{"null"}).isNull());
 
-    // This will be 42.
-    EXPECT_EQ(oracle.getContents(GlobalLocation{"something"}).getLiteral(),
-              Literal(int32_t(42)));
-  }
+  // This will be 42.
+  EXPECT_EQ(oracle.getContents(GlobalLocation{"something"}).getLiteral(),
+            Literal(int32_t(42)));
+}
 
-  {
-    // Test for a node with many possible types. The pass limits how many it
-    // notices to not use excessive memory, so even though 4 are possible
-    // here, we'll just report that more than one is possible ("many").
-    auto wasm = parse(R"(
-      (module
-        (type $A (struct_subtype (field i32) data))
-        (type $B (struct_subtype (field i64) data))
-        (type $C (struct_subtype (field f32) data))
-        (type $D (struct_subtype (field f64) data))
-        (func $foo (result (ref any))
+TEST_F(PossibleContentsTest, TestOracleManyTypes) {
+  // Test for a node with many possible types. The pass limits how many it
+  // notices to not use excessive memory, so even though 4 are possible here,
+  // we'll just report that more than one is possible ("many").
+  auto wasm = parse(R"(
+    (module
+      (type $A (struct_subtype (field i32) data))
+      (type $B (struct_subtype (field i64) data))
+      (type $C (struct_subtype (field f32) data))
+      (type $D (struct_subtype (field f64) data))
+      (func $foo (result (ref any))
+        (select (result (ref any))
           (select (result (ref any))
-            (select (result (ref any))
-              (struct.new $A)
-              (struct.new $B)
-              (i32.const 0)
-            )
-            (select (result (ref any))
-              (struct.new $C)
-              (struct.new $D)
-              (i32.const 0)
-            )
+            (struct.new $A)
+            (struct.new $B)
             (i32.const 0)
           )
+          (select (result (ref any))
+            (struct.new $C)
+            (struct.new $D)
+            (i32.const 0)
+          )
+          (i32.const 0)
         )
       )
-    )");
-    ContentOracle oracle(*wasm);
-    // The function's body should be Many.
-    EXPECT_TRUE(
-      oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0}).isMany());
-  }
+    )
+  )");
+  ContentOracle oracle(*wasm);
+  // The function's body should be Many.
+  EXPECT_TRUE(
+    oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0}).isMany());
 }
