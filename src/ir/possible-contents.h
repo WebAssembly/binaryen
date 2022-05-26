@@ -278,6 +278,9 @@ struct BranchLocation {
   Function* func;
   Name target;
   // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
+  // That is, if the branch target has tuple type, then each branch to that
+  // location sends a tuple, and we'll have a separate BranchLocation for each,
+  // indexed by the index in the tuple that the branch sends.
   Index tupleIndex;
   bool operator==(const BranchLocation& other) const {
     return func == other.func && target == other.target &&
