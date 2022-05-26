@@ -328,9 +328,12 @@ struct DataLocation {
   }
 };
 
-// The location of anything written to a particular index of a particular tag.
+// The location of anything written to a particular tag.
 struct TagLocation {
   Name tag;
+  // If the tag has more than one element, we'll have a separate TagLocation for
+  // each, with corresponding indexes. If the tag has just one element we'll
+  // only have one TagLocation with index 0.
   Index tupleIndex;
   bool operator==(const TagLocation& other) const {
     return tag == other.tag && tupleIndex == other.tupleIndex;
