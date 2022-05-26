@@ -63,9 +63,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     // Emit direct calls for things like a select over constants.
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
-          [&](Expression* target) {
-            return getNameInTable(target, flatTable);
-          },
+          [&](Expression* target) { return getNameInTable(target, flatTable); },
           *getFunction(),
           *getModule())) {
       replaceCurrent(calls);
@@ -93,7 +91,7 @@ private:
   // index in the given flat table. If so, return the name there, and otherwise
   // a null name.
   Name getNameInTable(Expression* curr,
-                    const TableUtils::FlatTable& flatTable) {
+                      const TableUtils::FlatTable& flatTable) {
     auto* c = curr->dynCast<Const>();
     if (!c) {
       return Name();
