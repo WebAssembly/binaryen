@@ -42,6 +42,8 @@
 #include <support/threads.h>
 #include <wasm.h>
 
+#include "call-utils.h"
+
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
 
@@ -1344,54 +1346,17 @@ struct OptimizeInstructions
     // TODO: merge with Directize
     if (auto* select = curr->target->dynCast<Select>()) {
       if (select->ifTrue->is<RefFunc>() && select->ifFalse->is<RefFunc>()) {
-        Builder builder(*getModule());
-        auto* func = getFunction();
-        std::vector<Expression*> blockContents;
-
-        if (select->condition->type == Type::unreachable) {
-          // Leave this for DCE.
-          return;
+        if (auto* calls = CallUtils::convertToDirectCalls(curr,
+                                               [](Expression* target) {
+                                                 if (auto* refFunc = target->dynCast<RefFunc>()) {
+                                                   return refFunc->func;
+                                                 }
+                                                 return Name();
+                                               },
+                                               *getFunction(),
+                                               *getModule())) {
+          replaceCurrent(calls);
         }
-
-        // We must use the operands twice, and also must move the condition to
-        // execute first; use locals for them all. While doing so, if we see
-        // any are unreachable, stop trying to optimize and leave this for DCE.
-        std::vector<Index> operandLocals;
-        for (auto* operand : curr->operands) {
-          if (operand->type == Type::unreachable ||
-              !TypeUpdating::canHandleAsLocal(operand->type)) {
-            return;
-          }
-        }
-
-        // None of the types are a problem, so we can proceed to add new vars as
-        // needed and perform this optimization.
-        for (auto* operand : curr->operands) {
-          auto currLocal = builder.addVar(func, operand->type);
-          operandLocals.push_back(currLocal);
-          blockContents.push_back(builder.makeLocalSet(currLocal, operand));
-        }
-
-        // Build the calls.
-        auto numOperands = curr->operands.size();
-        auto getOperands = [&]() {
-          std::vector<Expression*> newOperands(numOperands);
-          for (Index i = 0; i < numOperands; i++) {
-            newOperands[i] =
-              builder.makeLocalGet(operandLocals[i], curr->operands[i]->type);
-          }
-          return newOperands;
-        };
-        auto* ifTrueCall = builder.makeCall(
-          select->ifTrue->cast<RefFunc>()->func, getOperands(), curr->type);
-        auto* ifFalseCall = builder.makeCall(
-          select->ifFalse->cast<RefFunc>()->func, getOperands(), curr->type);
-
-        // Create the if to pick the calls, and emit the final block.
-        auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);
-        blockContents.push_back(iff);
-        replaceCurrent(builder.makeBlock(blockContents));
-        return;
       }
     }
   }
