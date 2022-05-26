@@ -29,6 +29,16 @@
 #include "support/insert_ordered.h"
 #endif
 
+namespace std {
+
+std::ostream& operator<<(std::ostream& stream,
+                         const wasm::PossibleContents& contents) {
+  contents.dump(stream);
+  return stream;
+}
+
+} // namespace std
+
 namespace wasm {
 
 void PossibleContents::combine(const PossibleContents& other) {

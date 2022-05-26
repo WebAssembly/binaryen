@@ -7,30 +7,26 @@ using namespace wasm;
 
 // Asserts a == b, in any order.
 template<typename T> void assertEqualSymmetric(const T& a, const T& b) {
-  std::cout << "\nassertEqualSymmetric\n";
-  a.dump(std::cout);
-  std::cout << '\n';
-  b.dump(std::cout);
-  std::cout << '\n';
-
-  EXPECT_TRUE(a == b);
-  EXPECT_TRUE(b == a);
-  EXPECT_FALSE(a != b);
-  EXPECT_FALSE(b != a);
+  EXPECT_EQ(a, b);
+  EXPECT_EQ(b, a);
+  EXPECT_PRED2([](const T& a, const T& b) {
+    return !(a != b);
+  }, a, b);
+  EXPECT_PRED2([](const T& a, const T& b) {
+    return !(b != a);
+  }, a, b);
 }
 
 // Asserts a != b, in any order.
 template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
-  std::cout << "\nassertNotEqualSymmetric\n";
-  a.dump(std::cout);
-  std::cout << '\n';
-  b.dump(std::cout);
-  std::cout << '\n';
-
-  EXPECT_TRUE(a != b);
-  EXPECT_TRUE(b != a);
-  EXPECT_FALSE(a == b);
-  EXPECT_FALSE(b == a);
+  EXPECT_NE(a, b);
+  EXPECT_NE(b, a);
+  EXPECT_PRED2([](const T& a, const T& b) {
+    return !(a == b);
+  }, a, b);
+  EXPECT_PRED2([](const T& a, const T& b) {
+    return !(b == a);
+  }, a, b);
 }
 
 // Asserts a combined with b (in any order) is equal to c.

@@ -371,6 +371,9 @@ using Location = std::variant<ExpressionLocation,
 
 namespace std {
 
+std::ostream& operator<<(std::ostream& stream,
+                         const wasm::PossibleContents& contents);
+
 template<> struct hash<wasm::PossibleContents> {
   size_t operator()(const wasm::PossibleContents& contents) const {
     return contents.hash();
