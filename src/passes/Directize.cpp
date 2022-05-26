@@ -60,6 +60,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       return;
     }
 
+    // Emit direct calls for things like a select over constants.
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
           [&](Expression* target) {
@@ -68,6 +69,9 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
           *getFunction(),
           *getModule())) {
       replaceCurrent(calls);
+      // Note that types may have changed, as the utility here can add locals
+      // which require fixups if they are non-nullable, for example.
+      changedTypes = true;
       return;
     }
   }
