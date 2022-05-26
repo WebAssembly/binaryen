@@ -63,7 +63,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     // Emit direct calls for things like a select over constants.
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
-          [&](Expression* target) { return getNameInTable(target, flatTable); },
+          [&](Expression* target) { return getTargetInfo(target, flatTable); },
           *getFunction(),
           *getModule())) {
       replaceCurrent(calls);
@@ -87,14 +87,15 @@ private:
 
   bool changedTypes = false;
 
-  // Given an expression, check if it is a constant and that constant is a valid
-  // index in the given flat table. If so, return the name there, and otherwise
-  // a null name.
-  Name getNameInTable(Expression* curr,
-                      const TableUtils::FlatTable& flatTable) {
-    auto* c = curr->dynCast<Const>();
+  // Given an expression that we will use as the target of an indirect call,
+  // analyze it and return one of the results of CallUtils::IndirectCallInfo,
+  // that is, whether we know a direct call target, or we know it will trap, or
+  // if we know nothing.
+  CallUtils::IndirectCallInfo getTargetInfo(Expression* target,
+                                             const TableUtils::FlatTable& flatTable) {
+    auto* c = target->dynCast<Const>();
     if (!c) {
-      return Name();
+      return CallUtils::Unknown{};
     }
 
     Index index = c->value.geti32();
@@ -104,9 +105,13 @@ private:
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
     if (index >= flatTable.names.size()) {
-      return Name();
+      return CallUtils::Trap{};
     }
-    return flatTable.names[index];
+    auto name = flatTable.names[index];
+    if (!name.is()) {
+      return CallUtils::Trap{};
+    }
+    return CallUtils::Known{name};
   }
 
   // Create a direct call for a given list of operands, an expression which is
@@ -121,10 +126,12 @@ private:
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    auto name = getNameInTable(c, flatTable);
-    if (!name.is()) {
+    auto info = getTargetInfo(c, flatTable);
+    if (std::get_if<CallUtils::Trap>(&info)) {
       return replaceWithUnreachable(operands);
     }
+    assert(std::get_if<CallUtils::Known>(&info));
+    auto name = std::get_if<CallUtils::Known>(&info)->target;
     auto* func = getModule()->getFunction(name);
     if (original->heapType != func->type) {
       return replaceWithUnreachable(operands);

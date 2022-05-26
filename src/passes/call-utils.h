@@ -17,10 +17,24 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
+#include <variant>
+
 #include "ir/type-updating.h"
 #include "wasm.h"
 
 namespace wasm::CallUtils {
+
+// Define a variant to describe the information we know about an indirect call,
+// which is one of three things:
+//  * Unknown: Nothing is known this call.
+//  * Trap: This call target is invalid and will trap at runtime.
+//  * Known: This call goes to a known static call target, which is provided.
+struct Unknown : public std::monostate {};
+struct Trap : public std::monostate {};
+struct Known {
+  Name target;
+};
+using IndirectCallInfo = std::variant<Unknown, Trap, Known>;
 
 // Converts indirect calls that target selects between values into ifs over
 // direct calls. For example, if we are given this:
@@ -43,15 +57,13 @@ namespace wasm::CallUtils {
 // |operands| is the list of operands on the outer call (call_ref in the example
 // above).
 //
-// |getCallTarget| is given one of the arms of the select and should return the
-// name of the function to be called (A for the first and B for the second in
-// the example above). If we cannot determine such a function, then return an
-// empty name.
-// FIXME let this return "unreachable" if we know the call will trap
+// |getCallTarget| is given one of the arms of the select and should return an
+// IndirectCallInfo that says what we know about it. We may know nothing or that
+// it will trap, or that it will go to a known static target.
 template<typename T>
 inline Expression*
 convertToDirectCalls(T* curr,
-                     std::function<Name(Expression*)> getCallTarget,
+                     std::function<IndirectCallInfo(Expression*)> getCallInfo,
                      Function& func,
                      Module& wasm) {
   if (curr->isReturn) {
@@ -69,14 +81,14 @@ convertToDirectCalls(T* curr,
     return nullptr;
   }
 
-  // Check if we can find static call targets for both arms.
+  // Check if we can find useful info for both arms: either known call targets,
+  // or traps.
   // TODO: support more than 2 targets (with nested selects)
-  auto ifTrueCallTarget = getCallTarget(select->ifTrue);
-  if (!ifTrueCallTarget.is()) {
-    return nullptr;
-  }
-  auto ifFalseCallTarget = getCallTarget(select->ifFalse);
-  if (!ifFalseCallTarget.is()) {
+  auto ifTrueCallInfo = getCallInfo(select->ifTrue);
+  auto ifFalseCallInfo = getCallInfo(select->ifFalse);
+  if (std::get_if<Unknown>(&ifTrueCallInfo) ||
+      std::get_if<Unknown>(&ifFalseCallInfo)) {
+    // We know nothing.
     return nullptr;
   }
 
@@ -114,10 +126,16 @@ convertToDirectCalls(T* curr,
     }
     return newOperands;
   };
-  auto* ifTrueCall =
-    builder.makeCall(ifTrueCallTarget, getOperands(), curr->type);
-  auto* ifFalseCall =
-    builder.makeCall(ifFalseCallTarget, getOperands(), curr->type);
+
+  auto makeCall = [&](IndirectCallInfo info) -> Expression* {
+    if (std::get_if<Trap>(&info)) {
+      return builder.makeUnreachable();
+    } else {
+      return builder.makeCall(std::get<Known>(info).target, getOperands(), curr->type);
+    }
+  };
+  auto* ifTrueCall = makeCall(ifTrueCallInfo);
+  auto* ifFalseCall = makeCall(ifFalseCallInfo);
 
   // Create the if to pick the calls, and emit the final block.
   auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);

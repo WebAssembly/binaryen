@@ -1346,11 +1346,11 @@ struct OptimizeInstructions
     // TODO: merge with Directize
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
-          [](Expression* target) {
+          [](Expression* target) -> CallUtils::IndirectCallInfo {
             if (auto* refFunc = target->dynCast<RefFunc>()) {
-              return refFunc->func;
+              return CallUtils::Known{refFunc->func};
             }
-            return Name();
+            return CallUtils::Unknown{};
           },
           *getFunction(),
           *getModule())) {
