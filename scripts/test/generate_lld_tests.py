@@ -89,6 +89,10 @@ def generate_wat_files(llvm_bin, emscripten_root):
         else:
             compile_cmd.append('--target=wasm32-emscripten')
 
+        if 'exception' in src_file:
+            compile_cmd.append('-fwasm-exceptions')
+            link_cmd += ['--export', '__cpp_exception']
+
         try:
             support.run_command(compile_cmd)
             support.run_command(link_cmd)
