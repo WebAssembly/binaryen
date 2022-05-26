@@ -138,7 +138,7 @@ public:
   // Return the relevant type here. Note that the *meaning* of the type varies
   // by the contents: type $foo of a global means that type or any subtype, as a
   // subtype might be written to it, while type $foo of a Literal or an
-  // ExactType means that type and nothing else; see isTypeExact().
+  // ExactType means that type and nothing else; see hasExactType().
   //
   // If no type is possible, return unreachable; if many types are, return none.
   Type getType() const {
@@ -158,10 +158,14 @@ public:
   }
 
   // Returns whether the type we can report here is exact, that is, nothing of a
-  // strict subtype might show up.
+  // strict subtype might show up - the contents here have an exact type.
+  //
+  // This is different from isExactType() which checks if all we know about the
+  // contents here is their exact type. Specifically, we may know both an exact
+  // type and also more than just that, which is the case with a Literal.
   //
   // This returns false for None and Many, for whom it is not well-defined.
-  bool isTypeExact() const { return isExactType() || isLiteral(); }
+  bool hasExactType() const { return isExactType() || isLiteral(); }
 
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a

@@ -85,10 +85,10 @@ void PossibleContents::combine(const PossibleContents& other) {
     // If only one is a null, but the other's type is known exactly, then the
     // combination is to add nullability (if the type is *not* known exactly,
     // like for a global, then we cannot do anything useful here).
-    if (!isNull() && isTypeExact()) {
+    if (!isNull() && hasExactType()) {
       value = ExactType(Type(type.getHeapType(), Nullable));
       return;
-    } else if (!other.isNull() && other.isTypeExact()) {
+    } else if (!other.isNull() && other.hasExactType()) {
       value = ExactType(Type(otherType.getHeapType(), Nullable));
       return;
     } else if (isNull() && other.isNull()) {
@@ -100,7 +100,7 @@ void PossibleContents::combine(const PossibleContents& other) {
     }
   }
 
-  if (isTypeExact() && other.isTypeExact() &&
+  if (hasExactType() && other.hasExactType() &&
       type.getHeapType() == otherType.getHeapType()) {
     // We know the types here exactly, and even the heap types match, but
     // there is some other difference that prevents them from being 100%
@@ -1504,7 +1504,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  if (refContents.isTypeExact()) {
+  if (refContents.hasExactType()) {
     // Update the one possible type here.
     auto heapLoc =
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
