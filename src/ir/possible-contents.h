@@ -169,6 +169,7 @@ public:
   bool canMakeExpression() const { return isLiteral() || isGlobal(); }
 
   Expression* makeExpression(Module& wasm) {
+    assert(canMakeExpression());
     Builder builder(wasm);
     if (isLiteral()) {
       return builder.makeConstantExpression(getLiteral());
