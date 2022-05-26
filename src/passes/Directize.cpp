@@ -22,6 +22,7 @@
 
 #include <unordered_map>
 
+#include "call-utils.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -59,62 +60,15 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       return;
     }
 
-    // If the target is a select of two different constants, we can emit two
-    // direct calls.
-    // TODO: handle 3+
-    // TODO: handle the case where just one arm is a constant?
-    if (auto* select = curr->target->dynCast<Select>()) {
-      if (select->ifTrue->is<Const>() && select->ifFalse->is<Const>()) {
-        Builder builder(*getModule());
-        auto* func = getFunction();
-        std::vector<Expression*> blockContents;
-
-        if (select->condition->type == Type::unreachable) {
-          // Leave this for DCE.
-          return;
-        }
-
-        // We must use the operands twice, and also must move the condition to
-        // execute first; use locals for them all. While doing so, if we see
-        // any are unreachable, stop trying to optimize and leave this for DCE.
-        std::vector<Index> operandLocals;
-        for (auto* operand : curr->operands) {
-          if (operand->type == Type::unreachable ||
-              !TypeUpdating::canHandleAsLocal(operand->type)) {
-            return;
-          }
-        }
-
-        // None of the types are a problem, so we can proceed to add new vars as
-        // needed and perform this optimization.
-        for (auto* operand : curr->operands) {
-          auto currLocal = builder.addVar(func, operand->type);
-          operandLocals.push_back(currLocal);
-          blockContents.push_back(builder.makeLocalSet(currLocal, operand));
-          // By adding locals we must make type adjustments at the end.
-          changedTypes = true;
-        }
-
-        // Build the calls.
-        auto numOperands = curr->operands.size();
-        auto getOperands = [&]() {
-          std::vector<Expression*> newOperands(numOperands);
-          for (Index i = 0; i < numOperands; i++) {
-            newOperands[i] =
-              builder.makeLocalGet(operandLocals[i], curr->operands[i]->type);
-          }
-          return newOperands;
-        };
-        auto* ifTrueCall =
-          makeDirectCall(getOperands(), select->ifTrue, flatTable, curr);
-        auto* ifFalseCall =
-          makeDirectCall(getOperands(), select->ifFalse, flatTable, curr);
-
-        // Create the if to pick the calls, and emit the final block.
-        auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);
-        blockContents.push_back(iff);
-        replaceCurrent(builder.makeBlock(blockContents));
-      }
+    if (auto* calls = CallUtils::convertToDirectCalls(
+          curr,
+          [&](Expression* target) {
+            return getDirectCallName(target, flatTable);
+          },
+          *getFunction(),
+          *getModule())) {
+      replaceCurrent(calls);
+      return;
     }
   }
 
@@ -131,6 +85,23 @@ private:
 
   bool changedTypes = false;
 
+  // Get the name of the function to call for an index in the table. If the
+  // given expression is not an index, or it corresponds to an invalid index,
+  // return a null name.
+  Name getDirectCallName(Expression* c,
+                         const TableUtils::FlatTable& flatTable) {
+    Index index = c->cast<Const>()->value.geti32();
+
+    // If the index is invalid, or the type is wrong, we can
+    // emit an unreachable here, since in Binaryen it is ok to
+    // reorder/replace traps when optimizing (but never to
+    // remove them, at least not by default).
+    if (index >= flatTable.names.size()) {
+      return Name()
+    }
+    return flatTable.names[index];
+  }
+
   // Create a direct call for a given list of operands, an expression which is
   // known to contain a constant indicating the table offset, and the relevant
   // table. If we can see that the call will trap, instead return an
@@ -139,16 +110,11 @@ private:
                              Expression* c,
                              const TableUtils::FlatTable& flatTable,
                              CallIndirect* original) {
-    Index index = c->cast<Const>()->value.geti32();
-
     // If the index is invalid, or the type is wrong, we can
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    if (index >= flatTable.names.size()) {
-      return replaceWithUnreachable(operands);
-    }
-    auto name = flatTable.names[index];
+    auto name = getDirectCallName(c, flatTable);
     if (!name.is()) {
       return replaceWithUnreachable(operands);
     }
