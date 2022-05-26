@@ -257,6 +257,12 @@ def init_important_initial_contents():
     IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
 
 
+INITIAL_CONTENTS_IGNORE = [
+    # not all relaxed SIMD instructions are implemented in the interpreter
+    'relaxed-simd.wast'
+]
+
+
 def pick_initial_contents():
     # if we use an initial wasm file's contents as the basis for the
     # fuzzing, then that filename, or None if we start entirely from scratch
@@ -279,6 +285,8 @@ def pick_initial_contents():
         # no longer exist, and we should just skip it.
         if not os.path.exists(test_name):
             return
+    if os.path.basename(test_name) in INITIAL_CONTENTS_IGNORE:
+        return
     assert os.path.exists(test_name)
     # tests that check validation errors are not helpful for us
     if '.fail.' in test_name:
@@ -1048,7 +1056,11 @@ def test_one(random_input, given_wasm):
         # apply properties like not having any NaNs, which the original fuzz
         # wasm had applied. that is, we need to preserve properties like not
         # having nans through reduction.
-        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+        try:
+            run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+        except Exception as e:
+            print("Internal error in fuzzer! Could not run given wasm")
+            raise e
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features

@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "wasm-builder.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
 

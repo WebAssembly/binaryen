@@ -474,12 +474,6 @@ struct Tuple {
   Tuple(const TypeList& types) : types(types) { validate(); }
   Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
 
-  // Allow copies when constructing.
-  Tuple(const Tuple& other) : types(other.types) { validate(); }
-
-  // Prevent accidental copies.
-  Tuple& operator=(const Tuple&) = delete;
-
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }
   std::string toString() const;

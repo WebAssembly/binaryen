@@ -3200,8 +3200,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       name = Name("fimport$" + std::to_string(functionCounter++));
       functionNames.push_back(name);
     } else if (kind == ExternalKind::Global) {
-      name = Name("gimport$" + std::to_string(globalCounter++));
-      globalNames.push_back(name);
+      // Handled in `parseGlobal`.
     } else if (kind == ExternalKind::Memory) {
       name = Name("mimport$" + std::to_string(memoryCounter++));
     } else if (kind == ExternalKind::Table) {
@@ -3239,25 +3238,11 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     functionTypes[name] = func->type;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
-    Type type;
-    bool mutable_ = false;
-    if (inner[j]->isStr()) {
-      type = stringToType(inner[j++]->str());
-    } else {
-      auto& inner2 = *inner[j++];
-      if (inner2[0]->str() != MUT) {
-        throw ParseException("expected mut", inner2.line, inner2.col);
-      }
-      type = stringToType(inner2[1]->str());
-      mutable_ = true;
-    }
-    auto global = make_unique<Global>();
-    global->setName(name, hasExplicitName);
+    parseGlobal(inner, true);
+    j++;
+    auto& global = wasm.globals.back();
     global->module = module;
     global->base = base;
-    global->type = type;
-    global->mutable_ = mutable_;
-    wasm.addGlobal(global.release());
   } else if (kind == ExternalKind::Table) {
     auto table = make_unique<Table>();
     table->setName(name, hasExplicitName);
@@ -3318,6 +3303,8 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   size_t i = 1;
   if (s[i]->dollared() && !(s[i]->isStr() && isType(s[i]->str()))) {
     global->setExplicitName(s[i++]->str());
+  } else if (preParseImport) {
+    global->name = Name("gimport$" + std::to_string(globalCounter));
   } else {
     global->name = Name::fromInt(globalCounter);
   }
@@ -3377,13 +3364,10 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
     wasm.addGlobal(im.release());
     return;
   }
-  if (preParseImport) {
-    throw ParseException("preParseImport in global", s.line, s.col);
-  }
   global->type = type;
   if (i < s.size()) {
     global->init = parseExpression(s[i++]);
-  } else {
+  } else if (!preParseImport) {
     throw ParseException("global without init", s.line, s.col);
   }
   global->mutable_ = mutable_;
