@@ -115,82 +115,7 @@ public:
 
   // Combine the information in a given PossibleContents to this one. The
   // contents here will then include whatever content was possible in |other|.
-  void combine(const PossibleContents& other) {
-    // First handle the trivial cases of them being equal, or one of them is
-    // None or Many.
-    if (*this == other) {
-      return;
-    }
-    if (other.isNone()) {
-      return;
-    }
-    if (isNone()) {
-      value = other.value;
-      return;
-    }
-    if (isMany()) {
-      return;
-    }
-    if (other.isMany()) {
-      value = Many();
-      return;
-    }
-
-    auto type = getType();
-    auto otherType = other.getType();
-
-    if (!type.isRef() || !otherType.isRef()) {
-      // At least one is not a reference. We could in principle try to find
-      // ExactType here, say as the combination of two different constants, but
-      // since there is no subtyping between non-ref types, ExactType would not
-      // carry any more information than Many. Furthermore, using Many here
-      // makes it simpler in ContentOracle's flow to know when to stop flowing a
-      // value: Many is a clear signal that we've hit the worst case and can't
-      // do any better in that location, and can stop there (otherwise, we'd
-      // need to check the ExactType to see if it is the worst case or not).
-      value = Many();
-      return;
-    }
-
-    // Special handling for references from here.
-
-    // Nulls are always equal to each other, even if their types differ.
-    if (isNull() || other.isNull()) {
-      // If only one is a null, but the other's type is known exactly, then the
-      // combination is to add nullability (if the type is *not* known exactly,
-      // like for a global, then we cannot do anything useful here).
-      if (!isNull() && isTypeExact()) {
-        value = ExactType(Type(type.getHeapType(), Nullable));
-        return;
-      } else if (!other.isNull() && other.isTypeExact()) {
-        value = ExactType(Type(otherType.getHeapType(), Nullable));
-        return;
-      } else if (isNull() && other.isNull()) {
-        // Both are null. The result is a null, of the LUB.
-        auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
-                                                otherType.getHeapType());
-        value = Literal::makeNull(lub);
-        return;
-      }
-    }
-
-    if (isTypeExact() && other.isTypeExact() &&
-        type.getHeapType() == otherType.getHeapType()) {
-      // We know the types here exactly, and even the heap types match, but
-      // there is some other difference that prevents them from being 100%
-      // identical (for example, one might be an ExactType and the other a
-      // Literal; or both might be ExactTypes and only one might be nullable).
-      // In these cases we can emit a proper ExactType here, adding nullability
-      // if we need to.
-      value = ExactType(Type(
-        type.getHeapType(),
-        type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
-      return;
-    }
-
-    // Nothing else possible combines in an interesting way; emit a Many.
-    value = Many();
-  }
+  void combine(const PossibleContents& other);
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isLiteral() const { return std::get_if<Literal>(&value); }
@@ -213,7 +138,7 @@ public:
   // Return the relevant type here. Note that the *meaning* of the type varies
   // by the contents: type $foo of a global means that type or any subtype, as a
   // subtype might be written to it, while type $foo of a Literal or an
-  // ExactType means that type and nothing else; see isTypeExact().
+  // ExactType means that type and nothing else; see hasExactType().
   //
   // If no type is possible, return unreachable; if many types are, return none.
   Type getType() const {
@@ -233,10 +158,14 @@ public:
   }
 
   // Returns whether the type we can report here is exact, that is, nothing of a
-  // strict subtype might show up.
+  // strict subtype might show up - the contents here have an exact type.
+  //
+  // This is different from isExactType() which checks if all we know about the
+  // contents here is their exact type. Specifically, we may know both an exact
+  // type and also more than just that, which is the case with a Literal.
   //
   // This returns false for None and Many, for whom it is not well-defined.
-  bool isTypeExact() const { return isExactType() || isLiteral(); }
+  bool hasExactType() const { return isExactType() || isLiteral(); }
 
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a
@@ -244,6 +173,7 @@ public:
   bool canMakeExpression() const { return isLiteral() || isGlobal(); }
 
   Expression* makeExpression(Module& wasm) {
+    assert(canMakeExpression());
     Builder builder(wasm);
     if (isLiteral()) {
       return builder.makeConstantExpression(getLiteral());
@@ -349,6 +279,9 @@ struct BranchLocation {
   Function* func;
   Name target;
   // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
+  // That is, if the branch target has a tuple type, then each branch to that
+  // location sends a tuple, and we'll have a separate BranchLocation for each,
+  // indexed by the index in the tuple that the branch sends.
   Index tupleIndex;
   bool operator==(const BranchLocation& other) const {
     return func == other.func && target == other.target &&
@@ -395,9 +328,12 @@ struct DataLocation {
   }
 };
 
-// The location of anything written to a particular index of a particular tag.
+// The location of anything written to a particular tag.
 struct TagLocation {
   Name tag;
+  // If the tag has more than one element, we'll have a separate TagLocation for
+  // each, with corresponding indexes. If the tag has just one element we'll
+  // only have one TagLocation with index 0.
   Index tupleIndex;
   bool operator==(const TagLocation& other) const {
     return tag == other.tag && tupleIndex == other.tupleIndex;
@@ -445,6 +381,9 @@ using Location = std::variant<ExpressionLocation,
 } // namespace wasm
 
 namespace std {
+
+std::ostream& operator<<(std::ostream& stream,
+                         const wasm::PossibleContents& contents);
 
 template<> struct hash<wasm::PossibleContents> {
   size_t operator()(const wasm::PossibleContents& contents) const {

@@ -29,7 +29,94 @@
 #include "support/insert_ordered.h"
 #endif
 
+namespace std {
+
+std::ostream& operator<<(std::ostream& stream,
+                         const wasm::PossibleContents& contents) {
+  contents.dump(stream);
+  return stream;
+}
+
+} // namespace std
+
 namespace wasm {
+
+void PossibleContents::combine(const PossibleContents& other) {
+  // First handle the trivial cases of them being equal, or one of them is
+  // None or Many.
+  if (*this == other) {
+    return;
+  }
+  if (other.isNone()) {
+    return;
+  }
+  if (isNone()) {
+    value = other.value;
+    return;
+  }
+  if (isMany()) {
+    return;
+  }
+  if (other.isMany()) {
+    value = Many();
+    return;
+  }
+
+  auto type = getType();
+  auto otherType = other.getType();
+
+  if (!type.isRef() || !otherType.isRef()) {
+    // At least one is not a reference. We could in principle try to find
+    // ExactType here, say as the combination of two different constants, but
+    // since there is no subtyping between non-ref types, ExactType would not
+    // carry any more information than Many. Furthermore, using Many here
+    // makes it simpler in ContentOracle's flow to know when to stop flowing a
+    // value: Many is a clear signal that we've hit the worst case and can't
+    // do any better in that location, and can stop there (otherwise, we'd
+    // need to check the ExactType to see if it is the worst case or not).
+    value = Many();
+    return;
+  }
+
+  // Special handling for references from here.
+
+  // Nulls are always equal to each other, even if their types differ.
+  if (isNull() || other.isNull()) {
+    // If only one is a null, but the other's type is known exactly, then the
+    // combination is to add nullability (if the type is *not* known exactly,
+    // like for a global, then we cannot do anything useful here).
+    if (!isNull() && hasExactType()) {
+      value = ExactType(Type(type.getHeapType(), Nullable));
+      return;
+    } else if (!other.isNull() && other.hasExactType()) {
+      value = ExactType(Type(otherType.getHeapType(), Nullable));
+      return;
+    } else if (isNull() && other.isNull()) {
+      // Both are null. The result is a null, of the LUB.
+      auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
+                                              otherType.getHeapType());
+      value = Literal::makeNull(lub);
+      return;
+    }
+  }
+
+  if (hasExactType() && other.hasExactType() &&
+      type.getHeapType() == otherType.getHeapType()) {
+    // We know the types here exactly, and even the heap types match, but
+    // there is some other difference that prevents them from being 100%
+    // identical (for example, one might be an ExactType and the other a
+    // Literal; or both might be ExactTypes and only one might be nullable).
+    // In these cases we can emit a proper ExactType here, adding nullability
+    // if we need to.
+    value = ExactType(Type(
+      type.getHeapType(),
+      type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
+    return;
+  }
+
+  // Nothing else possible combines in an interesting way; emit a Many.
+  value = Many();
+}
 
 namespace {
 
@@ -1417,7 +1504,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  if (refContents.isTypeExact()) {
+  if (refContents.hasExactType()) {
     // Update the one possible type here.
     auto heapLoc =
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
