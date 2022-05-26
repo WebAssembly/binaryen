@@ -627,17 +627,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $3)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $4)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (call $foo2
  ;; CHECK-NEXT:    (local.get $3)
  ;; CHECK-NEXT:    (local.get $4)
@@ -668,28 +658,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $3)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $4)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $3)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $4)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
