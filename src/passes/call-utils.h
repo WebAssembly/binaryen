@@ -47,6 +47,7 @@ namespace wasm::CallUtils {
 // name of the function to be called (A for the first and B for the second in
 // the example above). If we cannot determine such a function, then return an
 // empty name.
+// FIXME let this return "unreachable" if we know the call will trap
 template<typename T>
 inline Expression*
 convertToDirectCalls(T* curr,
