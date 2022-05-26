@@ -63,7 +63,9 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     // Emit direct calls for things like a select over constants.
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
-          [&](Expression* target) { return getTargetInfo(target, flatTable); },
+          [&](Expression* target) {
+            return getTargetInfo(target, flatTable, curr);
+          },
           *getFunction(),
           *getModule())) {
       replaceCurrent(calls);
@@ -92,7 +94,9 @@ private:
   // that is, whether we know a direct call target, or we know it will trap, or
   // if we know nothing.
   CallUtils::IndirectCallInfo
-  getTargetInfo(Expression* target, const TableUtils::FlatTable& flatTable) {
+  getTargetInfo(Expression* target,
+                const TableUtils::FlatTable& flatTable,
+                CallIndirect* original) {
     auto* c = target->dynCast<Const>();
     if (!c) {
       return CallUtils::Unknown{};
@@ -106,6 +110,10 @@ private:
     }
     auto name = flatTable.names[index];
     if (!name.is()) {
+      return CallUtils::Trap{};
+    }
+    auto* func = getModule()->getFunction(name);
+    if (original->heapType != func->type) {
       return CallUtils::Trap{};
     }
     return CallUtils::Known{name};
@@ -123,16 +131,12 @@ private:
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    auto info = getTargetInfo(c, flatTable);
+    auto info = getTargetInfo(c, flatTable, original);
     if (std::get_if<CallUtils::Trap>(&info)) {
       return replaceWithUnreachable(operands);
     }
     assert(std::get_if<CallUtils::Known>(&info));
     auto name = std::get_if<CallUtils::Known>(&info)->target;
-    auto* func = getModule()->getFunction(name);
-    if (original->heapType != func->type) {
-      return replaceWithUnreachable(operands);
-    }
 
     // Everything looks good!
     return Builder(*getModule())
