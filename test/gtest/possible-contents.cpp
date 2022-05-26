@@ -198,7 +198,8 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(exactFuncSignatureType, funcNull, exactFuncSignatureType);
   assertCombination(
     exactNonNullFuncSignatureType, funcNull, exactFuncSignatureType);
-  assertCombination(nonNullFunc, exactFuncSignatureType, exactFuncSignatureType);
+  assertCombination(
+    nonNullFunc, exactFuncSignatureType, exactFuncSignatureType);
   assertCombination(
     nonNullFunc, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
   assertCombination(nonNullFunc, exactI32, many);
