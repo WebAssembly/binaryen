@@ -47,10 +47,11 @@ namespace wasm::CallUtils {
 // the example above). If we cannot determine such a function, then return an
 // empty name.
 template<typename T>
-inline Expression* convertToDirectCalls(T* curr,
-                                        std::function<Name (Expression*)> getCallTarget,
-                                        Function& func,
-                                        Module& wasm) {
+inline Expression*
+convertToDirectCalls(T* curr,
+                     std::function<Name(Expression*)> getCallTarget,
+                     Function& func,
+                     Module& wasm) {
   if (curr->isReturn) {
     // TODO
     return nullptr;
@@ -111,10 +112,10 @@ inline Expression* convertToDirectCalls(T* curr,
     }
     return newOperands;
   };
-  auto* ifTrueCall = builder.makeCall(
-    ifTrueCallTarget, getOperands(), curr->type);
-  auto* ifFalseCall = builder.makeCall(
-    ifFalseCallTarget, getOperands(), curr->type);
+  auto* ifTrueCall =
+    builder.makeCall(ifTrueCallTarget, getOperands(), curr->type);
+  auto* ifFalseCall =
+    builder.makeCall(ifFalseCallTarget, getOperands(), curr->type);
 
   // Create the if to pick the calls, and emit the final block.
   auto* iff = builder.makeIf(select->condition, ifTrueCall, ifFalseCall);
