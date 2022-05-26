@@ -242,7 +242,7 @@ struct LexFloatCtx : LexCtx {
   LexFloatCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexFloatResult> lexed() {
-    static_assert(!std::signbit(NAN), "Expected NAN to be positive");
+    assert(!std::signbit(NAN) && "Expected NAN to be positive");
     auto basic = LexCtx::lexed();
     if (!basic) {
       return {};
