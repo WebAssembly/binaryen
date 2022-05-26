@@ -63,7 +63,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
           [&](Expression* target) {
-            return getTableName(target, flatTable);
+            return getNameInTable(target, flatTable);
           },
           *getFunction(),
           *getModule())) {
@@ -88,9 +88,14 @@ private:
   // Given an expression, check if it is a constant and that constant is a valid
   // index in the given flat table. If so, return the name there, and otherwise
   // a null name.
-  Name getTableName(Expression* c,
-                         const TableUtils::FlatTable& flatTable) {
-    Index index = c->cast<Const>()->value.geti32();
+  Name getNameInTable(Expression* curr,
+                    const TableUtils::FlatTable& flatTable) {
+    auto* c = curr->dynCast<Const>();
+    if (!c) {
+      return Name();
+    }
+
+    Index index = c->value.geti32();
 
     // If the index is invalid, or the type is wrong, we can
     // emit an unreachable here, since in Binaryen it is ok to
@@ -114,7 +119,7 @@ private:
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    auto name = getTableName(c, flatTable);
+    auto name = getNameInTable(c, flatTable);
     if (!name.is()) {
       return replaceWithUnreachable(operands);
     }
