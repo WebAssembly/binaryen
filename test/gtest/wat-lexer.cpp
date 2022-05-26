@@ -1,10 +1,28 @@
+/*
+ * Copyright 2022 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <cmath>
+
+#include "wat-lexer.h"
 #include "gtest/gtest.h"
 
-#include "wat-parser-internal.h"
-
 using namespace wasm::WATParser;
+using namespace std::string_view_literals;
 
-TEST(ParserTest, LexWhitespace) {
+TEST(LexerTest, LexWhitespace) {
   Token one{"1"sv, IntTok{1, Unsigned}};
   Token two{"2"sv, IntTok{2, Unsigned}};
   Token three{"3"sv, IntTok{3, Unsigned}};
@@ -39,7 +57,7 @@ TEST(ParserTest, LexWhitespace) {
   EXPECT_EQ(lexer.position(t5), (TextPos{4, 2}));
 }
 
-TEST(ParserTest, LexLineComment) {
+TEST(LexerTest, LexLineComment) {
   Token one{"1"sv, IntTok{1, Unsigned}};
   Token six{"6"sv, IntTok{6, Unsigned}};
 
@@ -58,7 +76,7 @@ TEST(ParserTest, LexLineComment) {
   EXPECT_EQ(lexer.position(t2), (TextPos{2, 0}));
 }
 
-TEST(ParserTest, LexBlockComment) {
+TEST(LexerTest, LexBlockComment) {
   Token one{"1"sv, IntTok{1, Unsigned}};
   Token six{"6"sv, IntTok{6, Unsigned}};
 
@@ -77,7 +95,7 @@ TEST(ParserTest, LexBlockComment) {
   EXPECT_EQ(lexer.position(t2), (TextPos{5, 2}));
 }
 
-TEST(ParserTest, LexParens) {
+TEST(LexerTest, LexParens) {
   Token left{"("sv, LParenTok{}};
   Token right{")"sv, RParenTok{}};
 
@@ -100,7 +118,7 @@ TEST(ParserTest, LexParens) {
   EXPECT_EQ(t4, right);
 }
 
-TEST(ParserTest, LexInt) {
+TEST(LexerTest, LexInt) {
   {
     Lexer lexer("0"sv);
     ASSERT_NE(lexer, lexer.end());
@@ -245,7 +263,7 @@ TEST(ParserTest, LexInt) {
   }
 }
 
-TEST(ParserTest, LexHexInt) {
+TEST(LexerTest, LexHexInt) {
   {
     Lexer lexer("0x0"sv);
     ASSERT_NE(lexer, lexer.end());
@@ -356,7 +374,7 @@ TEST(ParserTest, LexHexInt) {
   }
 }
 
-TEST(ParserTest, LexFloat) {
+TEST(LexerTest, LexFloat) {
   {
     Lexer lexer("42"sv);
     ASSERT_NE(lexer, lexer.end());
@@ -517,7 +535,7 @@ TEST(ParserTest, LexFloat) {
   }
 }
 
-TEST(ParserTest, LexHexFloat) {
+TEST(LexerTest, LexHexFloat) {
   {
     Lexer lexer("0x4B"sv);
     ASSERT_NE(lexer, lexer.end());
@@ -678,7 +696,7 @@ TEST(ParserTest, LexHexFloat) {
   }
 }
 
-TEST(ParserTest, LexInfinity) {
+TEST(LexerTest, LexInfinity) {
   {
     Lexer lexer("inf"sv);
     ASSERT_NE(lexer, lexer.end());
@@ -719,7 +737,7 @@ TEST(ParserTest, LexInfinity) {
   }
 }
 
-TEST(ParserTest, LexNan) {
+TEST(LexerTest, LexNan) {
   {
     Lexer lexer("nan"sv);
     ASSERT_NE(lexer, lexer.end());
@@ -833,7 +851,7 @@ TEST(ParserTest, LexNan) {
   }
 }
 
-TEST(ParserTest, LexIdent) {
+TEST(LexerTest, LexIdent) {
   {
     Lexer lexer("$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv);
     ASSERT_NE(lexer, lexer.end());
@@ -854,7 +872,7 @@ TEST(ParserTest, LexIdent) {
   }
 }
 
-TEST(ParserTest, LexString) {
+TEST(LexerTest, LexString) {
   {
     auto pangram = "\"The quick brown fox jumps over the lazy dog\""sv;
     Lexer lexer(pangram);
@@ -956,7 +974,7 @@ TEST(ParserTest, LexString) {
   }
 }
 
-TEST(ParserTest, LexKeywords) {
+TEST(LexerTest, LexKeywords) {
   Token module{"module"sv, KeywordTok{}};
   Token type{"type"sv, KeywordTok{}};
   Token func{"func"sv, KeywordTok{}};
