@@ -37,7 +37,7 @@ struct Known {
 using IndirectCallInfo = std::variant<Unknown, Trap, Known>;
 
 // Converts indirect calls that target selects between values into ifs over
-// direct calls. For example, if we are given this:
+// direct calls. For example, consider this input:
 //
 //  (call_ref
 //    (select
@@ -47,30 +47,30 @@ using IndirectCallInfo = std::variant<Unknown, Trap, Known>;
 //    )
 //  )
 //
-// This checks if the input falls into such a pattern, and if so, returns the
-// new form. If we fail to find that pattern, or we decide it is not worth
+// We'll check if the input falls into such a pattern, and if so, return the new
+// form:
+//
+//  (if
+//    (..condition..)
+//    (call $A)
+//    (call $B)
+//  )
+//
+// If we fail to find the expected pattern, or we decide it is not worth
 // optimizing it for some reason, we return nullptr.
 //
 // If this returns the new form, it will modify the function as necessary,
 // adding new locals etc., which later passes should optimize.
 //
-// |operands| is the list of operands on the outer call (call_ref in the example
-// above).
-//
-// |getCallTarget| is given one of the arms of the select and should return an
-// IndirectCallInfo that says what we know about it. We may know nothing or that
-// it will trap, or that it will go to a known static target.
+// |getCallInfo| is given one of the arms of the select and should return an
+// IndirectCallInfo that says what we know about it. We may know nothing, or
+// that it will trap, or that it will go to a known static target.
 template<typename T>
 inline Expression*
 convertToDirectCalls(T* curr,
                      std::function<IndirectCallInfo(Expression*)> getCallInfo,
                      Function& func,
                      Module& wasm) {
-  if (curr->isReturn) {
-    // TODO
-    return nullptr;
-  }
-
   auto* select = curr->target->template dynCast<Select>();
   if (!select) {
     return nullptr;
@@ -88,7 +88,9 @@ convertToDirectCalls(T* curr,
   auto ifFalseCallInfo = getCallInfo(select->ifFalse);
   if (std::get_if<Unknown>(&ifTrueCallInfo) ||
       std::get_if<Unknown>(&ifFalseCallInfo)) {
-    // We know nothing.
+    // We know nothing about at least one arm, so give up.
+    // TODO: Perhaps emitting a direct call for one arm is enough even if the
+    //       other remains indirect?
     return nullptr;
   }
 
@@ -132,7 +134,7 @@ convertToDirectCalls(T* curr,
       return builder.makeUnreachable();
     } else {
       return builder.makeCall(
-        std::get<Known>(info).target, getOperands(), curr->type);
+        std::get<Known>(info).target, getOperands(), curr->type, curr->isReturn);
     }
   };
   auto* ifTrueCall = makeCall(ifTrueCallInfo);

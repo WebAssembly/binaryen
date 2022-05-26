@@ -295,4 +295,17 @@
    )
   )
  )
+
+ (func $return_call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
+  ;; As above, but with a return call. We optimize this too, and turn a
+  ;; return_call_ref over a select into an if over return_calls.
+  (return_call_ref
+   (local.get $x)
+   (local.get $y)
+   (select
+    (ref.func $foo)
+    (ref.func $bar)
+    (local.get $z)
+   )
+  )
 )
