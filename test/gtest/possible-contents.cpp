@@ -77,7 +77,7 @@ protected:
   PossibleContents anyGlobal =
     PossibleContents::global("anyGlobal", Type::anyref);
 
-  PossibleContents func = PossibleContents::literal(
+  PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Type(Signature(Type::none, Type::none), NonNullable)));
 
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
@@ -168,7 +168,7 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   // the same heap type (nullability may be added, but nothing else).
   assertCombination(exactFuncref, exactAnyref, many);
   assertCombination(exactFuncref, anyGlobal, many);
-  assertCombination(exactFuncref, func, many);
+  assertCombination(exactFuncref, nonNullFunc, many);
   assertCombination(exactFuncref, exactFuncref, exactFuncref);
   assertCombination(exactFuncref, exactNonNullFuncref, exactFuncref);
 
@@ -193,15 +193,15 @@ TEST_F(PossibleContentsTest, TestCombinations) {
 
   // A function reference + a null becomes an exact type (of that sig), plus
   // nullability.
-  assertCombination(func, anyNull, exactFuncSignatureType);
-  assertCombination(func, funcNull, exactFuncSignatureType);
+  assertCombination(nonNullFunc, anyNull, exactFuncSignatureType);
+  assertCombination(nonNullFunc, funcNull, exactFuncSignatureType);
   assertCombination(exactFuncSignatureType, funcNull, exactFuncSignatureType);
   assertCombination(
     exactNonNullFuncSignatureType, funcNull, exactFuncSignatureType);
-  assertCombination(func, exactFuncSignatureType, exactFuncSignatureType);
+  assertCombination(nonNullFunc, exactFuncSignatureType, exactFuncSignatureType);
   assertCombination(
-    func, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
-  assertCombination(func, exactI32, many);
+    nonNullFunc, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
+  assertCombination(nonNullFunc, exactI32, many);
 
   // Globals vs nulls.
 
