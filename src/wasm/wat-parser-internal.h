@@ -26,6 +26,7 @@
 
 #include <cassert>
 #include <cctype>
+#include <cmath>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -107,6 +108,28 @@ public:
 
 enum Signedness { Unsigned, Signed };
 
+enum OverflowBehavior { DisallowOverflow, IgnoreOverflow };
+
+std::optional<int> getDigit(char c) {
+  if ('0' <= c && c <= '9') {
+    return {c - '0'};
+  }
+  return std::nullopt;
+}
+
+std::optional<int> getHexDigit(char c) {
+  if ('0' <= c && c <= '9') {
+    return {c - '0'};
+  }
+  if ('A' <= c && c <= 'F') {
+    return {10 + c - 'A'};
+  }
+  if ('a' <= c && c <= 'f') {
+    return {10 + c - 'a'};
+  }
+  return std::nullopt;
+}
+
 // The result of lexing an integer token fragment.
 struct LexIntResult : LexResult {
   uint64_t n;
@@ -124,28 +147,16 @@ private:
   bool negative = false;
   bool overflow = false;
 
-  std::optional<int> getDigit(char c) {
-    if ('0' <= c && c <= '9') {
-      return {c - '0'};
-    }
-    return std::nullopt;
-  }
-
-  std::optional<int> getHexDigit(char c) {
-    if ('0' <= c && c <= '9') {
-      return {c - '0'};
-    }
-    if ('A' <= c && c <= 'F') {
-      return {10 + c - 'A'};
-    }
-    if ('a' <= c && c <= 'f') {
-      return {10 + c - 'a'};
-    }
-    return std::nullopt;
-  }
-
 public:
   explicit LexIntCtx(std::string_view in) : LexCtx(in) {}
+
+  // Lex only the underlying span, ignoring the overflow and value.
+  std::optional<LexIntResult> lexedRaw() {
+    if (auto basic = LexCtx::lexed()) {
+      return LexIntResult{*basic, 0, Unsigned};
+    }
+    return {};
+  }
 
   std::optional<LexIntResult> lexed() {
     // Check most significant bit for overflow of signed numbers.
@@ -214,6 +225,49 @@ public:
   void take(const LexIntResult& res) {
     LexCtx::take(res);
     n = res.n;
+  }
+};
+
+struct LexFloatResult : LexResult {
+  // The payload if we lexed a nan with payload. We cannot store the payload
+  // directly in `d` because we do not know at this point whether we are parsing
+  // an f32 or f64 and therefore we do not know what the allowable payloads are.
+  std::optional<uint64_t> nanPayload;
+  double d;
+};
+
+struct LexFloatCtx : LexCtx {
+  std::optional<uint64_t> nanPayload;
+
+  LexFloatCtx(std::string_view in) : LexCtx(in) {}
+
+  std::optional<LexFloatResult> lexed() {
+    auto basic = LexCtx::lexed();
+    if (!basic) {
+      return {};
+    }
+    if (nanPayload) {
+      double nan = basic->span[0] == '-' ? -NAN : NAN;
+      return LexFloatResult{*basic, nanPayload, nan};
+    }
+    // Do not try to implement fully general and precise float parsing
+    // ourselves. Instead, call out to std::strtod to do our parsing. This means
+    // we need to strip any underscores since `std::strtod` does not understand
+    // them.
+    std::stringstream ss;
+    for (const char *curr = basic->span.data(),
+                    *end = curr + basic->span.size();
+         curr != end;
+         ++curr) {
+      if (*curr != '_') {
+        ss << *curr;
+      }
+    }
+    std::string str = ss.str();
+    char* last;
+    double d = std::strtod(str.data(), &last);
+    assert(last == str.data() + str.size() && "could not parse float");
+    return LexFloatResult{*basic, {}, d};
   }
 };
 
@@ -378,8 +432,12 @@ bool LexCtx::canFinish() const {
 // num   ::= d:digit => d
 //         |  n:num '_'? d:digit => 10*n + d
 // digit ::= '0' => 0 | ... | '9' => 9
-std::optional<LexIntResult> num(std::string_view in) {
+std::optional<LexIntResult> num(std::string_view in,
+                                OverflowBehavior overflow = DisallowOverflow) {
   LexIntCtx ctx(in);
+  if (ctx.empty()) {
+    return {};
+  }
   if (!ctx.takeDigit()) {
     return {};
   }
@@ -387,8 +445,9 @@ std::optional<LexIntResult> num(std::string_view in) {
     bool under = ctx.takePrefix("_"sv);
     if (!ctx.takeDigit()) {
       if (!under) {
-        return ctx.lexed();
+        return overflow == DisallowOverflow ? ctx.lexed() : ctx.lexedRaw();
       }
+      // TODO: Add error production for trailing underscore.
       return {};
     }
   }
@@ -399,7 +458,8 @@ std::optional<LexIntResult> num(std::string_view in) {
 // hexdigit ::= d:digit => d
 //            | 'A' => 10 | ... | 'F' => 15
 //            | 'a' => 10 | ... | 'f' => 15
-std::optional<LexIntResult> hexnum(std::string_view in) {
+std::optional<LexIntResult>
+hexnum(std::string_view in, OverflowBehavior overflow = DisallowOverflow) {
   LexIntCtx ctx(in);
   if (!ctx.takeHexdigit()) {
     return {};
@@ -408,8 +468,9 @@ std::optional<LexIntResult> hexnum(std::string_view in) {
     bool under = ctx.takePrefix("_"sv);
     if (!ctx.takeHexdigit()) {
       if (!under) {
-        return ctx.lexed();
+        return overflow == DisallowOverflow ? ctx.lexed() : ctx.lexedRaw();
       }
+      // TODO: Add error production for trailing underscore.
       return {};
     }
   }
@@ -441,6 +502,114 @@ std::optional<LexIntResult> integer(std::string_view in) {
     if (ctx.canFinish()) {
       return ctx.lexed();
     }
+  }
+  return {};
+}
+
+// float   ::= p:num '.'?                              => p
+//           | p:num '.' q:frac                        => p + q
+//           | p:num '.'? ('E'|'e') s:sign e:num       => p * 10^([s]e)
+//           | p:num '.' q:frac ('E'|'e') s:sign e:num => (p + q) * 10^([s]e)
+// frac    ::= d:digit                                 => d/10
+//           | d:digit '_'? p:frac                     => (d + p/10) / 10
+std::optional<LexResult> decfloat(std::string_view in) {
+  LexCtx ctx(in);
+  if (auto lexed = num(ctx.next(), IgnoreOverflow)) {
+    ctx.take(*lexed);
+  } else {
+    return {};
+  }
+  // Optional '.' followed by optional frac
+  if (ctx.takePrefix("."sv)) {
+    if (auto lexed = num(ctx.next(), IgnoreOverflow)) {
+      ctx.take(*lexed);
+    }
+  }
+  if (ctx.takePrefix("E"sv) || ctx.takePrefix("e"sv)) {
+    // Optional sign
+    ctx.takePrefix("+"sv) || ctx.takePrefix("-"sv);
+    if (auto lexed = num(ctx.next(), IgnoreOverflow)) {
+      ctx.take(*lexed);
+    } else {
+      // TODO: Add error production for missing exponent.
+      return {};
+    }
+  }
+  return ctx.lexed();
+}
+
+// hexfloat ::= '0x' p:hexnum '.'?                        => p
+//            | '0x' p:hexnum '.' q:hexfrac               => p + q
+//            | '0x' p:hexnum '.'? ('P'|'p') s:sign e:num => p * 2^([s]e)
+//            | '0x' p:hexnum '.' q:hexfrac ('P'|'p') s:sign e:num
+//                   => (p + q) * 2^([s]e)
+// hexfrac ::= h:hexdigit                              => h/16
+//           | h:hexdigit '_'? p:hexfrac               => (h + p/16) / 16
+std::optional<LexResult> hexfloat(std::string_view in) {
+  LexCtx ctx(in);
+  if (!ctx.takePrefix("0x"sv)) {
+    return {};
+  }
+  if (auto lexed = hexnum(ctx.next(), IgnoreOverflow)) {
+    ctx.take(*lexed);
+  } else {
+    return {};
+  }
+  // Optional '.' followed by optional hexfrac
+  if (ctx.takePrefix("."sv)) {
+    if (auto lexed = hexnum(ctx.next(), IgnoreOverflow)) {
+      ctx.take(*lexed);
+    }
+  }
+  if (ctx.takePrefix("P"sv) || ctx.takePrefix("p"sv)) {
+    // Optional sign
+    ctx.takePrefix("+"sv) || ctx.takePrefix("-"sv);
+    if (auto lexed = num(ctx.next(), IgnoreOverflow)) {
+      ctx.take(*lexed);
+    } else {
+      // TODO: Add error production for missing exponent.
+      return {};
+    }
+  }
+  return ctx.lexed();
+}
+
+// fN    ::= s:sign z:fNmag => [s]z
+// fNmag ::= z:float        => float_N(z) (if float_N(z) != +/-infinity)
+//         | z:hexfloat     => float_N(z) (if float_N(z) != +/-infinity)
+//         | 'inf'          => infinity
+//         | 'nan'          => nan(2^(signif(N)-1))
+//         | 'nan:0x' n:hexnum => nan(n) (if 1 <= n < 2^signif(N))
+std::optional<LexFloatResult> float_(std::string_view in) {
+  LexFloatCtx ctx(in);
+  // Optional sign
+  ctx.takePrefix("+"sv) || ctx.takePrefix("-"sv);
+  if (auto lexed = hexfloat(ctx.next())) {
+    ctx.take(*lexed);
+  } else if (auto lexed = decfloat(ctx.next())) {
+    ctx.take(*lexed);
+  } else if (ctx.takePrefix("inf"sv)) {
+    // nop
+  } else if (ctx.takePrefix("nan"sv)) {
+    if (ctx.takePrefix(":0x"sv)) {
+      if (auto lexed = hexnum(ctx.next())) {
+        ctx.take(*lexed);
+        if (1 <= lexed->n && lexed->n < (1ul << 52)) {
+          ctx.nanPayload = lexed->n;
+        } else {
+          // TODO: Add error production for invalid NaN payload.
+          return {};
+        }
+      } else {
+        // TODO: Add error production for malformed NaN payload.
+        return {};
+      }
+    }
+  } else {
+    return {};
+  }
+  if (ctx.canFinish()) {
+    return ctx.lexed();
   }
   return {};
 }
@@ -642,6 +811,31 @@ struct IntTok {
   }
 };
 
+struct FloatTok {
+  // The payload if we lexed a nan with payload. We cannot store the payload
+  // directly in `d` because we do not know at this point whether we are parsing
+  // an f32 or f64 and therefore we do not know what the allowable payloads are.
+  std::optional<uint64_t> nanPayload;
+  double d;
+
+  friend std::ostream& operator<<(std::ostream& os, const FloatTok& tok) {
+    if (std::isnan(tok.d)) {
+      os << (std::signbit(tok.d) ? "+" : "-");
+      if (tok.nanPayload) {
+        return os << "nan:0x" << std::hex << *tok.nanPayload << std::dec;
+      }
+      return os << "nan";
+    }
+    return os << tok.d;
+  }
+
+  friend bool operator==(const FloatTok& t1, const FloatTok& t2) {
+    return std::signbit(t1.d) == std::signbit(t2.d) &&
+           (t1.d == t2.d || (std::isnan(t1.d) && std::isnan(t2.d) &&
+                             t1.nanPayload == t2.nanPayload));
+  }
+};
+
 struct IdTok {
   friend std::ostream& operator<<(std::ostream& os, const IdTok&) {
     return os << "id";
@@ -676,8 +870,13 @@ struct KeywordTok {
 };
 
 struct Token {
-  using Data =
-    std::variant<LParenTok, RParenTok, IntTok, IdTok, StringTok, KeywordTok>;
+  using Data = std::variant<LParenTok,
+                            RParenTok,
+                            IntTok,
+                            FloatTok,
+                            IdTok,
+                            StringTok,
+                            KeywordTok>;
 
   std::string_view span;
   Data data;
@@ -765,6 +964,8 @@ struct Lexer {
       tok = Token{t->span, IdTok{}};
     } else if (auto t = integer(next())) {
       tok = Token{t->span, IntTok{t->n, t->signedness}};
+    } else if (auto t = float_(next())) {
+      tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
     } else if (auto t = str(next())) {
       tok = Token{t->span, StringTok{t->str}};
     } else if (auto t = keyword(next())) {
