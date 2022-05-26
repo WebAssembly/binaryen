@@ -242,6 +242,7 @@ struct LexFloatCtx : LexCtx {
   LexFloatCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexFloatResult> lexed() {
+    static_assert(!std::signbit(NAN), "Expected NAN to be positive");
     auto basic = LexCtx::lexed();
     if (!basic) {
       return {};
@@ -249,6 +250,10 @@ struct LexFloatCtx : LexCtx {
     if (nanPayload) {
       double nan = basic->span[0] == '-' ? -NAN : NAN;
       return LexFloatResult{*basic, nanPayload, nan};
+    }
+    // strtod does not return -NAN for "-nan" on all platforms.
+    if (basic->span == "-nan"sv) {
+      return LexFloatResult{*basic, nanPayload, -NAN};
     }
     // Do not try to implement fully general and precise float parsing
     // ourselves. Instead, call out to std::strtod to do our parsing. This means
@@ -594,7 +599,7 @@ std::optional<LexFloatResult> float_(std::string_view in) {
     if (ctx.takePrefix(":0x"sv)) {
       if (auto lexed = hexnum(ctx.next())) {
         ctx.take(*lexed);
-        if (1 <= lexed->n && lexed->n < (1ul << 52)) {
+        if (1 <= lexed->n && lexed->n < (1ull << 52)) {
           ctx.nanPayload = lexed->n;
         } else {
           // TODO: Add error production for invalid NaN payload.
