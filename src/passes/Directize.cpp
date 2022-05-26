@@ -100,10 +100,7 @@ private:
 
     Index index = c->value.geti32();
 
-    // If the index is invalid, or the type is wrong, we can
-    // emit an unreachable here, since in Binaryen it is ok to
-    // reorder/replace traps when optimizing (but never to
-    // remove them, at least not by default).
+    // If the index is invalid, or the type is wrong, then this will trap.
     if (index >= flatTable.names.size()) {
       return CallUtils::Trap{};
     }
