@@ -3908,6 +3908,10 @@ void BinaryenModulePrint(BinaryenModuleRef module) {
   std::cout << *(Module*)module;
 }
 
+void BinaryenModulePrintStackIR(BinaryenModuleRef module) {
+  wasm::printStackIR(std::cout, (Module*)module);
+}
+
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   auto* wasm = (Module*)module;
   Wasm2JSBuilder::Flags flags;
@@ -4090,6 +4094,21 @@ size_t BinaryenModuleWriteText(BinaryenModuleRef module,
   return std::min(outputSize, temp.size());
 }
 
+size_t BinaryenModuleWriteStackIR(BinaryenModuleRef module,
+                                  char* output,
+                                  size_t outputSize) {
+  // use a stringstream as an std::ostream. Extract the std::string
+  // representation, and then store in the output.
+  std::stringstream ss;
+  wasm::printStackIR(ss, (Module*)module);
+
+  const auto temp = ss.str();
+  const auto ctemp = temp.c_str();
+
+  strncpy(output, ctemp, outputSize);
+  return std::min(outputSize, temp.size());
+}
+
 BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module,
                                                      const char* url,
                                                      char* output,
@@ -4130,6 +4149,21 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
 
   Colors::setEnabled(false); // do not use colors for writing
   ss << *(Module*)module;
+  Colors::setEnabled(colors); // restore colors state
+
+  const std::string out = ss.str();
+  const int len = out.length() + 1;
+  char* cout = (char*)malloc(len);
+  strncpy(cout, out.c_str(), len);
+  return cout;
+}
+
+char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module) {
+  std::stringstream ss;
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
+  wasm::printStackIR(ss, (Module*)module);
   Colors::setEnabled(colors); // restore colors state
 
   const std::string out = ss.str();

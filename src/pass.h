@@ -443,6 +443,8 @@ public:
   void setPassRunner(PassRunner* runner_) { runner = runner_; }
 };
 
+std::ostream& printStackIR(std::ostream& o, Module* module);
+
 } // namespace wasm
 
 #endif // wasm_pass_h

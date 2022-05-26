@@ -3442,6 +3442,12 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
   return o;
 }
 
+std::ostream& printStackIR(std::ostream& o, Module* module) {
+  wasm::PassRunner runner(module);
+  wasm::PrintStackIR(&o).run(&runner, module);
+  return o;
+}
+
 } // namespace wasm
 
 namespace std {

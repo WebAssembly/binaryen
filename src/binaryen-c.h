@@ -2330,6 +2330,9 @@ BINARYEN_API BinaryenModuleRef BinaryenModuleParse(const char* text);
 // Print a module to stdout in s-expression text format. Useful for debugging.
 BINARYEN_API void BinaryenModulePrint(BinaryenModuleRef module);
 
+// Print a module to stdout in stack IR text format. Useful for debugging.
+BINARYEN_API void BinaryenModulePrintStackIR(BinaryenModuleRef module);
+
 // Print a module to stdout in asm.js syntax.
 BINARYEN_API void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 
@@ -2464,6 +2467,13 @@ BINARYEN_API size_t BinaryenModuleWriteText(BinaryenModuleRef module,
                                             char* output,
                                             size_t outputSize);
 
+// Serialize a module in stack IR text format.
+// @return how many bytes were written. This will be less than or equal to
+//         outputSize
+BINARYEN_API size_t BinaryenModuleWriteStackIR(BinaryenModuleRef module,
+                                            char* output,
+                                            size_t outputSize);
+
 typedef struct BinaryenBufferSizes {
   size_t outputBytes;
   size_t sourceMapBytes;
@@ -2503,6 +2513,12 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
 BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
+
+// Serialize a module in stack IR form. Implicity allocates the returned
+// char* with malloc(), and expects the user to free() them manually
+// once not needed anymore.
+BINARYEN_API char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef
+                                                           module);
 
 // Deserialize a module from binary form.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,
