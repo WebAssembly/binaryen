@@ -1339,11 +1339,8 @@ struct OptimizeInstructions
       return;
     }
 
-    // If the target is a select of two different constants, we can emit two
-    // direct calls.
-    // TODO: handle 3+
-    // TODO: handle the case where just one arm is a constant?
-    // TODO: merge with Directize
+    // If the target is a select of two different constants, we can emit an if
+    // over two direct calls.
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
           [](Expression* target) -> CallUtils::IndirectCallInfo {
