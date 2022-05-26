@@ -133,8 +133,10 @@ convertToDirectCalls(T* curr,
     if (std::get_if<Trap>(&info)) {
       return builder.makeUnreachable();
     } else {
-      return builder.makeCall(
-        std::get<Known>(info).target, getOperands(), curr->type, curr->isReturn);
+      return builder.makeCall(std::get<Known>(info).target,
+                              getOperands(),
+                              curr->type,
+                              curr->isReturn);
     }
   };
   auto* ifTrueCall = makeCall(ifTrueCallInfo);
