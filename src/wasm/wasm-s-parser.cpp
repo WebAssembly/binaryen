@@ -3669,9 +3669,9 @@ void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
     ex->value = tag->name;
     ex->kind = ExternalKind::Tag;
 
-      if (wasm.getExportOrNull(ex->name)) {
-        throw ParseException("duplicate export", s.line, s.col);
-      }
+    if (wasm.getExportOrNull(ex->name)) {
+      throw ParseException("duplicate export", s.line, s.col);
+    }
     wasm.addExport(ex.release());
   }
 
