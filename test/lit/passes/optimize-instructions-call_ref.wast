@@ -296,7 +296,28 @@
   )
  )
 
- (func $return_call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
+ ;; CHECK:      (func $return_call_ref-to-select (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local.set $2
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $3
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (call $get-i32)
+ ;; CHECK-NEXT:   (return_call $foo
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return_call $bar
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $return_call_ref-to-select (param $x i32) (param $y i32)
   ;; As above, but with a return call. We optimize this too, and turn a
   ;; return_call_ref over a select into an if over return_calls.
   (return_call_ref
@@ -305,7 +326,16 @@
    (select
     (ref.func $foo)
     (ref.func $bar)
-    (local.get $z)
+    (call $get-i32)
    )
   )
+ )
+
+ ;; CHECK:      (func $get-i32 (result i32)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $get-i32 (result i32)
+  ;; Helper for the above.
+  (i32.const 42)
+ )
 )
