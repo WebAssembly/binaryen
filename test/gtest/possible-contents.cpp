@@ -32,24 +32,12 @@ template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
 // Asserts a combined with b (in any order) is equal to c.
 template<typename T>
 void assertCombination(const T& a, const T& b, const T& c) {
-  std::cout << "\nassertCombination\n";
-  a.dump(std::cout);
-  std::cout << '\n';
-  b.dump(std::cout);
-  std::cout << '\n';
-  c.dump(std::cout);
-  std::cout << '\n';
-
   T temp1 = a;
   temp1.combine(b);
-  temp1.dump(std::cout);
-  std::cout << '\n';
   assertEqualSymmetric(temp1, c);
 
   T temp2 = b;
   temp2.combine(a);
-  temp2.dump(std::cout);
-  std::cout << '\n';
   assertEqualSymmetric(temp2, c);
 }
 
@@ -192,7 +180,7 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(exactFuncref, exactFuncref, exactFuncref);
   assertCombination(exactFuncref, exactNonNullFuncref, exactFuncref);
 
-  std::cout << "\nnulls\n";
+  // Nulls.
 
   assertCombination(anyNull, i32Zero, many);
   assertCombination(anyNull, anyNull, anyNull);
@@ -209,7 +197,7 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(anyNull, exactNonNullAnyref, exactAnyref);
   assertCombination(anyNull, exactNonNullFuncref, exactFuncref);
 
-  std::cout << "\nfuncrefs\n";
+  // Funcrefs
 
   // A function reference + a null becomes an exact type (of that sig), plus
   // nullability.
@@ -223,7 +211,7 @@ TEST_F(PossibleContentsTest, TestCombinations) {
     func, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
   assertCombination(func, exactI32, many);
 
-  std::cout << "\nglobals vs nulls\n";
+  // Globals vs nulls.
 
   assertCombination(anyGlobal, anyNull, many);
   assertCombination(anyGlobal, funcNull, many);
