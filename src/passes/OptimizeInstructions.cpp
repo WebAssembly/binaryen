@@ -1344,21 +1344,17 @@ struct OptimizeInstructions
     // TODO: handle 3+
     // TODO: handle the case where just one arm is a constant?
     // TODO: merge with Directize
-    if (auto* select = curr->target->dynCast<Select>()) {
-      if (select->ifTrue->is<RefFunc>() && select->ifFalse->is<RefFunc>()) {
-        if (auto* calls = CallUtils::convertToDirectCalls(
-              curr,
-              [](Expression* target) {
-                if (auto* refFunc = target->dynCast<RefFunc>()) {
-                  return refFunc->func;
-                }
-                return Name();
-              },
-              *getFunction(),
-              *getModule())) {
-          replaceCurrent(calls);
-        }
-      }
+    if (auto* calls = CallUtils::convertToDirectCalls(
+          curr,
+          [](Expression* target) {
+            if (auto* refFunc = target->dynCast<RefFunc>()) {
+              return refFunc->func;
+            }
+            return Name();
+          },
+          *getFunction(),
+          *getModule())) {
+      replaceCurrent(calls);
     }
   }
 
