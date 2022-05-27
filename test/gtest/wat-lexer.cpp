@@ -23,11 +23,11 @@ using namespace wasm::WATParser;
 using namespace std::string_view_literals;
 
 TEST(LexerTest, LexWhitespace) {
-  Token one{"1"sv, IntTok{1, Unsigned}};
-  Token two{"2"sv, IntTok{2, Unsigned}};
-  Token three{"3"sv, IntTok{3, Unsigned}};
-  Token four{"4"sv, IntTok{4, Unsigned}};
-  Token five{"5"sv, IntTok{5, Unsigned}};
+  Token one{"1"sv, IntTok{1, NoSign}};
+  Token two{"2"sv, IntTok{2, NoSign}};
+  Token three{"3"sv, IntTok{3, NoSign}};
+  Token four{"4"sv, IntTok{4, NoSign}};
+  Token five{"5"sv, IntTok{5, NoSign}};
 
   Lexer lexer(" 1\t2\n3\r4 \n\n\t 5 "sv);
 
@@ -58,8 +58,8 @@ TEST(LexerTest, LexWhitespace) {
 }
 
 TEST(LexerTest, LexLineComment) {
-  Token one{"1"sv, IntTok{1, Unsigned}};
-  Token six{"6"sv, IntTok{6, Unsigned}};
+  Token one{"1"sv, IntTok{1, NoSign}};
+  Token six{"6"sv, IntTok{6, NoSign}};
 
   Lexer lexer("1;; whee! 2 3\t4\r5\n6"sv);
 
@@ -77,8 +77,8 @@ TEST(LexerTest, LexLineComment) {
 }
 
 TEST(LexerTest, LexBlockComment) {
-  Token one{"1"sv, IntTok{1, Unsigned}};
-  Token six{"6"sv, IntTok{6, Unsigned}};
+  Token one{"1"sv, IntTok{1, NoSign}};
+  Token six{"6"sv, IntTok{6, NoSign}};
 
   Lexer lexer("1(; whoo! 2\n (; \n3\n ;) 4 (;) 5 ;) \n;)6"sv);
 
@@ -122,85 +122,85 @@ TEST(LexerTest, LexInt) {
   {
     Lexer lexer("0"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0"sv, IntTok{0, Unsigned}};
+    Token expected{"0"sv, IntTok{0, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+0"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+0"sv, IntTok{0, Signed}};
+    Token expected{"+0"sv, IntTok{0, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-0"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-0"sv, IntTok{0, Signed}};
+    Token expected{"-0"sv, IntTok{0, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("1"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"1"sv, IntTok{1, Unsigned}};
+    Token expected{"1"sv, IntTok{1, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+1"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+1"sv, IntTok{1, Signed}};
+    Token expected{"+1"sv, IntTok{1, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-1"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-1"sv, IntTok{-1ull, Signed}};
+    Token expected{"-1"sv, IntTok{-1ull, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("0010"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0010"sv, IntTok{10, Unsigned}};
+    Token expected{"0010"sv, IntTok{10, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+0010"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+0010"sv, IntTok{10, Signed}};
+    Token expected{"+0010"sv, IntTok{10, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-0010"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-0010"sv, IntTok{-10ull, Signed}};
+    Token expected{"-0010"sv, IntTok{-10ull, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("9999"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"9999"sv, IntTok{9999, Unsigned}};
+    Token expected{"9999"sv, IntTok{9999, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+9999"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+9999"sv, IntTok{9999, Signed}};
+    Token expected{"+9999"sv, IntTok{9999, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-9999"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-9999"sv, IntTok{-9999ull, Signed}};
+    Token expected{"-9999"sv, IntTok{-9999ull, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("12_34"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"12_34"sv, IntTok{1234, Unsigned}};
+    Token expected{"12_34"sv, IntTok{1234, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("1_2_3_4"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"1_2_3_4"sv, IntTok{1234, Unsigned}};
+    Token expected{"1_2_3_4"sv, IntTok{1234, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -222,7 +222,7 @@ TEST(LexerTest, LexInt) {
   {
     Lexer lexer("18446744073709551615"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"18446744073709551615"sv, IntTok{-1ull, Unsigned}};
+    Token expected{"18446744073709551615"sv, IntTok{-1ull, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -236,7 +236,7 @@ TEST(LexerTest, LexInt) {
   {
     Lexer lexer("+9223372036854775807"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+9223372036854775807"sv, IntTok{~(1ull << 63), Signed}};
+    Token expected{"+9223372036854775807"sv, IntTok{~(1ull << 63), Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -250,7 +250,7 @@ TEST(LexerTest, LexInt) {
   {
     Lexer lexer("-9223372036854775808"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-9223372036854775808"sv, IntTok{1ull << 63, Signed}};
+    Token expected{"-9223372036854775808"sv, IntTok{1ull << 63, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -267,85 +267,85 @@ TEST(LexerTest, LexHexInt) {
   {
     Lexer lexer("0x0"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0x0"sv, IntTok{0, Unsigned}};
+    Token expected{"0x0"sv, IntTok{0, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+0x0"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+0x0"sv, IntTok{0, Signed}};
+    Token expected{"+0x0"sv, IntTok{0, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-0x0"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-0x0"sv, IntTok{0, Signed}};
+    Token expected{"-0x0"sv, IntTok{0, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("0x1"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0x1"sv, IntTok{1, Unsigned}};
+    Token expected{"0x1"sv, IntTok{1, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+0x1"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+0x1"sv, IntTok{1, Signed}};
+    Token expected{"+0x1"sv, IntTok{1, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-0x1"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-0x1"sv, IntTok{-1ull, Signed}};
+    Token expected{"-0x1"sv, IntTok{-1ull, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("0x0010"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0x0010"sv, IntTok{16, Unsigned}};
+    Token expected{"0x0010"sv, IntTok{16, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+0x0010"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+0x0010"sv, IntTok{16, Signed}};
+    Token expected{"+0x0010"sv, IntTok{16, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-0x0010"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-0x0010"sv, IntTok{-16ull, Signed}};
+    Token expected{"-0x0010"sv, IntTok{-16ull, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("0xabcdef"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0xabcdef"sv, IntTok{0xabcdef, Unsigned}};
+    Token expected{"0xabcdef"sv, IntTok{0xabcdef, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+0xABCDEF"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+0xABCDEF"sv, IntTok{0xabcdef, Signed}};
+    Token expected{"+0xABCDEF"sv, IntTok{0xabcdef, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-0xAbCdEf"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-0xAbCdEf"sv, IntTok{-0xabcdefull, Signed}};
+    Token expected{"-0xAbCdEf"sv, IntTok{-0xabcdefull, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("0x12_34"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0x12_34"sv, IntTok{0x1234, Unsigned}};
+    Token expected{"0x12_34"sv, IntTok{0x1234, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("0x1_2_3_4"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0x1_2_3_4"sv, IntTok{0x1234, Unsigned}};
+    Token expected{"0x1_2_3_4"sv, IntTok{0x1234, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -378,7 +378,7 @@ TEST(LexerTest, LexFloat) {
   {
     Lexer lexer("42"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"42"sv, IntTok{42, Unsigned}};
+    Token expected{"42"sv, IntTok{42, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -539,7 +539,7 @@ TEST(LexerTest, LexHexFloat) {
   {
     Lexer lexer("0x4B"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"0x4B"sv, IntTok{0x4B, Unsigned}};
+    Token expected{"0x4B"sv, IntTok{0x4B, NoSign}};
     EXPECT_EQ(*lexer, expected);
   }
   {

@@ -123,7 +123,7 @@ std::optional<int> getHexDigit(char c) {
 // The result of lexing an integer token fragment.
 struct LexIntResult : LexResult {
   uint64_t n;
-  Signedness signedness;
+  Sign sign;
 };
 
 // Lexing context that accumulates lexed input to produce an integer token
@@ -133,8 +133,7 @@ struct LexIntCtx : LexCtx {
 
 private:
   uint64_t n = 0;
-  Signedness signedness = Unsigned;
-  bool negative = false;
+  Sign sign = NoSign;
   bool overflow = false;
 
 public:
@@ -143,13 +142,12 @@ public:
   // Lex only the underlying span, ignoring the overflow and value.
   std::optional<LexIntResult> lexedRaw() {
     if (auto basic = LexCtx::lexed()) {
-      return LexIntResult{*basic, 0, Unsigned};
+      return LexIntResult{*basic, 0, NoSign};
     }
     return {};
   }
 
   std::optional<LexIntResult> lexed() {
-    // Check most significant bit for overflow of signed numbers.
     if (overflow) {
       return {};
     }
@@ -157,28 +155,28 @@ public:
     if (!basic) {
       return {};
     }
-    if (signedness == Signed) {
-      if (negative) {
-        if (n > (1ull << 63)) {
-          // TODO: Add error production for signed underflow.
-          return {};
-        }
-      } else {
-        if (n > (1ull << 63) - 1) {
-          // TODO: Add error production for signed overflow.
-          return {};
-        }
+    // Check most significant bit for overflow of signed numbers.
+    if (sign == Neg) {
+      if (n > (1ull << 63)) {
+        // TODO: Add error production for signed underflow.
+        return {};
+      }
+    } else if (sign == Pos) {
+      if (n > (1ull << 63) - 1) {
+        // TODO: Add error production for signed overflow.
+        return {};
       }
     }
-    return LexIntResult{*basic, negative ? -n : n, signedness};
+    return LexIntResult{*basic, sign == Neg ? -n : n, sign};
   }
 
   void takeSign() {
     if (takePrefix("+"sv)) {
-      signedness = Signed;
+      sign = Pos;
     } else if (takePrefix("-"sv)) {
-      signedness = Signed;
-      negative = true;
+      sign = Neg;
+    } else {
+      sign = NoSign;
     }
   }
 
@@ -799,7 +797,7 @@ void Lexer::lexToken() {
   } else if (auto t = ident(next())) {
     tok = Token{t->span, IdTok{}};
   } else if (auto t = integer(next())) {
-    tok = Token{t->span, IntTok{t->n, t->signedness}};
+    tok = Token{t->span, IntTok{t->n, t->sign}};
   } else if (auto t = float_(next())) {
     tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
   } else if (auto t = str(next())) {
@@ -834,7 +832,7 @@ bool TextPos::operator==(const TextPos& other) const {
 }
 
 bool IntTok::operator==(const IntTok& other) const {
-  return n == other.n && signedness == other.signedness;
+  return n == other.n && sign == other.sign;
 }
 
 bool FloatTok::operator==(const FloatTok& other) const {
@@ -872,7 +870,7 @@ std::ostream& operator<<(std::ostream& os, const RParenTok&) {
 std::ostream& operator<<(std::ostream& os, const IdTok&) { return os << "id"; }
 
 std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
-  return os << tok.n << (tok.signedness == Signed ? " signed" : " unsigned");
+  return os << (tok.sign == Pos ? "+" : tok.sign == Neg ? "-" : "") << tok.n;
 }
 
 std::ostream& operator<<(std::ostream& os, const FloatTok& tok) {

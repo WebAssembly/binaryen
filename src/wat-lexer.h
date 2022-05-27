@@ -55,11 +55,11 @@ struct IdTok {
   friend std::ostream& operator<<(std::ostream&, const IdTok&);
 };
 
-enum Signedness { Unsigned, Signed };
+enum Sign { NoSign, Pos, Neg };
 
 struct IntTok {
   uint64_t n;
-  Signedness signedness;
+  Sign sign;
 
   bool operator==(const IntTok&) const;
   friend std::ostream& operator<<(std::ostream&, const IntTok&);
