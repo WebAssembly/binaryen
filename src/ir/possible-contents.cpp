@@ -217,7 +217,7 @@ struct CollectedInfo {
   // no possible contents, and now it does, then we have DataLocations to
   // update. Likewise, when the second local.get is updated we must do the same,
   // but again which DataLocations we update depends on the ref passed to the
-  // struct.get. To handle such things, we set add a childParent link, and then
+  // struct.set. To handle such things, we set add a childParent link, and then
   // when we update the child we can find the parent and handle any special
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
