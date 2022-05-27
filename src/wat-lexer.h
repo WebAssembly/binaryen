@@ -21,6 +21,9 @@
 #include <string_view>
 #include <variant>
 
+#ifndef wasm_wat_parser_h
+#define wasm_wat_parser_h
+
 namespace wasm::WATParser {
 
 struct TextPos {
@@ -175,3 +178,5 @@ private:
 };
 
 } // namespace wasm::WATParser
+
+#endif // wasm_wat_parser_h
