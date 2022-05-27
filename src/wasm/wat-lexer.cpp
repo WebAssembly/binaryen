@@ -102,22 +102,22 @@ enum OverflowBehavior { DisallowOverflow, IgnoreOverflow };
 
 std::optional<int> getDigit(char c) {
   if ('0' <= c && c <= '9') {
-    return {c - '0'};
+    return c - '0';
   }
-  return std::nullopt;
+  return {};
 }
 
 std::optional<int> getHexDigit(char c) {
   if ('0' <= c && c <= '9') {
-    return {c - '0'};
+    return c - '0';
   }
   if ('A' <= c && c <= 'F') {
-    return {10 + c - 'A'};
+    return 10 + c - 'A';
   }
   if ('a' <= c && c <= 'f') {
-    return {10 + c - 'a'};
+    return 10 + c - 'a';
   }
-  return std::nullopt;
+  return {};
 }
 
 // The result of lexing an integer token fragment.
@@ -170,7 +170,7 @@ public:
         }
       }
     }
-    return {LexIntResult{*basic, negative ? -n : n, signedness}};
+    return LexIntResult{*basic, negative ? -n : n, signedness};
   }
 
   void takeSign() {
@@ -285,9 +285,9 @@ public:
   std::optional<LexStrResult> lexed() {
     if (auto basic = LexCtx::lexed()) {
       if (escapeBuilder) {
-        return {LexStrResult{*basic, {escapeBuilder->str()}}};
+        return LexStrResult{*basic, {escapeBuilder->str()}};
       } else {
-        return {LexStrResult{*basic, {}}};
+        return LexStrResult{*basic, {}};
       }
     }
     return {};
