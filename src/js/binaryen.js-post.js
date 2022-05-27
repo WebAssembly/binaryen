@@ -2500,9 +2500,24 @@ function wrapModule(module, self = {}) {
       );
     });
   };
+  self['hasMemory'] = function() {
+    return Boolean(Module['_BinaryenHasMemory'](module));
+  };
+  self['getMemoryInfo'] = function() {
+    var memoryInfo = {
+      'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
+      'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
+      'initial': Module['_BinaryenMemoryGetInitial'](module),
+      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
+    };
+    if (Module['_BinaryenMemoryHasMax'](module)) {
+      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
+    }
+    return memoryInfo;
+  };
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
-  }
+  };
   self['getMemorySegmentInfoByIndex'] = function(id) {
     return {
       'offset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
@@ -2517,7 +2532,7 @@ function wrapModule(module, self = {}) {
       })(),
       'passive': Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id))
     };
-  }
+  };
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
   };

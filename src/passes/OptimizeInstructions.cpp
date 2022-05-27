@@ -42,6 +42,8 @@
 #include <support/threads.h>
 #include <wasm.h>
 
+#include "call-utils.h"
+
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
 
@@ -1334,6 +1336,22 @@ struct OptimizeInstructions
       curr->operands.back() = builder.makeBlock({set, drop, get});
       replaceCurrent(builder.makeCall(
         ref->func, curr->operands, curr->type, curr->isReturn));
+      return;
+    }
+
+    // If the target is a select of two different constants, we can emit an if
+    // over two direct calls.
+    if (auto* calls = CallUtils::convertToDirectCalls(
+          curr,
+          [](Expression* target) -> CallUtils::IndirectCallInfo {
+            if (auto* refFunc = target->dynCast<RefFunc>()) {
+              return CallUtils::Known{refFunc->func};
+            }
+            return CallUtils::Unknown{};
+          },
+          *getFunction(),
+          *getModule())) {
+      replaceCurrent(calls);
     }
   }
 
