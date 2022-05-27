@@ -116,6 +116,8 @@ TEST(LexerTest, LexParens) {
   EXPECT_EQ(t2, left);
   EXPECT_EQ(t3, right);
   EXPECT_EQ(t4, right);
+  EXPECT_TRUE(left.isLParen());
+  EXPECT_TRUE(right.isRParen());
 }
 
 TEST(LexerTest, LexInt) {
@@ -371,6 +373,361 @@ TEST(LexerTest, LexHexInt) {
   {
     Lexer lexer("0x120x34"sv);
     EXPECT_EQ(lexer, lexer.end());
+  }
+}
+
+TEST(LexerTest, ClassifyInt) {
+  {
+    Lexer lexer("0"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    ASSERT_TRUE(lexer->getU32());
+    ASSERT_TRUE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getU64(), 0ull);
+    EXPECT_EQ(*lexer->getS64(), 0ll);
+    EXPECT_EQ(*lexer->getI64(), 0ull);
+    EXPECT_EQ(*lexer->getU32(), 0u);
+    EXPECT_EQ(*lexer->getS32(), 0);
+    EXPECT_EQ(*lexer->getI32(), 0u);
+    EXPECT_EQ(*lexer->getF64(), 0.0);
+    EXPECT_EQ(*lexer->getF32(), 0.0);
+    EXPECT_FALSE(std::signbit(*lexer->getF64()));
+    EXPECT_FALSE(std::signbit(*lexer->getF32()));
+  }
+  {
+    Lexer lexer("+0"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    ASSERT_TRUE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), 0ll);
+    EXPECT_EQ(*lexer->getI64(), 0ull);
+    EXPECT_EQ(*lexer->getS32(), 0);
+    EXPECT_EQ(*lexer->getI32(), 0u);
+    EXPECT_EQ(*lexer->getF64(), 0.0);
+    EXPECT_EQ(*lexer->getF32(), 0.0);
+    EXPECT_FALSE(std::signbit(*lexer->getF64()));
+    EXPECT_FALSE(std::signbit(*lexer->getF32()));
+  }
+  {
+    Lexer lexer("-0"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    ASSERT_TRUE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), 0ll);
+    EXPECT_EQ(*lexer->getI64(), 0ull);
+    EXPECT_EQ(*lexer->getS32(), 0);
+    EXPECT_EQ(*lexer->getI32(), 0u);
+    EXPECT_EQ(*lexer->getF64(), -0.0);
+    EXPECT_EQ(*lexer->getF32(), -0.0);
+    ASSERT_TRUE(std::signbit(*lexer->getF64()));
+    ASSERT_TRUE(std::signbit(*lexer->getF32()));
+  }
+  {
+    Lexer lexer("0x7fff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    ASSERT_TRUE(lexer->getU32());
+    ASSERT_TRUE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getU64(), 0x7fffffffull);
+    EXPECT_EQ(*lexer->getS64(), 0x7fffffffll);
+    EXPECT_EQ(*lexer->getI64(), 0x7fffffffull);
+    EXPECT_EQ(*lexer->getU32(), 0x7fffffffu);
+    EXPECT_EQ(*lexer->getS32(), 0x7fffffff);
+    EXPECT_EQ(*lexer->getI32(), 0x7fffffffu);
+    EXPECT_EQ(*lexer->getF64(), 0x7fffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x7fffffff.p0f);
+  }
+  {
+    Lexer lexer("0x8000_0000"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    ASSERT_TRUE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getU64(), 0x80000000ull);
+    EXPECT_EQ(*lexer->getS64(), 0x80000000ll);
+    EXPECT_EQ(*lexer->getI64(), 0x80000000ull);
+    EXPECT_EQ(*lexer->getU32(), 0x80000000u);
+    EXPECT_EQ(*lexer->getI32(), 0x80000000u);
+    EXPECT_EQ(*lexer->getF64(), 0x80000000.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x80000000.p0f);
+  }
+  {
+    Lexer lexer("+0x7fff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    ASSERT_TRUE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), 0x7fffffffll);
+    EXPECT_EQ(*lexer->getI64(), 0x7fffffffull);
+    EXPECT_EQ(*lexer->getS32(), 0x7fffffff);
+    EXPECT_EQ(*lexer->getI32(), 0x7fffffffu);
+    EXPECT_EQ(*lexer->getF64(), 0x7fffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x7fffffff.p0f);
+  }
+  {
+    Lexer lexer("+0x8000_0000"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), 0x80000000ll);
+    EXPECT_EQ(*lexer->getI64(), 0x80000000ull);
+    EXPECT_EQ(*lexer->getF64(), 0x80000000.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x80000000.p0f);
+  }
+  {
+    Lexer lexer("-0x8000_0000"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    ASSERT_TRUE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), -0x80000000ll);
+    EXPECT_EQ(*lexer->getI64(), -0x80000000ull);
+    EXPECT_EQ(*lexer->getS32(), -0x7fffffffll - 1);
+    EXPECT_EQ(*lexer->getI32(), -0x80000000u);
+    EXPECT_EQ(*lexer->getF64(), -0x80000000.p0);
+    EXPECT_EQ(*lexer->getF32(), -0x80000000.p0f);
+  }
+  {
+    Lexer lexer("-0x8000_0001"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), -0x80000001ll);
+    EXPECT_EQ(*lexer->getI64(), -0x80000001ull);
+    EXPECT_EQ(*lexer->getF64(), -0x80000001.p0);
+    EXPECT_EQ(*lexer->getF32(), -0x80000001.p0f);
+  }
+  {
+    Lexer lexer("0xffff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    ASSERT_TRUE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    ASSERT_TRUE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getU64(), 0xffffffffull);
+    EXPECT_EQ(*lexer->getS64(), 0xffffffffll);
+    EXPECT_EQ(*lexer->getI64(), 0xffffffffull);
+    EXPECT_EQ(*lexer->getU32(), 0xffffffffu);
+    EXPECT_EQ(*lexer->getI32(), 0xffffffffu);
+    EXPECT_EQ(*lexer->getF64(), 0xffffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0xffffffff.p0f);
+  }
+  {
+    Lexer lexer("0x1_0000_0000"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getU64(), 0x100000000ull);
+    EXPECT_EQ(*lexer->getS64(), 0x100000000ll);
+    EXPECT_EQ(*lexer->getI64(), 0x100000000ull);
+    EXPECT_EQ(*lexer->getF64(), 0x100000000.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x100000000.p0f);
+  }
+  {
+    Lexer lexer("+0xffff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), 0xffffffffll);
+    EXPECT_EQ(*lexer->getI64(), 0xffffffffull);
+    EXPECT_EQ(*lexer->getF64(), 0xffffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0xffffffff.p0f);
+  }
+  {
+    Lexer lexer("+0x1_0000_0000"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), 0x100000000ll);
+    EXPECT_EQ(*lexer->getI64(), 0x100000000ull);
+    EXPECT_EQ(*lexer->getF64(), 0x100000000.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x100000000.p0f);
+  }
+  {
+    Lexer lexer("0x7fff_ffff_ffff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getU64(), 0x7fffffffffffffffull);
+    EXPECT_EQ(*lexer->getS64(), 0x7fffffffffffffffll);
+    EXPECT_EQ(*lexer->getI64(), 0x7fffffffffffffffull);
+    EXPECT_EQ(*lexer->getF64(), 0x7fffffffffffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x7fffffffffffffff.p0f);
+  }
+  {
+    Lexer lexer("+0x7fff_ffff_ffff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), 0x7fffffffffffffffll);
+    EXPECT_EQ(*lexer->getI64(), 0x7fffffffffffffffull);
+    EXPECT_EQ(*lexer->getF64(), 0x7fffffffffffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0x7fffffffffffffff.p0f);
+  }
+  {
+    Lexer lexer("-0x8000_0000_0000_0000"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    ASSERT_TRUE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getS64(), -0x7fffffffffffffffll - 1);
+    EXPECT_EQ(*lexer->getI64(), -0x8000000000000000ull);
+    EXPECT_EQ(*lexer->getF64(), -0x8000000000000000.p0);
+    EXPECT_EQ(*lexer->getF32(), -0x8000000000000000.p0f);
+  }
+  {
+    Lexer lexer("0xffff_ffff_ffff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getU64());
+    EXPECT_FALSE(lexer->getS64());
+    ASSERT_TRUE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getU64(), 0xffffffffffffffffull);
+    EXPECT_EQ(*lexer->getI64(), 0xffffffffffffffffull);
+    EXPECT_EQ(*lexer->getF64(), 0xffffffffffffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0xffffffffffffffff.p0f);
+  }
+  {
+    Lexer lexer("+0xffff_ffff_ffff_ffff"sv);
+    ASSERT_NE(lexer, lexer.end());
+
+    EXPECT_FALSE(lexer->getU64());
+    EXPECT_FALSE(lexer->getS64());
+    EXPECT_FALSE(lexer->getI64());
+    EXPECT_FALSE(lexer->getU32());
+    EXPECT_FALSE(lexer->getS32());
+    EXPECT_FALSE(lexer->getI32());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+
+    EXPECT_EQ(*lexer->getF64(), 0xffffffffffffffff.p0);
+    EXPECT_EQ(*lexer->getF32(), 0xffffffffffffffff.p0f);
   }
 }
 
@@ -851,12 +1208,133 @@ TEST(LexerTest, LexNan) {
   }
 }
 
+TEST(LexerTest, ClassifyFloat) {
+  constexpr int dsignif = 52;
+  constexpr int fsignif = 23;
+  constexpr uint64_t dnanMask = (1ull << dsignif) - 1;
+  constexpr uint32_t fnanMask = (1u << fsignif) - 1;
+  constexpr uint64_t dnanDefault = 1ull << (dsignif - 1);
+  constexpr uint32_t fnanDefault = 1u << (fsignif - 1);
+  {
+    Lexer lexer("340282346638528859811704183484516925440."sv);
+    ASSERT_NE(lexer, lexer.end());
+    ASSERT_TRUE(lexer->getF64());
+    EXPECT_TRUE(lexer->getF32());
+    EXPECT_EQ(*lexer->getF64(), FLT_MAX);
+    EXPECT_EQ(*lexer->getF32(), FLT_MAX);
+  }
+  {
+    Lexer lexer("17976931348623157081452742373170435679807056752584499659891747"
+                "68031572607800285387605895586327668781715404589535143824642343"
+                "21326889464182768467546703537516986049910576551282076245490090"
+                "38932894407586850845513394230458323690322294816580855933212334"
+                "8274797826204144723168738177180919299881250404026184124858368"
+                "."sv);
+    ASSERT_NE(lexer, lexer.end());
+    ASSERT_TRUE(lexer->getF64());
+    ASSERT_TRUE(lexer->getF32());
+    EXPECT_EQ(*lexer->getF64(), DBL_MAX);
+    EXPECT_EQ(*lexer->getF32(), INFINITY);
+  }
+  {
+    Lexer lexer("nan");
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getF64());
+    double d = *lexer->getF64();
+    EXPECT_TRUE(std::isnan(d));
+    EXPECT_FALSE(std::signbit(d));
+    uint64_t dbits;
+    memcpy(&dbits, &d, sizeof(dbits));
+    EXPECT_EQ(dbits & dnanMask, dnanDefault);
+
+    ASSERT_TRUE(lexer->getF32());
+    float f = *lexer->getF32();
+    EXPECT_TRUE(std::isnan(f));
+    EXPECT_FALSE(std::signbit(f));
+    uint32_t fbits;
+    memcpy(&fbits, &f, sizeof(fbits));
+    EXPECT_EQ(fbits & fnanMask, fnanDefault);
+  }
+  {
+    Lexer lexer("-nan");
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getF64());
+    double d = *lexer->getF64();
+    EXPECT_TRUE(std::isnan(d));
+    EXPECT_TRUE(std::signbit(d));
+    uint64_t dbits;
+    memcpy(&dbits, &d, sizeof(dbits));
+    EXPECT_EQ(dbits & dnanMask, dnanDefault);
+
+    ASSERT_TRUE(lexer->getF32());
+    float f = *lexer->getF32();
+    EXPECT_TRUE(std::isnan(f));
+    EXPECT_TRUE(std::signbit(f));
+    uint32_t fbits;
+    memcpy(&fbits, &f, sizeof(fbits));
+    EXPECT_EQ(fbits & fnanMask, fnanDefault);
+  }
+  {
+    Lexer lexer("nan:0x1234");
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getF64());
+    double d = *lexer->getF64();
+    EXPECT_TRUE(std::isnan(d));
+    uint64_t dbits;
+    memcpy(&dbits, &d, sizeof(dbits));
+    EXPECT_EQ(dbits & dnanMask, 0x1234ull);
+
+    ASSERT_TRUE(lexer->getF32());
+    float f = *lexer->getF32();
+    EXPECT_TRUE(std::isnan(f));
+    uint32_t fbits;
+    memcpy(&fbits, &f, sizeof(fbits));
+    EXPECT_EQ(fbits & fnanMask, 0x1234u);
+  }
+  {
+    Lexer lexer("nan:0x7FFFFF");
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getF64());
+    double d = *lexer->getF64();
+    EXPECT_TRUE(std::isnan(d));
+    uint64_t dbits;
+    memcpy(&dbits, &d, sizeof(dbits));
+    EXPECT_EQ(dbits & dnanMask, 0x7fffffull);
+
+    ASSERT_TRUE(lexer->getF32());
+    float f = *lexer->getF32();
+    EXPECT_TRUE(std::isnan(f));
+    uint32_t fbits;
+    memcpy(&fbits, &f, sizeof(fbits));
+    EXPECT_EQ(fbits & fnanMask, 0x7fffffu);
+  }
+  {
+    Lexer lexer("nan:0x800000");
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getF64());
+    double d = *lexer->getF64();
+    EXPECT_TRUE(std::isnan(d));
+    uint64_t dbits;
+    memcpy(&dbits, &d, sizeof(dbits));
+    EXPECT_EQ(dbits & dnanMask, 0x800000ull);
+
+    ASSERT_FALSE(lexer->getF32());
+  }
+}
+
 TEST(LexerTest, LexIdent) {
   {
     Lexer lexer("$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv);
     ASSERT_NE(lexer, lexer.end());
     Token expected{"$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv, IdTok{}};
     EXPECT_EQ(*lexer, expected);
+    EXPECT_TRUE(lexer->getID());
+    EXPECT_EQ(*lexer->getID(), "$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv);
   }
   {
     Lexer lexer("$[]{}"sv);
@@ -879,6 +1357,9 @@ TEST(LexerTest, LexString) {
     ASSERT_NE(lexer, lexer.end());
     Token expected{pangram, StringTok{{}}};
     EXPECT_EQ(*lexer, expected);
+    EXPECT_TRUE(lexer->getString());
+    EXPECT_EQ(*lexer->getString(),
+              "The quick brown fox jumps over the lazy dog"sv);
   }
   {
     auto chars = "\"`~!@#$%^&*()_-+0123456789|,.<>/?;:'\""sv;
@@ -893,6 +1374,8 @@ TEST(LexerTest, LexString) {
     ASSERT_NE(lexer, lexer.end());
     Token expected{escapes, StringTok{{"_\t_\n_\r_\\_\"_'_"}}};
     EXPECT_EQ(*lexer, expected);
+    EXPECT_TRUE(lexer->getString());
+    EXPECT_EQ(*lexer->getString(), "_\t_\n_\r_\\_\"_'_"sv);
   }
   {
     auto escapes = "\"_\\00_\\07_\\20_\\5A_\\7F_\\ff_\\ffff_\""sv;
@@ -1001,4 +1484,7 @@ TEST(LexerTest, LexKeywords) {
   EXPECT_EQ(t3, func);
   EXPECT_EQ(t4, import);
   EXPECT_EQ(t5, reserved);
+
+  EXPECT_TRUE(t1.getKeyword());
+  EXPECT_EQ(*t1.getKeyword(), "module"sv);
 }

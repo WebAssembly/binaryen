@@ -781,6 +781,136 @@ std::optional<LexResult> keyword(std::string_view in) {
 
 } // anonymous namespace
 
+std::optional<uint64_t> Token::getU64() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == NoSign) {
+      return tok->n;
+    }
+  }
+  return {};
+}
+
+std::optional<int64_t> Token::getS64() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    // Integers without an explicit sign still need to be in signed range.
+    if (tok->sign != NoSign || tok->n < (1ull << 63)) {
+      return int64_t(tok->n);
+    }
+    // TODO: Add error production for out-of-bounds integers.
+  }
+  return {};
+}
+
+std::optional<uint64_t> Token::getI64() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    return tok->n;
+  }
+  return {};
+}
+
+std::optional<uint32_t> Token::getU32() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == NoSign && tok->n < (1ull << 32)) {
+      return int32_t(tok->n);
+    }
+    // TODO: Add error production for out-of-bounds integers.
+  }
+  return {};
+}
+
+std::optional<int32_t> Token::getS32() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->n < (1ull << 31) ||
+        (tok->sign == Neg && -(1ull << 31) <= tok->n)) {
+      return int32_t(tok->n);
+    }
+    // TODO: Add error production for out-of-bounds integers.
+  }
+  return {};
+}
+
+std::optional<uint32_t> Token::getI32() const {
+  if (auto n = getU32()) {
+    return *n;
+  }
+  if (auto n = getS32()) {
+    return uint32_t(*n);
+  }
+  return {};
+}
+
+std::optional<double> Token::getF64() const {
+  constexpr int signif = 52;
+  constexpr uint64_t nanMask = (1ull << signif) - 1;
+  constexpr uint64_t nanDefault = 1ull << (signif - 1);
+  if (auto* tok = std::get_if<FloatTok>(&data)) {
+    double d = tok->d;
+    if (std::isnan(d)) {
+      // Inject payload.
+      uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
+      uint64_t bits;
+      static_assert(sizeof(bits) == sizeof(d));
+      memcpy(&bits, &d, sizeof(bits));
+      bits = (bits & ~nanMask) | payload;
+      memcpy(&d, &bits, sizeof(bits));
+    }
+    return d;
+  }
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == Neg) {
+      if (tok->n == 0) {
+        return -0.0;
+      }
+      return double(int64_t(tok->n));
+    }
+    return double(tok->n);
+  }
+  return {};
+}
+
+std::optional<float> Token::getF32() const {
+  constexpr int signif = 23;
+  constexpr uint32_t nanMask = (1u << signif) - 1;
+  constexpr uint64_t nanDefault = 1ull << (signif - 1);
+  if (auto* tok = std::get_if<FloatTok>(&data)) {
+    float f = tok->d;
+    if (std::isnan(f)) {
+      // Validate and inject payload.
+      uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
+      if (payload >= (1ull << 23)) {
+        // TODO: Add error production for out-of-bounds payload.
+        return {};
+      }
+      uint32_t bits;
+      static_assert(sizeof(bits) == sizeof(f));
+      memcpy(&bits, &f, sizeof(bits));
+      bits = (bits & ~nanMask) | payload;
+      memcpy(&f, &bits, sizeof(bits));
+    }
+    return f;
+  }
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == Neg) {
+      if (tok->n == 0) {
+        return -0.0f;
+      }
+      return float(int64_t(tok->n));
+    }
+    return float(tok->n);
+  }
+  return {};
+}
+
+std::optional<std::string_view> Token::getString() const {
+  if (auto* tok = std::get_if<StringTok>(&data)) {
+    if (tok->str) {
+      return std::string_view(*tok->str);
+    }
+    return span.substr(1, span.size() - 2);
+  }
+  return {};
+}
+
 void Lexer::skipSpace() {
   if (auto ctx = space(next())) {
     index += ctx->span.size();
