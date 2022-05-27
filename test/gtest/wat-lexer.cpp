@@ -1361,7 +1361,7 @@ TEST(LexerTest, LexIdent) {
     Token expected{"$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv, IdTok{}};
     EXPECT_EQ(*lexer, expected);
     EXPECT_TRUE(lexer->getID());
-    EXPECT_EQ(*lexer->getID(), "$09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv);
+    EXPECT_EQ(*lexer->getID(), "09azAZ!#$%&'*+-./:<=>?@\\^_`|~"sv);
   }
   {
     Lexer lexer("$[]{}"sv);

@@ -22,8 +22,8 @@
 #include <string_view>
 #include <variant>
 
-#ifndef wasm_wat_parser_h
-#define wasm_wat_parser_h
+#ifndef wasm_wat_lexer_h
+#define wasm_wat_lexer_h
 
 namespace wasm::WATParser {
 
@@ -112,7 +112,8 @@ struct Token {
 
   std::optional<std::string_view> getID() const {
     if (std::get_if<IdTok>(&data)) {
-      return span;
+      // Drop leading '$'.
+      return span.substr(1);
     }
     return {};
   }
@@ -163,7 +164,12 @@ public:
   // The end sentinel.
   Lexer() = default;
 
-  Lexer(std::string_view buffer) : buffer(buffer) {
+  Lexer(std::string_view buffer) : buffer(buffer) { setIndex(0); }
+
+  size_t getIndex() { return index; }
+
+  void setIndex(size_t i) {
+    index = i;
     skipSpace();
     lexToken();
     skipSpace();
@@ -203,6 +209,7 @@ public:
   Lexer end() { return Lexer(); }
 
   TextPos position(const char* c);
+  TextPos position(size_t i) { return position(buffer.data() + i); }
   TextPos position(std::string_view span) { return position(span.data()); }
   TextPos position(Token tok) { return position(tok.span); }
 
@@ -213,4 +220,4 @@ private:
 
 } // namespace wasm::WATParser
 
-#endif // wasm_wat_parser_h
+#endif // wasm_wat_lexer_h
