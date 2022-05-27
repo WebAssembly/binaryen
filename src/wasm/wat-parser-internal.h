@@ -284,39 +284,42 @@ struct LexStrResult : LexResult {
 
 struct LexStrCtx : LexCtx {
 private:
-  // Whether we are building a string due to the presence of escape
-  // sequences.
-  bool building = false;
-  std::stringstream ss;
+  // Used to build a string with resolved escape sequences. Only used when the
+  // parsed string contains escape sequences, otherwise we can just use the
+  // parsed string directly.
+  std::optional<std::stringstream> escapeBuilder;
 
 public:
   LexStrCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexStrResult> lexed() {
     if (auto basic = LexCtx::lexed()) {
-      auto str = building ? std::optional<std::string>{ss.str()} : std::nullopt;
-      return {LexStrResult{*basic, str}};
+      if (escapeBuilder) {
+        return {LexStrResult{*basic, {escapeBuilder->str()}}};
+      } else {
+        return {LexStrResult{*basic, {}}};
+      }
     }
     return {};
   }
 
   void takeChar() {
-    if (building) {
-      ss << peek();
+    if (escapeBuilder) {
+      *escapeBuilder << peek();
     }
     LexCtx::take(1);
   }
 
-  void ensureBuilding() {
-    if (building) {
+  void ensureBuildingEscaped() {
+    if (escapeBuilder) {
       return;
     }
     // Drop the opening '"'.
-    ss << LexCtx::lexed()->span.substr(1);
-    building = true;
+    escapeBuilder = std::stringstream{};
+    *escapeBuilder << LexCtx::lexed()->span.substr(1);
   }
 
-  void appendEscaped(char c) { ss << c; }
+  void appendEscaped(char c) { *escapeBuilder << c; }
 
   bool appendUnicode(uint64_t u) {
     if ((0xd800 <= u && u < 0xe000) || 0x110000 <= u) {
@@ -324,22 +327,22 @@ public:
     }
     if (u < 0x80) {
       // 0xxxxxxx
-      ss << uint8_t(u);
+      *escapeBuilder << uint8_t(u);
     } else if (u < 0x800) {
       // 110xxxxx 10xxxxxx
-      ss << uint8_t(0b11000000 | ((u >> 6) & 0b00011111));
-      ss << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
+      *escapeBuilder << uint8_t(0b11000000 | ((u >> 6) & 0b00011111));
+      *escapeBuilder << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
     } else if (u < 0x10000) {
       // 1110xxxx 10xxxxxx 10xxxxxx
-      ss << uint8_t(0b11100000 | ((u >> 12) & 0b00001111));
-      ss << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
-      ss << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
+      *escapeBuilder << uint8_t(0b11100000 | ((u >> 12) & 0b00001111));
+      *escapeBuilder << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
+      *escapeBuilder << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
     } else {
       // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-      ss << uint8_t(0b11110000 | ((u >> 18) & 0b00000111));
-      ss << uint8_t(0b10000000 | ((u >> 12) & 0b00111111));
-      ss << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
-      ss << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
+      *escapeBuilder << uint8_t(0b11110000 | ((u >> 18) & 0b00000111));
+      *escapeBuilder << uint8_t(0b10000000 | ((u >> 12) & 0b00111111));
+      *escapeBuilder << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
+      *escapeBuilder << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
     }
     return true;
   }
@@ -707,7 +710,7 @@ std::optional<LexStrResult> str(std::string_view in) {
     }
     if (ctx.startsWith("\\"sv)) {
       // Escape sequences
-      ctx.ensureBuilding();
+      ctx.ensureBuildingEscaped();
       ctx.take(1);
       if (ctx.takePrefix("t"sv)) {
         ctx.appendEscaped('\t');
