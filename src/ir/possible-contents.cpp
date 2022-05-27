@@ -190,7 +190,7 @@ namespace {
 
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
-struct CollectedInfo {
+struct CollectedFuncInfo {
   // All the links we found in this function. Rarely are there duplicates
   // in this list (say when writing to the same global location from another
   // global location), and we do not try to deduplicate here, just store them in
@@ -224,14 +224,14 @@ struct CollectedInfo {
 };
 
 // Walk the wasm and find all the links we need to care about, and the locations
-// and roots related to them. This builds up a CollectedInfo data structure.
+// and roots related to them. This builds up a CollectedFuncInfo data structure.
 // After all InfoCollectors run, those data structures will be merged and the
 // main flow will begin.
 struct InfoCollector
   : public PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
-  CollectedInfo& info;
+  CollectedFuncInfo& info;
 
-  InfoCollector(CollectedInfo& info) : info(info) {}
+  InfoCollector(CollectedFuncInfo& info) : info(info) {}
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
@@ -808,7 +808,7 @@ struct InfoCollector
     }
   }
 
-  // See the comment on CollectedInfo::childParents.
+  // See the comment on CollectedFuncInfo::childParents.
   void addSpecialChildParentLink(Expression* child, Expression* parent) {
     if (isRelevant(child->type)) {
       info.childParents[child] = parent;
@@ -908,7 +908,7 @@ private:
     return {getIndex(link.from), getIndex(link.to)};
   }
 
-  // See the comment on CollectedInfo::childParents. This is the merged info
+  // See the comment on CollectedFuncInfo::childParents. This is the merged info
   // from all the functions and the global scope.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
@@ -1029,8 +1029,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #endif
 
   // First, collect information from each function.
-  ModuleUtils::ParallelFunctionAnalysis<CollectedInfo> analysis(
-    wasm, [&](Function* func, CollectedInfo& info) {
+  ModuleUtils::ParallelFunctionAnalysis<CollectedFuncInfo> analysis(
+    wasm, [&](Function* func, CollectedFuncInfo& info) {
       InfoCollector finder(info);
 
       if (func->imported()) {
