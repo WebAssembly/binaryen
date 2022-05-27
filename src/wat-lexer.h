@@ -22,8 +22,8 @@
 #include <string_view>
 #include <variant>
 
-#ifndef wasm_wat_parser_h
-#define wasm_wat_parser_h
+#ifndef wasm_wat_lexer_h
+#define wasm_wat_lexer_h
 
 namespace wasm::WATParser {
 
@@ -112,7 +112,8 @@ struct Token {
 
   std::optional<std::string_view> getID() const {
     if (std::get_if<IdTok>(&data)) {
-      return span;
+      // Drop leading '$'.
+      return span.substr(1);
     }
     return {};
   }
@@ -213,4 +214,4 @@ private:
 
 } // namespace wasm::WATParser
 
-#endif // wasm_wat_parser_h
+#endif // wasm_wat_lexer_h

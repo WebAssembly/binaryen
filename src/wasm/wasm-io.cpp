@@ -24,19 +24,28 @@
 // binary.
 //
 
-#include "wasm-io.h"
+#include <cstdlib>
+
 #include "support/debug.h"
 #include "wasm-binary.h"
+#include "wasm-io.h"
 #include "wasm-s-parser.h"
+#include "wat-parser.h"
 
 namespace wasm {
 
 #define DEBUG_TYPE "writer"
 
 static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
-  SExpressionParser parser(const_cast<char*>(input.c_str()));
-  Element& root = *parser.root;
-  SExpressionWasmBuilder builder(wasm, *root[0], profile);
+  if (std::getenv("BINARYEN_NEW_WAT_PARSER")) {
+    if (!WATParser::parseModule(wasm, std::string_view(input.c_str()))) {
+      Fatal() << "Parse failure";
+    }
+  } else {
+    SExpressionParser parser(const_cast<char*>(input.c_str()));
+    Element& root = *parser.root;
+    SExpressionWasmBuilder builder(wasm, *root[0], profile);
+  }
 }
 
 void ModuleReader::readText(std::string filename, Module& wasm) {
