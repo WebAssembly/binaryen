@@ -97,9 +97,8 @@ convertToDirectCalls(T* curr,
   auto& operands = curr->operands;
 
   // We must use the operands twice, and also must move the condition to
-  // execute first; use locals for them all. While doing so, if we see
-  // any are unreachable, stop trying to optimize and leave this for DCE.
-  std::vector<Index> operandLocals;
+  // execute first, so we'll use locals for them all. First, see if any are
+  // unreachable, and if so stop trying to optimize and leave this for DCE.
   for (auto* operand : operands) {
     if (operand->type == Type::unreachable ||
         !TypeUpdating::canHandleAsLocal(operand->type)) {
@@ -112,6 +111,7 @@ convertToDirectCalls(T* curr,
 
   // None of the types are a problem, so we can proceed to add new vars as
   // needed and perform this optimization.
+  std::vector<Index> operandLocals;
   for (auto* operand : operands) {
     auto currLocal = builder.addVar(&func, operand->type);
     operandLocals.push_back(currLocal);
