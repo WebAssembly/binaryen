@@ -58,6 +58,15 @@ namespace wasm {
 //                     not track what they might be, so we must assume the worst
 //                     in the calling code.
 //
+// Note that we prefer not to emit ExactType{i32} etc., or any other type that
+// has no subtyping: instead, we emit Many for such things. While ExactType{i32}
+// would be correct, it adds no additional information: we know the type from
+// the wasm, and we know no subtype is possible, so we know it exactly.
+// Furthermore, using Many instead simplifies the logic in various places, in
+// particular, Many is a clear signal that we've hit the worst case and can't
+// do any better in that location, and can stop looking at it. If instead of
+// Many we emitted ExactType{i32} we'd need to also check for an exact type of
+// a type without subtypes, when trying to reason about hitting the worst case.
 class PossibleContents {
   struct None : public std::monostate {};
 

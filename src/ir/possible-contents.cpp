@@ -69,11 +69,8 @@ void PossibleContents::combine(const PossibleContents& other) {
     // At least one is not a reference. We could in principle try to find
     // ExactType here, say as the combination of two different constants, but
     // since there is no subtyping between non-ref types, ExactType would not
-    // carry any more information than Many. Furthermore, using Many here
-    // makes it simpler in ContentOracle's flow to know when to stop flowing a
-    // value: Many is a clear signal that we've hit the worst case and can't
-    // do any better in that location, and can stop there (otherwise, we'd
-    // need to check the ExactType to see if it is the worst case or not).
+    // carry any more information than Many. See the comment in
+    // possible-contents.h on ExactType at the top.
     value = Many();
     return;
   }
@@ -302,7 +299,8 @@ struct InfoCollector
   void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
     // We could infer the exact type here, but as no subtyping is possible, it
-    // would have no benefit, so just add a generic root (which will be a Many).
+    // would have no benefit, so just add a generic root, which will be "Many."
+    // See the comment in possible-contents.h on ExactType at the top.
     addRoot(curr);
   }
   void visitStore(Store* curr) {}
