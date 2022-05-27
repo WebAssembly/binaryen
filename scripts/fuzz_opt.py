@@ -35,8 +35,11 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
+TYPE_SYSTEM_FLAG = '--nominal'
+
 # feature options that are always passed to the tools.
 CONSTANT_FEATURE_OPTS = ['--all-features']
+CONSTANT_FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
@@ -254,6 +257,12 @@ def init_important_initial_contents():
     IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
 
 
+INITIAL_CONTENTS_IGNORE = [
+    # not all relaxed SIMD instructions are implemented in the interpreter
+    'relaxed-simd.wast'
+]
+
+
 def pick_initial_contents():
     # if we use an initial wasm file's contents as the basis for the
     # fuzzing, then that filename, or None if we start entirely from scratch
@@ -276,6 +285,8 @@ def pick_initial_contents():
         # no longer exist, and we should just skip it.
         if not os.path.exists(test_name):
             return
+    if os.path.basename(test_name) in INITIAL_CONTENTS_IGNORE:
+        return
     assert os.path.exists(test_name)
     # tests that check validation errors are not helpful for us
     if '.fail.' in test_name:
@@ -806,8 +817,8 @@ class CheckDeterminism(TestCaseHandler):
         b1 = open('b1.wasm', 'rb').read()
         b2 = open('b2.wasm', 'rb').read()
         if (b1 != b2):
-            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat'])
-            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'])
+            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat', TYPE_SYSTEM_FLAG])
+            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat', TYPE_SYSTEM_FLAG])
             t1 = open('b1.wat', 'r').read()
             t2 = open('b2.wat', 'r').read()
             compare(t1, t2, 'Output must be deterministic.', verbose=False)
@@ -855,7 +866,7 @@ class Wasm2JS(TestCaseHandler):
         # the trap, which lets us compare at least some results in some cases.
         # (this is why wasm2js is not in CompareVMs, which does full
         # comparisons - we need to limit the comparison in a special way here)
-        interpreter = run([in_bin('wasm-opt'), before_wasm_temp, '--fuzz-exec-before'])
+        interpreter = run_bynterp(before_wasm_temp, ['--fuzz-exec-before'])
         if TRAP_PREFIX in interpreter:
             trap_index = interpreter.index(TRAP_PREFIX)
             # we can't test this function, which the trap is in the middle of.
@@ -1054,7 +1065,11 @@ def test_one(random_input, given_wasm):
         # apply properties like not having any NaNs, which the original fuzz
         # wasm had applied. that is, we need to preserve properties like not
         # having nans through reduction.
-        run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+        try:
+            run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+        except Exception as e:
+            print("Internal error in fuzzer! Could not run given wasm")
+            raise e
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
@@ -1130,6 +1145,7 @@ def write_commands(commands, filename):
 opt_choices = [
     [],
     ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
+    ["--cfp"],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
@@ -1146,11 +1162,14 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
+    ["--global-refining"],
+    ["--gto"],
     ["--local-cse"],
     ["--heap2local"],
     ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
     ["--licm"],
+    ["--local-subtyping"],
     ["--memory-packing"],
     ["--merge-blocks"],
     ['--merge-locals'],
@@ -1171,13 +1190,15 @@ opt_choices = [
     ["--flatten", "--rereloop"],
     ["--roundtrip"],
     ["--rse"],
-    # TODO: fuzz signature-refining/pruning/etc., but those all need --nominal
+    ["--signature-pruning"],
+    ["--signature-refining"],
     ["--simplify-locals"],
     ["--simplify-locals-nonesting"],
     ["--simplify-locals-nostructure"],
     ["--simplify-locals-notee"],
     ["--simplify-locals-notee-nostructure"],
     ["--ssa"],
+    ["--type-refining"],
     ["--vacuum"],
 ]
 
@@ -1365,9 +1386,9 @@ on valid wasm files.)
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
 echo "At least one of the next two values should be 0:"
-%(wasm_opt)s --detect-features %(temp_wasm)s
+%(wasm_opt)s %(typesystem)s --detect-features %(temp_wasm)s
 echo "  " $?
-%(wasm_opt)s --all-features %(temp_wasm)s
+%(wasm_opt)s %(typesystem)s --all-features %(temp_wasm)s
 echo "  " $?
 
 # run the command
@@ -1404,6 +1425,7 @@ echo "  " $?
                          'auto_init': auto_init,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
+                         'typesystem': TYPE_SYSTEM_FLAG,
                          'reduce_sh': os.path.abspath('reduce.sh')})
 
                 print('''\
@@ -1425,7 +1447,7 @@ You can reduce the testcase by running this now:
 vvvv
 
 
-%(wasm_reduce)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
+%(wasm_reduce)s %(type_system_flag)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
 
 ^^^^
@@ -1454,7 +1476,8 @@ After reduction, the reduced file will be in %(working_wasm)s
                        'temp_wasm': os.path.abspath('t.wasm'),
                        'working_wasm': os.path.abspath('w.wasm'),
                        'wasm_reduce': in_bin('wasm-reduce'),
-                       'reduce_sh': os.path.abspath('reduce.sh')})
+                       'reduce_sh': os.path.abspath('reduce.sh'),
+                       'type_system_flag': TYPE_SYSTEM_FLAG})
                 break
         if given_seed is not None:
             break

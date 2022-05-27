@@ -121,10 +121,11 @@
   ;; As above, but all writes are of $child-A, which allows more optimization
   ;; up to that type.
 
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child-A))) data))
+
   ;; CHECK:      (type $child-A (struct_subtype (field (mut (ref $child-A))) $struct))
   (type $child-A (struct_subtype (field (mut dataref)) $struct))
 
-  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child-A))) data))
   (type $struct (struct_subtype (field (mut dataref)) data))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child-A|_=>_none (func_subtype (param (ref $struct) (ref $child-A)) func))
@@ -205,10 +206,11 @@
 (module
   ;; As above, but both writes are of $child, so we can optimize.
 
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child))) data))
+
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $child))) $struct))
   (type $child (struct_subtype (field (mut dataref)) $struct))
 
-  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref $child))) data))
   (type $struct (struct_subtype (field (mut dataref)) data))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func_subtype (param (ref $struct) (ref $child)) func))
@@ -435,10 +437,14 @@
 )
 
 (module
+  ;; CHECK:      (type $X (struct_subtype  data))
+
   ;; CHECK:      (type $Y (struct_subtype  $X))
   (type $Y (struct_subtype $X))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $A (struct_subtype (field (ref $Y)) data))
 
   ;; CHECK:      (type $C (struct_subtype (field (ref $Y)) $A))
   (type $C (struct_subtype (field (ref $X)) $A))
@@ -446,10 +452,8 @@
   ;; CHECK:      (type $B (struct_subtype (field (ref $Y)) $A))
   (type $B (struct_subtype (field (ref $X)) $A))
 
-  ;; CHECK:      (type $A (struct_subtype (field (ref $Y)) data))
   (type $A (struct_subtype (field (ref $X)) data))
 
-  ;; CHECK:      (type $X (struct_subtype  data))
   (type $X (struct_subtype data))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
@@ -489,6 +493,8 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $A (struct_subtype (field (ref $X)) data))
+
   ;; CHECK:      (type $C (struct_subtype (field (ref $X)) $A))
   (type $C (struct_subtype (field (ref $X)) $A))
 
@@ -498,7 +504,6 @@
   ;; CHECK:      (type $Y (struct_subtype  $X))
   (type $Y (struct_subtype $X))
 
-  ;; CHECK:      (type $A (struct_subtype (field (ref $X)) data))
   (type $A (struct_subtype (field (ref $X)) data))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
@@ -520,10 +525,11 @@
   (type $X (struct_subtype data))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $A (struct_subtype (field (ref $X)) data))
+
   ;; CHECK:      (type $B (struct_subtype (field (ref $Y)) $A))
   (type $B (struct_subtype (field (ref $Y)) $A))
 
-  ;; CHECK:      (type $A (struct_subtype (field (ref $X)) data))
   (type $A (struct_subtype (field (ref $X)) data))
 
   ;; CHECK:      (type $Y (struct_subtype  $X))
@@ -784,10 +790,14 @@
   ;; Root-Outer[Root-Inner] -> Leaf1-Outer[Leaf1-Inner]
   ;;                        -> Leaf2-Outer[Leaf2-Inner]
 
+  ;; CHECK:      (type $Root-Inner (struct_subtype  data))
+
   ;; CHECK:      (type $Leaf2-Inner (struct_subtype  $Root-Inner))
   (type $Leaf2-Inner (struct_subtype  $Root-Inner))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $Root-Outer (struct_subtype (field (ref $Leaf2-Inner)) data))
 
   ;; CHECK:      (type $Leaf1-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
   (type $Leaf1-Outer (struct_subtype (field (ref $Leaf1-Inner)) $Root-Outer))
@@ -795,10 +805,8 @@
  ;; CHECK:      (type $Leaf2-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
  (type $Leaf2-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
 
-  ;; CHECK:      (type $Root-Outer (struct_subtype (field (ref $Leaf2-Inner)) data))
   (type $Root-Outer (struct_subtype (field (ref $Root-Inner)) data))
 
-  ;; CHECK:      (type $Root-Inner (struct_subtype  data))
   (type $Root-Inner (struct_subtype  data))
 
   (type $Leaf1-Inner (struct_subtype (field i32) $Root-Inner))

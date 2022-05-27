@@ -629,8 +629,6 @@ std::optional<Type> TypeInfo::getCanonical() const {
         switch (basic.getBasic()) {
           case HeapType::func:
             return Type::funcref;
-          case HeapType::ext:
-            return Type::externref;
           case HeapType::any:
             return Type::anyref;
           case HeapType::eq:
@@ -1050,7 +1048,6 @@ unsigned Type::getByteSize() const {
       case Type::v128:
         return 16;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -1112,7 +1109,6 @@ FeatureSet Type::getFeatures() const {
       }
       if (heapType.isBasic()) {
         switch (heapType.getBasic()) {
-          case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
           case HeapType::BasicHeapType::i31:
           case HeapType::BasicHeapType::data:
@@ -1166,8 +1162,6 @@ HeapType Type::getHeapType() const {
         break;
       case Type::funcref:
         return HeapType::func;
-      case Type::externref:
-        return HeapType::ext;
       case Type::anyref:
         return HeapType::any;
       case Type::eqref:
@@ -1599,8 +1593,6 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     switch (b.getBasic()) {
       case HeapType::func:
         return a.isSignature();
-      case HeapType::ext:
-        return false;
       case HeapType::any:
         return true;
       case HeapType::eq:
@@ -1884,7 +1876,6 @@ HeapType::BasicHeapType TypeBounder::lub(HeapType::BasicHeapType a,
   }
   switch (a) {
     case HeapType::func:
-    case HeapType::ext:
     case HeapType::any:
       return HeapType::any;
     case HeapType::eq:
@@ -2020,8 +2011,6 @@ std::ostream& TypePrinter::print(Type type) {
         return os << "v128";
       case Type::funcref:
         return os << "funcref";
-      case Type::externref:
-        return os << "externref";
       case Type::anyref:
         return os << "anyref";
       case Type::eqref:
@@ -2061,8 +2050,6 @@ std::ostream& TypePrinter::print(HeapType type) {
     switch (type.getBasic()) {
       case HeapType::func:
         return os << "func";
-      case HeapType::ext:
-        return os << "extern";
       case HeapType::any:
         return os << "any";
       case HeapType::eq:
@@ -2823,7 +2810,7 @@ TypeBuilder::TypeBuilder(TypeBuilder&& other) = default;
 TypeBuilder& TypeBuilder::operator=(TypeBuilder&& other) = default;
 
 void TypeBuilder::grow(size_t n) {
-  assert(size() + n > size());
+  assert(size() + n >= size());
   impl->entries.resize(size() + n);
 }
 
@@ -3823,8 +3810,8 @@ void canonicalizeBasicTypes(CanonicalizationState& state) {
 
   if (replacements.size()) {
     // Canonicalizing basic heap types may cause their parent types to become
-    // canonicalizable as well, for example after creating `(ref null extern)`
-    // we can futher canonicalize to `externref`.
+    // canonicalizable as well, for example after creating `(ref null any)` we
+    // can futher canonicalize to `anyref`.
     struct TypeCanonicalizer : TypeGraphWalkerBase<TypeCanonicalizer> {
       void scanType(Type* type) {
         if (type->isTuple()) {

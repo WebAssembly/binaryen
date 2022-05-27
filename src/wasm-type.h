@@ -107,7 +107,6 @@ public:
     f64,
     v128,
     funcref,
-    externref,
     anyref,
     eqref,
     i31ref,
@@ -151,11 +150,10 @@ public:
   // │ v128        ║ x │   │ x │ x │     V │ ┘
   // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  n_ullable
-  // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
-  // │ i31ref      ║ x │   │ x │ x │       │ │ │
-  // │ dataref     ║ x │   │ x │ x │       │ │ ┘
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
+  // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
+  // │ i31ref      ║ x │   │ x │ x │       │ │
+  // │ dataref     ║ x │   │ x │ x │       │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -340,7 +338,6 @@ class HeapType {
 public:
   enum BasicHeapType : uint32_t {
     func,
-    ext,
     any,
     eq,
     i31,
@@ -476,12 +473,6 @@ struct Tuple {
   Tuple(std::initializer_list<Type> types) : types(types) { validate(); }
   Tuple(const TypeList& types) : types(types) { validate(); }
   Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
-
-  // Allow copies when constructing.
-  Tuple(const Tuple& other) : types(other.types) { validate(); }
-
-  // Prevent accidental copies.
-  Tuple& operator=(const Tuple&) = delete;
 
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }

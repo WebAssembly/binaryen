@@ -592,7 +592,7 @@ BINARYEN_API BinaryenOp BinaryenTruncSatZeroSVecF64x2ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatZeroUVecF64x2ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void);
-BINARYEN_API BinaryenOp BinaryenSwizzleVec8x16(void);
+BINARYEN_API BinaryenOp BinaryenSwizzleVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenRefIsNull(void);
 BINARYEN_API BinaryenOp BinaryenRefIsFunc(void);
 BINARYEN_API BinaryenOp BinaryenRefIsData(void);
@@ -2284,6 +2284,15 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex* segmentSizes,
                                     BinaryenIndex numSegments,
                                     bool shared);
+
+BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenMemoryHasMax(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module);
+BINARYEN_API const char*
+BinaryenMemoryImportGetModule(BinaryenModuleRef module);
+BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module);
 
 // Memory segments. Query utilities.
 

@@ -31,6 +31,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
 
   CostType cost;
 
+  // A cost that is extremely high, something that is far, far more expensive
+  // than a fast operation like an add. This cost is so high it is unacceptable
+  // to add any more of it, say by an If=>Select operation (which would execute
+  // both arms; if either arm contains an unacceptable cost, we do not do it).
+  static const CostType Unacceptable = 100;
+
   CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
 
   CostType visitBlock(Block* curr) {
@@ -85,20 +91,20 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + visit(curr->ptr) + visit(curr->value) + 10 * curr->isAtomic;
   }
   CostType visitAtomicRMW(AtomicRMW* curr) {
-    return 100 + visit(curr->ptr) + visit(curr->value);
+    return Unacceptable + visit(curr->ptr) + visit(curr->value);
   }
   CostType visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    return 100 + visit(curr->ptr) + visit(curr->expected) +
+    return Unacceptable + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->replacement);
   }
   CostType visitAtomicWait(AtomicWait* curr) {
-    return 100 + visit(curr->ptr) + visit(curr->expected) +
+    return Unacceptable + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->timeout);
   }
   CostType visitAtomicNotify(AtomicNotify* curr) {
-    return 100 + visit(curr->ptr) + visit(curr->notifyCount);
+    return Unacceptable + visit(curr->ptr) + visit(curr->notifyCount);
   }
-  CostType visitAtomicFence(AtomicFence* curr) { return 100; }
+  CostType visitAtomicFence(AtomicFence* curr) { return Unacceptable; }
   CostType visitConst(Const* curr) { return 1; }
   CostType visitUnary(Unary* curr) {
     CostType ret = 0;
@@ -491,8 +497,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case NarrowUVecI16x8ToVecI8x16:
       case NarrowSVecI32x4ToVecI16x8:
       case NarrowUVecI32x4ToVecI16x8:
-      case SwizzleVec8x16:
-      case RelaxedSwizzleVec8x16:
+      case SwizzleVecI8x16:
+      case RelaxedSwizzleVecI8x16:
+      case RelaxedQ15MulrSVecI16x8:
+      case DotI8x16I7x16SToVecI16x8:
+      case DotI8x16I7x16UToVecI16x8:
         ret = 1;
         break;
       case InvalidBinary:
@@ -508,7 +517,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitReturn(Return* curr) { return maybeVisit(curr->value); }
   CostType visitMemorySize(MemorySize* curr) { return 1; }
   CostType visitMemoryGrow(MemoryGrow* curr) {
-    return 100 + visit(curr->delta);
+    return Unacceptable + visit(curr->delta);
   }
   CostType visitMemoryInit(MemoryInit* curr) {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
@@ -540,6 +549,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case RelaxedFmsVecF32x4:
       case RelaxedFmaVecF64x2:
       case RelaxedFmsVecF64x2:
+      case DotI8x16I7x16AddSToVecI32x4:
+      case DotI8x16I7x16AddUToVecI32x4:
         ret = 1;
         break;
     }
@@ -563,20 +574,20 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitTableSize(TableSize* curr) { return 1; }
   CostType visitTableGrow(TableGrow* curr) {
-    return 100 + visit(curr->value) + visit(curr->delta);
+    return Unacceptable + visit(curr->value) + visit(curr->delta);
   }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
   }
   CostType visitThrow(Throw* curr) {
-    CostType ret = 100;
+    CostType ret = Unacceptable;
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
-  CostType visitRethrow(Rethrow* curr) { return 100; }
+  CostType visitRethrow(Rethrow* curr) { return Unacceptable; }
   CostType visitTupleMake(TupleMake* curr) {
     CostType ret = 0;
     for (auto* child : curr->operands) {
@@ -592,16 +603,21 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitI31New(I31New* curr) { return 3 + visit(curr->value); }
   CostType visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
   CostType visitRefTest(RefTest* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+    // Casts have a very high cost because in the VM they end up implemented as
+    // a combination of loads and branches. Given they contain branches, we do
+    // not want to add any more such work.
+    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref) +
            maybeVisit(curr->rtt);
   }
   CostType visitRefCast(RefCast* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref) +
            maybeVisit(curr->rtt);
   }
   CostType visitBrOn(BrOn* curr) {
-    // BrOnCast has more work to do with the rtt, so add a little there.
-    CostType base = curr->op == BrOnCast ? 3 : 2;
+    // BrOn of a null can be fairly fast, but anything else is a cast check
+    // basically, and an unacceptable cost.
+    CostType base =
+      curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : Unacceptable;
     return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref) +
            maybeVisit(curr->rtt);
   }

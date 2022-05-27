@@ -219,38 +219,56 @@ void WasmBinaryWriter::writeTypes() {
   if (indexedTypes.types.size() == 0) {
     return;
   }
-  // Count the number of recursion groups, which is always the number of
-  // elements in the type section. In non-isorecursive type systems, it is also
-  // equivalent to the number of types.
-  std::optional<RecGroup> lastGroup;
+  // Count the number of recursion groups, which is the number of elements in
+  // the type section. With nominal typing there is always one group and with
+  // equirecursive typing there is one group per type.
   size_t numGroups = 0;
-  for (auto type : indexedTypes.types) {
-    auto currGroup = type.getRecGroup();
-    numGroups += lastGroup != currGroup;
-    lastGroup = currGroup;
+  switch (getTypeSystem()) {
+    case TypeSystem::Equirecursive:
+      numGroups = indexedTypes.types.size();
+      break;
+    case TypeSystem::Nominal:
+      numGroups = 1;
+      break;
+    case TypeSystem::Isorecursive: {
+      std::optional<RecGroup> lastGroup;
+      for (auto type : indexedTypes.types) {
+        auto currGroup = type.getRecGroup();
+        numGroups += lastGroup != currGroup;
+        lastGroup = currGroup;
+      }
+    }
   }
   BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(numGroups);
-  lastGroup = std::nullopt;
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    // The nominal recursion group contains every type.
+    o << S32LEB(BinaryConsts::EncodedType::Rec)
+      << U32LEB(indexedTypes.types.size());
+  }
+  std::optional<RecGroup> lastGroup = std::nullopt;
   for (Index i = 0; i < indexedTypes.types.size(); ++i) {
     auto type = indexedTypes.types[i];
     // Check whether we need to start a new recursion group. Recursion groups of
     // size 1 are implicit, so only emit a group header for larger groups. This
     // gracefully handles non-isorecursive type systems, which only have groups
-    // of size 1.
+    // of size 1 internally (even though nominal types are emitted as a single
+    // large group).
     auto currGroup = type.getRecGroup();
     if (lastGroup != currGroup && currGroup.size() > 1) {
       o << S32LEB(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
     }
     lastGroup = currGroup;
     // Emit the type definition.
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
     BYN_TRACE("write " << type << std::endl);
+    if (auto super = type.getSuperType()) {
+      // Subtype constructor and vector of 1 supertype.
+      o << S32LEB(BinaryConsts::EncodedType::Sub) << U32LEB(1);
+      writeHeapType(*super);
+    }
     if (type.isSignature()) {
-      o << S32LEB(hasSupertype ? BinaryConsts::EncodedType::FuncExtending
-                               : BinaryConsts::EncodedType::Func);
+      o << S32LEB(BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
       for (auto& sigType : {sig.params, sig.results}) {
         o << U32LEB(sigType.size());
@@ -259,26 +277,17 @@ void WasmBinaryWriter::writeTypes() {
         }
       }
     } else if (type.isStruct()) {
-      o << S32LEB(hasSupertype ? BinaryConsts::EncodedType::StructExtending
-                               : BinaryConsts::EncodedType::Struct);
+      o << S32LEB(BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
       o << U32LEB(fields.size());
       for (const auto& field : fields) {
         writeField(field);
       }
     } else if (type.isArray()) {
-      o << S32LEB(hasSupertype ? BinaryConsts::EncodedType::ArrayExtending
-                               : BinaryConsts::EncodedType::Array);
+      o << S32LEB(BinaryConsts::EncodedType::Array);
       writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");
-    }
-    if (hasSupertype) {
-      auto super = type.getSuperType();
-      if (!super) {
-        super = type.isFunction() ? HeapType::func : HeapType::data;
-      }
-      writeHeapType(*super);
     }
   }
   finishSection(start);
@@ -1295,9 +1304,6 @@ void WasmBinaryWriter::writeType(Type type) {
     case Type::funcref:
       ret = BinaryConsts::EncodedType::funcref;
       break;
-    case Type::externref:
-      ret = BinaryConsts::EncodedType::externref;
-      break;
     case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
@@ -1326,9 +1332,6 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     switch (type.getBasic()) {
       case HeapType::func:
         ret = BinaryConsts::EncodedHeapType::func;
-        break;
-      case HeapType::ext:
-        ret = BinaryConsts::EncodedHeapType::extern_;
         break;
       case HeapType::any:
         ret = BinaryConsts::EncodedHeapType::any;
@@ -1678,9 +1681,6 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::funcref:
       out = Type::funcref;
       return true;
-    case BinaryConsts::EncodedType::externref:
-      out = Type::externref;
-      return true;
     case BinaryConsts::EncodedType::anyref:
       out = Type::anyref;
       return true;
@@ -1702,9 +1702,6 @@ bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
   switch (code) {
     case BinaryConsts::EncodedHeapType::func:
       out = HeapType::func;
-      return true;
-    case BinaryConsts::EncodedHeapType::extern_:
-      out = HeapType::ext;
       return true;
     case BinaryConsts::EncodedHeapType::any:
       out = HeapType::any;
@@ -1971,12 +1968,13 @@ void WasmBinaryBuilder::readTypes() {
     BYN_TRACE("read one\n");
     auto form = getS32LEB();
     if (form == BinaryConsts::EncodedType::Rec) {
-      if (getTypeSystem() != TypeSystem::Isorecursive) {
-        Fatal() << "Binary recursion groups only supported in --hybrid mode";
-      }
       uint32_t groupSize = getU32LEB();
+      if (getTypeSystem() == TypeSystem::Equirecursive) {
+        throwError("Recursion groups not allowed with equirecursive typing");
+      }
       if (groupSize == 0u) {
-        Fatal() << "Invalid recursion group of size zero";
+        // TODO: Support groups of size zero by shrinking the builder.
+        throwError("Recursion groups of size zero not supported");
       }
       // The group counts as one element in the type section, so we have to
       // allocate space for the extra types.
@@ -1984,45 +1982,61 @@ void WasmBinaryBuilder::readTypes() {
       builder.createRecGroup(i, groupSize);
       form = getS32LEB();
     }
+    std::optional<uint32_t> superIndex;
+    if (form == BinaryConsts::EncodedType::Sub) {
+      uint32_t supers = getU32LEB();
+      if (supers > 0) {
+        if (supers != 1) {
+          throwError("Invalid type definition with " + std::to_string(supers) +
+                     " supertypes");
+        }
+        superIndex = getU32LEB();
+      }
+      form = getS32LEB();
+    }
     if (form == BinaryConsts::EncodedType::Func ||
-        form == BinaryConsts::EncodedType::FuncExtending) {
+        form == BinaryConsts::EncodedType::FuncSubtype) {
       builder[i] = readSignatureDef();
     } else if (form == BinaryConsts::EncodedType::Struct ||
-               form == BinaryConsts::EncodedType::StructExtending) {
+               form == BinaryConsts::EncodedType::StructSubtype) {
       builder[i] = readStructDef();
     } else if (form == BinaryConsts::EncodedType::Array ||
-               form == BinaryConsts::EncodedType::ArrayExtending) {
+               form == BinaryConsts::EncodedType::ArraySubtype) {
       builder[i] = Array(readFieldDef());
     } else {
-      throwError("bad type form " + std::to_string(form));
+      throwError("Bad type form " + std::to_string(form));
     }
-    if (form == BinaryConsts::EncodedType::FuncExtending ||
-        form == BinaryConsts::EncodedType::StructExtending ||
-        form == BinaryConsts::EncodedType::ArrayExtending) {
-      auto superIndex = getS64LEB(); // TODO: Actually s33
-      if (superIndex >= 0) {
-        if (size_t(superIndex) >= builder.size()) {
-          throwError("bad supertype index " + std::to_string(superIndex));
-        }
-        builder[i].subTypeOf(builder[superIndex]);
+    if (form == BinaryConsts::EncodedType::FuncSubtype ||
+        form == BinaryConsts::EncodedType::StructSubtype ||
+        form == BinaryConsts::EncodedType::ArraySubtype) {
+      int64_t super = getS64LEB(); // TODO: Actually s33
+      if (super >= 0) {
+        superIndex = (uint32_t)super;
       } else {
         // Validate but otherwise ignore trivial supertypes.
-        HeapType super;
-        if (!getBasicHeapType(superIndex, super)) {
-          throwError("Unrecognized supertype " + std::to_string(superIndex));
+        HeapType basicSuper;
+        if (!getBasicHeapType(super, basicSuper)) {
+          throwError("Unrecognized supertype " + std::to_string(super));
         }
-        if (form == BinaryConsts::EncodedType::FuncExtending) {
-          if (super != HeapType::func) {
+        if (form == BinaryConsts::EncodedType::FuncSubtype) {
+          if (basicSuper != HeapType::func) {
             throwError(
               "The only allowed trivial supertype for functions is func");
           }
         } else {
-          if (super != HeapType::data) {
+          if (basicSuper != HeapType::data) {
             throwError("The only allowed trivial supertype for structs and "
                        "arrays is data");
           }
         }
       }
+    }
+    if (superIndex) {
+      if (*superIndex > builder.size()) {
+        throwError("Out of bounds supertype index " +
+                   std::to_string(*superIndex));
+      }
+      builder[i].subTypeOf(builder[*superIndex]);
     }
   }
 
@@ -5397,7 +5411,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = AvgrUVecI16x8;
       break;
-    case BinaryConsts::I16x8Q15mulrSatS:
+    case BinaryConsts::I16x8Q15MulrSatS:
       curr = allocator.alloc<Binary>();
       curr->op = Q15MulrSatSVecI16x8;
       break;
@@ -5575,11 +5589,11 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       break;
     case BinaryConsts::I8x16Swizzle:
       curr = allocator.alloc<Binary>();
-      curr->op = SwizzleVec8x16;
+      curr->op = SwizzleVecI8x16;
       break;
     case BinaryConsts::I8x16RelaxedSwizzle:
       curr = allocator.alloc<Binary>();
-      curr->op = RelaxedSwizzleVec8x16;
+      curr->op = RelaxedSwizzleVecI8x16;
       break;
     case BinaryConsts::F32x4RelaxedMin:
       curr = allocator.alloc<Binary>();
@@ -5596,6 +5610,18 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2RelaxedMax:
       curr = allocator.alloc<Binary>();
       curr->op = RelaxedMaxVecF64x2;
+      break;
+    case BinaryConsts::I16x8RelaxedQ15MulrS:
+      curr = allocator.alloc<Binary>();
+      curr->op = RelaxedQ15MulrSVecI16x8;
+      break;
+    case BinaryConsts::I16x8DotI8x16I7x16S:
+      curr = allocator.alloc<Binary>();
+      curr->op = DotI8x16I7x16SToVecI16x8;
+      break;
+    case BinaryConsts::I16x8DotI8x16I7x16U:
+      curr = allocator.alloc<Binary>();
+      curr->op = DotI8x16I7x16UToVecI16x8;
       break;
     default:
       return false;
@@ -6070,6 +6096,14 @@ bool WasmBinaryBuilder::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2RelaxedFms:
       curr = allocator.alloc<SIMDTernary>();
       curr->op = RelaxedFmsVecF64x2;
+      break;
+    case BinaryConsts::I32x4DotI8x16I7x16AddS:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = DotI8x16I7x16AddSToVecI32x4;
+      break;
+    case BinaryConsts::I32x4DotI8x16I7x16AddU:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = DotI8x16I7x16AddUToVecI32x4;
       break;
     default:
       return false;
@@ -6675,10 +6709,13 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
     auto* ref = popNonVoidExpression();
     out = Builder(wasm).makeRefCast(ref, rtt);
     return true;
-  } else if (code == BinaryConsts::RefCastStatic) {
+  } else if (code == BinaryConsts::RefCastStatic ||
+             code == BinaryConsts::RefCastNopStatic) {
     auto intendedType = getIndexedHeapType();
     auto* ref = popNonVoidExpression();
-    out = Builder(wasm).makeRefCast(ref, intendedType);
+    auto safety =
+      code == BinaryConsts::RefCastNopStatic ? RefCast::Unsafe : RefCast::Safe;
+    out = Builder(wasm).makeRefCast(ref, intendedType, safety);
     return true;
   }
   return false;

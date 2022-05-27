@@ -237,6 +237,10 @@ inline NameSet getBranchTargets(Expression* ast) {
 // Check if an expression defines a particular name as a branch target anywhere
 // inside it.
 inline bool hasBranchTarget(Expression* ast, Name target) {
+  if (!target.is()) {
+    return false;
+  }
+
   struct Scanner
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
     Name target;

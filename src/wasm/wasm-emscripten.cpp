@@ -432,7 +432,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     meta << "  \"exports\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {
-      if (ex->kind == ExternalKind::Function) {
+      if (ex->kind == ExternalKind::Function || ex->kind == ExternalKind::Tag) {
         meta << nextElement() << '"' << ex->name.str << '"';
       }
     }

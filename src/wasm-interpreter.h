@@ -917,6 +917,7 @@ public:
       case AvgrUVecI16x8:
         return left.avgrUI16x8(right);
       case Q15MulrSatSVecI16x8:
+      case RelaxedQ15MulrSVecI16x8:
         return left.q15MulrSatSI16x8(right);
       case ExtMulLowSVecI16x8:
         return left.extMulLowSI16x8(right);
@@ -1011,9 +1012,14 @@ public:
       case NarrowUVecI32x4ToVecI16x8:
         return left.narrowUToI16x8(right);
 
-      case SwizzleVec8x16:
-      case RelaxedSwizzleVec8x16:
+      case SwizzleVecI8x16:
+      case RelaxedSwizzleVecI8x16:
         return left.swizzleI8x16(right);
+
+      case DotI8x16I7x16SToVecI16x8:
+        return left.dotSI8x16toI16x8(right);
+      case DotI8x16I7x16UToVecI16x8:
+        return left.dotUI8x16toI16x8(right);
 
       case InvalidBinary:
         WASM_UNREACHABLE("invalid binary op");
@@ -1123,7 +1129,7 @@ public:
       case RelaxedFmsVecF64x2:
         return a.relaxedFmsF64x2(b, c);
       default:
-        // TODO: implement signselect
+        // TODO: implement signselect and dot_add
         WASM_UNREACHABLE("not implemented");
     }
   }
@@ -1331,7 +1337,7 @@ public:
   Flow visitCallRef(CallRef* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
-    return Literal::makeNull(curr->type);
+    return Literal::makeNull(curr->type.getHeapType());
   }
   Flow visitRefIs(RefIs* curr) {
     NOTE_ENTER("RefIs");
@@ -1477,7 +1483,7 @@ public:
       return typename Cast::Null{original};
     }
     // The input may not be GC data or a function; for example it could be an
-    // externref or an i31. The cast definitely fails in these cases.
+    // anyref or an i31. The cast definitely fails in these cases.
     if (!original.isData() && !original.isFunction()) {
       return typename Cast::Failure{original};
     }
@@ -1525,7 +1531,7 @@ public:
     if (auto* breaking = cast.getBreaking()) {
       return *breaking;
     } else if (cast.getNull()) {
-      return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
+      return Literal::makeNull(curr->type.getHeapType());
     } else if (auto* result = cast.getSuccess()) {
       return *result;
     }
@@ -2354,7 +2360,6 @@ public:
         case Type::v128:
           return Literal(load128(addr).data());
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -2413,7 +2418,6 @@ public:
           store128(addr, value.getv128());
           break;
         case Type::funcref:
-        case Type::externref:
         case Type::anyref:
         case Type::eqref:
         case Type::i31ref:
@@ -2569,7 +2573,7 @@ private:
       if (table->type.isNullable()) {
         // Initial with nulls in a nullable table.
         auto info = getTableInterfaceInfo(table->name);
-        auto null = Literal::makeNull(table->type);
+        auto null = Literal::makeNull(table->type.getHeapType());
         for (Address i = 0; i < table->initial; i++) {
           info.interface->tableStore(info.name, i, null);
         }

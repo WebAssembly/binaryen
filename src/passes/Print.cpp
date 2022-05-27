@@ -683,6 +683,12 @@ struct PrintExpressionContents
       case RelaxedFmsVecF64x2:
         o << "f64x2.relaxed_fms";
         break;
+      case DotI8x16I7x16AddSToVecI32x4:
+        o << "i32x4.dot_i8x16_i7x16_add_s";
+        break;
+      case DotI8x16I7x16AddUToVecI32x4:
+        o << "i32x4.dot_i8x16_i7x16_add_u";
+        break;
     }
     restoreNormalColor(o);
   }
@@ -1832,7 +1838,7 @@ struct PrintExpressionContents
         o << "i16x8.narrow_i32x4_u";
         break;
 
-      case SwizzleVec8x16:
+      case SwizzleVecI8x16:
         o << "i8x16.swizzle";
         break;
 
@@ -1848,8 +1854,17 @@ struct PrintExpressionContents
       case RelaxedMaxVecF64x2:
         o << "f64x2.relaxed_max";
         break;
-      case RelaxedSwizzleVec8x16:
+      case RelaxedSwizzleVecI8x16:
         o << "i8x16.relaxed_swizzle";
+        break;
+      case RelaxedQ15MulrSVecI16x8:
+        o << "i16x8.relaxed_q15mulr_s";
+        break;
+      case DotI8x16I7x16SToVecI16x8:
+        o << "i16x8.dot_i8x16_i7x16_s";
+        break;
+      case DotI8x16I7x16UToVecI16x8:
+        o << "i16x8.dot_i8x16_i7x16_u";
         break;
 
       case InvalidBinary:
@@ -1969,7 +1984,11 @@ struct PrintExpressionContents
     if (curr->rtt) {
       printMedium(o, "ref.cast");
     } else {
-      printMedium(o, "ref.cast_static ");
+      if (curr->safety == RefCast::Unsafe) {
+        printMedium(o, "ref.cast_nop_static ");
+      } else {
+        printMedium(o, "ref.cast_static ");
+      }
       printHeapType(o, curr->intendedType, wasm);
     }
   }

@@ -23,6 +23,7 @@
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
+#include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
@@ -1399,7 +1400,6 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1633,8 +1633,11 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case NarrowUVecI16x8ToVecI8x16:
     case NarrowSVecI32x4ToVecI16x8:
     case NarrowUVecI32x4ToVecI16x8:
-    case SwizzleVec8x16:
-    case RelaxedSwizzleVec8x16: {
+    case SwizzleVecI8x16:
+    case RelaxedSwizzleVecI8x16:
+    case RelaxedQ15MulrSVecI16x8:
+    case DotI8x16I7x16SToVecI16x8:
+    case DotI8x16I7x16UToVecI16x8: {
       shouldBeEqualOrFirstIsUnreachable(
         curr->left->type, Type(Type::v128), curr, "v128 op");
       shouldBeEqualOrFirstIsUnreachable(
@@ -1997,6 +2000,11 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
                "ref.null requires reference-types to be enabled");
   shouldBeTrue(
     curr->type.isNullable(), curr, "ref.null types must be nullable");
+
+  // The type of the null must also be valid for the features.
+  shouldBeTrue(curr->type.getFeatures() <= getModule()->features,
+               curr->type,
+               "ref.null type should be allowed");
 }
 
 void FunctionValidator::visitRefIs(RefIs* curr) {
@@ -2372,6 +2380,8 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
                     HeapType(),
                     curr,
                     "static ref.test must set intendedType field");
+    shouldBeTrue(
+      !curr->intendedType.isBasic(), curr, "ref.test must test a non-basic");
   }
 }
 
@@ -2396,6 +2406,8 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                     HeapType(),
                     curr,
                     "static ref.cast must set intendedType field");
+    shouldBeTrue(
+      !curr->intendedType.isBasic(), curr, "ref.cast must cast to a non-basic");
   }
 }
 
@@ -2424,6 +2436,9 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                       HeapType(),
                       curr,
                       "static br_on_cast* must set intendedType field");
+      shouldBeTrue(!curr->intendedType.isBasic(),
+                   curr,
+                   "br_on_cast* must cast to a non-basic");
     }
   } else {
     shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");
@@ -2765,6 +2780,37 @@ void FunctionValidator::visitFunction(Function* curr) {
     Name name = pair.second;
     shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
   }
+
+  if (getModule()->features.hasGCNNLocals()) {
+    // If we have non-nullable locals, verify that no local.get can read a null
+    // default value.
+    // TODO: this can be fairly slow due to the LocalGraph. writing more code to
+    //       do a more specific analysis (we don't need to know all sets, just
+    //       if there is a set of a null default value that is read) could be a
+    //       lot faster.
+    bool hasNNLocals = false;
+    for (const auto& var : curr->vars) {
+      if (var.isNonNullable()) {
+        hasNNLocals = true;
+        break;
+      }
+    }
+    if (hasNNLocals) {
+      LocalGraph graph(curr);
+      for (auto& [get, sets] : graph.getSetses) {
+        auto index = get->index;
+        // It is always ok to read nullable locals, and it is always ok to read
+        // params even if they are non-nullable.
+        if (!curr->getLocalType(index).isNonNullable() ||
+            curr->isParam(index)) {
+          continue;
+        }
+        for (auto* set : sets) {
+          shouldBeTrue(!!set, index, "non-nullable local must not read null");
+        }
+      }
+    }
+  }
 }
 
 static bool checkSegmentOffset(Expression* curr,
@@ -2832,7 +2878,6 @@ void FunctionValidator::validateAlignment(
     case Type::unreachable:
       break;
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -3138,17 +3183,16 @@ static void validateTables(Module& module, ValidationInfo& info) {
       "table",
       "Non-nullable reference types are not yet supported for tables");
     if (!module.features.hasGC()) {
-      info.shouldBeTrue(table->type.isFunction() ||
-                          table->type == Type::externref,
+      info.shouldBeTrue(table->type.isFunction() || table->type == Type::anyref,
                         "table",
-                        "Only function reference types or externref are valid "
+                        "Only function reference types or anyref are valid "
                         "for table type (when GC is disabled)");
     }
     if (!module.features.hasTypedFunctionReferences()) {
       info.shouldBeTrue(table->type == Type::funcref ||
-                          table->type == Type::externref,
+                          table->type == Type::anyref,
                         "table",
-                        "Only funcref and externref are valid for table type "
+                        "Only funcref and anyref are valid for table type "
                         "(when typed-function references are disabled)");
     }
   }

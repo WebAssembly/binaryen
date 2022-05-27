@@ -32,10 +32,8 @@ namespace wasm {
 
 namespace {
 
-// We use a LUBFinder to track field info. A LUBFinder keeps track of the best
-// possible LUB so far. The only extra functionality we need here is whether
-// there is a default null value (which would force us to keep the type
-// nullable).
+// We use a LUBFinder to track field info, which includes the best LUB possible
+// as well as relevant nulls (nulls force us to keep the type nullable).
 using FieldInfo = LUBFinder;
 
 struct FieldInfoScanner
@@ -193,7 +191,7 @@ struct TypeRefining : public Pass {
         }
       }
 
-      for (auto subType : subTypes.getSubTypes(type)) {
+      for (auto subType : subTypes.getStrictSubTypes(type)) {
         work.push(subType);
       }
     }

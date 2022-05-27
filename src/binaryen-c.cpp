@@ -70,7 +70,6 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::funcref:
       ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
       assert(x.isNull() && "unexpected non-null reference type literal");
@@ -100,10 +99,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.v128);
     case Type::funcref:
       return Literal::makeFunc(x.func);
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
-      return Literal::makeNull(Type(x.type));
+      return Literal::makeNull(Type(x.type).getHeapType());
     case Type::i31ref:
       WASM_UNREACHABLE("TODO: i31ref");
     case Type::dataref:
@@ -132,6 +130,7 @@ extern "C" {
 //
 
 // Core types
+// TODO: Deprecate BinaryenTypeExternref?
 
 BinaryenType BinaryenTypeNone(void) { return Type::none; }
 BinaryenType BinaryenTypeInt32(void) { return Type::i32; }
@@ -140,7 +139,7 @@ BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
 BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
-BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
+BinaryenType BinaryenTypeExternref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
 BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
@@ -757,7 +756,7 @@ BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
 BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
   return PromoteLowVecF32x4ToVecF64x2;
 }
-BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
+BinaryenOp BinaryenSwizzleVecI8x16(void) { return SwizzleVecI8x16; }
 BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
 BinaryenOp BinaryenRefIsData(void) { return RefIsData; }
@@ -3812,6 +3811,37 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
 
   Fatal() << "non-constant offsets aren't supported yet";
   return 0;
+}
+bool BinaryenHasMemory(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.exists;
+}
+BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.initial;
+}
+bool BinaryenMemoryHasMax(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.hasMax();
+}
+BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.max;
+}
+const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module) {
+  auto& memory = ((Module*)module)->memory;
+  if (memory.imported()) {
+    return memory.module.c_str();
+  } else {
+    return "";
+  }
+}
+const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
+  auto& memory = ((Module*)module)->memory;
+  if (memory.imported()) {
+    return memory.base.c_str();
+  } else {
+    return "";
+  }
+}
+bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.shared;
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {
