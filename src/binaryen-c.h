@@ -2514,7 +2514,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 // once not needed anymore.
 BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
 
-// Serialize a module in stack IR form. Implicity allocates the returned
+// Serialize a module in stack IR form. Implicitly allocates the returned
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
 BINARYEN_API char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef
