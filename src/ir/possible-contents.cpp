@@ -261,7 +261,6 @@ struct InfoCollector
   bool isRelevant(Expression* curr) { return curr && isRelevant(curr->type); }
 
   template<typename T> bool isRelevant(const T& vec) {
-    return true;
     for (auto* expr : vec) {
       if (isRelevant(expr->type)) {
         return true;
