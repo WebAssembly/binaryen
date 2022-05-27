@@ -222,6 +222,8 @@ struct LexFloatResult : LexResult {
   // The payload if we lexed a nan with payload. We cannot store the payload
   // directly in `d` because we do not know at this point whether we are parsing
   // an f32 or f64 and therefore we do not know what the allowable payloads are.
+  // No payload with NaN means to use the default payload for the expected float
+  // width.
   std::optional<uint64_t> nanPayload;
   double d;
 };
@@ -602,6 +604,9 @@ std::optional<LexFloatResult> float_(std::string_view in) {
         // TODO: Add error production for malformed NaN payload.
         return {};
       }
+    } else {
+      // No explicit payload necessary; we will inject the default payload
+      // later.
     }
   } else {
     return {};
