@@ -525,16 +525,4 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
   wasm.memory.segments.clear();
 }
 
-void EmscriptenGlueGenerator::renameMainArgcArgv() {
-  // If an export call ed __main_argc_argv exists rename it to main
-  Export* ex = wasm.getExportOrNull("__main_argc_argv");
-  if (!ex) {
-    BYN_TRACE("renameMain: __main_argc_argv not found\n");
-    return;
-  }
-  ex->name = "main";
-  wasm.updateMaps();
-  ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
-}
-
 } // namespace wasm
