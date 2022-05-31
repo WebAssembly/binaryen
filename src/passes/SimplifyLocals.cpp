@@ -346,10 +346,12 @@ struct SimplifyLocals
         // The problem described can also occur on the *value* and not the set
         // itself. For example, |X| above could be a local.set of a non-nullable
         // local. For that reason we must scan it all.
-        for (auto* set : FindAll<LocalSet>(*info.item).list) {
-          if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
-            invalidated.push_back(index);
-            break;
+        if (self->getModule()->features.hasGCNNLocals()) {
+          for (auto* set : FindAll<LocalSet>(*info.item).list) {
+            if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
+              invalidated.push_back(index);
+              break;
+            }
           }
         }
       }
