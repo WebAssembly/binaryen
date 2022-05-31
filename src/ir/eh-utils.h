@@ -17,6 +17,7 @@
 #ifndef wasm_ir_eh_h
 #define wasm_ir_eh_h
 
+#include "support/small_vector.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -39,6 +40,17 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm);
 
 // Calls handleBlockNestedPop for each 'Try's in a given function.
 void handleBlockNestedPops(Function* func, Module& wasm);
+
+// Given a catch body, find pops corresponding to the catch. There might be
+// pops nested inside a try inside this catch, and we must ignore them, like
+// here:
+//
+//  (catch
+//    (pop) ;; we want this
+//    (try
+//      (catch
+//        (pop) ;; but we do not want this for the outer catch
+SmallVector<Pop*, 1> findPops(Expression* expr);
 
 } // namespace EHUtils
 

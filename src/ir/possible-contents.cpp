@@ -18,7 +18,7 @@
 #include <variant>
 
 #include "ir/branch-utils.h"
-#include "ir/find_all.h"
+#include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "wasm.h"
@@ -323,7 +323,11 @@ struct InfoCollector
   void visitConst(Const* curr) {
     addRoot(curr, PossibleContents::literal(curr->value));
   }
-  void visitUnary(Unary* curr) { addRoot(curr); }
+  void visitUnary(Unary* curr) {
+    // TODO: Optimize cases like this using interpreter integration: if the
+    //       input is a Literal, we could interpret the Literal result.
+    addRoot(curr);
+  }
   void visitBinary(Binary* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
     // TODO: We could use the fact that both sides are executed unconditionally
@@ -497,14 +501,14 @@ struct InfoCollector
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: the table identity could also be used here
-    auto target = curr->heapType;
+    auto targetType = curr->heapType;
     handleCall(
       curr,
       [&](Index i) {
-        return SignatureParamLocation{target, i};
+        return SignatureParamLocation{targetType, i};
       },
       [&](Index i) {
-        return SignatureResultLocation{target, i};
+        return SignatureResultLocation{targetType, i};
       });
   }
   void visitCallRef(CallRef* curr) {
@@ -601,8 +605,10 @@ struct InfoCollector
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
     if (!isRelevant(curr->ref)) {
-      // We are not tracking references, and so we cannot properly analyze
-      // values read from them, and must assume the worst.
+      // If references are irrelevant then we will ignore them, and we won't
+      // have information about this struct.get's reference, which means we
+      // won't have information to compute relevant values for this struct.get.
+      // Instead, just mark this as an unknown value (root).
       addRoot(curr);
       return;
     }
@@ -638,7 +644,8 @@ struct InfoCollector
   }
 
   void visitArrayLen(ArrayLen* curr) {
-    // TODO: optimize when possible
+    // TODO: optimize when possible (perhaps we can infer a Literal for the
+    //       length)
     addRoot(curr);
   }
   void visitArrayCopy(ArrayCopy* curr) {
@@ -679,9 +686,9 @@ struct InfoCollector
 
       // Find the pop of the tag's contents. The body must start with such a
       // pop, which might be of a tuple.
-      FindAll<Pop> pops(body);
-      assert(!pops.list.empty());
-      auto* pop = pops.list[0];
+      auto pops = EHUtils::findPops(body);
+      assert(pops.size() == 1);
+      auto* pop = pops[0];
       assert(pop->type.size() == params.size());
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
@@ -1092,6 +1099,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       getIndex(root);
     }
     for (auto [child, parent] : info.childParents) {
+      assert(!child->type.isTuple());
       childParents[getIndex(ExpressionLocation{child, 0})] =
         getIndex(ExpressionLocation{parent, 0});
     }

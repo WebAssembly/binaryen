@@ -162,6 +162,28 @@ void handleBlockNestedPops(Function* func, Module& wasm) {
   TypeUpdating::handleNonDefaultableLocals(func, wasm);
 }
 
+SmallVector<Pop*, 1> findPops(Expression* expr) {
+  SmallVector<Pop*, 1> pops;
+  SmallVector<Expression*, 8> work;
+  work.push_back(expr);
+  while (!work.empty()) {
+    auto* curr = work.back();
+    work.pop_back();
+    if (auto* pop = curr->dynCast<Pop>()) {
+      pops.push_back(pop);
+    } else if (auto* try_ = curr->dynCast<Try>()) {
+      // We don't go into inner catch bodies; pops in inner catch bodies
+      // belong to the inner catches
+      work.push_back(try_->body);
+    } else {
+      for (auto* child : ChildIterator(curr)) {
+        work.push_back(child);
+      }
+    }
+  }
+  return pops;
+};
+
 } // namespace EHUtils
 
 } // namespace wasm
