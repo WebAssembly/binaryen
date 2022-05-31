@@ -2173,7 +2173,7 @@ void FunctionValidator::visitTry(Try* curr) {
     }
 
     auto* catchBody = curr->catchBodies[i];
-    SmallVector<Pop*, 1> pops = EHUtils::findPops(catchBody);
+    auto pops = EHUtils::findPops(catchBody);
     if (tag->sig.params == Type::none) {
       if (!shouldBeTrue(pops.empty(), curr, "")) {
         getStream() << "catch's tag (" << tagName
