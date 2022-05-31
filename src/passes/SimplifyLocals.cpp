@@ -308,7 +308,7 @@ struct SimplifyLocals
         // catch them, unlike before the move).
         //
         // Also, non-nullable local.sets cannot be moved into a try, as that may
-        // change dominance:
+        // change dominance from the perspective of the spec
         //
         //  (local.set $x X)
         //  (try
@@ -330,14 +330,14 @@ struct SimplifyLocals
         //      (local.get $x)))
         //
         // After sinking the set, the tee does not dominate the get in the
-        // catch, because ".." may throw and get there earlier.
-        // TODO: We could be more precise here and check if any catch may get
-        //       the local, however, whether we can do that depends on the
-        //       specific rules of non-nullable locals in the spec. Our
-        //       information about dominance may be more refined than what the
-        //       spec says, and we need to emit something that is valid by the
-        //       spec. See
-        //       https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
+        // catch, at least not in the simple way the spec defines it, see
+        // https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
+        // We have more refined information about control flow and dominance
+        // than the spec, and so we would see if ".." can throw or not (only if
+        // it can throw is there a branch to the catch, which can change
+        // dominance). To stay compliant with the spec, however, we must not
+        // move code regardless of whether ".." can throw - we must simply keep
+        // the set outside of the try.
         if (info.effects.throws() ||
             self->getFunction()->getLocalType(index).isNonNullable()) {
           invalidated.push_back(index);
