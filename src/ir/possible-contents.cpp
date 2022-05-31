@@ -768,7 +768,7 @@ struct InfoCollector
   void handleBreakValue(Expression* curr) {
     BranchUtils::operateOnScopeNameUsesAndSentValues(
       curr, [&](Name target, Expression* value) {
-        if (value) {
+        if (value && isRelevant(value->type)) {
           for (Index i = 0; i < value->type.size(); i++) {
             // Breaks send the contents of the break value to the branch target
             // that the break goes to.
