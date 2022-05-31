@@ -162,6 +162,12 @@ void handleBlockNestedPops(Function* func, Module& wasm) {
   TypeUpdating::handleNonDefaultableLocals(func, wasm);
 }
 
+Pop* findPop(Expression* expr) {
+  auto pops = findPops(expr);
+  assert(pops.size() == 1);
+  return pops[0];
+}
+
 SmallVector<Pop*, 1> findPops(Expression* expr) {
   SmallVector<Pop*, 1> pops;
   SmallVector<Expression*, 8> work;
