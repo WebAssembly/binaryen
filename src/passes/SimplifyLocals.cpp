@@ -299,12 +299,47 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    // Expressions that may throw cannot be sinked into 'try'. At the start of
-    // 'try', we drop all sinkables that may throw.
+    // Certain expressions cannot be sinked into 'try', and so at the start of
+    // 'try' we forget about them.
     if (curr->is<Try>()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
-        if (info.effects.throws()) {
+        // Expressions that may throw cannot be moved into a try (which might
+        // catch them, unlike before the move).
+        //
+        // Also, non-nullable local.sets cannot be moved into a try, as that may
+        // change dominance from the perspective of the spec
+        //
+        //  (local.set $x X)
+        //  (try
+        //    ..
+        //    (Y
+        //      (local.get $x))
+        //  (catch
+        //    (Z
+        //      (local.get $x)))
+        //
+        // =>
+        //
+        //  (try
+        //    ..
+        //    (Y
+        //      (local.tee $x X))
+        //  (catch
+        //    (Z
+        //      (local.get $x)))
+        //
+        // After sinking the set, the tee does not dominate the get in the
+        // catch, at least not in the simple way the spec defines it, see
+        // https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
+        // We have more refined information about control flow and dominance
+        // than the spec, and so we would see if ".." can throw or not (only if
+        // it can throw is there a branch to the catch, which can change
+        // dominance). To stay compliant with the spec, however, we must not
+        // move code regardless of whether ".." can throw - we must simply keep
+        // the set outside of the try.
+        if (info.effects.throws() ||
+            self->getFunction()->getLocalType(index).isNonNullable()) {
           invalidated.push_back(index);
         }
       }
