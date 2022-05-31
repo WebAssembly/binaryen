@@ -605,8 +605,10 @@ struct InfoCollector
   // Struct operations access the struct fields' locations.
   void visitStructGet(StructGet* curr) {
     if (!isRelevant(curr->ref)) {
-      // We are not tracking references, and so we cannot properly analyze
-      // values read from them, and must assume the worst.
+      // If references are irrelevant then we will ignore them, and we won't
+      // have information about this struct.get's reference, which means we
+      // won't have information to compute relevant values for this struct.get.
+      // Instead, just mark this as an unknown value (root).
       addRoot(curr);
       return;
     }
