@@ -841,7 +841,7 @@ std::optional<uint32_t> Token::getI32() const {
 
 std::optional<double> Token::getF64() const {
   constexpr int signif = 52;
-  constexpr uint64_t nanMask = (1ull << signif) - 1;
+  constexpr uint64_t payloadMask = (1ull << signif) - 1;
   constexpr uint64_t nanDefault = 1ull << (signif - 1);
   if (auto* tok = std::get_if<FloatTok>(&data)) {
     double d = tok->d;
@@ -851,7 +851,7 @@ std::optional<double> Token::getF64() const {
       uint64_t bits;
       static_assert(sizeof(bits) == sizeof(d));
       memcpy(&bits, &d, sizeof(bits));
-      bits = (bits & ~nanMask) | payload;
+      bits = (bits & ~payloadMask) | payload;
       memcpy(&d, &bits, sizeof(bits));
     }
     return d;
@@ -870,7 +870,7 @@ std::optional<double> Token::getF64() const {
 
 std::optional<float> Token::getF32() const {
   constexpr int signif = 23;
-  constexpr uint32_t nanMask = (1u << signif) - 1;
+  constexpr uint32_t payloadMask = (1u << signif) - 1;
   constexpr uint64_t nanDefault = 1ull << (signif - 1);
   if (auto* tok = std::get_if<FloatTok>(&data)) {
     float f = tok->d;
@@ -884,7 +884,7 @@ std::optional<float> Token::getF32() const {
       uint32_t bits;
       static_assert(sizeof(bits) == sizeof(f));
       memcpy(&bits, &f, sizeof(bits));
-      bits = (bits & ~nanMask) | payload;
+      bits = (bits & ~payloadMask) | payload;
       memcpy(&f, &bits, sizeof(bits));
     }
     return f;
