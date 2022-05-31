@@ -644,7 +644,8 @@ struct InfoCollector
   }
 
   void visitArrayLen(ArrayLen* curr) {
-    // TODO: optimize when possible
+    // TODO: optimize when possible (perhaps we can infer a Literal for the
+    //       length)
     addRoot(curr);
   }
   void visitArrayCopy(ArrayCopy* curr) {
