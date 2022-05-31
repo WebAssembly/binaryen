@@ -41,7 +41,7 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm);
 // Calls handleBlockNestedPop for each 'Try's in a given function.
 void handleBlockNestedPops(Function* func, Module& wasm);
 
-// Given a catch body, find pops corresponding to the catch. (There might be
+// Given a catch body, find pops corresponding to the catch. There might be
 // pops nested inside a try inside this catch, and we must ignore them, like
 // here:
 //

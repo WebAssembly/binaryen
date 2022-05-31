@@ -1099,6 +1099,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       getIndex(root);
     }
     for (auto [child, parent] : info.childParents) {
+      assert(!child->type.isTuple());
       childParents[getIndex(ExpressionLocation{child, 0})] =
         getIndex(ExpressionLocation{parent, 0});
     }
