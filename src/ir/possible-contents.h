@@ -58,6 +58,15 @@ namespace wasm {
 //                     not track what they might be, so we must assume the worst
 //                     in the calling code.
 //
+// Note that we prefer not to emit ExactType{i32} etc., or any other type that
+// has no subtyping: instead, we emit Many for such things. While ExactType{i32}
+// would be correct, it adds no additional information: we know the type from
+// the wasm, and we know no subtype is possible, so we know it exactly.
+// Furthermore, using Many instead simplifies the logic in various places, in
+// particular, Many is a clear signal that we've hit the worst case and can't
+// do any better in that location, and can stop looking at it. If instead of
+// Many we emitted ExactType{i32} we'd need to also check for an exact type of
+// a type without subtypes, when trying to reason about hitting the worst case.
 class PossibleContents {
   struct None : public std::monostate {};
 
@@ -274,16 +283,16 @@ struct LocalLocation {
   }
 };
 
-// The location of a branch target in a function, identified by its name.
-struct BranchLocation {
+// The location of a break target in a function, identified by its name.
+struct BreakTargetLocation {
   Function* func;
   Name target;
   // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
   // That is, if the branch target has a tuple type, then each branch to that
-  // location sends a tuple, and we'll have a separate BranchLocation for each,
-  // indexed by the index in the tuple that the branch sends.
+  // location sends a tuple, and we'll have a separate BreakTargetLocation for
+  // each, indexed by the index in the tuple that the branch sends.
   Index tupleIndex;
-  bool operator==(const BranchLocation& other) const {
+  bool operator==(const BreakTargetLocation& other) const {
     return func == other.func && target == other.target &&
            tupleIndex == other.tupleIndex;
   }
@@ -369,7 +378,7 @@ struct SpecialLocation {
 using Location = std::variant<ExpressionLocation,
                               ResultLocation,
                               LocalLocation,
-                              BranchLocation,
+                              BreakTargetLocation,
                               GlobalLocation,
                               SignatureParamLocation,
                               SignatureResultLocation,
@@ -415,8 +424,8 @@ template<> struct hash<wasm::LocalLocation> {
   }
 };
 
-template<> struct hash<wasm::BranchLocation> {
-  size_t operator()(const wasm::BranchLocation& loc) const {
+template<> struct hash<wasm::BreakTargetLocation> {
+  size_t operator()(const wasm::BreakTargetLocation& loc) const {
     return std::hash<std::pair<size_t, std::pair<wasm::Name, wasm::Index>>>{}(
       {size_t(loc.func), {loc.target, loc.tupleIndex}});
   }

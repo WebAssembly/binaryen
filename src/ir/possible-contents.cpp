@@ -69,11 +69,8 @@ void PossibleContents::combine(const PossibleContents& other) {
     // At least one is not a reference. We could in principle try to find
     // ExactType here, say as the combination of two different constants, but
     // since there is no subtyping between non-ref types, ExactType would not
-    // carry any more information than Many. Furthermore, using Many here
-    // makes it simpler in ContentOracle's flow to know when to stop flowing a
-    // value: Many is a clear signal that we've hit the worst case and can't
-    // do any better in that location, and can stop there (otherwise, we'd
-    // need to check the ExactType to see if it is the worst case or not).
+    // carry any more information than Many. See the comment in
+    // possible-contents.h on ExactType at the top.
     value = Many();
     return;
   }
@@ -190,7 +187,7 @@ namespace {
 
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
-struct CollectedInfo {
+struct CollectedFuncInfo {
   // All the links we found in this function. Rarely are there duplicates
   // in this list (say when writing to the same global location from another
   // global location), and we do not try to deduplicate here, just store them in
@@ -217,21 +214,21 @@ struct CollectedInfo {
   // no possible contents, and now it does, then we have DataLocations to
   // update. Likewise, when the second local.get is updated we must do the same,
   // but again which DataLocations we update depends on the ref passed to the
-  // struct.get. To handle such things, we set add a childParent link, and then
+  // struct.set. To handle such things, we set add a childParent link, and then
   // when we update the child we can find the parent and handle any special
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
 };
 
 // Walk the wasm and find all the links we need to care about, and the locations
-// and roots related to them. This builds up a CollectedInfo data structure.
+// and roots related to them. This builds up a CollectedFuncInfo data structure.
 // After all InfoCollectors run, those data structures will be merged and the
 // main flow will begin.
 struct InfoCollector
   : public PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
-  CollectedInfo& info;
+  CollectedFuncInfo& info;
 
-  InfoCollector(CollectedInfo& info) : info(info) {}
+  InfoCollector(CollectedFuncInfo& info) : info(info) {}
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
@@ -261,7 +258,6 @@ struct InfoCollector
   bool isRelevant(Expression* curr) { return curr && isRelevant(curr->type); }
 
   template<typename T> bool isRelevant(const T& vec) {
-    return true;
     for (auto* expr : vec) {
       if (isRelevant(expr->type)) {
         return true;
@@ -303,7 +299,8 @@ struct InfoCollector
   void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
     // We could infer the exact type here, but as no subtyping is possible, it
-    // would have no benefit, so just add a generic root (which will be a Many).
+    // would have no benefit, so just add a generic root, which will be "Many."
+    // See the comment in possible-contents.h on ExactType at the top.
     addRoot(curr);
   }
   void visitStore(Store* curr) {}
@@ -775,8 +772,9 @@ struct InfoCollector
           for (Index i = 0; i < value->type.size(); i++) {
             // Breaks send the contents of the break value to the branch target
             // that the break goes to.
-            info.links.push_back({ExpressionLocation{value, i},
-                                  BranchLocation{getFunction(), target, i}});
+            info.links.push_back(
+              {ExpressionLocation{value, i},
+               BreakTargetLocation{getFunction(), target, i}});
           }
         }
       });
@@ -787,7 +785,7 @@ struct InfoCollector
     if (isRelevant(curr->type)) {
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
-          info.links.push_back({BranchLocation{getFunction(), target, i},
+          info.links.push_back({BreakTargetLocation{getFunction(), target, i},
                                 ExpressionLocation{curr, i}});
         }
       });
@@ -808,7 +806,7 @@ struct InfoCollector
     }
   }
 
-  // See the comment on CollectedInfo::childParents.
+  // See the comment on CollectedFuncInfo::childParents.
   void addSpecialChildParentLink(Expression* child, Expression* parent) {
     if (isRelevant(child->type)) {
       info.childParents[child] = parent;
@@ -908,7 +906,7 @@ private:
     return {getIndex(link.from), getIndex(link.to)};
   }
 
-  // See the comment on CollectedInfo::childParents. This is the merged info
+  // See the comment on CollectedFuncInfo::childParents. This is the merged info
   // from all the functions and the global scope.
   std::unordered_map<LocationIndex, LocationIndex> childParents;
 
@@ -1029,8 +1027,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #endif
 
   // First, collect information from each function.
-  ModuleUtils::ParallelFunctionAnalysis<CollectedInfo> analysis(
-    wasm, [&](Function* func, CollectedInfo& info) {
+  ModuleUtils::ParallelFunctionAnalysis<CollectedFuncInfo> analysis(
+    wasm, [&](Function* func, CollectedFuncInfo& info) {
       InfoCollector finder(info);
 
       if (func->imported()) {
@@ -1579,7 +1577,7 @@ void Flower::dump(Location location) {
               << '\n';
   } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
     std::cout << "  globalloc " << loc->name << '\n';
-  } else if (auto* loc = std::get_if<BranchLocation>(&location)) {
+  } else if (auto* loc = std::get_if<BreakTargetLocation>(&location)) {
     std::cout << "  branchloc " << loc->func->name << " : " << loc->target
               << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<SignatureParamLocation>(&location)) {
