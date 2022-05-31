@@ -164,6 +164,9 @@ void handleBlockNestedPops(Function* func, Module& wasm) {
 
 Pop* findPop(Expression* expr) {
   auto pops = findPops(expr);
+  if (pops.size() == 0) {
+    return nullptr;
+  }
   assert(pops.size() == 1);
   return pops[0];
 }

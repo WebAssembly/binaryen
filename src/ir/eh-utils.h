@@ -50,11 +50,14 @@ void handleBlockNestedPops(Function* func, Module& wasm);
 //    (try
 //      (catch
 //        (pop) ;; but we do not want this for the outer catch
+//
+// If there is no pop, which can happen if the tag has no params, then nullptr
+// is returned.
 Pop* findPop(Expression* expr);
 
 // Like findPop(), but it does *not* assume that the module validates. A catch
-// might therefore have 0 or more than 1 pop. This is primarily useful in the
-// validator - normally you should call findPop(), above.
+// might therefore have any number of pops. This function is primarily useful in
+// the validator - normally you should call findPop(), above.
 SmallVector<Pop*, 1> findPops(Expression* expr);
 
 } // namespace EHUtils
