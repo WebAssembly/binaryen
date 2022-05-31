@@ -1380,10 +1380,8 @@ void Flower::connectDuringFlow(Location from, Location to) {
     newLinks.push_back(newIndexLink);
     links.insert(newIndexLink);
 
-    // In addition to adding the link, send the contents along it right now. (If
-    // we do not send the contents then we'd be assuming that some future
-    // flowing value will carry the contents along with it, but that might not
-    // happen.)
+    // In addition to adding the link, which will ensure new contents appearing
+    // later will be sent along, we also update with the current contents.
     updateContents(to, getContents(getIndex(from)));
   }
 }
