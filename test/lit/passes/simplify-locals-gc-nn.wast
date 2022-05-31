@@ -92,20 +92,22 @@
   ;; CHECK:      (func $test-nested-nn
   ;; CHECK-NEXT:  (local $nullable anyref)
   ;; CHECK-NEXT:  (local $nn (ref any))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $nullable
+  ;; CHECK-NEXT:   (block $block (result (ref any))
+  ;; CHECK-NEXT:    (local.set $nn
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (local.set $nullable
-  ;; CHECK-NEXT:     (block $block (result (ref any))
-  ;; CHECK-NEXT:      (local.set $nn
-  ;; CHECK-NEXT:       (ref.as_non_null
-  ;; CHECK-NEXT:        (ref.null any)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (ref.null any)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $nullable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all

@@ -306,8 +306,12 @@ struct SimplifyLocals
       for (auto& [index, info] : self->sinkables) {
         // Expressions that may throw cannot be moved into a try (which might
         // catch them, unlike before the move).
-        //
-        // Also, non-nullable local.sets cannot be moved into a try, as that may
+        if (info.effects.throws()) {
+          invalidated.push_back(index);
+          continue;
+        }
+
+        // Non-nullable local.sets cannot be moved into a try, as that may
         // change dominance from the perspective of the spec
         //
         //  (local.set $x X)
@@ -338,9 +342,15 @@ struct SimplifyLocals
         // dominance). To stay compliant with the spec, however, we must not
         // move code regardless of whether ".." can throw - we must simply keep
         // the set outside of the try.
-        if (info.effects.throws() ||
-            self->getFunction()->getLocalType(index).isNonNullable()) {
-          invalidated.push_back(index);
+        //
+        // The problem described can also occur on the *value* and not the set
+        // itself. For example, |X| above could be a local.set of a non-nullable
+        // local. For that reason we must scan it all.
+        for (auto* set : FindAll<LocalSet>(*info.item).list) {
+          if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
+            invalidated.push_back(index);
+            break;
+          }
         }
       }
       for (auto index : invalidated) {
