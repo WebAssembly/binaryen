@@ -995,7 +995,8 @@ private:
 
   // New links are processed when we are not iterating on any links, at a safe
   // time. This adds to the appropriate |targets| vectors, which are definitely
-  // not being operated on at this time.
+  // not being operated on at the time this method is called (which is after
+  // we finished the current |targets| iteration).
   void updateNewLinks();
 
   // Contents sent to a global location can be filtered in a special way during
