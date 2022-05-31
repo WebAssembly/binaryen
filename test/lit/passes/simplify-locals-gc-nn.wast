@@ -24,15 +24,17 @@
   ;; CHECK-NEXT: )
   (func $test
     (local $nn (ref any))
-    ;; We should not sink this set into the try, as we want to avoid the risk of
-    ;; changing dominance. TODO This try has no extra branches to the
+    ;; We should not sink this set into the try, as the spec does not allow it
+    ;; even though we are not changing dominance (we are not changing it,
+    ;; because there is nothing that can throw in the try's body that can reach
+    ;; the catch_all before the local.set that we move there). See
+    ;; https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
     (local.set $nn
       (ref.as_non_null
         (ref.null any)
       )
     )
     (try
-      ;;(call $test)
       (do
         (drop
           (local.get $nn)
