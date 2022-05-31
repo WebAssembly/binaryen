@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-// Usage note
-// ----------
-//
-// This parser is a work in progress and this file should not yet be included
-// anywhere except for in its own tests. Once the parser is usable, we will add
-// wat-parser.h to declare the public parsing API and wat-parser.cpp to
-// implement the public parsing functions in terms of the private API in this
-// header. The private API will stay in this header rather than moving to
-// wat-parser.cpp so that we can continue to unit test it.
-
 #include <cassert>
 #include <cctype>
 #include <cmath>
@@ -31,6 +21,8 @@
 #include <optional>
 #include <sstream>
 #include <variant>
+
+#include "wat-lexer.h"
 
 using namespace std::string_view_literals;
 
@@ -106,34 +98,32 @@ public:
   void takeAll() { lexedSize = input.size(); }
 };
 
-enum Signedness { Unsigned, Signed };
-
 enum OverflowBehavior { DisallowOverflow, IgnoreOverflow };
 
 std::optional<int> getDigit(char c) {
   if ('0' <= c && c <= '9') {
-    return {c - '0'};
+    return c - '0';
   }
-  return std::nullopt;
+  return {};
 }
 
 std::optional<int> getHexDigit(char c) {
   if ('0' <= c && c <= '9') {
-    return {c - '0'};
+    return c - '0';
   }
   if ('A' <= c && c <= 'F') {
-    return {10 + c - 'A'};
+    return 10 + c - 'A';
   }
   if ('a' <= c && c <= 'f') {
-    return {10 + c - 'a'};
+    return 10 + c - 'a';
   }
-  return std::nullopt;
+  return {};
 }
 
 // The result of lexing an integer token fragment.
 struct LexIntResult : LexResult {
   uint64_t n;
-  Signedness signedness;
+  Sign sign;
 };
 
 // Lexing context that accumulates lexed input to produce an integer token
@@ -143,8 +133,7 @@ struct LexIntCtx : LexCtx {
 
 private:
   uint64_t n = 0;
-  Signedness signedness = Unsigned;
-  bool negative = false;
+  Sign sign = NoSign;
   bool overflow = false;
 
 public:
@@ -153,13 +142,12 @@ public:
   // Lex only the underlying span, ignoring the overflow and value.
   std::optional<LexIntResult> lexedRaw() {
     if (auto basic = LexCtx::lexed()) {
-      return LexIntResult{*basic, 0, Unsigned};
+      return LexIntResult{*basic, 0, NoSign};
     }
     return {};
   }
 
   std::optional<LexIntResult> lexed() {
-    // Check most significant bit for overflow of signed numbers.
     if (overflow) {
       return {};
     }
@@ -167,28 +155,28 @@ public:
     if (!basic) {
       return {};
     }
-    if (signedness == Signed) {
-      if (negative) {
-        if (n > (1ull << 63)) {
-          // TODO: Add error production for signed underflow.
-          return {};
-        }
-      } else {
-        if (n > (1ull << 63) - 1) {
-          // TODO: Add error production for signed overflow.
-          return {};
-        }
+    // Check most significant bit for overflow of signed numbers.
+    if (sign == Neg) {
+      if (n > (1ull << 63)) {
+        // TODO: Add error production for signed underflow.
+        return {};
+      }
+    } else if (sign == Pos) {
+      if (n > (1ull << 63) - 1) {
+        // TODO: Add error production for signed overflow.
+        return {};
       }
     }
-    return {LexIntResult{*basic, negative ? -n : n, signedness}};
+    return LexIntResult{*basic, sign == Neg ? -n : n, sign};
   }
 
   void takeSign() {
     if (takePrefix("+"sv)) {
-      signedness = Signed;
+      sign = Pos;
     } else if (takePrefix("-"sv)) {
-      signedness = Signed;
-      negative = true;
+      sign = Neg;
+    } else {
+      sign = NoSign;
     }
   }
 
@@ -232,6 +220,8 @@ struct LexFloatResult : LexResult {
   // The payload if we lexed a nan with payload. We cannot store the payload
   // directly in `d` because we do not know at this point whether we are parsing
   // an f32 or f64 and therefore we do not know what the allowable payloads are.
+  // No payload with NaN means to use the default payload for the expected float
+  // width.
   std::optional<uint64_t> nanPayload;
   double d;
 };
@@ -295,9 +285,9 @@ public:
   std::optional<LexStrResult> lexed() {
     if (auto basic = LexCtx::lexed()) {
       if (escapeBuilder) {
-        return {LexStrResult{*basic, {escapeBuilder->str()}}};
+        return LexStrResult{*basic, {escapeBuilder->str()}};
       } else {
-        return {LexStrResult{*basic, {}}};
+        return LexStrResult{*basic, {}};
       }
     }
     return {};
@@ -612,6 +602,9 @@ std::optional<LexFloatResult> float_(std::string_view in) {
         // TODO: Add error production for malformed NaN payload.
         return {};
       }
+    } else {
+      // No explicit payload necessary; we will inject the default payload
+      // later.
     }
   } else {
     return {};
@@ -786,258 +779,127 @@ std::optional<LexResult> keyword(std::string_view in) {
   return ctx.lexed();
 }
 
-// ======
-// Tokens
-// ======
-
-struct LParenTok {
-  friend std::ostream& operator<<(std::ostream& os, const LParenTok&) {
-    return os << "'('";
-  }
-
-  friend bool operator==(const LParenTok&, const LParenTok&) { return true; }
-};
-
-struct RParenTok {
-  friend std::ostream& operator<<(std::ostream& os, const RParenTok&) {
-    return os << "')'";
-  }
-
-  friend bool operator==(const RParenTok&, const RParenTok&) { return true; }
-};
-
-struct IntTok {
-  uint64_t n;
-  Signedness signedness;
-
-  friend std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
-    return os << tok.n << (tok.signedness == Signed ? " signed" : " unsigned");
-  }
-
-  friend bool operator==(const IntTok& t1, const IntTok& t2) {
-    return t1.n == t2.n && t1.signedness == t2.signedness;
-  }
-};
-
-struct FloatTok {
-  // The payload if we lexed a nan with payload. We cannot store the payload
-  // directly in `d` because we do not know at this point whether we are parsing
-  // an f32 or f64 and therefore we do not know what the allowable payloads are.
-  std::optional<uint64_t> nanPayload;
-  double d;
-
-  friend std::ostream& operator<<(std::ostream& os, const FloatTok& tok) {
-    if (std::isnan(tok.d)) {
-      os << (std::signbit(tok.d) ? "+" : "-");
-      if (tok.nanPayload) {
-        return os << "nan:0x" << std::hex << *tok.nanPayload << std::dec;
-      }
-      return os << "nan";
-    }
-    return os << tok.d;
-  }
-
-  friend bool operator==(const FloatTok& t1, const FloatTok& t2) {
-    return std::signbit(t1.d) == std::signbit(t2.d) &&
-           (t1.d == t2.d || (std::isnan(t1.d) && std::isnan(t2.d) &&
-                             t1.nanPayload == t2.nanPayload));
-  }
-};
-
-struct IdTok {
-  friend std::ostream& operator<<(std::ostream& os, const IdTok&) {
-    return os << "id";
-  }
-
-  friend bool operator==(const IdTok&, const IdTok&) { return true; }
-};
-
-struct StringTok {
-  std::optional<std::string> str;
-
-  friend std::ostream& operator<<(std::ostream& os, const StringTok& tok) {
-    if (tok.str) {
-      os << '"' << *tok.str << '"';
-    } else {
-      os << "(raw string)";
-    }
-    return os;
-  }
-
-  friend bool operator==(const StringTok& t1, const StringTok& t2) {
-    return t1.str == t2.str;
-  }
-};
-
-struct KeywordTok {
-  friend std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
-    return os << "keyword";
-  }
-
-  friend bool operator==(const KeywordTok&, const KeywordTok&) { return true; }
-};
-
-struct Token {
-  using Data = std::variant<LParenTok,
-                            RParenTok,
-                            IntTok,
-                            FloatTok,
-                            IdTok,
-                            StringTok,
-                            KeywordTok>;
-
-  std::string_view span;
-  Data data;
-
-  // Suppress clang-tidy false positive about unused functions.
-  [[maybe_unused]] friend std::ostream& operator<<(std::ostream& os,
-                                                   const Token& tok) {
-    std::visit([&](const auto& t) { os << t; }, tok.data);
-    return os << " \"" << tok.span << "\"";
-  }
-
-  [[maybe_unused]] friend bool operator==(const Token& t1, const Token& t2) {
-    return t1.span == t2.span &&
-           std::visit(
-             [](auto& d1, auto& d2) {
-               if constexpr (std::is_same_v<decltype(d1), decltype(d2)>) {
-                 return d1 == d2;
-               } else {
-                 return false;
-               }
-             },
-             t1.data,
-             t2.data);
-  }
-};
-
-struct TextPos {
-  size_t line;
-  size_t col;
-
-  bool operator==(const TextPos& other) const {
-    return line == other.line && col == other.col;
-  }
-  bool operator!=(const TextPos& other) const { return !(*this == other); }
-
-  // Suppress clang-tidy false positive about unused functions.
-  [[maybe_unused]] friend std::ostream& operator<<(std::ostream& os,
-                                                   const TextPos& pos) {
-    return os << pos.line << ":" << pos.col;
-  }
-};
-
-// Lexer's purpose is twofold. First, it wraps a buffer to provide a tokenizing
-// iterator over it. Second, it implements that iterator itself. Also provides
-// utilities for locating the text position of tokens within the buffer. Text
-// positions are computed on demand rather than eagerly because they are
-// typically only needed when there is an error to report.
-struct Lexer {
-  using iterator = Lexer;
-  using difference_type = std::ptrdiff_t;
-  using value_type = Token;
-  using pointer = const Token*;
-  using reference = const Token&;
-  using iterator_category = std::forward_iterator_tag;
-
-  std::string_view buffer;
-  size_t index = 0;
-  std::optional<Token> curr;
-
-  // The end sentinel.
-  Lexer() = default;
-
-  Lexer(std::string_view buffer) : buffer(buffer) {
-    skipSpace();
-    lexToken();
-    skipSpace();
-  }
-
-  std::string_view next() const { return buffer.substr(index); }
-
-  void skipSpace() {
-    if (auto ctx = space(next())) {
-      index += ctx->span.size();
-    }
-  }
-
-  void lexToken() {
-    // TODO: Ensure we're getting the longest possible match.
-    Token tok;
-    if (auto t = lparen(next())) {
-      tok = Token{t->span, LParenTok{}};
-    } else if (auto t = rparen(next())) {
-      tok = Token{t->span, RParenTok{}};
-    } else if (auto t = ident(next())) {
-      tok = Token{t->span, IdTok{}};
-    } else if (auto t = integer(next())) {
-      tok = Token{t->span, IntTok{t->n, t->signedness}};
-    } else if (auto t = float_(next())) {
-      tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
-    } else if (auto t = str(next())) {
-      tok = Token{t->span, StringTok{t->str}};
-    } else if (auto t = keyword(next())) {
-      tok = Token{t->span, KeywordTok{}};
-    } else {
-      // TODO: Do something about lexing errors.
-      curr = std::nullopt;
-      return;
-    }
-    index += tok.span.size();
-    curr = {tok};
-  }
-
-  Lexer& operator++() {
-    // Preincrement
-    lexToken();
-    skipSpace();
-    return *this;
-  }
-
-  Lexer operator++(int) {
-    // Postincrement
-    Lexer ret = *this;
-    ++(*this);
-    return ret;
-  }
-
-  const Token& operator*() { return *curr; }
-  const Token* operator->() { return &*curr; }
-
-  bool operator==(const Lexer& other) const {
-    // The iterator is equal to the end sentinel when there is no current token.
-    if (!curr && !other.curr) {
-      return true;
-    }
-    // Otherwise they are equivalent when they are at the same position.
-    return index == other.index;
-  }
-
-  bool operator!=(const Lexer& other) const { return !(*this == other); }
-
-  Lexer begin() { return *this; }
-
-  Lexer end() { return Lexer(); }
-
-  TextPos position(const char* c) {
-    assert(size_t(c - buffer.data()) < buffer.size());
-    TextPos pos{1, 0};
-    for (const char* p = buffer.data(); p != c; ++p) {
-      if (*p == '\n') {
-        pos.line++;
-        pos.col = 0;
-      } else {
-        pos.col++;
-      }
-    }
-    return pos;
-  }
-
-  TextPos position(std::string_view span) { return position(span.data()); }
-
-  TextPos position(Token tok) { return position(tok.span); }
-};
-
 } // anonymous namespace
+
+void Lexer::skipSpace() {
+  if (auto ctx = space(next())) {
+    index += ctx->span.size();
+  }
+}
+
+void Lexer::lexToken() {
+  // TODO: Ensure we're getting the longest possible match.
+  Token tok;
+  if (auto t = lparen(next())) {
+    tok = Token{t->span, LParenTok{}};
+  } else if (auto t = rparen(next())) {
+    tok = Token{t->span, RParenTok{}};
+  } else if (auto t = ident(next())) {
+    tok = Token{t->span, IdTok{}};
+  } else if (auto t = integer(next())) {
+    tok = Token{t->span, IntTok{t->n, t->sign}};
+  } else if (auto t = float_(next())) {
+    tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
+  } else if (auto t = str(next())) {
+    tok = Token{t->span, StringTok{t->str}};
+  } else if (auto t = keyword(next())) {
+    tok = Token{t->span, KeywordTok{}};
+  } else {
+    // TODO: Do something about lexing errors.
+    curr = std::nullopt;
+    return;
+  }
+  index += tok.span.size();
+  curr = {tok};
+}
+
+TextPos Lexer::position(const char* c) {
+  assert(size_t(c - buffer.data()) < buffer.size());
+  TextPos pos{1, 0};
+  for (const char* p = buffer.data(); p != c; ++p) {
+    if (*p == '\n') {
+      pos.line++;
+      pos.col = 0;
+    } else {
+      pos.col++;
+    }
+  }
+  return pos;
+}
+
+bool TextPos::operator==(const TextPos& other) const {
+  return line == other.line && col == other.col;
+}
+
+bool IntTok::operator==(const IntTok& other) const {
+  return n == other.n && sign == other.sign;
+}
+
+bool FloatTok::operator==(const FloatTok& other) const {
+  return std::signbit(d) == std::signbit(other.d) &&
+         (d == other.d || (std::isnan(d) && std::isnan(other.d) &&
+                           nanPayload == other.nanPayload));
+}
+
+bool Token::operator==(const Token& other) const {
+  return span == other.span &&
+         std::visit(
+           [](auto& t1, auto& t2) {
+             if constexpr (std::is_same_v<decltype(t1), decltype(t2)>) {
+               return t1 == t2;
+             } else {
+               return false;
+             }
+           },
+           data,
+           other.data);
+}
+
+std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
+  return os << pos.line << ":" << pos.col;
+}
+
+std::ostream& operator<<(std::ostream& os, const LParenTok&) {
+  return os << "'('";
+}
+
+std::ostream& operator<<(std::ostream& os, const RParenTok&) {
+  return os << "')'";
+}
+
+std::ostream& operator<<(std::ostream& os, const IdTok&) { return os << "id"; }
+
+std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
+  return os << (tok.sign == Pos ? "+" : tok.sign == Neg ? "-" : "") << tok.n;
+}
+
+std::ostream& operator<<(std::ostream& os, const FloatTok& tok) {
+  if (std::isnan(tok.d)) {
+    os << (std::signbit(tok.d) ? "+" : "-");
+    if (tok.nanPayload) {
+      return os << "nan:0x" << std::hex << *tok.nanPayload << std::dec;
+    }
+    return os << "nan";
+  }
+  return os << tok.d;
+}
+
+std::ostream& operator<<(std::ostream& os, const StringTok& tok) {
+  if (tok.str) {
+    os << '"' << *tok.str << '"';
+  } else {
+    os << "(raw string)";
+  }
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
+  return os << "keyword";
+}
+
+std::ostream& operator<<(std::ostream& os, const Token& tok) {
+  std::visit([&](const auto& t) { os << t; }, tok.data);
+  return os << " \"" << tok.span << "\"";
+}
 
 } // namespace wasm::WATParser

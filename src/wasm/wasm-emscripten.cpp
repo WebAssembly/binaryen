@@ -477,12 +477,16 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     if (exp) {
       if (exp->kind == ExternalKind::Function) {
         auto* main = wasm.getFunction(exp->value);
-        mainReadsParams = true;
-        // If main does not read its parameters, it will just be a stub that
-        // calls __original_main (which has no parameters).
-        if (auto* call = main->body->dynCast<Call>()) {
-          if (call->operands.empty()) {
-            mainReadsParams = false;
+        mainReadsParams = main->getNumParams() > 0;
+        if (mainReadsParams) {
+          // Main could also be stub that just calls __original_main with
+          // no parameters.
+          // TODO(sbc): Remove this once https://reviews.llvm.org/D75277
+          // lands.
+          if (auto* call = main->body->dynCast<Call>()) {
+            if (call->operands.empty()) {
+              mainReadsParams = false;
+            }
           }
         }
       }
@@ -523,18 +527,6 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     lastEnd = offset + seg.data.size();
   }
   wasm.memory.segments.clear();
-}
-
-void EmscriptenGlueGenerator::renameMainArgcArgv() {
-  // If an export call ed __main_argc_argv exists rename it to main
-  Export* ex = wasm.getExportOrNull("__main_argc_argv");
-  if (!ex) {
-    BYN_TRACE("renameMain: __main_argc_argv not found\n");
-    return;
-  }
-  ex->name = "main";
-  wasm.updateMaps();
-  ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
 }
 
 } // namespace wasm
