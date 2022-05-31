@@ -1099,6 +1099,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       getIndex(root);
     }
     for (auto [child, parent] : info.childParents) {
+      // In practice we do not have any childParent connections with a tuple;
+      // assert on that just to be safe.
       assert(!child->type.isTuple());
       childParents[getIndex(ExpressionLocation{child, 0})] =
         getIndex(ExpressionLocation{parent, 0});
