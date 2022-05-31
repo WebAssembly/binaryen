@@ -1459,7 +1459,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     // TODO: The Global case may have a different cone type than the heapType,
     //       which we could use here.
     // TODO: A Global may refer to an immutable global, which we can read the
-    //       field from potentially (reading it from the struct.new/array.now
+    //       field from potentially (reading it from the struct.new/array.new
     //       in the definition of it, if it is not imported; or, we could track
     //       the contents of immutable fields of allocated objects, and not just
     //       represent them as ExactType).
