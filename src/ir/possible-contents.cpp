@@ -323,7 +323,11 @@ struct InfoCollector
   void visitConst(Const* curr) {
     addRoot(curr, PossibleContents::literal(curr->value));
   }
-  void visitUnary(Unary* curr) { addRoot(curr); }
+  void visitUnary(Unary* curr) {
+    // TODO: Optimize cases like this using interpreter integration: if the
+    //       input is a Literal, we could interpret the Literal result.
+    addRoot(curr);
+  }
   void visitBinary(Binary* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
     // TODO: We could use the fact that both sides are executed unconditionally
@@ -497,14 +501,14 @@ struct InfoCollector
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: the table identity could also be used here
-    auto target = curr->heapType;
+    auto targetType = curr->heapType;
     handleCall(
       curr,
       [&](Index i) {
-        return SignatureParamLocation{target, i};
+        return SignatureParamLocation{targetType, i};
       },
       [&](Index i) {
-        return SignatureResultLocation{target, i};
+        return SignatureResultLocation{targetType, i};
       });
   }
   void visitCallRef(CallRef* curr) {
