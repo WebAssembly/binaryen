@@ -993,10 +993,11 @@ private:
   // on the |targets| vectors during the flow (which iterates on |targets|).
   std::vector<IndexLink> newLinks;
 
-  // New links are processed when we are not iterating on any links, at a safe
-  // time. This adds to the appropriate |targets| vectors, which are definitely
-  // not being operated on at the time this method is called (which is after
-  // we finished the current |targets| iteration).
+  // New links must be added to the appropriate |targets| vector (that is, the
+  // |targets| of the source must get a new target added to it). We are
+  // iterating on |targets| for most of our work, however, so we must not alter
+  // it at that time. This method is called later, after there is no risk of
+  // aliasing, and it appends to the appropriate |targets| vector.
   void updateNewLinks();
 
   // Contents sent to a global location can be filtered in a special way during
