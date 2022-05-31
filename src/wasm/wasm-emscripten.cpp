@@ -477,12 +477,16 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     if (exp) {
       if (exp->kind == ExternalKind::Function) {
         auto* main = wasm.getFunction(exp->value);
-        mainReadsParams = true;
-        // If main does not read its parameters, it will just be a stub that
-        // calls __original_main (which has no parameters).
-        if (auto* call = main->body->dynCast<Call>()) {
-          if (call->operands.empty()) {
-            mainReadsParams = false;
+        mainReadsParams = main->getNumParams() > 0;
+        if (mainReadsParams) {
+          // Main could also be stub that just calls __original_main with
+          // no parameters.
+          // TODO(sbc): Remove this once https://reviews.llvm.org/D75277
+          // lands.
+          if (auto* call = main->body->dynCast<Call>()) {
+            if (call->operands.empty()) {
+              mainReadsParams = false;
+            }
           }
         }
       }
