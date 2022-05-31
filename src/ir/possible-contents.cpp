@@ -1099,6 +1099,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       getIndex(root);
     }
     for (auto [child, parent] : info.childParents) {
+      // In practice we do not have any childParent connections with a tuple;
+      // assert on that just to be safe.
       assert(!child->type.isTuple());
       childParents[getIndex(ExpressionLocation{child, 0})] =
         getIndex(ExpressionLocation{parent, 0});
@@ -1127,7 +1129,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     } else if (ex->kind == ExternalKind::Table) {
       // If a table is exported, assume any function in tables can be called
       // from the outside.
-      // TODO: This could be more precise about which tables
+      // TODO: This could be more precise about which tables are exported and
+      //       which are not.
       // TODO: This does not handle table.get/table.set, or call_ref, for which
       //       we'd need to see which references are used and which escape etc.
       //       For now, assume a closed world for such such advanced use cases /
@@ -1325,15 +1328,16 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   // flow, additional operations that we need to do aside from sending the new
   // contents to the statically linked targets.
 
-  if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
-    auto* targetExpr = targetExprLoc->expr;
+  if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    auto* child = exprLoc->expr;
     auto iter = childParents.find(locationIndex);
     if (iter == childParents.end()) {
       return;
     }
 
-    // The target is one of the special cases where it is an expression for whom
-    // we must know the parent in order to handle things in a special manner.
+    // This is indeed one of the special cases where it is the child of a
+    // parent, and we need to do some special handling because of that child-
+    // parent connection.
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
@@ -1342,21 +1346,21 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
 #endif
 
     if (auto* get = parent->dynCast<StructGet>()) {
-      // This is the reference child of a struct.get.
-      assert(get->ref == targetExpr);
+      // |child| is the reference child of a struct.get.
+      assert(get->ref == child);
       readFromData(get->ref->type.getHeapType(), get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
-      // This is either the reference or the value child of a struct.set.
-      assert(set->ref == targetExpr || set->value == targetExpr);
+      // |child| is either the reference or the value child of a struct.set.
+      assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
-      assert(get->ref == targetExpr);
+      assert(get->ref == child);
       readFromData(get->ref->type.getHeapType(), 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
-      assert(set->ref == targetExpr || set->value == targetExpr);
+      assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
     } else if (auto* cast = parent->dynCast<RefCast>()) {
-      assert(cast->ref == targetExpr);
+      assert(cast->ref == child);
       flowRefCast(contents, cast);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
