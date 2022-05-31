@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --simplify-locals -all --enable-gc-nn-locals -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test-nn
   ;; CHECK-NEXT:  (local $nn (ref any))
   ;; CHECK-NEXT:  (local.set $nn
   ;; CHECK-NEXT:   (ref.as_non_null
@@ -22,7 +22,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test-nn
     (local $nn (ref any))
     ;; We should not sink this set into the try, as the spec does not allow it
     ;; even though we are not changing dominance (we are not changing it,
@@ -47,4 +47,44 @@
       )
     )
   )
-)
+
+  ;; CHECK:      (func $test-nullable
+  ;; CHECK-NEXT:  (local $nullable anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (local.set $nullable
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $nullable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-nullable
+    ;; As above, but now the local is nullable. Here we *can* optimize the set
+    ;; into the try.
+    (local $nullable (ref null any))
+    (local.set $nullable
+      (ref.as_non_null
+        (ref.null any)
+      )
+    )
+    (try
+      (do
+        (drop
+          (local.get $nullable)
+        )
+      )
+      (catch_all
+        (drop
+          (local.get $nullable)
+        )
+      )
+    )
+  ))
