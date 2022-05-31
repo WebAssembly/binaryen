@@ -18,7 +18,7 @@
 #include <variant>
 
 #include "ir/branch-utils.h"
-#include "ir/find_all.h"
+#include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "wasm.h"
@@ -686,9 +686,9 @@ struct InfoCollector
 
       // Find the pop of the tag's contents. The body must start with such a
       // pop, which might be of a tuple.
-      FindAll<Pop> pops(body);
-      assert(!pops.list.empty());
-      auto* pop = pops.list[0];
+      auto pops = EHUtils::findPops(body);
+      assert(pops.size() == 1);
+      auto* pop = pops[0];
       assert(pop->type.size() == params.size());
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
