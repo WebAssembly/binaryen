@@ -772,8 +772,9 @@ struct InfoCollector
           for (Index i = 0; i < value->type.size(); i++) {
             // Breaks send the contents of the break value to the branch target
             // that the break goes to.
-            info.links.push_back({ExpressionLocation{value, i},
-                                  BranchLocation{getFunction(), target, i}});
+            info.links.push_back(
+              {ExpressionLocation{value, i},
+               BreakTargetLocation{getFunction(), target, i}});
           }
         }
       });
@@ -784,7 +785,7 @@ struct InfoCollector
     if (isRelevant(curr->type)) {
       BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
         for (Index i = 0; i < curr->type.size(); i++) {
-          info.links.push_back({BranchLocation{getFunction(), target, i},
+          info.links.push_back({BreakTargetLocation{getFunction(), target, i},
                                 ExpressionLocation{curr, i}});
         }
       });
@@ -1576,7 +1577,7 @@ void Flower::dump(Location location) {
               << '\n';
   } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
     std::cout << "  globalloc " << loc->name << '\n';
-  } else if (auto* loc = std::get_if<BranchLocation>(&location)) {
+  } else if (auto* loc = std::get_if<BreakTargetLocation>(&location)) {
     std::cout << "  branchloc " << loc->func->name << " : " << loc->target
               << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<SignatureParamLocation>(&location)) {
