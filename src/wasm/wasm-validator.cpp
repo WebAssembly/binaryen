@@ -23,6 +23,7 @@
 #include "ir/features.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
+#include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
@@ -2755,6 +2756,37 @@ void FunctionValidator::visitFunction(Function* curr) {
   for (auto& pair : curr->localNames) {
     Name name = pair.second;
     shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
+  }
+
+  if (getModule()->features.hasGCNNLocals()) {
+    // If we have non-nullable locals, verify that no local.get can read a null
+    // default value.
+    // TODO: this can be fairly slow due to the LocalGraph. writing more code to
+    //       do a more specific analysis (we don't need to know all sets, just
+    //       if there is a set of a null default value that is read) could be a
+    //       lot faster.
+    bool hasNNLocals = false;
+    for (const auto& var : curr->vars) {
+      if (var.isNonNullable()) {
+        hasNNLocals = true;
+        break;
+      }
+    }
+    if (hasNNLocals) {
+      LocalGraph graph(curr);
+      for (auto& [get, sets] : graph.getSetses) {
+        auto index = get->index;
+        // It is always ok to read nullable locals, and it is always ok to read
+        // params even if they are non-nullable.
+        if (!curr->getLocalType(index).isNonNullable() ||
+            curr->isParam(index)) {
+          continue;
+        }
+        for (auto* set : sets) {
+          shouldBeTrue(!!set, index, "non-nullable local must not read null");
+        }
+      }
+    }
   }
 }
 
