@@ -1328,15 +1328,16 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   // flow, additional operations that we need to do aside from sending the new
   // contents to the statically linked targets.
 
-  if (auto* targetExprLoc = std::get_if<ExpressionLocation>(&location)) {
-    auto* targetExpr = targetExprLoc->expr;
+  if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    auto* child = exprLoc->expr;
     auto iter = childParents.find(locationIndex);
     if (iter == childParents.end()) {
       return;
     }
 
-    // The target is one of the special cases where it is an expression for whom
-    // we must know the parent in order to handle things in a special manner.
+    // This is indeed one of the special cases where it is the child of a
+    // parent, and we need to do some special handling because of that child-
+    // parent connection.
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
@@ -1345,21 +1346,21 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
 #endif
 
     if (auto* get = parent->dynCast<StructGet>()) {
-      // This is the reference child of a struct.get.
-      assert(get->ref == targetExpr);
+      // |child| is the reference child of a struct.get.
+      assert(get->ref == child);
       readFromData(get->ref->type.getHeapType(), get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
-      // This is either the reference or the value child of a struct.set.
-      assert(set->ref == targetExpr || set->value == targetExpr);
+      // |child| is either the reference or the value child of a struct.set.
+      assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
-      assert(get->ref == targetExpr);
+      assert(get->ref == child);
       readFromData(get->ref->type.getHeapType(), 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
-      assert(set->ref == targetExpr || set->value == targetExpr);
+      assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
     } else if (auto* cast = parent->dynCast<RefCast>()) {
-      assert(cast->ref == targetExpr);
+      assert(cast->ref == child);
       flowRefCast(contents, cast);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
