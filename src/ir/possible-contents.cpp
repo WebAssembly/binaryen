@@ -990,11 +990,12 @@ private:
   void connectDuringFlow(Location from, Location to);
 
   // New links added during the flow are added on the side to avoid aliasing
-  // during the flow, which iterates on links.
+  // on the |targets| vectors during the flow (which iterates on |targets|).
   std::vector<IndexLink> newLinks;
 
   // New links are processed when we are not iterating on any links, at a safe
-  // time.
+  // time. This adds to the appropriate |targets| vectors, which are definitely
+  // not being operated on at this time.
   void updateNewLinks();
 
   // Contents sent to a global location can be filtered in a special way during
@@ -1372,8 +1373,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
 
 void Flower::connectDuringFlow(Location from, Location to) {
   // Add the new link to a temporary structure on the side to avoid any
-  // aliasing as we work. updateNewLinks() will be called at the proper time
-  // to apply these links to the graph safely.
+  // aliasing on a |targets| vector as we work. updateNewLinks() will be called
+  // at the proper time to apply these links to the appropriate |targets|
+  // safely.
   auto newLink = LocationLink{from, to};
   auto newIndexLink = getIndexes(newLink);
   if (links.count(newIndexLink) == 0) {
