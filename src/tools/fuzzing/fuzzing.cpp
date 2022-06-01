@@ -1995,8 +1995,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
         // Use a local static to avoid creating a fresh nominal types in
         // --nominal mode.
         static HeapType trivialStruct = HeapType(Struct());
-        return builder.makeStructNew(trivialStruct,
-                                     std::vector<Expression*>{});
+        return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
       } else {
         // Use a local static to avoid creating a fresh nominal types in
         // --nominal mode.
