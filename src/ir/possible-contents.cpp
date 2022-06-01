@@ -396,7 +396,7 @@ struct InfoCollector
   void visitRefCast(RefCast* curr) {
     // We will handle this in a special way later during the flow, as ref.cast
     // only allows valid values to flow through.
-    addSpecialChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
@@ -620,15 +620,15 @@ struct InfoCollector
     // handle all of this in a special way during the flow. Note that we do
     // not even create a DataLocation here; anything that we need will be
     // added during the flow.
-    addSpecialChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->ref, curr);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
     // See comment on visitStructGet. Here we also connect the value.
-    addSpecialChildParentLink(curr->ref, curr);
-    addSpecialChildParentLink(curr->value, curr);
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
   }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
@@ -636,14 +636,14 @@ struct InfoCollector
       addRoot(curr);
       return;
     }
-    addSpecialChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    addSpecialChildParentLink(curr->ref, curr);
-    addSpecialChildParentLink(curr->value, curr);
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
   }
 
   void visitArrayLen(ArrayLen* curr) {
@@ -818,7 +818,7 @@ struct InfoCollector
   }
 
   // See the comment on CollectedFuncInfo::childParents.
-  void addSpecialChildParentLink(Expression* child, Expression* parent) {
+  void addChildParentLink(Expression* child, Expression* parent) {
     if (isRelevant(child->type)) {
       info.childParents[child] = parent;
     }
