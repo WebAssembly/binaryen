@@ -59,7 +59,7 @@ protected:
     wasm::setTypeSystem(TypeSystem::Nominal);
   }
 
-  PossibleContents none_ = PossibleContents::none();
+  PossibleContents none = PossibleContents::none();
 
   PossibleContents i32Zero = PossibleContents::literal(Literal(int32_t(0)));
   PossibleContents i32One = PossibleContents::literal(Literal(int32_t(1)));
@@ -97,11 +97,11 @@ protected:
 };
 
 TEST_F(PossibleContentsTest, TestComparisons) {
-  assertEqualSymmetric(none_, none_);
-  assertNotEqualSymmetric(none_, i32Zero);
-  assertNotEqualSymmetric(none_, i32Global1);
-  assertNotEqualSymmetric(none_, exactI32);
-  assertNotEqualSymmetric(none_, many);
+  assertEqualSymmetric(none, none);
+  assertNotEqualSymmetric(none, i32Zero);
+  assertNotEqualSymmetric(none, i32Global1);
+  assertNotEqualSymmetric(none, exactI32);
+  assertNotEqualSymmetric(none, many);
 
   assertEqualSymmetric(i32Zero, i32Zero);
   assertNotEqualSymmetric(i32Zero, i32One);
@@ -133,11 +133,11 @@ TEST_F(PossibleContentsTest, TestComparisons) {
 
 TEST_F(PossibleContentsTest, TestCombinations) {
   // None with anything else becomes the other thing.
-  assertCombination(none_, none_, none_);
-  assertCombination(none_, i32Zero, i32Zero);
-  assertCombination(none_, i32Global1, i32Global1);
-  assertCombination(none_, exactI32, exactI32);
-  assertCombination(none_, many, many);
+  assertCombination(none, none, none);
+  assertCombination(none, i32Zero, i32Zero);
+  assertCombination(none, i32Global1, i32Global1);
+  assertCombination(none, exactI32, exactI32);
+  assertCombination(none, many, many);
 
   // i32(0) will become Many, unless the value is identical. (We could do
   // exactI32 if only the values differ, but there is no point as subtyping
@@ -216,7 +216,6 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
   // fuzzable).
   auto wasm = parse(R"(
     (module
-      (type $struct (struct))
       (global $null (ref null any) (ref.null any))
       (global $something i32 (i32.const 42))
     )
