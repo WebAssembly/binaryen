@@ -211,9 +211,6 @@
 
 ;; We ignore imports, as we assume a closed world, but that might change in the
 ;; future. For now, we will optimize here.
-;; TODO: We can't import (ref $struct) here due to
-;;       https://github.com/WebAssembly/binaryen/issues/4676
-;;       So we test an imported i32 for now.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
@@ -221,7 +218,7 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (import "a" "b" (global $global-import i32))
-  (import "a" "b" (global $global-import i32))
+  (import "a" "b" (global $global-import (ref $struct)))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
