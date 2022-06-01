@@ -437,6 +437,9 @@ struct InfoCollector
   // Globals read and write from their location.
   void visitGlobalGet(GlobalGet* curr) {
     if (isRelevant(curr->type)) {
+      // FIXME: we allow tuples in globals, so GlobalLocation needs a tupleIndex
+      //        and we should loop here.
+      assert(!curr->type.isTuple());
       info.links.push_back(
         {GlobalLocation{curr->name}, ExpressionLocation{curr, 0}});
     }
