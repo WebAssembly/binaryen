@@ -396,7 +396,7 @@ struct InfoCollector
   void visitRefCast(RefCast* curr) {
     // We will handle this in a special way later during the flow, as ref.cast
     // only allows valid values to flow through.
-    addSpecialChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
@@ -541,8 +541,8 @@ struct InfoCollector
   // Iterates over a list of children and adds links from them. The target of
   // those link is created using a function that is passed in, which receives
   // the index of the child.
-  void handleChildList(ExpressionList& operands,
-                       std::function<Location(Index)> makeTarget) {
+  void linkChildList(ExpressionList& operands,
+                     std::function<Location(Index)> makeTarget) {
     Index i = 0;
     for (auto* operand : operands) {
       // This helper is not used from places that allow a tuple (hence we can
@@ -570,7 +570,7 @@ struct InfoCollector
       }
     } else {
       // Link the operands to the struct's fields.
-      handleChildList(curr->operands, [&](Index i) {
+      linkChildList(curr->operands, [&](Index i) {
         return DataLocation{type, i};
       });
     }
@@ -596,7 +596,7 @@ struct InfoCollector
     }
     if (!curr->values.empty()) {
       auto type = curr->type.getHeapType();
-      handleChildList(curr->values, [&](Index i) {
+      linkChildList(curr->values, [&](Index i) {
         // The index i is ignored, as we do not track indexes in Arrays -
         // everything is modeled as if at index 0.
         return DataLocation{type, 0};
@@ -620,15 +620,15 @@ struct InfoCollector
     // handle all of this in a special way during the flow. Note that we do
     // not even create a DataLocation here; anything that we need will be
     // added during the flow.
-    addSpecialChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->ref, curr);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
     // See comment on visitStructGet. Here we also connect the value.
-    addSpecialChildParentLink(curr->ref, curr);
-    addSpecialChildParentLink(curr->value, curr);
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
   }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
@@ -636,14 +636,14 @@ struct InfoCollector
       addRoot(curr);
       return;
     }
-    addSpecialChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    addSpecialChildParentLink(curr->ref, curr);
-    addSpecialChildParentLink(curr->value, curr);
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
   }
 
   void visitArrayLen(ArrayLen* curr) {
@@ -818,7 +818,7 @@ struct InfoCollector
   }
 
   // See the comment on CollectedFuncInfo::childParents.
-  void addSpecialChildParentLink(Expression* child, Expression* parent) {
+  void addChildParentLink(Expression* child, Expression* parent) {
     if (isRelevant(child->type)) {
       info.childParents[child] = parent;
     }

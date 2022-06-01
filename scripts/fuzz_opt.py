@@ -1154,6 +1154,7 @@ opt_choices = [
     ["--inlining-optimizing"],
     ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
     ["--global-refining"],
+    ["--gsi"],
     ["--gto"],
     ["--gufa"],
     ["--gufa-optimizing"],

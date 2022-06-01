@@ -52,6 +52,7 @@ Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateStackIRPass();
 Pass* createGlobalRefiningPass();
+Pass* createGlobalStructInferencePass();
 Pass* createGlobalTypeOptimizationPass();
 Pass* createGUFAPass();
 Pass* createGUFAOptimizingPass();

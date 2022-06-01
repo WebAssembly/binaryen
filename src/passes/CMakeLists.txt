@@ -38,6 +38,7 @@ set(passes_SOURCES
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
   GlobalRefining.cpp
+  GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
   GUFA.cpp
   Heap2Local.cpp
