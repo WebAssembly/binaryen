@@ -15,6 +15,7 @@
  */
 
 #include <cstddef>
+#include <cstring>
 #include <iterator>
 #include <optional>
 #include <ostream>
@@ -100,6 +101,37 @@ struct Token {
                             KeywordTok>;
   std::string_view span;
   Data data;
+
+  // ====================
+  // Token classification
+  // ====================
+
+  bool isLParen() const { return std::get_if<LParenTok>(&data); }
+
+  bool isRParen() const { return std::get_if<RParenTok>(&data); }
+
+  std::optional<std::string_view> getID() const {
+    if (std::get_if<IdTok>(&data)) {
+      return span;
+    }
+    return {};
+  }
+
+  std::optional<std::string_view> getKeyword() const {
+    if (std::get_if<KeywordTok>(&data)) {
+      return span;
+    }
+    return {};
+  }
+  std::optional<uint64_t> getU64() const;
+  std::optional<int64_t> getS64() const;
+  std::optional<uint64_t> getI64() const;
+  std::optional<uint32_t> getU32() const;
+  std::optional<int32_t> getS32() const;
+  std::optional<uint32_t> getI32() const;
+  std::optional<double> getF64() const;
+  std::optional<float> getF32() const;
+  std::optional<std::string_view> getString() const;
 
   bool operator==(const Token&) const;
   friend std::ostream& operator<<(std::ostream& os, const Token&);
