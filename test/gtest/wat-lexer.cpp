@@ -238,28 +238,28 @@ TEST(LexerTest, LexInt) {
   {
     Lexer lexer("+9223372036854775807"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"+9223372036854775807"sv, IntTok{~(1ull << 63), Pos}};
+    Token expected{"+9223372036854775807"sv, IntTok{INT64_MAX, Pos}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+9223372036854775808"sv);
     ASSERT_NE(lexer, lexer.end());
     Token expected{"+9223372036854775808"sv,
-                   IntTok{9223372036854775808ull, Pos}};
+                   IntTok{uint64_t(INT64_MAX) + 1, Pos}};
     ;
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-9223372036854775808"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"-9223372036854775808"sv, IntTok{1ull << 63, Neg}};
+    Token expected{"-9223372036854775808"sv, IntTok{uint64_t(INT64_MIN), Neg}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-9223372036854775809"sv);
     ASSERT_NE(lexer, lexer.end());
     Token expected{"-9223372036854775809"sv,
-                   IntTok{-9223372036854775809ull, Neg}};
+                   IntTok{uint64_t(INT64_MIN) - 1, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
 }
@@ -1209,12 +1209,12 @@ TEST(LexerTest, LexNan) {
 }
 
 TEST(LexerTest, ClassifyFloat) {
-  constexpr int dsignif = 52;
-  constexpr int fsignif = 23;
-  constexpr uint64_t dnanMask = (1ull << dsignif) - 1;
-  constexpr uint32_t fnanMask = (1u << fsignif) - 1;
-  constexpr uint64_t dnanDefault = 1ull << (dsignif - 1);
-  constexpr uint32_t fnanDefault = 1u << (fsignif - 1);
+  constexpr int signif64 = 52;
+  constexpr int signif32 = 23;
+  constexpr uint64_t payloadMask64 = (1ull << signif64) - 1;
+  constexpr uint32_t payloadMask32 = (1u << signif32) - 1;
+  constexpr uint64_t dnanDefault = 1ull << (signif64 - 1);
+  constexpr uint32_t fnanDefault = 1u << (signif32 - 1);
   {
     Lexer lexer("340282346638528859811704183484516925440."sv);
     ASSERT_NE(lexer, lexer.end());
@@ -1246,7 +1246,7 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_FALSE(std::signbit(d));
     uint64_t dbits;
     memcpy(&dbits, &d, sizeof(dbits));
-    EXPECT_EQ(dbits & dnanMask, dnanDefault);
+    EXPECT_EQ(dbits & payloadMask64, dnanDefault);
 
     ASSERT_TRUE(lexer->getF32());
     float f = *lexer->getF32();
@@ -1254,7 +1254,7 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_FALSE(std::signbit(f));
     uint32_t fbits;
     memcpy(&fbits, &f, sizeof(fbits));
-    EXPECT_EQ(fbits & fnanMask, fnanDefault);
+    EXPECT_EQ(fbits & payloadMask32, fnanDefault);
   }
   {
     Lexer lexer("-nan");
@@ -1266,7 +1266,7 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_TRUE(std::signbit(d));
     uint64_t dbits;
     memcpy(&dbits, &d, sizeof(dbits));
-    EXPECT_EQ(dbits & dnanMask, dnanDefault);
+    EXPECT_EQ(dbits & payloadMask64, dnanDefault);
 
     ASSERT_TRUE(lexer->getF32());
     float f = *lexer->getF32();
@@ -1274,7 +1274,7 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_TRUE(std::signbit(f));
     uint32_t fbits;
     memcpy(&fbits, &f, sizeof(fbits));
-    EXPECT_EQ(fbits & fnanMask, fnanDefault);
+    EXPECT_EQ(fbits & payloadMask32, fnanDefault);
   }
   {
     Lexer lexer("+nan");
@@ -1286,7 +1286,7 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_FALSE(std::signbit(d));
     uint64_t dbits;
     memcpy(&dbits, &d, sizeof(dbits));
-    EXPECT_EQ(dbits & dnanMask, dnanDefault);
+    EXPECT_EQ(dbits & payloadMask64, dnanDefault);
 
     ASSERT_TRUE(lexer->getF32());
     float f = *lexer->getF32();
@@ -1294,7 +1294,7 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_FALSE(std::signbit(f));
     uint32_t fbits;
     memcpy(&fbits, &f, sizeof(fbits));
-    EXPECT_EQ(fbits & fnanMask, fnanDefault);
+    EXPECT_EQ(fbits & payloadMask32, fnanDefault);
   }
   {
     Lexer lexer("nan:0x1234");
@@ -1305,14 +1305,14 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_TRUE(std::isnan(d));
     uint64_t dbits;
     memcpy(&dbits, &d, sizeof(dbits));
-    EXPECT_EQ(dbits & dnanMask, 0x1234ull);
+    EXPECT_EQ(dbits & payloadMask64, 0x1234ull);
 
     ASSERT_TRUE(lexer->getF32());
     float f = *lexer->getF32();
     EXPECT_TRUE(std::isnan(f));
     uint32_t fbits;
     memcpy(&fbits, &f, sizeof(fbits));
-    EXPECT_EQ(fbits & fnanMask, 0x1234u);
+    EXPECT_EQ(fbits & payloadMask32, 0x1234u);
   }
   {
     Lexer lexer("nan:0x7FFFFF");
@@ -1323,14 +1323,14 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_TRUE(std::isnan(d));
     uint64_t dbits;
     memcpy(&dbits, &d, sizeof(dbits));
-    EXPECT_EQ(dbits & dnanMask, 0x7fffffull);
+    EXPECT_EQ(dbits & payloadMask64, 0x7fffffull);
 
     ASSERT_TRUE(lexer->getF32());
     float f = *lexer->getF32();
     EXPECT_TRUE(std::isnan(f));
     uint32_t fbits;
     memcpy(&fbits, &f, sizeof(fbits));
-    EXPECT_EQ(fbits & fnanMask, 0x7fffffu);
+    EXPECT_EQ(fbits & payloadMask32, 0x7fffffu);
   }
   {
     Lexer lexer("nan:0x800000");
@@ -1341,7 +1341,7 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_TRUE(std::isnan(d));
     uint64_t dbits;
     memcpy(&dbits, &d, sizeof(dbits));
-    EXPECT_EQ(dbits & dnanMask, 0x800000ull);
+    EXPECT_EQ(dbits & payloadMask64, 0x800000ull);
 
     ASSERT_FALSE(lexer->getF32());
   }
