@@ -1993,13 +1993,26 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     }
     // We have to produce a non-null value. Possibly create a null and cast it
     // to non-null even though that will trap at runtime. We must have a
-    // function context because the cast is not allowed in globals.
-    if (!funcContext) {
-      std::cerr << type << "\n";
+    // function context for this because the cast is not allowed in globals.
+    if (funcContext) {
+      return builder.makeRefAs(RefAsNonNull,
+                               builder.makeRefNull(Type(heapType, Nullable)));
     }
-    assert(funcContext);
-    return builder.makeRefAs(RefAsNonNull,
-                             builder.makeRefNull(Type(heapType, Nullable)));
+
+    // Otherwise, we are not in a function context. This can happen if we need
+    // to make a constant for the initializer of a global, for example. We've
+    // already handled simple cases of this above, for basic heap types, so what
+    // we have left here are user-defined heap types like structs.
+    // TODO: support non-defaultable fields. for now, just use default values.
+    if (type.isStruct()) {
+      return builder.makeStructNew(type.getHeapType(),
+                                   std::vector<Expression*>{});
+    } else if (type.isArray()) {
+      return builder.makeArrayNew(type.getHeapType(),
+                                  makeConst(Type::i32));
+    } else {
+      WASM_UNREACHABLE("bad user-defined ref type");
+    }
   } else if (type.isRtt()) {
     return builder.makeRtt(type);
   } else if (type.isTuple()) {
