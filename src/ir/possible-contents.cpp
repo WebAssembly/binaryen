@@ -542,7 +542,7 @@ struct InfoCollector
   // those link is created using a function that is passed in, which receives
   // the index of the child.
   void linkChildList(ExpressionList& operands,
-                       std::function<Location(Index)> makeTarget) {
+                     std::function<Location(Index)> makeTarget) {
     Index i = 0;
     for (auto* operand : operands) {
       // This helper is not used from places that allow a tuple (hence we can
