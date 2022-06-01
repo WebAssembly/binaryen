@@ -1385,7 +1385,7 @@ void Flower::connectDuringFlow(Location from, Location to) {
     targets.push_back(newIndexLink.to);
 #ifndef NDEBUG
     disallowDuplicates(targets);
-#endif    
+#endif
 
     // In addition to adding the link, which will ensure new contents appearing
     // later will be sent along, we also update with the current contents.
