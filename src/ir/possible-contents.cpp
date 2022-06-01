@@ -980,13 +980,13 @@ private:
 
   // Flow contents from a location where a change occurred. This sends the new
   // contents to all the normal targets of this location (using
-  // flowAfterUpdateToTargets), and also handles special cases of flow after.
+  // flowToTargetsAfterUpdate), and also handles special cases of flow after.
   void flowAfterUpdate(LocationIndex locationIndex);
 
   // Internal part of flowAfterUpdate that handles sending new values to the
   // given location index's normal targets (that is, the ones listed in the
   // |targets| vector).
-  void flowAfterUpdateToTargets(LocationIndex locationIndex,
+  void flowToTargetsAfterUpdate(LocationIndex locationIndex,
                                 const PossibleContents& contents);
 
   // Add a new connection while the flow is happening. If the link already
@@ -1297,7 +1297,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
 #endif
 
   // Flow the contents to the normal targets of this location.
-  flowAfterUpdateToTargets(locationIndex, contents);
+  flowToTargetsAfterUpdate(locationIndex, contents);
 
   // We are mostly done, except for handling interesting/special cases in the
   // flow, additional operations that we need to do aside from sending the new
@@ -1345,7 +1345,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   }
 }
 
-void Flower::flowAfterUpdateToTargets(LocationIndex locationIndex,
+void Flower::flowToTargetsAfterUpdate(LocationIndex locationIndex,
                                       const PossibleContents& contents) {
   // Send the new contents to all the targets of this location. As we do so,
   // prune any targets that we do not need to bother sending content to in the
