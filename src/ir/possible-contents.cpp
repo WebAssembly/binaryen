@@ -1307,7 +1307,6 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   // contents to the normal (statically linked) targets.
 
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-    auto* child = exprLoc->expr;
     auto iter = childParents.find(locationIndex);
     if (iter == childParents.end()) {
       return;
@@ -1316,6 +1315,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     // This is indeed one of the special cases where it is the child of a
     // parent, and we need to do some special handling because of that child-
     // parent connection.
+    auto* child = exprLoc->expr;
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
