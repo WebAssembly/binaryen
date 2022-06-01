@@ -1913,7 +1913,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type);
     }
-    if (type.getHeapType().isBasic()) {
+    if (type.isBasic()) {
       return makeConstBasicRef(type);
     } else {
       return makeConstComplexRef(type);
@@ -2012,7 +2012,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
 
 Expression* TranslateToFuzzReader::makeConstComplexRef(Type type) {
   assert(type.isRef());
-  assert(type.isBasic());
+  assert(!type.isBasic());
   assert(wasm.features.hasReferenceTypes());
   auto heapType = type.getHeapType();
   if (heapType.isSignature()) {
