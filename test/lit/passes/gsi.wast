@@ -217,7 +217,7 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (import "a" "b" (global $global-import i32))
+  ;; CHECK:      (import "a" "b" (global $global-import (ref $struct)))
   (import "a" "b" (global $global-import (ref $struct)))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
