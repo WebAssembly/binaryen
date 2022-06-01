@@ -27,10 +27,6 @@
 // Use an insert-ordered set for easier debugging with deterministic queue
 // ordering.
 #include "support/insert_ordered.h"
-using WorkQueue = InsertOrderedSet<LocationIndex>;
-#else
-// By default, use a simple/fast unordered set.
-using WorkQueue = std::unordered_set<LocationIndex>;
 #endif
 
 namespace std {
@@ -937,7 +933,11 @@ private:
   // possible is helpful as anything reading them meanwhile (before we get to
   // their work item in the queue) will see the newer value, possibly avoiding
   // flowing an old value that would later be overwritten.
-  WorkQueue workQueue;
+#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
+  InsertOrderedSet<LocationIndex> workQueue;
+#else
+  std::unordered_set<LocationIndex> workQueue;
+#endif
 
   // Maps a heap type + an index in the type (0 for an array) to the index of a
   // SpecialLocation for a cone read of those contents. We use such special
