@@ -2008,8 +2008,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
       return builder.makeStructNew(type.getHeapType(),
                                    std::vector<Expression*>{});
     } else if (type.isArray()) {
-      return builder.makeArrayNew(type.getHeapType(),
-                                  makeConst(Type::i32));
+      return builder.makeArrayNew(type.getHeapType(), makeConst(Type::i32));
     } else {
       WASM_UNREACHABLE("bad user-defined ref type");
     }
