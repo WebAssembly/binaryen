@@ -406,7 +406,7 @@ struct InfoCollector
   void visitRttCanon(RttCanon* curr) { addRoot(curr); }
   void visitRttSub(RttSub* curr) { addRoot(curr); }
   void visitRefAs(RefAs* curr) {
-    // TODO optimize when possible: like RefCast, not all values flow through.
+    // TODO: optimize when possible: like RefCast, not all values flow through.
     receiveChildValue(curr->value, curr);
   }
 
@@ -975,7 +975,7 @@ private:
                       PossibleContents newContents);
 
   // Slow helper that converts a Location to a LocationIndex. This should be
-  // avoided. TODO remove the remaining uses of this.
+  // avoided. TODO: remove the remaining uses of this.
   bool updateContents(const Location& location,
                       const PossibleContents& newContents) {
     return updateContents(getIndex(location), newContents);
@@ -1404,7 +1404,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // "Many", since in the worst case we can just use the immutable value. That
     // is, we can always replace this value with (global.get $name) which will
     // get the right value. Likewise, using the immutable global value is often
-    // better than an exact type, but TODO we could note both an exact type
+    // better than an exact type, but TODO: we could note both an exact type
     // *and* that something is equal to a global, in some cases.
     if (contents.isMany() || contents.isExactType()) {
       contents = PossibleContents::global(global->name, global->type);
@@ -1542,7 +1542,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     if (mayBeSubType) {
       // The contents are not Many, but they may be a subtype of the intended
       // type, so we'll pass them through.
-      // TODO When we get cone types, we could filter the cone here.
+      // TODO: When we get cone types, we could filter the cone here.
       filtered.combine(contents);
     }
     bool mayBeNull = contents.getType().isNullable();
