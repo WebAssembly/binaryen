@@ -687,6 +687,9 @@ struct InfoCollector
       // Find the pop of the tag's contents. The body must start with such a
       // pop, which might be of a tuple.
       auto* pop = EHUtils::findPop(body);
+      // There must be a pop since we checked earlier if it was an empty tag,
+      // and would not reach here.
+      assert(pop);
       assert(pop->type.size() == params.size());
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
