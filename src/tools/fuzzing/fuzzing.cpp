@@ -1917,7 +1917,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     if (type.getHeapType().isBasic()) {
       return makeConstBasicRef(type);
     } else {
-      return makeConstComplexRef(type);
+      return makeConstCompoundRef(type);
     }
   } else if (type.isRtt()) {
     return builder.makeRtt(type);
@@ -2010,7 +2010,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
   }
 }
 
-Expression* TranslateToFuzzReader::makeConstComplexRef(Type type) {
+Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   assert(type.isRef());
   auto heapType = type.getHeapType();
   assert(!heapType.isBasic());

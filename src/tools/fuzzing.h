@@ -265,9 +265,9 @@ private:
   Expression* makeConst(Type type);
 
   // Like makeConst, but for a type that is a reference type. One function
-  // handles basic types, and the other complex (user-defined) ones.
+  // handles basic types, and the other compound ones.
   Expression* makeConstBasicRef(Type type);
-  Expression* makeConstComplexRef(Type type);
+  Expression* makeConstCompoundRef(Type type);
 
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
