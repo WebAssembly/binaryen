@@ -242,11 +242,11 @@ TEST(LexerTest, LexInt) {
     EXPECT_EQ(*lexer, expected);
   }
   {
-    // 64-bit signed overflow!
     Lexer lexer("+9223372036854775808"sv);
     ASSERT_NE(lexer, lexer.end());
     Token expected{"+9223372036854775808"sv,
-                   FloatTok{{}, 9223372036854775808.}};
+                   IntTok{9223372036854775808ull, Pos}};
+    ;
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -256,11 +256,10 @@ TEST(LexerTest, LexInt) {
     EXPECT_EQ(*lexer, expected);
   }
   {
-    // 64-bit signed underflow!
     Lexer lexer("-9223372036854775809"sv);
     ASSERT_NE(lexer, lexer.end());
     Token expected{"-9223372036854775809"sv,
-                   FloatTok{{}, -9223372036854775809.}};
+                   IntTok{-9223372036854775809ull, Neg}};
     EXPECT_EQ(*lexer, expected);
   }
 }
@@ -1183,13 +1182,14 @@ TEST(LexerTest, LexNan) {
   {
     Lexer lexer("nan:0x0"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"nan:0x0"sv, KeywordTok{}};
+    Token expected{"nan:0x0"sv, FloatTok{{0}, NAN}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("nan:0x10_0000_0000_0000"sv);
     ASSERT_NE(lexer, lexer.end());
-    Token expected{"nan:0x10_0000_0000_0000"sv, KeywordTok{}};
+    Token expected{"nan:0x10_0000_0000_0000"sv,
+                   FloatTok{{0x10000000000000}, NAN}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -1277,6 +1277,26 @@ TEST(LexerTest, ClassifyFloat) {
     EXPECT_EQ(fbits & fnanMask, fnanDefault);
   }
   {
+    Lexer lexer("+nan");
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_TRUE(lexer->getF64());
+    double d = *lexer->getF64();
+    EXPECT_TRUE(std::isnan(d));
+    EXPECT_FALSE(std::signbit(d));
+    uint64_t dbits;
+    memcpy(&dbits, &d, sizeof(dbits));
+    EXPECT_EQ(dbits & dnanMask, dnanDefault);
+
+    ASSERT_TRUE(lexer->getF32());
+    float f = *lexer->getF32();
+    EXPECT_TRUE(std::isnan(f));
+    EXPECT_FALSE(std::signbit(f));
+    uint32_t fbits;
+    memcpy(&fbits, &f, sizeof(fbits));
+    EXPECT_EQ(fbits & fnanMask, fnanDefault);
+  }
+  {
     Lexer lexer("nan:0x1234");
     ASSERT_NE(lexer, lexer.end());
 
@@ -1323,6 +1343,13 @@ TEST(LexerTest, ClassifyFloat) {
     memcpy(&dbits, &d, sizeof(dbits));
     EXPECT_EQ(dbits & dnanMask, 0x800000ull);
 
+    ASSERT_FALSE(lexer->getF32());
+  }
+  {
+    Lexer lexer("nan:0x0");
+    ASSERT_NE(lexer, lexer.end());
+
+    ASSERT_FALSE(lexer->getF64());
     ASSERT_FALSE(lexer->getF32());
   }
 }

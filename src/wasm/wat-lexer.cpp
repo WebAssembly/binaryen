@@ -151,23 +151,10 @@ public:
     if (overflow) {
       return {};
     }
-    auto basic = LexCtx::lexed();
-    if (!basic) {
-      return {};
+    if (auto basic = LexCtx::lexed()) {
+      return LexIntResult{*basic, sign == Neg ? -n : n, sign};
     }
-    // Check most significant bit for overflow of signed numbers.
-    if (sign == Neg) {
-      if (n > (1ull << 63)) {
-        // TODO: Add error production for signed underflow.
-        return {};
-      }
-    } else if (sign == Pos) {
-      if (n > (1ull << 63) - 1) {
-        // TODO: Add error production for signed overflow.
-        return {};
-      }
-    }
-    return LexIntResult{*basic, sign == Neg ? -n : n, sign};
+    return {};
   }
 
   void takeSign() {
@@ -592,12 +579,7 @@ std::optional<LexFloatResult> float_(std::string_view in) {
     if (ctx.takePrefix(":0x"sv)) {
       if (auto lexed = hexnum(ctx.next())) {
         ctx.take(*lexed);
-        if (1 <= lexed->n && lexed->n < (1ull << 52)) {
-          ctx.nanPayload = lexed->n;
-        } else {
-          // TODO: Add error production for invalid NaN payload.
-          return {};
-        }
+        ctx.nanPayload = lexed->n;
       } else {
         // TODO: Add error production for malformed NaN payload.
         return {};
@@ -792,39 +774,52 @@ std::optional<uint64_t> Token::getU64() const {
 
 std::optional<int64_t> Token::getS64() const {
   if (auto* tok = std::get_if<IntTok>(&data)) {
-    // Integers without an explicit sign still need to be in signed range.
-    if (tok->sign != NoSign || tok->n < (1ull << 63)) {
-      return int64_t(tok->n);
+    if (tok->sign == Neg) {
+      if (uint64_t(INT64_MIN) <= tok->n || tok->n == 0) {
+        return int64_t(tok->n);
+      }
+      // TODO: Add error production for signed underflow.
+    } else {
+      if (tok->n <= uint64_t(INT64_MAX)) {
+        return int64_t(tok->n);
+      }
+      // TODO: Add error production for signed overflow.
     }
-    // TODO: Add error production for out-of-bounds integers.
   }
   return {};
 }
 
 std::optional<uint64_t> Token::getI64() const {
-  if (auto* tok = std::get_if<IntTok>(&data)) {
-    return tok->n;
+  if (auto n = getU64()) {
+    return *n;
+  }
+  if (auto n = getS64()) {
+    return *n;
   }
   return {};
 }
 
 std::optional<uint32_t> Token::getU32() const {
   if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == NoSign && tok->n < (1ull << 32)) {
+    if (tok->sign == NoSign && tok->n <= UINT32_MAX) {
       return int32_t(tok->n);
     }
-    // TODO: Add error production for out-of-bounds integers.
+    // TODO: Add error production for unsigned overflow.
   }
   return {};
 }
 
 std::optional<int32_t> Token::getS32() const {
   if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->n < (1ull << 31) ||
-        (tok->sign == Neg && -(1ull << 31) <= tok->n)) {
-      return int32_t(tok->n);
+    if (tok->sign == Neg) {
+      if (uint64_t(INT32_MIN) <= tok->n || tok->n == 0) {
+        return int32_t(tok->n);
+      }
+    } else {
+      if (tok->n <= uint64_t(INT32_MAX)) {
+        return int32_t(tok->n);
+      }
     }
-    // TODO: Add error production for out-of-bounds integers.
   }
   return {};
 }
@@ -848,6 +843,10 @@ std::optional<double> Token::getF64() const {
     if (std::isnan(d)) {
       // Inject payload.
       uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
+      if (payload == 0 || payload > payloadMask) {
+        // TODO: Add error production for out-of-bounds payload.
+        return {};
+      }
       uint64_t bits;
       static_assert(sizeof(bits) == sizeof(d));
       memcpy(&bits, &d, sizeof(bits));
@@ -877,7 +876,7 @@ std::optional<float> Token::getF32() const {
     if (std::isnan(f)) {
       // Validate and inject payload.
       uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
-      if (payload >= (1ull << 23)) {
+      if (payload == 0 || payload > payloadMask) {
         // TODO: Add error production for out-of-bounds payload.
         return {};
       }
