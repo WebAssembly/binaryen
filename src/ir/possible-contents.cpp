@@ -427,11 +427,11 @@ struct InfoCollector
     for (Index i = 0; i < curr->value->type.size(); i++) {
       info.links.push_back({ExpressionLocation{curr->value, i},
                             LocalLocation{getFunction(), curr->index, i}});
-
-      // Tees also flow out the value (receiveChildValue will see if this is a
-      // tee based on the type, automatically).
-      receiveChildValue(curr->value, curr);
     }
+
+    // Tees also flow out the value (receiveChildValue will see if this is a tee
+    // based on the type, automatically).
+    receiveChildValue(curr->value, curr);
   }
 
   // Globals read and write from their location.
