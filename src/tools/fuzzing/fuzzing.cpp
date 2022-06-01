@@ -1909,11 +1909,12 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
 
 Expression* TranslateToFuzzReader::makeConst(Type type) {
   if (type.isRef()) {
+    assert(wasm.features.hasReferenceTypes());
     // With a low chance, just emit a null if that is valid.
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type);
     }
-    if (type.isBasic()) {
+    if (type.getHeapType().isBasic()) {
       return makeConstBasicRef(type);
     } else {
       return makeConstComplexRef(type);
@@ -1934,9 +1935,9 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
 
 Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
   assert(type.isRef());
-  assert(type.isBasic());
-  assert(wasm.features.hasReferenceTypes());
   auto heapType = type.getHeapType();
+  assert(heapType.isBasic());
+  assert(wasm.features.hasReferenceTypes());
   switch (heapType.getBasic()) {
     case HeapType::func: {
       return makeRefFuncConst(type);
@@ -1959,7 +1960,6 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
-      assert(wasm.features.hasReferenceTypes());
       if (!wasm.features.hasGC()) {
         // Without wasm GC all we have is an "abstract" eqref type, which is
         // a subtype of anyref, but we cannot create constants of it, except
@@ -1978,7 +1978,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::i31: {
-      assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+      assert(wasm.features.hasGC());
       // i31.new is not allowed in initializer expressions.
       if (funcContext) {
         return builder.makeI31New(makeConst(Type::i32));
@@ -1988,7 +1988,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       }
     }
     case HeapType::data: {
-      assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+      assert(wasm.features.hasGC());
       // TODO: Construct nontrivial types. For now just create a hard coded
       // struct or array.
       if (oneIn(2)) {
@@ -2012,9 +2012,9 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
 
 Expression* TranslateToFuzzReader::makeConstComplexRef(Type type) {
   assert(type.isRef());
-  assert(!type.isBasic());
-  assert(wasm.features.hasReferenceTypes());
   auto heapType = type.getHeapType();
+  assert(!heapType.isBasic());
+  assert(wasm.features.hasReferenceTypes());
   if (heapType.isSignature()) {
     return makeRefFuncConst(type);
   } else {
