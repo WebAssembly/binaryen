@@ -993,17 +993,6 @@ private:
   // exists it is not added.
   void connectDuringFlow(Location from, Location to);
 
-  // New links added during the flow are added on the side to avoid aliasing
-  // on the |targets| vectors during the flow (which iterates on |targets|).
-  std::vector<IndexLink> newLinks;
-
-  // New links must be added to the appropriate |targets| vector (that is, the
-  // |targets| of the source must get a new target added to it). We are
-  // iterating on |targets| for most of our work, however, so we must not alter
-  // it at that time. This method is called later, after there is no risk of
-  // aliasing, and it appends to the appropriate |targets| vector.
-  void updateNewLinks();
-
   // Contents sent to a global location can be filtered in a special way during
   // the flow, which is handled in this helper.
   void filterGlobalContents(PossibleContents& contents,
@@ -1236,8 +1225,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     workQueue.erase(iter);
 
     flowAfterUpdate(locationIndex);
-
-    updateNewLinks();
   }
 
   // TODO: Add analysis and retrieval logic for fields of immutable globals,
@@ -1387,39 +1374,23 @@ void Flower::flowAfterUpdateToTargets(LocationIndex locationIndex,
 }
 
 void Flower::connectDuringFlow(Location from, Location to) {
-  // Add the new link to a temporary structure on the side to avoid any
-  // aliasing on a |targets| vector as we work. updateNewLinks() will be called
-  // at the proper time to apply these links to the appropriate |targets|
-  // safely.
   auto newLink = LocationLink{from, to};
   auto newIndexLink = getIndexes(newLink);
   if (links.count(newIndexLink) == 0) {
-    newLinks.push_back(newIndexLink);
+    // This is a new link. Add it to the known links.
     links.insert(newIndexLink);
+
+    // Add it to the |targets| vector.
+    auto& targets = getTargets(newIndexLink.from);
+    targets.push_back(newIndexLink.to);
+#ifndef NDEBUG
+    disallowDuplicates(targets);
+#endif    
 
     // In addition to adding the link, which will ensure new contents appearing
     // later will be sent along, we also update with the current contents.
     updateContents(to, getContents(getIndex(from)));
   }
-}
-
-void Flower::updateNewLinks() {
-  // Update any new links.
-  for (auto newLink : newLinks) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "\nnewLink:\n";
-    dump(getLocation(newLink.from));
-    dump(getLocation(newLink.to));
-#endif
-
-    auto& targets = getTargets(newLink.from);
-    targets.push_back(newLink.to);
-
-#ifndef NDEBUG
-    disallowDuplicates(targets);
-#endif
-  }
-  newLinks.clear();
 }
 
 void Flower::filterGlobalContents(PossibleContents& contents,
