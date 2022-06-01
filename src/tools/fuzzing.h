@@ -257,7 +257,18 @@ private:
   Literal tweak(Literal value);
   Literal makeLiteral(Type type);
   Expression* makeRefFuncConst(Type type);
+
+  // Emit a constant expression for a given type, as best we can. We may not be
+  // able to emit a literal Const, like say if the type is a function reference
+  // then we may emit a RefFunc, but also we may have other requirements, like
+  // we may add a GC cast to fixup the type.
   Expression* makeConst(Type type);
+
+  // Like makeConst, but for a type that is a reference type. One function
+  // handles basic types, and the other compound ones.
+  Expression* makeConstBasicRef(Type type);
+  Expression* makeConstCompoundRef(Type type);
+
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
   Expression* buildBinary(const BinaryArgs& args);

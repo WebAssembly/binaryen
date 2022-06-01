@@ -1910,96 +1910,15 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
 Expression* TranslateToFuzzReader::makeConst(Type type) {
   if (type.isRef()) {
     assert(wasm.features.hasReferenceTypes());
+    // With a low chance, just emit a null if that is valid.
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type);
     }
-    auto heapType = type.getHeapType();
-    if (heapType.isBasic()) {
-      switch (heapType.getBasic()) {
-        case HeapType::func:
-          return makeRefFuncConst(type);
-        case HeapType::any: {
-          // Choose a subtype we can materialize a constant for. We cannot
-          // materialize non-nullable refs to func or i31 in global contexts.
-          Nullability nullability = getSubType(type.getNullability());
-          HeapType subtype;
-          if (funcContext || nullability == Nullable) {
-            subtype = pick(FeatureOptions<HeapType>()
-                             .add(FeatureSet::ReferenceTypes, HeapType::func)
-                             .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                                  HeapType::func,
-                                  HeapType::i31,
-                                  HeapType::data));
-          } else {
-            subtype = HeapType::func;
-          }
-          return makeConst(Type(subtype, nullability));
-        }
-        case HeapType::eq: {
-          assert(wasm.features.hasReferenceTypes());
-          if (!wasm.features.hasGC()) {
-            // Without wasm GC all we have is an "abstract" eqref type, which is
-            // a subtype of anyref, but we cannot create constants of it, except
-            // for null.
-            assert(type.isNullable());
-            return builder.makeRefNull(type);
-          }
-          auto nullability = getSubType(type.getNullability());
-          // i31.new is not allowed in initializer expressions.
-          HeapType subtype;
-          if (funcContext) {
-            subtype = pick(HeapType::i31, HeapType::data);
-          } else {
-            subtype = HeapType::data;
-          }
-          return makeConst(Type(subtype, nullability));
-        }
-        case HeapType::i31:
-          assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-          // i31.new is not allowed in initializer expressions.
-          if (funcContext) {
-            return builder.makeI31New(makeConst(Type::i32));
-          } else {
-            assert(type.isNullable());
-            return builder.makeRefNull(type);
-          }
-        case HeapType::data:
-          assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-          // TODO: Construct nontrivial types. For now just create a hard coded
-          // struct or array.
-          if (oneIn(2)) {
-            // Use a local static to avoid creating a fresh nominal types in
-            // --nominal mode.
-            static HeapType trivialStruct = HeapType(Struct());
-            return builder.makeStructNew(trivialStruct,
-                                         std::vector<Expression*>{});
-          } else {
-            // Use a local static to avoid creating a fresh nominal types in
-            // --nominal mode.
-            static HeapType trivialArray =
-              HeapType(Array(Field(Field::PackedType::i8, Immutable)));
-            return builder.makeArrayInit(trivialArray, {});
-          }
-      }
-    } else if (heapType.isSignature()) {
-      return makeRefFuncConst(type);
+    if (type.getHeapType().isBasic()) {
+      return makeConstBasicRef(type);
     } else {
-      // TODO: Handle nontrivial array and struct types.
+      return makeConstCompoundRef(type);
     }
-    // We weren't able to directly materialize a non-null constant. Try again to
-    // create a null.
-    if (type.isNullable()) {
-      return builder.makeRefNull(type);
-    }
-    // We have to produce a non-null value. Possibly create a null and cast it
-    // to non-null even though that will trap at runtime. We must have a
-    // function context because the cast is not allowed in globals.
-    if (!funcContext) {
-      std::cerr << type << "\n";
-    }
-    assert(funcContext);
-    return builder.makeRefAs(RefAsNonNull,
-                             builder.makeRefNull(Type(heapType, Nullable)));
   } else if (type.isRtt()) {
     return builder.makeRtt(type);
   } else if (type.isTuple()) {
@@ -2012,6 +1931,109 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     assert(type.isBasic());
     return builder.makeConst(makeLiteral(type));
   }
+}
+
+Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
+  assert(type.isRef());
+  auto heapType = type.getHeapType();
+  assert(heapType.isBasic());
+  assert(wasm.features.hasReferenceTypes());
+  switch (heapType.getBasic()) {
+    case HeapType::func: {
+      return makeRefFuncConst(type);
+    }
+    case HeapType::any: {
+      // Choose a subtype we can materialize a constant for. We cannot
+      // materialize non-nullable refs to func or i31 in global contexts.
+      Nullability nullability = getSubType(type.getNullability());
+      HeapType subtype;
+      if (funcContext || nullability == Nullable) {
+        subtype = pick(FeatureOptions<HeapType>()
+                         .add(FeatureSet::ReferenceTypes, HeapType::func)
+                         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                              HeapType::func,
+                              HeapType::i31,
+                              HeapType::data));
+      } else {
+        subtype = HeapType::func;
+      }
+      return makeConst(Type(subtype, nullability));
+    }
+    case HeapType::eq: {
+      if (!wasm.features.hasGC()) {
+        // Without wasm GC all we have is an "abstract" eqref type, which is
+        // a subtype of anyref, but we cannot create constants of it, except
+        // for null.
+        assert(type.isNullable());
+        return builder.makeRefNull(type);
+      }
+      auto nullability = getSubType(type.getNullability());
+      // i31.new is not allowed in initializer expressions.
+      HeapType subtype;
+      if (funcContext) {
+        subtype = pick(HeapType::i31, HeapType::data);
+      } else {
+        subtype = HeapType::data;
+      }
+      return makeConst(Type(subtype, nullability));
+    }
+    case HeapType::i31: {
+      assert(wasm.features.hasGC());
+      // i31.new is not allowed in initializer expressions.
+      if (funcContext) {
+        return builder.makeI31New(makeConst(Type::i32));
+      } else {
+        assert(type.isNullable());
+        return builder.makeRefNull(type);
+      }
+    }
+    case HeapType::data: {
+      assert(wasm.features.hasGC());
+      // TODO: Construct nontrivial types. For now just create a hard coded
+      // struct or array.
+      if (oneIn(2)) {
+        // Use a local static to avoid creating a fresh nominal types in
+        // --nominal mode.
+        static HeapType trivialStruct = HeapType(Struct());
+        return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
+      } else {
+        // Use a local static to avoid creating a fresh nominal types in
+        // --nominal mode.
+        static HeapType trivialArray =
+          HeapType(Array(Field(Field::PackedType::i8, Immutable)));
+        return builder.makeArrayInit(trivialArray, {});
+      }
+    }
+    default: {
+      WASM_UNREACHABLE("invalid basic ref type");
+    }
+  }
+}
+
+Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
+  assert(type.isRef());
+  auto heapType = type.getHeapType();
+  assert(!heapType.isBasic());
+  assert(wasm.features.hasReferenceTypes());
+  if (heapType.isSignature()) {
+    return makeRefFuncConst(type);
+  } else {
+    // TODO: Handle nontrivial array and struct types.
+  }
+  // We weren't able to directly materialize a non-null constant. Try again to
+  // create a null.
+  if (type.isNullable()) {
+    return builder.makeRefNull(type);
+  }
+  // We have to produce a non-null value. Possibly create a null and cast it
+  // to non-null even though that will trap at runtime. We must have a
+  // function context because the cast is not allowed in globals.
+  if (!funcContext) {
+    std::cerr << type << "\n";
+  }
+  assert(funcContext);
+  return builder.makeRefAs(RefAsNonNull,
+                           builder.makeRefNull(Type(heapType, Nullable)));
 }
 
 Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
