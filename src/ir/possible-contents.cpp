@@ -687,6 +687,9 @@ struct InfoCollector
       // Find the pop of the tag's contents. The body must start with such a
       // pop, which might be of a tuple.
       auto* pop = EHUtils::findPop(body);
+      // There must be a pop since we checked earlier if it was an empty tag,
+      // and would not reach here.
+      assert(pop);
       assert(pop->type.size() == params.size());
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
@@ -980,13 +983,13 @@ private:
 
   // Flow contents from a location where a change occurred. This sends the new
   // contents to all the normal targets of this location (using
-  // flowAfterUpdateToTargets), and also handles special cases of flow after.
+  // flowToTargetsAfterUpdate), and also handles special cases of flow after.
   void flowAfterUpdate(LocationIndex locationIndex);
 
   // Internal part of flowAfterUpdate that handles sending new values to the
   // given location index's normal targets (that is, the ones listed in the
   // |targets| vector).
-  void flowAfterUpdateToTargets(LocationIndex locationIndex,
+  void flowToTargetsAfterUpdate(LocationIndex locationIndex,
                                 const PossibleContents& contents);
 
   // Add a new connection while the flow is happening. If the link already
@@ -1297,14 +1300,13 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
 #endif
 
   // Flow the contents to the normal targets of this location.
-  flowAfterUpdateToTargets(locationIndex, contents);
+  flowToTargetsAfterUpdate(locationIndex, contents);
 
   // We are mostly done, except for handling interesting/special cases in the
   // flow, additional operations that we need to do aside from sending the new
   // contents to the normal (statically linked) targets.
 
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-    auto* child = exprLoc->expr;
     auto iter = childParents.find(locationIndex);
     if (iter == childParents.end()) {
       return;
@@ -1313,6 +1315,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     // This is indeed one of the special cases where it is the child of a
     // parent, and we need to do some special handling because of that child-
     // parent connection.
+    auto* child = exprLoc->expr;
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
@@ -1345,7 +1348,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   }
 }
 
-void Flower::flowAfterUpdateToTargets(LocationIndex locationIndex,
+void Flower::flowToTargetsAfterUpdate(LocationIndex locationIndex,
                                       const PossibleContents& contents) {
   // Send the new contents to all the targets of this location. As we do so,
   // prune any targets that we do not need to bother sending content to in the
@@ -1385,7 +1388,7 @@ void Flower::connectDuringFlow(Location from, Location to) {
     targets.push_back(newIndexLink.to);
 #ifndef NDEBUG
     disallowDuplicates(targets);
-#endif    
+#endif
 
     // In addition to adding the link, which will ensure new contents appearing
     // later will be sent along, we also update with the current contents.
