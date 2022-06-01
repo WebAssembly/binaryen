@@ -2165,29 +2165,6 @@ void FunctionValidator::visitTry(Try* curr) {
                 curr,
                 "try cannot have both catch and delegate at the same time");
 
-  // Given a catch body, find pops corresponding to the catch
-  auto findPops = [](Expression* expr) {
-    SmallVector<Pop*, 1> pops;
-    SmallVector<Expression*, 8> work;
-    work.push_back(expr);
-    while (!work.empty()) {
-      auto* curr = work.back();
-      work.pop_back();
-      if (auto* pop = curr->dynCast<Pop>()) {
-        pops.push_back(pop);
-      } else if (auto* try_ = curr->dynCast<Try>()) {
-        // We don't go into inner catch bodies; pops in inner catch bodies
-        // belong to the inner catches
-        work.push_back(try_->body);
-      } else {
-        for (auto* child : ChildIterator(curr)) {
-          work.push_back(child);
-        }
-      }
-    }
-    return pops;
-  };
-
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     Name tagName = curr->catchTags[i];
     auto* tag = getModule()->getTagOrNull(tagName);
@@ -2196,7 +2173,7 @@ void FunctionValidator::visitTry(Try* curr) {
     }
 
     auto* catchBody = curr->catchBodies[i];
-    SmallVector<Pop*, 1> pops = findPops(catchBody);
+    auto pops = EHUtils::findPops(catchBody);
     if (tag->sig.params == Type::none) {
       if (!shouldBeTrue(pops.empty(), curr, "")) {
         getStream() << "catch's tag (" << tagName
@@ -2225,7 +2202,7 @@ void FunctionValidator::visitTry(Try* curr) {
 
   if (curr->hasCatchAll()) {
     auto* catchAllBody = curr->catchBodies.back();
-    shouldBeTrue(findPops(catchAllBody).empty(),
+    shouldBeTrue(EHUtils::findPops(catchAllBody).empty(),
                  curr,
                  "catch_all's body should not have pops");
   }
