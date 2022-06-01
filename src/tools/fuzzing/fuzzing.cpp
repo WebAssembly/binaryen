@@ -2017,14 +2017,14 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   assert(wasm.features.hasReferenceTypes());
   if (heapType.isSignature()) {
     return makeRefFuncConst(type);
-  } else {
-    // TODO: Handle nontrivial array and struct types.
   }
+
   // We weren't able to directly materialize a non-null constant. Try again to
   // create a null.
   if (type.isNullable()) {
     return builder.makeRefNull(type);
   }
+
   // We have to produce a non-null value. Possibly create a null and cast it
   // to non-null even though that will trap at runtime. We must have a
   // function context for this because the cast is not allowed in globals.
