@@ -979,9 +979,15 @@ private:
   }
 
   // Flow contents from a location where a change occurred. This sends the new
-  // contents to all the targets of this location, and handles special cases of
-  // flow.
+  // contents to all the normal targets of this location (using
+  // flowAfterUpdateToTargets), and also handles special cases of flow after.
   void flowAfterUpdate(LocationIndex locationIndex);
+
+  // Internal part of flowAfterUpdate that handles sending new values to the
+  // given location index's normal targets (that is, the ones listed in the
+  // |targets| vector).
+  void flowAfterUpdateToTargets(LocationIndex locationIndex,
+                                const PossibleContents& contents);
 
   // Add a new connection while the flow is happening. If the link already
   // exists it is not added.
@@ -1303,34 +1309,12 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
   std::cout << '\n';
 #endif
 
-  // Send the new contents to all the targets of this location. As we do so,
-  // prune any targets that we do not need to bother sending content to in the
-  // future, to save space and work later.
-  auto& targets = getTargets(locationIndex);
-  targets.erase(std::remove_if(targets.begin(),
-                               targets.end(),
-                               [&](LocationIndex targetIndex) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-                                 std::cout << "  send to target\n";
-                                 dump(getLocation(targetIndex));
-#endif
-                                 return !updateContents(targetIndex, contents);
-                               }),
-                targets.end());
-
-  if (contents.isMany()) {
-    // We contain Many, and just called updateContents on our targets to send
-    // that value to them. We'll never need to send anything from here ever
-    // again, since we sent the worst case possible already, so we can just
-    // clear our targets vector. But we should have already removed all the
-    // targets in the above remove_if operation, since they should have all
-    // notified us that we do not need to send them any more updates.
-    assert(targets.empty());
-  }
+  // Flow the contents to the normal targets of this location.
+  flowAfterUpdateToTargets(locationIndex, contents);
 
   // We are mostly done, except for handling interesting/special cases in the
   // flow, additional operations that we need to do aside from sending the new
-  // contents to the statically linked targets.
+  // contents to the normal (statically linked) targets.
 
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto* child = exprLoc->expr;
@@ -1371,6 +1355,34 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
       WASM_UNREACHABLE("bad childParents content");
     }
+  }
+}
+
+void Flower::flowAfterUpdateToTargets(LocationIndex locationIndex,
+                                      const PossibleContents& contents) {
+  // Send the new contents to all the targets of this location. As we do so,
+  // prune any targets that we do not need to bother sending content to in the
+  // future, to save space and work later.
+  auto& targets = getTargets(locationIndex);
+  targets.erase(std::remove_if(targets.begin(),
+                               targets.end(),
+                               [&](LocationIndex targetIndex) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+                                 std::cout << "  send to target\n";
+                                 dump(getLocation(targetIndex));
+#endif
+                                 return !updateContents(targetIndex, contents);
+                               }),
+                targets.end());
+
+  if (contents.isMany()) {
+    // We contain Many, and just called updateContents on our targets to send
+    // that value to them. We'll never need to send anything from here ever
+    // again, since we sent the worst case possible already, so we can just
+    // clear our targets vector. But we should have already removed all the
+    // targets in the above remove_if operation, since they should have all
+    // notified us that we do not need to send them any more updates.
+    assert(targets.empty());
   }
 }
 
