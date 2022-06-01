@@ -3668,6 +3668,7 @@ void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
     }
     ex->value = tag->name;
     ex->kind = ExternalKind::Tag;
+    wasm.addExport(ex.release());
   }
 
   // Parse typeuse

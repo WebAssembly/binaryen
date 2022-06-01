@@ -299,13 +299,60 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    // Expressions that may throw cannot be sinked into 'try'. At the start of
-    // 'try', we drop all sinkables that may throw.
+    // Certain expressions cannot be sinked into 'try', and so at the start of
+    // 'try' we forget about them.
     if (curr->is<Try>()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
+        // Expressions that may throw cannot be moved into a try (which might
+        // catch them, unlike before the move).
         if (info.effects.throws()) {
           invalidated.push_back(index);
+          continue;
+        }
+
+        // Non-nullable local.sets cannot be moved into a try, as that may
+        // change dominance from the perspective of the spec
+        //
+        //  (local.set $x X)
+        //  (try
+        //    ..
+        //    (Y
+        //      (local.get $x))
+        //  (catch
+        //    (Z
+        //      (local.get $x)))
+        //
+        // =>
+        //
+        //  (try
+        //    ..
+        //    (Y
+        //      (local.tee $x X))
+        //  (catch
+        //    (Z
+        //      (local.get $x)))
+        //
+        // After sinking the set, the tee does not dominate the get in the
+        // catch, at least not in the simple way the spec defines it, see
+        // https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
+        // We have more refined information about control flow and dominance
+        // than the spec, and so we would see if ".." can throw or not (only if
+        // it can throw is there a branch to the catch, which can change
+        // dominance). To stay compliant with the spec, however, we must not
+        // move code regardless of whether ".." can throw - we must simply keep
+        // the set outside of the try.
+        //
+        // The problem described can also occur on the *value* and not the set
+        // itself. For example, |X| above could be a local.set of a non-nullable
+        // local. For that reason we must scan it all.
+        if (self->getModule()->features.hasGCNNLocals()) {
+          for (auto* set : FindAll<LocalSet>(*info.item).list) {
+            if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
+              invalidated.push_back(index);
+              break;
+            }
+          }
         }
       }
       for (auto index : invalidated) {

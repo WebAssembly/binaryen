@@ -686,9 +686,7 @@ struct InfoCollector
 
       // Find the pop of the tag's contents. The body must start with such a
       // pop, which might be of a tuple.
-      auto pops = EHUtils::findPops(body);
-      assert(pops.size() == 1);
-      auto* pop = pops[0];
+      auto* pop = EHUtils::findPop(body);
       assert(pop->type.size() == params.size());
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
@@ -990,11 +988,14 @@ private:
   void connectDuringFlow(Location from, Location to);
 
   // New links added during the flow are added on the side to avoid aliasing
-  // during the flow, which iterates on links.
+  // on the |targets| vectors during the flow (which iterates on |targets|).
   std::vector<IndexLink> newLinks;
 
-  // New links are processed when we are not iterating on any links, at a safe
-  // time.
+  // New links must be added to the appropriate |targets| vector (that is, the
+  // |targets| of the source must get a new target added to it). We are
+  // iterating on |targets| for most of our work, however, so we must not alter
+  // it at that time. This method is called later, after there is no risk of
+  // aliasing, and it appends to the appropriate |targets| vector.
   void updateNewLinks();
 
   // Contents sent to a global location can be filtered in a special way during
@@ -1372,18 +1373,17 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
 
 void Flower::connectDuringFlow(Location from, Location to) {
   // Add the new link to a temporary structure on the side to avoid any
-  // aliasing as we work. updateNewLinks() will be called at the proper time
-  // to apply these links to the graph safely.
+  // aliasing on a |targets| vector as we work. updateNewLinks() will be called
+  // at the proper time to apply these links to the appropriate |targets|
+  // safely.
   auto newLink = LocationLink{from, to};
   auto newIndexLink = getIndexes(newLink);
   if (links.count(newIndexLink) == 0) {
     newLinks.push_back(newIndexLink);
     links.insert(newIndexLink);
 
-    // In addition to adding the link, send the contents along it right now. (If
-    // we do not send the contents then we'd be assuming that some future
-    // flowing value will carry the contents along with it, but that might not
-    // happen.)
+    // In addition to adding the link, which will ensure new contents appearing
+    // later will be sent along, we also update with the current contents.
     updateContents(to, getContents(getIndex(from)));
   }
 }
@@ -1459,12 +1459,18 @@ void Flower::readFromData(HeapType declaredHeapType,
     // TODO: The Global case may have a different cone type than the heapType,
     //       which we could use here.
     // TODO: A Global may refer to an immutable global, which we can read the
-    //       field from potentially (reading it from the struct.new/array.now
+    //       field from potentially (reading it from the struct.new/array.new
     //       in the definition of it, if it is not imported; or, we could track
     //       the contents of immutable fields of allocated objects, and not just
     //       represent them as ExactType).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
+    // Note that this cannot be a Literal, since this is a reference, and the
+    // only reference literals we have are nulls (handled above) and ref.func.
+    // ref.func is not valid in struct|array.get, so the code would trap at
+    // runtime, and also it would never reach here as because of wasm validation
+    // it would be cast to a struct/array type, and our special ref.cast code
+    // would filter it out.
     assert(refContents.isMany() || refContents.isGlobal());
 
     // We create a special location for the canonical cone of this type, to
