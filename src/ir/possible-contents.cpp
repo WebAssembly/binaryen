@@ -1128,10 +1128,13 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     if (ex->kind == ExternalKind::Function) {
       calledFromOutside(ex->value);
     } else if (ex->kind == ExternalKind::Table) {
-      // If a table is exported, assume any function in tables can be called
-      // from the outside.
+      // If any table is exported, assume any function in any table (including
+      // other tables) can be called from the outside.
       // TODO: This could be more precise about which tables are exported and
-      //       which are not.
+      //       which are not: perhaps one table is exported but we can optimize
+      //       the functions in another table, which is not exported. However,
+      //       it is simpler to treat them all the same, and this handles the
+      //       common case of no tables being exported at all.
       // TODO: This does not handle table.get/table.set, or call_ref, for which
       //       we'd need to see which references are used and which escape etc.
       //       For now, assume a closed world for such such advanced use cases /
