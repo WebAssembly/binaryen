@@ -3444,10 +3444,9 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
 
 std::ostream& printStackIR(std::ostream& o, Module* module) {
   wasm::PassRunner runner(module);
-  Pass* generatePass = createGenerateStackIRPass();
-  generatePass->run(&runner, module);
-  wasm::PrintStackIR(&o).run(&runner, module);
-  delete generatePass;
+  runner.add("generate-stack-ir");
+  runner.add(std::make_unique<PrintStackIR>(&o));
+  runner.run();
   return o;
 }
 

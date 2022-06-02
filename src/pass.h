@@ -20,7 +20,6 @@
 #include <functional>
 
 #include "mixed_arena.h"
-#include "passes/passes.h"
 #include "support/utilities.h"
 #include "wasm-traversal.h"
 #include "wasm.h"

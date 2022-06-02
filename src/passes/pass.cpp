@@ -24,6 +24,7 @@
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
 #include "pass.h"
+#include "passes/passes.h"
 #include "support/colors.h"
 #include "wasm-debug.h"
 #include "wasm-io.h"
