@@ -65,9 +65,6 @@ struct SpillPointers
   // main entry point
 
   void doWalkFunction(Function* func) {
-    if (!canRun(func)) {
-      return;
-    }
     super::doWalkFunction(func);
     spillPointers();
   }
