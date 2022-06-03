@@ -68,8 +68,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   auto* stackSaveFunctionExport = wasm.getExportOrNull("stackSave");
   if (stackSaveFunctionExport &&
       stackSaveFunctionExport->kind == ExternalKind::Function) {
-    auto* stackSaveFunction =
-      wasm.getFunction(stackSaveFunctionExport->value);
+    auto* stackSaveFunction = wasm.getFunction(stackSaveFunctionExport->value);
     assert(!stackSaveFunction->imported());
     auto* globalGet = stackSaveFunction->body->dynCast<GlobalGet>();
     if (globalGet) {
