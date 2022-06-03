@@ -44,37 +44,7 @@ inline Index stackAlign(Index size) {
 
 inline void
 getStackSpace(Index local, Function* func, Index size, Module& wasm) {
-  // Attempt to locate the stack pointer by recognizing code idioms
-  // used by Emscripten.
-  //
-  // Starting with Emscripten 1.38.24, the stack pointer variable is
-  // initialized with a literal constant, eliminating the import that
-  // we used to locate the stack pointer by name.  We must match the following
-  // idiom, expecting to see the module structured as follows:
-  //
-  //(module
-  //  ...
-  //  (export "stackSave" (func $stackSave))
-  //  ...
-  //  (func $stackSave (result i32)
-  //    (global.get $STACKTOP)
-  //  )
-  //  ...
-  //)
-  //
-  // That is, we don't know the name of the global, but we look for an export
-  // called "stackSave" and find the global from its internals.
-  Global* stackPointer = nullptr;
-  auto* stackSaveFunctionExport = wasm.getExportOrNull("stackSave");
-  if (stackSaveFunctionExport &&
-      stackSaveFunctionExport->kind == ExternalKind::Function) {
-    auto* stackSaveFunction = wasm.getFunction(stackSaveFunctionExport->value);
-    assert(!stackSaveFunction->imported());
-    auto* globalGet = stackSaveFunction->body->dynCast<GlobalGet>();
-    if (globalGet) {
-      stackPointer = wasm.getGlobal(globalGet->name);
-    }
-  }
+  auto* stackPointer = getStackPointerGlobal(wasm);
   if (!stackPointer) {
     Fatal() << "getStackSpace: failed to find the stack pointer";
   }
