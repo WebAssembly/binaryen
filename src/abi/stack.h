@@ -17,7 +17,6 @@
 #ifndef wasm_abi_stack_h
 #define wasm_abi_stack_h
 
-#include "abi.h"
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
 #include "ir/global-utils.h"
@@ -51,25 +50,26 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   }
   // align the size
   size = stackAlign(size);
+  auto pointerType = wasm.memory.indexType;
   // TODO: find existing stack usage, and add on top of that - carefully
   Builder builder(wasm);
   auto* block = builder.makeBlock();
   block->list.push_back(builder.makeLocalSet(
-    local, builder.makeGlobalGet(stackPointer->name, PointerType)));
+    local, builder.makeGlobalGet(stackPointer->name, pointerType)));
   // TODO: add stack max check
   Expression* added;
-  if (PointerType == Type::i32) {
+  if (pointerType == Type::i32) {
     // The stack goes downward in the LLVM wasm backend.
     added = builder.makeBinary(SubInt32,
-                               builder.makeLocalGet(local, PointerType),
+                               builder.makeLocalGet(local, pointerType),
                                builder.makeConst(int32_t(size)));
   } else {
-    WASM_UNREACHABLE("unhandled PointerType");
+    WASM_UNREACHABLE("unhandled pointerType");
   }
   block->list.push_back(builder.makeGlobalSet(stackPointer->name, added));
   auto makeStackRestore = [&]() {
     return builder.makeGlobalSet(stackPointer->name,
-                                 builder.makeLocalGet(local, PointerType));
+                                 builder.makeLocalGet(local, pointerType));
   };
   // add stack restores to the returns
   FindAllPointers<Return> finder(func->body);

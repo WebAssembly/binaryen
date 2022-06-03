@@ -25,7 +25,6 @@
 //  * There is currently no check that there is enough stack space.
 //
 
-#include "abi/abi.h"
 #include "abi/stack.h"
 #include "cfg/liveness-traversal.h"
 #include "pass.h"
@@ -72,13 +71,17 @@ struct SpillPointers
   // map pointers to their offset in the spill area
   typedef std::unordered_map<Index, Index> PointerMap;
 
+  Type pointerType;
+
   void spillPointers() {
+    pointerType = getModule()->memory.indexType;
+
     // we only care about possible pointers
     auto* func = getFunction();
     PointerMap pointerMap;
     for (Index i = 0; i < func->getNumLocals(); i++) {
-      if (func->getLocalType(i) == ABI::PointerType) {
-        auto offset = pointerMap.size() * ABI::PointerType.getByteSize();
+      if (func->getLocalType(i) == pointerType) {
+        auto offset = pointerMap.size() * pointerType.getByteSize();
         pointerMap[i] = offset;
       }
     }
@@ -123,7 +126,7 @@ struct SpillPointers
             if (!spilled) {
               // prepare stack support: get a pointer to stack space big enough
               // for all our data
-              spillLocal = Builder::addVar(func, ABI::PointerType);
+              spillLocal = Builder::addVar(func, pointerType);
               spilled = true;
             }
             // the origin was seen at walk, but the thing may have moved
@@ -140,7 +143,7 @@ struct SpillPointers
       // get the stack space, and set the local to it
       ABI::getStackSpace(spillLocal,
                          func,
-                         ABI::PointerType.getByteSize() * pointerMap.size(),
+                         pointerType.getByteSize() * pointerMap.size(),
                          *getModule());
     }
   }
@@ -184,12 +187,12 @@ struct SpillPointers
     // add the spills
     for (auto index : toSpill) {
       block->list.push_back(
-        builder.makeStore(ABI::PointerType.getByteSize(),
+        builder.makeStore(pointerType.getByteSize(),
                           pointerMap[index],
-                          ABI::PointerType.getByteSize(),
-                          builder.makeLocalGet(spillLocal, ABI::PointerType),
-                          builder.makeLocalGet(index, ABI::PointerType),
-                          ABI::PointerType));
+                          pointerType.getByteSize(),
+                          builder.makeLocalGet(spillLocal, pointerType),
+                          builder.makeLocalGet(index, pointerType),
+                          pointerType));
     }
     // add the (modified) call
     block->list.push_back(call);
