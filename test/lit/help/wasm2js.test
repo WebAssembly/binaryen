@@ -128,6 +128,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-refining                             refine the types of globals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gsi                                         globally optimize struct values
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gto                                         globally optimize GC types
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with

@@ -42,6 +42,8 @@
 #include <support/threads.h>
 #include <wasm.h>
 
+#include "call-utils.h"
+
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
 
@@ -208,6 +210,9 @@ struct OptimizeInstructions
 
   bool fastMath;
 
+  // In rare cases we make a change to a type, and will do a refinalize.
+  bool refinalize = false;
+
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
 
@@ -220,6 +225,10 @@ struct OptimizeInstructions
 
     // Main walk.
     super::doWalkFunction(func);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
 
     // Final optimizations.
     {
@@ -1327,6 +1336,22 @@ struct OptimizeInstructions
       curr->operands.back() = builder.makeBlock({set, drop, get});
       replaceCurrent(builder.makeCall(
         ref->func, curr->operands, curr->type, curr->isReturn));
+      return;
+    }
+
+    // If the target is a select of two different constants, we can emit an if
+    // over two direct calls.
+    if (auto* calls = CallUtils::convertToDirectCalls(
+          curr,
+          [](Expression* target) -> CallUtils::IndirectCallInfo {
+            if (auto* refFunc = target->dynCast<RefFunc>()) {
+              return CallUtils::Known{refFunc->func};
+            }
+            return CallUtils::Unknown{};
+          },
+          *getFunction(),
+          *getModule())) {
+      replaceCurrent(calls);
     }
   }
 
@@ -1622,6 +1647,25 @@ struct OptimizeInstructions
                                           passOptions));
         } else {
           replaceCurrent(curr->ref);
+
+          // We must refinalize here, as we may be returning a more specific
+          // type, which can alter the parent. For example:
+          //
+          //  (struct.get $parent 0
+          //   (ref.cast_static $parent
+          //    (local.get $child)
+          //   )
+          //  )
+          //
+          // Try to cast a $child to its parent, $parent. That always works,
+          // so the cast can be removed.
+          // Then once the cast is removed, the outer struct.get
+          // will have a reference with a different type, making it a
+          // (struct.get $child ..) instead of $parent.
+          // But if $parent and $child have different types on field 0 (the
+          // child may have a more refined one) then the struct.get must be
+          // refinalized so the IR node has the expected type.
+          refinalize = true;
         }
         return;
       }

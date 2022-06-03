@@ -123,13 +123,14 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $struct (struct_subtype  data))
+
   ;; CHECK:      (type $struct-sub1 (struct_subtype  $struct))
   (type $struct-sub1 (struct_subtype $struct))
 
   ;; CHECK:      (type $struct-sub2 (struct_subtype  $struct))
   (type $struct-sub2 (struct_subtype $struct))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
@@ -622,5 +623,100 @@
       )
     )
     (unreachable)
+  )
+)
+
+;; Exports prevent optimization, so $func's type will not change here.
+(module
+  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (export "prevent-opts" (func $func))
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (export "prevent-opts") (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (struct.new $struct)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (func_subtype (param i32) func))
+  (type $A (func_subtype (param i32) func))
+  ;; CHECK:      (type $B (func_subtype (param i32) $A))
+  (type $B (func_subtype (param i32) $A))
+
+  ;; CHECK:      (func $bar (type $B) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $bar (type $B) (param $x i32)
+   ;; The parameter to this function can be pruned. But while doing so we must
+   ;; properly preserve the subtyping of $B from $A, which means we cannot just
+   ;; remove it - we'd need to remove it from $A as well, which we don't
+   ;; attempt to do in the pass atm. So we do not optimize here.
+    (nop)
+  )
+)
+
+(module
+  ;; CHECK:      (type $ref|${}|_i32_=>_none (func_subtype (param (ref ${}) i32) func))
+
+  ;; CHECK:      (type ${} (struct_subtype  data))
+  (type ${} (struct_subtype data))
+
+  ;; CHECK:      (func $foo (type $ref|${}|_i32_=>_none) (param $ref (ref ${})) (param $i32 i32)
+  ;; CHECK-NEXT:  (local $2 eqref)
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $foo
+  ;; CHECK-NEXT:    (block $block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (ref.null eq)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (param $ref eqref) (param $i32 i32)
+    (call $foo
+      ;; The only reference to the ${} type is in this block signature. Even
+      ;; this will go away in the internal ReFinalize (which makes the block
+      ;; type unreachable).
+      (block (result (ref ${}))
+        (unreachable)
+      )
+      (i32.const 0)
+    )
+    ;; Write something of type eqref into $ref. When we refine the type of the
+    ;; parameter from eqref to ${} we must do something here, as we can no
+    ;; longer just write this (ref.null eq) into a parameter of the more
+    ;; refined type. While doing so, we must not be confused by the fact that
+    ;; the only mention of ${} in the original module gets removed during our
+    ;; processing, as mentioned in the earlier comment. This is a regression
+    ;; test for a crash because of that.
+    (local.set $ref
+      (ref.null eq)
+    )
   )
 )

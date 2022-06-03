@@ -464,14 +464,17 @@ enum BinaryOp {
   NarrowUVecI32x4ToVecI16x8,
 
   // SIMD Swizzle
-  SwizzleVec8x16,
+  SwizzleVecI8x16,
 
   // Relaxed SIMD
-  RelaxedSwizzleVec8x16,
+  RelaxedSwizzleVecI8x16,
   RelaxedMinVecF32x4,
   RelaxedMaxVecF32x4,
   RelaxedMinVecF64x2,
   RelaxedMaxVecF64x2,
+  RelaxedQ15MulrSVecI16x8,
+  DotI8x16I7x16SToVecI16x8,
+  DotI8x16I7x16UToVecI16x8,
 
   InvalidBinary
 };
@@ -551,6 +554,8 @@ enum SIMDTernaryOp {
   LaneselectI16x8,
   LaneselectI32x4,
   LaneselectI64x2,
+  DotI8x16I7x16AddSToVecI32x4,
+  DotI8x16I7x16AddUToVecI32x4,
 };
 
 enum RefIsOp {
@@ -1451,6 +1456,11 @@ public:
   // See above with RefTest.
   Expression* rtt = nullptr;
   HeapType intendedType;
+
+  // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
+  // measurements.
+  enum Safety { Safe, Unsafe };
+  Safety safety = Safe;
 
   void finalize();
 

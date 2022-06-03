@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "wasm-builder.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
 
@@ -12,7 +13,7 @@ void test_builder() {
 
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
-  // (type $array (array (mut externref)))
+  // (type $array (array (mut anyref)))
 
   TypeBuilder builder;
   assert(builder.size() == 0);
@@ -24,11 +25,11 @@ void test_builder() {
   Type refArray = builder.getTempRefType(builder[2], NonNullable);
   Type refNullArray = builder.getTempRefType(builder[2], Nullable);
   Type rttArray = builder.getTempRttType(Rtt(0, builder[2]));
-  Type refNullExt(HeapType::ext, Nullable);
+  Type refNullAny(HeapType::any, Nullable);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
   Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
-  Array array(Field(refNullExt, Mutable));
+  Array array(Field(refNullAny, Mutable));
 
   {
     IndexedTypeNameGenerator print(builder);
@@ -327,7 +328,6 @@ void test_subtypes() {
   {
     // Basic Types
     for (auto other : {HeapType::func,
-                       HeapType::ext,
                        HeapType::any,
                        HeapType::eq,
                        HeapType::i31,

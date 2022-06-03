@@ -786,3 +786,27 @@
     (call $bar (ref.null func))
   )
 )
+
+(module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $A (struct_subtype  data))
+  (type $A (struct_subtype data))
+  ;; CHECK:      (func $0 (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 f32)
+  ;; CHECK-NEXT:  (ref.cast_static $A
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $0 (param $0 f32)
+    ;; $A is only used in an unreachable cast. We should not error when
+    ;; removing the param from this function, during which we collect heap
+    ;; types, and must find this one even though the cast is unreachable, as
+    ;; we do need to handle it in the optimization as well as print it (note how
+    ;; type $A is declared in the output here - it would be a bug if it were
+    ;; not, which this is a regression test for).
+    (ref.cast_static $A
+      (unreachable)
+    )
+  )
+)

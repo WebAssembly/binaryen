@@ -37,12 +37,6 @@ public:
 
   void fixInvokeFunctionNames();
 
-  // clang uses name mangling to rename the argc/argv form of main to
-  // __main_argc_argv.  Emscripten in non-standalone mode expects that function
-  // to be exported as main.  This function renames __main_argc_argv to main
-  // as expected by emscripten.
-  void renameMainArgcArgv();
-
   // Emits the data segments to a file. The file contains data from address base
   // onwards (we must pass in base, as we can't tell it from the wasm - the
   // first segment may start after a run of zeros, but we need those zeros in

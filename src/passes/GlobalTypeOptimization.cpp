@@ -21,8 +21,6 @@
 //  * Immutability: If a field has no struct.set, it can become immutable.
 //  * Fields that are never read from can be removed entirely.
 //
-// TODO: Specialize field types.
-//
 
 #include "ir/effects.h"
 #include "ir/localize.h"
@@ -391,10 +389,12 @@ struct GlobalTypeOptimization : public Pass {
           // Map to the new index.
           curr->index = newIndex;
         } else {
-          // This field was removed, so just emit drops of our children.
+          // This field was removed, so just emit drops of our children (plus a
+          // trap if the input is null).
           Builder builder(*getModule());
-          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                              builder.makeDrop(curr->value)));
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            builder.makeDrop(curr->value)));
         }
       }
 

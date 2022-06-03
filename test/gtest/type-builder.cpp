@@ -1,3 +1,4 @@
+#include "ir/subtypes.h"
 #include "type-test.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
@@ -9,6 +10,8 @@ TEST_F(TypeTest, TypeBuilderGrowth) {
   TypeBuilder builder;
   EXPECT_EQ(builder.size(), 0u);
   builder.grow(3);
+  EXPECT_EQ(builder.size(), 3u);
+  builder.grow(0);
   EXPECT_EQ(builder.size(), 3u);
 }
 
@@ -118,7 +121,7 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 TEST_F(EquirecursiveTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
-  // (type $array (array (mut externref)))
+  // (type $array (array (mut anyref)))
   TypeBuilder builder(3);
   ASSERT_EQ(builder.size(), size_t{3});
 
@@ -127,11 +130,11 @@ TEST_F(EquirecursiveTest, Basics) {
   Type refArray = builder.getTempRefType(builder[2], NonNullable);
   Type refNullArray = builder.getTempRefType(builder[2], Nullable);
   Type rttArray = builder.getTempRttType(Rtt(0, builder[2]));
-  Type refNullExt(HeapType::ext, Nullable);
+  Type refNullAny(HeapType::any, Nullable);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
   Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
-  Array array(Field(refNullExt, Mutable));
+  Array array(Field(refNullAny, Mutable));
 
   builder[0] = sig;
   builder[1] = struct_;
@@ -159,7 +162,7 @@ TEST_F(EquirecursiveTest, Basics) {
   EXPECT_EQ(
     built[1].getStruct(),
     Struct({Field(newRefNullArray, Immutable), Field(newRttArray, Mutable)}));
-  EXPECT_EQ(built[2].getArray(), Array(Field(refNullExt, Mutable)));
+  EXPECT_EQ(built[2].getArray(), Array(Field(refNullAny, Mutable)));
 
   // The built types should be different from the temporary types.
   EXPECT_NE(newRefSig, refSig);
@@ -475,14 +478,14 @@ TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
 static void testCanonicalizeBasicTypes() {
   TypeBuilder builder(5);
 
-  Type externref = builder.getTempRefType(builder[0], Nullable);
-  Type externrefs = builder.getTempTupleType({externref, externref});
+  Type anyref = builder.getTempRefType(builder[0], Nullable);
+  Type anyrefs = builder.getTempTupleType({anyref, anyref});
 
-  builder[0] = HeapType::ext;
-  builder[1] = Struct({Field(externref, Immutable)});
-  builder[2] = Struct({Field(Type::externref, Immutable)});
-  builder[3] = Signature(externrefs, Type::none);
-  builder[4] = Signature({Type::externref, Type::externref}, Type::none);
+  builder[0] = HeapType::any;
+  builder[1] = Struct({Field(anyref, Immutable)});
+  builder[2] = Struct({Field(Type::anyref, Immutable)});
+  builder[3] = Signature(anyrefs, Type::none);
+  builder[4] = Signature({Type::anyref, Type::anyref}, Type::none);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
@@ -497,4 +500,33 @@ TEST_F(EquirecursiveTest, CanonicalizeBasicTypes) {
 }
 TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
   testCanonicalizeBasicTypes();
+}
+
+// Test SubTypes utility code.
+TEST_F(NominalTest, testSubTypes) {
+  // Build type types, the second of which is a subtype.
+  TypeBuilder builder(2);
+  builder[0] = Struct({Field(Type::anyref, Immutable)});
+  builder[1] = Struct({Field(Type::funcref, Immutable)});
+  builder[1].subTypeOf(builder[0]);
+  auto built = *builder.build();
+
+  // Build a tiny wasm module that uses the types, so that we can test the
+  // SubTypes utility code.
+  Module wasm;
+  Builder wasmBuilder(wasm);
+  wasm.addFunction(wasmBuilder.makeFunction(
+    "func",
+    Signature(Type::none, Type::none),
+    {Type(built[0], Nullable), Type(built[1], Nullable)},
+    wasmBuilder.makeNop()));
+  SubTypes subTypes(wasm);
+  auto subTypes0 = subTypes.getStrictSubTypes(built[0]);
+  EXPECT_TRUE(subTypes0.size() == 1 && subTypes0[0] == built[1]);
+  auto subTypes0Inclusive = subTypes.getAllSubTypes(built[0]);
+  EXPECT_TRUE(subTypes0Inclusive.size() == 2 &&
+              subTypes0Inclusive[0] == built[1] &&
+              subTypes0Inclusive[1] == built[0]);
+  auto subTypes1 = subTypes.getStrictSubTypes(built[1]);
+  EXPECT_EQ(subTypes1.size(), 0u);
 }

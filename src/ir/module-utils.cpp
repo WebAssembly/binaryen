@@ -42,65 +42,65 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
   }
 };
 
-Counts getHeapTypeCounts(Module& wasm) {
-  struct CodeScanner
-    : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
-    Counts& counts;
+struct CodeScanner
+  : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
+  Counts& counts;
 
-    CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
-      setModule(&wasm);
-    }
+  CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
+    setModule(&wasm);
+  }
 
-    void visitExpression(Expression* curr) {
-      if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->heapType);
-      } else if (curr->is<RefNull>()) {
+  void visitExpression(Expression* curr) {
+    if (auto* call = curr->dynCast<CallIndirect>()) {
+      counts.note(call->heapType);
+    } else if (curr->is<RefNull>()) {
+      counts.note(curr->type);
+    } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
+      counts.note(curr->type.getRtt().heapType);
+    } else if (auto* make = curr->dynCast<StructNew>()) {
+      handleMake(make);
+    } else if (auto* make = curr->dynCast<ArrayNew>()) {
+      handleMake(make);
+    } else if (auto* make = curr->dynCast<ArrayInit>()) {
+      handleMake(make);
+    } else if (auto* cast = curr->dynCast<RefCast>()) {
+      handleCast(cast);
+    } else if (auto* cast = curr->dynCast<RefTest>()) {
+      handleCast(cast);
+    } else if (auto* cast = curr->dynCast<BrOn>()) {
+      if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
+        handleCast(cast);
+      }
+    } else if (auto* get = curr->dynCast<StructGet>()) {
+      counts.note(get->ref->type);
+    } else if (auto* set = curr->dynCast<StructSet>()) {
+      counts.note(set->ref->type);
+    } else if (Properties::isControlFlowStructure(curr)) {
+      if (curr->type.isTuple()) {
+        // TODO: Allow control flow to have input types as well
+        counts.note(Signature(Type::none, curr->type));
+      } else {
         counts.note(curr->type);
-      } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-        counts.note(curr->type.getRtt().heapType);
-      } else if (auto* make = curr->dynCast<StructNew>()) {
-        // Some operations emit a HeapType in the binary format, if they are
-        // static and not dynamic (if dynamic, the RTT provides the heap type).
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayNew>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayInit>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* cast = curr->dynCast<RefCast>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<RefTest>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<BrOn>()) {
-        if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-          if (!cast->rtt && cast->type != Type::unreachable) {
-            counts.note(cast->getIntendedType());
-          }
-        }
-      } else if (auto* get = curr->dynCast<StructGet>()) {
-        counts.note(get->ref->type);
-      } else if (auto* set = curr->dynCast<StructSet>()) {
-        counts.note(set->ref->type);
-      } else if (Properties::isControlFlowStructure(curr)) {
-        if (curr->type.isTuple()) {
-          // TODO: Allow control flow to have input types as well
-          counts.note(Signature(Type::none, curr->type));
-        } else {
-          counts.note(curr->type);
-        }
       }
     }
-  };
+  }
 
+  template<typename T> void handleMake(T* curr) {
+    if (!curr->rtt && curr->type != Type::unreachable) {
+      counts.note(curr->type.getHeapType());
+    }
+  }
+
+  template<typename T> void handleCast(T* curr) {
+    // Some operations emit a HeapType in the binary format, if they are
+    // static and not dynamic (if dynamic, the RTT provides the heap type).
+    if (!curr->rtt) {
+      counts.note(curr->intendedType);
+    }
+  }
+};
+
+Counts getHeapTypeCounts(Module& wasm) {
   // Collect module-level info.
   Counts counts;
   CodeScanner(wasm, counts).walkModuleCode(&wasm);
@@ -115,8 +115,8 @@ Counts getHeapTypeCounts(Module& wasm) {
   }
 
   // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
-    wasm, [&](Function* func, Counts& counts) {
+  ModuleUtils::ParallelFunctionAnalysis<Counts, Immutable, InsertOrderedMap>
+    analysis(wasm, [&](Function* func, Counts& counts) {
       counts.note(func->type);
       for (auto type : func->vars) {
         counts.note(type);
@@ -203,9 +203,10 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
 }
 
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
+  TypeSystem system = getTypeSystem();
   Counts counts = getHeapTypeCounts(wasm);
 
-  if (getTypeSystem() != TypeSystem::Isorecursive) {
+  if (system == TypeSystem::Equirecursive) {
     // Sort by frequency and then original insertion order.
     std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(),
                                                     counts.end());
@@ -223,9 +224,12 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     return indexedTypes;
   }
 
-  // Isorecursive types have to be arranged into topologically ordered recursion
-  // groups. Sort the groups by average use count among their members so that
-  // the topological sort will place frequently used types first.
+  // Types have to be arranged into topologically ordered recursion groups.
+  // Under isorecrsive typing, the topological sort has to take all referenced
+  // rec groups into account but under nominal typing it only has to take
+  // supertypes into account. First, sort the groups by average use count among
+  // their members so that the later topological sort will place frequently used
+  // types first.
   struct GroupInfo {
     size_t index;
     double useCount = 0;
@@ -236,7 +240,7 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
       if (useCount != other.useCount) {
         return useCount < other.useCount;
       }
-      return index < other.index;
+      return index > other.index;
     }
   };
 
@@ -257,20 +261,35 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     // Update the reference count.
     info.useCount += counts.at(type);
     // Collect predecessor groups.
-    for (auto child : type.getReferencedHeapTypes()) {
-      if (!child.isBasic()) {
-        RecGroup otherGroup = child.getRecGroup();
-        if (otherGroup != group) {
-          info.preds.insert(otherGroup);
+    switch (system) {
+      case TypeSystem::Isorecursive:
+        for (auto child : type.getReferencedHeapTypes()) {
+          if (!child.isBasic()) {
+            RecGroup otherGroup = child.getRecGroup();
+            if (otherGroup != group) {
+              info.preds.insert(otherGroup);
+            }
+          }
         }
-      }
+        break;
+      case TypeSystem::Nominal:
+        if (auto super = type.getSuperType()) {
+          info.preds.insert(super->getRecGroup());
+        }
+        break;
+      case TypeSystem::Equirecursive:
+        WASM_UNREACHABLE(
+          "Equirecursive types should already have been handled");
     }
   }
 
   // Fix up the use counts to be averages to ensure groups are used comensurate
-  // with the amount of index space they occupy.
-  for (auto& [group, info] : groupInfos) {
-    info.useCount /= group.size();
+  // with the amount of index space they occupy. Skip this for nominal types
+  // since their internal group size is always 1.
+  if (system != TypeSystem::Nominal) {
+    for (auto& [group, info] : groupInfos) {
+      info.useCount /= group.size();
+    }
   }
 
   // Sort the predecessors so the most used will be visited first.

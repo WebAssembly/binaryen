@@ -1344,14 +1344,6 @@ private:
 
     RelevantLiveLocalsWalker walker;
     walker.setFunction(func);
-    if (!walker.canRun(func)) {
-      // We can proceed without this optimization, which will cause more
-      // spilling - assume all locals are relevant.
-      for (Index i = 0; i < func->getNumLocals(); i++) {
-        relevantLiveLocals.insert(i);
-      }
-      return;
-    }
     walker.walkFunctionInModule(func, getModule());
     // The relevant live locals are ones that are alive at an unwind/rewind
     // location. TODO look more precisely inside basic blocks, as one might stop
@@ -1531,8 +1523,8 @@ struct Asyncify : public Pass {
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
     auto verbose =
       runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
-    auto sideModule =
-      runner->options.getArgumentOrDefault("asyncify-side-module", "") != "";
+    auto relocatable =
+      runner->options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1567,7 +1559,7 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module, sideModule);
+    addGlobals(module, relocatable);
 
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is

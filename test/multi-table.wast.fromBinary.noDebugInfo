@@ -5,7 +5,7 @@
  (global $global$1 i32 (i32.const 0))
  (table $0 3 3 funcref)
  (table $1 4 4 funcref)
- (table $2 0 externref)
+ (table $2 0 anyref)
  (table $3 5 5 (ref null $none_=>_none))
  (elem $0 (table $timport$0) (i32.const 0) func $0)
  (elem $1 (table $0) (i32.const 0) func $0)

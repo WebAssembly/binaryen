@@ -392,7 +392,7 @@ void test_signature_lub() {
            (StackSignature{Type::i32, Type::i32, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::externref, StackSignature::Polymorphic};
+    StackSignature a{Type::none, Type::anyref, StackSignature::Polymorphic};
     StackSignature b{Type::none, Type::funcref, StackSignature::Polymorphic};
     assert(StackSignature::haveLeastUpperBound(a, b));
     assert(
@@ -411,7 +411,7 @@ void test_signature_lub() {
     StackSignature a{
       {Type::i32, Type::funcref}, Type::funcref, StackSignature::Polymorphic};
     StackSignature b{
-      Type::funcref, {Type::f32, Type::externref}, StackSignature::Polymorphic};
+      Type::funcref, {Type::f32, Type::anyref}, StackSignature::Polymorphic};
     assert(StackSignature::haveLeastUpperBound(a, b));
     assert(StackSignature::getLeastUpperBound(a, b) ==
            (StackSignature{{Type::i32, Type::funcref},

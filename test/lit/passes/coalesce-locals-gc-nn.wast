@@ -81,4 +81,27 @@
    )
   )
  )
+
+ ;; CHECK:      (func $unreachable-get-of-non-nullable
+ ;; CHECK-NEXT:  (local $0 (ref any))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result (ref any))
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $unreachable-get-of-non-nullable
+  ;; One local is unused entirely, the other is used but only in unreachable
+  ;; code. It does not really matter what we do here (coalesce, or not), but we
+  ;; should emit valid IR. Normally we would apply a constant to replace the
+  ;; local.get, however, the types here are non-nullable, so we must do
+  ;; something else.
+  (local $unused (ref any))
+  (local $used-in-unreachable (ref any))
+  (unreachable)
+  (drop
+   (local.get $used-in-unreachable)
+  )
+ )
 )

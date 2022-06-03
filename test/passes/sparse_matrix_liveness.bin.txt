@@ -6,7 +6,7 @@ total
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 4       
- [vars]         : 65536   
+ [vars]         : 8194    
  Block          : 1       
  Const          : 1       
  LocalGet       : 1       
@@ -19,7 +19,7 @@ total
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 4       
- [vars]         : 65536   
+ [vars]         : 1          -8193
  Block          : 1       
  Const          : 1       
  LocalGet       : 1       
