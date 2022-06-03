@@ -2471,8 +2471,8 @@ BINARYEN_API size_t BinaryenModuleWriteText(BinaryenModuleRef module,
 // @return how many bytes were written. This will be less than or equal to
 //         outputSize
 BINARYEN_API size_t BinaryenModuleWriteStackIR(BinaryenModuleRef module,
-                                            char* output,
-                                            size_t outputSize);
+                                               char* output,
+                                               size_t outputSize);
 
 typedef struct BinaryenBufferSizes {
   size_t outputBytes;
@@ -2517,8 +2517,8 @@ BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
 // Serialize a module in stack IR form. Implicitly allocates the returned
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
-BINARYEN_API char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef
-                                                           module);
+BINARYEN_API char*
+BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module);
 
 // Deserialize a module from binary form.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,
