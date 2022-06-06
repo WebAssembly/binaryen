@@ -139,22 +139,20 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(none, exactI32, exactI32);
   assertCombination(none, many, many);
 
-  // i32(0) will become Many, unless the value is identical. (We could do
-  // exactI32 if only the values differ, but there is no point as subtyping
-  // does not exist for this type, and so Many is just as informative.)
+  // i32(0) will become Many, unless the value or the type is identical.
   assertCombination(i32Zero, i32Zero, i32Zero);
-  assertCombination(i32Zero, i32One, many);
+  assertCombination(i32Zero, i32One, exactI32);
   assertCombination(i32Zero, f64One, many);
-  assertCombination(i32Zero, i32Global1, many);
+  assertCombination(i32Zero, i32Global1, exactI32);
   assertCombination(i32Zero, f64Global, many);
-  assertCombination(i32Zero, exactI32, many);
+  assertCombination(i32Zero, exactI32, exactI32);
   assertCombination(i32Zero, exactAnyref, many);
   assertCombination(i32Zero, many, many);
 
   assertCombination(i32Global1, i32Global1, i32Global1);
-  assertCombination(i32Global1, i32Global2, many);
+  assertCombination(i32Global1, i32Global2, exactI32);
   assertCombination(i32Global1, f64Global, many);
-  assertCombination(i32Global1, exactI32, many);
+  assertCombination(i32Global1, exactI32, exactI32);
   assertCombination(i32Global1, exactAnyref, many);
   assertCombination(i32Global1, many, many);
 

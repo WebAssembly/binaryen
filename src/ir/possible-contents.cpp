@@ -66,12 +66,16 @@ void PossibleContents::combine(const PossibleContents& other) {
   auto otherType = other.getType();
 
   if (!type.isRef() || !otherType.isRef()) {
-    // At least one is not a reference. We could in principle try to find
-    // ExactType here, say as the combination of two different constants, but
-    // since there is no subtyping between non-ref types, ExactType would not
-    // carry any more information than Many. See the comment in
-    // possible-contents.h on ExactType at the top.
-    value = Many();
+    // At least one is not a reference. The only possibility left for a useful
+    // combination here is if they have the same type (since we've already ruled
+    // out the case of them being equal). If they have the same type then
+    // neither is a reference and we can emit an exact type (since subtyping is
+    // not relevant for non-references.
+    if (type == otherType) {
+      value = ExactType(type);
+    } else {
+      value = Many();
+    }
     return;
   }
 
