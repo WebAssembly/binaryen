@@ -687,7 +687,7 @@ struct InfoCollector
 
       auto params = getModule()->getTag(tag)->sig.params;
       if (params.size() == 0) {
-        return;
+        continue;
       }
 
       // Find the pop of the tag's contents. The body must start with such a
