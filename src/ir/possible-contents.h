@@ -349,17 +349,17 @@ struct NullLocation {
   }
 };
 
-// Special locations do not correspond to actual locations in the wasm, but are
-// used to organize and optimize the graph. See the comment on
-// possible-contents.cpp:canonicalConeReads.
-struct SpecialLocation {
+// Special locations, each of which are unique, and which do not correspond to
+// actual locations in the wasm, but are used to organize and optimize the
+// graph. See the comment on possible-contents.cpp:canonicalConeReads.
+struct UniqueLocation {
   // A unique index for this location. Necessary to keep different
-  // SpecialLocations different, but the actual value here does not matter
+  // UniqueLocations different, but the actual value here does not matter
   // otherwise. (In practice this will contain the LocationIndex for this
-  // Location, see possible-contents.cpp:makeSpecialLocation(), which is nice
+  // Location, see possible-contents.cpp:makeUniqueLocation(), which is nice
   // for debugging.)
   Index index;
-  bool operator==(const SpecialLocation& other) const {
+  bool operator==(const UniqueLocation& other) const {
     return index == other.index;
   }
 };
@@ -376,7 +376,7 @@ using Location = std::variant<ExpressionLocation,
                               DataLocation,
                               TagLocation,
                               NullLocation,
-                              SpecialLocation>;
+                              UniqueLocation>;
 
 } // namespace wasm
 
@@ -462,8 +462,8 @@ template<> struct hash<wasm::NullLocation> {
   }
 };
 
-template<> struct hash<wasm::SpecialLocation> {
-  size_t operator()(const wasm::SpecialLocation& loc) const {
+template<> struct hash<wasm::UniqueLocation> {
+  size_t operator()(const wasm::UniqueLocation& loc) const {
     return std::hash<wasm::Index>{}(loc.index);
   }
 };
