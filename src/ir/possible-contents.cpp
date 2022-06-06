@@ -943,7 +943,7 @@ private:
 #endif
 
   // Maps a heap type + an index in the type (0 for an array) to the index of a
-  // SpecialLocation for a cone read of those contents. We use such special
+  // UniqueLocation for a cone read of those contents. We use such special
   // locations because a read of a cone type (as opposed to an exact type) will
   // require N incoming links, from each of the N subtypes - and we need that
   // for each struct.get of a cone. If there are M such gets then we have N * M
@@ -954,12 +954,12 @@ private:
   std::unordered_map<std::pair<HeapType, Index>, LocationIndex>
     canonicalConeReads;
 
-  // Creates a new special location that is different from all others so far.
-  LocationIndex makeSpecialLocation() {
+  // Creates a new UniqueLocation (that is different from all others so far).
+  LocationIndex makeUniqueLocation() {
     // Use the location index as the internal index to indicate this special
     // location. That keeps debugging as simple as possible.
     auto expectedIndex = Index(locations.size());
-    auto seenIndex = getIndex(SpecialLocation{expectedIndex});
+    auto seenIndex = getIndex(UniqueLocation{expectedIndex});
     assert(seenIndex == expectedIndex);
     return seenIndex;
   }
@@ -1482,7 +1482,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     // would filter it out.
     assert(refContents.isMany() || refContents.isGlobal());
 
-    // We create a special location for the canonical cone of this type, to
+    // We create a UniqueLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on Flower::canonicalConeReads().
     // TODO: A cone with no subtypes needs no canonical location, just
     //       add one direct link here.
@@ -1493,10 +1493,10 @@ void Flower::readFromData(HeapType declaredHeapType,
       // something at index 0 already - the ExpressionLocation of this very
       // expression, in particular), so we can use that as an indicator that we
       // have never allocated one yet, and do so now.
-      coneReadIndex = makeSpecialLocation();
+      coneReadIndex = makeUniqueLocation();
       for (auto type : subTypes->getAllSubTypes(declaredHeapType)) {
         connectDuringFlow(DataLocation{type, fieldIndex},
-                          SpecialLocation{coneReadIndex});
+                          UniqueLocation{coneReadIndex});
       }
 
       // TODO: if the old contents here were an exact type then we have an old
@@ -1506,7 +1506,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     }
 
     // Link to the canonical location.
-    connectDuringFlow(SpecialLocation{coneReadIndex},
+    connectDuringFlow(UniqueLocation{coneReadIndex},
                       ExpressionLocation{read, 0});
   }
 }
@@ -1615,7 +1615,7 @@ void Flower::dump(Location location) {
     std::cout << "  sigresultloc " << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
-  } else if (auto* loc = std::get_if<SpecialLocation>(&location)) {
+  } else if (auto* loc = std::get_if<UniqueLocation>(&location)) {
     std::cout << "  Specialloc " << loc->index << '\n';
   } else {
     std::cout << "  (other)\n";
