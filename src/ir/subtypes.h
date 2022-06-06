@@ -26,8 +26,9 @@ namespace wasm {
 // them.
 struct SubTypes {
   SubTypes(Module& wasm) {
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "SubTypes requires nominal typing to find supers";
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "SubTypes requires explicit supers";
     }
     types = ModuleUtils::collectHeapTypes(wasm);
     for (auto type : types) {

@@ -246,10 +246,10 @@ struct InfoCollector
         }
       }
     }
-    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
-      // If nominal typing is not enabled then we cannot handle refs, as we need
-      // to do a subtyping analysis there (which the SubTyping helper class only
-      // supports in nominal mode).
+    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      // We need explicit supers in the SubTyping helper class. Without that,
+      // cannot handle refs, and consider them irrelevant.
       return false;
     }
     return true;
@@ -1176,7 +1176,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "struct phase\n";
 #endif
 
-  if (getTypeSystem() == TypeSystem::Nominal) {
+  if (getTypeSystem() == TypeSystem::Nominal ||
+      getTypeSystem() == TypeSystem::Isorecursive) {
     subTypes = std::make_unique<SubTypes>(wasm);
   }
 
