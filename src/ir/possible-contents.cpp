@@ -303,8 +303,7 @@ struct InfoCollector
   void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
     // We could infer the exact type here, but as no subtyping is possible, it
-    // would have no benefit, so just add a generic root, which will be "Many."
-    // See the comment in possible-contents.h on ExactType at the top.
+    // would have no benefit, so just add a generic root (which will be "Many").
     addRoot(curr);
   }
   void visitStore(Store* curr) {}
