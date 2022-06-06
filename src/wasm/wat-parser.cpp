@@ -64,101 +64,47 @@ namespace wasm::WATParser {
 
 namespace {
 
-// =======================
-// Parser Input and Output
-// =======================
-
-// Wraps a lexer with a queue of lexed tokens to support peeking at upcoming
-// tokens without entirely re-parsing them each time they are retrieved.
-//
-// TODO: We should only ever need lookahead of 1, and then only to check the
-// keyword after an open paren. If we add SExprStart as its own token type, then
-// we could just use a normal Lexer with no buffering.
-struct BufferedLexer {
-  Lexer lexer;
-
-  // TODO: vector queue? Array literal of size 2?
-  std::deque<Token> buffer;
-
-  BufferedLexer(std::string_view input) : lexer(input) {}
-
-  // Get the token `index` ahead of the current position without consuming
-  // anything. The returned reference may be invalidated by any subsequent
-  // `peek` or `take` operation.
-  std::optional<Token> peek(size_t index = 0) {
-    while (buffer.size() < index) {
-      if (lexer == lexer.end()) {
-        return {};
-      }
-      buffer.push_back(*lexer++);
-    }
-    if (index == buffer.size()) {
-      return *lexer;
-    }
-    return buffer[index];
-  }
-
-  // Consume the next `n` tokens.
-  void take(size_t n) {
-    while (n > 0 && buffer.size()) {
-      buffer.pop_front();
-      --n;
-    }
-    while (n > 0 && lexer != lexer.end()) {
-      ++lexer;
-      --n;
-    }
-  }
-};
+// ============
+// Parser Input
+// ============
 
 // Wraps a lexer and provides utilities for consuming tokens.
 struct ParseInput {
-  BufferedLexer lexer;
+  Lexer lexer;
 
   ParseInput(std::string_view in) : lexer(in) {}
 
-  std::string_view next() { return lexer.lexer.next(); }
+  bool empty() { return lexer == lexer.end(); }
 
-  // Take an open paren and expected keyword.
-  bool takeSExprStart(std::string_view expected) {
-    auto first = lexer.peek();
-    if (!first || !first->isLParen()) {
-      return false;
+  std::optional<Token> peek() {
+    if (lexer != lexer.end()) {
+      return *lexer;
     }
-    auto next = lexer.peek(1);
-    if (auto next = lexer.peek(1)) {
-      if (auto keyword = next->getKeyword()) {
-        if (*keyword == expected) {
-          lexer.take(2);
-          return true;
-        }
-      }
-    }
-    return false;
+    return {};
   }
 
   bool takeLParen() {
-    auto t = lexer.peek();
+    auto t = peek();
     if (!t || !t->isLParen()) {
       return false;
     }
-    lexer.take(1);
+    ++lexer;
     return true;
   }
 
   bool takeRParen() {
-    auto t = lexer.peek();
+    auto t = peek();
     if (!t || !t->isRParen()) {
       return false;
     }
-    lexer.take(1);
+    ++lexer;
     return true;
   }
 
   std::optional<Name> takeID() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto id = t->getID()) {
-        lexer.take(1);
+        ++lexer;
         // See comment on takeName.
         return Name(std::string(*id));
       }
@@ -167,10 +113,10 @@ struct ParseInput {
   }
 
   bool takeKeyword(std::string_view expected) {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto keyword = t->getKeyword()) {
         if (*keyword == expected) {
-          lexer.take(1);
+          ++lexer;
           return true;
         }
       }
@@ -179,9 +125,9 @@ struct ParseInput {
   }
 
   std::optional<uint64_t> takeU64() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto n = t->getU64()) {
-        lexer.take(1);
+        ++lexer;
         return n;
       }
     }
@@ -189,9 +135,9 @@ struct ParseInput {
   }
 
   std::optional<int64_t> takeS64() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto n = t->getS64()) {
-        lexer.take(1);
+        ++lexer;
         return n;
       }
     }
@@ -199,9 +145,9 @@ struct ParseInput {
   }
 
   std::optional<int64_t> takeI64() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto n = t->getI64()) {
-        lexer.take(1);
+        ++lexer;
         return n;
       }
     }
@@ -209,9 +155,9 @@ struct ParseInput {
   }
 
   std::optional<uint32_t> takeU32() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto n = t->getU32()) {
-        lexer.take(1);
+        ++lexer;
         return n;
       }
     }
@@ -219,9 +165,9 @@ struct ParseInput {
   }
 
   std::optional<int32_t> takeS32() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto n = t->getS32()) {
-        lexer.take(1);
+        ++lexer;
         return n;
       }
     }
@@ -229,9 +175,9 @@ struct ParseInput {
   }
 
   std::optional<int32_t> takeI32() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto n = t->getI32()) {
-        lexer.take(1);
+        ++lexer;
         return n;
       }
     }
@@ -239,9 +185,9 @@ struct ParseInput {
   }
 
   std::optional<double> takeF64() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto d = t->getF64()) {
-        lexer.take(1);
+        ++lexer;
         return d;
       }
     }
@@ -249,9 +195,9 @@ struct ParseInput {
   }
 
   std::optional<float> takeF32() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto f = t->getF32()) {
-        lexer.take(1);
+        ++lexer;
         return f;
       }
     }
@@ -259,9 +205,9 @@ struct ParseInput {
   }
 
   std::optional<std::string_view> takeString() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       if (auto s = t->getString()) {
-        lexer.take(1);
+        ++lexer;
         return s;
       }
     }
@@ -280,15 +226,24 @@ struct ParseInput {
     return {};
   }
 
+  bool takeSExprStart(std::string_view expected) {
+    auto original = lexer;
+    if (takeLParen() && takeKeyword(expected)) {
+      return true;
+    }
+    lexer = original;
+    return false;
+  }
+
   struct Position {
     const char* pos;
   };
 
   Position getPos() {
-    if (auto t = lexer.peek()) {
+    if (auto t = peek()) {
       return {&t->span.front()};
     }
-    return {&lexer.lexer.next().back()};
+    return {&lexer.next().back()};
   }
 
   std::string_view getSpanSince(Position prev) {
@@ -1677,7 +1632,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     if (!module(decls, in)) {
       return {};
     }
-    if (!in.next().empty()) {
+    if (!in.empty()) {
       return {};
     }
   }
