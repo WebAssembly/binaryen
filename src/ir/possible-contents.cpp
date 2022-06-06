@@ -303,8 +303,7 @@ struct InfoCollector
   void visitSwitch(Switch* curr) { handleBreakValue(curr); }
   void visitLoad(Load* curr) {
     // We could infer the exact type here, but as no subtyping is possible, it
-    // would have no benefit, so just add a generic root, which will be "Many."
-    // See the comment in possible-contents.h on ExactType at the top.
+    // would have no benefit, so just add a generic root (which will be "Many").
     addRoot(curr);
   }
   void visitStore(Store* curr) {}
@@ -688,7 +687,7 @@ struct InfoCollector
 
       auto params = getModule()->getTag(tag)->sig.params;
       if (params.size() == 0) {
-        return;
+        continue;
       }
 
       // Find the pop of the tag's contents. The body must start with such a
@@ -1257,9 +1256,23 @@ bool Flower::updateContents(LocationIndex locationIndex,
 
   contents.combine(newContents);
 
+  if (contents.isNone()) {
+    // There is still nothing here. There is nothing more to do here but to
+    // return that it is worth sending more.
+    return true;
+  }
+
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
+  //
+  // Many is always the worst possible case. An exact type of a non-reference is
+  // also the worst case, since subtyping is not relevant there, and so if we
+  // know only the type then we already know nothing beyond what the type in the
+  // wasm tells us (and from there we can only go to Many).
   bool worthSendingMore = !contents.isMany();
+  if (!contents.getType().isRef() && contents.isExactType()) {
+    worthSendingMore = false;
+  }
 
   if (contents == oldContents) {
     // Nothing actually changed, so just return.
