@@ -259,7 +259,8 @@ struct GlobalStructInference : public Pass {
           }
         }
 
-        // We have at globals (at least 2), and so must have at least one value.
+        // We have some globals (at least 2), and so must have at least one
+        // value.
         assert(values.size() >= 1);
         if (values.size() != 2) {
           // More than two values to pick from, so we'd need more than one
