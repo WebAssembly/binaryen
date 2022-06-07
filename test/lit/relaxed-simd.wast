@@ -388,25 +388,6 @@
   )
  )
 
- ;; CHECK-BINARY:      (func $i16x8.dot_i8x16_i7x16_u (param $0 v128) (param $1 v128) (result v128)
- ;; CHECK-BINARY-NEXT:  (i16x8.dot_i8x16_i7x16_u
- ;; CHECK-BINARY-NEXT:   (local.get $0)
- ;; CHECK-BINARY-NEXT:   (local.get $1)
- ;; CHECK-BINARY-NEXT:  )
- ;; CHECK-BINARY-NEXT: )
- ;; CHECK-TEXT:      (func $i16x8.dot_i8x16_i7x16_u (param $0 v128) (param $1 v128) (result v128)
- ;; CHECK-TEXT-NEXT:  (i16x8.dot_i8x16_i7x16_u
- ;; CHECK-TEXT-NEXT:   (local.get $0)
- ;; CHECK-TEXT-NEXT:   (local.get $1)
- ;; CHECK-TEXT-NEXT:  )
- ;; CHECK-TEXT-NEXT: )
- (func $i16x8.dot_i8x16_i7x16_u (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.dot_i8x16_i7x16_u
-   (local.get $0)
-   (local.get $1)
-  )
- )
-
 ;; CHECK-BINARY:      (func $i32x4.dot_i8x16_i7x16_add_s (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BINARY-NEXT:  (i32x4.dot_i8x16_i7x16_add_s
 ;; CHECK-BINARY-NEXT:   (local.get $0)
@@ -423,28 +404,6 @@
 ;; CHECK-TEXT-NEXT: )
 (func $i32x4.dot_i8x16_i7x16_add_s (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
   (i32x4.dot_i8x16_i7x16_add_s
-   (local.get $0)
-   (local.get $1)
-   (local.get $2)
-  )
- )
-
-;; CHECK-BINARY:      (func $i32x4.dot_i8x16_i7x16_add_u (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BINARY-NEXT:  (i32x4.dot_i8x16_i7x16_add_u
-;; CHECK-BINARY-NEXT:   (local.get $0)
-;; CHECK-BINARY-NEXT:   (local.get $1)
-;; CHECK-BINARY-NEXT:   (local.get $2)
-;; CHECK-BINARY-NEXT:  )
-;; CHECK-BINARY-NEXT: )
-;; CHECK-TEXT:      (func $i32x4.dot_i8x16_i7x16_add_u (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-TEXT-NEXT:  (i32x4.dot_i8x16_i7x16_add_u
-;; CHECK-TEXT-NEXT:   (local.get $0)
-;; CHECK-TEXT-NEXT:   (local.get $1)
-;; CHECK-TEXT-NEXT:   (local.get $2)
-;; CHECK-TEXT-NEXT:  )
-;; CHECK-TEXT-NEXT: )
-(func $i32x4.dot_i8x16_i7x16_add_u (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (i32x4.dot_i8x16_i7x16_add_u
    (local.get $0)
    (local.get $1)
    (local.get $2)
@@ -597,23 +556,8 @@
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )
 
-;; CHECK-NODEBUG:      (func $19 (param $0 v128) (param $1 v128) (result v128)
-;; CHECK-NODEBUG-NEXT:  (i16x8.dot_i8x16_i7x16_u
-;; CHECK-NODEBUG-NEXT:   (local.get $0)
-;; CHECK-NODEBUG-NEXT:   (local.get $1)
-;; CHECK-NODEBUG-NEXT:  )
-;; CHECK-NODEBUG-NEXT: )
-
-;; CHECK-NODEBUG:      (func $20 (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-NODEBUG:      (func $19 (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-NODEBUG-NEXT:  (i32x4.dot_i8x16_i7x16_add_s
-;; CHECK-NODEBUG-NEXT:   (local.get $0)
-;; CHECK-NODEBUG-NEXT:   (local.get $1)
-;; CHECK-NODEBUG-NEXT:   (local.get $2)
-;; CHECK-NODEBUG-NEXT:  )
-;; CHECK-NODEBUG-NEXT: )
-
-;; CHECK-NODEBUG:      (func $21 (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-NODEBUG-NEXT:  (i32x4.dot_i8x16_i7x16_add_u
 ;; CHECK-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-NODEBUG-NEXT:   (local.get $2)

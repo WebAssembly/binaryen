@@ -686,9 +686,6 @@ struct PrintExpressionContents
       case DotI8x16I7x16AddSToVecI32x4:
         o << "i32x4.dot_i8x16_i7x16_add_s";
         break;
-      case DotI8x16I7x16AddUToVecI32x4:
-        o << "i32x4.dot_i8x16_i7x16_add_u";
-        break;
     }
     restoreNormalColor(o);
   }
@@ -1862,9 +1859,6 @@ struct PrintExpressionContents
         break;
       case DotI8x16I7x16SToVecI16x8:
         o << "i16x8.dot_i8x16_i7x16_s";
-        break;
-      case DotI8x16I7x16UToVecI16x8:
-        o << "i16x8.dot_i8x16_i7x16_u";
         break;
 
       case InvalidBinary:

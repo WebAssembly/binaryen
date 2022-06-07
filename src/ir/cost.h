@@ -501,7 +501,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case RelaxedSwizzleVecI8x16:
       case RelaxedQ15MulrSVecI16x8:
       case DotI8x16I7x16SToVecI16x8:
-      case DotI8x16I7x16UToVecI16x8:
         ret = 1;
         break;
       case InvalidBinary:
@@ -550,7 +549,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case RelaxedFmaVecF64x2:
       case RelaxedFmsVecF64x2:
       case DotI8x16I7x16AddSToVecI32x4:
-      case DotI8x16I7x16AddUToVecI32x4:
         ret = 1;
         break;
     }

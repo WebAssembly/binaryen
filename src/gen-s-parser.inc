@@ -933,17 +933,9 @@ switch (op[0]) {
           case 'b':
             if (strcmp(op, "i16x8.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI16x8); }
             goto parse_error;
-          case 'd': {
-            switch (op[22]) {
-              case 's':
-                if (strcmp(op, "i16x8.dot_i8x16_i7x16_s") == 0) { return makeBinary(s, BinaryOp::DotI8x16I7x16SToVecI16x8); }
-                goto parse_error;
-              case 'u':
-                if (strcmp(op, "i16x8.dot_i8x16_i7x16_u") == 0) { return makeBinary(s, BinaryOp::DotI8x16I7x16UToVecI16x8); }
-                goto parse_error;
-              default: goto parse_error;
-            }
-          }
+          case 'd':
+            if (strcmp(op, "i16x8.dot_i8x16_i7x16_s") == 0) { return makeBinary(s, BinaryOp::DotI8x16I7x16SToVecI16x8); }
+            goto parse_error;
           case 'e': {
             switch (op[7]) {
               case 'q':
@@ -1708,17 +1700,9 @@ switch (op[0]) {
                       case '1':
                         if (strcmp(op, "i32x4.dot_i16x8_s") == 0) { return makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4); }
                         goto parse_error;
-                      case '8': {
-                        switch (op[26]) {
-                          case 's':
-                            if (strcmp(op, "i32x4.dot_i8x16_i7x16_add_s") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4); }
-                            goto parse_error;
-                          case 'u':
-                            if (strcmp(op, "i32x4.dot_i8x16_i7x16_add_u") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::DotI8x16I7x16AddUToVecI32x4); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
+                      case '8':
+                        if (strcmp(op, "i32x4.dot_i8x16_i7x16_add_s") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4); }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }

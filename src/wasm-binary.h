@@ -919,11 +919,11 @@ enum ASTNodes {
 
   I32x4Abs = 0xa0,
   I32x4Neg = 0xa1,
-  // 0xa2 for relaxed SIMD
+  // 0xa2 unused
   I32x4AllTrue = 0xa3,
   I32x4Bitmask = 0xa4,
-  // 0xa5 for relaxed SIMD
-  // 0xa6 for relaxed SIMD
+  // 0xa5 unused
+  // 0xa6 unused
   I32x4ExtendLowI16x8S = 0xa7,
   I32x4ExtendHighI16x8S = 0xa8,
   I32x4ExtendLowI16x8U = 0xa9,
@@ -932,12 +932,12 @@ enum ASTNodes {
   I32x4ShrS = 0xac,
   I32x4ShrU = 0xad,
   I32x4Add = 0xae,
-  // 0xaf for relaxed SIMD
-  // 0xb0 for relaxed SIMD
+  // 0xaf unused
+  // 0xb0 unused
   I32x4Sub = 0xb1,
-  // 0xb2 for relaxed SIMD
-  // 0xb3 for relaxed SIMD
-  // 0xb4 for relaxed SIMD
+  // 0xb2 unused
+  // 0xb3 unused
+  // 0xb4 unused
   I32x4Mul = 0xb5,
   I32x4MinS = 0xb6,
   I32x4MinU = 0xb7,
@@ -955,8 +955,8 @@ enum ASTNodes {
   // 0xc2 unused
   I64x2AllTrue = 0xc3,
   I64x2Bitmask = 0xc4,
-  // 0xc5 for relaxed SIMD
-  // 0xc6 for relaxed SIMD
+  // 0xc5 unused
+  // 0xc6 unused
   I64x2ExtendLowI32x4S = 0xc7,
   I64x2ExtendHighI32x4S = 0xc8,
   I64x2ExtendLowI32x4U = 0xc9,
@@ -965,12 +965,12 @@ enum ASTNodes {
   I64x2ShrS = 0xcc,
   I64x2ShrU = 0xcd,
   I64x2Add = 0xce,
-  // 0xcf for relaxed SIMD
-  // 0xd0 for relaxed SIMD
+  // 0xcf unused
+  // 0xd0 unused
   I64x2Sub = 0xd1,
-  // 0xd2 for relaxed SIMD
-  // 0xd3 for relaxed SIMD
-  // 0xd4 for relaxed SIMD
+  // 0xd2 unused
+  // 0xd3 unused
+  // 0xd4 unused
   I64x2Mul = 0xd5,
   I64x2Eq = 0xd6,
   I64x2Ne = 0xd7,
@@ -985,7 +985,7 @@ enum ASTNodes {
 
   F32x4Abs = 0xe0,
   F32x4Neg = 0xe1,
-  // 0xe2 for relaxed SIMD
+  // 0xe2 unused
   F32x4Sqrt = 0xe3,
   F32x4Add = 0xe4,
   F32x4Sub = 0xe5,
@@ -998,7 +998,7 @@ enum ASTNodes {
 
   F64x2Abs = 0xec,
   F64x2Neg = 0xed,
-  // 0xee for relaxed SIMD
+  // 0xee unused
   F64x2Sqrt = 0xef,
   F64x2Add = 0xf0,
   F64x2Sub = 0xf1,
@@ -1019,28 +1019,26 @@ enum ASTNodes {
   F64x2ConvertLowI32x4U = 0xff,
 
   // relaxed SIMD opcodes
-  I8x16RelaxedSwizzle = 0xa2,
-  I32x4RelaxedTruncF32x4S = 0xa5,
-  I32x4RelaxedTruncF32x4U = 0xa6,
-  I32x4RelaxedTruncF64x2SZero = 0xc5,
-  I32x4RelaxedTruncF64x2UZero = 0xc6,
-  F32x4RelaxedFma = 0xaf,
-  F32x4RelaxedFms = 0xb0,
-  F64x2RelaxedFma = 0xcf,
-  F64x2RelaxedFms = 0xd0,
-  I8x16Laneselect = 0xb2,
-  I16x8Laneselect = 0xb3,
-  I32x4Laneselect = 0xd2,
-  I64x2Laneselect = 0xd3,
-  F32x4RelaxedMin = 0xb4,
-  F32x4RelaxedMax = 0xe2,
-  F64x2RelaxedMin = 0xd4,
-  F64x2RelaxedMax = 0xee,
+  I8x16RelaxedSwizzle = 0x100,
+  I32x4RelaxedTruncF32x4S = 0x101,
+  I32x4RelaxedTruncF32x4U = 0x102,
+  I32x4RelaxedTruncF64x2SZero = 0x103,
+  I32x4RelaxedTruncF64x2UZero = 0x104,
+  F32x4RelaxedFma = 0x105,
+  F32x4RelaxedFms = 0x106,
+  F64x2RelaxedFma = 0x107,
+  F64x2RelaxedFms = 0x108,
+  I8x16Laneselect = 0x109,
+  I16x8Laneselect = 0x10a,
+  I32x4Laneselect = 0x10b,
+  I64x2Laneselect = 0x10c,
+  F32x4RelaxedMin = 0x10d,
+  F32x4RelaxedMax = 0x10e,
+  F64x2RelaxedMin = 0x10f,
+  F64x2RelaxedMax = 0x110,
   I16x8RelaxedQ15MulrS = 0x111,
   I16x8DotI8x16I7x16S = 0x112,
-  I16x8DotI8x16I7x16U = 0x113,
-  I32x4DotI8x16I7x16AddS = 0x114,
-  I32x4DotI8x16I7x16AddU = 0x115,
+  I32x4DotI8x16I7x16AddS = 0x113,
 
   // bulk memory opcodes
 
