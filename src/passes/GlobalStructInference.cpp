@@ -187,46 +187,111 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
-        auto& globals = iter->second;
-
-        // TODO: more sizes
-        if (globals.size() != 2) {
-          return;
-        }
-
-        // Check if the relevant fields contain constants, and are immutable.
-        auto& wasm = *getModule();
+        // The field must be immutable.
         auto fieldIndex = curr->index;
         auto& field = type.getHeapType().getStruct().fields[fieldIndex];
         if (field.mutable_ == Mutable) {
           return;
         }
-        auto fieldType = field.type;
+
+        // We are looking for the case where we can pick between two values
+        // using a single comparison. More than two values, or more than a
+        // single comparison, add tradeoffs that may not be worth it, and a
+        // single value (or no value) is already handled by other passes.
+        //
+        // That situation may involve more than two globals. For example we may
+        // have three relevant globals, but two may have the same value. In that
+        // case we can compare against the third:
+        //
+        //  $global0: (struct.new $Type (i32.const 42))
+        //  $global1: (struct.new $Type (i32.const 42))
+        //  $global2: (struct.new $Type (i32.const 1337))
+        //
+        // (struct.get $Type (ref))
+        //   =>
+        // (select
+        //   (i32.const 1337)
+        //   (i32.const 42)
+        //   (ref.eq (ref) $global2))
+        auto& globals = iter->second;
+        if (globals.size() < 2) {
+          return;
+        }
+
+        // Find the constant values and which globals correspond to them.
+        // TODO: SmallVectors?
         std::vector<Literal> values;
+        std::vector<std::vector<Name>> globalsForValue;
+
+        // Check if the relevant fields contain constants.
+        auto& wasm = *getModule();
+        auto fieldType = field.type;
         for (Index i = 0; i < globals.size(); i++) {
-          auto* structNew = wasm.getGlobal(globals[i])->init->cast<StructNew>();
+          Name global = globals[i];
+          auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
+          Literal value;
           if (structNew->isWithDefault()) {
-            values.push_back(Literal::makeZero(fieldType));
+            value = Literal::makeZero(fieldType);
           } else {
             auto* init = structNew->operands[fieldIndex];
             if (!Properties::isConstantExpression(init)) {
               // Non-constant; give up entirely.
               return;
             }
-            values.push_back(Properties::getLiteral(init));
+            value = Properties::getLiteral(init);
           }
+
+          // Process the current value, comparing it against the previous.
+          auto found = std::find(values.begin(), values.end(), value);
+          if (found == values.end()) {
+            // This is a new value.
+            assert(values.size() <= 2);
+            if (values.size() == 2) {
+              // Adding this value would mean we have too many, so give up.
+              return;
+            }
+            values.push_back(value);
+            globalsForValue.push_back({global});
+          } else {
+            // This is an existing value.
+            Index index = found - values.begin();
+            globalsForValue[index].push_back(global);
+          }
+        }
+
+        // We have at globals (at least 2), and so must have at least one value.
+        assert(values.size() >= 1);
+        if (values.size() != 2) {
+          // More than two values to pick from, so we'd need more than one
+          // comparison. Give up.
+          return;
+        }
+
+        // We have two values. Check that we can pick between them using a
+        // single comparison. Find the index that we can check on, which is the
+        // index that has a single global.
+        Index checkIndex;
+        if (globalsForValue[0].size() == 1) {
+          checkIndex = 0;
+        } else if (globalsForValue[1].size() == 1) {
+          checkIndex = 1;
+        } else {
+          // Both indexes have more than one option, so we'd need more than one
+          // comparison. Give up.
+          return;
         }
 
         // Excellent, we can optimize here! Emit a select.
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
+        auto otherIndex = 1 - checkIndex;
         Builder builder(wasm);
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(
-                              globals[0], wasm.getGlobal(globals[0])->type)),
-          builder.makeConstantExpression(values[0]),
-          builder.makeConstantExpression(values[1])));
+                              globals[checkIndex], wasm.getGlobal(globals[checkIndex])->type)),
+          builder.makeConstantExpression(values[checkIndex]),
+          builder.makeConstantExpression(values[otherIndex])));
       }
 
     private:
