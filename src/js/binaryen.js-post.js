@@ -149,6 +149,7 @@ function initializeConstants() {
     'Memory64',
     'TypedFunctionReferences',
     'RelaxedSIMD',
+    'ExtendedConst',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -529,7 +530,7 @@ function initializeConstants() {
     'TruncSatZeroUVecF64x2ToVecI32x4',
     'DemoteZeroVecF64x2ToVecF32x4',
     'PromoteLowVecF32x4ToVecF64x2',
-    'SwizzleVec8x16',
+    'SwizzleVecI8x16',
     'RefIsNull',
     'RefIsFunc',
     'RefIsData',
@@ -1596,7 +1597,7 @@ function wrapModule(module, self = {}) {
       return preserveStack(() => Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask)));
     },
     'swizzle'(left, right) {
-      return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
+      return Module['_BinaryenBinary'](module, Module['SwizzleVecI8x16'], left, right);
     },
     'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI8x16'], value);
@@ -2499,9 +2500,24 @@ function wrapModule(module, self = {}) {
       );
     });
   };
+  self['hasMemory'] = function() {
+    return Boolean(Module['_BinaryenHasMemory'](module));
+  };
+  self['getMemoryInfo'] = function() {
+    var memoryInfo = {
+      'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
+      'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
+      'initial': Module['_BinaryenMemoryGetInitial'](module),
+      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
+    };
+    if (Module['_BinaryenMemoryHasMax'](module)) {
+      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
+    }
+    return memoryInfo;
+  };
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
-  }
+  };
   self['getMemorySegmentInfoByIndex'] = function(id) {
     return {
       'offset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
@@ -2516,7 +2532,7 @@ function wrapModule(module, self = {}) {
       })(),
       'passive': Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id))
     };
-  }
+  };
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
   };

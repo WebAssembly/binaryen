@@ -123,13 +123,14 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $struct (struct_subtype  data))
+
   ;; CHECK:      (type $struct-sub1 (struct_subtype  $struct))
   (type $struct-sub1 (struct_subtype $struct))
 
   ;; CHECK:      (type $struct-sub2 (struct_subtype  $struct))
   (type $struct-sub2 (struct_subtype $struct))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
@@ -487,6 +488,235 @@
     )
     (call $func
       (ref.null data)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  ;; This signature has a single function using it, which returns a more
+  ;; refined type, and we can refine to that.
+  ;; CHECK:      (type $sig-can-refine (func_subtype (result (ref $struct)) func))
+  (type $sig-can-refine (func_subtype (result anyref) func))
+
+  ;; Also a single function, but no refinement is possible.
+  ;; CHECK:      (type $sig-cannot-refine (func_subtype (result anyref) func))
+  (type $sig-cannot-refine (func_subtype (result anyref) func))
+
+  ;; The single function never returns, so no refinement is possible.
+  ;; CHECK:      (type $sig-unreachable (func_subtype (result anyref) func))
+  (type $sig-unreachable (func_subtype (result anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (elem declare func $func-can-refine)
+
+  ;; CHECK:      (func $func-can-refine (type $sig-can-refine) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  (func $func-can-refine (type $sig-can-refine) (result anyref)
+    (struct.new $struct)
+  )
+
+  ;; CHECK:      (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
+  ;; CHECK-NEXT:  (ref.null any)
+  ;; CHECK-NEXT: )
+  (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
+    (ref.null any)
+  )
+
+  ;; CHECK:      (func $func-unreachable (type $sig-unreachable) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func-unreachable (type $sig-unreachable) (result anyref)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref $struct))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (call $func-can-refine)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref $struct))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (call_ref
+  ;; CHECK-NEXT:     (ref.func $func-can-refine)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; Add a call to see that we update call types properly.
+    ;; Put the call in an if so the refinalize will update the if type and get
+    ;; printed out conveniently.
+    (drop
+      (if (result anyref)
+        (i32.const 1)
+        (call $func-can-refine)
+        (unreachable)
+      )
+    )
+    ;; The same with a call_ref.
+    (drop
+      (if (result anyref)
+        (i32.const 1)
+        (call_ref
+          (ref.func $func-can-refine)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  ;; This signature has multiple functions using it, and some of them have nulls
+  ;; which should be updated when we refine.
+  ;; CHECK:      (type $sig (func_subtype (result (ref null $struct)) func))
+  (type $sig (func_subtype (result anyref) func))
+
+  ;; CHECK:      (func $func-1 (type $sig) (result (ref null $struct))
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  (func $func-1 (type $sig) (result anyref)
+    (struct.new $struct)
+  )
+
+  ;; CHECK:      (func $func-2 (type $sig) (result (ref null $struct))
+  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT: )
+  (func $func-2 (type $sig) (result anyref)
+    (ref.null any)
+  )
+
+  ;; CHECK:      (func $func-3 (type $sig) (result (ref null $struct))
+  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT: )
+  (func $func-3 (type $sig) (result anyref)
+    (ref.null eq)
+  )
+
+  ;; CHECK:      (func $func-4 (type $sig) (result (ref null $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func-4 (type $sig) (result anyref)
+    (if
+      (i32.const 1)
+      (return
+        (ref.null any)
+      )
+    )
+    (unreachable)
+  )
+)
+
+;; Exports prevent optimization, so $func's type will not change here.
+(module
+  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  (type $sig (func_subtype (param anyref) func))
+
+  ;; CHECK:      (export "prevent-opts" (func $func))
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (export "prevent-opts") (type $sig) (param $x anyref)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (struct.new $struct)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (func_subtype (param i32) func))
+  (type $A (func_subtype (param i32) func))
+  ;; CHECK:      (type $B (func_subtype (param i32) $A))
+  (type $B (func_subtype (param i32) $A))
+
+  ;; CHECK:      (func $bar (type $B) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $bar (type $B) (param $x i32)
+   ;; The parameter to this function can be pruned. But while doing so we must
+   ;; properly preserve the subtyping of $B from $A, which means we cannot just
+   ;; remove it - we'd need to remove it from $A as well, which we don't
+   ;; attempt to do in the pass atm. So we do not optimize here.
+    (nop)
+  )
+)
+
+(module
+  ;; CHECK:      (type $ref|${}|_i32_=>_none (func_subtype (param (ref ${}) i32) func))
+
+  ;; CHECK:      (type ${} (struct_subtype  data))
+  (type ${} (struct_subtype data))
+
+  ;; CHECK:      (func $foo (type $ref|${}|_i32_=>_none) (param $ref (ref ${})) (param $i32 i32)
+  ;; CHECK-NEXT:  (local $2 eqref)
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $foo
+  ;; CHECK-NEXT:    (block $block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (ref.null eq)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (param $ref eqref) (param $i32 i32)
+    (call $foo
+      ;; The only reference to the ${} type is in this block signature. Even
+      ;; this will go away in the internal ReFinalize (which makes the block
+      ;; type unreachable).
+      (block (result (ref ${}))
+        (unreachable)
+      )
+      (i32.const 0)
+    )
+    ;; Write something of type eqref into $ref. When we refine the type of the
+    ;; parameter from eqref to ${} we must do something here, as we can no
+    ;; longer just write this (ref.null eq) into a parameter of the more
+    ;; refined type. While doing so, we must not be confused by the fact that
+    ;; the only mention of ${} in the original module gets removed during our
+    ;; processing, as mentioned in the earlier comment. This is a regression
+    ;; test for a crash because of that.
+    (local.set $ref
+      (ref.null eq)
     )
   )
 )

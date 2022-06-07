@@ -87,6 +87,10 @@ def update_ctor_eval_tests():
         print('..', os.path.basename(t))
         ctors = open(t + '.ctors').read().strip()
         cmd = shared.WASM_CTOR_EVAL + [t, '-all', '-o', 'a.wast', '-S', '--ctors', ctors]
+        if 'ignore-external-input' in t:
+            cmd += ['--ignore-external-input']
+        if 'results' in t:
+            cmd += ['--kept-exports', 'test1,test3']
         support.run_command(cmd)
         actual = open('a.wast').read()
         out = t + '.out'
@@ -149,6 +153,14 @@ def update_lit_tests():
                              '--binaryen-bin=' + shared.options.binaryen_bin,
                              os.path.join(lit_dir, '**', '*.wast'),
                              os.path.join(lit_dir, '**', '*.wat')])
+
+    # Update the help lit tests
+    script = os.path.join(shared.options.binaryen_root,
+                          'scripts',
+                          'update_help_checks.py')
+    subprocess.check_output([sys.executable,
+                             script,
+                             '--binaryen-bin=' + shared.options.binaryen_bin])
 
 
 TEST_SUITES = OrderedDict([

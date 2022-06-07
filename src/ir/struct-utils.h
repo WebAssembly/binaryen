@@ -221,15 +221,21 @@ public:
   SubTypes subTypes;
 
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
-    propagate(infos, false);
+    propagate(infos, false, true);
+  }
+
+  void propagateToSubTypes(StructValuesMap<T>& infos) {
+    propagate(infos, true, false);
   }
 
   void propagateToSuperAndSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true);
+    propagate(infos, true, true);
   }
 
 private:
-  void propagate(StructValuesMap<T>& combinedInfos, bool toSubTypes) {
+  void propagate(StructValuesMap<T>& combinedInfos,
+                 bool toSubTypes,
+                 bool toSuperTypes) {
     UniqueDeferredQueue<HeapType> work;
     for (auto& [type, _] : combinedInfos) {
       work.push(type);
@@ -238,13 +244,15 @@ private:
       auto type = work.pop();
       auto& infos = combinedInfos[type];
 
-      // Propagate shared fields to the supertype.
-      if (auto superType = type.getSuperType()) {
-        auto& superInfos = combinedInfos[*superType];
-        auto& superFields = superType->getStruct().fields;
-        for (Index i = 0; i < superFields.size(); i++) {
-          if (superInfos[i].combine(infos[i])) {
-            work.push(*superType);
+      if (toSuperTypes) {
+        // Propagate shared fields to the supertype.
+        if (auto superType = type.getSuperType()) {
+          auto& superInfos = combinedInfos[*superType];
+          auto& superFields = superType->getStruct().fields;
+          for (Index i = 0; i < superFields.size(); i++) {
+            if (superInfos[i].combine(infos[i])) {
+              work.push(*superType);
+            }
           }
         }
       }
@@ -252,7 +260,7 @@ private:
       if (toSubTypes) {
         // Propagate shared fields to the subtypes.
         auto numFields = type.getStruct().fields.size();
-        for (auto subType : subTypes.getSubTypes(type)) {
+        for (auto subType : subTypes.getStrictSubTypes(type)) {
           auto& subInfos = combinedInfos[subType];
           for (Index i = 0; i < numFields; i++) {
             if (subInfos[i].combine(infos[i])) {

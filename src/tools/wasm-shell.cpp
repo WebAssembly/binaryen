@@ -47,17 +47,21 @@ struct ShellOptions : public Options {
   Name entry;
   std::set<size_t> skipped;
 
+  const std::string WasmShellOption = "wasm-shell options";
+
   ShellOptions(const std::string& command, const std::string& description)
     : Options(command, description) {
     (*this)
       .add("--entry",
            "-e",
            "Call the entry point after parsing the module",
+           WasmShellOption,
            Options::Arguments::One,
            [this](Options*, const std::string& argument) { entry = argument; })
       .add("--skip",
            "-s",
            "Skip input on certain lines (comma-separated-list)",
+           WasmShellOption,
            Options::Arguments::One,
            [this](Options*, const std::string& argument) {
              size_t i = 0;
@@ -84,16 +88,16 @@ protected:
   std::map<Name, std::shared_ptr<Module>> modules;
   std::map<Name, std::shared_ptr<SExpressionWasmBuilder>> builders;
   std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
-  std::map<Name, std::shared_ptr<ModuleInstance>> instances;
+  std::map<Name, std::shared_ptr<ModuleRunner>> instances;
   // used for imports
-  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   Name lastModule;
 
   void instantiate(Module* wasm) {
     auto tempInterface =
       std::make_shared<ShellExternalInterface>(linkedInstances);
-    auto tempInstance = std::make_shared<ModuleInstance>(
+    auto tempInstance = std::make_shared<ModuleRunner>(
       *wasm, tempInterface.get(), linkedInstances);
     interfaces[wasm->name].swap(tempInterface);
     instances[wasm->name].swap(tempInstance);
@@ -169,13 +173,13 @@ protected:
     if (s[i]->dollared()) {
       moduleName = s[i++]->str();
     }
-    ModuleInstance* instance = instances[moduleName].get();
+    ModuleRunner* instance = instances[moduleName].get();
     assert(instance);
 
     Name base = s[i++]->str();
 
     if (s[0]->str() == INVOKE) {
-      LiteralList args;
+      Literals args;
       while (i < s.size()) {
         Expression* argument = builders[moduleName]->parseExpression(*s[i++]);
         args.push_back(getLiteralFromConstExpression(argument));

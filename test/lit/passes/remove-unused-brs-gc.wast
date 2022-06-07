@@ -111,5 +111,217 @@
    (unreachable)
   )
  )
-)
 
+ ;; CHECK:      (func $br_on_cast_static (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_static (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    ;; This static cast can be computed at compile time: it will definitely be
+    ;; taken, so we can turn it into a normal br.
+    (br_on_cast_static $block $struct
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_static_no (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_static $block $struct
+ ;; CHECK-NEXT:     (ref.null $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_static_no (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    (br_on_cast_static $block $struct
+     ;; As above, but now the type is nullable, so we cannot infer anything.
+     (ref.null $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail_static (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_static (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    ;; As $br_on_cast_static, but this checks for a failing cast, so we know it will
+    ;; *not* be taken.
+    (br_on_cast_static_fail $block $struct
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_dynamic (result (ref $struct))
+ ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $block
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $struct
+ ;; CHECK-NEXT:      (rtt.canon $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (rtt.canon $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_dynamic (result (ref $struct))
+  (local $temp (ref null $struct))
+  (block $block (result (ref $struct))
+   (drop
+    ;; This dynamic cast happens to be optimizable since we see both sides use
+    ;; rtt.canon, but we do not inspect things that closely, and leave such
+    ;; dynamic casts to runtime.
+    (br_on_cast $block
+     (struct.new_with_rtt $struct
+       (rtt.canon $struct)
+     )
+     (rtt.canon $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $casts-are-costly (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (ref.test_static $struct
+ ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (if (result anyref)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.cast_static $struct
+ ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (if (result anyref)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (block $block (result anyref)
+ ;; CHECK-NEXT:     (block $something (result anyref)
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (br_on_cast_static $something $struct
+ ;; CHECK-NEXT:        (ref.null $struct)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (ref.null any)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select (result anyref)
+ ;; CHECK-NEXT:    (block $block3 (result anyref)
+ ;; CHECK-NEXT:     (block $nothing
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (br_on_null $nothing
+ ;; CHECK-NEXT:        (ref.null $struct)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $casts-are-costly (param $x i32)
+  ;; We never turn an if into a select if an arm has a cast of any kind, as
+  ;; those things involve branches internally, so we'd be adding more than we
+  ;; save.
+  (drop
+   (if (result i32)
+    (local.get $x)
+    (ref.test_static $struct
+     (ref.null any)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (if (result anyref)
+    (local.get $x)
+    (ref.null any)
+    (ref.cast_static $struct
+     (ref.null any)
+    )
+   )
+  )
+  (drop
+   (if (result anyref)
+    (local.get $x)
+    (block (result anyref)
+     (block $something (result anyref)
+      (drop
+       (br_on_cast_static $something $struct
+        (ref.null $struct)
+       )
+      )
+      (ref.null any)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  ;; However, null checks are fairly fast, and we will emit a select here.
+  (drop
+   (if (result anyref)
+    (local.get $x)
+    (block (result anyref)
+     (block $nothing
+      (drop
+       (br_on_null $nothing
+        (ref.null $struct)
+       )
+      )
+     )
+     (ref.null any)
+    )
+    (ref.null any)
+   )
+  )
+ )
+)

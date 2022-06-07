@@ -30,6 +30,7 @@
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
 #include "wasm-s-parser.h"
+#include "wasm-stack.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 #include "wasm2js.h"
@@ -70,7 +71,6 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::funcref:
       ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
       assert(x.isNull() && "unexpected non-null reference type literal");
@@ -100,10 +100,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.v128);
     case Type::funcref:
       return Literal::makeFunc(x.func);
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
-      return Literal::makeNull(Type(x.type));
+      return Literal::makeNull(Type(x.type).getHeapType());
     case Type::i31ref:
       WASM_UNREACHABLE("TODO: i31ref");
     case Type::dataref:
@@ -132,6 +131,7 @@ extern "C" {
 //
 
 // Core types
+// TODO: Deprecate BinaryenTypeExternref?
 
 BinaryenType BinaryenTypeNone(void) { return Type::none; }
 BinaryenType BinaryenTypeInt32(void) { return Type::i32; }
@@ -140,7 +140,7 @@ BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
 BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
-BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
+BinaryenType BinaryenTypeExternref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
 BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
@@ -148,10 +148,10 @@ BinaryenType BinaryenTypeDataref(void) { return Type::dataref; }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
-BinaryenType BinaryenTypeCreate(BinaryenType* types, uint32_t numTypes) {
+BinaryenType BinaryenTypeCreate(BinaryenType* types, BinaryenIndex numTypes) {
   std::vector<Type> typeVec;
   typeVec.reserve(numTypes);
-  for (size_t i = 0; i < numTypes; ++i) {
+  for (BinaryenIndex i = 0; i < numTypes; ++i) {
     typeVec.push_back(Type(types[i]));
   }
   return Type(typeVec).getID();
@@ -251,6 +251,9 @@ BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void) {
 }
 BinaryenFeatures BinaryenFeatureRelaxedSIMD(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::RelaxedSIMD);
+}
+BinaryenFeatures BinaryenFeatureExtendedConst(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::ExtendedConst);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -754,7 +757,7 @@ BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
 BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
   return PromoteLowVecF32x4ToVecF64x2;
 }
-BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
+BinaryenOp BinaryenSwizzleVecI8x16(void) { return SwizzleVecI8x16; }
 BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
 BinaryenOp BinaryenRefIsData(void) { return RefIsData; }
@@ -3810,6 +3813,37 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   Fatal() << "non-constant offsets aren't supported yet";
   return 0;
 }
+bool BinaryenHasMemory(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.exists;
+}
+BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.initial;
+}
+bool BinaryenMemoryHasMax(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.hasMax();
+}
+BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.max;
+}
+const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module) {
+  auto& memory = ((Module*)module)->memory;
+  if (memory.imported()) {
+    return memory.module.c_str();
+  } else {
+    return "";
+  }
+}
+const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
+  auto& memory = ((Module*)module)->memory;
+  if (memory.imported()) {
+    return memory.base.c_str();
+  } else {
+    return "";
+  }
+}
+bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
+  return ((Module*)module)->memory.shared;
+}
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {
   const auto& segments = ((Module*)module)->memory.segments;
@@ -3873,6 +3907,10 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
   std::cout << *(Module*)module;
+}
+
+void BinaryenModulePrintStackIR(BinaryenModuleRef module) {
+  wasm::printStackIR(std::cout, (Module*)module);
 }
 
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
@@ -4057,6 +4095,21 @@ size_t BinaryenModuleWriteText(BinaryenModuleRef module,
   return std::min(outputSize, temp.size());
 }
 
+size_t BinaryenModuleWriteStackIR(BinaryenModuleRef module,
+                                  char* output,
+                                  size_t outputSize) {
+  // use a stringstream as an std::ostream. Extract the std::string
+  // representation, and then store in the output.
+  std::stringstream ss;
+  wasm::printStackIR(ss, (Module*)module);
+
+  const auto temp = ss.str();
+  const auto ctemp = temp.c_str();
+
+  strncpy(output, ctemp, outputSize);
+  return std::min(outputSize, temp.size());
+}
+
 BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module,
                                                      const char* url,
                                                      char* output,
@@ -4106,6 +4159,21 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   return cout;
 }
 
+char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module) {
+  std::stringstream ss;
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
+  wasm::printStackIR(ss, (Module*)module);
+  Colors::setEnabled(colors); // restore colors state
+
+  const std::string out = ss.str();
+  const int len = out.length() + 1;
+  char* cout = (char*)malloc(len);
+  strncpy(cout, out.c_str(), len);
+  return cout;
+}
+
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   auto* wasm = new Module;
   std::vector<char> buffer(false);
@@ -4124,7 +4192,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
 
 void BinaryenModuleInterpret(BinaryenModuleRef module) {
   ShellExternalInterface interface;
-  ModuleInstance instance(*(Module*)module, &interface, {});
+  ModuleRunner instance(*(Module*)module, &interface, {});
 }
 
 BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
@@ -4617,10 +4685,6 @@ void BinaryenSetColorsEnabled(bool enabled) { Colors::setEnabled(enabled); }
 bool BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
 
 #ifdef __EMSCRIPTEN__
-// Override atexit - we don't need any global ctors to actually run, and
-// otherwise we get clutter in the output in debug builds
-int atexit(void (*function)(void)) { return 0; }
-
 // Internal binaryen.js APIs
 
 // Returns the size of a Literal object.

@@ -6,37 +6,37 @@ total
  [memory-data]  : 22      
  [table-data]   : 4       
  [tables]       : 1       
- [tags]         : 1       
- [total]        : 465     
- [vars]         : 10      
- ArrayInit      : 1       
+ [tags]         : 0       
+ [total]        : 650     
+ [vars]         : 12      
  AtomicCmpxchg  : 1       
+ AtomicFence    : 1       
  AtomicNotify   : 1       
- Binary         : 64      
- Block          : 51      
- Break          : 6       
- Call           : 19      
- Const          : 121     
- DataDrop       : 1       
- Drop           : 6       
- GlobalGet      : 22      
- GlobalSet      : 12      
- If             : 20      
- Load           : 13      
- LocalGet       : 22      
- LocalSet       : 18      
- Loop           : 3       
- MemoryFill     : 1       
- Nop            : 20      
- RefAs          : 1       
- RefFunc        : 5       
- RefIs          : 3       
- RefNull        : 3       
- Return         : 18      
- SIMDExtract    : 3       
- Select         : 1       
- Store          : 3       
- StructNew      : 3       
+ Binary         : 83      
+ Block          : 72      
+ Break          : 5       
+ Call           : 23      
+ CallRef        : 4       
+ Const          : 141     
+ Drop           : 3       
+ GlobalGet      : 39      
+ GlobalSet      : 21      
+ I31New         : 10      
+ If             : 31      
+ Load           : 24      
+ LocalGet       : 49      
+ LocalSet       : 25      
+ Loop           : 11      
+ Nop            : 9       
+ RefEq          : 2       
+ RefFunc        : 12      
+ RefIs          : 1       
+ RefNull        : 2       
+ Return         : 27      
+ SIMDExtract    : 1       
+ Select         : 2       
+ Store          : 2       
+ StructNew      : 4       
  TupleExtract   : 2       
- TupleMake      : 4       
- Unary          : 17      
+ TupleMake      : 7       
+ Unary          : 35      

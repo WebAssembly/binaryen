@@ -683,6 +683,12 @@ struct PrintExpressionContents
       case RelaxedFmsVecF64x2:
         o << "f64x2.relaxed_fms";
         break;
+      case DotI8x16I7x16AddSToVecI32x4:
+        o << "i32x4.dot_i8x16_i7x16_add_s";
+        break;
+      case DotI8x16I7x16AddUToVecI32x4:
+        o << "i32x4.dot_i8x16_i7x16_add_u";
+        break;
     }
     restoreNormalColor(o);
   }
@@ -1832,7 +1838,7 @@ struct PrintExpressionContents
         o << "i16x8.narrow_i32x4_u";
         break;
 
-      case SwizzleVec8x16:
+      case SwizzleVecI8x16:
         o << "i8x16.swizzle";
         break;
 
@@ -1848,8 +1854,17 @@ struct PrintExpressionContents
       case RelaxedMaxVecF64x2:
         o << "f64x2.relaxed_max";
         break;
-      case RelaxedSwizzleVec8x16:
+      case RelaxedSwizzleVecI8x16:
         o << "i8x16.relaxed_swizzle";
+        break;
+      case RelaxedQ15MulrSVecI16x8:
+        o << "i16x8.relaxed_q15mulr_s";
+        break;
+      case DotI8x16I7x16SToVecI16x8:
+        o << "i16x8.dot_i8x16_i7x16_s";
+        break;
+      case DotI8x16I7x16UToVecI16x8:
+        o << "i16x8.dot_i8x16_i7x16_u";
         break;
 
       case InvalidBinary:
@@ -1969,7 +1984,11 @@ struct PrintExpressionContents
     if (curr->rtt) {
       printMedium(o, "ref.cast");
     } else {
-      printMedium(o, "ref.cast_static ");
+      if (curr->safety == RefCast::Unsafe) {
+        printMedium(o, "ref.cast_nop_static ");
+      } else {
+        printMedium(o, "ref.cast_static ");
+      }
       printHeapType(o, curr->intendedType, wasm);
     }
   }
@@ -2582,7 +2601,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    if (!name.is() && getTypeSystem() == TypeSystem::Nominal) {
+    bool hasSupertype =
+      !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
+                     getTypeSystem() == TypeSystem::Isorecursive);
+    if (hasSupertype) {
       o << "(func_subtype";
     } else {
       o << "(func";
@@ -2612,7 +2634,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')';
     }
-    if (!name.is() && getTypeSystem() == TypeSystem::Nominal) {
+    if (hasSupertype) {
       o << ' ';
       printSupertypeOr(curr, "func");
     }
@@ -2638,21 +2660,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
+                        getTypeSystem() == TypeSystem::Isorecursive;
+    if (hasSupertype) {
       o << "(array_subtype ";
     } else {
       o << "(array ";
     }
     handleFieldBody(curr.getArray().element);
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (hasSupertype) {
       o << ' ';
       printSupertypeOr(curr, "data");
     }
     o << ')';
   }
   void handleStruct(HeapType curr) {
+    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
+                        getTypeSystem() == TypeSystem::Isorecursive;
     const auto& fields = curr.getStruct().fields;
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (hasSupertype) {
       o << "(struct_subtype ";
     } else {
       o << "(struct ";
@@ -2669,7 +2695,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
       sep = " ";
     }
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (hasSupertype) {
       o << ' ';
       printSupertypeOr(curr, "data");
     }
@@ -2779,7 +2805,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (getTypeSystem() == TypeSystem::Nominal) {
+    if (getTypeSystem() == TypeSystem::Nominal ||
+        getTypeSystem() == TypeSystem::Isorecursive) {
       o << " (type ";
       printHeapType(o, curr->type, currModule) << ')';
     }
@@ -3064,10 +3091,32 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printName(curr->name, o);
     }
     incIndent();
-    std::vector<HeapType> types;
-    std::unordered_map<HeapType, Index> indices;
-    ModuleUtils::collectHeapTypes(*curr, types, indices);
-    for (auto type : types) {
+
+    // Use the same type order as the binary output would even though there is
+    // no code size benefit in the text format.
+    auto indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*curr);
+    std::optional<RecGroup> currGroup;
+    bool nontrivialGroup = false;
+    auto finishGroup = [&]() {
+      if (nontrivialGroup) {
+        decIndent();
+        o << maybeNewLine;
+      }
+    };
+    for (auto type : indexedTypes.types) {
+      RecGroup newGroup = type.getRecGroup();
+      if (!currGroup || *currGroup != newGroup) {
+        if (currGroup) {
+          finishGroup();
+        }
+        currGroup = newGroup;
+        nontrivialGroup = currGroup->size() > 1;
+        if (nontrivialGroup) {
+          doIndent(o, indent);
+          o << "(rec ";
+          incIndent();
+        }
+      }
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
@@ -3076,6 +3125,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       handleHeapType(type);
       o << ")" << maybeNewLine;
     }
+    finishGroup();
+
     ModuleUtils::iterImportedMemories(
       *curr, [&](Memory* memory) { visitMemory(memory); });
     ModuleUtils::iterImportedTables(*curr,
@@ -3388,6 +3439,14 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
     std::cout << '\n';
   }
   assert(controlFlowDepth == 0);
+  return o;
+}
+
+std::ostream& printStackIR(std::ostream& o, Module* module) {
+  wasm::PassRunner runner(module);
+  runner.add("generate-stack-ir");
+  runner.add(std::make_unique<PrintStackIR>(&o));
+  runner.run();
   return o;
 }
 

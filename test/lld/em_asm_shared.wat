@@ -93,11 +93,7 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- ;; dylink section
- ;;   memorysize: 90
- ;;   memoryalignment: 0
- ;;   tablesize: 0
- ;;   tablealignment: 0
+ ;; custom section "dylink.0", size 6
  ;; custom section "producers", size 112
  ;; features section: mutable-globals
 )

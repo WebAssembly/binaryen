@@ -20,6 +20,8 @@
 // This pass will run --remove-unused-module-elements automatically for you, in
 // order to remove as many things as possible.
 
+#include <cctype>
+
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"

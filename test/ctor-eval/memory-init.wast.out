@@ -1,0 +1,18 @@
+(module
+ (type $none_=>_none (func))
+ (memory $0 1)
+ (data (i32.const 0) "__________")
+ (data (i32.const 20) "__________")
+ (export "test1" (func $0))
+ (func $0
+  (i32.store8
+   (i32.const 4)
+   (i32.const 100)
+  )
+  (memory.init 1
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 1)
+  )
+ )
+)

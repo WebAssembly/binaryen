@@ -2,10 +2,10 @@
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_f64 (func (result f64)))
- (type $none_=>_v128 (func (result v128)))
  (type $0 (func (param i32)))
+ (type $none_=>_v128 (func (result v128)))
  (type $none_=>_i32_i64 (func (result i32 i64)))
- (type $none_=>_externref (func (result externref)))
+ (type $none_=>_anyref (func (result anyref)))
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
  (memory $0 512 512)
@@ -217,17 +217,8 @@
    (i32.const 2)
   )
  )
- (func $no-simd-precompute (result v128)
-  (i32x4.splat
-   (i32.const 0)
-  )
- )
- (func $no-simd-precompute-if (result v128)
-  (return
-   (i32x4.splat
-    (i32.const 0)
-   )
-  )
+ (func $simd-precompute (result v128)
+  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
  )
  (func $no-memory-init-precompute
   (memory.init 0
@@ -262,8 +253,8 @@
  (func $loop-precompute (result i32)
   (i32.const 1)
  )
- (func $reftype-test (result externref)
-  (ref.null extern)
+ (func $reftype-test (result anyref)
+  (ref.null any)
  )
  (func $dummy
   (nop)
@@ -285,18 +276,18 @@
    )
   )
   (drop
-   (block $l2 (result externref)
+   (block $l2 (result anyref)
     (drop
      (block $l3
       (global.set $global-mut
        (i32.const 1)
       )
       (br $l2
-       (ref.null extern)
+       (ref.null any)
       )
      )
     )
-    (ref.null extern)
+    (ref.null any)
    )
   )
   (drop

@@ -55,15 +55,16 @@ bool isExported(Module& wasm, Name name) {
 
 Global* getStackPointerGlobal(Module& wasm) {
   // Assumption: The stack pointer is either imported as __stack_pointer or
-  // its the first non-imported and non-exported global.
+  // we just assume it's the first non-imported global.
   // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
   // linker could export it by name?
   for (auto& g : wasm.globals) {
-    if (g->imported()) {
-      if (g->base == STACK_POINTER) {
-        return g.get();
-      }
-    } else if (!isExported(wasm, g->name)) {
+    if (g->imported() && g->base == STACK_POINTER) {
+      return g.get();
+    }
+  }
+  for (auto& g : wasm.globals) {
+    if (!g->imported()) {
       return g.get();
     }
   }
@@ -77,6 +78,11 @@ std::string escape(std::string code) {
   size_t curr = 0;
   while ((curr = code.find("\\n", curr)) != std::string::npos) {
     code = code.replace(curr, 2, "\\\\n");
+    curr += 3; // skip this one
+  }
+  curr = 0;
+  while ((curr = code.find("\\t", curr)) != std::string::npos) {
+    code = code.replace(curr, 2, "\\\\t");
     curr += 3; // skip this one
   }
   // replace double quotes with escaped single quotes
@@ -394,12 +400,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     meta << "\n  },\n";
   }
 
-  if (!wasm.tables.empty()) {
-    meta << "  \"tableSize\": " << wasm.tables[0]->initial.addr << ",\n";
-  } else {
-    meta << "  \"tableSize\": 0,\n";
-  }
-
   // Avoid adding duplicate imports to `declares' or `invokeFuncs`.  Even
   // though we might import the same function multiple times (i.e. with
   // different sigs) we only need to list is in the metadata once.
@@ -432,7 +432,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     meta << "  \"exports\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {
-      if (ex->kind == ExternalKind::Function) {
+      if (ex->kind == ExternalKind::Function || ex->kind == ExternalKind::Tag) {
         meta << nextElement() << '"' << ex->name.str << '"';
       }
     }
@@ -477,12 +477,16 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     if (exp) {
       if (exp->kind == ExternalKind::Function) {
         auto* main = wasm.getFunction(exp->value);
-        mainReadsParams = true;
-        // If main does not read its parameters, it will just be a stub that
-        // calls __original_main (which has no parameters).
-        if (auto* call = main->body->dynCast<Call>()) {
-          if (call->operands.empty()) {
-            mainReadsParams = false;
+        mainReadsParams = main->getNumParams() > 0;
+        if (mainReadsParams) {
+          // Main could also be stub that just calls __original_main with
+          // no parameters.
+          // TODO(sbc): Remove this once https://reviews.llvm.org/D75277
+          // lands.
+          if (auto* call = main->body->dynCast<Call>()) {
+            if (call->operands.empty()) {
+              mainReadsParams = false;
+            }
           }
         }
       }
@@ -523,18 +527,6 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     lastEnd = offset + seg.data.size();
   }
   wasm.memory.segments.clear();
-}
-
-void EmscriptenGlueGenerator::renameMainArgcArgv() {
-  // If an export call ed __main_argc_argv exists rename it to main
-  Export* ex = wasm.getExportOrNull("__main_argc_argv");
-  if (!ex) {
-    BYN_TRACE("renameMain: __main_argc_argv not found\n");
-    return;
-  }
-  ex->name = "main";
-  wasm.updateMaps();
-  ModuleUtils::renameFunction(wasm, "__main_argc_argv", "main");
 }
 
 } // namespace wasm

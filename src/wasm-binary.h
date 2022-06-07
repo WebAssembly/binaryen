@@ -362,10 +362,8 @@ enum EncodedType {
   i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
-  // opaque host reference type
-  externref = -0x11, // 0x6f
-  // any reference type
-  anyref = -0x12, // 0x6e
+  // top type of references, including host references
+  anyref = -0x11, // 0x6f
   // comparable reference type
   eqref = -0x13, // 0x6d
   // nullable typed function reference type, with parameter
@@ -379,24 +377,27 @@ enum EncodedType {
   // run-time type info type, without depth index n
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
-  // func_type form
-  Func = -0x20,            // 0x60
-  Struct = -0x21,          // 0x5f
-  Array = -0x22,           // 0x5e
-  FuncExtending = -0x23,   // 0x5d
-  StructExtending = -0x24, // 0x5c
-  ArrayExtending = -0x25,  // 0x5b
+  // type forms
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
+  Sub = -0x30,    // 0x50
+  // prototype nominal forms we still parse
+  FuncSubtype = -0x23,   // 0x5d
+  StructSubtype = -0x24, // 0x5c
+  ArraySubtype = -0x25,  // 0x5b
+  // isorecursive recursion groups
+  Rec = -0x31, // 0x4f
   // block_type
   Empty = -0x40 // 0x40
 };
 
 enum EncodedHeapType {
-  func = -0x10,    // 0x70
-  extern_ = -0x11, // 0x6f
-  any = -0x12,     // 0x6e
-  eq = -0x13,      // 0x6d
-  i31 = -0x16,     // 0x6a
-  data = -0x19,    // 0x67
+  func = -0x10, // 0x70
+  any = -0x11,  // 0x6f
+  eq = -0x13,   // 0x6d
+  i31 = -0x16,  // 0x6a
+  data = -0x19, // 0x67
 };
 
 namespace UserSections {
@@ -423,6 +424,7 @@ extern const char* GCFeature;
 extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
 extern const char* RelaxedSIMDFeature;
+extern const char* ExtendedConstFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -884,7 +886,7 @@ enum ASTNodes {
 
   I16x8Abs = 0x80,
   I16x8Neg = 0x81,
-  I16x8Q15mulrSatS = 0x82,
+  I16x8Q15MulrSatS = 0x82,
   I16x8AllTrue = 0x83,
   I16x8Bitmask = 0x84,
   I16x8NarrowI32x4S = 0x85,
@@ -1034,6 +1036,11 @@ enum ASTNodes {
   F32x4RelaxedMax = 0xe2,
   F64x2RelaxedMin = 0xd4,
   F64x2RelaxedMax = 0xee,
+  I16x8RelaxedQ15MulrS = 0x111,
+  I16x8DotI8x16I7x16S = 0x112,
+  I16x8DotI8x16I7x16U = 0x113,
+  I32x4DotI8x16I7x16AddS = 0x114,
+  I32x4DotI8x16I7x16AddU = 0x115,
 
   // bulk memory opcodes
 
@@ -1105,6 +1112,7 @@ enum ASTNodes {
   RefCastStatic = 0x45,
   BrOnCastStatic = 0x46,
   BrOnCastStaticFail = 0x47,
+  RefCastNopStatic = 0x48,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,
@@ -1310,8 +1318,7 @@ private:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
-  std::unordered_map<HeapType, Index> typeIndices;
-  std::vector<HeapType> types;
+  ModuleUtils::IndexedHeapTypes indexedTypes;
 
   bool debugInfo = true;
 

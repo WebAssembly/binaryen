@@ -170,6 +170,8 @@ void PassRegistry::registerPasses() {
     "global-refining", "refine the types of globals", createGlobalRefiningPass);
   registerPass(
     "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass(
+    "gsi", "globally optimize struct values", createGlobalStructInferencePass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
@@ -227,6 +229,9 @@ void PassRegistry::registerPasses() {
                createMemoryPackingPass);
   registerPass(
     "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
+  registerPass("merge-similar-functions",
+               "merges similar functions when benefical",
+               createMergeSimilarFunctionsPass);
   registerPass(
     "merge-locals", "merges locals when beneficial", createMergeLocalsPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
@@ -251,10 +256,6 @@ void PassRegistry::registerPasses() {
                createModAsyncifyNeverUnwindPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
-  registerPass("no-exit-runtime",
-               "removes calls to atexit(), which is valid if the C runtime "
-               "will never be exited",
-               createNoExitRuntimePass);
   registerPass("once-reduction",
                "reduces calls to code that only runs once",
                createOnceReductionPass);
@@ -354,6 +355,9 @@ void PassRegistry::registerPasses() {
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
+  registerPass("signature-pruning",
+               "remove params from function signature types where possible",
+               createSignaturePruningPass);
   registerPass("signature-refining",
                "apply more specific subtypes to signature types where possible",
                createSignatureRefiningPass);
@@ -385,6 +389,9 @@ void PassRegistry::registerPasses() {
   registerPass("souperify-single-use",
                "emit Souper IR in text form (single-use nodes only)",
                createSouperifySingleUsePass);
+  registerPass("spill-pointers",
+               "spill pointers to the C stack (useful for Boehm-style GC)",
+               createSpillPointersPass);
   registerPass("stub-unsupported-js",
                "stub out unsupported JS operations",
                createStubUnsupportedJSOpsPass);
@@ -550,6 +557,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("type-refining");
+    addIfNoDWARFIssues("signature-pruning");
     addIfNoDWARFIssues("signature-refining");
     addIfNoDWARFIssues("global-refining");
     // Global type optimization can remove fields that are not needed, which can
@@ -569,9 +577,16 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("inlining-optimizing");
   }
+
   // Optimizations show more functions as duplicate, so run this here in Post.
   addIfNoDWARFIssues("duplicate-function-elimination");
   addIfNoDWARFIssues("duplicate-import-elimination");
+
+  // perform after the number of functions is reduced by inlining-optimizing
+  if (options.shrinkLevel >= 2) {
+    addIfNoDWARFIssues("merge-similar-functions");
+  }
+
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("simplify-globals-optimizing");
   } else {

@@ -34,6 +34,7 @@
 
 #include "literal.h"
 #include "mixed_arena.h"
+#include "support/index.h"
 #include "support/name.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
@@ -463,14 +464,17 @@ enum BinaryOp {
   NarrowUVecI32x4ToVecI16x8,
 
   // SIMD Swizzle
-  SwizzleVec8x16,
+  SwizzleVecI8x16,
 
   // Relaxed SIMD
-  RelaxedSwizzleVec8x16,
+  RelaxedSwizzleVecI8x16,
   RelaxedMinVecF32x4,
   RelaxedMaxVecF32x4,
   RelaxedMinVecF64x2,
   RelaxedMaxVecF64x2,
+  RelaxedQ15MulrSVecI16x8,
+  DotI8x16I7x16SToVecI16x8,
+  DotI8x16I7x16UToVecI16x8,
 
   InvalidBinary
 };
@@ -550,6 +554,8 @@ enum SIMDTernaryOp {
   LaneselectI16x8,
   LaneselectI32x4,
   LaneselectI64x2,
+  DotI8x16I7x16AddSToVecI32x4,
+  DotI8x16I7x16AddUToVecI32x4,
 };
 
 enum RefIsOp {
@@ -1451,6 +1457,11 @@ public:
   Expression* rtt = nullptr;
   HeapType intendedType;
 
+  // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
+  // measurements.
+  enum Safety { Safe, Unsafe };
+  Safety safety = Safe;
+
   void finalize();
 
   // Returns the type we intend to cast to.
@@ -1971,14 +1982,6 @@ public:
   // Module name, if specified. Serves a documentary role only.
   Name name;
 
-  // Optional type name information, used in printing only. Note that Types are
-  // globally interned, but type names are specific to a module.
-  struct TypeNames {
-    // The name of the type.
-    Name name;
-    // For a Struct, names of fields.
-    std::unordered_map<Index, Name> fieldNames;
-  };
   std::unordered_map<HeapType, TypeNames> typeNames;
 
   MixedArena allocator;

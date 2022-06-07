@@ -49,6 +49,7 @@ const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
 const char* TypedFunctionReferencesFeature = "typed-function-references";
 const char* RelaxedSIMDFeature = "relaxed-simd";
+const char* ExtendedConstFeature = "extended-const";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -91,8 +92,8 @@ Name NEG_NAN("-nan");
 Name CASE("case");
 Name BR("br");
 Name FUNCREF("funcref");
-Name FAKE_RETURN("fake_return_waka123");
-Name DELEGATE_CALLER_TARGET("delegate_caller_target_waka123");
+Name FAKE_RETURN("__binaryen_fake_return");
+Name DELEGATE_CALLER_TARGET("__binaryen_delegate_caller_target");
 Name MUT("mut");
 Name SPECTEST("spectest");
 Name PRINT("print");

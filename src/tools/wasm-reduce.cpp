@@ -35,6 +35,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/hash.h"
 #include "support/path.h"
 #include "support/timing.h"
 #include "tool-options.h"
@@ -259,8 +260,11 @@ struct Reducer
       "--flatten -O3",
       "--flatten --simplify-locals-notee-nostructure --local-cse -Os",
       "--coalesce-locals --vacuum",
+      "--dae",
+      "--dae-optimizing",
       "--dce",
       "--duplicate-function-elimination",
+      "--gto",
       "--inlining",
       "--inlining-optimizing",
       "--optimize-level=3 --inlining-optimizing",
@@ -276,6 +280,8 @@ struct Reducer
       "--remove-unused-nonfunction-module-elements",
       "--reorder-functions",
       "--reorder-locals",
+      // TODO: signature* passes
+      "--simplify-globals",
       "--simplify-locals --vacuum",
       "--strip",
       "--vacuum"};
@@ -392,10 +398,21 @@ struct Reducer
     return out == expected;
   }
 
+  size_t decisionCounter = 0;
+
   bool shouldTryToReduce(size_t bonus = 1) {
-    static size_t counter = 0;
-    counter += bonus;
-    return (counter % factor) <= bonus;
+    assert(bonus > 0);
+    // Increment to avoid returning the same result each time.
+    decisionCounter += bonus;
+    return (decisionCounter % factor) <= bonus;
+  }
+
+  // Returns a random number in the range [0, max). This is deterministic given
+  // all the previous work done in the reducer.
+  size_t deterministicRandom(size_t max) {
+    assert(max > 0);
+    hash_combine(decisionCounter, max);
+    return decisionCounter % max;
   }
 
   bool isOkReplacement(Expression* with) {
@@ -611,7 +628,6 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -639,7 +655,6 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -667,7 +682,6 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -695,7 +709,6 @@ struct Reducer
                 WASM_UNREACHABLE("unexpected type");
               case Type::v128:
               case Type::funcref:
-              case Type::externref:
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
@@ -709,7 +722,6 @@ struct Reducer
           }
           case Type::v128:
           case Type::funcref:
-          case Type::externref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
@@ -819,7 +831,10 @@ struct Reducer
     // First, shrink segment elements.
     bool shrank = false;
     for (auto& segment : module->elementSegments) {
-      shrank = shrank || shrinkByReduction(segment.get(), 1);
+      // Try to shrink all the segments (code in shrinkByReduction will decide
+      // which to actually try to shrink, based on the current factor), and note
+      // if we shrank anything at all (which we'll use later down).
+      shrank = shrinkByReduction(segment.get(), 1) || shrank;
     }
 
     // Second, try to replace elements with a "zero".
@@ -864,17 +879,26 @@ struct Reducer
   // amount of reduction that justifies doing even more.
   bool reduceFunctions() {
     // try to remove functions
-    std::cerr << "|    try to remove functions\n";
     std::vector<Name> functionNames;
     for (auto& func : module->functions) {
       functionNames.push_back(func->name);
+    }
+    auto numFuncs = functionNames.size();
+    if (numFuncs == 0) {
+      return false;
     }
     size_t skip = 1;
     size_t maxSkip = 1;
     // If we just removed some functions in the previous iteration, keep trying
     // to remove more as this is one of the most efficient ways to reduce.
     bool justReduced = true;
-    for (size_t i = 0; i < functionNames.size(); i++) {
+    // Start from a new place each time.
+    size_t base = deterministicRandom(numFuncs);
+    std::cerr << "|    try to remove functions (base: " << base
+              << ", decisionCounter: " << decisionCounter << ", numFuncs "
+              << numFuncs << ")\n";
+    for (size_t x = 0; x < functionNames.size(); x++) {
+      size_t i = (base + x) % numFuncs;
       if (!justReduced &&
           functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
           !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
@@ -892,18 +916,22 @@ struct Reducer
       if (names.size() == 0) {
         continue;
       }
+      std::cerr << "|     trying at i=" << i << " of size " << names.size()
+                << "\n";
       // Try to remove functions and/or empty them. Note that
       // tryToRemoveFunctions() will reload the module if it fails, which means
       // function names may change - for that reason, run it second.
       justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
-        i += skip;
+        // Subtract 1 since the loop increments us anyhow by one: we want to
+        // skip over the skipped functions, and not any more.
+        x += skip - 1;
         skip = std::min(size_t(factor), 2 * skip);
         maxSkip = std::max(skip, maxSkip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
-        i += factor / 100;
+        x += factor / 100;
       }
     }
     // If maxSkip is 1 then we never reduced at all. If it is 2 then we did
@@ -1173,6 +1201,9 @@ int main(int argc, const char* argv[]) {
   std::string binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
+
+  const std::string WasmReduceOption = "wasm-reduce options";
+
   ToolOptions options("wasm-reduce",
                       "Reduce a wasm file to a smaller one that has the same "
                       "behavior on a given command");
@@ -1183,12 +1214,14 @@ int main(int argc, const char* argv[]) {
          "the command's output identical. "
          "We look at the command's return code and stdout here (TODO: stderr), "
          "and we reduce while keeping those unchanged.",
+         WasmReduceOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { command = argument; })
     .add("--test",
          "-t",
          "Test file (this will be written to to test, the given command should "
          "read it when we call it)",
+         WasmReduceOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { test = argument; })
     .add("--working",
@@ -1196,11 +1229,13 @@ int main(int argc, const char* argv[]) {
          "Working file (this will contain the current good state while doing "
          "temporary computations, "
          "and will contain the final best result at the end)",
+         WasmReduceOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { working = argument; })
     .add("--binaries",
          "-b",
          "binaryen binaries location (bin/ directory)",
+         WasmReduceOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            // Add separator just in case
@@ -1210,33 +1245,39 @@ int main(int argc, const char* argv[]) {
          "-S",
          "Emit intermediate files as text, instead of binary (also make sure "
          "the test and working files have a .wat or .wast suffix)",
+         WasmReduceOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { binary = false; })
     .add("--denan",
          "",
          "Avoid nans when reducing",
+         WasmReduceOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { deNan = true; })
     .add("--verbose",
          "-v",
          "Verbose output mode",
+         WasmReduceOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { verbose = true; })
     .add("--debugInfo",
          "-g",
          "Keep debug info in binaries",
+         WasmReduceOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { debugInfo = true; })
     .add("--force",
          "-f",
          "Force the reduction attempt, ignoring problems that imply it is "
          "unlikely to succeed",
+         WasmReduceOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { force = true; })
     .add("--timeout",
          "-to",
          "A timeout to apply to each execution of the command, in seconds "
          "(default: 2)",
+         WasmReduceOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            timeout = atoi(argument.c_str());
@@ -1246,6 +1287,7 @@ int main(int argc, const char* argv[]) {
          "-ef",
          "Extra commandline flags to pass to wasm-opt while reducing. "
          "(default: --enable-all)",
+         WasmReduceOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            extraFlags = argument;

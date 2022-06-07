@@ -56,6 +56,7 @@ public:
   Options& add(const std::string& longName,
                const std::string& shortName,
                const std::string& description,
+               const std::string& category,
                Arguments arguments,
                const Action& action,
                bool hidden = false);
@@ -69,6 +70,7 @@ private:
     std::string longName;
     std::string shortName;
     std::string description;
+    std::string category;
     Arguments arguments;
     Action action;
     bool hidden;
@@ -78,6 +80,9 @@ private:
   Arguments positional;
   std::string positionalName;
   Action positionalAction;
+
+  // The category names, in the order in which help will be printed.
+  std::vector<std::string> categories;
 };
 
 } // namespace wasm

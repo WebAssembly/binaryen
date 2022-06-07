@@ -764,10 +764,40 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         break;
       }
       case ExternalKind::Global: {
+        Ref object = ValueBuilder::makeObject();
+
+        IString identName = fromName(export_->value, NameScope::Top);
+
+        // getter
+        {
+          Ref block = ValueBuilder::makeBlock();
+
+          block[1]->push_back(
+            ValueBuilder::makeReturn(ValueBuilder::makeName(identName)));
+
+          ValueBuilder::appendToObjectAsGetter(object, IString("value"), block);
+        }
+
+        // setter
+        {
+          std::ostringstream buffer;
+          buffer << '_' << identName.c_str();
+          auto setterParam = stringToIString(buffer.str());
+
+          auto block = ValueBuilder::makeBlock();
+
+          block[1]->push_back(
+            ValueBuilder::makeBinary(ValueBuilder::makeName(identName),
+                                     SET,
+                                     ValueBuilder::makeName(setterParam)));
+
+          ValueBuilder::appendToObjectAsSetter(
+            object, IString("value"), setterParam, block);
+        }
+
         ValueBuilder::appendToObjectWithQuotes(
-          exports,
-          fromName(export_->name, NameScope::Export),
-          ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
+          exports, fromName(export_->name, NameScope::Export), object);
+
         break;
       }
       case ExternalKind::Tag:
@@ -2600,6 +2630,7 @@ void Wasm2JSGlue::emitPostES6() {
   for (auto& exp : wasm.exports) {
     switch (exp->kind) {
       case ExternalKind::Function:
+      case ExternalKind::Global:
       case ExternalKind::Memory:
         break;
 
@@ -2856,9 +2887,14 @@ void Wasm2JSGlue::emitSpecialSupport() {
     } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
       out << R"(
   function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
-    if (timeoutLow != -1 || timeoutHigh != -1) throw 'unsupported timeout';
+    var timeout = Infinity;
+    if (timeoutHigh >= 0) {
+      // Convert from nanoseconds to milliseconds
+      // Taken from convertI32PairToI53 in emscripten's library_int53.js
+      timeout = ((timeoutLow >>> 0) / 1e6) + timeoutHigh * (4294967296 / 1e6);
+    }
     var view = new Int32Array(bufferView.buffer); // TODO cache
-    var result = Atomics.wait(view, ptr, expected);
+    var result = Atomics.wait(view, ptr >> 2, expected, timeout);
     if (result == 'ok') return 0;
     if (result == 'not-equal') return 1;
     if (result == 'timed-out') return 2;
