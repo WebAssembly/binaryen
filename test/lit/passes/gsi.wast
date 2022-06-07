@@ -302,7 +302,7 @@
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.get $global2) ;; XXX bad!
+  ;; CHECK-NEXT:     (global.get $global3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -412,7 +412,7 @@
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.get $global2) ;; XXX bad
+  ;; CHECK-NEXT:     (global.get $global3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

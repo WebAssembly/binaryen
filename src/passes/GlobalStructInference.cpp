@@ -284,13 +284,14 @@ struct GlobalStructInference : public Pass {
         // Excellent, we can optimize here! Emit a select.
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
+        auto checkGlobal = globalsForValue[checkIndex][0];
         auto otherIndex = 1 - checkIndex;
         Builder builder(wasm);
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(
             builder.makeRefAs(RefAsNonNull, curr->ref),
-            builder.makeGlobalGet(globals[checkIndex],
-                                  wasm.getGlobal(globals[checkIndex])->type)),
+            builder.makeGlobalGet(checkGlobal,
+                                  wasm.getGlobal(checkGlobal)->type)),
           builder.makeConstantExpression(values[checkIndex]),
           builder.makeConstantExpression(values[otherIndex])));
       }
