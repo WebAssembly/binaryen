@@ -86,10 +86,51 @@
   ;; CHECK-NEXT:    (i32.const 8)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $i32-sign-extentions (param $x i32)
     (drop (i32.shr_s (i32.shl (local.get $x) (i32.const 24)) (i32.const 24)))
     (drop (i32.shr_s (i32.shl (local.get $x) (i32.const 16)) (i32.const 16)))
     (drop (i32.shr_s (i32.shl (local.get $x) (i32.const 8)) (i32.const 8))) ;; skip
+
+    (drop (i32.shr_u (i32.shl (local.get $x) (i32.const 24)) (i32.const 24))) ;; skip
+    (drop (i32.shr_u (i32.shl (local.get $x) (i32.const 16)) (i32.const 16))) ;; skip
+    (drop (i32.shr_s (i32.shl (local.get $x) (i32.const 16)) (i32.const 24))) ;; skip
+    (drop (i32.shr_s (i32.shl (local.get $x) (i32.const 24)) (i32.const 16))) ;; skip
   )
 )
