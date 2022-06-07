@@ -288,10 +288,9 @@ struct GlobalStructInference : public Pass {
         auto otherIndex = 1 - checkIndex;
         Builder builder(wasm);
         replaceCurrent(builder.makeSelect(
-          builder.makeRefEq(
-            builder.makeRefAs(RefAsNonNull, curr->ref),
-            builder.makeGlobalGet(checkGlobal,
-                                  wasm.getGlobal(checkGlobal)->type)),
+          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
+                            builder.makeGlobalGet(
+                              checkGlobal, wasm.getGlobal(checkGlobal)->type)),
           builder.makeConstantExpression(values[checkIndex]),
           builder.makeConstantExpression(values[otherIndex])));
       }
