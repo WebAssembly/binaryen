@@ -304,6 +304,14 @@ struct InfoCollector
   void visitLoad(Load* curr) {
     // We could infer the exact type here, but as no subtyping is possible, it
     // would have no benefit, so just add a generic root (which will be "Many").
+    // That is, when subtyping is possible then ExactType can be very useful -
+    // it tells us no subtypes are possible - but the type here cannot have a
+    // subtype anyhow. Because of that, Many means as much as i32 does - both
+    // only tell us that content is possible here, but nothing more (we already
+    // know the type of that content from the type declared in the IR, i32;
+    // again, no subtype is possible, which would have changed things). As it
+    // keeps the code slightly shorter to use the default of Many here, we do
+    // that.
     addRoot(curr);
   }
   void visitStore(Store* curr) {}
