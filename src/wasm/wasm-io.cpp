@@ -38,8 +38,9 @@ namespace wasm {
 
 static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
   if (std::getenv("BINARYEN_NEW_WAT_PARSER")) {
-    if (!WATParser::parseModule(wasm, std::string_view(input.c_str()))) {
-      Fatal() << "Parse failure";
+    std::string_view in(input.c_str());
+    if (auto err = WATParser::parseModule(wasm, in).getErr()) {
+      Fatal() << err->msg;
     }
   } else {
     SExpressionParser parser(const_cast<char*>(input.c_str()));

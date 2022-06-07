@@ -26,8 +26,39 @@ namespace wasm::WATParser {
 
 struct Ok {};
 
-// TODO: Support error variants as well.
-template<typename T = Ok> using Result = std::optional<T>;
+// struct None {};
+
+struct Err {
+  std::string msg;
+};
+
+template<typename T = Ok> struct Result {
+  // std::variant<T, None, Err> val;
+  std::variant<T, Err> val;
+
+  // Result() : val(None{}) {}
+  Result(Err& e) : val(std::in_place_type<Err>, e) {}
+  Result(Err&& e) : val(std::in_place_type<Err>, std::move(e)) {}
+  template<typename U = T>
+  Result(U&& u) : val(std::in_place_type<T>, std::forward<U>(u)) {}
+
+  bool ok() const { return std::holds_alternative<T>(val); }
+
+  // Whether we have an error or a truthy value. Useful for assignment in loops
+  // and if conditions where errors should not get lost.
+  operator bool() const { return !ok() || bool(*std::get_if<T>(&val)); }
+
+  std::optional<Err> getErr() {
+    if (auto* err = std::get_if<Err>(&val)) {
+      return *err;
+    }
+    return {};
+  }
+
+  T& operator*() { return *std::get_if<T>(&val); }
+
+  T* operator->() { return std::get_if<T>(&val); }
+};
 
 // Parse a single WAT module.
 Result<> parseModule(Module& wasm, std::string_view in);
