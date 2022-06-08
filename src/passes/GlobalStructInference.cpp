@@ -260,11 +260,11 @@ struct GlobalStructInference : public Pass {
         }
 
         // We have some globals (at least 2), and so must have at least one
-        // value.
-        assert(values.size() >= 1);
+        // value. And we have already exited if we have more than 2, so that
+        // only leaves 1 and 2. We are looking for the case of 2 here, since
+        // other passes (ConstantFieldPropagation) can handle 1.
+        assert(values.size() >= 1 && values.size() <= 2);
         if (values.size() != 2) {
-          // More than two values to pick from, so we'd need more than one
-          // comparison. Give up.
           return;
         }
 
