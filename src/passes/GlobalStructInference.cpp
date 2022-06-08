@@ -263,10 +263,10 @@ struct GlobalStructInference : public Pass {
         // value. And we have already exited if we have more than 2, so that
         // only leaves 1 and 2. We are looking for the case of 2 here, since
         // other passes (ConstantFieldPropagation) can handle 1.
-        assert(values.size() >= 1 && values.size() <= 2);
-        if (values.size() != 2) {
+        if (values.size() == 1) {
           return;
         }
+        assert(values.size() == 2);
 
         // We have two values. Check that we can pick between them using a
         // single comparison. While doing so, ensure that the index we can check
