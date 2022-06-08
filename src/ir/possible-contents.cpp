@@ -1449,6 +1449,32 @@ void Flower::readFromData(HeapType declaredHeapType,
                           Index fieldIndex,
                           const PossibleContents& refContents,
                           Expression* read) {
+  // The data that a struct.get reads depends on two things: the reference that
+  // we read from, and the relevant DataLocations. The reference determines
+  // which DataLocations are relevant: if it is an ExactType then we have a
+  // single DataLocation to read from, the one type that can be read from there.
+  // Otherwise, we might read from any subtype, and so all their DataLocations
+  // are relevant.
+  //
+  // What can be confusing is that the information about the reference is also
+  // inferred during the flow. That is, we use our current information about the
+  // reference to decide what to do here. But the flow is not finished yet!
+  // To keep things valid, we must therefore react to changes in either the
+  // reference - when we see that more types might be read from here - or the
+  // DataLocations - when new things are written to the data we can read from.
+  // Specifically, at every point in time we want to preserve the property that
+  // we've read from all relevant types based on the current reference, and
+  // we've read the very latest possible contents from those types. And then
+  // since we preserve that property til the end of the flow, it is also valid
+  // then. At the end of the flow, the current reference's contents are the
+  // final and correct contents for that location, which means we've ended up
+  // with the proper result: the struct.get reads everything it should.
+  //
+  // To implement what was just described, we call this function when the
+  // reference is updated. This function will then set up connections in the
+  // graph so that updates to the relevant DataLocations will reach us in the
+  // future.
+
   if (refContents.isNull() || refContents.isNone()) {
     // Nothing is read here.
     return;
