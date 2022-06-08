@@ -269,13 +269,13 @@ struct GlobalStructInference : public Pass {
         }
 
         // We have two values. Check that we can pick between them using a
-        // single comparison. Find the index that we can check on, which is the
-        // index that has a single global.
-        Index checkIndex;
+        // single comparison. While doing so, ensure that the index can can
+        // check on is 0, that is, the first value has a single global.
         if (globalsForValue[0].size() == 1) {
-          checkIndex = 0;
+          // The checked global is already in index 0.
         } else if (globalsForValue[1].size() == 1) {
-          checkIndex = 1;
+          std::swap(values[0], values[1]);
+          std::swap(globalsForValue[0], globalsForValue[1]);
         } else {
           // Both indexes have more than one option, so we'd need more than one
           // comparison. Give up.
@@ -285,15 +285,14 @@ struct GlobalStructInference : public Pass {
         // Excellent, we can optimize here! Emit a select.
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
-        auto checkGlobal = globalsForValue[checkIndex][0];
-        auto otherIndex = 1 - checkIndex;
+        auto checkGlobal = globalsForValue[0][0];
         Builder builder(wasm);
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(
                               checkGlobal, wasm.getGlobal(checkGlobal)->type)),
-          builder.makeConstantExpression(values[checkIndex]),
-          builder.makeConstantExpression(values[otherIndex])));
+          builder.makeConstantExpression(values[0]),
+          builder.makeConstantExpression(values[1])));
       }
 
     private:
