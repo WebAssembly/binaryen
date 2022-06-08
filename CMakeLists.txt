@@ -289,6 +289,10 @@ else()
     # explicitly undefine it:
     add_nondebug_compile_flag("-UNDEBUG")
   endif()
+  if(NOT APPLE AND NOT "${CMAKE_CXX_FLAGS}" MATCHES "-fsanitize")
+    # This flag only applies to shared libraries so don't use add_link_flag
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+  endif()
 endif()
 
 if(EMSCRIPTEN)
@@ -370,6 +374,7 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
+target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
 if(NOT (BUILD_STATIC_LIB AND BYN_INSTALL_TOOLS_ONLY))
   install(TARGETS binaryen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
