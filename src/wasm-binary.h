@@ -1158,6 +1158,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
     std::unordered_map<Name, Index> elemIndexes;
+    std::unordered_map<Name, Index> dataIndexes;
 
     BinaryIndexes(Module& wasm) {
       auto addIndexes = [&](auto& source, auto& indexes) {
@@ -1183,6 +1184,11 @@ class WasmBinaryWriter {
       for (auto& curr : wasm.elementSegments) {
         auto index = elemIndexes.size();
         elemIndexes[curr->name] = index;
+      }
+
+      for (auto& curr : wasm.dataSegments) {
+        auto index = dataIndexes.size();
+        dataIndexes[curr->name] = index;
       }
 
       // Globals may have tuple types in the IR, in which case they lower to
@@ -1255,7 +1261,7 @@ public:
   void writeFunctions();
   void writeGlobals();
   void writeExports();
-  void writeDataCount();
+  void writeDataSegmentCount();
   void writeDataSegments();
   void writeTags();
 
@@ -1486,6 +1492,9 @@ public:
   // names
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
 
+  // we store data here after being read from binary, before we know their names
+  std::vector<std::unique_ptr<DataSegment>> dataSegments;
+
   // we store globals here before wasm.addGlobal after we know their names
   std::vector<std::unique_ptr<Global>> globals;
   // we store global imports here before wasm.addGlobalImport after we know
@@ -1590,7 +1599,7 @@ public:
   bool hasDataCount = false;
 
   void readDataSegments();
-  void readDataCount();
+  void readDataSegmentCount();
 
   void readTableDeclarations();
   void readElementSegments();
