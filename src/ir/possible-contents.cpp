@@ -1551,10 +1551,20 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // loop over the places we need to send info to, which we can figure out in a
   // simple way, and by doing so we avoid materializing edges into the graph.
   //
-  // Figure out what to send in a simple way that does not even check whether
-  // the ref or the value was just updated: simply figure out the values being
-  // written in the current state (which is after the current update) and
-  // forward them.
+  // Note that this is different from readFromData, above, which does add edges
+  // to the graph (and works hard to add as few as possible, see the "canonical
+  // cone reads" logic). The difference is because readFromData must "subscribe"
+  // to get notifications from the relevant DataLocations. But when writing that
+  // is not a problem: whenever a change happens in the reference or the value
+  // of a struct.set then this function will get called, and those are the only
+  // things we care about. And we can then just compute the values we are
+  // sending (based on the current contents of the reference and the value), and
+  // where we should send them to, and do that right here. (And as commented in
+  // readFromData, that is guaranteed to give us the right result in the end: at
+  // every point in time we send the right data, so when the flow is finished
+  // we've sent information based on the final and correct information about our
+  // reference and value.)
+
   auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
   if (refContents.isNone() || refContents.isNull()) {
