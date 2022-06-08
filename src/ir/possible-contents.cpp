@@ -1546,7 +1546,10 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 
   // We could set up links here as we do for reads, but as we get to this code
   // in any case, we can just flow the values forward directly. This avoids
-  // increasing the size of the graph.
+  // adding any links (edges) to the graph (and edges are what we want to avoid
+  // adding, as there can be a quadratic number of them). In other words, we'll
+  // loop over the places we need to send info to, which we can figure out in a
+  // simple way, and by doing so we avoid materializing edges into the graph.
   //
   // Figure out what to send in a simple way that does not even check whether
   // the ref or the value was just updated: simply figure out the values being
