@@ -384,6 +384,9 @@
 ;; CHECK-NEXT:   --souperify-single-use                        emit Souper IR in text form
 ;; CHECK-NEXT:                                                 (single-use nodes only)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --spill-pointers                              spill pointers to the C stack
+;; CHECK-NEXT:                                                 (useful for Boehm-style GC)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --ssa                                         ssa-ify variables so that they
 ;; CHECK-NEXT:                                                 have a single assignment
 ;; CHECK-NEXT:

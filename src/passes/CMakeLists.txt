@@ -96,6 +96,7 @@ set(passes_SOURCES
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
+  SpillPointers.cpp
   StackCheck.cpp
   SSAify.cpp
   Untee.cpp

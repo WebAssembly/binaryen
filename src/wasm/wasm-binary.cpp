@@ -5619,10 +5619,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = DotI8x16I7x16SToVecI16x8;
       break;
-    case BinaryConsts::I16x8DotI8x16I7x16U:
-      curr = allocator.alloc<Binary>();
-      curr->op = DotI8x16I7x16UToVecI16x8;
-      break;
     default:
       return false;
   }
@@ -6100,10 +6096,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
     case BinaryConsts::I32x4DotI8x16I7x16AddS:
       curr = allocator.alloc<SIMDTernary>();
       curr->op = DotI8x16I7x16AddSToVecI32x4;
-      break;
-    case BinaryConsts::I32x4DotI8x16I7x16AddU:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = DotI8x16I7x16AddUToVecI32x4;
       break;
     default:
       return false;
