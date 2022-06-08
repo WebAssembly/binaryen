@@ -269,8 +269,8 @@ struct GlobalStructInference : public Pass {
         }
 
         // We have two values. Check that we can pick between them using a
-        // single comparison. While doing so, ensure that the index can can
-        // check on is 0, that is, the first value has a single global.
+        // single comparison. While doing so, ensure that the index we can check
+        // on is 0, that is, the first value has a single global.
         if (globalsForValue[0].size() == 1) {
           // The checked global is already in index 0.
         } else if (globalsForValue[1].size() == 1) {
