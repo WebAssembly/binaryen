@@ -474,7 +474,6 @@ enum BinaryOp {
   RelaxedMaxVecF64x2,
   RelaxedQ15MulrSVecI16x8,
   DotI8x16I7x16SToVecI16x8,
-  DotI8x16I7x16UToVecI16x8,
 
   InvalidBinary
 };
@@ -555,7 +554,6 @@ enum SIMDTernaryOp {
   LaneselectI32x4,
   LaneselectI64x2,
   DotI8x16I7x16AddSToVecI32x4,
-  DotI8x16I7x16AddUToVecI32x4,
 };
 
 enum RefIsOp {

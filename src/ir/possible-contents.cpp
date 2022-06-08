@@ -246,10 +246,10 @@ struct InfoCollector
         }
       }
     }
-    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
-      // If nominal typing is not enabled then we cannot handle refs, as we need
-      // to do a subtyping analysis there (which the SubTyping helper class only
-      // supports in nominal mode).
+    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      // We need explicit supers in the SubTyping helper class. Without that,
+      // cannot handle refs, and consider them irrelevant.
       return false;
     }
     return true;
@@ -304,6 +304,7 @@ struct InfoCollector
   void visitLoad(Load* curr) {
     // We could infer the exact type here, but as no subtyping is possible, it
     // would have no benefit, so just add a generic root (which will be "Many").
+    // See the comment on the ContentOracle class.
     addRoot(curr);
   }
   void visitStore(Store* curr) {}
@@ -1176,7 +1177,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "struct phase\n";
 #endif
 
-  if (getTypeSystem() == TypeSystem::Nominal) {
+  if (getTypeSystem() == TypeSystem::Nominal ||
+      getTypeSystem() == TypeSystem::Isorecursive) {
     subTypes = std::make_unique<SubTypes>(wasm);
   }
 
@@ -1447,6 +1449,32 @@ void Flower::readFromData(HeapType declaredHeapType,
                           Index fieldIndex,
                           const PossibleContents& refContents,
                           Expression* read) {
+  // The data that a struct.get reads depends on two things: the reference that
+  // we read from, and the relevant DataLocations. The reference determines
+  // which DataLocations are relevant: if it is an ExactType then we have a
+  // single DataLocation to read from, the one type that can be read from there.
+  // Otherwise, we might read from any subtype, and so all their DataLocations
+  // are relevant.
+  //
+  // What can be confusing is that the information about the reference is also
+  // inferred during the flow. That is, we use our current information about the
+  // reference to decide what to do here. But the flow is not finished yet!
+  // To keep things valid, we must therefore react to changes in either the
+  // reference - when we see that more types might be read from here - or the
+  // DataLocations - when new things are written to the data we can read from.
+  // Specifically, at every point in time we want to preserve the property that
+  // we've read from all relevant types based on the current reference, and
+  // we've read the very latest possible contents from those types. And then
+  // since we preserve that property til the end of the flow, it is also valid
+  // then. At the end of the flow, the current reference's contents are the
+  // final and correct contents for that location, which means we've ended up
+  // with the proper result: the struct.get reads everything it should.
+  //
+  // To implement what was just described, we call this function when the
+  // reference is updated. This function will then set up connections in the
+  // graph so that updates to the relevant DataLocations will reach us in the
+  // future.
+
   if (refContents.isNull() || refContents.isNone()) {
     // Nothing is read here.
     return;
@@ -1518,12 +1546,25 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 
   // We could set up links here as we do for reads, but as we get to this code
   // in any case, we can just flow the values forward directly. This avoids
-  // increasing the size of the graph.
+  // adding any links (edges) to the graph (and edges are what we want to avoid
+  // adding, as there can be a quadratic number of them). In other words, we'll
+  // loop over the places we need to send info to, which we can figure out in a
+  // simple way, and by doing so we avoid materializing edges into the graph.
   //
-  // Figure out what to send in a simple way that does not even check whether
-  // the ref or the value was just updated: simply figure out the values being
-  // written in the current state (which is after the current update) and
-  // forward them.
+  // Note that this is different from readFromData, above, which does add edges
+  // to the graph (and works hard to add as few as possible, see the "canonical
+  // cone reads" logic). The difference is because readFromData must "subscribe"
+  // to get notifications from the relevant DataLocations. But when writing that
+  // is not a problem: whenever a change happens in the reference or the value
+  // of a struct.set then this function will get called, and those are the only
+  // things we care about. And we can then just compute the values we are
+  // sending (based on the current contents of the reference and the value), and
+  // where we should send them to, and do that right here. (And as commented in
+  // readFromData, that is guaranteed to give us the right result in the end: at
+  // every point in time we send the right data, so when the flow is finished
+  // we've sent information based on the final and correct information about our
+  // reference and value.)
+
   auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
   if (refContents.isNone() || refContents.isNull()) {

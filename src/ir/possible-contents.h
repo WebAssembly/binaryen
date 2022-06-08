@@ -477,6 +477,34 @@ namespace wasm {
 // values - and propagates them to the locations they reach. After the
 // analysis the user of this class can ask which contents are possible at any
 // location.
+//
+// This focuses on useful information for the typical user of this API.
+// Specifically, we find out:
+//
+//  1. What locations have no content reaching them at all. That means the code
+//     is unreachable. (Other passes may handle this, but ContentOracle does it
+//     for all things, so it might catch situations other passes do not cover;
+//     and, it takes no effort to support this here).
+//  2. For all locations, we try to find when they must contain a constant value
+//     like i32(42) or ref.func(foo).
+//  3. For locations that contain references, information about the subtypes
+//     possible there. For example, if something has wasm type anyref in the IR,
+//     we might find it must contain an exact type of something specific.
+//
+// Note that there is not much use in providing type info for locations that are
+// *not* references. If a local is i32, for example, then it cannot contain any
+// subtype anyhow, since i32 is not a reference and has no subtypes. And we know
+// the type i32 from the wasm anyhow, that is, the caller will know it.
+// Therefore the only useful information we can provide on top of the info
+// already in the wasm is either that nothing can be there (1, above), or that a
+// constant must be there (2, above), and so we do not make an effort to track
+// non-reference types here. This makes the internals of ContentOracle simpler
+// and faster. A noticeable outcome of that is that querying the contents of an
+// i32 local will return Many and not ExactType{i32} (assuming we could not
+// infer either that there must be nothing there, or a constant). Again, the
+// caller is assumed to know the wasm IR type anyhow, and also other
+// optimization passes work on the types in the IR, so we do not focus on that
+// here.
 class ContentOracle {
   Module& wasm;
 

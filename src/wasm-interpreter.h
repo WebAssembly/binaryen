@@ -1018,8 +1018,6 @@ public:
 
       case DotI8x16I7x16SToVecI16x8:
         return left.dotSI8x16toI16x8(right);
-      case DotI8x16I7x16UToVecI16x8:
-        return left.dotUI8x16toI16x8(right);
 
       case InvalidBinary:
         WASM_UNREACHABLE("invalid binary op");
