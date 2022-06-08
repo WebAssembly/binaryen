@@ -917,6 +917,10 @@ private:
     return index;
   }
 
+  bool hasIndex(const Location& location) {
+    return locationIndexes.find(location) != locationIndexes.end();
+  }
+
   IndexLink getIndexes(const LocationLink& link) {
     return {getIndex(link.from), getIndex(link.to)};
   }
@@ -942,28 +946,6 @@ private:
 #else
   std::unordered_set<LocationIndex> workQueue;
 #endif
-
-  // Maps a heap type + an index in the type (0 for an array) to the index of a
-  // UniqueLocation for a cone read of those contents. We use such special
-  // locations because a read of a cone type (as opposed to an exact type) will
-  // require N incoming links, from each of the N subtypes - and we need that
-  // for each struct.get of a cone. If there are M such gets then we have N * M
-  // edges for this. Instead, make a single canonical "cone read" location, and
-  // add a single link to it from each get, which is only N + M (plus the cost
-  // of adding "latency" in requiring an additional step along the way for the
-  // data to flow along).
-  std::unordered_map<std::pair<HeapType, Index>, LocationIndex>
-    canonicalConeReads;
-
-  // Creates a new UniqueLocation (that is different from all others so far).
-  LocationIndex makeUniqueLocation() {
-    // Use the location index as the internal index to indicate this special
-    // location. That keeps debugging as simple as possible.
-    auto expectedIndex = Index(locations.size());
-    auto seenIndex = getIndex(UniqueLocation{expectedIndex});
-    assert(seenIndex == expectedIndex);
-    return seenIndex;
-  }
 
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
@@ -1510,21 +1492,16 @@ void Flower::readFromData(HeapType declaredHeapType,
     // would filter it out.
     assert(refContents.isMany() || refContents.isGlobal());
 
-    // We create a UniqueLocation for the canonical cone of this type, to
-    // avoid bloating the graph, see comment on Flower::canonicalConeReads().
+    // We create a ConeReadLocation for the canonical cone of this type, to
+    // avoid bloating the graph, see comment on ConeReadLocation().
     // TODO: A cone with no subtypes needs no canonical location, just
     //       add one direct link here.
-    auto& coneReadIndex = canonicalConeReads[std::pair<HeapType, Index>(
-      declaredHeapType, fieldIndex)];
-    if (coneReadIndex == 0) {
-      // 0 is an impossible index for a LocationIndex (as there must be
-      // something at index 0 already - the ExpressionLocation of this very
-      // expression, in particular), so we can use that as an indicator that we
-      // have never allocated one yet, and do so now.
-      coneReadIndex = makeUniqueLocation();
+    auto coneReadLocation = ConeReadLocation{declaredHeapType, fieldIndex};
+    if (!hasIndex(coneReadLocation)) {
+      // This is the first time we use this location, so create the links for it
+      // in the graph.
       for (auto type : subTypes->getAllSubTypes(declaredHeapType)) {
-        connectDuringFlow(DataLocation{type, fieldIndex},
-                          UniqueLocation{coneReadIndex});
+        connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
       }
 
       // TODO: if the old contents here were an exact type then we have an old
@@ -1534,8 +1511,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     }
 
     // Link to the canonical location.
-    connectDuringFlow(UniqueLocation{coneReadIndex},
-                      ExpressionLocation{read, 0});
+    connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
   }
 }
 

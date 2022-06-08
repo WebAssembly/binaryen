@@ -349,20 +349,19 @@ struct NullLocation {
   }
 };
 
-// Special locations, each of which are unique, and which do not correspond to
-// actual locations in the wasm, but are used to organize and optimize the
-// graph. See the comment on possible-contents.cpp:canonicalConeReads.
-struct UniqueLocation {
-  // A unique index for this location. Necessary to keep different
-  // UniqueLocations different, but the actual value here does not matter
-  // otherwise. (In practice this will contain the LocationIndex for this
-  // Location, see possible-contents.cpp:makeUniqueLocation(), which is nice
-  // for debugging.)
-  Index index;
-  bool operator==(const UniqueLocation& other) const {
-    return index == other.index;
-  }
-};
+// A special type of location that does not refer to something concrete in the
+// wasm, but is used to optimize the graph. A "cone read" is a struct.get or
+// array.get of a type that is not exact, so it can read the "cone" of all the
+// subtypes. In general a read of a cone type (as opposed to an exact type) will
+// require N incoming links, from each of the N subtypes - and we need that
+// for each struct.get of a cone. If there are M such gets then we have N * M
+// edges for this. Instead, we make a single canonical "cone read" location, and
+// add a single link to it from each get, which is only N + M (plus the cost
+// of adding "latency" in requiring an additional step along the way for the
+// data to flow along).
+//
+// This has the same fields as DataLocation: a heap type and a field index.
+struct ConeReadLocation : public DataLocation {};
 
 // A location is a variant over all the possible flavors of locations that we
 // have.
@@ -376,7 +375,7 @@ using Location = std::variant<ExpressionLocation,
                               DataLocation,
                               TagLocation,
                               NullLocation,
-                              UniqueLocation>;
+                              ConeReadLocation>;
 
 } // namespace wasm
 
@@ -462,9 +461,10 @@ template<> struct hash<wasm::NullLocation> {
   }
 };
 
-template<> struct hash<wasm::UniqueLocation> {
-  size_t operator()(const wasm::UniqueLocation& loc) const {
-    return std::hash<wasm::Index>{}(loc.index);
+template<> struct hash<wasm::ConeReadLocation> {
+  size_t operator()(const wasm::ConeReadLocation& loc) const {
+    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
+      {loc.type, loc.index});
   }
 };
 
