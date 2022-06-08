@@ -1275,6 +1275,10 @@ ElementSegment* Module::getElementSegment(Name name) {
   return getModuleElement(elementSegmentsMap, name, "getElementSegment");
 }
 
+DataSegment* Module::getDataSegment(Name name) {
+  return getModuleElement(dataSegmentsMap, name, "getDataSegment");
+}
+
 Global* Module::getGlobal(Name name) {
   return getModuleElement(globalsMap, name, "getGlobal");
 }
@@ -1306,6 +1310,10 @@ Table* Module::getTableOrNull(Name name) {
 
 ElementSegment* Module::getElementSegmentOrNull(Name name) {
   return getModuleElementOrNull(elementSegmentsMap, name);
+}
+
+DataSegment* Module::getDataSegmentOrNull(Name name) {
+  return getModuleElementOrNull(dataSegmentsMap, name);
 }
 
 Global* Module::getGlobalOrNull(Name name) {
@@ -1383,6 +1391,10 @@ Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
     elementSegments, elementSegmentsMap, std::move(curr), "addElementSegment");
 }
 
+DataSegment* Module::addDataSegment(std::unique_ptr<DataSegment>&& curr) {
+  return addModuleElement(dataSegments, dataSegmentsMap, std::move(curr), "addDataSegment");
+}
+
 Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {
   return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
 }
@@ -1415,6 +1427,9 @@ void Module::removeTable(Name name) {
 }
 void Module::removeElementSegment(Name name) {
   removeModuleElement(elementSegments, elementSegmentsMap, name);
+}
+void Module::removeDataSegment(Name name) {
+  removeModuleElement(dataSegments, dataSegmentsMap, name);
 }
 void Module::removeGlobal(Name name) {
   removeModuleElement(globals, globalsMap, name);
@@ -1449,6 +1464,9 @@ void Module::removeTables(std::function<bool(Table*)> pred) {
 void Module::removeElementSegments(std::function<bool(ElementSegment*)> pred) {
   removeModuleElements(elementSegments, elementSegmentsMap, pred);
 }
+void Module::removeDataSegments(std::function<bool(DataSegment*)> pred) {
+  removeModuleElements(dataSegments, dataSegmentsMap, pred);
+}
 void Module::removeGlobals(std::function<bool(Global*)> pred) {
   removeModuleElements(globals, globalsMap, pred);
 }
@@ -1472,6 +1490,10 @@ void Module::updateMaps() {
   elementSegmentsMap.clear();
   for (auto& curr : elementSegments) {
     elementSegmentsMap[curr->name] = curr.get();
+  }
+  dataSegmentsMap.clear();
+  for (auto& curr : dataSegments) {
+    dataSegmentsMap[curr->name] = curr.get();
   }
   globalsMap.clear();
   for (auto& curr : globals) {
