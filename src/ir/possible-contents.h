@@ -359,9 +359,15 @@ struct NullLocation {
 // add a single link to it from each get, which is only N + M (plus the cost
 // of adding "latency" in requiring an additional step along the way for the
 // data to flow along).
-//
-// This has the same fields as DataLocation: a heap type and a field index.
-struct ConeReadLocation : public DataLocation {};
+struct ConeReadLocation {
+  HeapType type;
+  // The index of the field in a struct, or 0 for an array (where we do not
+  // attempt to differentiate by index).
+  Index index;
+  bool operator==(const ConeReadLocation& other) const {
+    return type == other.type && index == other.index;
+  }
+};
 
 // A location is a variant over all the possible flavors of locations that we
 // have.
