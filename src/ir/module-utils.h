@@ -106,6 +106,20 @@ inline Table* copyTable(const Table* table, Module& out) {
   return out.addTable(std::move(ret));
 }
 
+inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
+  auto copy = [&]std::unique_ptr<DataSegment>&& ret) {
+    ret->name = segment->name;
+    ret->hasExplicitName = segment->hasExplicitName;
+    ret->isPassive = segment->isPassive;
+    ret->data = segment->data;
+
+    return out.addDataSegment(std::move(ret));
+  }
+
+  auto offset = ExpressionManipulator::copy(segment->offset, out);
+  return copy(std::make_unique<DataSegment>(offset));
+}
+
 inline void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
@@ -127,11 +141,10 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
-
-  out.memory = in.memory;
-  for (auto& segment : out.memory.segments) {
-    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+  for (auto& curr : in.dataSegments) {
+    copyDataSegment(curr.get(), out);
   }
+  out.memory = in.memory;
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
@@ -202,6 +215,12 @@ template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
 template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
   if (wasm.memory.exists && !wasm.memory.imported()) {
     visitor(&wasm.memory);
+  }
+}
+
+template<typename T> inline void iterDataSegments(Module& wasm, T visitor) {
+  for (auto& segment : wasm.dataSegments) {
+    visitor(segment.get());
   }
 }
 

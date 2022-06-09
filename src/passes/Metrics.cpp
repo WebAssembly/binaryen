@@ -65,9 +65,7 @@ struct Metrics
     // add memory and table
     if (module->memory.exists) {
       Index size = 0;
-      for (auto& segment : module->memory.segments) {
-        size += segment.data.size();
-      }
+      ModuleUtils::iterDataSegments(*module, [&](DataSegment* segment) { size += segment->data.size(); });
       counts["[memory-data]"] = size;
     }
 

@@ -2809,8 +2809,8 @@ void WasmBinaryBuilder::processNames() {
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
-  for (auto& dataSegment : dataSegments) {
-    wasm.addElementSegment(std::move(dataSegment));
+  for (auto& segment : dataSegments) {
+    wasm.addDataSegment(std::move(segment));
   }
   // now that we have names, apply things
 
@@ -2948,7 +2948,7 @@ void WasmBinaryBuilder::readTableDeclarations() {
   }
 }
 
-voidedWasmBinaryBuilder::readElementSegments() {
+void WasmBinaryBuilder::readElementSegments() {
   BYN_TRACE("== readElementSegments\n");
   auto numSegments = getU32LEB();
   if (numSegments >= Table::kMaxSize) {

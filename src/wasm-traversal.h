@@ -49,6 +49,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
+  ReturnType visitDataSegment(DataSegment* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
   ReturnType visitTag(Tag* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
@@ -204,12 +205,14 @@ struct Walker : public VisitorType {
     static_cast<SubType*>(this)->visitTable(table);
   }
 
-  void walkMemory(Memory* memory) {
-    for (auto& segment : memory->segments) {
-      if (!segment.isPassive) {
-        walk(segment.offset);
-      }
+  void walkDataSegment(DataSegment* segment) {
+    if (!segment.isPassive) {
+      walk(segment.offset);
     }
+    static_cast<SubType*>(this)->visitDataSegment(segment);
+  }
+
+  void walkMemory(Memory* memory) {
     static_cast<SubType*>(this)->visitMemory(memory);
   }
 
@@ -255,6 +258,9 @@ struct Walker : public VisitorType {
       self->walkElementSegment(curr.get());
     }
     self->walkMemory(&module->memory);
+    for (auto& curr : module->dataSegments) {
+      self->walkDataSegment(curr.get());
+    }
   }
 
   // Walks module-level code, that is, code that is not in functions.

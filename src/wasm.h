@@ -1863,27 +1863,28 @@ public:
 };
 
 class DataSegment : public Named {
-  // For use in name section only
-  Name name;
+public:
+  Name memory;
   bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
   DataSegment() = default;
-  DataSegment(Expression* offset) : offset(offset) {}
-  DataSegment(Expression* offset, const char* init, Address size)
-    : offset(offset) {
+  DataSegment(Name memory, Expression* offset) : memory(memory), offset(offset) {}
+  DataSegment(Name memory, Expression* offset, const char* init, Address size)
+    : memory(memory, offset(offset) {
     data.resize(size);
     std::copy_n(init, size, data.begin());
   }
-  DataSegment(Expression* offset, std::vector<char>& init) : offset(offset) {
+  DataSegment(Name memory, Expression* offset, std::vector<char>& init) : memory(memory), offset(offset) {
     data.swap(init);
   }
   DataSegment(Name name,
+          Name memory,
           bool isPassive,
           Expression* offset,
           const char* init,
           Address size)
-    : name(name), isPassive(isPassive), offset(offset) {
+    : name(name), memory(memory), isPassive(isPassive), offset(offset) {
     data.resize(size);
     std::copy_n(init, size, data.begin());
   }
@@ -1900,7 +1901,6 @@ public:
   bool exists = false;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
-  std::vector<DataSegment> dataSegments;
 
   bool shared = false;
   Type indexType = Type::i32;
