@@ -951,7 +951,7 @@ private:
   // to add is new or not.
   std::unordered_set<IndexLink> links;
 
-  // Update a location with new contents, that are added to everything already
+  // Update a location with new contents that are added to everything already
   // present there. If the update changes the contents at that location (if
   // there was anything new) then we also need to flow from there, which we will
   // do by adding the location to the work queue, and eventually flowAfterUpdate
