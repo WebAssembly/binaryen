@@ -24,8 +24,6 @@
 // binary.
 //
 
-#include <cstdlib>
-
 #include "support/debug.h"
 #include "wasm-binary.h"
 #include "wasm-io.h"
