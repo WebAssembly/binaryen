@@ -70,7 +70,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     : module(module) {
     queue = roots;
     // Globals used in memory/table init expressions are also roots
-    for (auto& segment : module->memory.segments) {
+    for (auto& segment : module->dataSegments) {
       if (!segment.isPassive) {
         walk(segment.offset);
       }
@@ -365,9 +365,9 @@ struct RemoveUnusedModuleElements : public Pass {
       if (!importsMemory) {
         // The memory is unobservable to the outside, we can remove the
         // contents.
-        module->memory.segments.clear();
+        module->dataSegments.clear();
       }
-      if (module->memory.segments.empty()) {
+      if (module->dataSegments.empty()) {
         module->memory.exists = false;
         module->memory.module = module->memory.base = Name();
         module->memory.initial = 0;

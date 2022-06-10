@@ -98,16 +98,16 @@ struct MemoryPacking : public Pass {
   bool canOptimize(const Memory& memory, const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
-  void dropUnusedSegments(std::vector<Memory::Segment>& segments,
+  void dropUnusedSegments(std::vector<DataSegment>& segments,
                           ReferrersMap& referrers);
-  bool canSplit(const Memory::Segment& segment, const Referrers& referrers);
-  void calculateRanges(const Memory::Segment& segment,
+  bool canSplit(const DataSegment& segment, const Referrers& referrers);
+  void calculateRanges(const DataSegment& segment,
                        const Referrers& referrers,
                        std::vector<Range>& ranges);
   void createSplitSegments(Builder& builder,
-                           const Memory::Segment& segment,
+                           const DataSegment& segment,
                            std::vector<Range>& ranges,
-                           std::vector<Memory::Segment>& packed,
+                           std::vector<DataSegment>& packed,
                            size_t segmentsRemaining);
   void createReplacements(Module* module,
                           const std::vector<Range>& ranges,
@@ -120,11 +120,11 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!canOptimize(module->memory, runner->options)) {
+  if (!canOptimize(module->memory, module->dataSegments, runner->options)) {
     return;
   }
 
-  auto& segments = module->memory.segments;
+  auto& segments = module->dataSegments;
 
   // For each segment, a list of bulk memory instructions that refer to it
   ReferrersMap referrers;
@@ -141,7 +141,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 
   // The new, split memory segments
-  std::vector<Memory::Segment> packed;
+  std::vector<DataSegment> packed;
 
   Replacements replacements;
   Builder builder(*module);
@@ -174,6 +174,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
 }
 
 bool MemoryPacking::canOptimize(const Memory& memory,
+                                const DataSegment& dataSegments,
                                 const PassOptions& passOptions) {
   if (!memory.exists) {
     return false;
@@ -186,16 +187,14 @@ bool MemoryPacking::canOptimize(const Memory& memory,
     return false;
   }
 
-  auto& segments = memory.segments;
-
   // One segment is always ok to optimize, as it does not have the potential
   // problems handled below.
-  if (segments.size() <= 1) {
+  if (dataSegments.size() <= 1) {
     return true;
   }
   // Check if it is ok for us to optimize.
   Address maxAddress = 0;
-  for (auto& segment : segments) {
+  for (auto& segment : dataSegments) {
     if (!segment.isPassive) {
       auto* c = segment.offset->dynCast<Const>();
       // If an active segment has a non-constant offset, then what gets written
@@ -230,7 +229,7 @@ bool MemoryPacking::canOptimize(const Memory& memory,
   // earlier.
   // TODO: optimize in the trampling case
   DisjointSpans space;
-  for (auto& segment : segments) {
+  for (auto& segment : dataSegments) {
     if (!segment.isPassive) {
       auto* c = segment.offset->cast<Const>();
       Address start = c->value.getUnsigned();
@@ -245,7 +244,7 @@ bool MemoryPacking::canOptimize(const Memory& memory,
   return true;
 }
 
-bool MemoryPacking::canSplit(const Memory::Segment& segment,
+bool MemoryPacking::canSplit(const DataSegment& segment,
                              const Referrers& referrers) {
   // Don't mess with segments related to llvm coverage tools such as
   // __llvm_covfun. There segments are expected/parsed by external downstream
@@ -271,7 +270,7 @@ bool MemoryPacking::canSplit(const Memory::Segment& segment,
   return segment.offset->is<Const>();
 }
 
-void MemoryPacking::calculateRanges(const Memory::Segment& segment,
+void MemoryPacking::calculateRanges(const DataSegment& segment,
                                     const Referrers& referrers,
                                     std::vector<Range>& ranges) {
   auto& data = segment.data;
@@ -375,7 +374,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
 
     void visitMemoryInit(MemoryInit* curr) {
       Builder builder(*getModule());
-      Memory::Segment& segment = getModule()->memory.segments[curr->segment];
+      DataSegment& segment = getModule()->dataSegments[curr->segment];
       size_t maxRuntimeSize = segment.isPassive ? segment.data.size() : 0;
       bool mustNop = false;
       bool mustTrap = false;
@@ -420,7 +419,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
       }
     }
     void visitDataDrop(DataDrop* curr) {
-      if (!getModule()->memory.segments[curr->segment].isPassive) {
+      if (!getModule()->dataSegments[curr->segment].isPassive) {
         ExpressionManipulator::nop(curr);
       }
     }
@@ -467,9 +466,9 @@ void MemoryPacking::getSegmentReferrers(Module* module,
   }
 }
 
-void MemoryPacking::dropUnusedSegments(std::vector<Memory::Segment>& segments,
+void MemoryPacking::dropUnusedSegments(std::vector<DataSegment>& segments,
                                        ReferrersMap& referrers) {
-  std::vector<Memory::Segment> usedSegments;
+  std::vector<DataSegment> usedSegments;
   ReferrersMap usedReferrers;
   // Remove segments that are never used
   // TODO: remove unused portions of partially used segments as well
@@ -507,9 +506,9 @@ void MemoryPacking::dropUnusedSegments(std::vector<Memory::Segment>& segments,
 }
 
 void MemoryPacking::createSplitSegments(Builder& builder,
-                                        const Memory::Segment& segment,
+                                        const DataSegment& segment,
                                         std::vector<Range>& ranges,
-                                        std::vector<Memory::Segment>& packed,
+                                        std::vector<DataSegment>& packed,
                                         size_t segmentsRemaining) {
   size_t segmentCount = 0;
   for (size_t i = 0; i < ranges.size(); ++i) {

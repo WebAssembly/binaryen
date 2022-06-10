@@ -53,7 +53,6 @@ struct Metrics
     }
     ModuleUtils::iterDefinedGlobals(*module,
                                     [&](Global* curr) { walkGlobal(curr); });
-    walkMemory(&module->memory);
 
     // add imports / funcs / globals / exports / tables
     counts["[imports]"] = imports.getNumImports();
@@ -62,14 +61,18 @@ struct Metrics
     counts["[tags]"] = imports.getNumDefinedTags();
     counts["[exports]"] = module->exports.size();
     counts["[tables]"] = imports.getNumDefinedTables();
-    // add memory and table
-    if (module->memory.exists) {
-      Index size = 0;
-      ModuleUtils::iterDataSegments(*module, [&](DataSegment* segment) { size += segment->data.size(); });
-      counts["[memory-data]"] = size;
-    }
 
+    // add memory
+    walkMemory(&module->memory);
+    for (auto& segment : module->dataSegments) {
+      walkDataSegment(segment.get());
+    }
     Index size = 0;
+    ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) { size += segment->data.size(); });
+    counts["[memory-data]"] = size;
+
+    // add table
+    size = 0;
     ModuleUtils::iterActiveElementSegments(
       *module, [&](ElementSegment* segment) { size += segment->data.size(); });
     for (auto& table : module->tables) {

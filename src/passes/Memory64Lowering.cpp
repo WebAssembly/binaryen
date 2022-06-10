@@ -99,7 +99,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   void visitAtomicNotify(AtomicNotify* curr) { wrapAddress64(curr->ptr); }
 
   void visitMemory(Memory* memory) {
-    for (auto& segment : memory->segments) {
+    for (auto& segment : memory->dataSegments) {
       if (!segment.isPassive) {
         auto* c = segment.offset->cast<Const>();
         c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
