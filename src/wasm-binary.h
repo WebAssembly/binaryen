@@ -1146,6 +1146,114 @@ enum FeaturePrefix {
 // (local index in IR, tuple index) => binary local index
 using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
 
+// Type of value being written to the stream
+enum class ValueWritten {
+  // Webassembly header
+  Magic,
+  Version,
+  // Section header
+  SectionSize,
+  SectionStart,
+  // Function
+  FunctionIndex,
+  CountFunctionIndices,
+  NumFunctionParams,
+  CountDefinedFunctions,
+  // Function local
+  LocalIndex,
+  NumFunctionLocals,
+  FunctionLocalSize,
+  CountNumLocalsByType,
+  NumLocalsByType,
+  // Type
+  CountTypeGroups,
+  Type,
+  TypeIndex,
+  CountTypeNames,
+  NumTypes,
+  RTTDepth,
+  // Table
+  TableIndex,
+  CountTables,
+  CountDefinedTables,
+  // Element segment
+  ElementSegmentIndex,
+  CountElementSegments,
+  ElementSegmentFlags,
+  ElementSegmentType,
+  ElementSegmentSize,
+  // Memory
+  MemoryIndex,
+  CountMemories,
+  MemorySegmentIndex,
+  CountMemorySegments,
+  MemorySegmentFlags,
+  // Import
+  CountImports,
+  // Export
+  CountExports,
+  // Global
+  GlobalIndex,
+  CountGlobals,
+  // GC field
+  GCFieldIndex,
+  NumGCFields,
+  CountGCFieldTypes,
+  // External
+  ExternalKind,
+  // Tag
+  TagIndex,
+  CountDefinedTags,
+  // Attribute
+  Attribute,
+  Mutable,
+  // Heap type
+  HeapType,
+  IndexedHeapType,
+  // AST Node
+  ASTNode,
+  ASTNode32,
+  // Struct
+  StructFieldIndex,
+  NumStructFields,
+  // Array
+  ArraySize,
+  // User section
+  UserSectionData,
+  // Features
+  FeaturePrefix,
+  NumFeatures,
+  // Dynlink
+  DylinkSection,
+  NumNeededDynlibs,
+  // Literals
+  ConstS32,
+  ConstS64,
+  ConstF32,
+  ConstF64,
+  ConstV128,
+  // SIMD
+  SIMDIndex,
+  AtomicFenceOrder,
+  // Memory access
+  MemoryAccessAlignment,
+  MemoryAccessOffset,
+  // Break
+  BreakIndex,
+  // Switch
+  SwitchTargets,
+  // Select
+  NumSelectTypes,
+  // memory.size
+  MemorySizeFlags,
+  // memory.grow
+  MemoryGrowFlags,
+  // Scratch local
+  ScratchLocalIndex,
+  // Buffer
+  InlineBufferSize,
+};
+
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
@@ -1286,6 +1394,82 @@ public:
   void writeDebugLocationEnd(Expression* curr, Function* func);
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
+  template<ValueWritten VT, typename T = int> void writeValue(T value = 0) {
+    if constexpr (VT == ValueWritten::Magic) {
+      o << int32_t(BinaryConsts::Magic);
+      WASM_UNUSED(value);
+    } else if constexpr (VT == ValueWritten::Version) {
+      o << int32_t(BinaryConsts::Version);
+      WASM_UNUSED(value);
+    } else if constexpr (VT == ValueWritten::SectionSize) {
+      // Default U32LEB
+      o << int32_t(0);
+      o << int8_t(0);
+      WASM_UNUSED(value);
+    } else if constexpr (VT == ValueWritten::SectionStart) {
+      o << uint8_t(value);
+    } else if constexpr (VT == ValueWritten::Type) {
+      o << S32LEB(value);
+    } else if constexpr (VT == ValueWritten::MemoryIndex) {
+      o << int8_t(value);
+    } else if constexpr (VT == ValueWritten::ExternalKind) {
+      o << U32LEB(int32_t(value));
+    } else if constexpr (VT == ValueWritten::Attribute) {
+      o << uint8_t(value);
+    } else if constexpr (VT == ValueWritten::HeapType) {
+      // TODO: Actually s33
+      o << S64LEB(value);
+    } else if constexpr (VT == ValueWritten::ASTNode) {
+      o << int8_t(value);
+    } else if constexpr (VT == ValueWritten::UserSectionData) {
+      o << uint8_t(value);
+    } else if constexpr (VT == ValueWritten::FeaturePrefix) {
+      o << uint8_t(value);
+    } else if constexpr (VT == ValueWritten::DylinkSection) {
+      o << U32LEB(wasm->dylinkSection->memorySize);
+      o << U32LEB(wasm->dylinkSection->memoryAlignment);
+      o << U32LEB(wasm->dylinkSection->tableSize);
+      o << U32LEB(wasm->dylinkSection->tableAlignment);
+      WASM_UNUSED(value);
+    } else if constexpr (VT == ValueWritten::ConstS32) {
+      o << S32LEB(value);
+    } else if constexpr (VT == ValueWritten::ConstS64) {
+      o << S64LEB(value);
+    } else if constexpr (VT == ValueWritten::ConstF32) {
+      o << int32_t(value);
+    } else if constexpr (VT == ValueWritten::ConstF64) {
+      o << int64_t(value);
+    } else if constexpr (VT == ValueWritten::ConstV128) {
+      std::array<uint8_t, 16> v = value.getv128();
+      for (size_t i = 0; i < 16; ++i) {
+        o << uint8_t(v[i]);
+      }
+    } else if constexpr (VT == ValueWritten::SIMDIndex) {
+      o << uint8_t(value);
+    } else if constexpr (VT == ValueWritten::AtomicFenceOrder) {
+      o << int8_t(value);
+    } else if constexpr (VT == ValueWritten::MemoryAccessOffset) {
+      if (wasm->memory.is64()) {
+        o << U64LEB(value);
+      } else {
+        o << U32LEB(value);
+      }
+    } else {
+      o << U32LEB(value);
+    }
+  }
+  int32_t streamOffset() { return o.size(); }
+  void streamResize(int32_t size) { o.resize(size); }
+  size_t streamWrite(size_t loc, int32_t value) {
+    return o.writeAt(loc, U32LEB(value));
+  }
+  size_t streamAdjustSectionLEB(int32_t start);
+  void streamAdjustFunctionLEB(Function* func,
+                               size_t start,
+                               size_t size,
+                               size_t sizePos,
+                               size_t sourceMapSize);
+
   // helpers
   void writeInlineString(const char* name);
   void writeEscapedName(const char* name);
@@ -1314,7 +1498,7 @@ public:
 
   void writeField(const Field& field);
 
-private:
+protected:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
@@ -1410,6 +1594,61 @@ public:
   int32_t getS32LEB();
   int64_t getS64LEB();
   uint64_t getUPtrLEB();
+
+  template<ValueWritten VT, typename I = int> auto getValue(I inputValue = 0) {
+    WASM_UNUSED(inputValue);
+    if constexpr (VT == ValueWritten::Magic) {
+      verifyInt32(inputValue);
+    } else if constexpr (VT == ValueWritten::Version) {
+      verifyInt32(inputValue);
+    } else if constexpr (VT == ValueWritten::SectionStart) {
+      return getInt8();
+    } else if constexpr (VT == ValueWritten::Type) {
+      return getS32LEB();
+    } else if constexpr (VT == ValueWritten::MemoryIndex) {
+      return getInt8();
+    } else if constexpr (VT == ValueWritten::ExternalKind) {
+      return (ExternalKind)getU32LEB();
+    } else if constexpr (VT == ValueWritten::Attribute) {
+      return getInt8();
+    } else if constexpr (VT == ValueWritten::HeapType) {
+      // TODO: Actually s33
+      return getS64LEB();
+    } else if constexpr (VT == ValueWritten::ASTNode) {
+      return getInt8();
+    } else if constexpr (VT == ValueWritten::UserSectionData) {
+      return getInt8();
+    } else if constexpr (VT == ValueWritten::FeaturePrefix) {
+      return getInt8();
+    } else if constexpr (VT == ValueWritten::DylinkSection) {
+      wasm.dylinkSection->memorySize = getU32LEB();
+      wasm.dylinkSection->memoryAlignment = getU32LEB();
+      wasm.dylinkSection->tableSize = getU32LEB();
+      wasm.dylinkSection->tableAlignment = getU32LEB();
+    } else if constexpr (VT == ValueWritten::ConstS32) {
+      return Literal(getS32LEB());
+    } else if constexpr (VT == ValueWritten::ConstS64) {
+      return Literal(getS64LEB());
+    } else if constexpr (VT == ValueWritten::ConstF32) {
+      return getFloat32Literal();
+    } else if constexpr (VT == ValueWritten::ConstF64) {
+      return getFloat64Literal();
+    } else if constexpr (VT == ValueWritten::ConstV128) {
+      return getVec128Literal();
+    } else if constexpr (VT == ValueWritten::SIMDIndex) {
+      return getLaneIndex(inputValue);
+    } else if constexpr (VT == ValueWritten::AtomicFenceOrder) {
+      return getInt8();
+    } else if constexpr (VT == ValueWritten::MemoryAccessOffset) {
+      if (wasm.memory.is64()) {
+        return getU64LEB();
+      } else {
+        return (uint64_t)getU32LEB();
+      }
+    } else {
+      return getU32LEB();
+    }
+  }
 
   bool getBasicType(int32_t code, Type& out);
   bool getBasicHeapType(int64_t code, HeapType& out);

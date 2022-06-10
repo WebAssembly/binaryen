@@ -26,7 +26,8 @@ void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     parent.writeType(Type::none);
   } else if (type.isTuple()) {
-    o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
+    parent.writeValue<ValueWritten::Type>(
+      parent.getTypeIndex(Signature(Type::none, type)));
   } else {
     parent.writeType(type);
   }
@@ -34,7 +35,7 @@ void BinaryInstWriter::emitResultType(Type type) {
 
 void BinaryInstWriter::visitBlock(Block* curr) {
   breakStack.push_back(curr->name);
-  o << int8_t(BinaryConsts::Block);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Block);
   emitResultType(curr->type);
 }
 
@@ -43,7 +44,7 @@ void BinaryInstWriter::visitIf(If* curr) {
   // TODO: optimize this in Stack IR (if child is a block, we may break to this
   // instead)
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
-  o << int8_t(BinaryConsts::If);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::If);
   emitResultType(curr->type);
 }
 
@@ -51,64 +52,76 @@ void BinaryInstWriter::emitIfElse(If* curr) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, BinaryLocations::Else);
   }
-  o << int8_t(BinaryConsts::Else);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Else);
 }
 
 void BinaryInstWriter::visitLoop(Loop* curr) {
   breakStack.push_back(curr->name);
-  o << int8_t(BinaryConsts::Loop);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Loop);
   emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitBreak(Break* curr) {
-  o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-    << U32LEB(getBreakIndex(curr->name));
+  parent.writeValue<ValueWritten::ASTNode>(curr->condition ? BinaryConsts::BrIf
+                                                           : BinaryConsts::Br);
+  parent.writeValue<ValueWritten::BreakIndex>(getBreakIndex(curr->name));
 }
 
 void BinaryInstWriter::visitSwitch(Switch* curr) {
-  o << int8_t(BinaryConsts::BrTable) << U32LEB(curr->targets.size());
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::BrTable);
+  parent.writeValue<ValueWritten::SwitchTargets>(curr->targets.size());
   for (auto target : curr->targets) {
-    o << U32LEB(getBreakIndex(target));
+    parent.writeValue<ValueWritten::BreakIndex>(getBreakIndex(target));
   }
-  o << U32LEB(getBreakIndex(curr->default_));
+  parent.writeValue<ValueWritten::BreakIndex>(getBreakIndex(curr->default_));
 }
 
 void BinaryInstWriter::visitCall(Call* curr) {
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallFunction : BinaryConsts::CallFunction;
-  o << op << U32LEB(parent.getFunctionIndex(curr->target));
+  parent.writeValue<ValueWritten::ASTNode>(op);
+  parent.writeValue<ValueWritten::FunctionIndex>(
+    parent.getFunctionIndex(curr->target));
 }
 
 void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   Index tableIdx = parent.getTableIndex(curr->table);
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->heapType)) << U32LEB(tableIdx);
+  parent.writeValue<ValueWritten::ASTNode>(op);
+  parent.writeValue<ValueWritten::TypeIndex>(
+    parent.getTypeIndex(curr->heapType));
+  parent.writeValue<ValueWritten::TableIndex>(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
   size_t numValues = func->getLocalType(curr->index).size();
   for (Index i = 0; i < numValues; ++i) {
-    o << int8_t(BinaryConsts::LocalGet)
-      << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::LocalGet);
+    parent.writeValue<ValueWritten::LocalIndex>(
+      mappedLocals[std::make_pair(curr->index, i)]);
   }
 }
 
 void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
   size_t numValues = func->getLocalType(curr->index).size();
   for (Index i = numValues - 1; i >= 1; --i) {
-    o << int8_t(BinaryConsts::LocalSet)
-      << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::LocalSet);
+    parent.writeValue<ValueWritten::LocalIndex>(
+      mappedLocals[std::make_pair(curr->index, i)]);
   }
   if (!curr->isTee()) {
-    o << int8_t(BinaryConsts::LocalSet)
-      << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::LocalSet);
+    parent.writeValue<ValueWritten::LocalIndex>(
+      mappedLocals[std::make_pair(curr->index, 0)]);
   } else {
-    o << int8_t(BinaryConsts::LocalTee)
-      << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::LocalTee);
+    parent.writeValue<ValueWritten::LocalIndex>(
+      mappedLocals[std::make_pair(curr->index, 0)]);
     for (Index i = 1; i < numValues; ++i) {
-      o << int8_t(BinaryConsts::LocalGet)
-        << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::LocalGet);
+      parent.writeValue<ValueWritten::LocalIndex>(
+        mappedLocals[std::make_pair(curr->index, i)]);
     }
   }
 }
@@ -118,7 +131,8 @@ void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
   Index index = parent.getGlobalIndex(curr->name);
   size_t numValues = curr->type.size();
   for (Index i = 0; i < numValues; ++i) {
-    o << int8_t(BinaryConsts::GlobalGet) << U32LEB(index + i);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GlobalGet);
+    parent.writeValue<ValueWritten::GlobalIndex>(index + i);
   }
 }
 
@@ -127,7 +141,8 @@ void BinaryInstWriter::visitGlobalSet(GlobalSet* curr) {
   Index index = parent.getGlobalIndex(curr->name);
   size_t numValues = parent.getModule()->getGlobal(curr->name)->type.size();
   for (int i = numValues - 1; i >= 0; --i) {
-    o << int8_t(BinaryConsts::GlobalSet) << U32LEB(index + i);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GlobalSet);
+    parent.writeValue<ValueWritten::GlobalIndex>(index + i);
   }
 }
 
@@ -137,15 +152,17 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem8S
-                                      : BinaryConsts::I32LoadMem8U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              curr->signed_ ? BinaryConsts::I32LoadMem8S
+                            : BinaryConsts::I32LoadMem8U);
             break;
           case 2:
-            o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem16S
-                                      : BinaryConsts::I32LoadMem16U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              curr->signed_ ? BinaryConsts::I32LoadMem16S
+                            : BinaryConsts::I32LoadMem16U);
             break;
           case 4:
-            o << int8_t(BinaryConsts::I32LoadMem);
+            parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32LoadMem);
             break;
           default:
             abort();
@@ -155,19 +172,22 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case Type::i64: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem8S
-                                      : BinaryConsts::I64LoadMem8U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              curr->signed_ ? BinaryConsts::I64LoadMem8S
+                            : BinaryConsts::I64LoadMem8U);
             break;
           case 2:
-            o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem16S
-                                      : BinaryConsts::I64LoadMem16U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              curr->signed_ ? BinaryConsts::I64LoadMem16S
+                            : BinaryConsts::I64LoadMem16U);
             break;
           case 4:
-            o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem32S
-                                      : BinaryConsts::I64LoadMem32U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              curr->signed_ ? BinaryConsts::I64LoadMem32S
+                            : BinaryConsts::I64LoadMem32U);
             break;
           case 8:
-            o << int8_t(BinaryConsts::I64LoadMem);
+            parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64LoadMem);
             break;
           default:
             abort();
@@ -175,13 +195,14 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         break;
       }
       case Type::f32:
-        o << int8_t(BinaryConsts::F32LoadMem);
+        parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32LoadMem);
         break;
       case Type::f64:
-        o << int8_t(BinaryConsts::F64LoadMem);
+        parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64LoadMem);
         break;
       case Type::v128:
-        o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Load);
+        parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+        parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load);
         break;
       case Type::unreachable:
         // the pointer is unreachable, so we are never reached; just don't emit
@@ -196,18 +217,21 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
-    o << int8_t(BinaryConsts::AtomicPrefix);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicPrefix);
     switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(BinaryConsts::I32AtomicLoad8U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32AtomicLoad8U);
             break;
           case 2:
-            o << int8_t(BinaryConsts::I32AtomicLoad16U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32AtomicLoad16U);
             break;
           case 4:
-            o << int8_t(BinaryConsts::I32AtomicLoad);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32AtomicLoad);
             break;
           default:
             WASM_UNREACHABLE("invalid load size");
@@ -217,16 +241,20 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case Type::i64: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(BinaryConsts::I64AtomicLoad8U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicLoad8U);
             break;
           case 2:
-            o << int8_t(BinaryConsts::I64AtomicLoad16U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicLoad16U);
             break;
           case 4:
-            o << int8_t(BinaryConsts::I64AtomicLoad32U);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicLoad32U);
             break;
           case 8:
-            o << int8_t(BinaryConsts::I64AtomicLoad);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicLoad);
             break;
           default:
             WASM_UNREACHABLE("invalid load size");
@@ -248,13 +276,15 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(BinaryConsts::I32StoreMem8);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32StoreMem8);
             break;
           case 2:
-            o << int8_t(BinaryConsts::I32StoreMem16);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32StoreMem16);
             break;
           case 4:
-            o << int8_t(BinaryConsts::I32StoreMem);
+            parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32StoreMem);
             break;
           default:
             abort();
@@ -264,16 +294,19 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case Type::i64: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(BinaryConsts::I64StoreMem8);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64StoreMem8);
             break;
           case 2:
-            o << int8_t(BinaryConsts::I64StoreMem16);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64StoreMem16);
             break;
           case 4:
-            o << int8_t(BinaryConsts::I64StoreMem32);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64StoreMem32);
             break;
           case 8:
-            o << int8_t(BinaryConsts::I64StoreMem);
+            parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64StoreMem);
             break;
           default:
             abort();
@@ -281,14 +314,14 @@ void BinaryInstWriter::visitStore(Store* curr) {
         break;
       }
       case Type::f32:
-        o << int8_t(BinaryConsts::F32StoreMem);
+        parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32StoreMem);
         break;
       case Type::f64:
-        o << int8_t(BinaryConsts::F64StoreMem);
+        parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64StoreMem);
         break;
       case Type::v128:
-        o << int8_t(BinaryConsts::SIMDPrefix)
-          << U32LEB(BinaryConsts::V128Store);
+        parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+        parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Store);
         break;
       case Type::funcref:
       case Type::anyref:
@@ -300,18 +333,21 @@ void BinaryInstWriter::visitStore(Store* curr) {
         WASM_UNREACHABLE("unexpected type");
     }
   } else {
-    o << int8_t(BinaryConsts::AtomicPrefix);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicPrefix);
     switch (curr->valueType.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(BinaryConsts::I32AtomicStore8);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32AtomicStore8);
             break;
           case 2:
-            o << int8_t(BinaryConsts::I32AtomicStore16);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32AtomicStore16);
             break;
           case 4:
-            o << int8_t(BinaryConsts::I32AtomicStore);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I32AtomicStore);
             break;
           default:
             WASM_UNREACHABLE("invalid store size");
@@ -321,16 +357,20 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case Type::i64: {
         switch (curr->bytes) {
           case 1:
-            o << int8_t(BinaryConsts::I64AtomicStore8);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicStore8);
             break;
           case 2:
-            o << int8_t(BinaryConsts::I64AtomicStore16);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicStore16);
             break;
           case 4:
-            o << int8_t(BinaryConsts::I64AtomicStore32);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicStore32);
             break;
           case 8:
-            o << int8_t(BinaryConsts::I64AtomicStore);
+            parent.writeValue<ValueWritten::ASTNode>(
+              BinaryConsts::I64AtomicStore);
             break;
           default:
             WASM_UNREACHABLE("invalid store size");
@@ -345,7 +385,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
 }
 
 void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
-  o << int8_t(BinaryConsts::AtomicPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicPrefix);
 
 #define CASE_FOR_OP(Op)                                                        \
   case RMW##Op:                                                                \
@@ -353,13 +393,16 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
       case Type::i32:                                                          \
         switch (curr->bytes) {                                                 \
           case 1:                                                              \
-            o << int8_t(BinaryConsts::I32AtomicRMW##Op##8U);                   \
+            parent.writeValue<ValueWritten::ASTNode>(                          \
+              BinaryConsts::I32AtomicRMW##Op##8U);                             \
             break;                                                             \
           case 2:                                                              \
-            o << int8_t(BinaryConsts::I32AtomicRMW##Op##16U);                  \
+            parent.writeValue<ValueWritten::ASTNode>(                          \
+              BinaryConsts::I32AtomicRMW##Op##16U);                            \
             break;                                                             \
           case 4:                                                              \
-            o << int8_t(BinaryConsts::I32AtomicRMW##Op);                       \
+            parent.writeValue<ValueWritten::ASTNode>(                          \
+              BinaryConsts::I32AtomicRMW##Op);                                 \
             break;                                                             \
           default:                                                             \
             WASM_UNREACHABLE("invalid rmw size");                              \
@@ -368,16 +411,20 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
       case Type::i64:                                                          \
         switch (curr->bytes) {                                                 \
           case 1:                                                              \
-            o << int8_t(BinaryConsts::I64AtomicRMW##Op##8U);                   \
+            parent.writeValue<ValueWritten::ASTNode>(                          \
+              BinaryConsts::I64AtomicRMW##Op##8U);                             \
             break;                                                             \
           case 2:                                                              \
-            o << int8_t(BinaryConsts::I64AtomicRMW##Op##16U);                  \
+            parent.writeValue<ValueWritten::ASTNode>(                          \
+              BinaryConsts::I64AtomicRMW##Op##16U);                            \
             break;                                                             \
           case 4:                                                              \
-            o << int8_t(BinaryConsts::I64AtomicRMW##Op##32U);                  \
+            parent.writeValue<ValueWritten::ASTNode>(                          \
+              BinaryConsts::I64AtomicRMW##Op##32U);                            \
             break;                                                             \
           case 8:                                                              \
-            o << int8_t(BinaryConsts::I64AtomicRMW##Op);                       \
+            parent.writeValue<ValueWritten::ASTNode>(                          \
+              BinaryConsts::I64AtomicRMW##Op);                                 \
             break;                                                             \
           default:                                                             \
             WASM_UNREACHABLE("invalid rmw size");                              \
@@ -404,18 +451,21 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
 }
 
 void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-  o << int8_t(BinaryConsts::AtomicPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicPrefix);
   switch (curr->type.getBasic()) {
     case Type::i32:
       switch (curr->bytes) {
         case 1:
-          o << int8_t(BinaryConsts::I32AtomicCmpxchg8U);
+          parent.writeValue<ValueWritten::ASTNode>(
+            BinaryConsts::I32AtomicCmpxchg8U);
           break;
         case 2:
-          o << int8_t(BinaryConsts::I32AtomicCmpxchg16U);
+          parent.writeValue<ValueWritten::ASTNode>(
+            BinaryConsts::I32AtomicCmpxchg16U);
           break;
         case 4:
-          o << int8_t(BinaryConsts::I32AtomicCmpxchg);
+          parent.writeValue<ValueWritten::ASTNode>(
+            BinaryConsts::I32AtomicCmpxchg);
           break;
         default:
           WASM_UNREACHABLE("invalid size");
@@ -424,16 +474,20 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     case Type::i64:
       switch (curr->bytes) {
         case 1:
-          o << int8_t(BinaryConsts::I64AtomicCmpxchg8U);
+          parent.writeValue<ValueWritten::ASTNode>(
+            BinaryConsts::I64AtomicCmpxchg8U);
           break;
         case 2:
-          o << int8_t(BinaryConsts::I64AtomicCmpxchg16U);
+          parent.writeValue<ValueWritten::ASTNode>(
+            BinaryConsts::I64AtomicCmpxchg16U);
           break;
         case 4:
-          o << int8_t(BinaryConsts::I64AtomicCmpxchg32U);
+          parent.writeValue<ValueWritten::ASTNode>(
+            BinaryConsts::I64AtomicCmpxchg32U);
           break;
         case 8:
-          o << int8_t(BinaryConsts::I64AtomicCmpxchg);
+          parent.writeValue<ValueWritten::ASTNode>(
+            BinaryConsts::I64AtomicCmpxchg);
           break;
         default:
           WASM_UNREACHABLE("invalid size");
@@ -446,15 +500,15 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 }
 
 void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
-  o << int8_t(BinaryConsts::AtomicPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicPrefix);
   switch (curr->expectedType.getBasic()) {
     case Type::i32: {
-      o << int8_t(BinaryConsts::I32AtomicWait);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32AtomicWait);
       emitMemoryAccess(4, 4, curr->offset);
       break;
     }
     case Type::i64: {
-      o << int8_t(BinaryConsts::I64AtomicWait);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64AtomicWait);
       emitMemoryAccess(8, 8, curr->offset);
       break;
     }
@@ -464,198 +518,217 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
 }
 
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
-  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicNotify);
   emitMemoryAccess(4, 4, curr->offset);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
-  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicFence)
-    << int8_t(curr->order);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::AtomicFence);
+  parent.writeValue<ValueWritten::AtomicFenceOrder>(curr->order);
 }
 
 void BinaryInstWriter::visitSIMDExtract(SIMDExtract* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case ExtractLaneSVecI8x16:
-      o << U32LEB(BinaryConsts::I8x16ExtractLaneS);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I8x16ExtractLaneS);
       break;
     case ExtractLaneUVecI8x16:
-      o << U32LEB(BinaryConsts::I8x16ExtractLaneU);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I8x16ExtractLaneU);
       break;
     case ExtractLaneSVecI16x8:
-      o << U32LEB(BinaryConsts::I16x8ExtractLaneS);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtractLaneS);
       break;
     case ExtractLaneUVecI16x8:
-      o << U32LEB(BinaryConsts::I16x8ExtractLaneU);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtractLaneU);
       break;
     case ExtractLaneVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4ExtractLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtractLane);
       break;
     case ExtractLaneVecI64x2:
-      o << U32LEB(BinaryConsts::I64x2ExtractLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtractLane);
       break;
     case ExtractLaneVecF32x4:
-      o << U32LEB(BinaryConsts::F32x4ExtractLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F32x4ExtractLane);
       break;
     case ExtractLaneVecF64x2:
-      o << U32LEB(BinaryConsts::F64x2ExtractLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F64x2ExtractLane);
       break;
   }
-  o << uint8_t(curr->index);
+  parent.writeValue<ValueWritten::SIMDIndex>(curr->index);
 }
 
 void BinaryInstWriter::visitSIMDReplace(SIMDReplace* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case ReplaceLaneVecI8x16:
-      o << U32LEB(BinaryConsts::I8x16ReplaceLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I8x16ReplaceLane);
       break;
     case ReplaceLaneVecI16x8:
-      o << U32LEB(BinaryConsts::I16x8ReplaceLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ReplaceLane);
       break;
     case ReplaceLaneVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4ReplaceLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ReplaceLane);
       break;
     case ReplaceLaneVecI64x2:
-      o << U32LEB(BinaryConsts::I64x2ReplaceLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ReplaceLane);
       break;
     case ReplaceLaneVecF32x4:
-      o << U32LEB(BinaryConsts::F32x4ReplaceLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F32x4ReplaceLane);
       break;
     case ReplaceLaneVecF64x2:
-      o << U32LEB(BinaryConsts::F64x2ReplaceLane);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F64x2ReplaceLane);
       break;
   }
   assert(curr->index < 16);
-  o << uint8_t(curr->index);
+  parent.writeValue<ValueWritten::SIMDIndex>(curr->index);
 }
 
 void BinaryInstWriter::visitSIMDShuffle(SIMDShuffle* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Shuffle);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Shuffle);
   for (uint8_t m : curr->mask) {
-    o << m;
+    parent.writeValue<ValueWritten::SIMDIndex>(m);
   }
 }
 
 void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case Bitselect:
-      o << U32LEB(BinaryConsts::V128Bitselect);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Bitselect);
       break;
     case LaneselectI8x16:
-      o << U32LEB(BinaryConsts::I8x16Laneselect);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Laneselect);
       break;
     case LaneselectI16x8:
-      o << U32LEB(BinaryConsts::I16x8Laneselect);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Laneselect);
       break;
     case LaneselectI32x4:
-      o << U32LEB(BinaryConsts::I32x4Laneselect);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Laneselect);
       break;
     case LaneselectI64x2:
-      o << U32LEB(BinaryConsts::I64x2Laneselect);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Laneselect);
       break;
     case RelaxedFmaVecF32x4:
-      o << U32LEB(BinaryConsts::F32x4RelaxedFma);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4RelaxedFma);
       break;
     case RelaxedFmsVecF32x4:
-      o << U32LEB(BinaryConsts::F32x4RelaxedFms);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4RelaxedFms);
       break;
     case RelaxedFmaVecF64x2:
-      o << U32LEB(BinaryConsts::F64x2RelaxedFma);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2RelaxedFma);
       break;
     case RelaxedFmsVecF64x2:
-      o << U32LEB(BinaryConsts::F64x2RelaxedFms);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2RelaxedFms);
       break;
     case DotI8x16I7x16AddSToVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4DotI8x16I7x16AddS);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4DotI8x16I7x16AddS);
       break;
     case DotI8x16I7x16AddUToVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4DotI8x16I7x16AddU);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4DotI8x16I7x16AddU);
       break;
   }
 }
 
 void BinaryInstWriter::visitSIMDShift(SIMDShift* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case ShlVecI8x16:
-      o << U32LEB(BinaryConsts::I8x16Shl);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Shl);
       break;
     case ShrSVecI8x16:
-      o << U32LEB(BinaryConsts::I8x16ShrS);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16ShrS);
       break;
     case ShrUVecI8x16:
-      o << U32LEB(BinaryConsts::I8x16ShrU);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16ShrU);
       break;
     case ShlVecI16x8:
-      o << U32LEB(BinaryConsts::I16x8Shl);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Shl);
       break;
     case ShrSVecI16x8:
-      o << U32LEB(BinaryConsts::I16x8ShrS);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8ShrS);
       break;
     case ShrUVecI16x8:
-      o << U32LEB(BinaryConsts::I16x8ShrU);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8ShrU);
       break;
     case ShlVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4Shl);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Shl);
       break;
     case ShrSVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4ShrS);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4ShrS);
       break;
     case ShrUVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4ShrU);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4ShrU);
       break;
     case ShlVecI64x2:
-      o << U32LEB(BinaryConsts::I64x2Shl);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Shl);
       break;
     case ShrSVecI64x2:
-      o << U32LEB(BinaryConsts::I64x2ShrS);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2ShrS);
       break;
     case ShrUVecI64x2:
-      o << U32LEB(BinaryConsts::I64x2ShrU);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2ShrU);
       break;
   }
 }
 
 void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case Load8SplatVec128:
-      o << U32LEB(BinaryConsts::V128Load8Splat);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load8Splat);
       break;
     case Load16SplatVec128:
-      o << U32LEB(BinaryConsts::V128Load16Splat);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load16Splat);
       break;
     case Load32SplatVec128:
-      o << U32LEB(BinaryConsts::V128Load32Splat);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load32Splat);
       break;
     case Load64SplatVec128:
-      o << U32LEB(BinaryConsts::V128Load64Splat);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load64Splat);
       break;
     case Load8x8SVec128:
-      o << U32LEB(BinaryConsts::V128Load8x8S);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load8x8S);
       break;
     case Load8x8UVec128:
-      o << U32LEB(BinaryConsts::V128Load8x8U);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load8x8U);
       break;
     case Load16x4SVec128:
-      o << U32LEB(BinaryConsts::V128Load16x4S);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load16x4S);
       break;
     case Load16x4UVec128:
-      o << U32LEB(BinaryConsts::V128Load16x4U);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load16x4U);
       break;
     case Load32x2SVec128:
-      o << U32LEB(BinaryConsts::V128Load32x2S);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load32x2S);
       break;
     case Load32x2UVec128:
-      o << U32LEB(BinaryConsts::V128Load32x2U);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load32x2U);
       break;
     case Load32ZeroVec128:
-      o << U32LEB(BinaryConsts::V128Load32Zero);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load32Zero);
       break;
     case Load64ZeroVec128:
-      o << U32LEB(BinaryConsts::V128Load64Zero);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load64Zero);
       break;
   }
   assert(curr->align);
@@ -663,86 +736,90 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
 }
 
 void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
     case Load8LaneVec128:
-      o << U32LEB(BinaryConsts::V128Load8Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load8Lane);
       break;
     case Load16LaneVec128:
-      o << U32LEB(BinaryConsts::V128Load16Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load16Lane);
       break;
     case Load32LaneVec128:
-      o << U32LEB(BinaryConsts::V128Load32Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load32Lane);
       break;
     case Load64LaneVec128:
-      o << U32LEB(BinaryConsts::V128Load64Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Load64Lane);
       break;
     case Store8LaneVec128:
-      o << U32LEB(BinaryConsts::V128Store8Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Store8Lane);
       break;
     case Store16LaneVec128:
-      o << U32LEB(BinaryConsts::V128Store16Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Store16Lane);
       break;
     case Store32LaneVec128:
-      o << U32LEB(BinaryConsts::V128Store32Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Store32Lane);
       break;
     case Store64LaneVec128:
-      o << U32LEB(BinaryConsts::V128Store64Lane);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Store64Lane);
       break;
   }
   assert(curr->align);
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
-  o << curr->index;
+  parent.writeValue<ValueWritten::SIMDIndex>(curr->index);
 }
 
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
-  o << int8_t(BinaryConsts::MiscPrefix);
-  o << U32LEB(BinaryConsts::MemoryInit);
-  o << U32LEB(curr->segment) << int8_t(0);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::MemoryInit);
+  parent.writeValue<ValueWritten::MemorySegmentIndex>(curr->segment);
+  parent.writeValue<ValueWritten::MemoryIndex>(0);
 }
 
 void BinaryInstWriter::visitDataDrop(DataDrop* curr) {
-  o << int8_t(BinaryConsts::MiscPrefix);
-  o << U32LEB(BinaryConsts::DataDrop);
-  o << U32LEB(curr->segment);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::DataDrop);
+  parent.writeValue<ValueWritten::MemorySegmentIndex>(curr->segment);
 }
 
 void BinaryInstWriter::visitMemoryCopy(MemoryCopy* curr) {
-  o << int8_t(BinaryConsts::MiscPrefix);
-  o << U32LEB(BinaryConsts::MemoryCopy);
-  o << int8_t(0) << int8_t(0);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::MemoryCopy);
+  parent.writeValue<ValueWritten::MemoryIndex>(0);
+  parent.writeValue<ValueWritten::MemoryIndex>(0);
 }
 
 void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
-  o << int8_t(BinaryConsts::MiscPrefix);
-  o << U32LEB(BinaryConsts::MemoryFill);
-  o << int8_t(0);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::MemoryFill);
+  parent.writeValue<ValueWritten::MemoryIndex>(0);
 }
 
 void BinaryInstWriter::visitConst(Const* curr) {
   switch (curr->type.getBasic()) {
     case Type::i32: {
-      o << int8_t(BinaryConsts::I32Const) << S32LEB(curr->value.geti32());
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Const);
+      parent.writeValue<ValueWritten::ConstS32>(curr->value.geti32());
       break;
     }
     case Type::i64: {
-      o << int8_t(BinaryConsts::I64Const) << S64LEB(curr->value.geti64());
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Const);
+      parent.writeValue<ValueWritten::ConstS64>(curr->value.geti64());
       break;
     }
     case Type::f32: {
-      o << int8_t(BinaryConsts::F32Const) << curr->value.reinterpreti32();
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Const);
+      parent.writeValue<ValueWritten::ConstF32>(curr->value.reinterpreti32());
       break;
     }
     case Type::f64: {
-      o << int8_t(BinaryConsts::F64Const) << curr->value.reinterpreti64();
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Const);
+      parent.writeValue<ValueWritten::ConstF64>(curr->value.reinterpreti64());
       break;
     }
     case Type::v128: {
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Const);
-      std::array<uint8_t, 16> v = curr->value.getv128();
-      for (size_t i = 0; i < 16; ++i) {
-        o << uint8_t(v[i]);
-      }
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Const);
+      parent.writeValue<ValueWritten::ConstV128>(curr->value);
       break;
     }
     case Type::funcref:
@@ -759,441 +836,498 @@ void BinaryInstWriter::visitConst(Const* curr) {
 void BinaryInstWriter::visitUnary(Unary* curr) {
   switch (curr->op) {
     case ClzInt32:
-      o << int8_t(BinaryConsts::I32Clz);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Clz);
       break;
     case CtzInt32:
-      o << int8_t(BinaryConsts::I32Ctz);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Ctz);
       break;
     case PopcntInt32:
-      o << int8_t(BinaryConsts::I32Popcnt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Popcnt);
       break;
     case EqZInt32:
-      o << int8_t(BinaryConsts::I32EqZ);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32EqZ);
       break;
     case ClzInt64:
-      o << int8_t(BinaryConsts::I64Clz);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Clz);
       break;
     case CtzInt64:
-      o << int8_t(BinaryConsts::I64Ctz);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Ctz);
       break;
     case PopcntInt64:
-      o << int8_t(BinaryConsts::I64Popcnt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Popcnt);
       break;
     case EqZInt64:
-      o << int8_t(BinaryConsts::I64EqZ);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64EqZ);
       break;
     case NegFloat32:
-      o << int8_t(BinaryConsts::F32Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Neg);
       break;
     case AbsFloat32:
-      o << int8_t(BinaryConsts::F32Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Abs);
       break;
     case CeilFloat32:
-      o << int8_t(BinaryConsts::F32Ceil);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Ceil);
       break;
     case FloorFloat32:
-      o << int8_t(BinaryConsts::F32Floor);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Floor);
       break;
     case TruncFloat32:
-      o << int8_t(BinaryConsts::F32Trunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Trunc);
       break;
     case NearestFloat32:
-      o << int8_t(BinaryConsts::F32NearestInt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32NearestInt);
       break;
     case SqrtFloat32:
-      o << int8_t(BinaryConsts::F32Sqrt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Sqrt);
       break;
     case NegFloat64:
-      o << int8_t(BinaryConsts::F64Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Neg);
       break;
     case AbsFloat64:
-      o << int8_t(BinaryConsts::F64Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Abs);
       break;
     case CeilFloat64:
-      o << int8_t(BinaryConsts::F64Ceil);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Ceil);
       break;
     case FloorFloat64:
-      o << int8_t(BinaryConsts::F64Floor);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Floor);
       break;
     case TruncFloat64:
-      o << int8_t(BinaryConsts::F64Trunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Trunc);
       break;
     case NearestFloat64:
-      o << int8_t(BinaryConsts::F64NearestInt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64NearestInt);
       break;
     case SqrtFloat64:
-      o << int8_t(BinaryConsts::F64Sqrt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Sqrt);
       break;
     case ExtendSInt32:
-      o << int8_t(BinaryConsts::I64SExtendI32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64SExtendI32);
       break;
     case ExtendUInt32:
-      o << int8_t(BinaryConsts::I64UExtendI32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64UExtendI32);
       break;
     case WrapInt64:
-      o << int8_t(BinaryConsts::I32WrapI64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32WrapI64);
       break;
     case TruncUFloat32ToInt32:
-      o << int8_t(BinaryConsts::I32UTruncF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32UTruncF32);
       break;
     case TruncUFloat32ToInt64:
-      o << int8_t(BinaryConsts::I64UTruncF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64UTruncF32);
       break;
     case TruncSFloat32ToInt32:
-      o << int8_t(BinaryConsts::I32STruncF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32STruncF32);
       break;
     case TruncSFloat32ToInt64:
-      o << int8_t(BinaryConsts::I64STruncF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64STruncF32);
       break;
     case TruncUFloat64ToInt32:
-      o << int8_t(BinaryConsts::I32UTruncF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32UTruncF64);
       break;
     case TruncUFloat64ToInt64:
-      o << int8_t(BinaryConsts::I64UTruncF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64UTruncF64);
       break;
     case TruncSFloat64ToInt32:
-      o << int8_t(BinaryConsts::I32STruncF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32STruncF64);
       break;
     case TruncSFloat64ToInt64:
-      o << int8_t(BinaryConsts::I64STruncF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64STruncF64);
       break;
     case ConvertUInt32ToFloat32:
-      o << int8_t(BinaryConsts::F32UConvertI32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32UConvertI32);
       break;
     case ConvertUInt32ToFloat64:
-      o << int8_t(BinaryConsts::F64UConvertI32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64UConvertI32);
       break;
     case ConvertSInt32ToFloat32:
-      o << int8_t(BinaryConsts::F32SConvertI32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32SConvertI32);
       break;
     case ConvertSInt32ToFloat64:
-      o << int8_t(BinaryConsts::F64SConvertI32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64SConvertI32);
       break;
     case ConvertUInt64ToFloat32:
-      o << int8_t(BinaryConsts::F32UConvertI64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32UConvertI64);
       break;
     case ConvertUInt64ToFloat64:
-      o << int8_t(BinaryConsts::F64UConvertI64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64UConvertI64);
       break;
     case ConvertSInt64ToFloat32:
-      o << int8_t(BinaryConsts::F32SConvertI64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32SConvertI64);
       break;
     case ConvertSInt64ToFloat64:
-      o << int8_t(BinaryConsts::F64SConvertI64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64SConvertI64);
       break;
     case DemoteFloat64:
-      o << int8_t(BinaryConsts::F32DemoteI64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32DemoteI64);
       break;
     case PromoteFloat32:
-      o << int8_t(BinaryConsts::F64PromoteF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64PromoteF32);
       break;
     case ReinterpretFloat32:
-      o << int8_t(BinaryConsts::I32ReinterpretF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32ReinterpretF32);
       break;
     case ReinterpretFloat64:
-      o << int8_t(BinaryConsts::I64ReinterpretF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64ReinterpretF64);
       break;
     case ReinterpretInt32:
-      o << int8_t(BinaryConsts::F32ReinterpretI32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32ReinterpretI32);
       break;
     case ReinterpretInt64:
-      o << int8_t(BinaryConsts::F64ReinterpretI64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64ReinterpretI64);
       break;
     case ExtendS8Int32:
-      o << int8_t(BinaryConsts::I32ExtendS8);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32ExtendS8);
       break;
     case ExtendS16Int32:
-      o << int8_t(BinaryConsts::I32ExtendS16);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32ExtendS16);
       break;
     case ExtendS8Int64:
-      o << int8_t(BinaryConsts::I64ExtendS8);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64ExtendS8);
       break;
     case ExtendS16Int64:
-      o << int8_t(BinaryConsts::I64ExtendS16);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64ExtendS16);
       break;
     case ExtendS32Int64:
-      o << int8_t(BinaryConsts::I64ExtendS32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64ExtendS32);
       break;
     case TruncSatSFloat32ToInt32:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I32STruncSatF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32STruncSatF32);
       break;
     case TruncSatUFloat32ToInt32:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I32UTruncSatF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32UTruncSatF32);
       break;
     case TruncSatSFloat64ToInt32:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I32STruncSatF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32STruncSatF64);
       break;
     case TruncSatUFloat64ToInt32:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I32UTruncSatF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32UTruncSatF64);
       break;
     case TruncSatSFloat32ToInt64:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I64STruncSatF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64STruncSatF32);
       break;
     case TruncSatUFloat32ToInt64:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I64UTruncSatF32);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64UTruncSatF32);
       break;
     case TruncSatSFloat64ToInt64:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I64STruncSatF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64STruncSatF64);
       break;
     case TruncSatUFloat64ToInt64:
-      o << int8_t(BinaryConsts::MiscPrefix)
-        << U32LEB(BinaryConsts::I64UTruncSatF64);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64UTruncSatF64);
       break;
     case SplatVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Splat);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Splat);
       break;
     case SplatVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Splat);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Splat);
       break;
     case SplatVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Splat);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Splat);
       break;
     case SplatVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Splat);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Splat);
       break;
     case SplatVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Splat);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Splat);
       break;
     case SplatVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Splat);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Splat);
       break;
     case NotVec128:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Not);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Not);
       break;
     case AnyTrueVec128:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::V128AnyTrue);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128AnyTrue);
       break;
     case AbsVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Abs);
       break;
     case NegVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Neg);
       break;
     case AllTrueVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16AllTrue);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16AllTrue);
       break;
     case BitmaskVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16Bitmask);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Bitmask);
       break;
     case PopcntVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16Popcnt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Popcnt);
       break;
     case AbsVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Abs);
       break;
     case NegVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Neg);
       break;
     case AllTrueVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8AllTrue);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8AllTrue);
       break;
     case BitmaskVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8Bitmask);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Bitmask);
       break;
     case AbsVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Abs);
       break;
     case NegVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Neg);
       break;
     case AllTrueVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4AllTrue);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4AllTrue);
       break;
     case BitmaskVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4Bitmask);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Bitmask);
       break;
     case AbsVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Abs);
       break;
     case NegVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Neg);
       break;
     case AllTrueVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2AllTrue);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2AllTrue);
       break;
     case BitmaskVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2Bitmask);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Bitmask);
       break;
     case AbsVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Abs);
       break;
     case NegVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Neg);
       break;
     case SqrtVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sqrt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Sqrt);
       break;
     case CeilVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ceil);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Ceil);
       break;
     case FloorVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Floor);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Floor);
       break;
     case TruncVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Trunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Trunc);
       break;
     case NearestVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F32x4Nearest);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Nearest);
       break;
     case AbsVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Abs);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Abs);
       break;
     case NegVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Neg);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Neg);
       break;
     case SqrtVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sqrt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Sqrt);
       break;
     case CeilVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ceil);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Ceil);
       break;
     case FloorVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Floor);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Floor);
       break;
     case TruncVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Trunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Trunc);
       break;
     case NearestVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2Nearest);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Nearest);
       break;
     case ExtAddPairwiseSVecI8x16ToI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtaddPairwiseI8x16S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtaddPairwiseI8x16S);
       break;
     case ExtAddPairwiseUVecI8x16ToI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtaddPairwiseI8x16U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtaddPairwiseI8x16U);
       break;
     case ExtAddPairwiseSVecI16x8ToI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtaddPairwiseI16x8S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtaddPairwiseI16x8S);
       break;
     case ExtAddPairwiseUVecI16x8ToI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtaddPairwiseI16x8U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtaddPairwiseI16x8U);
       break;
     case TruncSatSVecF32x4ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4TruncSatF32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4TruncSatF32x4S);
       break;
     case TruncSatUVecF32x4ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4TruncSatF32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4TruncSatF32x4U);
       break;
     case ConvertSVecI32x4ToVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F32x4ConvertI32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F32x4ConvertI32x4S);
       break;
     case ConvertUVecI32x4ToVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F32x4ConvertI32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F32x4ConvertI32x4U);
       break;
     case ExtendLowSVecI8x16ToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtendLowI8x16S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtendLowI8x16S);
       break;
     case ExtendHighSVecI8x16ToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtendHighI8x16S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtendHighI8x16S);
       break;
     case ExtendLowUVecI8x16ToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtendLowI8x16U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtendLowI8x16U);
       break;
     case ExtendHighUVecI8x16ToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtendHighI8x16U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtendHighI8x16U);
       break;
     case ExtendLowSVecI16x8ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtendLowI16x8S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtendLowI16x8S);
       break;
     case ExtendHighSVecI16x8ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtendHighI16x8S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtendHighI16x8S);
       break;
     case ExtendLowUVecI16x8ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtendLowI16x8U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtendLowI16x8U);
       break;
     case ExtendHighUVecI16x8ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtendHighI16x8U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtendHighI16x8U);
       break;
     case ExtendLowSVecI32x4ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtendLowI32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtendLowI32x4S);
       break;
     case ExtendHighSVecI32x4ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtendHighI32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtendHighI32x4S);
       break;
     case ExtendLowUVecI32x4ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtendLowI32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtendLowI32x4U);
       break;
     case ExtendHighUVecI32x4ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtendHighI32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtendHighI32x4U);
       break;
     case ConvertLowSVecI32x4ToVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2ConvertLowI32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F64x2ConvertLowI32x4S);
       break;
     case ConvertLowUVecI32x4ToVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2ConvertLowI32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F64x2ConvertLowI32x4U);
       break;
     case TruncSatZeroSVecF64x2ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4TruncSatF64x2SZero);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4TruncSatF64x2SZero);
       break;
     case TruncSatZeroUVecF64x2ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4TruncSatF64x2UZero);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4TruncSatF64x2UZero);
       break;
     case DemoteZeroVecF64x2ToVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F32x4DemoteF64x2Zero);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F32x4DemoteF64x2Zero);
       break;
     case PromoteLowVecF32x4ToVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2PromoteLowF32x4);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::F64x2PromoteLowF32x4);
       break;
     case RelaxedTruncSVecF32x4ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4RelaxedTruncF32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4RelaxedTruncF32x4S);
       break;
     case RelaxedTruncUVecF32x4ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4RelaxedTruncF32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4RelaxedTruncF32x4U);
       break;
     case RelaxedTruncZeroSVecF64x2ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4RelaxedTruncF64x2SZero);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4RelaxedTruncF64x2SZero);
       break;
     case RelaxedTruncZeroUVecF64x2ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4RelaxedTruncF64x2UZero);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4RelaxedTruncF64x2UZero);
       break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
@@ -1203,659 +1337,773 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
 void BinaryInstWriter::visitBinary(Binary* curr) {
   switch (curr->op) {
     case AddInt32:
-      o << int8_t(BinaryConsts::I32Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Add);
       break;
     case SubInt32:
-      o << int8_t(BinaryConsts::I32Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Sub);
       break;
     case MulInt32:
-      o << int8_t(BinaryConsts::I32Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Mul);
       break;
     case DivSInt32:
-      o << int8_t(BinaryConsts::I32DivS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32DivS);
       break;
     case DivUInt32:
-      o << int8_t(BinaryConsts::I32DivU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32DivU);
       break;
     case RemSInt32:
-      o << int8_t(BinaryConsts::I32RemS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32RemS);
       break;
     case RemUInt32:
-      o << int8_t(BinaryConsts::I32RemU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32RemU);
       break;
     case AndInt32:
-      o << int8_t(BinaryConsts::I32And);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32And);
       break;
     case OrInt32:
-      o << int8_t(BinaryConsts::I32Or);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Or);
       break;
     case XorInt32:
-      o << int8_t(BinaryConsts::I32Xor);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Xor);
       break;
     case ShlInt32:
-      o << int8_t(BinaryConsts::I32Shl);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Shl);
       break;
     case ShrUInt32:
-      o << int8_t(BinaryConsts::I32ShrU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32ShrU);
       break;
     case ShrSInt32:
-      o << int8_t(BinaryConsts::I32ShrS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32ShrS);
       break;
     case RotLInt32:
-      o << int8_t(BinaryConsts::I32RotL);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32RotL);
       break;
     case RotRInt32:
-      o << int8_t(BinaryConsts::I32RotR);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32RotR);
       break;
     case EqInt32:
-      o << int8_t(BinaryConsts::I32Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Eq);
       break;
     case NeInt32:
-      o << int8_t(BinaryConsts::I32Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32Ne);
       break;
     case LtSInt32:
-      o << int8_t(BinaryConsts::I32LtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32LtS);
       break;
     case LtUInt32:
-      o << int8_t(BinaryConsts::I32LtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32LtU);
       break;
     case LeSInt32:
-      o << int8_t(BinaryConsts::I32LeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32LeS);
       break;
     case LeUInt32:
-      o << int8_t(BinaryConsts::I32LeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32LeU);
       break;
     case GtSInt32:
-      o << int8_t(BinaryConsts::I32GtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32GtS);
       break;
     case GtUInt32:
-      o << int8_t(BinaryConsts::I32GtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32GtU);
       break;
     case GeSInt32:
-      o << int8_t(BinaryConsts::I32GeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32GeS);
       break;
     case GeUInt32:
-      o << int8_t(BinaryConsts::I32GeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I32GeU);
       break;
 
     case AddInt64:
-      o << int8_t(BinaryConsts::I64Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Add);
       break;
     case SubInt64:
-      o << int8_t(BinaryConsts::I64Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Sub);
       break;
     case MulInt64:
-      o << int8_t(BinaryConsts::I64Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Mul);
       break;
     case DivSInt64:
-      o << int8_t(BinaryConsts::I64DivS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64DivS);
       break;
     case DivUInt64:
-      o << int8_t(BinaryConsts::I64DivU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64DivU);
       break;
     case RemSInt64:
-      o << int8_t(BinaryConsts::I64RemS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64RemS);
       break;
     case RemUInt64:
-      o << int8_t(BinaryConsts::I64RemU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64RemU);
       break;
     case AndInt64:
-      o << int8_t(BinaryConsts::I64And);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64And);
       break;
     case OrInt64:
-      o << int8_t(BinaryConsts::I64Or);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Or);
       break;
     case XorInt64:
-      o << int8_t(BinaryConsts::I64Xor);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Xor);
       break;
     case ShlInt64:
-      o << int8_t(BinaryConsts::I64Shl);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Shl);
       break;
     case ShrUInt64:
-      o << int8_t(BinaryConsts::I64ShrU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64ShrU);
       break;
     case ShrSInt64:
-      o << int8_t(BinaryConsts::I64ShrS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64ShrS);
       break;
     case RotLInt64:
-      o << int8_t(BinaryConsts::I64RotL);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64RotL);
       break;
     case RotRInt64:
-      o << int8_t(BinaryConsts::I64RotR);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64RotR);
       break;
     case EqInt64:
-      o << int8_t(BinaryConsts::I64Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Eq);
       break;
     case NeInt64:
-      o << int8_t(BinaryConsts::I64Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64Ne);
       break;
     case LtSInt64:
-      o << int8_t(BinaryConsts::I64LtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64LtS);
       break;
     case LtUInt64:
-      o << int8_t(BinaryConsts::I64LtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64LtU);
       break;
     case LeSInt64:
-      o << int8_t(BinaryConsts::I64LeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64LeS);
       break;
     case LeUInt64:
-      o << int8_t(BinaryConsts::I64LeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64LeU);
       break;
     case GtSInt64:
-      o << int8_t(BinaryConsts::I64GtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64GtS);
       break;
     case GtUInt64:
-      o << int8_t(BinaryConsts::I64GtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64GtU);
       break;
     case GeSInt64:
-      o << int8_t(BinaryConsts::I64GeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64GeS);
       break;
     case GeUInt64:
-      o << int8_t(BinaryConsts::I64GeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::I64GeU);
       break;
 
     case AddFloat32:
-      o << int8_t(BinaryConsts::F32Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Add);
       break;
     case SubFloat32:
-      o << int8_t(BinaryConsts::F32Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Sub);
       break;
     case MulFloat32:
-      o << int8_t(BinaryConsts::F32Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Mul);
       break;
     case DivFloat32:
-      o << int8_t(BinaryConsts::F32Div);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Div);
       break;
     case CopySignFloat32:
-      o << int8_t(BinaryConsts::F32CopySign);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32CopySign);
       break;
     case MinFloat32:
-      o << int8_t(BinaryConsts::F32Min);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Min);
       break;
     case MaxFloat32:
-      o << int8_t(BinaryConsts::F32Max);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Max);
       break;
     case EqFloat32:
-      o << int8_t(BinaryConsts::F32Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Eq);
       break;
     case NeFloat32:
-      o << int8_t(BinaryConsts::F32Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Ne);
       break;
     case LtFloat32:
-      o << int8_t(BinaryConsts::F32Lt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Lt);
       break;
     case LeFloat32:
-      o << int8_t(BinaryConsts::F32Le);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Le);
       break;
     case GtFloat32:
-      o << int8_t(BinaryConsts::F32Gt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Gt);
       break;
     case GeFloat32:
-      o << int8_t(BinaryConsts::F32Ge);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F32Ge);
       break;
 
     case AddFloat64:
-      o << int8_t(BinaryConsts::F64Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Add);
       break;
     case SubFloat64:
-      o << int8_t(BinaryConsts::F64Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Sub);
       break;
     case MulFloat64:
-      o << int8_t(BinaryConsts::F64Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Mul);
       break;
     case DivFloat64:
-      o << int8_t(BinaryConsts::F64Div);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Div);
       break;
     case CopySignFloat64:
-      o << int8_t(BinaryConsts::F64CopySign);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64CopySign);
       break;
     case MinFloat64:
-      o << int8_t(BinaryConsts::F64Min);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Min);
       break;
     case MaxFloat64:
-      o << int8_t(BinaryConsts::F64Max);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Max);
       break;
     case EqFloat64:
-      o << int8_t(BinaryConsts::F64Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Eq);
       break;
     case NeFloat64:
-      o << int8_t(BinaryConsts::F64Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Ne);
       break;
     case LtFloat64:
-      o << int8_t(BinaryConsts::F64Lt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Lt);
       break;
     case LeFloat64:
-      o << int8_t(BinaryConsts::F64Le);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Le);
       break;
     case GtFloat64:
-      o << int8_t(BinaryConsts::F64Gt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Gt);
       break;
     case GeFloat64:
-      o << int8_t(BinaryConsts::F64Ge);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::F64Ge);
       break;
 
     case EqVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Eq);
       break;
     case NeVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Ne);
       break;
     case LtSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16LtS);
       break;
     case LtUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16LtU);
       break;
     case GtSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16GtS);
       break;
     case GtUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16GtU);
       break;
     case LeSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16LeS);
       break;
     case LeUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16LeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16LeU);
       break;
     case GeSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16GeS);
       break;
     case GeUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16GeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16GeU);
       break;
     case EqVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Eq);
       break;
     case NeVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Ne);
       break;
     case LtSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8LtS);
       break;
     case LtUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8LtU);
       break;
     case GtSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8GtS);
       break;
     case GtUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8GtU);
       break;
     case LeSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8LeS);
       break;
     case LeUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8LeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8LeU);
       break;
     case GeSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8GeS);
       break;
     case GeUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8GeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8GeU);
       break;
     case EqVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Eq);
       break;
     case NeVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Ne);
       break;
     case LtSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4LtS);
       break;
     case LtUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4LtU);
       break;
     case GtSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4GtS);
       break;
     case GtUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GtU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4GtU);
       break;
     case LeSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4LeS);
       break;
     case LeUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4LeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4LeU);
       break;
     case GeSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4GeS);
       break;
     case GeUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4GeU);
       break;
     case EqVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Eq);
       break;
     case NeVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Ne);
       break;
     case LtSVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2LtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2LtS);
       break;
     case GtSVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2GtS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2GtS);
       break;
     case LeSVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2LeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2LeS);
       break;
     case GeSVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2GeS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2GeS);
       break;
     case EqVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Eq);
       break;
     case NeVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Ne);
       break;
     case LtVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Lt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Lt);
       break;
     case GtVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Gt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Gt);
       break;
     case LeVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Le);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Le);
       break;
     case GeVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Ge);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Ge);
       break;
     case EqVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Eq);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Eq);
       break;
     case NeVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ne);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Ne);
       break;
     case LtVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Lt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Lt);
       break;
     case GtVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Gt);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Gt);
       break;
     case LeVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Le);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Le);
       break;
     case GeVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Ge);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Ge);
       break;
     case AndVec128:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128And);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128And);
       break;
     case OrVec128:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Or);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Or);
       break;
     case XorVec128:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Xor);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Xor);
       break;
     case AndNotVec128:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Andnot);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::V128Andnot);
       break;
     case AddVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Add);
       break;
     case AddSatSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16AddSatS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16AddSatS);
       break;
     case AddSatUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16AddSatU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16AddSatU);
       break;
     case SubVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Sub);
       break;
     case SubSatSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16SubSatS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16SubSatS);
       break;
     case SubSatUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16SubSatU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16SubSatU);
       break;
     case MinSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MinS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16MinS);
       break;
     case MinUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MinU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16MinU);
       break;
     case MaxSVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MaxS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16MaxS);
       break;
     case MaxUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MaxU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16MaxU);
       break;
     case AvgrUVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16AvgrU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16AvgrU);
       break;
     case AddVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Add);
       break;
     case AddSatSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8AddSatS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8AddSatS);
       break;
     case AddSatUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8AddSatU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8AddSatU);
       break;
     case SubVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Sub);
       break;
     case SubSatSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8SubSatS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8SubSatS);
       break;
     case SubSatUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8SubSatU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8SubSatU);
       break;
     case MulVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8Mul);
       break;
     case MinSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MinS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8MinS);
       break;
     case MinUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MinU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8MinU);
       break;
     case MaxSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MaxS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8MaxS);
       break;
     case MaxUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8MaxU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8MaxU);
       break;
     case AvgrUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8AvgrU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I16x8AvgrU);
       break;
     case Q15MulrSatSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8Q15MulrSatS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8Q15MulrSatS);
       break;
     case ExtMulLowSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtmulLowI8x16S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtmulLowI8x16S);
       break;
     case ExtMulHighSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtmulHighI8x16S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtmulHighI8x16S);
       break;
     case ExtMulLowUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtmulLowI8x16U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtmulLowI8x16U);
       break;
     case ExtMulHighUVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8ExtmulHighI8x16U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8ExtmulHighI8x16U);
       break;
     case AddVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Add);
       break;
     case SubVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Sub);
       break;
     case MulVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4Mul);
       break;
     case MinSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MinS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4MinS);
       break;
     case MinUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MinU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4MinU);
       break;
     case MaxSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MaxS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4MaxS);
       break;
     case MaxUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4MaxU);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4MaxU);
       break;
     case DotSVecI16x8ToVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4DotI16x8S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I32x4DotI16x8S);
       break;
     case ExtMulLowSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtmulLowI16x8S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtmulLowI16x8S);
       break;
     case ExtMulHighSVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtmulHighI16x8S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtmulHighI16x8S);
       break;
     case ExtMulLowUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtmulLowI16x8U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtmulLowI16x8U);
       break;
     case ExtMulHighUVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4ExtmulHighI16x8U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I32x4ExtmulHighI16x8U);
       break;
     case AddVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Add);
       break;
     case SubVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Sub);
       break;
     case MulVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I64x2Mul);
       break;
     case ExtMulLowSVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtmulLowI32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtmulLowI32x4S);
       break;
     case ExtMulHighSVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtmulHighI32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtmulHighI32x4S);
       break;
     case ExtMulLowUVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtmulLowI32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtmulLowI32x4U);
       break;
     case ExtMulHighUVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2ExtmulHighI32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I64x2ExtmulHighI32x4U);
       break;
 
     case AddVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Add);
       break;
     case SubVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Sub);
       break;
     case MulVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Mul);
       break;
     case DivVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Div);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Div);
       break;
     case MinVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Min);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Min);
       break;
     case MaxVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Max);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Max);
       break;
     case PMinVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Pmin);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Pmin);
       break;
     case PMaxVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Pmax);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4Pmax);
       break;
     case AddVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Add);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Add);
       break;
     case SubVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Sub);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Sub);
       break;
     case MulVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Mul);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Mul);
       break;
     case DivVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Div);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Div);
       break;
     case MinVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Min);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Min);
       break;
     case MaxVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Max);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Max);
       break;
     case PMinVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Pmin);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Pmin);
       break;
     case PMaxVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F64x2Pmax);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2Pmax);
       break;
 
     case NarrowSVecI16x8ToVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16NarrowI16x8S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I8x16NarrowI16x8S);
       break;
     case NarrowUVecI16x8ToVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16NarrowI16x8U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I8x16NarrowI16x8U);
       break;
     case NarrowSVecI32x4ToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8NarrowI32x4S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8NarrowI32x4S);
       break;
     case NarrowUVecI32x4ToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8NarrowI32x4U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8NarrowI32x4U);
       break;
 
     case SwizzleVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16Swizzle);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I8x16Swizzle);
       break;
 
     case RelaxedSwizzleVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16RelaxedSwizzle);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I8x16RelaxedSwizzle);
       break;
     case RelaxedMinVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F32x4RelaxedMin);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4RelaxedMin);
       break;
     case RelaxedMaxVecF32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F32x4RelaxedMax);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F32x4RelaxedMax);
       break;
     case RelaxedMinVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2RelaxedMin);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2RelaxedMin);
       break;
     case RelaxedMaxVecF64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2RelaxedMax);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::F64x2RelaxedMax);
       break;
     case RelaxedQ15MulrSVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8RelaxedQ15MulrS);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8RelaxedQ15MulrS);
       break;
     case DotI8x16I7x16SToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8DotI8x16I7x16S);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8DotI8x16I7x16S);
       break;
     case DotI8x16I7x16UToVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8DotI8x16I7x16U);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::I16x8DotI8x16I7x16U);
       break;
 
     case InvalidBinary:
@@ -1865,48 +2113,53 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
 
 void BinaryInstWriter::visitSelect(Select* curr) {
   if (curr->type.isRef()) {
-    o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SelectWithType);
+    parent.writeValue<ValueWritten::NumSelectTypes>(curr->type.size());
     for (size_t i = 0; i < curr->type.size(); i++) {
       parent.writeType(curr->type != Type::unreachable ? curr->type
                                                        : Type::none);
     }
   } else {
-    o << int8_t(BinaryConsts::Select);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Select);
   }
 }
 
 void BinaryInstWriter::visitReturn(Return* curr) {
-  o << int8_t(BinaryConsts::Return);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Return);
 }
 
 void BinaryInstWriter::visitMemorySize(MemorySize* curr) {
-  o << int8_t(BinaryConsts::MemorySize);
-  o << U32LEB(0); // Reserved flags field
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MemorySize);
+  parent.writeValue<ValueWritten::MemorySizeFlags>(0);
 }
 
 void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
-  o << int8_t(BinaryConsts::MemoryGrow);
-  o << U32LEB(0); // Reserved flags field
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MemoryGrow);
+  // Reserved flags field
+  parent.writeValue<ValueWritten::MemoryGrowFlags>(0);
 }
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
-  o << int8_t(BinaryConsts::RefNull);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefNull);
   parent.writeHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefIs(RefIs* curr) {
   switch (curr->op) {
     case RefIsNull:
-      o << int8_t(BinaryConsts::RefIsNull);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefIsNull);
       break;
     case RefIsFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsFunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefIsFunc);
       break;
     case RefIsData:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsData);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefIsData);
       break;
     case RefIsI31:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsI31);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefIsI31);
       break;
     default:
       WASM_UNREACHABLE("unimplemented ref.is_*");
@@ -1914,37 +2167,44 @@ void BinaryInstWriter::visitRefIs(RefIs* curr) {
 }
 
 void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
-  o << int8_t(BinaryConsts::RefFunc)
-    << U32LEB(parent.getFunctionIndex(curr->func));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefFunc);
+  parent.writeValue<ValueWritten::FunctionIndex>(
+    parent.getFunctionIndex(curr->func));
 }
 
 void BinaryInstWriter::visitRefEq(RefEq* curr) {
-  o << int8_t(BinaryConsts::RefEq);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefEq);
 }
 
 void BinaryInstWriter::visitTableGet(TableGet* curr) {
-  o << int8_t(BinaryConsts::TableGet);
-  o << U32LEB(parent.getTableIndex(curr->table));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::TableGet);
+  parent.writeValue<ValueWritten::TableIndex>(
+    parent.getTableIndex(curr->table));
 }
 
 void BinaryInstWriter::visitTableSet(TableSet* curr) {
-  o << int8_t(BinaryConsts::TableSet);
-  o << U32LEB(parent.getTableIndex(curr->table));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::TableSet);
+  parent.writeValue<ValueWritten::TableIndex>(
+    parent.getTableIndex(curr->table));
 }
 
 void BinaryInstWriter::visitTableSize(TableSize* curr) {
-  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableSize);
-  o << U32LEB(parent.getTableIndex(curr->table));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::TableSize);
+  parent.writeValue<ValueWritten::TableIndex>(
+    parent.getTableIndex(curr->table));
 }
 
 void BinaryInstWriter::visitTableGrow(TableGrow* curr) {
-  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableGrow);
-  o << U32LEB(parent.getTableIndex(curr->table));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::MiscPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::TableGrow);
+  parent.writeValue<ValueWritten::TableIndex>(
+    parent.getTableIndex(curr->table));
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
-  o << int8_t(BinaryConsts::Try);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Try);
   emitResultType(curr->type);
 }
 
@@ -1952,15 +2212,16 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
-  o << int8_t(BinaryConsts::Catch)
-    << U32LEB(parent.getTagIndex(curr->catchTags[i]));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Catch);
+  parent.writeValue<ValueWritten::TagIndex>(
+    parent.getTagIndex(curr->catchTags[i]));
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
   }
-  o << int8_t(BinaryConsts::CatchAll);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::CatchAll);
 }
 
 void BinaryInstWriter::emitDelegate(Try* curr) {
@@ -1969,28 +2230,33 @@ void BinaryInstWriter::emitDelegate(Try* curr) {
   // target its own try.
   assert(!breakStack.empty());
   breakStack.pop_back();
-  o << int8_t(BinaryConsts::Delegate)
-    << U32LEB(getBreakIndex(curr->delegateTarget));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Delegate);
+  parent.writeValue<ValueWritten::BreakIndex>(
+    getBreakIndex(curr->delegateTarget));
 }
 
 void BinaryInstWriter::visitThrow(Throw* curr) {
-  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getTagIndex(curr->tag));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Throw);
+  parent.writeValue<ValueWritten::TagIndex>(parent.getTagIndex(curr->tag));
 }
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
-  o << int8_t(BinaryConsts::Rethrow) << U32LEB(getBreakIndex(curr->target));
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Rethrow);
+  parent.writeValue<ValueWritten::BreakIndex>(getBreakIndex(curr->target));
 }
 
-void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }
+void BinaryInstWriter::visitNop(Nop* curr) {
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Nop);
+}
 
 void BinaryInstWriter::visitUnreachable(Unreachable* curr) {
-  o << int8_t(BinaryConsts::Unreachable);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Unreachable);
 }
 
 void BinaryInstWriter::visitDrop(Drop* curr) {
   size_t numValues = curr->value->type.size();
   for (size_t i = 0; i < numValues; i++) {
-    o << int8_t(BinaryConsts::Drop);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Drop);
   }
 }
 
@@ -2006,7 +2272,7 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
   size_t numVals = curr->tuple->type.size();
   // Drop all values after the one we want
   for (size_t i = curr->index + 1; i < numVals; ++i) {
-    o << int8_t(BinaryConsts::Drop);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Drop);
   }
   // If the extracted value is the only one left, we're done
   if (curr->index == 0) {
@@ -2015,46 +2281,51 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
   // Otherwise, save it to a scratch local, drop the others, then retrieve it
   assert(scratchLocals.find(curr->type) != scratchLocals.end());
   auto scratch = scratchLocals[curr->type];
-  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratch);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::LocalSet);
+  parent.writeValue<ValueWritten::ScratchLocalIndex>(scratch);
   for (size_t i = 0; i < curr->index; ++i) {
-    o << int8_t(BinaryConsts::Drop);
+    parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Drop);
   }
-  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::LocalGet);
+  parent.writeValue<ValueWritten::ScratchLocalIndex>(scratch);
 }
 
 void BinaryInstWriter::visitI31New(I31New* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::I31New);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::I31New);
 }
 
 void BinaryInstWriter::visitI31Get(I31Get* curr) {
-  o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(
+    curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
 }
 
 void BinaryInstWriter::visitCallRef(CallRef* curr) {
-  o << int8_t(curr->isReturn ? BinaryConsts::RetCallRef
-                             : BinaryConsts::CallRef);
+  parent.writeValue<ValueWritten::ASTNode>(
+    curr->isReturn ? BinaryConsts::RetCallRef : BinaryConsts::CallRef);
 }
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
   if (curr->rtt) {
-    o << U32LEB(BinaryConsts::RefTest);
+    parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RefTest);
   } else {
-    o << U32LEB(BinaryConsts::RefTestStatic);
+    parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RefTestStatic);
     parent.writeIndexedHeapType(curr->intendedType);
   }
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
   if (curr->rtt) {
-    o << U32LEB(BinaryConsts::RefCast);
+    parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RefCast);
   } else {
     if (curr->safety == RefCast::Unsafe) {
-      o << U32LEB(BinaryConsts::RefCastNopStatic);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::RefCastNopStatic);
     } else {
-      o << U32LEB(BinaryConsts::RefCastStatic);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RefCastStatic);
     }
     parent.writeIndexedHeapType(curr->intendedType);
   }
@@ -2063,78 +2334,91 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
   switch (curr->op) {
     case BrOnNull:
-      o << int8_t(BinaryConsts::BrOnNull);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::BrOnNull);
       break;
     case BrOnNonNull:
-      o << int8_t(BinaryConsts::BrOnNonNull);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::BrOnNonNull);
       break;
     case BrOnCast:
-      o << int8_t(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
       if (curr->rtt) {
-        o << U32LEB(BinaryConsts::BrOnCast);
+        parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnCast);
       } else {
-        o << U32LEB(BinaryConsts::BrOnCastStatic);
+        parent.writeValue<ValueWritten::ASTNode32>(
+          BinaryConsts::BrOnCastStatic);
       }
       break;
     case BrOnCastFail:
-      o << int8_t(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
       if (curr->rtt) {
-        o << U32LEB(BinaryConsts::BrOnCastFail);
+        parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnCastFail);
       } else {
-        o << U32LEB(BinaryConsts::BrOnCastStaticFail);
+        parent.writeValue<ValueWritten::ASTNode32>(
+          BinaryConsts::BrOnCastStaticFail);
       }
       break;
     case BrOnFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnFunc);
       break;
     case BrOnNonFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonFunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnNonFunc);
       break;
     case BrOnData:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnData);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnData);
       break;
     case BrOnNonData:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonData);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnNonData);
       break;
     case BrOnI31:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnI31);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnI31);
       break;
     case BrOnNonI31:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonI31);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::BrOnNonI31);
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
-  o << U32LEB(getBreakIndex(curr->name));
+  parent.writeValue<ValueWritten::BreakIndex>(getBreakIndex(curr->name));
   if ((curr->op == BrOnCast || curr->op == BrOnCastFail) && !curr->rtt) {
     parent.writeIndexedHeapType(curr->intendedType);
   }
 }
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttCanon);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RttCanon);
   parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  o << U32LEB(curr->fresh ? BinaryConsts::RttFreshSub : BinaryConsts::RttSub);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(
+    curr->fresh ? BinaryConsts::RttFreshSub : BinaryConsts::RttSub);
   parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
   if (curr->rtt) {
     if (curr->isWithDefault()) {
-      o << U32LEB(BinaryConsts::StructNewDefaultWithRtt);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::StructNewDefaultWithRtt);
     } else {
-      o << U32LEB(BinaryConsts::StructNewWithRtt);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::StructNewWithRtt);
     }
   } else {
     if (curr->isWithDefault()) {
-      o << U32LEB(BinaryConsts::StructNewDefault);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::StructNewDefault);
     } else {
-      o << U32LEB(BinaryConsts::StructNew);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::StructNew);
     }
   }
   parent.writeIndexedHeapType(curr->type.getHeapType());
@@ -2151,44 +2435,47 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
   } else {
     op = BinaryConsts::StructGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(op);
   parent.writeIndexedHeapType(heapType);
-  o << U32LEB(curr->index);
+  parent.writeValue<ValueWritten::StructFieldIndex>(curr->index);
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::StructSet);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-  o << U32LEB(curr->index);
+  parent.writeValue<ValueWritten::StructFieldIndex>(curr->index);
 }
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
   if (curr->rtt) {
     if (curr->isWithDefault()) {
-      o << U32LEB(BinaryConsts::ArrayNewDefaultWithRtt);
+      parent.writeValue<ValueWritten::ASTNode32>(
+        BinaryConsts::ArrayNewDefaultWithRtt);
     } else {
-      o << U32LEB(BinaryConsts::ArrayNewWithRtt);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArrayNewWithRtt);
     }
   } else {
     if (curr->isWithDefault()) {
-      o << U32LEB(BinaryConsts::ArrayNewDefault);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArrayNewDefault);
     } else {
-      o << U32LEB(BinaryConsts::ArrayNew);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArrayNew);
     }
   }
   parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
   if (curr->rtt) {
-    o << U32LEB(BinaryConsts::ArrayInit);
+    parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArrayInit);
   } else {
-    o << U32LEB(BinaryConsts::ArrayInitStatic);
+    parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArrayInitStatic);
   }
   parent.writeIndexedHeapType(curr->type.getHeapType());
-  o << U32LEB(curr->values.size());
+  parent.writeValue<ValueWritten::ArraySize>(curr->values.size());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
@@ -2202,22 +2489,26 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
   } else {
     op = BinaryConsts::ArrayGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(op);
   parent.writeIndexedHeapType(heapType);
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArraySet);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArrayLen);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayCopy);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+  parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::ArrayCopy);
   parent.writeIndexedHeapType(curr->destRef->type.getHeapType());
   parent.writeIndexedHeapType(curr->srcRef->type.getHeapType());
 }
@@ -2225,16 +2516,19 @@ void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
   switch (curr->op) {
     case RefAsNonNull:
-      o << int8_t(BinaryConsts::RefAsNonNull);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::RefAsNonNull);
       break;
     case RefAsFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsFunc);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RefAsFunc);
       break;
     case RefAsData:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsData);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RefAsData);
       break;
     case RefAsI31:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsI31);
+      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::GCPrefix);
+      parent.writeValue<ValueWritten::ASTNode32>(BinaryConsts::RefAsI31);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
@@ -2244,16 +2538,18 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
-  o << int8_t(BinaryConsts::End);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::End);
   if (func && !sourceMap) {
     parent.writeDebugLocationEnd(curr, func);
   }
 }
 
-void BinaryInstWriter::emitFunctionEnd() { o << int8_t(BinaryConsts::End); }
+void BinaryInstWriter::emitFunctionEnd() {
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::End);
+}
 
 void BinaryInstWriter::emitUnreachable() {
-  o << int8_t(BinaryConsts::Unreachable);
+  parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::Unreachable);
 }
 
 void BinaryInstWriter::mapLocalsAndEmitHeader() {
@@ -2273,10 +2569,10 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     }
     Index varStart = func->getVarIndexBase();
     Index varEnd = varStart + func->getNumVars();
-    o << U32LEB(func->getNumVars());
+    parent.writeValue<ValueWritten::NumFunctionLocals>(func->getNumVars());
     for (Index i = varStart; i < varEnd; i++) {
       mappedLocals[std::make_pair(i, 0)] = i;
-      o << U32LEB(1);
+      parent.writeValue<ValueWritten::FunctionLocalSize>(1);
       parent.writeType(func->getLocalType(i));
     }
     return;
@@ -2304,9 +2600,10 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     }
   }
   setScratchLocals();
-  o << U32LEB(numLocalsByType.size());
+  parent.writeValue<ValueWritten::CountNumLocalsByType>(numLocalsByType.size());
   for (auto& localType : localTypes) {
-    o << U32LEB(numLocalsByType.at(localType));
+    parent.writeValue<ValueWritten::NumLocalsByType>(
+      numLocalsByType.at(localType));
     parent.writeType(localType);
   }
 }
@@ -2345,8 +2642,9 @@ void BinaryInstWriter::setScratchLocals() {
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
                                         uint32_t offset) {
-  o << U32LEB(Bits::log2(alignment ? alignment : bytes));
-  o << U32LEB(offset);
+  parent.writeValue<ValueWritten::MemoryAccessAlignment>(
+    Bits::log2(alignment ? alignment : bytes));
+  parent.writeValue<ValueWritten::MemoryAccessOffset>(offset);
 }
 
 int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found

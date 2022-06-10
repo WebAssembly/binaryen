@@ -86,11 +86,10 @@ public:
 class BinaryInstWriter : public OverriddenVisitor<BinaryInstWriter> {
 public:
   BinaryInstWriter(WasmBinaryWriter& parent,
-                   BufferWithRandomAccess& o,
                    Function* func,
                    bool sourceMap,
                    bool DWARF)
-    : parent(parent), o(o), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
+    : parent(parent), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
 
   void visit(Expression* curr) {
     if (func && !sourceMap) {
@@ -126,7 +125,6 @@ private:
   int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;
-  BufferWithRandomAccess& o;
   Function* func = nullptr;
   bool sourceMap;
   bool DWARF;
@@ -370,12 +368,11 @@ class BinaryenIRToBinaryWriter
   : public BinaryenIRWriter<BinaryenIRToBinaryWriter> {
 public:
   BinaryenIRToBinaryWriter(WasmBinaryWriter& parent,
-                           BufferWithRandomAccess& o,
                            Function* func = nullptr,
                            bool sourceMap = false,
                            bool DWARF = false)
     : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
-      writer(parent, o, func, sourceMap, DWARF), sourceMap(sourceMap) {}
+      writer(parent, func, sourceMap, DWARF), sourceMap(sourceMap) {}
 
   void visit(Expression* curr) {
     BinaryenIRWriter<BinaryenIRToBinaryWriter>::visit(curr);
@@ -457,10 +454,8 @@ private:
 // Stack IR to binary writer
 class StackIRToBinaryWriter {
 public:
-  StackIRToBinaryWriter(WasmBinaryWriter& parent,
-                        BufferWithRandomAccess& o,
-                        Function* func)
-    : writer(parent, o, func, false /* sourceMap */, false /* DWARF */),
+  StackIRToBinaryWriter(WasmBinaryWriter& parent, Function* func)
+    : writer(parent, func, false /* sourceMap */, false /* DWARF */),
       func(func) {}
 
   void write();
