@@ -104,6 +104,9 @@ Counts getHeapTypeCounts(Module& wasm) {
   // Collect module-level info.
   Counts counts;
   CodeScanner(wasm, counts).walkModuleCode(&wasm);
+  for (auto& curr : wasm.globals) {
+    counts.note(curr->type);
+  }
   for (auto& curr : wasm.tags) {
     counts.note(curr->sig);
   }
