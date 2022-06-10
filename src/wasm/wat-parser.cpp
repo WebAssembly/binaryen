@@ -92,7 +92,7 @@ struct ParseInput {
   bool empty() { return lexer == lexer.end(); }
 
   std::optional<Token> peek() {
-    if (lexer != lexer.end()) {
+    if (!empty()) {
       return *lexer;
     }
     return {};
