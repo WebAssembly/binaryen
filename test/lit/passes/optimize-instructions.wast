@@ -13873,7 +13873,7 @@
   )
 
 
-  ;; (x >>> z) | (y >>> z)    ==>   (x | y) >>> z,
+  ;; (x >>> z) op (y >>> z)    ==>   (x op y) >>> z,
   ;;    where op = `|`, `&`, `^`
   ;; CHECK:      (func $combine_partailly_equals_unsigned_right_shifts (param $x i32) (param $y i32) (param $z i32) (param $X i64) (param $Y i64) (param $Z i64)
   ;; CHECK-NEXT:  (drop
@@ -14023,7 +14023,7 @@
     )) ;; side effects
   )
 
-  ;; (x >> z) | (y >> z)    ==>   (x | y) >> z,
+  ;; (x >> z) op (y >> z)    ==>   (x op y) >> z,
   ;;    where op = `|`, `&`, `^`
   ;; CHECK:      (func $combine_partailly_equals_signed_right_shifts (param $x i32) (param $y i32) (param $z i32) (param $X i64) (param $Y i64) (param $Z i64)
   ;; CHECK-NEXT:  (drop
@@ -14173,8 +14173,8 @@
     )) ;; side effects
   )
 
-  ;; (x << z) | (y << z)    ==>   (x | y) << z,
-  ;;    where op = `|`, `&`, `^`, `+`, `-`
+  ;; (x << z) op (y << z)    ==>   (x op y) << z,
+  ;;    where op = `|`, `&`, `^`
   ;; CHECK:      (func $combine_partailly_equals_left_shifts (param $x i32) (param $y i32) (param $z i32) (param $X i64) (param $Y i64) (param $Z i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.shl
