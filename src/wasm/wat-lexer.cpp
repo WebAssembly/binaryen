@@ -151,23 +151,10 @@ public:
     if (overflow) {
       return {};
     }
-    auto basic = LexCtx::lexed();
-    if (!basic) {
-      return {};
+    if (auto basic = LexCtx::lexed()) {
+      return LexIntResult{*basic, sign == Neg ? -n : n, sign};
     }
-    // Check most significant bit for overflow of signed numbers.
-    if (sign == Neg) {
-      if (n > (1ull << 63)) {
-        // TODO: Add error production for signed underflow.
-        return {};
-      }
-    } else if (sign == Pos) {
-      if (n > (1ull << 63) - 1) {
-        // TODO: Add error production for signed overflow.
-        return {};
-      }
-    }
-    return LexIntResult{*basic, sign == Neg ? -n : n, sign};
+    return {};
   }
 
   void takeSign() {
@@ -592,12 +579,7 @@ std::optional<LexFloatResult> float_(std::string_view in) {
     if (ctx.takePrefix(":0x"sv)) {
       if (auto lexed = hexnum(ctx.next())) {
         ctx.take(*lexed);
-        if (1 <= lexed->n && lexed->n < (1ull << 52)) {
-          ctx.nanPayload = lexed->n;
-        } else {
-          // TODO: Add error production for invalid NaN payload.
-          return {};
-        }
+        ctx.nanPayload = lexed->n;
       } else {
         // TODO: Add error production for malformed NaN payload.
         return {};
@@ -780,6 +762,153 @@ std::optional<LexResult> keyword(std::string_view in) {
 }
 
 } // anonymous namespace
+
+std::optional<uint64_t> Token::getU64() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == NoSign) {
+      return tok->n;
+    }
+  }
+  return {};
+}
+
+std::optional<int64_t> Token::getS64() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == Neg) {
+      if (uint64_t(INT64_MIN) <= tok->n || tok->n == 0) {
+        return int64_t(tok->n);
+      }
+      // TODO: Add error production for signed underflow.
+    } else {
+      if (tok->n <= uint64_t(INT64_MAX)) {
+        return int64_t(tok->n);
+      }
+      // TODO: Add error production for signed overflow.
+    }
+  }
+  return {};
+}
+
+std::optional<uint64_t> Token::getI64() const {
+  if (auto n = getU64()) {
+    return *n;
+  }
+  if (auto n = getS64()) {
+    return *n;
+  }
+  return {};
+}
+
+std::optional<uint32_t> Token::getU32() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == NoSign && tok->n <= UINT32_MAX) {
+      return int32_t(tok->n);
+    }
+    // TODO: Add error production for unsigned overflow.
+  }
+  return {};
+}
+
+std::optional<int32_t> Token::getS32() const {
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == Neg) {
+      if (uint64_t(INT32_MIN) <= tok->n || tok->n == 0) {
+        return int32_t(tok->n);
+      }
+    } else {
+      if (tok->n <= uint64_t(INT32_MAX)) {
+        return int32_t(tok->n);
+      }
+    }
+  }
+  return {};
+}
+
+std::optional<uint32_t> Token::getI32() const {
+  if (auto n = getU32()) {
+    return *n;
+  }
+  if (auto n = getS32()) {
+    return uint32_t(*n);
+  }
+  return {};
+}
+
+std::optional<double> Token::getF64() const {
+  constexpr int signif = 52;
+  constexpr uint64_t payloadMask = (1ull << signif) - 1;
+  constexpr uint64_t nanDefault = 1ull << (signif - 1);
+  if (auto* tok = std::get_if<FloatTok>(&data)) {
+    double d = tok->d;
+    if (std::isnan(d)) {
+      // Inject payload.
+      uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
+      if (payload == 0 || payload > payloadMask) {
+        // TODO: Add error production for out-of-bounds payload.
+        return {};
+      }
+      uint64_t bits;
+      static_assert(sizeof(bits) == sizeof(d));
+      memcpy(&bits, &d, sizeof(bits));
+      bits = (bits & ~payloadMask) | payload;
+      memcpy(&d, &bits, sizeof(bits));
+    }
+    return d;
+  }
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == Neg) {
+      if (tok->n == 0) {
+        return -0.0;
+      }
+      return double(int64_t(tok->n));
+    }
+    return double(tok->n);
+  }
+  return {};
+}
+
+std::optional<float> Token::getF32() const {
+  constexpr int signif = 23;
+  constexpr uint32_t payloadMask = (1u << signif) - 1;
+  constexpr uint64_t nanDefault = 1ull << (signif - 1);
+  if (auto* tok = std::get_if<FloatTok>(&data)) {
+    float f = tok->d;
+    if (std::isnan(f)) {
+      // Validate and inject payload.
+      uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
+      if (payload == 0 || payload > payloadMask) {
+        // TODO: Add error production for out-of-bounds payload.
+        return {};
+      }
+      uint32_t bits;
+      static_assert(sizeof(bits) == sizeof(f));
+      memcpy(&bits, &f, sizeof(bits));
+      bits = (bits & ~payloadMask) | payload;
+      memcpy(&f, &bits, sizeof(bits));
+    }
+    return f;
+  }
+  if (auto* tok = std::get_if<IntTok>(&data)) {
+    if (tok->sign == Neg) {
+      if (tok->n == 0) {
+        return -0.0f;
+      }
+      return float(int64_t(tok->n));
+    }
+    return float(tok->n);
+  }
+  return {};
+}
+
+std::optional<std::string_view> Token::getString() const {
+  if (auto* tok = std::get_if<StringTok>(&data)) {
+    if (tok->str) {
+      return std::string_view(*tok->str);
+    }
+    return span.substr(1, span.size() - 2);
+  }
+  return {};
+}
 
 void Lexer::skipSpace() {
   if (auto ctx = space(next())) {

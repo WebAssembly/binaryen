@@ -642,10 +642,6 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
       parent.writeValue<ValueWritten::ASTNode32>(
         BinaryConsts::I32x4DotI8x16I7x16AddS);
       break;
-    case DotI8x16I7x16AddUToVecI32x4:
-      parent.writeValue<ValueWritten::ASTNode32>(
-        BinaryConsts::I32x4DotI8x16I7x16AddU);
-      break;
   }
 }
 
@@ -2099,11 +2095,6 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
       parent.writeValue<ValueWritten::ASTNode32>(
         BinaryConsts::I16x8DotI8x16I7x16S);
-      break;
-    case DotI8x16I7x16UToVecI16x8:
-      parent.writeValue<ValueWritten::ASTNode>(BinaryConsts::SIMDPrefix);
-      parent.writeValue<ValueWritten::ASTNode32>(
-        BinaryConsts::I16x8DotI8x16I7x16U);
       break;
 
     case InvalidBinary:
