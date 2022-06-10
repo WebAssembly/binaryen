@@ -468,7 +468,7 @@ Result<std::vector<Name>> inlineExports(ParseInput& in) {
 //          | '(' 'global' id? '(' 'import' mod:name nm:name ')'
 //                gt:globaltype ')'
 template<typename Ctx> MaybeResult<> global(Ctx& ctx, ParseInput& in) {
-  auto pos = in.getPos();
+  [[maybe_unused]] auto pos = in.getPos();
   if (!in.takeSExprStart("global"sv)) {
     return {};
   }
