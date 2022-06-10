@@ -2604,12 +2604,7 @@ private:
     offset.finalize();
 
     // apply active memory segments
-    for (size_t i = 0, e = wasm.memory.segments.size(); i < e; ++i) {
-      Memory::Segment& segment = wasm.memory.segments[i];
-      if (segment.isPassive) {
-        continue;
-      }
-
+    ModuleUtils::iterActiveDataSegments(wasm, [&](DataSegment* segment) {
       Const size;
       size.value = Literal(uint32_t(segment.data.size()));
       size.finalize();
@@ -2627,7 +2622,7 @@ private:
 
       self()->visit(&init);
       self()->visit(&drop);
-    }
+    });
   }
 
 public:
@@ -3303,8 +3298,8 @@ public:
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
 
-    assert(curr->segment < wasm.memory.segments.size());
-    Memory::Segment& segment = wasm.memory.segments[curr->segment];
+    assert(curr->segment < wasm.dataSegments.size());
+    DataSegment& segment = wasm.dataSegments[curr->segment];
 
     Address destVal(dest.getSingleValue().getUnsigned());
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
