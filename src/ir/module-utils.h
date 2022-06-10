@@ -109,7 +109,6 @@ inline Table* copyTable(const Table* table, Module& out) {
 inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
   auto copy = [&]std::unique_ptr<DataSegment>&& ret) {
     ret->name = segment->name;
-    ret->memory = segment->memory;
     ret->hasExplicitName = segment->hasExplicitName;
     ret->isPassive = segment->isPassive;
     ret->data = segment->data;
@@ -121,7 +120,7 @@ inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
     return copy(std::make_unique<DataSegment>());
   } else {
     auto offset = ExpressionManipulator::copy(segment->offset, out);
-    return copy(std::make_unique<DataSegment>(segment->memory, offset));
+    return copy(std::make_unique<DataSegment>(offset));
   }
 }
 

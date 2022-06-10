@@ -3068,7 +3068,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                       "memory",
                       "memory is shared, but atomics are disabled");
   }
-  for (auto& segment : curr.segments) {
+  for (auto& segment : module.dataSegments) {
     auto size = segment.data.size();
     if (segment.isPassive) {
       info.shouldBeTrue(module.features.hasBulkMemory(),

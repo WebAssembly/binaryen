@@ -1864,27 +1864,25 @@ public:
 
 class DataSegment : public Named {
 public:
-  Name memory;
   bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
   DataSegment() = default;
-  DataSegment(Name memory, Expression* offset) : memory(memory), offset(offset) {}
-  DataSegment(Name memory, Expression* offset, const char* init, Address size)
-    : memory(memory, offset(offset) {
+  DataSegment(Expression* offset) : offset(offset) {}
+  DataSegment(Expression* offset, const char* init, Address size)
+    : offset(offset) {
     data.resize(size);
     std::copy_n(init, size, data.begin());
   }
-  DataSegment(Name memory, Expression* offset, std::vector<char>& init) : memory(memory), offset(offset) {
+  DataSegment(Expression* offset, std::vector<char>& init) : offset(offset) {
     data.swap(init);
   }
   DataSegment(Name name,
-          Name memory,
           bool isPassive,
           Expression* offset,
           const char* init,
           Address size)
-    : name(name), memory(memory), isPassive(isPassive), offset(offset) {
+    : name(name), isPassive(isPassive), offset(offset) {
     data.resize(size);
     std::copy_n(init, size, data.begin());
   }
