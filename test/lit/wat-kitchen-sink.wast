@@ -4,7 +4,9 @@
 
 (module $parse
  ;; types
+ ;; CHECK:      (type $void (func))
  (type $void (func))
+ ;; CHECK:      (type $many (func (param i32 i64 f32 f64) (result anyref (ref func))))
  (type $many (func (param $x i32) (param i64 f32) (param) (param $y f64)
                    (result anyref (ref func))))
 
