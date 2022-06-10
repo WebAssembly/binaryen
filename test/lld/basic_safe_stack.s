@@ -1,5 +1,5 @@
 # Test that wasm-binaryen-finalize --check-stack-overflow correctly
-# inserts stack chekc handlers.
+# inserts stack check handlers.
 
 .globl stackRestore
 .globl stackAlloc

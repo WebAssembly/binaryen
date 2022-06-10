@@ -933,6 +933,9 @@ switch (op[0]) {
           case 'b':
             if (strcmp(op, "i16x8.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI16x8); }
             goto parse_error;
+          case 'd':
+            if (strcmp(op, "i16x8.dot_i8x16_i7x16_s") == 0) { return makeBinary(s, BinaryOp::DotI8x16I7x16SToVecI16x8); }
+            goto parse_error;
           case 'e': {
             switch (op[7]) {
               case 'q':
@@ -1139,9 +1142,17 @@ switch (op[0]) {
           case 'q':
             if (strcmp(op, "i16x8.q15mulr_sat_s") == 0) { return makeBinary(s, BinaryOp::Q15MulrSatSVecI16x8); }
             goto parse_error;
-          case 'r':
-            if (strcmp(op, "i16x8.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI16x8, 8); }
-            goto parse_error;
+          case 'r': {
+            switch (op[8]) {
+              case 'l':
+                if (strcmp(op, "i16x8.relaxed_q15mulr_s") == 0) { return makeBinary(s, BinaryOp::RelaxedQ15MulrSVecI16x8); }
+                goto parse_error;
+              case 'p':
+                if (strcmp(op, "i16x8.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI16x8, 8); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 's': {
             switch (op[7]) {
               case 'h': {
@@ -1684,9 +1695,17 @@ switch (op[0]) {
                   case 'b':
                     if (strcmp(op, "i32x4.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI32x4); }
                     goto parse_error;
-                  case 'd':
-                    if (strcmp(op, "i32x4.dot_i16x8_s") == 0) { return makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4); }
-                    goto parse_error;
+                  case 'd': {
+                    switch (op[11]) {
+                      case '1':
+                        if (strcmp(op, "i32x4.dot_i16x8_s") == 0) { return makeBinary(s, BinaryOp::DotSVecI16x8ToVecI32x4); }
+                        goto parse_error;
+                      case '8':
+                        if (strcmp(op, "i32x4.dot_i8x16_i7x16_add_s") == 0) { return makeSIMDTernary(s, SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   case 'e': {
                     switch (op[7]) {
                       case 'q':
@@ -2828,7 +2847,7 @@ switch (op[0]) {
           case 'r': {
             switch (op[8]) {
               case 'l':
-                if (strcmp(op, "i8x16.relaxed_swizzle") == 0) { return makeBinary(s, BinaryOp::RelaxedSwizzleVec8x16); }
+                if (strcmp(op, "i8x16.relaxed_swizzle") == 0) { return makeBinary(s, BinaryOp::RelaxedSwizzleVecI8x16); }
                 goto parse_error;
               case 'p':
                 if (strcmp(op, "i8x16.replace_lane") == 0) { return makeSIMDReplace(s, SIMDReplaceOp::ReplaceLaneVecI8x16, 16); }
@@ -2883,7 +2902,7 @@ switch (op[0]) {
                 }
               }
               case 'w':
-                if (strcmp(op, "i8x16.swizzle") == 0) { return makeBinary(s, BinaryOp::SwizzleVec8x16); }
+                if (strcmp(op, "i8x16.swizzle") == 0) { return makeBinary(s, BinaryOp::SwizzleVecI8x16); }
                 goto parse_error;
               default: goto parse_error;
             }
@@ -2992,9 +3011,17 @@ switch (op[0]) {
                   case '\0':
                     if (strcmp(op, "ref.cast") == 0) { return makeRefCast(s); }
                     goto parse_error;
-                  case '_':
-                    if (strcmp(op, "ref.cast_static") == 0) { return makeRefCastStatic(s); }
-                    goto parse_error;
+                  case '_': {
+                    switch (op[9]) {
+                      case 'n':
+                        if (strcmp(op, "ref.cast_nop_static") == 0) { return makeRefCastNopStatic(s); }
+                        goto parse_error;
+                      case 's':
+                        if (strcmp(op, "ref.cast_static") == 0) { return makeRefCastStatic(s); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }

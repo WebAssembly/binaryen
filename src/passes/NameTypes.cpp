@@ -30,9 +30,7 @@ static const size_t NameLenLimit = 20;
 struct NameTypes : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Find all the types.
-    std::vector<HeapType> types;
-    std::unordered_map<HeapType, Index> typeIndices;
-    ModuleUtils::collectHeapTypes(*module, types, typeIndices);
+    std::vector<HeapType> types = ModuleUtils::collectHeapTypes(*module);
 
     // Ensure simple names. If a name already exists, and is short enough, keep
     // it.

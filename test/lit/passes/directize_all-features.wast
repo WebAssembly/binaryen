@@ -519,6 +519,11 @@
 
  ;; CHECK:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
+
+ (type $none (func))
+
+ ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
  ;; CHECK:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo1 $foo2)
@@ -627,17 +632,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $3)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $4)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (call $foo2
  ;; CHECK-NEXT:    (local.get $3)
  ;; CHECK-NEXT:    (local.get $4)
@@ -668,28 +663,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $3)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $4)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $3)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $4)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
@@ -748,6 +723,24 @@
     (i32.const 1)
     (i32.const 2)
     (unreachable)
+   )
+  )
+ )
+ ;; CHECK:      (func $select-bad-type (param $z i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-bad-type (param $z i32)
+  ;; The type here is $none, which does not match the functions at indexes 1 and
+  ;; 2, so we know they will trap and can emit unreachables.
+  (call_indirect (type $none)
+   (select
+    (i32.const 1)
+    (i32.const 2)
+    (local.get $z)
    )
   )
  )

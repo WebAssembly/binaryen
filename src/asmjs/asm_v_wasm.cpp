@@ -34,7 +34,6 @@ JsType wasmToJsType(Type type) {
     case Type::v128:
       WASM_UNREACHABLE("v128 not implemented yet");
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -63,8 +62,6 @@ char getSig(Type type) {
       return 'V';
     case Type::funcref:
       return 'F';
-    case Type::externref:
-      return 'X';
     case Type::anyref:
       return 'A';
     case Type::eqref:

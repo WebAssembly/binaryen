@@ -10,16 +10,18 @@
  ;; CHECK:      (type $A (struct (field (ref $C))))
  ;; NOMNL:      (type $A (struct_subtype (field (ref $C)) data))
  (type $A (struct (field (ref $C))))
+ ;; CHECK:      (type $D (struct (field (ref $C)) (field (ref $A))))
+
  ;; CHECK:      (type $C (struct (field (mut (ref $B)))))
 
  ;; CHECK:      (type $B (func (param (ref $A)) (result (ref $B))))
+ ;; NOMNL:      (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+
  ;; NOMNL:      (type $C (struct_subtype (field (mut (ref $B))) data))
 
  ;; NOMNL:      (type $B (func_subtype (param (ref $A)) (result (ref $B)) func))
  (type $B (func (param (ref $A)) (result (ref $B))))
  (type $C (struct (field (mut (ref $B)))))
- ;; CHECK:      (type $D (struct (field (ref $C)) (field (ref $A))))
- ;; NOMNL:      (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
  (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
  ;; CHECK:      (global $g0 (rtt 0 $A) (rtt.canon $A))
  ;; NOMNL:      (global $g0 (rtt 0 $A) (rtt.canon $A))

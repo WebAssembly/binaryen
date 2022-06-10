@@ -42,7 +42,12 @@ struct FeatureSet {
     // TODO: Remove this feature when the wasm spec stabilizes.
     GCNNLocals = 1 << 13,
     RelaxedSIMD = 1 << 14,
-    All = (1 << 15) - 1
+    ExtendedConst = 1 << 15,
+    // GCNNLocals are opt-in: merely asking for "All" does not apply them. To
+    // get all possible values use AllPossible. See setAll() below for more
+    // details.
+    All = ((1 << 16) - 1) & ~GCNNLocals,
+    AllPossible = (1 << 16) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -77,15 +82,17 @@ struct FeatureSet {
         return "gc-nn-locals";
       case RelaxedSIMD:
         return "relaxed-simd";
+      case ExtendedConst:
+        return "extended-const";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
   }
 
-  std::string toString() {
+  std::string toString() const {
     std::string ret;
     uint32_t x = 1;
-    while (x & Feature::All) {
+    while (x & Feature::AllPossible) {
       if (features & x) {
         if (!ret.empty()) {
           ret += ", ";
@@ -102,7 +109,7 @@ struct FeatureSet {
   operator uint32_t() const { return features; }
 
   bool isMVP() const { return features == MVP; }
-  bool has(FeatureSet f) { return (features & f) == f; }
+  bool has(FeatureSet f) const { return (features & f) == f.features; }
   bool hasAtomics() const { return (features & Atomics) != 0; }
   bool hasMutableGlobals() const { return (features & MutableGlobals) != 0; }
   bool hasTruncSat() const { return (features & TruncSat) != 0; }
@@ -122,7 +129,8 @@ struct FeatureSet {
   }
   bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
   bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
-  bool hasAll() const { return (features & All) != 0; }
+  bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
+  bool hasAll() const { return (features & AllPossible) != 0; }
 
   void set(FeatureSet f, bool v = true) {
     features = v ? (features | f) : (features & ~f);
@@ -144,6 +152,7 @@ struct FeatureSet {
   }
   void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
   void setRelaxedSIMD(bool v = true) { set(RelaxedSIMD, v); }
+  void setExtendedConst(bool v = true) { set(ExtendedConst, v); }
   void setMVP() { features = MVP; }
   void setAll() {
     // Do not set GCNNLocals, which forces the user to opt in to that feature
@@ -156,17 +165,17 @@ struct FeatureSet {
     // --enable-gc-nn-locals -all work (that is, if we enable the feature,
     // then -all does not disable it; it simply does not enable it by itself).
     auto oldGCNNLocals = hasGCNNLocals();
-    features = All;
+    features = AllPossible;
     setGCNNLocals(oldGCNNLocals);
   }
 
   void enable(const FeatureSet& other) { features |= other.features; }
   void disable(const FeatureSet& other) {
-    features = features & ~other.features & All;
+    features = features & ~other.features & AllPossible;
   }
 
-  template<typename F> void iterFeatures(F f) {
-    for (uint32_t feature = MVP + 1; feature < All; feature <<= 1) {
+  template<typename F> void iterFeatures(F f) const {
+    for (uint32_t feature = MVP + 1; feature < AllPossible; feature <<= 1) {
       if (has(feature)) {
         f(static_cast<Feature>(feature));
       }

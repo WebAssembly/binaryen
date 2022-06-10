@@ -810,10 +810,13 @@ public:
     ret->finalize();
     return ret;
   }
-  RefCast* makeRefCast(Expression* ref, HeapType intendedType) {
+
+  RefCast*
+  makeRefCast(Expression* ref, HeapType intendedType, RefCast::Safety safety) {
     auto* ret = wasm.allocator.alloc<RefCast>();
     ret->ref = ref;
     ret->intendedType = intendedType;
+    ret->safety = safety;
     ret->finalize();
     return ret;
   }
@@ -999,7 +1002,6 @@ public:
     }
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
         assert(value.isNull() && "unexpected non-null reference type literal");
@@ -1148,7 +1150,7 @@ public:
   // Returns a replacement with the precise same type, and with minimal contents
   // as best we can. As a replacement, this may reuse the input node.
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
-    if (curr->type.isTuple()) {
+    if (curr->type.isTuple() && curr->type.isDefaultable()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
     if (curr->type.isNullable()) {
@@ -1181,7 +1183,6 @@ public:
       }
       case Type::funcref:
         WASM_UNREACHABLE("handled above");
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);

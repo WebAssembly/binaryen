@@ -110,7 +110,7 @@ BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // the API figure out the type instead of providing one.
 BINARYEN_API BinaryenType BinaryenTypeAuto(void);
 BINARYEN_API BinaryenType BinaryenTypeCreate(BinaryenType* valueTypes,
-                                             uint32_t numTypes);
+                                             BinaryenIndex numTypes);
 BINARYEN_API uint32_t BinaryenTypeArity(BinaryenType t);
 BINARYEN_API void BinaryenTypeExpand(BinaryenType t, BinaryenType* buf);
 
@@ -162,6 +162,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureGC(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMemory64(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedSIMD(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureExtendedConst(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -591,7 +592,7 @@ BINARYEN_API BinaryenOp BinaryenTruncSatZeroSVecF64x2ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatZeroUVecF64x2ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void);
-BINARYEN_API BinaryenOp BinaryenSwizzleVec8x16(void);
+BINARYEN_API BinaryenOp BinaryenSwizzleVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenRefIsNull(void);
 BINARYEN_API BinaryenOp BinaryenRefIsFunc(void);
 BINARYEN_API BinaryenOp BinaryenRefIsData(void);
@@ -2284,6 +2285,15 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex numSegments,
                                     bool shared);
 
+BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenMemoryHasMax(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module);
+BINARYEN_API const char*
+BinaryenMemoryImportGetModule(BinaryenModuleRef module);
+BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module);
+BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module);
+
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
@@ -2319,6 +2329,9 @@ BINARYEN_API BinaryenModuleRef BinaryenModuleParse(const char* text);
 
 // Print a module to stdout in s-expression text format. Useful for debugging.
 BINARYEN_API void BinaryenModulePrint(BinaryenModuleRef module);
+
+// Print a module to stdout in stack IR text format. Useful for debugging.
+BINARYEN_API void BinaryenModulePrintStackIR(BinaryenModuleRef module);
 
 // Print a module to stdout in asm.js syntax.
 BINARYEN_API void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
@@ -2454,6 +2467,13 @@ BINARYEN_API size_t BinaryenModuleWriteText(BinaryenModuleRef module,
                                             char* output,
                                             size_t outputSize);
 
+// Serialize a module in stack IR text format.
+// @return how many bytes were written. This will be less than or equal to
+//         outputSize
+BINARYEN_API size_t BinaryenModuleWriteStackIR(BinaryenModuleRef module,
+                                               char* output,
+                                               size_t outputSize);
+
 typedef struct BinaryenBufferSizes {
   size_t outputBytes;
   size_t sourceMapBytes;
@@ -2493,6 +2513,12 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
 BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
+
+// Serialize a module in stack IR form. Implicitly allocates the returned
+// char* with malloc(), and expects the user to free() them manually
+// once not needed anymore.
+BINARYEN_API char*
+BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module);
 
 // Deserialize a module from binary form.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,

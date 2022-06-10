@@ -31,8 +31,7 @@ public:
                  Module& module,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
-      debugInfo(passOptions.debugInfo), module(module),
+      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
       features(module.features) {
     if (ast) {
       walk(ast);
@@ -41,7 +40,6 @@ public:
 
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
-  bool debugInfo;
   Module& module;
   FeatureSet features;
 
@@ -431,12 +429,6 @@ private:
         parent.throws_ = true;
       }
       if (curr->isReturn) {
-        parent.branchesOut = true;
-      }
-      if (parent.debugInfo) {
-        // debugInfo call imports must be preserved very strongly, do not
-        // move code around them
-        // FIXME: we could check if the call is to an import
         parent.branchesOut = true;
       }
     }

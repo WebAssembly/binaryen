@@ -119,6 +119,14 @@ public:
     }
   }
 
+  void reserve(size_t reservedSize) {
+    if (reservedSize > N) {
+      flexible.reserve(reservedSize - N);
+    }
+  }
+
+  size_t capacity() const { return N + flexible.capacity(); }
+
   bool operator==(const SmallVector<T, N>& other) const {
     if (usedFixed != other.usedFixed) {
       return false;

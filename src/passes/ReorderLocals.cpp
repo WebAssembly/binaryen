@@ -50,10 +50,10 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
       return; // nothing to do. All locals are parameters
     }
     Index num = curr->getNumLocals();
+    counts.clear();
     counts.resize(num);
-    std::fill(counts.begin(), counts.end(), 0);
-    firstUses.resize(num);
-    std::fill(firstUses.begin(), firstUses.end(), Unseen);
+    firstUses.clear();
+    firstUses.resize(num, Unseen);
     // Gather information about local usages.
     walk(curr->body);
     // Use the information about local usages.

@@ -53,8 +53,8 @@ namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
   FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
-  ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), I8("i8"), I16("i16"),
-  RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
+  ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
+  I16("i16"), RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -458,6 +458,9 @@ void SExpressionWasmBuilder::parseModuleElement(Element& curr) {
   if (id == TYPE) {
     return; // already done
   }
+  if (id == REC) {
+    return; // already done
+  }
   if (id == TAG) {
     return parseTag(curr);
   }
@@ -680,18 +683,29 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
 }
 
 void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
+  // Iterate through each individual type definition, calling `f` with the
+  // definition and its recursion group number.
   auto forEachType = [&](auto f) {
+    size_t groupNumber = 0;
     for (auto* elemPtr : module) {
       auto& elem = *elemPtr;
       if (elementStartsWith(elem, TYPE)) {
-        f(elem);
+        f(elem, groupNumber++);
+      } else if (elementStartsWith(elem, REC)) {
+        for (auto* innerPtr : elem) {
+          auto& inner = *innerPtr;
+          if (elementStartsWith(inner, TYPE)) {
+            f(inner, groupNumber);
+          }
+        }
+        ++groupNumber;
       }
     }
   };
 
+  // Map type names to indices
   size_t numTypes = 0;
-  forEachType([&](Element& elem) {
-    // Map type names to indices
+  forEachType([&](Element& elem, size_t) {
     if (elem[1]->dollared()) {
       std::string name = elem[1]->c_str();
       if (!typeIndices.insert({name, numTypes}).second) {
@@ -702,6 +716,22 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   });
 
   TypeBuilder builder(numTypes);
+
+  // Create recursion groups
+  size_t currGroup = 0, groupStart = 0, groupLength = 0;
+  auto finishGroup = [&]() {
+    builder.createRecGroup(groupStart, groupLength);
+    groupStart = groupStart + groupLength;
+    groupLength = 0;
+  };
+  forEachType([&](Element&, size_t group) {
+    if (group != currGroup) {
+      finishGroup();
+      currGroup = group;
+    }
+    ++groupLength;
+  });
+  finishGroup();
 
   auto parseRefType = [&](Element& elem) -> Type {
     // '(' 'ref' 'null'? ht ')'
@@ -860,24 +890,22 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   };
 
   size_t index = 0;
-  forEachType([&](Element& elem) {
+  forEachType([&](Element& elem, size_t) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
-    bool nominal =
+    bool hasSupertype =
       kind == FUNC_SUBTYPE || kind == STRUCT_SUBTYPE || kind == ARRAY_SUBTYPE;
     if (kind == FUNC || kind == FUNC_SUBTYPE) {
-      builder[index] = parseSignatureDef(def, nominal);
+      builder[index] = parseSignatureDef(def, hasSupertype);
     } else if (kind == STRUCT || kind == STRUCT_SUBTYPE) {
-      builder[index] = parseStructDef(def, index, nominal);
+      builder[index] = parseStructDef(def, index, hasSupertype);
     } else if (kind == ARRAY || kind == ARRAY_SUBTYPE) {
       builder[index] = parseArrayDef(def);
     } else {
       throw ParseException("unknown heaptype kind", kind.line, kind.col);
     }
     Element* super = nullptr;
-    if (nominal) {
-      // TODO: Let the new nominal types coexist with equirecursive types
-      // builder[index].setNominal();
+    if (hasSupertype) {
       super = def[def.size() - 1];
       if (super->dollared()) {
         // OK
@@ -906,7 +934,20 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     ++index;
   });
 
-  types = builder.build();
+  auto result = builder.build();
+  if (auto* err = result.getError()) {
+    // Find the name to provide a better error message.
+    std::stringstream msg;
+    msg << "Invalid type: " << err->reason;
+    for (auto& [name, index] : typeIndices) {
+      if (index == err->index) {
+        Fatal() << msg.str() << " at type $" << name;
+      }
+    }
+    // No name, just report the index.
+    Fatal() << msg.str() << " at index " << err->index;
+  }
+  types = *result;
 
   for (auto& [name, index] : typeIndices) {
     auto type = types[index];
@@ -1130,10 +1171,8 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
     return Type::funcref;
   }
-  if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
-    return Type::externref;
-  }
-  if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
+  if ((strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) ||
+      (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0))) {
     return Type::anyref;
   }
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
@@ -1165,7 +1204,7 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     }
     if (str[1] == 'x' && str[2] == 't' && str[3] == 'e' && str[4] == 'r' &&
         str[5] == 'n' && (prefix || str[6] == 0)) {
-      return HeapType::ext;
+      return HeapType::any;
     }
   }
   if (str[0] == 'a') {
@@ -1699,7 +1738,6 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
     }
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2664,7 +2702,13 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
 Expression* SExpressionWasmBuilder::makeRefCastStatic(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
-  return Builder(wasm).makeRefCast(ref, heapType);
+  return Builder(wasm).makeRefCast(ref, heapType, RefCast::Safe);
+}
+
+Expression* SExpressionWasmBuilder::makeRefCastNopStatic(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  auto* ref = parseExpression(*s[2]);
+  return Builder(wasm).makeRefCast(ref, heapType, RefCast::Unsafe);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
@@ -3156,8 +3200,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       name = Name("fimport$" + std::to_string(functionCounter++));
       functionNames.push_back(name);
     } else if (kind == ExternalKind::Global) {
-      name = Name("gimport$" + std::to_string(globalCounter++));
-      globalNames.push_back(name);
+      // Handled in `parseGlobal`.
     } else if (kind == ExternalKind::Memory) {
       name = Name("mimport$" + std::to_string(memoryCounter++));
     } else if (kind == ExternalKind::Table) {
@@ -3195,25 +3238,11 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     functionTypes[name] = func->type;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
-    Type type;
-    bool mutable_ = false;
-    if (inner[j]->isStr()) {
-      type = stringToType(inner[j++]->str());
-    } else {
-      auto& inner2 = *inner[j++];
-      if (inner2[0]->str() != MUT) {
-        throw ParseException("expected mut", inner2.line, inner2.col);
-      }
-      type = stringToType(inner2[1]->str());
-      mutable_ = true;
-    }
-    auto global = make_unique<Global>();
-    global->setName(name, hasExplicitName);
+    parseGlobal(inner, true);
+    j++;
+    auto& global = wasm.globals.back();
     global->module = module;
     global->base = base;
-    global->type = type;
-    global->mutable_ = mutable_;
-    wasm.addGlobal(global.release());
   } else if (kind == ExternalKind::Table) {
     auto table = make_unique<Table>();
     table->setName(name, hasExplicitName);
@@ -3274,6 +3303,8 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   size_t i = 1;
   if (s[i]->dollared() && !(s[i]->isStr() && isType(s[i]->str()))) {
     global->setExplicitName(s[i++]->str());
+  } else if (preParseImport) {
+    global->name = Name("gimport$" + std::to_string(globalCounter));
   } else {
     global->name = Name::fromInt(globalCounter);
   }
@@ -3333,13 +3364,10 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
     wasm.addGlobal(im.release());
     return;
   }
-  if (preParseImport) {
-    throw ParseException("preParseImport in global", s.line, s.col);
-  }
   global->type = type;
   if (i < s.size()) {
     global->init = parseExpression(s[i++]);
-  } else {
+  } else if (!preParseImport) {
     throw ParseException("global without init", s.line, s.col);
   }
   global->mutable_ = mutable_;
@@ -3640,6 +3668,7 @@ void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
     }
     ex->value = tag->name;
     ex->kind = ExternalKind::Tag;
+    wasm.addExport(ex.release());
   }
 
   // Parse typeuse

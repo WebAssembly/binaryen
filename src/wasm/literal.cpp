@@ -30,18 +30,39 @@ namespace wasm {
 template<int N> using LaneArray = std::array<Literal, N>;
 
 Literal::Literal(Type type) : type(type) {
-  if (type == Type::i31ref) {
-    // i31ref is special in that it is non-nullable, so we construct with zero
-    i32 = 0;
-  } else {
-    assert(type != Type::unreachable && !type.isNonNullable());
-    if (isData()) {
-      new (&gcData) std::shared_ptr<GCData>();
-    } else if (type.isRtt()) {
-      new (this) Literal(Literal::makeCanonicalRtt(type.getHeapType()));
-    } else {
-      memset(&v128, 0, 16);
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = 0;
+        return;
+      case Type::i64:
+      case Type::f64:
+        i64 = 0;
+        return;
+      case Type::v128:
+        memset(&v128, 0, 16);
+        return;
+      case Type::none:
+        return;
+      case Type::unreachable:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
+      case Type::dataref:
+        break;
     }
+  }
+
+  if (isData()) {
+    assert(!type.isNonNullable());
+    new (&gcData) std::shared_ptr<GCData>();
+  } else if (type.isRtt()) {
+    new (this) Literal(Literal::makeCanonicalRtt(type.getHeapType()));
+  } else {
+    // For anything else, zero out all the union data.
+    memset(&v128, 0, 16);
   }
 }
 
@@ -63,6 +84,30 @@ Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        i32 = other.i32;
+        return;
+      case Type::i64:
+      case Type::f64:
+        i64 = other.i64;
+        return;
+      case Type::v128:
+        memcpy(&v128, other.v128, 16);
+        return;
+      case Type::none:
+        return;
+      case Type::unreachable:
+      case Type::funcref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
+      case Type::dataref:
+        break;
+    }
+  }
   if (other.isData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
@@ -81,7 +126,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
     if (heapType.isBasic()) {
       switch (heapType.getBasic()) {
         case HeapType::any:
-        case HeapType::ext:
         case HeapType::eq:
           return; // null
         case HeapType::i31:
@@ -93,49 +137,18 @@ Literal::Literal(const Literal& other) : type(other.type) {
       }
     }
   }
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    case Type::i32:
-    case Type::f32:
-      i32 = other.i32;
-      break;
-    case Type::i64:
-    case Type::f64:
-      i64 = other.i64;
-      break;
-    case Type::v128:
-      memcpy(&v128, other.v128, 16);
-      break;
-    case Type::none:
-      break;
-    case Type::unreachable:
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
-      WASM_UNREACHABLE("invalid type");
-  }
 }
 
 Literal::~Literal() {
+  // Early exit for the common case; basic types need no special handling.
+  if (type.isBasic()) {
+    return;
+  }
+
   if (isData()) {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
     rttSupers.~unique_ptr();
-  } else if (type.isFunction() || type.isRef()) {
-    // Nothing special to do for a function or a non-GC reference (GC data was
-    // handled earlier). For references, this handles the case of (ref ? i31)
-    // for example, which may or may not be basic.
-  } else {
-    // Basic types need no special handling.
-    // TODO: change this to an assert after we figure out the underlying issue
-    //       on the release builder
-    //       https://github.com/WebAssembly/binaryen/issues/3459
-    if (!type.isBasic()) {
-      Fatal() << "~Literal on unhandled type: " << type << '\n';
-    }
   }
 }
 
@@ -225,7 +238,7 @@ Literal Literal::makeZero(Type type) {
     if (type == Type::i31ref) {
       return makeI31(0);
     } else {
-      return makeNull(type);
+      return makeNull(type.getHeapType());
     }
   } else if (type.isRtt()) {
     return Literal(type);
@@ -339,7 +352,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::none:
     case Type::unreachable:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -368,7 +380,7 @@ bool Literal::operator==(const Literal& other) const {
       return gcData == other.gcData;
     }
     // other non-null reference type literals cannot represent concrete values,
-    // i.e. there is no concrete externref, anyref or eqref other than null.
+    // i.e. there is no concrete anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");
   };
   if (type.isBasic()) {
@@ -385,7 +397,6 @@ bool Literal::operator==(const Literal& other) const {
       case Type::v128:
         return memcmp(v128, other.v128, 16) == 0;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::dataref:
@@ -512,10 +523,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       }
     } else {
       switch (literal.type.getHeapType().getBasic()) {
-        case HeapType::ext:
-          assert(literal.isNull() && "unexpected non-null externref literal");
-          o << "externref(null)";
-          break;
         case HeapType::any:
           assert(literal.isNull() && "unexpected non-null anyref literal");
           o << "anyref(null)";
@@ -564,7 +571,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         literal.printVec128(o, literal.getv128());
         break;
       case Type::funcref:
-      case Type::externref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -788,7 +794,6 @@ Literal Literal::eqz() const {
       return eq(Literal(double(0)));
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -812,7 +817,6 @@ Literal Literal::neg() const {
       return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -836,7 +840,6 @@ Literal Literal::abs() const {
       return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -977,7 +980,6 @@ Literal Literal::add(const Literal& other) const {
       return standardizeNaN(getf64() + other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1001,7 +1003,6 @@ Literal Literal::sub(const Literal& other) const {
       return standardizeNaN(getf64() - other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1104,7 +1105,6 @@ Literal Literal::mul(const Literal& other) const {
       return standardizeNaN(getf64() * other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1340,7 +1340,6 @@ Literal Literal::eq(const Literal& other) const {
       return Literal(getf64() == other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1364,7 +1363,6 @@ Literal Literal::ne(const Literal& other) const {
       return Literal(getf64() != other.getf64());
     case Type::v128:
     case Type::funcref:
-    case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2356,15 +2354,31 @@ Literal Literal::pmaxF64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesF64x2, &Literal::pmax>(*this, other);
 }
 
-Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
-  LaneArray<8> lhs = getLanesSI16x8();
-  LaneArray<8> rhs = other.getLanesSI16x8();
-  LaneArray<4> result;
-  for (size_t i = 0; i < 4; ++i) {
-    result[i] = Literal(lhs[i * 2].geti32() * rhs[i * 2].geti32() +
-                        lhs[i * 2 + 1].geti32() * rhs[i * 2 + 1].geti32());
+template<size_t Lanes,
+         size_t Factor,
+         LaneArray<Lanes * Factor> (Literal::*IntoLanes)() const>
+static Literal dot(const Literal& left, const Literal& right) {
+  LaneArray<Lanes* Factor> lhs = (left.*IntoLanes)();
+  LaneArray<Lanes* Factor> rhs = (right.*IntoLanes)();
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes; ++i) {
+    result[i] = Literal(int32_t(0));
+    for (size_t j = 0; j < Factor; ++j) {
+      result[i] = Literal(result[i].geti32() + lhs[i * Factor + j].geti32() *
+                                                 rhs[i * Factor + j].geti32());
+    }
   }
   return Literal(result);
+}
+
+Literal Literal::dotSI8x16toI16x8(const Literal& other) const {
+  return dot<8, 2, &Literal::getLanesSI8x16>(*this, other);
+}
+Literal Literal::dotUI8x16toI16x8(const Literal& other) const {
+  return dot<8, 2, &Literal::getLanesUI8x16>(*this, other);
+}
+Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
+  return dot<4, 2, &Literal::getLanesSI16x8>(*this, other);
 }
 
 Literal Literal::bitselectV128(const Literal& left,

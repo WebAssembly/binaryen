@@ -42,7 +42,7 @@ struct TrapException {};
 // GC memory may be allocated, but hosts have limits.)
 struct HostLimitException {};
 
-struct ShellExternalInterface : ModuleInstance::ExternalInterface {
+struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
   // isn't well-behaved in C++. WebAssembly nonetheless expects it to behave
   // properly. Avoid emitting unaligned load/store by checking for alignment
@@ -95,16 +95,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   } memory;
 
   std::unordered_map<Name, std::vector<Literal>> tables;
-  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   ShellExternalInterface(
-    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances_ = {})
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
     : memory() {
     linkedInstances.swap(linkedInstances_);
   }
   virtual ~ShellExternalInterface() = default;
 
-  ModuleInstance* getImportInstance(Importable* import) {
+  ModuleRunner* getImportInstance(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
       Fatal() << "importGlobals: unknown import: " << import->module.str << "."
@@ -113,7 +113,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return it->second.get();
   }
 
-  void init(Module& wasm, ModuleInstance& instance) override {
+  void init(Module& wasm, ModuleRunner& instance) override {
     if (wasm.memory.exists && !wasm.memory.imported()) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     }
@@ -133,7 +133,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -153,9 +153,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   Literals callTable(Name tableName,
                      Index index,
                      HeapType sig,
-                     LiteralList& arguments,
+                     Literals& arguments,
                      Type results,
-                     ModuleInstance& instance) override {
+                     ModuleRunner& instance) override {
 
     auto it = tables.find(tableName);
     if (it == tables.end()) {

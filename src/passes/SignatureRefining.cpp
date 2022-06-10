@@ -26,6 +26,7 @@
 // type, and all call_refs using it).
 //
 
+#include "ir/export-utils.h"
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
@@ -34,8 +35,6 @@
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
-
-using namespace std;
 
 namespace wasm {
 
@@ -71,9 +70,15 @@ struct SignatureRefining : public Pass {
 
       // A possibly improved LUB for the results.
       LUBFinder resultsLUB;
+
+      // Normally we can optimize, but some cases prevent a particular signature
+      // type from being changed at all, see below.
+      bool canModify = true;
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+    // This analysis also modifies the wasm as it goes, as the getResultsLUB()
+    // operation has side effects (see comment on header declaration).
+    ModuleUtils::ParallelFunctionAnalysis<Info, Mutable> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           return;
@@ -108,6 +113,20 @@ struct SignatureRefining : public Pass {
       allInfo[func->type].resultsLUB.combine(info.resultsLUB);
     }
 
+    // We cannot alter the signature of an exported function, as the outside may
+    // notice us doing so. For example, if we turn a parameter from nullable
+    // into non-nullable then callers sending a null will break. Put another
+    // way, we need to see all callers to refine types, and for exports we
+    // cannot do so.
+    // TODO If a function type is passed we should also mark the types used
+    //      there, etc., recursively. For now this code just handles the top-
+    //      level type, which is enough to keep the fuzzer from erroring. More
+    //      generally, we need to decide about adding a "closed-world" flag of
+    //      some kind.
+    for (auto* exportedFunc : ExportUtils::getExportedFunctions(*module)) {
+      allInfo[exportedFunc->type].canModify = false;
+    }
+
     bool refinedResults = false;
 
     // Compute optimal LUBs.
@@ -115,6 +134,11 @@ struct SignatureRefining : public Pass {
     for (auto& func : module->functions) {
       auto type = func->type;
       if (!seen.insert(type).second) {
+        continue;
+      }
+
+      auto& info = allInfo[type];
+      if (!info.canModify) {
         continue;
       }
 
@@ -129,7 +153,6 @@ struct SignatureRefining : public Pass {
         }
       };
 
-      auto& info = allInfo[type];
       for (auto* call : info.calls) {
         updateLUBs(call->operands);
       }
@@ -220,30 +243,22 @@ struct SignatureRefining : public Pass {
           for (auto param : iter->second.params) {
             newParamsTypes.push_back(param);
           }
-          TypeUpdating::updateParamTypes(func, newParamsTypes, wasm);
+          // Do not update local.get/local.tee here, as we will do so in
+          // GlobalTypeRewriter::updateSignatures, below. (Doing an update here
+          // would leave the IR in an inconsistent state of a partial update;
+          // instead, do the full update at the end.)
+          TypeUpdating::updateParamTypes(
+            func,
+            newParamsTypes,
+            wasm,
+            TypeUpdating::LocalUpdatingMode::DoNotUpdate);
         }
       }
     };
     CodeUpdater(*this, *module).run(runner, module);
 
     // Rewrite the types.
-    class TypeRewriter : public GlobalTypeRewriter {
-      SignatureRefining& parent;
-
-    public:
-      TypeRewriter(Module& wasm, SignatureRefining& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
-
-      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-        auto iter = parent.newSignatures.find(oldSignatureType);
-        if (iter != parent.newSignatures.end()) {
-          sig.params = getTempType(iter->second.params);
-          sig.results = getTempType(iter->second.results);
-        }
-      }
-    };
-
-    TypeRewriter(*module, *this).update();
+    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
     if (refinedResults) {
       // After return types change we need to propagate.

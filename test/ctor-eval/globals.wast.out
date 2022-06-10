@@ -1,0 +1,12 @@
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (global $g1 (mut i32) (i32.const 50))
+ (global $g2 (mut i32) (i32.const 40))
+ (export "keepalive" (func $keepalive))
+ (func $keepalive (result i32)
+  (i32.add
+   (global.get $g1)
+   (global.get $g2)
+  )
+ )
+)
