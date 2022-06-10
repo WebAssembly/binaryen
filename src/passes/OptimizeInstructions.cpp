@@ -2831,8 +2831,8 @@ private:
                   binary(&opMid,
                          binary(&opLhs, any(&x), any(&z1)),
                          binary(&opRhs, any(&y), any(&z2)))) &&
-          (opLhs == opRhs) && hasAnyShift(opLhs) &&
-          hasAnyBitwise(opMid) && areConsecutiveInputsEqualAndFoldable(z1, z2)) {
+          (opLhs == opRhs) && hasAnyShift(opLhs) && hasAnyBitwise(opMid) &&
+          areConsecutiveInputsEqualAndFoldable(z1, z2)) {
         auto* lhs = curr->left->cast<Binary>();
         lhs->right = y;
         curr->right = z1;
