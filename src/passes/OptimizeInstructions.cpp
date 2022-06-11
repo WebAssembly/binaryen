@@ -1056,6 +1056,10 @@ struct OptimizeInstructions
     if (auto* ret = deduplicateUnary(curr)) {
       return replaceCurrent(ret);
     }
+
+    if (auto* ret = simplifyRoundingsAndConversions(curr)) {
+      return replaceCurrent(ret);
+    }
   }
 
   void visitSelect(Select* curr) {
@@ -3392,6 +3396,66 @@ private:
           curr->left = inner->left;
           return curr;
         }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* simplifyRoundingsAndConversions(Unary* unaryOuter) {
+    switch (unaryOuter->op) {
+      case TruncSFloat64ToInt32:
+      case TruncUFloat64ToInt32:
+      case TruncSatSFloat64ToInt32:
+      case TruncSatUFloat64ToInt32: {
+        // Integer -> Float -> Integer rountripping optimizations
+        //   i32.trunc(_sat)_f64_(s|u)(
+        //     f64.convert_i32_(s|u)(i32(x))
+        //   )
+        //   ->  i32(x)
+        if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
+          switch (unaryInner->op) {
+            case ConvertSInt32ToFloat64:
+            case ConvertUInt32ToFloat64: {
+              return unaryInner->value;
+            }
+            default: {
+            }
+          }
+        }
+        break;
+      }
+      case CeilFloat32:
+      case CeilFloat64:
+      case FloorFloat32:
+      case FloorFloat64:
+      case TruncFloat32:
+      case TruncFloat64:
+      case NearestFloat32:
+      case NearestFloat64: {
+        // Rounding after integer to float conversion may be skipped
+        //   ceil(float(int(x)))     ->  float(int(x))
+        //   floor(float(int(x)))    ->  float(int(x))
+        //   trunc(float(int(x)))    ->  float(int(x))
+        //   nearest(float(int(x)))  ->  float(int(x))
+        if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
+          switch (unaryInner->op) {
+            case ConvertSInt32ToFloat32:
+            case ConvertSInt32ToFloat64:
+            case ConvertUInt32ToFloat32:
+            case ConvertUInt32ToFloat64:
+            case ConvertSInt64ToFloat32:
+            case ConvertSInt64ToFloat64:
+            case ConvertUInt64ToFloat32:
+            case ConvertUInt64ToFloat64: {
+              return unaryInner;
+            }
+            default: {
+            }
+          }
+        }
+        break;
+      }
+      default: {
       }
     }
     return nullptr;
