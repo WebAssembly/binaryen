@@ -191,7 +191,7 @@ void TranslateToFuzzReader::setupMemory() {
     // need at least one segment for memory.inits
     size_t numSegments = upTo(8) + 1;
     for (size_t i = 0; i < numSegments; i++) {
-      Memory::Segment segment;
+      DataSegment segment;
       segment.isPassive = bool(upTo(2));
       size_t segSize = upTo(USABLE_MEMORY * 2);
       segment.data.resize(segSize);
@@ -202,15 +202,15 @@ void TranslateToFuzzReader::setupMemory() {
         segment.offset = builder.makeConst(int32_t(memCovered));
         memCovered += segSize;
       }
-      wasm.memory.segments.push_back(segment);
+      wasm.dataSegments.push_back(segment);
     }
   } else {
     // init some data
-    wasm.memory.segments.emplace_back(builder.makeConst(int32_t(0)));
+    wasm.dataSegments.emplace_back(builder.makeConst(int32_t(0)));
     auto num = upTo(USABLE_MEMORY * 2);
     for (size_t i = 0; i < num; i++) {
       auto value = upTo(512);
-      wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
+      wasm.dataSegments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
     }
   }
   // Add memory hasher helper (for the hash, see hash.h). The function looks
@@ -326,7 +326,7 @@ void TranslateToFuzzReader::setupTags() {
 }
 
 void TranslateToFuzzReader::finalizeMemory() {
-  for (auto& segment : wasm.memory.segments) {
+  for (auto& segment : wasm.dataSegments) {
     Address maxOffset = segment.data.size();
     if (!segment.isPassive) {
       if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
@@ -2905,8 +2905,8 @@ Expression* TranslateToFuzzReader::makeMemoryInit() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  uint32_t segment = upTo(wasm.memory.segments.size());
-  size_t totalSize = wasm.memory.segments[segment].data.size();
+  uint32_t segment = upTo(wasm.dataSegments.size());
+  size_t totalSize = wasm.dataSegments[segment].data.size();
   size_t offsetVal = upTo(totalSize);
   size_t sizeVal = upTo(totalSize - offsetVal);
   Expression* dest = makePointer();
@@ -2919,7 +2919,7 @@ Expression* TranslateToFuzzReader::makeDataDrop() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  return builder.makeDataDrop(upTo(wasm.memory.segments.size()));
+  return builder.makeDataDrop(upTo(wasm.dataSegments.size()));
 }
 
 Expression* TranslateToFuzzReader::makeMemoryCopy() {
