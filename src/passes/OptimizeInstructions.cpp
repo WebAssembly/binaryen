@@ -3407,11 +3407,10 @@ private:
       case TruncUFloat64ToInt32:
       case TruncSatSFloat64ToInt32:
       case TruncSatUFloat64ToInt32: {
-        // Integer -> Float -> Integer rountripping optimizations
-        //   i32.trunc(_sat)_f64_(s|u)(
-        //     f64.convert_i32_(s|u)(i32(x))
-        //   )
-        //   ->  i32(x)
+        // i32 -> f64 -> i32 rountripping optimizations
+        //   i32.trunc(_sat)_f64_(s|u)(f64.convert_i32_(s|u)(x))
+        //     ==>
+        //   x
         if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
           switch (unaryInner->op) {
             case ConvertSInt32ToFloat64:
@@ -3433,10 +3432,10 @@ private:
       case NearestFloat32:
       case NearestFloat64: {
         // Rounding after integer to float conversion may be skipped
-        //   ceil(float(int(x)))     ->  float(int(x))
-        //   floor(float(int(x)))    ->  float(int(x))
-        //   trunc(float(int(x)))    ->  float(int(x))
-        //   nearest(float(int(x)))  ->  float(int(x))
+        //   ceil(float(int(x)))     ==>  float(int(x))
+        //   floor(float(int(x)))    ==>  float(int(x))
+        //   trunc(float(int(x)))    ==>  float(int(x))
+        //   nearest(float(int(x)))  ==>  float(int(x))
         if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
           switch (unaryInner->op) {
             case ConvertSInt32ToFloat32:
