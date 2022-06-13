@@ -43,8 +43,8 @@ inline void ensureExists(Memory& memory) {
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
 inline bool ensureLimitedSegments(Module& module) {
-  Memory& memory = module.memory;
-  if (memory.segments.size() <= WebLimitations::MaxDataSegments) {
+  DataSegment& dataSegments = module.dataSegments;
+  if (dataSegments.size() <= WebLimitations::MaxDataSegments) {
     return true;
   }
 
@@ -54,17 +54,17 @@ inline bool ensureLimitedSegments(Module& module) {
     return false;
   }
 
-  auto isEmpty = [](Memory::Segment& segment) {
+  auto isEmpty = [](DataSegment& segment) {
     return segment.data.size() == 0;
   };
 
-  auto isConstantOffset = [](Memory::Segment& segment) {
+  auto isConstantOffset = [](DataSegment& segment) {
     return segment.offset && segment.offset->is<Const>();
   };
 
   Index numConstant = 0, numDynamic = 0;
   bool hasPassiveSegments = false;
-  for (auto& segment : memory.segments) {
+  for (auto& segment : dataSegments) {
     if (!isEmpty(segment)) {
       if (isConstantOffset(segment)) {
         numConstant++;
@@ -97,7 +97,7 @@ inline bool ensureLimitedSegments(Module& module) {
   mergedSegments.reserve(WebLimitations::MaxDataSegments);
 
   // drop empty segments and pass through dynamic-offset segments
-  for (auto& segment : memory.segments) {
+  for (auto& segment : dataSegments) {
     if (isEmpty(segment)) {
       continue;
     }
@@ -109,11 +109,11 @@ inline bool ensureLimitedSegments(Module& module) {
 
   // from here on, we concern ourselves with non-empty constant-offset
   // segments, the ones which we may need to merge
-  auto isRelevant = [&](Memory::Segment& segment) {
+  auto isRelevant = [&](DataSegment& segment) {
     return !isEmpty(segment) && isConstantOffset(segment);
   };
-  for (Index i = 0; i < memory.segments.size(); i++) {
-    auto& segment = memory.segments[i];
+  for (Index i = 0; i < dataSegments.size(); i++) {
+    auto& segment = dataSegments[i];
     if (!isRelevant(segment)) {
       continue;
     }
@@ -124,8 +124,8 @@ inline bool ensureLimitedSegments(Module& module) {
     // we can emit only one more segment! merge everything into one
     // start the combined segment at the bottom of them all
     auto start = segment.offset->cast<Const>()->value.getInteger();
-    for (Index j = i + 1; j < memory.segments.size(); j++) {
-      auto& segment = memory.segments[j];
+    for (Index j = i + 1; j < dataSegments.size(); j++) {
+      auto& segment = dataSegments[j];
       if (!isRelevant(segment)) {
         continue;
       }
@@ -137,9 +137,9 @@ inline bool ensureLimitedSegments(Module& module) {
     c->value = Literal(int32_t(start));
     c->type = Type::i32;
 
-    Memory::Segment combined(c);
-    for (Index j = i; j < memory.segments.size(); j++) {
-      auto& segment = memory.segments[j];
+    DataSegment combined(c);
+    for (Index j = i; j < dataSegments.size(); j++) {
+      auto& segment = dataSegments[j];
       if (!isRelevant(segment)) {
         continue;
       }
@@ -156,7 +156,7 @@ inline bool ensureLimitedSegments(Module& module) {
     break;
   }
 
-  memory.segments.swap(mergedSegments);
+  dataSegments.swap(mergedSegments);
   return true;
 }
 } // namespace wasm::MemoryUtils
