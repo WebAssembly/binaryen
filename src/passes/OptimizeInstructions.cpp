@@ -3405,8 +3405,8 @@ private:
     switch (unaryOuter->op) {
       case TruncSFloat64ToInt32:
       case TruncSatSFloat64ToInt32: {
-        // i32 -> f64 -> i32 rountripping optimizations
-        //   i32.trunc(_sat)_f64_s(f64.convert_i32_s(x)) ==>  x
+        // i32 -> f64 -> i32 rountripping optimization:
+        //   i32.trunc(_sat)_f64_s(f64.convert_i32_s(x))  ==>  x
         if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
           if (unaryInner->op == ConvertSInt32ToFloat64) {
             return unaryInner->value;
@@ -3416,8 +3416,8 @@ private:
       }
       case TruncUFloat64ToInt32:
       case TruncSatUFloat64ToInt32: {
-        // u32 -> f64 -> u32 rountripping optimizations
-        //   i32.trunc(_sat)_f64_u(f64.convert_i32_u(x)) ==>  x
+        // u32 -> f64 -> u32 rountripping optimization:
+        //   i32.trunc(_sat)_f64_u(f64.convert_i32_u(x))  ==>  x
         if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
           if (unaryInner->op == ConvertUInt32ToFloat64) {
             return unaryInner->value;
