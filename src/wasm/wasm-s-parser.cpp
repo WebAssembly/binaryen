@@ -3039,7 +3039,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
         offset->set(Literal(int32_t(0)));
       }
       parseInnerData(inner, j, {}, offset, false);
-      wasm.memory.initial = wasm.memory.segments[0].data.size();
+      wasm.memory.initial = wasm.dataSegments[0].data.size();
       return;
     }
   }
@@ -3073,9 +3073,9 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
-      wasm.memory.segments.emplace_back(offset, data.data(), data.size());
+      wasm.dataSegments.emplace_back(offset, data.data(), data.size());
     } else {
-      wasm.memory.segments.emplace_back(offset, "", 0);
+      wasm.dataSegments.emplace_back(offset, "", 0);
     }
     i++;
   }
@@ -3124,7 +3124,7 @@ void SExpressionWasmBuilder::parseInnerData(
       stringToBinary(input, size, data);
     }
   }
-  wasm.memory.segments.emplace_back(
+  wasm.dataSegments.emplace_back(
     name, isPassive, offset, data.data(), data.size());
 }
 
