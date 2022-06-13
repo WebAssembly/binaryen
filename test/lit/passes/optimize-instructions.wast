@@ -13797,10 +13797,18 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.trunc_f64_u
+  ;; CHECK-NEXT:    (f64.convert_i32_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.trunc_f64_s
+  ;; CHECK-NEXT:    (f64.convert_i32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.trunc_f32_u
@@ -13839,12 +13847,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simplify_int_float_conversion_roundtrips (param $x i32) (param $y i64)
-    (drop (i32.trunc_f64_s (f64.convert_i32_u (local.get $x))))
-    (drop (i32.trunc_f64_s (f64.convert_i32_u (local.get $x))))
-    (drop (i32.trunc_f64_u (f64.convert_i32_s (local.get $x))))
+    (drop (i32.trunc_f64_u (f64.convert_i32_u (local.get $x))))
     (drop (i32.trunc_f64_s (f64.convert_i32_s (local.get $x))))
 
     ;; skips
+    (drop (i32.trunc_f64_u (f64.convert_i32_s (local.get $x))))
+    (drop (i32.trunc_f64_s (f64.convert_i32_u (local.get $x))))
     (drop (i32.trunc_f32_u (f32.convert_i32_u (local.get $x))))
     (drop (i32.trunc_f64_u (f64.convert_i64_u (local.get $y))))
     (drop (i64.trunc_f64_s (f64.convert_i64_s (local.get $y))))

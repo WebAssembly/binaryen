@@ -3404,21 +3404,23 @@ private:
   Expression* simplifyRoundingsAndConversions(Unary* unaryOuter) {
     switch (unaryOuter->op) {
       case TruncSFloat64ToInt32:
-      case TruncUFloat64ToInt32:
-      case TruncSatSFloat64ToInt32:
-      case TruncSatUFloat64ToInt32: {
+      case TruncSatSFloat64ToInt32: {
         // i32 -> f64 -> i32 rountripping optimizations
-        //   i32.trunc(_sat)_f64_(s|u)(f64.convert_i32_(s|u)(x))
-        //     ==>
-        //   x
+        //   i32.trunc(_sat)_f64_s(f64.convert_i32_s(x)) ==>  x
         if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
-          switch (unaryInner->op) {
-            case ConvertSInt32ToFloat64:
-            case ConvertUInt32ToFloat64: {
-              return unaryInner->value;
-            }
-            default: {
-            }
+          if (unaryInner->op == ConvertSInt32ToFloat64) {
+            return unaryInner->value;
+          }
+        }
+        break;
+      }
+      case TruncUFloat64ToInt32:
+      case TruncSatUFloat64ToInt32: {
+        // u32 -> f64 -> u32 rountripping optimizations
+        //   i32.trunc(_sat)_f64_u(f64.convert_i32_u(x)) ==>  x
+        if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
+          if (unaryInner->op == ConvertUInt32ToFloat64) {
+            return unaryInner->value;
           }
         }
         break;
