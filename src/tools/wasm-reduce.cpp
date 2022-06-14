@@ -1305,6 +1305,9 @@ int main(int argc, const char* argv[]) {
   if (getTypeSystem() == TypeSystem::Nominal) {
     extraFlags += " --nominal";
   }
+  if (getTypeSystem() == TypeSystem::Isorecursive) {
+    extraFlags += " --hybrid";
+  }
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";
