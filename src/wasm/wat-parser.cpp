@@ -988,6 +988,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
       if (auto name = decls.typeDefs[i].name; name.is()) {
         // TODO: struct field names
         bool inserted = wasm.typeNames.insert({types[i], {name, {}}}).second;
+        WASM_UNUSED(inserted);
         assert(inserted);
       }
     }
