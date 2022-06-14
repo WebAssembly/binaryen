@@ -1301,7 +1301,7 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
                     "Memory operations require a memory")) {
     return;
   }
-  shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
+  shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
                curr,
                "memory.init segment index out of bounds");
 }
@@ -1317,7 +1317,7 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
                     "Memory operations require a memory")) {
     return;
   }
-  shouldBeTrue(curr->segment < getModule()->memory.segments.size(),
+  shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
                curr,
                "data.drop segment index out of bounds");
 }

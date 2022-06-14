@@ -111,8 +111,8 @@ public:
   StringConstantTracker(Module& wasm) : wasm(wasm) { calcSegmentOffsets(); }
 
   const char* stringAtAddr(Address address) {
-    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-      Memory::Segment& segment = wasm.memory.segments[i];
+    for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
+      DataSegment& segment = wasm.dataSegments[i];
       Address offset = segmentOffsets[i];
       if (offset != UNKNOWN_OFFSET && address >= offset &&
           address < offset + segment.data.size()) {
@@ -159,8 +159,8 @@ private:
       } searcher(passiveOffsets);
       searcher.walkModule(&wasm);
     }
-    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-      auto& segment = wasm.memory.segments[i];
+    for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
+      auto& segment = wasm.dataSegments[i];
       if (segment.isPassive) {
         auto it = passiveOffsets.find(i);
         if (it != passiveOffsets.end()) {
@@ -220,7 +220,7 @@ static void removeSegment(Module& wasm, Index segment) {
   // Resize the segment to zero.  In theory we should completely remove it
   // but that would mean re-numbering the segments that follow which is
   // non-trivial.
-  wasm.memory.segments[segment].data.resize(0);
+  wasm.dataSegments[segment].data.resize(0);
 }
 
 static Address getExportedAddress(Module& wasm, Export* export_) {
@@ -250,9 +250,9 @@ static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
   StringConstantTracker stringTracker(wasm);
   Address startAddress = getExportedAddress(wasm, start);
   Address endAddress = getExportedAddress(wasm, end);
-  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
     Address segmentStart = stringTracker.segmentOffsets[i];
-    size_t segmentSize = wasm.memory.segments[i].data.size();
+    size_t segmentSize = wasm.dataSegments[i].data.size();
     if (segmentStart <= startAddress &&
         segmentStart + segmentSize >= endAddress) {
       Address address = startAddress;
@@ -269,7 +269,7 @@ static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
         // If we can't remove the whole segment then just set the string
         // data to zero.
         size_t segmentOffset = startAddress - segmentStart;
-        char* startElem = &wasm.memory.segments[i].data[segmentOffset];
+        char* startElem = &wasm.dataSegments[i].data[segmentOffset];
         memset(startElem, 0, endAddress - startAddress);
       }
       break;
@@ -343,18 +343,18 @@ EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
   // single segment.
   // We can detect this by checking for segments that contain only JS strings.
   // When we find such segements we remove them from the final binary.
-  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
     Address start = walker.stringTracker.segmentOffsets[i];
     Address cur = start;
 
-    while (cur < start + wasm.memory.segments[i].data.size()) {
+    while (cur < start + wasm.dataSegments[i].data.size()) {
       if (walker.codeAddresses.count(cur) == 0) {
         break;
       }
       cur.addr += walker.codeAddresses[cur];
     }
 
-    if (cur == start + wasm.memory.segments[i].data.size()) {
+    if (cur == start + wasm.dataSegments[i].data.size()) {
       // Entire segment is contains JS strings.  Remove it.
       removeSegment(wasm, i);
     }
@@ -509,7 +509,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
 void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
                                                    Address base) {
   size_t lastEnd = 0;
-  for (Memory::Segment& seg : wasm.memory.segments) {
+  for (DataSegment& seg : wasm.dataSegments) {
     if (seg.isPassive) {
       Fatal() << "separating passive segments not implemented";
     }
@@ -526,7 +526,7 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     outfile->write(seg.data.data(), seg.data.size());
     lastEnd = offset + seg.data.size();
   }
-  wasm.memory.segments.clear();
+  wasm.dataSegments.clear();
 }
 
 } // namespace wasm

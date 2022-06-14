@@ -3768,7 +3768,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    wasm->memory.segments.emplace_back(Name(),
+    wasm->dataSegments.emplace_back(Name(),
                                        segmentPassive[i],
                                        (Expression*)segmentOffsets[i],
                                        segments[i],
@@ -3779,12 +3779,12 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 // Memory segments
 
 uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
-  return ((Module*)module)->memory.segments.size();
+  return ((Module*)module)->dataSegments.size();
 }
 uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
                                             BinaryenIndex id) {
   auto* wasm = (Module*)module;
-  if (wasm->memory.segments.size() <= id) {
+  if (wasm->dataSegments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
 
@@ -3797,7 +3797,7 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
     return false;
   };
 
-  const auto& segment = wasm->memory.segments[id];
+  const auto& segment = wasm->dataSegments[id];
 
   int64_t ret;
   if (globalOffset(segment.offset, ret)) {
@@ -3846,7 +3846,7 @@ bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {
-  const auto& segments = ((Module*)module)->memory.segments;
+  const auto& segments = ((Module*)module)->dataSegments;
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
@@ -3854,7 +3854,7 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
 }
 bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
                                      BinaryenIndex id) {
-  const auto& segments = ((Module*)module)->memory.segments;
+  const auto& segments = ((Module*)module)->dataSegments;
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
@@ -3863,7 +3863,7 @@ bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
                                    char* buffer) {
-  const auto& segments = ((Module*)module)->memory.segments;
+  const auto& segments = ((Module*)module)->dataSegments;
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }

@@ -43,7 +43,7 @@ inline void ensureExists(Memory& memory) {
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
 inline bool ensureLimitedSegments(Module& module) {
-  DataSegment& dataSegments = module.dataSegments;
+  auto& dataSegments = module.dataSegments;
   if (dataSegments.size() <= WebLimitations::MaxDataSegments) {
     return true;
   }
@@ -93,7 +93,7 @@ inline bool ensureLimitedSegments(Module& module) {
     assert(num == WebLimitations::MaxDataSegments - 1);
   }
 
-  std::vector<Memory::Segment> mergedSegments;
+  std::vector<DataSegment> mergedSegments;
   mergedSegments.reserve(WebLimitations::MaxDataSegments);
 
   // drop empty segments and pass through dynamic-offset segments

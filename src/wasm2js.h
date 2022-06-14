@@ -94,8 +94,8 @@ bool isTableExported(Module& wasm) {
 }
 
 bool hasActiveSegments(Module& wasm) {
-  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
-    if (!wasm.memory.segments[i].isPassive) {
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+    if (!wasm.dataSegments[i].isPassive) {
       return true;
     }
   }
@@ -2665,16 +2665,14 @@ void Wasm2JSGlue::emitMemory() {
 
   // If there are no memory segments, we don't need to emit any support code for
   // segment creation.
-  if ((!wasm.memory.exists) || wasm.memory.segments.empty()) {
+  if ((!wasm.memory.exists) || wasm.dataSegments.empty()) {
     return;
   }
 
   // If we have passive memory segments, we need to store those.
-  for (auto& seg : wasm.memory.segments) {
-    if (seg.isPassive) {
-      out << "  var memorySegments = {};\n";
-      break;
-    }
+  ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
+    out << "  var memorySegments = {};\n";
+    break; 
   }
 
   out <<
@@ -2706,20 +2704,17 @@ void Wasm2JSGlue::emitMemory() {
   }
 )";
 
-  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
-    auto& seg = wasm.memory.segments[i];
-    if (seg.isPassive) {
-      // Fancy passive segments are decoded into typed arrays on the side, for
-      // later copying.
-      out << "memorySegments[" << i
-          << "] = base64DecodeToExistingUint8Array(new Uint8Array("
-          << seg.data.size() << ")"
-          << ", 0, \"" << base64Encode(seg.data) << "\");\n";
-    }
+  ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
+    // Fancy passive segments are decoded into typed arrays on the side, for
+    // later copying.
+    out << "memorySegments[" << i
+        << "] = base64DecodeToExistingUint8Array(new Uint8Array("
+        << segment.data.size() << ")"
+        << ", 0, \"" << base64Encode(segment.data) << "\");\n";
   }
 
   if (hasActiveSegments(wasm)) {
-    auto globalOffset = [&](const Memory::Segment& segment) {
+    auto globalOffset = [&](const DataSegment& segment) {
       if (auto* c = segment.offset->dynCast<Const>()) {
         return std::to_string(c->value.getInteger());
       }
@@ -2732,15 +2727,12 @@ void Wasm2JSGlue::emitMemory() {
     };
 
     out << "function initActiveSegments(imports) {\n";
-    for (Index i = 0; i < wasm.memory.segments.size(); i++) {
-      auto& seg = wasm.memory.segments[i];
-      if (!seg.isPassive) {
-        // Plain active segments are decoded directly into the main memory.
-        out << "  base64DecodeToExistingUint8Array(bufferView, "
-            << globalOffset(seg) << ", \"" << base64Encode(seg.data)
-            << "\");\n";
-      }
-    }
+    ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
+      // Plain active segments are decoded directly into the main memory.
+      out << "  base64DecodeToExistingUint8Array(bufferView, "
+          << globalOffset(segment) << ", \"" << base64Encode(segment.data)
+          << "\");\n";
+    } 
     out << "}\n";
   }
 }
