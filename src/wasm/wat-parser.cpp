@@ -501,7 +501,8 @@ MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx, ParseInput& in) {
     return {};
   }
 
-  auto nullability = in.takeKeyword("null"sv) ? Nullable : NonNullable;
+  [[maybe_unused]] auto nullability =
+    in.takeKeyword("null"sv) ? Nullable : NonNullable;
 
   auto type = heaptype(ctx, in);
   CHECK_ERR(type);
@@ -675,7 +676,7 @@ Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx, ParseInput& in) {
 //           | v:id  => x (if types[x] = v)
 template<typename Ctx>
 Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx, ParseInput& in) {
-  Index index;
+  [[maybe_unused]] Index index;
   if (auto x = in.takeU32()) {
     index = *x;
   } else if (auto id = in.takeID()) {
@@ -742,7 +743,7 @@ Result<std::vector<Name>> inlineExports(ParseInput& in) {
 
 // type ::= '(' 'type' id? ft:functype ')' => ft
 template<typename Ctx> MaybeResult<> type(Ctx& ctx, ParseInput& in) {
-  auto start = in.getPos();
+  [[maybe_unused]] auto start = in.getPos();
 
   if (!in.takeSExprStart("type"sv)) {
     return {};
