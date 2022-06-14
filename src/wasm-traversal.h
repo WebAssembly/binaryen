@@ -49,8 +49,8 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
-  ReturnType visitDataSegment(DataSegment* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
+  ReturnType visitDataSegment(DataSegment* curr) { return ReturnType(); }
   ReturnType visitTag(Tag* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
 
