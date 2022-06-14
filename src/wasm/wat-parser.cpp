@@ -337,7 +337,7 @@ struct ParseTypeDefsCtx {
   // Map heap type names to their indices.
   const IndexMap& typeIndices;
 
-  // The index of type definition we are parsing.
+  // The index of the type definition we are parsing.
   Index index = 0;
 
   ParseTypeDefsCtx(TypeBuilder& builder, const IndexMap& typeIndices)
