@@ -427,17 +427,18 @@ private:
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
     if (wasm->dataSegments.empty()) {
-      Builder builder(*wasm);
+      Builder builder(*wasm); 
       std::vector<char> empty;
+      auto new_segment = std::make_unique<DataSegment>(builder.makeConst(int32_t(0)), empty); 
       wasm->dataSegments.push_back(
-        DataSegment(builder.makeConst(int32_t(0)), empty));
+        std::move(new_segment));
     }
     auto& segment = wasm->dataSegments[0];
-    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
+    assert(segment->offset->cast<Const>()->value.getInteger() == 0);
 
     // Copy the current memory contents after execution into the Module's
     // memory.
-    segment.data = memory;
+    segment->data = memory;
   }
 
   // Serializing GC data requires more work than linear memory, because

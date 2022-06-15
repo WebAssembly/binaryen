@@ -3069,52 +3069,52 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                       "memory is shared, but atomics are disabled");
   }
   for (auto& segment : module.dataSegments) {
-    auto size = segment.data.size();
-    if (segment.isPassive) {
+    auto size = segment->data.size();
+    if (segment->isPassive) {
       info.shouldBeTrue(module.features.hasBulkMemory(),
-                        segment.offset,
+                        segment->offset,
                         "nonzero segment flags (bulk memory is disabled)");
-      info.shouldBeEqual(segment.offset,
+      info.shouldBeEqual(segment->offset,
                          (Expression*)nullptr,
-                         segment.offset,
+                         segment->offset,
                          "passive segment should not have an offset");
     } else {
       if (curr.is64()) {
-        if (!info.shouldBeEqual(segment.offset->type,
+        if (!info.shouldBeEqual(segment->offset->type,
                                 Type(Type::i64),
-                                segment.offset,
+                                segment->offset,
                                 "segment offset should be i64")) {
           continue;
         }
       } else {
-        if (!info.shouldBeEqual(segment.offset->type,
+        if (!info.shouldBeEqual(segment->offset->type,
                                 Type(Type::i32),
-                                segment.offset,
+                                segment->offset,
                                 "segment offset should be i32")) {
           continue;
         }
       }
-      info.shouldBeTrue(checkSegmentOffset(segment.offset,
-                                           segment.data.size(),
+      info.shouldBeTrue(checkSegmentOffset(segment->offset,
+                                           segment->data.size(),
                                            curr.initial * Memory::kPageSize,
                                            module.features),
-                        segment.offset,
+                        segment->offset,
                         "memory segment offset should be reasonable");
-      if (segment.offset->is<Const>()) {
-        auto start = segment.offset->cast<Const>()->value.getUnsigned();
+      if (segment->offset->is<Const>()) {
+        auto start = segment->offset->cast<Const>()->value.getUnsigned();
         auto end = start + size;
         info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
-                          segment.data.size(),
+                          segment->data.size(),
                           "segment size should fit in memory (end)");
       }
-      FunctionValidator(module, &info).validate(segment.offset);
+      FunctionValidator(module, &info).validate(segment->offset);
     }
     // If the memory is imported we don't actually know its initial size.
     // Specifically wasm dll's import a zero sized memory which is perfectly
     // valid.
     if (!curr.imported()) {
       info.shouldBeTrue(size <= curr.initial * Memory::kPageSize,
-                        segment.data.size(),
+                        segment->data.size(),
                         "segment size should fit in memory (initial)");
     }
   }

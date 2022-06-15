@@ -206,8 +206,8 @@ struct Walker : public VisitorType {
   }
 
   void walkDataSegment(DataSegment* segment) {
-    if (!segment.isPassive) {
-      walk(segment.offset);
+    if (!segment->isPassive) {
+      walk(segment->offset);
     }
     static_cast<SubType*>(this)->visitDataSegment(segment);
   }

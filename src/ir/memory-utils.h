@@ -54,25 +54,25 @@ inline bool ensureLimitedSegments(Module& module) {
     return false;
   }
 
-  auto isEmpty = [](DataSegment& segment) {
-    return segment.data.size() == 0;
+  auto isEmpty = [](DataSegment* segment) {
+    return segment->data.size() == 0;
   };
 
-  auto isConstantOffset = [](DataSegment& segment) {
-    return segment.offset && segment.offset->is<Const>();
+  auto isConstantOffset = [](DataSegment* segment) {
+    return segment->offset && segment->offset->is<Const>();
   };
 
   Index numConstant = 0, numDynamic = 0;
   bool hasPassiveSegments = false;
   for (auto& segment : dataSegments) {
-    if (!isEmpty(segment)) {
-      if (isConstantOffset(segment)) {
+    if (!isEmpty(segment.get())) {
+      if (isConstantOffset(segment.get())) {
         numConstant++;
       } else {
         numDynamic++;
       }
     }
-    hasPassiveSegments |= segment.isPassive;
+    hasPassiveSegments |= segment->isPassive;
   }
 
   if (hasPassiveSegments) {
@@ -93,43 +93,43 @@ inline bool ensureLimitedSegments(Module& module) {
     assert(num == WebLimitations::MaxDataSegments - 1);
   }
 
-  std::vector<DataSegment> mergedSegments;
+  std::vector<std::unique_ptr<wasm::DataSegment>> mergedSegments;
   mergedSegments.reserve(WebLimitations::MaxDataSegments);
 
   // drop empty segments and pass through dynamic-offset segments
   for (auto& segment : dataSegments) {
-    if (isEmpty(segment)) {
+    if (isEmpty(segment.get())) {
       continue;
     }
-    if (isConstantOffset(segment)) {
+    if (isConstantOffset(segment.get())) {
       continue;
     }
-    mergedSegments.push_back(segment);
+    mergedSegments.push_back(std::move(segment));
   }
 
   // from here on, we concern ourselves with non-empty constant-offset
   // segments, the ones which we may need to merge
-  auto isRelevant = [&](DataSegment& segment) {
+  auto isRelevant = [&](DataSegment* segment) {
     return !isEmpty(segment) && isConstantOffset(segment);
   };
   for (Index i = 0; i < dataSegments.size(); i++) {
     auto& segment = dataSegments[i];
-    if (!isRelevant(segment)) {
+    if (!isRelevant(segment.get())) {
       continue;
     }
     if (mergedSegments.size() + 2 < WebLimitations::MaxDataSegments) {
-      mergedSegments.push_back(segment);
+      mergedSegments.push_back(std::move(segment));
       continue;
     }
     // we can emit only one more segment! merge everything into one
     // start the combined segment at the bottom of them all
-    auto start = segment.offset->cast<Const>()->value.getInteger();
+    auto start = segment->offset->cast<Const>()->value.getInteger();
     for (Index j = i + 1; j < dataSegments.size(); j++) {
       auto& segment = dataSegments[j];
-      if (!isRelevant(segment)) {
+      if (!isRelevant(segment.get())) {
         continue;
       }
-      auto offset = segment.offset->cast<Const>()->value.getInteger();
+      auto offset = segment->offset->cast<Const>()->value.getInteger();
       start = std::min(start, offset);
     }
     // create the segment and add in all the data
@@ -137,22 +137,22 @@ inline bool ensureLimitedSegments(Module& module) {
     c->value = Literal(int32_t(start));
     c->type = Type::i32;
 
-    DataSegment combined(c);
+    auto combined = std::make_unique<DataSegment>(c);
     for (Index j = i; j < dataSegments.size(); j++) {
       auto& segment = dataSegments[j];
-      if (!isRelevant(segment)) {
+      if (!isRelevant(segment.get())) {
         continue;
       }
-      auto offset = segment.offset->cast<Const>()->value.getInteger();
-      auto needed = offset + segment.data.size() - start;
-      if (combined.data.size() < needed) {
-        combined.data.resize(needed);
+      auto offset = segment->offset->cast<Const>()->value.getInteger();
+      auto needed = offset + segment->data.size() - start;
+      if (combined->data.size() < needed) {
+        combined->data.resize(needed);
       }
-      std::copy(segment.data.begin(),
-                segment.data.end(),
-                combined.data.begin() + (offset - start));
+      std::copy(segment->data.begin(),
+                segment->data.end(),
+                combined->data.begin() + (offset - start));
     }
-    mergedSegments.push_back(combined);
+    mergedSegments.push_back(std::move(combined));
     break;
   }
 

@@ -3768,11 +3768,11 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    wasm->dataSegments.emplace_back(Name(),
-                                       segmentPassive[i],
+    auto newSegment = std::make_unique<DataSegment>(segmentPassive[i],
                                        (Expression*)segmentOffsets[i],
                                        segments[i],
                                        segmentSizes[i]);
+    wasm->dataSegments.push_back(std::move(newSegment));
   }
 }
 
@@ -3800,10 +3800,10 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   const auto& segment = wasm->dataSegments[id];
 
   int64_t ret;
-  if (globalOffset(segment.offset, ret)) {
+  if (globalOffset(segment->offset, ret)) {
     return ret;
   }
-  if (auto* get = segment.offset->dynCast<GlobalGet>()) {
+  if (auto* get = segment->offset->dynCast<GlobalGet>()) {
     Global* global = wasm->getGlobal(get->name);
     if (globalOffset(global->init, ret)) {
       return ret;
@@ -3850,7 +3850,7 @@ size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  return segments[id].data.size();
+  return segments[id]->data.size();
 }
 bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
                                      BinaryenIndex id) {
@@ -3858,7 +3858,7 @@ bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  return segments[id].isPassive;
+  return segments[id]->isPassive;
 }
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
@@ -3868,7 +3868,7 @@ void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
     Fatal() << "invalid segment id.";
   }
   const auto& segment = segments[id];
-  std::copy(segment.data.cbegin(), segment.data.cend(), buffer);
+  std::copy(segment->data.cbegin(), segment->data.cend(), buffer);
 }
 
 // Start function. One per module

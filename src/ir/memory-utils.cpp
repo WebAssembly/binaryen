@@ -45,26 +45,26 @@ bool flatten(Module& wasm) {
 
   std::vector<char> data;
   for (auto& segment : dataSegments) {
-    if (segment.isPassive) {
+    if (segment->isPassive) {
       return false;
     }
-    auto* offset = segment.offset->dynCast<Const>();
+    auto* offset = segment->offset->dynCast<Const>();
     if (!offset) {
       return false;
     }
   }
   for (auto& segment : dataSegments) {
-    auto* offset = segment.offset->dynCast<Const>();
+    auto* offset = segment->offset->dynCast<Const>();
     Index start = offset->value.getInteger();
-    Index end = start + segment.data.size();
+    Index end = start + segment->data.size();
     if (end > data.size()) {
       data.resize(end);
     }
-    std::copy(segment.data.begin(), segment.data.end(), data.begin() + start);
+    std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);
   }
   dataSegments.resize(1);
-  dataSegments[0].offset->cast<Const>()->value = Literal(int32_t(0));
-  dataSegments[0].data.swap(data);
+  dataSegments[0]->offset->cast<Const>()->value = Literal(int32_t(0));
+  dataSegments[0]->data.swap(data);
 
   return true;
 }

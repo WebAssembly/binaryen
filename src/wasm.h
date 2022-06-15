@@ -1877,12 +1877,11 @@ public:
   DataSegment(Expression* offset, std::vector<char>& init) : offset(offset) {
     data.swap(init);
   }
-  DataSegment(Name name,
-          bool isPassive,
+  DataSegment(bool isPassive,
           Expression* offset,
           const char* init,
           Address size)
-    : name(name), isPassive(isPassive), offset(offset) {
+    : isPassive(isPassive), offset(offset) {
     data.resize(size);
     std::copy_n(init, size, data.begin());
   }

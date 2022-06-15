@@ -2604,14 +2604,18 @@ private:
     offset.finalize();
 
     // apply active memory segments
-    ModuleUtils::iterActiveDataSegments(wasm, [&](DataSegment* segment) {
+    for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
+      auto& segment = wasm.dataSegments[i];
+      if (segment->isPassive) {
+        continue;
+      }
       Const size;
-      size.value = Literal(uint32_t(segment.data.size()));
+      size.value = Literal(uint32_t(segment->data.size()));
       size.finalize();
 
       MemoryInit init;
       init.segment = i;
-      init.dest = segment.offset;
+      init.dest = segment->offset;
       init.offset = &offset;
       init.size = &size;
       init.finalize();
@@ -2622,7 +2626,7 @@ private:
 
       self()->visit(&init);
       self()->visit(&drop);
-    });
+    };
   }
 
 public:
@@ -3299,7 +3303,7 @@ public:
     NOTE_EVAL1(size);
 
     assert(curr->segment < wasm.dataSegments.size());
-    DataSegment& segment = wasm.dataSegments[curr->segment];
+    auto& segment = wasm.dataSegments[curr->segment];
 
     Address destVal(dest.getSingleValue().getUnsigned());
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
@@ -3308,7 +3312,7 @@ public:
     if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
-    if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
+    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in memory.init");
     }
     auto* inst = getMemoryInstance();
@@ -3319,7 +3323,7 @@ public:
       Literal addr(destVal + i);
       inst->externalInterface->store8(
         inst->getFinalAddressWithoutOffset(addr, 1),
-        segment.data[offsetVal + i]);
+        segment->data[offsetVal + i]);
     }
     return {};
   }

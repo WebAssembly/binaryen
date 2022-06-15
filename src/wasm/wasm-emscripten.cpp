@@ -112,11 +112,11 @@ public:
 
   const char* stringAtAddr(Address address) {
     for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
-      DataSegment& segment = wasm.dataSegments[i];
+      auto& segment = wasm.dataSegments[i];
       Address offset = segmentOffsets[i];
       if (offset != UNKNOWN_OFFSET && address >= offset &&
-          address < offset + segment.data.size()) {
-        return &segment.data[address - offset];
+          address < offset + segment->data.size()) {
+        return &segment->data[address - offset];
       }
     }
     Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
@@ -161,7 +161,7 @@ private:
     }
     for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
       auto& segment = wasm.dataSegments[i];
-      if (segment.isPassive) {
+      if (segment->isPassive) {
         auto it = passiveOffsets.find(i);
         if (it != passiveOffsets.end()) {
           segmentOffsets.push_back(it->second);
@@ -169,7 +169,7 @@ private:
           // This was a non-constant offset (perhaps TLS)
           segmentOffsets.push_back(UNKNOWN_OFFSET);
         }
-      } else if (auto* addrConst = segment.offset->dynCast<Const>()) {
+      } else if (auto* addrConst = segment->offset->dynCast<Const>()) {
         auto address = addrConst->value.getUnsigned();
         segmentOffsets.push_back(address);
       } else {
@@ -220,7 +220,7 @@ static void removeSegment(Module& wasm, Index segment) {
   // Resize the segment to zero.  In theory we should completely remove it
   // but that would mean re-numbering the segments that follow which is
   // non-trivial.
-  wasm.dataSegments[segment].data.resize(0);
+  wasm.dataSegments[segment]->data.resize(0);
 }
 
 static Address getExportedAddress(Module& wasm, Export* export_) {
@@ -252,7 +252,7 @@ static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
   Address endAddress = getExportedAddress(wasm, end);
   for (Index i = 0; i < wasm.dataSegments.size(); i++) {
     Address segmentStart = stringTracker.segmentOffsets[i];
-    size_t segmentSize = wasm.dataSegments[i].data.size();
+    size_t segmentSize = wasm.dataSegments[i]->data.size();
     if (segmentStart <= startAddress &&
         segmentStart + segmentSize >= endAddress) {
       Address address = startAddress;
@@ -269,7 +269,7 @@ static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
         // If we can't remove the whole segment then just set the string
         // data to zero.
         size_t segmentOffset = startAddress - segmentStart;
-        char* startElem = &wasm.dataSegments[i].data[segmentOffset];
+        char* startElem = &wasm.dataSegments[i]->data[segmentOffset];
         memset(startElem, 0, endAddress - startAddress);
       }
       break;
@@ -347,14 +347,14 @@ EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
     Address start = walker.stringTracker.segmentOffsets[i];
     Address cur = start;
 
-    while (cur < start + wasm.dataSegments[i].data.size()) {
+    while (cur < start + wasm.dataSegments[i]->data.size()) {
       if (walker.codeAddresses.count(cur) == 0) {
         break;
       }
       cur.addr += walker.codeAddresses[cur];
     }
 
-    if (cur == start + wasm.dataSegments[i].data.size()) {
+    if (cur == start + wasm.dataSegments[i]->data.size()) {
       // Entire segment is contains JS strings.  Remove it.
       removeSegment(wasm, i);
     }
@@ -509,22 +509,22 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
 void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
                                                    Address base) {
   size_t lastEnd = 0;
-  for (DataSegment& seg : wasm.dataSegments) {
-    if (seg.isPassive) {
+  for (auto& seg : wasm.dataSegments) {
+    if (seg->isPassive) {
       Fatal() << "separating passive segments not implemented";
     }
-    if (!seg.offset->is<Const>()) {
+    if (!seg->offset->is<Const>()) {
       Fatal() << "separating relocatable segments not implemented";
     }
-    size_t offset = seg.offset->cast<Const>()->value.getInteger();
+    size_t offset = seg->offset->cast<Const>()->value.getInteger();
     offset -= base;
     size_t fill = offset - lastEnd;
     if (fill > 0) {
       std::vector<char> buf(fill);
       outfile->write(buf.data(), fill);
     }
-    outfile->write(seg.data.data(), seg.data.size());
-    lastEnd = offset + seg.data.size();
+    outfile->write(seg->data.data(), seg->data.size());
+    lastEnd = offset + seg->data.size();
   }
   wasm.dataSegments.clear();
 }

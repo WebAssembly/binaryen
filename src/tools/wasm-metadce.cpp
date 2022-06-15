@@ -237,7 +237,7 @@ struct MetaDCEGraph {
     });
     ModuleUtils::iterActiveDataSegments(wasm, [&](DataSegment* segment) {
         rooter.walk(segment->offset); 
-    }
+    });
 
     // A parallel scanner for function bodies
     struct Scanner : public WalkerPass<PostWalker<Scanner>> {

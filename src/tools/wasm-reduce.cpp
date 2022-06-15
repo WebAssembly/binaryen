@@ -758,11 +758,10 @@ struct Reducer
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool shrank = false;
-    shrank = shrinkByReduction(&curr, 2);
+    shrank = shrinkByReduction(curr, 2);
     // the "opposite" of shrinking: copy a 'zero' element
     reduceByZeroing(
-      &curr, 0, [](char item) { return item == 0; }, 2, shrank);
-    }
+      curr, 0, [](char item) { return item == 0; }, 2, shrank);
   }
 
   template<typename T, typename U, typename C>

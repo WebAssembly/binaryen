@@ -95,7 +95,7 @@ bool isTableExported(Module& wasm) {
 
 bool hasActiveSegments(Module& wasm) {
   for (Index i = 0; i < wasm.dataSegments.size(); i++) {
-    if (!wasm.dataSegments[i].isPassive) {
+    if (!wasm.dataSegments[i]->isPassive) {
       return true;
     }
   }
@@ -2670,9 +2670,11 @@ void Wasm2JSGlue::emitMemory() {
   }
 
   // If we have passive memory segments, we need to store those.
-  ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-    out << "  var memorySegments = {};\n";
-    break; 
+  for (auto& seg : wasm.dataSegments) {
+    if (seg->isPassive) {
+      out << "  var memorySegments = {};\n";
+      break;
+    }
   }
 
   out <<
@@ -2704,21 +2706,24 @@ void Wasm2JSGlue::emitMemory() {
   }
 )";
 
-  ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-    // Fancy passive segments are decoded into typed arrays on the side, for
-    // later copying.
-    out << "memorySegments[" << i
-        << "] = base64DecodeToExistingUint8Array(new Uint8Array("
-        << segment.data.size() << ")"
-        << ", 0, \"" << base64Encode(segment.data) << "\");\n";
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+    auto& seg = wasm.dataSegments[i];
+    if (seg->isPassive) {
+      // Fancy passive segments are decoded into typed arrays on the side, for
+      // later copying.
+      out << "memorySegments[" << i
+          << "] = base64DecodeToExistingUint8Array(new Uint8Array("
+          << seg->data.size() << ")"
+          << ", 0, \"" << base64Encode(seg->data) << "\");\n";
+    }
   }
 
   if (hasActiveSegments(wasm)) {
-    auto globalOffset = [&](const DataSegment& segment) {
-      if (auto* c = segment.offset->dynCast<Const>()) {
+    auto globalOffset = [&](const DataSegment* segment) {
+      if (auto* c = segment->offset->dynCast<Const>()) {
         return std::to_string(c->value.getInteger());
       }
-      if (auto* get = segment.offset->dynCast<GlobalGet>()) {
+      if (auto* get = segment->offset->dynCast<GlobalGet>()) {
         auto internalName = get->name;
         auto importedName = wasm.getGlobal(internalName)->base;
         return std::string("imports[") + asmangle(importedName.str) + "]";
@@ -2727,12 +2732,15 @@ void Wasm2JSGlue::emitMemory() {
     };
 
     out << "function initActiveSegments(imports) {\n";
-    ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      // Plain active segments are decoded directly into the main memory.
-      out << "  base64DecodeToExistingUint8Array(bufferView, "
-          << globalOffset(segment) << ", \"" << base64Encode(segment.data)
-          << "\");\n";
-    } 
+    for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+      auto& seg = wasm.dataSegments[i];
+      if (!seg->isPassive) {
+        // Plain active segments are decoded directly into the main memory.
+        out << "  base64DecodeToExistingUint8Array(bufferView, "
+            << globalOffset(seg.get()) << ", \"" << base64Encode(seg->data)
+            << "\");\n";
+      }
+    }
     out << "}\n";
   }
 }

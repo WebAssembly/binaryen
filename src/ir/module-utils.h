@@ -107,14 +107,14 @@ inline Table* copyTable(const Table* table, Module& out) {
 }
 
 inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
-  auto copy = [&]std::unique_ptr<DataSegment>&& ret) {
+  auto copy = [&](std::unique_ptr<DataSegment>&& ret) {
     ret->name = segment->name;
     ret->hasExplicitName = segment->hasExplicitName;
     ret->isPassive = segment->isPassive;
     ret->data = segment->data;
 
     return out.addDataSegment(std::move(ret));
-  }
+  };
 
   if (segment->isPassive) {
     return copy(std::make_unique<DataSegment>());
