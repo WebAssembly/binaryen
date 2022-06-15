@@ -17,7 +17,6 @@
 #ifndef wasm_wat_parser_h
 #define wasm_wat_parser_h
 
-#include <optional>
 #include <string_view>
 
 #include "wasm.h"
@@ -37,7 +36,7 @@ template<typename T = Ok> struct Result {
 
   Result(Result<T>& other) = default;
   Result(const Err& e) : val(std::in_place_type<Err>, e) {}
-  Result(Err&& e) : val(std::in_place_type<Err>, e) {}
+  Result(Err&& e) : val(std::in_place_type<Err>, std::move(e)) {}
   template<typename U = T>
   Result(U&& u) : val(std::in_place_type<T>, std::forward<U>(u)) {}
 

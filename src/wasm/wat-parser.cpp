@@ -32,11 +32,11 @@
 // definitions. This phase establishes the indices and names of each module
 // element so that subsequent phases can look them up.
 //
-// The second phase, not yet implemented, parses type definitions to construct
-// the types used in the module. This has to be its own phase because we have no
-// way to refer to a type before it has been built along with all the other
-// types, unlike for other module elements that can be referred to by name
-// before their definitions have been parsed.
+// The second phase parses type definitions to construct the types used in the
+// module. This has to be its own phase because we have no way to refer to a
+// type before it has been built along with all the other types, unlike for
+// other module elements that can be referred to by name before their
+// definitions have been parsed.
 //
 // The third phase, not yet implemented, further parses and constructs types
 // implicitly defined by type uses in functions, blocks, and call_indirect
@@ -89,7 +89,7 @@ struct ParseInput {
     lexer.setIndex(index);
   }
 
-  bool empty() { return lexer == lexer.end(); }
+  bool empty() { return lexer.empty(); }
 
   std::optional<Token> peek() {
     if (!empty()) {
