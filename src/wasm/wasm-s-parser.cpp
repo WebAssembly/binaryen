@@ -3070,15 +3070,18 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       offset->type = Type::i32;
       offset->value = Literal(int32_t(offsetValue));
     }
+    Name name = Name::fromInt(wasm.dataSegments.size());
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
-      auto newSegment =
+      auto segment =
         std::make_unique<DataSegment>(offset, data.data(), data.size());
-      wasm.dataSegments.push_back(std::move(newSegment));
+      segment->setName(name, false);
+      wasm.dataSegments.push_back(std::move(segment));
     } else {
-      auto newSegment = std::make_unique<DataSegment>(offset, "", 0);
-      wasm.dataSegments.push_back(std::move(newSegment));
+      auto segment = std::make_unique<DataSegment>(offset, "", 0);
+      segment->setName(name, false);
+      wasm.dataSegments.push_back(std::move(segment));
     }
     i++;
   }
@@ -3127,10 +3130,10 @@ void SExpressionWasmBuilder::parseInnerData(
       stringToBinary(input, size, data);
     }
   }
-  auto newSegment =
+  auto curr =
     std::make_unique<DataSegment>(isPassive, offset, data.data(), data.size());
-  newSegment->name = name;
-  wasm.dataSegments.push_back(std::move(newSegment));
+  curr->setName(name, false);
+  wasm.dataSegments.push_back(std::move(curr));
 }
 
 void SExpressionWasmBuilder::parseExport(Element& s) {

@@ -429,9 +429,10 @@ private:
     if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
       std::vector<char> empty;
-      auto newSegment =
+      auto curr =
         std::make_unique<DataSegment>(builder.makeConst(int32_t(0)), empty);
-      wasm->dataSegments.push_back(std::move(newSegment));
+      curr->setName(Name::fromInt(0), false);
+      wasm->dataSegments.push_back(std::move(curr));
     }
     auto& segment = wasm->dataSegments[0];
     assert(segment->offset->cast<Const>()->value.getInteger() == 0);

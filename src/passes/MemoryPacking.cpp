@@ -559,12 +559,12 @@ void MemoryPacking::createSplitSegments(
       }
       segmentCount++;
     }
-    auto newSegment = std::make_unique<DataSegment>(segment->isPassive,
+    auto curr = std::make_unique<DataSegment>(segment->isPassive,
                                                     offset,
                                                     &segment->data[range.start],
                                                     range.end - range.start);
-    newSegment->name = name;
-    packed.push_back(std::move(newSegment));
+    curr->setName(name, false);
+    packed.push_back(std::move(curr));
   }
 }
 
