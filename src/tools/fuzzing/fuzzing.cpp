@@ -192,6 +192,7 @@ void TranslateToFuzzReader::setupMemory() {
     size_t numSegments = upTo(8) + 1;
     for (size_t i = 0; i < numSegments; i++) {
       auto segment = std::make_unique<DataSegment>();
+      segment->setName(Name::fromInt(i), false);
       segment->isPassive = bool(upTo(2));
       size_t segSize = upTo(USABLE_MEMORY * 2);
       segment->data.resize(segSize);
