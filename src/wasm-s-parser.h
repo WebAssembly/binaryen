@@ -134,6 +134,7 @@ class SExpressionWasmBuilder {
   int tableCounter = 0;
   int elemCounter = 0;
   int memoryCounter = 0;
+  int dataCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, HeapType> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
@@ -321,7 +322,7 @@ private:
   void parseMemory(Element& s, bool preParseImport = false);
   void parseData(Element& s);
   void parseInnerData(
-    Element& s, Index i, Name name, Expression* offset, bool isPassive);
+    Element& s, Index i, Name name, bool hasExplicitName, Expression* offset, bool isPassive);
   void parseExport(Element& s);
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);

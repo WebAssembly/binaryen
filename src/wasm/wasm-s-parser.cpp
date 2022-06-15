@@ -3038,7 +3038,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       } else {
         offset->set(Literal(int32_t(0)));
       }
-      parseInnerData(inner, j, {}, offset, false);
+      parseInnerData(inner, j, Name::fromInt(dataCounter++), false, offset, false);
       wasm.memory.initial = wasm.dataSegments[0]->data.size();
       return;
     }
@@ -3091,13 +3091,15 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   if (!wasm.memory.exists) {
     throw ParseException("data but no memory", s.line, s.col);
   }
+  Index i = 1;
+  Name name = Name::fromInt(dataCounter++);
+  bool hasExplicitName = false;
   bool isPassive = true;
   Expression* offset = nullptr;
-  Index i = 1;
-  Name name;
 
   if (s[i]->isStr() && s[i]->dollared()) {
     name = s[i++]->str();
+    hasExplicitName = true;
   }
 
   if (s[i]->isList()) {
@@ -3118,11 +3120,11 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     isPassive = false;
   }
 
-  parseInnerData(s, i, name, offset, isPassive);
+  parseInnerData(s, i, name, hasExplicitName, offset, isPassive);
 }
 
 void SExpressionWasmBuilder::parseInnerData(
-  Element& s, Index i, Name name, Expression* offset, bool isPassive) {
+  Element& s, Index i, Name name, bool hasExplicitName, Expression* offset, bool isPassive) {
   std::vector<char> data;
   while (i < s.size()) {
     const char* input = s[i++]->c_str();
@@ -3132,7 +3134,7 @@ void SExpressionWasmBuilder::parseInnerData(
   }
   auto curr =
     std::make_unique<DataSegment>(isPassive, offset, data.data(), data.size());
-  curr->setName(name, false);
+  curr->setName(name, hasExplicitName);
   wasm.dataSegments.push_back(std::move(curr));
 }
 
