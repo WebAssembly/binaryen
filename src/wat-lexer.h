@@ -166,7 +166,7 @@ public:
 
   Lexer(std::string_view buffer) : buffer(buffer) { setIndex(0); }
 
-  size_t getIndex() { return index; }
+  size_t getIndex() const { return index; }
 
   void setIndex(size_t i) {
     index = i;
@@ -206,12 +206,16 @@ public:
 
   Lexer begin() { return *this; }
 
-  Lexer end() { return Lexer(); }
+  Lexer end() const { return Lexer(); }
 
-  TextPos position(const char* c);
-  TextPos position(size_t i) { return position(buffer.data() + i); }
-  TextPos position(std::string_view span) { return position(span.data()); }
-  TextPos position(Token tok) { return position(tok.span); }
+  bool empty() const { return *this == end(); }
+
+  TextPos position(const char* c) const;
+  TextPos position(size_t i) const { return position(buffer.data() + i); }
+  TextPos position(std::string_view span) const {
+    return position(span.data());
+  }
+  TextPos position(Token tok) const { return position(tok.span); }
 
 private:
   void skipSpace();

@@ -24,12 +24,12 @@
 // binary.
 //
 
+#include "wasm-io.h"
 #include "support/debug.h"
 #include "wasm-binary.h"
 #include "wasm-s-parser.h"
 #include "wat-parser.h"
 
-#include "wasm-io.h"
 
 namespace wasm {
 
