@@ -2906,6 +2906,7 @@ void WasmBinaryBuilder::readDataSegments() {
       throwError("bad segment flags, must be 0, 1, or 2, not " +
                  std::to_string(flags));
     }
+    curr->setName(Name::fromInt(i), false);
     curr->isPassive = flags & BinaryConsts::IsPassive;
     if (flags & BinaryConsts::HasIndex) {
       auto memIndex = getU32LEB();
