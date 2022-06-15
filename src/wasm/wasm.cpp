@@ -1392,7 +1392,8 @@ Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
 }
 
 DataSegment* Module::addDataSegment(std::unique_ptr<DataSegment>&& curr) {
-  return addModuleElement(dataSegments, dataSegmentsMap, std::move(curr), "addDataSegment");
+  return addModuleElement(
+    dataSegments, dataSegmentsMap, std::move(curr), "addDataSegment");
 }
 
 Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {

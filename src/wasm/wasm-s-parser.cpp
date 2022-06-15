@@ -3073,7 +3073,8 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
-      auto newSegment = std::make_unique<DataSegment>(offset, data.data(), data.size());
+      auto newSegment =
+        std::make_unique<DataSegment>(offset, data.data(), data.size());
       wasm.dataSegments.push_back(std::move(newSegment));
     } else {
       auto newSegment = std::make_unique<DataSegment>(offset, "", 0);
@@ -3126,7 +3127,8 @@ void SExpressionWasmBuilder::parseInnerData(
       stringToBinary(input, size, data);
     }
   }
-  auto newSegment = std::make_unique<DataSegment>(isPassive, offset, data.data(), data.size());
+  auto newSegment =
+    std::make_unique<DataSegment>(isPassive, offset, data.data(), data.size());
   newSegment->name = name;
   wasm.dataSegments.push_back(std::move(newSegment));
 }

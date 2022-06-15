@@ -54,9 +54,7 @@ inline bool ensureLimitedSegments(Module& module) {
     return false;
   }
 
-  auto isEmpty = [](DataSegment* segment) {
-    return segment->data.size() == 0;
-  };
+  auto isEmpty = [](DataSegment* segment) { return segment->data.size() == 0; };
 
   auto isConstantOffset = [](DataSegment* segment) {
     return segment->offset && segment->offset->is<Const>();

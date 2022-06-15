@@ -68,7 +68,8 @@ struct Metrics
       walkDataSegment(segment.get());
     }
     Index size = 0;
-    ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) { size += segment->data.size(); });
+    ModuleUtils::iterActiveDataSegments(
+      *module, [&](DataSegment* segment) { size += segment->data.size(); });
     counts["[memory-data]"] = size;
 
     // add table

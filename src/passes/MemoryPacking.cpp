@@ -95,7 +95,9 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
 
 struct MemoryPacking : public Pass {
   void run(PassRunner* runner, Module* module) override;
-  bool canOptimize(const Memory& memory, std::vector<std::unique_ptr<DataSegment>>& dataSegments, const PassOptions& passOptions);
+  bool canOptimize(const Memory& memory,
+                   std::vector<std::unique_ptr<DataSegment>>& dataSegments,
+                   const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
   void dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>& segments,
@@ -161,7 +163,8 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
 
     Index firstNewIndex = packed.size();
     size_t segmentsRemaining = segments.size() - origIndex;
-    createSplitSegments(builder, segment.get(), ranges, packed, segmentsRemaining);
+    createSplitSegments(
+      builder, segment.get(), ranges, packed, segmentsRemaining);
     createReplacements(
       module, ranges, currReferrers, replacements, firstNewIndex);
   }
@@ -173,9 +176,10 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 }
 
-bool MemoryPacking::canOptimize(const Memory& memory,
-                                std::vector<std::unique_ptr<DataSegment>>& dataSegments,
-                                const PassOptions& passOptions) {
+bool MemoryPacking::canOptimize(
+  const Memory& memory,
+  std::vector<std::unique_ptr<DataSegment>>& dataSegments,
+  const PassOptions& passOptions) {
   if (!memory.exists) {
     return false;
   }
@@ -466,8 +470,9 @@ void MemoryPacking::getSegmentReferrers(Module* module,
   }
 }
 
-void MemoryPacking::dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>& segments,
-                                       ReferrersMap& referrers) {
+void MemoryPacking::dropUnusedSegments(
+  std::vector<std::unique_ptr<DataSegment>>& segments,
+  ReferrersMap& referrers) {
   std::vector<std::unique_ptr<DataSegment>> usedSegments;
   ReferrersMap usedReferrers;
   // Remove segments that are never used
@@ -505,11 +510,12 @@ void MemoryPacking::dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>
   std::swap(referrers, usedReferrers);
 }
 
-void MemoryPacking::createSplitSegments(Builder& builder,
-                                        const DataSegment* segment,
-                                        std::vector<Range>& ranges,
-                                        std::vector<std::unique_ptr<DataSegment>>& packed,
-                                        size_t segmentsRemaining) {
+void MemoryPacking::createSplitSegments(
+  Builder& builder,
+  const DataSegment* segment,
+  std::vector<Range>& ranges,
+  std::vector<std::unique_ptr<DataSegment>>& packed,
+  size_t segmentsRemaining) {
   size_t segmentCount = 0;
   for (size_t i = 0; i < ranges.size(); ++i) {
     Range& range = ranges[i];
@@ -552,8 +558,11 @@ void MemoryPacking::createSplitSegments(Builder& builder,
                std::to_string(segmentCount);
       }
       segmentCount++;
-    } 
-    auto newSegment = std::make_unique<DataSegment>(segment->isPassive, offset, &segment->data[range.start], range.end - range.start);
+    }
+    auto newSegment = std::make_unique<DataSegment>(segment->isPassive,
+                                                    offset,
+                                                    &segment->data[range.start],
+                                                    range.end - range.start);
     newSegment->name = name;
     packed.push_back(std::move(newSegment));
   }

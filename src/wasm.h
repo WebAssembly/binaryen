@@ -1878,9 +1878,9 @@ public:
     data.swap(init);
   }
   DataSegment(bool isPassive,
-          Expression* offset,
-          const char* init,
-          Address size)
+              Expression* offset,
+              const char* init,
+              Address size)
     : isPassive(isPassive), offset(offset) {
     data.resize(size);
     std::copy_n(init, size, data.begin());
