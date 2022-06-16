@@ -15,6 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v109
+----
+
+- Add Global Struct Inference pass (#4659) (#4714)
+- Restore and fix SpillPointers pass (#4570)
+- Update relaxed SIMD instructions to latest spec
+
 v108
 ----
 

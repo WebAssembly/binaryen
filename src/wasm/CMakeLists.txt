@@ -13,6 +13,7 @@ set(wasm_SOURCES
   wasm-type.cpp
   wasm-validator.cpp
   wat-lexer.cpp
+  wat-parser.cpp
   ${wasm_HEADERS}
 )
 # wasm-debug.cpp includes LLVM header using std::iterator (deprecated in C++17)

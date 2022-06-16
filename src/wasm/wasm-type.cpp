@@ -187,8 +187,6 @@ private:
   // used directly.
   std::optional<Type> lub(Type a, Type b);
   HeapType lub(HeapType a, HeapType b);
-  HeapType::BasicHeapType lub(HeapType::BasicHeapType a,
-                              HeapType::BasicHeapType b);
   std::optional<Tuple> lub(const Tuple& a, const Tuple& b);
   std::optional<Field> lub(const Field& a, const Field& b);
   std::optional<Signature> lub(const Signature& a, const Signature& b);
@@ -580,6 +578,52 @@ HeapType asCanonical(HeapType type) {
   } else {
     return type;
   }
+}
+
+HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
+  if (type.isBasic()) {
+    return type.getBasic();
+  }
+  auto* info = getHeapTypeInfo(type);
+  switch (info->kind) {
+    case HeapTypeInfo::BasicKind:
+      break;
+    case HeapTypeInfo::SignatureKind:
+      return HeapType::func;
+    case HeapTypeInfo::StructKind:
+    case HeapTypeInfo::ArrayKind:
+      return HeapType::data;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+};
+
+HeapType getBasicHeapTypeLUB(HeapType::BasicHeapType a,
+                             HeapType::BasicHeapType b) {
+  if (a == b) {
+    return a;
+  }
+  // Canonicalize to have `a` be the lesser type.
+  if (unsigned(a) > unsigned(b)) {
+    std::swap(a, b);
+  }
+  switch (a) {
+    case HeapType::func:
+    case HeapType::any:
+      return HeapType::any;
+    case HeapType::eq:
+      if (b == HeapType::i31 || b == HeapType::data) {
+        return HeapType::eq;
+      }
+      return HeapType::any;
+    case HeapType::i31:
+      if (b == HeapType::data) {
+        return HeapType::eq;
+      }
+      return HeapType::any;
+    case HeapType::data:
+      return HeapType::any;
+  }
+  WASM_UNREACHABLE("unexpected basic type");
 }
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
@@ -1222,11 +1266,59 @@ std::vector<HeapType> Type::getHeapTypeChildren() {
 }
 
 bool Type::hasLeastUpperBound(Type a, Type b) {
-  return TypeBounder().hasLeastUpperBound(a, b);
+  if (getTypeSystem() == TypeSystem::Equirecursive) {
+    return TypeBounder().hasLeastUpperBound(a, b);
+  }
+  return getLeastUpperBound(a, b) != Type::none;
 }
 
 Type Type::getLeastUpperBound(Type a, Type b) {
-  return TypeBounder().getLeastUpperBound(a, b);
+  if (a == b) {
+    return a;
+  }
+  if (getTypeSystem() == TypeSystem::Equirecursive) {
+    return TypeBounder().getLeastUpperBound(a, b);
+  }
+  if (a == Type::unreachable) {
+    return b;
+  }
+  if (b == Type::unreachable) {
+    return a;
+  }
+  if (a.isTuple() && b.isTuple()) {
+    auto size = a.size();
+    if (size != b.size()) {
+      return Type::none;
+    }
+    std::vector<Type> elems;
+    elems.reserve(size);
+    for (size_t i = 0; i < size; ++i) {
+      auto lub = Type::getLeastUpperBound(a[i], b[i]);
+      if (lub == Type::none) {
+        return Type::none;
+      }
+      elems.push_back(lub);
+    }
+    return Type(elems);
+  }
+  if (a.isRef() && b.isRef()) {
+    auto nullability =
+      (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
+    auto heapType =
+      HeapType::getLeastUpperBound(a.getHeapType(), b.getHeapType());
+    return Type(heapType, nullability);
+  }
+  if (a.isRtt() && b.isRtt()) {
+    auto heapType = a.getHeapType();
+    if (heapType != b.getHeapType()) {
+      return Type::none;
+    }
+    auto rttA = a.getRtt(), rttB = b.getRtt();
+    auto depth = rttA.depth == rttB.depth ? rttA.depth : Rtt::NoDepth;
+    return Rtt(depth, heapType);
+  }
+  return Type::none;
+  WASM_UNREACHABLE("unexpected type");
 }
 
 size_t Type::size() const {
@@ -1426,7 +1518,53 @@ std::vector<HeapType> HeapType::getReferencedHeapTypes() const {
 }
 
 HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
-  return TypeBounder().getLeastUpperBound(a, b);
+  if (a == b) {
+    return a;
+  }
+  if (getTypeSystem() == TypeSystem::Equirecursive) {
+    return TypeBounder().getLeastUpperBound(a, b);
+  }
+  if (a.isBasic() || b.isBasic()) {
+    return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
+                               getBasicHeapSupertype(b));
+  }
+
+  auto* infoA = getHeapTypeInfo(a);
+  auto* infoB = getHeapTypeInfo(b);
+
+  if (infoA->kind != infoB->kind) {
+    return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
+                               getBasicHeapSupertype(b));
+  }
+
+  // Walk up the subtype tree to find the LUB. Ascend the tree from both `a`
+  // and `b` in lockstep. The first type we see for a second time must be the
+  // LUB because there are no cycles and the only way to encounter a type
+  // twice is for it to be on the path above both `a` and `b`.
+  std::unordered_set<HeapTypeInfo*> seen;
+  seen.insert(infoA);
+  seen.insert(infoB);
+  while (true) {
+    auto* nextA = infoA->supertype;
+    auto* nextB = infoB->supertype;
+    if (nextA == nullptr && nextB == nullptr) {
+      // Did not find a LUB in the subtype tree.
+      return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
+                                 getBasicHeapSupertype(b));
+    }
+    if (nextA) {
+      if (!seen.insert(nextA).second) {
+        return HeapType(uintptr_t(nextA));
+      }
+      infoA = nextA;
+    }
+    if (nextB) {
+      if (!seen.insert(nextB).second) {
+        return HeapType(uintptr_t(nextB));
+      }
+      infoB = nextB;
+    }
+  }
 }
 
 // Recursion groups with single elements are encoded as that single element's
@@ -1763,70 +1901,20 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
     return a;
   }
 
-  auto getBasicApproximation = [](HeapType x) {
-    if (x.isBasic()) {
-      return x.getBasic();
-    }
-    auto* info = getHeapTypeInfo(x);
-    switch (info->kind) {
-      case HeapTypeInfo::BasicKind:
-        break;
-      case HeapTypeInfo::SignatureKind:
-        return HeapType::func;
-      case HeapTypeInfo::StructKind:
-      case HeapTypeInfo::ArrayKind:
-        return HeapType::data;
-    }
-    WASM_UNREACHABLE("unexpected kind");
-  };
-
-  auto getBasicLUB = [&]() {
-    return lub(getBasicApproximation(a), getBasicApproximation(b));
-  };
-
   if (a.isBasic() || b.isBasic()) {
-    return getBasicLUB();
+    return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
+                               getBasicHeapSupertype(b));
   }
 
   HeapTypeInfo* infoA = getHeapTypeInfo(a);
   HeapTypeInfo* infoB = getHeapTypeInfo(b);
 
   if (infoA->kind != infoB->kind) {
-    return getBasicLUB();
+    return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
+                               getBasicHeapSupertype(b));
   }
 
-  if (typeSystem == TypeSystem::Nominal ||
-      typeSystem == TypeSystem::Isorecursive) {
-    // Walk up the subtype tree to find the LUB. Ascend the tree from both `a`
-    // and `b` in lockstep. The first type we see for a second time must be the
-    // LUB because there are no cycles and the only way to encounter a type
-    // twice is for it to be on the path above both `a` and `b`.
-    std::unordered_set<HeapTypeInfo*> seen;
-    auto* currA = infoA;
-    auto* currB = infoB;
-    seen.insert(currA);
-    seen.insert(currB);
-    while (true) {
-      auto* nextA = currA->supertype;
-      auto* nextB = currB->supertype;
-      if (nextA == nullptr && nextB == nullptr) {
-        // Did not find a LUB in the subtype tree.
-        return getBasicLUB();
-      }
-      if (nextA) {
-        if (!seen.insert(nextA).second) {
-          return HeapType(uintptr_t(nextA));
-        }
-        currA = nextA;
-      }
-      if (nextB) {
-        if (!seen.insert(nextB).second) {
-          return HeapType(uintptr_t(nextB));
-        }
-        currB = nextB;
-      }
-    }
-  }
+  assert(getTypeSystem() == TypeSystem::Equirecursive);
 
   // Allocate a new slot to construct the LUB of this pair if we have not
   // already seen it before. Canonicalize the pair to have the element with the
@@ -1863,35 +1951,6 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
     }
   }
   WASM_UNREACHABLE("unexpected kind");
-}
-
-HeapType::BasicHeapType TypeBounder::lub(HeapType::BasicHeapType a,
-                                         HeapType::BasicHeapType b) {
-  if (a == b) {
-    return a;
-  }
-  // Canonicalize to have `x` be the lesser type.
-  if (unsigned(a) > unsigned(b)) {
-    std::swap(a, b);
-  }
-  switch (a) {
-    case HeapType::func:
-    case HeapType::any:
-      return HeapType::any;
-    case HeapType::eq:
-      if (b == HeapType::i31 || b == HeapType::data) {
-        return HeapType::eq;
-      }
-      return HeapType::any;
-    case HeapType::i31:
-      if (b == HeapType::data) {
-        return HeapType::eq;
-      }
-      return HeapType::any;
-    case HeapType::data:
-      return HeapType::any;
-  }
-  WASM_UNREACHABLE("unexpected basic type");
 }
 
 std::optional<Tuple> TypeBounder::lub(const Tuple& a, const Tuple& b) {

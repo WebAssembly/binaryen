@@ -28,15 +28,27 @@
 #include "support/debug.h"
 #include "wasm-binary.h"
 #include "wasm-s-parser.h"
+#include "wat-parser.h"
+
 
 namespace wasm {
+
+bool useNewWATParser = false;
 
 #define DEBUG_TYPE "writer"
 
 static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
-  SExpressionParser parser(const_cast<char*>(input.c_str()));
-  Element& root = *parser.root;
-  SExpressionWasmBuilder builder(wasm, *root[0], profile);
+  if (useNewWATParser) {
+    std::string_view in(input.c_str());
+    if (auto parsed = WATParser::parseModule(wasm, in);
+        auto err = parsed.getErr()) {
+      Fatal() << err->msg;
+    }
+  } else {
+    SExpressionParser parser(const_cast<char*>(input.c_str()));
+    Element& root = *parser.root;
+    SExpressionWasmBuilder builder(wasm, *root[0], profile);
+  }
 }
 
 void ModuleReader::readText(std::string filename, Module& wasm) {
