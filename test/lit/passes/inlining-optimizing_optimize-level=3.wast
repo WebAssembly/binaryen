@@ -35,8 +35,6 @@
 
  ;; CHECK:      (import "env" "memory" (memory $0 256 256))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
- ;; CHECK:      (data (i32.const 1024) "emcc_hello_world.asm.js")
-
  ;; CHECK:      (import "env" "table" (table $timport$0 18 18 funcref))
  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
  ;; CHECK:      (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
@@ -99,6 +97,8 @@
  (global $tempRet0 (mut i32) (i32.const 0))
  (elem (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
  (data (i32.const 1024) "emcc_hello_world.asm.js")
+ ;; CHECK:      (data (i32.const 1024) "emcc_hello_world.asm.js")
+
  ;; CHECK:      (elem (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
 
  ;; CHECK:      (export "_i64Subtract" (func $_i64Subtract))
