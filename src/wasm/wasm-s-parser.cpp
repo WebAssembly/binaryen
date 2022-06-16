@@ -3070,17 +3070,16 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       offset->type = Type::i32;
       offset->value = Literal(int32_t(offsetValue));
     }
-    Name name = Name::fromInt(wasm.dataSegments.size());
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
       auto segment =
         std::make_unique<DataSegment>(offset, data.data(), data.size());
-      segment->setName(name, false);
+      segment->setName(Name::fromInt(elemCounter++), false);
       wasm.dataSegments.push_back(std::move(segment));
     } else {
       auto segment = std::make_unique<DataSegment>(offset, "", 0);
-      segment->setName(name, false);
+      segment->setName(Name::fromInt(elemCounter++), false);
       wasm.dataSegments.push_back(std::move(segment));
     }
     i++;

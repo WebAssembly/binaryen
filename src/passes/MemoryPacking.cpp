@@ -517,6 +517,7 @@ void MemoryPacking::createSplitSegments(
   std::vector<std::unique_ptr<DataSegment>>& packed,
   size_t segmentsRemaining) {
   size_t segmentCount = 0;
+  bool hasExplicitName = false;
   for (size_t i = 0; i < ranges.size(); ++i) {
     Range& range = ranges[i];
     if (range.isZero) {
@@ -553,6 +554,7 @@ void MemoryPacking::createSplitSegments(
       // output segment have the same name.
       if (!segmentCount) {
         name = segment->name;
+        hasExplicitName = segment->hasExplicitName;
       } else {
         name = std::string(segment->name.c_str()) + "." +
                std::to_string(segmentCount);
@@ -563,7 +565,7 @@ void MemoryPacking::createSplitSegments(
                                                     offset,
                                                     &segment->data[range.start],
                                                     range.end - range.start);
-    curr->setName(name, false);
+    curr->setName(name, hasExplicitName);
     packed.push_back(std::move(curr));
   }
 }

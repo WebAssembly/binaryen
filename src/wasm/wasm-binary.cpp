@@ -3257,11 +3257,13 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameData) {
       auto num = getU32LEB();
+      NameProcessor processor;
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
+        auto name = processor.process(rawName);
         if (index < wasm.dataSegments.size()) {
-          wasm.dataSegments[i]->name = rawName;
+          wasm.dataSegments[i]->setExplicitName(name);
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
