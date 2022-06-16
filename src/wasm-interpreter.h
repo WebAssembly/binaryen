@@ -2626,7 +2626,7 @@ private:
 
       self()->visit(&init);
       self()->visit(&drop);
-    };
+    }
   }
 
 public:
