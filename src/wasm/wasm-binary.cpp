@@ -2791,7 +2791,7 @@ Expression* WasmBinaryBuilder::popTypedExpression(Type type) {
 }
 
 void WasmBinaryBuilder::validateBinary() {
-  if (hasDataCount && wasm.dataSegments.size() != dataCount) {
+  if (hasDataCount && dataSegments.size() != dataCount) {
     throwError("Number of segments does not agree with DataCount section");
   }
 }
