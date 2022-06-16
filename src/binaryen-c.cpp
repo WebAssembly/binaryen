@@ -3768,11 +3768,10 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    auto curr =
-      std::make_unique<DataSegment>(segmentPassive[i],
-                                    (Expression*)segmentOffsets[i],
-                                    segments[i],
-                                    segmentSizes[i]);
+    auto curr = std::make_unique<DataSegment>(segmentPassive[i],
+                                              (Expression*)segmentOffsets[i],
+                                              segments[i],
+                                              segmentSizes[i]);
     curr->setName(Name::fromInt(i), false);
     wasm->dataSegments.push_back(std::move(curr));
   }

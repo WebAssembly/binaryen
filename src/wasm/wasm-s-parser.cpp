@@ -3038,7 +3038,8 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       } else {
         offset->set(Literal(int32_t(0)));
       }
-      parseInnerData(inner, j, Name::fromInt(dataCounter++), false, offset, false);
+      parseInnerData(
+        inner, j, Name::fromInt(dataCounter++), false, offset, false);
       wasm.memory.initial = wasm.dataSegments[0]->data.size();
       return;
     }
@@ -3122,8 +3123,12 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   parseInnerData(s, i, name, hasExplicitName, offset, isPassive);
 }
 
-void SExpressionWasmBuilder::parseInnerData(
-  Element& s, Index i, Name name, bool hasExplicitName, Expression* offset, bool isPassive) {
+void SExpressionWasmBuilder::parseInnerData(Element& s,
+                                            Index i,
+                                            Name name,
+                                            bool hasExplicitName,
+                                            Expression* offset,
+                                            bool isPassive) {
   std::vector<char> data;
   while (i < s.size()) {
     const char* input = s[i++]->c_str();

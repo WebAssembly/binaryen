@@ -207,8 +207,7 @@ void TranslateToFuzzReader::setupMemory() {
     }
   } else {
     // init some data
-    auto segment =
-      std::make_unique<DataSegment>(builder.makeConst(int32_t(0)));
+    auto segment = std::make_unique<DataSegment>(builder.makeConst(int32_t(0)));
     segment->setName(Name::fromInt(0), false);
     wasm.dataSegments.push_back(std::move(segment));
     auto num = upTo(USABLE_MEMORY * 2);
