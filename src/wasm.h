@@ -2097,7 +2097,6 @@ public:
   static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
-  bool exists = false;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
 
@@ -2108,7 +2107,6 @@ public:
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return indexType == Type::i64; }
   void clear() {
-    exists = false;
     name = "";
     initial = 0;
     max = kMaxSize32;
@@ -2155,10 +2153,10 @@ public:
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  std::vector<std::unique_ptr<Memory>> memories;
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
-  Memory memory;
   Name start;
 
   std::vector<UserSection> userSections;
@@ -2190,6 +2188,7 @@ private:
   std::unordered_map<Name, Export*> exportsMap;
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, Memory*> memoriesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, DataSegment*> dataSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
@@ -2202,12 +2201,14 @@ public:
   Function* getFunction(Name name);
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
+  Memory* getMemorySegment(Name name);
   DataSegment* getDataSegment(Name name);
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
+  Memory* getMemoryOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
   DataSegment* getDataSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
@@ -2223,6 +2224,7 @@ public:
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
+  Memory* addMemory(std::unique_ptr<Memory>&& curr);
   DataSegment* addDataSegment(std::unique_ptr<DataSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Tag* addTag(std::unique_ptr<Tag>&& curr);
@@ -2233,6 +2235,7 @@ public:
   void removeFunction(Name name);
   void removeTable(Name name);
   void removeElementSegment(Name name);
+  void removeMemory(Name name);
   void removeDataSegment(Name name);
   void removeGlobal(Name name);
   void removeTag(Name name);
@@ -2241,6 +2244,7 @@ public:
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
+  void removeMemory(std::function<bool(Memory*)> pred);
   void removeDataSegments(std::function<bool(DataSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeTags(std::function<bool(Tag*)> pred);
