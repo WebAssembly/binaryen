@@ -920,7 +920,7 @@ void WasmBinaryWriter::writeNames() {
   if (wasm->memory.exists) {
     Index count = 0;
     for (auto& seg : wasm->dataSegments) {
-      if (seg->name.is()) {
+      if (seg->name.is() && seg->hasExplicitName) {
         count++;
       }
     }
