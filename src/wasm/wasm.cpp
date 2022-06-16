@@ -1336,6 +1336,10 @@ ElementSegment* Module::getElementSegment(Name name) {
   return getModuleElement(elementSegmentsMap, name, "getElementSegment");
 }
 
+Memory* Module::getMemory(Name name) {
+  return getModuleElement(memoriesMap, name, "getMemories");
+}
+
 DataSegment* Module::getDataSegment(Name name) {
   return getModuleElement(dataSegmentsMap, name, "getDataSegment");
 }
@@ -1371,6 +1375,10 @@ Table* Module::getTableOrNull(Name name) {
 
 ElementSegment* Module::getElementSegmentOrNull(Name name) {
   return getModuleElementOrNull(elementSegmentsMap, name);
+}
+
+Memory* Module::getMemoryOrNull(Name name) {
+  return getModuleElementOrNull(memoriesMap, name);
 }
 
 DataSegment* Module::getDataSegmentOrNull(Name name) {
@@ -1452,6 +1460,11 @@ Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
     elementSegments, elementSegmentsMap, std::move(curr), "addElementSegment");
 }
 
+Memory* Module::addMemory(std::unique_ptr<Memory>&& curr) {
+  return addModuleElement(
+    memories, memoriesMap, std::move(curr), "addMemory");
+}
+
 DataSegment* Module::addDataSegment(std::unique_ptr<DataSegment>&& curr) {
   return addModuleElement(
     dataSegments, dataSegmentsMap, std::move(curr), "addDataSegment");
@@ -1490,6 +1503,9 @@ void Module::removeTable(Name name) {
 void Module::removeElementSegment(Name name) {
   removeModuleElement(elementSegments, elementSegmentsMap, name);
 }
+void Module::removeMemory(Name name) {
+  removeModuleElement(memories, memoriesMap, name);
+}
 void Module::removeDataSegment(Name name) {
   removeModuleElement(dataSegments, dataSegmentsMap, name);
 }
@@ -1526,6 +1542,9 @@ void Module::removeTables(std::function<bool(Table*)> pred) {
 void Module::removeElementSegments(std::function<bool(ElementSegment*)> pred) {
   removeModuleElements(elementSegments, elementSegmentsMap, pred);
 }
+void Module::removeMemories(std::function<bool(Memory*)> pred) {
+  removeModuleElements(memories, memoriesMap, pred);
+}
 void Module::removeDataSegments(std::function<bool(DataSegment*)> pred) {
   removeModuleElements(dataSegments, dataSegmentsMap, pred);
 }
@@ -1552,6 +1571,10 @@ void Module::updateMaps() {
   elementSegmentsMap.clear();
   for (auto& curr : elementSegments) {
     elementSegmentsMap[curr->name] = curr.get();
+  }
+  memoriesMap.clear();
+  for (auto& curr : memories) {
+    memoriesMap[curr->name] = curr.get();
   }
   dataSegmentsMap.clear();
   for (auto& curr : dataSegments) {
