@@ -492,9 +492,10 @@ void WasmBinaryWriter::writeExports() {
         o << U32LEB(getFunctionIndex(curr->value));
         break;
       case ExternalKind::Table:
-        o << U32LEB(0);
+        o << U32LEB(getTableIndex(curr->value));
         break;
       case ExternalKind::Memory:
+        // TODO: fix with multi-memory
         o << U32LEB(0);
         break;
       case ExternalKind::Global:
