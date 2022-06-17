@@ -3265,8 +3265,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         if (index < dataSegments.size()) {
           dataSegments[i]->setExplicitName(name);
         } else {
-          std::cerr << "warning: memory index out of bounds in name section, "
-                       "memory subsection: "
+          std::cerr << "warning: data index out of bounds in name section, "
+                       "data subsection: "
                     << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
