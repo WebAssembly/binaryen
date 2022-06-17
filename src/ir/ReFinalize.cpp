@@ -192,7 +192,6 @@ void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitDataSegment(DataSegment* curr) {
   WASM_UNREACHABLE("unimp");
 }
-
 void ReFinalize::visitTag(Tag* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 

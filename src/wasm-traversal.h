@@ -213,6 +213,7 @@ struct Walker : public VisitorType {
   }
 
   void walkMemory(Memory* memory) {
+    // TODO: This method and walkTable should walk children too, or be renamed.
     static_cast<SubType*>(this)->visitMemory(memory);
   }
 

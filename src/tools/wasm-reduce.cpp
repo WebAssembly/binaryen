@@ -753,8 +753,6 @@ struct Reducer
   // TODO: bisection on segment shrinking?
 
   void visitDataSegment(DataSegment* curr) {
-    std::cerr << "|    try to simplify data segments\n";
-
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool shrank = false;

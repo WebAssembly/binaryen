@@ -70,7 +70,9 @@ struct Metrics
     Index size = 0;
     ModuleUtils::iterActiveDataSegments(
       *module, [&](DataSegment* segment) { size += segment->data.size(); });
-    counts["[memory-data]"] = size;
+    if (!module->dataSegments.empty()) {
+      counts["[memory-data]"] = size;
+    }
 
     // add table
     size = 0;
