@@ -801,7 +801,7 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    if (auto* ret = combineBinaryWithShifts(curr)) {
+    if (auto* ret = preserveShift(curr)) {
       return replaceCurrent(ret);
     }
     if (curr->op == AndInt32 || curr->op == OrInt32) {
@@ -2821,7 +2821,7 @@ private:
   // (x << z) op (y << z)    ==>   (x op y) << z,   op = `|`, `&`, `^`
   // (x >> z) op (y >> z)    ==>   (x op y) >> z,   op = `|`, `&`, `^`
   // (x >>> z) op (y >>> z)  ==>   (x op y) >>> z,  op = `|`, `&`, `^`
-  Expression* combineBinaryWithShifts(Binary* curr) {
+  Expression* preserveShift(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
     {
