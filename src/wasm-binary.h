@@ -1261,7 +1261,7 @@ public:
   void writeFunctions();
   void writeGlobals();
   void writeExports();
-  void writeDataSegmentCount();
+  void writeDataCount();
   void writeDataSegments();
   void writeTags();
 

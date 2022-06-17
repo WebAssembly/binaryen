@@ -54,17 +54,17 @@ inline bool ensureLimitedSegments(Module& module) {
     return false;
   }
 
-  auto isEmpty = [](DataSegment* segment) { return segment->data.size() == 0; };
+  auto isEmpty = [](DataSegment& segment) { return segment.data.size() == 0; };
 
-  auto isConstantOffset = [](DataSegment* segment) {
-    return segment->offset && segment->offset->is<Const>();
+  auto isConstantOffset = [](DataSegment& segment) {
+    return segment.offset && segment.offset->is<Const>();
   };
 
   Index numConstant = 0, numDynamic = 0;
   bool hasPassiveSegments = false;
   for (auto& segment : dataSegments) {
-    if (!isEmpty(segment.get())) {
-      if (isConstantOffset(segment.get())) {
+    if (!isEmpty(*segment)) {
+      if (isConstantOffset(*segment)) {
         numConstant++;
       } else {
         numDynamic++;
@@ -96,10 +96,10 @@ inline bool ensureLimitedSegments(Module& module) {
 
   // drop empty segments and pass through dynamic-offset segments
   for (auto& segment : dataSegments) {
-    if (isEmpty(segment.get())) {
+    if (isEmpty(*segment)) {
       continue;
     }
-    if (isConstantOffset(segment.get())) {
+    if (isConstantOffset(*segment)) {
       continue;
     }
     mergedSegments.push_back(std::move(segment));
@@ -107,12 +107,12 @@ inline bool ensureLimitedSegments(Module& module) {
 
   // from here on, we concern ourselves with non-empty constant-offset
   // segments, the ones which we may need to merge
-  auto isRelevant = [&](DataSegment* segment) {
+  auto isRelevant = [&](DataSegment& segment) {
     return !isEmpty(segment) && isConstantOffset(segment);
   };
   for (Index i = 0; i < dataSegments.size(); i++) {
     auto& segment = dataSegments[i];
-    if (!isRelevant(segment.get())) {
+    if (!isRelevant(*segment)) {
       continue;
     }
     if (mergedSegments.size() + 2 < WebLimitations::MaxDataSegments) {
@@ -124,7 +124,7 @@ inline bool ensureLimitedSegments(Module& module) {
     auto start = segment->offset->cast<Const>()->value.getInteger();
     for (Index j = i + 1; j < dataSegments.size(); j++) {
       auto& segment = dataSegments[j];
-      if (!isRelevant(segment.get())) {
+      if (!isRelevant(*segment)) {
         continue;
       }
       auto offset = segment->offset->cast<Const>()->value.getInteger();
@@ -135,10 +135,11 @@ inline bool ensureLimitedSegments(Module& module) {
     c->value = Literal(int32_t(start));
     c->type = Type::i32;
 
-    auto combined = std::make_unique<DataSegment>(c);
+    auto combined = Builder::makeDataSegment();
+    combined->offset = c;
     for (Index j = i; j < dataSegments.size(); j++) {
       auto& segment = dataSegments[j];
-      if (!isRelevant(segment.get())) {
+      if (!isRelevant(*segment)) {
         continue;
       }
       auto offset = segment->offset->cast<Const>()->value.getInteger();

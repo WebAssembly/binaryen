@@ -65,6 +65,7 @@ bool flatten(Module& wasm) {
   dataSegments.resize(1);
   dataSegments[0]->offset->cast<Const>()->value = Literal(int32_t(0));
   dataSegments[0]->data.swap(data);
+  wasm.removeDataSegments([&](DataSegment* curr) { return curr->name != dataSegments[0]->name; });
 
   return true;
 }

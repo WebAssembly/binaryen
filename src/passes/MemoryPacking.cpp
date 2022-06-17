@@ -561,11 +561,12 @@ void MemoryPacking::createSplitSegments(
       }
       segmentCount++;
     }
-    auto curr = std::make_unique<DataSegment>(segment->isPassive,
-                                              offset,
-                                              &segment->data[range.start],
-                                              range.end - range.start);
-    curr->setName(name, hasExplicitName);
+    auto curr = Builder::makeDataSegment(name,
+                                         segment->isPassive,
+                                         offset,
+                                         &segment->data[range.start],
+                                         range.end - range.start);
+    curr->hasExplicitName = hasExplicitName;
     packed.push_back(std::move(curr));
   }
 }

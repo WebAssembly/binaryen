@@ -116,12 +116,12 @@ inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
     return out.addDataSegment(std::move(ret));
   };
 
-  if (segment->isPassive) {
-    return copy(std::make_unique<DataSegment>());
-  } else {
+  auto curr = Builder::makeDataSegment();
+  if (!segment->isPassive) {
     auto offset = ExpressionManipulator::copy(segment->offset, out);
-    return copy(std::make_unique<DataSegment>(offset));
+    curr->offset = offset;
   }
+  return copy(std::move(curr));
 }
 
 inline void copyModule(const Module& in, Module& out) {

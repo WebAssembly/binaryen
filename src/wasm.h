@@ -1867,24 +1867,6 @@ public:
   bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
-  DataSegment() = default;
-  DataSegment(Expression* offset) : offset(offset) {}
-  DataSegment(Expression* offset, const char* init, Address size)
-    : offset(offset) {
-    data.resize(size);
-    std::copy_n(init, size, data.begin());
-  }
-  DataSegment(Expression* offset, std::vector<char>& init) : offset(offset) {
-    data.swap(init);
-  }
-  DataSegment(bool isPassive,
-              Expression* offset,
-              const char* init,
-              Address size)
-    : isPassive(isPassive), offset(offset) {
-    data.resize(size);
-    std::copy_n(init, size, data.begin());
-  }
 };
 
 class Memory : public Importable {

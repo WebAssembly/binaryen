@@ -58,7 +58,7 @@ void WasmBinaryWriter::write() {
   writeExports();
   writeStart();
   writeElementSegments();
-  writeDataSegmentCount();
+  writeDataCount();
   writeFunctions();
   writeDataSegments();
   if (debugInfo || emitModuleName) {
@@ -516,7 +516,7 @@ void WasmBinaryWriter::writeExports() {
   finishSection(start);
 }
 
-void WasmBinaryWriter::writeDataSegmentCount() {
+void WasmBinaryWriter::writeDataCount() {
   if (!wasm->features.hasBulkMemory() || !wasm->dataSegments.size()) {
     return;
   }
@@ -920,7 +920,7 @@ void WasmBinaryWriter::writeNames() {
   if (wasm->memory.exists) {
     Index count = 0;
     for (auto& seg : wasm->dataSegments) {
-      if (seg->name.is() && seg->hasExplicitName) {
+      if (seg->hasExplicitName) {
         count++;
       }
     }
@@ -2900,7 +2900,7 @@ void WasmBinaryBuilder::readDataSegments() {
   BYN_TRACE("== readDataSegments\n");
   auto num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
-    auto curr = std::make_unique<DataSegment>();
+    auto curr = Builder::makeDataSegment();
     uint32_t flags = getU32LEB();
     if (flags > 2) {
       throwError("bad segment flags, must be 0, 1, or 2, not " +

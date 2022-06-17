@@ -428,9 +428,8 @@ private:
     // segment at offset 0, or none.
     if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
-      std::vector<char> empty;
-      auto curr =
-        std::make_unique<DataSegment>(builder.makeConst(int32_t(0)), empty);
+      auto curr = builder.makeDataSegment();
+      curr->offset = builder.makeConst(int32_t(0));
       curr->setName(Name::fromInt(0), false);
       wasm->dataSegments.push_back(std::move(curr));
     }

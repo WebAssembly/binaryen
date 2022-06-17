@@ -2719,11 +2719,11 @@ void Wasm2JSGlue::emitMemory() {
   }
 
   if (hasActiveSegments(wasm)) {
-    auto globalOffset = [&](const DataSegment* segment) {
-      if (auto* c = segment->offset->dynCast<Const>()) {
+    auto globalOffset = [&](const DataSegment& segment) {
+      if (auto* c = segment.offset->dynCast<Const>()) {
         return std::to_string(c->value.getInteger());
       }
-      if (auto* get = segment->offset->dynCast<GlobalGet>()) {
+      if (auto* get = segment.offset->dynCast<GlobalGet>()) {
         auto internalName = get->name;
         auto importedName = wasm.getGlobal(internalName)->base;
         return std::string("imports[") + asmangle(importedName.str) + "]";
@@ -2737,7 +2737,7 @@ void Wasm2JSGlue::emitMemory() {
       if (!seg->isPassive) {
         // Plain active segments are decoded directly into the main memory.
         out << "  base64DecodeToExistingUint8Array(bufferView, "
-            << globalOffset(seg.get()) << ", \"" << base64Encode(seg->data)
+            << globalOffset(*seg) << ", \"" << base64Encode(seg->data)
             << "\");\n";
       }
     }

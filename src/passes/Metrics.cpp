@@ -64,25 +64,23 @@ struct Metrics
 
     // add memory
     walkMemory(&module->memory);
+    Index size = 0;
     for (auto& segment : module->dataSegments) {
       walkDataSegment(segment.get());
+      size += segment->data.size();
     }
-    Index size = 0;
-    ModuleUtils::iterActiveDataSegments(
-      *module, [&](DataSegment* segment) { size += segment->data.size(); });
     if (!module->dataSegments.empty()) {
       counts["[memory-data]"] = size;
     }
 
     // add table
     size = 0;
-    ModuleUtils::iterActiveElementSegments(
-      *module, [&](ElementSegment* segment) { size += segment->data.size(); });
     for (auto& table : module->tables) {
       walkTable(table.get());
     }
     for (auto& segment : module->elementSegments) {
       walkElementSegment(segment.get());
+      size += segment->data.size();
     }
     if (!module->tables.empty()) {
       counts["[table-data]"] = size;

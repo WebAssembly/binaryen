@@ -3011,7 +3011,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     doIndent(o, indent);
     o << '(';
     printMajor(o, "data ");
-    if (curr->name.is() && curr->hasExplicitName) {
+    if (curr->hasExplicitName) {
       printName(curr->name, o);
       o << ' ';
     }
