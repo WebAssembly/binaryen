@@ -96,7 +96,6 @@ global
  [funcs]        : 0       
  [globals]      : 0       
  [imports]      : 0       
- [memory-data]  : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 0       
@@ -107,7 +106,6 @@ global
  [funcs]        : 3       
  [globals]      : 0       
  [imports]      : 1       
- [memory-data]  : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 0       
@@ -184,7 +182,6 @@ global
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 1       
- [memory-data]  : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 0       
@@ -218,7 +215,6 @@ global
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 1       
- [memory-data]  : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 0       
@@ -248,7 +244,6 @@ global
  [funcs]        : 1       
  [globals]      : 1       
  [imports]      : 1       
- [memory-data]  : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 1       

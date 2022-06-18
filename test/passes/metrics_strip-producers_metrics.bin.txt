@@ -3,7 +3,6 @@ total
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 0       
- [memory-data]  : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 1       
@@ -14,7 +13,6 @@ total
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 0       
- [memory-data]  : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 1       
