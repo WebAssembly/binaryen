@@ -680,7 +680,7 @@ private:
   Literal avgrUInt(const Literal& other) const;
 };
 
-class Literals : public SmallVector<Literal, 1> {
+class Literals final : public SmallVector<Literal, 1> {
 public:
   Literals() = default;
   Literals(std::initializer_list<Literal> init)

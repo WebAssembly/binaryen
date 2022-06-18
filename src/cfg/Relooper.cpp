@@ -533,7 +533,7 @@ struct RelooperRecursor {
   RelooperRecursor(Relooper* ParentInit) : Parent(ParentInit) {}
 };
 
-struct Liveness : public RelooperRecursor {
+struct Liveness final : public RelooperRecursor {
   Liveness(Relooper* Parent) : RelooperRecursor(Parent) {}
   BlockSet Live;
 
@@ -556,7 +556,7 @@ struct Liveness : public RelooperRecursor {
 
 typedef std::pair<Branch*, Block*> BranchBlock;
 
-struct Optimizer : public RelooperRecursor {
+struct Optimizer final : public RelooperRecursor {
   Block* Entry;
 
   Optimizer(Relooper* Parent, Block* EntryInit)
@@ -1072,7 +1072,7 @@ void Relooper::Calculate(Block* Entry) {
 
   // Recursively process the graph
 
-  struct Analyzer : public RelooperRecursor {
+  struct Analyzer final : public RelooperRecursor {
     Analyzer(Relooper* Parent) : RelooperRecursor(Parent) {}
 
     // Create a list of entries from a block. If LimitTo is provided, only

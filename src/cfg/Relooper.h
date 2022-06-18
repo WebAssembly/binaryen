@@ -234,7 +234,7 @@ struct Shape {
   }
 };
 
-struct SimpleShape : public Shape {
+struct SimpleShape final : public Shape {
   Block* Inner = nullptr;
 
   SimpleShape() : Shape(Simple) {}
@@ -243,7 +243,7 @@ struct SimpleShape : public Shape {
 
 typedef std::map<int, Shape*> IdShapeMap;
 
-struct MultipleShape : public Shape {
+struct MultipleShape final : public Shape {
   IdShapeMap InnerMap; // entry block ID -> shape
 
   MultipleShape() : Shape(Multiple) {}
@@ -251,7 +251,7 @@ struct MultipleShape : public Shape {
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
-struct LoopShape : public Shape {
+struct LoopShape final : public Shape {
   Shape* Inner = nullptr;
 
   BlockSet Entries; // we must visit at least one of these

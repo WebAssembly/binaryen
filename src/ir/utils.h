@@ -115,7 +115,7 @@ struct ExpressionAnalyzer {
 // exist, but the breaks don't declare the type, rather everything
 // depends on the block. To avoid looking at the parent or something
 // else, just remove such un-taken branches.
-struct ReFinalize
+struct ReFinalize final
   : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
   bool isFunctionParallel() override { return true; }
 
@@ -152,7 +152,7 @@ private:
 
 // Re-finalize a single node. This is slow, if you want to refinalize
 // an entire ast, use ReFinalize
-struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
+struct ReFinalizeNode final : public OverriddenVisitor<ReFinalizeNode> {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { curr->finalize(); }
 
@@ -180,7 +180,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
 // dropping can change types, and depends on types being cleaned up - no
 // unnecessary block/if/loop types (see refinalize)
 // TODO: optimize that, interleave them
-struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
+struct AutoDrop final : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new AutoDrop; }

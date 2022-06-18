@@ -24,7 +24,7 @@ namespace wasm::LabelUtils {
 
 // Handles branch/loop labels in a function; makes it easy to add new
 // ones without duplicates
-class LabelManager : public PostWalker<LabelManager> {
+class LabelManager final : public PostWalker<LabelManager> {
 public:
   LabelManager(Function* func) { walkFunction(func); }
 

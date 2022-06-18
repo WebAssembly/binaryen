@@ -154,7 +154,7 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
 
 // Replace all delegate/rethrow targets within the given AST.
 inline void replaceExceptionTargets(Expression* ast, Name from, Name to) {
-  struct Replacer
+  struct Replacer final
     : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
     Name from, to;
     Replacer(Name from, Name to) : from(from), to(to) {}
@@ -174,7 +174,7 @@ inline void replaceExceptionTargets(Expression* ast, Name from, Name to) {
 
 // Replace all branch targets within the given AST.
 inline void replaceBranchTargets(Expression* ast, Name from, Name to) {
-  struct Replacer
+  struct Replacer final
     : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
     Name from, to;
     Replacer(Name from, Name to) : from(from), to(to) {}
@@ -195,7 +195,7 @@ inline void replaceBranchTargets(Expression* ast, Name from, Name to) {
 // Returns the set of targets to which we branch that are
 // outside of an expression.
 inline NameSet getExitingBranches(Expression* ast) {
-  struct Scanner
+  struct Scanner final
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
     NameSet targets;
 
@@ -217,7 +217,7 @@ inline NameSet getExitingBranches(Expression* ast) {
 // returns the list of all branch targets in a node
 
 inline NameSet getBranchTargets(Expression* ast) {
-  struct Scanner
+  struct Scanner final
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
     NameSet targets;
 
@@ -241,7 +241,7 @@ inline bool hasBranchTarget(Expression* ast, Name target) {
     return false;
   }
 
-  struct Scanner
+  struct Scanner final
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
     Name target;
     bool has = false;
@@ -279,7 +279,7 @@ inline Expression* getSentValue(Expression* curr) {
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
-struct BranchSeeker
+struct BranchSeeker final
   : public PostWalker<BranchSeeker, UnifiedExpressionVisitor<BranchSeeker>> {
   Name target;
 
@@ -322,7 +322,7 @@ struct BranchSeeker
 };
 
 // Accumulates all the branches in an entire tree.
-struct BranchAccumulator
+struct BranchAccumulator final
   : public PostWalker<BranchAccumulator,
                       UnifiedExpressionVisitor<BranchAccumulator>> {
   NameSet branches;
@@ -411,7 +411,8 @@ struct BranchTargets {
   }
 
 private:
-  struct Inner : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
+  struct Inner final
+    : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
     void visitExpression(Expression* curr) {
       operateOnScopeNameDefs(curr, [&](Name name) {
         if (name.is()) {
