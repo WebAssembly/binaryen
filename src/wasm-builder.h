@@ -106,11 +106,12 @@ public:
     return seg;
   }
 
-  static std::unique_ptr<DataSegment> makeDataSegment(Name name = "",
-                                                      bool isPassive = false,
-                                                      Expression* offset = nullptr,
-                                                      const char* init = "",
-                                                      Address size = 0) {
+  static std::unique_ptr<DataSegment>
+  makeDataSegment(Name name = "",
+                  bool isPassive = false,
+                  Expression* offset = nullptr,
+                  const char* init = "",
+                  Address size = 0) {
     auto seg = std::make_unique<DataSegment>();
     seg->name = name;
     seg->isPassive = isPassive;

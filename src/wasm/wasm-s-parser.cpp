@@ -3074,11 +3074,13 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
-      auto segment = Builder::makeDataSegment(Name::fromInt(dataCounter++), false, offset, data.data(), data.size());
+      auto segment = Builder::makeDataSegment(
+        Name::fromInt(dataCounter++), false, offset, data.data(), data.size());
       segment->hasExplicitName = false;
       wasm.dataSegments.push_back(std::move(segment));
     } else {
-      auto segment = Builder::makeDataSegment(Name::fromInt(dataCounter++), false, offset);
+      auto segment =
+        Builder::makeDataSegment(Name::fromInt(dataCounter++), false, offset);
       segment->hasExplicitName = false;
       wasm.dataSegments.push_back(std::move(segment));
     }
@@ -3135,7 +3137,8 @@ void SExpressionWasmBuilder::parseInnerData(Element& s,
       stringToBinary(input, size, data);
     }
   }
-  auto curr = Builder::makeDataSegment(name, isPassive, offset, data.data(), data.size());
+  auto curr =
+    Builder::makeDataSegment(name, isPassive, offset, data.data(), data.size());
   curr->hasExplicitName = hasExplicitName;
   wasm.dataSegments.push_back(std::move(curr));
 }
