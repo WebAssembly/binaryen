@@ -36,7 +36,7 @@
 
 namespace wasm {
 
-struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
+struct DataFlowOpts final : public WalkerPass<PostWalker<DataFlowOpts>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DataFlowOpts; }

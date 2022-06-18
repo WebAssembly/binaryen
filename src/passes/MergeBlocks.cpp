@@ -85,7 +85,7 @@ namespace wasm {
 // Looks for reasons we can't remove the values from breaks to an origin
 // For example, if there is a switch targeting us, we can't do it - we can't
 // remove the value from other targets
-struct ProblemFinder
+struct ProblemFinder final
   : public ControlFlowWalker<ProblemFinder,
                              UnifiedExpressionVisitor<ProblemFinder>> {
   Name origin;
@@ -138,7 +138,7 @@ struct ProblemFinder
 
 // Drops values from breaks to an origin.
 // While doing so it can create new blocks, so optimize blocks as well.
-struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
+struct BreakValueDropper final : public ControlFlowWalker<BreakValueDropper> {
   Name origin;
   PassOptions& passOptions;
   BranchUtils::BranchSeekerCache& branchInfo;
@@ -398,7 +398,7 @@ void BreakValueDropper::visitBlock(Block* curr) {
   optimizeBlock(curr, getModule(), passOptions, branchInfo);
 }
 
-struct MergeBlocks
+struct MergeBlocks final
   : public WalkerPass<
       PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }

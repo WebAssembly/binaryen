@@ -200,7 +200,7 @@ struct ReReloop final : public Pass {
     }
   };
 
-  struct BreakTask : public Task {
+  struct BreakTask final : public Task {
     static void handle(ReReloop& parent, Break* curr) {
       // add the branch. note how if the condition is false, it is the right
       // value there as well
@@ -216,7 +216,7 @@ struct ReReloop final : public Pass {
     }
   };
 
-  struct SwitchTask : public Task {
+  struct SwitchTask final : public Task {
     static void handle(ReReloop& parent, Switch* curr) {
       // set the switch condition for the block ending now
       auto* before = parent.getCurrCFGBlock();
@@ -245,7 +245,7 @@ struct ReReloop final : public Pass {
     }
   };
 
-  struct ReturnTask : public Task {
+  struct ReturnTask final : public Task {
     static void handle(ReReloop& parent, Return* curr) {
       // reuse the return
       parent.getCurrBlock()->list.push_back(curr);
@@ -253,7 +253,7 @@ struct ReReloop final : public Pass {
     }
   };
 
-  struct UnreachableTask : public Task {
+  struct UnreachableTask final : public Task {
     static void handle(ReReloop& parent, Unreachable* curr) {
       // reuse the unreachable
       parent.getCurrBlock()->list.push_back(curr);

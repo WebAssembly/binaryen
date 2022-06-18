@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-struct NameList : public Pass {
+struct NameList final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       std::cout << "    " << func->name << " : "

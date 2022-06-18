@@ -25,7 +25,8 @@
 
 namespace wasm {
 
-struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
+struct OptimizeForJSPass final
+  : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new OptimizeForJSPass; }

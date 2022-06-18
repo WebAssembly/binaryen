@@ -86,7 +86,7 @@ struct DAEFunctionInfo {
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
 
-struct DAEScanner
+struct DAEScanner final
   : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {
   bool isFunctionParallel() override { return true; }
 
@@ -165,7 +165,7 @@ struct DAEScanner
   }
 };
 
-struct DAE : public Pass {
+struct DAE final : public Pass {
   // This pass changes locals and parameters.
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
@@ -317,7 +317,7 @@ private:
     func->setResults(Type::none);
     Builder builder(*module);
     // Remove any return values.
-    struct ReturnUpdater : public PostWalker<ReturnUpdater> {
+    struct ReturnUpdater final : public PostWalker<ReturnUpdater> {
       Module* module;
       ReturnUpdater(Function* func, Module* module) : module(module) {
         walk(func->body);

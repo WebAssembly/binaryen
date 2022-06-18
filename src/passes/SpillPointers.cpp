@@ -33,7 +33,7 @@
 
 namespace wasm {
 
-struct SpillPointers
+struct SpillPointers final
   : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
   bool isFunctionParallel() override { return true; }
 

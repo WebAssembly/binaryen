@@ -171,7 +171,7 @@ struct EquivalentClass {
                     bool isIndirectionEnabled);
 };
 
-struct MergeSimilarFunctions : public Pass {
+struct MergeSimilarFunctions final : public Pass {
   bool invalidatesDWARF() override { return true; }
 
   void run(PassRunner* runner, Module* module) override {

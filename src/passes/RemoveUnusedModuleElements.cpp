@@ -39,7 +39,7 @@ typedef std::pair<ModuleElementKind, Name> ModuleElement;
 // Finds reachabilities
 // TODO: use Effects to determine if a memory is used
 
-struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
+struct ReachabilityAnalyzer final : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;
@@ -226,7 +226,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   }
 };
 
-struct RemoveUnusedModuleElements : public Pass {
+struct RemoveUnusedModuleElements final : public Pass {
   bool rootAllFunctions;
 
   RemoveUnusedModuleElements(bool rootAllFunctions)

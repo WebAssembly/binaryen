@@ -56,7 +56,8 @@ static void addExportedFunction(Module& module,
   module.addExport(std::move(export_));
 }
 
-struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
+struct EnforceStackLimits final
+  : public WalkerPass<PostWalker<EnforceStackLimits>> {
   EnforceStackLimits(const Global* stackPointer,
                      const Global* stackBase,
                      const Global* stackLimit,
@@ -122,7 +123,7 @@ private:
   Name handler;
 };
 
-struct StackCheck : public Pass {
+struct StackCheck final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Global* stackPointer = getStackPointerGlobal(*module);
     if (!stackPointer) {

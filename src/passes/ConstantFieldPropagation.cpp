@@ -49,7 +49,8 @@ using PCVFunctionStructValuesMap =
 // TODO Aside from writes, we could use information like whether any struct of
 //      this type has even been created (to handle the case of struct.sets but
 //      no struct.news).
-struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
+struct FunctionOptimizer final
+  : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FunctionOptimizer(infos); }
@@ -121,7 +122,7 @@ private:
   bool changed = false;
 };
 
-struct PCVScanner
+struct PCVScanner final
   : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
     return new PCVScanner(functionNewInfos, functionSetGetInfos);
@@ -174,7 +175,7 @@ struct PCVScanner
   }
 };
 
-struct ConstantFieldPropagation : public Pass {
+struct ConstantFieldPropagation final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "ConstantFieldPropagation requires nominal typing";

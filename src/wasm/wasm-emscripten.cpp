@@ -130,7 +130,7 @@ private:
     std::unordered_map<Index, Address> passiveOffsets;
     if (wasm.features.hasBulkMemory()) {
       // Fetch passive segment offsets out of memory.init instructions
-      struct OffsetSearcher : PostWalker<OffsetSearcher> {
+      struct OffsetSearcher final : PostWalker<OffsetSearcher> {
         std::unordered_map<Index, Address>& offsets;
         OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
           : offsets(offsets) {}
@@ -188,7 +188,7 @@ struct AsmConst {
   std::string code;
 };
 
-struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
+struct SegmentRemover final : WalkerPass<PostWalker<SegmentRemover>> {
   SegmentRemover(Index segment) : segment(segment) {}
 
   bool isFunctionParallel() override { return true; }
@@ -282,7 +282,7 @@ static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
   return asmConsts;
 }
 
-struct EmJsWalker : public PostWalker<EmJsWalker> {
+struct EmJsWalker final : public PostWalker<EmJsWalker> {
   Module& wasm;
   StringConstantTracker stringTracker;
   std::vector<Export> toRemove;

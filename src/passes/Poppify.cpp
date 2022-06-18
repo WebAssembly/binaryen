@@ -91,7 +91,7 @@ Name getGlobalElem(Module* module, Name global, Index i) {
     *module, std::string(global.c_str()) + '$' + std::to_string(i));
 }
 
-struct Poppifier : BinaryenIRWriter<Poppifier> {
+struct Poppifier final : BinaryenIRWriter<Poppifier> {
   // Collects instructions to be inserted into a block at a certain scope, as
   // well as what kind of scope it is, which determines how the instructions are
   // inserted.
@@ -428,7 +428,7 @@ void Poppifier::emitGlobalSet(GlobalSet* curr) {
 }
 
 void Poppifier::poppify(Expression* expr) {
-  struct Poppifier : PostWalker<Poppifier> {
+  struct Poppifier final : PostWalker<Poppifier> {
     bool scanned = false;
     Builder builder;
     Poppifier(Builder& builder) : builder(builder) {}

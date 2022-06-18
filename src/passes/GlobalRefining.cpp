@@ -30,7 +30,7 @@ namespace wasm {
 
 namespace {
 
-struct GlobalRefining : public Pass {
+struct GlobalRefining final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalRefining requires nominal typing";
@@ -96,7 +96,7 @@ struct GlobalRefining : public Pass {
 
     // Update function contents for their new parameter types: global.gets must
     // now return the new type for any globals that we modified.
-    struct GetUpdater : public WalkerPass<PostWalker<GetUpdater>> {
+    struct GetUpdater final : public WalkerPass<PostWalker<GetUpdater>> {
       bool isFunctionParallel() override { return true; }
 
       GlobalRefining& parent;

@@ -412,7 +412,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
-  struct CallIndirector : public WalkerPass<PostWalker<CallIndirector>> {
+  struct CallIndirector final : public WalkerPass<PostWalker<CallIndirector>> {
     ModuleSplitter& parent;
     Builder builder;
     CallIndirector(ModuleSplitter& parent)
@@ -444,7 +444,7 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
   // Find primary functions called in the secondary module.
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> callCollector(
     secondary, [&](Function* func, std::vector<Name>& calledPrimaryFuncs) {
-      struct CallCollector : PostWalker<CallCollector> {
+      struct CallCollector final : PostWalker<CallCollector> {
         const std::set<Name>& primaryFuncs;
         std::vector<Name>& calledPrimaryFuncs;
         CallCollector(const std::set<Name>& primaryFuncs,

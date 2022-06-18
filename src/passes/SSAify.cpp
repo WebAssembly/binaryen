@@ -67,7 +67,7 @@ static LocalSet IMPOSSIBLE_SET;
 // Tracks assignments to locals, assuming single-assignment form, i.e.,
 // each assignment creates a new variable.
 
-struct SSAify : public Pass {
+struct SSAify final : public Pass {
   bool isFunctionParallel() override { return true; }
 
   // SSAify maps each original local to a number of new ones.

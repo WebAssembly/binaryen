@@ -699,7 +699,7 @@ struct Printer {
 
 } // namespace DataFlow
 
-struct Souperify : public WalkerPass<PostWalker<Souperify>> {
+struct Souperify final : public WalkerPass<PostWalker<Souperify>> {
   // Not parallel, for now - could parallelize and combine outputs at the end.
   // If Souper is thread-safe, we could also run it in parallel.
 

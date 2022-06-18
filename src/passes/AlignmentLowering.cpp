@@ -26,7 +26,8 @@
 
 namespace wasm {
 
-struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
+struct AlignmentLowering final
+  : public WalkerPass<PostWalker<AlignmentLowering>> {
   // Core lowering of a 32-bit load: ensures it is done using aligned
   // operations, which means we can leave it alone if it's already aligned, or
   // else we break it up into smaller loads that are.

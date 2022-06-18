@@ -29,7 +29,7 @@ typedef std::map<const char*, int> Counts;
 static Counts lastCounts;
 
 // Prints metrics between optimization passes.
-struct Metrics
+struct Metrics final
   : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<Metrics>>> {
   bool modifiesBinaryenIR() override { return false; }
 

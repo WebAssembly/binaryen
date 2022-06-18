@@ -171,13 +171,14 @@ public:
     }
   };
 
-  struct Iterator : IteratorBase<SmallVector<T, N>, Iterator> {
+  struct Iterator final : IteratorBase<SmallVector<T, N>, Iterator> {
     Iterator(SmallVector<T, N>* parent, size_t index)
       : IteratorBase<SmallVector<T, N>, Iterator>(parent, index) {}
     value_type& operator*() { return (*this->parent)[this->index]; }
   };
 
-  struct ConstIterator : IteratorBase<const SmallVector<T, N>, ConstIterator> {
+  struct ConstIterator final
+    : IteratorBase<const SmallVector<T, N>, ConstIterator> {
     ConstIterator(const SmallVector<T, N>* parent, size_t index)
       : IteratorBase<const SmallVector<T, N>, ConstIterator>(parent, index) {}
     const value_type& operator*() const { return (*this->parent)[this->index]; }

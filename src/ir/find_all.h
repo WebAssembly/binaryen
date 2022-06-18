@@ -27,7 +27,7 @@ template<typename T> struct FindAll {
   std::vector<T*> list;
 
   FindAll(Expression* ast) {
-    struct Finder
+    struct Finder final
       : public PostWalker<Finder, UnifiedExpressionVisitor<Finder>> {
       std::vector<T*>* list;
       void visitExpression(Expression* curr) {
@@ -46,7 +46,7 @@ template<typename T> struct FindAll {
 
 // Find all pointers to instances of a certain node type
 
-struct PointerFinder
+struct PointerFinder final
   : public PostWalker<PointerFinder, UnifiedExpressionVisitor<PointerFinder>> {
   Expression::Id id;
   std::vector<Expression**>* list;

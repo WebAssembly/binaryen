@@ -63,7 +63,8 @@ static Name getStoreName(Store* curr) {
   return ret;
 }
 
-struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
+struct AccessInstrumenter final
+  : public WalkerPass<PostWalker<AccessInstrumenter>> {
   // A set of function that we should ignore (not instrument).
   std::set<Name> ignoreFunctions;
 
@@ -126,7 +127,7 @@ static std::set<Name> findCalledFunctions(Module* module, Name startFunc) {
   return called;
 }
 
-struct SafeHeap : public Pass {
+struct SafeHeap final : public Pass {
   PassOptions options;
 
   void run(PassRunner* runner, Module* module) override {

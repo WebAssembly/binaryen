@@ -42,7 +42,7 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
   }
 };
 
-struct CodeScanner
+struct CodeScanner final
   : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
   Counts& counts;
 

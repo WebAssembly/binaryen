@@ -394,7 +394,7 @@ private:
         if (!func->body) {
           return;
         }
-        struct TypeCollector : PostWalker<TypeCollector> {
+        struct TypeCollector final : PostWalker<TypeCollector> {
           Types& types;
           TypeCollector(Types& types) : types(types) {}
           void visitCall(Call* curr) {
@@ -491,7 +491,7 @@ class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
 
-  struct Info
+  struct Info final
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // The function name.
     Name name;
@@ -574,7 +574,7 @@ public:
           }
           return;
         }
-        struct Walker : PostWalker<Walker> {
+        struct Walker final : PostWalker<Walker> {
           Info& info;
           Module& module;
           bool canIndirectChangeState;
@@ -727,7 +727,7 @@ public:
     // Look inside to see if we call any of the things we know can change the
     // state.
     // TODO: caching, this is O(N^2)
-    struct Walker : PostWalker<Walker> {
+    struct Walker final : PostWalker<Walker> {
       void visitCall(Call* curr) {
         // We only implement these at the very end, but we know that they
         // definitely change the state.
@@ -830,7 +830,7 @@ public:
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
-struct AsyncifyFlow : public Pass {
+struct AsyncifyFlow final : public Pass {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
@@ -1159,7 +1159,7 @@ private:
                             builder->makeGlobalGet(ASYNCIFY_STATE, Type::i32)),
       func->body);
     // Add a check around every call.
-    struct Walker : PostWalker<Walker> {
+    struct Walker final : PostWalker<Walker> {
       void visitCall(Call* curr) {
         // Tail calls will need another type of check, as they wouldn't reach
         // this assertion.
@@ -1204,7 +1204,7 @@ private:
 };
 
 // Instrument local saving/restoring.
-struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
+struct AsyncifyLocals final : public WalkerPass<PostWalker<AsyncifyLocals>> {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
@@ -1316,7 +1316,7 @@ private:
   std::set<Index> relevantLiveLocals;
 
   void findRelevantLiveLocals(Function* func) {
-    struct RelevantLiveLocalsWalker
+    struct RelevantLiveLocalsWalker final
       : public LivenessWalker<RelevantLiveLocalsWalker,
                               Visitor<RelevantLiveLocalsWalker>> {
       // Basic blocks that have a possible unwind/rewind in them.
@@ -1478,7 +1478,7 @@ static std::string getFullImportName(Name module, Name base) {
   return std::string(module.str) + '.' + base.str;
 }
 
-struct Asyncify : public Pass {
+struct Asyncify final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     bool optimize = runner->options.optimizeLevel > 0;
 
@@ -1697,7 +1697,7 @@ Pass* createAsyncifyPass() { return new Asyncify(); }
 // Helper passes that can be run after Asyncify.
 
 template<bool neverRewind, bool neverUnwind, bool importsAlwaysUnwind>
-struct ModAsyncify
+struct ModAsyncify final
   : public WalkerPass<LinearExecutionWalker<
       ModAsyncify<neverRewind, neverUnwind, importsAlwaysUnwind>>> {
   bool isFunctionParallel() override { return true; }
@@ -1825,7 +1825,7 @@ Pass* createModAsyncifyAlwaysOnlyUnwindPass() {
 //
 // Assume that we never unwind, but may still rewind.
 //
-struct ModAsyncifyNeverUnwind : public Pass {
+struct ModAsyncifyNeverUnwind final : public Pass {
   void run(PassRunner* runner, Module* module) override {}
 };
 

@@ -333,7 +333,7 @@ struct ParallelFunctionAnalysis {
       }
     }
 
-    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
+    struct Mapper final : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
       bool modifiesBinaryenIR() override { return Mut; }
 
@@ -393,7 +393,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
       if (func->imported()) {
         return;
       }
-      struct Mapper : public PostWalker<Mapper> {
+      struct Mapper final : public PostWalker<Mapper> {
         Mapper(Module* module, T& info, Func work)
           : module(module), info(info), work(work) {}
 

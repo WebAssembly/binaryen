@@ -70,7 +70,7 @@ namespace wasm {
 
 static const Index WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH = 3;
 
-struct ExpressionMarker
+struct ExpressionMarker final
   : public PostWalker<ExpressionMarker,
                       UnifiedExpressionVisitor<ExpressionMarker>> {
   std::set<Expression*>& marked;
@@ -83,7 +83,7 @@ struct ExpressionMarker
   void visitExpression(Expression* expr) { marked.insert(expr); }
 };
 
-struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
+struct CodeFolding final : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new CodeFolding; }

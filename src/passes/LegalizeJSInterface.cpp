@@ -43,7 +43,7 @@
 
 namespace wasm {
 
-struct LegalizeJSInterface : public Pass {
+struct LegalizeJSInterface final : public Pass {
   bool full;
 
   LegalizeJSInterface(bool full) : full(full) {}
@@ -109,7 +109,7 @@ struct LegalizeJSInterface : public Pass {
     if (!illegalImportsToLegal.empty()) {
       // fix up imports: call_import of an illegal must be turned to a call of a
       // legal. the same must be done with ref.funcs.
-      struct Fixer : public WalkerPass<PostWalker<Fixer>> {
+      struct Fixer final : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
         Pass* create() override { return new Fixer(illegalImportsToLegal); }

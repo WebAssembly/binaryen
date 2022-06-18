@@ -27,7 +27,7 @@ struct Parents {
   Expression* getParent(Expression* curr) { return inner.parentMap[curr]; }
 
 private:
-  struct Inner
+  struct Inner final
     : public ExpressionStackWalker<Inner, UnifiedExpressionVisitor<Inner>> {
     void visitExpression(Expression* curr) { parentMap[curr] = getParent(); }
 

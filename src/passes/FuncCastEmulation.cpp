@@ -126,7 +126,7 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
   return value;
 }
 
-struct ParallelFuncCastEmulation
+struct ParallelFuncCastEmulation final
   : public WalkerPass<PostWalker<ParallelFuncCastEmulation>> {
   bool isFunctionParallel() override { return true; }
 
@@ -164,7 +164,7 @@ private:
   Index numParams;
 };
 
-struct FuncCastEmulation : public Pass {
+struct FuncCastEmulation final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Index numParams =
       std::stoul(runner->options.getArgumentOrDefault("max-func-params", "16"));

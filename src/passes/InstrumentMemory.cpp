@@ -96,7 +96,8 @@ static Name array_set_index("array_set_index");
 
 // TODO: Add support for atomicRMW/cmpxchg
 
-struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
+struct InstrumentMemory final
+  : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitLoad(Load* curr) {
     id++;
     Builder builder(*getModule());

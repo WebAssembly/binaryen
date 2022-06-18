@@ -28,7 +28,7 @@ namespace wasm {
 
 // Generate Stack IR from Binaryen IR
 
-struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
+struct GenerateStackIR final : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new GenerateStackIR; }
@@ -365,7 +365,7 @@ private:
   }
 };
 
-struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
+struct OptimizeStackIR final : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new OptimizeStackIR; }

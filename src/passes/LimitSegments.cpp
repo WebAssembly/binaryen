@@ -20,7 +20,7 @@
 
 namespace wasm {
 
-struct LimitSegments : public Pass {
+struct LimitSegments final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     if (!MemoryUtils::ensureLimitedSegments(*module)) {
       std::cerr << "Unable to merge segments. "

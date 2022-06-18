@@ -45,7 +45,7 @@
 
 namespace wasm {
 
-struct MinifyImportsAndExports : public Pass {
+struct MinifyImportsAndExports final : public Pass {
   bool minifyExports, minifyModules;
 
 public:

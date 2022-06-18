@@ -18,7 +18,7 @@
 
 namespace wasm {
 
-struct StripTargetFeatures : public Pass {
+struct StripTargetFeatures final : public Pass {
   bool isStripped = false;
   StripTargetFeatures(bool isStripped) : isStripped(isStripped) {}
   void run(PassRunner* runner, Module* module) override {

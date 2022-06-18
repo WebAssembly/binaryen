@@ -56,7 +56,7 @@ inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
   module->updateMaps();
 }
 
-struct FunctionRefReplacer
+struct FunctionRefReplacer final
   : public WalkerPass<PostWalker<FunctionRefReplacer>> {
   bool isFunctionParallel() override { return true; }
 

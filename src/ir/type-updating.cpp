@@ -93,7 +93,7 @@ void GlobalTypeRewriter::update() {
   }
 
   // Replace all the old types in the module with the new ones.
-  struct CodeUpdater
+  struct CodeUpdater final
     : public WalkerPass<
         PostWalker<CodeUpdater, UnifiedExpressionVisitor<CodeUpdater>>> {
     bool isFunctionParallel() override { return true; }

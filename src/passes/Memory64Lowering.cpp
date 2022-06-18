@@ -27,7 +27,8 @@
 
 namespace wasm {
 
-struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
+struct Memory64Lowering final
+  : public WalkerPass<PostWalker<Memory64Lowering>> {
 
   void run(PassRunner* runner, Module* module) override {
     if (module->memory.is64()) {

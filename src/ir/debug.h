@@ -27,7 +27,8 @@ inline void copyDebugInfo(Expression* origin,
                           Expression* copy,
                           Function* originFunc,
                           Function* copyFunc) {
-  struct Lister : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
+  struct Lister final
+    : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
     std::vector<Expression*> list;
     void visitExpression(Expression* curr) { list.push_back(curr); }
   };

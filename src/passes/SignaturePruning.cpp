@@ -41,7 +41,7 @@ namespace wasm {
 
 namespace {
 
-struct SignaturePruning : public Pass {
+struct SignaturePruning final : public Pass {
   // Maps each heap type to the possible pruned heap type. We will fill this
   // during analysis and then use it while doing an update of the types. If a
   // type has no improvement that we can find, it will not appear in this map.

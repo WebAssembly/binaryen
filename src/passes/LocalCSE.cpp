@@ -202,7 +202,7 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
   }
 };
 
-struct Scanner
+struct Scanner final
   : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
   PassOptions& options;
 
@@ -349,7 +349,7 @@ struct Scanner
 //
 // This updates the RequestInfos of things it sees are invalidated, which will
 // make Applier ignore them.
-struct Checker
+struct Checker final
   : public LinearExecutionWalker<Checker, UnifiedExpressionVisitor<Checker>> {
   PassOptions& options;
   RequestInfoMap& requestInfos;
@@ -472,7 +472,7 @@ struct Checker
 };
 
 // Applies the optimization now that we know which requests are valid.
-struct Applier
+struct Applier final
   : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   RequestInfoMap requestInfos;
 
@@ -520,7 +520,7 @@ struct Applier
 
 } // anonymous namespace
 
-struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
+struct LocalCSE final : public WalkerPass<PostWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
 
   // FIXME DWARF updating does not handle local changes yet.

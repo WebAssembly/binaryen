@@ -30,7 +30,7 @@
 
 namespace wasm {
 
-struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
+struct Vacuum final : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Vacuum; }

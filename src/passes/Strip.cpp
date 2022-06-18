@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct Strip : public Pass {
+struct Strip final : public Pass {
   // A function that returns true if the method should be removed.
   typedef std::function<bool(UserSection&)> Decider;
   Decider decider;

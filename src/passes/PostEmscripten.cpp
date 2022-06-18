@@ -43,7 +43,7 @@ static bool isInvoke(Function* F) {
 
 } // namespace
 
-struct PostEmscripten : public Pass {
+struct PostEmscripten final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Optimize exceptions
     optimizeExceptions(runner, module);
@@ -73,7 +73,7 @@ struct PostEmscripten : public Pass {
     }
     // This code has exceptions. Find functions that definitely cannot throw,
     // and remove invokes to them.
-    struct Info
+    struct Info final
       : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
       bool canThrow = false;
     };
@@ -94,7 +94,8 @@ struct PostEmscripten : public Pass {
       analyzer.NonDirectCallsHaveProperty);
 
     // Apply the information.
-    struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
+    struct OptimizeInvokes final
+      : public WalkerPass<PostWalker<OptimizeInvokes>> {
       bool isFunctionParallel() override { return true; }
 
       Pass* create() override { return new OptimizeInvokes(map, flatTable); }

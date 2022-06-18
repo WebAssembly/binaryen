@@ -35,7 +35,8 @@ namespace wasm {
 
 namespace {
 
-struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
+struct FunctionDirectizer final
+  : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FunctionDirectizer(tables); }
@@ -157,7 +158,7 @@ private:
   }
 };
 
-struct Directize : public Pass {
+struct Directize final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Find which tables are valid to optimize on. They must not be imported nor
     // exported (so the outside cannot modify them), and must have no sets in

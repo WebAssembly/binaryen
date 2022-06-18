@@ -35,7 +35,7 @@ struct Info {
 
 // flow helper class. flows the gets to their sets
 
-struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
+struct Flower final : public CFGWalker<Flower, Visitor<Flower>, Info> {
   LocalGraph::GetSetses& getSetses;
   LocalGraph::Locations& locations;
 

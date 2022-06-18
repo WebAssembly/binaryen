@@ -38,7 +38,8 @@ namespace wasm {
 
 static Name makeHighName(Name n) { return std::string(n.c_str()) + "$hi"; }
 
-struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
+struct I64ToI32Lowering final
+  : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   struct TempVar {
     TempVar(Index idx, Type ty, I64ToI32Lowering& pass)
       : idx(idx), pass(pass), moved(false), ty(ty) {}

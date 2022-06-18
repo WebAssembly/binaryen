@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-struct DeAlign : public WalkerPass<PostWalker<DeAlign>> {
+struct DeAlign final : public WalkerPass<PostWalker<DeAlign>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DeAlign(); }

@@ -81,7 +81,7 @@ struct OptInfo {
     newOnceGlobalsSetInFuncs;
 };
 
-struct Scanner : public WalkerPass<PostWalker<Scanner>> {
+struct Scanner final : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
   Scanner(OptInfo& optInfo) : optInfo(optInfo) {}
@@ -211,7 +211,7 @@ struct BlockInfo {
 // also do a full propagation to a fixed point in between running local
 // optimization, but that would require more code - it might be more efficient,
 // though).
-struct Optimizer
+struct Optimizer final
   : public WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
@@ -341,7 +341,7 @@ private:
 
 } // anonymous namespace
 
-struct OnceReduction : public Pass {
+struct OnceReduction final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     OptInfo optInfo;
 

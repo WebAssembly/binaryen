@@ -56,7 +56,7 @@ namespace wasm {
 
 namespace {
 
-struct GlobalStructInference : public Pass {
+struct GlobalStructInference final : public Pass {
   // Maps optimizable struct types to the globals whose init is a struct.new of
   // them. If a global is not present here, it cannot be optimized.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
@@ -168,7 +168,7 @@ struct GlobalStructInference : public Pass {
     }
 
     // Optimize based on the above.
-    struct FunctionOptimizer
+    struct FunctionOptimizer final
       : public WalkerPass<PostWalker<FunctionOptimizer>> {
       bool isFunctionParallel() override { return true; }
 

@@ -950,7 +950,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
   // be optimized into the switch, since they must be reached normally,
   // unless they happen to be right after us, in which case it's just
   // a fallthrough anyhow.
-  struct SwitchProcessor : public ExpressionStackWalker<SwitchProcessor> {
+  struct SwitchProcessor final : public ExpressionStackWalker<SwitchProcessor> {
     // A list of expressions we don't need to emit, as we are handling them
     // in another way.
     std::set<Expression*> unneededExpressions;

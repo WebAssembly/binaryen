@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-struct RemoveMemory : public Pass {
+struct RemoveMemory final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     module->memory.segments.clear();
   }

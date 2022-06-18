@@ -26,7 +26,7 @@ bool isGenerative(Expression* curr, FeatureSet features) {
     return false;
   }
 
-  struct Scanner : public PostWalker<Scanner> {
+  struct Scanner final : public PostWalker<Scanner> {
     bool generative = false;
     void visitStructNew(StructNew* curr) { generative = true; }
     void visitArrayNew(ArrayNew* curr) { generative = true; }

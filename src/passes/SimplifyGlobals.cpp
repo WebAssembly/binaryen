@@ -92,7 +92,8 @@ struct GlobalInfo {
 
 using GlobalInfoMap = std::map<Name, GlobalInfo>;
 
-struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
+struct GlobalUseScanner final
+  : public WalkerPass<PostWalker<GlobalUseScanner>> {
   bool isFunctionParallel() override { return true; }
 
   GlobalUseScanner(GlobalInfoMap* infos) : infos(infos) {}
@@ -190,7 +191,7 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     //
     // To check this, find the get of the global in the condition, and look up
     // through its parents to see how the global's value is used.
-    struct FlowScanner
+    struct FlowScanner final
       : public ExpressionStackWalker<FlowScanner,
                                      UnifiedExpressionVisitor<FlowScanner>> {
       GlobalUseScanner& globalUseScanner;
@@ -301,7 +302,8 @@ private:
 using NameNameMap = std::map<Name, Name>;
 using NameSet = std::set<Name>;
 
-struct GlobalUseModifier : public WalkerPass<PostWalker<GlobalUseModifier>> {
+struct GlobalUseModifier final
+  : public WalkerPass<PostWalker<GlobalUseModifier>> {
   bool isFunctionParallel() override { return true; }
 
   GlobalUseModifier(NameNameMap* copiedParentMap)
@@ -322,7 +324,7 @@ private:
   NameNameMap* copiedParentMap;
 };
 
-struct ConstantGlobalApplier
+struct ConstantGlobalApplier final
   : public WalkerPass<
       LinearExecutionWalker<ConstantGlobalApplier,
                             UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
@@ -393,7 +395,8 @@ private:
   std::map<Name, Literals> currConstantGlobals;
 };
 
-struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
+struct GlobalSetRemover final
+  : public WalkerPass<PostWalker<GlobalSetRemover>> {
   GlobalSetRemover(const NameSet* toRemove, bool optimize)
     : toRemove(toRemove), optimize(optimize) {}
 
@@ -427,7 +430,7 @@ private:
 
 } // anonymous namespace
 
-struct SimplifyGlobals : public Pass {
+struct SimplifyGlobals final : public Pass {
   PassRunner* runner;
   Module* module;
 

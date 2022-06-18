@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-struct SetGlobals : public Pass {
+struct SetGlobals final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Name input = runner->options.getArgument(
       "set-globals",

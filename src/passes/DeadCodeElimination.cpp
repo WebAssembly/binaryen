@@ -38,7 +38,7 @@
 
 namespace wasm {
 
-struct DeadCodeElimination
+struct DeadCodeElimination final
   : public WalkerPass<
       PostWalker<DeadCodeElimination,
                  UnifiedExpressionVisitor<DeadCodeElimination>>> {

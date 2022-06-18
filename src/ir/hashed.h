@@ -26,7 +26,7 @@ namespace wasm {
 
 // A pass that hashes all functions
 
-struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
+struct FunctionHasher final : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
   struct Map : public std::map<Function*, size_t> {};

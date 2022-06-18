@@ -194,7 +194,7 @@ public:
   }
 };
 
-struct Precompute
+struct Precompute final
   : public WalkerPass<
       PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
   bool isFunctionParallel() override { return true; }

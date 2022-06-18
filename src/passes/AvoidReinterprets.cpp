@@ -73,7 +73,8 @@ static bool isReinterpret(Unary* curr) {
          curr->op == ReinterpretFloat32 || curr->op == ReinterpretFloat64;
 }
 
-struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
+struct AvoidReinterprets final
+  : public WalkerPass<PostWalker<AvoidReinterprets>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new AvoidReinterprets; }
@@ -130,7 +131,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
       infos.erase(load);
     }
     // We now know which we can optimize, and how.
-    struct FinalOptimizer : public PostWalker<FinalOptimizer> {
+    struct FinalOptimizer final : public PostWalker<FinalOptimizer> {
       std::map<Load*, Info>& infos;
       LocalGraph* localGraph;
       Module* module;

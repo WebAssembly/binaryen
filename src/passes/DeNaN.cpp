@@ -30,8 +30,9 @@
 
 namespace wasm {
 
-struct DeNaN : public WalkerPass<
-                 ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>> {
+struct DeNaN final
+  : public WalkerPass<
+      ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>> {
 
   Name deNan32, deNan64;
 

@@ -322,7 +322,7 @@ public:
   std::set<Name> delegateTargets;
 
 private:
-  struct InternalAnalyzer
+  struct InternalAnalyzer final
     : public PostWalker<InternalAnalyzer, OverriddenVisitor<InternalAnalyzer>> {
 
     EffectAnalyzer& parent;

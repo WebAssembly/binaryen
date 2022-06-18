@@ -93,7 +93,7 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
 
 } // anonymous namespace
 
-struct MemoryPacking : public Pass {
+struct MemoryPacking final : public Pass {
   void run(PassRunner* runner, Module* module) override;
   bool canOptimize(const Memory& memory, const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
@@ -367,7 +367,7 @@ void MemoryPacking::calculateRanges(const Memory::Segment& segment,
 }
 
 void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
-  struct Optimizer : WalkerPass<PostWalker<Optimizer>> {
+  struct Optimizer final : WalkerPass<PostWalker<Optimizer>> {
     bool isFunctionParallel() override { return true; }
     Pass* create() override { return new Optimizer; }
 
@@ -441,7 +441,7 @@ void MemoryPacking::getSegmentReferrers(Module* module,
     if (func->imported()) {
       return;
     }
-    struct Collector : WalkerPass<PostWalker<Collector>> {
+    struct Collector final : WalkerPass<PostWalker<Collector>> {
       ReferrersMap& referrers;
       Collector(ReferrersMap& referrers) : referrers(referrers) {}
 
@@ -756,7 +756,7 @@ void MemoryPacking::createReplacements(Module* module,
 void MemoryPacking::replaceBulkMemoryOps(PassRunner* runner,
                                          Module* module,
                                          Replacements& replacements) {
-  struct Replacer : WalkerPass<PostWalker<Replacer>> {
+  struct Replacer final : WalkerPass<PostWalker<Replacer>> {
     bool isFunctionParallel() override { return true; }
 
     Replacements& replacements;

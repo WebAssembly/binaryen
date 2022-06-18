@@ -58,7 +58,7 @@ static void extract(PassRunner* runner, Module* module, Name name) {
   postRunner.run();
 }
 
-struct ExtractFunction : public Pass {
+struct ExtractFunction final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Name name = runner->options.getArgument(
       "extract-function",
@@ -67,7 +67,7 @@ struct ExtractFunction : public Pass {
   }
 };
 
-struct ExtractFunctionIndex : public Pass {
+struct ExtractFunctionIndex final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     std::string index =
       runner->options.getArgument("extract-function-index",

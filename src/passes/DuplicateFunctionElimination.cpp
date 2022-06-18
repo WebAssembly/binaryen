@@ -30,7 +30,7 @@
 
 namespace wasm {
 
-struct DuplicateFunctionElimination : public Pass {
+struct DuplicateFunctionElimination final : public Pass {
   // FIXME Merge DWARF info
   bool invalidatesDWARF() override { return true; }
 

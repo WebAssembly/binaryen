@@ -37,7 +37,8 @@ namespace wasm {
 
 typedef std::unordered_map<Name, std::atomic<Index>> NameCountMap;
 
-struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
+struct CallCountScanner final
+  : public WalkerPass<PostWalker<CallCountScanner>> {
   bool isFunctionParallel() override { return true; }
 
   CallCountScanner(NameCountMap* counts) : counts(counts) {}
@@ -54,7 +55,7 @@ private:
   NameCountMap* counts;
 };
 
-struct ReorderFunctions : public Pass {
+struct ReorderFunctions final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     NameCountMap counts;
     // fill in info, as we operate on it in parallel (each function to its own

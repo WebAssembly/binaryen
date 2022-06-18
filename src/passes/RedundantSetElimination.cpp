@@ -57,7 +57,7 @@ struct Info {
   std::vector<Expression**> setps;
 };
 
-struct RedundantSetElimination
+struct RedundantSetElimination final
   : public WalkerPass<CFGWalker<RedundantSetElimination,
                                 Visitor<RedundantSetElimination>,
                                 Info>> {

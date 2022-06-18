@@ -73,7 +73,8 @@ Name set_eqref("set_eqref");
 Name set_i31ref("set_i31ref");
 Name set_dataref("set_dataref");
 
-struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
+struct InstrumentLocals final
+  : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
     Builder builder(*getModule());
     Name import;

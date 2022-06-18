@@ -59,7 +59,7 @@ struct FieldInfo {
   }
 };
 
-struct FieldInfoScanner
+struct FieldInfoScanner final
   : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
     return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
@@ -92,7 +92,7 @@ struct FieldInfoScanner
   }
 };
 
-struct GlobalTypeOptimization : public Pass {
+struct GlobalTypeOptimization final : public Pass {
   StructUtils::StructValuesMap<FieldInfo> combinedSetGetInfos;
 
   // Maps types to a vector of booleans that indicate whether a field can
@@ -311,7 +311,7 @@ struct GlobalTypeOptimization : public Pass {
   // After updating the types to remove certain fields, we must also remove
   // them from struct instructions.
   void removeFieldsInInstructions(PassRunner* runner, Module& wasm) {
-    struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
+    struct FieldRemover final : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
 
       GlobalTypeOptimization& parent;

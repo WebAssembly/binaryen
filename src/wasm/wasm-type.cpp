@@ -3068,7 +3068,7 @@ void CanonicalizationState::updateUses(ReplacementMap& replacements,
     return;
   }
   // Replace all old types reachable from `info`.
-  struct ChildUpdater : HeapTypeChildWalker<ChildUpdater> {
+  struct ChildUpdater final : HeapTypeChildWalker<ChildUpdater> {
     ReplacementMap& replacements;
     ChildUpdater(ReplacementMap& replacements) : replacements(replacements) {}
     void noteChild(HeapType* child) {
@@ -3394,7 +3394,7 @@ ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
 }
 
 void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
-  struct Initializer : HeapTypeGraphWalker<Initializer> {
+  struct Initializer final : HeapTypeGraphWalker<Initializer> {
     ShapeCanonicalizer& canonicalizer;
 
     // Maps shallow HeapType shapes to corresponding HeapType indices.
@@ -3426,7 +3426,7 @@ void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
 
       // Traverse the non-basic children to collect graph edges, i.e.
       // transitions in the DFA.
-      struct TransitionInitializer
+      struct TransitionInitializer final
         : HeapTypeChildWalker<TransitionInitializer> {
         Initializer& initializer;
         size_t parent;
@@ -3569,7 +3569,7 @@ void ShapeCanonicalizer::createReplacements() {
 void globallyCanonicalize(CanonicalizationState& state) {
   // Map each temporary Type and HeapType to the locations where they will
   // have to be replaced with canonical Types and HeapTypes.
-  struct Locations : TypeGraphWalker<Locations> {
+  struct Locations final : TypeGraphWalker<Locations> {
     std::unordered_map<Type, std::unordered_set<Type*>> types;
     std::unordered_map<HeapType, std::unordered_set<HeapType*>> heapTypes;
 
@@ -3871,7 +3871,7 @@ void canonicalizeBasicTypes(CanonicalizationState& state) {
     // Canonicalizing basic heap types may cause their parent types to become
     // canonicalizable as well, for example after creating `(ref null any)` we
     // can futher canonicalize to `anyref`.
-    struct TypeCanonicalizer : TypeGraphWalkerBase<TypeCanonicalizer> {
+    struct TypeCanonicalizer final : TypeGraphWalkerBase<TypeCanonicalizer> {
       void scanType(Type* type) {
         if (type->isTuple()) {
           TypeGraphWalkerBase<TypeCanonicalizer>::scanType(type);

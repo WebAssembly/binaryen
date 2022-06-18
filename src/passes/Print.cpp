@@ -354,7 +354,7 @@ static Type forceConcrete(Type type) {
 
 // Prints the internal contents of an expression: everything but
 // the children.
-struct PrintExpressionContents
+struct PrintExpressionContents final
   : public OverriddenVisitor<PrintExpressionContents> {
   Module* wasm = nullptr;
   Function* currFunction = nullptr;
@@ -2207,7 +2207,8 @@ struct PrintExpressionContents
 
 // Prints an expression in s-expr format, including both the
 // internal contents and the nested children.
-struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
+struct PrintSExpression final
+  : public UnifiedExpressionVisitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
 

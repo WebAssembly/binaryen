@@ -33,7 +33,7 @@
 
 namespace wasm {
 
-struct LoopInvariantCodeMotion
+struct LoopInvariantCodeMotion final
   : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion>> {
   bool isFunctionParallel() override { return true; }
 

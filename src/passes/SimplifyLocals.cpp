@@ -65,7 +65,7 @@ namespace wasm {
 template<bool allowTee = true,
          bool allowStructure = true,
          bool allowNesting = true>
-struct SimplifyLocals
+struct SimplifyLocals final
   : public WalkerPass<LinearExecutionWalker<
       SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
   bool isFunctionParallel() override { return true; }
@@ -970,7 +970,7 @@ struct SimplifyLocals
     //    )
     //   )
     // will inhibit us creating an if return value.
-    struct EquivalentOptimizer
+    struct EquivalentOptimizer final
       : public LinearExecutionWalker<EquivalentOptimizer> {
       std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;

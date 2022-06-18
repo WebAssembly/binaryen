@@ -53,7 +53,7 @@
 
 namespace wasm {
 
-struct MergeLocals
+struct MergeLocals final
   : public WalkerPass<
       PostWalker<MergeLocals, UnifiedExpressionVisitor<MergeLocals>>> {
   bool isFunctionParallel() override { return true; }

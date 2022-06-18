@@ -298,7 +298,7 @@ Expression* makeTrappingUnary(Unary* curr,
   return builder.makeCall(name, {curr->value}, curr->type);
 }
 
-struct TrapModePass : public WalkerPass<PostWalker<TrapModePass>> {
+struct TrapModePass final : public WalkerPass<PostWalker<TrapModePass>> {
 public:
   // Needs to be non-parallel so that visitModule gets called after visiting
   // each node in the module, so we can add the functions that we created.

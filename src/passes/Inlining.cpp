@@ -134,7 +134,7 @@ static bool canHandleParams(Function* func) {
 
 typedef std::unordered_map<Name, FunctionInfo> NameInfoMap;
 
-struct FunctionInfoScanner
+struct FunctionInfoScanner final
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
 
@@ -204,7 +204,7 @@ struct InliningState {
   std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction;
 };
 
-struct Planner : public WalkerPass<PostWalker<Planner>> {
+struct Planner final : public WalkerPass<PostWalker<Planner>> {
   bool isFunctionParallel() override { return true; }
 
   Planner(InliningState* state) : state(state) {}
@@ -243,7 +243,7 @@ private:
   InliningState* state;
 };
 
-struct Updater : public PostWalker<Updater> {
+struct Updater final : public PostWalker<Updater> {
   Module* module;
   std::map<Index, Index> localMapping;
   Name returnName;
@@ -819,7 +819,7 @@ private:
   }
 };
 
-struct Inlining : public Pass {
+struct Inlining final : public Pass {
   // This pass changes locals and parameters.
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
@@ -1094,7 +1094,7 @@ struct Inlining : public Pass {
 static const char* MAIN = "main";
 static const char* ORIGINAL_MAIN = "__original_main";
 
-struct InlineMainPass : public Pass {
+struct InlineMainPass final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     auto* main = module->getFunctionOrNull(MAIN);
     auto* originalMain = module->getFunctionOrNull(ORIGINAL_MAIN);

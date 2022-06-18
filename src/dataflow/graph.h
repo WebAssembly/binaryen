@@ -39,7 +39,7 @@ namespace wasm::DataFlow {
 // Bad node if not supported, or nullptr if not relevant (we only
 // use the return value for internal expressions, that is, the
 // value of a local.set or the condition of an if etc).
-struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
+struct Graph final : public UnifiedExpressionVisitor<Graph, Node*> {
   // We only need one canonical bad node. It is never modified.
   Node bad = Node(Node::Type::Bad);
 

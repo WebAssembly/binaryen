@@ -29,7 +29,7 @@
 
 namespace wasm {
 
-struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
+struct RemoveImports final : public WalkerPass<PostWalker<RemoveImports>> {
   void visitCall(Call* curr) {
     auto* func = getModule()->getFunction(curr->target);
     if (!func->imported()) {

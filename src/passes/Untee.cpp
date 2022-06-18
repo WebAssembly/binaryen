@@ -28,7 +28,7 @@
 
 namespace wasm {
 
-struct Untee : public WalkerPass<PostWalker<Untee>> {
+struct Untee final : public WalkerPass<PostWalker<Untee>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Untee; }

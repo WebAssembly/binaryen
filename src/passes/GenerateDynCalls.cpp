@@ -35,7 +35,8 @@
 
 namespace wasm {
 
-struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
+struct GenerateDynCalls final
+  : public WalkerPass<PostWalker<GenerateDynCalls>> {
   GenerateDynCalls(bool onlyI64) : onlyI64(onlyI64) {}
 
   void doWalkModule(Module* wasm) {

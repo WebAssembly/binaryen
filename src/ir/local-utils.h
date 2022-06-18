@@ -22,7 +22,7 @@
 
 namespace wasm {
 
-struct LocalGetCounter : public PostWalker<LocalGetCounter> {
+struct LocalGetCounter final : public PostWalker<LocalGetCounter> {
   std::vector<Index> num;
 
   LocalGetCounter() = default;
@@ -41,7 +41,7 @@ struct LocalGetCounter : public PostWalker<LocalGetCounter> {
 
 // Removes trivially unneeded sets: sets for whom there is no possible get, and
 // sets of the same value immediately.
-struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
+struct UnneededSetRemover final : public PostWalker<UnneededSetRemover> {
   PassOptions& passOptions;
 
   LocalGetCounter* localGetCounter = nullptr;

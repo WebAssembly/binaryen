@@ -36,7 +36,7 @@ namespace {
 // as well as relevant nulls (nulls force us to keep the type nullable).
 using FieldInfo = LUBFinder;
 
-struct FieldInfoScanner
+struct FieldInfoScanner final
   : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
   Pass* create() override {
     return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
@@ -74,7 +74,7 @@ struct FieldInfoScanner
   }
 };
 
-struct TypeRefining : public Pass {
+struct TypeRefining final : public Pass {
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
@@ -210,7 +210,7 @@ struct TypeRefining : public Pass {
   // something that is invalid for that read. To ensure the code still
   // validates, simply remove such reads.
   void updateInstructions(Module& wasm, PassRunner* runner) {
-    struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
+    struct ReadUpdater final : public WalkerPass<PostWalker<ReadUpdater>> {
       bool isFunctionParallel() override { return true; }
 
       TypeRefining& parent;

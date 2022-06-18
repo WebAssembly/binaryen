@@ -561,7 +561,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
   getFunction()->localIndices.clear();
 }
 
-struct CoalesceLocalsWithLearning : public CoalesceLocals {
+struct CoalesceLocalsWithLearning final : public CoalesceLocals {
   virtual Pass* create() override { return new CoalesceLocalsWithLearning; }
 
   virtual void pickIndices(std::vector<Index>& indices) override;

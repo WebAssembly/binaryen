@@ -105,7 +105,7 @@ void UniqueNameMapper::clear() {
 }
 
 void UniqueNameMapper::uniquify(Expression* curr) {
-  struct Walker
+  struct Walker final
     : public ControlFlowWalker<Walker, UnifiedExpressionVisitor<Walker>> {
     UniqueNameMapper mapper;
 

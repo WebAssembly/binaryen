@@ -111,7 +111,7 @@ bool removeParameter(const std::vector<Function*>& funcs,
     newIndexes.push_back(Builder::addVar(func, type));
   }
   // Update local operations.
-  struct LocalUpdater : public PostWalker<LocalUpdater> {
+  struct LocalUpdater final : public PostWalker<LocalUpdater> {
     Index removedIndex;
     Index newIndex;
     LocalUpdater(Function* func, Index removedIndex, Index newIndex)

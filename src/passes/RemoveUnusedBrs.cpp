@@ -114,7 +114,7 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return CostAnalyzer(curr).cost >= TooCostlyToRunUnconditionally;
 }
 
-struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
+struct RemoveUnusedBrs final : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RemoveUnusedBrs; }
@@ -611,7 +611,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   bool sinkBlocks(Function* func) {
-    struct Sinker : public PostWalker<Sinker> {
+    struct Sinker final : public PostWalker<Sinker> {
       bool worked = false;
 
       void visitBlock(Block* curr) {
@@ -693,7 +693,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       return false;
     }
 
-    struct Optimizer : public PostWalker<Optimizer> {
+    struct Optimizer final : public PostWalker<Optimizer> {
       bool worked = false;
 
       void visitBrOn(BrOn* curr) {
@@ -803,7 +803,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     } while (anotherCycle);
 
     // thread trivial jumps
-    struct JumpThreader : public ControlFlowWalker<JumpThreader> {
+    struct JumpThreader final : public ControlFlowWalker<JumpThreader> {
       // map of all value-less breaks and switches going to a block (and not a
       // loop)
       std::map<Block*, std::vector<Expression*>> branchesToBlock;
@@ -883,7 +883,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     jumpThreader.finish(func);
 
     // perform some final optimizations
-    struct FinalOptimizer : public PostWalker<FinalOptimizer> {
+    struct FinalOptimizer final : public PostWalker<FinalOptimizer> {
       bool shrink;
       PassOptions& passOptions;
 

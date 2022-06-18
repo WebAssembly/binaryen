@@ -29,7 +29,7 @@
 
 namespace wasm {
 
-struct DWARFDump : public Pass {
+struct DWARFDump final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Debug::dumpDWARF(*module);
   }

@@ -27,7 +27,7 @@ namespace wasm {
 
 // Measure the size of an AST
 
-struct Measurer
+struct Measurer final
   : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>> {
   Index size = 0;
 

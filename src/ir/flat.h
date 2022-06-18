@@ -70,7 +70,7 @@
 namespace wasm::Flat {
 
 inline void verifyFlatness(Function* func) {
-  struct VerifyFlatness
+  struct VerifyFlatness final
     : public PostWalker<VerifyFlatness,
                         UnifiedExpressionVisitor<VerifyFlatness>> {
     void visitExpression(Expression* curr) {
@@ -111,7 +111,7 @@ inline void verifyFlatness(Function* func) {
 }
 
 inline void verifyFlatness(Module* module) {
-  struct VerifyFlatness
+  struct VerifyFlatness final
     : public WalkerPass<
         PostWalker<VerifyFlatness, UnifiedExpressionVisitor<VerifyFlatness>>> {
     bool isFunctionParallel() override { return true; }

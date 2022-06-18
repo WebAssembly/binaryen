@@ -233,7 +233,7 @@ struct Heap2LocalOptimizer {
   //
   // TODO: Doing a single rewrite walk at the end would be more efficient, but
   //       it would need to be more complex.
-  struct Rewriter : PostWalker<Rewriter> {
+  struct Rewriter final : PostWalker<Rewriter> {
     StructNew* allocation;
     Function* func;
     Builder builder;
@@ -580,7 +580,7 @@ struct Heap2LocalOptimizer {
       return ParentChildInteraction::Escapes;
     }
 
-    struct Checker : public Visitor<Checker> {
+    struct Checker final : public Visitor<Checker> {
       Expression* child;
 
       // Assume escaping (or some other problem we cannot analyze) unless we are
@@ -740,7 +740,7 @@ struct Heap2LocalOptimizer {
   }
 };
 
-struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
+struct Heap2Local final : public WalkerPass<PostWalker<Heap2Local>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Heap2Local(); }

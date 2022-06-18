@@ -67,7 +67,7 @@ namespace wasm {
 // Once exception is that we allow an (unreachable) node, which is used
 // when we move something unreachable to another place, and need a
 // placeholder. We will never reach that (unreachable) anyhow
-struct Flatten
+struct Flatten final
   : public WalkerPass<
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }

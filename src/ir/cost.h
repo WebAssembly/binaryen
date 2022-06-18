@@ -26,7 +26,7 @@ namespace wasm {
 
 using CostType = uint32_t;
 
-struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
+struct CostAnalyzer final : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostAnalyzer(Expression* ast) { cost = visit(ast); }
 
   CostType cost;

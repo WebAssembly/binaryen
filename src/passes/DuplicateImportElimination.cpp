@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct DuplicateImportElimination : public Pass {
+struct DuplicateImportElimination final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     ImportInfo imports(*module);
     std::map<Name, Name> replacements;

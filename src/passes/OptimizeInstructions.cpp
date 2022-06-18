@@ -57,7 +57,7 @@ struct LocalInfo {
   Index signExtedBits;
 };
 
-struct LocalScanner : PostWalker<LocalScanner> {
+struct LocalScanner final : PostWalker<LocalScanner> {
   std::vector<LocalInfo>& localInfo;
   const PassOptions& passOptions;
 
@@ -139,7 +139,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
 
 namespace {
 // perform some final optimizations
-struct FinalOptimizer : public PostWalker<FinalOptimizer> {
+struct FinalOptimizer final : public PostWalker<FinalOptimizer> {
   const PassOptions& passOptions;
 
   FinalOptimizer(const PassOptions& passOptions) : passOptions(passOptions) {}
@@ -202,7 +202,7 @@ template<class Opt> struct Match::Internal::MatchSelf<PureMatcherKind<Opt>> {
 };
 
 // Main pass class
-struct OptimizeInstructions
+struct OptimizeInstructions final
   : public WalkerPass<PostWalker<OptimizeInstructions>> {
   bool isFunctionParallel() override { return true; }
 
@@ -2414,7 +2414,7 @@ private:
       c->value = Literal::makeZero(c->type);
     }
     // remove added/subbed zeros
-    struct ZeroRemover : public PostWalker<ZeroRemover> {
+    struct ZeroRemover final : public PostWalker<ZeroRemover> {
       // TODO: we could save the binarys and costs we drop, and reuse them later
 
       PassOptions& passOptions;

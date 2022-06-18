@@ -236,7 +236,7 @@ private:
   }
 };
 
-struct OptimizeAddedConstants
+struct OptimizeAddedConstants final
   : public WalkerPass<
       PostWalker<OptimizeAddedConstants,
                  UnifiedExpressionVisitor<OptimizeAddedConstants>>> {
@@ -365,7 +365,7 @@ private:
   std::map<LocalSet*, Index> helperIndexes;
 
   void createHelperIndexes() {
-    struct Creator : public PostWalker<Creator> {
+    struct Creator final : public PostWalker<Creator> {
       std::map<LocalSet*, Index>& helperIndexes;
       Module* module;
 

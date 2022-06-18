@@ -40,7 +40,7 @@ namespace wasm {
 
 namespace {
 
-struct SignatureRefining : public Pass {
+struct SignatureRefining final : public Pass {
   // Maps each heap type to the possible refinement of the types in their
   // signatures. We will fill this during analysis and then use it while doing
   // an update of the types. If a type has no improvement that we can find, it
@@ -234,7 +234,7 @@ struct SignatureRefining : public Pass {
     }
 
     // Update function contents for their new parameter types.
-    struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
+    struct CodeUpdater final : public WalkerPass<PostWalker<CodeUpdater>> {
       bool isFunctionParallel() override { return true; }
 
       SignatureRefining& parent;

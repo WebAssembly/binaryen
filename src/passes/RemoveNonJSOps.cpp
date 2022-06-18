@@ -49,7 +49,8 @@
 
 namespace wasm {
 
-struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
+struct RemoveNonJSOpsPass final
+  : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   std::unique_ptr<Builder> builder;
   std::unordered_set<Name> neededIntrinsics;
   InsertOrderedSet<std::pair<Name, Type>> neededImportedGlobals;
@@ -335,7 +336,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 };
 
-struct StubUnsupportedJSOpsPass
+struct StubUnsupportedJSOpsPass final
   : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
   bool isFunctionParallel() override { return true; }
 

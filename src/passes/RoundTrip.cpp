@@ -27,7 +27,7 @@
 
 namespace wasm {
 
-struct RoundTrip : public Pass {
+struct RoundTrip final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     BufferWithRandomAccess buffer;
     // Save features, which would not otherwise make it through a round trip if

@@ -21,7 +21,8 @@
 
 namespace wasm {
 
-struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
+struct IntrinsicLowering final
+  : public WalkerPass<PostWalker<IntrinsicLowering>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new IntrinsicLowering; }

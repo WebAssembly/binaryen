@@ -41,7 +41,7 @@ namespace wasm {
 // with fewer uses than this, it is never beneficial to hoist
 static const Index MIN_USES = 2;
 
-struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
+struct ConstHoisting final : public WalkerPass<PostWalker<ConstHoisting>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ConstHoisting; }

@@ -31,7 +31,7 @@
 
 namespace wasm {
 
-struct PrintFunctionMap : public Pass {
+struct PrintFunctionMap final : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {

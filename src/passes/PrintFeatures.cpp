@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-struct PrintFeatures : public Pass {
+struct PrintFeatures final : public Pass {
   void run(PassRunner* runner, Module* module) override {
     module->features.iterFeatures([](FeatureSet::Feature f) {
       std::cout << "--enable-" << FeatureSet::toString(f) << std::endl;

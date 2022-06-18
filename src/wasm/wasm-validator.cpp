@@ -204,7 +204,8 @@ struct ValidationInfo {
   }
 };
 
-struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
+struct FunctionValidator final
+  : public WalkerPass<PostWalker<FunctionValidator>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FunctionValidator(*getModule(), &info); }
@@ -2864,7 +2865,7 @@ void FunctionValidator::validateAlignment(
 }
 
 static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
-  struct BinaryenIRValidator
+  struct BinaryenIRValidator final
     : public PostWalker<BinaryenIRValidator,
                         UnifiedExpressionVisitor<BinaryenIRValidator>> {
     ValidationInfo& info;
