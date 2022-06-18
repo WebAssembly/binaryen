@@ -223,7 +223,12 @@ void WasmBinaryWriter::writeTypes() {
   // the type section. With nominal typing there is always one group and with
   // equirecursive typing there is one group per type.
   size_t numGroups = 0;
-  switch (getTypeSystem()) {
+  // MVP types are structural and do not use recursion groups.
+  TypeSystem typeSystem = getTypeSystem();
+  if (!wasm->features.hasGC()) {
+    typeSystem = TypeSystem::Equirecursive;
+  }
+  switch (typeSystem) {
     case TypeSystem::Equirecursive:
       numGroups = indexedTypes.types.size();
       break;
@@ -242,7 +247,7 @@ void WasmBinaryWriter::writeTypes() {
   BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(numGroups);
-  if (getTypeSystem() == TypeSystem::Nominal) {
+  if (typeSystem == TypeSystem::Nominal) {
     // The nominal recursion group contains every type.
     o << S32LEB(BinaryConsts::EncodedType::Rec)
       << U32LEB(indexedTypes.types.size());
@@ -492,9 +497,10 @@ void WasmBinaryWriter::writeExports() {
         o << U32LEB(getFunctionIndex(curr->value));
         break;
       case ExternalKind::Table:
-        o << U32LEB(0);
+        o << U32LEB(getTableIndex(curr->value));
         break;
       case ExternalKind::Memory:
+        // TODO: fix with multi-memory
         o << U32LEB(0);
         break;
       case ExternalKind::Global:
