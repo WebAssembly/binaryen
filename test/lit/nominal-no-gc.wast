@@ -6,6 +6,9 @@
 ;; actually show up in the output and cause the test to fail.
 ;; RUN: wasm-opt %t.wasm --hybrid -all -S -o - | filecheck %s
 
+;; Also check that we don't get a failure with the default configuration.
+;; RUN: wasm-opt %t.wasm
+
 ;; CHECK-NOT: rec
 
 (module
