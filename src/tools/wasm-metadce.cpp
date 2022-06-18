@@ -189,7 +189,7 @@ struct MetaDCEGraph {
     // Add initializer dependencies
     // if we provide a parent DCE name, that is who can reach what we see
     // if none is provided, then it is something we must root
-    struct InitScanner : public PostWalker<InitScanner> {
+    struct InitScanner final : public PostWalker<InitScanner> {
       InitScanner(MetaDCEGraph* parent, Name parentDceName)
         : parent(parent), parentDceName(parentDceName) {}
 
@@ -242,7 +242,7 @@ struct MetaDCEGraph {
     }
 
     // A parallel scanner for function bodies
-    struct Scanner : public WalkerPass<PostWalker<Scanner>> {
+    struct Scanner final : public WalkerPass<PostWalker<Scanner>> {
       bool isFunctionParallel() override { return true; }
 
       Scanner(MetaDCEGraph* parent) : parent(parent) {}

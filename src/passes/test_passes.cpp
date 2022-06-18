@@ -29,7 +29,7 @@ namespace wasm {
 namespace {
 
 // Pass to test EHUtil::handleBlockNestedPops function
-struct CatchPopFixup : public WalkerPass<PostWalker<CatchPopFixup>> {
+struct CatchPopFixup final : public WalkerPass<PostWalker<CatchPopFixup>> {
   bool isFunctionParallel() override { return true; }
   Pass* create() override { return new CatchPopFixup; }
 

@@ -245,7 +245,7 @@ struct GlobalTypeOptimization final : public Pass {
   }
 
   void updateTypes(Module& wasm) {
-    class TypeRewriter : public GlobalTypeRewriter {
+    class TypeRewriter final : public GlobalTypeRewriter {
       GlobalTypeOptimization& parent;
 
     public:

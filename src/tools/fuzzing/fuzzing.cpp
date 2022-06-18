@@ -579,7 +579,7 @@ void TranslateToFuzzReader::recombine(Function* func) {
     return;
   }
   // First, scan and group all expressions by type.
-  struct Scanner
+  struct Scanner final
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
     TranslateToFuzzReader& parent;
     // A map of all expressions, categorized by type.
@@ -620,7 +620,8 @@ void TranslateToFuzzReader::recombine(Function* func) {
   // Second, with some probability replace an item with another item having
   // the same type. (This is not always valid due to nesting of labels, but
   // we'll fix that up later.)
-  struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
+  struct Modder final
+    : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     Scanner& scanner;
     TranslateToFuzzReader& parent;
@@ -647,7 +648,8 @@ void TranslateToFuzzReader::mutate(Function* func) {
   if (oneIn(2)) {
     return;
   }
-  struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
+  struct Modder final
+    : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
 
@@ -676,7 +678,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 }
 
 void TranslateToFuzzReader::fixLabels(Function* func) {
-  struct Fixer
+  struct Fixer final
     : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
@@ -794,7 +796,7 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
   if (oneIn(2)) {
     return;
   }
-  struct Modder : public PostWalker<Modder> {
+  struct Modder final : public PostWalker<Modder> {
     Module& wasm;
     TranslateToFuzzReader& parent;
 

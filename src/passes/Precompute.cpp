@@ -72,7 +72,7 @@ using HeapValues = std::unordered_map<Expression*, std::shared_ptr<GCData>>;
 // precomputed. Inherits most of its functionality from
 // ConstantExpressionRunner, which it shares with the C-API, but adds handling
 // of GetValues computed during the precompute pass.
-class PrecomputingExpressionRunner
+class PrecomputingExpressionRunner final
   : public ConstantExpressionRunner<PrecomputingExpressionRunner> {
 
   using Super = ConstantExpressionRunner<PrecomputingExpressionRunner>;

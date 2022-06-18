@@ -36,7 +36,7 @@ namespace {
 static void optimizeWasm(Module& wasm, PassOptions options) {
   // Perform various optimizations that will be good for JS, but would not be
   // great for wasm in general
-  struct OptimizeForJS : public WalkerPass<PostWalker<OptimizeForJS>> {
+  struct OptimizeForJS final : public WalkerPass<PostWalker<OptimizeForJS>> {
     bool isFunctionParallel() override { return true; }
 
     Pass* create() override { return new OptimizeForJS; }

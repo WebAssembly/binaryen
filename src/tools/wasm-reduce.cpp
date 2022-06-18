@@ -228,7 +228,7 @@ ProgramResult expected;
 // case we may try again but much later.
 static std::unordered_set<Name> functionsWeTriedToRemove;
 
-struct Reducer
+struct Reducer final
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
   bool binary, deNan, verbose, debugInfo;
@@ -1068,7 +1068,7 @@ struct Reducer
     }
 
     // remove all references to them
-    struct FunctionReferenceRemover
+    struct FunctionReferenceRemover final
       : public PostWalker<FunctionReferenceRemover> {
       std::unordered_set<Name> names;
       std::vector<Name> exportsToRemove;

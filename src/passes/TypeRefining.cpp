@@ -251,7 +251,7 @@ struct TypeRefining final : public Pass {
   }
 
   void updateTypes(Module& wasm, PassRunner* runner) {
-    class TypeRewriter : public GlobalTypeRewriter {
+    class TypeRewriter final : public GlobalTypeRewriter {
       TypeRefining& parent;
 
     public:

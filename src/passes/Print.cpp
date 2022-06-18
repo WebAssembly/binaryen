@@ -3225,7 +3225,7 @@ Pass* createPrinterPass() { return new Printer(); }
 
 // Prints out a minified module
 
-class MinifiedPrinter : public Printer {
+class MinifiedPrinter final : public Printer {
 public:
   MinifiedPrinter() = default;
   MinifiedPrinter(std::ostream* o) : Printer(o) {}
@@ -3242,7 +3242,7 @@ Pass* createMinifiedPrinterPass() { return new MinifiedPrinter(); }
 
 // Prints out a module withough elision, i.e., the full ast
 
-class FullPrinter : public Printer {
+class FullPrinter final : public Printer {
 public:
   FullPrinter() = default;
   FullPrinter(std::ostream* o) : Printer(o) {}
@@ -3259,7 +3259,7 @@ Pass* createFullPrinterPass() { return new FullPrinter(); }
 
 // Print Stack IR (if present)
 
-class PrintStackIR : public Printer {
+class PrintStackIR final : public Printer {
 public:
   PrintStackIR() = default;
   PrintStackIR(std::ostream* o) : Printer(o) {}

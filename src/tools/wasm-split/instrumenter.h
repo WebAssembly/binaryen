@@ -26,7 +26,7 @@ namespace wasm {
 // Add a global monotonic counter and a timestamp global for each function, code
 // at the beginning of each function to set its timestamp, and a new exported
 // function for dumping the profile data.
-struct Instrumenter : public Pass {
+struct Instrumenter final : public Pass {
   PassRunner* runner = nullptr;
   Module* wasm = nullptr;
 

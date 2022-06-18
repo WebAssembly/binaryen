@@ -459,7 +459,7 @@ class PoppifyFunctionsPass : public Pass {
 
 } // anonymous namespace
 
-class PoppifyPass : public Pass {
+class PoppifyPass final : public Pass {
   void run(PassRunner* runner, Module* module) {
     PassRunner subRunner(runner);
     subRunner.add(std::make_unique<PoppifyFunctionsPass>());
