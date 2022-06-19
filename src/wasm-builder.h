@@ -94,6 +94,12 @@ public:
     return table;
   }
 
+  static std::unique_ptr<Memory>makeMemory(Name name = Name::fromInt(0)) {
+    auto memory = std::make_unique<Memory();
+    memory->name = name;
+    return memory;
+  }
+
   static std::unique_ptr<ElementSegment>
   makeElementSegment(Name name,
                      Name table,

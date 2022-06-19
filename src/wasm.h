@@ -2103,7 +2103,6 @@ public:
   bool shared = false;
   Type indexType = Type::i32;
 
-  Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return indexType == Type::i64; }
   void clear() {

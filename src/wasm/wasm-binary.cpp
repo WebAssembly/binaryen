@@ -204,17 +204,17 @@ void WasmBinaryWriter::writeStart() {
 }
 
 void WasmBinaryWriter::writeMemory() {
-  if (!wasm->memory.exists || wasm->memory.imported()) {
+  if (!wasm->memories[0] || wasm->memories[0]->imported()) {
     return;
   }
   BYN_TRACE("== writeMemory\n");
   auto start = startSection(BinaryConsts::Section::Memory);
   o << U32LEB(1); // Define 1 memory
-  writeResizableLimits(wasm->memory.initial,
-                       wasm->memory.max,
-                       wasm->memory.hasMax(),
-                       wasm->memory.shared,
-                       wasm->memory.is64());
+  writeResizableLimits(wasm->memories[0]->initial,
+                       wasm->memories[0]->max,
+                       wasm->memories[0]->hasMax(),
+                       wasm->memories[0]->shared,
+                       wasm->memories[0]->is64());
   finishSection(start);
 }
 
@@ -333,15 +333,15 @@ void WasmBinaryWriter::writeImports() {
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
     o << U32LEB(getTypeIndex(tag->sig));
   });
-  if (wasm->memory.imported()) {
+  if (wasm->memories[0]->imported()) {
     BYN_TRACE("write one memory\n");
-    writeImportHeader(&wasm->memory);
+    writeImportHeader(wasm->memories[0]);
     o << U32LEB(int32_t(ExternalKind::Memory));
-    writeResizableLimits(wasm->memory.initial,
-                         wasm->memory.max,
-                         wasm->memory.hasMax(),
-                         wasm->memory.shared,
-                         wasm->memory.is64());
+    writeResizableLimits(wasm->memories[0]->initial,
+                         wasm->memories[0]->max,
+                         wasm->memories[0]->hasMax(),
+                         wasm->memories[0]->shared,
+                         wasm->memories[0]->is64());
   }
   ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
     BYN_TRACE("write one table\n");
@@ -930,11 +930,11 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // memory names
-  if (wasm->memory.exists && wasm->memory.hasExplicitName) {
+  if (wasm->memories[0] && wasm->memories[0]->hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 memory at index 0
-    writeEscapedName(wasm->memory.name.str);
+    writeEscapedName(wasm->memories[0]->name.str);
     finishSubsection(substart);
   }
 
@@ -990,7 +990,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // data segment names
-  if (wasm->memory.exists) {
+  if (wasm->memories[0]) {
     Index count = 0;
     for (auto& seg : wasm->dataSegments) {
       if (seg->hasExplicitName) {
@@ -1773,7 +1773,7 @@ int64_t WasmBinaryBuilder::getS64LEB() {
 }
 
 uint64_t WasmBinaryBuilder::getUPtrLEB() {
-  return wasm.memory.is64() ? getU64LEB() : getU32LEB();
+  return wasm.memories[0]->is64() ? getU64LEB() : getU32LEB();
 }
 
 bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
@@ -1991,15 +1991,16 @@ void WasmBinaryBuilder::readMemory() {
   if (numMemories != 1) {
     throwError("Must be exactly 1 memory");
   }
-  if (wasm.memory.exists) {
+  if (wasm.memories[0]) {
     throwError("Memory cannot be both imported and defined");
   }
-  wasm.memory.exists = true;
-  getResizableLimits(wasm.memory.initial,
-                     wasm.memory.max,
-                     wasm.memory.shared,
-                     wasm.memory.indexType,
+  auto memory = Builder::makeMemory();
+  getResizableLimits(memory->initial,
+                     memory->max,
+                     memory->shared,
+                     memory->indexType,
                      Memory::kUnlimitedSize);
+  memories.push_back(memory);
 }
 
 void WasmBinaryBuilder::readTypes() {
@@ -2299,14 +2300,15 @@ void WasmBinaryBuilder::readImports() {
       }
       case ExternalKind::Memory: {
         Name name(std::string("mimport$") + std::to_string(memoryCounter++));
-        wasm.memory.module = module;
-        wasm.memory.base = base;
-        wasm.memory.name = name;
-        wasm.memory.exists = true;
-        getResizableLimits(wasm.memory.initial,
-                           wasm.memory.max,
-                           wasm.memory.shared,
-                           wasm.memory.indexType,
+        auto curr = builder.makeMemory(name);
+        wasm.addMemory(std::move(curr));
+        wasm.memories[0]->module = module;
+        wasm.memories[0]->base = base;
+        wasm.memories[0]->name = name;
+        getResizableLimits(wasm.memories[0]->initial,
+                           wasm.memories[0]->max,
+                           wasm.memories[0]->shared,
+                           wasm.memories[0]->indexType,
                            Memory::kUnlimitedSize);
         break;
       }
@@ -2954,6 +2956,9 @@ void WasmBinaryBuilder::processNames() {
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
+  if (memories.size() == 1) {
+    wasm.addMemory(std::move(memories[0]));
+  }
   for (auto& segment : dataSegments) {
     wasm.addDataSegment(std::move(segment));
   }
@@ -2974,7 +2979,7 @@ void WasmBinaryBuilder::processNames() {
         curr->value = getTableName(index);
         break;
       case ExternalKind::Memory:
-        curr->value = wasm.memory.name;
+        curr->value = wasm.memories[0]->name;
         break;
       case ExternalKind::Global:
         curr->value = getGlobalName(index);
@@ -3368,7 +3373,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         if (index == 0) {
-          wasm.memory.setExplicitName(escape(rawName));
+          memories[0]->setExplicitName(escape(rawName));
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
@@ -3744,7 +3749,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::MemorySize: {
       auto size = allocator.alloc<MemorySize>();
-      if (wasm.memory.is64()) {
+      if (wasm.memories[0]->is64()) {
         size->make64();
       }
       curr = size;
@@ -3753,7 +3758,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     }
     case BinaryConsts::MemoryGrow: {
       auto grow = allocator.alloc<MemoryGrow>();
-      if (wasm.memory.is64()) {
+      if (wasm.memories[0]->is64()) {
         grow->make64();
       }
       curr = grow;
