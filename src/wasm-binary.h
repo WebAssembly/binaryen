@@ -1526,6 +1526,9 @@ public:
   // names
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
 
+  // we store memories here after being read from binary, before we know their
+  // names
+  std::vector<std::unique_ptr<Memory>> memories;
   // we store data here after being read from binary, before we know their names
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
 
