@@ -258,7 +258,7 @@ struct Walker : public VisitorType {
     for (auto& curr : module->elementSegments) {
       self->walkElementSegment(curr.get());
     }
-    self->walkMemory(&module->memory);
+    self->walkMemory(&module->memories[0]);
     for (auto& curr : module->dataSegments) {
       self->walkDataSegment(curr.get());
     }
