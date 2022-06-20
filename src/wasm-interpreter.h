@@ -3289,7 +3289,7 @@ public:
     NOTE_ENTER("MemorySize");
     auto* inst = getMemoryInstance();
     return Literal::makeFromInt64(inst->memorySize,
-                                  inst->wasm.memories->indexType);
+                                  inst->wasm.memories[0]->indexType);
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
@@ -3309,7 +3309,7 @@ public:
       return fail;
     }
     auto newSize = inst->memorySize + delta;
-    if (newSize > inst->wasm.memory.max) {
+    if (newSize > inst->wasm.memories[0]->max) {
       return fail;
     }
     if (!inst->externalInterface->growMemory(

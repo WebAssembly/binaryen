@@ -106,6 +106,18 @@ inline Table* copyTable(const Table* table, Module& out) {
   return out.addTable(std::move(ret));
 }
 
+inline Memory* copyMemory(const Memory* memory, Module& out) {
+  auto ret = Builder::makeMemory();
+  ret->name = memory->name;
+  ret->hasExplicitName = memory->hasExplicitName;
+  ret->initial = memory->initial;
+  ret->max = memory->max;
+  ret->shared = memory->shared;
+  ret->indexType = memory->indexType;
+
+  return out.addMemory(std::move(ret));
+}
+
 inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
   auto ret = Builder::makeDataSegment();
   ret->name = segment->name;
@@ -144,7 +156,7 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
-  out.memory = in.memory;
+  copyMemory(in.memories[0].get(), out);
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
@@ -208,13 +220,13 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 
 template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
   if (wasm.memories[0] && wasm.memories[0]->imported()) {
-    visitor(&wasm.memories[0]);
+    visitor(wasm.memories[0].get());
   }
 }
 
 template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
   if (wasm.memories[0] && !wasm.memories[0]->imported()) {
-    visitor(&wasm.memories[0]);
+    visitor(wasm.memories[0].get());
   }
 }
 

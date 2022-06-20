@@ -452,7 +452,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
         BUFFER,
         ValueBuilder::makeNew(ValueBuilder::makeCall(
           ValueBuilder::makeName("ArrayBuffer"),
-          ValueBuilder::makeInt(Address::address32_t(wasm->memories->initial.addr *
+          ValueBuilder::makeInt(Address::address32_t(wasm->memories[0]->initial.addr *
                                                      Memory::kPageSize)))));
     }
   }

@@ -368,7 +368,6 @@ struct RemoveUnusedModuleElements : public Pass {
         module->dataSegments.clear();
       }
       if (module->dataSegments.empty()) {
-        module->memories[0]->exists = false;
         module->memories[0]->module = module->memories[0]->base = Name();
         module->memories[0]->initial = 0;
         module->memories[0]->max = 0;

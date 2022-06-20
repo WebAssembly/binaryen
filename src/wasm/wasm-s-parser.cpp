@@ -1415,7 +1415,7 @@ Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeMemoryGrow(Element& s) {
   auto ret = allocator.alloc<MemoryGrow>();
-  if (wasm.memories[0]->s64()) {
+  if (wasm.memories[0]->is64()) {
     ret->make64();
   }
   ret->delta = parseExpression(s[1]);
@@ -3126,7 +3126,7 @@ Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
   }
   auto initElem = s[i++];
   wasm.memories[0]->initial = getAddress(initElem);
-  if (!wasm.memories[0]->64()) {
+  if (!wasm.memories[0]->is64()) {
     checkAddress(wasm.memories[0]->initial, "excessive memory init", initElem);
   }
   if (i == s.size()) {
@@ -3143,7 +3143,7 @@ Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
 }
 
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
-  if (wasm.memories[0]) {
+  if (wasm.memories.size() == 1) {
     throw ParseException("too many memories", s.line, s.col);
   }
   auto memory = make_unique<Memory>();
@@ -3152,7 +3152,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (s[i]->dollared()) {
     memory->setExplicitName(s[i++]->str());
   }
-  wasm.addMemory(memory);
+  wasm.addMemory(std::move(memory));
   i = parseMemoryIndex(s, i);
   Name importModule, importBase;
   if (s[i]->isList()) {
@@ -3442,7 +3442,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
         throw ParseException(
           "bad memory limit declaration", inner[j]->line, inner[j]->col);
       }
-      wasm->memories[0]->shared = true;
+      wasm.memories[0]->shared = true;
       j = parseMemoryLimits(limits, 1);
     } else {
       j = parseMemoryLimits(inner, j);
