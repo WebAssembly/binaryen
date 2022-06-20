@@ -1,18 +1,18 @@
 /*
- * Copyright 2017 WebAssembly Community Group participants
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2017 WebAssembly Community Group participants
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #include <mutex>
 #include <set>
@@ -35,463 +35,463 @@ namespace wasm {
 
 // Print anything that can be streamed to an ostream
 template<typename T,
-         typename std::enable_if<!std::is_base_of<
-           Expression,
-           typename std::remove_pointer<T>::type>::value>::type* = nullptr>
+       typename std::enable_if<!std::is_base_of<
+         Expression,
+         typename std::remove_pointer<T>::type>::value>::type* = nullptr>
 inline std::ostream&
 printModuleComponent(T curr, std::ostream& stream, Module& wasm) {
-  stream << curr << std::endl;
-  return stream;
+stream << curr << std::endl;
+return stream;
 }
 
 // Extra overload for Expressions, to print their contents.
 inline std::ostream&
 printModuleComponent(Expression* curr, std::ostream& stream, Module& wasm) {
-  if (curr) {
-    stream << ModuleExpression(wasm, curr) << '\n';
-  }
-  return stream;
+if (curr) {
+  stream << ModuleExpression(wasm, curr) << '\n';
+}
+return stream;
 }
 
 // For parallel validation, we have a helper struct for coordination
 struct ValidationInfo {
-  Module& wasm;
+Module& wasm;
 
-  bool validateWeb;
-  bool validateGlobally;
-  bool quiet;
+bool validateWeb;
+bool validateGlobally;
+bool quiet;
 
-  std::atomic<bool> valid;
+std::atomic<bool> valid;
 
-  // a stream of error test for each function. we print in the right order at
-  // the end, for deterministic output
-  // note errors are rare/unexpected, so it's ok to use a slow mutex here
-  std::mutex mutex;
-  std::unordered_map<Function*, std::unique_ptr<std::ostringstream>> outputs;
+// a stream of error test for each function. we print in the right order at
+// the end, for deterministic output
+// note errors are rare/unexpected, so it's ok to use a slow mutex here
+std::mutex mutex;
+std::unordered_map<Function*, std::unique_ptr<std::ostringstream>> outputs;
 
-  ValidationInfo(Module& wasm) : wasm(wasm) { valid.store(true); }
+ValidationInfo(Module& wasm) : wasm(wasm) { valid.store(true); }
 
-  std::ostringstream& getStream(Function* func) {
-    std::unique_lock<std::mutex> lock(mutex);
-    auto iter = outputs.find(func);
-    if (iter != outputs.end()) {
-      return *(iter->second.get());
-    }
-    auto& ret = outputs[func] = make_unique<std::ostringstream>();
-    return *ret.get();
+std::ostringstream& getStream(Function* func) {
+  std::unique_lock<std::mutex> lock(mutex);
+  auto iter = outputs.find(func);
+  if (iter != outputs.end()) {
+    return *(iter->second.get());
   }
+  auto& ret = outputs[func] = make_unique<std::ostringstream>();
+  return *ret.get();
+}
 
-  // printing and error handling support
+// printing and error handling support
 
-  template<typename T, typename S>
-  std::ostream& fail(S text, T curr, Function* func) {
-    valid.store(false);
-    auto& stream = getStream(func);
-    if (quiet) {
-      return stream;
-    }
-    auto& ret = printFailureHeader(func);
-    ret << text << ", on \n";
-    return printModuleComponent(curr, ret, wasm);
-  }
-
-  std::ostream& printFailureHeader(Function* func) {
-    auto& stream = getStream(func);
-    if (quiet) {
-      return stream;
-    }
-    Colors::red(stream);
-    if (func) {
-      stream << "[wasm-validator error in function ";
-      Colors::green(stream);
-      stream << func->name;
-      Colors::red(stream);
-      stream << "] ";
-    } else {
-      stream << "[wasm-validator error in module] ";
-    }
-    Colors::normal(stream);
+template<typename T, typename S>
+std::ostream& fail(S text, T curr, Function* func) {
+  valid.store(false);
+  auto& stream = getStream(func);
+  if (quiet) {
     return stream;
   }
+  auto& ret = printFailureHeader(func);
+  ret << text << ", on \n";
+  return printModuleComponent(curr, ret, wasm);
+}
 
-  // checking utilities
-
-  template<typename T>
-  bool shouldBeTrue(bool result,
-                    T curr,
-                    const char* text,
-                    Function* func = nullptr) {
-    if (!result) {
-      fail("unexpected false: " + std::string(text), curr, func);
-      return false;
-    }
-    return result;
+std::ostream& printFailureHeader(Function* func) {
+  auto& stream = getStream(func);
+  if (quiet) {
+    return stream;
   }
-  template<typename T>
-  bool shouldBeFalse(bool result,
-                     T curr,
-                     const char* text,
-                     Function* func = nullptr) {
-    if (result) {
-      fail("unexpected true: " + std::string(text), curr, func);
-      return false;
-    }
-    return result;
+  Colors::red(stream);
+  if (func) {
+    stream << "[wasm-validator error in function ";
+    Colors::green(stream);
+    stream << func->name;
+    Colors::red(stream);
+    stream << "] ";
+  } else {
+    stream << "[wasm-validator error in module] ";
   }
+  Colors::normal(stream);
+  return stream;
+}
 
-  template<typename T, typename S>
-  bool shouldBeEqual(
-    S left, S right, T curr, const char* text, Function* func = nullptr) {
-    if (left != right) {
-      std::ostringstream ss;
-      ss << left << " != " << right << ": " << text;
-      fail(ss.str(), curr, func);
-      return false;
-    }
-    return true;
-  }
+// checking utilities
 
-  template<typename T, typename S>
-  bool shouldBeEqualOrFirstIsUnreachable(
-    S left, S right, T curr, const char* text, Function* func = nullptr) {
-    if (left != Type::unreachable && left != right) {
-      std::ostringstream ss;
-      ss << left << " != " << right << ": " << text;
-      fail(ss.str(), curr, func);
-      return false;
-    }
-    return true;
-  }
-
-  template<typename T, typename S>
-  bool shouldBeUnequal(
-    S left, S right, T curr, const char* text, Function* func = nullptr) {
-    if (left == right) {
-      std::ostringstream ss;
-      ss << left << " == " << right << ": " << text;
-      fail(ss.str(), curr, func);
-      return false;
-    }
-    return true;
-  }
-
-  void shouldBeIntOrUnreachable(Type ty,
-                                Expression* curr,
-                                const char* text,
-                                Function* func = nullptr) {
-    switch (ty.getBasic()) {
-      case Type::i32:
-      case Type::i64:
-      case Type::unreachable: {
-        break;
-      }
-      default:
-        fail(text, curr, func);
-    }
-  }
-
-  // Type 'left' should be a subtype of 'right'.
-  bool shouldBeSubType(Type left,
-                       Type right,
-                       Expression* curr,
-                       const char* text,
-                       Function* func = nullptr) {
-    if (Type::isSubType(left, right)) {
-      return true;
-    }
-    fail(text, curr, func);
+template<typename T>
+bool shouldBeTrue(bool result,
+                  T curr,
+                  const char* text,
+                  Function* func = nullptr) {
+  if (!result) {
+    fail("unexpected false: " + std::string(text), curr, func);
     return false;
   }
+  return result;
+}
+template<typename T>
+bool shouldBeFalse(bool result,
+                   T curr,
+                   const char* text,
+                   Function* func = nullptr) {
+  if (result) {
+    fail("unexpected true: " + std::string(text), curr, func);
+    return false;
+  }
+  return result;
+}
+
+template<typename T, typename S>
+bool shouldBeEqual(
+  S left, S right, T curr, const char* text, Function* func = nullptr) {
+  if (left != right) {
+    std::ostringstream ss;
+    ss << left << " != " << right << ": " << text;
+    fail(ss.str(), curr, func);
+    return false;
+  }
+  return true;
+}
+
+template<typename T, typename S>
+bool shouldBeEqualOrFirstIsUnreachable(
+  S left, S right, T curr, const char* text, Function* func = nullptr) {
+  if (left != Type::unreachable && left != right) {
+    std::ostringstream ss;
+    ss << left << " != " << right << ": " << text;
+    fail(ss.str(), curr, func);
+    return false;
+  }
+  return true;
+}
+
+template<typename T, typename S>
+bool shouldBeUnequal(
+  S left, S right, T curr, const char* text, Function* func = nullptr) {
+  if (left == right) {
+    std::ostringstream ss;
+    ss << left << " == " << right << ": " << text;
+    fail(ss.str(), curr, func);
+    return false;
+  }
+  return true;
+}
+
+void shouldBeIntOrUnreachable(Type ty,
+                              Expression* curr,
+                              const char* text,
+                              Function* func = nullptr) {
+  switch (ty.getBasic()) {
+    case Type::i32:
+    case Type::i64:
+    case Type::unreachable: {
+      break;
+    }
+    default:
+      fail(text, curr, func);
+  }
+}
+
+// Type 'left' should be a subtype of 'right'.
+bool shouldBeSubType(Type left,
+                     Type right,
+                     Expression* curr,
+                     const char* text,
+                     Function* func = nullptr) {
+  if (Type::isSubType(left, right)) {
+    return true;
+  }
+  fail(text, curr, func);
+  return false;
+}
 };
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
-  bool isFunctionParallel() override { return true; }
+bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionValidator(*getModule(), &info); }
+Pass* create() override { return new FunctionValidator(*getModule(), &info); }
 
-  bool modifiesBinaryenIR() override { return false; }
+bool modifiesBinaryenIR() override { return false; }
 
-  ValidationInfo& info;
+ValidationInfo& info;
 
-  FunctionValidator(Module& wasm, ValidationInfo* info) : info(*info) {
-    setModule(&wasm);
-  }
+FunctionValidator(Module& wasm, ValidationInfo* info) : info(*info) {
+  setModule(&wasm);
+}
 
-  // Validate the entire module.
-  void validate(PassRunner* runner) { run(runner, getModule()); }
+// Validate the entire module.
+void validate(PassRunner* runner) { run(runner, getModule()); }
 
-  // Validate a specific expression.
-  void validate(Expression* curr) { walk(curr); }
+// Validate a specific expression.
+void validate(Expression* curr) { walk(curr); }
 
-  // Validate a function.
-  void validate(Function* func) { walkFunction(func); }
+// Validate a function.
+void validate(Function* func) { walkFunction(func); }
 
-  std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
-  std::unordered_set<Name> delegateTargetNames;
-  std::unordered_set<Name> rethrowTargetNames;
+std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
+std::unordered_set<Name> delegateTargetNames;
+std::unordered_set<Name> rethrowTargetNames;
 
-  std::unordered_set<Type> returnTypes; // types used in returns
+std::unordered_set<Type> returnTypes; // types used in returns
 
-  // Binaryen IR requires that label names must be unique - IR generators must
-  // ensure that
-  std::unordered_set<Name> labelNames;
+// Binaryen IR requires that label names must be unique - IR generators must
+// ensure that
+std::unordered_set<Name> labelNames;
 
-  void noteLabelName(Name name);
+void noteLabelName(Name name);
 
 public:
-  // visitors
+// visitors
 
-  void validatePoppyExpression(Expression* curr);
+void validatePoppyExpression(Expression* curr);
 
-  static void visitPoppyExpression(FunctionValidator* self,
-                                   Expression** currp) {
-    self->validatePoppyExpression(*currp);
+static void visitPoppyExpression(FunctionValidator* self,
+                                 Expression** currp) {
+  self->validatePoppyExpression(*currp);
+}
+
+static void visitPreBlock(FunctionValidator* self, Expression** currp) {
+  auto* curr = (*currp)->cast<Block>();
+  if (curr->name.is()) {
+    self->breakTypes[curr->name];
+  }
+}
+
+void visitBlock(Block* curr);
+void validateNormalBlockElements(Block* curr);
+void validatePoppyBlockElements(Block* curr);
+
+static void visitPreLoop(FunctionValidator* self, Expression** currp) {
+  auto* curr = (*currp)->cast<Loop>();
+  if (curr->name.is()) {
+    self->breakTypes[curr->name];
+  }
+}
+
+void visitLoop(Loop* curr);
+void visitIf(If* curr);
+
+static void visitPreTry(FunctionValidator* self, Expression** currp) {
+  auto* curr = (*currp)->cast<Try>();
+  if (curr->name.is()) {
+    self->delegateTargetNames.insert(curr->name);
+  }
+}
+
+// We remove try's label before proceeding to verify catch bodies because the
+// following is a validation failure:
+// (try $l0
+//   (do ... )
+//   (catch $e
+//     (try
+//       (do ...)
+//       (delegate $l0) ;; validation failure
+//     )
+//   )
+// )
+// Unlike branches, if delegate's target 'catch' is located above the
+// delegate, it is a validation failure.
+static void visitPreCatch(FunctionValidator* self, Expression** currp) {
+  auto* curr = (*currp)->cast<Try>();
+  if (curr->name.is()) {
+    self->delegateTargetNames.erase(curr->name);
+    self->rethrowTargetNames.insert(curr->name);
+  }
+}
+
+// override scan to add a pre and a post check task to all nodes
+static void scan(FunctionValidator* self, Expression** currp) {
+  auto* curr = *currp;
+  // Treat 'Try' specially because we need to run visitPreCatch between the
+  // try body and catch bodies
+  if (curr->is<Try>()) {
+    self->pushTask(doVisitTry, currp);
+    auto& list = curr->cast<Try>()->catchBodies;
+    for (int i = int(list.size()) - 1; i >= 0; i--) {
+      self->pushTask(scan, &list[i]);
+    }
+    self->pushTask(visitPreCatch, currp);
+    self->pushTask(scan, &curr->cast<Try>()->body);
+    self->pushTask(visitPreTry, currp);
+    return;
   }
 
-  static void visitPreBlock(FunctionValidator* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Block>();
-    if (curr->name.is()) {
-      self->breakTypes[curr->name];
+  PostWalker<FunctionValidator>::scan(self, currp);
+
+  if (curr->is<Block>()) {
+    self->pushTask(visitPreBlock, currp);
+  }
+  if (curr->is<Loop>()) {
+    self->pushTask(visitPreLoop, currp);
+  }
+  if (auto* func = self->getFunction()) {
+    if (func->profile == IRProfile::Poppy) {
+      self->pushTask(visitPoppyExpression, currp);
     }
   }
+}
 
-  void visitBlock(Block* curr);
-  void validateNormalBlockElements(Block* curr);
-  void validatePoppyBlockElements(Block* curr);
+void noteBreak(Name name, Expression* value, Expression* curr);
+void noteBreak(Name name, Type valueType, Expression* curr);
+void visitBreak(Break* curr);
+void visitSwitch(Switch* curr);
+void visitCall(Call* curr);
+void visitCallIndirect(CallIndirect* curr);
+void visitConst(Const* curr);
+void visitLocalGet(LocalGet* curr);
+void visitLocalSet(LocalSet* curr);
+void visitGlobalGet(GlobalGet* curr);
+void visitGlobalSet(GlobalSet* curr);
+void visitLoad(Load* curr);
+void visitStore(Store* curr);
+void visitAtomicRMW(AtomicRMW* curr);
+void visitAtomicCmpxchg(AtomicCmpxchg* curr);
+void visitAtomicWait(AtomicWait* curr);
+void visitAtomicNotify(AtomicNotify* curr);
+void visitAtomicFence(AtomicFence* curr);
+void visitSIMDExtract(SIMDExtract* curr);
+void visitSIMDReplace(SIMDReplace* curr);
+void visitSIMDShuffle(SIMDShuffle* curr);
+void visitSIMDTernary(SIMDTernary* curr);
+void visitSIMDShift(SIMDShift* curr);
+void visitSIMDLoad(SIMDLoad* curr);
+void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
+void visitMemoryInit(MemoryInit* curr);
+void visitDataDrop(DataDrop* curr);
+void visitMemoryCopy(MemoryCopy* curr);
+void visitMemoryFill(MemoryFill* curr);
+void visitBinary(Binary* curr);
+void visitUnary(Unary* curr);
+void visitSelect(Select* curr);
+void visitDrop(Drop* curr);
+void visitReturn(Return* curr);
+void visitMemorySize(MemorySize* curr);
+void visitMemoryGrow(MemoryGrow* curr);
+void visitRefNull(RefNull* curr);
+void visitRefIs(RefIs* curr);
+void visitRefFunc(RefFunc* curr);
+void visitRefEq(RefEq* curr);
+void visitTableGet(TableGet* curr);
+void visitTableSet(TableSet* curr);
+void visitTableSize(TableSize* curr);
+void visitTableGrow(TableGrow* curr);
+void noteDelegate(Name name, Expression* curr);
+void noteRethrow(Name name, Expression* curr);
+void visitTry(Try* curr);
+void visitThrow(Throw* curr);
+void visitRethrow(Rethrow* curr);
+void visitTupleMake(TupleMake* curr);
+void visitTupleExtract(TupleExtract* curr);
+void visitCallRef(CallRef* curr);
+void visitI31New(I31New* curr);
+void visitI31Get(I31Get* curr);
+void visitRefTest(RefTest* curr);
+void visitRefCast(RefCast* curr);
+void visitBrOn(BrOn* curr);
+void visitStructNew(StructNew* curr);
+void visitStructGet(StructGet* curr);
+void visitStructSet(StructSet* curr);
+void visitArrayNew(ArrayNew* curr);
+void visitArrayInit(ArrayInit* curr);
+void visitArrayGet(ArrayGet* curr);
+void visitArraySet(ArraySet* curr);
+void visitArrayLen(ArrayLen* curr);
+void visitArrayCopy(ArrayCopy* curr);
+void visitFunction(Function* curr);
 
-  static void visitPreLoop(FunctionValidator* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Loop>();
-    if (curr->name.is()) {
-      self->breakTypes[curr->name];
-    }
-  }
-
-  void visitLoop(Loop* curr);
-  void visitIf(If* curr);
-
-  static void visitPreTry(FunctionValidator* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Try>();
-    if (curr->name.is()) {
-      self->delegateTargetNames.insert(curr->name);
-    }
-  }
-
-  // We remove try's label before proceeding to verify catch bodies because the
-  // following is a validation failure:
-  // (try $l0
-  //   (do ... )
-  //   (catch $e
-  //     (try
-  //       (do ...)
-  //       (delegate $l0) ;; validation failure
-  //     )
-  //   )
-  // )
-  // Unlike branches, if delegate's target 'catch' is located above the
-  // delegate, it is a validation failure.
-  static void visitPreCatch(FunctionValidator* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Try>();
-    if (curr->name.is()) {
-      self->delegateTargetNames.erase(curr->name);
-      self->rethrowTargetNames.insert(curr->name);
-    }
-  }
-
-  // override scan to add a pre and a post check task to all nodes
-  static void scan(FunctionValidator* self, Expression** currp) {
-    auto* curr = *currp;
-    // Treat 'Try' specially because we need to run visitPreCatch between the
-    // try body and catch bodies
-    if (curr->is<Try>()) {
-      self->pushTask(doVisitTry, currp);
-      auto& list = curr->cast<Try>()->catchBodies;
-      for (int i = int(list.size()) - 1; i >= 0; i--) {
-        self->pushTask(scan, &list[i]);
-      }
-      self->pushTask(visitPreCatch, currp);
-      self->pushTask(scan, &curr->cast<Try>()->body);
-      self->pushTask(visitPreTry, currp);
-      return;
-    }
-
-    PostWalker<FunctionValidator>::scan(self, currp);
-
-    if (curr->is<Block>()) {
-      self->pushTask(visitPreBlock, currp);
-    }
-    if (curr->is<Loop>()) {
-      self->pushTask(visitPreLoop, currp);
-    }
-    if (auto* func = self->getFunction()) {
-      if (func->profile == IRProfile::Poppy) {
-        self->pushTask(visitPoppyExpression, currp);
-      }
-    }
-  }
-
-  void noteBreak(Name name, Expression* value, Expression* curr);
-  void noteBreak(Name name, Type valueType, Expression* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallIndirect(CallIndirect* curr);
-  void visitConst(Const* curr);
-  void visitLocalGet(LocalGet* curr);
-  void visitLocalSet(LocalSet* curr);
-  void visitGlobalGet(GlobalGet* curr);
-  void visitGlobalSet(GlobalSet* curr);
-  void visitLoad(Load* curr);
-  void visitStore(Store* curr);
-  void visitAtomicRMW(AtomicRMW* curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
-  void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicNotify(AtomicNotify* curr);
-  void visitAtomicFence(AtomicFence* curr);
-  void visitSIMDExtract(SIMDExtract* curr);
-  void visitSIMDReplace(SIMDReplace* curr);
-  void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDTernary(SIMDTernary* curr);
-  void visitSIMDShift(SIMDShift* curr);
-  void visitSIMDLoad(SIMDLoad* curr);
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
-  void visitMemoryInit(MemoryInit* curr);
-  void visitDataDrop(DataDrop* curr);
-  void visitMemoryCopy(MemoryCopy* curr);
-  void visitMemoryFill(MemoryFill* curr);
-  void visitBinary(Binary* curr);
-  void visitUnary(Unary* curr);
-  void visitSelect(Select* curr);
-  void visitDrop(Drop* curr);
-  void visitReturn(Return* curr);
-  void visitMemorySize(MemorySize* curr);
-  void visitMemoryGrow(MemoryGrow* curr);
-  void visitRefNull(RefNull* curr);
-  void visitRefIs(RefIs* curr);
-  void visitRefFunc(RefFunc* curr);
-  void visitRefEq(RefEq* curr);
-  void visitTableGet(TableGet* curr);
-  void visitTableSet(TableSet* curr);
-  void visitTableSize(TableSize* curr);
-  void visitTableGrow(TableGrow* curr);
-  void noteDelegate(Name name, Expression* curr);
-  void noteRethrow(Name name, Expression* curr);
-  void visitTry(Try* curr);
-  void visitThrow(Throw* curr);
-  void visitRethrow(Rethrow* curr);
-  void visitTupleMake(TupleMake* curr);
-  void visitTupleExtract(TupleExtract* curr);
-  void visitCallRef(CallRef* curr);
-  void visitI31New(I31New* curr);
-  void visitI31Get(I31Get* curr);
-  void visitRefTest(RefTest* curr);
-  void visitRefCast(RefCast* curr);
-  void visitBrOn(BrOn* curr);
-  void visitStructNew(StructNew* curr);
-  void visitStructGet(StructGet* curr);
-  void visitStructSet(StructSet* curr);
-  void visitArrayNew(ArrayNew* curr);
-  void visitArrayInit(ArrayInit* curr);
-  void visitArrayGet(ArrayGet* curr);
-  void visitArraySet(ArraySet* curr);
-  void visitArrayLen(ArrayLen* curr);
-  void visitArrayCopy(ArrayCopy* curr);
-  void visitFunction(Function* curr);
-
-  // helpers
+// helpers
 private:
-  std::ostream& getStream() { return info.getStream(getFunction()); }
+std::ostream& getStream() { return info.getStream(getFunction()); }
 
-  template<typename T>
-  bool shouldBeTrue(bool result, T curr, const char* text) {
-    return info.shouldBeTrue(result, curr, text, getFunction());
-  }
-  template<typename T>
-  bool shouldBeFalse(bool result, T curr, const char* text) {
-    return info.shouldBeFalse(result, curr, text, getFunction());
-  }
+template<typename T>
+bool shouldBeTrue(bool result, T curr, const char* text) {
+  return info.shouldBeTrue(result, curr, text, getFunction());
+}
+template<typename T>
+bool shouldBeFalse(bool result, T curr, const char* text) {
+  return info.shouldBeFalse(result, curr, text, getFunction());
+}
 
-  template<typename T, typename S>
-  bool shouldBeEqual(S left, S right, T curr, const char* text) {
-    return info.shouldBeEqual(left, right, curr, text, getFunction());
-  }
+template<typename T, typename S>
+bool shouldBeEqual(S left, S right, T curr, const char* text) {
+  return info.shouldBeEqual(left, right, curr, text, getFunction());
+}
 
-  template<typename T, typename S>
-  bool
-  shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
-    return info.shouldBeEqualOrFirstIsUnreachable(
-      left, right, curr, text, getFunction());
-  }
+template<typename T, typename S>
+bool
+shouldBeEqualOrFirstIsUnreachable(S left, S right, T curr, const char* text) {
+  return info.shouldBeEqualOrFirstIsUnreachable(
+    left, right, curr, text, getFunction());
+}
 
-  template<typename T, typename S>
-  bool shouldBeUnequal(S left, S right, T curr, const char* text) {
-    return info.shouldBeUnequal(left, right, curr, text, getFunction());
-  }
+template<typename T, typename S>
+bool shouldBeUnequal(S left, S right, T curr, const char* text) {
+  return info.shouldBeUnequal(left, right, curr, text, getFunction());
+}
 
-  void shouldBeIntOrUnreachable(Type ty, Expression* curr, const char* text) {
-    return info.shouldBeIntOrUnreachable(ty, curr, text, getFunction());
-  }
+void shouldBeIntOrUnreachable(Type ty, Expression* curr, const char* text) {
+  return info.shouldBeIntOrUnreachable(ty, curr, text, getFunction());
+}
 
-  bool
-  shouldBeSubType(Type left, Type right, Expression* curr, const char* text) {
-    return info.shouldBeSubType(left, right, curr, text, getFunction());
-  }
+bool
+shouldBeSubType(Type left, Type right, Expression* curr, const char* text) {
+  return info.shouldBeSubType(left, right, curr, text, getFunction());
+}
 
-  void validateAlignment(
-    size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
-  void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
+void validateAlignment(
+  size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
+void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
 
-  template<typename T> void validateReturnCall(T* curr) {
-    shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
-                 curr,
-                 "return_call* requires tail calls to be enabled");
-  }
+template<typename T> void validateReturnCall(T* curr) {
+  shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
+               curr,
+               "return_call* requires tail calls to be enabled");
+}
 
-  // |printable| is the expression to print in case of an error. That may differ
-  // from |curr| which we are validating.
-  template<typename T>
-  void validateCallParamsAndResult(T* curr,
-                                   HeapType sigType,
-                                   Expression* printable) {
-    if (!shouldBeTrue(sigType.isSignature(),
-                      printable,
-                      "Heap type must be a signature type")) {
-      return;
-    }
-    auto sig = sigType.getSignature();
-    if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
-                      printable,
-                      "call* param number must match")) {
-      return;
-    }
-    size_t i = 0;
-    for (const auto& param : sig.params) {
-      if (!shouldBeSubType(curr->operands[i]->type,
-                           param,
-                           printable,
-                           "call param types must match") &&
-          !info.quiet) {
-        getStream() << "(on argument " << i << ")\n";
-      }
-      ++i;
-    }
-    if (curr->isReturn) {
-      shouldBeEqual(curr->type,
-                    Type(Type::unreachable),
+// |printable| is the expression to print in case of an error. That may differ
+// from |curr| which we are validating.
+template<typename T>
+void validateCallParamsAndResult(T* curr,
+                                 HeapType sigType,
+                                 Expression* printable) {
+  if (!shouldBeTrue(sigType.isSignature(),
                     printable,
-                    "return_call* should have unreachable type");
-      shouldBeSubType(
-        sig.results,
-        getFunction()->getResults(),
-        printable,
-        "return_call* callee return type must match caller return type");
-    } else {
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->type,
-        sig.results,
-        printable,
-        "call* type must match callee return type");
-    }
+                    "Heap type must be a signature type")) {
+    return;
   }
+  auto sig = sigType.getSignature();
+  if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
+                    printable,
+                    "call* param number must match")) {
+    return;
+  }
+  size_t i = 0;
+  for (const auto& param : sig.params) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         param,
+                         printable,
+                         "call param types must match") &&
+        !info.quiet) {
+      getStream() << "(on argument " << i << ")\n";
+    }
+    ++i;
+  }
+  if (curr->isReturn) {
+    shouldBeEqual(curr->type,
+                  Type(Type::unreachable),
+                  printable,
+                  "return_call* should have unreachable type");
+    shouldBeSubType(
+      sig.results,
+      getFunction()->getResults(),
+      printable,
+      "return_call* callee return type must match caller return type");
+  } else {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->type,
+      sig.results,
+      printable,
+      "call* type must match callee return type");
+  }
+}
 
   // In the common case, we use |curr| as |printable|.
   template<typename T>
@@ -499,7 +499,7 @@ private:
     validateCallParamsAndResult(curr, sigType, curr);
   }
 
-  Type indexType() { return getModule()->memory.indexType; }
+  Type indexType() { return getModule()->memories[0]->indexType; }
 };
 
 void FunctionValidator::noteLabelName(Name name) {
@@ -935,7 +935,7 @@ void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
 
 void FunctionValidator::visitLoad(Load* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
@@ -966,7 +966,7 @@ void FunctionValidator::visitLoad(Load* curr) {
 
 void FunctionValidator::visitStore(Store* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
@@ -1003,7 +1003,7 @@ void FunctionValidator::visitStore(Store* curr) {
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1023,7 +1023,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1056,7 +1056,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1082,7 +1082,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
 
 void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1102,7 +1102,7 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
 
 void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1241,7 +1241,7 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 
 void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1276,7 +1276,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
 
 void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   if (curr->isLoad()) {
@@ -1344,7 +1344,7 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
                                     "memory.init offset must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "memory.init size must be an i32");
-  if (!shouldBeTrue(getModule()->memory.exists,
+  if (!shouldBeTrue(getModule()->memories[0],
                     curr,
                     "Memory operations require a memory")) {
     return;
@@ -1360,7 +1360,7 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
                "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
-  if (!shouldBeTrue(getModule()->memory.exists,
+  if (!shouldBeTrue(getModule()->memories[0],
                     curr,
                     "Memory operations require a memory")) {
     return;
@@ -1392,7 +1392,7 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
     curr,
     "memory.copy size must match memory index type");
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
@@ -1416,7 +1416,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr,
     "memory.fill size must match memory index type");
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::validateMemBytes(uint8_t bytes,
@@ -2021,12 +2021,12 @@ void FunctionValidator::visitReturn(Return* curr) {
 
 void FunctionValidator::visitMemorySize(MemorySize* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
                                     indexType(),
                                     curr,
@@ -2940,7 +2940,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
                         name,
                         "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
-      info.shouldBeTrue(name == Name("0") || name == module.memory.name,
+      info.shouldBeTrue(name == Name("0") || name == module.memories[0]->name,
                         name,
                         "module memory exports must be found");
     } else if (exp->kind == ExternalKind::Tag) {
@@ -2982,7 +2982,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 }
 
 static void validateMemory(Module& module, ValidationInfo& info) {
-  auto& curr = module.memory;
+  auto& curr = module.memories[0];
   info.shouldBeFalse(
     curr.initial > curr.max, "memory", "memory max >= initial");
   if (curr.is64()) {
