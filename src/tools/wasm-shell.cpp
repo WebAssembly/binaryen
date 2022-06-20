@@ -284,8 +284,8 @@ protected:
           }
         }
       });
-      if (wasm.memory.imported()) {
-        reportUnknownImport(&wasm.memory);
+      if (wasm.memories[0]->imported()) {
+        reportUnknownImport(&wasm.memories[0]);
       }
     }
 
@@ -352,11 +352,11 @@ protected:
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
-    spectest->memory.exists = true;
-    spectest->memory.initial = 1;
-    spectest->memory.max = 2;
+    spectest->addMemory(builder.makeMemory());
+    spectest->memories[0]->initial = 1;
+    spectest->memories[0]->max = 2;
     spectest->addExport(builder.makeExport(
-      "memory", spectest->memory.name, ExternalKind::Memory));
+      "memory", spectest->memories[0]->name, ExternalKind::Memory));
 
     modules["spectest"].swap(spectest);
     modules["spectest"]->features = FeatureSet::All;

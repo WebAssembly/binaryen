@@ -255,19 +255,19 @@ void Instrumenter::addProfileExport() {
 
   // Also make sure there is a memory with enough pages to write into
   size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
-  if (!wasm->memory.exists) {
-    wasm->memory.exists = true;
-    wasm->memory.initial = pages;
-    wasm->memory.max = pages;
-  } else if (wasm->memory.initial < pages) {
-    wasm->memory.initial = pages;
-    if (wasm->memory.max < pages) {
-      wasm->memory.max = pages;
+  if (!wasm->memories[0]) {
+    wasm->addMemory(Builder::makeMemory());
+    wasm->memories[0]->initial = pages;
+    wasm->memories[0]->max = pages;
+  } else if (wasm->memories[0]->initial < pages) {
+    wasm->memories[0]->initial = pages;
+    if (wasm->memories[0]->max < pages) {
+      wasm->memories[0]->max = pages;
     }
   }
 
   // Export the memory if it is not already exported or imported.
-  if (!wasm->memory.imported()) {
+  if (!wasm->memories[0]->imported()) {
     bool memoryExported = false;
     for (auto& ex : wasm->exports) {
       if (ex->kind == ExternalKind::Memory) {
@@ -278,7 +278,7 @@ void Instrumenter::addProfileExport() {
     if (!memoryExported) {
       wasm->addExport(
         Builder::makeExport("profile-memory",
-                            Names::getValidExportName(*wasm, wasm->memory.name),
+                            Names::getValidExportName(*wasm, wasm->memories[0]->name),
                             ExternalKind::Memory));
     }
   }
