@@ -122,7 +122,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     }
 
     // Intrinsics may use memory, so ensure the module has one.
-    MemoryUtils::ensureExists(module->memory);
+    MemoryUtils::ensureMinimalSize(module->memories[0]);
 
     // Add missing globals
     for (auto& [name, type] : neededImportedGlobals) {

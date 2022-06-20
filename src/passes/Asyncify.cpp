@@ -1483,7 +1483,7 @@ struct Asyncify : public Pass {
     bool optimize = runner->options.optimizeLevel > 0;
 
     // Ensure there is a memory, as we need it.
-    MemoryUtils::ensureExists(module->memory);
+    MemoryUtils::ensureMinimalSize(module->memories[0]);
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
