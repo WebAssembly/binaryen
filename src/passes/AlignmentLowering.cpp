@@ -34,7 +34,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     if (curr->align == 0 || curr->align == curr->bytes) {
       return curr;
     }
-    auto indexType = getModule()->memory.indexType;
+    auto indexType = getModule()->memories[0]->indexType;
     Builder builder(*getModule());
     assert(curr->type == Type::i32);
     auto temp = builder.addVar(getFunction(), indexType);
@@ -135,7 +135,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     }
     Builder builder(*getModule());
     assert(curr->value->type == Type::i32);
-    auto indexType = getModule()->memory.indexType;
+    auto indexType = getModule()->memories[0]->indexType;
     auto tempPtr = builder.addVar(getFunction(), indexType);
     auto tempValue = builder.addVar(getFunction(), Type::i32);
     auto* block =
@@ -256,7 +256,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           break;
         }
         // Load two 32-bit pieces, and combine them.
-        auto indexType = getModule()->memory.indexType;
+        auto indexType = getModule()->memories[0]->indexType;
         auto temp = builder.addVar(getFunction(), indexType);
         auto* set = builder.makeLocalSet(temp, curr->ptr);
         Expression* low =
@@ -335,7 +335,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           value = builder.makeUnary(ReinterpretFloat64, value);
         }
         // Store as two 32-bit pieces.
-        auto indexType = getModule()->memory.indexType;
+        auto indexType = getModule()->memories[0]->indexType;
         auto tempPtr = builder.addVar(getFunction(), indexType);
         auto* setPtr = builder.makeLocalSet(tempPtr, curr->ptr);
         auto tempValue = builder.addVar(getFunction(), Type::i64);
