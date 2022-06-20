@@ -151,7 +151,7 @@ struct SafeHeap : public Pass {
 
   void addImports(Module* module) {
     ImportInfo info(*module);
-    auto indexType = module->memory.indexType;
+    auto indexType = module->memories[0]->indexType;
     if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
@@ -222,7 +222,7 @@ struct SafeHeap : public Pass {
             for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
               if (isAtomic && !isPossibleAtomicOperation(
-                                align, bytes, module->memory.shared, type)) {
+                                align, bytes, module->memories[0]->shared, type)) {
                 continue;
               }
               addLoadFunc(load, module);
@@ -256,7 +256,7 @@ struct SafeHeap : public Pass {
           for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
             if (isAtomic && !isPossibleAtomicOperation(
-                              align, bytes, module->memory.shared, valueType)) {
+                              align, bytes, module->memories[0]->shared, valueType)) {
               continue;
             }
             addStoreFunc(store, module);
@@ -273,14 +273,14 @@ struct SafeHeap : public Pass {
       return;
     }
     // pointer, offset
-    auto indexType = module->memory.indexType;
+    auto indexType = module->memories[0]->indexType;
     auto funcSig = Signature({indexType, indexType}, style.type);
     auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       2,
-      builder.makeBinary(module->memory.is64() ? AddInt64 : AddInt32,
+      builder.makeBinary(module->memories[0]->is64() ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
@@ -312,7 +312,7 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto indexType = module->memory.indexType;
+    auto indexType = module->memories[0]->indexType;
     // pointer, offset, value
     auto funcSig =
       Signature({indexType, indexType, style.valueType}, Type::none);
@@ -321,7 +321,7 @@ struct SafeHeap : public Pass {
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       3,
-      builder.makeBinary(module->memory.is64() ? AddInt64 : AddInt32,
+      builder.makeBinary(module->memories[0]->is64() ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
@@ -344,9 +344,9 @@ struct SafeHeap : public Pass {
 
   Expression*
   makeAlignCheck(Address align, Builder& builder, Index local, Module* module) {
-    auto indexType = module->memory.indexType;
+    auto indexType = module->memories[0]->indexType;
     Expression* ptrBits = builder.makeLocalGet(local, indexType);
-    if (module->memory.is64()) {
+    if (module->memories[0]->is64()) {
       ptrBits = builder.makeUnary(WrapInt64, ptrBits);
     }
     return builder.makeIf(
@@ -357,8 +357,8 @@ struct SafeHeap : public Pass {
 
   Expression* makeBoundsCheck(
     Type type, Builder& builder, Index local, Index bytes, Module* module) {
-    auto indexType = module->memory.indexType;
-    auto upperOp = module->memory.is64()
+    auto indexType = module->memories[0]->indexType;
+    auto upperOp = module->memories[0]->is64()
                      ? options.lowMemoryUnused ? LtUInt64 : EqInt64
                      : options.lowMemoryUnused ? LtUInt32 : EqInt32;
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
@@ -373,11 +373,11 @@ struct SafeHeap : public Pass {
       } else {
         sbrkPtr = builder.makeCall(getSbrkPtr, {}, indexType);
       }
-      auto size = module->memory.is64() ? 8 : 4;
+      auto size = module->memories[0]->is64() ? 8 : 4;
       brkLocation = builder.makeLoad(size, false, 0, size, sbrkPtr, indexType);
     }
-    auto gtuOp = module->memory.is64() ? GtUInt64 : GtUInt32;
-    auto addOp = module->memory.is64() ? AddInt64 : AddInt32;
+    auto gtuOp = module->memories[0]->is64() ? GtUInt64 : GtUInt32;
+    auto addOp = module->memories[0]->is64() ? AddInt64 : AddInt32;
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,

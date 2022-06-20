@@ -279,7 +279,7 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     // Check for special imports, which are roots.
     bool importsMemory = false;
-    if (module->memory.imported()) {
+    if (module->memories[0]->imported()) {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
@@ -368,10 +368,10 @@ struct RemoveUnusedModuleElements : public Pass {
         module->dataSegments.clear();
       }
       if (module->dataSegments.empty()) {
-        module->memory.exists = false;
-        module->memory.module = module->memory.base = Name();
-        module->memory.initial = 0;
-        module->memory.max = 0;
+        module->memories[0]->exists = false;
+        module->memories[0]->module = module->memories[0]->base = Name();
+        module->memories[0]->initial = 0;
+        module->memories[0]->max = 0;
       }
     }
   }

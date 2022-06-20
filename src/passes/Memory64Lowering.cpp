@@ -30,7 +30,7 @@ namespace wasm {
 struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
   void run(PassRunner* runner, Module* module) override {
-    if (module->memory.is64()) {
+    if (module->memories[0]->is64()) {
       super::run(runner, module);
     }
   }
@@ -40,7 +40,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       return;
     }
     auto& module = *getModule();
-    assert(module.memory.is64());
+    assert(module.memories[0]->is64());
     assert(ptr->type == Type::i64);
     Builder builder(module);
     ptr = builder.makeUnary(UnaryOp::WrapInt64, ptr);
@@ -51,7 +51,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       return;
     }
     auto& module = *getModule();
-    assert(module.memory.is64());
+    assert(module.memories[0]->is64());
     assert(ptr->type == Type::i64);
     ptr->type = Type::i32;
     Builder builder(module);
