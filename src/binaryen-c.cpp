@@ -3626,10 +3626,11 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              uint8_t shared) {
-  auto& memory = ((Module*)module)->memory;
+  auto& memory = std::make_unique<Memory>();
   memory.module = externalModuleName;
   memory.base = externalBaseName;
   memory.shared = shared;
+  ((Module*)module)->addMemory(std::move(memory));
 }
 void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* internalName,
@@ -3854,10 +3855,11 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex numSegments,
                        bool shared) {
   auto* wasm = (Module*)module;
-  wasm->memory.initial = initial;
-  wasm->memory.max = int32_t(maximum); // Make sure -1 extends.
-  wasm->memory.exists = true;
-  wasm->memory.shared = shared;
+  auto memory = Builder::makeMemory();
+  memory->initial = initial;
+  memory->max = int32_t(maximum); // Make sure -1 extends.
+  memory->shared = shared;
+  wasm->addMemory(std::move(memory));
   if (exportName) {
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;
@@ -3914,35 +3916,35 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   return 0;
 }
 bool BinaryenHasMemory(BinaryenModuleRef module) {
-  return ((Module*)module)->memory.exists;
+  return ((Module*)module)->memories[0];
 }
 BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
-  return ((Module*)module)->memory.initial;
+  return ((Module*)module)->memories[0]->initial;
 }
 bool BinaryenMemoryHasMax(BinaryenModuleRef module) {
-  return ((Module*)module)->memory.hasMax();
+  return ((Module*)module)->memories[0]->hasMax();
 }
 BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module) {
-  return ((Module*)module)->memory.max;
+  return ((Module*)module)->memories[0]->max;
 }
 const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module) {
-  auto& memory = ((Module*)module)->memory;
-  if (memory.imported()) {
-    return memory.module.c_str();
+  auto& memory = ((Module*)module)->memories[0];
+  if (memory->imported()) {
+    return memory->module.c_str();
   } else {
     return "";
   }
 }
 const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
-  auto& memory = ((Module*)module)->memory;
-  if (memory.imported()) {
-    return memory.base.c_str();
+  auto& memory = ((Module*)module)->memories[0];
+  if (memory->imported()) {
+    return memory->base.c_str();
   } else {
     return "";
   }
 }
 bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
-  return ((Module*)module)->memory.shared;
+  return ((Module*)module)->memories->shared;
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {
