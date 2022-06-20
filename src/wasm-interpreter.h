@@ -2521,7 +2521,7 @@ public:
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // prepare memory
-    memorySize = wasm.memory.initial;
+    memorySize = wasm.memories[0]->initial;
     // generate internal (non-imported) globals
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       globals[global->name] = self()->visit(global->init).values;
@@ -2727,8 +2727,8 @@ protected:
   // Returns the instance that defines the memory used by this one.
   SubType* getMemoryInstance() {
     auto* inst = self();
-    while (inst->wasm.memory.imported()) {
-      inst = inst->linkedInstances.at(inst->wasm.memory.module).get();
+    while (inst->wasm.memories[0]->imported()) {
+      inst = inst->linkedInstances.at(inst->wasm.memories[0]->module).get();
     }
     return inst;
   }
@@ -3289,12 +3289,12 @@ public:
     NOTE_ENTER("MemorySize");
     auto* inst = getMemoryInstance();
     return Literal::makeFromInt64(inst->memorySize,
-                                  inst->wasm.memory.indexType);
+                                  inst->wasm.memories->indexType);
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
     auto* inst = getMemoryInstance();
-    auto indexType = inst->wasm.memory.indexType;
+    auto indexType = inst->wasm.memories[0]->indexType;
     auto fail = Literal::makeFromInt64(-1, indexType);
     Flow flow = self()->visit(curr->delta);
     if (flow.breaking()) {
