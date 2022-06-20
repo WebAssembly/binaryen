@@ -2145,7 +2145,7 @@ public:
   Function* getFunction(Name name);
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
-  Memory* getMemorySegment(Name name);
+  Memory* getMemory(Name name);
   DataSegment* getDataSegment(Name name);
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
@@ -2188,7 +2188,7 @@ public:
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
-  void removeMemory(std::function<bool(Memory*)> pred);
+  void removeMemories(std::function<bool(Memory*)> pred);
   void removeDataSegments(std::function<bool(DataSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeTags(std::function<bool(Tag*)> pred);

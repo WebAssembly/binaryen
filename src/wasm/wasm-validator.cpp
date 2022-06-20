@@ -935,7 +935,7 @@ void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
 
 void FunctionValidator::visitLoad(Load* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
@@ -966,7 +966,7 @@ void FunctionValidator::visitLoad(Load* curr) {
 
 void FunctionValidator::visitStore(Store* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
@@ -1003,7 +1003,7 @@ void FunctionValidator::visitStore(Store* curr) {
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1023,7 +1023,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1056,7 +1056,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1082,7 +1082,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
 
 void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1102,7 +1102,7 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
 
 void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1241,7 +1241,7 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 
 void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1276,7 +1276,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
 
 void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   if (curr->isLoad()) {
@@ -1344,7 +1344,7 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
                                     "memory.init offset must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "memory.init size must be an i32");
-  if (!shouldBeTrue(getModule()->memories[0],
+  if (!shouldBeTrue(getModule()->memories[0] != nullptr,
                     curr,
                     "Memory operations require a memory")) {
     return;
@@ -1360,7 +1360,7 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
                "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
-  if (!shouldBeTrue(getModule()->memories[0],
+  if (!shouldBeTrue(getModule()->memories[0] != nullptr,
                     curr,
                     "Memory operations require a memory")) {
     return;
@@ -1392,7 +1392,7 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
     curr,
     "memory.copy size must match memory index type");
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
@@ -1416,7 +1416,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr,
     "memory.fill size must match memory index type");
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::validateMemBytes(uint8_t bytes,
@@ -2021,12 +2021,12 @@ void FunctionValidator::visitReturn(Return* curr) {
 
 void FunctionValidator::visitMemorySize(MemorySize* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
   shouldBeTrue(
-    getModule()->memories[0], curr, "Memory operations require a memory");
+    getModule()->memories[0] != nullptr, curr, "Memory operations require a memory");
   shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
                                     indexType(),
                                     curr,
@@ -2984,23 +2984,23 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 static void validateMemory(Module& module, ValidationInfo& info) {
   auto& curr = module.memories[0];
   info.shouldBeFalse(
-    curr.initial > curr.max, "memory", "memory max >= initial");
-  if (curr.is64()) {
+    curr->initial > curr->max, "memory", "memory max >= initial");
+  if (curr->is64()) {
     info.shouldBeTrue(module.features.hasMemory64(),
                       "memory",
                       "memory is 64-bit, but memory64 is disabled");
   } else {
-    info.shouldBeTrue(curr.initial <= Memory::kMaxSize32,
+    info.shouldBeTrue(curr->initial <= Memory::kMaxSize32,
                       "memory",
                       "initial memory must be <= 4GB");
-    info.shouldBeTrue(!curr.hasMax() || curr.max <= Memory::kMaxSize32,
+    info.shouldBeTrue(!curr->hasMax() || curr->max <= Memory::kMaxSize32,
                       "memory",
                       "max memory must be <= 4GB, or unlimited");
   }
-  info.shouldBeTrue(!curr.shared || curr.hasMax(),
+  info.shouldBeTrue(!curr->shared || curr->hasMax(),
                     "memory",
                     "shared memory must have max size");
-  if (curr.shared) {
+  if (curr->shared) {
     info.shouldBeTrue(module.features.hasAtomics(),
                       "memory",
                       "memory is shared, but atomics are disabled");
@@ -3016,7 +3016,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                          segment->offset,
                          "passive segment should not have an offset");
     } else {
-      if (curr.is64()) {
+      if (curr->is64()) {
         if (!info.shouldBeEqual(segment->offset->type,
                                 Type(Type::i64),
                                 segment->offset,
@@ -3033,14 +3033,14 @@ static void validateMemory(Module& module, ValidationInfo& info) {
       }
       info.shouldBeTrue(checkSegmentOffset(segment->offset,
                                            segment->data.size(),
-                                           curr.initial * Memory::kPageSize,
+                                           curr->initial * Memory::kPageSize,
                                            module.features),
                         segment->offset,
                         "memory segment offset should be reasonable");
       if (segment->offset->is<Const>()) {
         auto start = segment->offset->cast<Const>()->value.getUnsigned();
         auto end = start + size;
-        info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
+        info.shouldBeTrue(end <= curr->initial * Memory::kPageSize,
                           segment->data.size(),
                           "segment size should fit in memory (end)");
       }
@@ -3049,8 +3049,8 @@ static void validateMemory(Module& module, ValidationInfo& info) {
     // If the memory is imported we don't actually know its initial size.
     // Specifically wasm dll's import a zero sized memory which is perfectly
     // valid.
-    if (!curr.imported()) {
-      info.shouldBeTrue(size <= curr.initial * Memory::kPageSize,
+    if (!curr->imported()) {
+      info.shouldBeTrue(size <= curr->initial * Memory::kPageSize,
                         segment->data.size(),
                         "segment size should fit in memory (initial)");
     }

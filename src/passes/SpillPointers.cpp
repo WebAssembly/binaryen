@@ -74,7 +74,7 @@ struct SpillPointers
   Type pointerType;
 
   void spillPointers() {
-    pointerType = getModule()->memory.indexType;
+    pointerType = getModule()->memories[0]->indexType;
 
     // we only care about possible pointers
     auto* func = getFunction();

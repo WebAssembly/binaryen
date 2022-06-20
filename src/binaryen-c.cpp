@@ -3656,10 +3656,10 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              uint8_t shared) {
-  auto& memory = std::make_unique<Memory>();
-  memory.module = externalModuleName;
-  memory.base = externalBaseName;
-  memory.shared = shared;
+  auto memory = std::make_unique<Memory>();
+  memory->module = externalModuleName;
+  memory->base = externalBaseName;
+  memory->shared = shared;
   ((Module*)module)->addMemory(std::move(memory));
 }
 void BinaryenAddGlobalImport(BinaryenModuleRef module,
@@ -3946,7 +3946,7 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   return 0;
 }
 bool BinaryenHasMemory(BinaryenModuleRef module) {
-  return ((Module*)module)->memories[0];
+  return ((Module*)module)->memories[0] != nullptr;
 }
 BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
   return ((Module*)module)->memories[0]->initial;
@@ -3974,7 +3974,7 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
   }
 }
 bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
-  return ((Module*)module)->memories->shared;
+  return ((Module*)module)->memories[0]->shared;
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {

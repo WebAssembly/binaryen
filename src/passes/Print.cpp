@@ -3129,14 +3129,11 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << ")";
   }
   void visitMemory(Memory* curr) {
-    if (!curr->exists) {
-      return;
-    }
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
       emitImportHeader(curr);
-      printMemoryHeader(&currModule->memories[0]);
+      printMemoryHeader(&*currModule->memories[0]);
       o << ')' << maybeNewLine;
     } else {
       doIndent(o, indent);

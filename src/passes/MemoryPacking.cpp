@@ -123,7 +123,7 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!canOptimize(module->memories[0], module->dataSegments, runner->options)) {
+  if (!canOptimize(*module->memories[0], module->dataSegments, runner->options)) {
     return;
   }
 
@@ -184,7 +184,7 @@ bool MemoryPacking::canOptimize(
   // We must optimize under the assumption that memory has been initialized to
   // zero. That is the case for a memory declared in the module, but for a
   // memory that is imported, we must be told that it is zero-initialized.
-  if (memories[0]->imported() && !passOptions.zeroFilledMemory) {
+  if (memory.imported() && !passOptions.zeroFilledMemory) {
     return false;
   }
 

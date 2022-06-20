@@ -335,7 +335,7 @@ void WasmBinaryWriter::writeImports() {
   });
   if (wasm->memories[0]->imported()) {
     BYN_TRACE("write one memory\n");
-    writeImportHeader(wasm->memories[0]);
+    writeImportHeader(&*wasm->memories[0]);
     o << U32LEB(int32_t(ExternalKind::Memory));
     writeResizableLimits(wasm->memories[0]->initial,
                          wasm->memories[0]->max,
@@ -1981,7 +1981,7 @@ void WasmBinaryBuilder::readMemory() {
                      memory->shared,
                      memory->indexType,
                      Memory::kUnlimitedSize);
-  memories.push_back(memory);
+  memories.push_back(std::move(memory));
 }
 
 void WasmBinaryBuilder::readTypes() {
