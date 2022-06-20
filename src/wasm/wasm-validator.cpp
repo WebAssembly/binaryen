@@ -487,7 +487,7 @@ private:
     }
   }
 
-  Type indexType() { return getModule()->memory.indexType; }
+  Type indexType() { return getModule()->memories[0]->indexType; }
 };
 
 void FunctionValidator::noteLabelName(Name name) {
@@ -887,7 +887,7 @@ void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
 
 void FunctionValidator::visitLoad(Load* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
@@ -918,7 +918,7 @@ void FunctionValidator::visitLoad(Load* curr) {
 
 void FunctionValidator::visitStore(Store* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   if (curr->isAtomic) {
     shouldBeTrue(getModule()->features.hasAtomics(),
                  curr,
@@ -955,7 +955,7 @@ void FunctionValidator::visitStore(Store* curr) {
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -975,7 +975,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1008,7 +1008,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1034,7 +1034,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
 
 void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1054,7 +1054,7 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
 
 void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operation (atomics are disabled)");
@@ -1193,7 +1193,7 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 
 void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1228,7 +1228,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
 
 void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   if (curr->isLoad()) {
@@ -1296,7 +1296,7 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
                                     "memory.init offset must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "memory.init size must be an i32");
-  if (!shouldBeTrue(getModule()->memory.exists,
+  if (!shouldBeTrue(getModule()->memories[0],
                     curr,
                     "Memory operations require a memory")) {
     return;
@@ -1312,7 +1312,7 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
                "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
-  if (!shouldBeTrue(getModule()->memory.exists,
+  if (!shouldBeTrue(getModule()->memories[0],
                     curr,
                     "Memory operations require a memory")) {
     return;
@@ -1344,7 +1344,7 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
     curr,
     "memory.copy size must match memory index type");
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
@@ -1368,7 +1368,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr,
     "memory.fill size must match memory index type");
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::validateMemBytes(uint8_t bytes,
@@ -1973,12 +1973,12 @@ void FunctionValidator::visitReturn(Return* curr) {
 
 void FunctionValidator::visitMemorySize(MemorySize* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
 }
 
 void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
   shouldBeTrue(
-    getModule()->memory.exists, curr, "Memory operations require a memory");
+    getModule()->memories[0], curr, "Memory operations require a memory");
   shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
                                     indexType(),
                                     curr,
@@ -2994,7 +2994,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
                         name,
                         "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
-      info.shouldBeTrue(name == Name("0") || name == module.memory.name,
+      info.shouldBeTrue(name == Name("0") || name == module.memories[0]->name,
                         name,
                         "module memory exports must be found");
     } else if (exp->kind == ExternalKind::Tag) {
@@ -3036,7 +3036,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 }
 
 static void validateMemory(Module& module, ValidationInfo& info) {
-  auto& curr = module.memory;
+  auto& curr = module.memories[0];
   info.shouldBeFalse(
     curr.initial > curr.max, "memory", "memory max >= initial");
   if (curr.is64()) {
