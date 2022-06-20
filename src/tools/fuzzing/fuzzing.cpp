@@ -185,7 +185,7 @@ void TranslateToFuzzReader::build() {
 
 void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
-  MemoryUtils::ensureExists(wasm.memory);
+  MemoryUtils::ensureMinimalSize(wasm.memory);
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits
@@ -229,7 +229,7 @@ void TranslateToFuzzReader::setupMemory() {
   std::vector<Expression*> contents;
   contents.push_back(
     builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
-  auto zero = Literal::makeFromInt32(0, wasm.memory.indexType);
+  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
   for (Index i = 0; i < USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
       0,
@@ -354,25 +354,25 @@ void TranslateToFuzzReader::finalizeMemory() {
         maxOffset = maxOffset + offset->value.getInteger();
       }
     }
-    wasm.memory.initial = std::max(
-      wasm.memory.initial,
+    wasm.memories[0]->initial = std::max(
+      wasm.memories[0]->initial,
       Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
   }
-  wasm.memory.initial = std::max(wasm.memory.initial, USABLE_MEMORY);
+  wasm.memories[0]->initial = std::max(wasm.memories[0]->initial, USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
   // as different VMs will run out of system memory in different ways.
-  if (wasm.memory.max == Memory::kUnlimitedSize) {
-    wasm.memory.max = wasm.memory.initial;
+  if (wasm.memories[0]->max == Memory::kUnlimitedSize) {
+    wasm.memories[0]->max = wasm.memories[0]->initial;
   }
-  if (wasm.memory.max <= wasm.memory.initial) {
+  if (wasm.memories[0]->max <= wasm.memories[0]->initial) {
     // To allow growth to work (which a testcase may assume), try to make the
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
-    wasm.memory.max =
-      std::min(Address(wasm.memory.initial + 1), Address(Memory::kMaxSize32));
+    wasm.memories[0]->max =
+      std::min(Address(wasm.memories[0]->initial + 1), Address(Memory::kMaxSize32));
   }
   // Avoid an imported memory (which the fuzz harness would need to handle).
-  wasm.memory.module = wasm.memory.base = Name();
+  wasm.memories[0]->module = wasm.memories[0]->base = Name();
 }
 
 void TranslateToFuzzReader::finalizeTable() {
@@ -1403,12 +1403,12 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  auto* ret = make(wasm.memory.indexType);
+  auto* ret = make(wasm.memories[0]->indexType);
   // with high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
   // most memory ops will just trap
   if (!allowOOB || !oneIn(10)) {
-    if (wasm.memory.is64()) {
+    if (wasm.memories[0]->is64()) {
       ret = builder.makeBinary(
         AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
     } else {
@@ -1484,7 +1484,7 @@ Expression* TranslateToFuzzReader::makeLoad(Type type) {
   }
   // make it atomic
   auto* load = ret->cast<Load>();
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   load->isAtomic = true;
   load->signed_ = false;
   load->align = load->bytes;
@@ -1584,7 +1584,7 @@ Expression* TranslateToFuzzReader::makeStore(Type type) {
     return store;
   }
   // make it atomic
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   store->isAtomic = true;
   store->align = store->bytes;
   return store;
@@ -2530,7 +2530,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   if (!allowMemory) {
     return makeTrivial(type);
   }
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   if (type == Type::none) {
     return builder.makeAtomicFence();
   }
@@ -2884,7 +2884,7 @@ Expression* TranslateToFuzzReader::makeMemoryCopy() {
   }
   Expression* dest = makePointer();
   Expression* source = makePointer();
-  Expression* size = make(wasm.memory.indexType);
+  Expression* size = make(wasm.memories[0]->indexType);
   return builder.makeMemoryCopy(dest, source, size);
 }
 
@@ -2894,7 +2894,7 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   }
   Expression* dest = makePointer();
   Expression* value = make(Type::i32);
-  Expression* size = make(wasm.memory.indexType);
+  Expression* size = make(wasm.memories[0]->indexType);
   return builder.makeMemoryFill(dest, value, size);
 }
 
