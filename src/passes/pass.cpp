@@ -575,6 +575,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("gto");
     addIfNoDWARFIssues("remove-unused-module-elements");
     addIfNoDWARFIssues("cfp");
+    addIfNoDWARFIssues("gsi");
   }
 }
 

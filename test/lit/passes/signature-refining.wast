@@ -720,3 +720,28 @@
     )
   )
 )
+
+;; Do not modify the types used on imported functions (until the spec and VM
+;; support becomes stable).
+(module
+  ;; CHECK:      (type $ref?|data|_=>_none (func_subtype (param (ref null data)) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct_subtype data))
+
+  ;; CHECK:      (import "a" "b" (func $import (param (ref null data))))
+  (import "a" "b" (func $import (param (ref null data))))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (call $import
+      (struct.new $struct)
+    )
+  )
+)

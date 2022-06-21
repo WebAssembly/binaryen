@@ -76,6 +76,9 @@
 ;; CHECK-NEXT:   --output-source-map-url,-osu                  Emit specified string as source
 ;; CHECK-NEXT:                                                 map URL
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --new-wat-parser                              Use the experimental new WAT
+;; CHECK-NEXT:                                                 parser
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Optimization passes:
 ;; CHECK-NEXT: --------------------

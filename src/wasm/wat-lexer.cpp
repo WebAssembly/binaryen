@@ -942,7 +942,7 @@ void Lexer::lexToken() {
   curr = {tok};
 }
 
-TextPos Lexer::position(const char* c) {
+TextPos Lexer::position(const char* c) const {
   assert(size_t(c - buffer.data()) < buffer.size());
   TextPos pos{1, 0};
   for (const char* p = buffer.data(); p != c; ++p) {

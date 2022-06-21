@@ -664,10 +664,9 @@
   ;; Create an immutable vtable in an immutable global, but using an array
   ;; instead of a struct.
 
-  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
-
   ;; CHECK:      (type $vtable (array_subtype funcref data))
   (type $vtable (array_subtype funcref data))
+  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
   (type $object (struct_subtype (ref $vtable) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (array.init_static $vtable

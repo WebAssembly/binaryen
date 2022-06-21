@@ -479,10 +479,10 @@
 ;; CHECK-NEXT:  (ref.func $0)
 ;; CHECK-NEXT: )
 (module
- ;; CHECK:      (type $none_=>_none (func))
-
  ;; CHECK:      (type $i64 (func (param i64)))
  (type $i64 (func (param i64)))
+ ;; CHECK:      (type $none_=>_none (func))
+
  ;; CHECK:      (global $global$0 (ref $i64) (ref.func $0))
  (global $global$0 (ref $i64) (ref.func $0))
  ;; CHECK:      (export "even" (func $1))

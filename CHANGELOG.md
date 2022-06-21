@@ -15,6 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v109
+----
+
+- Add Global Struct Inference pass (#4659) (#4714)
+- Restore and fix SpillPointers pass (#4570)
+- Update relaxed SIMD instructions to latest spec
+
 v108
 ----
 
@@ -161,6 +168,13 @@ v100
 v99
 ---
 
+- Fix optimization behavior on assuming memory is zero-filled. We made that
+  assumption before, but it is incorrect in general, which caused problems.
+  The fixed behavior is to not assume it, but require the user to pass it in as
+  a flag, `--zero-filled-memory`. Large binaries with lots of empty bytes in the
+  data section may regress without that flag. Toolchains like Emscripten can
+  pass the flag automatically for users if they know it is right to assume,
+  which can avoid any regressions. (#3306)
 - `RefFunc` C and JS API constructors (`BinaryenRefFunc` and `ref.func`
   respectively) now take an extra `type` parameter, similar to `RefNull`. This
   is necessary for typed function references support.
