@@ -3133,7 +3133,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       emitImportHeader(curr);
-      printMemoryHeader(&*currModule->memories[0]);
+      printMemoryHeader(curr);
       o << ')' << maybeNewLine;
     } else {
       doIndent(o, indent);

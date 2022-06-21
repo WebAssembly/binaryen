@@ -153,10 +153,12 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
+  for (auto& curr : in.memories) {
+    copyMemory(curr.get(), out);
+  }
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
-  copyMemory(in.memories[0].get(), out);
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;

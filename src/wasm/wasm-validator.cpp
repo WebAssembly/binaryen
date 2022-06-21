@@ -2982,7 +2982,10 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 }
 
 static void validateMemory(Module& module, ValidationInfo& info) {
-  auto curr = module.memories[0];
+  if (module.memories.empty()) {
+    return;
+  }
+  auto& curr = module.memories[0];
   info.shouldBeFalse(
     curr->initial > curr->max, "memory", "memory max >= initial");
   if (curr->is64()) {
