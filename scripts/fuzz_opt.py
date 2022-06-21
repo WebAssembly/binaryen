@@ -767,8 +767,9 @@ class CompareVMs(TestCaseHandler):
                     D8(),
                     D8Liftoff(),
                     D8TurboFan(),
-                    Wasm2C(),
-                    Wasm2C2Wasm()]
+                    # Wasm2C(),
+                    # Wasm2C2Wasm()
+                    ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
