@@ -767,6 +767,7 @@ class CompareVMs(TestCaseHandler):
                     D8(),
                     D8Liftoff(),
                     D8TurboFan(),
+                    # FIXME: Temprorary disable. See issue #4741 for more details
                     # Wasm2C(),
                     # Wasm2C2Wasm()
                     ]
