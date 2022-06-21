@@ -114,7 +114,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   }
 
   void init(Module& wasm, ModuleRunner& instance) override {
-    if (wasm.memories[0] && !wasm.memories[0]->imported()) {
+    if (!wasm.memories.empty() && !wasm.memories[0]->imported()) {
       memory.resize(wasm.memories[0]->initial * wasm::Memory::kPageSize);
     }
     ModuleUtils::iterDefinedTables(

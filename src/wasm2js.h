@@ -103,7 +103,7 @@ bool hasActiveSegments(Module& wasm) {
 }
 
 bool needsBufferView(Module& wasm) {
-  if (!wasm.memories[0]) {
+  if (wasm.memories.empty()) {
     return false;
   }
 
@@ -414,7 +414,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
 
   // add memory import
-  if (wasm->memories[0]) {
+  if (!wasm->memories.empty()) {
     if (wasm->memories[0]->imported()) {
       // find memory and buffer in imports
       Ref theVar = ValueBuilder::makeVar();
@@ -536,7 +536,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 }
 
 void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
-  if (wasm->memories[0]) {
+  if (!wasm->memories.empty()) {
     // heaps, var HEAP8 = new global.Int8Array(buffer); etc
     auto addHeap = [&](IString name, IString view) {
       Ref theVar = ValueBuilder::makeVar();
@@ -805,7 +805,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         Fatal() << "unsupported export type: " << export_->name << "\n";
     }
   }
-  if (wasm->memories[0]) {
+  if (!wasm->memories.empty()) {
     addMemoryFuncs(ast, wasm);
   }
   ast->push_back(
@@ -2006,8 +2006,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitMemoryGrow(MemoryGrow* curr) {
-      if (module->memories[0] &&
-          module->memories[0]->max > module->memories[0]->initial) {
+      if (!module->memories.empty() && module->memories[0]->max > module->memories[0]->initial) {
         return ValueBuilder::makeCall(
           WASM_MEMORY_GROW,
           makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
@@ -2633,7 +2632,7 @@ void Wasm2JSGlue::emitPostES6() {
   //
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
-  if (wasm.memories[0] && wasm.memories[0]->imported()) {
+  if (!wasm.memories.empty() && wasm.memories[0]->imported()) {
     out << "var mem" << moduleName.str << " = new ArrayBuffer("
         << wasm.memories[0]->initial.addr * Memory::kPageSize << ");\n";
   }
@@ -2717,7 +2716,7 @@ void Wasm2JSGlue::emitMemory() {
 
   // If there are no memory segments, we don't need to emit any support code for
   // segment creation.
-  if ((!wasm.memories[0]) || wasm.dataSegments.empty()) {
+  if (wasm.memories.empty() || wasm.dataSegments.empty()) {
     return;
   }
 

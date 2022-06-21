@@ -3916,7 +3916,7 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   return 0;
 }
 bool BinaryenHasMemory(BinaryenModuleRef module) {
-  return ((Module*)module)->memories[0] != nullptr;
+  return !((Module*)module)->memories.empty();
 }
 BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
   return ((Module*)module)->memories[0]->initial;

@@ -204,7 +204,7 @@ void WasmBinaryWriter::writeStart() {
 }
 
 void WasmBinaryWriter::writeMemory() {
-  if (!wasm->memories[0] || wasm->memories[0]->imported()) {
+  if (wasm->memories.empty() || wasm->memories[0]->imported()) {
     return;
   }
   BYN_TRACE("== writeMemory\n");
@@ -930,7 +930,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // memory names
-  if (wasm->memories[0] && wasm->memories[0]->hasExplicitName) {
+  if (!wasm->memories.empty() && wasm->memories[0]->hasExplicitName) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
     o << U32LEB(1) << U32LEB(0); // currently exactly 1 memory at index 0
@@ -990,7 +990,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // data segment names
-  if (wasm->memories[0]) {
+  if (!wasm->memories.empty()) {
     Index count = 0;
     for (auto& seg : wasm->dataSegments) {
       if (seg->hasExplicitName) {
@@ -1991,7 +1991,7 @@ void WasmBinaryBuilder::readMemory() {
   if (numMemories != 1) {
     throwError("Must be exactly 1 memory");
   }
-  if (wasm.memories[0]) {
+  if (!wasm.memories.empty()) {
     throwError("Memory cannot be both imported and defined");
   }
   auto memory = Builder::makeMemory();
@@ -2956,7 +2956,7 @@ void WasmBinaryBuilder::processNames() {
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
-  if (memories.size() == 1) {
+  if (!memories.empty()) {
     wasm.addMemory(std::move(memories[0]));
   }
   for (auto& segment : dataSegments) {
