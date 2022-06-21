@@ -255,7 +255,7 @@ void Instrumenter::addProfileExport() {
 
   // Also make sure there is a memory with enough pages to write into
   size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
-  if (!wasm->memories[0]) {
+  if (wasm->memories.empty()) {
     wasm->addMemory(Builder::makeMemory());
     wasm->memories[0]->initial = pages;
     wasm->memories[0]->max = pages;
