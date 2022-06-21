@@ -2999,6 +2999,7 @@ private:
     if (last) {
       uint64_t value64 = last->value.getInteger();
       uint64_t offset64 = offset;
+      assert(!getModule()->memories.empty());
       if (getModule()->memories[0]->is64()) {
         last->value = Literal(int64_t(value64 + offset64));
         offset = 0;

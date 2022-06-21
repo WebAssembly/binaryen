@@ -83,6 +83,7 @@ const size_t DATA_DROP_SIZE = 3;
 
 Expression*
 makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
+  assert(!module.memories.empty());
   return builder.makeBinary(
     module.memories[0]->is64() ? GtUInt64 : GtUInt32,
     curr->dest,
@@ -95,7 +96,7 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
 
 struct MemoryPacking : public Pass {
   void run(PassRunner* runner, Module* module) override;
-  bool canOptimize(const Memory& memory,
+  bool canOptimize(std::vector<std::unique_ptr<Memory>>& memories,
                    std::vector<std::unique_ptr<DataSegment>>& dataSegments,
                    const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
@@ -123,7 +124,7 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!canOptimize(*module->memories[0], module->dataSegments, runner->options)) {
+  if (!canOptimize(module->memories, module->dataSegments, runner->options)) {
     return;
   }
 
@@ -178,13 +179,17 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
 }
 
 bool MemoryPacking::canOptimize(
-  const Memory& memory,
+  std::vector<std::unique_ptr<Memory>>& memories,
   std::vector<std::unique_ptr<DataSegment>>& dataSegments,
   const PassOptions& passOptions) {
+  if (memories.empty()) {
+    return false;
+  }
+  auto& memory = memories[0];
   // We must optimize under the assumption that memory has been initialized to
   // zero. That is the case for a memory declared in the module, but for a
   // memory that is imported, we must be told that it is zero-initialized.
-  if (memory.imported() && !passOptions.zeroFilledMemory) {
+  if (memory->imported() && !passOptions.zeroFilledMemory) {
     return false;
   }
 

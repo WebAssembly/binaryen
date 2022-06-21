@@ -279,6 +279,7 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     // Check for special imports, which are roots.
     bool importsMemory = false;
+    assert(!module->memories.empty());
     if (module->memories[0]->imported()) {
       importsMemory = true;
     }

@@ -63,7 +63,9 @@ struct Metrics
     counts["[tables]"] = imports.getNumDefinedTables();
 
     // add memory
-    walkMemory(&(*module->memories[0]));
+    for (auto& memory : module->memories) {
+      walkMemory(memory.get());
+    }
     Index size = 0;
     for (auto& segment : module->dataSegments) {
       walkDataSegment(segment.get());

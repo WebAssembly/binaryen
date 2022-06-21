@@ -612,10 +612,10 @@ void ModuleSplitter::shareImportableItems() {
   // TODO: Be more selective by only sharing global items that are actually used
   // in the secondary module, just like we do for functions.
 
-  if (!primary.memories.empty()) {
-    ModuleUtils::copyMemory(primary.memories[0].get(), secondary);
+  for (auto& memory : primary.memories) {
+    auto secondaryMemory = ModuleUtils::copyMemory(memory.get(), secondary);
     makeImportExport(
-      *primary.memories[0], *secondary.memories[0], "memory", ExternalKind::Memory);
+      *memory, *secondaryMemory, "memory", ExternalKind::Memory);
   }
 
   for (auto& table : primary.tables) {

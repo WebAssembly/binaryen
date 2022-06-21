@@ -115,6 +115,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
 
   void optimize(Function* func) {
     std::set<Load*> unoptimizables;
+    assert(!getModule()->memories.empty());
     auto indexType = getModule()->memories[0]->indexType;
     for (auto& [load, info] : infos) {
       if (info.reinterpreted && canReplaceWithReinterpret(load)) {
@@ -173,6 +174,7 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
           auto& info = iter->second;
           Builder builder(*module);
           auto* ptr = curr->ptr;
+          assert(!getModule()->memories.empty());
           auto indexType = getModule()->memories[0]->indexType;
           curr->ptr = builder.makeLocalGet(info.ptrLocal, indexType);
           // Note that the other load can have its sign set to false - if the

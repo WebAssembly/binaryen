@@ -185,7 +185,7 @@ void TranslateToFuzzReader::build() {
 
 void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
-  MemoryUtils::ensureMinimalSize(*wasm.memories[0]);
+  assert(!wasm.memories.empty());
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits

@@ -151,6 +151,7 @@ struct SafeHeap : public Pass {
 
   void addImports(Module* module) {
     ImportInfo info(*module);
+    assert(!module->memories.empty());
     auto indexType = module->memories[0]->indexType;
     if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;

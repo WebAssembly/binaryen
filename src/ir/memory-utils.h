@@ -32,11 +32,6 @@ namespace wasm::MemoryUtils {
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
 bool flatten(Module& wasm);
 
-// Ensures that the memory has an initial/max minimal size.
-inline void ensureMinimalSize(Memory& memory) {
-  memory.initial = memory.max = 1;
-}
-
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
 inline bool ensureLimitedSegments(Module& module) {

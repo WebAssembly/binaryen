@@ -3919,15 +3919,22 @@ bool BinaryenHasMemory(BinaryenModuleRef module) {
   return !((Module*)module)->memories.empty();
 }
 BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
+  assert(!((Module*)module)->memories.empty());
   return ((Module*)module)->memories[0]->initial;
 }
 bool BinaryenMemoryHasMax(BinaryenModuleRef module) {
+  assert(!((Module*)module)->memories.empty());
   return ((Module*)module)->memories[0]->hasMax();
 }
 BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module) {
+  assert(!((Module*)module)->memories.empty());
   return ((Module*)module)->memories[0]->max;
 }
 const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module) {
+  if (((Module*)module)->memories.empty()) {
+    return "";
+  }
+
   auto& memory = ((Module*)module)->memories[0];
   if (memory->imported()) {
     return memory->module.c_str();
@@ -3936,6 +3943,10 @@ const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module) {
   }
 }
 const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
+  if (((Module*)module)->memories.empty()) {
+    return "";
+  }
+
   auto& memory = ((Module*)module)->memories[0];
   if (memory->imported()) {
     return memory->base.c_str();
@@ -3944,6 +3955,7 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
   }
 }
 bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
+  assert(!((Module*)module)->memories.empty());
   return ((Module*)module)->memories[0]->shared;
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
