@@ -951,7 +951,7 @@ private:
   // to add is new or not.
   std::unordered_set<IndexLink> links;
 
-  // Update a location with new contents, that are added to everything already
+  // Update a location with new contents that are added to everything already
   // present there. If the update changes the contents at that location (if
   // there was anything new) then we also need to flow from there, which we will
   // do by adding the location to the work queue, and eventually flowAfterUpdate
@@ -1574,11 +1574,15 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     filtered = contents;
   } else {
     auto intendedType = cast->getIntendedType();
-    bool mayBeSubType =
+    bool isSubType =
       HeapType::isSubType(contents.getType().getHeapType(), intendedType);
-    if (mayBeSubType) {
-      // The contents are not Many, but they may be a subtype of the intended
-      // type, so we'll pass them through.
+    if (isSubType) {
+      // The contents are not Many, but their heap type is a subtype of the
+      // intended type, so we'll pass that through. Note that we pass the entire
+      // contents here, which includes nullability, but that is fine, it would
+      // just overlap with the code below that handles nulls (that is, the code
+      // below only makes a difference when the heap type is *not* a subtype but
+      // the type is nullable).
       // TODO: When we get cone types, we could filter the cone here.
       filtered.combine(contents);
     }
