@@ -102,8 +102,8 @@ struct MemoryPacking : public Pass {
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
   void dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
-  bool canSplit(const DataSegment* segment, const Referrers& referrers);
-  void calculateRanges(const DataSegment* segment,
+  bool canSplit(const std::unique_ptr<DataSegment>& segment, const Referrers& referrers);
+  void calculateRanges(const std::unique_ptr<DataSegment>& segment,
                        const Referrers& referrers,
                        std::vector<Range>& ranges);
   void createSplitSegments(Builder& builder,
@@ -153,8 +153,8 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
 
     std::vector<Range> ranges;
 
-    if (canSplit(segment.get(), currReferrers)) {
-      calculateRanges(segment.get(), currReferrers, ranges);
+    if (canSplit(segment, currReferrers)) {
+      calculateRanges(segment, currReferrers, ranges);
     } else {
       // A single range covers the entire segment. Set isZero to false so the
       // original memory.init will be used even if segment is all zeroes.
@@ -248,7 +248,7 @@ bool MemoryPacking::canOptimize(
   return true;
 }
 
-bool MemoryPacking::canSplit(const DataSegment* segment,
+bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
                              const Referrers& referrers) {
   // Don't mess with segments related to llvm coverage tools such as
   // __llvm_covfun. There segments are expected/parsed by external downstream
@@ -274,7 +274,7 @@ bool MemoryPacking::canSplit(const DataSegment* segment,
   return segment->offset->is<Const>();
 }
 
-void MemoryPacking::calculateRanges(const DataSegment* segment,
+void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
                                     const Referrers& referrers,
                                     std::vector<Range>& ranges) {
   auto& data = segment->data;

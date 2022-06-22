@@ -107,21 +107,17 @@ inline Table* copyTable(const Table* table, Module& out) {
 }
 
 inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
-  auto copy = [&](std::unique_ptr<DataSegment>&& ret) {
-    ret->name = segment->name;
-    ret->hasExplicitName = segment->hasExplicitName;
-    ret->isPassive = segment->isPassive;
-    ret->data = segment->data;
-
-    return out.addDataSegment(std::move(ret));
-  };
-
-  auto curr = Builder::makeDataSegment();
+  auto ret = Builder::makeDataSegment();
+  ret->name = segment->name;
+  ret->hasExplicitName = segment->hasExplicitName;
+  ret->isPassive = segment->isPassive;
   if (!segment->isPassive) {
     auto offset = ExpressionManipulator::copy(segment->offset, out);
-    curr->offset = offset;
+    ret->offset = offset;
   }
-  return copy(std::move(curr));
+  ret->data = segment->data;
+
+  return out.addDataSegment(std::move(ret));
 }
 
 inline void copyModule(const Module& in, Module& out) {
