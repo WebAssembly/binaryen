@@ -306,6 +306,7 @@ private:
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
+  Type parseOptionalTypeRef(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
   Index parseMemoryIndex(Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);

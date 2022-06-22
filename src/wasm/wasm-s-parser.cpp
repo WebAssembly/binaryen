@@ -1492,7 +1492,11 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     }
     curr->name = nameMapper.pushLabelName(sName);
     // block signature
+    // type can be optionally a result type or a type ref.
     curr->type = parseOptionalResultType(s, i);
+    if (curr->type == Type::none) {
+      curr->type = parseOptionalTypeRef(s, i);
+    }
     if (i >= s.size()) {
       break; // empty block
     }
@@ -1518,7 +1522,8 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
       while (i < s.size() && s[i]->isStr()) {
         i++;
       }
-      if (i < s.size() && elementStartsWith(*s[i], RESULT)) {
+      if (i < s.size() && (elementStartsWith(*s[i], RESULT) ||
+                           elementStartsWith(*s[i], TYPE))) {
         i++;
       }
       if (t < int(stack.size()) - 1) {
@@ -2303,6 +2308,23 @@ Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
   if (id == RESULT) {
     i++;
     return Type(parseResults(results));
+  }
+  return Type::none;
+}
+
+Type SExpressionWasmBuilder::parseOptionalTypeRef(Element& s, Index& i) {
+  if (s.size() == i) {
+    return Type::none;
+  }
+
+  Element& typeref = *s[i];
+  IString id = typeref[0]->str();
+  if (id == TYPE) {
+    i++;
+    // FIX: If we don't pass a second argument, this will call Type::Type(Rtt)
+    // instead of Type::Type(Ref, NonNullability), although at this point
+    // I am not sure the NonNullable here is the right thing to do.
+    return Type(parseTypeRef(typeref), NonNullable);
   }
   return Type::none;
 }

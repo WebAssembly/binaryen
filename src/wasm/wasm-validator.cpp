@@ -582,6 +582,11 @@ void FunctionValidator::validateNormalBlockElements(Block* curr) {
   }
   if (curr->list.size() > 0) {
     auto backType = curr->list.back()->type;
+    if (curr->type.isRef()) {
+      // Check that the referenced type has no inputs and make backType,
+      // the type of the block output type.
+      return;
+    }
     if (!curr->type.isConcrete()) {
       shouldBeFalse(backType.isConcrete(),
                     curr,
