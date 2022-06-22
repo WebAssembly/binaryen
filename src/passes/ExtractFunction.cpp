@@ -80,10 +80,10 @@ struct ExtractFunctionIndex : public Pass {
     }
     Index i = std::stoi(index);
     if (i >= module->functions.size()) {
-      Fatal() << "Invalid function index";
+      Fatal() << "Out of bounds function index " << i << "! (module has only " << module->functions.size() << " functions)";
     }
     // Assumes imports are at the beginning
-    Name name = module->functions[std::stoi(index)]->name;
+    Name name = module->functions[i]->name;
     extract(runner, module, name);
   }
 };
